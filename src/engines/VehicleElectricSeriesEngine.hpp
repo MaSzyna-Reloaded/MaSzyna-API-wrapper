@@ -1,0 +1,46 @@
+#pragma once
+#include "VehicleElectricEngine.hpp"
+#include "macros.hpp"
+#include "resources/engines/RelayListItem.hpp"
+
+namespace godot {
+    class VehicleController;
+
+    class VehicleElectricSeriesEngine : public VehicleElectricEngine {
+            GDCLASS(VehicleElectricSeriesEngine, VehicleElectricEngine)
+        public:
+        public:
+            void _fill_state_dictionary(Dictionary &p_state) const override;
+
+            /* Live state, read straight from the backend - nothing is stored. */
+            virtual double get_resistor_fan_rotation() const = 0;
+
+            /* RVent= (Automatic / Yes / No): resistor cooling fan drive mode */
+            enum FanType {
+                FAN_TYPE_NONE,
+                FAN_TYPE_YES,
+                FAN_TYPE_AUTOMATIC,
+            };
+
+            static void _bind_methods();
+
+        private:
+        protected:
+            EngineType get_engine_type() const override;
+
+        public:
+            MAKE_MEMBER_GS(double, nominal_voltage, 0.0);
+            MAKE_MEMBER_GS(double, winding_resistance, 0.0);
+            MAKE_MEMBER_GS(double, max_rpm, 0.0);
+            MAKE_MEMBER_GS_NR(FanType, resistor_fan_type, FAN_TYPE_NONE);
+            MAKE_MEMBER_GS(double, resistor_fan_max_rpm, 1.0);
+            MAKE_MEMBER_GS(double, resistor_fan_cutoff_resistance, 0.0);
+            MAKE_MEMBER_GS(double, resistor_fan_min_current, 50.0);
+            MAKE_MEMBER_GS(double, resistor_fan_speed, 0.5);
+            MAKE_MEMBER_GS(double, dynamic_brake_resistance, 5.8);
+            MAKE_MEMBER_GS(double, dynamic_brake_resistance_1, 5.8);
+            MAKE_MEMBER_GS(double, dynamic_brake_resistance_2, 5.8);
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RelayListItem>, relay_list)
+    };
+} // namespace godot
+VARIANT_ENUM_CAST(VehicleElectricSeriesEngine::FanType)

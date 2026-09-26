@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaszynaRuntime" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Runtime-wide services shared by every on-disk cache.
+	</brief_description>
+	<description>
+		Owns the single "throw the caches away" entry point and the build stamp those caches are keyed against.
+		Every [ResourceCache] connects its own [method ResourceCache.clear] to [signal cache_clear_requested] when it is created, so a new cache is covered by "Clear cache" without its owner having to remember it. A manager that also keeps state in memory connects its own [code]clear_cache()[/code] to the same signal.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="check_build_version">
+			<return type="bool" />
+			<description>
+				Compares the build stamp with the one stored in the user settings ([code]app/build_number[/code]) and, when they differ, emits [signal cache_clear_requested] and stores the current stamp. Returns whether the caches were cleared.
+				Runs at most once per run and does nothing in a checkout that was never built. Call it from the entry point of a scene, before anything reads a cache.
+			</description>
+		</method>
+		<method name="clear_cache">
+			<return type="void" />
+			<description>
+				Emits [signal cache_clear_requested], which clears every cache connected to it.
+			</description>
+		</method>
+		<method name="is_paused" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the world is paused, see [method pause].
+			</description>
+		</method>
+		<method name="pause">
+			<return type="void" />
+			<description>
+				Stops the world while something covers it - a loading screen, the spinner of "Exit to menu". Emits [signal paused] if it was running. [RailVehicleServer] stops stepping the vehicles, the environment holds its weather and the sound systems hold the world's voices; the scene tree itself keeps running, so a scenery still loads and vehicles still take their places.
+			</description>
+		</method>
+		<method name="unpause">
+			<return type="void" />
+			<description>
+				Starts the world again after [method pause]. Emits [signal unpaused] if it was paused.
+			</description>
+		</method>
+		<method name="get_build_number">
+			<return type="String" />
+			<description>
+				Returns the stamp written by the build itself ([code]cmake/write_build_number.cmake[/code]), so it names the library that is actually loaded. Empty in a checkout that was never built.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="language" type="String" setter="set_language" getter="get_language" default="&quot;en&quot;">
+			The language of the game's strings, named as its catalogue in the game's [code]lang/[/code] ([code]"pl"[/code] for [code]lang/pl.po[/code]); [code]"en"[/code] is the original's own strings, untranslated. Kept in the user settings; [MaszynaTranslationServer] loads the catalogue.
+		</member>
+	</members>
+	<signals>
+		<signal name="language_changed">
+			<description>
+				[member language] was set to another language.
+			</description>
+		</signal>
+		<signal name="paused">
+			<description>
+				Emitted by [method pause] when the world stops.
+			</description>
+		</signal>
+		<signal name="unpaused">
+			<description>
+				Emitted by [method unpause] when the world starts again.
+			</description>
+		</signal>
+		<signal name="cache_clear_requested">
+			<description>
+				Emitted when every cache is to be dropped, by [method clear_cache] or by [method check_build_version].
+			</description>
+		</signal>
+	</signals>
+</class>

@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://ccuksauqx4qmn" path="res://examples/mover_demo.gd" id="1_hbfy1"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_j25qa"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://hud/panel.tscn" id="3_pdcrj"]
-[ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="4_4bpxo"]
 [ext_resource type="PackedScene" uid="uid://laujatulc22" path="res://hud/mover_switches.tscn" id="5_vg5os"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="6_7bum4"]
 
@@ -87,17 +86,13 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Gauges" parent="UI" unique_id=1854622144 instance=ExtResource("4_4bpxo")]
-layout_mode = 2
-train_controller = NodePath("../../SM42")
-
 [node name="MoverSwitches" parent="UI" unique_id=1293506753 instance=ExtResource("5_vg5os")]
 layout_mode = 2
 train_controller = NodePath("../../SM42")
 
 [node name="SM42" parent="." unique_id=851805456 instance=ExtResource("6_7bum4")]
 
-[connection signal="mover_initialized" from="SM42" to="." method="_on_sm_42_mover_initialized"]
+[connection signal="simulation_initialized" from="SM42" to="." method="_on_sm_42_simulation_initialized"]
 
 [editable path="UI/MoverSwitches"]
 [editable path="SM42"]

@@ -68,7 +68,7 @@ func refresh_items() -> void:
     _clear_items()
 
     var search_query = _search_edit.text.strip_edges().to_lower()
-    var is_searching: bool = not search_query.is_empty()
+    var is_searching: bool = not not search_query
     var search_root = _library
     var filters: Array[Callable] = []
 

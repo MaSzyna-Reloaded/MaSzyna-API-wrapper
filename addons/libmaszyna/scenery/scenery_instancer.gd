@@ -1,0 +1,825 @@
+@tool
+extends Node
+
+static var sky_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
+static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_atmo_importer.gd").new()
+static var time_importer = preload("res://addons/libmaszyna/importer/maszyna_time_importer.gd").new()
+static var config_importer = preload("res://addons/libmaszyna/importer/maszyna_config_importer.gd").new()
+static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
+static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
+## A lit model no `lights` event is aimed at - it has lights but no aspects
+## The one delegate every scenery driver shares; it keeps their state per driver
+static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+const GENERIC_SEMAPHORE_KIND:SemaphoreKind = preload("../semaphores/generic_semaphore_kind.tres")
+static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()
+static var endorigin_importer = preload("res://addons/libmaszyna/importer/maszyna_endorigin_importer.gd").new()
+static var rotate_importer = preload("res://addons/libmaszyna/importer/maszyna_rotate_importer.gd").new()
+static var terrain_importer = preload("res://addons/libmaszyna/importer/maszyna_terrain_importer.gd").new()
+static var include_importer = preload("res://addons/libmaszyna/importer/maszyna_include_importer.gd").new()
+static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna_trainset_importer.gd").new()
+static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
+static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
+static var isolated_importer = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd").new()
+static var area_importer = preload("res://addons/libmaszyna/importer/maszyna_area_importer.gd").new()
+const TRIANGLE_CHUNK_SIZE_M := 1000.0
+const CACHE_FORMAT_VERSION:int = 23
+const CACHE_DIRECTORY:String = "scenery_compiled"
+## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
+const SUBSCENE_MIN_SIZE:int = 65536
+## Cached subscenes nested deeper are parsed as part of their parent's cache entry
+const SUBSCENE_MAX_DEPTH:int = 2
+## Share of the loading progress taken by .scn parsing (the rest goes fairly fast)
+const PARSE_PROGRESS:float = 0.5
+## Time spent building/attaching objects between progress reports
+const PROGRESS_FRAME_BUDGET_MSEC:int = 100
+
+static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
+## Queues currently parsing, so a scenery leaving the tree can stop them - their tasks are
+## GDScript and call GDScript handlers, which must not be reached once the scripts are going away
+static var _active_queues:Array[SceneryLoadingTaskQueue] = []
+static var _last_report_msec:int = 0
+static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
+## Cache paths of subscenes being saved by queue workers - one writer per file
+static var _saving_subscenes:Dictionary = {}
+static var _saving_subscenes_mutex:Mutex = Mutex.new()
+
+
+## Stops every parse in flight and joins its workers. Called by a scenery leaving the tree: the
+## tasks are GDScript and the parser calls GDScript handlers through a Callable, so a worker still
+## inside one when the scripts are freed jumps into code that is gone (see FINDINGS.md,
+## 2026-09-24). Waiting here is safe, because here the scripts are still alive.
+static func cancel_loading() -> void:
+    # the parse has to stop between tokens, or joining its worker means waiting out a whole file
+    MaszynaParser.set_cancelled(true)
+    for queue:SceneryLoadingTaskQueue in _active_queues.duplicate():
+        queue.drain()
+    _active_queues.clear()
+    # the workers are joined, so nothing is parsing and the next scenery may start clean
+    MaszynaParser.set_cancelled(false)
+
+
+## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
+## E3DModelManager.clear_cache()/MaterialManager.clear_cache() - nothing previously cleared this
+## one, so a stale/corrupt compiled-scenery cache entry (e.g. from a killed process mid-write)
+## had no way to be cleared from the settings UI.
+static func clear_cache() -> void:
+    _cache.clear()
+
+
+## Parses root.filename and (re-)populates root with everything the scenery declares.
+##
+## Tracks, traction, models and merged terrain meshes are built directly against TrackManager/
+## TrackRenderingServer/TractionRenderingServer/E3DRenderingServer/SceneryChunkRenderingServer's
+## RID-based API (_build_track()/_build_traction()/_build_model()/_build_triangle_chunks() below)
+## instead of instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D/E3DModelInstance nodes -
+## a real scenery can have thousands of these, and a Node per segment (each with its own @tool
+## script and per-frame _process()) is overhead that only actually earns its keep for a handful of
+## hand-authored pieces edited directly in a scene like demo_3d.tscn. root keeps the resulting RIDs
+## (_track_rids/_track_render_rids/_traction_rids/_wire_power_rids/_power_source_rids/_e3d_rids/
+## _triangle_chunk_rids) so they can be freed on the next reload or when root itself leaves the
+## tree - see maszyna_include.gd.
+##
+## What the rendering servers get here is a registration, not geometry: SceneryStreamingServer
+## builds each piece only while the camera is within its visibility range of the 1 km chunk
+## holding it. baltyk_skm1.scn alone places 8 487 models, 90 228 "triangles" nodes (41% of them
+## with no range at all), 2 340 tracks and 1 163 traction spans.
+func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
+    var source_path:String = _get_source_path(root.filename)
+    var parameters_hash:String = _get_parameters_hash(parameters)
+    var cache_path:String = _get_cache_path(source_path, parameters_hash)
+    var world_3d:World3D = root.get_world_3d()
+    var compiled:MaszynaCompiledScenery
+    if root.use_cache:
+        compiled = await _load_cached_with_progress(root, cache_path, source_path, parameters_hash)
+
+    if compiled:
+        await _report_progress(root, 0.3, "Registering tracks and traction")
+        await _instantiate_server_data(
+            root,
+            world_3d,
+            compiled.tracks,
+            compiled.traction,
+            compiled.power_sources,
+            compiled.models,
+            compiled.events,
+            compiled.memcells,
+            compiled.launchers,
+            compiled.sounds,
+            compiled.isolated_sections,
+            0.3,
+            0.6,
+        )
+        await _report_progress(root, 0.6, "Registering terrain")
+        _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
+        await _report_progress(root, 0.7, "Instancing objects")
+        await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
+        await _wait_for_vehicles(root)
+        _build_drivers(root)
+        return
+
+    await _report_progress(root, 0.0, "Scanning includes")
+    var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
+    var objects:Array = context.objects
+    assign_semaphore_kinds(context.models, context.events)
+
+    await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
+    await _instantiate_server_data(
+        root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
+        context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
+        PARSE_PROGRESS, 0.6
+    )
+    await _report_progress(root, 0.6, "Building terrain")
+    var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
+
+    if root.use_cache and context.cacheable:
+        await _report_progress(root, 0.6, "Saving cache")
+        compiled = _compile_scenery(source_path, parameters_hash, context, objects)
+        if compiled:
+            compiled.triangle_chunks = triangle_chunks
+            _cache.set(cache_path, compiled)
+
+    await _report_progress(root, 0.65, "Registering terrain")
+    _build_triangle_chunks(root, triangle_chunks, world_3d)
+    await _report_progress(root, 0.7, "Instancing objects")
+    await _attach_objects(root, objects, 0.7, 0.9)
+    await _wait_for_vehicles(root)
+    _build_drivers(root)
+
+
+## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
+## `message` is a msgid the loading screen's Label translates; one composed with a value is
+## translated before the value goes in.
+static func _report_progress(root:MaszynaIncludeNode, progress:float, message:String) -> void:
+    root.load_progress.emit(progress, message)
+    await root.get_tree().process_frame
+    _last_report_msec = Time.get_ticks_msec()
+
+
+## _report_progress() for loops over many objects - reports only after PROGRESS_FRAME_BUDGET_MSEC
+static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, message:String) -> void:
+    if Time.get_ticks_msec() - _last_report_msec < PROGRESS_FRAME_BUDGET_MSEC:
+        return
+    await _report_progress(root, progress, message)
+
+
+## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached.
+static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
+    var vehicles:Array[Node] = root.find_children("", "DynamicRailVehicle3D", true, false)
+    for vehicle:Node in vehicles:
+        while not (vehicle as DynamicRailVehicle3D).is_built():
+            await _report_progress(root, 0.9, "Instancing vehicles")
+    root.load_progress.emit(1.0, "")
+
+
+## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
+## their handles exist only then. The vehicle goes first: the driver learns its cab from it.
+static func _build_drivers(root:MaszynaIncludeNode) -> void:
+    for node:Node in root.find_children("", "DynamicRailVehicle3D", true, false):
+        var vehicle_node:DynamicRailVehicle3D = node
+        var controller:VehicleController = vehicle_node.get_controller()
+        if not controller or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
+            continue
+        var driver:RID = DriverSystem.driver_create()
+        root._driver_rids.append(driver)
+        DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
+        DriverSystem.driver_attach_delegate(driver, _ai_driver)
+
+
+static func _instantiate_server_data(
+    root:MaszynaIncludeNode,
+    world_3d:World3D,
+    tracks:Array[MaszynaTrackData],
+    traction:Array[MaszynaTractionData],
+    power_sources:Array[MaszynaPowerSourceData],
+    models:Array[MaszynaModelData],
+    events:Array[MaszynaEventData],
+    memcells:Array[MaszynaMemcellData],
+    launchers:Array[MaszynaEventLauncherData],
+    sounds:Array[MaszynaSoundData],
+    isolated_sections:Array[MaszynaIsolatedData],
+    progress_from:float,
+    progress_to:float,
+) -> void:
+    var total:float = float(maxi(tracks.size() + power_sources.size() + traction.size() + models.size(), 1))
+    var built_count:int = 0
+    # in the order of the data, which is how the events find what they are aimed at
+    var track_rids:Array[RID] = []
+    var model_rids:Array[RID] = []
+    for track_data:MaszynaTrackData in tracks:
+        var built:Dictionary = _build_track(track_data, world_3d)
+        root._track_rids.append(built["track_rid"])
+        track_rids.append(built["track_rid"])
+        root._track_render_rids.append(built["track_render_rid"])
+        built_count += 1
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering tracks")
+
+    for power_source_data:MaszynaPowerSourceData in power_sources:
+        root._power_source_rids.append(_build_power_source(power_source_data))
+        built_count += 1
+    for traction_data:MaszynaTractionData in traction:
+        var traction_rid:RID = _build_traction(traction_data, world_3d)
+        root._traction_rids.append(traction_rid)
+        root._wire_power_rids.append(_build_wire_power(traction_data))
+        built_count += 1
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering traction")
+    if root._wire_power_rids.size() > 0:
+        TractionPowerServer.network_build()
+
+    if root._track_rids.size() > 0:
+        TrackManager.topology_rebuild()
+
+    # the original's semaphores: every lit model, driven by the scenery's own `lights` events
+    var semaphore_system:RID = SemaphoreServer.system_create()
+    SemaphoreServer.system_attach_delegate(semaphore_system, MaszynaLegacySemaphoreDelegate.new())
+    SemaphoreServer.system_set_name(semaphore_system, root.filename)
+    root._semaphore_system_rids.append(semaphore_system)
+    for model_data:MaszynaModelData in models:
+        var e3d_rid:RID = _build_model(model_data, world_3d, semaphore_system)
+        model_rids.append(e3d_rid)
+        if e3d_rid.is_valid():
+            root._e3d_rids.append(e3d_rid)
+        built_count += 1
+        await _report_progress_throttled(
+            root, lerpf(progress_from, progress_to, built_count / total), TranslationServer.translate("Registering %s") % model_data.model_filename
+        )
+    # the original's firstinit: everything the events are aimed at exists by now
+    MaszynaLegacyEventFactory.build(
+        root, events, memcells, launchers, sounds, isolated_sections, tracks, track_rids, models, model_rids,
+        power_sources
+    )
+
+
+## Registers the merged meshes with SceneryChunkRenderingServer; they are rendered only while the
+## camera is within range of their chunk (see the server's doc comment for why)
+static func _build_triangle_chunks(
+    root:MaszynaIncludeNode, chunks:Array[MaszynaTrianglesChunkData], world_3d:World3D
+) -> void:
+    for chunk:MaszynaTrianglesChunkData in chunks:
+        root._triangle_chunk_rids.append(SceneryChunkRenderingServer.create_chunk(chunk, world_3d.scenario))
+
+
+static func _build_triangle_chunk_data(triangles:Array) -> Array[MaszynaTrianglesChunkData]:
+    var chunk_data:Array[MaszynaTrianglesChunkData] = []
+    # merge triangles grouped by material and by their per-node
+    # range_min/range_max (e.g. grass.inc's "node 300 0 ... triangles" is only meant to be
+    # visible within 300m - see maszyna_node_importer.gd's own range_min/range_max handling for
+    # regular model nodes). Triangles are bucketed by range before chunking so a distance-limited
+    # patch of grass never ends up merged into an always-visible terrain chunk mesh.
+    var triangles_by_range: Dictionary = {}
+    for triangle_entry: Array in triangles:
+        var entry_range_min: float = triangle_entry[4] if triangle_entry.size() > 4 else 0.0
+        var entry_range_max: float = triangle_entry[5] if triangle_entry.size() > 5 else -1.0
+        var range_key: Vector2 = Vector2(entry_range_min, entry_range_max)
+        if not triangles_by_range.has(range_key):
+            triangles_by_range[range_key] = []
+        (triangles_by_range[range_key] as Array).append(triangle_entry)
+
+    for range_key: Vector2 in triangles_by_range.keys():
+        var range_min: float = range_key.x
+        var range_max: float = range_key.y
+        var built_chunks: Array = SceneryTrianglesBuilder.build_chunks(triangles_by_range[range_key], TRIANGLE_CHUNK_SIZE_M)
+        for chunk in built_chunks:
+            var mesh := ArrayMesh.new()
+            var arrays: Array = []
+            arrays.resize(Mesh.ARRAY_MAX)
+            arrays[Mesh.ARRAY_VERTEX] = chunk["vertices"]
+            arrays[Mesh.ARRAY_NORMAL] = chunk["normals"]
+            arrays[Mesh.ARRAY_TEX_UV] = chunk["uvs"]
+            mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+            var data := MaszynaTrianglesChunkData.new()
+            data.mesh = mesh
+            data.position = chunk["origin"]
+            data.material_name = chunk["texture"]
+            data.range_min = range_min
+            data.range_max = range_max if range_max > 0 else 0.0
+            chunk_data.append(data)
+    return chunk_data
+
+
+## Adds objects to root, reporting the object being attached (see _report_progress_throttled())
+## with progress going from progress_from to progress_to.
+static func _attach_objects(
+    root:MaszynaIncludeNode, objects:Array, progress_from:float, progress_to:float
+) -> void:
+    for i:int in objects.size():
+        var node:Node = objects[i] as Node
+        if not node:
+            continue
+
+        _apply_skin_overrides(root, node)
+        root.add_child(node)
+        var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
+        await _report_progress_throttled(root, progress, TranslationServer.translate("Instancing %s") % node.name)
+    if Engine.is_editor_hint():
+        root.SceneryEditor.update_owners(root)
+
+
+## Vehicles are built from their properties once they enter the tree, so an overridden skin has
+## to be set before that (a trainset holds its vehicles as children)
+static func _apply_skin_overrides(root:MaszynaIncludeNode, node:Node) -> void:
+    if not root.skin_overrides:
+        return
+    var vehicles:Array[Node] = [node]
+    vehicles.append_array(node.find_children("", "DynamicRailVehicle3D", true, false))
+    for candidate:Node in vehicles:
+        var vehicle:DynamicRailVehicle3D = candidate as DynamicRailVehicle3D
+        if vehicle and root.skin_overrides.has(vehicle.train_id):
+            vehicle.skin = root.skin_overrides[vehicle.train_id]
+
+
+static func _compile_scenery(
+    source_path:String,
+    parameters_hash:String,
+    context:MaszynaImporterContext,
+    objects:Array,
+    compiled:MaszynaCompiledScenery = MaszynaCompiledScenery.new(),
+) -> MaszynaCompiledScenery:
+    var packed_scene:PackedScene = _pack_objects(objects)
+    if not packed_scene:
+        return null
+
+    compiled.format_version = CACHE_FORMAT_VERSION
+    compiled.source_path = source_path
+    compiled.parameters_hash = parameters_hash
+    compiled.dependencies = context.dependencies.duplicate(true)
+    compiled.nodes = packed_scene
+    compiled.tracks = context.tracks
+    compiled.traction = context.traction
+    compiled.power_sources = context.power_sources
+    compiled.models = context.models
+    compiled.events = context.events
+    compiled.memcells = context.memcells
+    compiled.launchers = context.launchers
+    compiled.sounds = context.sounds
+    compiled.isolated_sections = context.isolated_sections
+    return compiled
+
+
+static func _pack_objects(objects:Array) -> PackedScene:
+    var scene_root := Node3D.new()
+    for object:Variant in objects:
+        if object is Node:
+            scene_root.add_child(object)
+            object.owner = scene_root
+            if object is TrainSet3D:
+                for vehicle:Node in object.get_children():
+                    vehicle.owner = scene_root
+
+    var packed_scene := PackedScene.new()
+    var result:Error = packed_scene.pack(scene_root)
+
+    for child:Node in scene_root.get_children():
+        child.owner = null
+        scene_root.remove_child(child)
+    scene_root.free()
+
+    if not result == OK:
+        push_error("Cannot compile scenery cache")
+        return null
+    return packed_scene
+
+
+static func _instantiate_cached_nodes(packed_scene:PackedScene) -> Array:
+    var objects:Array = []
+    if not packed_scene:
+        return objects
+    var scene_root:Node = packed_scene.instantiate()
+    for child:Node in scene_root.get_children():
+        scene_root.remove_child(child)
+        child.owner = null
+        objects.append(child)
+    scene_root.free()
+    return objects
+
+
+## Compiled sceneries are hundreds of MB - read on a worker thread, so the main thread keeps
+## drawing frames (loading screen, the selector dissolving into it) instead of freezing
+static func _load_cached_with_progress(
+    root:MaszynaIncludeNode,
+    cache_path:String,
+    source_path:String,
+    parameters_hash:String,
+) -> MaszynaCompiledScenery:
+    var queue := SceneryLoadingTaskQueue.new()
+    _active_queues.append(queue)
+    var task_id:int = queue.submit(_load_cached.bind(cache_path, source_path, parameters_hash))
+    while not queue.is_done(task_id):
+        await _report_progress(root, 0.0, "Reading cache")
+    _active_queues.erase(queue)
+    return queue.wait(task_id) as MaszynaCompiledScenery
+
+
+static func _load_cached(
+    cache_path:String,
+    source_path:String,
+    parameters_hash:String,
+) -> MaszynaCompiledScenery:
+    var compiled:MaszynaCompiledScenery = _cache.get(cache_path) as MaszynaCompiledScenery
+    if not compiled:
+        return null
+    if not _is_cache_valid(compiled, source_path, parameters_hash):
+        _cache.remove(cache_path)
+        return null
+    return compiled
+
+
+static func _is_cache_valid(
+    compiled:MaszynaCompiledScenery,
+    source_path:String,
+    parameters_hash:String,
+) -> bool:
+    if not compiled.format_version == CACHE_FORMAT_VERSION:
+        return false
+    if not compiled.source_path == source_path:
+        return false
+    if not compiled.parameters_hash == parameters_hash:
+        return false
+    if not compiled.nodes:
+        return false
+    if not compiled.dependencies.has(source_path):
+        return false
+    for dependency_value:Variant in compiled.dependencies.keys():
+        var dependency_path:String = dependency_value
+        if not FileAccess.file_exists(dependency_path):
+            return false
+        var state:Dictionary = compiled.dependencies[dependency_path]
+        if not FileAccess.get_modified_time(dependency_path) == int(state["modified_time"]):
+            return false
+        var file:FileAccess = FileAccess.open(dependency_path, FileAccess.READ)
+        if not file:
+            return false
+        if not file.get_length() == int(state["size"]):
+            return false
+    return true
+
+
+static func _get_parameters_hash(parameters:Dictionary) -> String:
+    var keys:Array = parameters.keys()
+    keys.sort()
+    var parts:Array[String] = []
+    for key_value:Variant in keys:
+        var key:String = str(key_value)
+        var value:String = JSON.stringify(parameters[key_value])
+        parts.append("%d:%s=%d:%s" % [key.length(), key, value.length(), value])
+    return "|".join(parts).md5_text()
+
+
+static func _get_cache_path(source_path:String, parameters_hash:String) -> String:
+    return (
+        "%s:%s:%s" % [CACHE_FORMAT_VERSION, source_path, parameters_hash]
+    ).md5_text() + ".res"
+
+
+static func _get_source_path(filename:String) -> String:
+    return UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename).simplify_path()
+
+
+func scenery_exists(filename: String):
+    var abs_file:String = _get_source_path(filename)
+    return FileAccess.file_exists(abs_file)
+
+
+func parse_file(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> Array:
+    var parser:MaszynaParser = open_parser(filename, parameters, context)
+    if not parser:
+        return []
+    var objects:Array = parser.parse()
+    _close_parser(parser, filename, context)
+    return objects
+
+
+## Parses a file in its own context restored from state (MaszynaImporterContext.get_state()) -
+## a SceneryLoadingTaskQueue task. Includes become further tasks of the queue, merged at the end.
+func parse_file_task(
+    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+) -> MaszynaImporterContext:
+    var context:MaszynaImporterContext = MaszynaImporterContext.from_state(state)
+    context.queue = queue
+    context.objects = parse_file(filename, parameters, context)
+    context.merge_pending_includes()
+    context.queue = null
+    return context
+
+
+## parse_file_task() of a subscene (see maszyna_include_importer.gd), read from / saved to the
+## cache. The cache key includes the inherited origin/rotate - parsed objects are already placed
+## in world coordinates.
+func parse_subscene_task(
+    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+) -> MaszynaImporterContext:
+    var source_path:String = _get_source_path(filename)
+    var state_hash:String = var_to_str([state["origin"], state["rotate"]]).md5_text()
+    var cache_path:String = _get_cache_path(source_path, state_hash)
+    var compiled:MaszynaCompiledSubscene = _load_cached(cache_path, source_path, state_hash) as MaszynaCompiledSubscene
+    if compiled:
+        var cached := MaszynaImporterContext.new()
+        cached.tracks.assign(compiled.tracks)
+        cached.traction.assign(compiled.traction)
+        cached.power_sources.assign(compiled.power_sources)
+        cached.models.assign(compiled.models)
+        cached.events.assign(compiled.events)
+        cached.memcells.assign(compiled.memcells)
+        cached.launchers.assign(compiled.launchers)
+        cached.sounds.assign(compiled.sounds)
+        cached.isolated_sections.assign(compiled.isolated_sections)
+        cached.triangles.assign(compiled.triangles)
+        cached.dependencies = compiled.dependencies.duplicate(true)
+        cached.objects = _instantiate_cached_nodes(compiled.nodes)
+        return cached
+
+    state["subscene_depth"] = int(state["subscene_depth"]) + 1
+    var context:MaszynaImporterContext = parse_file_task(filename, parameters, state, queue)
+    if not context.cacheable:
+        return context
+
+    _saving_subscenes_mutex.lock()
+    var is_saving:bool = _saving_subscenes.has(cache_path)
+    _saving_subscenes[cache_path] = true
+    _saving_subscenes_mutex.unlock()
+    if is_saving:
+        return context
+
+    var subscene := MaszynaCompiledSubscene.new()
+    subscene.triangles = context.triangles
+    if _compile_scenery(source_path, state_hash, context, context.objects, subscene):
+        _cache.set(cache_path, subscene)
+    _saving_subscenes_mutex.lock()
+    _saving_subscenes.erase(cache_path)
+    _saving_subscenes_mutex.unlock()
+    return context
+
+
+## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
+## progress every frame: finished tasks / includes counted by _count_includes().
+func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -> MaszynaImporterContext:
+    var root_context := MaszynaImporterContext.new()
+    root_context.rotate = root.context_rotate
+    root_context.origin = root.context_origin
+    var queue := SceneryLoadingTaskQueue.new()
+    _active_queues.append(queue)
+    # the prescan reads every included file - on a worker thread, like the parsing itself, so the
+    # main thread keeps drawing frames
+    var count_task_id:int = queue.submit(_count_includes.bind(root.filename, {}))
+    while not queue.is_done(count_task_id):
+        await _report_progress(root, 0.0, "Scanning includes")
+    var include_count:int = queue.wait(count_task_id)
+    var parsed_before:int = queue.get_completed_count()
+    var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
+    while not queue.is_done(task_id):
+        var parsed:float = minf(
+            float(queue.get_completed_count() - parsed_before) / float(maxi(include_count, 1)), 1.0
+        )
+        await _report_progress(root, PARSE_PROGRESS * parsed, tr("Parsing %s") % root.filename)
+    var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
+    _active_queues.erase(queue)
+    if not context:
+        push_error("Cannot parse scenery: " + root.filename)
+        return MaszynaImporterContext.new()
+    return context
+
+
+## Grep-like prescan: every "include" in filename and, recursively, in the included files (each
+## occurrence counts, files are scanned once - counts caches the per-file totals). Parameterised
+## include paths that don't resolve to a file count as one include without children.
+func _count_includes(filename:String, counts:Dictionary) -> int:
+    # the prescan runs on the same worker as the parse and reads every included file, so it stops
+    # on the same signal - otherwise a teardown joining that worker waits the whole scan out
+    if MaszynaParser.is_cancelled():
+        return 0
+    if counts.has(filename):
+        return counts[filename]
+    counts[filename] = 0
+    var path:String = _get_source_path(filename)
+    if not FileAccess.file_exists(path):
+        return 0
+    var total:int = 0
+    for line:String in FileAccess.get_file_as_bytes(path).get_string_from_ascii().split("\n"):
+        if MaszynaParser.is_cancelled():
+            return 0
+        var code:String = line.get_slice("//", 0)
+        if not code.containsn("include"):
+            continue
+        for found:RegExMatch in _include_regex.search_all(code):
+            total += 1 + _count_includes(include_importer.resolve_filename(found.get_string(1)), counts)
+    counts[filename] = total
+    return total
+
+
+func open_parser(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> MaszynaParser:
+    var abs_file:String = _get_source_path(filename)
+    if not context.begin_file(abs_file):
+        push_error("Recursive scenery include: " + abs_file)
+        return null
+    var file := FileAccess.open(abs_file, FileAccess.READ)
+    if not file:
+        context.end_file(abs_file)
+        push_error("Cannot load scenery: " + abs_file)
+        return null
+    context.register_dependency(abs_file, file.get_length())
+
+    var parser := MaszynaParser.new()
+    parser.set_parameters(parameters)
+    parser.initialize(file.get_buffer(file.get_length()))
+    parser.register_handler("sky", _make_importer_callback(sky_importer, context))
+    parser.register_handler("atmo", _make_importer_callback(atmo_importer, context))
+    parser.register_handler("time", _make_importer_callback(time_importer, context))
+    parser.register_handler("config", _make_importer_callback(config_importer, context))
+    parser.register_handler("node", _make_importer_callback(node_importer, context))
+    parser.register_handler("event", _make_importer_callback(event_importer, context))
+    parser.register_handler("origin", _make_importer_callback(origin_importer, context))
+    parser.register_handler("endorigin", _make_importer_callback(endorigin_importer, context))
+    parser.register_handler("rotate", _make_importer_callback(rotate_importer, context))
+    parser.register_handler("terrain", _make_importer_callback(terrain_importer, context))
+    parser.register_handler("include", _make_importer_callback(include_importer, context))
+    parser.register_handler("trainset", _make_importer_callback(trainset_importer, context))
+    parser.register_handler("endtrainset", _make_importer_callback(endtrainset_importer, context))
+    parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
+    parser.register_handler("isolated", _make_importer_callback(isolated_importer, context))
+    parser.register_handler("area", _make_importer_callback(area_importer, context))
+    return parser
+
+
+func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
+    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit", "isolated", "area"]:
+        parser.unregister_handler(token)
+    context.end_file(_get_source_path(filename))
+
+
+static func _make_importer_callback(importer, context) -> Callable:
+    var callback = func(p): return importer.import(p, context)
+    return callback
+
+
+## Mirrors TrackNormal3D/TrackSwitch3D's own _create_track()/_update_track_data()/
+## _update_track_rendering() (addons/libmaszyna/tracks/track_normal_3d.gd,
+## track_switch_3d.gd), minus the Node - see instantiate()'s doc comment for why. The rendering
+## meshes are not built here: stream_track() leaves that to SceneryStreamingServer.
+static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dictionary:
+    var track_rid:RID = TrackManager.track_create()
+    var track_render_rid:RID = TrackRenderingServer.create_track(track_rid)
+    TrackRenderingServer.set_track_scenario(track_render_rid, world_3d.scenario)
+
+    TrackManager.track_update_curves(track_rid, track_data.curve, track_data.diverging_curve)
+    TrackManager.track_update(track_rid, track_data.type, track_data.track_name, track_data.width)
+    TrackManager.track_update_properties(
+            track_rid, track_data.quality_flag, track_data.environment, track_data.sound_distance)
+    if track_data.type == TrackManager.TRACK_SWITCH:
+        TrackManager.switch_set_active_track(track_rid, TrackManager.TRACK_COMMON)
+    # the speed limit a `trackvel` event changes (Track.cpp:851-858)
+    TrackManager.track_set_velocity(track_rid, float(track_data.parameters.get("velocity", -1.0)))
+
+    TrackRenderingServer.set_track_render_options(
+        track_render_rid,
+        track_data.tex_length,
+        track_data.tex_height,
+        track_data.tex_width,
+        track_data.tex_slope,
+        track_data.material1,
+        track_data.material2,
+        track_data.parameters.get("trackbed", ""), # optional switch attribute, Track.cpp:2378
+        track_data.railprofile,
+        true, # rail_visible
+        true, # ballast_visible
+    )
+    TrackRenderingServer.set_track_visible(track_render_rid, track_data.visible)
+    TrackRenderingServer.stream_track(track_render_rid)
+
+    return {"track_rid": track_rid, "track_render_rid": track_render_rid}
+
+
+## Mirrors MaszynaTraction3D's own _enter_tree()/_update() (addons/libmaszyna/traction/
+## maszyna_traction_3d.gd), minus the Node. contact_p1/p2/support_p1/p2 are already absolute
+## world coordinates read straight from the .scn (same as track curve points), so the traction's
+## own transform is identity - there's nothing local left to place.
+static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D) -> RID:
+    var traction_rid:RID = TractionRenderingServer.create_traction()
+    TractionRenderingServer.set_traction_geometry(
+        traction_rid,
+        traction_data.contact_p1,
+        traction_data.contact_p2,
+        traction_data.support_p1,
+        traction_data.support_p2,
+        traction_data.wire_thickness,
+        traction_data.wires,
+        traction_data.wire_offset,
+        traction_data.min_height,
+        traction_data.segment_length,
+    )
+    TractionRenderingServer.set_traction_transform(traction_rid, Transform3D.IDENTITY)
+    TractionRenderingServer.set_traction_visible(traction_rid, traction_data.visible)
+    TractionRenderingServer.set_traction_scenario(traction_rid, world_3d.scenario)
+    TractionRenderingServer.set_traction_material(traction_rid, _get_traction_material(traction_data).get_rid())
+    TractionRenderingServer.stream_traction(traction_rid)
+    return traction_rid
+
+
+## Registers the placement with E3DRenderingServer instead of instancing it (a real scenery places
+## hundreds of thousands of submodels - instancing them all at load costs both the loading time and
+## the frame rate). The server loads the model and builds the instance once the streaming camera
+## comes within the node's range of the chunk it falls into, and clears it when the camera leaves.
+## The original's semaphores have no kind: a model shows whatever `lights` events the scenery aims
+## at it (Event.cpp:1741-1803). Every lit model, and every model such an event is aimed at, is
+## given a kind made of those events (MaszynaLegacySemaphoreKindFactory); the copies of one include
+## end up with equal kinds, which are then one resource. A lit model no event reaches gets the
+## generic kind. Target names are matched in lower case, as the original reads them (Event.cpp:327).
+static func assign_semaphore_kinds(
+    models:Array[MaszynaModelData], scenery_events:Array[MaszynaEventData]
+) -> void:
+    var events_by_target:Dictionary[String, Array] = {}
+    for event:MaszynaEventData in scenery_events:
+        if not event.type == "lights":
+            continue
+        for target:String in event.targets:
+            if not events_by_target.has(target):
+                events_by_target[target] = []
+            events_by_target[target].append(event)
+    var kinds:Dictionary[String, SemaphoreKind] = {}
+    for model_data:MaszynaModelData in models:
+        var events:Array = events_by_target.get(model_data.name.to_lower(), []) if model_data.name else []
+        if not events:
+            model_data.semaphore_kind = GENERIC_SEMAPHORE_KIND if model_data.lights else null
+            continue
+        var aspects:Dictionary = {}
+        for event:MaszynaEventData in events:
+            # one TAnimModel::LightSet() value per light, light 0 first
+            var values:PackedFloat32Array = []
+            for value:String in event.parameters:
+                values.append(float(value))
+            aspects[MaszynaLegacySemaphoreKindFactory.get_aspect_name(event.name, model_data.name)] = values
+        var key:String = var_to_str(aspects)
+        if not kinds.has(key):
+            kinds[key] = MaszynaLegacySemaphoreKindFactory.create_kind(aspects)
+        model_data.semaphore_kind = kinds[key]
+
+
+static func _build_model(model_data:MaszynaModelData, world_3d:World3D, semaphore_system:RID) -> RID:
+    var model_rid:RID = E3DRenderingServer.instance_register(
+        model_data.data_path,
+        model_data.model_filename,
+        model_data.skins,
+        Transform3D(Basis.from_euler(model_data.rotation), model_data.position),
+        model_data.range_min,
+        model_data.range_max,
+        world_3d.scenario,
+    )
+    # the declared modes outlive the streaming, so they are set once here and not on every build
+    if model_data.lights:
+        E3DRenderingServer.instance_set_lights_modes(model_rid, model_data.lights)
+    if model_data.semaphore_kind:
+        # goes with the instance when the include frees it
+        var semaphore:RID = SemaphoreServer.semaphore_create(model_rid)
+        SemaphoreServer.semaphore_set_kind(semaphore, model_data.semaphore_kind)
+        SemaphoreServer.semaphore_set_name(semaphore, model_data.name)
+        SemaphoreServer.system_add_semaphore(semaphore_system, semaphore)
+    if model_data.light_colors:
+        E3DRenderingServer.instance_set_lights_colors(model_rid, model_data.light_colors)
+    return model_rid
+
+
+## Mirrors _build_traction() - a tractionpowersource node has no visual representation, so this
+## only ever registers electrical data against TractionPowerServer.
+static func _build_power_source(power_source_data:MaszynaPowerSourceData) -> RID:
+    var power_source_rid:RID = TractionPowerServer.power_source_create()
+    TractionPowerServer.power_source_set_params(
+        power_source_rid,
+        power_source_data.name,
+        power_source_data.nominal_voltage,
+        power_source_data.voltage_frequency,
+        power_source_data.internal_resistance,
+        power_source_data.max_output_current,
+        power_source_data.fast_fuse_timeout,
+        power_source_data.fast_fuse_repetition,
+        power_source_data.slow_fuse_timeout,
+        power_source_data.recuperation,
+        false,
+        power_source_data.is_section,
+    )
+    return power_source_rid
+
+
+## Registers a traction wire's electrical data (as opposed to _build_traction()'s visual mesh)
+## against TractionPowerServer - a second, purely-electrical RID for the same wire span.
+static func _build_wire_power(traction_data:MaszynaTractionData) -> RID:
+    var wire_rid:RID = TractionPowerServer.wire_create()
+    TractionPowerServer.wire_set_params(
+        wire_rid,
+        traction_data.contact_p1,
+        traction_data.contact_p2,
+        traction_data.power_supply_name,
+        traction_data.nominal_voltage,
+        traction_data.max_current,
+        traction_data.resistivity,
+    )
+    # the span this one shares its running with, which a pantograph cannot reach along the chain
+    TractionPowerServer.wire_set_parallel(wire_rid, traction_data.parallel)
+    return wire_rid
+
+
+static func _get_traction_material(traction_data:MaszynaTractionData) -> Material:
+    var is_copper:bool = traction_data.material == 0 # TractionMaterial.COPPER
+    if traction_data.damage_flag & MaszynaTraction3D.DamageFlag.PATINA:
+        return (
+            MaszynaTraction3D.TRACTION_CU_PATINA_MATERIAL if is_copper
+            else MaszynaTraction3D.TRACTION_AL_PATINA_MATERIAL
+        )
+    return MaszynaTraction3D.TRACTION_CU_MATERIAL if is_copper else MaszynaTraction3D.TRACTION_AL_MATERIAL

@@ -4,7 +4,17 @@ extends Control
 class_name DebugKnob
 
 var _dirty = false
-var _controller:TrainController
+var _controller:VehicleController
+
+## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:VehicleController:
+    set(x):
+        if not vehicle == x:
+            vehicle = x
+            _controller = x
+            _dirty = true
+
 
 
 @export var label:String:
@@ -27,7 +37,7 @@ var _controller:TrainController
         _dirty = true
         step = x
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -53,12 +63,6 @@ func _process(delta):
         $SpinBox.step = step
 
         $Label.text = label
-        if not _controller and not controller.is_empty():
-            _controller = get_node(controller)
-            #$SpinBox.disabled = false
-        else:
-            pass
-            #$SpinBox.disabled = true
 
     if not Engine.is_editor_hint():
         _t += delta

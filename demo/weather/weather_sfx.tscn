@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://weather/weather_sfx.gd" id="1_sfx"]
+[ext_resource type="Script" path="res://addons/gnd_sfx/sfx_player.gd" id="2_player"]
+[ext_resource type="Resource" path="res://weather/sounds/weather_sfx_bank.tres" id="3_bank"]
+[ext_resource type="AudioStream" path="res://weather/sounds/334151__svampen__thunder-rolling-2.wav" id="4_thunder_light"]
+[ext_resource type="AudioStream" path="res://weather/sounds/399656__bajko__sfx_thunder-blast.wav" id="5_thunder_heavy"]
+
+[node name="WeatherSfx" type="Node"]
+script = ExtResource("1_sfx")
+
+[node name="RainSfxPlayer" type="Node" parent="."]
+script = ExtResource("2_player")
+bank = ExtResource("3_bank")
+bus = &"Rain"
+
+[node name="ThunderLight" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("4_thunder_light")
+volume_db = -3.4
+bus = &"Rain"
+
+[node name="ThunderHeavy" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("5_thunder_heavy")
+bus = &"Rain"

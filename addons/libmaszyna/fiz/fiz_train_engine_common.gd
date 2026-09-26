@@ -1,0 +1,209 @@
+@tool
+extends RefCounted
+class_name FizTrainEngineCommon
+
+## Field-application helpers shared by every concrete engine parser (Diesel/DieselElectric/
+## ElectricSeries/ElectricInduction) - NOT a section parser itself (no parse()/prefix), just
+## the common part of Engine:'s and Cntrl.'s field sets, factored out because every concrete
+## VehicleEngine subclass inherits these Godot properties. LoadFIZ_Engine common subset:
+## Mover.cpp:11119; Cntrl. engine subset: Mover.cpp:10707.
+
+
+## EngineType= decode (VehicleEngine.EngineType - the enum this class family owns).
+## LoadFIZ_EngineDecode: Mover.cpp:11689. Used by Engine: and by other sections that reference
+## an engine type (Light:/Clima: generator engine).
+static func parse_engine_type(value: String, default_value: int = VehicleEngine.NONE) -> int:
+    if not value:
+        return default_value
+    match value.to_lower():
+        "electricseriesmotor": return VehicleEngine.ELECTRIC_SERIES_MOTOR
+        "dieselengine": return VehicleEngine.DIESEL
+        "steamengine": return VehicleEngine.STEAM
+        "wheelsdriven": return VehicleEngine.WHEELS_DRIVEN
+        "dumb": return VehicleEngine.DUMB
+        "dieselelectric", "dumbde": return VehicleEngine.DIESEL_ELECTRIC
+        "electricinductionmotor": return VehicleEngine.ELECTRIC_INDUCTION_MOTOR
+        "main": return VehicleEngine.MAIN
+        _: return VehicleEngine.NONE
+
+
+## Engine: fields common to every EngineType (Trans=, TransEff, motor blowers, ...).
+static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: FizImportContext) -> void:
+    if kv.has("Trans"):
+        var parts: PackedStringArray = FizLineUtil.get_string(kv, "Trans").split(":")
+        if parts.size() == 2:
+            node.transmission_gear_teeth_motor = parts[0].to_int()
+            node.transmission_gear_teeth_wheel = parts[1].to_int()
+    if kv.has("TransEff"):
+        node.transmission_efficiency = FizLineUtil.get_float(kv, "TransEff")
+    if kv.has("Ftmax"):
+        node.maximum_traction_force = FizLineUtil.get_float(kv, "Ftmax")
+    if kv.has("MotorBlowersSpeed"):
+        node.motor_blowers_speed = FizLineUtil.get_float(kv, "MotorBlowersSpeed")
+    if kv.has("MotorBlowersSustainTime"):
+        node.motor_blowers_sustain_time = FizLineUtil.get_float(kv, "MotorBlowersSustainTime")
+    if kv.has("MotorBlowersStartVelocity"):
+        node.motor_blowers_start_velocity = FizLineUtil.get_float(kv, "MotorBlowersStartVelocity")
+    if kv.has("InvNo"):
+        node.inverters_count = FizLineUtil.get_int(kv, "InvNo")
+
+    # PressureSwitch's absent-key default (true, unless the vehicle is EZT) differs from the
+    # compiled default (false).
+    var pressure_switch_default: bool = context.train_type != VehicleController.TRAIN_TYPE_EZT
+    node.pressure_switch_present = FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default)
+
+
+## The controller-position-count subset of Cntrl. (stashed on context.cntrl_kv by
+## FizTrainCntrlParser, since Cntrl. conventionally precedes Engine: in real files).
+## The pantographs of an electric engine - LoadFIZ_Cntrl (Mover.cpp:10919-10946): the pantograph
+## compressor, its automatic valve, the master valve and each pantograph's own. The defaults are
+## the properties' own: the master valve automatic, each pantograph's valve manual. PantAutoValve
+## defaults to true for an EZT in the original (Mover.cpp:10925) - not ported with the train type.
+static func apply_cntrl_electric_subset(node: VehicleElectricEngine, cntrl_kv: Dictionary) -> void:
+    if cntrl_kv.has("PantCompressorStart"):
+        node.cntrl_pantograph_compressor_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), VehicleEngine.START_MODE_MANUAL)
+    if cntrl_kv.has("PantAutoValve"):
+        node.cntrl_pantograph_auto_valve = FizLineUtil.get_bool(cntrl_kv, "PantAutoValve")
+    if cntrl_kv.has("PantEPValveStart"):
+        node.cntrl_pantographs_valve_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), VehicleEngine.START_MODE_AUTOMATIC)
+    if cntrl_kv.has("PantEPValveSpring"):
+        node.cntrl_pantographs_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantEPValveSpring")
+    if cntrl_kv.has("PantValveStart"):
+        node.cntrl_pantograph_valve_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), VehicleEngine.START_MODE_MANUAL)
+    if cntrl_kv.has("PantValveSpring"):
+        node.cntrl_pantograph_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantValveSpring")
+    if cntrl_kv.has("PantValveSolenoid"):
+        node.cntrl_pantograph_valve_solenoid = FizLineUtil.get_bool(cntrl_kv, "PantValveSolenoid")
+
+
+static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary) -> void:
+    if not cntrl_kv:
+        return
+    if cntrl_kv.has("MCPN"):
+        node.cntrl_main_controller_position_count = FizLineUtil.get_int(cntrl_kv, "MCPN")
+    if cntrl_kv.has("SCPN"):
+        node.cntrl_shunt_controller_position_count = FizLineUtil.get_int(cntrl_kv, "SCPN")
+    if cntrl_kv.has("DirChangeMaxPos"):
+        node.cntrl_direction_change_max_position = FizLineUtil.get_int(cntrl_kv, "DirChangeMaxPos")
+    if cntrl_kv.has("CoupledCtrl"):
+        node.cntrl_coupled_controllers = FizLineUtil.get_bool(cntrl_kv, "CoupledCtrl")
+    if cntrl_kv.has("Camshaft"):
+        node.cntrl_has_camshaft = FizLineUtil.get_bool(cntrl_kv, "Camshaft")
+    if cntrl_kv.has("ScndS"):
+        node.cntrl_series_shunt_on_series_position = FizLineUtil.get_bool(cntrl_kv, "ScndS")
+    if cntrl_kv.has("IniCDelay"):
+        node.cntrl_initial_controller_delay = FizLineUtil.get_float(cntrl_kv, "IniCDelay")
+    if cntrl_kv.has("SCDelay"):
+        node.cntrl_controller_step_delay = FizLineUtil.get_float(cntrl_kv, "SCDelay")
+    # SCDDelay's absent-key default (== SCDelay) differs from the compiled default (0.0).
+    node.cntrl_controller_step_down_delay = FizLineUtil.get_float(
+            cntrl_kv, "SCDDelay", FizLineUtil.get_float(cntrl_kv, "SCDelay"))
+    if cntrl_kv.has("FSCircuit"):
+        node.cntrl_fast_series_circuit = FizLineUtil.get_bool(cntrl_kv, "FSCircuit")
+    if cntrl_kv.has("EIMCtrlAddZeros"):
+        node.cntrl_eim_control_additional_zeros = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlAddZeros")
+    if cntrl_kv.has("EIMCtrlEmergency"):
+        node.cntrl_eim_control_emergency = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlEmergency")
+    if cntrl_kv.has("EIMCtrlType"):
+        node.cntrl_eim_control_type = clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3)
+    if cntrl_kv.has("MotorBlowersStart"):
+        node.motor_blowers_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), VehicleEngine.START_MODE_MANUAL)
+    if node is VehicleDieselEngine and cntrl_kv.has("OilStart"):
+        (node as VehicleDieselEngine).oil_pump_start_mode = FizTrainControllerParser.parse_start_mode(
+                        FizLineUtil.get_string(cntrl_kv, "OilStart"), VehicleEngine.START_MODE_MANUAL)
+
+    match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
+        "optional": node.cntrl_auto_relay_mode = VehicleEngine.AUTO_RELAY_OPTIONAL
+        "yes": node.cntrl_auto_relay_mode = VehicleEngine.AUTO_RELAY_YES
+
+
+## Shared MotorParamTable0:/MotorParamTable: row parser. These are TWO DIFFERENT sections in the
+## original, dispatched to two DIFFERENT reader functions purely by whether the header has a
+## trailing "0" (Mover.cpp:9737 issection("MotorParamTable0:") -> startMPT0 -> readMPT0(),
+## Mover.cpp:9729 issection("MotorParamTable:") -> startMPT -> readMPT() -> EngineType switch) -
+## NOT the same row shape, despite the near-identical header text. Verified directly against both
+## real readers (not the wiki, which marks every column "?"):
+## - "MotorParamTable0:" (what ElectricSeriesMotor vehicles - e.g. 303e-ep.fiz - actually use) ->
+##   readMPT0 (Mover.cpp:8948), default (non-DieselEngine) case: idx, mfi, mIsat, mfi0, fi, Isat,
+##   fi0 - SIX mandatory fields, then an optional 7th auto-shunt flag (int==1). Previously
+##   misread as readMPTElectricSeries's shape (below), which silently dropped mfi0/fi0 entirely
+##   and read "fi" from the wrong column (0.11 instead of the real ~140) - fi is the back-EMF
+##   constant Current() (Mover.cpp:271) uses to taper current/torque as motor RPM rises, so
+##   reading it 1000x too small meant the motor never lost torque with speed: unbounded
+##   acceleration at any fixed controller notch, confirmed against a live run of the actual
+##   original executable (ammeter drops quickly and speed plateaus around 50 km/h on notch 6,
+##   which this wrapper's sim could not reproduce until this fix).
+## - "MotorParamTable:" (no "0" - what this wrapper's DieselElectric parser uses) -> readMPT() ->
+##   readMPTElectricSeries (Mover.cpp:9004) for ElectricSeriesMotor: idx, mfi, mIsat, fi, Isat,
+##   optional 5th auto-shunt flag - OR readMPTDieselElectric (Mover.cpp:9028) for DieselElectric:
+##   idx, mfi, mIsat, fi, Isat, then two REQUIRED trailing columns as MPTRelay[]'s
+##   shunting_up/shunting_down thresholds (p_is_diesel_electric selects this variant - this
+##   wrapper has no plain-ElectricSeriesMotor caller for "MotorParamTable:" today, only
+##   "MotorParamTable0:", so that reader's shape is documented here for completeness but unused).
+static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool = false) -> MotorParameter:
+    var tokens: Array = p.get_tokens(8)
+    var min_tokens: int = (7 if p_is_diesel_electric else 7)
+    if tokens.size() < min_tokens:
+        return null
+    var item := MotorParameter.new()
+    if p_is_diesel_electric:
+        item.voltage_constant_multiplier = float(tokens[1])   # mfi
+        item.saturation_current_multiplier = float(tokens[2]) # mIsat
+        item.voltage_constant = float(tokens[3])               # fi
+        item.saturation_current = float(tokens[4])             # Isat
+        item.shunting_up = float(tokens[5])
+        item.shunting_down = float(tokens[6])
+    else:
+        item.voltage_constant_multiplier = float(tokens[1])          # mfi
+        item.saturation_current_multiplier = float(tokens[2])        # mIsat
+        item.initial_voltage_constant_multiplier = float(tokens[3])  # mfi0
+        item.voltage_constant = float(tokens[4])                     # fi
+        item.saturation_current = float(tokens[5])                   # Isat
+        item.initial_voltage_constant = float(tokens[6])             # fi0
+        if tokens.size() >= 8:
+            item.auto_switch = (int(tokens[7]) == 1)
+    return item
+
+
+## Power:'s fields, common to the whole VehicleElectricEngine family (Series + Induction).
+## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
+## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.
+static func apply_power(node: VehicleElectricEngine, power_kv: Dictionary) -> void:
+    if not power_kv:
+        return
+    if power_kv.has("EnginePower"):
+        node.power_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(power_kv, "EnginePower"))
+    if power_kv.has("CollectorsNo"):
+        node.power_current_collector_number_of_collectors = FizLineUtil.get_int(power_kv, "CollectorsNo")
+    if power_kv.has("MinH"):
+        node.power_current_collector_min_collector_lifting = FizLineUtil.get_float(power_kv, "MinH")
+    if power_kv.has("MaxH"):
+        node.power_current_collector_max_collector_lifting = FizLineUtil.get_float(power_kv, "MaxH")
+    if power_kv.has("CSW"):
+        node.power_current_collector_sliding_width = FizLineUtil.get_float(power_kv, "CSW")
+    if power_kv.has("PhysicalLayout"):
+        node.power_current_collector_physical_layout = FizLineUtil.get_int(power_kv, "PhysicalLayout", 3)
+    if power_kv.has("OverVoltProt"):
+        node.power_current_collector_overvoltage_relay = FizLineUtil.get_bool(power_kv, "OverVoltProt")
+    if power_kv.has("TransducerInputV"):
+        node.power_transducer_input_voltage = FizLineUtil.get_float(power_kv, "TransducerInputV")
+    if power_kv.has("PowerTrans"):
+        node.power_cable_source = FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(power_kv, "PowerTrans"))
+    if power_kv.has("SteamPress"):
+        node.power_cable_steam_pressure = FizLineUtil.get_float(power_kv, "SteamPress")
+
+    var max_voltage: float = FizLineUtil.get_float(power_kv, "MaxVoltage")
+    if power_kv.has("MaxVoltage"):
+        node.power_current_collector_max_voltage = max_voltage
+    if power_kv.has("MaxCurrent"):
+        node.power_current_collector_max_current = FizLineUtil.get_float(power_kv, "MaxCurrent")
+    # MinV/InsetV's absent-key defaults (fractions of MaxVoltage) differ from the compiled
+    # defaults (0.0) whenever MaxVoltage is set.
+    node.power_current_collector_min_main_switch_voltage = FizLineUtil.get_float(power_kv, "MinV", 0.5 * max_voltage)
+    node.power_current_collector_required_main_switch_voltage = FizLineUtil.get_float(power_kv, "InsetV", 0.6 * max_voltage)
+    node.power_current_collector_min_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MinPress", 3.5)
+    node.power_current_collector_max_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MaxPress", 5.0)

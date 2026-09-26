@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MoverVehicleElectricInductionEngine" inherits="VehicleElectricInductionEngine" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="fuse_reset">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_circuit_imax" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_dynamic_brake_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuse_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_connectors_open" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_current" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_motor_connectors_open">
+			<return type="void" />
+			<param index="0" name="open" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

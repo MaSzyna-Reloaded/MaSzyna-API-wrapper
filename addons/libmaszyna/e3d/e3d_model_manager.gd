@@ -3,6 +3,13 @@ extends Node
 
 var _cache = ResourceCache.create("e3d")
 
+
+## E3DRenderingServer loads the models of registered scenery placements through this, on its
+## streaming worker thread
+func _ready() -> void:
+    E3DRenderingServer.set_model_loader(load_model)
+
+
 func clear_cache():
     _cache.clear()
 

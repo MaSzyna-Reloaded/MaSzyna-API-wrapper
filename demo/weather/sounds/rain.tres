@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="SfxEvent" format=3 uid="uid://d35qhcy1exdge"]
+
+[ext_resource type="Script" uid="uid://bf434i6ru4ch" path="res://addons/gnd_sfx/sfx_automation.gd" id="1_8wa07"]
+[ext_resource type="Script" uid="uid://bgxtc44e5rb0l" path="res://addons/gnd_sfx/sfx_event.gd" id="2_5nb3e"]
+[ext_resource type="Script" uid="uid://boicinkvs7i0h" path="res://addons/gnd_sfx/sfx_clip.gd" id="3_flvm4"]
+[ext_resource type="AudioStream" uid="uid://bpnabk1wxklmv" path="res://weather/sounds/116323__dymewiz__rain-05.wav" id="3_uqwmn"]
+[ext_resource type="AudioStream" uid="uid://djaf6mlm623pp" path="res://weather/sounds/136971__dwoboyle__ambiance-heavy-rain-loop.wav" id="4_ttecn"]
+[ext_resource type="Script" uid="uid://dcy83smx1expw" path="res://addons/gnd_sfx/sfx_track.gd" id="5_tf10u"]
+[ext_resource type="Script" uid="uid://dd8my4sifw81e" path="res://addons/gnd_sfx/sfx_parameter_modulation.gd" id="6_5bt0p"]
+
+[sub_resource type="Curve" id="Curve_3oiar"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.49214658, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Resource" id="Resource_f3bo4"]
+script = ExtResource("3_flvm4")
+stream = ExtResource("3_uqwmn")
+fade_in_curve = SubResource("Curve_3oiar")
+
+[sub_resource type="Curve" id="Curve_uqwmn"]
+_data = [Vector2(0.43193713, 0), 0.0, 0.0, 0, 0, Vector2(0.95287955, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Resource" id="Resource_8pkln"]
+script = ExtResource("3_flvm4")
+stream = ExtResource("4_ttecn")
+fade_in_curve = SubResource("Curve_uqwmn")
+
+[sub_resource type="Resource" id="Resource_8wa07"]
+script = ExtResource("1_8wa07")
+parameter_name = &"strength"
+clips = Array[ExtResource("3_flvm4")]([SubResource("Resource_f3bo4"), SubResource("Resource_8pkln")])
+
+[sub_resource type="Resource" id="Resource_8dpxw"]
+script = ExtResource("5_tf10u")
+track_name = &"Master"
+
+[resource]
+script = ExtResource("2_5nb3e")
+master_track = SubResource("Resource_8dpxw")
+name = &"rain"
+automations = Array[ExtResource("1_8wa07")]([SubResource("Resource_8wa07")])

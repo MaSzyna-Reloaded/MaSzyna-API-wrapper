@@ -1,0 +1,124 @@
+extends MaszynaGutTest
+
+const FIXTURE_PATH := "res://tests/fixtures/test_vehicle.fiz"
+
+var vehicle: VehiclePhysicsNode
+var controller: VehicleController
+
+
+## A .fiz is a VehicleModel now; a VehiclePhysicsNode is what builds a vehicle from one, and the
+## controller it owns is not a node - it lives and dies with the vehicle.
+func before_each():
+    vehicle = VehiclePhysicsNode.new()
+    add_child(vehicle)
+    vehicle.set_model(FizVehicleBuilder.build_model_at(FIXTURE_PATH))
+    controller = vehicle.get_controller()
+    await wait_idle_frames(2)
+
+
+func after_each():
+    controller = null
+    remove_child(vehicle)
+    vehicle.free()
+
+
+func test_param_and_dimensions():
+    assert_eq(controller.mass, 74000.0)
+    assert_eq(controller.reduced_mass, 2000.0)
+    assert_eq(controller.max_velocity, 90.0)
+    assert_eq(controller.power, 590.0)
+    assert_eq(controller.category, VehicleController.CATEGORY_TRAIN)
+    assert_eq(controller.train_type, VehicleController.TRAIN_TYPE_DEFAULT)
+    assert_eq(controller.dimensions_length, 16.6)
+    assert_eq(controller.dimensions_height, 4.28)
+    assert_eq(controller.dimensions_width, 3.07)
+    assert_eq(controller.dimensions_drag_coefficient, 0.5)
+
+
+func test_cntrl_general_subset():
+    assert_true(controller.cntrl_automatic_cab_activation)
+    assert_eq(controller.cntrl_battery_start_mode, VehicleController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_ground_relay_start_mode, VehicleController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_converter_start_mode, VehicleController.START_MODE_AUTOMATIC)
+    assert_eq(controller.cntrl_converter_start_delay, 10.0)
+
+
+func test_wheels():
+    var wheels: VehicleWheels = controller.get_component(VehicleComponentType.COMPONENT_WHEELS)
+    assert_not_null(wheels)
+    assert_eq(wheels.powered_wheel_diameter, 1.1)
+    assert_eq(wheels.front_rolling_wheel_diameter, 1.1) # defaults to powered diameter
+    assert_eq(wheels.track_width, 1.435)
+    assert_eq(wheels.axle_arrangement, "Bo'Bo'")
+    assert_eq(wheels.bogie_axle_spacing, 2.6)
+    assert_eq(wheels.bogie_pivot_spacing, 7.524)
+
+
+func test_brake_and_bpt_table():
+    var brake: VehicleBrake = controller.get_component(VehicleComponentType.COMPONENT_BRAKES)
+    assert_not_null(brake)
+    assert_eq(brake.brake_force_max, 250.0)
+    assert_eq(brake.max_cylinder_pressure, 3.8)
+    assert_eq(brake.cylinder_count, 4)
+    assert_eq(brake.rig_effectiveness, 0.85)
+    assert_eq(brake.valve_type, VehicleBrake.BRAKE_VALVE_W_LU_L)
+    assert_eq(brake.cntrl_brake_system, VehicleBrake.BRAKE_SYSTEM_PNEUMATIC)
+    assert_eq(brake.cntrl_brake_ctrl_position_count, 6)
+    assert_eq(brake.cntrl_brake_delay_1, 15.0)
+    assert_eq(brake.cntrl_brake_handle_type, VehicleBrake.BRAKE_HANDLE_TYPE_FV4A)
+    assert_true(brake.cntrl_manual_brake_present)
+
+    var bpt: Array = brake.brake_pressure_table
+    assert_eq(bpt.size(), 3)
+    var row0: BrakePressureTableItem = bpt[0]
+    assert_eq(row0.handle_position, -1)
+    assert_eq(row0.pipe_pressure, 0.0)
+    assert_eq(row0.brake_cylinder_pressure, -1.0)
+    var row2: BrakePressureTableItem = bpt[2]
+    assert_eq(row2.handle_position, 3)
+    assert_eq(row2.pipe_pressure, 3.5)
+
+
+func test_doors():
+    var doors: VehicleDoors = controller.get_component(VehicleComponentType.COMPONENT_DOORS)
+    assert_not_null(doors)
+    assert_eq(doors.open_time, 3.0)
+    assert_eq(doors.max_shift, 3.0) # DoorMaxShiftR
+    assert_eq(doors.type, VehicleDoors.TYPE_ROTATE)
+    assert_eq(doors.voltage, VehicleDoors.VOLTAGE_24)
+
+
+func test_buff_coupl():
+    var coupler: VehicleBuffCoupl = controller.get_component(VehicleComponentType.COMPONENT_BUFFERS)
+    assert_not_null(coupler)
+    assert_eq(coupler.coupler_type, VehicleBuffCoupl.COUPLER_TYPE_SCREW)
+    assert_eq(coupler.coupler_stiffness_k, 2.5) # kC in kN/m, converted to N/m by VehicleBuffCoupl
+    assert_eq(coupler.coupler_max_tension_tolerance, 1000.0) # FmaxC in kN
+    assert_eq(coupler.buffer_location, VehicleBuffCoupl.BUFFER_LOCATION_BOTH)
+    assert_eq(coupler.allowed_flag, 63)
+
+
+
+## WiperList: as e186_v2 writes it - bounded by Size= and closed by "endL" instead of "endwl"
+func test_wiper_list_reaches_the_vehicle():
+    assert_eq(controller.config.get("wipers_switch_position_max", -1), 3)
+    controller.send_command("wipers_switch_increase")
+    assert_eq(controller.state.get("wipers_switch_position", -1), 1)
+
+
+# LoadFIZ_LightsList / readLightsList (Mover.cpp:11531, 8558): each row is the light bits of cabin
+# A's end and cabin B's (enum light, MOVER.h:189)
+func test_lights_list():
+    var lighting: VehicleLighting = controller.get_component(VehicleComponentType.COMPONENT_LIGHTING)
+    assert_true(lighting.lights_wrap_selector)
+    assert_eq(lighting.lights_default_selector_position, 2)
+    assert_eq(lighting.lights_list.size(), 2)
+    var first: LightListItem = lighting.lights_list[0]
+    assert_true(first.cabin_a_head_light, "4 - the upper headlight")
+    assert_true(first.cabin_b_left_red_signal, "34 - both red markers")
+    assert_true(first.cabin_b_right_red_signal)
+    assert_false(first.cabin_b_end_signals)
+    var second: LightListItem = lighting.lights_list[1]
+    assert_true(second.cabin_a_left_white_signal, "17 - both lower headlights")
+    assert_true(second.cabin_a_right_white_signal)
+    assert_true(second.cabin_b_end_signals, "64 - the end-of-train plates")

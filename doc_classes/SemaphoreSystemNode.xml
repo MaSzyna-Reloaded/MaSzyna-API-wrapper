@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="SemaphoreSystemNode" inherits="Node" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A node proxy of a semaphore system: creates it with a delegate and groups semaphores by name.
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_system" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="send_event">
+			<return type="void" />
+			<param index="0" name="event" type="StringName" />
+			<param index="1" name="arguments" type="Dictionary" default="{}" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="delegate" type="SemaphoreSystemDelegate" setter="set_delegate" getter="get_delegate">
+		</member>
+		<member name="semaphore_names" type="PackedStringArray" setter="set_semaphore_names" getter="get_semaphore_names" default="PackedStringArray()">
+		</member>
+	</members>
+	<signals>
+		<signal name="event_published">
+			<param index="0" name="event" type="StringName" />
+			<param index="1" name="arguments" type="Dictionary" />
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

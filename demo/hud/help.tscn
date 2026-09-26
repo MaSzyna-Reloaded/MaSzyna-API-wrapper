@@ -1,0 +1,92 @@
+[gd_scene format=3 uid="uid://pgf35en812s1"]
+
+[ext_resource type="Script" uid="uid://mjhl7bk5hnnf" path="res://hud/help.gd" id="1_help"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_group_panel"]
+content_margin_left = 8.0
+content_margin_top = 6.0
+content_margin_right = 8.0
+content_margin_bottom = 6.0
+bg_color = Color(0.38, 0.48, 0.388, 1)
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_group_title_collapsed_hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.345, 0.51, 0.45, 0.93)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_group_title_collapsed"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.3036, 0.46044487, 0.4033, 0.8901961)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_group_title_hover"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.345, 0.51, 0.45, 0.93)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_group_title"]
+content_margin_left = 8.0
+content_margin_top = 4.0
+content_margin_right = 8.0
+content_margin_bottom = 4.0
+bg_color = Color(0.3036, 0.46044487, 0.4033, 0.8901961)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_key_cap"]
+content_margin_left = 8.0
+content_margin_top = 1.0
+content_margin_right = 8.0
+content_margin_bottom = 2.0
+bg_color = Color(0.08, 0.1, 0.11, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.14713949, 0.46044487, 0.34612492, 0.8901961)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="Theme" id="Theme_help"]
+FoldableContainer/styles/panel = SubResource("StyleBoxFlat_group_panel")
+FoldableContainer/styles/title_collapsed_hover_panel = SubResource("StyleBoxFlat_group_title_collapsed_hover")
+FoldableContainer/styles/title_collapsed_panel = SubResource("StyleBoxFlat_group_title_collapsed")
+FoldableContainer/styles/title_hover_panel = SubResource("StyleBoxFlat_group_title_hover")
+FoldableContainer/styles/title_panel = SubResource("StyleBoxFlat_group_title")
+KeyCap/base_type = &"PanelContainer"
+KeyCap/styles/panel = SubResource("StyleBoxFlat_key_cap")
+KeyCapLabel/base_type = &"Label"
+KeyCapLabel/colors/font_color = Color(0.93, 0.94, 0.9, 1)
+KeyCapLabel/font_sizes/font_size = 13
+
+[node name="Help" type="ScrollContainer" unique_id=1652083604]
+custom_minimum_size = Vector2(200, 200)
+theme = SubResource("Theme_help")
+horizontal_scroll_mode = 0
+script = ExtResource("1_help")
+
+[node name="Bindings" type="VBoxContainer" parent="." unique_id=900032842]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4

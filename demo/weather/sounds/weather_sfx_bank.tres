@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="SfxBank" format=3]
+
+[ext_resource type="Script" path="res://addons/gnd_sfx/sfx_event.gd" id="1_event"]
+[ext_resource type="Resource" path="res://weather/sounds/rain.tres" id="2_rain"]
+[ext_resource type="Script" path="res://addons/gnd_sfx/sfx_bank.gd" id="3_bank"]
+
+[resource]
+script = ExtResource("3_bank")
+events = Array[ExtResource("1_event")]([ExtResource("2_rain")])

@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RailVehicleServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="broadcast_command">
+			<return type="void" />
+			<param index="0" name="command" type="StringName" />
+			<param index="1" name="p1" type="Variant" default="null" />
+			<param index="2" name="p2" type="Variant" default="null" />
+			<description>
+				Sends [param command] to every vehicle that has it. Reports an error when no vehicle does.
+			</description>
+		</method>
+		<method name="generic_vehicle_component_find" qualifiers="const">
+			<return type="VehicleComponent[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="tag" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_vehicles" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Returns the handles of every vehicle the server holds.
+			</description>
+		</method>
+		<method name="get_vehicles_in_rect" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="rect" type="Rect2" />
+			<description>
+				Returns the handles of the vehicles whose position (x, z) lies in [param rect].
+			</description>
+		</method>
+		<method name="is_stepping_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="set_stepping_enabled">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="step">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="step_frame">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_attach_controller">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="controller_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_attach_rail_vehicle">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="rail_vehicle_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_component_get" qualifiers="const">
+			<return type="VehicleComponent" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="type" type="int" enum="VehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_create">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_dump_config" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_dump_state">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_exists" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_free">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_commands" qualifiers="const">
+			<return type="PackedStringArray" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				Returns the commands [param vehicle] answers to.
+			</description>
+		</method>
+		<method name="vehicle_get_coupled" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<param index="2" name="element" type="int" enum="VehicleController.CouplingElement" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_curve">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="bogie_pivot_spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_rid_by_name" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_speed" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_track_position" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform_at_distance">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_velocity" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_move">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_process_movement">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_radio_stop">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_send_command">
+			<return type="Variant" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="command" type="StringName" />
+			<param index="2" name="p1" type="Variant" default="null" />
+			<param index="3" name="p2" type="Variant" default="null" />
+			<description>
+				Sends [param command] to [param vehicle] by its handle and returns what its handler answered (whether the command was accepted), or [code]null[/code] when the vehicle has no such command. A vehicle is reached by its handle whatever its scenery name - use [method vehicle_get_rid_by_name] to find one by name.
+			</description>
+		</method>
+		<method name="vehicle_set_name">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_track">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<param index="2" name="track_offset" type="float" />
+			<param index="3" name="track_direction" type="int" enum="TrackManager.Direction" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="vehicle_command_received">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="command" type="String" />
+			<param index="2" name="p1" type="Variant" />
+			<param index="3" name="p2" type="Variant" />
+			<description>
+				A command ran against [param vehicle].
+			</description>
+		</signal>
+		<signal name="vehicle_freed">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				[param vehicle] was freed; its handle is not reused.
+			</description>
+		</signal>
+		<signal name="vehicle_moved">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="position" type="Vector3" />
+			<description>
+				[param vehicle] moved to [param position].
+			</description>
+		</signal>
+		<signal name="vehicle_occupied_cab_changed">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="cab" type="int" />
+			<description>
+				The occupied cab of [param vehicle] changed to [param cab]: 1, 0 (machine room) or -1.
+			</description>
+		</signal>
+	</signals>
+</class>

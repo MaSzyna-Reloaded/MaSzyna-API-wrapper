@@ -1,0 +1,335 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_engine.tscn" id="4_engine"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_spring_brake.tscn" id="10_spring"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_lights.tscn" id="13_lights"]
+[ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
+[ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
+[ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
+[ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
+[ext_resource type="PackedScene" uid="uid://pgf35en812s1" path="res://hud/help.tscn" id="12_help"]
+[ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_controller.tscn" id="20_5crau"]
+[ext_resource type="PackedScene" uid="uid://cs3n2ry5tr34m" path="res://hud/scenery_streaming_panel.tscn" id="21_streaming"]
+[ext_resource type="PackedScene" path="res://hud/scenario_events_panel.tscn" id="23_scenario_events"]
+[ext_resource type="PackedScene" uid="uid://ctrktrct1on01" path="res://hud/track_traction_panel.tscn" id="22_tracktrac"]
+[ext_resource type="Script" path="res://hud/game_hud.gd" id="game_hud"]
+[ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/cabin/cabin_control_tooltip.tscn" id="23_cabin_tooltip"]
+
+[sub_resource type="Theme" id="Theme_control_windows"]
+default_font_size = 12
+
+[node name="GameHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("game_hud")
+
+[node name="TopBar" type="Container" parent="." unique_id=702463713]
+self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
+top_level = true
+clip_contents = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+script = ExtResource("8_top_bar")
+drag_enabled = false
+resize_enabled = false
+window_decorations = false
+allow_close = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar" unique_id=1628639189]
+clip_contents = true
+layout_mode = 2
+
+[node name="MenuBar" type="MenuBar" parent="TopBar/HBoxContainer" unique_id=524829392]
+clip_contents = true
+layout_mode = 2
+focus_mode = 0
+prefer_global_menu = false
+
+[node name="PopupMenu" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
+title = "Controls"
+
+[node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer" unique_id=1886226088]
+clip_contents = true
+layout_mode = 2
+focus_mode = 0
+toggle_mode = true
+text = "Toggle controls"
+
+[node name="MenuActions" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="ControlWindows" type="Control" parent="." unique_id=1707221364]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+theme = SubResource("Theme_control_windows")
+
+[node name="General" type="Container" parent="ControlWindows" unique_id=381149408]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 662.0
+offset_right = 236.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "General"
+
+[node name="GeneralScroll" type="ScrollContainer" parent="ControlWindows/General"]
+layout_mode = 2
+
+[node name="General" parent="ControlWindows/General/GeneralScroll" unique_id=897642042 instance=ExtResource("3_l04v0")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Engine" type="Container" parent="ControlWindows" unique_id=834001622]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 244.0
+offset_top = 594.0
+offset_right = 474.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Engine"
+
+[node name="EngineScroll" type="ScrollContainer" parent="ControlWindows/Engine"]
+layout_mode = 2
+
+[node name="Engine" parent="ControlWindows/Engine/EngineScroll" unique_id=442757379 instance=ExtResource("4_engine")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Brakes" type="Container" parent="ControlWindows" unique_id=701487849]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 482.0
+offset_top = 710.0
+offset_right = 670.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Brakes"
+
+[node name="BrakesScroll" type="ScrollContainer" parent="ControlWindows/Brakes"]
+layout_mode = 2
+
+[node name="Brakes" parent="ControlWindows/Brakes/BrakesScroll" unique_id=13421247 instance=ExtResource("6_lsqkb")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpringBrake" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 678.0
+offset_top = 710.0
+offset_right = 870.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Spring brake"
+
+[node name="SpringBrakeScroll" type="ScrollContainer" parent="ControlWindows/SpringBrake"]
+layout_mode = 2
+
+[node name="SpringBrake" parent="ControlWindows/SpringBrake/SpringBrakeScroll" instance=ExtResource("10_spring")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Lights" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1078.0
+offset_top = 738.0
+offset_right = 1418.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Lights"
+
+[node name="LightsScroll" type="ScrollContainer" parent="ControlWindows/Lights"]
+layout_mode = 2
+
+[node name="Lights" parent="ControlWindows/Lights/LightsScroll" instance=ExtResource("13_lights")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Doors" type="Container" parent="ControlWindows" unique_id=2062841507]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 878.0
+offset_top = 710.0
+offset_right = 1070.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Doors"
+
+[node name="DoorsScroll" type="ScrollContainer" parent="ControlWindows/Doors"]
+layout_mode = 2
+
+[node name="Doors" parent="ControlWindows/Doors/DoorsScroll" unique_id=1694193 instance=ExtResource("7_t705k")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Security" type="Container" parent="ControlWindows" unique_id=483370992]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 482.0
+offset_top = 594.0
+offset_right = 670.0
+offset_bottom = 702.0
+script = ExtResource("9_window")
+title = "Security"
+
+[node name="SecurityScroll" type="ScrollContainer" parent="ControlWindows/Security"]
+layout_mode = 2
+
+[node name="Security" parent="ControlWindows/Security/SecurityScroll" unique_id=2147294606 instance=ExtResource("8_h5mje")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Controller" type="Container" parent="ControlWindows" unique_id=402961173]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 505.0
+offset_right = 236.0
+offset_bottom = 654.0
+script = ExtResource("9_window")
+title = "Controller"
+
+[node name="ControllerScroll" type="ScrollContainer" parent="ControlWindows/Controller"]
+layout_mode = 2
+
+[node name="Controller" parent="ControlWindows/Controller/ControllerScroll" unique_id=1886735510 instance=ExtResource("20_5crau")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MiniMap" type="Container" parent="ControlWindows" unique_id=536285318]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1516.0
+offset_top = 738.0
+offset_right = 1912.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Mini Map"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="MiniMapControl" parent="ControlWindows/MiniMap" unique_id=234941782 instance=ExtResource("11_minimap")]
+layout_mode = 2
+
+[node name="SceneryStreaming" type="Container" parent="ControlWindows" unique_id=609847832]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1252.0
+offset_top = 40.0
+offset_right = 1604.0
+offset_bottom = 441.0
+script = ExtResource("9_window")
+title = "Scenery Streaming"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming" unique_id=1011989969 instance=ExtResource("21_streaming")]
+clip_contents = true
+layout_mode = 2
+
+[node name="TrackAndTraction" type="Container" parent="ControlWindows" unique_id=609847833]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1252.0
+offset_top = 449.0
+offset_right = 1604.0
+offset_bottom = 730.0
+script = ExtResource("9_window")
+title = "Track & Traction"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="TrackTractionPanel" parent="ControlWindows/TrackAndTraction" unique_id=1011989970 instance=ExtResource("22_tracktrac")]
+clip_contents = true
+layout_mode = 2
+
+[node name="ScenarioAndEvents" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1252.0
+offset_top = 738.0
+offset_right = 1604.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Scenario and Events"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="ScenarioEventsPanel" parent="ControlWindows/ScenarioAndEvents" instance=ExtResource("23_scenario_events")]
+clip_contents = true
+layout_mode = 2
+
+[node name="WeatherAndTime" type="Container" parent="ControlWindows" unique_id=1426730518]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 40.0
+offset_right = 1244.0
+offset_bottom = 310.0
+script = ExtResource("9_window")
+title = "Weather and Time"
+
+[node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Help" type="Container" parent="ControlWindows" unique_id=1837402256]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1612.0
+offset_top = 40.0
+offset_right = 1912.0
+offset_bottom = 730.0
+script = ExtResource("9_window")
+title = "Help"
+
+[node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]
+layout_mode = 2
+
+[node name="CabinControlTooltip" parent="." instance=ExtResource("23_cabin_tooltip")]
+layout_mode = 0
+
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
+[connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]

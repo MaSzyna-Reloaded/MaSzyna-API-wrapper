@@ -109,9 +109,12 @@ namespace godot {
             Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel) const;
             void _register_lights(
                     const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
-                    const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices) const;
+                    const std::vector<int> &p_parent_indices) const;
+            void _register_smoke_sources(
+                    const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
+                    const std::vector<int> &p_parent_indices) const;
             NodePath _build_submodel_path(
-                    const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices,
+                    const std::vector<Ref<E3DSubModel>> &p_submodels, const std::vector<int> &p_parent_indices,
                     int p_index) const;
     };
 } // namespace godot

@@ -4,7 +4,17 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _controller:TrainController
+var _controller:VehicleController
+
+## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:VehicleController:
+    set(x):
+        if not vehicle == x:
+            vehicle = x
+            _controller = x
+            _dirty = true
+
 
 
 @export var label:String:
@@ -16,7 +26,7 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 
 @export var type:SwitchType = SwitchType.TOGGLE
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -28,6 +38,9 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
         state_property = x
 
 @export var command:String
+## Sent before the switch's own state, for a command that also names what it switches
+## (pantograph(selector, enabled)); null sends the state alone
+@export var command_argument:Variant = null
 
 func _ready():
     _dirty = true
@@ -45,8 +58,7 @@ func _process(delta):
 
 
         $Label.text = label
-        if not _controller and not controller.is_empty():
-            _controller = get_node(controller)
+        if _controller:
             $Switch.disabled = false
         else:
             $Switch.disabled = true
@@ -69,12 +81,19 @@ func _process(delta):
 
 func _on_switch_toggled(toggled_on):
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _controller and command:
-        _controller.send_command(command, toggled_on)
+        _send(toggled_on)
 
 func _on_switch_pressed():
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _controller and command:
-        _controller.send_command(command, $Switch.button_pressed)
+        _send($Switch.button_pressed)
 
 func _on_switch_button_up():
     if not type == SwitchType.MONOSTABLE:
-        _controller.send_command(command, $Switch.button_pressed)
+        _send($Switch.button_pressed)
+
+
+func _send(enabled:bool) -> void:
+    if command_argument == null:
+        _controller.send_command(command, enabled)
+        return
+    _controller.send_command(command, command_argument, enabled)

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="VehicleComponentType" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<constants>
+		<constant name="COMPONENT_NONE" value="0" enum="Type">
+		</constant>
+		<constant name="COMPONENT_BRAKES" value="1" enum="Type">
+		</constant>
+		<constant name="COMPONENT_SPRING_BRAKE" value="2" enum="Type">
+		</constant>
+		<constant name="COMPONENT_EP_ED_BRAKE" value="3" enum="Type">
+		</constant>
+		<constant name="COMPONENT_BUFFERS" value="4" enum="Type">
+		</constant>
+		<constant name="COMPONENT_DOORS" value="5" enum="Type">
+		</constant>
+		<constant name="COMPONENT_ENGINE" value="6" enum="Type">
+		</constant>
+		<constant name="COMPONENT_HEATING" value="7" enum="Type">
+		</constant>
+		<constant name="COMPONENT_LIGHTING" value="8" enum="Type">
+		</constant>
+		<constant name="COMPONENT_LOAD" value="9" enum="Type">
+		</constant>
+		<constant name="COMPONENT_SPEED_CONTROL" value="10" enum="Type">
+		</constant>
+		<constant name="COMPONENT_SWITCHES" value="11" enum="Type">
+		</constant>
+		<constant name="COMPONENT_AI_HINTS" value="12" enum="Type">
+		</constant>
+		<constant name="COMPONENT_HORNS" value="13" enum="Type">
+		</constant>
+		<constant name="COMPONENT_SECURITY" value="14" enum="Type">
+		</constant>
+		<constant name="COMPONENT_WHEELS" value="15" enum="Type">
+		</constant>
+		<constant name="COMPONENT_WIPERS" value="16" enum="Type">
+		</constant>
+		<constant name="COMPONENT_UNIVERSAL_CONTROLLER" value="17" enum="Type">
+		</constant>
+		<constant name="COMPONENT_GENERIC" value="18" enum="Type">
+		</constant>
+		<constant name="COMPONENT_RADIO" value="19" enum="Type">
+		</constant>
+	</constants>
+</class>

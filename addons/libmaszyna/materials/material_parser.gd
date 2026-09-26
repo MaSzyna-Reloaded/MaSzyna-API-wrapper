@@ -116,17 +116,20 @@ func _update_variant(variant: MaszynaMaterial.MaszynaMaterialVariant, key: Strin
         else:
             variant.set_texture_path(texture_name, cleaned_value)
     elif key == "shader":
-        variant.shader = str(value)
+        # the original resolves "mat_<name>.frag" on a case insensitive file system
+        # (opengl33renderer.cpp:2018) and the data relies on it ("shader: Default_1")
+        variant.shader = str(value).to_lower()
     elif key.begins_with("param_"):
         var parameter_name := key.substr(6)
         if typeof(value) == TYPE_ARRAY:
             var values: Array = value
             if values.size() == 4:
                 variant.set_parameter_vec4(parameter_name, _parse_vector4(values))
-            elif values.size() == 1:
-                variant.set_parameter(parameter_name, float(values[0]))
             else:
-                push_warning("Unsupported material parameter array for %s" % key)
+                # Quirk: besides a 4 component value, an array here is the same key repeated in one
+                # block (real data, e.g. pods_grass.mat) - the original keeps the first definition,
+                # a later one with the same priority is ignored (material.cpp:351-357).
+                variant.set_parameter(parameter_name, float(values[0]))
         else:
             variant.set_parameter(parameter_name, float(value))
 
@@ -152,7 +155,8 @@ func _parse_vector4(value: Array) -> Vector4:
     return Vector4.ZERO
 
 func _clean_texture_path(path:String) -> String:
-    return path.split(":")[0]
+    # utilities.cpp:537 (deserialize_random_set) - the original swaps "\\" for "/" in texture paths.
+    return path.split(":")[0].replace("\\", "/")
 
 func _texture_requires_transparency(path:String) -> bool:
     var _parts:PackedStringArray = path.split(":")

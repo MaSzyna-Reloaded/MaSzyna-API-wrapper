@@ -2,6 +2,45 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_EXTENSIONS ON)
 SET(CMAKE_COLOR_DIAGNOSTICS ON)
+# scripts/style-check only parses the sources, never links or runs them, so it binds against the
+# single-precision API godot-cpp ships and needs no Godot at all
+OPTION(LIBMASZYNA_STYLE_CHECK "Configure for scripts/style-check, against godot-cpp's own API" OFF)
+IF (LIBMASZYNA_STYLE_CHECK)
+    SET(LIBMASZYNA_PRECISION "single")
+    SET(LIBMASZYNA_API_FILE "${CMAKE_SOURCE_DIR}/godot-cpp/gdextension/extension_api.json")
+ELSE ()
+    SET(LIBMASZYNA_PRECISION "double")
+    SET(LIBMASZYNA_API_FILE "${CMAKE_SOURCE_DIR}/extension_api.json")
+ENDIF ()
+set(GODOTCPP_PRECISION "${LIBMASZYNA_PRECISION}" CACHE STRING "" FORCE)
+set(GODOTCPP_CUSTOM_API_FILE "${LIBMASZYNA_API_FILE}" CACHE FILEPATH "" FORCE)
+# godot-cpp ships the single-precision API only, so the double one is dumped once from a
+# double-precision Godot and not versioned; delete the file to dump it again
+IF (NOT EXISTS "${GODOTCPP_CUSTOM_API_FILE}")
+    FIND_PROGRAM(
+        GODOT_EXECUTABLE NAMES godot-double godot REQUIRED
+        DOC "A double-precision Godot, used to dump extension_api.json"
+    )
+    MESSAGE(STATUS "Dumping extension_api.json with ${GODOT_EXECUTABLE}")
+    # --dump-extension-api writes the file into the working directory
+    EXECUTE_PROCESS(
+        COMMAND "${GODOT_EXECUTABLE}" --headless --dump-extension-api
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        RESULT_VARIABLE GODOT_DUMP_RESULT
+        OUTPUT_QUIET
+    )
+    IF (EXISTS "${GODOTCPP_CUSTOM_API_FILE}")
+        # "precision" sits in the "header" object at the top of the dump
+        FILE(READ "${GODOTCPP_CUSTOM_API_FILE}" GODOT_API_HEADER LIMIT 1024)
+        STRING(FIND "${GODOT_API_HEADER}" "\"precision\": \"double\"" GODOT_API_DOUBLE)
+    ENDIF ()
+    IF (NOT GODOT_DUMP_RESULT EQUAL 0 OR NOT GODOT_API_DOUBLE GREATER -1)
+        FILE(REMOVE "${GODOTCPP_CUSTOM_API_FILE}")
+        MESSAGE(FATAL_ERROR
+            "${GODOT_EXECUTABLE} did not dump a double-precision extension API; "
+            "pass -DGODOT_EXECUTABLE=<path to a double-precision Godot>")
+    ENDIF ()
+ENDIF ()
 OPTION(LIBMASZYNA_DEBUG "If the build should contain custom library logger" OFF)
 # Do not hard‑force a generator; allow users to select one suitable for cross‑compiling.
 # Silence unused variable warning when specified from toolchain
@@ -107,6 +146,14 @@ IF (CMAKE_SYSTEM_NAME STREQUAL "Android")
     ENDIF()
 ENDIF ()
 
+IF (NOT MSVC)
+    # The vendored engine is written against its own stdafx.h, which includes <stdlib.h>: that is
+    # what makes an unqualified abs(double) resolve to std::abs. Without it C's int abs() wins and
+    # every |x| < 1 truncates to 0 - the brake handles' control reservoir froze (FINDINGS 2026-09-24)
+    FILE(GLOB_RECURSE MASZYNA_VENDORED_FILES "src/maszyna/*.cpp")
+    SET_PROPERTY(SOURCE ${MASZYNA_VENDORED_FILES} APPEND PROPERTY COMPILE_OPTIONS "-include" "stdlib.h")
+ENDIF ()
+
 ADD_LIBRARY(${LIBNAME} SHARED ${SRC_FILES})
 TARGET_INCLUDE_DIRECTORIES(${LIBNAME} PRIVATE src)
 TARGET_SOURCES(${LIBNAME} PRIVATE)
@@ -120,6 +167,22 @@ IF (DOC_XML)
 ENDIF ()
 
 TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
+# PythonScreenServer loads CPython at run time (dlopen)
+TARGET_LINK_LIBRARIES(${LIBNAME} ${CMAKE_DL_LIBS})
+
+# The build number is not stamped here. A stamp written while the library links is overwritten by
+# the next build of any other configuration, and the export then packs whichever one happened to
+# be on disk - which is how a release shipped a library and a project two hours apart. The
+# Makefile's `build-number` target writes it when asked, so it describes a release and so the
+# Linux and the Windows package, built by separate invocations, carry the same one.
+
+# A MinGW-built DLL otherwise needs libstdc++-6.dll, libgcc_s_seh-1.dll and libwinpthread-1.dll
+# sitting next to the game, and Godot only ships the executable and this library - the extension
+# would simply fail to load on a clean Windows. Godot's own MinGW builds do the same
+# (use_static_cpp).
+IF (MINGW)
+    TARGET_LINK_OPTIONS(${LIBNAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+ENDIF ()
 
 SET_TARGET_PROPERTIES(${LIBNAME}
         PROPERTIES

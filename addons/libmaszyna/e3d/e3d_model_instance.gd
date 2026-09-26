@@ -4,10 +4,10 @@ class_name E3DModelInstance
 
 ## Displays a MaSzyna E3D model in 3D space.
 ##
-## [E3DModelInstance] loads an [E3DModel] and instantiates it using one of the
-## supported instancers. [code]NODES[/code] and [code]EDITABLE_NODES[/code]
-## build a regular node hierarchy. [code]OPTIMIZED[/code] renders through
-## [code]RenderingServer[/code] and does not create child mesh nodes.
+## [E3DModelInstance] is a node client of [E3DRenderingServer]: it loads an [E3DModel] and keeps
+## one server instance built with the selected instancer. [code]NODES[/code] and
+## [code]EDITABLE_NODES[/code] build a regular node hierarchy under this node.
+## [code]OPTIMIZED[/code] renders through [code]RenderingServer[/code] and does not create child nodes.
 ## If [member model] is set, it will be used to instnatiate. Otherwise the
 ## [member data_path] and [member model_filename] will be used to load with [E3DModelManager].
 
@@ -15,8 +15,11 @@ class_name E3DModelInstance
 ## Emitted after the current model instance has been created.
 signal e3d_loading
 signal e3d_loaded
+## Emitted whenever a new [E3DRenderingServer] instance is created for the model - on the first
+## load, on [method reload] and on re-entering the tree
+signal e3d_instance_created(instance: RID)
 
-## Selected instancing backend
+## Selected instancing backend (same values as [enum E3DRenderingServer.Instancer])
 enum Instancer {
      OPTIMIZED,  ## Renders using [code]RenderingServer[/code] without creating child mesh nodes.
      NODES,  ## Creates a regular hierarchy of generated 3D nodes.
@@ -26,14 +29,13 @@ enum Instancer {
 var _model: E3DModel
 var _dirty: bool = false
 var _e3d_loaded: bool = false
-var _current_instancer: E3DInstancer
-var _current_editable: bool = false
+var _rid: RID = RID()
 
 @export var lights_state: Dictionary[String, bool] = {}:
     set(x):
         lights_state = _merge_lights_state(x)
-        if is_inside_tree() and _e3d_loaded and _current_instancer:
-            _current_instancer.sync_lights(self)
+        if _rid.is_valid():
+            E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
 
 
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
@@ -43,6 +45,15 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
     set(x):
         if not x == model:
             model = x
+            _dirty = true
+
+## What this placement is - a static scenery model or a dynamic one, in the words a [code].scn[/code]
+## uses. Handed to the server when the instance is created, because the smoke density it selects is
+## baked into every emitter of the model; changing it reloads the instance, like the model itself.
+@export var instance_kind: E3DRenderingServer.InstanceKind = E3DRenderingServer.INSTANCE_KIND_STATIC:
+    set(x):
+        if not x == instance_kind:
+            instance_kind = x
             _dirty = true
 
 ## Base MaSzyna data path used to resolve model files and materials.
@@ -70,6 +81,28 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             exclude_node_names = x
             _dirty = true
 
+## Submodel tree paths (relative to the model root, e.g. [code]"banan/podswietlenie_on"[/code])
+## for which real alpha blending is forced, instead of the default alpha-scissor cutout.
+## Applies to the resolved submodel and all of its descendants (e.g. cabin instrument
+## backlight groups). Submodel names alone are not unique across the tree, so paths
+## are resolved via [method E3DModel.get_node_or_null].
+@export var force_alpha_submodel_paths:Array[NodePath] = []:
+    set(x):
+        if not x == force_alpha_submodel_paths:
+            force_alpha_submodel_paths = x
+            _dirty = true
+
+## When true, every submodel already flagged [code]material_transparent[/code] gets real alpha
+## blending instead of the default alpha-scissor cutout - unlike [member force_alpha_submodel_paths],
+## this is not limited to specific named submodels. Opaque submodels are unaffected. Intended for
+## self-contained models (e.g. a cabin interior) where alpha-scissor's crisp cutout looks wrong
+## across the board (glass, instrument backlight glow, ...), unlike mixed-purpose exterior content.
+@export var force_alpha:bool = false:
+    set(x):
+        if not x == force_alpha:
+            force_alpha = x
+            _dirty = true
+
 # Probably instancer should be set project-wide
 @export var instancer = Instancer.NODES:
     set(x):
@@ -92,21 +125,21 @@ func _get_aabb() -> AABB:
 func _process(_delta: float) -> void:
     if Engine.is_editor_hint():
         if _dirty:
-            _process_dirty(_delta)
             _dirty = false
+            _process_dirty(_delta)
 
 
 func _process_dirty(_delta: float) -> void:
     reload()
 
 
-## Reloads the configured E3D model and recreates the current instance using the selected instancer.
+## Reloads the configured E3D model and recreates the server instance using the selected instancer.
 func reload() -> void:
     if is_inside_tree() and (model or model_filename):
+        _dirty = false
         _e3d_loaded = false
         e3d_loading.emit()
-        if _current_instancer:
-            _current_instancer.clear(self)
+        _free_instance()
 
         if model:
             _model = model
@@ -115,41 +148,76 @@ func reload() -> void:
         if _model:
             lights_state = _merge_lights_state(lights_state)
             submodels_aabb = E3DModelTool.get_aabb(_model)
-            _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
-
-            _current_instancer = _resolve_instancer()
-
-            if _current_instancer:
-                _current_instancer.instantiate(self, _model, _current_editable)
-                _e3d_loaded = true
-                e3d_loaded.emit()
-            else:
-                push_error("Selected instancer is not supported!")
-
-
-func _notification(what: int) -> void:
-    match what:
-        NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
-            if _current_instancer:
-                _current_instancer.sync(self)
+            _create_instance()
+            _e3d_loaded = true
+            e3d_loaded.emit()
 
 
 func _ready() -> void:
-    set_notify_transform(true)
     reload()
 
 
 func _enter_tree() -> void:
-    if _model and _current_instancer:
-        _current_instancer.instantiate(self, _model, _current_editable)
+    if _model:
+        _create_instance()
+
 
 func _exit_tree() -> void:
-    if _current_instancer:
-        _current_instancer.clear(self)
+    _free_instance()
+
+
+func _notification(what: int) -> void:
+    match what:
+        NOTIFICATION_TRANSFORM_CHANGED:
+            if _rid.is_valid() and is_inside_tree():
+                E3DRenderingServer.instance_set_transform(_rid, global_transform)
+        NOTIFICATION_VISIBILITY_CHANGED:
+            if _rid.is_valid():
+                E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
+
+
+## The [E3DRenderingServer] instance of the model, empty until it is created
+func get_e3d_instance() -> RID:
+    return _rid
 
 
 func is_e3d_loaded() -> bool:
     return _e3d_loaded
+
+
+## Spawn rate multiplier of the model's particle emitters, as the engine state drives it
+## (see [method E3DRenderingServer.instance_set_smoke_intensity])
+func set_smoke_intensity(intensity:float) -> void:
+    if _rid.is_valid():
+        E3DRenderingServer.instance_set_smoke_intensity(_rid, intensity)
+
+
+func _create_instance() -> void:
+    var server_instancer: int = (
+        Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
+    )
+    _rid = E3DRenderingServer.instance_create(_model, server_instancer, instance_kind)
+    E3DRenderingServer.instance_set_options(
+        _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths
+    )
+    E3DRenderingServer.instance_attach_node(_rid, self)
+    E3DRenderingServer.instance_set_scenario(_rid, get_world_3d().scenario)
+    E3DRenderingServer.instance_set_transform(_rid, global_transform)
+    E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
+    E3DRenderingServer.instance_set_layer_mask(_rid, layers)
+    E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
+    E3DRenderingServer.instance_build(_rid)
+    e3d_instance_created.emit(_rid)
+    # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
+    # but a particle emitter of the model is owned by the server either way and spawns where the
+    # server last saw the instance
+    set_notify_transform(true)
+
+
+func _free_instance() -> void:
+    if _rid.is_valid():
+        E3DRenderingServer.instance_free(_rid)
+        _rid = RID()
 
 
 func _merge_lights_state(new_state: Dictionary[String, bool]) -> Dictionary[String, bool]:
@@ -164,11 +232,3 @@ func _merge_lights_state(new_state: Dictionary[String, bool]) -> Dictionary[Stri
                 state.erase(light_name)
     state.sort()
     return state
-
-
-func _resolve_instancer():
-    match instancer:
-        Instancer.NODES, Instancer.EDITABLE_NODES:
-            return E3DNodesInstancer
-        _:
-            push_error("Unsupported instancer " + instancer)

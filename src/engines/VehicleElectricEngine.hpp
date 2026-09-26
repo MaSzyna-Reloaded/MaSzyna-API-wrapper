@@ -180,7 +180,6 @@ namespace godot {
 
             void set_power_source(VehicleController::TrainPowerSource p_source);
             VehicleController::TrainPowerSource get_power_source() const;
-            void compressor(bool p_enabled);
             void converter(bool p_enabled);
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);

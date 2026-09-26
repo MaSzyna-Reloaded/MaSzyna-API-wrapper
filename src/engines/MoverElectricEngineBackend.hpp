@@ -60,7 +60,6 @@ namespace godot {
             bool get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const override;
             void apply_configuration(const VehicleElectricEngine *p_engine) const override;
             void converter(const VehicleElectricEngine *p_engine, bool p_enabled) const override;
-            void compressor(const VehicleElectricEngine *p_engine, bool p_enabled) const override;
             void converter_fuse_reset(const VehicleElectricEngine *p_engine) const override;
             void pantographs_valve(const VehicleElectricEngine *p_engine, bool p_enabled) const override;
             void pantographs_valve_operate(

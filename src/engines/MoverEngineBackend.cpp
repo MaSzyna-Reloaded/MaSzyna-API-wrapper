@@ -178,6 +178,12 @@ namespace godot {
         return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
     }
 
+    void MoverEngineBackend::compressor(const VehicleEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->CompressorSwitch(p_enabled);
+    }
+
     void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();
         const VehicleController *controller = p_engine->get_controller();

@@ -65,6 +65,7 @@ namespace godot {
 
     void VehicleEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &VehicleEngine::main_switch);
+        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleEngine::compressor);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         BIND_PROPERTY(VehicleEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
@@ -269,11 +270,19 @@ namespace godot {
         return engine_backend != nullptr ? engine_backend->main_switch(this, p_enabled) : false;
     }
 
+    void VehicleEngine::compressor(const bool p_enabled) {
+        if (engine_backend != nullptr) {
+            engine_backend->compressor(this, p_enabled);
+        }
+    }
+
     void VehicleEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
+        register_command("compressor", Callable(this, "compressor"));
     }
 
     void VehicleEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
+        unregister_command("compressor", Callable(this, "compressor"));
     }
 } // namespace godot

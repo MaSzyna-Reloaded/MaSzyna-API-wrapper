@@ -31,6 +31,7 @@ namespace godot {
             bool get_main_no_power_pos(const VehicleEngine *p_engine) const override;
             void apply_configuration(const VehicleEngine *p_engine) const override;
             bool main_switch(const VehicleEngine *p_engine, bool p_enabled) const override;
+            void compressor(const VehicleEngine *p_engine, bool p_enabled) const override;
             void process(const VehicleEngine *p_engine, double p_delta) const override;
             void fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const override;
     };

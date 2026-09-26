@@ -6,14 +6,8 @@
 	<description>
 		Generic VehicleComponent
 		This class allows to implement a custom VehicleComponent in GDScript.
-		You need to implement [method _get_train_part_state] returning a [Dictionary] of the actual state of this train part.
-		You also need to implement [method _process_train_part] if you need to compute a custom behaviour of this train part. Note that [method _process_train_part] is an equivalent of a pure [method _process] surrounded by simple condition:
-		[code]
-		func _process(delta):
-		    if enabled:
-		        _process_train_part(delta)
-		[/code]
-		NOTE: it is safer to stay with overriding [method _process_train_part] for a future compatibility.
+		You need to implement [code]_get_component_state()[/code] returning a [Dictionary] of the actual state of this component.
+		You also need to implement [code]_process_component(delta)[/code] if you need to compute a custom behaviour of this component. The vehicle calls it on every tick while the component is enabled.
 	</description>
 	<tutorials>
 	</tutorials>

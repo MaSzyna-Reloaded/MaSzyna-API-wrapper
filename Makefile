@@ -1,4 +1,4 @@
-.PHONY: linux-sdk-image compile-release-linux docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
+.PHONY: linux-sdk-image compile-release-linux docs compile watch-and-compile api-docs docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
@@ -197,10 +197,18 @@ release-windows: compile-windows-release
 release: release-linux release-windows
 
 
+# The class reference pages of the Jekyll site in docs/ (docs/api/, not versioned): C++ classes
+# from doc_classes/*.xml - refresh those with `make docs` - and GDScript classes from their ##
+# comments
+api-docs:
+	scripts/make-api-docs docs/api
+
+
 docs-install:
 	cd docs && make install
 
 
+# Generates the class reference and serves the site; without Ruby on the host, both run in Docker
 docs-server:
 	cd docs && make runserver
 

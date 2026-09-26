@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="PythonScreenServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="screen_create">
+			<return type="RID" />
+			<param index="0" name="script_path" type="String" />
+			<param index="1" name="commands_received" type="Callable" />
+			<description>
+			</description>
+		</method>
+		<method name="screen_free">
+			<return type="void" />
+			<param index="0" name="screen" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="screen_get_texture" qualifiers="const">
+			<return type="Texture2D" />
+			<param index="0" name="screen" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="screen_request_render">
+			<return type="void" />
+			<param index="0" name="screen" type="RID" />
+			<param index="1" name="state" type="Dictionary" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

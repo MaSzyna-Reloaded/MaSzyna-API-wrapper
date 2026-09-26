@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="VehicleComponentModel" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="implementation" type="StringName" setter="set_implementation" getter="get_implementation" default="&amp;&quot;&quot;">
+		</member>
+		<member name="properties" type="Dictionary" setter="set_properties" getter="get_properties" default="{}">
+		</member>
+		<member name="type" type="int" setter="set_type" getter="get_type" enum="VehicleComponentType.Type" default="0">
+		</member>
+	</members>
+</class>

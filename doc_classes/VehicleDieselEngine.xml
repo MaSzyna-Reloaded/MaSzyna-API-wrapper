@@ -6,7 +6,7 @@
 	<description>
 		Class handling diesel engines with a mechanical transmission. Vehicles with an electric transmission
 		([code]EngineType=DieselElectric[/code]) should use [VehicleDieselElectricEngine] instead, which extends this
-		class with the electric-transmission-specific FIZ fields (and [member wwlist]).
+		class with the electric-transmission-specific FIZ fields (and [member VehicleDieselElectricEngine.wwlist]).
 	</description>
 	<tutorials>
 	</tutorials>

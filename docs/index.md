@@ -28,6 +28,7 @@ Resposibilities of the core:
 ## Important topics
 
 * [Overall architecture](architecture)
+* [API reference](api/) - every class of libmaszyna, C++ and GDScript
 * [Wrapping the original MaSzyna physics](wrapping-mover)
 
 ## Knowledge base

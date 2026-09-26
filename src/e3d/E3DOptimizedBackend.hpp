@@ -19,5 +19,6 @@ namespace godot {
             void clear(E3DInstanceData &p_instance) override;
             void update(const E3DInstanceData &p_instance) override;
             void apply_transform(const E3DInstanceData &p_instance) override;
+            void apply_poses(E3DInstanceData &p_instance) override;
     };
 } // namespace godot

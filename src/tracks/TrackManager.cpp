@@ -55,6 +55,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("track_get_quality_flag", "track"), &TrackManager::track_get_quality_flag);
         ClassDB::bind_method(D_METHOD("track_get_environment", "track"), &TrackManager::track_get_environment);
         ClassDB::bind_method(D_METHOD("track_get_sound_distance", "track"), &TrackManager::track_get_sound_distance);
+        ClassDB::bind_method(D_METHOD("track_set_velocity", "track", "velocity"), &TrackManager::track_set_velocity);
+        ClassDB::bind_method(D_METHOD("track_get_velocity", "track"), &TrackManager::track_get_velocity);
         ClassDB::bind_method(D_METHOD("track_get_endpoints", "track"), &TrackManager::track_get_endpoints);
         ClassDB::bind_method(
                 D_METHOD("track_get_common_endpoint_index", "track"), &TrackManager::track_get_common_endpoint_index);
@@ -654,6 +656,17 @@ namespace godot {
     double TrackManager::track_get_sound_distance(const RID &p_track) const {
         const TrackSegment *track = tracks.getptr(p_track);
         return track != nullptr ? track->sound_distance : -1.0;
+    }
+
+    void TrackManager::track_set_velocity(const RID &p_track, const double p_velocity) {
+        TrackSegment *track = tracks.getptr(p_track);
+        ERR_FAIL_NULL(track);
+        track->velocity = p_velocity;
+    }
+
+    double TrackManager::track_get_velocity(const RID &p_track) const {
+        const TrackSegment *track = tracks.getptr(p_track);
+        return track != nullptr ? track->velocity : -1.0;
     }
 
     PackedVector3Array TrackManager::track_get_endpoints(const RID &p_track) {

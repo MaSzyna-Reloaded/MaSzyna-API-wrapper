@@ -7,6 +7,9 @@ static var model_importer = preload("res://addons/libmaszyna/importer/maszyna_no
 static var triangles_importer = preload("res://addons/libmaszyna/importer/maszyna_node_triangles_importer.gd").new()
 static var dynamic_importer = preload("res://addons/libmaszyna/importer/maszyna_node_dynamic_importer.gd").new()
 static var power_source_importer = preload("res://addons/libmaszyna/importer/maszyna_node_tractionpowersource_importer.gd").new()
+static var memcell_importer = preload("res://addons/libmaszyna/importer/maszyna_node_memcell_importer.gd").new()
+static var eventlauncher_importer = preload("res://addons/libmaszyna/importer/maszyna_node_eventlauncher_importer.gd").new()
+static var sound_importer = preload("res://addons/libmaszyna/importer/maszyna_node_sound_importer.gd").new()
 
 # FIXME: _current_rotation, _origin change to parent nodes
 func import(p:MaszynaParser, context: MaszynaImporterContext):
@@ -27,8 +30,10 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
 
     match type:
         "eventlauncher":
-            p.get_tokens_until("end")
-            #push_warning("Eventlauncher node is not supported yet")
+            var launcher:MaszynaEventLauncherData = eventlauncher_importer.import(p, context)
+            launcher.name = name
+            launcher.position = launcher.position.rotated(Vector3.UP, context.rotate.y) + context.origin
+            context.launchers.append(launcher)
 
         "triangles":
             var triangles = triangles_importer.import(p, context, range_min, range_max)
@@ -36,8 +41,11 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 context.triangles.append(triangles)
 
         "sound":
-            p.get_tokens_until("endsound")
-            #push_warning("Sound node is not supported yet")
+            var sound:MaszynaSoundData = sound_importer.import(p, context)
+            sound.name = name
+            sound.range_max = range_max
+            sound.position = sound.position.rotated(Vector3.UP, context.rotate.y) + context.origin
+            context.sounds.append(sound)
 
         "traction":
             var traction = traction_importer.import(p, context)
@@ -74,8 +82,10 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 (obj as DynamicRailVehicle3D).train_id = name
 
         "memcell":
-            p.get_tokens_until("endmemcell")
-            #push_warning("Memcell node is not supported yet")
+            var memcell:MaszynaMemcellData = memcell_importer.import(p, context)
+            memcell.name = name
+            memcell.position = memcell.position.rotated(Vector3.UP, context.rotate.y) + context.origin
+            context.memcells.append(memcell)
         "lines":
             p.get_tokens_until("endline")
             #push_warning("Lines node is not supported yet")

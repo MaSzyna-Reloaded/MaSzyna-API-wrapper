@@ -24,6 +24,9 @@ namespace godot {
     const char *RailVehicleServer::vehicle_command_received_signal = "vehicle_command_received";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
     const char *RailVehicleServer::vehicle_freed_signal = "vehicle_freed";
+    const char *RailVehicleServer::vehicle_heading_to_track_start_signal = "vehicle_heading_to_track_start";
+    const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
+    const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -51,6 +54,8 @@ namespace godot {
                 &RailVehicleServer::vehicle_attach_controller);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
         ClassDB::bind_method(D_METHOD("get_vehicles"), &RailVehicleServer::get_vehicles);
         ClassDB::bind_method(D_METHOD("get_vehicles_in_rect", "rect"), &RailVehicleServer::get_vehicles_in_rect);
@@ -107,6 +112,15 @@ namespace godot {
                 vehicle_occupied_cab_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::INT, "cab")));
         ADD_SIGNAL(MethodInfo(vehicle_freed_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_heading_to_track_start_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_heading_to_track_end_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_stopped_on_track_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
     }
 
     void RailVehicleServer::vehicle_attach_rail_vehicle(const RID &p_vehicle, const uint64_t p_rail_vehicle_id) {
@@ -224,6 +238,13 @@ namespace godot {
                     vformat("Bad scenario: two vehicles named \"%s\" - the later one takes the name", p_name));
         }
         vehicles_by_name[p_name] = p_vehicle;
+    }
+
+    VehicleController::DriverType RailVehicleServer::vehicle_get_driver_type(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(placement, VehicleController::DRIVER_NOBODY);
+        const VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_driver_type() : VehicleController::DRIVER_NOBODY;
     }
 
     String RailVehicleServer::vehicle_get_name(const RID &p_vehicle) const {
@@ -534,6 +555,7 @@ namespace godot {
 
         p_placement.track = current_track;
         p_placement.track_is_switch = current_is_switch;
+        p_placement.travel_sign = movement_sign;
         p_placement.track_offset = current_track_offset;
         p_placement.track_direction = current_track_direction;
         p_placement.switch_track = current_switch_track;
@@ -1039,6 +1061,29 @@ namespace godot {
                 controller->update_state();
             }
             controller->process_components(p_delta);
+
+            // reported on a change only: the track events hang on what it was, not on every step
+            VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
+            const TrackHeading heading = controller->get_speed() <= STANDING_SPEED ? HEADING_STANDING
+                                         : placement->travel_sign > 0.0            ? HEADING_TO_END
+                                                                                   : HEADING_TO_START;
+            if (heading == placement->reported_heading && placement->track == placement->reported_track) {
+                continue;
+            }
+            placement->reported_heading = heading;
+            placement->reported_track = placement->track;
+            const RID track = placement->track;
+            switch (heading) {
+                case HEADING_STANDING:
+                    emit_signal(vehicle_stopped_on_track_signal, stepped_vehicles[index], track);
+                    break;
+                case HEADING_TO_START:
+                    emit_signal(vehicle_heading_to_track_start_signal, stepped_vehicles[index], track);
+                    break;
+                case HEADING_TO_END:
+                    emit_signal(vehicle_heading_to_track_end_signal, stepped_vehicles[index], track);
+                    break;
+            }
         }
         if (diagnostics) {
             _check_velocity_jumps(p_delta);

@@ -51,6 +51,8 @@ namespace godot {
             /// declared mode carries no fraction of its own (DefaultDarkThresholdLevel,
             /// AnimModel.h:24)
             static constexpr double DEFAULT_DARK_THRESHOLD = 0.325;
+            /// A translation this close to its target has arrived (1 cm, AnimModel.cpp:101)
+            static constexpr double ANIMATION_TRANSLATION_EPSILON = 0.01;
             /// LIGHT_MODE_HOME lights are forced off between these hours (AnimModel.cpp:601-607)
             static constexpr double HOME_LIGHTS_OFF_FROM_HOUR = 1.0;
             static constexpr double HOME_LIGHTS_OFF_TO_HOUR = 5.0;
@@ -119,7 +121,8 @@ namespace godot {
             static const char *instance_built_signal;
 
             static E3DRenderingServer *get_instance() {
-                return Object::cast_to<E3DRenderingServer>(Engine::get_singleton()->get_singleton("E3DRenderingServer"));
+                return Object::cast_to<E3DRenderingServer>(
+                        Engine::get_singleton()->get_singleton("E3DRenderingServer"));
             }
 
         private:
@@ -208,7 +211,11 @@ namespace godot {
             Vector<RID> blinking_instances;
             int blinking_cursor = 0;
             bool light_processing = false;
-            double light_clock = 0.0; // seconds, the clock every blinking light cycles on
+            /// Instances with a submodel still moving towards its target, advanced by
+            /// _process_animations()
+            Vector<RID> animating_instances;
+            bool animation_processing = false;
+            double light_clock = 0.0;   // seconds, the clock every blinking light cycles on
             double current_time = 12.0; // hours, 0..24
             double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
@@ -262,6 +269,16 @@ namespace godot {
             void _update_blinking(const RID &p_instance, const E3DInstanceData &p_instance_data);
             void _set_light_processing(bool p_processing);
             static String _light_name_for_index(int p_index);
+            /// First submodel of the name in the tree, compared in lower case (TModel3d::GetFromName())
+            static E3DSubModel *_find_submodel(const TypedArray<E3DSubModel> &p_submodels, const String &p_name);
+            /// Puts the instance on the animating list, with the animated submodel found if it is built
+            void _start_submodel_animation(
+                    const RID &p_instance, E3DInstanceData &p_instance_data, const String &p_submodel);
+            /// Composes the poses out of the animations and hands them to the backend
+            void _pose_submodels(E3DInstanceData &p_instance);
+            /// Connected to SceneTree's process_frame while a submodel moves
+            void _process_animations();
+            void _set_animation_processing(bool p_processing);
 
         protected:
             static void _bind_methods();
@@ -275,6 +292,14 @@ namespace godot {
                     const String &p_data_path, const String &p_model_filename, const PackedStringArray &p_skins,
                     const Transform3D &p_transform, float p_range_begin, float p_range_end, const RID &p_scenario);
             void instance_free(const RID &p_instance);
+            /// Turns the submodel towards p_degrees about its own x, y and z at p_speed degrees per
+            /// second (a scenery `animation ... rotate` event, TAnimContainer::SetRotateAnim())
+            void instance_set_submodel_rotation(
+                    const RID &p_instance, const String &p_submodel, const Vector3 &p_degrees, double p_speed);
+            /// Moves the submodel towards p_offset at p_speed metres per second (`animation ...
+            /// translate`, TAnimContainer::SetTranslateAnim())
+            void instance_set_submodel_translation(
+                    const RID &p_instance, const String &p_submodel, const Vector3 &p_offset, double p_speed);
             void instance_build(const RID &p_instance);
             void instance_set_options(
                     const RID &p_instance, const String &p_data_path, const PackedStringArray &p_skins,

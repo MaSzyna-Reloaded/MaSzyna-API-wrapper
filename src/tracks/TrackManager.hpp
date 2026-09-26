@@ -135,6 +135,8 @@ namespace godot {
                     int quality_flag = 0;
                     int environment = 0;
                     double sound_distance = -1.0;
+                    /* Speed limit in km/h, negative for none (TTrack::fVelocity, Track.cpp:851-858) */
+                    double velocity = -1.0;
                     double length = 0.0;
                     double length1 = 0.0;
                     double length2 = 0.0;
@@ -269,6 +271,9 @@ namespace godot {
             int track_get_quality_flag(const RID &p_track) const;
             int track_get_environment(const RID &p_track) const;
             double track_get_sound_distance(const RID &p_track) const;
+            /* Speed limit in km/h, negative for none (TTrack::VelocitySet()) */
+            void track_set_velocity(const RID &p_track, double p_velocity);
+            double track_get_velocity(const RID &p_track) const;
             PackedVector3Array track_get_endpoints(const RID &p_track);
             int track_get_common_endpoint_index(const RID &p_track) const;
             Ref<Resource> track_get_curve(const RID &p_track, int p_branch = TRACK_COMMON) const;

@@ -24,6 +24,7 @@ namespace godot {
             bool build_number_read = false;
             bool build_version_checked = false;
             double time_of_day = 0.0;
+            double simulation_speed = 1.0;
             double light_level = 1.0;
             double air_temperature = 0.0;
             bool paused = false;
@@ -36,6 +37,8 @@ namespace godot {
             static const char *language_changed_signal;
             static const char *paused_signal;
             static const char *unpaused_signal;
+            static const char *simulation_speed_changed_signal;
+            static const char *time_of_day_changed_signal;
             /// The original's own strings, untranslated - no catalogue needed
             static constexpr const char *DEFAULT_LANGUAGE = "en";
 
@@ -50,6 +53,9 @@ namespace godot {
             /// Hours since midnight, fractional
             void set_time_of_day(double p_hours);
             double get_time_of_day() const;
+            /// How many simulated seconds pass in one real second (Global.fTimeSpeed, Timer.cpp:80)
+            void set_simulation_speed(double p_speed);
+            double get_simulation_speed() const;
             /// How bright the scene is, 0-1 (Global.fLuminance, simulationenvironment.cpp:184)
             void set_light_level(double p_level);
             double get_light_level() const;

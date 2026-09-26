@@ -61,6 +61,15 @@ namespace godot {
             static constexpr double DIAGNOSTICS_MAX_ACCELERATION = 3.0;
             /* Movement below this is not worth walking the route for (m) */
             static constexpr double MOVEMENT_EPSILON = 0.0001;
+            /* Below this speed (km/h) a vehicle stands - TTrackFollower::Move(), TrkFoll.cpp:104 */
+            static constexpr double STANDING_SPEED = 0.01;
+
+            /* What a vehicle last did on its track, as the track signals reported it */
+            enum TrackHeading {
+                HEADING_STANDING,
+                HEADING_TO_START,
+                HEADING_TO_END,
+            };
             /* How far a Radio-Stop carries (m) - basic_region::RadioStop, scene.cpp:1271 */
             static constexpr double RADIO_STOP_RANGE = 2000.0;
             /* How far ahead and behind the transform samples the curve to find its heading (m) */
@@ -78,6 +87,12 @@ namespace godot {
                      * track never turns into one, so it is asked when the vehicle changes track
                      * rather than on every step. */
                     bool track_is_switch = false;
+                    /* Which way the last movement went along `track`: towards its end (+1) or its
+                     * start (-1) */
+                    double travel_sign = 0.0;
+                    /* The track and heading last reported by the track signals */
+                    RID reported_track;
+                    TrackHeading reported_heading = HEADING_STANDING;
                     /* Moved since the simulated vehicle's location was last updated */
                     bool moved = true;
                     /* The body's transform and whether it still describes the placement above. A
@@ -164,6 +179,12 @@ namespace godot {
             static const char *vehicle_command_received_signal;
             static const char *vehicle_occupied_cab_changed_signal;
             static const char *vehicle_freed_signal;
+            /* The vehicle has started moving along the track towards its start, its end, or has
+             * stopped on it - once per change, what a scenery's track events are fired by
+             * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
+            static const char *vehicle_heading_to_track_start_signal;
+            static const char *vehicle_heading_to_track_end_signal;
+            static const char *vehicle_stopped_on_track_signal;
 
             RailVehicleServer();
             ~RailVehicleServer() override;
@@ -180,6 +201,8 @@ namespace godot {
              * same shape, for the same reason). */
             void vehicle_set_name(const RID &p_vehicle, const String &p_name);
             String vehicle_get_name(const RID &p_vehicle) const;
+            /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
+            VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
             /* Every vehicle the server holds, and those whose position falls in p_rect (x, z) */
             TypedArray<RID> get_vehicles() const;

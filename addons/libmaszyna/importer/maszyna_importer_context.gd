@@ -12,7 +12,7 @@ class PendingInclude:
     var parent_trainset:TrainSet3D = null
 
 const RESULT_LISTS:Array[String] = [
-    "tracks", "traction", "power_sources", "models", "light_events", "terrains", "triangles"
+    "tracks", "traction", "power_sources", "models", "events", "memcells", "launchers", "sounds", "terrains", "triangles"
 ]
 
 var _states: Array[Dictionary] = []
@@ -25,7 +25,10 @@ var tracks:Array[MaszynaTrackData] = []
 var traction:Array[MaszynaTractionData] = []
 var power_sources:Array[MaszynaPowerSourceData] = []
 var models:Array[MaszynaModelData] = []
-var light_events:Array[MaszynaLightsEventData] = []
+var events:Array[MaszynaEventData] = []
+var memcells:Array[MaszynaMemcellData] = []
+var launchers:Array[MaszynaEventLauncherData] = []
+var sounds:Array[MaszynaSoundData] = []
 var terrains: Array = []
 var triangles: Array = []
 var dependencies:Dictionary = {}

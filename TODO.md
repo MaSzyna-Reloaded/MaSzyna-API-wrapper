@@ -551,14 +551,8 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 semaphore's kind is made of the `lights` events aimed at it, and the original's
 `MaszynaLegacySemaphoreDelegate` shows one of them when it is handed the event. Left:
 
-* **Scenery events are not run**: `maszyna_event_importer.gd` keeps only `lights` events (as the
-  aspects of the semaphores' kinds) and drops the rest - `multiple` with `condition`
-  (`memcompare`, `trackfree`/`trackoccupied`), `updatevalues`, `getvalues`, `animation`; memcells
-  are skipped (`maszyna_node_importer.gd`), and `TIsolated` `:busy`/`:free` is not generated. This
-  is an EventServer of its own; once it exists, `lights` goes to the legacy delegate
-  (`system_send_event(system, &"lights", {semaphore, aspect})`, the target by
-  `semaphore_get_rid_by_name`, the aspect by `MaszynaLegacySemaphoreKindFactory.get_aspect_name()`)
-  and the isolated sections become the system's sources.
+* **The isolated sections become the system's sources** once `TrackManager` has them (see
+  Scenario events).
 * **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
   `getvalues` (`Driver.cpp:459-470`, `:292-419`) - has no counterpart; a delegate only publishes
   its aspect with `system_publish_event`.
@@ -571,6 +565,60 @@ semaphore's kind is made of the `lights` events aimed at it, and the original's
   kind (lights, no aspects). The declared `lights` list is not an aspect, so a scenery semaphore's
   light states on the server read `LIGHT_STATE_OFF` until its first aspect, whatever E3D shows.
 * **`SemaphoreAspect.lights` are plain numbers** in the inspector (`LightCommand`), not an enum.
+
+## Scenario events
+
+`ScenarioEventServer` (events, the queue, the simulation time, memory, launchers, track events)
+runs the scenery's events; `MaszynaLegacyEventFactory` builds them from the `.scn` data once the
+include's server data is built. Built: `updatevalues`, `addvalues`, `copyvalues`, `multiple`,
+`lights`, `switch`, `trackvel`, `voltage`, `animation` (rotate, translate), `sound`; conditions
+`memcompare` and `probability`; a track's `event0/1/2`, `eventall0/1/2` and `<track>:<slot>`
+events; `onstart` and negative-delay events; Shift+0..9 (`keyctrl00-09`) and launcher keys
+(`ScenarioKeyboard`); the "Scenario and Events" HUD window. Checked on `td.scn` with a headless
+probe (Shift+8 closes both level crossings). Left:
+
+* **Track events, as the original fires them**: the direction filter by the consist's intended
+  direction (`eventfilter`, `TrkFoll.cpp:117-121`) - here the actual direction of travel decides;
+  the vehicle's one placement point stands for the primary axle; events with a delay <= -1 queued
+  on every move along the same track (`TrkFoll.cpp:249-260`); a crewed vehicle is one with a
+  `driver_type`, the original's `Mechanik->primary()` is one per consist.
+* **Isolated sections** (`TIsolated`, `Track.cpp:110-170`, `isolated`/`area` blocks,
+  `simulationstateserializer.cpp:167-194`) - to `TrackManager` as `isolated_*` with
+  `isolated_occupied/freed(isolated, vehicle)`; the event server binds `:busy/:free/:inc/:dec`;
+  the automatic memcell named after the section (bit 0 of v2, `Track.cpp:3556-3575`).
+* **Conditions** `trackfree`/`trackoccupied` (`Event.cpp:44-59`) and `memcompareex` (operators,
+  all/any/none, `Event.cpp:200-254`, `comparison.h:56-75`).
+* **Event types without an action**: `getvalues`/`putvalues` (and the AI's passive scanning,
+  `Driver.cpp:459-640`; `putvalues CabSignal` reaches the player's cab through it), `whois`
+  (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
+  `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
+  `digital` or `.vmd` mode and no `<model>.<submodel>:done` event (`Event.cpp:1591`,
+  `AnimModel.cpp:120-209`); a `sound` event with a radio channel (`simulation::radio_message`) is
+  played as a plain sound.
+* **Submodel animations** run on the frame's real delta: they ignore the pause and the simulation
+  speed (`TAnimContainer` uses the simulation's `Timer::GetDeltaTime()`).
+* **Scenery sounds** use the player's defaults for everything but `max_distance` (the node's
+  range); their bank was not dumped nor checked by ear.
+* **Memory and the AI**: pushing a memory to the vehicles on its track when it changes
+  (`Event.cpp:538-548`), `bCommand`/`CommandCheck` and `:sent` (`MemCell.cpp:52-99`, `196-205`).
+* **`departuredelay`** is read and dropped - needs the activator's timetable (`Event.cpp:2412-2425`).
+* **Duplicate event names**: the later wins (with a warning); the original joins them as siblings
+  and ignores the first (`Event.cpp:2296-2349`).
+* **Launchers**: radio calls (`queue_receivers`, `Event.cpp:2255-2268`), numeric key codes,
+  `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
+  train, not the camera), a click on a model firing the launcher of its name (`scene.cpp:33-43`).
+  Timed launchers are global here; the original polls non-global ones only near the camera.
+* **No AI trains**: a scenario whose stages wait for a train the AI drives stops there - e.g.
+  `stary_jawor_eszelon` waits for the eszelon to reach Roztocze (`n282:event2`,
+  `skp/skp_eszelon_events.ctr`). The track events fire for any moving vehicle with a driver, but no
+  such vehicle moves without the AI.
+* **Time-of-day launchers** match the clock `MaszynaRuntime` publishes once a second; at a
+  simulation speed above 60 a minute can pass between two publishes and the launcher misses it
+  (the original checks every frame).
+* The `queueevent` console command.
+* Events of one include cannot refer to events of another `MaszynaIncludeNode`.
+* Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
+  `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
 
 ## Tests
 

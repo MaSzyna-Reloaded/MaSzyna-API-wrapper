@@ -18,7 +18,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 19
+const CACHE_FORMAT_VERSION:int = 21
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -97,6 +97,10 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             compiled.traction,
             compiled.power_sources,
             compiled.models,
+            compiled.events,
+            compiled.memcells,
+            compiled.launchers,
+            compiled.sounds,
             0.3,
             0.6,
         )
@@ -110,12 +114,12 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _report_progress(root, 0.0, "Scanning includes")
     var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
     var objects:Array = context.objects
-    assign_semaphore_kinds(context.models, context.light_events)
+    assign_semaphore_kinds(context.models, context.events)
 
     await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
     await _instantiate_server_data(
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
-        PARSE_PROGRESS, 0.6
+        context.events, context.memcells, context.launchers, context.sounds, PARSE_PROGRESS, 0.6
     )
     await _report_progress(root, 0.6, "Building terrain")
     var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
@@ -166,14 +170,22 @@ static func _instantiate_server_data(
     traction:Array[MaszynaTractionData],
     power_sources:Array[MaszynaPowerSourceData],
     models:Array[MaszynaModelData],
+    events:Array[MaszynaEventData],
+    memcells:Array[MaszynaMemcellData],
+    launchers:Array[MaszynaEventLauncherData],
+    sounds:Array[MaszynaSoundData],
     progress_from:float,
     progress_to:float,
 ) -> void:
     var total:float = float(maxi(tracks.size() + power_sources.size() + traction.size() + models.size(), 1))
     var built_count:int = 0
+    # in the order of the data, which is how the events find what they are aimed at
+    var track_rids:Array[RID] = []
+    var model_rids:Array[RID] = []
     for track_data:MaszynaTrackData in tracks:
         var built:Dictionary = _build_track(track_data, world_3d)
         root._track_rids.append(built["track_rid"])
+        track_rids.append(built["track_rid"])
         root._track_render_rids.append(built["track_render_rid"])
         built_count += 1
         await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering tracks")
@@ -200,12 +212,17 @@ static func _instantiate_server_data(
     root._semaphore_system_rids.append(semaphore_system)
     for model_data:MaszynaModelData in models:
         var e3d_rid:RID = _build_model(model_data, world_3d, semaphore_system)
+        model_rids.append(e3d_rid)
         if e3d_rid.is_valid():
             root._e3d_rids.append(e3d_rid)
         built_count += 1
         await _report_progress_throttled(
             root, lerpf(progress_from, progress_to, built_count / total), TranslationServer.translate("Registering %s") % model_data.model_filename
         )
+    # the original's firstinit: everything the events are aimed at exists by now
+    MaszynaLegacyEventFactory.build(
+        root, events, memcells, launchers, sounds, tracks, track_rids, models, model_rids, power_sources
+    )
 
 
 ## Registers the merged meshes with SceneryChunkRenderingServer; they are rendered only while the
@@ -306,7 +323,10 @@ static func _compile_scenery(
     compiled.traction = context.traction
     compiled.power_sources = context.power_sources
     compiled.models = context.models
-    compiled.light_events = context.light_events
+    compiled.events = context.events
+    compiled.memcells = context.memcells
+    compiled.launchers = context.launchers
+    compiled.sounds = context.sounds
     return compiled
 
 
@@ -472,7 +492,10 @@ func parse_subscene_task(
         cached.traction.assign(compiled.traction)
         cached.power_sources.assign(compiled.power_sources)
         cached.models.assign(compiled.models)
-        cached.light_events.assign(compiled.light_events)
+        cached.events.assign(compiled.events)
+        cached.memcells.assign(compiled.memcells)
+        cached.launchers.assign(compiled.launchers)
+        cached.sounds.assign(compiled.sounds)
         cached.triangles.assign(compiled.triangles)
         cached.dependencies = compiled.dependencies.duplicate(true)
         cached.objects = _instantiate_cached_nodes(compiled.nodes)
@@ -614,6 +637,8 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
             track_rid, track_data.quality_flag, track_data.environment, track_data.sound_distance)
     if track_data.type == TrackManager.TRACK_SWITCH:
         TrackManager.switch_set_active_track(track_rid, TrackManager.TRACK_COMMON)
+    # the speed limit a `trackvel` event changes (Track.cpp:851-858)
+    TrackManager.track_set_velocity(track_rid, float(track_data.parameters.get("velocity", -1.0)))
 
     TrackRenderingServer.set_track_render_options(
         track_render_rid,
@@ -670,10 +695,12 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
 ## end up with equal kinds, which are then one resource. A lit model no event reaches gets the
 ## generic kind. Target names are matched in lower case, as the original reads them (Event.cpp:327).
 static func assign_semaphore_kinds(
-    models:Array[MaszynaModelData], light_events:Array[MaszynaLightsEventData]
+    models:Array[MaszynaModelData], scenery_events:Array[MaszynaEventData]
 ) -> void:
     var events_by_target:Dictionary[String, Array] = {}
-    for event:MaszynaLightsEventData in light_events:
+    for event:MaszynaEventData in scenery_events:
+        if not event.type == "lights":
+            continue
         for target:String in event.targets:
             if not events_by_target.has(target):
                 events_by_target[target] = []
@@ -685,8 +712,12 @@ static func assign_semaphore_kinds(
             model_data.semaphore_kind = GENERIC_SEMAPHORE_KIND if model_data.lights else null
             continue
         var aspects:Dictionary = {}
-        for event:MaszynaLightsEventData in events:
-            aspects[MaszynaLegacySemaphoreKindFactory.get_aspect_name(event.name, model_data.name)] = event.values
+        for event:MaszynaEventData in events:
+            # one TAnimModel::LightSet() value per light, light 0 first
+            var values:PackedFloat32Array = []
+            for value:String in event.parameters:
+                values.append(float(value))
+            aspects[MaszynaLegacySemaphoreKindFactory.get_aspect_name(event.name, model_data.name)] = values
         var key:String = var_to_str(aspects)
         if not kinds.has(key):
             kinds[key] = MaszynaLegacySemaphoreKindFactory.create_kind(aspects)

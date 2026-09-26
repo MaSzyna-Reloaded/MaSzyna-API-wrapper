@@ -51,6 +51,10 @@ var _power_source_rids:Array[RID] = []
 var _e3d_rids:Array[RID] = []
 var _semaphore_system_rids:Array[RID] = []
 var _triangle_chunk_rids:Array[RID] = []
+var _launcher_rids:Array[RID] = []
+var _event_rids:Array[RID] = []
+var _memory_rids:Array[RID] = []
+var _event_track_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -70,6 +74,11 @@ func _exit_tree() -> void:
 ## spinner) keeps animating; 0 frees everything at once (leaving the tree)
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
+        # first, so no queued event runs against what is freed after them
+        [_launcher_rids, ScenarioEventServer.launcher_free],
+        [_event_rids, ScenarioEventServer.event_free],
+        [_memory_rids, ScenarioEventServer.memory_free],
+        [_event_track_rids, ScenarioEventServer.track_clear_events],
         [_track_render_rids, TrackRenderingServer.free_track],
         [_track_rids, TrackManager.track_free],
         [_traction_rids, TractionRenderingServer.free_traction],

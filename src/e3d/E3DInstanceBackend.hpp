@@ -31,6 +31,19 @@ namespace godot {
                     bool has_color = false;
             };
 
+            /// A scenery `animation` event's motion of one submodel, towards its target at a speed
+            /// in degrees or metres per second (TAnimContainer, AnimModel.cpp:51-188)
+            struct SubmodelAnimation {
+                    Vector3 angles; // degrees about the submodel's own x, y, z (TSubModel::SetRotateXYZ)
+                    Vector3 target_angles;
+                    double rotate_speed = 0.0;
+                    Vector3 offset; // metres (TSubModel::SetTranslate)
+                    Vector3 target_offset;
+                    double translate_speed = 0.0;
+                    /// The animated submodel of the built model, found once per build
+                    E3DSubModel *submodel = nullptr;
+            };
+
             struct LightNodes {
                     ObjectID on;
                     ObjectID off;
@@ -67,6 +80,11 @@ namespace godot {
             Dictionary lights_override;
             /// Real lights owned by this instance (E3DRenderingServer light RIDs)
             Vector<RID> light_objects;
+            /// By lower-case submodel name, kept across a stream clear/build cycle
+            HashMap<String, SubmodelAnimation> submodel_animations;
+            /// What the animations make of their submodels, on top of the submodel's own transform;
+            /// what the backends read
+            HashMap<E3DSubModel *, Transform3D> submodel_poses;
             /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
             Vector<RID> smoke_objects;
             /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
@@ -83,6 +101,7 @@ namespace godot {
             // NODES backend
             Vector<ObjectID> root_nodes;
             HashMap<String, LightNodes> light_nodes;
+            HashMap<E3DSubModel *, ObjectID> submodel_nodes;
     };
 
     /// Builds and updates the content of E3DRenderingServer instances.
@@ -99,6 +118,8 @@ namespace godot {
              * hidden by whoever owns that light, and re-applying them on every move overwrites
              * that owner once per frame (see `FINDINGS.md`, 2026-09-23). */
             virtual void apply_transform(const E3DInstanceData &p_instance) = 0;
+            /// Places the submodels as submodel_poses says; called when an animation moved them
+            virtual void apply_poses(E3DInstanceData &p_instance) = 0;
 
         protected:
             static bool _is_submodel_valid(const E3DSubModel *p_submodel, const Array &p_exclude_node_names);

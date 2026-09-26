@@ -12,6 +12,8 @@ namespace godot {
     const char *MaszynaRuntime::language_changed_signal = "language_changed";
     const char *MaszynaRuntime::paused_signal = "paused";
     const char *MaszynaRuntime::unpaused_signal = "unpaused";
+    const char *MaszynaRuntime::simulation_speed_changed_signal = "simulation_speed_changed";
+    const char *MaszynaRuntime::time_of_day_changed_signal = "time_of_day_changed";
 
     namespace {
         constexpr const char *LANGUAGE_SECTION = "maszyna";
@@ -25,11 +27,16 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_time_of_day", "hours"), &MaszynaRuntime::set_time_of_day);
         ClassDB::bind_method(D_METHOD("get_time_of_day"), &MaszynaRuntime::get_time_of_day);
+        ClassDB::bind_method(D_METHOD("set_simulation_speed", "speed"), &MaszynaRuntime::set_simulation_speed);
+        ClassDB::bind_method(D_METHOD("get_simulation_speed"), &MaszynaRuntime::get_simulation_speed);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &MaszynaRuntime::set_light_level);
         ClassDB::bind_method(D_METHOD("get_light_level"), &MaszynaRuntime::get_light_level);
         ClassDB::bind_method(D_METHOD("set_air_temperature", "temperature"), &MaszynaRuntime::set_air_temperature);
         ClassDB::bind_method(D_METHOD("get_air_temperature"), &MaszynaRuntime::get_air_temperature);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "time_of_day"), "set_time_of_day", "get_time_of_day");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "simulation_speed"), "set_simulation_speed", "get_simulation_speed");
+        ADD_SIGNAL(MethodInfo(simulation_speed_changed_signal));
+        ADD_SIGNAL(MethodInfo(time_of_day_changed_signal));
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "light_level"), "set_light_level", "get_light_level");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_temperature"), "set_air_temperature", "get_air_temperature");
         ClassDB::bind_method(D_METHOD("set_language", "language"), &MaszynaRuntime::set_language);
@@ -47,11 +54,27 @@ namespace godot {
     }
 
     void MaszynaRuntime::set_time_of_day(const double p_hours) {
+        if (time_of_day == p_hours) {
+            return;
+        }
         time_of_day = p_hours;
+        emit_signal(time_of_day_changed_signal);
     }
 
     double MaszynaRuntime::get_time_of_day() const {
         return time_of_day;
+    }
+
+    void MaszynaRuntime::set_simulation_speed(const double p_speed) {
+        if (simulation_speed == p_speed) {
+            return;
+        }
+        simulation_speed = p_speed;
+        emit_signal(simulation_speed_changed_signal);
+    }
+
+    double MaszynaRuntime::get_simulation_speed() const {
+        return simulation_speed;
     }
 
     void MaszynaRuntime::set_light_level(const double p_level) {

@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
+[ext_resource type="Script" path="res://addons/libmaszyna/scenario/scenario_keyboard.gd" id="scenario_keyboard"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 script = ExtResource("7_demo")
@@ -35,6 +36,9 @@ sfx_bank = ExtResource("player_sfx_bank")
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
 environment_node_path = NodePath("../MaszynaEnvironmentNode")
+
+[node name="ScenarioKeyboard" type="Node" parent="."]
+script = ExtResource("scenario_keyboard")
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
@@ -83,6 +87,7 @@ color = Color(0, 0, 0, 1)
 [connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]
 [connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
 [connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]
 [connection signal="pressed" from="GameHud/MenuActions/ExitToMenu" to="." method="_on_exit_to_menu_pressed"]

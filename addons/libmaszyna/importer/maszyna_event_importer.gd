@@ -1,9 +1,8 @@
 @tool
 extends RefCounted
 
-## `event <name> <type> <delay> <targets> <parameters> endevent` (Event.cpp:289-333). Only a
-## `lights` event is kept - it is an aspect of the semaphores it is aimed at; the body of any
-## other type is read through to its `endevent` and dropped (see TODO.md).
+## `event <name> <type> <delay> <targets> <parameters> [condition ...] [randomdelay <s>]
+## [departuredelay <s>] endevent` (Event.cpp:289-333, 442-448)
 
 ## Events named "none_..." are ignored by the original (Event.cpp:301)
 const IGNORED_PREFIX:String = "none_"
@@ -14,14 +13,16 @@ const NO_TARGET:String = "none"
 
 func import(p:MaszynaParser, context: MaszynaImporterContext):
     var name:String = p.next_token().to_lower()
-    var type:String = p.next_token().to_lower()
-    if not type == "lights" or name.begins_with(IGNORED_PREFIX):
+    if name.begins_with(IGNORED_PREFIX):
         while not p.eof_reached():
             if p.next_token().to_lower() == "endevent":
                 break
         return []
 
-    var _delay:String = p.next_token()
+    var event:MaszynaEventData = MaszynaEventData.new()
+    event.name = name
+    event.type = p.next_token().to_lower()
+    event.delay = float(p.next_token())
     var targets:PackedStringArray = [p.next_token().to_lower()]
     for separator:String in TARGET_SEPARATORS:
         var split:PackedStringArray = []
@@ -32,21 +33,27 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     while not none_index == -1:
         targets.remove_at(none_index)
         none_index = targets.find(NO_TARGET)
+    event.targets = targets
 
-    var values:PackedFloat32Array = []
+    var in_condition:bool = false
     while not p.eof_reached():
         var token:String = p.next_token()
         var keyword:String = token.to_lower()
         if keyword == "endevent":
             break
         if keyword == "randomdelay":
+            event.random_delay = float(p.next_token())
+            continue
+        if keyword == "departuredelay":
+            # needs the activator's timetable, see TODO.md
             p.next_token()
             continue
-        values.append(float(token))
-
-    var event := MaszynaLightsEventData.new()
-    event.name = name
-    event.targets = targets
-    event.values = values
-    context.light_events.append(event)
+        if keyword == "condition":
+            in_condition = true
+            continue
+        if in_condition:
+            event.condition.append(token)
+        else:
+            event.parameters.append(token)
+    context.events.append(event)
     return []

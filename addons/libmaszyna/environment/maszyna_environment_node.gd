@@ -405,6 +405,7 @@ func _push_environment_state(delta: float) -> void:
     E3DRenderingServer.set_current_time(current_time)
     E3DRenderingServer.set_light_level(light_level)
     MaszynaRuntime.time_of_day = current_time
+    MaszynaRuntime.simulation_speed = simulation_speed
     MaszynaRuntime.light_level = light_level
     MaszynaRuntime.air_temperature = temperature
     E3DRenderingServer.set_wind(

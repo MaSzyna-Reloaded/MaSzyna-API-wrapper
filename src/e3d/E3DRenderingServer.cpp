@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
+#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/mutex_lock.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -59,6 +60,12 @@ namespace godot {
                 &E3DRenderingServer::instance_set_light_mode);
         ClassDB::bind_method(
                 D_METHOD("instance_get_light_count", "instance"), &E3DRenderingServer::instance_get_light_count);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_rotation", "instance", "submodel", "degrees", "speed"),
+                &E3DRenderingServer::instance_set_submodel_rotation);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_translation", "instance", "submodel", "offset", "speed"),
+                &E3DRenderingServer::instance_set_submodel_translation);
         ClassDB::bind_method(
                 D_METHOD("instance_set_light_blink", "instance", "light", "on_time", "off_time", "phase"),
                 &E3DRenderingServer::instance_set_light_blink);
@@ -125,6 +132,7 @@ namespace godot {
         smoke_order.clear();
         _set_smoke_processing(false);
         _set_light_processing(false);
+        _set_animation_processing(false);
         for (KeyValue<RID, E3DInstanceData> &item: instances) {
             item.value.light_objects.clear();
             item.value.smoke_objects.clear();
@@ -200,6 +208,10 @@ namespace godot {
             blinking_instances.erase(p_instance);
             _set_light_processing(!blinking_instances.is_empty());
         }
+        if (animating_instances.has(p_instance)) {
+            animating_instances.erase(p_instance);
+            _set_animation_processing(!animating_instances.is_empty());
+        }
         E3DInstanceData clearing = data;
         _clear_instance_lights(clearing);
         _clear_instance_smoke_sources(clearing);
@@ -228,6 +240,13 @@ namespace godot {
         _resolve_lights(*instance);
         instance->built = true;
         backend.build(*instance, material_resolver);
+        // the model may be a new one after streaming, so the animated submodels are found again
+        for (KeyValue<String, E3DInstanceData::SubmodelAnimation> &animation: instance->submodel_animations) {
+            animation.value.submodel = _find_submodel(instance->model->get_submodels(), animation.key);
+        }
+        if (!instance->submodel_animations.is_empty()) {
+            _pose_submodels(*instance);
+        }
         _build_instance_lights(p_instance, *instance);
         _build_instance_smoke_sources(p_instance, *instance);
         emit_signal(instance_built_signal, p_instance);
@@ -980,8 +999,7 @@ namespace godot {
             if (instance == nullptr) {
                 continue;
             }
-            for (const KeyValue<String, E3DInstanceData::LightDeclaration> &declaration:
-                 instance->light_declarations) {
+            for (const KeyValue<String, E3DInstanceData::LightDeclaration> &declaration: instance->light_declarations) {
                 if (declaration.value.mode == LIGHT_MODE_BLINK &&
                     _is_light_on(declaration.value) != declaration.value.blink_on) {
                     _resolve_lights(*instance);
@@ -1024,6 +1042,137 @@ namespace godot {
             return;
         }
         tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_lights));
+    }
+
+    void E3DRenderingServer::instance_set_submodel_rotation(
+            const RID &p_instance, const String &p_submodel, const Vector3 &p_degrees, const double p_speed) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        E3DInstanceData::SubmodelAnimation &animation = instance->submodel_animations[p_submodel.to_lower()];
+        animation.target_angles = p_degrees;
+        animation.rotate_speed = p_speed;
+        _start_submodel_animation(p_instance, *instance, p_submodel.to_lower());
+    }
+
+    void E3DRenderingServer::instance_set_submodel_translation(
+            const RID &p_instance, const String &p_submodel, const Vector3 &p_offset, const double p_speed) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        E3DInstanceData::SubmodelAnimation &animation = instance->submodel_animations[p_submodel.to_lower()];
+        animation.target_offset = p_offset;
+        animation.translate_speed = p_speed;
+        _start_submodel_animation(p_instance, *instance, p_submodel.to_lower());
+    }
+
+    void E3DRenderingServer::_start_submodel_animation(
+            const RID &p_instance, E3DInstanceData &p_instance_data, const String &p_submodel) {
+        if (p_instance_data.built) {
+            p_instance_data.submodel_animations[p_submodel].submodel =
+                    _find_submodel(p_instance_data.model->get_submodels(), p_submodel);
+        }
+        if (!animating_instances.has(p_instance)) {
+            animating_instances.push_back(p_instance);
+        }
+        _set_animation_processing(true);
+    }
+
+    E3DSubModel *E3DRenderingServer::_find_submodel(const TypedArray<E3DSubModel> &p_submodels, const String &p_name) {
+        for (int i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> submodel = p_submodels[i];
+            if (submodel.is_null()) {
+                continue;
+            }
+            if (submodel->get_name().to_lower() == p_name) {
+                return submodel.ptr();
+            }
+            if (E3DSubModel *found = _find_submodel(submodel->get_submodels(), p_name); found != nullptr) {
+                return found;
+            }
+        }
+        return nullptr;
+    }
+
+    /// TSubModel::RaAnimation() at_RotateXYZ (Model3d.cpp:1145-1152): the offset, then the angles
+    /// about x, y and z, on top of the submodel's own transform
+    void E3DRenderingServer::_pose_submodels(E3DInstanceData &p_instance) {
+        p_instance.submodel_poses.clear();
+        for (const KeyValue<String, E3DInstanceData::SubmodelAnimation> &animation: p_instance.submodel_animations) {
+            if (animation.value.submodel == nullptr) {
+                continue;
+            }
+            const Vector3 &angles = animation.value.angles;
+            const Basis rotation = Basis(Vector3(1.0, 0.0, 0.0), Math::deg_to_rad(angles.x)) *
+                                   Basis(Vector3(0.0, 1.0, 0.0), Math::deg_to_rad(angles.y)) *
+                                   Basis(Vector3(0.0, 0.0, 1.0), Math::deg_to_rad(angles.z));
+            p_instance.submodel_poses[animation.value.submodel] = Transform3D(rotation, animation.value.offset);
+        }
+        _get_backend(p_instance).apply_poses(p_instance);
+    }
+
+    /// TAnimContainer::UpdateModel() (AnimModel.cpp:92-188): every angle turns towards its target at
+    /// the speed, the offset moves along the straight line to its own. A model out of range keeps
+    /// moving, so it is where it should be when it comes back.
+    void E3DRenderingServer::_process_animations() {
+        const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        ERR_FAIL_NULL(tree);
+        const double delta = tree->get_root()->get_process_delta_time();
+        for (int index = animating_instances.size() - 1; index >= 0; index--) {
+            E3DInstanceData *instance = instances.getptr(animating_instances[index]);
+            bool moving = false;
+            if (instance != nullptr) {
+                for (KeyValue<String, E3DInstanceData::SubmodelAnimation> &item: instance->submodel_animations) {
+                    E3DInstanceData::SubmodelAnimation &animation = item.value;
+                    if (animation.rotate_speed != 0.0) {
+                        const double step = Math::abs(animation.rotate_speed) * delta;
+                        for (int axis = Vector3::AXIS_X; axis <= Vector3::AXIS_Z; axis++) {
+                            const double difference = animation.target_angles[axis] - animation.angles[axis];
+                            animation.angles[axis] = Math::abs(difference) <= step
+                                                             ? animation.target_angles[axis]
+                                                             : animation.angles[axis] + (SIGN(difference) * step);
+                        }
+                        if (animation.angles == animation.target_angles) {
+                            animation.rotate_speed = 0.0;
+                        } else {
+                            moving = true;
+                        }
+                    }
+                    if (animation.translate_speed != 0.0) {
+                        const Vector3 difference = animation.target_offset - animation.offset;
+                        const double step = Math::abs(animation.translate_speed) * delta;
+                        if (difference.length() <= MAX(step, ANIMATION_TRANSLATION_EPSILON)) {
+                            animation.offset = animation.target_offset;
+                            animation.translate_speed = 0.0;
+                        } else {
+                            animation.offset += difference.normalized() * step;
+                            moving = true;
+                        }
+                    }
+                }
+                if (instance->built) {
+                    _pose_submodels(*instance);
+                }
+            }
+            if (!moving) {
+                animating_instances.remove_at(index);
+            }
+        }
+        _set_animation_processing(!animating_instances.is_empty());
+    }
+
+    void E3DRenderingServer::_set_animation_processing(const bool p_processing) {
+        if (animation_processing == p_processing) {
+            return;
+        }
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        if (tree == nullptr) {
+            return;
+        }
+        animation_processing = p_processing;
+        if (p_processing) {
+            tree->connect("process_frame", callable_mp(this, &E3DRenderingServer::_process_animations));
+            return;
+        }
+        tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_animations));
     }
 
     /// One emitter's share of a frame. Fractional particles are carried over, so a rate below one

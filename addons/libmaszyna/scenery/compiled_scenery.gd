@@ -12,5 +12,6 @@ class_name MaszynaCompiledScenery
 @export var traction:Array[MaszynaTractionData] = []
 @export var power_sources:Array[MaszynaPowerSourceData] = []
 @export var models:Array[MaszynaModelData] = []
+@export var light_events:Array[MaszynaLightsEventData] = []
 ## Merged triangle meshes, streamed by SceneryChunkRenderingServer (not nodes, so not in [member nodes])
 @export var triangle_chunks:Array[MaszynaTrianglesChunkData] = []

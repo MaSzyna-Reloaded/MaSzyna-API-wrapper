@@ -4,6 +4,7 @@
 #include "E3DNodesBackend.hpp"
 #include "E3DOptimizedBackend.hpp"
 #include "E3DSmokeSourceFactory.hpp"
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -107,6 +108,19 @@ namespace godot {
             /// own clock owes it. The count of particles is unchanged either way - only how
             /// evenly they are spread.
             static constexpr int MAX_SMOKE_SOURCES_PER_FRAME = 64;
+            /// Blinking instances visited per frame; above it an instance's edge comes a few
+            /// frames late, the cycle itself runs on the clock and does not drift
+            static constexpr int MAX_BLINKING_INSTANCES_PER_FRAME = 64;
+            static constexpr double USEC_PER_SECOND = 1000000.0;
+
+            /// Emitted once an instance is freed, so whatever refers to it can let go
+            static const char *instance_freed_signal;
+            /// Emitted after an instance is built - its model, and so its lights, are known from then
+            static const char *instance_built_signal;
+
+            static E3DRenderingServer *get_instance() {
+                return Object::cast_to<E3DRenderingServer>(Engine::get_singleton()->get_singleton("E3DRenderingServer"));
+            }
 
         private:
             /// An addressable light of an instance. An emission light only switches the model's
@@ -190,6 +204,11 @@ namespace godot {
             Vector3 wind_direction = Vector3(1.0, 0.0, 0.0);
             Vector3 wind;
             bool smoke_processing = false;
+            /// Instances with a LIGHT_MODE_BLINK light, walked round-robin by _process_lights()
+            Vector<RID> blinking_instances;
+            int blinking_cursor = 0;
+            bool light_processing = false;
+            double light_clock = 0.0; // seconds, the clock every blinking light cycles on
             double current_time = 12.0; // hours, 0..24
             double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
@@ -237,7 +256,11 @@ namespace godot {
             /// of day, then applies it to the backend and to the instance's light objects
             void _resolve_lights(E3DInstanceData &p_instance);
             void _resolve_all_lights();
-            bool _is_light_mode_on(float p_mode) const;
+            bool _is_light_on(const E3DInstanceData::LightDeclaration &p_declaration) const;
+            /// Connected to SceneTree's process_frame while any light blinks
+            void _process_lights();
+            void _update_blinking(const RID &p_instance, const E3DInstanceData &p_instance_data);
+            void _set_light_processing(bool p_processing);
             static String _light_name_for_index(int p_index);
 
         protected:
@@ -268,6 +291,11 @@ namespace godot {
             void instance_set_lights_modes(const RID &p_instance, const PackedFloat32Array &p_modes);
             /// The scenery node's `lightcolors` list, in the same order
             void instance_set_lights_colors(const RID &p_instance, const PackedColorArray &p_colors);
+            void instance_set_light_mode(const RID &p_instance, int p_light, LightMode p_mode);
+            /// Lights addressed by index (light_on00...), 0 until the instance is built
+            int instance_get_light_count(const RID &p_instance) const;
+            void instance_set_light_blink(
+                    const RID &p_instance, int p_light, float p_on_time, float p_off_time, float p_phase);
 
             RID emission_light_create(const RID &p_instance, const String &p_light_name);
             RID spot_light_create(const RID &p_instance, const String &p_light_name, const NodePath &p_submodel_path);

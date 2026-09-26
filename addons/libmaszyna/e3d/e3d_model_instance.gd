@@ -15,6 +15,9 @@ class_name E3DModelInstance
 ## Emitted after the current model instance has been created.
 signal e3d_loading
 signal e3d_loaded
+## Emitted whenever a new [E3DRenderingServer] instance is created for the model - on the first
+## load, on [method reload] and on re-entering the tree
+signal e3d_instance_created(instance: RID)
 
 ## Selected instancing backend (same values as [enum E3DRenderingServer.Instancer])
 enum Instancer {
@@ -173,6 +176,11 @@ func _notification(what: int) -> void:
                 E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
 
 
+## The [E3DRenderingServer] instance of the model, empty until it is created
+func get_e3d_instance() -> RID:
+    return _rid
+
+
 func is_e3d_loaded() -> bool:
     return _e3d_loaded
 
@@ -199,6 +207,7 @@ func _create_instance() -> void:
     E3DRenderingServer.instance_set_layer_mask(_rid, layers)
     E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
     E3DRenderingServer.instance_build(_rid)
+    e3d_instance_created.emit(_rid)
     # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
     # but a particle emitter of the model is owned by the server either way and spawns where the
     # server last saw the instance

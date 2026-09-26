@@ -125,6 +125,9 @@ anything. Open work belongs in `TODO.md`.
   on md5, not mtime. *(09-24 .fiz stopped importing)*
 * `global_script_class_cache.cfg` is updated only by an editor scan. Run `--import`. *(09-20
   new class_name; 09-22 sfx tick)*
+* A node-typed property written into a `.tscn` by hand needs `node_paths=PackedStringArray(...)`
+  in the node's header; without it the `NodePath` is not resolved, the property stays empty and
+  the next save from the editor drops it. *(09-26 semaphore lost its model)*
 * A new catalogue in the same locale re-translates nothing: `set_locale()` of an unchanged locale
   and `add_translation()`/`remove_translation()` send no `NOTIFICATION_TRANSLATION_CHANGED`.
   The code that swaps it notifies the main loop. *(09-25 catalogue swapped, UI unchanged)*

@@ -531,8 +531,8 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * `latarnial_betdziur` registers a second light `zarowka` (`_on`/`_off` suffix rule,
   `e3d_parser.cpp:592`) that no `lights` list reaches, so the bulb stays off. The original binds
   only `Light_On00..07` (`AnimModel.cpp:303`) - should the suffix rule apply to scenery models?
-* `ls_Blink` follows `ls_Dark`, and the `m_lightopacities` transition (`AnimModel.cpp:500-548`) is
-  not ported - both need a per-frame timer; `lights 2` is used 15 times, `notransition` never.
+* The `m_lightopacities` transition (`AnimModel.cpp:542-549`) is not ported - a blinking light
+  (`E3DRenderingServer._process_lights()`) snaps on and off; `notransition` is parsed and ignored.
 * `Overcast` is folded into the light level (`MaszynaSkyEnvironment.get_light_level()`) instead of
   subtracted at the threshold (`AnimModel.cpp:598`).
 * Scenery models have no nodes - not pickable in the editor, don't follow the
@@ -544,6 +544,33 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   without an `atmo` section inherits it.
 * `MaszynaRuntime.pause()` holds the vehicle step, the weather and the world's sounds only - the
   environment clock, `TractionPowerServer`, `TrackManager` switches and the smoke keep running.
+
+## Semaphores (#296)
+
+`SemaphoreServer` with systems, delegates, sources, kinds and the nodes is in place; a scenery
+semaphore's kind is made of the `lights` events aimed at it, and the original's
+`MaszynaLegacySemaphoreDelegate` shows one of them when it is handed the event. Left:
+
+* **Scenery events are not run**: `maszyna_event_importer.gd` keeps only `lights` events (as the
+  aspects of the semaphores' kinds) and drops the rest - `multiple` with `condition`
+  (`memcompare`, `trackfree`/`trackoccupied`), `updatevalues`, `getvalues`, `animation`; memcells
+  are skipped (`maszyna_node_importer.gd`), and `TIsolated` `:busy`/`:free` is not generated. This
+  is an EventServer of its own; once it exists, `lights` goes to the legacy delegate
+  (`system_send_event(system, &"lights", {semaphore, aspect})`, the target by
+  `semaphore_get_rid_by_name`, the aspect by `MaszynaLegacySemaphoreKindFactory.get_aspect_name()`)
+  and the isolated sections become the system's sources.
+* **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
+  `getvalues` (`Driver.cpp:459-470`, `:292-419`) - has no counterpart; a delegate only publishes
+  its aspect with `system_publish_event`.
+* **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the semaphore
+  API has no light that follows the daylight; the legacy kind factory warns and keeps the light.
+* **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).
+* **Every lit scenery model is a semaphore** (the operator's decision), street lamps with
+  `lights 3` included - telling semaphores apart is open.
+* **Scenery kinds are made of `lights` events only**: a lit model no event reaches gets the generic
+  kind (lights, no aspects). The declared `lights` list is not an aspect, so a scenery semaphore's
+  light states on the server read `LIGHT_STATE_OFF` until its first aspect, whatever E3D shows.
+* **`SemaphoreAspect.lights` are plain numbers** in the inspector (`LightCommand`), not an enum.
 
 ## Tests
 

@@ -16,8 +16,10 @@
 [ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
+[ext_resource type="SemaphoreSystemDelegate" path="res://semaphores/demo_block_delegate.tres" id="demo_block_delegate"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
+[ext_resource type="SemaphoreKind" uid="uid://diyvl26to634d" path="res://semaphores/sbl_3.tres" id="sbl_3_kind"]
 
 [sub_resource type="Resource" id="TrackCurve_common"]
 script = ExtResource("22_track_curve")
@@ -1023,6 +1025,32 @@ script = ExtResource("4_drlsl")
 model = ExtResource("21_sa6xs")
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
+[node name="SBL" type="VisualInstance3D" parent="Dekoracje" unique_id=1624308571]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1.0000000000000038, 0, 0, 0, 1, 0, 0, 0, 1.0000000000000038, -20.505828389161007, 0, 196.3552999344456)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+lights_state = Dictionary[String, bool]({
+"00": false,
+"01": false,
+"02": false
+})
+data_path = "models/sem"
+model_filename = "sbl_3_p_zcp_ks_ds_03"
+metadata/_custom_type_script = "uid://dgifxvb2e4hww"
+
 [node name="TrackExample" type="Node3D" parent="." unique_id=371000835]
 
 [node name="CommonTrack" type="VisualInstance3D" parent="TrackExample" unique_id=136143682]
@@ -1350,3 +1378,19 @@ data_path = "models"
 model_filename = "tra/-3d"
 skins = ["tra/betonrelief1"]
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
+
+[node name="SBLSemaphore" type="SemaphoreNode" parent="." unique_id=880412397 node_paths=PackedStringArray("model")]
+semaphore_name = &"demo_sbl"
+model = NodePath("../Dekoracje/SBL")
+kind = ExtResource("sbl_3_kind")
+aspect = &"S1"
+
+[node name="DemoBlock" type="SemaphoreSystemNode" parent="." unique_id=1340977105]
+delegate = ExtResource("demo_block_delegate")
+semaphore_names = PackedStringArray("demo_sbl")
+
+[node name="AspectCycle" type="Timer" parent="." unique_id=517233640]
+wait_time = 5.0
+autostart = true
+
+[connection signal="timeout" from="AspectCycle" to="DemoBlock" method="send_event" binds= [&"next"]]

@@ -1,0 +1,21 @@
+[gd_resource type="SemaphoreKind" format=3 uid="uid://diyvl26to634d"]
+
+[sub_resource type="SemaphoreAspect" id="S1"]
+lights = PackedInt32Array(0, 1, 0)
+
+[sub_resource type="SemaphoreAspect" id="S5"]
+lights = PackedInt32Array(0, 0, 1)
+
+[sub_resource type="SemaphoreAspect" id="S2"]
+lights = PackedInt32Array(1, 0, 0)
+
+[sub_resource type="SemaphoreAspect" id="S3"]
+lights = PackedInt32Array(2, 0, 0)
+
+[resource]
+aspects = {
+&"S1": SubResource("S1"),
+&"S2": SubResource("S2"),
+&"S3": SubResource("S3"),
+&"S5": SubResource("S5")
+}

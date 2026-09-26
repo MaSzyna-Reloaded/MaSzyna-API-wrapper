@@ -74,6 +74,14 @@
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
 #include "scripting/PythonScreenServer.hpp"
+#include "semaphores/MaszynaLegacySemaphoreDelegate.hpp"
+#include "semaphores/MaszynaLegacySemaphoreKindFactory.hpp"
+#include "semaphores/SemaphoreAspect.hpp"
+#include "semaphores/SemaphoreKind.hpp"
+#include "semaphores/SemaphoreNode.hpp"
+#include "semaphores/SemaphoreServer.hpp"
+#include "semaphores/SemaphoreSystemDelegate.hpp"
+#include "semaphores/SemaphoreSystemNode.hpp"
 #include "speed_control/MoverVehicleSpeedControl.hpp"
 #include "speed_control/VehicleSpeedControl.hpp"
 #include "switches/MoverVehicleSwitches.hpp"
@@ -113,6 +121,7 @@ SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
 MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
+SemaphoreServer *semaphore_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -142,6 +151,14 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrackEndpointRef);
         GDREGISTER_CLASS(TrackBranchNeighbors);
         GDREGISTER_CLASS(TrackManager);
+        GDREGISTER_CLASS(SemaphoreServer);
+        GDREGISTER_CLASS(SemaphoreAspect);
+        GDREGISTER_CLASS(SemaphoreKind);
+        GDREGISTER_ABSTRACT_CLASS(MaszynaLegacySemaphoreKindFactory);
+        GDREGISTER_VIRTUAL_CLASS(SemaphoreSystemDelegate);
+        GDREGISTER_CLASS(MaszynaLegacySemaphoreDelegate);
+        GDREGISTER_CLASS(SemaphoreNode);
+        GDREGISTER_CLASS(SemaphoreSystemNode);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
@@ -249,6 +266,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton(
                 "MaszynaTranslationServer", maszyna_translation_server_singleton);                            // 13
         Engine::get_singleton()->register_singleton("CabinHUDMouseSystem", cabin_hud_mouse_system_singleton); // 14
+        // after E3DRenderingServer is registered: the constructor follows its freed instances
+        semaphore_server_singleton = memnew(SemaphoreServer);
+        Engine::get_singleton()->register_singleton("SemaphoreServer", semaphore_server_singleton); // 15
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -272,6 +292,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("SemaphoreServer")) {
+        Engine::get_singleton()->unregister_singleton("SemaphoreServer"); // 15
+    }
+    if (semaphore_server_singleton != nullptr) {
+        memdelete(semaphore_server_singleton);
+        semaphore_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("CabinHUDMouseSystem")) {

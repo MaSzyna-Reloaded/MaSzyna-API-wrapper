@@ -32,6 +32,8 @@ namespace godot {
                     RID vehicle;
                     /// The sequence of its scheduled update in the queue, 0 while none is
                     uint64_t update_sequence = 0;
+                    /// It drives; off while a player sits in the vehicle's cab
+                    bool control_active = true;
             };
 
             /// A driver's update at a time; the sequence keeps entries of one time in the order
@@ -83,5 +85,10 @@ namespace godot {
             /// The driver's delegate is updated in p_seconds of simulated time; a later call
             /// replaces the one pending
             void driver_schedule_update(const RID &p_driver, double p_seconds);
+            /// Whether the vehicle's driver drives it - off while a player drives it
+            /// (RailVehicle3D::enter_cabin()); the driver still takes its orders then, but touches no
+            /// control. False for a vehicle without a driver.
+            void vehicle_set_control_active(const RID &p_vehicle, bool p_active);
+            bool vehicle_is_control_active(const RID &p_vehicle) const;
     };
 } // namespace godot

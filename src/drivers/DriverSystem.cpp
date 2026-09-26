@@ -22,6 +22,10 @@ namespace godot {
                 &DriverSystem::driver_send_command, DEFVAL(Vector3()));
         ClassDB::bind_method(
                 D_METHOD("driver_schedule_update", "driver", "seconds"), &DriverSystem::driver_schedule_update);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_control_active", "vehicle", "active"), &DriverSystem::vehicle_set_control_active);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_is_control_active", "vehicle"), &DriverSystem::vehicle_is_control_active);
     }
 
     /// A freed vehicle leaves its driver without one; the time follows the runtime. No explicit
@@ -95,6 +99,22 @@ namespace godot {
             }
         }
         _refresh_processing();
+    }
+
+    void DriverSystem::vehicle_set_control_active(const RID &p_vehicle, const bool p_active) {
+        const RID *driver = drivers_by_vehicle.getptr(p_vehicle);
+        if (driver == nullptr) {
+            return;
+        }
+        if (DriverData *data = drivers.getptr(*driver); data != nullptr) {
+            data->control_active = p_active;
+        }
+    }
+
+    bool DriverSystem::vehicle_is_control_active(const RID &p_vehicle) const {
+        const RID *driver = drivers_by_vehicle.getptr(p_vehicle);
+        const DriverData *data = driver != nullptr ? drivers.getptr(*driver) : nullptr;
+        return data != nullptr && data->control_active;
     }
 
     void DriverSystem::driver_schedule_update(const RID &p_driver, const double p_seconds) {

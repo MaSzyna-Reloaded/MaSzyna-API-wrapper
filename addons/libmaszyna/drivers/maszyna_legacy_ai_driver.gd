@@ -259,6 +259,10 @@ func _update(driver:RID) -> void:
             state.shunt_velocity, state.timetable.velocity if state.timetable else 0.0,
             TrackManager.track_get_velocity(track) if track.is_valid() else MaszynaLegacyDriverSpeed.NO_LIMIT,
             directional_speed, state.trainset)
+    # a player drives it: the driver takes orders and reads the trainset, and touches nothing
+    if not DriverSystem.vehicle_is_control_active(vehicle):
+        DriverSystem.driver_schedule_update(driver, state.reaction_time)
+        return
     _control_security_system(vehicle, CabinSystem.occupied_cab(vehicle))
     # the power and the brakes, as the original's AI decides them on every update (UpdateSituation())
     MaszynaLegacyDriverTraction.control(

@@ -22,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyn
 static var isolated_importer = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/importer/maszyna_area_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 23
+const CACHE_FORMAT_VERSION:int = 24
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -172,7 +172,8 @@ static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
 
 
 ## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
-## their handles exist only then. The vehicle goes first: the driver learns its cab from it.
+## their handles exist only then. The vehicle goes first: the driver learns its cab from it. Then
+## every trainset's driver gets the trainset's timetable.
 static func _build_drivers(root:MaszynaIncludeNode) -> void:
     for node:Node in root.find_children("", "DynamicRailVehicle3D", true, false):
         var vehicle_node:DynamicRailVehicle3D = node
@@ -186,6 +187,20 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         CabinSystem.vehicle_attach_cab_logic(
                 controller.get_rid(), LegacyCabinLogic.from_mmd(vehicle_node.data_path, vehicle_node.file_name))
         DriverSystem.driver_attach_delegate(driver, _ai_driver)
+    # endtrainset (simulationstateserializer.cpp:818-848): the trainset's driver gets its timetable
+    # and the velocity it starts with; of several drivers, the one furthest along the trainset
+    for node:Node in root.find_children("", "TrainSet3D", true, false):
+        var trainset:TrainSet3D = node
+        var trainset_driver:RID = RID()
+        for child:Node in trainset.get_children():
+            var vehicle_node:DynamicRailVehicle3D = child as DynamicRailVehicle3D
+            var controller:VehicleController = vehicle_node.get_controller() if vehicle_node else null
+            var driver:RID = DriverSystem.vehicle_get_driver(controller.get_rid()) if controller else RID()
+            if driver.is_valid():
+                trainset_driver = driver
+        if trainset_driver.is_valid():
+            DriverSystem.driver_send_command(
+                    trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset.timetable, trainset.velocity, 0.0)
 
 
 static func _instantiate_server_data(

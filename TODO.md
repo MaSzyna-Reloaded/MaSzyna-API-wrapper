@@ -758,16 +758,8 @@ ported, into a delegate.
       braking point offset (`braking_distance_multiplier()`) in the target speed.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
    runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
-   **Open - a long trainset is unstable when a physics frame is long.** Since the one clock
-   (2026-09-27) the physics runs at the simulation speed. Headless at speed 5 (about 0.17 s of
-   simulation per frame) the eszelon rolls at ~1 km/h already while its brakes release, the
-   driver - no longer "standing" - wants the shunting 40, and the 21 vehicles then oscillate
-   (trainset acceleration +-18 m/s2) at full power without moving off; a 0.2 s frame cap does not
-   help. At speed 1 (about 0.03 s a frame) the same start stands, then pulls away cleanly. The
-   original runs the same frame structure; suspects are what the wrapper does once per frame -
-   `_update_neighbours()`, the `update_location()` sync, `process_components(p_delta)`. The
-   earlier "dead stop on n151 while SM42-099 drives" (headless, speed 5) is most likely the same
-   thing - the other train only made the frames longer.
+   The eszelon's lock-up at simulation speed 5 was the couplers stiffened by a long frame
+   (`docs/findings-archive.md`, 2026-09-27) - fixed in `RailVehicleServer::step()`.
    6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
       stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
       parser does) - passed at speed where the train does not stop, else brought forward for the
@@ -800,6 +792,12 @@ ported, into a delegate.
       margins of modern vehicles and of the weather, and a late train's (`moveLate`).
 
 ## Tests
+
+* **No regression test for the couplers stiffened by a long frame** (2026-09-27). A snatch of
+  `test_vehicle.fiz` wagons does not tell the fixed build from the broken one - the fixture
+  wagons stop within 3 s whatever the frame. It needs a free-rolling consist fixture (or a
+  powered one pulling a long train), stepped at 0.017 s and at 0.17 s a frame. Checked so far
+  by hand on Stary Jawor only (the eszelon at 0.03 s and 0.17 s: 14.09 and 14.06 m/s at 80 s).
 
 * `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not
   accelerate past 2 m/s across 5 notches (it reads the game directory, see below).

@@ -85,8 +85,10 @@ namespace godot {
                     /* The track and heading last reported by the track signals */
                     RID reported_track;
                     TrackHeading reported_heading = HEADING_STANDING;
-                    /* Moved since the simulated vehicle's location was last updated */
+                    /* Moved since its position was last announced (once a frame), and since the
+                     * simulated vehicle's location was last set (every sub-step) */
                     bool moved = true;
+                    bool location_stale = true;
                     /* The body's transform and whether it still describes the placement above. A
                      * parked vehicle is asked for it every frame by everything that draws it or
                      * listens from it, and composing it samples the track twice. */

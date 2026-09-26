@@ -126,6 +126,14 @@ interface.
   `P` alone raises its pantograph; porting only the keys that are present left the master valve
   shut, and the wrapper grew a workaround opening it on every raise. Wrapper: the loader's
   defaults in `VehicleElectricEngine`, the workaround removed.
+* **The couplers depend on the frame rate.** `CouplerForce()` (`Mover.cpp:4779-4784`) takes a
+  coupler's length as the distance set by the last refresh plus *ten times* the relative
+  movement since (`dMoveLen`), and the original refreshes once a frame, before all its physics
+  sub-steps (`DynObj.cpp:8691-8699`). The longer the frame, the stiffer and more wrongly loaded
+  every coupler: at 60 fps nobody notices, at a slow frame or a faster simulation a long train
+  locks up - the Stary Jawor eszelon, 21 vehicles, stood at 0.18 m/s with 391 kN at the wheels at
+  0.17 s a frame, and ran to 14 m/s at 0.03 s. Wrapper: locations and neighbours refreshed before
+  every sub-step (`RailVehicleServer::step()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
 * **The FIZ loader is not in the vendored copy.** Ours is 9598 lines against the original's 12813
   and holds no `LoadFIZ_*` at all, so every quirk of how a FIZ key reaches a Mover field has to be
   read in `~/src/maszyna`, not in `src/maszyna`.

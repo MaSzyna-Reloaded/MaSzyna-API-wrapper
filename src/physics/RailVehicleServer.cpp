@@ -439,6 +439,7 @@ namespace godot {
         placement->track = p_track;
         placement->track_direction = p_track_direction;
         placement->moved = true;
+        placement->location_stale = true;
         placement->body_transform_valid = false;
         placement->track_is_switch = tracks->track_is_switch(p_track);
         placement->switch_track =
@@ -472,6 +473,7 @@ namespace godot {
         TrackManager *tracks = TrackManager::get_instance();
         ERR_FAIL_NULL(tracks);
         p_placement.moved = true;
+        p_placement.location_stale = true;
 
         RID current_track = p_placement.track;
         TrackManager::SwitchTrack current_switch_track = p_placement.switch_track;
@@ -1008,18 +1010,11 @@ namespace godot {
 
         for (int index = 0; index < stepped_vehicles.size(); ++index) {
             VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-            VehicleController *controller = Object::cast_to<VehicleController>(stepped_controllers[index]);
-            // a vehicle that has not moved keeps its location - sampling the track is not needed
             if (placement->moved) {
-                controller->update_location();
-                controller->emit_position_changed_if_needed();
+                Object::cast_to<VehicleController>(stepped_controllers[index])->emit_position_changed_if_needed();
             }
             placement->moved = false;
             track_vehicles[placement->track].push_back(stepped_vehicles[index]);
-        }
-        // once per update, like the original (DynObj.cpp:8691-8699)
-        for (const RID &vehicle_rid: stepped_vehicles) {
-            _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
         }
 
         // the whole frame, in steps no longer than PHYSICS_STEP; the clock caps the frame
@@ -1027,6 +1022,38 @@ namespace godot {
         const int iterations = MAX(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1);
         const double sub_step = p_delta / iterations;
         for (int iteration = 0; iteration < iterations; ++iteration) {
+            // DELIBERATE DEPARTURE FROM THE ORIGINAL - do not move this back out of the loop.
+            //
+            // The original refreshes the vehicles' locations and neighbour distances once a frame
+            // (vehicle_table::update(), DynObj.cpp:8691-8699), before all its sub-steps. The Mover
+            // does not measure a coupler from the positions, though: CouplerForce()
+            // (Mover.cpp:4779-4784) takes the distance set by that refresh and adds TEN TIMES what
+            // the two vehicles moved relative to each other since (dMoveLen, reset with the
+            // location). The error of that term grows with the time since the refresh, so the
+            // longer the frame, the stiffer and more wrongly loaded every coupler is. At 60 fps
+            // (1-2 sub-steps) it does not show; at 0.17 s a frame (17 sub-steps - a slow machine,
+            // or any simulation speed above 1) the eszelon's 21 vehicles locked up: 391 kN at
+            // the wheels, 0.18 m/s, for minutes. Measured with the same start stepped at 0.03 s
+            // and at 0.17 s a frame (FINDINGS.md, 2026-09-27 "couplers stiffened by a long
+            // frame").
+            //
+            // Refreshed here, before every sub-step, the ten-fold term only ever spans one
+            // PHYSICS_STEP whatever the frame length, which is what the original does at 100 fps;
+            // the two frame lengths then give the same run to within 0.1 m/s. The Mover itself
+            // (vendored) is left as it is. The cost: the locations and the neighbour scan run per
+            // sub-step, not per frame - at 60 fps the same as before, on a slow frame up to
+            // MAX_FRAME_TIME / PHYSICS_STEP times. A vehicle that has not moved keeps its
+            // location, sampling the track is not needed.
+            for (int index = 0; index < stepped_vehicles.size(); ++index) {
+                VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
+                if (placement->location_stale) {
+                    Object::cast_to<VehicleController>(stepped_controllers[index])->update_location();
+                }
+                placement->location_stale = false;
+            }
+            for (const RID &vehicle_rid: stepped_vehicles) {
+                _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
+            }
             // the original computes the forces of every vehicle before moving any of them, so
             // coupled vehicles see a consistent state (DynObj.cpp:8199-8205)
             for (int index = 0; index < stepped_vehicles.size(); ++index) {

@@ -4,6 +4,30 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - couplers stiffened by a long frame
+
+* **Symptom:** once the physics ran at the simulation speed (the one clock, below), the eszelon
+  at speed 5 headless would not pull away: full power (391 kN, master controller 15), brakes
+  released, 0.18 m/s for minutes, the trainset's acceleration jumping +-18 m/s2. At speed 1 the
+  same start pulled away cleanly. Earlier "dead stops" of the eszelon at speed 5 were the same.
+* **Wrong turns:** the physics catch-up jump (no warning logged), another train in the way (none
+  within 150 m), a 0.2 s cap on the frame (still locked up), a driver fault (it drove the same in
+  both runs).
+* **What proved it:** the eszelon loaded, settled for 60 frames, then the clock advanced by hand
+  (`MaszynaRuntime.advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
+  and with 0.17 s frames - same scenery, same driver, only the frame length different: 14 m/s
+  after 80 s against 0.18 m/s. Then the locations and neighbour distances refreshed before every
+  sub-step instead of once a frame: 14.06 against 14.09 m/s.
+* **Cause:** `TMoverParameters::CouplerForce()` (Mover.cpp:4779-4784, the original's own code)
+  measures a coupler as the distance set by the last refresh plus ten times the relative
+  `dMoveLen` since. The original refreshes once a frame (DynObj.cpp:8691-8699), so a coupler's
+  load depends on the frame length; at the original's usual 60 fps it does not show.
+* **Fix:** `RailVehicleServer::step()` refreshes `update_location()` and `_update_neighbours()`
+  before every sub-step (a location only for a vehicle that moved); the position is still
+  announced once a frame. The Mover is untouched.
+* **Rule:** whatever the Mover measures from "since the last refresh" is refreshed every
+  sub-step, not every frame - otherwise its behaviour depends on the frame rate.
+
 ## 2026-09-27 - three clocks: the physics ran at real time, events and drivers at the speed set
 
 * **Symptom:** headless probes at simulation speed 5 behaved oddly - trains reached places long

@@ -4,6 +4,29 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-26 - headless test crashes at teardown: the dummy renderer is not thread safe
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` crashed in about half of the runs, in
+  `MaszynaInclude._free_owned_rids()` -> `E3DRenderingServer::instance_free()` ->
+  `E3DOptimizedBackend::clear()` -> `RenderingServer::free_rid()`, SIGSEGV. Other runs logged
+  `mesh_add_surface: Parameter "m" is null` from `E3DModelManager.load_model()` while the cab
+  loaded, "unimplemented base type encountered in renderer scene cull", or aborted with glibc
+  `double free or corruption (!prev)` right after those errors.
+* **Proof:** gdb on the crash: a built optimized instance, its model still referenced, its three
+  render instances freed one by one. The crash is at the commit before too (2 of 4). No crash in 6
+  runs with the scenery freed before the player, nor in 6 with streaming stopped first, but one
+  of those aborted with the heap corrupted during the cab model load - so the teardown is only
+  where the damage shows. In the engine source (4.7.2) the dummy renderer's mesh storage is
+  `RID_Owner<DummyMesh>`, not thread safe, while the real one is `RID_Owner<Mesh, true>`.
+* **Cause:** the streaming worker preloads E3D models, which creates meshes, while the main thread
+  loads the cab's model (`MmdCabinInstancer.build_into()` -> `E3DModelManager.load_model()`). The
+  RenderingServer allows mesh creation from any thread; the headless dummy renderer does not
+  honour it, and two threads allocating in its mesh owner corrupt the heap.
+* **Fix:** none yet (TODO.md, "Tests").
+* **Rule:** a headless crash or heap corruption in rendering code that meshes are created in from
+  two threads is the dummy renderer before it is our code - check whether a worker was loading
+  models at the same time.
+
 ## 2026-09-26 - semaphore lost its model
 
 * **Symptom:** `SemaphoreNode.model` in `demo_3d.tscn` was empty in the editor, and after the

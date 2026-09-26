@@ -163,6 +163,9 @@ anything. Open work belongs in `TODO.md`.
 * The headless dummy renderer keeps no texture data. A vehicle without mass or a track is NaN, and
   NaN never compares equal or culls. *(09-24 Python screens; 09-24 parked vehicle; 09-22 sound
   cost)*
+* The headless dummy renderer's mesh storage is not thread safe: meshes created on the streaming
+  worker and on the main thread at once corrupt the heap, and the crash shows later, at teardown.
+  *(09-26 headless test crashes at teardown)*
 
 ## Sound
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through

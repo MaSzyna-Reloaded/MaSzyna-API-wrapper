@@ -701,10 +701,11 @@ ported, into a delegate.
   'Dictionary'") - not caused by the scenario work, not looked into.
 
 * `test_zzz_ep07_cabin_main_switch.gd` crashes (SIGSEGV) in about half of the runs, at `82cda7a30`
-  too (2 of 4): tearing the scenery down, `MaszynaInclude._free_owned_rids()` ->
-  `E3DRenderingServer::instance_free()` -> `RenderingServer::free_rid()`. Once it came with
-  "unimplemented base type encountered in renderer scene cull" (`instance_set_base`) during the
-  test. Not looked into.
+  too: the headless dummy renderer's mesh storage is not thread safe, and the streaming worker
+  preloads models while the main thread loads the cab's (`docs/findings-archive.md`, 2026-09-26
+  "headless test crashes at teardown"). To decide: serialise model loading (one lock in
+  `E3DModelManager.load_model()` - costs the real game a wait on the main thread), or load on the
+  worker only with a real renderer.
 
 * **No HUD panel test on a non-diesel.** `mover_gauges.gd` broke on an induction motor (it asked
   `VehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `VehicleDieselEngine`'s);

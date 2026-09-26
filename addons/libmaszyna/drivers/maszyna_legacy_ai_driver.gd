@@ -34,6 +34,8 @@ const MAX_ORDERS:int = 64
 const TIMETABLE_PREFIX:String = "Timetable:"
 const NO_TIMETABLE:String = "none"
 const SCENERY_DIRECTORY:String = "scenery"
+## The shunting speed until an order gives another [km/h] (fShuntVelocity, Driver.h:431)
+const DEFAULT_SHUNT_VELOCITY:float = 40.0
 ## A shunting speed is kept only when it is a speed (fabs(NewValue1) > 2.0, Driver.cpp:4667)
 const MIN_SHUNT_VELOCITY:float = 2.0
 ## `Shunt <vehicles> <coupler>`: -1 all the vehicles; below -1.5 wait for the signal; below -2.5
@@ -75,10 +77,11 @@ class DriverState:
     var direction_order:int = 0
     ## SetVelocity/ShuntVelocity: the speed allowed and the one after it; stop_here - not to move
     ## towards a signal until told to (moveStopHere)
-    var velocity:float = -1.0
+    ## at first it stands (Driver.h:392)
+    var velocity:float = 0.0
     var velocity_next:float = -1.0
     var stop_here:bool = true
-    var shunt_velocity:float = -1.0
+    var shunt_velocity:float = DEFAULT_SHUNT_VELOCITY
     ## iVehicleCount, iCoupler, fStopTime of `Shunt` and `Wait_for_orders`
     var vehicle_count:int = -2
     var coupler:int = 0
@@ -98,6 +101,8 @@ class DriverState:
     var reaction_time:float = PREPARE_TIME
     ## What it read of its trainset on its last update
     var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
+    ## The speed and acceleration it wants
+    var speed:MaszynaLegacyDriverSpeed = MaszynaLegacyDriverSpeed.new()
 
     func _init() -> void:
         orders.resize(MAX_ORDERS)
@@ -150,6 +155,8 @@ func get_state(driver:RID) -> Dictionary:
         "trainset_braked": state.trainset.braked,
         "trainset_gravity_acceleration": state.trainset.gravity_acceleration,
         "trainset_acceleration": state.trainset.acceleration,
+        "velocity_desired": state.speed.velocity_desired,
+        "acceleration_desired": state.speed.acceleration_desired,
     }
 
 
@@ -243,6 +250,21 @@ func _update(driver:RID) -> void:
         return
     state.reaction_time = EASY_REACTION_TIME
     state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
+    var track:RID = RailVehicleServer.vehicle_get_track_position(vehicle)["track_rid"]
+    # DirectionalVel(), Driver.h:312: the speed, negative when it runs against the way it drives
+    var directional_speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) \
+            * signf(state.direction * float(CabinSystem.vehicle_state_value(vehicle, "velocity", 0.0)))
+    state.speed.pick(
+            state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
+            state.shunt_velocity, state.timetable.velocity if state.timetable else 0.0,
+            TrackManager.track_get_velocity(track) if track.is_valid() else MaszynaLegacyDriverSpeed.NO_LIMIT,
+            directional_speed, state.trainset)
+    _control_security_system(vehicle, CabinSystem.occupied_cab(vehicle))
+    # the power and the brakes, as the original's AI decides them on every update (UpdateSituation())
+    MaszynaLegacyDriverTraction.control(
+            vehicle, CabinSystem.occupied_cab(vehicle), state.speed, state.trainset, directional_speed)
+    MaszynaLegacyDriverBraking.control(
+            vehicle, CabinSystem.occupied_cab(vehicle), state.orders[state.order_position], state.speed)
     var cab:int = CabinSystem.occupied_cab(vehicle)
     var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
     # a vehicle somebody powered up gets ready to drive (the original's HACK, Driver.cpp:7226-7231)
@@ -348,6 +370,22 @@ func _activation(state:DriverState, vehicle:RID) -> void:
     cab = CabinSystem.occupied_cab(vehicle)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, 1)
+
+
+## control_security_system() (Driver.cpp:6382-6408): the vigilance and the cab signal acknowledged
+## while they flash, the reverser forward first if it stands at neutral. The train brake the
+## security system applied is released by the driving (MaszynaLegacyDriverBraking). Radio-Stop's
+## radio switched off at a stop is not ported yet (TODO.md).
+func _control_security_system(vehicle:RID, cab:int) -> void:
+    var cabsignal:bool = CabinSystem.vehicle_state_value(vehicle, "cabsignal_blinking", false) \
+            and CabinSystem.vehicle_state_value(vehicle, "separate_acknowledge", false)
+    var blinking:bool = CabinSystem.vehicle_state_value(vehicle, "blinking", false)
+    if (cabsignal or blinking) and int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0:
+        MaszynaLegacyDriverHints.set_direction(vehicle, cab, int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab)))
+    if cabsignal:
+        MaszynaLegacyDriverHints.reset_security_system(vehicle, cab, MaszynaLegacyDriverHints.CABSIGNAL_RESET)
+    if blinking:
+        MaszynaLegacyDriverHints.reset_security_system(vehicle, cab, MaszynaLegacyDriverHints.SECURITY_RESET)
 
 
 static func _has_diesel_engine(vehicle:RID) -> bool:

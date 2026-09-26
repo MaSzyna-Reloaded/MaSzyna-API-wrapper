@@ -701,12 +701,22 @@ ported, into a delegate.
       other vehicles under control, the individual release of an overcharged vehicle, the parking
       brake of a speed control unit, EP brakes in `IsConsistBraked`, the pipe pressure a brake
       counts as applied at (`BrakePressureActual.PipePressureVal`, taken as 3.9).
-   2. The speed and acceleration wanted without a speed table: `VelDesired` from the orders and
-      the vehicle's limit, `AccPreferred` (`SetDriverPsyche()`), `AccDesired`
-      (`UpdateSituation()`, `Driver.cpp:7300-7420`).
-   3. Tractive force through the cab (`control_tractive_force()`, `IncSpeed()`/`DecSpeed()`,
-      `Driver.cpp:3406-3760, 7996-8063`): diesel and diesel-electric first (Stary Jawor), then the
-      electric series motor and the induction motor.
+   2. Done without a speed table: the speed and acceleration wanted
+      (`MaszynaLegacyDriverSpeed`, `pick_optimal_speed()`, `Driver.cpp:7297-7400`) - the
+      trainset's top speed, the timetable's, the shunting speed, the speed allowed, the track's,
+      waiting told to stop here. Left: the next speed and its distance (with the speed table),
+      obstacles ahead, the load exchange, waiting (`fStopTime`), an aggressive driver, EMU/DMU
+      thresholds, the cargo trains' and couplers' acceleration limits, the braking test.
+   3. Diesel-electric done: tractive force through the cab (`MaszynaLegacyDriverTraction`,
+      `control_tractive_force()`, `IncSpeed()`/`DecSpeed()`); the vehicle publishes
+      `line_contactor_closed` (`StLinFlag`) and `pressure_switch_tripped`
+      (`ControlPressureSwitch`). The driver acknowledges the vigilance and SHP
+      (`control_security_system()`), and releases the brakes when it wants to accelerate.
+      Checked on Stary Jawor: SM42-1273 with five wagons, `ShuntVelocity 20`, starts, reaches
+      20 km/h and coasts. Left: the diesel-mechanical engine and its gearbox (`SpeedSet()`,
+      `MotorParam`, sa134, WMB10), the electric series and induction motors, the cruise control,
+      the stretched couplers, spring brake, doors and departure signal before adding power, the
+      radio off after a Radio-Stop.
    4. Braking through the cab (`control_braking_force()`, the AI's own handle position
       `BrakeCtrlPosition`/`gbh_*`, `IncBrake()`/`DecBrake()`, the brake table `fBrake_a0/a1`,
       `Driver.cpp:3014-3366, 8065-8190`), the releaser and the independent brake.

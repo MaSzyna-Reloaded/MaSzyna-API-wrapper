@@ -25,6 +25,8 @@ namespace godot {
             virtual bool get_fuse_active(const VehicleEngine *p_engine) const = 0;
             /* The line contactors are open */
             virtual bool get_motor_connectors_open(const VehicleEngine *p_engine) const = 0;
+            virtual bool is_line_contactor_closed(const VehicleEngine *p_engine) const = 0;
+            virtual bool is_pressure_switch_tripped(const VehicleEngine *p_engine) const = 0;
 
             virtual void reset_fuse(const VehicleEngine *p_engine) const = 0;
             virtual void open_motor_connectors(const VehicleEngine *p_engine, bool p_open) const = 0;

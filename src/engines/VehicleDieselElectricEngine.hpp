@@ -13,6 +13,11 @@ namespace godot {
             virtual bool get_dynamic_brake_active() const = 0;
             virtual bool get_fuse_active() const = 0;
             virtual bool get_motor_connectors_open() const = 0;
+            /* The line contactors are closed (StLinFlag); the control pressure switch tripped - the
+             * brake cylinder or pipe pressure is out of its working range (ControlPressureSwitch,
+             * Mover.cpp:7177) */
+            virtual bool is_line_contactor_closed() const = 0;
+            virtual bool is_pressure_switch_tripped() const = 0;
             virtual void fuse_reset() = 0;
             virtual void set_motor_connectors_open(bool p_open) = 0;
 

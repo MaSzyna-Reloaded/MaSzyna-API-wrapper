@@ -55,6 +55,8 @@ const MASTER_CONTROLLER:StringName = &"mainctrl"
 const SECOND_CONTROLLER:StringName = &"scndctrl"
 const REVERSER:StringName = &"dirkey"
 const TRAIN_BRAKE_RELEASE:StringName = LegacyCabinControls.BRAKE_LEVEL_DRIVE
+const SECURITY_RESET:StringName = &"security_reset_bt"
+const CABSIGNAL_RESET:StringName = &"shp_reset_bt"
 
 
 ## Operates the switch unless the vehicle shows the step done; true when it is. A vehicle without
@@ -117,6 +119,13 @@ static func set_direction(vehicle:RID, cab:int, direction:int) -> void:
         if stepped == current:
             return
         current = stepped
+
+
+## securitysystemreset / shpsystemreset (driverhints.cpp): a press of the vigilance button, or of the
+## cab signal's own when the vehicle has one, while it flashes
+static func reset_security_system(vehicle:RID, cab:int, control:StringName) -> void:
+    CabinSystem.act(vehicle, cab, control, &"hold")
+    CabinSystem.act(vehicle, cab, control, &"release")
 
 
 ## trainbrakerelease: the handle to its driving position; the state does not tell that position,

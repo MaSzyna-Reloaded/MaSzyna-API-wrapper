@@ -656,12 +656,26 @@ ported, into a delegate.
    the MMD with no random choices - a cab with random includes may differ from the player's widgets.
    The `brake_level_drive` `CabinCommand` node still carries its `command`/`command_param`, now only
    as the guard of its key (the wiring is `LegacyCabinControls.BRAKE_LEVEL_DRIVE`).
-3. **Taking the orders done; carrying them out is next.** `DriverSystem` (C++, not
-   `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
-   `MaszynaLegacyAIDriver` (GDScript, as it will act through `CabinSystem`): a driver for every
-   crewed scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders
-   ask for (`get_state()`); Stary Jawor's SU46 gets its orders from the scenario. Left: carrying
-   them out through the cab; `engine_active` (set by the driving); the trainset's own timetable and
+3. **Orders taken; the engine and the turning carried out through the cab.** `DriverSystem` (C++,
+   not `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
+   `MaszynaLegacyAIDriver` (GDScript, acting through `CabinSystem`): a driver for every crewed
+   scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders ask for
+   (`get_state()`); Stary Jawor's SU46 gets its orders from the scenario. A driver acts one reaction
+   time apart (`DriverSystem.driver_schedule_update()`, `DriverDelegate._update()`).
+   `Prepare_engine`, `Release_engine` and `Change_direction` are carried out step by step through
+   the cab (`MaszynaLegacyDriverHints`, the original's `driver_hint`s): checked on Stary Jawor's SU46
+   - put away, prepared again, turned to its other cab. Left of `PrepareEngine()`/`ReleaseEngine()`
+   (`Driver.cpp:2759-3012`): the heating of a diesel (`PrepareHeating()`, the water pump and heater),
+   the pantograph air (the compressor, `bPantKurek3`, `PantsValve`) and the speed a pantograph
+   counts as up at, the ground and motor overload relay resets, the idle position of SN61's
+   controller, `mastercontrollersetreverserunlock`, the motor blowers, the spring brake and the
+   doors, lights, releaser and train or independent brake on putting away; the presence of a
+   compressor is not asked (readiness waits for the main reservoir only); the brake handle's
+   driving position is cued, not checked (the state does not say where it is). `Activation()`'s
+   move to another vehicle of the trainset (EN57, ET41) is not ported, nor `ShuntModeAllow`.
+   On Stary Jawor sa134-014 and WMB10-819 report their line breaker open after being prepared -
+   not looked into. Left besides: `engine_active` lost when the vehicle breaks down while driving
+   (`handle_engine()` prepares it again only for driving orders); the trainset's own timetable and
    velocity from the `.scn` (`trainset <timetable> ... <velocity>` -> `OrdersInit`); a push-pull set
    that only turns at `@` (`movePushPull`, `OrdersInit()`); what `OrderCheck()` does to the lights
    and doors; `SetSignal`; the station announcements and guard signals of `Timetable:`.

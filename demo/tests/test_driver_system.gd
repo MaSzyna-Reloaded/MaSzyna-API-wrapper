@@ -2,6 +2,7 @@ extends MaszynaGutTest
 
 const Order = MaszynaLegacyAIDriver.Order
 const MAX_WAIT:float = 5.0
+const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
 
 
 func test_a_driver_is_attached_to_a_vehicle_by_rids() -> void:
@@ -92,8 +93,55 @@ func test_a_putvalues_order_reaches_the_activators_driver() -> void:
     DriverSystem.driver_free(driver)
 
 
+func test_a_scheduled_update_reaches_the_delegate() -> void:
+    var delegate:UpdateCounter = UpdateCounter.new()
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_delegate(driver, delegate)
+
+    DriverSystem.driver_schedule_update(driver, 0.0)
+    DriverSystem.driver_schedule_update(driver, 0.0)
+    await wait_until(func() -> bool: return delegate.updates > 0, MAX_WAIT)
+    await wait_idle_frames(2)
+
+    assert_eq(delegate.updates, 1, "a later schedule replaces the pending one")
+    DriverSystem.driver_free(driver)
+
+
+func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverCabTest", SM42)
+    train.battery_voltage = 110.0
+    train.apply_configuration()
+    var vehicle:RID = train.get_rid()
+    # a cab with no controls of its own: every catalog control is there unmodelled
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return controls))
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    await wait_until(func() -> bool: return train.state["battery_enabled"], MAX_WAIT)
+    assert_true(train.state["battery_enabled"], "the battery is switched on")
+    assert_eq(CabinSystem.get_control(vehicle, 1, &"battery_sw"), true, "by its switch in the cab")
+
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 0.0, 0.0)
+    await wait_until(func() -> bool: return not train.state["battery_enabled"], MAX_WAIT)
+    assert_false(train.state["battery_enabled"], "put away, the battery is off")
+    DriverSystem.driver_free(driver)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
 func _create_driver(ai:MaszynaLegacyAIDriver) -> RID:
     var driver:RID = DriverSystem.driver_create()
     DriverSystem.driver_attach_vehicle(driver, build_vehicle("AIDriverTest").get_rid())
     DriverSystem.driver_attach_delegate(driver, ai)
     return driver
+
+
+class UpdateCounter extends DriverDelegate:
+    var updates:int = 0
+
+    func _update(_driver:RID) -> void:
+        updates += 1

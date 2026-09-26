@@ -23,6 +23,7 @@ namespace godot {
             GDVIRTUAL1(_driver_attached, RID)
             GDVIRTUAL1(_driver_detached, RID)
             GDVIRTUAL5(_handle_command, RID, String, double, double, Vector3)
+            GDVIRTUAL1(_update, RID)
 
             /// Called by DriverSystem. A C++ delegate overrides these; the default forwards to the
             /// script.
@@ -32,5 +33,7 @@ namespace godot {
             virtual void handle_command(
                     const RID &p_driver, const String &p_command, double p_value1, double p_value2,
                     const Vector3 &p_position);
+            /// The time the driver asked for has come (DriverSystem.driver_schedule_update())
+            virtual void update(const RID &p_driver);
     };
 } // namespace godot

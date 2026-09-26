@@ -8,7 +8,7 @@ const MAX_WAIT:float = 5.0
 const NEVER:float = 3600.0
 ## Fast enough for one frame to pass the cap
 const FAST_SPEED:float = 1000.0
-## ScenarioEventServer::MAX_FRAME_TIME (Timer.cpp:84)
+## MaszynaRuntime::MAX_FRAME_TIME (Timer.cpp:84)
 const MAX_FRAME_TIME:float = 1.0
 
 
@@ -73,14 +73,14 @@ func test_an_event_queueing_itself_runs_once_a_frame() -> void:
     var action:RequeueingAction = RequeueingAction.new()
     var event:RID = _create_event(action, 0.0)
 
-    # the server connected to process_frame when the event was queued, before this awaits it
+    # the clock starts ticking when the event is queued; between two frames it ticks once
     ScenarioEventServer.event_queue(event)
+    await wait_until(func() -> bool: return action.count > 0, MAX_WAIT)
     await get_tree().process_frame
     var count:int = action.count
     await get_tree().process_frame
 
-    assert_eq(count, 1, "the pass should not run the event it queued")
-    assert_eq(action.count, 2, "the next frame should run it again")
+    assert_eq(action.count, count + 1, "once a frame: the pass does not run the event it queued")
     _free_events([event])
 
 
@@ -123,17 +123,17 @@ func test_pause_stops_the_time_and_the_speed_scales_it() -> void:
     ScenarioEventServer.event_queue(event)
 
     MaszynaRuntime.pause()
-    var paused_at:float = ScenarioEventServer.get_time()
+    var paused_at:float = MaszynaRuntime.get_simulation_time()
     await get_tree().process_frame
     await get_tree().process_frame
-    assert_eq(ScenarioEventServer.get_time(), paused_at, "the time should stand while paused")
+    assert_eq(MaszynaRuntime.get_simulation_time(), paused_at, "the time should stand while paused")
     MaszynaRuntime.unpause()
 
     MaszynaRuntime.simulation_speed = FAST_SPEED
-    var fast_from:float = ScenarioEventServer.get_time()
+    var fast_from:float = MaszynaRuntime.get_simulation_time()
     await get_tree().process_frame
     assert_almost_eq(
-        ScenarioEventServer.get_time() - fast_from,
+        MaszynaRuntime.get_simulation_time() - fast_from,
         MAX_FRAME_TIME,
         0.001,
         "a frame should advance at most MAX_FRAME_TIME"

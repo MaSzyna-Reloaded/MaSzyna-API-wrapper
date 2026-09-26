@@ -4,6 +4,27 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - three clocks: the physics ran at real time, events and drivers at the speed set
+
+* **Symptom:** headless probes at simulation speed 5 behaved oddly - trains reached places long
+  after the events and the drivers expected them, and the analysis of a stop leaned on times
+  that did not match.
+* **What proved it:** reading who advances time. `RailVehicleStepper` handed `step_frame()` the
+  raw frame delta; `ScenarioEventServer` and `DriverSystem` each added `delta *
+  simulation_speed`, capped at 1 s, on `process_frame`; the sky backends counted the time of day
+  themselves and pushed it to `MaszynaRuntime` once a second. At any speed but 1 the physics ran
+  at a fifth (or a tenth) of the pace of the events, the drivers and the clock of the day.
+* **Fix:** one clock in `MaszynaRuntime` (Timer::UpdateTimers(), Timer.cpp:79-87): a
+  `SimulationClock` node, processed first, advances it by the frame's delta times the speed, at
+  most 1 s, adds that to the simulation time and the time of day and emits
+  `simulation_advanced(seconds)`. The physics integrates exactly those seconds in steps of at most
+  0.01 s (drivermode.cpp:193-206) - no debt, no catch-up jump; a machine that cannot keep up runs
+  the simulation slower. The events and the drivers read `get_simulation_time()`; the sky reads
+  the time of day, and the environment only sets it (a jump). Whoever needs time holds the clock
+  (`clock_hold()`/`clock_release()`); paused, it stands.
+* **Rule:** anything that measures simulated time reads `MaszynaRuntime` - never its own
+  `delta * simulation_speed`.
+
 ## 2026-09-26 - FV4a handle left at lap: the train brake never released
 
 * **Symptom:** Stary Jawor's eszelon (ST44, 20 wagons) would not start, or crawled as if braked
@@ -489,11 +510,12 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   nodes are processed. It pushed placement onto `RailVehicle3D` afterwards, but other readers
   (`ExternalCamera._process()`) saw the previous frame.
 * **Fix:** `RailVehicleStepper` (`process_priority = -100`) calls
-  `RailVehicleServer::step_frame()`.
-* **Follow-up:** past 0.2 s, `sub_step = delta / MAX_PHYSICS_ITERATIONS` exceeds `PHYSICS_STEP`.
-  Time drives events and multiplayer, so `step_frame()` owes the excess to the next frames. Only
-  past `maszyna/physics/catch_up_limit` does it take the debt in one logged jump. The debt resets
-  when stepping starts.
+  `RailVehicleServer::step_frame()` - since 2026-09-27 `SimulationClock`, the same priority,
+  ticking `MaszynaRuntime`'s clock.
+* **Follow-up (superseded 2026-09-27, "three clocks"):** past 0.2 s, `sub_step = delta /
+  MAX_PHYSICS_ITERATIONS` exceeded `PHYSICS_STEP`, so `step_frame()` owed the excess to the next
+  frames and past `maszyna/physics/catch_up_limit` took it in one jump. Gone: the frame is capped
+  at 1 s and integrated whole, as the original does.
 * **Test trap:** `test_process_movement_with_invalid_controller_reference_is_noop` relied on the
   old order. `controller = null` does not detach, so the test now detaches the controller.
 * **Rules:**

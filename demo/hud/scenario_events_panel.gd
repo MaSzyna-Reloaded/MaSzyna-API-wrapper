@@ -31,7 +31,7 @@ func _on_event_queued(event:RID, activator:RID) -> void:
 func _on_event_launched(event:RID, activator:RID) -> void:
     _queued.erase(event)
     _log.insert(0, "%.1f  %s%s" % [
-        ScenarioEventServer.get_time(), ScenarioEventServer.event_get_name(event), _activator_suffix(activator)
+        MaszynaRuntime.get_simulation_time(), ScenarioEventServer.event_get_name(event), _activator_suffix(activator)
     ])
     if _log.size() > MAX_LOG_ROWS:
         _log.resize(MAX_LOG_ROWS)
@@ -39,7 +39,7 @@ func _on_event_launched(event:RID, activator:RID) -> void:
 
 ## The countdown, on the refresh timer (a [connection] in the scene)
 func _refresh() -> void:
-    var now:float = ScenarioEventServer.get_time()
+    var now:float = MaszynaRuntime.get_simulation_time()
     %Time.text = tr("Simulation time: %.1f s") % now
     var rows:Array[Array] = []
     for event:RID in _queued:

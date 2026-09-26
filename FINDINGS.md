@@ -100,6 +100,9 @@ anything. Open work belongs in `TODO.md`.
 ## Godot / GDExtension
 * `process_frame` is the end of a frame. What `_process` reads is produced before it, ordered by
   `process_priority`. *(09-24 simulation stepped after readers)*
+* Simulated time has one clock, `MaszynaRuntime`'s: read `get_simulation_time()` or take
+  `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
+  clocks)*
 * A C++ class under an existing GDScript subclass keeps its lifecycle in `_notification()`, never
   in `_ready()`/`_process()`. A script shadows a native method only for `call()` callers.
   *(09-23 subclass replaced _ready())*

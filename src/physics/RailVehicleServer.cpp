@@ -2,8 +2,6 @@
 #include "../radio/VehicleRadio.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
-#include "RailVehicleStepper.hpp"
-#include <godot_cpp/classes/window.hpp>
 
 #include "../core/GameLog.hpp"
 #include "../core/MaszynaRuntime.hpp"
@@ -12,7 +10,6 @@
 
 #include <godot_cpp/classes/curve3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -32,14 +29,13 @@ namespace godot {
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
         diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
-        catch_up_limit = settings->get_setting(CATCH_UP_LIMIT_SETTING, DEFAULT_CATCH_UP_LIMIT);
-        // The world stands still while the runtime is paused. No explicit disconnect: callable_mp
-        // reports this instance as the callable's object, so the engine drops the connection when
-        // the instance dies.
+        // The world steps by the runtime's clock, which stands still while paused. No explicit
+        // disconnect: callable_mp reports this instance as the callable's object, so the engine
+        // drops the connection when the instance dies.
         MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
         ERR_FAIL_NULL(runtime);
-        runtime->connect(MaszynaRuntime::paused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
-        runtime->connect(MaszynaRuntime::unpaused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
+        runtime->connect(
+                MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &RailVehicleServer::_on_simulation_advanced));
     }
 
     RailVehicleServer::~RailVehicleServer() {
@@ -83,7 +79,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
-        ClassDB::bind_method(D_METHOD("step_frame", "delta"), &RailVehicleServer::step_frame);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
@@ -157,38 +152,31 @@ namespace godot {
         return stepping_enabled;
     }
 
-    /// Steps while stepping is enabled, the runtime is not paused and the world holds a vehicle
+    /// Steps while stepping is enabled and the world holds a vehicle
     void RailVehicleServer::_refresh_stepping() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        _set_stepping(stepping_enabled && !vehicles.is_empty() && runtime != nullptr && !runtime->is_paused());
+        _set_stepping(stepping_enabled && !vehicles.is_empty());
     }
 
-    /// The step runs only while the world holds a vehicle, the same shape as E3DRenderingServer's
-    /// smoke tick.
+    /// Stepping holds the runtime's clock, so time passes while there is a vehicle to move
     void RailVehicleServer::_set_stepping(const bool p_stepping) {
         if (stepping == p_stepping) {
             return;
         }
-        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
-            return;
-        }
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
         stepping = p_stepping;
-        // a simulation that is starting owes nothing: whatever passed while it was stopped is not
-        // time it failed to integrate
-        owed_seconds = 0.0;
         if (p_stepping) {
-            RailVehicleStepper *stepper = memnew(RailVehicleStepper);
-            stepper_id = stepper->get_instance_id();
-            // internal, so a node nobody declared does not turn up in the root's children and
-            // surprise whatever walks the tree
-            tree->get_root()->add_child(stepper, false, Node::INTERNAL_MODE_FRONT);
+            runtime->clock_hold();
             return;
         }
-        if (Node *stepper = Object::cast_to<Node>(ObjectDB::get_instance(ObjectID(stepper_id))); stepper != nullptr) {
-            stepper->queue_free();
+        runtime->clock_release();
+    }
+
+    /// One frame of the clock, before any node has been processed (SimulationClock)
+    void RailVehicleServer::_on_simulation_advanced(const double p_seconds) {
+        if (stepping && !Engine::get_singleton()->is_editor_hint()) {
+            step(p_seconds);
         }
-        stepper_id = 0;
     }
 
     VehicleController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
@@ -996,44 +984,6 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    /* Simulation time is never dropped: the scenario's events and, later, multiplayer are driven
-     * by it, so a simulation that quietly ran slower than the clock would drift out of both.
-     *
-     * A frame therefore hands over its whole delta, and what cannot be integrated now is owed and
-     * paid off by the frames that follow. What "cannot be integrated now" means is one thing:
-     * the sub-step must stay at or below PHYSICS_STEP, because that is what the coupler springs
-     * were tuned for - integrate a stiff spring with a step several times larger and the consist
-     * kicks. MAX_PHYSICS_ITERATIONS sub-steps of PHYSICS_STEP is the most a frame can honestly
-     * take, so that product is the budget.
-     *
-     * Every frame still integrates at least its own delta, so nothing is quantised and the motion
-     * stays as smooth as the frame rate - only the backlog is spread.
-     *
-     * Past CATCH_UP_LIMIT_SETTING the machine is not stalling, it is too slow to simulate in real
-     * time, and spreading the debt would only add work to frames that are already late. There the
-     * debt is taken in one step: the step is too large for the couplers and the consist visibly
-     * jumps, which is the deliberate choice - a jump that can be seen beats a clock that silently
-     * lies. It is logged, so it is not mistaken for a physics bug. */
-    void RailVehicleServer::step_frame(const double p_delta) {
-        if (!stepping_enabled || Engine::get_singleton()->is_editor_hint() || p_delta <= 0.0) {
-            return;
-        }
-        owed_seconds += p_delta;
-
-        double budget = MIN(owed_seconds, MAX_PHYSICS_ITERATIONS * PHYSICS_STEP);
-        if (owed_seconds > catch_up_limit) {
-            if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
-                game_log->warning(
-                        vformat("RailVehicleServer: %.2f s of simulation owed, over the %.2f s catch-up "
-                                "limit - taking it in one step, so the vehicles jump",
-                                owed_seconds, catch_up_limit));
-            }
-            budget = owed_seconds;
-        }
-        owed_seconds -= budget;
-        step(budget);
-    }
-
     void RailVehicleServer::step(const double p_delta) {
         if (p_delta <= 0.0) {
             return;
@@ -1072,7 +1022,9 @@ namespace godot {
             _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
         }
 
-        const int iterations = CLAMP(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1, MAX_PHYSICS_ITERATIONS);
+        // the whole frame, in steps no longer than PHYSICS_STEP; the clock caps the frame
+        // (drivermode.cpp:193-206)
+        const int iterations = MAX(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1);
         const double sub_step = p_delta / iterations;
         for (int iteration = 0; iteration < iterations; ++iteration) {
             // the original computes the forces of every vehicle before moving any of them, so

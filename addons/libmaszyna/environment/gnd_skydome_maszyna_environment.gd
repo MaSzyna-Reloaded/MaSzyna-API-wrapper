@@ -297,16 +297,16 @@ func process(delta: float) -> void:
     if _time_update_elapsed < TIME_UPDATE_INTERVAL:
         return
 
-    var elapsed: float = _time_update_elapsed
     _time_update_elapsed = 0.0
 
     if environment_node.use_system_time:
         _read_system_time()
     else:
-        _current_time += elapsed * environment_node.simulation_speed / SECONDS_PER_HOUR
-        if _current_time >= 24.0:
-            _current_time -= 24.0
+        # the time the simulation's clock ran to; past midnight it is the next day
+        var now: float = MaszynaRuntime.time_of_day
+        if now < _current_time:
             _normalize_date(_year, _month, _day + 1)
+        _current_time = now
     _push_time(false)
 
 

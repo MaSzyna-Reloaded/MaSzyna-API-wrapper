@@ -290,12 +290,6 @@ func _enter_tree():
         PROPERTY_HINT_RANGE, "16,8000,1"
     )
     add_custom_project_setting("maszyna/physics/diagnostics", false, TYPE_BOOL)
-    # How much simulation time may be owed before it is taken in one step instead of being spread
-    # over the following frames - see RailVehicleServer::step_frame(). Past it the vehicles jump.
-    add_custom_project_setting(
-        "maszyna/physics/catch_up_limit", 1.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.2,10.0,0.1,suffix:s"
-    )
     add_custom_project_setting(
         "maszyna/import/dds_max_texture_size", 1024, TYPE_INT,
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"

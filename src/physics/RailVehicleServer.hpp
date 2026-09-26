@@ -33,25 +33,15 @@ namespace godot {
             GDCLASS(RailVehicleServer, Object)
 
         public:
-            /* Original engine: primary physics update rate and the iteration limit per frame
-             * (drivermode.cpp:186-206) */
+            /* Original engine: the primary physics update rate - a frame is integrated whole, in as
+             * many steps as keep each at or below it (drivermode.cpp:193-206) */
             static constexpr double PHYSICS_STEP = 0.01;
-            static constexpr int MAX_PHYSICS_ITERATIONS = 20;
 
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
             }
 
         private:
-            /* Simulation time owed but not yet integrated - see step_frame(). Kept in seconds,
-             * never dropped while it stays under the catch-up limit. */
-            double owed_seconds = 0.0;
-            /* How much owed time may pile up before the simulation stops spreading it and takes
-             * it in one step instead. A setting, because the answer depends on the machine. */
-            static constexpr const char *CATCH_UP_LIMIT_SETTING = "maszyna/physics/catch_up_limit";
-            static constexpr double DEFAULT_CATCH_UP_LIMIT = 1.0;
-            /// Read once - step_frame() runs every frame and must not look a setting up there.
-            double catch_up_limit = DEFAULT_CATCH_UP_LIMIT;
             /* Distance the neighbour scan steps past a track endpoint to enter the next track */
             static constexpr double SCAN_ENDPOINT_EPSILON = 0.001;
             /* 10 m is about 140 km/h at 4 fps, plus a safety margin (DynObj.cpp:7160) */
@@ -133,10 +123,9 @@ namespace godot {
             int64_t next_vehicle_id = 0;
             bool diagnostics = false;
             HashMap<uint64_t, double> diagnostics_velocity;
+            /// Stepping holds MaszynaRuntime's clock and steps as it advances
             bool stepping = false;
             bool stepping_enabled = true;
-            /// The node that drives step_frame(); freed when stepping stops.
-            uint64_t stepper_id = 0;
             /* Bumped once per step; a dump older than this is stale. Comparing a
              * serial beats clearing every vehicle's dump each frame. */
             uint64_t step_serial = 1;
@@ -166,6 +155,7 @@ namespace godot {
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
             void _refresh_stepping();
             void _set_stepping(bool p_stepping);
+            void _on_simulation_advanced(double p_seconds);
             void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
@@ -250,12 +240,10 @@ namespace godot {
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);
 
-            /* One whole step of every registered vehicle. Driven by `process_frame`, and callable
-             * directly with an explicit delta where the caller wants to decide when it happens. */
+            /* One whole step of every registered vehicle. Driven by MaszynaRuntime's clock, and
+             * callable directly with an explicit delta where the caller wants to decide when it
+             * happens. */
             void step(double p_delta);
-            /* One frame's worth of simulation, called by RailVehicleStepper before any node has
-             * been processed - see that class for why the timing matters. */
-            void step_frame(double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */

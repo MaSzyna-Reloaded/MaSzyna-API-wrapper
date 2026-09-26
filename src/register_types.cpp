@@ -55,7 +55,7 @@
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "physics/RailVehicleServer.hpp"
-#include "physics/RailVehicleStepper.hpp"
+#include "core/SimulationClock.hpp"
 #include "physics/VehicleNeighbour.hpp"
 #include "radio/MoverVehicleRadio.hpp"
 #include "radio/VehicleRadio.hpp"
@@ -164,7 +164,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
-        GDREGISTER_INTERNAL_CLASS(RailVehicleStepper);
+        GDREGISTER_INTERNAL_CLASS(SimulationClock);
         GDREGISTER_CLASS(VehicleNeighbour);
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);

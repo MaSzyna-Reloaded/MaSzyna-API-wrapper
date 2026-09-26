@@ -15,12 +15,16 @@ const FOG_BEGIN_FACTOR: float = 0.2
 const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
 const MAXIMUM_FOG_OPACITY: float = 0.999
 const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
+## How often the sky follows the simulation's clock [s]
+const TIME_UPDATE_INTERVAL: float = 0.1
+const HOURS_PER_DAY: float = 24.0
 
 var sky_dome: SkyDome
 var time_of_day: TimeOfDay
 var sun_light: DirectionalLight3D
 var moon_light: DirectionalLight3D
 var environment: Environment
+var _time_update_elapsed: float = 0.0
 
 
 func create_sky() -> Sky:
@@ -144,13 +148,9 @@ func apply_time_configuration() -> void:
         return
 
     time_of_day.editor_time_enabled = false
+    # the time runs by the simulation's clock (process()); only the system time runs on its own
+    time_of_day.game_time_enabled = environment_node.use_system_time
     time_of_day.system_sync = environment_node.use_system_time
-    time_of_day.minutes_per_day = (
-        1440.0 / environment_node.simulation_speed
-        if environment_node.simulation_speed > 0.0
-        else 0.0
-    )
-    time_of_day.update_interval = time_of_day.minutes_per_day * 0.001
     time_of_day.latitude = deg_to_rad(environment_node.latitude)
     time_of_day.longitude = deg_to_rad(environment_node.longitude)
     time_of_day.utc = float(environment_node.timezone_offset)
@@ -160,6 +160,19 @@ func apply_time_configuration() -> void:
     else:
         set_date(environment_node.year, environment_node.month, environment_node.day)
         time_of_day.current_time = environment_node.current_time
+
+
+## The time the simulation's clock ran to, at most every TIME_UPDATE_INTERVAL; past midnight it is
+## the next day (TimeOfDay counts the day on past 24)
+func process(delta: float) -> void:
+    if Engine.is_editor_hint() or environment_node.use_system_time or not time_of_day:
+        return
+    _time_update_elapsed += delta
+    if _time_update_elapsed < TIME_UPDATE_INTERVAL:
+        return
+    _time_update_elapsed = 0.0
+    var now: float = MaszynaRuntime.time_of_day
+    time_of_day.current_time = now + HOURS_PER_DAY if now < time_of_day.current_time else now
 
 
 func get_date() -> Vector3i:

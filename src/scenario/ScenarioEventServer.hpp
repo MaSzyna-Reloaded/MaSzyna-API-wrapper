@@ -19,8 +19,8 @@ namespace godot {
     /// An event is a delay, an optional condition and an action (ScenarioEventAction); the server
     /// knows no event types - what `updatevalues` or `lights` means is the business of an action.
     /// A queued event runs once its time comes: its condition is tested, then the action's run()
-    /// or run_else() is called. The time is the simulation's own, in seconds: it follows
-    /// MaszynaRuntime's simulation speed and stands still while the runtime is paused.
+    /// or run_else() is called. The time is MaszynaRuntime's simulation time, in seconds, which
+    /// the physics and the drivers read too.
     class ScenarioEventServer : public Object {
             GDCLASS(ScenarioEventServer, Object)
 
@@ -56,8 +56,6 @@ namespace godot {
                 ISOLATED_EVENT_MAX,
             };
 
-            /// Simulated seconds one frame may advance at most (Timer.cpp:84)
-            static constexpr double MAX_FRAME_TIME = 1.0;
             static constexpr double MINUTES_PER_HOUR = 60.0;
 
             static const char *event_queued_signal;
@@ -161,11 +159,9 @@ namespace godot {
             HashMap<StringName, RID> launchers_by_name;
             std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> queue;
             uint64_t next_sequence = 1;
-            double time = 0.0;
-            double simulation_speed = 1.0;
+            /// While something is queued it holds the runtime's clock and runs as it advances
             bool processing = false;
 
-            void _on_simulation_speed_changed();
             void _on_time_of_day_changed();
             void
             _on_vehicle_radio_called(const RID &p_vehicle, VehicleRadio::RadioCall p_call, const Vector3 &p_position);
@@ -187,7 +183,7 @@ namespace godot {
                     const RID &p_track, TrackEvent p_crew_slot, TrackEvent p_all_slot, const RID &p_vehicle);
             void _refresh_processing();
             void _set_processing(bool p_processing);
-            void _process_queue();
+            void _process_queue(double p_seconds);
             /// Puts the owner (an event or a launcher) in the queue, returns the entry's sequence
             uint64_t _schedule(const RID &p_owner, double p_time, const RID &p_activator);
             void _fire(Ref<ScenarioEventCondition> p_condition, RID p_event);
@@ -226,10 +222,9 @@ namespace godot {
             /// (event_manager::AddToQuery, Event.cpp:2380-2462). A passive event is refused.
             bool event_queue(const RID &p_event, const RID &p_activator = RID(), double p_extra_delay = 0.0);
             bool event_is_queued(const RID &p_event) const;
-            /// The time (get_time()) a queued event runs at, negative when it is not queued
+            /// The simulation time (MaszynaRuntime.get_simulation_time()) a queued event runs at,
+            /// negative when it is not queued
             double event_get_run_time(const RID &p_event) const;
-            /// Simulated seconds since the server was created
-            double get_time() const;
 
             RID memory_create();
             void memory_free(const RID &p_memory);

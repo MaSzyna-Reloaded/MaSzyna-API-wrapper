@@ -3,8 +3,6 @@
 #include "../physics/RailVehicleServer.hpp"
 #include "../tracks/TrackManager.hpp"
 #include "ScenarioEventServer.hpp"
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -38,7 +36,6 @@ namespace godot {
                 DEFVAL(RID()), DEFVAL(0.0));
         ClassDB::bind_method(D_METHOD("event_is_queued", "event"), &ScenarioEventServer::event_is_queued);
         ClassDB::bind_method(D_METHOD("event_get_run_time", "event"), &ScenarioEventServer::event_get_run_time);
-        ClassDB::bind_method(D_METHOD("get_time"), &ScenarioEventServer::get_time);
 
         ClassDB::bind_method(D_METHOD("memory_create"), &ScenarioEventServer::memory_create);
         ClassDB::bind_method(D_METHOD("memory_free", "memory"), &ScenarioEventServer::memory_free);
@@ -126,19 +123,12 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(memory_values_changed_signal, PropertyInfo(Variant::RID, "memory")));
     }
 
-    /// The time follows the runtime: it stands still while paused and runs at the speed the
-    /// environment publishes. No explicit disconnect: callable_mp reports this instance as the
-    /// callable's object, so the engine drops the connections when the instance dies.
+    /// No explicit disconnect: callable_mp reports this instance as the callable's object, so the
+    /// engine drops the connections when the instance dies.
     ScenarioEventServer::ScenarioEventServer() {
         MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
         ERR_FAIL_NULL(runtime);
-        simulation_speed = runtime->get_simulation_speed();
-        runtime->connect(MaszynaRuntime::paused_signal, callable_mp(this, &ScenarioEventServer::_refresh_processing));
-        runtime->connect(MaszynaRuntime::unpaused_signal, callable_mp(this, &ScenarioEventServer::_refresh_processing));
-        runtime->connect(
-                MaszynaRuntime::simulation_speed_changed_signal,
-                callable_mp(this, &ScenarioEventServer::_on_simulation_speed_changed));
-        // the time of day is the clock the environment publishes, not this server's time
+        // a launcher at an hour looks at the time of day, which the runtime's clock runs
         runtime->connect(
                 MaszynaRuntime::time_of_day_changed_signal,
                 callable_mp(this, &ScenarioEventServer::_on_time_of_day_changed));
@@ -186,12 +176,6 @@ namespace godot {
         _set_processing(false);
     }
 
-    void ScenarioEventServer::_on_simulation_speed_changed() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        ERR_FAIL_NULL(runtime);
-        simulation_speed = runtime->get_simulation_speed();
-    }
-
     /// TEventLauncher::check_activation() (EvLaunch.cpp:197-211): a launcher fires when the clock
     /// shows its HH:MM, once, and is armed again when the hour is another
     void ScenarioEventServer::_on_time_of_day_changed() {
@@ -237,36 +221,38 @@ namespace godot {
         }
     }
 
-    /// Processes while something is queued and the runtime is not paused
+    /// Processes while something is queued
     void ScenarioEventServer::_refresh_processing() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        _set_processing(!queue.empty() && runtime != nullptr && !runtime->is_paused());
+        _set_processing(!queue.empty());
     }
 
+    /// Queued, it holds the runtime's clock, so the time the queue waits for passes
     void ScenarioEventServer::_set_processing(const bool p_processing) {
         if (processing == p_processing) {
             return;
         }
-        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
-            return;
-        }
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
         processing = p_processing;
         if (p_processing) {
-            tree->connect("process_frame", callable_mp(this, &ScenarioEventServer::_process_queue));
+            runtime->clock_hold();
+            runtime->connect(
+                    MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
             return;
         }
-        tree->disconnect("process_frame", callable_mp(this, &ScenarioEventServer::_process_queue));
+        runtime->disconnect(
+                MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
+        runtime->clock_release();
     }
 
     /// event_manager::CheckQuery() (Event.cpp:2465-2490): the entries whose time has come run in
     /// time order. Only those queued before the pass started are taken - what an action queues,
     /// even for now, runs on the next frame, as in the original - so an event that queues itself
     /// again cannot keep the pass going.
-    void ScenarioEventServer::_process_queue() {
-        const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        ERR_FAIL_NULL(tree);
-        time += MIN(tree->get_root()->get_process_delta_time() * simulation_speed, MAX_FRAME_TIME);
+    void ScenarioEventServer::_process_queue(double /* p_seconds */) {
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
+        const double time = runtime->get_simulation_time();
         const uint64_t pass_end = next_sequence;
         while (!queue.empty() && queue.top().time <= time && queue.top().sequence < pass_end) {
             const QueueEntry entry = queue.top();
@@ -562,7 +548,9 @@ namespace godot {
         if (event->passive || event->queued_sequence > 0) {
             return false;
         }
-        const double run_time = time + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL_V(runtime, false);
+        const double run_time = runtime->get_simulation_time() + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
         event->queued_sequence = _schedule(p_event, run_time, p_activator);
         event->run_time = run_time;
         emit_signal(event_queued_signal, p_event, p_activator);
@@ -579,10 +567,6 @@ namespace godot {
         const EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL_V(event, -1.0);
         return event->queued_sequence > 0 ? event->run_time : -1.0;
-    }
-
-    double ScenarioEventServer::get_time() const {
-        return time;
     }
 
     // --- memory ---
@@ -822,7 +806,9 @@ namespace godot {
         if (p_seconds <= 0.0) {
             return;
         }
-        launcher->scheduled_sequence = _schedule(p_launcher, time + p_seconds, RID());
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
+        launcher->scheduled_sequence = _schedule(p_launcher, runtime->get_simulation_time() + p_seconds, RID());
     }
 
     /// TEventLauncher's HHMM DeltaTime (EvLaunch.cpp:138-157)

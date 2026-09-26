@@ -13,8 +13,8 @@ namespace godot {
     ///
     /// A driver acts in moments, as the original's does after its reaction time (TController::
     /// ReactionTime, Driver.cpp:150-158): its delegate asks for the next one
-    /// (driver_schedule_update()) and is called when it comes. The time is the simulation's: it
-    /// follows MaszynaRuntime's simulation speed and stands still while the runtime is paused.
+    /// (driver_schedule_update()) and is called when it comes. The time is MaszynaRuntime's
+    /// simulation time, which the physics and the events read too.
     class DriverSystem : public Object {
             GDCLASS(DriverSystem, Object)
 
@@ -24,8 +24,6 @@ namespace godot {
             }
 
         private:
-            /// A frame never moves the time on by more (Timer.cpp:78-89, as ScenarioEventServer)
-            static constexpr double MAX_FRAME_TIME = 1.0;
 
             struct DriverData {
                     Ref<DriverDelegate> delegate;
@@ -52,15 +50,13 @@ namespace godot {
             HashMap<RID, RID> drivers_by_vehicle;
             std::priority_queue<UpdateEntry, std::vector<UpdateEntry>, std::greater<UpdateEntry>> updates;
             uint64_t next_sequence = 1;
-            double time = 0.0;
-            double simulation_speed = 1.0;
+            /// While something is scheduled it holds the runtime's clock and runs as it advances
             bool processing = false;
 
             void _on_vehicle_freed(const RID &p_vehicle);
-            void _on_simulation_speed_changed();
             void _refresh_processing();
             void _set_processing(bool p_processing);
-            void _process_updates();
+            void _process_updates(double p_seconds);
 
         protected:
             static void _bind_methods();

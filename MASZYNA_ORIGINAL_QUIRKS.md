@@ -65,6 +65,10 @@ interface.
 * `traintriggered` computes a scaled radius and then compares against the unscaled one.
 * A duplicate event name makes the first definition `m_ignored` and the second its sibling
   (`Event.cpp:2296-2349`). Wrapper: the factory joins them; the server keeps the later name.
+* **Setting the clock by hand can break a scenario.** A time-of-day launcher fires only in its
+  exact minute (`EvLaunch.cpp:197-211`), so one jumped over never fires, and the timetables
+  compare departures with the clock, so every train is late or early by the jump. Kept as is;
+  the event queue and the drivers run on the simulation time, which a jump does not touch.
 
 ## Scenery model lights (`model/AnimModel.cpp`)
 

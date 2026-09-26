@@ -622,9 +622,10 @@ closes both level crossings). Left:
   `stary_jawor_eszelon` waits for the eszelon to reach Roztocze (`n282:event2`,
   `skp/skp_eszelon_events.ctr`). The track events fire for any moving vehicle with a driver, but no
   such vehicle moves without the AI.
-* **Time-of-day launchers** match the clock `MaszynaRuntime` publishes once a second; at a
-  simulation speed above 60 a minute can pass between two publishes and the launcher misses it
-  (the original checks every frame).
+* **A jump of the time of day** (the environment's time set, the system time) is not a running
+  clock: a time-of-day launcher whose minute is jumped over does not fire, and a timetable
+  compares its departures with the clock, so a train is late or early by the jump. The queue and
+  the drivers' updates run on the simulation time and do not notice. The original does the same.
 * The `queueevent` console command.
 * **Timetables** are followed by the drivers (Drivers, part 6). Not read: the station
   announcements (`load_sounds()`, `mtable.cpp:644-671`). The original's quirks around them are in
@@ -757,11 +758,16 @@ ported, into a delegate.
       braking point offset (`braking_distance_multiplier()`) in the target speed.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
    runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
-   **Open, since `382755556`:** in a headless run at simulation speed 5 the whole eszelon stops
-   dead within one frame (51 -> 5 km/h) on the plain track n151, and then stands at full power.
-   It happens only while SM42-099 drives too (22 km away, no vehicle of its own near the eszelon,
-   nothing foreign in the collision scan); with SM42-099 or every other driver switched off it
-   runs on. Not the physics catch-up jump - no "owed" warning before it. Cause not found.
+   **Open - a long trainset is unstable when a physics frame is long.** Since the one clock
+   (2026-09-27) the physics runs at the simulation speed. Headless at speed 5 (about 0.17 s of
+   simulation per frame) the eszelon rolls at ~1 km/h already while its brakes release, the
+   driver - no longer "standing" - wants the shunting 40, and the 21 vehicles then oscillate
+   (trainset acceleration +-18 m/s2) at full power without moving off; a 0.2 s frame cap does not
+   help. At speed 1 (about 0.03 s a frame) the same start stands, then pulls away cleanly. The
+   original runs the same frame structure; suspects are what the wrapper does once per frame -
+   `_update_neighbours()`, the `update_location()` sync, `process_components(p_delta)`. The
+   earlier "dead stop on n151 while SM42-099 drives" (headless, speed 5) is most likely the same
+   thing - the other train only made the frames longer.
    6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
       stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
       parser does) - passed at speed where the train does not stop, else brought forward for the

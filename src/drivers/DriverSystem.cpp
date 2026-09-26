@@ -1,8 +1,6 @@
 #include "../core/MaszynaRuntime.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include "DriverSystem.hpp"
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -28,61 +26,46 @@ namespace godot {
                 D_METHOD("vehicle_is_control_active", "vehicle"), &DriverSystem::vehicle_is_control_active);
     }
 
-    /// A freed vehicle leaves its driver without one; the time follows the runtime. No explicit
-    /// disconnect: callable_mp reports this instance as the callable's object, so the engine drops
-    /// the connections when it dies.
+    /// A freed vehicle leaves its driver without one. No explicit disconnect: callable_mp reports
+    /// this instance as the callable's object, so the engine drops the connection when it dies.
     DriverSystem::DriverSystem() {
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         vehicles->connect(RailVehicleServer::vehicle_freed_signal, callable_mp(this, &DriverSystem::_on_vehicle_freed));
-        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        ERR_FAIL_NULL(runtime);
-        simulation_speed = runtime->get_simulation_speed();
-        runtime->connect(MaszynaRuntime::paused_signal, callable_mp(this, &DriverSystem::_refresh_processing));
-        runtime->connect(MaszynaRuntime::unpaused_signal, callable_mp(this, &DriverSystem::_refresh_processing));
-        runtime->connect(
-                MaszynaRuntime::simulation_speed_changed_signal,
-                callable_mp(this, &DriverSystem::_on_simulation_speed_changed));
     }
 
     DriverSystem::~DriverSystem() {
         _set_processing(false);
     }
 
-    void DriverSystem::_on_simulation_speed_changed() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        ERR_FAIL_NULL(runtime);
-        simulation_speed = runtime->get_simulation_speed();
-    }
-
-    /// Processes while an update is scheduled and the runtime is not paused
+    /// Processes while an update is scheduled
     void DriverSystem::_refresh_processing() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        _set_processing(!updates.empty() && runtime != nullptr && !runtime->is_paused());
+        _set_processing(!updates.empty());
     }
 
+    /// Scheduled, it holds the runtime's clock, so the time it waits for passes
     void DriverSystem::_set_processing(const bool p_processing) {
         if (processing == p_processing) {
             return;
         }
-        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
-            return;
-        }
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
         processing = p_processing;
         if (p_processing) {
-            tree->connect("process_frame", callable_mp(this, &DriverSystem::_process_updates));
+            runtime->clock_hold();
+            runtime->connect(MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
             return;
         }
-        tree->disconnect("process_frame", callable_mp(this, &DriverSystem::_process_updates));
+        runtime->disconnect(MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
+        runtime->clock_release();
     }
 
     /// Only the updates whose time has come are taken, and only those scheduled before the pass:
     /// what an update schedules, even for now, runs on the next frame
-    void DriverSystem::_process_updates() {
-        const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        ERR_FAIL_NULL(tree);
-        time += MIN(tree->get_root()->get_process_delta_time() * simulation_speed, MAX_FRAME_TIME);
+    void DriverSystem::_process_updates(double /* p_seconds */) {
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
+        const double time = runtime->get_simulation_time();
         const uint64_t pass_end = next_sequence;
         while (!updates.empty() && updates.top().time <= time && updates.top().sequence < pass_end) {
             const UpdateEntry entry = updates.top();
@@ -121,7 +104,9 @@ namespace godot {
         DriverData *data = drivers.getptr(p_driver);
         ERR_FAIL_NULL(data);
         data->update_sequence = next_sequence++;
-        updates.push(UpdateEntry{time + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
+        updates.push(UpdateEntry{runtime->get_simulation_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
         _refresh_processing();
     }
 

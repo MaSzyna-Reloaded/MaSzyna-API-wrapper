@@ -196,12 +196,17 @@ func _ready() -> void:
 
 func _enter_tree() -> void:
     add_to_group(GROUP)
+    # the time of day passes while the environment is there (MaszynaRuntime's clock)
+    if not Engine.is_editor_hint():
+        MaszynaRuntime.clock_hold()
     UserSettings.config_changed.connect(_on_user_settings_changed)
     MaszynaRuntime.paused.connect(_on_runtime_paused)
     MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
 
 
 func _exit_tree() -> void:
+    if not Engine.is_editor_hint():
+        MaszynaRuntime.clock_release()
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
     MaszynaRuntime.paused.disconnect(_on_runtime_paused)
     MaszynaRuntime.unpaused.disconnect(_on_runtime_unpaused)
@@ -394,6 +399,8 @@ func _apply_time_configuration() -> void:
 
     _sky_environment.apply_time_configuration()
     _sync_time()
+    # a time set, not run: the clock jumps to it
+    MaszynaRuntime.time_of_day = current_time
 
 
 ## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
@@ -411,7 +418,6 @@ func _push_environment_state(delta: float) -> void:
     var light_level:float = _sky_environment.get_light_level()
     E3DRenderingServer.set_current_time(current_time)
     E3DRenderingServer.set_light_level(light_level)
-    MaszynaRuntime.time_of_day = current_time
     MaszynaRuntime.simulation_speed = simulation_speed
     _publish_animation_speed()
     MaszynaRuntime.light_level = light_level

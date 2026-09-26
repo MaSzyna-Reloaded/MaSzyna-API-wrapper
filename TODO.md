@@ -382,10 +382,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `project.godot` override and are not verified by ear at 2.0 (`EXTERIOR_*` are 1.0).
 * The gnd-sfx tick is GDScript on a worker (12 ms/frame for 200 players, headless). If it limits,
   move the runtime to a C++ singleton beside `E3DRenderingServer`.
-* gnd-sfx: `SfxPlaybackRuntime._release_voice()` indexed an emptied `_active_voices` when a
-  scenery `sound` event called `stop()` and `play()` from the main thread while the tick ran
-  (stary_jawor_eszelon probe) - `_update_voice()` checks the index and the array changes before
-  it is used. The sound action no longer stops before playing; the race itself is in gnd-sfx.
 * `SfxGeneratorPlayback.update()` runs on the sfx worker (single producer into the ring buffer);
   revisit if a generator clip ever needs the scene tree.
 

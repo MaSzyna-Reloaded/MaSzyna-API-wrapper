@@ -14,6 +14,8 @@
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
 #include "core/MaszynaRuntime.hpp"
+#include "drivers/DriverDelegate.hpp"
+#include "drivers/DriverSystem.hpp"
 #include "core/MaszynaTranslationServer.hpp"
 #include "core/MoverVehicleController.hpp"
 #include "core/RailVehicle3D.hpp"
@@ -137,6 +139,7 @@ MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 SemaphoreServer *semaphore_server_singleton = nullptr;
 ScenarioEventServer *scenario_event_server_singleton = nullptr;
+DriverSystem *driver_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -175,6 +178,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SemaphoreNode);
         GDREGISTER_CLASS(SemaphoreSystemNode);
         GDREGISTER_CLASS(ScenarioEventServer);
+        GDREGISTER_CLASS(DriverSystem);
+        GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventAction);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventCondition);
         GDREGISTER_CLASS(MaszynaLegacyMemoryAction);
@@ -301,6 +306,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after MaszynaRuntime is registered: the constructor follows its pause and speed
         scenario_event_server_singleton = memnew(ScenarioEventServer);
         Engine::get_singleton()->register_singleton("ScenarioEventServer", scenario_event_server_singleton); // 16
+        // after RailVehicleServer is registered: the constructor follows its freed vehicles
+        driver_system_singleton = memnew(DriverSystem);
+        Engine::get_singleton()->register_singleton("DriverSystem", driver_system_singleton); // 17
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -324,6 +332,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("DriverSystem")) {
+        Engine::get_singleton()->unregister_singleton("DriverSystem"); // 17
+    }
+    if (driver_system_singleton != nullptr) {
+        memdelete(driver_system_singleton);
+        driver_system_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("ScenarioEventServer")) {

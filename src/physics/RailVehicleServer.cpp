@@ -70,6 +70,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
+        ClassDB::bind_method(D_METHOD("radio_stop", "position"), &RailVehicleServer::radio_stop);
         ClassDB::bind_method(D_METHOD("vehicle_radio_call", "vehicle", "call"), &RailVehicleServer::vehicle_radio_call);
         ADD_SIGNAL(MethodInfo(
                 vehicle_radio_called_signal, PropertyInfo(Variant::RID, "vehicle"), PropertyInfo(Variant::INT, "call"),
@@ -264,11 +265,14 @@ namespace godot {
     void RailVehicleServer::vehicle_radio_stop(const RID &p_vehicle) {
         const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(sender);
-        const Vector3 origin = _placement_transform(*sender).origin;
+        radio_stop(_placement_transform(*sender).origin);
+    }
+
+    void RailVehicleServer::radio_stop(const Vector3 &p_position) {
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             VehicleController *controller = _get_controller(entry.value);
             if (controller == nullptr ||
-                _placement_transform(entry.value).origin.distance_to(origin) > RADIO_STOP_RANGE) {
+                _placement_transform(entry.value).origin.distance_to(p_position) > RADIO_STOP_RANGE) {
                 continue;
             }
             if (VehicleRadio *radio =

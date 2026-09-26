@@ -114,6 +114,7 @@ static func build(
         power_source_names[power_source_data.name.to_lower()] = power_source_data.name
 
     var memories:Dictionary[String, RID] = {}
+    var memory_positions:Dictionary[String, Vector3] = {}
     for memcell:MaszynaMemcellData in memcells:
         var memory:RID = ScenarioEventServer.memory_create()
         root._memory_rids.append(memory)
@@ -122,6 +123,7 @@ static func build(
         if memcell.track:
             ScenarioEventServer.memory_set_track(memory, tracks_by_name.get(memcell.track, RID()))
         memories[memcell.name.to_lower()] = memory
+        memory_positions[memcell.name.to_lower()] = memcell.position
 
     # a scenery sound is a player of its own with a bank of its one file, played once or looped
     var players_by_name:Dictionary[String, SfxPlayer3D] = {}
@@ -272,6 +274,11 @@ static func build(
                 var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
                 action.command = event.parameters[3]
                 action.value1 = float(event.parameters[4])
+                action.value2 = float(event.parameters[5])
+                # the origin moves it, the rotation does not (Event.cpp:709-712)
+                action.position = event.origin + Vector3(
+                    float(event.parameters[0]), float(event.parameters[1]), float(event.parameters[2])
+                )
                 ScenarioEventServer.event_attach_action(rid, action)
             "getvalues":
                 # the command is the first target memory's, read when the event runs (Event.cpp:577-597)
@@ -279,6 +286,10 @@ static func build(
                     continue
                 var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
                 action.source = event_memories[0]
+                for target:String in event.targets:
+                    if memory_positions.has(target):
+                        action.position = memory_positions[target]
+                        break
                 ScenarioEventServer.event_attach_action(rid, action)
             "sound":
                 var players:Array[SfxPlayer3D] = []

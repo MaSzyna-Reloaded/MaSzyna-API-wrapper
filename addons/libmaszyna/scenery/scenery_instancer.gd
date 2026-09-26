@@ -8,6 +8,8 @@ static var config_importer = preload("res://addons/libmaszyna/importer/maszyna_c
 static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
 ## A lit model no `lights` event is aimed at - it has lights but no aspects
+## The one delegate every scenery driver shares; it keeps their state per driver
+static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
 const GENERIC_SEMAPHORE_KIND:SemaphoreKind = preload("../semaphores/generic_semaphore_kind.tres")
 static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()
 static var endorigin_importer = preload("res://addons/libmaszyna/importer/maszyna_endorigin_importer.gd").new()
@@ -20,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyn
 static var isolated_importer = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/importer/maszyna_area_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 22
+const CACHE_FORMAT_VERSION:int = 23
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -112,6 +114,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         await _report_progress(root, 0.7, "Instancing objects")
         await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
         await _wait_for_vehicles(root)
+        _build_drivers(root)
         return
 
     await _report_progress(root, 0.0, "Scanning includes")
@@ -140,6 +143,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _report_progress(root, 0.7, "Instancing objects")
     await _attach_objects(root, objects, 0.7, 0.9)
     await _wait_for_vehicles(root)
+    _build_drivers(root)
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
@@ -165,6 +169,20 @@ static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
         while not (vehicle as DynamicRailVehicle3D).is_built():
             await _report_progress(root, 0.9, "Instancing vehicles")
     root.load_progress.emit(1.0, "")
+
+
+## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
+## their handles exist only then. The vehicle goes first: the driver learns its cab from it.
+static func _build_drivers(root:MaszynaIncludeNode) -> void:
+    for node:Node in root.find_children("", "DynamicRailVehicle3D", true, false):
+        var vehicle_node:DynamicRailVehicle3D = node
+        var controller:VehicleController = vehicle_node.get_controller()
+        if not controller or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
+            continue
+        var driver:RID = DriverSystem.driver_create()
+        root._driver_rids.append(driver)
+        DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
+        DriverSystem.driver_attach_delegate(driver, _ai_driver)
 
 
 static func _instantiate_server_data(

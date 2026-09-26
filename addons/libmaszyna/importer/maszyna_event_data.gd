@@ -20,3 +20,6 @@ class_name MaszynaEventData
 @export var parameters:PackedStringArray = []
 ## The tokens after `condition` (event_conditions::deserialize(), Event.cpp:181-254)
 @export var condition:PackedStringArray = []
+## The origin in effect where the event is defined - what a position among its parameters is
+## relative to (`putvalues`, Event.cpp:709-712)
+@export var origin:Vector3 = Vector3.ZERO

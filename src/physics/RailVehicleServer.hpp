@@ -226,6 +226,9 @@ namespace godot {
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
             void vehicle_radio_stop(const RID &p_vehicle);
+            /* A Radio-Stop sent from a place rather than a vehicle - a scenery's `Emergency_brake` -
+             * heard by every vehicle within RADIO_STOP_RANGE */
+            void radio_stop(const Vector3 &p_position);
             /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
             void vehicle_radio_call(const RID &p_vehicle, VehicleRadio::RadioCall p_call);
             /* The RailVehicle3D this handle belongs to, by instance id. */

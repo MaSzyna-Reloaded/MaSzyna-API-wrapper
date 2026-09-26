@@ -57,6 +57,7 @@ var _memory_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
+var _driver_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -77,6 +78,7 @@ func _exit_tree() -> void:
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
         # first, so no queued event runs against what is freed after them
+        [_driver_rids, DriverSystem.driver_free],
         [_launcher_rids, ScenarioEventServer.launcher_free],
         [_event_rids, ScenarioEventServer.event_free],
         [_memory_rids, ScenarioEventServer.memory_free],

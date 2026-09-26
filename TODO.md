@@ -633,6 +633,45 @@ closes both level crossings). Left:
 * Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
   `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
 
+## Drivers (plan, #297)
+
+Agreed 2026-09-26. The AI drives a vehicle the way a player does - through the cab
+(`CabinSystem.act()`), never by a path of its own; while the player sits in the cab the AI does not
+drive. The original's `TController` is no architectural model: only its vocabulary of orders is
+ported, into a delegate.
+
+1. **Done: `Emergency_brake` as a Radio-Stop broadcast** - a scenery `putvalues`/`getvalues`
+   `Emergency_brake` is sent from the event's position (`putvalues x y z` plus the include's origin,
+   `Event.cpp:709-712`; the memcell's position for `getvalues`) to every vehicle within
+   `RADIO_STOP_RANGE`, as `RailVehicleServer.vehicle_radio_stop` does from a vehicle. `CabSignal`
+   stays the magnet acting on the activator. Both stay in the event system, not in a driver.
+   No test covers the broadcast: receiving it needs a vehicle with a driver, Radio-Stop fitted
+   and the radio on.
+2. **Cab logic without the 3D cab** - the `CabinSystem` handlers, `CabinState` and
+   `LegacyCabinLogicDelegate` split off `DynamicTrainCabin`, so every driven vehicle has its controls
+   registered without the model and the widgets; the player's 3D cab adds the look and the mouse.
+   Read the cab thoroughly and agree the split before changing it.
+3. **Taking the orders done; carrying them out waits for 2.** `DriverSystem` (C++, not
+   `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
+   `MaszynaLegacyAIDriver` (GDScript, as it will act through `CabinSystem`): a driver for every
+   crewed scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders
+   ask for (`get_state()`); Stary Jawor's SU46 gets its orders from the scenario. Left: carrying
+   them out through the cab; `engine_active` (set by the driving); the trainset's own timetable and
+   velocity from the `.scn` (`trainset <timetable> ... <velocity>` -> `OrdersInit`); a push-pull set
+   that only turns at `@` (`movePushPull`, `OrdersInit()`); what `OrderCheck()` does to the lights
+   and doors; `SetSignal`; the station announcements and guard signals of `Timetable:`.
+   The first plan read: driver RIDs,
+   `driver_attach_delegate`, `driver_send_command(driver, command, values)`;
+   `RailVehicleServer.vehicle_attach_driver(vehicle, driver)`, RIDs only. `MaszynaLegacyAIDriver` is
+   the original's implementation: it takes the orders (`SetVelocity`, `ShuntVelocity`,
+   `Prepare_engine`, `Change_direction`, `Shunt`, `Wait_for_orders`, `Timetable:`...,
+   `TController::PutCommand()`, `Driver.cpp:4468-4906`) and carries out those that are a sequence of
+   controls (`Prepare_engine`, `Change_direction`) through `CabinSystem.act()`. A driver for every
+   `headdriver`/`reardriver` vehicle of the `.scn`. The `putvalues`/`getvalues` action hands the
+   orders to the activator's driver. A future scenario kind (Lua...) is another delegate.
+4. **Driving** - the track ahead read over the existing topology (`_motion_connection`), the passive
+   events' positions and the speed table, speed control through the cab, the timetable followed.
+
 ## Tests
 
 * `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not

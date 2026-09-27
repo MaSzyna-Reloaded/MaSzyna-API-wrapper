@@ -92,7 +92,11 @@ namespace godot {
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, cntrl_brake_delay_3, "cntrl")
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, cntrl_brake_delay_4, "cntrl")
         BIND_PROPERTY_W_HINT(
-                VehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM, "PN:3,PNEPMED:15")
+                VehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM,
+                enum_hint({{"None", BRAKE_OP_MODE_NONE},
+                           {"PN", BRAKE_OP_MODE_PN},
+                           {"PNEP", BRAKE_OP_MODE_PNEP},
+                           {"PNEPMED", BRAKE_OP_MODE_PNEPMED}}))
         BIND_PROPERTY_W_HINT(
                 VehicleBrake, Variant::INT, cntrl_brake_handle_type, "cntrl", PROPERTY_HINT_ENUM,
                 "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
@@ -161,7 +165,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_DELAY_PR_MG);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR_MG);
 
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_NONE);
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PN);
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PNEP);
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PNEPMED);
 
         BIND_ENUM_CONSTANT(BRAKE_SYSTEM_INDIVIDUAL);
@@ -223,6 +229,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
 
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &VehicleBrake::brake_releaser);
+        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleBrake::compressor);
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &VehicleBrake::brake_level_set);
         ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &VehicleBrake::brake_level_set_position);
         ClassDB::bind_method(
@@ -235,6 +242,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("manual_brake_increase"), &VehicleBrake::manual_brake_increase);
         ClassDB::bind_method(D_METHOD("manual_brake_decrease"), &VehicleBrake::manual_brake_decrease);
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &VehicleBrake::auto_rewident);
+        ClassDB::bind_method(
+                D_METHOD("brake_operation_mode_increase"), &VehicleBrake::brake_operation_mode_increase);
+        ClassDB::bind_method(
+                D_METHOD("brake_operation_mode_decrease"), &VehicleBrake::brake_operation_mode_decrease);
+        ClassDB::bind_method(D_METHOD("ep_brake", "applied"), &VehicleBrake::ep_brake);
+        ClassDB::bind_method(D_METHOD("get_operation_mode"), &VehicleBrake::get_operation_mode);
         ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &VehicleBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &VehicleBrake::alarm_chain);
         ClassDB::bind_method(
@@ -288,6 +301,18 @@ namespace godot {
                         Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_compressor_pressure");
+        ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleBrake::get_compressor_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_enabled");
+        ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &VehicleBrake::get_compressor_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_allowed");
         ClassDB::bind_method(D_METHOD("get_controller_position"), &VehicleBrake::get_controller_position);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -391,10 +416,21 @@ namespace godot {
                         Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_pipe_locked");
+        ClassDB::bind_method(D_METHOD("get_force"), &VehicleBrake::get_force);
+        ClassDB::bind_method(D_METHOD("get_force_at", "ratio", "velocity"), &VehicleBrake::get_force_at);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_force");
+        ClassDB::bind_method(D_METHOD("is_braking"), &VehicleBrake::is_braking);
+        ClassDB::bind_method(D_METHOD("is_holding"), &VehicleBrake::is_holding);
+        ClassDB::bind_method(D_METHOD("is_cut_off"), &VehicleBrake::is_cut_off);
     }
 
     void VehicleBrake::_register_commands() {
         register_command("brake_releaser", Callable(this, "brake_releaser"));
+        register_command("compressor", Callable(this, "compressor"));
         register_command("brake_level_set", Callable(this, "brake_level_set"));
         register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         register_command("brake_level_increase", Callable(this, "brake_level_increase"));
@@ -405,6 +441,9 @@ namespace godot {
         register_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         register_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         register_command("auto_rewident", Callable(this, "auto_rewident"));
+        register_command("brake_operation_mode_increase", Callable(this, "brake_operation_mode_increase"));
+        register_command("brake_operation_mode_decrease", Callable(this, "brake_operation_mode_decrease"));
+        register_command("ep_brake", Callable(this, "ep_brake"));
         register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
         register_command("universal_brake_button", Callable(this, "universal_brake_button"));
@@ -412,6 +451,7 @@ namespace godot {
 
     void VehicleBrake::_unregister_commands() {
         unregister_command("brake_releaser", Callable(this, "brake_releaser"));
+        unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("brake_level_set", Callable(this, "brake_level_set"));
         unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
@@ -422,6 +462,9 @@ namespace godot {
         unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         unregister_command("auto_rewident", Callable(this, "auto_rewident"));
+        unregister_command("brake_operation_mode_increase", Callable(this, "brake_operation_mode_increase"));
+        unregister_command("brake_operation_mode_decrease", Callable(this, "brake_operation_mode_decrease"));
+        unregister_command("ep_brake", Callable(this, "ep_brake"));
         unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
         unregister_command("universal_brake_button", Callable(this, "universal_brake_button"));

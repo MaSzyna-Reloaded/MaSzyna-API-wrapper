@@ -30,6 +30,11 @@ namespace godot {
 
         ClassDB::bind_method(
                 D_METHOD("get_resistor_fan_rotation"), &VehicleElectricSeriesEngine::get_resistor_fan_rotation);
+        ClassDB::bind_method(D_METHOD("get_circuit_imin"), &VehicleElectricSeriesEngine::get_circuit_imin);
+        ClassDB::bind_method(D_METHOD("get_engine_voltage"), &VehicleElectricSeriesEngine::get_engine_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_next_position_velocity", "main_controller"),
+                &VehicleElectricSeriesEngine::get_next_position_velocity);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
@@ -47,6 +52,8 @@ namespace godot {
             return;
         }
         p_state["resistor_fan_rotation"] = get_resistor_fan_rotation();
+        p_state["circuit_imin"] = get_circuit_imin();
+        p_state["engine_voltage"] = get_engine_voltage();
     }
 
 } // namespace godot

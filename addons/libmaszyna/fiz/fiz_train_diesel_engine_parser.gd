@@ -2,11 +2,10 @@
 extends RefCounted
 class_name FizTrainDieselEngineParser
 
-## VehicleDieselEngine's DList:/DMList:/HTCList:/V2NList: table sections. Registered directly in
-## FizVehicleBuilder's section table. These are independent of whether Engine:'s own
-## plain-DieselEngine field subset has a dedicated parser yet (still common-fields-only, same
-## status ElectricInductionMotor was in before FizTrainDieselElectricEngineParser existed) -
-## the node itself is created by FizTrainEngineParser's stub branch regardless.
+## VehicleDieselEngine's own subset of Engine: (apply_engine_fields(), called by
+## FizTrainEngineParser once it created the node), the clutch of its gearbox's header
+## (apply_clutch()), and the DList:/DMList:/HTCList:/V2NList: table sections, registered directly
+## in FizVehicleBuilder's section table.
 ##
 ## DList: header keys confirmed against a real vehicle line: `DList: Size=10 Mmax=2750
 ## nMmax=18.3 nmax=33.3 Mnmax=2142 nominalfill=1.0 Mstand=250.0 NomFuelConsRate=220`, cross-
@@ -31,6 +30,119 @@ var _torque_rows: Array[CurvePointItem] = []
 var _tc_rows: Array[CurvePointItem] = []
 var _v2n_rows: Array[CurvePointItem] = []
 var _active_table: String = ""
+
+
+## Revolutions per minute in the file, per second in the Mover (LoadFIZ_Engine, Mover.cpp:11172-11196)
+const SECONDS_PER_MINUTE: float = 60.0
+
+
+## Engine:'s plain DieselEngine subset (LoadFIZ_Engine, Mover.cpp:11169-11241), applied by
+## FizTrainEngineParser once it created the node. Each key only when present, so the properties
+## keep the Mover's own defaults.
+func apply_engine_fields(kv: Dictionary, node: VehicleDieselEngine) -> void:
+    var min_rpm: float = FizLineUtil.get_float(kv, "nmin") / SECONDS_PER_MINUTE
+    node.mechanical_min_rpm = min_rpm
+    # nmin_hdrive and nmin_retarder fall back to nmin when absent or zero (Mover.cpp:11177-11189)
+    var hydro_drive_rpm: float = FizLineUtil.get_float(kv, "nmin_hdrive") / SECONDS_PER_MINUTE
+    node.mechanical_min_rpm_hydro_drive = hydro_drive_rpm if hydro_drive_rpm > 0.0 else min_rpm
+    node.mechanical_min_rpm_hydro_drive_factor = FizLineUtil.get_float(kv, "nmin_hdrive_factor") / SECONDS_PER_MINUTE
+    var retarder_rpm: float = FizLineUtil.get_float(kv, "nmin_retarder") / SECONDS_PER_MINUTE
+    node.mechanical_min_rpm_retarder = retarder_rpm if retarder_rpm > 0.0 else min_rpm
+    node.mechanical_nominal_max_rpm = FizLineUtil.get_float(kv, "nmax") / SECONDS_PER_MINUTE
+    node.mechanical_fuel_cutoff_rpm = FizLineUtil.get_float(kv, "nmax_cutoff") / SECONDS_PER_MINUTE
+    if kv.has("nreg_acc"):
+        node.mechanical_regulator_acceleration = FizLineUtil.get_float(kv, "nreg_acc") / SECONDS_PER_MINUTE
+    if kv.has("AIM"):
+        node.mechanical_inertia = FizLineUtil.get_float(kv, "AIM")
+    if kv.has("RPMDecRate"):
+        node.mechanical_rpm_decrease_rate = FizLineUtil.get_float(kv, "RPMDecRate")
+    if kv.has("EUS"):
+        node.mechanical_clutch_engage_speed = FizLineUtil.get_float(kv, "EUS")
+    if kv.has("EDS"):
+        node.mechanical_clutch_disengage_speed = FizLineUtil.get_float(kv, "EDS")
+    if kv.has("ShuntMode"):
+        # the higher gear gives more force: a ratio under 1 is its inverse (Mover.cpp:11203-11213)
+        var ratio: float = FizLineUtil.get_float(kv, "ShuntMode")
+        node.mechanical_shunt_mode_ratio = 1.0 / ratio if ratio > 0.0 and ratio < 1.0 else ratio
+    node.torque_converter_present = FizLineUtil.get_bool(kv, "IsTC")
+    if node.torque_converter_present:
+        _apply_torque_converter(kv, node)
+    apply_diesel_common(kv, node)
+
+
+## The clutch, from the header of the gearbox's MotorParamTable: (LoadFIZ_MotorParamTable,
+## Mover.cpp:11394-11406)
+static func apply_clutch(kv: Dictionary, node: VehicleDieselEngine) -> void:
+    if kv.has("minVelfullengage"):
+        node.clutch_min_velocity_full_engage = FizLineUtil.get_float(kv, "minVelfullengage")
+    if kv.has("engageDia"):
+        node.clutch_diameter = FizLineUtil.get_float(kv, "engageDia")
+    if kv.has("engageMaxForce"):
+        node.clutch_max_force = FizLineUtil.get_float(kv, "engageMaxForce")
+    if kv.has("engagefriction"):
+        node.clutch_friction = FizLineUtil.get_float(kv, "engagefriction")
+
+
+## Engine:'s keys both diesel engine kinds share (Mover.cpp:11326-11338); the cooling ones
+## (HeaterMin/MaxTemperature, NominalCoolingPower) are not mapped yet (TODO.md).
+static func apply_diesel_common(kv: Dictionary, node: VehicleDieselEngine) -> void:
+    if kv.has("OilMinPressure"):
+        node.oil_pump_pressure_minimum = FizLineUtil.get_float(kv, "OilMinPressure")
+    if kv.has("OilMaxPressure"):
+        node.oil_pump_pressure_maximum = FizLineUtil.get_float(kv, "OilMaxPressure")
+
+
+## The torque converter and the retarder behind it (Mover.cpp:11214-11241)
+func _apply_torque_converter(kv: Dictionary, node: VehicleDieselEngine) -> void:
+    if kv.has("TC_TMMax"):
+        node.torque_converter_max_torque_ratio = FizLineUtil.get_float(kv, "TC_TMMax")
+    if kv.has("TC_CP"):
+        node.torque_converter_coupling_point = FizLineUtil.get_float(kv, "TC_CP")
+    if kv.has("TC_LT"):
+        node.torque_converter_lockup_torque = FizLineUtil.get_float(kv, "TC_LT")
+    if kv.has("TC_LR"):
+        node.torque_converter_lockup_rate = FizLineUtil.get_float(kv, "TC_LR")
+    if kv.has("TC_ULR"):
+        node.torque_converter_unlock_rate = FizLineUtil.get_float(kv, "TC_ULR")
+    if kv.has("TC_FRI"):
+        node.torque_converter_fill_rate_increase = FizLineUtil.get_float(kv, "TC_FRI")
+    if kv.has("TC_FRD"):
+        node.torque_converter_fill_rate_decrease = FizLineUtil.get_float(kv, "TC_FRD")
+    if kv.has("TC_TII"):
+        node.torque_converter_torque_in_in = FizLineUtil.get_float(kv, "TC_TII")
+    if kv.has("TC_TIO"):
+        node.torque_converter_torque_in_out = FizLineUtil.get_float(kv, "TC_TIO")
+    if kv.has("TC_TOO"):
+        node.torque_converter_torque_out_out = FizLineUtil.get_float(kv, "TC_TOO")
+    if kv.has("TC_LS"):
+        node.torque_converter_lockup_speed = FizLineUtil.get_float(kv, "TC_LS")
+    if kv.has("TC_ULS"):
+        node.torque_converter_unlock_speed = FizLineUtil.get_float(kv, "TC_ULS")
+    if kv.has("MaxVelANS"):
+        node.torque_converter_unlock_velocity = FizLineUtil.get_float(kv, "MaxVelANS")
+    node.retarder_present = FizLineUtil.get_bool(kv, "IsRetarder")
+    if not node.retarder_present:
+        return
+    if kv.has("R_Place"):
+        node.retarder_placement = FizLineUtil.get_int(kv, "R_Place") as VehicleDieselEngine.RetarderPlacement
+    if kv.has("R_TII"):
+        node.retarder_torque_in_in = FizLineUtil.get_float(kv, "R_TII")
+    if kv.has("R_MT"):
+        node.retarder_max_torque = FizLineUtil.get_float(kv, "R_MT")
+    if kv.has("R_MP"):
+        node.retarder_max_power = FizLineUtil.get_float(kv, "R_MP")
+    if kv.has("R_FRI"):
+        node.retarder_fill_rate_increase = FizLineUtil.get_float(kv, "R_FRI")
+    if kv.has("R_FRD"):
+        node.retarder_fill_rate_decrease = FizLineUtil.get_float(kv, "R_FRD")
+    if kv.has("R_MinVel"):
+        node.retarder_min_velocity = FizLineUtil.get_float(kv, "R_MinVel")
+    if kv.has("R_EngageVel"):
+        node.retarder_engage_velocity = FizLineUtil.get_float(kv, "R_EngageVel")
+    if kv.has("R_ClutchSpeed"):
+        node.retarder_clutch_speed = FizLineUtil.get_float(kv, "R_ClutchSpeed")
+    node.retarder_clutch = FizLineUtil.get_bool(kv, "R_IsClutch")
+    node.retarder_with_individual = FizLineUtil.get_bool(kv, "R_WithIndividual")
 
 
 func _get_node(context: FizImportContext) -> VehicleDieselEngine:

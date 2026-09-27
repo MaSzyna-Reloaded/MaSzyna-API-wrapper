@@ -3,9 +3,10 @@ extends MaszynaGutTest
 var train: VehicleController
 
 func before_each():
-    # A startup sequence is a driver operating the loco, so the cab is occupied. Without it
-    # CabActive stays 0 and TMoverParameters::ComputeTotalForce() switches the physics off once
-    # LastSwitchingTime passes 5 s (Mover.cpp:4485) - the engine runs and the vehicle never moves.
+    # A startup sequence is a driver operating the loco, so the cab is occupied and switched on.
+    # Without it CabActive stays 0 and TMoverParameters::ComputeTotalForce() switches the physics
+    # off once LastSwitchingTime passes 5 s (Mover.cpp:4485) - the engine runs and the vehicle
+    # never moves.
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
     physics_node.train_id = "TestTrain"
     physics_node.driver_type = VehicleController.DRIVER_HEAD
@@ -14,6 +15,7 @@ func before_each():
     train = physics_node.get_controller()
     await wait_idle_frames(2)
     train.send_command("battery", true)
+    train.send_command("cab_activation", true)
     await wait_idle_frames(2)
 
 func test_successful_enabling_oil_pump():

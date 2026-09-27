@@ -98,6 +98,10 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
 
     # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
     controller.send_command("battery", true)
+    # the player takes the vehicle over from its driver, as entering the cab does
+    # (RailVehicle3D.cpp:185-188), and switches the cab on - none is active before (MOVER.h:2090)
+    DriverSystem.vehicle_set_control_active(controller.get_rid(), false)
+    controller.send_command("cab_activation", true)
     await wait_idle_frames(2)
     controller.send_command("security_acknowledge", true)
     controller.send_command("security_acknowledge", false)

@@ -63,9 +63,12 @@ signal configuration_changed
         timezone_offset = value
         _dirty_time = true
 
-@export_range(0.0, 1000.0) var simulation_speed: float = 1.0:
+## The fastest the simulation runs, as many times the wall clock
+const MAX_SIMULATION_SPEED: float = 100.0
+
+@export_range(0.0, MAX_SIMULATION_SPEED) var simulation_speed: float = 1.0:
     set(value):
-        simulation_speed = value
+        simulation_speed = clampf(value, 0.0, MAX_SIMULATION_SPEED)
         _dirty_time = true
 
 @export_category("Location")
@@ -196,12 +199,17 @@ func _ready() -> void:
 
 func _enter_tree() -> void:
     add_to_group(GROUP)
+    # the time of day passes while the environment is there (MaszynaRuntime's clock)
+    if not Engine.is_editor_hint():
+        MaszynaRuntime.clock_hold()
     UserSettings.config_changed.connect(_on_user_settings_changed)
     MaszynaRuntime.paused.connect(_on_runtime_paused)
     MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
 
 
 func _exit_tree() -> void:
+    if not Engine.is_editor_hint():
+        MaszynaRuntime.clock_release()
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
     MaszynaRuntime.paused.disconnect(_on_runtime_paused)
     MaszynaRuntime.unpaused.disconnect(_on_runtime_unpaused)
@@ -375,10 +383,17 @@ func _on_user_settings_changed() -> void:
 
 func _on_runtime_paused() -> void:
     _sky_environment.pause_weather()
+    _publish_animation_speed()
 
 
 func _on_runtime_unpaused() -> void:
     _sky_environment.unpause_weather()
+    _publish_animation_speed()
+
+
+## Scenery submodels animate in the simulation's time: at its speed, and not at all while paused
+func _publish_animation_speed() -> void:
+    E3DRenderingServer.set_animation_speed(0.0 if MaszynaRuntime.is_paused() else simulation_speed)
 
 
 func _apply_time_configuration() -> void:
@@ -387,6 +402,8 @@ func _apply_time_configuration() -> void:
 
     _sky_environment.apply_time_configuration()
     _sync_time()
+    # a time set, not run: the clock jumps to it
+    MaszynaRuntime.time_of_day = current_time
 
 
 ## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
@@ -404,7 +421,8 @@ func _push_environment_state(delta: float) -> void:
     var light_level:float = _sky_environment.get_light_level()
     E3DRenderingServer.set_current_time(current_time)
     E3DRenderingServer.set_light_level(light_level)
-    MaszynaRuntime.time_of_day = current_time
+    MaszynaRuntime.simulation_speed = simulation_speed
+    _publish_animation_speed()
     MaszynaRuntime.light_level = light_level
     MaszynaRuntime.air_temperature = temperature
     E3DRenderingServer.set_wind(

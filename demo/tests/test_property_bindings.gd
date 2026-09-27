@@ -74,8 +74,8 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     assert_eq(brake.brake_force_max, 85.0)
 
     var electric_engine: VehicleElectricEngine = MoverVehicleElectricSeriesEngine.new()
-    electric_engine.power_cable_source = VehicleController.POWER_TYPE_STEAM
-    assert_eq(electric_engine.power_cable_source, VehicleController.POWER_TYPE_STEAM)
+    electric_engine.power_cable_source = TrainController.POWER_TYPE_STEAM
+    assert_eq(electric_engine.power_cable_source, TrainController.POWER_TYPE_STEAM)
 
     var lights: LightListItem = LightListItem.new()
     lights.cabin_a_left_white_signal = false

@@ -108,7 +108,7 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
-## The coupling elements the physics side reports, in the order of VehicleController.CouplingElement,
+## The coupling elements the physics side reports, in the order of TrainController.CouplingElement,
 ## attach first and detach second, then the pantograph events of VehicleElectricEngine - the layout
 ## of a vehicle's entry in _vehicle_events.
 const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
@@ -376,11 +376,11 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
     _pantograph_sources.erase(vehicle_rid)
 
 
-func _on_coupler_attached(element:VehicleController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_attached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][element] += 1
 
 
-func _on_coupler_detached(element:VehicleController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_detached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 

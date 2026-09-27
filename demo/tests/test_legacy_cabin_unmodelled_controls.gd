@@ -5,7 +5,7 @@ extends MaszynaGutTest
 ## without its gauge, here LegacyCabinUnmodelledControls registers them in CabinSystem.
 
 var train: VehicleController
-var cabin: Node3D
+var logic: LegacyCabinLogic
 
 
 func before_each():
@@ -13,25 +13,27 @@ func before_each():
     train.battery_voltage = 110.0
     train.apply_configuration()
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
-    var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
-    engine.cntrl_main_controller_position_count = 4
-    train.add_component(engine)
-    cabin = Node3D.new()
-    add_child(cabin)
-    var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.vehicle_rid = train.get_rid()
-    logic.cab = 1
-    cabin.add_child(logic)
+    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    master_controller.main_position_count = 4
+    train.add_component(master_controller)
+    var controls: LegacyCabinControls = LegacyCabinControls.new()
+    logic = LegacyCabinLogic.new(func(_cab: int) -> LegacyCabinControls: return controls)
+    logic.register(train.get_rid(), 1)
     await wait_idle_frames(2)
 
 
 func after_each():
-    remove_child(cabin)
-    cabin.free()
+    logic.unregister()
 
 
 func test_catalog_controls_with_keys_are_registered_without_widgets():
     for control: StringName in [&"dirkey", &"main_on_bt", &"main_off_bt", &"shp_reset_bt", &"battery_sw"]:
+        assert_true(CabinSystem.has_control(train.get_rid(), 1, control), "%s should be registered" % control)
+
+
+func test_knobs_are_registered_for_their_value():
+    # the AI sets them by value (MaszynaLegacyDriverBraking); a key has none to give
+    for control: StringName in [&"brakectrl", &"localbrake"]:
         assert_true(CabinSystem.has_control(train.get_rid(), 1, control), "%s should be registered" % control)
 
 

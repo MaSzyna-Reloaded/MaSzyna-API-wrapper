@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/TrainController.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 
@@ -38,15 +39,17 @@ namespace godot {
             virtual bool get_dynamic_brake_active() const = 0;
             virtual bool get_fuse_active() const = 0;
             virtual bool get_motor_connectors_open() const = 0;
+            /* The line contactors are closed (StLinFlag); the control pressure switch tripped - the
+             * brake cylinder or pipe pressure is out of its working range (ControlPressureSwitch,
+             * Mover.cpp:7177) */
+            virtual bool is_line_contactor_closed() const = 0;
+            virtual bool is_pressure_switch_tripped() const = 0;
 
             /* Traction commands - "zbij nadmiarowy" and the line contactors */
             virtual void fuse_reset() = 0;
             virtual void set_motor_connectors_open(bool p_open) = 0;
 
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_converter_enabled() const;
-            bool get_converted_allowed() const;
-            double get_converter_time_to_start() const;
             double get_collector_max_voltage() const;
             double get_collector_max_current() const;
             double get_collector_max_lifting() const;
@@ -103,7 +106,7 @@ namespace godot {
             };
 
             static void _bind_methods();
-            VehicleController::TrainPowerSource power_source = VehicleController::POWER_SOURCE_NOT_DEFINED;
+            TrainController::TrainPowerSource power_source = TrainController::POWER_SOURCE_NOT_DEFINED;
             MAKE_MEMBER_GS(int, power_current_collector_number_of_collectors, 0);
             MAKE_MEMBER_GS(float, power_current_collector_max_voltage, 0.0);
             MAKE_MEMBER_GS(float, power_current_collector_max_current, 0.0);
@@ -120,11 +123,11 @@ namespace godot {
                     0.6f * power_current_collector_max_voltage);
             MAKE_MEMBER_GS(float, power_transducer_input_voltage, 0.0f);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, power_accumulator_recharge_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED);
+                    TrainController::TrainPowerSource, power_accumulator_recharge_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerType, power_cable_source,
-                    VehicleController::TrainPowerType::POWER_TYPE_NONE);
+                    TrainController::TrainPowerType, power_cable_source,
+                    TrainController::TrainPowerType::POWER_TYPE_NONE);
             MAKE_MEMBER_GS(float, power_cable_steam_pressure, 0.0f);
             MAKE_MEMBER_GS(int, power_current_collector_physical_layout, 0);
 
@@ -173,10 +176,8 @@ namespace godot {
             static const char *pantograph_up_signal;
             static const char *pantograph_down_signal;
 
-            void set_power_source(VehicleController::TrainPowerSource p_source);
-            VehicleController::TrainPowerSource get_power_source() const;
-            void compressor(bool p_enabled);
-            void converter(bool p_enabled);
+            void set_power_source(TrainController::TrainPowerSource p_source);
+            TrainController::TrainPowerSource get_power_source() const;
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
             void pantographs_valve_operate(ValveOperation p_operation);

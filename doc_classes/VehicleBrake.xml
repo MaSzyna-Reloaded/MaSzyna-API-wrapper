@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleBrake" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleBrake" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Represents and configures the vehicle brake system and exposes controls to operate it.
 	</brief_description>
@@ -67,12 +67,62 @@
 				This is a convenience wrapper around [method brake_level_set_position].
 			</description>
 		</method>
+		<method name="brake_operation_mode_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="brake_operation_mode_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="brake_releaser">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
 				Operates the brake releaser (overrides to quickly release brake cylinder pressure).
 				Pass true to engage the releaser, false to disengage. Typically used momentarily.
+			</description>
+		</method>
+		<method name="compressor">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Switches the compressor ([code]CompressorSwitch()[/code]); the command is sent along the control line to the vehicles that carry one.
+			</description>
+		</method>
+		<method name="ep_brake">
+			<return type="bool" />
+			<param index="0" name="applied" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_force_at" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="ratio" type="float" />
+			<param index="1" name="velocity" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_operation_mode" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="is_braking" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_cut_off" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_holding" qualifiers="const">
+			<return type="bool" />
+			<description>
 			</description>
 		</method>
 		<method name="local_brake_decrease">
@@ -157,7 +207,7 @@
 			[code]Cntrl.BrakeHandle[/code]
 			Type of the main (train) brake handle.
 		</member>
-		<member name="cntrl_brake_op_modes" type="int" setter="set_cntrl_brake_op_modes" getter="get_cntrl_brake_op_modes" enum="VehicleBrake.BrakeOperationMode" default="15">
+		<member name="cntrl_brake_op_modes" type="int" setter="set_cntrl_brake_op_modes" getter="get_cntrl_brake_op_modes" enum="VehicleBrake.BrakeOperationMode" default="0">
 			[code]Cntrl.BrakeOpModes[/code]
 		</member>
 		<member name="cntrl_brake_system" type="int" setter="set_cntrl_brake_system" getter="get_cntrl_brake_system" enum="VehicleBrake.BrakeSystemType" default="1">
@@ -192,6 +242,8 @@
 		<member name="cntrl_spring_brake_drive_emergency_velocity" type="float" setter="set_cntrl_spring_brake_drive_emergency_velocity" getter="get_cntrl_spring_brake_drive_emergency_velocity" default="-1.0">
 			[code]Cntrl.SpringBrakeDriveEmergencyVel[/code]
 		</member>
+		<member name="compressor_allowed" type="bool" setter="" getter="get_compressor_allowed" default="false">
+		</member>
 		<member name="compressor_cab_a_max_pressure" type="float" setter="set_compressor_cab_a_max_pressure" getter="get_compressor_cab_a_max_pressure" default="0.0">
 			Cab A compressor cut-out (maximum) pressure in bar.
 			For engine-driven compressors, pressure cycles between this value and Cab A min pressure.
@@ -211,6 +263,8 @@
 		<member name="compressor_emergency_valve_area" type="float" setter="set_compressor_emergency_valve_area" getter="get_compressor_emergency_valve_area" default="0.0">
 			[code]Brake:EVArea[/code]
 			Outlet cross-section of the main tank safety valve, in l/m.
+		</member>
+		<member name="compressor_enabled" type="bool" setter="" getter="get_compressor_enabled" default="false">
 		</member>
 		<member name="compressor_higher_emergency_closing_pressure" type="float" setter="set_compressor_higher_emergency_closing_pressure" getter="get_compressor_higher_emergency_closing_pressure" default="-1.0">
 			Main tank safety valve unlocking pressure
@@ -272,6 +326,8 @@
 			Size index of the ESt family camshaft valve (e.g., 1–3). Used only with ESt/LSt-type valves.
 		</member>
 		<member name="feed_pipe_pressure" type="float" setter="" getter="get_feed_pipe_pressure" default="0.0">
+		</member>
+		<member name="force" type="float" setter="" getter="get_force" default="0.0">
 		</member>
 		<member name="force_ratio" type="float" setter="" getter="get_force_ratio" default="0.0">
 		</member>
@@ -493,8 +549,12 @@
 		<constant name="BRAKE_DELAY_GPR_MG" value="15" enum="BrakeDelaySetting">
 			"G", "P", "R" and "Mg" delay settings.
 		</constant>
+		<constant name="BRAKE_OP_MODE_NONE" value="0" enum="BrakeOperationMode">
+		</constant>
 		<constant name="BRAKE_OP_MODE_PN" value="3" enum="BrakeOperationMode">
 			Pneumatic control and leak test only.
+		</constant>
+		<constant name="BRAKE_OP_MODE_PNEP" value="7" enum="BrakeOperationMode">
 		</constant>
 		<constant name="BRAKE_OP_MODE_PNEPMED" value="15" enum="BrakeOperationMode">
 			Pneumatic, electro-pneumatic, electro-dynamic control and leak test.

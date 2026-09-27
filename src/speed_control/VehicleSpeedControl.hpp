@@ -1,12 +1,12 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class VehicleController;
-    class VehicleSpeedControl : public VehicleComponent {
-            GDCLASS(VehicleSpeedControl, VehicleComponent);
+    class VehicleSpeedControl : public TrainComponent {
+            GDCLASS(VehicleSpeedControl, TrainComponent);
 
 
         public:
@@ -23,6 +23,18 @@ namespace godot {
             virtual double get_desired_velocity() const = 0;
             virtual double get_desired_power() const = 0;
             virtual double get_selected_velocity() const = 0;
+            /* The speed set by an impulse lever, in tens (NewSpeed) */
+            virtual double get_set_velocity() const = 0;
+            /* The player's buttons (OnCommand_speedcontrol*, Train.cpp:6887-6974) */
+            virtual void speed_control_increase() = 0;
+            virtual void speed_control_decrease() = 0;
+            virtual void speed_control_power_increase() = 0;
+            virtual void speed_control_power_decrease() = 0;
+            virtual void speed_control_button(int p_button) = 0;
+            /* The speed set outright [km/h], as a driver's order (RunCommand("SpeedCntrl"), Mover.cpp:12695) */
+            virtual void speed_control_set(double p_velocity) = 0;
+            void _register_commands() override;
+            void _unregister_commands() override;
             MAKE_MEMBER_GS(bool, speed_control_enabled, false);
             MAKE_MEMBER_GS(double, delay, 0.0);
             MAKE_MEMBER_GS(bool, impulse_lever, false);

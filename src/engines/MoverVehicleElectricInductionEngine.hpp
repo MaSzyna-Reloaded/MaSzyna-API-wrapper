@@ -31,6 +31,8 @@ namespace godot {
             bool get_dynamic_brake_active() const override;
             bool get_fuse_active() const override;
             bool get_motor_connectors_open() const override;
+            bool is_line_contactor_closed() const override;
+            bool is_pressure_switch_tripped() const override;
             void fuse_reset() override;
             void set_motor_connectors_open(bool p_open) override;
             void _register_commands() override;

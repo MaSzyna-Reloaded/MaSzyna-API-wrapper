@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 
 namespace godot {
@@ -7,13 +7,22 @@ namespace godot {
      * the volume are the cab radio's own settings (TTrain's iRadioChannel and m_radiovolume in
      * the original, Train.h:918); whether the radio is on, powered, and what a Radio-Stop does
      * to the vehicle are the backend's to answer. */
-    class VehicleRadio : public VehicleComponent {
-            GDCLASS(VehicleRadio, VehicleComponent);
+    class VehicleRadio : public TrainComponent {
+            GDCLASS(VehicleRadio, TrainComponent);
 
         public:
             VehicleComponentType::Type get_component_type() const override {
                 return VehicleComponentType::COMPONENT_RADIO;
             }
+
+            /* The calls a train radio sends (radio_message, Globals.h) */
+            enum RadioCall {
+                RADIO_CALL1,
+                RADIO_CALL3,
+            };
+
+            /* On this channel the radio sends no calls (Train.cpp:8211, 8228) */
+            static constexpr int CHANNEL_NO_CALLS = 10;
 
             static const char *radio_toggled_signal;
             static const char *channel_changed_signal;
@@ -57,7 +66,12 @@ namespace godot {
             /* A Radio-Stop sent by a vehicle in range reached this one (TDynamicObject::RadioStop,
              * DynObj.cpp:7229) */
             virtual void radio_stop_receive() = 0;
+            /* radiocall1_sw:/radiocall3_sw: pressed sends the call to whatever listens in range
+             * (TTrain::OnCommand_radiocall1send/3send, Train.cpp:8209-8236) */
+            virtual void radio_call(bool p_pressed, RadioCall p_call) = 0;
 
             void _fill_state_dictionary(Dictionary &p_state) const override;
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(VehicleRadio::RadioCall)

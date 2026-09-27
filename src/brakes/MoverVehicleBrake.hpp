@@ -21,6 +21,8 @@ namespace godot {
             double get_feed_pipe_pressure() const override;
             double get_tank_volume() const override;
             double get_compressor_pressure() const override;
+            bool get_compressor_enabled() const override;
+            bool get_compressor_allowed() const override;
             double get_controller_position() const override;
             double get_controller_position_normalized() const override;
             double get_local_position_normalized() const override;
@@ -38,6 +40,11 @@ namespace godot {
             double get_edb_cylinder_pressure() const override;
             bool get_releaser_active() const override;
             bool get_main_pipe_locked() const override;
+            double get_force() const override;
+            double get_force_at(double p_ratio, double p_velocity) const override;
+            bool is_braking() const override;
+            bool is_holding() const override;
+            bool is_cut_off() const override;
 
         private:
             const std::unordered_map<BrakeMethod, int> brake_method_map = {
@@ -128,6 +135,7 @@ namespace godot {
 
         public:
             void brake_releaser(bool p_pressed) override;
+            void compressor(bool p_enabled) override;
             void brake_level_set(double p_level) override;
             void brake_level_set_position(BrakeHandlePosition p_position) override;
             void brake_level_set_position_str(const String &p_position) override;
@@ -139,6 +147,10 @@ namespace godot {
             void manual_brake_increase() override;
             void manual_brake_decrease() override;
             void auto_rewident(int p_brake_delay) override;
+            void brake_operation_mode_increase() override;
+            void brake_operation_mode_decrease() override;
+            bool ep_brake(bool p_applied) override;
+            int get_operation_mode() const override;
             void brake_level_charging(bool p_active) override;
             void alarm_chain(bool p_pulled) override;
             void universal_brake_button(int p_button, bool p_pressed) override;

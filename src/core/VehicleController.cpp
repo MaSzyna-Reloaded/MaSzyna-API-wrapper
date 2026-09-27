@@ -13,15 +13,10 @@ namespace godot {
 
     const char *VehicleController::simulation_configured_signal = "simulation_configured";
     const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
-    const char *VehicleController::power_changed_signal = "power_changed";
     const char *VehicleController::command_received = "command_received";
     const char *VehicleController::roof_light_changed = "roof_light_changed";
-    const char *VehicleController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *VehicleController::config_changed = "config_changed";
     const char *VehicleController::position_changed_signal = "position_changed";
-    const char *VehicleController::consist_changed_signal = "consist_changed";
-    const char *VehicleController::coupler_attached_signal = "coupler_attached";
-    const char *VehicleController::coupler_detached_signal = "coupler_detached";
 
     void VehicleController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &VehicleController::get_state);
@@ -49,30 +44,13 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleController::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleController::unregister_command);
-        ClassDB::bind_method(D_METHOD("battery", "enabled"), &VehicleController::battery);
-        ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &VehicleController::cab_activation);
-        ClassDB::bind_method(D_METHOD("cab_activation_auto"), &VehicleController::cab_activation_auto);
-        ClassDB::bind_method(D_METHOD("cab_change", "direction"), &VehicleController::cab_change);
-        ClassDB::bind_method(
-                D_METHOD("main_controller_increase", "step"), &VehicleController::main_controller_increase, DEFVAL(1));
-        ClassDB::bind_method(
-                D_METHOD("main_controller_decrease", "step"), &VehicleController::main_controller_decrease, DEFVAL(1));
-        ClassDB::bind_method(
-                D_METHOD("second_controller_increase", "step"), &VehicleController::second_controller_increase,
-                DEFVAL(1));
-        ClassDB::bind_method(
-                D_METHOD("second_controller_decrease", "step"), &VehicleController::second_controller_decrease,
-                DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("direction_increase"), &VehicleController::direction_increase);
-        ClassDB::bind_method(D_METHOD("direction_decrease"), &VehicleController::direction_decrease);
-        ClassDB::bind_method(
-                D_METHOD("distance_counter_activate", "pressed"), &VehicleController::distance_counter_activate);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleController::apply_config);
         ClassDB::bind_method(D_METHOD("initialize"), &VehicleController::initialize);
         ClassDB::bind_method(D_METHOD("process_components", "delta"), &VehicleController::process_components);
         ClassDB::bind_method(D_METHOD("update_state"), &VehicleController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &VehicleController::get_velocity);
         ClassDB::bind_method(D_METHOD("get_speed"), &VehicleController::get_speed);
+        ClassDB::bind_method(D_METHOD("get_acceleration"), &VehicleController::get_acceleration);
         ClassDB::bind_method(D_METHOD("get_mass_total"), &VehicleController::get_mass_total);
         ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
@@ -85,33 +63,13 @@ namespace godot {
          * of a step, so the step alone does not say whether a dump is still current. */
         ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
         ClassDB::bind_method(D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
-        ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
-        ClassDB::bind_method(D_METHOD("update_location"), &VehicleController::update_location);
-        ClassDB::bind_method(
-                D_METHOD("update_neighbour", "end", "other", "other_end", "track_distance"),
-                &VehicleController::update_neighbour);
-        ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &VehicleController::compute_forces);
-        ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &VehicleController::compute_movement);
-        ClassDB::bind_method(D_METHOD("compute_fast_movement", "delta"), &VehicleController::compute_fast_movement);
         ClassDB::bind_method(D_METHOD("is_physics_active"), &VehicleController::is_physics_active);
-        ClassDB::bind_method(
-                D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &VehicleController::couple);
-        ClassDB::bind_method(D_METHOD("uncouple", "end"), &VehicleController::uncouple);
-        ClassDB::bind_method(D_METHOD("is_coupled", "end"), &VehicleController::is_coupled);
-        ClassDB::bind_method(D_METHOD("is_coupled_by", "end", "element"), &VehicleController::is_coupled_by);
-        ClassDB::bind_method(D_METHOD("get_coupled_controller", "end"), &VehicleController::get_coupled_controller);
-        ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &VehicleController::get_coupled_end);
-        ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &VehicleController::coupler_connect);
-        ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &VehicleController::coupler_disconnect);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &VehicleController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &VehicleController::get_world_position);
-        ClassDB::bind_method(
-                D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
-                &VehicleController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &VehicleController::get_rid);
-        ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(
                 D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
+        ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);
 
         BIND_PROPERTY(VehicleController, Variant::STRING, train_id);
@@ -119,8 +77,6 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, max_velocity);
-        /* FIXME: move to TrainPower section? */
-        BIND_PROPERTY_W_HINT(VehicleController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
                 VehicleController, Variant::INT, category, PROPERTY_HINT_ENUM,
                 enum_hint(
@@ -128,24 +84,6 @@ namespace godot {
                          {"Road", CATEGORY_ROAD},
                          {"Ship", CATEGORY_SHIP},
                          {"Airplane", CATEGORY_AIRPLANE}}));
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, train_type, PROPERTY_HINT_ENUM,
-                enum_hint(
-                        {{"Default", TRAIN_TYPE_DEFAULT},
-                         {"EZT", TRAIN_TYPE_EZT},
-                         {"ET41", TRAIN_TYPE_ET41},
-                         {"ET42", TRAIN_TYPE_ET42},
-                         {"PseudoDiesel", TRAIN_TYPE_PSEUDODIESEL},
-                         {"ET22", TRAIN_TYPE_ET22},
-                         {"SN61", TRAIN_TYPE_SN61},
-                         {"EP05", TRAIN_TYPE_EP05},
-                         {"ET40", TRAIN_TYPE_ET40},
-                         {"T181", TRAIN_TYPE_181},
-                         {"DMU", TRAIN_TYPE_DMU}}));
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, reduced_mass);
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, sand_capacity);
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, heating_power);
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, light_power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_length, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_height, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_width, "dimensions");
@@ -159,254 +97,20 @@ namespace godot {
         BIND_ENUM_CONSTANT(DRIVER_REAR);
         BIND_PROPERTY(VehicleController, Variant::STRING, load_name);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, load_amount);
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, cntrl_converter_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, cntrl_converter_start_delay, "cntrl");
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, cntrl_ground_relay_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, cntrl_compartment_lights_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY(VehicleController, Variant::BOOL, cntrl_automatic_cab_activation, "cntrl");
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, cntrl_inactive_cab_flag, "cntrl", PROPERTY_HINT_FLAGS,
-                "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
-                "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
-        ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
-        ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
-        ADD_SIGNAL(MethodInfo(consist_changed_signal));
-        const String coupling_element_hint = enum_hint(
-                {{"Coupler", COUPLING_ELEMENT_COUPLER},
-                 {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},
-                 {"MainHose", COUPLING_ELEMENT_MAINHOSE},
-                 {"Control", COUPLING_ELEMENT_CONTROL},
-                 {"Gangway", COUPLING_ELEMENT_GANGWAY},
-                 {"Heating", COUPLING_ELEMENT_HEATING},
-                 {"Permanent", COUPLING_ELEMENT_PERMANENT}});
-        ADD_SIGNAL(MethodInfo(
-                coupler_attached_signal,
-                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
-        ADD_SIGNAL(MethodInfo(
-                coupler_detached_signal,
-                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
 
-        BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_GENERATOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_ACCUMULATOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_CURRENTCOLLECTOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_POWERCABLE);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_HEATER);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_MAIN);
-
-        BIND_ENUM_CONSTANT(POWER_TYPE_NONE);
-        BIND_ENUM_CONSTANT(POWER_TYPE_BIO);
-        BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
-        BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
-        BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
-
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_COUPLER);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_BRAKEHOSE);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_MAINHOSE);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_CONTROL);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_GANGWAY);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_HEATING);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_PERMANENT);
         BIND_ENUM_CONSTANT(CATEGORY_TRAIN);
         BIND_ENUM_CONSTANT(CATEGORY_ROAD);
         BIND_ENUM_CONSTANT(CATEGORY_SHIP);
         BIND_ENUM_CONSTANT(CATEGORY_AIRPLANE);
-
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_DEFAULT);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_EZT);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET41);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET42);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_PSEUDODIESEL);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET22);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_SN61);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_EP05);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET40);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_181);
-        BIND_ENUM_CONSTANT(TRAIN_TYPE_DMU);
-
-        BIND_ENUM_CONSTANT(START_MODE_DISABLED);
-        BIND_ENUM_CONSTANT(START_MODE_MANUAL);
-        BIND_ENUM_CONSTANT(START_MODE_AUTOMATIC);
-        BIND_ENUM_CONSTANT(START_MODE_MANUAL_WITH_AUTO_FALLBACK);
-        BIND_ENUM_CONSTANT(START_MODE_CONVERTER);
-        BIND_ENUM_CONSTANT(START_MODE_BATTERY);
-        BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
-
-        ClassDB::bind_method(D_METHOD("get_tachometer_speed"), &VehicleController::get_tachometer_speed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_speed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_speed");
-        ClassDB::bind_method(D_METHOD("get_tachometer_speed_jump"), &VehicleController::get_tachometer_speed_jump);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_speed_jump");
-        ClassDB::bind_method(D_METHOD("get_tachometer_clock_speed"), &VehicleController::get_tachometer_clock_speed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_clock_speed");
-        ClassDB::bind_method(D_METHOD("get_direction_absolute"), &VehicleController::get_direction_absolute);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "direction_absolute", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_direction_absolute");
-        ClassDB::bind_method(D_METHOD("get_cabin"), &VehicleController::get_cabin);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "cabin", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin");
-        ClassDB::bind_method(D_METHOD("get_cabin_controleable"), &VehicleController::get_cabin_controleable);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "cabin_controleable", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin_controleable");
-        ClassDB::bind_method(D_METHOD("get_cabin_occupied"), &VehicleController::get_cabin_occupied);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "cabin_occupied", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin_occupied");
-        ClassDB::bind_method(D_METHOD("get_live_battery_voltage"), &VehicleController::get_live_battery_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "live_battery_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_live_battery_voltage");
-        ClassDB::bind_method(D_METHOD("get_battery_enabled"), &VehicleController::get_battery_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_battery_enabled");
-        ClassDB::bind_method(D_METHOD("get_distance_counter"), &VehicleController::get_distance_counter);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "distance_counter", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_distance_counter");
-        ClassDB::bind_method(D_METHOD("get_power24_voltage"), &VehicleController::get_power24_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power24_voltage");
-        ClassDB::bind_method(D_METHOD("get_power24_available"), &VehicleController::get_power24_available);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "power24_available", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power24_available");
-        ClassDB::bind_method(D_METHOD("get_power110_available"), &VehicleController::get_power110_available);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "power110_available", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power110_available");
-        ClassDB::bind_method(D_METHOD("get_current0"), &VehicleController::get_current0);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current0", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current0");
-        ClassDB::bind_method(D_METHOD("get_current1"), &VehicleController::get_current1);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current1", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current1");
-        ClassDB::bind_method(D_METHOD("get_current2"), &VehicleController::get_current2);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current2", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current2");
-        ClassDB::bind_method(D_METHOD("get_relay_novolt"), &VehicleController::get_relay_novolt);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_novolt", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_novolt");
-        ClassDB::bind_method(D_METHOD("get_relay_overvoltage"), &VehicleController::get_relay_overvoltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_overvoltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_overvoltage");
-        ClassDB::bind_method(D_METHOD("get_relay_ground"), &VehicleController::get_relay_ground);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_ground", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_ground");
-        ClassDB::bind_method(D_METHOD("get_train_damage"), &VehicleController::get_train_damage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "train_damage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_train_damage");
-        ClassDB::bind_method(
-                D_METHOD("get_controller_second_position"), &VehicleController::get_controller_second_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_second_position");
-        ClassDB::bind_method(
-                D_METHOD("get_controller_main_position"), &VehicleController::get_controller_main_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_position");
-        ClassDB::bind_method(
-                D_METHOD("get_controller_joint_position"), &VehicleController::get_controller_joint_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_joint_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_joint_position");
-        ClassDB::bind_method(
-                D_METHOD("get_controller_main_actual_position"),
-                &VehicleController::get_controller_main_actual_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_actual_position");
-        ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &VehicleController::get_circuit_rlist_size);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "circuit_rlist_size", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_circuit_rlist_size");
     }
 
     void VehicleController::register_command(const StringName &p_command, const Callable &p_callable) {
@@ -466,19 +170,7 @@ namespace godot {
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
             server->vehicle_set_name(rid, train_id);
         }
-        register_command("battery", Callable(this, "battery"));
-        register_command("cab_change", Callable(this, "cab_change"));
-        register_command("cab_activation", Callable(this, "cab_activation"));
-        register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
-        register_command("main_controller_increase", Callable(this, "main_controller_increase"));
-        register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-        register_command("second_controller_increase", Callable(this, "second_controller_increase"));
-        register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
-        register_command("direction_increase", Callable(this, "direction_increase"));
-        register_command("direction_decrease", Callable(this, "direction_decrease"));
-        register_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
-        register_command("coupler_connect", Callable(this, "coupler_connect"));
-        register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
+        _register_commands();
     }
 
     /* The simulation, once every component is attached - _initialize_simulation() pushes the
@@ -486,7 +178,6 @@ namespace godot {
     void VehicleController::initialize() {
         _initialize_simulation();
         update_state();
-        emit_signal(power_changed_signal, prev_is_powered);
         emit_signal(roof_light_changed, prev_roof_light_enabled);
     }
 
@@ -503,21 +194,10 @@ namespace godot {
         if (!is_simulation_ready()) {
             return;
         }
-        const bool new_is_powered = get_power24_available() || get_power110_available();
-        if (prev_is_powered != new_is_powered) {
-            prev_is_powered = new_is_powered; // FIXME: I don't like this
-            emit_signal(power_changed_signal, prev_is_powered);
-        }
-
         if (const bool new_roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
             prev_roof_light_enabled != new_roof_light_enabled) {
             prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
             emit_signal(roof_light_changed, new_roof_light_enabled);
-        }
-
-        if (const int new_cabin_occupied = get_cabin_occupied(); prev_cabin_occupied != new_cabin_occupied) {
-            prev_cabin_occupied = new_cabin_occupied;
-            emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
     }
 
@@ -538,33 +218,9 @@ namespace godot {
         p_state["mass_total"] = get_mass_total();
         p_state["velocity"] = get_velocity();
         p_state["speed"] = get_speed();
-        p_state["tachometer_speed"] = get_tachometer_speed();
-        p_state["tachometer_speed_jump"] = get_tachometer_speed_jump();
-        p_state["tachometer_clock_speed"] = get_tachometer_clock_speed();
+        p_state["acceleration"] = get_acceleration();
         p_state["total_distance"] = get_total_distance();
         p_state["direction"] = get_direction();
-        p_state["direction_absolute"] = get_direction_absolute();
-        p_state["cabin"] = get_cabin();
-        p_state["cabin_controleable"] = get_cabin_controleable();
-        p_state["cabin_occupied"] = get_cabin_occupied();
-        p_state["battery_enabled"] = get_battery_enabled();
-        p_state["battery_voltage"] = get_live_battery_voltage();
-        p_state["distance_counter"] = get_distance_counter();
-        p_state["power24_voltage"] = get_power24_voltage();
-        p_state["power24_available"] = get_power24_available();
-        p_state["power110_available"] = get_power110_available();
-        p_state["current0"] = get_current0();
-        p_state["current1"] = get_current1();
-        p_state["current2"] = get_current2();
-        p_state["relay_novolt"] = get_relay_novolt();
-        p_state["relay_overvoltage"] = get_relay_overvoltage();
-        p_state["relay_ground"] = get_relay_ground();
-        p_state["train_damage"] = get_train_damage();
-        p_state["controller_second_position"] = get_controller_second_position();
-        p_state["controller_main_position"] = get_controller_main_position();
-        p_state["controller_joint_position"] = get_controller_joint_position();
-        p_state["controller_main_actual_position"] = get_controller_main_actual_position();
-        p_state["circuit_rlist_size"] = get_circuit_rlist_size();
     }
 
     /* The whole vehicle's configuration: its own plus every component's, composed when asked.
@@ -622,19 +278,7 @@ namespace godot {
 
     /* Every component goes with the vehicle; nothing outside it holds one. */
     void VehicleController::shutdown() {
-        unregister_command("battery");
-        unregister_command("cab_change");
-        unregister_command("cab_activation");
-        unregister_command("cab_activation_auto");
-        unregister_command("main_controller_increase");
-        unregister_command("main_controller_decrease");
-        unregister_command("second_controller_increase");
-        unregister_command("second_controller_decrease");
-        unregister_command("direction_increase");
-        unregister_command("direction_decrease");
-        unregister_command("distance_counter_activate");
-        unregister_command("coupler_connect");
-        unregister_command("coupler_disconnect");
+        _unregister_commands();
         // the handle belongs to RailVehicle3D, which frees it with itself
         rid = RID();
     }
@@ -675,13 +319,6 @@ namespace godot {
             }
         }
         return result;
-    }
-
-    void VehicleController::change_track(
-            const String &p_track_name, const float p_track_offset, const int p_track_direction) {
-        UtilityFunctions::push_warning(
-                vformat("VehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d",
-                        p_track_name, p_track_offset, p_track_direction));
     }
 
     Vector3 VehicleController::get_world_position() const {

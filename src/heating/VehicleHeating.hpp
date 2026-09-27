@@ -1,5 +1,6 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainController.hpp"
+#include "../core/TrainComponent.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "macros.hpp"
 
@@ -12,8 +13,8 @@ namespace godot {
      * enums are the authoring source of truth. The live values are pure virtual: whichever
      * simulation is underneath answers them, and a caller that took this component through
      * VehicleServer sees the same interface either way. */
-    class VehicleHeating : public VehicleComponent {
-            GDCLASS(VehicleHeating, VehicleComponent);
+    class VehicleHeating : public TrainComponent {
+            GDCLASS(VehicleHeating, TrainComponent);
 
 
         public:
@@ -40,16 +41,16 @@ namespace godot {
             void _unregister_commands() override;
 
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, heating_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
+                    TrainController::TrainPowerSource, heating_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_GENERATOR);
             MAKE_MEMBER_GS_NR(VehicleEngine::EngineType, heating_generator_engine, VehicleEngine::EngineType::MAIN);
             MAKE_MEMBER_GS(double, heating_generator_min_rpm, 0.0);
             MAKE_MEMBER_GS(double, heating_generator_min_voltage, 0.0);
             MAKE_MEMBER_GS(double, heating_generator_max_rpm, 0.0);
             MAKE_MEMBER_GS(double, heating_generator_max_voltage, 0.0);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerType, heating_power_cable_type,
-                    VehicleController::TrainPowerType::POWER_TYPE_ELECTRIC);
+                    TrainController::TrainPowerType, heating_power_cable_type,
+                    TrainController::TrainPowerType::POWER_TYPE_ELECTRIC);
             MAKE_MEMBER_GS(double, heating_max_voltage, 0.0);
     };
 } // namespace godot

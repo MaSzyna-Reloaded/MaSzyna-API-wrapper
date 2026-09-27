@@ -33,6 +33,12 @@ namespace godot {
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
+    void MoverVehicleBrake::compressor(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->CompressorSwitch(p_enabled);
+    }
+
     void MoverVehicleBrake::brake_level_set(const double p_level) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
@@ -127,6 +133,35 @@ namespace godot {
         mover->SpringBrake.Activate = false;
     }
 
+    // Original engine: TTrain::OnCommand_trainbrakeoperationmodeincrease (Train.cpp:2447-2460)
+    void MoverVehicleBrake::brake_operation_mode_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (((mover->BrakeOpModeFlag << 1) & mover->BrakeOpModes) != 0) {
+            mover->BrakeOpModeFlag <<= 1;
+        }
+    }
+
+    // Original engine: TTrain::OnCommand_trainbrakeoperationmodedecrease (Train.cpp:2463-2476)
+    void MoverVehicleBrake::brake_operation_mode_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (((mover->BrakeOpModeFlag >> 1) & mover->BrakeOpModes) != 0) {
+            mover->BrakeOpModeFlag >>= 1;
+        }
+    }
+
+    bool MoverVehicleBrake::ep_brake(const bool p_applied) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover, false);
+        return mover->SwitchEPBrake(p_applied ? 1 : 0);
+    }
+
+    int MoverVehicleBrake::get_operation_mode() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->BrakeOpModeFlag : 0;
+    }
+
     // Original engine: TTrain::OnCommand_trainbrakecharging (Train.cpp:1686) - held, the handle stays in the
     // charging position -1; released, only self-returning EP handles go back to the running position
     // (zero_charging_train_brake(), Train.cpp:960), an FV4a stays where it is
@@ -168,6 +203,10 @@ namespace godot {
         // available brake delay settings (bdelay_* flags) and main reservoir, used by AutoRewidentNode
         p_config["brake_delays"] = mover->BrakeDelays;
         p_config["brake_main_reservoir_volume"] = mover->VeselVolume;
+        // the train's brake system and its brake's delays [s], per delay setting (BDelay1-4)
+        p_config["brake_system"] = get_cntrl_brake_system();
+        p_config["brake_delay_times"] = PackedFloat64Array({get_cntrl_brake_delay_1(), get_cntrl_brake_delay_2(),
+                                                            get_cntrl_brake_delay_3(), get_cntrl_brake_delay_4()});
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - get_cntrl_local_brake_handle_type() is the real signal.
@@ -188,6 +227,19 @@ namespace godot {
         p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
         p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
         p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
+        // the electro-pneumatic range: releasing, holding and full braking (bh_EPR/EPN/EPB); a
+        // handle whose holding equals releasing works the EP brake by a switch (hamulce.h:173-177)
+        p_config["brakes_controller_position_ep_release"] = mover->Handle->GetPos(bh_EPR);
+        p_config["brakes_controller_position_ep_hold"] = mover->Handle->GetPos(bh_EPN);
+        p_config["brakes_controller_position_ep_brake"] = mover->Handle->GetPos(bh_EPB);
+        // the EP brake is applied by how long the handle is held (TDriverHandle::TimeEP)
+        p_config["brake_handle_ep_time_controlled"] = mover->Handle->TimeEP;
+        // a handle that sets the pipe pressure by how long it is held, not by where it stands
+        // (TDriverHandle::Time, hamulce.cpp: MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405)
+        p_config["brake_handle_time_controlled"] = mover->Handle->Time;
+        // the pipe's running pressure and its working range (HighPipePress, DeltaPipePress)
+        p_config["brake_pipe_pressure_high"] = mover->HighPipePress;
+        p_config["brake_pipe_pressure_delta"] = mover->DeltaPipePress;
     }
 
     // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered rate of
@@ -261,6 +313,16 @@ namespace godot {
     double MoverVehicleBrake::get_compressor_pressure() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Compressor : 0.0;
+    }
+
+    bool MoverVehicleBrake::get_compressor_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorFlag : false;
+    }
+
+    bool MoverVehicleBrake::get_compressor_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorAllow : false;
     }
 
     double MoverVehicleBrake::get_controller_position() const {
@@ -348,6 +410,32 @@ namespace godot {
         return mover != nullptr ? mover->LockPipe : false;
     }
 
+    double MoverVehicleBrake::get_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Fb : 0.0;
+    }
+
+    double MoverVehicleBrake::get_force_at(const double p_ratio, const double p_velocity) const {
+        // BrakeForceR() computes and changes nothing, but is not declared const
+        TMoverParameters *mover = const_cast<TMoverParameters *>(get_mover());
+        return mover != nullptr ? mover->BrakeForceR(p_ratio, p_velocity) : 0.0;
+    }
+
+    bool MoverVehicleBrake::is_braking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_on);
+    }
+
+    bool MoverVehicleBrake::is_holding() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_hld);
+    }
+
+    bool MoverVehicleBrake::is_cut_off() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_dmg);
+    }
+
     void MoverVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -361,6 +449,8 @@ namespace godot {
         p_state["feed_pipe_pressure"] = get_feed_pipe_pressure();
         p_state["brake_tank_volume"] = get_tank_volume();
         p_state["compressor_pressure"] = get_compressor_pressure();
+        p_state["compressor_enabled"] = get_compressor_enabled();
+        p_state["compressor_allowed"] = get_compressor_allowed();
         p_state["brake_controller_position"] = get_controller_position();
         p_state["brake_controller_position_normalized"] = get_controller_position_normalized();
         p_state["brake_local_position_normalized"] = get_local_position_normalized();
@@ -377,7 +467,16 @@ namespace godot {
         p_state["brake_local_aeim_position"] = get_local_aeim_position();
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
+        p_state["brake_operation_mode"] = get_operation_mode();
         p_state["main_pipe_locked"] = get_main_pipe_locked();
+        p_state["brake_force"] = get_force();
+        p_state["brake_is_braking"] = is_braking();
+        p_state["brake_is_holding"] = is_holding();
+        p_state["brake_is_cut_off"] = is_cut_off();
+        // the delay setting in use, a BrakeDelaySetting (BrakeDelayFlag)
+        p_state["brake_delay_setting"] = mover->BrakeDelayFlag;
+        // the distributor's control reservoir (GetCRP())
+        p_state["brake_control_reservoir_pressure"] = mover->Hamulec ? mover->Hamulec->GetCRP() : 0.0;
     }
 
     void MoverVehicleBrake::_apply_configuration() {
@@ -466,6 +565,8 @@ namespace godot {
         /* PipePress i HighPipePress musza byc skopiowane */
         p_mover->HighPipePress = get_pipe_pressure_max();
         p_mover->LowPipePress = get_pipe_pressure_min();
+        // Mover.cpp:10474 - LoadFIZ derives it; the time-controlled handles of the AI steer by it
+        p_mover->DeltaPipePress = p_mover->HighPipePress - p_mover->LowPipePress;
         p_mover->VeselVolume = get_tank_volume_main();
         p_mover->MinCompressor = get_compressor_cab_a_min_pressure();
         p_mover->MaxCompressor = get_compressor_cab_a_max_pressure();

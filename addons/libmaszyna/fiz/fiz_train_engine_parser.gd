@@ -7,13 +7,13 @@ class_name FizTrainEngineParser
 ## stashed Cntrl./Power: subsets, then delegates the remaining type-specific fields to the
 ## matching concrete engine parser. LoadFIZ_Engine: Mover.cpp:11119.
 ##
-## NOTE: only Diesel still gets the generic common-fields-only stub treatment (see the TODO
-## branch below) - ElectricSeriesMotor, DieselElectric and ElectricInductionMotor all have
-## their own dedicated field-mapping parsers.
+## WheelsDriven, Dumb and Steam engines are not built (the TODO branch below); every other type
+## has its own field-mapping parser.
 
 var electric_series_parser: FizTrainElectricSeriesEngineParser = FizTrainElectricSeriesEngineParser.new()
 var diesel_electric_parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
 var electric_induction_parser: FizTrainElectricInductionEngineParser = FizTrainElectricInductionEngineParser.new()
+var diesel_parser: FizTrainDieselEngineParser = FizTrainDieselEngineParser.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
@@ -37,6 +37,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             FizTrainEngineCommon.apply_engine_common(node, kv, context)
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
             diesel_electric_parser.apply_engine_fields(kv, node)
+            FizTrainDieselEngineParser.apply_diesel_common(kv, node as VehicleDieselEngine)
         VehicleEngine.ELECTRIC_INDUCTION_MOTOR:
             node = electric_induction_parser.create_node()
             context.add_part("VehicleEngine", node)
@@ -45,22 +46,15 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             FizTrainEngineCommon.apply_cntrl_electric_subset(node as VehicleElectricEngine, context.cntrl_kv)
             FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_induction_parser.apply_engine_fields(kv, node)
-        VehicleEngine.DIESEL, \
+        VehicleEngine.DIESEL:
+            node = MoverVehicleDieselEngine.new()
+            context.add_part("VehicleEngine", node)
+            FizTrainEngineCommon.apply_engine_common(node, kv, context)
+            FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
+            diesel_parser.apply_engine_fields(kv, node as VehicleDieselEngine)
         VehicleEngine.WHEELS_DRIVEN, VehicleEngine.DUMB, VehicleEngine.STEAM:
-            # TODO: type-specific field mapping not written yet - only common fields applied.
+            # TODO: no wrapper engine class for these yet
             push_warning(
-                    "FIZ Engine:EngineType=%s: only common VehicleEngine fields are mapped so far." %
-                    FizLineUtil.get_string(kv, "EngineType"))
-            node = _create_stub_node(engine_type)
-            if node:
-                context.add_part("VehicleEngine", node)
-                FizTrainEngineCommon.apply_engine_common(node, kv, context)
-                FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
+                    "FIZ Engine:EngineType=%s: no engine class for it yet." % FizLineUtil.get_string(kv, "EngineType"))
         _:
             push_warning("FIZ Engine:EngineType=%s: unrecognized or unsupported." % FizLineUtil.get_string(kv, "EngineType"))
-
-
-func _create_stub_node(engine_type: int) -> VehicleEngine:
-    match engine_type:
-        VehicleEngine.DIESEL: return MoverVehicleDieselEngine.new()
-        _: return null

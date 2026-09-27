@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/TrainComponent.hpp"
 #include "../brakes/VehicleBrake.hpp"
 #include "../core/VehicleController.hpp"
 #include "../macros.hpp"
@@ -6,8 +7,8 @@
 
 namespace godot {
     class VehicleController;
-    class VehicleElectroPneumaticDynamicBrake : public VehicleComponent {
-            GDCLASS(VehicleElectroPneumaticDynamicBrake, VehicleComponent)
+    class VehicleElectroPneumaticDynamicBrake : public TrainComponent {
+            GDCLASS(VehicleElectroPneumaticDynamicBrake, TrainComponent)
 
 
         public:

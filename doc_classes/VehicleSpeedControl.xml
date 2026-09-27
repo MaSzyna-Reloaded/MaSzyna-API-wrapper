@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleSpeedControl" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleSpeedControl" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Configures the vehicle's cruise control (tempomat).
 	</brief_description>
@@ -9,7 +9,48 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="get_set_velocity" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_button">
+			<return type="void" />
+			<param index="0" name="button" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_power_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_power_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="speed_control_set">
+			<return type="void" />
+			<param index="0" name="velocity" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
+		<member name="active" type="bool" setter="" getter="get_active" default="false">
+		</member>
 		<member name="brake_intervention" type="bool" setter="set_brake_intervention" getter="get_brake_intervention" default="false">
 			[code]SpeedControl:BrakeIntervention[/code]
 			Whether the cruise control may assist with the automatic pneumatic brake when other means of slowing down
@@ -22,6 +63,10 @@
 		<member name="delay" type="float" setter="set_delay" getter="get_delay" default="0.0">
 			[code]SpeedControl:SpeedCtrlDelay[/code]
 			Delay before a newly set target velocity is applied.
+		</member>
+		<member name="desired_power" type="float" setter="" getter="get_desired_power" default="0.0">
+		</member>
+		<member name="desired_velocity" type="float" setter="" getter="get_desired_velocity" default="0.0">
 		</member>
 		<member name="disables_on" type="int" setter="set_disables_on" getter="get_disables_on" default="0">
 			[code]SpeedControl:SpeedCtrlATOF[/code]
@@ -96,6 +141,8 @@
 		<member name="proportional_gain_positive" type="float" setter="set_proportional_gain_positive" getter="get_proportional_gain_positive" default="0.5">
 			[code]SpeedControl:kPpos[/code]
 			Drive power proportional gain for a 1 km/h deficit in velocity.
+		</member>
+		<member name="selected_velocity" type="float" setter="" getter="get_selected_velocity" default="0.0">
 		</member>
 		<member name="speed_control_enabled" type="bool" setter="set_speed_control_enabled" getter="get_speed_control_enabled" default="false">
 			[code]SpeedControl:SpeedCtrl[/code]

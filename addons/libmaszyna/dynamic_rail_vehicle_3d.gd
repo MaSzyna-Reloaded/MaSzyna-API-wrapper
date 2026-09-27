@@ -131,6 +131,12 @@ func is_built() -> bool:
     return not _dirty
 
 
+## whether the vehicle stands on its start track - false until its simulation placed it there
+func is_placed() -> bool:
+    var controller:VehicleController = get_controller()
+    return controller and RailVehicleServer.vehicle_get_track_position(controller.get_rid()).get("track_rid", RID()).is_valid()
+
+
 func get_controller() -> VehicleController:
     return _vehicle.get_controller() if _vehicle else null
 

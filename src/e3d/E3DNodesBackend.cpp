@@ -43,6 +43,19 @@ namespace godot {
         }
         p_instance.root_nodes.clear();
         p_instance.light_nodes.clear();
+        p_instance.submodel_nodes.clear();
+    }
+
+    void E3DNodesBackend::apply_poses(E3DInstanceData &p_instance) {
+        for (const KeyValue<E3DSubModel *, Transform3D> &pose: p_instance.submodel_poses) {
+            const ObjectID *node_id = p_instance.submodel_nodes.getptr(pose.key);
+            if (node_id == nullptr) {
+                continue;
+            }
+            if (Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(*node_id)); node != nullptr) {
+                node->set_transform(pose.key->get_transform() * pose.value);
+            }
+        }
     }
 
     void E3DNodesBackend::update(const E3DInstanceData &p_instance) {
@@ -115,6 +128,7 @@ namespace godot {
             }
 
             p_parent->add_child(child, false, editable ? Node::INTERNAL_MODE_DISABLED : Node::INTERNAL_MODE_BACK);
+            p_instance.submodel_nodes[submodel.ptr()] = ObjectID(child->get_instance_id());
             if (p_parent == p_target) {
                 p_instance.root_nodes.push_back(ObjectID(child->get_instance_id()));
             }

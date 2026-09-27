@@ -78,11 +78,13 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     controller = physics_node.get_controller()
 
     engine = MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 1
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
-    engine.cntrl_main_controller_position_count = 6
+    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    master_controller.main_position_count = 6
+    controller.add_component(master_controller)
     controller.add_component(engine)
 
     vehicle = RailVehicle3D.new()

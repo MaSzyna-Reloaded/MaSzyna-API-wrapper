@@ -14,6 +14,14 @@ namespace godot {
 
             /* Live state, read straight from the backend - nothing is stored. */
             virtual double get_resistor_fan_rotation() const = 0;
+            /* The current the automatic start steps on below (Imin: IminLo, or IminHi switched high) */
+            virtual double get_circuit_imin() const = 0;
+            /* The voltage on the motors [V] (EngineVoltage) */
+            virtual double get_engine_voltage() const = 0;
+            /* The speed [km/h] above which the next position of the master controller (or, with
+             * `p_main_controller` false, of the field shunt) keeps the motor current within its
+             * limit and the wheels within their adhesion (TController::ESMVelocity(), Driver.cpp:2344) */
+            virtual double get_next_position_velocity(bool p_main_controller) const = 0;
 
             /* RVent= (Automatic / Yes / No): resistor cooling fan drive mode */
             enum FanType {

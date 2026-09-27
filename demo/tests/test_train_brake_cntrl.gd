@@ -28,7 +28,8 @@ func test_defaults_match_original_mover():
     assert_eq(brake.cntrl_brake_delay_3, 36.0)
     assert_eq(brake.cntrl_brake_delay_4, 22.0)
     assert_eq(brake.cntrl_brake_delays, VehicleBrake.BRAKE_DELAY_GP)
-    assert_eq(brake.cntrl_brake_op_modes, VehicleBrake.BRAKE_OP_MODE_PNEPMED)
+    # none unless the FIZ says (MOVER.h:1580, Mover.cpp:10746) - with PS the handle works only from an occupied cab
+    assert_eq(brake.cntrl_brake_op_modes, VehicleBrake.BRAKE_OP_MODE_NONE)
     assert_eq(brake.cntrl_brake_handle_type, VehicleBrake.BRAKE_HANDLE_TYPE_FV4A)
     assert_eq(brake.cntrl_local_brake_handle_type, VehicleBrake.BRAKE_HANDLE_TYPE_FD1)
     assert_eq(brake.cntrl_anti_skid_brake_type, VehicleBrake.ANTI_SKID_BRAKE_MANUAL)

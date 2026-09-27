@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleUniversalController" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleUniversalController" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Represents the universal controller in a train.
 	</brief_description>
@@ -12,13 +12,15 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="integrated_brake" type="bool" setter="set_integrated_brake" getter="get_integrated_brake" default="true">
+		<member name="integrated_brake" type="bool" setter="set_integrated_brake" getter="get_integrated_brake" default="false">
 			[code]UCList:IntegratedBrake[/code]
 			Whether the ED/HD/auxiliary pneumatic brake is supported on this controller.
 		</member>
-		<member name="integrated_brake_pn" type="bool" setter="set_integrated_brake_pn" getter="get_integrated_brake_pn" default="true">
+		<member name="integrated_brake_pn" type="bool" setter="set_integrated_brake_pn" getter="get_integrated_brake_pn" default="false">
 			[code]UCList:IntegratedBrakePN[/code]
 			Whether the train's (automatic) pneumatic brake is supported on this controller.
+		</member>
+		<member name="integrated_local_brake" type="bool" setter="set_integrated_local_brake" getter="get_integrated_local_brake" default="false">
 		</member>
 		<member name="positions" type="UniversalControllerListItem[]" setter="set_positions" getter="get_positions" default="[]">
 			[code]UCList[/code]

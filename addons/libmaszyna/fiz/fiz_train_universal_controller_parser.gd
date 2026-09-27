@@ -29,6 +29,8 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.integrated_brake_pn = FizLineUtil.get_bool(kv, "IntegratedBrakePN")
     if kv.has("IntegratedBrake"):
         node.integrated_brake = FizLineUtil.get_bool(kv, "IntegratedBrake")
+    if kv.has("IntegratedLocBrake"):
+        node.integrated_local_brake = FizLineUtil.get_bool(kv, "IntegratedLocBrake")
     _rows = []
 
 

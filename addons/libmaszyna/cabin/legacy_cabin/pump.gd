@@ -8,6 +8,8 @@ class_name LegacyCabinPump
 ## * two-state - a press flips it, and switching off also sets the pump's off flag
 ##   (FuelPumpSwitchOff, Train.cpp:3937, 3963).
 
+## The pumps are the driven vehicle's (OnCommand_fuelpump*/oilpump*: mvControlled)
+const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 var _control:StringName
 var _command:String
 var _switch_off_command:String
@@ -46,12 +48,12 @@ func _pump(state:CabinState, action:StringName, value:Variant) -> Variant:
     if _button_type == CabinButton.ButtonType.PUSH:
         var held:bool = state.is_pressed(_control, action, value)
         state.set_value(_control, held)
-        return state.send_vehicle_command(_command, held)
+        return state.send_vehicle_command(_command, held, null, TARGET)
     # two-state: only a press counts (Train.cpp:3889)
     if action == &"release":
         return null
-    var enabled:bool = (not state.vehicle_state_value(_enabled_state, false)
+    var enabled:bool = (not state.vehicle_state_value(_enabled_state, false, TARGET)
             if value == null or action == &"hold" else bool(value))
     state.set_value(_control, enabled)
-    state.send_vehicle_command(_switch_off_command, not enabled)
-    return state.send_vehicle_command(_command, enabled)
+    state.send_vehicle_command(_switch_off_command, not enabled, null, TARGET)
+    return state.send_vehicle_command(_command, enabled, null, TARGET)

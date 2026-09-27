@@ -12,6 +12,8 @@ class_name LegacyCabinMainSwitch
 ## there, an impulse one (dynamic/pkp/e186_v2) springs back on release. The vehicle-level
 ## "main_switch" command itself still acts immediately (AI, console, tests).
 
+## The line breaker is the driven vehicle's (OnCommand_linebreaker*: mvControlled->MainSwitch())
+const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 const ON_BUTTON:StringName = &"main_on_bt"
 const OFF_BUTTON:StringName = &"main_off_bt"
 const TOGGLE_SWITCH:StringName = &"main_sw"
@@ -123,7 +125,7 @@ func _open(state:CabinState) -> Variant:
     state.data["relay_timer"] = 0.0
     if state.data.get("linebreaker_state", OPEN) == OPEN:
         return null
-    var result:Variant = state.send_vehicle_command("main_switch", false)
+    var result:Variant = state.send_vehicle_command("main_switch", false, null, TARGET)
     if result:
         state.data["linebreaker_state"] = OPEN
     return result
@@ -133,8 +135,8 @@ func _open(state:CabinState) -> Variant:
 func _close_released(state:CabinState) -> Variant:
     var result:Variant = null
     if state.data.get("linebreaker_state", OPEN) == READY \
-            and int(state.vehicle_state_value("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
-        result = state.send_vehicle_command("main_switch", true)
+            and int(state.vehicle_state_value("engine_type", 0, TARGET)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+        result = state.send_vehicle_command("main_switch", true, null, TARGET)
         state.data["linebreaker_state"] = CLOSED if result else OPEN
     state.data["relay_timer"] = 0.0
     return result
@@ -143,7 +145,7 @@ func _close_released(state:CabinState) -> Variant:
 # Train.cpp:8436-8474
 func _process(state:CabinState, delta:float) -> void:
     var linebreaker_state:int = state.data.get("linebreaker_state", OPEN)
-    var mains:bool = state.vehicle_state_value("main_switch_enabled", false)
+    var mains:bool = state.vehicle_state_value("main_switch_enabled", false, TARGET)
     # sync with the vehicle - closed by someone else, or knocked out
     if linebreaker_state == OPEN and mains:
         linebreaker_state = CLOSED
@@ -153,7 +155,7 @@ func _process(state:CabinState, delta:float) -> void:
     var relay_timer:float = state.data.get("relay_timer", 0.0)
     if state.get_value(ON_BUTTON, false) \
             or float(state.get_value(TOGGLE_SWITCH, LEVER_OPEN)) > LEVER_HELD_THRESHOLD:
-        if state.vehicle_state_value("main_switch_closable", false):
+        if state.vehicle_state_value("main_switch_closable", false, TARGET):
             relay_timer += delta
     else:
         relay_timer = 0.0
@@ -161,12 +163,12 @@ func _process(state:CabinState, delta:float) -> void:
         relay_timer = 0.0
 
     if linebreaker_state == OPEN and relay_timer > float(
-            state.vehicle_state_value("line_breaker_initial_delay", 0.0)):
+            state.vehicle_state_value("line_breaker_initial_delay", 0.0, TARGET)):
         linebreaker_state = READY
     # Train.cpp:8467 - without main_on_bt, or for anything but a series motor, closing completes here
     if linebreaker_state == READY and (not _has_on_button
-            or not int(state.vehicle_state_value("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR):
-        linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true) else OPEN
+            or not int(state.vehicle_state_value("engine_type", 0, TARGET)) == VehicleEngine.ELECTRIC_SERIES_MOTOR):
+        linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true, null, TARGET) else OPEN
 
     state.data["linebreaker_state"] = linebreaker_state
     state.data["relay_timer"] = relay_timer

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleAIHints" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleAIHints" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Configures suggested behavior hints consumed by the AI driver.
 	</brief_description>
@@ -14,7 +14,7 @@
 			[code]AI:LocalBrakeAccFactor[/code]
 			Suggested braking force multiplier for the AI driver when using the local (independent) brake.
 		</member>
-		<member name="pantograph_state" type="int" setter="set_pantograph_state" getter="get_pantograph_state" enum="VehicleAIHints.PantographState" default="1">
+		<member name="pantograph_state" type="int" setter="set_pantograph_state" getter="get_pantograph_state" enum="VehicleAIHints.PantographState" default="0">
 			[code]AI:Pantstate[/code]
 			Suggested pantograph selection for the AI driver.
 		</member>
@@ -24,6 +24,8 @@
 		</member>
 	</members>
 	<constants>
+		<constant name="PANTOGRAPH_STATE_AUTOMATIC" value="0" enum="PantographState">
+		</constant>
 		<constant name="PANTOGRAPH_STATE_FRONT" value="1" enum="PantographState">
 			Drive on the front pantograph.
 		</constant>

@@ -41,6 +41,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="radio_stop">
+			<return type="void" />
+			<param index="0" name="position" type="Vector3" />
+			<description>
+			</description>
+		</method>
 		<method name="set_stepping_enabled">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -48,12 +54,6 @@
 			</description>
 		</method>
 		<method name="step">
-			<return type="void" />
-			<param index="0" name="delta" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="step_frame">
 			<return type="void" />
 			<param index="0" name="delta" type="float" />
 			<description>
@@ -103,6 +103,28 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_find_pantograph_carrier" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle whose pantographs a cab of [param vehicle] raises ([code]FindPantographCarrier()[/code]), or an invalid RID when there is none.
+			</description>
+		</method>
+		<method name="vehicle_find_powered" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle a cab of [param vehicle] drives ([code]FindPowered()[/code]): itself when powered, else the nearest powered vehicle joined to it - within its unit for an EMU or DMU, else by the control line; [param vehicle] when there is none.
+			</description>
+		</method>
+		<method name="vehicle_find_vehicle">
+			<return type="VehicleNeighbour" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<param index="2" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_free">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -128,6 +150,12 @@
 			<return type="Dictionary" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="bogie_pivot_spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_driver_type" qualifiers="const">
+			<return type="int" enum="VehicleController.DriverType" />
+			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</method>
@@ -188,6 +216,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_radio_call">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="call" type="int" enum="VehicleRadio.RadioCall" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_radio_stop">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -220,6 +255,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_trace_route">
+			<return type="TrackRouteSegment[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="direction" type="int" />
+			<param index="2" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<signals>
 		<signal name="vehicle_command_received">
@@ -237,6 +280,18 @@
 				[param vehicle] was freed; its handle is not reused.
 			</description>
 		</signal>
+		<signal name="vehicle_heading_to_track_end">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_heading_to_track_start">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
 		<signal name="vehicle_moved">
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="position" type="Vector3" />
@@ -249,6 +304,19 @@
 			<param index="1" name="cab" type="int" />
 			<description>
 				The occupied cab of [param vehicle] changed to [param cab]: 1, 0 (machine room) or -1.
+			</description>
+		</signal>
+		<signal name="vehicle_radio_called">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="call" type="int" />
+			<param index="2" name="position" type="Vector3" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_stopped_on_track">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
 			</description>
 		</signal>
 	</signals>

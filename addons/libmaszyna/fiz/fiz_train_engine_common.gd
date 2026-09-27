@@ -49,7 +49,7 @@ static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: Fi
 
     # PressureSwitch's absent-key default (true, unless the vehicle is EZT) differs from the
     # compiled default (false).
-    var pressure_switch_default: bool = context.train_type != VehicleController.TRAIN_TYPE_EZT
+    var pressure_switch_default: bool = context.train_type != TrainController.TRAIN_TYPE_EZT
     node.pressure_switch_present = FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default)
 
 
@@ -82,25 +82,10 @@ static func apply_cntrl_electric_subset(node: VehicleElectricEngine, cntrl_kv: D
 static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary) -> void:
     if not cntrl_kv:
         return
-    if cntrl_kv.has("MCPN"):
-        node.cntrl_main_controller_position_count = FizLineUtil.get_int(cntrl_kv, "MCPN")
-    if cntrl_kv.has("SCPN"):
-        node.cntrl_shunt_controller_position_count = FizLineUtil.get_int(cntrl_kv, "SCPN")
-    if cntrl_kv.has("DirChangeMaxPos"):
-        node.cntrl_direction_change_max_position = FizLineUtil.get_int(cntrl_kv, "DirChangeMaxPos")
-    if cntrl_kv.has("CoupledCtrl"):
-        node.cntrl_coupled_controllers = FizLineUtil.get_bool(cntrl_kv, "CoupledCtrl")
     if cntrl_kv.has("Camshaft"):
         node.cntrl_has_camshaft = FizLineUtil.get_bool(cntrl_kv, "Camshaft")
     if cntrl_kv.has("ScndS"):
         node.cntrl_series_shunt_on_series_position = FizLineUtil.get_bool(cntrl_kv, "ScndS")
-    if cntrl_kv.has("IniCDelay"):
-        node.cntrl_initial_controller_delay = FizLineUtil.get_float(cntrl_kv, "IniCDelay")
-    if cntrl_kv.has("SCDelay"):
-        node.cntrl_controller_step_delay = FizLineUtil.get_float(cntrl_kv, "SCDelay")
-    # SCDDelay's absent-key default (== SCDelay) differs from the compiled default (0.0).
-    node.cntrl_controller_step_down_delay = FizLineUtil.get_float(
-            cntrl_kv, "SCDDelay", FizLineUtil.get_float(cntrl_kv, "SCDelay"))
     if cntrl_kv.has("FSCircuit"):
         node.cntrl_fast_series_circuit = FizLineUtil.get_bool(cntrl_kv, "FSCircuit")
     if cntrl_kv.has("EIMCtrlAddZeros"):
@@ -166,6 +151,21 @@ static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool =
         item.initial_voltage_constant = float(tokens[6])             # fi0
         if tokens.size() >= 8:
             item.auto_switch = (int(tokens[7]) == 1)
+    return item
+
+
+## A gear of a plain diesel engine (readMPTDieselEngine, Mover.cpp:9175): idx, mIsat, fi, mfi -
+## the gear's ratio, and the lowest and highest speed it is driven in [km/h] - then an optional
+## flag of a gear the controller passes by itself
+static func parse_diesel_gear_row(p: MaszynaParser) -> MotorParameter:
+    var tokens: Array = p.get_tokens(5)
+    if tokens.size() < 4:
+        return null
+    var item := MotorParameter.new()
+    item.saturation_current_multiplier = float(tokens[1]) # mIsat
+    item.voltage_constant = float(tokens[2])              # fi
+    item.voltage_constant_multiplier = float(tokens[3])   # mfi
+    item.auto_switch = tokens.size() >= 5 and int(tokens[4]) == 1
     return item
 
 

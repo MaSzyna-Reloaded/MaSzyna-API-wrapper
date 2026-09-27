@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleSwitches" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleSwitches" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Configures cab control panel switch behavior (impulse vs. toggle) and the headlight dimmer.
 	</brief_description>
@@ -71,6 +71,8 @@
 		<member name="relay_reset_button_3" type="int" setter="set_relay_reset_button_3" getter="get_relay_reset_button_3" default="0">
 			[code]Switches:RelayResetButton3[/code]
 			Bitmask of relays reset by button 3.
+		</member>
+		<member name="sand_active" type="bool" setter="" getter="get_sand_active" default="false">
 		</member>
 	</members>
 </class>

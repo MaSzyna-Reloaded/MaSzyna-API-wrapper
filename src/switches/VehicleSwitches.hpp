@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include "resources/switches/DimmerListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
@@ -14,8 +14,8 @@ namespace godot {
      * RelayResetButtonX=, PantographPresets=, PantographPresetDefault=, ModernDimmer= and
      * DimmerList: have no counterpart in the simulation at all - they are stored on this
      * component only, ready to be wired up if the simulation ever supports them. */
-    class VehicleSwitches : public VehicleComponent {
-            GDCLASS(VehicleSwitches, VehicleComponent);
+    class VehicleSwitches : public TrainComponent {
+            GDCLASS(VehicleSwitches, TrainComponent);
 
 
         public:

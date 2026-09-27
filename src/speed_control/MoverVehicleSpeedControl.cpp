@@ -71,6 +71,47 @@ namespace godot {
         return mover != nullptr ? mover->SpeedCtrlValue : 0.0;
     }
 
+    double MoverVehicleSpeedControl::get_set_velocity() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->NewSpeed : 0.0;
+    }
+
+    void MoverVehicleSpeedControl::speed_control_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SpeedCtrlInc();
+    }
+
+    void MoverVehicleSpeedControl::speed_control_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SpeedCtrlDec();
+    }
+
+    void MoverVehicleSpeedControl::speed_control_power_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SpeedCtrlPowerInc();
+    }
+
+    void MoverVehicleSpeedControl::speed_control_power_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SpeedCtrlPowerDec();
+    }
+
+    void MoverVehicleSpeedControl::speed_control_button(const int p_button) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SpeedCtrlButton(p_button);
+    }
+
+    void MoverVehicleSpeedControl::speed_control_set(const double p_velocity) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->RunCommand("SpeedCntrl", p_velocity, mover->CabActive);
+    }
+
     void MoverVehicleSpeedControl::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
         if (get_mover() == nullptr) {
@@ -80,5 +121,6 @@ namespace godot {
         p_state["speed_control/desired_velocity"] = get_desired_velocity();
         p_state["speed_control/desired_power"] = get_desired_power();
         p_state["speed_control/selected_velocity"] = get_selected_velocity();
+        p_state["speed_control/set_velocity"] = get_set_velocity();
     }
 } // namespace godot

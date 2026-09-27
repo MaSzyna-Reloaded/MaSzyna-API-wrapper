@@ -159,7 +159,8 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
     ),
 }
 
-var _alpha_blend_shaders: Dictionary[int, Shader] = {}
+## Shader variants by "source shader instance id:alpha blend:cull disabled"
+var _shader_variants: Dictionary[String, Shader] = {}
 
 
 func create(
@@ -255,8 +256,8 @@ func _apply(
         var property_name: String = property.get("name", "")
         if property_name == "shader":
             target_shader_material.shader = (
-                _get_alpha_blend_shader(source_shader_material.shader)
-                if options.force_transparent
+                _get_shader_variant(source_shader_material.shader, options)
+                if options.force_transparent or options.cull_disabled
                 else source_shader_material.shader
             )
         elif property_name == "render_priority" or property_name.begins_with("shader_parameter/"):
@@ -275,19 +276,23 @@ func _apply(
     target_shader_material.set_shader_parameter("emission_energy", options.selfillum_energy)
 
 
-func _get_alpha_blend_shader(source_shader: Shader) -> Shader:
-    var cache_key: int = source_shader.get_instance_id()
-    var cached_shader: Shader = _alpha_blend_shaders.get(cache_key)
+func _get_shader_variant(source_shader: Shader, options: MaterialManager.MaterialOptions) -> Shader:
+    var cache_key: String = "%d:%s:%s" % [
+        source_shader.get_instance_id(), options.force_transparent, options.cull_disabled
+    ]
+    var cached_shader: Shader = _shader_variants.get(cache_key)
     if cached_shader:
         return cached_shader
 
-    var alpha_blend_shader: Shader = Shader.new()
-    alpha_blend_shader.code = source_shader.code.replace(
-        "shader_type spatial;",
-        "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND",
-    )
-    _alpha_blend_shaders[cache_key] = alpha_blend_shader
-    return alpha_blend_shader
+    var code: String = source_shader.code
+    if options.force_transparent:
+        code = code.replace("shader_type spatial;", "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND")
+    if options.cull_disabled:
+        code = code.replace("cull_back", "cull_disabled")
+    var variant_shader: Shader = Shader.new()
+    variant_shader.code = code
+    _shader_variants[cache_key] = variant_shader
+    return variant_shader
 
 
 func _apply_default_material(

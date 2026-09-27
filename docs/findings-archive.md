@@ -4,6 +4,54 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - thin station objects lost their sun shadows: a normal bias of whole metres
+
+* **Symptom:** on Stary Jawor, from the cab, the shadows of semaphores, switch indicators and a
+  figure by the track were cut short near the cab and missing further out; rails cast almost none.
+* **Cause:** the lookup moves along the normal by `shadow_normal_bias` texels of the cascade it
+  lands in. The cab view spent two of four cascades on 0-3 m (splits 0.01/0.02/0.2 of 150 m), so
+  everything outside the window fell into 3-30 m (2.8 cm texel) and 30-150 m (13.7 cm texel); at a
+  normal bias of 5 that is 14 cm and 68 cm - thicker than a mast or a person. The exterior used a
+  normal bias of 10 (0.3-2.6 m). Rails: the rail profile is an open strip, and with the shadow
+  pass culling front faces (`reverse_cull_face`) a ray from above enters through a culled face
+  and leaves through the open bottom.
+* **Proof:** texel = bounding sphere of the cascade slice / 2048 px (4096 atlas, four splits),
+  computed per cascade for the 45 degree cab camera - no in-game guessing.
+* **What the original does:** one layout for the cab and the exterior - cascades ending at
+  range/32, range/8 and range, range 250 m (`opengl33renderer.cpp:1106`, `Globals.h:153`), no
+  normal bias, the cab only in the nearest cascade (`:1135`), and tracks drawn with culling
+  disabled in the shadow pass (`:3609`).
+* **Fix:** the world's sun takes the original's layout (1/32, 1/8, 1/2 of 250 m) with Godot's
+  default normal bias 1.0; the cab gets a sun of its own lighting only its render layer
+  (`maszyna/cabin/improve_shadows_quality`), with two splits over 8 m; track materials are a
+  `cull_disabled` variant. Two shadowed directional lights halve Godot's directional atlas
+  (`light_storage.cpp` `_get_directional_shadow_rect`), so the setting raises it to 8192.
+* **Also found:** the E3D data is consistently CCW (17753 of 18135 scenery, 253235 of 253643
+  vehicle submodels agree with their normals), and the importer flipped only indexed triangles
+  and read only VNT2 - 21 VNT0 files (non-indexed, among them `czestochowa_dworzec_osobowy`) had
+  no geometry at all. Both fixed.
+* **`reverse_cull_face` was hiding acne, not fixing it.** With it on, a flat single-sided ground
+  never entered a lamp's shadow map; with it off (now the default, as in Godot) the ground under
+  a street lamp showed stable stripes. Measured from Godot's `light_storage.cpp:1162` and
+  `scene_forward_lights_inc.glsl:813`: the merged lamp cone reaches ~60 degrees off the axis and
+  gets a 128-256 px map, the normal bias vanishes under the lamp (x `1 - |N.L|`) and a node's
+  spot bias 0.03 covers only the axis. Street lamps now use spot bias 0.06 and normal bias 3.0.
+* **The lamp's own arms threw spokes across its pool** - the exclusion by
+  `SCENERY_LIGHT_OWNER_LAYER` never worked: the layer was OR-ed onto layer 1, and Godot casts
+  when `layer_mask & shadow_caster_mask` is non-zero (`renderer_scene_cull.cpp:2427`), so layer 1
+  still matched `~OWNER`. A light-owning model now sits on the owner layer alone.
+* **Thin casters looked flat even in clear weather:** the sun's `light_angular_distance` (Skydome
+  drives it from the clouds, `Skydome.gd:775`) was 1.0 degree clear and 4.0 overcast in
+  `project.godot`. The umbra is the caster's width minus the penumbra (distance to the ground x
+  tan(angle)): a 0.2 m mast top 12 m from the ground along the ray had no umbra left at 1.0 degree.
+  Both are now 0.53 degree, the real sun; the original has no penumbra at all (a fixed 1-texel PCF,
+  `light_common.glsl:58`) and lets overcast only lighten the shadow (`opengl33renderer.cpp:2073`).
+* **Rule:** excluding something from a mask means *every* bit it has must be outside the mask -
+  adding an "excluded" layer beside the default one excludes nothing.
+* **Rule:** a shadow bias is texel x normal_bias per cascade - compute it against the thinnest
+  caster before tuning, and do not spend cascades on what a view does not look at. A culling mode
+  that makes acne disappear also makes open geometry stop casting - fix the bias instead.
+
 ## 2026-09-27 - both pantographs of every vehicle sampled the wire at the vehicle's origin
 
 * **Symptom:** none reported. Found while moving the pantograph's power path out of the drawing

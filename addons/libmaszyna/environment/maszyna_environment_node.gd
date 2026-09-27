@@ -5,6 +5,9 @@ class_name MaszynaEnvironmentNode
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
 ## Group the player sets cabin_view on when switching between the cabin and the exterior view
 const GROUP: StringName = &"maszyna_environment"
+## Render layer of the cab interior - with maszyna/cabin/improve_shadows_quality the cab is lit by a
+## sun of its own that reaches only this layer (MaszynaSkyEnvironment._create_cabin_light())
+const CABIN_RENDER_LAYER: int = 1 << 18
 ## How often the time of day, the light level and the wind are pushed to E3DRenderingServer, which
 ## decides from the first two which scenery lights are lit (see _push_environment_state())
 const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
@@ -182,7 +185,7 @@ var _dirty_weather_preset: bool = false
 var _dirty_lights: bool = false
 var _light_state_elapsed: float = 0.0
 
-## Cabin view (the player in a cab) - the lights use the cabin shadow distance then
+## Cabin view (the player in a cab) - the cab light casts its shadows then
 var cabin_view: bool = false:
     set(value):
         if not value == cabin_view:
@@ -217,6 +220,7 @@ func _exit_tree() -> void:
 
 func _process(delta: float) -> void:
     _process_dirty()
+    _sky_environment.sync_cabin_lights()
     _sky_environment.process(delta)
     _sync_time()
     _push_environment_state(delta)

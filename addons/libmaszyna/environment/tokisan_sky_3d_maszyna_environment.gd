@@ -42,14 +42,16 @@ func create_nodes(world_environment: WorldEnvironment, p_environment: Environmen
     sun_light = DirectionalLight3D.new()
     sun_light.name = &"SunLight"
     sun_light.shadow_enabled = true
-    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
+    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     world_environment.add_child(sun_light, false, Node.INTERNAL_MODE_BACK)
 
     moon_light = DirectionalLight3D.new()
     moon_light.name = &"MoonLight"
     moon_light.shadow_enabled = true
-    moon_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
+    moon_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     world_environment.add_child(moon_light, false, Node.INTERNAL_MODE_BACK)
+    _create_cabin_light(sun_light)
+    _create_cabin_light(moon_light)
 
     sky_dome = SkyDome.new()
     sky_dome.name = SKY_DOME_NAME
@@ -70,6 +72,8 @@ func bind_nodes(world_environment: WorldEnvironment) -> void:
     environment = world_environment.environment
     sun_light = world_environment.get_node_or_null("SunLight") as DirectionalLight3D
     moon_light = world_environment.get_node_or_null("MoonLight") as DirectionalLight3D
+    _bind_cabin_light(sun_light)
+    _bind_cabin_light(moon_light)
     sky_dome = world_environment.get_node_or_null(NodePath(SKY_DOME_NAME)) as SkyDome
     time_of_day = world_environment.get_node_or_null(NodePath(TIME_OF_DAY_NAME)) as TimeOfDay
 
@@ -128,8 +132,8 @@ func _fog_opacity_to_exponential_density(opacity: float, distance: float) -> flo
 
 
 func apply_light_configuration() -> void:
-    _apply_directional_light_settings(sun_light)
-    _apply_directional_light_settings(moon_light)
+    _apply_sun_settings(sun_light)
+    _apply_sun_settings(moon_light)
 
 
 func set_date(year: int, month: int, day: int) -> Vector3i:

@@ -77,8 +77,9 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
     # Skydome switches this single light between sun and moon by itself.
     sun_light = DirectionalLight3D.new()
     sun_light.name = SUN_LIGHT_NAME
-    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
+    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     world_environment.add_child(sun_light, false, Node.INTERNAL_MODE_BACK)
+    _create_cabin_light(sun_light)
 
     skydome = Skydome.new()
     skydome.name = SKYDOME_NAME
@@ -101,6 +102,7 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
 
 func bind_nodes(world_environment: WorldEnvironment) -> void:
     sun_light = world_environment.get_node_or_null(NodePath(SUN_LIGHT_NAME)) as DirectionalLight3D
+    _bind_cabin_light(sun_light)
     skydome = world_environment.get_node_or_null(NodePath(SKYDOME_NAME)) as Skydome
     weather = world_environment.get_node_or_null(NodePath(WEATHER_NAME)) as WeatherNode
 
@@ -228,7 +230,7 @@ func apply_visual_configuration() -> void:
 
 ## Skydome later overrides shadow opacity from cloud coverage.
 func apply_light_configuration() -> void:
-    _apply_directional_light_settings(sun_light)
+    _apply_sun_settings(sun_light)
 
 
 func set_date(year: int, month: int, day: int) -> Vector3i:

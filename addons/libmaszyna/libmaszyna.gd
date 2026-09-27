@@ -112,9 +112,13 @@ func _disable_plugin():
 func _enter_tree():
     add_custom_project_setting("maszyna/import/model_scale_factor", 1.0, TYPE_FLOAT)
     add_custom_project_setting("maszyna/scenery/track_curve_bake_interval", 10.0, TYPE_FLOAT)
-    # Quirk: the original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
-    # against self-shadowing acne; Godot's default culls the same faces as the color pass
-    add_custom_project_setting("maszyna/lights/reverse_cull_face", true, TYPE_BOOL)
+    # The original renders shadow maps with front faces culled (opengl33renderer.cpp:1758) against
+    # self-shadowing acne; off by default like in Godot, because an open single-sided model then casts
+    # no shadow and the acne only moves to the unlit side
+    add_custom_project_setting("maszyna/lights/reverse_cull_face", false, TYPE_BOOL)
+    # The cab gets a sun of its own with sharp shadows over its few metres, and the world's sun keeps
+    # its far cascades in the cab view too; costs a second shadow map and a twice larger atlas
+    add_custom_project_setting("maszyna/cabin/improve_shadows_quality", true, TYPE_BOOL)
     # CPython 2.7 prefix PythonScreenServer runs the cab screens with (lib/libpython2.7.so.1.0 on
     # Linux); empty is python2.7 in the game directory on Linux and the original's python64 on Windows
     add_custom_project_setting("maszyna/python/home", "", TYPE_STRING, PROPERTY_HINT_GLOBAL_DIR)

@@ -487,6 +487,13 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 
 ### Other
 
+* E3D: VNT1 (packed vertices), vertices with userdata (VNT4+) and TRA1 (double matrices) are not
+  read - no file in the game data uses them today (`Model3d.cpp:1977`, `:2135`). 57 scenery and
+  31 vehicle submodels are wound CW or mixed in the data itself (e.g. cabs of ET21, ET22, EU05,
+  ST44) and render inside out exactly as in the original.
+* `maszyna/lights/reverse_cull_face` is off by default now; street lamps got their own biases
+  for it. Vehicle headlamps and cab lights (SpotLight3D nodes with a node's 0.03 / 1.0) were not
+  measured - check them for acne at night.
 * Skydome needs an option to disable `light_angular_distance`: its PSSM/soft-shadow cost can push a
   60 FPS cabin frame with visible clouds past the V-Sync budget (`FINDINGS.md`, 2026-09-20).
 * Normal maps at `normal_scale` 1.0 (`mat_normalmap.frag:46-48`): not checked whether Godot's

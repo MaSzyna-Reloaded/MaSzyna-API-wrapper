@@ -26,6 +26,9 @@ namespace godot {
         private:
             const int64_t max_31_b = 1LL << 31;
             const int64_t max_32_b = 1LL << 32;
+            /// Bytes per vertex: position, normal, uv (VNT0), plus a tangent (VNT2) - Model3d.cpp:1984
+            static constexpr uint64_t VNT0_VERTEX_SIZE = 32;
+            static constexpr uint64_t VNT2_VERTEX_SIZE = 48;
             static constexpr std::array<std::string_view, 19> NON_LIGHTS_TO_EXCLUDE = {
                     "coupler1",      "coupler2",    "cctrl1",       "cctrl2",      "cpass1",
                     "cpass2",        "cpneumatic1", "cpneumatic1r", "cpneumatic2", "cpneumatic2r",

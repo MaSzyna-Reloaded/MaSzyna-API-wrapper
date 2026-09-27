@@ -373,6 +373,8 @@ static func build_into(
     # the resource itself rather than its filename, so the indicator lights can read its submodels
     model.model = E3DModelManager.load_model(data_path, model_relpath)
     model.skins = resolve_skins(data_path, skin)
+    # the cab's own sun lights this layer alone (maszyna/cabin/improve_shadows_quality)
+    model.layers = MaszynaEnvironmentNode.CABIN_RENDER_LAYER
     # A cabin interior is self-contained (glass, instrument backlight glow, ...) and, unlike
     # mixed-purpose exterior E3D content, alpha-scissor's crisp cutout looks wrong across the
     # board here - real alpha blending for every already-transparent-flagged submodel instead.
@@ -1103,7 +1105,7 @@ static func _build_indicator_lights(
         for field_name:String in entry["fixed_fields"]:
             widget.set(field_name, entry["fixed_fields"][field_name])
         if widget is Light3D:
-            (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
+            (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
         generated_root.add_child(widget)
 
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
@@ -1144,7 +1146,7 @@ static func _build_indicator_lights(
                     light.set(field_name, entry["light_fixed_fields"][field_name])
                 if lamp_submodel:
                     light.light_color = lamp_submodel.diffuse_color
-                light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
+                light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
                 generated_root.add_child(light)
                 _position_at_submodel_instance(light, submodel)
                 if light_points:

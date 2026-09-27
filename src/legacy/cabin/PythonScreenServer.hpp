@@ -1,7 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
-#include <godot_cpp/classes/mutex.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
@@ -53,7 +53,7 @@ namespace godot {
             HashMap<RID, Screen> screens;
 
             // shared with the worker, under the mutex
-            Ref<Mutex> mutex;
+            Mutex mutex;
             Ref<Semaphore> semaphore;
             Ref<Thread> worker;
             List<Request> requests;

@@ -4,7 +4,6 @@
 #include <godot_cpp/classes/image.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
-#include <godot_cpp/core/mutex_lock.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -182,7 +181,6 @@ namespace godot {
     }
 
     PythonScreenServer::PythonScreenServer() {
-        mutex.instantiate();
         semaphore.instantiate();
     }
 
@@ -191,7 +189,7 @@ namespace godot {
             return;
         }
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             exiting = true;
         }
         semaphore->post();
@@ -233,7 +231,7 @@ namespace godot {
         const Screen *screen = screens.getptr(p_screen);
         ERR_FAIL_NULL(screen);
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             bool replaced = false;
             for (Request &request: requests) {
                 if (request.screen == p_screen) {
@@ -251,7 +249,7 @@ namespace godot {
 
     void PythonScreenServer::screen_free(const RID &p_screen) {
         screens.erase(p_screen);
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         for (List<Request>::Element *element = requests.front(); element != nullptr; element = element->next()) {
             if (element->get().screen == p_screen) {
                 element->erase();
@@ -312,7 +310,7 @@ namespace godot {
             while (true) {
                 Request request;
                 {
-                    MutexLock lock(**mutex);
+                    MutexLock lock(mutex);
                     if (exiting) {
                         if (loaded) {
                             for (const KeyValue<String, PyObject *> &renderer: renderers) {

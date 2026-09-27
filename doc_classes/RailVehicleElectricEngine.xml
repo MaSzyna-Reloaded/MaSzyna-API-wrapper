@@ -276,8 +276,14 @@
 			Required voltage to switch the main switch on.
 			            By default, it is 0.6*max_voltage
 		</member>
+		<member name="power_current_collector_first_position" type="Vector3" setter="set_power_current_collector_first_position" getter="get_power_current_collector_first_position" default="Vector3(0, 0, 0)">
+			Where the first pantograph sits on the vehicle, in the vehicle's own space. The overhead wire is sampled at this point, so the two pantographs of one vehicle read different wires where the data puts them apart. Taken from the model's pantograph submodel, as the original does ([code]TAnimPant::vPos[/code]).
+		</member>
 		<member name="power_current_collector_sliding_width" type="float" setter="set_power_current_collector_sliding_width" getter="get_power_current_collector_sliding_width">
 			Sliding width of the power collector (like pantograph)
+		</member>
+		<member name="power_current_collector_second_position" type="Vector3" setter="set_power_current_collector_second_position" getter="get_power_current_collector_second_position" default="Vector3(0, 0, 0)">
+			Where the second pantograph sits on the vehicle, in the vehicle's own space. See [member power_current_collector_first_position].
 		</member>
 		<member name="power_source" type="int" setter="set_power_source" getter="get_power_source" enum="RailVehicleController.TrainPowerSource">
 			Energy source for the engine

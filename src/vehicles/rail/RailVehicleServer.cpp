@@ -778,7 +778,7 @@ namespace godot {
                 origin);
         if (p_placement.track_direction == TrackServer::DIRECTION_REVERSED) {
             track_transform.basis =
-                    track_transform.basis.rotated(track_transform.basis.get_column(1).normalized(), Math_PI)
+                    track_transform.basis.rotated(track_transform.basis.get_column(1).normalized(), Math::PI)
                             .orthonormalized();
         }
         track_transform.origin.y += static_cast<real_t>(tracks->get_rail_height());
@@ -917,7 +917,7 @@ namespace godot {
         const Vector3 rear_forward = -_placement_transform(rear).basis.get_column(2);
         double yaw_difference =
                 Math::atan2(front_forward.x, front_forward.z) - Math::atan2(rear_forward.x, rear_forward.z);
-        yaw_difference = Math::wrapf(yaw_difference, -Math_PI, Math_PI);
+        yaw_difference = Math::wrapf(yaw_difference, -Math::PI, Math::PI);
         double radius = 0.0;
         if (!Math::is_zero_approx(Math::sin(yaw_difference * 0.5))) {
             radius = -0.5 * p_bogie_pivot_spacing / Math::sin(yaw_difference * 0.5);

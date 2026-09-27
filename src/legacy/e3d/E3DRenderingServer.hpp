@@ -5,7 +5,7 @@
 #include "E3DOptimizedBackend.hpp"
 #include "E3DSmokeSourceFactory.hpp"
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/mutex.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/particle_process_material.hpp>
@@ -228,7 +228,7 @@ namespace godot {
             Callable smoke_source_resolver;
             HashMap<String, Ref<E3DModel>> models;
             HashMap<RID, StreamModel> stream_models;
-            Ref<Mutex> models_mutex;
+            Mutex models_mutex;
 
             E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance);
             void _rebuild_if_built(E3DInstanceData &p_instance);

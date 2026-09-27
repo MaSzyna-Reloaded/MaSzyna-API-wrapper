@@ -105,11 +105,11 @@ func _refresh() -> void:
     _rows["Slider"].text = tr("%.3f m half width + %.3f m horn") % [half_width, HORN_WIDTH]
 
     _report_pantograph(
-            vehicle, 1, vehicle.pantograph_front_offset, half_width,
+            vehicle, 1, _engine.power_current_collector_first_position, half_width,
             _engine.get_collector_pantograph_first_active(),
             _engine.get_collector_pantograph_first_voltage())
     _report_pantograph(
-            vehicle, 2, vehicle.pantograph_rear_offset, half_width,
+            vehicle, 2, _engine.power_current_collector_second_position, half_width,
             _engine.get_collector_pantograph_second_active(),
             _engine.get_collector_pantograph_second_voltage())
 

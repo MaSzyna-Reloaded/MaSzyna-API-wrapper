@@ -321,7 +321,7 @@ namespace godot {
             E3DLightParams params;
             params.omni = false;
             // pointing straight down: Godot's spot shines along -Z
-            params.transform = Transform3D(Basis(Vector3(1, 0, 0), Math_PI * -0.5), origin);
+            params.transform = Transform3D(Basis(Vector3(1, 0, 0), Math::PI * -0.5), origin);
             params.color = anchors.color;
             params.color.a = 1.0;
             params.energy = DEFAULT_LIGHT_ENERGY;

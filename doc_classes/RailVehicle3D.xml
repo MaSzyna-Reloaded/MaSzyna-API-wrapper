@@ -73,11 +73,7 @@
 		</member>
 		<member name="pantograph_front_arm_paths" type="NodePath[]" setter="set_pantograph_front_arm_paths" getter="get_pantograph_front_arm_paths" default="[]">
 		</member>
-		<member name="pantograph_front_offset" type="Vector3" setter="set_pantograph_front_offset" getter="get_pantograph_front_offset" default="Vector3(0, 0, 0)">
-		</member>
 		<member name="pantograph_rear_arm_paths" type="NodePath[]" setter="set_pantograph_rear_arm_paths" getter="get_pantograph_rear_arm_paths" default="[]">
-		</member>
-		<member name="pantograph_rear_offset" type="Vector3" setter="set_pantograph_rear_offset" getter="get_pantograph_rear_offset" default="Vector3(0, 0, 0)">
 		</member>
 		<member name="powered_wheel_paths" type="NodePath[]" setter="set_powered_wheel_paths" getter="get_powered_wheel_paths" default="[]">
 		</member>

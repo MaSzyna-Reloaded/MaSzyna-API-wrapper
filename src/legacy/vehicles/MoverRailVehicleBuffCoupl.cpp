@@ -72,7 +72,7 @@ namespace godot {
 
         coupler->PowerCoupling = get_power_coupling();
         coupler->PowerFlag = get_power_flag();
-        coupler->control_type = get_control_type().ascii();
+        coupler->control_type = get_control_type().ascii().get_data();
 
         if (coupler->CouplerType != TCouplerType::NoCoupler && coupler->CouplerType != TCouplerType::Bare &&
             coupler->CouplerType != TCouplerType::Articulated) {

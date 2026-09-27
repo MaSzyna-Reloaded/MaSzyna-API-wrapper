@@ -2,7 +2,6 @@
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
-#include <godot_cpp/core/mutex_lock.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -29,7 +28,6 @@ namespace godot {
     }
 
     SceneryStreamingServer::SceneryStreamingServer() {
-        mutex.instantiate();
         semaphore.instantiate();
         draw_distance =
                 ProjectSettings::get_singleton()->get_setting("maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
@@ -46,14 +44,14 @@ namespace godot {
             return;
         }
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             exiting = true;
         }
         semaphore->post();
         worker->wait_to_finish();
         worker.unref();
         // the thread is joined, so the next plan may start a new one
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         exiting = false;
         planning = false;
     }
@@ -98,7 +96,7 @@ namespace godot {
     /// nothing to prepare off the main thread.
     int
     SceneryStreamingServer::owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear) {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         Owner owner;
         owner.preload = p_preload;
         owner.build = p_build;
@@ -111,7 +109,7 @@ namespace godot {
     /// range of its own and is streamed up to the global draw distance.
     RID SceneryStreamingServer::stream_register(
             const int p_owner, const RID &p_user_rid, const Vector3 &p_position, const float p_range_end) {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         ERR_FAIL_INDEX_V(p_owner, owners.size(), RID());
         Entry entry;
         entry.owner = p_owner;
@@ -131,7 +129,7 @@ namespace godot {
     /// per piece instead of searching the chunk for every one of them. The owner's clear callable
     /// is not called: whoever frees the piece frees its content too.
     void SceneryStreamingServer::stream_free(const RID &p_stream_rid) {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         const Vector2i *key = entry_chunks.getptr(p_stream_rid);
         if (key == nullptr) {
             return;
@@ -228,7 +226,7 @@ namespace godot {
         bool was_streaming;
         bool is_streaming;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             was_streaming = camera_id.is_valid();
             camera_id = p_camera != nullptr ? ObjectID(p_camera->get_instance_id()) : ObjectID();
             is_streaming = camera_id.is_valid();
@@ -259,7 +257,7 @@ namespace godot {
     Vector3 SceneryStreamingServer::get_camera_position() const {
         ObjectID current_camera_id;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             current_camera_id = camera_id;
         }
         const Camera3D *camera = Object::cast_to<Camera3D>(ObjectDB::get_instance(current_camera_id));
@@ -267,7 +265,7 @@ namespace godot {
     }
 
     bool SceneryStreamingServer::has_camera() const {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         return camera_id.is_valid();
     }
 
@@ -300,13 +298,13 @@ namespace godot {
     }
 
     bool SceneryStreamingServer::is_area_ready(const int p_chunk_radius) const {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         return _is_area_ready_locked(MAX(0, p_chunk_radius));
     }
 
     /// Pieces currently built - what the streaming actually keeps alive
     int SceneryStreamingServer::get_streamed_count() const {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         int count = 0;
         for (const KeyValue<Vector2i, Chunk> &item: chunks) {
             count += item.value.built_count;
@@ -317,7 +315,7 @@ namespace godot {
     /// What the streaming is doing right now, for the "Scenery Streaming" debug window
     Dictionary SceneryStreamingServer::get_statistics() const {
         Dictionary statistics;
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         int streamed = 0;
         int active_chunks = 0;
         for (const KeyValue<Vector2i, Chunk> &item: chunks) {
@@ -354,7 +352,7 @@ namespace godot {
     }
 
     void SceneryStreamingServer::_request_plan(const Vector3 &p_position) {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         camera_position = p_position;
         target_revision++;
         scanned_revision = 0;
@@ -390,7 +388,7 @@ namespace godot {
         ObjectID current_camera_id;
         bool requested;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             current_camera_id = camera_id;
             requested = force_plan || content_dirty;
         }
@@ -415,7 +413,7 @@ namespace godot {
     void SceneryStreamingServer::_apply_plan() {
         bool catching_up;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             if (planned_builds.size() > 0 || planned_clears.size() > 0) {
                 pending_builds.append_array(planned_builds);
                 pending_clears.append_array(planned_clears);
@@ -444,7 +442,7 @@ namespace godot {
             pending_clears.resize(pending_clears.size() - 1);
             bool apply = false;
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 Entry *entry = _get_entry(pending.stream_rid);
                 if (pending.revision == target_revision && entry != nullptr && entry->built &&
                     entry->wanted_revision != target_revision) {
@@ -466,7 +464,7 @@ namespace godot {
             pending_builds.resize(pending_builds.size() - 1);
             bool apply = false;
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 Entry *entry = _get_entry(pending.stream_rid);
                 apply = pending.revision == target_revision && entry != nullptr && !entry->built &&
                         entry->wanted_revision == target_revision;
@@ -476,7 +474,7 @@ namespace godot {
             }
             if (apply && pending.build.is_valid()) {
                 pending.build.call(pending.user_rid, pending.preloaded);
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 Entry *entry = _get_entry(pending.stream_rid);
                 if (pending.revision == target_revision && entry != nullptr && !entry->built &&
                     entry->wanted_revision == target_revision) {
@@ -500,7 +498,7 @@ namespace godot {
         Vector<PendingClear> leaving;
         int wanted_unbuilt = 0;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             if (p_revision != target_revision || !camera_id.is_valid()) {
                 return false;
             }
@@ -547,7 +545,7 @@ namespace godot {
         for (int64_t i = entering.size() - 1; i >= 0; i--) {
             PendingBuild build = entering[i];
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 if (p_revision != target_revision || !entry_chunks.has(build.stream_rid)) {
                     return false;
                 }
@@ -556,7 +554,7 @@ namespace godot {
                 build.preloaded = build.preload.call(build.user_rid);
             }
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 Entry *entry = _get_entry(build.stream_rid);
                 if (p_revision != target_revision || entry == nullptr || entry->wanted_revision != p_revision) {
                     return false;
@@ -565,7 +563,7 @@ namespace godot {
             }
         }
 
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         if (p_revision != target_revision) {
             return false;
         }
@@ -581,7 +579,7 @@ namespace godot {
                 uint64_t revision;
                 Vector3 position;
                 {
-                    MutexLock lock(**mutex);
+                    MutexLock lock(mutex);
                     if (exiting) {
                         return;
                     }
@@ -593,7 +591,7 @@ namespace godot {
                     position = camera_position;
                 }
                 const bool completed = _plan(revision, position);
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 if (exiting) {
                     return;
                 }

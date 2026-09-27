@@ -178,6 +178,6 @@ namespace godot {
                 motor.fi * std::max(std::abs(current) / (std::abs(current) + motor.Isat) - motor.fi0, 0.0);
         const double voltage = std::abs(mover->EngineVoltage) - current * resistance;
         const double revolutions = std::max(0.0, voltage / (flux * step.Mn));
-        return revolutions * mover->WheelDiameter * Math_PI * SECONDS_PER_HOUR_PER_KILOMETRE / mover->Transmision.Ratio;
+        return revolutions * mover->WheelDiameter * Math::PI * SECONDS_PER_HOUR_PER_KILOMETRE / mover->Transmision.Ratio;
     }
 } // namespace godot

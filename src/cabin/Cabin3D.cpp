@@ -155,7 +155,7 @@ namespace godot {
         Vector3 shake_vector;
         const double engine_revolutions = _engine_revolutions();
         if (engine_revolutions > 0.0) {
-            engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math_TAU);
+            engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math::TAU);
             const double fade_in = CLAMP(
                     (engine_revolutions - (engine_shake_fade_in_rpm / 60.0)) * engine_shake_fade_in_factor, 0.0, 1.0);
             const double fade_out = 1.0 - CLAMP((engine_revolutions - (engine_shake_fade_out_rpm / 60.0)) *

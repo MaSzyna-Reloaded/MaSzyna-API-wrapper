@@ -41,8 +41,6 @@ namespace godot {
              * node's - the original keeps it in TAnimPant::vPos. It is exported here only because
              * the instancer reads it off the model, and the pantograph power path cannot move to
              * RailVehicleServer until it does not have to come back here for these. */
-            Vector3 pantograph_front_offset;
-            Vector3 pantograph_rear_offset;
             double pantograph_collector_width = 0.5;
             /* Half of the slider's width, taken from the vehicle's own CSW when its configuration
              * lands - see _on_vehicle_config_changed(). */
@@ -191,6 +189,9 @@ namespace godot {
             };
 
             PantographFrame _pantograph_frame() const;
+            /// Hands the vehicle where each of its pantographs stands, once both the model's arm
+            /// nodes and the electric engine are known
+            void _publish_collector_positions() const;
             /// Both of these read the electric engine and the controller through their typed
             /// accessors - neither needs the vehicle's whole state, and a scenery runs hundreds of
             /// powered vehicles
@@ -250,10 +251,6 @@ namespace godot {
             TypedArray<NodePath> get_powered_wheel_paths() const;
             void set_rear_rolling_wheel_paths(const TypedArray<NodePath> &p_value);
             TypedArray<NodePath> get_rear_rolling_wheel_paths() const;
-            void set_pantograph_front_offset(const Vector3 &p_value);
-            Vector3 get_pantograph_front_offset() const;
-            void set_pantograph_rear_offset(const Vector3 &p_value);
-            Vector3 get_pantograph_rear_offset() const;
             void set_pantograph_collector_width(double p_value);
             double get_pantograph_collector_width() const;
             void set_pantograph_front_arm_paths(const TypedArray<NodePath> &p_value);

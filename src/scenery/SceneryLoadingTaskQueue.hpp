@@ -1,5 +1,5 @@
 #pragma once
-#include <godot_cpp/classes/mutex.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
@@ -23,7 +23,7 @@ namespace godot {
                     bool done = false;
             };
 
-            Ref<Mutex> mutex;
+            Mutex mutex;
             Ref<Semaphore> semaphore;
             Vector<Ref<Thread>> workers;
             HashMap<int, Task> tasks;

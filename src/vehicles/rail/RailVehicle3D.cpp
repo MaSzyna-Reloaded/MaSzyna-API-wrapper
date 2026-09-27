@@ -99,8 +99,6 @@ namespace godot {
         BIND_RAIL_NODE_PATH_ARRAY(front_rolling_wheel_paths);
         BIND_RAIL_NODE_PATH_ARRAY(powered_wheel_paths);
         BIND_RAIL_NODE_PATH_ARRAY(rear_rolling_wheel_paths);
-        BIND_RAIL_PROPERTY(pantograph_front_offset, Variant::VECTOR3);
-        BIND_RAIL_PROPERTY(pantograph_rear_offset, Variant::VECTOR3);
         BIND_RAIL_PROPERTY(pantograph_collector_width, Variant::FLOAT);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_front_arm_paths);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_rear_arm_paths);
@@ -418,6 +416,21 @@ namespace godot {
         const double sliding_width =
                 electric_engine != nullptr ? electric_engine->get_power_current_collector_sliding_width() : 0.0;
         pantograph_slider_half_width = sliding_width > 0.0 ? 0.5 * sliding_width : pantograph_collector_width;
+        _publish_collector_positions();
+    }
+
+    /* Where each pantograph sits on the vehicle, handed to the vehicle that owns the value. Its two
+     * inputs land in either order - the model's arm nodes when the paths change, the electric
+     * engine when the vehicle's parts are adopted - so both events publish, and the one that runs
+     * second is the one that completes it. */
+    void RailVehicle3D::_publish_collector_positions() const {
+        if (electric_engine == nullptr) {
+            return;
+        }
+        electric_engine->set_power_current_collector_first_position(
+                pantograph_front_geometry.get("offset", Vector3()));
+        electric_engine->set_power_current_collector_second_position(
+                pantograph_rear_geometry.get("offset", Vector3()));
     }
 
     void RailVehicle3D::_on_controller_changed(RailVehicleController *p_controller) {
@@ -932,6 +945,11 @@ namespace godot {
         }
         constexpr double HEIGHT = 0.07;
         Dictionary geometry;
+        /* Where this pantograph sits on the vehicle, in the vehicle's own space - the original
+         * reads the same thing off the submodel's matrix (TAnimPant::vPos, DynObj.cpp:5508-5549:
+         * sideways, up, and along the length). Without it both pantographs of a vehicle sampled
+         * the wire at the same point, the vehicle's origin. */
+        geometry["offset"] = get_global_transform().affine_inverse().xform(lower->get_global_position());
         geometry["len_l1"] = len_l1;
         geometry["len_u1"] = len_u1;
         geometry["horiz"] = horizontal;
@@ -991,6 +1009,7 @@ namespace godot {
         pantograph_rear_geometry = _cache_pantograph_geometry(pantograph_rear_arm_nodes);
         pantograph_front_converged = pantograph_front_geometry.is_empty();
         pantograph_rear_converged = pantograph_rear_geometry.is_empty();
+        _publish_collector_positions();
         TypedArray<Node3D> arm_arrays[] = {pantograph_front_arm_nodes, pantograph_rear_arm_nodes};
         for (const TypedArray<Node3D> &arm_nodes: arm_arrays) {
             for (int index = 0; index < arm_nodes.size(); ++index) {
@@ -1397,12 +1416,16 @@ namespace godot {
         _report_contact_gap(2, first_active, pantograph_front_converged);
         _report_contact_gap(3, second_active, pantograph_rear_converged);
         const double front_voltage =
-                front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
+                front_active ? _pantograph_wire_voltage(
+                                       2, electric_engine->get_power_current_collector_first_position(), frame,
+                                       assumed_voltage, current)
                              : 0.0;
         electric_engine->set_pantograph_wire_voltage(RailVehicleElectricEngine::PANTOGRAPH_FIRST, front_voltage);
         electric_engine->set_pantograph_wire_voltage(
                 RailVehicleElectricEngine::PANTOGRAPH_SECOND,
-                rear_active ? _pantograph_wire_voltage(3, pantograph_rear_offset, frame, assumed_voltage, current)
+                rear_active ? _pantograph_wire_voltage(
+                                      3, electric_engine->get_power_current_collector_second_position(), frame,
+                                      assumed_voltage, current)
                             : 0.0);
     }
 
@@ -1472,7 +1495,7 @@ namespace godot {
         if (pressure > pressure_threshold && power_available) {
             speed_factor = MAX(0.0, 0.015 * pressure * p_delta);
         }
-        double pant_diff = Math_INF;
+        double pant_diff = Math::INF;
         if (p_is_active) {
             // a lowered pantograph comes down regardless of the wire (DynObj.cpp:3775), no search needed
             const PantographFrame frame = _pantograph_frame();
@@ -1500,7 +1523,7 @@ namespace godot {
             const double upper_angle = Math::acos(
                     ((double(p_geometry["len_l1"]) * Math::cos(angle)) + double(p_geometry["horiz"])) /
                     double(p_geometry["len_u1"]));
-            if (angle + upper_angle < Math_PI) {
+            if (angle + upper_angle < Math::PI) {
                 p_geometry["angle_l"] = angle;
                 p_geometry["angle_u"] = upper_angle;
                 p_geometry["pant_wys"] = (double(p_geometry["len_l1"]) * Math::sin(angle)) +
@@ -1631,18 +1654,6 @@ namespace godot {
     }
     TypedDictionary<String, bool> RailVehicle3D::get_lights() const {
         return lights;
-    }
-    void RailVehicle3D::set_pantograph_front_offset(const Vector3 &p_value) {
-        pantograph_front_offset = p_value;
-    }
-    Vector3 RailVehicle3D::get_pantograph_front_offset() const {
-        return pantograph_front_offset;
-    }
-    void RailVehicle3D::set_pantograph_rear_offset(const Vector3 &p_value) {
-        pantograph_rear_offset = p_value;
-    }
-    Vector3 RailVehicle3D::get_pantograph_rear_offset() const {
-        return pantograph_rear_offset;
     }
     void RailVehicle3D::set_pantograph_collector_width(double p_value) {
         pantograph_collector_width = p_value;

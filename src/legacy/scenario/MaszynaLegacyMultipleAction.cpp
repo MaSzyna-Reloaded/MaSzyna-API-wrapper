@@ -1,5 +1,5 @@
 #include "MaszynaLegacyMultipleAction.hpp"
-#include "ScenarioEventServer.hpp"
+#include "scenario/ScenarioEventServer.hpp"
 
 namespace godot {
     void MaszynaLegacyMultipleAction::_bind_methods() {

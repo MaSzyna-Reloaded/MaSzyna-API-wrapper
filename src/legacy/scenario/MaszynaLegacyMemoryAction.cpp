@@ -1,6 +1,6 @@
-#include "../macros.hpp"
-#include "../driver/DriverSystem.hpp"
-#include "../tracks/TrackServer.hpp"
+#include "macros.hpp"
+#include "driver/DriverSystem.hpp"
+#include "tracks/TrackServer.hpp"
 #include "MaszynaLegacyMemoryAction.hpp"
 
 namespace godot {

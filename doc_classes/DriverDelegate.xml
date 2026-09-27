@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="DriverDelegate" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="_control_taken" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="_driver_attached" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="_driver_detached" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="_handle_command" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="command" type="String" />
+			<param index="2" name="value1" type="float" />
+			<param index="3" name="value2" type="float" />
+			<param index="4" name="position" type="Vector3" />
+			<description>
+			</description>
+		</method>
+		<method name="_update" qualifiers="virtual">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

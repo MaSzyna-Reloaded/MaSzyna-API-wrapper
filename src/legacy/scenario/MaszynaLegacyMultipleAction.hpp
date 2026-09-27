@@ -1,5 +1,5 @@
 #pragma once
-#include "ScenarioEventAction.hpp"
+#include "scenario/ScenarioEventAction.hpp"
 #include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {

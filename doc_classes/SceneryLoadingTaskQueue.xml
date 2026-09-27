@@ -9,6 +9,11 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="drain">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="get_completed_count" qualifiers="const">
 			<return type="int" />
 			<description>

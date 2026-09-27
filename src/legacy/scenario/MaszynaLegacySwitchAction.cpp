@@ -1,4 +1,4 @@
-#include "../macros.hpp"
+#include "macros.hpp"
 #include "MaszynaLegacySwitchAction.hpp"
 
 namespace godot {

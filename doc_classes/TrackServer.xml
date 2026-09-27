@@ -7,6 +7,56 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="isolated_add_track">
+			<return type="void" />
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_create">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_free">
+			<return type="void" />
+			<param index="0" name="isolated" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_get_name" qualifiers="const">
+			<return type="StringName" />
+			<param index="0" name="isolated" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_get_rid_by_name" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_is_occupied" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="isolated" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_set_name">
+			<return type="void" />
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="isolated_set_parent">
+			<return type="void" />
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="parent" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="switch_get_active_track" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="track" type="RID" />
@@ -165,6 +215,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="track_get_next">
+			<return type="TrackEndpointRef" />
+			<param index="0" name="track" type="RID" />
+			<param index="1" name="endpoint_index" type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="track_get_quality_flag" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="track" type="RID" />
@@ -188,8 +245,26 @@
 			<description>
 			</description>
 		</method>
+		<method name="track_get_vehicles" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="track" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="track_get_velocity" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="track_get_width" qualifiers="const">
 			<return type="float" />
+			<param index="0" name="track" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="track_is_occupied" qualifiers="const">
+			<return type="bool" />
 			<param index="0" name="track" type="RID" />
 			<description>
 			</description>
@@ -197,6 +272,13 @@
 		<method name="track_is_switch" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="track" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="track_set_velocity">
+			<return type="void" />
+			<param index="0" name="track" type="RID" />
+			<param index="1" name="velocity" type="float" />
 			<description>
 			</description>
 		</method>
@@ -226,6 +308,20 @@
 			<description>
 			</description>
 		</method>
+		<method name="track_vehicle_entered">
+			<return type="void" />
+			<param index="0" name="track" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="track_vehicle_left">
+			<return type="void" />
+			<param index="0" name="track" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="tracks_find_in_aabb" qualifiers="const">
 			<return type="RID[]" />
 			<param index="0" name="aabb" type="Rect2" />
@@ -244,6 +340,30 @@
 		</member>
 	</members>
 	<signals>
+		<signal name="isolated_freed">
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="isolated_occupied">
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="isolated_vehicle_entered">
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="isolated_vehicle_left">
+			<param index="0" name="isolated" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
 		<signal name="switch_active_track_changed">
 			<param index="0" name="track_rid" type="RID" />
 			<param index="1" name="active_track" type="int" />

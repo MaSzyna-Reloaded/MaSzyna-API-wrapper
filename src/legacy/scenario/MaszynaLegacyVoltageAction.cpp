@@ -1,4 +1,4 @@
-#include "../traction/TractionServer.hpp"
+#include "traction/TractionServer.hpp"
 #include "MaszynaLegacyVoltageAction.hpp"
 
 namespace godot {

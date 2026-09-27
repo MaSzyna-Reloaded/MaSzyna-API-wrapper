@@ -1,5 +1,5 @@
-#include "../macros.hpp"
-#include "../tracks/TrackServer.hpp"
+#include "macros.hpp"
+#include "tracks/TrackServer.hpp"
 #include "MaszynaLegacyEventCondition.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 

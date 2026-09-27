@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 18
+const FIZ_PARSER_FORMAT_VERSION := 19
 
 ## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
 const _COMPONENT_TYPES:Array[int] = [
@@ -34,6 +34,7 @@ const _COMPONENT_TYPES:Array[int] = [
     VehicleComponentType.COMPONENT_HORNS, VehicleComponentType.COMPONENT_SECURITY,
     VehicleComponentType.COMPONENT_WHEELS, VehicleComponentType.COMPONENT_WIPERS,
     VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER, VehicleComponentType.COMPONENT_RADIO,
+    VehicleComponentType.COMPONENT_MASTER_CONTROLLER,
 ]
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section

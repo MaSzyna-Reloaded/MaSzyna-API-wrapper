@@ -86,7 +86,6 @@ namespace godot {
         /* WWList: tablica rezystorow rozr. (eng. Starting resistor array) aka DEList aka TDESchemeTable */
         constexpr int MAX = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
         const int wwlist_size = static_cast<int>(get_wwlist().size());
-        p_mover->MainCtrlPosNo = wwlist_size - 1;
         for (int i = 0; i < std::min(MAX, wwlist_size); i++) {
             const Ref<WWListItem> &row = get_wwlist()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {

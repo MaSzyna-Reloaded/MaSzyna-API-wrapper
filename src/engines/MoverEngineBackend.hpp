@@ -20,8 +20,6 @@ namespace godot {
             double get_wheel_torque(const VehicleEngine *p_engine) const override;
             double get_wheel_force(const VehicleEngine *p_engine) const override;
             double get_tractive_force(const VehicleEngine *p_engine) const override;
-            bool get_compressor_enabled(const VehicleEngine *p_engine) const override;
-            bool get_compressor_allowed(const VehicleEngine *p_engine) const override;
             double get_power(const VehicleEngine *p_engine) const override;
             double get_rpm_count(const VehicleEngine *p_engine) const override;
             double get_rpm_ratio(const VehicleEngine *p_engine) const override;
@@ -33,7 +31,6 @@ namespace godot {
             double get_eimic_real(const VehicleEngine *p_engine) const override;
             void apply_configuration(const VehicleEngine *p_engine) const override;
             bool main_switch(const VehicleEngine *p_engine, bool p_enabled) const override;
-            void compressor(const VehicleEngine *p_engine, bool p_enabled) const override;
             bool motor_overload_relay_threshold(const VehicleEngine *p_engine, bool p_high) const override;
             void process(const VehicleEngine *p_engine, double p_delta) const override;
             void fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const override;

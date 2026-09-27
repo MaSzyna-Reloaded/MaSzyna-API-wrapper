@@ -49,9 +49,6 @@ namespace godot {
             virtual void set_motor_connectors_open(bool p_open) = 0;
 
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_converter_enabled() const;
-            bool get_converted_allowed() const;
-            double get_converter_time_to_start() const;
             double get_collector_max_voltage() const;
             double get_collector_max_current() const;
             double get_collector_max_lifting() const;
@@ -180,7 +177,6 @@ namespace godot {
 
             void set_power_source(VehicleController::TrainPowerSource p_source);
             VehicleController::TrainPowerSource get_power_source() const;
-            void converter(bool p_enabled);
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
             void pantographs_valve_operate(ValveOperation p_operation);

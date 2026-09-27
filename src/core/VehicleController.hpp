@@ -82,6 +82,12 @@ namespace godot {
             virtual bool get_cabin_controleable() const = 0;
             virtual int get_cabin_occupied() const = 0;
             virtual bool get_battery_enabled() const = 0;
+            /* ConverterFlag: the converter runs */
+            virtual bool get_converter_enabled() const = 0;
+            /* ConverterAllow: the converter's switch is on */
+            virtual bool get_converter_allowed() const = 0;
+            /* ConverterStartDelayTimer [s] */
+            virtual double get_converter_time_to_start() const = 0;
             /* Metres since the distance counter was started, or -1 while it is off
              * (TTrain::m_distancecounter, Train.h:904) */
             virtual double get_distance_counter() const = 0;
@@ -208,6 +214,9 @@ namespace godot {
             send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             PackedStringArray get_commands() const;
             virtual void battery(bool p_enabled) const = 0;
+            /* The converter switched (ConverterSwitch(), Mover.cpp:3702): the cab's own, sent along
+             * the control line to the vehicles that carry one */
+            virtual void converter(bool p_enabled) const = 0;
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
             virtual void cab_change(int p_direction) const = 0;

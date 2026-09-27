@@ -21,6 +21,8 @@ namespace godot {
             double get_feed_pipe_pressure() const override;
             double get_tank_volume() const override;
             double get_compressor_pressure() const override;
+            bool get_compressor_enabled() const override;
+            bool get_compressor_allowed() const override;
             double get_controller_position() const override;
             double get_controller_position_normalized() const override;
             double get_local_position_normalized() const override;
@@ -133,6 +135,7 @@ namespace godot {
 
         public:
             void brake_releaser(bool p_pressed) override;
+            void compressor(bool p_enabled) override;
             void brake_level_set(double p_level) override;
             void brake_level_set_position(BrakeHandlePosition p_position) override;
             void brake_level_set_position_str(const String &p_position) override;

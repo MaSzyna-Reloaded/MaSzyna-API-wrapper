@@ -8,7 +8,9 @@
 #include "buffers/VehicleBuffCoupl.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "cabin/CabinHUDMouseSystem.hpp"
+#include "controllers/MoverVehicleMasterController.hpp"
 #include "controllers/MoverVehicleUniversalController.hpp"
+#include "controllers/VehicleMasterController.hpp"
 #include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
@@ -263,6 +265,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)
         GDREGISTER_CLASS(MoverVehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
+        GDREGISTER_ABSTRACT_CLASS(VehicleMasterController)
+        GDREGISTER_CLASS(MoverVehicleMasterController)
         GDREGISTER_ABSTRACT_CLASS(VehicleWipers)
         GDREGISTER_CLASS(MoverVehicleWipers)
         GDREGISTER_CLASS(WiperListItem)

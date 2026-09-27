@@ -67,7 +67,9 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     driven.power = 5600.0
     var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
     eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    eim.cntrl_main_controller_position_count = 4
+    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    master_controller.main_position_count = 4
+    driven.add_component(master_controller)
     eim.power_current_collector_max_voltage = 3900.0
     eim.power_current_collector_min_main_switch_voltage = 1900.0
     eim.power_current_collector_physical_layout = 3
@@ -110,7 +112,9 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.add_component(wheels)
     var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
     eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    eim.cntrl_main_controller_position_count = 4
+    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    master_controller.main_position_count = 4
+    driven.add_component(master_controller)
     eim.transmission_gear_teeth_motor = 48
     eim.transmission_gear_teeth_wheel = 251
     var line: MaszynaParser = MaszynaParser.new()
@@ -126,6 +130,8 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.apply_configuration()
     await wait_idle_frames(2)
     driven.send_command("battery", true)
+    # the crew switches its cab on - no cab is active before (CabActive = 0, MOVER.h:2090)
+    driven.send_command("cab_activation", true)
     driven.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in 10:
         eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)

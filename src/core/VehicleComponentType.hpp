@@ -40,6 +40,7 @@ namespace godot {
                 COMPONENT_UNIVERSAL_CONTROLLER,
                 COMPONENT_GENERIC,
                 COMPONENT_RADIO,
+                COMPONENT_MASTER_CONTROLLER,
             };
     };
 } // namespace godot

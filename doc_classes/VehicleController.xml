@@ -18,6 +18,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="antislip" qualifiers="const">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="apply_config" experimental="true">
 			<return type="void" />
 			<description>
@@ -89,6 +94,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="converter" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Switches the converter ([code]ConverterSwitch()[/code]); the command is sent along the control line to the vehicles that carry one.
+			</description>
+		</method>
 		<method name="couple">
 			<return type="void" />
 			<param index="0" name="other" type="VehicleController" />
@@ -141,6 +153,11 @@
 		<method name="find_generic_components" qualifiers="const">
 			<return type="VehicleComponent[]" />
 			<param index="0" name="tag" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_acceleration" qualifiers="const">
+			<return type="float" />
 			<description>
 			</description>
 		</method>
@@ -215,6 +232,11 @@
 		</method>
 		<method name="get_world_transform" qualifiers="const">
 			<return type="Transform3D" />
+			<description>
+			</description>
+		</method>
+		<method name="ground_relay_reset" qualifiers="const">
+			<return type="void" />
 			<description>
 			</description>
 		</method>
@@ -389,9 +411,21 @@
 		</member>
 		<member name="controller_main_actual_position" type="int" setter="" getter="get_controller_main_actual_position" default="0">
 		</member>
+		<member name="controller_main_delayed" type="bool" setter="" getter="get_controller_main_delayed" default="false">
+		</member>
+		<member name="controller_main_no_power_position" type="int" setter="" getter="get_controller_main_no_power_position" default="0">
+		</member>
 		<member name="controller_main_position" type="int" setter="" getter="get_controller_main_position" default="0">
 		</member>
 		<member name="controller_second_position" type="int" setter="" getter="get_controller_second_position" default="0">
+		</member>
+		<member name="converter_allowed" type="bool" setter="" getter="get_converter_allowed" default="false">
+		</member>
+		<member name="converter_enabled" type="bool" setter="" getter="get_converter_enabled" default="false">
+		</member>
+		<member name="converter_time_to_start" type="float" setter="" getter="get_converter_time_to_start" default="0.0">
+		</member>
+		<member name="coupler_stretched" type="bool" setter="" getter="get_coupler_stretched" default="false">
 		</member>
 		<member name="current0" type="float" setter="" getter="get_current0" default="0.0">
 		</member>
@@ -455,6 +489,8 @@
 		<member name="power24_voltage" type="float" setter="" getter="get_power24_voltage" default="0.0">
 		</member>
 		<member name="power110_available" type="bool" setter="" getter="get_power110_available" default="false">
+		</member>
+		<member name="radio_stop_active" type="bool" setter="" getter="get_radio_stop_active" default="false">
 		</member>
 		<member name="reduced_mass" type="float" setter="set_reduced_mass" getter="get_reduced_mass" default="0.0">
 			[code]Param.Mred[/code]

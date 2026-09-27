@@ -11,7 +11,7 @@ func before_each():
     await wait_idle_frames(2)
 
 func test_defaults():
-    assert_eq(ai_hints.pantograph_state, VehicleAIHints.PANTOGRAPH_STATE_FRONT)
+    assert_eq(ai_hints.pantograph_state, VehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC)
     assert_true(ai_hints.raise_pantographs_when_idle)
     assert_eq(ai_hints.local_brake_acceleration_factor, 1.05)
 

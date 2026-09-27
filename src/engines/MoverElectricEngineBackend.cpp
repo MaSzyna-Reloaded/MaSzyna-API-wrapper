@@ -18,20 +18,8 @@ namespace godot {
         };
     } // namespace
 
-    bool MoverElectricEngineBackend::get_converter_enabled(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterFlag : false;
-    }
 
-    bool MoverElectricEngineBackend::get_converted_allowed(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterAllow : false;
-    }
 
-    double MoverElectricEngineBackend::get_converter_time_to_start(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterStartDelayTimer : 0.0;
-    }
 
     double MoverElectricEngineBackend::get_collector_max_voltage(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
@@ -328,11 +316,6 @@ namespace godot {
         p_mover->MainsStart = mover_start_mode(p_engine->get_cntrl_main_switch_start_mode());
     }
 
-    void MoverElectricEngineBackend::converter(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = owner.get_mover();
-        ASSERT_MOVER(mover);
-        mover->ConverterSwitch(p_enabled);
-    }
 
     void MoverElectricEngineBackend::converter_fuse_reset(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *mover = owner.get_mover();

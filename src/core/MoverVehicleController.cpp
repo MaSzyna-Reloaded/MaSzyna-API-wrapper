@@ -106,11 +106,9 @@ namespace godot {
         if (mover->CabOccupied == 0) {
             mover->CabOccupied = 1;
         }
-        // only a driven vehicle gets its cab activated by the driver (Driver.cpp:2126); an unmanned
-        // one stays inactive, so ComputeTotalForce() can switch its physics off
-        if (get_driver_type() != DRIVER_NOBODY) {
-            mover->CabActivisation();
-        }
+        // no cab is active yet (CabActive = 0, MOVER.h:2090): the driver switches it on once the
+        // trainset is coupled - the AI by its hint (driverhints.cpp:108), the player on entering
+        // (Train.cpp:9147) - so the activation reaches every cab of the unit (SendCtrlToNext)
         /* What the scenery loaded the vehicle with. The backend takes the cargo's name and its
          * amount together and reads more than cargo out of them - `pantstate` is how a scenery
          * starts a locomotive with raised pantographs (Mover.cpp:7647). */
@@ -499,6 +497,18 @@ namespace godot {
         return mover != nullptr ? mover->Battery : false;
     }
 
+    bool MoverVehicleController::get_converter_enabled() const {
+        return mover != nullptr ? mover->ConverterFlag : false;
+    }
+
+    bool MoverVehicleController::get_converter_allowed() const {
+        return mover != nullptr ? mover->ConverterAllow : false;
+    }
+
+    double MoverVehicleController::get_converter_time_to_start() const {
+        return mover != nullptr ? mover->ConverterStartDelayTimer : 0.0;
+    }
+
     double MoverVehicleController::get_power24_voltage() const {
         return mover != nullptr ? mover->Power24vVoltage : 0.0;
     }
@@ -607,6 +617,10 @@ namespace godot {
 
     void MoverVehicleController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
+    }
+
+    void MoverVehicleController::converter(const bool p_enabled) const {
+        mover->ConverterSwitch(p_enabled);
     }
 
     // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)

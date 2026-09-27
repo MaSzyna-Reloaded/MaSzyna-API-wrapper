@@ -23,12 +23,6 @@ namespace godot {
     double VehicleEngine::get_tractive_force() const {
         return engine_backend != nullptr ? engine_backend->get_tractive_force(this) : 0.0;
     }
-    bool VehicleEngine::get_compressor_enabled() const {
-        return engine_backend != nullptr ? engine_backend->get_compressor_enabled(this) : false;
-    }
-    bool VehicleEngine::get_compressor_allowed() const {
-        return engine_backend != nullptr ? engine_backend->get_compressor_allowed(this) : false;
-    }
     double VehicleEngine::get_power() const {
         return engine_backend != nullptr ? engine_backend->get_power(this) : 0.0;
     }
@@ -73,7 +67,6 @@ namespace godot {
 
     void VehicleEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &VehicleEngine::main_switch);
-        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleEngine::compressor);
         ClassDB::bind_method(
                 D_METHOD("motor_overload_relay_threshold", "high"), &VehicleEngine::motor_overload_relay_threshold);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
@@ -90,21 +83,14 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 VehicleEngine, Variant::INT, motor_blowers_start_mode, "motor_blowers", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY(VehicleEngine, Variant::INT, cntrl_main_controller_position_count, "cntrl");
-        BIND_PROPERTY(VehicleEngine, Variant::INT, cntrl_shunt_controller_position_count, "cntrl");
-        BIND_PROPERTY(VehicleEngine, Variant::INT, cntrl_direction_change_max_position, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_eim_control_additional_zeros, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_eim_control_emergency, "cntrl");
         BIND_PROPERTY_W_HINT(
                 VehicleEngine, Variant::INT, cntrl_eim_control_type, "cntrl", PROPERTY_HINT_ENUM, "0,1,2,3");
         BIND_PROPERTY_W_HINT(
                 VehicleEngine, Variant::INT, cntrl_auto_relay_mode, "cntrl", PROPERTY_HINT_ENUM, "No,Yes,Optional");
-        BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_coupled_controllers, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_has_camshaft, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_series_shunt_on_series_position, "cntrl");
-        BIND_PROPERTY(VehicleEngine, Variant::FLOAT, cntrl_initial_controller_delay, "cntrl");
-        BIND_PROPERTY(VehicleEngine, Variant::FLOAT, cntrl_controller_step_delay, "cntrl");
-        BIND_PROPERTY(VehicleEngine, Variant::FLOAT, cntrl_controller_step_down_delay, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_fast_series_circuit, "cntrl");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
@@ -177,18 +163,6 @@ namespace godot {
                         Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tractive_force");
-        ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleEngine::get_compressor_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_compressor_enabled");
-        ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &VehicleEngine::get_compressor_allowed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_compressor_allowed");
         ClassDB::bind_method(D_METHOD("get_power"), &VehicleEngine::get_power);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -279,8 +253,6 @@ namespace godot {
         p_state["Mw"] = get_wheel_torque();
         p_state["Fw"] = get_wheel_force();
         p_state["Ft"] = get_tractive_force();
-        p_state["compressor_enabled"] = get_compressor_enabled();
-        p_state["compressor_allowed"] = get_compressor_allowed();
         p_state["engine_power"] = get_power();
         p_state["engine_rpm_count"] = get_rpm_count();
         p_state["engine_rpm_ratio"] = get_rpm_ratio();
@@ -300,21 +272,14 @@ namespace godot {
         return engine_backend != nullptr ? engine_backend->motor_overload_relay_threshold(this, p_high) : false;
     }
 
-    void VehicleEngine::compressor(const bool p_enabled) {
-        if (engine_backend != nullptr) {
-            engine_backend->compressor(this, p_enabled);
-        }
-    }
 
     void VehicleEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
-        register_command("compressor", Callable(this, "compressor"));
         register_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
     }
 
     void VehicleEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
-        unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
     }
 } // namespace godot

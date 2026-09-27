@@ -9,9 +9,6 @@ namespace godot {
         public:
             virtual ~VehicleElectricEngineBackend() = default;
 
-            virtual bool get_converter_enabled(const VehicleElectricEngine *p_engine) const = 0;
-            virtual bool get_converted_allowed(const VehicleElectricEngine *p_engine) const = 0;
-            virtual double get_converter_time_to_start(const VehicleElectricEngine *p_engine) const = 0;
             virtual double get_collector_max_voltage(const VehicleElectricEngine *p_engine) const = 0;
             virtual double get_collector_max_current(const VehicleElectricEngine *p_engine) const = 0;
             virtual double get_collector_max_lifting(const VehicleElectricEngine *p_engine) const = 0;
@@ -54,7 +51,6 @@ namespace godot {
             virtual double get_line_breaker_initial_delay(const VehicleElectricEngine *p_engine) const = 0;
             virtual bool get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const = 0;
             virtual void apply_configuration(const VehicleElectricEngine *p_engine) const = 0;
-            virtual void converter(const VehicleElectricEngine *p_engine, bool p_enabled) const = 0;
             virtual void converter_fuse_reset(const VehicleElectricEngine *p_engine) const = 0;
             virtual void pantographs_valve(const VehicleElectricEngine *p_engine, bool p_enabled) const = 0;
             virtual void pantographs_valve_operate(

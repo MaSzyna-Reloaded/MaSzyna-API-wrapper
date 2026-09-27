@@ -1323,3 +1323,40 @@ lighting or the consist.
   the engine node; with the order reversed nobody applied it.
 * **Fix:** `Cntrl.` applies its engine subset to an engine that already exists.
 * **Rule:** a FIZ section is applied whatever the order the file gives it in.
+
+## 2026-09-27 - EN57 vented its pipe from the rear cab and did not drive
+
+* **Symptom:** the AI prepared EN57 from `ra`: pantographs up, line breaker closed, but the brake
+  pipe fell to 0.2 bar and the driver never became ready.
+* **Proof:** `rb` (the rear cab car) had `CabActive` 0 and its emergency valve open -
+  `(0 == CabActive) && (InactiveCabFlag & emergencybrake)` (Mover.cpp:4585). A `cab_activation`
+  sent to `ra` after load reached `s` and `rb`; the AI's own one, at t=0.09 s, did not. A frame
+  trace showed three causes in a row:
+  1. `MoverVehicleController` switched the cab on while the vehicle was created, before it was
+     coupled; the AI's hint then found it on and did nothing, so `CabActivisation()` never went
+     along the unit. The original starts with `CabActive = 0` (MOVER.h:2090).
+  2. `TrainSet3D` coupled in its own `_process` once the controllers existed - a frame after the
+     drivers were attached, and coupling earlier (at the instancer) found the vehicles not yet on
+     their tracks: every coupler of `ra` stayed stretched and broke after 4 s, pulling the alarm
+     chain.
+  3. With `rb` active, its alerter (enabled for every vehicle by the component's `enabled`,
+     `MoverVehicleSecuritySystem::_apply_configuration()`) saw the cab activated, started the cab
+     signalling nobody acknowledged and braked. The original enables the alerter only in
+     `CabActivisation()` of the master cab (Mover.cpp:2905).
+* **Fix:** no cab activation at creation; `SceneryInstancer._wait_for_vehicles()` waits until the
+  vehicles stand on their tracks and `_build_drivers()` couples the trainsets (`TrainSet3D.couple()`)
+  before any driver exists; the alerter is left to the cab's activation.
+* **Rule:** a command sent along the couplers is sent once the trainset is coupled and placed; a
+  configuration never sets what the original switches at run time.
+
+## 2026-09-27 - a control car had no controller: MCPN lived on the engine
+
+* **Symptom:** EN57 `ra` (no engine) could not turn its reverser; `DirectionForward()` and
+  `MainSwitch_()` refuse with `MainCtrlPosNo == 0`.
+* **Cause:** MCPN/SCPN, the controller delays and `CoupledCtrl` were `VehicleEngine` properties,
+  though `LoadFIZ_Cntrl` reads them for every vehicle (Mover.cpp:10837-10869). The diesel-electric
+  engine also derived `MainCtrlPosNo` from its WWList, which the original never does (every FIZ
+  checked has MCPN equal to it).
+* **Fix:** `VehicleMasterController` component, created from every `Cntrl.` section.
+* **Rule:** a field goes where the original's loader reads it, not where its first consumer is.
+

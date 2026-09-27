@@ -20,8 +20,6 @@ namespace godot {
             virtual double get_wheel_torque(const VehicleEngine *p_engine) const = 0;
             virtual double get_wheel_force(const VehicleEngine *p_engine) const = 0;
             virtual double get_tractive_force(const VehicleEngine *p_engine) const = 0;
-            virtual bool get_compressor_enabled(const VehicleEngine *p_engine) const = 0;
-            virtual bool get_compressor_allowed(const VehicleEngine *p_engine) const = 0;
             virtual double get_power(const VehicleEngine *p_engine) const = 0;
             virtual double get_rpm_count(const VehicleEngine *p_engine) const = 0;
             virtual double get_rpm_ratio(const VehicleEngine *p_engine) const = 0;
@@ -34,8 +32,6 @@ namespace godot {
             virtual double get_eimic_real(const VehicleEngine *p_engine) const = 0;
             virtual void apply_configuration(const VehicleEngine *p_engine) const = 0;
             virtual bool main_switch(const VehicleEngine *p_engine, bool p_enabled) const = 0;
-            /* The compressor's switch (CompressorSwitch(), any engine - Mover.cpp) */
-            virtual void compressor(const VehicleEngine *p_engine, bool p_enabled) const = 0;
             /* The motor overload relay's high threshold, or the shunting mode of an engine that has
              * one (CurrentSwitch(), Mover.cpp:805) */
             virtual bool motor_overload_relay_threshold(const VehicleEngine *p_engine, bool p_high) const = 0;

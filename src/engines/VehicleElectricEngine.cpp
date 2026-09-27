@@ -33,15 +33,6 @@ namespace godot {
         }
     }
 
-    bool VehicleElectricEngine::get_converter_enabled() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_enabled(this) : false;
-    }
-    bool VehicleElectricEngine::get_converted_allowed() const {
-        return electric_backend != nullptr ? electric_backend->get_converted_allowed(this) : false;
-    }
-    double VehicleElectricEngine::get_converter_time_to_start() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_time_to_start(this) : 0.0;
-    }
     double VehicleElectricEngine::get_collector_max_voltage() const {
         return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(this) : 0.0;
     }
@@ -252,7 +243,6 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, cntrl_main_switch_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        ClassDB::bind_method(D_METHOD("converter", "enabled"), &VehicleElectricEngine::converter);
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &VehicleElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &VehicleElectricEngine::pantographs_valve);
         ClassDB::bind_method(D_METHOD("pantographs_drop_all", "enabled"), &VehicleElectricEngine::pantographs_drop_all);
@@ -300,25 +290,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("pantographs_valve_operate", "operation"), &VehicleElectricEngine::pantographs_valve_operate);
 
-        ClassDB::bind_method(D_METHOD("get_converter_enabled"), &VehicleElectricEngine::get_converter_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "converter_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_enabled");
-        ClassDB::bind_method(D_METHOD("get_converted_allowed"), &VehicleElectricEngine::get_converted_allowed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "converted_allowed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converted_allowed");
-        ClassDB::bind_method(
-                D_METHOD("get_converter_time_to_start"), &VehicleElectricEngine::get_converter_time_to_start);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "converter_time_to_start", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_time_to_start");
         ClassDB::bind_method(D_METHOD("get_collector_max_voltage"), &VehicleElectricEngine::get_collector_max_voltage);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -618,9 +589,6 @@ namespace godot {
         if (!is_simulation_ready()) {
             return;
         }
-        p_state["converter_enabled"] = get_converter_enabled();
-        p_state["converted_allowed"] = get_converted_allowed();
-        p_state["converter_time_to_start"] = get_converter_time_to_start();
         p_state["power_source"] = get_power_source();
         if (has_accumulator()) {
             p_state["accumulator/recharge_source"] = get_power_accumulator_recharge_source();
@@ -665,11 +633,6 @@ namespace godot {
         }
     }
 
-    void VehicleElectricEngine::converter(const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->converter(this, p_enabled);
-        }
-    }
 
     void VehicleElectricEngine::converter_fuse_reset() {
         if (electric_backend != nullptr) {
@@ -734,7 +697,6 @@ namespace godot {
 
     void VehicleElectricEngine::_register_commands() {
         VehicleEngine::_register_commands();
-        register_command("converter", Callable(this, "converter"));
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
         register_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
@@ -747,7 +709,6 @@ namespace godot {
 
     void VehicleElectricEngine::_unregister_commands() {
         VehicleEngine::_unregister_commands();
-        unregister_command("converter", Callable(this, "converter"));
         unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
         unregister_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));

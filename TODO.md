@@ -822,9 +822,16 @@ ported, into a delegate.
 * Gauges read the occupied vehicle unless the MMD catalog tags them: the ammeters, voltmeters and
   lamps of the motor car (`Train.cpp` `mvControlled` in `update_gauges`) need `target` in
   `MmdSemanticCatalog`.
-* EN57 `ra` has no engine, so no `MainCtrlPosNo`: no reverser and no master controller in the
-  control car. The planned `VehicleMasterController` component carries MCPN/SCPN, the delays,
-  `CoupledCtrl` and `MainCtrlMaxDirChangePos` for every vehicle.
+
+### TrainController (operator's decision, 2026-09-27)
+
+`VehicleController` is meant to be generic - a trolley, a car, a tractor - yet it carries the
+railway: cabs (`cab_activation`, `cab_change`, `cabin_*`, `cntrl_inactive_cab_flag`), couplers
+(`couple`, `is_coupled_by`, `coupler_*`, `CouplingElement`), the master controller and reverser
+commands, relays (`relay_*`, `ground_relay_reset`), 24/110 V, the battery and the converter (moved
+there in the EN57 commit), `train_type`, `antislip`. Split: `TrainController extends
+VehicleController` (+ `MoverTrainController`) takes all of it, and the railway components depend on
+`TrainController`, not on the generic one. Next commit after the EN57 one.
 
 ## Tests
 
@@ -840,6 +847,8 @@ ported, into a delegate.
 * `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not
   accelerate past 2 m/s across 5 notches (it reads the game directory, see below).
 
+* `test_zzz_scenery_scene_smoke.gd` fails in a second: it waits for `scenery.loaded`, a signal
+  `MaszynaSceneryNode` does not have (`scenery_loaded`), and reads the private `_track_rids`.
 * `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
   at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type
   'Dictionary'") - not caused by the scenario work, not looked into.

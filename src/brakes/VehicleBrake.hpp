@@ -30,6 +30,10 @@ namespace godot {
             virtual double get_feed_pipe_pressure() const = 0;
             virtual double get_tank_volume() const = 0;
             virtual double get_compressor_pressure() const = 0;
+            /* CompressorFlag: the compressor runs */
+            virtual bool get_compressor_enabled() const = 0;
+            /* CompressorAllow: the compressor's switch is on */
+            virtual bool get_compressor_allowed() const = 0;
             virtual double get_controller_position() const = 0;
             virtual double get_controller_position_normalized() const = 0;
             virtual double get_local_position_normalized() const = 0;
@@ -275,6 +279,9 @@ namespace godot {
 
         public:
             virtual void brake_releaser(bool p_pressed) = 0;
+            /* The compressor switched (CompressorSwitch(), Mover.cpp:3724): the cab's own, sent along
+             * the control line to the vehicles that carry one */
+            virtual void compressor(bool p_enabled) = 0;
             virtual void brake_level_set(double p_level) = 0;
             virtual void brake_level_set_position(BrakeHandlePosition p_position) = 0;
             virtual void brake_level_set_position_str(const String &p_position) = 0;

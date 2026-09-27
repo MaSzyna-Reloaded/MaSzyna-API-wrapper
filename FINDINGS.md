@@ -85,10 +85,19 @@ anything. Open work belongs in `TODO.md`.
 * A loop that steps a control until it gets somewhere ends on "did not move", never on "is not
   there yet" - the vehicle may refuse the step. *(09-27 the driver's update hung on a refused
   controller)*
+* A field goes where the original's loader reads it, not where its first consumer is (MCPN is
+  every vehicle's, not the engine's). *(09-27 a control car had no controller)*
 * A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
   `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 
 ## State, ownership, events
+* A command the original sends along the couplers (`SendCtrlToNext`) is sent only once the
+  trainset is coupled: couple at endtrainset, after the vehicles stand on their tracks, then give
+  the driver its orders. A cab switched on before that leaves the unit's other cabs inactive.
+  *(09-27 EN57 vented its pipe from the rear cab)*
+* Configuration never sets what the original switches at run time: the alerter is enabled by the
+  cab's activation, not by a component's `enabled`. *(09-27 EN57 vented its pipe from the rear
+  cab)*
 * Every timer of the simulated train, the cab's relays included, runs on the simulation clock
   (`MaszynaRuntime.simulation_advanced`), never on the frame. *(09-27 the cab's relays ran on real
   time)*

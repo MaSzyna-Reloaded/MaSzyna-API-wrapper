@@ -229,6 +229,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
 
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &VehicleBrake::brake_releaser);
+        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleBrake::compressor);
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &VehicleBrake::brake_level_set);
         ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &VehicleBrake::brake_level_set_position);
         ClassDB::bind_method(
@@ -300,6 +301,18 @@ namespace godot {
                         Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_compressor_pressure");
+        ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleBrake::get_compressor_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_enabled");
+        ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &VehicleBrake::get_compressor_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_allowed");
         ClassDB::bind_method(D_METHOD("get_controller_position"), &VehicleBrake::get_controller_position);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -417,6 +430,7 @@ namespace godot {
 
     void VehicleBrake::_register_commands() {
         register_command("brake_releaser", Callable(this, "brake_releaser"));
+        register_command("compressor", Callable(this, "compressor"));
         register_command("brake_level_set", Callable(this, "brake_level_set"));
         register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         register_command("brake_level_increase", Callable(this, "brake_level_increase"));
@@ -437,6 +451,7 @@ namespace godot {
 
     void VehicleBrake::_unregister_commands() {
         unregister_command("brake_releaser", Callable(this, "brake_releaser"));
+        unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("brake_level_set", Callable(this, "brake_level_set"));
         unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));

@@ -15,9 +15,6 @@ namespace godot {
         public:
             explicit MoverElectricEngineBackend(const MoverComponent &p_owner) : owner(p_owner) {}
 
-            bool get_converter_enabled(const VehicleElectricEngine *p_engine) const override;
-            bool get_converted_allowed(const VehicleElectricEngine *p_engine) const override;
-            double get_converter_time_to_start(const VehicleElectricEngine *p_engine) const override;
             double get_collector_max_voltage(const VehicleElectricEngine *p_engine) const override;
             double get_collector_max_current(const VehicleElectricEngine *p_engine) const override;
             double get_collector_max_lifting(const VehicleElectricEngine *p_engine) const override;
@@ -59,7 +56,6 @@ namespace godot {
             double get_line_breaker_initial_delay(const VehicleElectricEngine *p_engine) const override;
             bool get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const override;
             void apply_configuration(const VehicleElectricEngine *p_engine) const override;
-            void converter(const VehicleElectricEngine *p_engine, bool p_enabled) const override;
             void converter_fuse_reset(const VehicleElectricEngine *p_engine) const override;
             void pantographs_valve(const VehicleElectricEngine *p_engine, bool p_enabled) const override;
             void pantographs_valve_operate(

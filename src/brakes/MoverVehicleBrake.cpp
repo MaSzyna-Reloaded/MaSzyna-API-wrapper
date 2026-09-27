@@ -33,6 +33,12 @@ namespace godot {
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
+    void MoverVehicleBrake::compressor(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->CompressorSwitch(p_enabled);
+    }
+
     void MoverVehicleBrake::brake_level_set(const double p_level) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
@@ -309,6 +315,16 @@ namespace godot {
         return mover != nullptr ? mover->Compressor : 0.0;
     }
 
+    bool MoverVehicleBrake::get_compressor_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorFlag : false;
+    }
+
+    bool MoverVehicleBrake::get_compressor_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorAllow : false;
+    }
+
     double MoverVehicleBrake::get_controller_position() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->fBrakeCtrlPos : 0.0;
@@ -433,6 +449,8 @@ namespace godot {
         p_state["feed_pipe_pressure"] = get_feed_pipe_pressure();
         p_state["brake_tank_volume"] = get_tank_volume();
         p_state["compressor_pressure"] = get_compressor_pressure();
+        p_state["compressor_enabled"] = get_compressor_enabled();
+        p_state["compressor_allowed"] = get_compressor_allowed();
         p_state["brake_controller_position"] = get_controller_position();
         p_state["brake_controller_position_normalized"] = get_controller_position_normalized();
         p_state["brake_local_position_normalized"] = get_local_position_normalized();

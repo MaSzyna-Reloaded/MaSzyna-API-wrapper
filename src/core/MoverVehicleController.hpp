@@ -58,6 +58,9 @@ namespace godot {
             bool get_cabin_controleable() const override;
             int get_cabin_occupied() const override;
             bool get_battery_enabled() const override;
+            bool get_converter_enabled() const override;
+            bool get_converter_allowed() const override;
+            double get_converter_time_to_start() const override;
             double get_power24_voltage() const override;
             bool get_power24_available() const override;
             bool get_power110_available() const override;
@@ -86,6 +89,7 @@ namespace godot {
             TMoverParameters *get_mover() const;
 
             void battery(bool p_enabled) const override;
+            void converter(bool p_enabled) const override;
             void cab_activation(bool p_enabled) const override;
             void cab_activation_auto() const override;
             void cab_change(int p_direction) const override;

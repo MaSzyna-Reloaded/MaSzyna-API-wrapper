@@ -3,7 +3,8 @@ extends RefCounted
 class_name FizTrainCntrlParser
 
 ## Cntrl. section dispatcher: this single FIZ section's keys fan out to several different
-## Godot classes (VehicleController general subset, VehicleBrake brake subset, and later
+## Godot classes (VehicleController general subset, VehicleMasterController - every vehicle's,
+## an engine's or not -, VehicleBrake brake subset, and later
 ## VehicleEngine's controller-position-count subset once Engine: creates that node - Cntrl.
 ## conventionally appears before Engine: in real files, so the engine-relevant keys are
 ## stashed on the context for Engine:'s parser to pick up). Also owns the brake-position table
@@ -23,13 +24,24 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     controller_parser.apply_cntrl(kv, context)
 
+    var master_controller:MoverVehicleMasterController = MoverVehicleMasterController.new()
+    master_controller.main_position_count = FizLineUtil.get_int(kv, "MCPN")
+    master_controller.second_position_count = FizLineUtil.get_int(kv, "SCPN")
+    master_controller.direction_change_max_position = FizLineUtil.get_int(kv, "DirChangeMaxPos")
+    master_controller.coupled_controllers = FizLineUtil.get_bool(kv, "CoupledCtrl")
+    master_controller.initial_delay = FizLineUtil.get_float(kv, "IniCDelay")
+    master_controller.step_delay = FizLineUtil.get_float(kv, "SCDelay")
+    # without SCDDelay stepping down is as slow as up (Mover.cpp:10868)
+    master_controller.step_down_delay = FizLineUtil.get_float(kv, "SCDDelay", master_controller.step_delay)
+    context.add_part("VehicleMasterController", master_controller)
+
     var brake: VehicleBrake = context.get_part("VehicleBrake")
     if brake != null:
         brake_parser.apply_cntrl(kv, brake, context)
     else:
         push_warning("FIZ Cntrl.: no VehicleBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
 
-    # Engine:'s controller-position-count subset (MCPN, SCPN, AutoRelay, ...) is applied once
+    # Engine:'s subset (AutoRelay, Camshaft, ...) is applied once
     # Engine: creates the VehicleEngine-family node when Cntrl. precedes it, or here when it comes
     # after - EN57's Cntrl. is in the brake include that follows its Engine:
     context.cntrl_kv = kv

@@ -36,15 +36,7 @@ namespace godot {
         return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
 
-    bool MoverEngineBackend::get_compressor_enabled(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->CompressorFlag : false;
-    }
 
-    bool MoverEngineBackend::get_compressor_allowed(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->CompressorAllow : false;
-    }
 
     double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
@@ -117,19 +109,12 @@ namespace godot {
             fan.start_type = mover_start_mode(p_engine->get_motor_blowers_start_mode());
         }
 
-        p_mover->MainCtrlPosNo = p_engine->get_cntrl_main_controller_position_count();
-        p_mover->ScndCtrlPosNo = p_engine->get_cntrl_shunt_controller_position_count();
-        p_mover->MainCtrlMaxDirChangePos = p_engine->get_cntrl_direction_change_max_position();
         p_mover->EIMCtrlAdditionalZeros = p_engine->get_cntrl_eim_control_additional_zeros();
         p_mover->EIMCtrlEmergency = p_engine->get_cntrl_eim_control_emergency();
         p_mover->EIMCtrlType = p_engine->get_cntrl_eim_control_type();
         p_mover->AutoRelayType = p_engine->get_cntrl_auto_relay_mode();
-        p_mover->CoupledCtrl = p_engine->get_cntrl_coupled_controllers();
         p_mover->HasCamshaft = p_engine->get_cntrl_has_camshaft();
         p_mover->ScndS = p_engine->get_cntrl_series_shunt_on_series_position();
-        p_mover->InitialCtrlDelay = p_engine->get_cntrl_initial_controller_delay();
-        p_mover->CtrlDelay = p_engine->get_cntrl_controller_step_delay();
-        p_mover->CtrlDownDelay = p_engine->get_cntrl_controller_step_down_delay();
         p_mover->FastSerialCircuit = static_cast<int>(p_engine->get_cntrl_fast_series_circuit());
 
         // Original engine: GroundRelay/NoVoltRelay/OvervoltageRelay/DamageFlag/EngDmgFlag/
@@ -180,8 +165,6 @@ namespace godot {
         if (p_mover == nullptr) {
             return;
         }
-        p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
-        p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
     }
 
@@ -195,11 +178,6 @@ namespace godot {
         return p_mover != nullptr ? p_mover->CurrentSwitch(p_high) : false;
     }
 
-    void MoverEngineBackend::compressor(const VehicleEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        ASSERT_MOVER(p_mover);
-        p_mover->CompressorSwitch(p_enabled);
-    }
 
     void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();

@@ -32,8 +32,6 @@ namespace godot {
             double get_wheel_torque() const;
             double get_wheel_force() const;
             double get_tractive_force() const;
-            bool get_compressor_enabled() const;
-            bool get_compressor_allowed() const;
             double get_power() const;
             double get_rpm_count() const;
             double get_rpm_ratio() const;
@@ -93,7 +91,6 @@ namespace godot {
             }
 
             bool main_switch(bool p_enabled);
-            void compressor(bool p_enabled);
             bool motor_overload_relay_threshold(bool p_high);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
@@ -111,19 +108,12 @@ namespace godot {
             MAKE_MEMBER_GS_NR(StartMode, motor_blowers_start_mode, START_MODE_MANUAL);
 
             /* Cntrl. (wspolne pola sterowania nastawnikiem i rozrusznikiem) */
-            MAKE_MEMBER_GS(int, cntrl_main_controller_position_count, 0);
-            MAKE_MEMBER_GS(int, cntrl_shunt_controller_position_count, 0);
-            MAKE_MEMBER_GS(int, cntrl_direction_change_max_position, 0);
             MAKE_MEMBER_GS(bool, cntrl_eim_control_additional_zeros, false);
             MAKE_MEMBER_GS(bool, cntrl_eim_control_emergency, false);
             MAKE_MEMBER_GS_NR(EimControlType, cntrl_eim_control_type, EIM_CONTROL_TYPE_0);
             MAKE_MEMBER_GS_NR(AutoRelayMode, cntrl_auto_relay_mode, AUTO_RELAY_NO);
-            MAKE_MEMBER_GS(bool, cntrl_coupled_controllers, false);
             MAKE_MEMBER_GS(bool, cntrl_has_camshaft, false);
             MAKE_MEMBER_GS(bool, cntrl_series_shunt_on_series_position, false);
-            MAKE_MEMBER_GS(double, cntrl_initial_controller_delay, 0.0);
-            MAKE_MEMBER_GS(double, cntrl_controller_step_delay, 0.0);
-            MAKE_MEMBER_GS(double, cntrl_controller_step_down_delay, 0.0);
             MAKE_MEMBER_GS(bool, cntrl_fast_series_circuit, false);
 
         private:

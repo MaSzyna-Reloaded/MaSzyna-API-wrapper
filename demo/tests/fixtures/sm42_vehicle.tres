@@ -157,6 +157,12 @@ implementation = &"MoverVehicleElectroPneumaticDynamicBrake"
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_4"]
 implementation = &"MoverVehicleSpringBrake"
 
+[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_5"]
+implementation = &"MoverVehicleMasterController"
+properties = {
+"main_position_count": 11
+}
+
 [resource]
 properties = {
 "axle_arrangement": "Bo'Bo'",
@@ -166,4 +172,4 @@ properties = {
 "power": 590.0,
 "type_name": "6d"
 }
-components = Array[VehicleComponentModel]([SubResource("VehicleComponentModel_0"), SubResource("VehicleComponentModel_1"), SubResource("VehicleComponentModel_2"), SubResource("VehicleComponentModel_3"), SubResource("VehicleComponentModel_4")])
+components = Array[VehicleComponentModel]([SubResource("VehicleComponentModel_0"), SubResource("VehicleComponentModel_1"), SubResource("VehicleComponentModel_2"), SubResource("VehicleComponentModel_3"), SubResource("VehicleComponentModel_4"), SubResource("VehicleComponentModel_5")])

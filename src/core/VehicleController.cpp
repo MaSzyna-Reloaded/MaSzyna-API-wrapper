@@ -50,6 +50,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleController::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleController::unregister_command);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &VehicleController::battery);
+        ClassDB::bind_method(D_METHOD("converter", "enabled"), &VehicleController::converter);
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &VehicleController::cab_activation);
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &VehicleController::cab_activation_auto);
         ClassDB::bind_method(D_METHOD("cab_change", "direction"), &VehicleController::cab_change);
@@ -309,6 +310,24 @@ namespace godot {
                         Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_battery_enabled");
+        ClassDB::bind_method(D_METHOD("get_converter_enabled"), &VehicleController::get_converter_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "converter_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_enabled");
+        ClassDB::bind_method(D_METHOD("get_converter_allowed"), &VehicleController::get_converter_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "converter_allowed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_allowed");
+        ClassDB::bind_method(D_METHOD("get_converter_time_to_start"), &VehicleController::get_converter_time_to_start);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "converter_time_to_start", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_time_to_start");
         ClassDB::bind_method(D_METHOD("get_distance_counter"), &VehicleController::get_distance_counter);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -497,6 +516,7 @@ namespace godot {
             server->vehicle_set_name(rid, train_id);
         }
         register_command("battery", Callable(this, "battery"));
+        register_command("converter", Callable(this, "converter"));
         register_command("cab_change", Callable(this, "cab_change"));
         register_command("ground_relay_reset", Callable(this, "ground_relay_reset"));
         register_command("antislip", Callable(this, "antislip"));
@@ -582,6 +602,9 @@ namespace godot {
         p_state["cabin_occupied"] = get_cabin_occupied();
         p_state["battery_enabled"] = get_battery_enabled();
         p_state["battery_voltage"] = get_live_battery_voltage();
+        p_state["converter_enabled"] = get_converter_enabled();
+        p_state["converter_allowed"] = get_converter_allowed();
+        p_state["converter_time_to_start"] = get_converter_time_to_start();
         p_state["distance_counter"] = get_distance_counter();
         p_state["power24_voltage"] = get_power24_voltage();
         p_state["power24_available"] = get_power24_available();
@@ -660,6 +683,7 @@ namespace godot {
     /* Every component goes with the vehicle; nothing outside it holds one. */
     void VehicleController::shutdown() {
         unregister_command("battery");
+        unregister_command("converter");
         unregister_command("cab_change");
         unregister_command("ground_relay_reset");
         unregister_command("antislip");

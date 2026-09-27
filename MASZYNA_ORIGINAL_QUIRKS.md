@@ -125,6 +125,15 @@ interface.
 
 ## Mover (`src/maszyna`, vendored)
 
+* **A cab switched on sends itself only backwards.** `SendCtrlToNext()` picks the coupler from the
+  sign of the cab (`d = (1 + Sign(dir)) / 2`, "wysyłanie tylko w tył"), and `CabActivisation()`
+  does nothing when a cab is already active - so a cab switched on before the unit was coupled
+  never reaches the other cab car, whose inactive cab (`InactiveCabFlag` emergencybrake) then
+  vents the pipe for good. Wrapper: no cab switched on until the trainset is coupled.
+* **An inactive cab car's alerter would brake the train.** A cab made active by the unit's master
+  (`RunCommand("CabActivisation")`) counts as "just activated" for `TSecuritySystem::update()` -
+  harmless only because the original never enabled that vehicle's alerter. Wrapper: the alerter is
+  enabled by `CabActivisation()` alone, as there.
 * **The brake handle has three positions and only one of them is compared.**
   `CheckLocomotiveParameters()` sets `BrakeCtrlPos` and `BrakeCtrlPosR` but not `fBrakeCtrlPos`,
   and `BrakeLevelSet()` returns early when `fBrakeCtrlPos` already equals the new position - so a

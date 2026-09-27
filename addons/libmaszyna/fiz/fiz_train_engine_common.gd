@@ -82,25 +82,10 @@ static func apply_cntrl_electric_subset(node: VehicleElectricEngine, cntrl_kv: D
 static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary) -> void:
     if not cntrl_kv:
         return
-    if cntrl_kv.has("MCPN"):
-        node.cntrl_main_controller_position_count = FizLineUtil.get_int(cntrl_kv, "MCPN")
-    if cntrl_kv.has("SCPN"):
-        node.cntrl_shunt_controller_position_count = FizLineUtil.get_int(cntrl_kv, "SCPN")
-    if cntrl_kv.has("DirChangeMaxPos"):
-        node.cntrl_direction_change_max_position = FizLineUtil.get_int(cntrl_kv, "DirChangeMaxPos")
-    if cntrl_kv.has("CoupledCtrl"):
-        node.cntrl_coupled_controllers = FizLineUtil.get_bool(cntrl_kv, "CoupledCtrl")
     if cntrl_kv.has("Camshaft"):
         node.cntrl_has_camshaft = FizLineUtil.get_bool(cntrl_kv, "Camshaft")
     if cntrl_kv.has("ScndS"):
         node.cntrl_series_shunt_on_series_position = FizLineUtil.get_bool(cntrl_kv, "ScndS")
-    if cntrl_kv.has("IniCDelay"):
-        node.cntrl_initial_controller_delay = FizLineUtil.get_float(cntrl_kv, "IniCDelay")
-    if cntrl_kv.has("SCDelay"):
-        node.cntrl_controller_step_delay = FizLineUtil.get_float(cntrl_kv, "SCDelay")
-    # SCDDelay's absent-key default (== SCDelay) differs from the compiled default (0.0).
-    node.cntrl_controller_step_down_delay = FizLineUtil.get_float(
-            cntrl_kv, "SCDDelay", FizLineUtil.get_float(cntrl_kv, "SCDelay"))
     if cntrl_kv.has("FSCircuit"):
         node.cntrl_fast_series_circuit = FizLineUtil.get_bool(cntrl_kv, "FSCircuit")
     if cntrl_kv.has("EIMCtrlAddZeros"):

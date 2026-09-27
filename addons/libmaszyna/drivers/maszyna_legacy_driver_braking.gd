@@ -795,9 +795,9 @@ func _decrease_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
             if main < EIM_ELF_BRAKE_OFF:
                 return MaszynaLegacyDriverTraction.set_main_controller(situation, EIM_ELF_BRAKE_OFF)
         VehicleEngine.EIM_CONTROL_TYPE_3:
-            var engine:VehicleEngine = RailVehicleServer.vehicle_component_get(
-                    vehicle, VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
-            var neutral:int = engine.cntrl_direction_change_max_position if engine else 0
+            var master_controller:VehicleMasterController = RailVehicleServer.vehicle_component_get(
+                    situation.controlling, VehicleComponentType.COMPONENT_MASTER_CONTROLLER) as VehicleMasterController
+            var neutral:int = master_controller.direction_change_max_position if master_controller else 0
             if main < neutral:
                 return MaszynaLegacyDriverTraction.set_main_controller(situation, neutral)
     return false

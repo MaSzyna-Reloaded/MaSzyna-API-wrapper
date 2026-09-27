@@ -162,19 +162,26 @@ static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, 
     await _report_progress(root, progress, message)
 
 
-## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached.
+## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached, and the vehicle
+## is placed on its track in its own _process after that - the trainsets are coupled only then, as a
+## coupler measures from the positions. A vehicle that failed to load has no controller.
 static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
     var vehicles:Array[Node] = root.find_children("", "DynamicRailVehicle3D", true, false)
-    for vehicle:Node in vehicles:
-        while not (vehicle as DynamicRailVehicle3D).is_built():
+    for node:Node in vehicles:
+        var vehicle:DynamicRailVehicle3D = node
+        while not vehicle.is_built() or (vehicle.get_controller() and not vehicle.is_placed()):
             await _report_progress(root, 0.9, "Instancing vehicles")
     root.load_progress.emit(1.0, "")
 
 
-## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
-## their handles exist only then. The vehicle goes first: the driver learns its cab from it. Then
-## every trainset's driver gets the trainset's timetable.
+## Every trainset coupled, then every vehicle with somebody aboard gets the original's driver - once
+## the vehicles are built, as their handles exist only then. The vehicle goes first: the driver
+## learns its cab from it. Then every trainset's driver gets the trainset's timetable.
 static func _build_drivers(root:MaszynaIncludeNode) -> void:
+    # endtrainset couples the vehicles before the driver is given its orders
+    # (simulationstateserializer.cpp:818-840) - what the driver does first is sent along the couplers
+    for node:Node in root.find_children("", "TrainSet3D", true, false):
+        (node as TrainSet3D).couple()
     for node:Node in root.find_children("", "DynamicRailVehicle3D", true, false):
         var vehicle_node:DynamicRailVehicle3D = node
         var controller:VehicleController = vehicle_node.get_controller()

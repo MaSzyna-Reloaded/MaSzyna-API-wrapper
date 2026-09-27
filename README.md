@@ -20,6 +20,36 @@ git clone <url>
 git submodule update --init --recursive
 ```
 
+#### Setup with Nix
+
+`flake.nix` provides the toolchain instead, so steps 1 and 2 are not needed - only the submodule
+checkout is:
+
+```
+git submodule update --init --recursive
+nix develop
+```
+
+The shell carries CMake, Python, SCons, the MinGW cross compiler that `make compile-windows-*`
+calls by name, clang-format and clang-tidy pinned to the same LLVM major as
+`.github/workflows/clang-tidy.yml`, and `godot-double`. `make compile-debug`, `make style-check`
+and `make compile-windows-debug` then work against it unchanged.
+
+> [!NOTE]
+> The first `nix develop` builds Godot from source and takes a while. `precision=double` is not a
+> variant the Godot project or the NixOS binary cache publishes, so there is nothing to download.
+> It is built once per engine version and then cached. The extension is built against
+> double-precision godot-cpp and only a Godot built the same way can load it - see the `GODOT`
+> comment in the `Makefile`.
+
+Entering the shell also links `extension_api.json` from a pinned derivation, which is the same
+double-precision API dump `CMakeLists.txt` would otherwise produce on the first configure. To get
+the dump on its own - to hand to a build that is not using the dev shell:
+
+```
+nix build .#extension-api-double
+```
+
 ### Android development
 #### Set up the build system   
 For build system setup,

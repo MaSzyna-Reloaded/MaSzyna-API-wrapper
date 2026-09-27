@@ -66,7 +66,7 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         const std::unordered_map<std::string, int>::const_iterator it =
-                brake_handle_position_string_map.find(std::string(p_position.utf8()));
+                brake_handle_position_string_map.find(std::string(p_position.utf8().get_data()));
         if (it != brake_handle_position_string_map.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {

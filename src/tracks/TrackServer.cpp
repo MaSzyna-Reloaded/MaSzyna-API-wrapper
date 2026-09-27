@@ -424,11 +424,11 @@ namespace godot {
         const double primary_angle = Math::atan2(primary.x, primary.z);
         const double secondary_angle = Math::atan2(secondary.x, secondary.z);
         double angle_delta = secondary_angle - primary_angle;
-        while (angle_delta > Math_PI) {
-            angle_delta -= 2.0 * Math_PI;
+        while (angle_delta > Math::PI) {
+            angle_delta -= 2.0 * Math::PI;
         }
-        while (angle_delta < -Math_PI) {
-            angle_delta += 2.0 * Math_PI;
+        while (angle_delta < -Math::PI) {
+            angle_delta += 2.0 * Math::PI;
         }
         p_track.switch_is_right = angle_delta < 0.0;
     }

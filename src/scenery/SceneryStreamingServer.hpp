@@ -1,7 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/mutex.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
@@ -112,7 +112,7 @@ namespace godot {
                     }
             };
 
-            Ref<Mutex> mutex;
+            Mutex mutex;
             Ref<Semaphore> semaphore;
             Ref<Thread> worker;
             bool exiting = false;

@@ -8,7 +8,6 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/window.hpp>
-#include <godot_cpp/core/mutex_lock.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -122,7 +121,6 @@ namespace godot {
     }
 
     E3DRenderingServer::E3DRenderingServer() {
-        models_mutex.instantiate();
     }
 
     E3DRenderingServer::~E3DRenderingServer() {
@@ -207,7 +205,7 @@ namespace godot {
             if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance(); streaming != nullptr) {
                 streaming->stream_free(data.stream_rid);
             }
-            MutexLock lock(**models_mutex);
+            MutexLock lock(models_mutex);
             stream_models.erase(p_instance);
         }
         if (blinking_instances.has(p_instance)) {
@@ -455,7 +453,7 @@ namespace godot {
         instance.visibility_range_end = p_range_end;
         instance.scenario = p_scenario;
         {
-            MutexLock lock(**models_mutex);
+            MutexLock lock(models_mutex);
             StreamModel stream_model;
             stream_model.data_path = p_data_path;
             stream_model.model_filename = p_model_filename;
@@ -468,7 +466,7 @@ namespace godot {
     /// `model_loader(data_path: String, filename: String) -> E3DModel`, called on the streaming
     /// worker thread for registered instances entering the camera's range
     void E3DRenderingServer::set_model_loader(const Callable &p_model_loader) {
-        MutexLock lock(**models_mutex);
+        MutexLock lock(models_mutex);
         model_loader = p_model_loader;
     }
 
@@ -485,7 +483,7 @@ namespace godot {
         const String key = p_data_path.path_join(p_model_filename);
         Callable loader;
         {
-            MutexLock lock(**models_mutex);
+            MutexLock lock(models_mutex);
             const Ref<E3DModel> *cached = models.getptr(key);
             if (cached != nullptr) {
                 return *cached;
@@ -494,7 +492,7 @@ namespace godot {
         }
         const Ref<E3DModel> model =
                 loader.is_valid() ? Ref<E3DModel>(loader.call(p_data_path, p_model_filename)) : Ref<E3DModel>();
-        MutexLock lock(**models_mutex);
+        MutexLock lock(models_mutex);
         models[key] = model;
         return model;
     }
@@ -504,7 +502,7 @@ namespace godot {
     Variant E3DRenderingServer::_stream_preload(const RID &p_instance) {
         StreamModel stream_model;
         {
-            MutexLock lock(**models_mutex);
+            MutexLock lock(models_mutex);
             const StreamModel *found = stream_models.getptr(p_instance);
             if (found == nullptr) {
                 return Variant();

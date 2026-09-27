@@ -32,7 +32,7 @@ namespace godot {
             /// The RailVehicleServer handle of the vehicle this cab sits in
             RID vehicle_rid;
             bool cabin_ready = false;
-            double engine_angle = Math_PI * 0.5;
+            double engine_angle = Math::PI * 0.5;
             Vector3 shake_velocity;
             Vector3 shake_offset;
             double shake_accumulator = 0.0;

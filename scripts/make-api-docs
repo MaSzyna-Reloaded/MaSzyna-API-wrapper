@@ -25,7 +25,7 @@ SRC_DIR = ROOT / "src"
 GDSCRIPT_DIR = ROOT / "addons" / "libmaszyna"
 GODOT_CLASS_URL = "https://docs.godotengine.org/en/stable/classes/class_{}.html"
 PLUGIN = GDSCRIPT_DIR / "libmaszyna.gd"
-GODOT_API = ROOT / "godot-cpp" / "gdextension" / "extension_api.json"
+GODOT_API = ROOT / "godot-cpp" / "gdextension" / "extension_api-4-7.json"
 REGISTER_TYPES = ROOT / "src" / "register_types.cpp"
 PROJECT = ROOT / "demo" / "project.godot"
 # the namespace of a class declared at the top of src/ or addons/libmaszyna/

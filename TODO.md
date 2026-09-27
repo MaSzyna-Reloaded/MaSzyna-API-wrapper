@@ -89,6 +89,12 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   `RailVehicleServer`'s name registry, where it may be empty or repeated. Left: `train_id` is still
   written by the physics node rather than having `RailVehicle3D` as its only writer.
 
+**`RailVehicle3D` binds its tick under a virtual's name.**
+`ClassDB::bind_method(D_METHOD("_process", ...), &RailVehicle3D::process_manually)` registers a
+method called `_process`. No GDScript subclass defines `_process` today, so the trap of
+`FINDINGS.md` 2026-09-23 - a script replacing a native virtual, silently - is not active, but it is
+one subclass away. Either the tick gets a name of its own or the class stops binding that one.
+
 **One state cache, in the vehicle server - done 2026-09-27.** `RailVehicleController::get_state()`
 answers from `RailVehicleServer::vehicle_dump_state(get_rid())`, `VehicleController::compose_state()`
 is the one place that builds the dictionary and the cache's miss path is its only caller, and
@@ -841,6 +847,12 @@ ported, into a delegate.
   `MmdSemanticCatalog`.
 
 ## Tests
+
+* `test_e3d_rendering_server.gd` passes 9/9 but the process does not exit (timeout at 60 s),
+  seen after godot-cpp was raised to `507ed9d` (2026-09-27); not checked whether it hung before.
+* Stary Jawor's eszelon at x10 (headless, 2026-09-27) runs at about 20 km/h wanting 70: the master
+  controller jumps 0-7 and `Ft` is 0 half of the time; at x20 the same run reaches 51 km/h. Not
+  looked into.
 
 * `test_weather_controls.gd` fails since `2f4740239`: the scene's root became an `HFlowContainer`,
   the test still casts it `as VBoxContainer` and gets null.

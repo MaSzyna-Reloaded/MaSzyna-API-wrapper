@@ -4,6 +4,68 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - both pantographs of every vehicle sampled the wire at the vehicle's origin
+
+* **Symptom:** none reported. Found while moving the pantograph's power path out of the drawing
+  node, by asking what `_pantograph_wire_voltage()` is handed as the contact point.
+* **Cause:** `RailVehicle3D` took the point from `pantograph_front_offset` /
+  `pantograph_rear_offset`, two exported `Vector3` properties. The only assignments to them in the
+  whole repository were inside their own setters: no scene declares a `RailVehicle3D`, the
+  instancer never set them, nothing in GDScript did. So both were `(0, 0, 0)` for every vehicle in
+  the game, and `contact_point = frame.transform.xform(offset)` put the front and the rear
+  pantograph at the same place - the vehicle's origin.
+* **What the original does:** it reads the pantograph's zero point off the submodel's own matrix -
+  `vPos.z = m[3][0]` sideways, `vPos.y = m[3][1]` up, `vPos.x = m[3][2]` along the length
+  (`TAnimPant::vPos`, `vehicle/DynObj.cpp:5508-5549`), with the comment "odczytane z modelu".
+* **Fix:** the position is read from the arm submodel the node already resolves (the same nodes the
+  arm lengths are measured from) and published to `RailVehicleElectricEngine` as
+  `power_current_collector_first_position` / `..._second_position`, because it is the vehicle's
+  geometry and the vehicle is what samples the wire. The two exported offsets are gone.
+* **The fix's own ordering defect, which a test caught:** publishing needs two inputs that land
+  independently - the model's arm nodes (when the arm paths change) and the electric engine (when
+  the vehicle's parts are adopted). `_process_impl()` caches the animation bindings **before** it
+  processes `dirty`, so on the first tick the geometry was known and the engine was not; the dirty
+  flag was already consumed, so nothing published it later. `_publish_collector_positions()` is now
+  called by both events, and whichever runs second completes it.
+* **Rule:** a geometric value that nobody publishes does not read as missing - it reads as zero,
+  and zero silently makes two things identical. The same shape as the bogie pivot spacing of 0
+  (2026-09-23): grep for *assignments* to an exported property before trusting that anything fills
+  it, and treat "both halves report the same number" as the signature.
+* **Rule:** when a value is composed from two inputs that land in either order, every event that
+  changes an input publishes it. One event plus a consumed dirty flag loses the race, and it loses
+  it silently - the value stays at its default.
+* **Trap met on the way:** removing an exported property needs a grep for *reads*, not only for
+  assignments. `demo/hud/track_traction_panel.gd` read both offsets off the node and started
+  erroring per frame.
+* **Latent, not fixed:** `RailVehicle3D` binds its tick as `ClassDB::bind_method(D_METHOD("_process",
+  ...))`, i.e. it registers a method under a virtual's name. No GDScript subclass defines `_process`
+  today, so the trap of 2026-09-23 (a script replacing a native virtual) is not active - but it is
+  one subclass away. Recorded in `TODO.md`.
+
+## 2026-09-27 - every rebuilt state dump stayed in memory: godot-cpp's Dictionary move
+
+* **Symptom:** on Stary Jawor at x10/x20 memory grew by about 55 MB a second, paused as much as
+  running (2.35 MB a frame), up to 10 GB and the OOM killer. The object count stayed flat, and
+  Godot reported no leak at exit.
+* **What proved it:** a jemalloc heap profile (`LD_PRELOAD=libjemalloc.so.2`,
+  `MALLOC_CONF=prof:true`, two dumps diffed with `jeprof --base`): 99.7 % of the memory held was
+  allocated in `VehicleController::compose_state()` under `RailVehicleServer::vehicle_dump_state()`.
+  Each case in its own process: commands alone 0 KB, cached reads alone 0 KB, a command then a read
+  about 40 KB (one whole dump of 169 keys) every time; clearing each dump after reading it cut that
+  by nine tenths - the old dumps themselves were kept.
+* **Cause:** godot-cpp generated `Dictionary::operator=(Dictionary &&)` as a copy construction over
+  `opaque` without releasing what it held (`needs_copy_instead_of_move()`), so
+  `placement->state_dump = controller->compose_state()` dropped every previous dump's reference
+  without freeing it. Upstream: godotengine/godot-cpp#2048, fixed by #2055 on 2026-09-08. The line
+  leaked since the cache (3246c7348); 5c95bc989 routed every `controller.state` reader through it,
+  the sound system's per-frame reads included, which made it grow by the frame.
+* **Fix:** godot-cpp raised to `507ed9d`, with what it breaks: `extension_api-4-7.json`, the native
+  `Mutex`/`MutexLock` in `templates/mutex.hpp` (the engine class is `CoreBind::Mutex`), `Math::PI`
+  for `Math_PI`, `CharString::get_data()` for a `std::string`. Stary Jawor paused holds 694 MB.
+* **Rule:** memory that grows while the object count stays flat and nothing is reported at exit is
+  a container still referenced - profile the heap (jemalloc) and diff two dumps before reading code;
+  suspect the binding's value types too, not only our code.
+
 ## 2026-09-27 - the AI stood at a clear signal: a stop behind it, and a takeover that remembered
 
 * **Symptom:** on Stary Jawor the player drove the SU46 to the signal before the station, left the

@@ -1,6 +1,5 @@
 #include "SceneryLoadingTaskQueue.hpp"
 #include <godot_cpp/classes/os.hpp>
-#include <godot_cpp/core/mutex_lock.hpp>
 
 namespace godot {
     void SceneryLoadingTaskQueue::_bind_methods() {
@@ -13,7 +12,6 @@ namespace godot {
     }
 
     SceneryLoadingTaskQueue::SceneryLoadingTaskQueue() {
-        mutex.instantiate();
         semaphore.instantiate();
     }
 
@@ -34,7 +32,7 @@ namespace godot {
 
     void SceneryLoadingTaskQueue::drain() {
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             exiting = true;
             pending.clear();
         }
@@ -54,7 +52,7 @@ namespace godot {
         }
         int task_id = 0;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             task_id = next_id++;
             tasks[task_id].callable = p_task;
             pending.push_back(task_id);
@@ -64,7 +62,7 @@ namespace godot {
     }
 
     bool SceneryLoadingTaskQueue::is_done(const int p_task_id) const {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         // a queue being torn down runs nothing more, so whoever polls this has to be let go
         const Task *task = tasks.getptr(p_task_id);
         return exiting || (task != nullptr && task->done);
@@ -74,7 +72,7 @@ namespace godot {
     Variant SceneryLoadingTaskQueue::wait(const int p_task_id) {
         while (true) {
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 /* A task waits here for a task it submitted, and drain() drops what is queued -
                  * so without this the waiter waits for something that will never run, its worker
                  * is never joined, and the join blocks the main thread for good. Giving up is the
@@ -102,7 +100,7 @@ namespace godot {
     }
 
     int SceneryLoadingTaskQueue::get_completed_count() const {
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         return completed;
     }
 
@@ -115,7 +113,7 @@ namespace godot {
         Callable callable;
         int task_id = 0;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             if (pending.is_empty()) {
                 return false;
             }
@@ -132,7 +130,7 @@ namespace godot {
     bool SceneryLoadingTaskQueue::_run_task(const int p_task_id) {
         Callable callable;
         {
-            MutexLock lock(**mutex);
+            MutexLock lock(mutex);
             if (!pending.erase(p_task_id)) {
                 return false;
             }
@@ -157,7 +155,7 @@ namespace godot {
         // last reference to the queue is never released on a worker thread (joining itself)
         p_callable = Callable();
 
-        MutexLock lock(**mutex);
+        MutexLock lock(mutex);
         Task &task = tasks[p_task_id];
         task.result = result;
         task.done = true;
@@ -168,7 +166,7 @@ namespace godot {
         while (true) {
             semaphore->wait();
             {
-                MutexLock lock(**mutex);
+                MutexLock lock(mutex);
                 if (exiting) {
                     return;
                 }

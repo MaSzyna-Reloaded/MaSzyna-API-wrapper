@@ -113,6 +113,12 @@ namespace godot {
             MAKE_MEMBER_GS(float, power_current_collector_min_collector_lifting, 0.0);
             MAKE_MEMBER_GS(float, power_current_collector_max_collector_lifting, 0.0);
             MAKE_MEMBER_GS(float, power_current_collector_sliding_width, 0.0);
+            /* Where each pantograph sits on the vehicle, in the vehicle's own space. The original
+             * reads it off the model's submodel matrix (TAnimPant::vPos, DynObj.cpp:5508-5549:
+             * sideways, up, and along the length), and it is the vehicle's geometry rather than the
+             * drawing node's - the wire is sampled at these points, one per pantograph. */
+            MAKE_MEMBER_GS(Vector3, power_current_collector_first_position, Vector3());
+            MAKE_MEMBER_GS(Vector3, power_current_collector_second_position, Vector3());
             MAKE_MEMBER_GS(
                     float, power_current_collector_min_main_switch_voltage, 0.5f * power_current_collector_max_voltage);
             MAKE_MEMBER_GS(float, power_current_collector_min_pantograph_tank_pressure, 0.0);

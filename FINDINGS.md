@@ -91,6 +91,15 @@ anything. Open work belongs in `TODO.md`.
   `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 
 ## State, ownership, events
+* A geometric value nobody publishes reads as zero, not as missing, and zero makes two things
+  identical - grep for assignments to an exported property before trusting it is filled, and treat
+  "both halves report the same number" as the signature. *(09-27 both pantographs at the origin;
+  09-23 bogie pivot spacing of zero)*
+* A value composed from two inputs that land in either order is published by **every** event that
+  changes an input; one event plus a consumed dirty flag loses the race silently. *(09-27 both
+  pantographs at the origin)*
+* Removing an exported property needs a grep for its **reads**, not only its assignments. *(09-27
+  both pantographs at the origin)*
 * A command the original sends along the couplers (`SendCtrlToNext`) is sent only once the
   trainset is coupled: couple at endtrainset, after the vehicles stand on their tracks, then give
   the driver its orders. A cab switched on before that leaves the unit's other cabs inactive.
@@ -122,6 +131,9 @@ anything. Open work belongs in `TODO.md`.
   *(09-20 streaming from menu camera)*
 
 ## Godot / GDExtension
+* Memory that grows with a flat object count and no leak reported at exit is a referenced
+  container: diff two jemalloc heap dumps before reading code, and suspect the binding's value
+  types too. *(09-27 every rebuilt state dump stayed in memory)*
 * `process_frame` is the end of a frame. What `_process` reads is produced before it, ordered by
   `process_priority`. *(09-24 simulation stepped after readers)*
 * The Mover measures couplers from "the last refresh plus ten times the movement since": refresh

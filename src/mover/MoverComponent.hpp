@@ -1,18 +1,18 @@
 #pragma once
-#include "../core/MoverVehicleController.hpp"
+#include "../core/MoverTrainController.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
 
 namespace godot {
     /* What every Mover* component shares: the Mover implementation of the vehicle it belongs to,
      * the way TrainPart held its TrainController. Not a Godot class - a Mover* component inherits
-     * it next to its Vehicle* interface, and MoverVehicleController fills it in when the component
+     * it next to its Vehicle* interface, and MoverTrainController fills it in when the component
      * joins the vehicle and clears it when the component leaves.
      *
      * Two things follow from it not being an Object, and both are easy to undo by accident:
      *
      * `Object::cast_to<MoverComponent>` cannot reach it - that helper only walks Godot's own class
      * hierarchy - so the one place that asks whether a component has a Mover behind it uses
-     * `dynamic_cast` (MoverVehicleController::_component_attached). That is the correct tool here,
+     * `dynamic_cast` (MoverTrainController::_component_attached). That is the correct tool here,
      * not an oversight of `CODE_STYLE.md`'s "call a method, do not name it", and replacing it with
      * `cast_to` does not compile.
      *
@@ -24,20 +24,20 @@ namespace godot {
      * to work, which is what makes it worth writing down. */
     class MoverComponent {
         private:
-            MoverVehicleController *mover_controller = nullptr;
+            MoverTrainController *mover_controller = nullptr;
 
         public:
             virtual ~MoverComponent() = default;
 
             /* The component joined (a controller) or left (null) a vehicle simulated on the Mover.
-             * Called by MoverVehicleController only - the vehicle hands itself over, the component
+             * Called by MoverTrainController only - the vehicle hands itself over, the component
              * never takes it. */
-            void set_mover_controller(MoverVehicleController *p_controller) {
+            void set_mover_controller(MoverTrainController *p_controller) {
                 mover_controller = p_controller;
             }
 
             /* The vehicle's Mover implementation, or null while the component belongs to none. */
-            MoverVehicleController *get_mover_controller() const {
+            MoverTrainController *get_mover_controller() const {
                 return mover_controller;
             }
 

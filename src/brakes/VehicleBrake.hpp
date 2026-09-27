@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include "resources/brakes/BrakePressureTableItem.hpp"
 #include "resources/brakes/CompressorListItem.hpp"
@@ -8,8 +8,8 @@
 
 namespace godot {
     class VehicleController;
-    class VehicleBrake : public VehicleComponent {
-            GDCLASS(VehicleBrake, VehicleComponent)
+    class VehicleBrake : public TrainComponent {
+            GDCLASS(VehicleBrake, TrainComponent)
 
 
         public:

@@ -1,3 +1,4 @@
+#include "../core/TrainController.hpp"
 #include "VehicleElectricEngine.hpp"
 #include "VehicleElectricEngineBackend.hpp"
 #include "macros.hpp"
@@ -200,11 +201,11 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, power_cable_source, "power/power_cable", PROPERTY_HINT_ENUM,
                 enum_hint(
-                        {{"NoPower", VehicleController::POWER_TYPE_NONE},
-                         {"BioPower", VehicleController::POWER_TYPE_BIO},
-                         {"MechPower", VehicleController::POWER_TYPE_MECH},
-                         {"ElectricPower", VehicleController::POWER_TYPE_ELECTRIC},
-                         {"SteamPower", VehicleController::POWER_TYPE_STEAM}}));
+                        {{"NoPower", TrainController::POWER_TYPE_NONE},
+                         {"BioPower", TrainController::POWER_TYPE_BIO},
+                         {"MechPower", TrainController::POWER_TYPE_MECH},
+                         {"ElectricPower", TrainController::POWER_TYPE_ELECTRIC},
+                         {"SteamPower", TrainController::POWER_TYPE_STEAM}}));
         BIND_PROPERTY(VehicleElectricEngine, Variant::FLOAT, power_cable_steam_pressure, "power/power_cable");
         BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, power_current_collector_physical_layout, "power/current_collector",
@@ -565,11 +566,11 @@ namespace godot {
 
 
     bool VehicleElectricEngine::has_accumulator() const {
-        return power_source == VehicleController::POWER_SOURCE_ACCUMULATOR;
+        return power_source == TrainController::POWER_SOURCE_ACCUMULATOR;
     }
 
     bool VehicleElectricEngine::has_power_cable() const {
-        return power_source == VehicleController::POWER_SOURCE_POWERCABLE;
+        return power_source == TrainController::POWER_SOURCE_POWERCABLE;
     }
 
     void VehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
@@ -720,12 +721,12 @@ namespace godot {
     }
 
 
-    void VehicleElectricEngine::set_power_source(const VehicleController::TrainPowerSource p_source) {
+    void VehicleElectricEngine::set_power_source(const TrainController::TrainPowerSource p_source) {
         power_source = p_source;
         dirty = true;
     }
 
-    VehicleController::TrainPowerSource VehicleElectricEngine::get_power_source() const {
+    TrainController::TrainPowerSource VehicleElectricEngine::get_power_source() const {
         return power_source;
     }
 } // namespace godot

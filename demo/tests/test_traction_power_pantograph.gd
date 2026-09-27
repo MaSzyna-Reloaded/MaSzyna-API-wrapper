@@ -15,7 +15,7 @@ func before_each():
     train.battery_voltage = 110.0
     train.apply_configuration()
     engine = MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 3 # both pantographs physically present
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 2

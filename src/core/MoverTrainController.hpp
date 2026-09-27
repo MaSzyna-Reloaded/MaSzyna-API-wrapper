@@ -1,6 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
-#include "VehicleController.hpp"
+#include "TrainController.hpp"
 #include <unordered_map>
 
 namespace godot {
@@ -9,8 +9,8 @@ namespace godot {
      * vehicle mechanics that act on it (the TDynamicObject parts of DynObj.cpp: cab, couplers,
      * neighbours). Movement along the track, transforms, tracks and wires are not here - they are
      * RailVehicleServer's. */
-    class MoverVehicleController : public VehicleController {
-            GDCLASS(MoverVehicleController, VehicleController)
+    class MoverTrainController : public TrainController {
+            GDCLASS(MoverTrainController, TrainController)
 
         private:
             /* Created by _initialize_simulation(), deleted by release(). */
@@ -31,7 +31,7 @@ namespace godot {
             bool tachometer_clock_active = false;
 
             // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
-            static std::unordered_map<const TMoverParameters *, MoverVehicleController *> controllers_by_mover;
+            static std::unordered_map<const TMoverParameters *, MoverTrainController *> controllers_by_mover;
 
             void initialize_mover_state();
             void _integrate(double p_delta, Integration p_integration);
@@ -82,7 +82,7 @@ namespace godot {
             int get_circuit_rlist_size() const override;
 
         public:
-            ~MoverVehicleController() override;
+            ~MoverTrainController() override;
 
             /* C++ only and unbound: the Mover is this implementation's own business. The Mover*
              * components of this vehicle reach it through here. */
@@ -117,18 +117,18 @@ namespace godot {
             double process_movement(double p_delta) override;
             void update_location() override;
             void
-            update_neighbour(int p_end, VehicleController *p_other, int p_other_end, double p_track_distance) override;
+            update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance) override;
             void compute_forces(double p_delta) override;
             void compute_movement(double p_delta) override;
             void compute_fast_movement(double p_delta) override;
             bool is_physics_active() const override;
-            void couple(VehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) override;
+            void couple(TrainController *p_other, int p_end, int p_other_end, int p_coupling_type) override;
             void uncouple(int p_end) override;
             bool is_coupled(int p_end) const override;
             bool is_coupled_by(int p_end, CouplingElement p_element) const override;
             void coupler_connect(const Variant &p_where) override;
             void coupler_disconnect(const Variant &p_where) override;
-            VehicleController *get_coupled_controller(int p_end) const override;
+            TrainController *get_coupled_controller(int p_end) const override;
             int get_coupled_end(int p_end) const override;
     };
 } // namespace godot

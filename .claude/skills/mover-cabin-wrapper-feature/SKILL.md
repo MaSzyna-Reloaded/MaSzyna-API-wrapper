@@ -30,7 +30,7 @@ in any layer before.
      `_register_commands()` and `_unregister_commands()` (`VehicleBrake.cpp:369,385`) - forgetting
      the second leaks a dangling command entry when the node is freed.
    - **Implementation** `MoverVehicleX` (`src/brakes/MoverVehicleBrake.cpp`,
-     `src/core/MoverVehicleController.cpp`, ...): the `override` takes the Mover with
+     `src/core/MoverTrainController.cpp`, ...): the `override` takes the Mover with
      `get_mover()` (from `MoverComponent`, `src/mover/MoverComponent.hpp`) and calls the vendored
      method directly (`mover->IncLocalBrakeLevel(1)`, `MoverVehicleBrake.cpp:91`).
    - Keep the existing step-size convention: one command invocation is one notch/step, like

@@ -1,12 +1,12 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 
 namespace godot {
     /* The driver's master controller of a vehicle, whatever it drives: the positions of its main
      * and second controller and how fast they step (LoadFIZ_Cntrl, Mover.cpp:10837-10869). A control
      * car has one without an engine - EN57's ra reverses and steps its controller like its motor car. */
-    class VehicleMasterController : public VehicleComponent {
-            GDCLASS(VehicleMasterController, VehicleComponent);
+    class VehicleMasterController : public TrainComponent {
+            GDCLASS(VehicleMasterController, TrainComponent);
 
         public:
             VehicleComponentType::Type get_component_type() const override {

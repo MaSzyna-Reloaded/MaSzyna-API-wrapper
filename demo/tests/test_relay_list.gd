@@ -11,7 +11,7 @@ func before_each():
     # a configured power source hits a pre-existing bug in VehicleElectricEngine's state fetch
     # (RAccumulator.RechargeSource is read uninitialized), unrelated to relay_list itself.
     # The canonical property name is power_source; the Inspector grouping is independent.
-    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
 

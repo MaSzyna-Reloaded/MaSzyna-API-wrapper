@@ -6,6 +6,7 @@
 #include "../traction/TractionPowerServer.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicle3D.hpp"
+#include "TrainController.hpp"
 #include "VehiclePhysicsNode.hpp"
 
 #include "../engines/VehicleDieselEngine.hpp"
@@ -288,17 +289,18 @@ namespace godot {
         }
     }
 
-    VehicleController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
-        // a vehicle in the tree is a VehiclePhysicsNode; the controller is the object it owns
+    TrainController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
+        // a vehicle in the tree is a VehiclePhysicsNode; the controller is the object it owns - a
+        // railway one, as this node draws a rail vehicle
         VehiclePhysicsNode *physics = Object::cast_to<VehiclePhysicsNode>(get_node_or_null(p_node_path));
-        return physics == nullptr ? nullptr : physics->get_controller();
+        return physics == nullptr ? nullptr : Object::cast_to<TrainController>(physics->get_controller());
     }
 
     RID RailVehicle3D::get_rid() const {
         return rid;
     }
 
-    VehicleController *RailVehicle3D::get_controller() const {
+    TrainController *RailVehicle3D::get_controller() const {
         return controller_path.is_empty() ? nullptr : _resolve_controller(controller_path);
     }
 
@@ -349,7 +351,9 @@ namespace godot {
     /* The vehicle this node draws has been (re)built. Everything this node sets up needs a
      * vehicle, so this is where its own initialisation starts - and where processing begins. */
     void RailVehicle3D::_on_vehicle_changed() {
-        VehicleController *vehicle = fiz_controller != nullptr ? fiz_controller->get_controller() : nullptr;
+        TrainController *vehicle = fiz_controller != nullptr
+                                           ? Object::cast_to<TrainController>(fiz_controller->get_controller())
+                                           : nullptr;
         _on_controller_changed(vehicle);
         // the vehicle was rebuilt in place, so its parts changed even though it did not
         _adopt_vehicle_parts();
@@ -413,7 +417,7 @@ namespace godot {
         pantograph_slider_half_width = sliding_width > 0.0 ? 0.5 * sliding_width : pantograph_collector_width;
     }
 
-    void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
+    void RailVehicle3D::_on_controller_changed(TrainController *p_controller) {
         if (controller == p_controller) {
             return;
         }
@@ -1028,7 +1032,7 @@ namespace godot {
         const int own = get_pneumatic_layout(p_end, p_brake_hose);
         int other = 0;
         RailVehicleServer *server = RailVehicleServer::get_instance();
-        if (VehicleController *other_controller = controller->get_coupled_controller(p_end);
+        if (TrainController *other_controller = controller->get_coupled_controller(p_end);
             other_controller != nullptr && server != nullptr) {
             const ObjectID other_id = ObjectID(server->vehicle_get_rail_vehicle(other_controller->get_rid()));
             if (const RailVehicle3D *other_vehicle = Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(other_id));
@@ -1462,7 +1466,7 @@ namespace godot {
         const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
         const bool power_available = controller->get_power24_available() || controller->get_power110_available();
         const bool is_ezt =
-                (controller->get_train_type() & VehicleController::TRAIN_TYPE_EZT) == VehicleController::TRAIN_TYPE_EZT;
+                (controller->get_train_type() & TrainController::TRAIN_TYPE_EZT) == TrainController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;
         double speed_factor = 0.0;
         if (pressure > pressure_threshold && power_available) {

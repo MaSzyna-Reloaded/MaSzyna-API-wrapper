@@ -1,3 +1,4 @@
+#include "../core/TrainController.hpp"
 #include "../core/VehicleComponent.hpp"
 #include "../engines/VehicleElectricEngine.hpp"
 #include "../radio/VehicleRadio.hpp"
@@ -185,11 +186,11 @@ namespace godot {
         }
     }
 
-    VehicleController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
+    TrainController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
         if (p_placement.controller_id.is_null()) {
             return nullptr;
         }
-        return Object::cast_to<VehicleController>(ObjectDB::get_instance(p_placement.controller_id));
+        return Object::cast_to<TrainController>(ObjectDB::get_instance(p_placement.controller_id));
     }
 
     RID RailVehicleServer::vehicle_create() {
@@ -253,7 +254,7 @@ namespace godot {
     VehicleController::DriverType RailVehicleServer::vehicle_get_driver_type(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(placement, VehicleController::DRIVER_NOBODY);
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_driver_type() : VehicleController::DRIVER_NOBODY;
     }
 
@@ -270,7 +271,7 @@ namespace godot {
 
     void RailVehicleServer::radio_stop(const Vector3 &p_position) {
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
-            VehicleController *controller = _get_controller(entry.value);
+            TrainController *controller = _get_controller(entry.value);
             if (controller == nullptr ||
                 _placement_transform(entry.value).origin.distance_to(p_position) > RADIO_STOP_RANGE) {
                 continue;
@@ -295,10 +296,10 @@ namespace godot {
     }
 
     TypedArray<RID> RailVehicleServer::vehicle_get_coupled(
-            const RID &p_vehicle, const int p_end, const VehicleController::CouplingElement p_element) const {
+            const RID &p_vehicle, const int p_end, const TrainController::CouplingElement p_element) const {
         TypedArray<RID> result;
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        TrainController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
         if (first == nullptr) {
             return result;
         }
@@ -311,7 +312,7 @@ namespace godot {
             end = 1 - entered;
         }
         // and back, from that end, through every vehicle joined the same way
-        VehicleController *vehicle = first;
+        TrainController *vehicle = first;
         end = 1 - end;
         while (vehicle != nullptr) {
             result.push_back(vehicle->get_rid());
@@ -328,13 +329,13 @@ namespace godot {
     /* TDynamicObject::find_vehicle() (DynObj.h:886-903): this vehicle, then those joined towards its
      * rear, then towards its front - the first that satisfies p_predicate */
     template <typename Predicate>
-    static VehicleController *
-    find_joined(VehicleController *p_first, const VehicleController::CouplingElement p_element, Predicate p_predicate) {
+    static TrainController *
+    find_joined(TrainController *p_first, const TrainController::CouplingElement p_element, Predicate p_predicate) {
         if (p_predicate(p_first)) {
             return p_first;
         }
         for (const int start : {1, 0}) {
-            VehicleController *vehicle = p_first;
+            TrainController *vehicle = p_first;
             int end = start;
             while (vehicle->is_coupled_by(end, p_element)) {
                 const int entered = vehicle->get_coupled_end(end);
@@ -352,35 +353,35 @@ namespace godot {
         /* Power > 1.0 (DynObj.cpp:7793) */
         constexpr double POWERED = 1.0;
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        TrainController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
         if (first == nullptr) {
             return RID();
         }
-        const VehicleController::TrainType train_type = first->get_train_type();
-        const VehicleController::CouplingElement element =
-                train_type == VehicleController::TRAIN_TYPE_EZT || train_type == VehicleController::TRAIN_TYPE_DMU
-                        ? VehicleController::COUPLING_ELEMENT_PERMANENT
-                        : VehicleController::COUPLING_ELEMENT_CONTROL;
-        const VehicleController *powered = find_joined(
-                first, element, [](const VehicleController *p_vehicle) { return p_vehicle->get_power() > POWERED; });
+        const TrainController::TrainType train_type = first->get_train_type();
+        const TrainController::CouplingElement element =
+                train_type == TrainController::TRAIN_TYPE_EZT || train_type == TrainController::TRAIN_TYPE_DMU
+                        ? TrainController::COUPLING_ELEMENT_PERMANENT
+                        : TrainController::COUPLING_ELEMENT_CONTROL;
+        const TrainController *powered = find_joined(
+                first, element, [](const TrainController *p_vehicle) { return p_vehicle->get_power() > POWERED; });
         return powered != nullptr ? powered->get_rid() : p_vehicle;
     }
 
     RID RailVehicleServer::vehicle_find_pantograph_carrier(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        TrainController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
         if (first == nullptr) {
             return RID();
         }
-        const auto carries = [](const VehicleController *p_vehicle) {
+        const auto carries = [](const TrainController *p_vehicle) {
             const VehicleElectricEngine *engine = Object::cast_to<VehicleElectricEngine>(
                     p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE));
-            return engine != nullptr && engine->get_power_source() == VehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
+            return engine != nullptr && engine->get_power_source() == TrainController::POWER_SOURCE_CURRENTCOLLECTOR &&
                    engine->get_power_current_collector_number_of_collectors() > 0;
         };
-        for (const VehicleController::CouplingElement element :
-             {VehicleController::COUPLING_ELEMENT_PERMANENT, VehicleController::COUPLING_ELEMENT_CONTROL}) {
-            if (const VehicleController *carrier = find_joined(first, element, carries); carrier != nullptr) {
+        for (const TrainController::CouplingElement element :
+             {TrainController::COUPLING_ELEMENT_PERMANENT, TrainController::COUPLING_ELEMENT_CONTROL}) {
+            if (const TrainController *carrier = find_joined(first, element, carries); carrier != nullptr) {
                 return carrier->get_rid();
             }
         }
@@ -395,14 +396,14 @@ namespace godot {
         _disconnect_relays(p_vehicle, *placement);
         placement->controller_id = ObjectID(p_controller_id);
         _connect_relays(p_vehicle, *placement);
-        if (VehicleController *controller = _get_controller(*placement); controller != nullptr) {
+        if (TrainController *controller = _get_controller(*placement); controller != nullptr) {
             controller->set_vehicle_rid(p_vehicle);
             controller->emit_position_changed_if_needed();
         }
     }
 
     void RailVehicleServer::_connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
-        VehicleController *controller = _get_controller(p_placement);
+        TrainController *controller = _get_controller(p_placement);
         if (controller == nullptr) {
             return;
         }
@@ -413,12 +414,12 @@ namespace godot {
                 VehicleController::command_received,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_command_received).bind(p_vehicle));
         controller->connect(
-                VehicleController::cabin_occupied_changed,
+                TrainController::cabin_occupied_changed,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
     }
 
     void RailVehicleServer::_disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
-        VehicleController *controller = _get_controller(p_placement);
+        TrainController *controller = _get_controller(p_placement);
         if (controller == nullptr) {
             return;
         }
@@ -429,7 +430,7 @@ namespace godot {
                 VehicleController::command_received,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_command_received).bind(p_vehicle));
         controller->disconnect(
-                VehicleController::cabin_occupied_changed,
+                TrainController::cabin_occupied_changed,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
     }
 
@@ -469,7 +470,7 @@ namespace godot {
             const RID &p_vehicle, const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(placement, Variant());
-        VehicleController *controller = _get_controller(*placement);
+        TrainController *controller = _get_controller(*placement);
         ERR_FAIL_NULL_V(controller, Variant());
         return controller->send_command(p_command, p_p1, p_p2);
     }
@@ -477,7 +478,7 @@ namespace godot {
     void RailVehicleServer::broadcast_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
         bool known = false;
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
-            VehicleController *controller = _get_controller(entry.value);
+            TrainController *controller = _get_controller(entry.value);
             if (controller != nullptr && controller->get_commands().has(p_command)) {
                 known = true;
                 controller->send_command(p_command, p_p1, p_p2);
@@ -491,7 +492,7 @@ namespace godot {
     PackedStringArray RailVehicleServer::vehicle_get_commands(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(placement, PackedStringArray());
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_commands() : PackedStringArray();
     }
 
@@ -528,7 +529,7 @@ namespace godot {
             return;
         }
         _move_placement(*placement, p_distance, true);
-        if (VehicleController *controller = _get_controller(*placement); controller != nullptr) {
+        if (TrainController *controller = _get_controller(*placement); controller != nullptr) {
             controller->emit_position_changed_if_needed();
         }
     }
@@ -887,9 +888,9 @@ namespace godot {
         if (!_find_vehicle(p_vehicle, *placement, p_end, p_distance, found, found_end, found_distance)) {
             return Ref<VehicleNeighbour>();
         }
-        // the scan measures between the centres (MoverVehicleController::update_neighbour())
-        const VehicleController *controller = _get_controller(*placement);
-        const VehicleController *other = _get_controller(*vehicles.getptr(found));
+        // the scan measures between the centres (MoverTrainController::update_neighbour())
+        const TrainController *controller = _get_controller(*placement);
+        const TrainController *other = _get_controller(*vehicles.getptr(found));
         const double half_lengths =
                 0.5 * ((controller != nullptr ? controller->get_dimensions_length() : 0.0) +
                        (other != nullptr ? other->get_dimensions_length() : 0.0));
@@ -964,7 +965,7 @@ namespace godot {
         if (placement == nullptr) {
             return 0.0;
         }
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_velocity() : 0.0;
     }
 
@@ -973,7 +974,7 @@ namespace godot {
         if (placement == nullptr) {
             return 0.0;
         }
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_speed() : 0.0;
     }
 
@@ -987,7 +988,7 @@ namespace godot {
         if (placement == nullptr) {
             return nullptr;
         }
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_component(p_type) : nullptr;
     }
 
@@ -997,7 +998,7 @@ namespace godot {
         if (placement == nullptr) {
             return TypedArray<VehicleComponent>();
         }
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->find_generic_components(p_tag) : TypedArray<VehicleComponent>();
     }
 
@@ -1006,7 +1007,7 @@ namespace godot {
         if (placement == nullptr) {
             return Dictionary();
         }
-        VehicleController *controller = _get_controller(*placement);
+        TrainController *controller = _get_controller(*placement);
         /* A command runs between two reads of the same step and changes what the vehicle says, so
          * the step alone does not decide whether the dump still describes it. A widget reads the
          * state the moment it sends a command; keyed on the step alone it read the values from
@@ -1028,7 +1029,7 @@ namespace godot {
         if (placement == nullptr) {
             return Dictionary();
         }
-        const VehicleController *controller = _get_controller(*placement);
+        const TrainController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_config() : Dictionary();
     }
 
@@ -1041,7 +1042,7 @@ namespace godot {
         if (placement->track.is_valid() && (tracks == nullptr || !tracks->track_exists(placement->track))) {
             return;
         }
-        VehicleController *controller = _get_controller(*placement);
+        TrainController *controller = _get_controller(*placement);
         if (controller == nullptr) {
             return;
         }
@@ -1065,7 +1066,7 @@ namespace godot {
         stepped_controllers.clear();
         track_vehicles.clear();
         for (KeyValue<RID, VehiclePlacement> &item: vehicles) {
-            VehicleController *controller = _get_controller(item.value);
+            TrainController *controller = _get_controller(item.value);
             if (controller == nullptr) {
                 continue;
             }
@@ -1079,7 +1080,7 @@ namespace godot {
         for (int index = 0; index < stepped_vehicles.size(); ++index) {
             VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
             if (placement->moved) {
-                Object::cast_to<VehicleController>(stepped_controllers[index])->emit_position_changed_if_needed();
+                Object::cast_to<TrainController>(stepped_controllers[index])->emit_position_changed_if_needed();
             }
             placement->moved = false;
             track_vehicles[placement->track].push_back(stepped_vehicles[index]);
@@ -1115,7 +1116,7 @@ namespace godot {
             for (int index = 0; index < stepped_vehicles.size(); ++index) {
                 VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
                 if (placement->location_stale) {
-                    Object::cast_to<VehicleController>(stepped_controllers[index])->update_location();
+                    Object::cast_to<TrainController>(stepped_controllers[index])->update_location();
                 }
                 placement->location_stale = false;
             }
@@ -1125,11 +1126,11 @@ namespace godot {
             // the original computes the forces of every vehicle before moving any of them, so
             // coupled vehicles see a consistent state (DynObj.cpp:8199-8205)
             for (int index = 0; index < stepped_vehicles.size(); ++index) {
-                Object::cast_to<VehicleController>(stepped_controllers[index])->compute_forces(sub_step);
+                Object::cast_to<TrainController>(stepped_controllers[index])->compute_forces(sub_step);
             }
             const bool full_movement = iteration == iterations - 1;
             for (int index = 0; index < stepped_vehicles.size(); ++index) {
-                VehicleController *controller = Object::cast_to<VehicleController>(stepped_controllers[index]);
+                TrainController *controller = Object::cast_to<TrainController>(stepped_controllers[index]);
                 if (!controller->is_physics_active()) {
                     continue;
                 }
@@ -1144,7 +1145,7 @@ namespace godot {
         }
 
         for (int index = 0; index < stepped_vehicles.size(); ++index) {
-            VehicleController *controller = Object::cast_to<VehicleController>(stepped_controllers[index]);
+            TrainController *controller = Object::cast_to<TrainController>(stepped_controllers[index]);
             if (controller->is_physics_active()) {
                 controller->update_state();
             }
@@ -1204,7 +1205,7 @@ namespace godot {
     /* Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135) - a coupled end keeps
      * its coupled vehicle, a free end looks for the nearest vehicle on the route. */
     void RailVehicleServer::_clear_neighbour(
-            VehicleController *p_controller, VehiclePlacement &p_placement, const int p_end) {
+            TrainController *p_controller, VehiclePlacement &p_placement, const int p_end) {
         if (p_placement.neighbour_cleared[p_end]) {
             return;
         }
@@ -1213,7 +1214,7 @@ namespace godot {
     }
 
     void RailVehicleServer::_update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement) {
-        VehicleController *controller = _get_controller(p_placement);
+        TrainController *controller = _get_controller(p_placement);
         const TrackManager *tracks = TrackManager::get_instance();
         if (controller == nullptr || tracks == nullptr) {
             return;
@@ -1312,7 +1313,7 @@ namespace godot {
      * comes from the forces, typically a coupler reacting to an inconsistent vehicle position. */
     void RailVehicleServer::_check_velocity_jumps(const double p_delta) {
         for (int index = 0; index < stepped_vehicles.size(); ++index) {
-            VehicleController *controller = Object::cast_to<VehicleController>(stepped_controllers[index]);
+            TrainController *controller = Object::cast_to<TrainController>(stepped_controllers[index]);
             const uint64_t id = controller->get_instance_id();
             const double velocity = controller->get_velocity();
             const double *previous = diagnostics_velocity.getptr(id);

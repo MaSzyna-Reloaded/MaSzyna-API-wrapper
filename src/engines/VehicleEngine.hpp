@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "VehicleEngineBackend.hpp"
 #include "macros.hpp"
 #include "resources/engines/MotorParameter.hpp"
@@ -7,8 +7,8 @@
 
 namespace godot {
     class VehicleController;
-    class VehicleEngine : public VehicleComponent {
-            GDCLASS(VehicleEngine, VehicleComponent)
+    class VehicleEngine : public TrainComponent {
+            GDCLASS(VehicleEngine, TrainComponent)
 
 
         public:

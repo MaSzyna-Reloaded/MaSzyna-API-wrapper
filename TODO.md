@@ -5,7 +5,7 @@
 The vehicle becomes an object owned by a server, addressed by RID, with thin `*Node` proxies for
 the editor. Each stage is one PR, titled `(#184) <area> - <what>`, and each leaves the game
 runnable. Stages 1-3 are done (`RailVehicleServer` owns placement, movement and the step;
-`MoverVehicleController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
+`MoverTrainController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
 
 Design that replaced the withdrawn stage 4 (a global name registry, now deleted):
 
@@ -822,16 +822,6 @@ ported, into a delegate.
 * Gauges read the occupied vehicle unless the MMD catalog tags them: the ammeters, voltmeters and
   lamps of the motor car (`Train.cpp` `mvControlled` in `update_gauges`) need `target` in
   `MmdSemanticCatalog`.
-
-### TrainController (operator's decision, 2026-09-27)
-
-`VehicleController` is meant to be generic - a trolley, a car, a tractor - yet it carries the
-railway: cabs (`cab_activation`, `cab_change`, `cabin_*`, `cntrl_inactive_cab_flag`), couplers
-(`couple`, `is_coupled_by`, `coupler_*`, `CouplingElement`), the master controller and reverser
-commands, relays (`relay_*`, `ground_relay_reset`), 24/110 V, the battery and the converter (moved
-there in the EN57 commit), `train_type`, `antislip`. Split: `TrainController extends
-VehicleController` (+ `MoverTrainController`) takes all of it, and the railway components depend on
-`TrainController`, not on the generic one. Next commit after the EN57 one.
 
 ## Tests
 

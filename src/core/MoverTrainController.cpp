@@ -1,19 +1,19 @@
 #include "../mover/MoverComponent.hpp"
 #include "../mover/MoverTypes.hpp"
-#include "MoverVehicleController.hpp"
+#include "MoverTrainController.hpp"
 #include "maszyna/utilities.h"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    std::unordered_map<const TMoverParameters *, MoverVehicleController *> MoverVehicleController::controllers_by_mover;
+    std::unordered_map<const TMoverParameters *, MoverTrainController *> MoverTrainController::controllers_by_mover;
 
-    void MoverVehicleController::_bind_methods() {}
+    void MoverTrainController::_bind_methods() {}
 
     /* release() runs from VehicleController's NOTIFICATION_PREDELETE, which the editor skips; the
      * Mover must not outlive the vehicle either way. */
-    MoverVehicleController::~MoverVehicleController() {
+    MoverTrainController::~MoverTrainController() {
         if (mover != nullptr) {
             controllers_by_mover.erase(mover);
             delete mover;
@@ -24,31 +24,31 @@ namespace godot {
     /* A Mover* component reaches this vehicle's Mover through here from now on. `dynamic_cast`
      * rather than `Object::cast_to`, because MoverComponent is not an Object - see its own
      * header for why that is the right tool and what it costs to get wrong. */
-    void MoverVehicleController::_component_attached(VehicleComponent *p_component) {
+    void MoverTrainController::_component_attached(VehicleComponent *p_component) {
         if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
             mover_component->set_mover_controller(this);
         }
     }
 
-    void MoverVehicleController::_component_detached(VehicleComponent *p_component) {
+    void MoverTrainController::_component_detached(VehicleComponent *p_component) {
         if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
             mover_component->set_mover_controller(nullptr);
         }
     }
 
-    TMoverParameters *MoverVehicleController::get_mover() const {
+    TMoverParameters *MoverTrainController::get_mover() const {
         return mover;
     }
 
     // the end of the coupled vehicle facing this one (TCoupling::ConnectedNr), -1 when not coupled
-    int MoverVehicleController::get_coupled_end(const int p_end) const {
+    int MoverTrainController::get_coupled_end(const int p_end) const {
         if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
             return -1;
         }
         return mover->Couplers[p_end].ConnectedNr;
     }
 
-    VehicleController *MoverVehicleController::get_coupled_controller(const int p_end) const {
+    TrainController *MoverTrainController::get_coupled_controller(const int p_end) const {
         if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
             return nullptr;
         }
@@ -56,7 +56,7 @@ namespace godot {
         return it == controllers_by_mover.end() ? nullptr : it->second;
     }
 
-    void MoverVehicleController::initialize_mover_state() {
+    void MoverTrainController::initialize_mover_state() {
         const bool driver_active = get_initial_velocity() != 0.0;
 
         mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
@@ -69,7 +69,7 @@ namespace godot {
                 std::floor(mover->Handle->GetPos(driver_active && get_driver_type() != DRIVER_NOBODY ? bh_RP : bh_NP)));
     }
 
-    void MoverVehicleController::_initialize_simulation() {
+    void MoverTrainController::_initialize_simulation() {
         // the vehicle used to be named by its node; what identifies one now is its train id
         mover = new TMoverParameters(
                 get_initial_velocity(), std::string(get_type_name().utf8().get_data()),
@@ -124,7 +124,7 @@ namespace godot {
     }
 
     /* The base lets go of the components and the registration; the Mover goes last. */
-    void MoverVehicleController::release() {
+    void MoverTrainController::release() {
         VehicleController::release();
         if (mover == nullptr) {
             return;
@@ -134,19 +134,19 @@ namespace godot {
         mover = nullptr;
     }
 
-    bool MoverVehicleController::is_simulation_ready() const {
+    bool MoverTrainController::is_simulation_ready() const {
         return mover != nullptr;
     }
 
     /* Whether the vehicle still has anything to integrate. A braked standing vehicle stays active
      * in the original too (Mover.cpp:4603). */
-    bool MoverVehicleController::is_physics_active() const {
+    bool MoverTrainController::is_physics_active() const {
         return mover != nullptr && mover->PhysicActivation;
     }
 
     // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
     // movement of one simulation frame and is reset after it (ResetdMoveLen, DynObj.cpp:3473)
-    void MoverVehicleController::update_location() {
+    void MoverTrainController::update_location() {
         if (mover == nullptr) {
             return;
         }
@@ -157,8 +157,8 @@ namespace godot {
 
     // Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135); the track scan itself
     // (find_vehicle) is done by RailVehiclePhysicsServer, which passes the center to center track distance
-    void MoverVehicleController::update_neighbour(
-            const int p_end, VehicleController *p_other, const int p_other_end, const double p_track_distance) {
+    void MoverTrainController::update_neighbour(
+            const int p_end, TrainController *p_other, const int p_other_end, const double p_track_distance) {
         if (mover == nullptr) {
             return;
         }
@@ -176,7 +176,7 @@ namespace godot {
         }
 
         neighbour = neighbour_data();
-        const MoverVehicleController *other = Object::cast_to<MoverVehicleController>(p_other);
+        const MoverTrainController *other = Object::cast_to<MoverTrainController>(p_other);
         if (other == nullptr || other->mover == nullptr) {
             return;
         }
@@ -193,14 +193,14 @@ namespace godot {
         }
     }
 
-    void MoverVehicleController::compute_forces(const double p_delta) {
+    void MoverTrainController::compute_forces(const double p_delta) {
         if (mover == nullptr) {
             return;
         }
         mover->ComputeTotalForce(p_delta);
     }
 
-    void MoverVehicleController::compute_movement(const double p_delta) {
+    void MoverTrainController::compute_movement(const double p_delta) {
         _integrate(p_delta, Integration::FULL);
         // the Hasler recorder is vehicle state, not integration - it stays here until the state
         // registry takes it over
@@ -211,11 +211,11 @@ namespace godot {
     /// FastUpdate for every sub-iteration and the full Update() only once per frame
     /// (DynObj.cpp:8195-8210), where FastUpdate calls Mover::FastComputeMovement()
     /// (DynObj.cpp:4086) instead of the full ComputeMovement().
-    void MoverVehicleController::compute_fast_movement(const double p_delta) {
+    void MoverTrainController::compute_fast_movement(const double p_delta) {
         _integrate(p_delta, Integration::FAST);
     }
 
-    void MoverVehicleController::_integrate(const double p_delta, const Integration p_integration) {
+    void MoverTrainController::_integrate(const double p_delta, const Integration p_integration) {
         // a standing vehicle switched off by ComputeTotalForce() is not moved at all
         // (DynObj.cpp:4059 FastUpdate, DynObj.cpp:2940 Update)
         if (mover == nullptr || !mover->PhysicActivation) {
@@ -241,9 +241,9 @@ namespace godot {
     }
 
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
-    void MoverVehicleController::couple(
-            VehicleController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
-        MoverVehicleController *other = Object::cast_to<MoverVehicleController>(p_other);
+    void MoverTrainController::couple(
+            TrainController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
+        MoverTrainController *other = Object::cast_to<MoverTrainController>(p_other);
         if (mover == nullptr || other == nullptr || other->mover == nullptr) {
             UtilityFunctions::push_error("Cannot couple vehicles without initialized movers.");
             return;
@@ -259,7 +259,7 @@ namespace godot {
         other->emit_signal(consist_changed_signal);
     }
 
-    void MoverVehicleController::uncouple(const int p_end) {
+    void MoverTrainController::uncouple(const int p_end) {
         if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
             return;
         }
@@ -267,11 +267,11 @@ namespace godot {
         emit_signal(consist_changed_signal);
     }
 
-    bool MoverVehicleController::is_coupled(const int p_end) const {
+    bool MoverTrainController::is_coupled(const int p_end) const {
         return mover != nullptr && mover->Couplers[p_end].Connected != nullptr;
     }
 
-    bool MoverVehicleController::is_coupled_by(const int p_end, const CouplingElement p_element) const {
+    bool MoverTrainController::is_coupled_by(const int p_end, const CouplingElement p_element) const {
         // indexed by CouplingElement
         static constexpr int flags[] = {coupling::coupler, coupling::brakehose, coupling::mainhose, coupling::control,
                                         coupling::gangway, coupling::heating,   coupling::permanent};
@@ -280,7 +280,7 @@ namespace godot {
 
     // p_where is a coupler end (0 front, 1 rear) or a world position - then the vehicle end nearest to
     // it is used, like the walk mode commands of the original (ABuScanNearestObject, Train.cpp:6213)
-    int MoverVehicleController::_resolve_coupler_end(const Variant &p_where) const {
+    int MoverTrainController::_resolve_coupler_end(const Variant &p_where) const {
         if (p_where.get_type() != Variant::VECTOR3) {
             return CLAMP(static_cast<int>(p_where), 0, 1);
         }
@@ -294,7 +294,7 @@ namespace godot {
 
     // Original engine: TDynamicObject::couple() (DynObj.cpp:1509) - one more coupling type per call,
     // with the vehicle detected at that end
-    void MoverVehicleController::coupler_connect(const Variant &p_where) {
+    void MoverTrainController::coupler_connect(const Variant &p_where) {
         if (mover == nullptr) {
             return;
         }
@@ -326,7 +326,7 @@ namespace godot {
     }
 
     // Original engine: TDynamicObject::uncouple() (DynObj.cpp:1614)
-    void MoverVehicleController::coupler_disconnect(const Variant &p_where) {
+    void MoverTrainController::coupler_disconnect(const Variant &p_where) {
         if (mover == nullptr) {
             return;
         }
@@ -339,7 +339,7 @@ namespace godot {
 
     // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
     // sound gate (Train.cpp:8323-8335).
-    void MoverVehicleController::_update_tachometer(const double p_delta) {
+    void MoverTrainController::_update_tachometer(const double p_delta) {
         const double max_tachometer = 3.0;
         tachometer_velocity = std::min(std::abs(11.31 * mover->WheelDiameter * mover->nrot), mover->Vmax * 1.05);
 
@@ -368,11 +368,11 @@ namespace godot {
     }
 
     /* The coupler events are consumed first, then the vehicle compares what it announces. */
-    void MoverVehicleController::update_state() {
+    void MoverTrainController::update_state() {
         if (mover != nullptr) {
             _consume_coupler_sounds();
         }
-        VehicleController::update_state();
+        TrainController::update_state();
     }
 
     // The elements follow the original's coupling:: flags (Mover.cpp:590).
@@ -381,7 +381,7 @@ namespace godot {
     //
     // Consuming is a tick job, not a read job: this clears the mover's flags, so doing it while
     // filling the state dictionary made the events belong to whoever happened to read first.
-    void MoverVehicleController::_consume_coupler_sounds() {
+    void MoverTrainController::_consume_coupler_sounds() {
         static const int flags[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
                                     sound::attachcontrol, sound::attachgangway,   sound::attachheating};
         for (TCoupling &coupler: mover->Couplers) {
@@ -400,11 +400,11 @@ namespace godot {
         }
     }
 
-    double MoverVehicleController::process_movement(const double p_delta) {
+    double MoverTrainController::process_movement(const double p_delta) {
         return mover != nullptr ? mover->V * p_delta : 0.0;
     }
 
-    void MoverVehicleController::apply_config() {
+    void MoverTrainController::apply_config() {
         if (mover == nullptr) {
             UtilityFunctions::push_warning("VehicleController::apply_config() failed: internal mover not initialized");
             return;
@@ -449,7 +449,7 @@ namespace godot {
         initialize_mover_state();
     }
 
-    void MoverVehicleController::_fill_config_dictionary(Dictionary &p_config) const {
+    void MoverTrainController::_fill_config_dictionary(Dictionary &p_config) const {
         if (mover == nullptr) {
             return;
         }
@@ -461,103 +461,103 @@ namespace godot {
         p_config["train_type"] = get_train_type();
     }
 
-    double MoverVehicleController::get_tachometer_speed() const {
+    double MoverTrainController::get_tachometer_speed() const {
         return mover != nullptr ? tachometer_velocity : 0.0;
     }
 
-    double MoverVehicleController::get_tachometer_speed_jump() const {
+    double MoverTrainController::get_tachometer_speed_jump() const {
         return mover != nullptr ? tachometer_velocity_jump : 0.0;
     }
 
-    double MoverVehicleController::get_tachometer_clock_speed() const {
+    double MoverTrainController::get_tachometer_clock_speed() const {
         return mover != nullptr ? tachometer_clock_active ? tachometer_velocity : 0.0 : 0.0;
     }
 
-    int MoverVehicleController::get_direction_absolute() const {
+    int MoverTrainController::get_direction_absolute() const {
         return mover != nullptr ? mover->DirAbsolute : 0;
     }
 
-    int MoverVehicleController::get_cabin() const {
+    int MoverTrainController::get_cabin() const {
         return mover != nullptr ? mover->CabActive : 0;
     }
 
-    bool MoverVehicleController::get_cabin_controleable() const {
+    bool MoverTrainController::get_cabin_controleable() const {
         return mover != nullptr ? mover->IsCabMaster() : false;
     }
 
-    int MoverVehicleController::get_cabin_occupied() const {
+    int MoverTrainController::get_cabin_occupied() const {
         return mover != nullptr ? mover->CabOccupied : 0;
     }
 
-    double MoverVehicleController::get_live_battery_voltage() const {
+    double MoverTrainController::get_live_battery_voltage() const {
         return mover != nullptr ? mover->BatteryVoltage : 0.0;
     }
 
-    bool MoverVehicleController::get_battery_enabled() const {
+    bool MoverTrainController::get_battery_enabled() const {
         return mover != nullptr ? mover->Battery : false;
     }
 
-    bool MoverVehicleController::get_converter_enabled() const {
+    bool MoverTrainController::get_converter_enabled() const {
         return mover != nullptr ? mover->ConverterFlag : false;
     }
 
-    bool MoverVehicleController::get_converter_allowed() const {
+    bool MoverTrainController::get_converter_allowed() const {
         return mover != nullptr ? mover->ConverterAllow : false;
     }
 
-    double MoverVehicleController::get_converter_time_to_start() const {
+    double MoverTrainController::get_converter_time_to_start() const {
         return mover != nullptr ? mover->ConverterStartDelayTimer : 0.0;
     }
 
-    double MoverVehicleController::get_power24_voltage() const {
+    double MoverTrainController::get_power24_voltage() const {
         return mover != nullptr ? mover->Power24vVoltage : 0.0;
     }
 
-    bool MoverVehicleController::get_power24_available() const {
+    bool MoverTrainController::get_power24_available() const {
         return mover != nullptr ? mover->Power24vIsAvailable : false;
     }
 
-    bool MoverVehicleController::get_power110_available() const {
+    bool MoverTrainController::get_power110_available() const {
         return mover != nullptr ? mover->Power110vIsAvailable : false;
     }
 
-    double MoverVehicleController::get_current0() const {
+    double MoverTrainController::get_current0() const {
         return mover != nullptr ? mover->ShowCurrent(0) : 0.0;
     }
 
-    double MoverVehicleController::get_current1() const {
+    double MoverTrainController::get_current1() const {
         return mover != nullptr ? mover->ShowCurrent(1) : 0.0;
     }
 
-    double MoverVehicleController::get_current2() const {
+    double MoverTrainController::get_current2() const {
         return mover != nullptr ? mover->ShowCurrent(2) : 0.0;
     }
 
-    bool MoverVehicleController::get_relay_novolt() const {
+    bool MoverTrainController::get_relay_novolt() const {
         return mover != nullptr ? mover->NoVoltRelay : false;
     }
 
-    bool MoverVehicleController::get_relay_overvoltage() const {
+    bool MoverTrainController::get_relay_overvoltage() const {
         return mover != nullptr ? mover->OvervoltageRelay : false;
     }
 
-    bool MoverVehicleController::get_relay_ground() const {
+    bool MoverTrainController::get_relay_ground() const {
         return mover != nullptr ? mover->GroundRelay : false;
     }
 
-    int MoverVehicleController::get_train_damage() const {
+    int MoverTrainController::get_train_damage() const {
         return mover != nullptr ? mover->DamageFlag : 0;
     }
 
-    int MoverVehicleController::get_controller_second_position() const {
+    int MoverTrainController::get_controller_second_position() const {
         return mover != nullptr ? mover->ScndCtrlPos : 0;
     }
 
-    int MoverVehicleController::get_controller_main_position() const {
+    int MoverTrainController::get_controller_main_position() const {
         return mover != nullptr ? mover->MainCtrlPos : 0;
     }
 
-    int MoverVehicleController::get_controller_joint_position() const {
+    int MoverTrainController::get_controller_joint_position() const {
         return mover != nullptr
                        ? mover->LocalBrakePosA > 0.0
                                  ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo))
@@ -565,66 +565,66 @@ namespace godot {
                        : 0;
     }
 
-    int MoverVehicleController::get_controller_main_actual_position() const {
+    int MoverTrainController::get_controller_main_actual_position() const {
         return mover != nullptr ? mover->MainCtrlActualPos : 0;
     }
 
-    bool MoverVehicleController::get_controller_main_delayed() const {
+    bool MoverTrainController::get_controller_main_delayed() const {
         return mover != nullptr ? mover->DelayCtrlFlag : false;
     }
 
-    bool MoverVehicleController::get_coupler_stretched() const {
+    bool MoverTrainController::get_coupler_stretched() const {
         return mover != nullptr
                && (mover->Couplers[end::front].stretch_duration > 0.0f
                    || mover->Couplers[end::rear].stretch_duration > 0.0f);
     }
 
-    int MoverVehicleController::get_controller_main_no_power_position() const {
+    int MoverTrainController::get_controller_main_no_power_position() const {
         return mover != nullptr ? mover->MainCtrlNoPowerPos() : 0;
     }
 
-    bool MoverVehicleController::get_radio_stop_active() const {
+    bool MoverTrainController::get_radio_stop_active() const {
         return mover != nullptr && mover->RadioStopFlag;
     }
 
-    int MoverVehicleController::get_circuit_rlist_size() const {
+    int MoverTrainController::get_circuit_rlist_size() const {
         return mover != nullptr ? mover->RlistSize : 0;
     }
 
-    double MoverVehicleController::get_velocity() const {
+    double MoverTrainController::get_velocity() const {
         return mover != nullptr ? mover->V : 0.0;
     }
 
-    double MoverVehicleController::get_speed() const {
+    double MoverTrainController::get_speed() const {
         return mover != nullptr ? mover->Vel : 0.0;
     }
 
-    double MoverVehicleController::get_acceleration() const {
+    double MoverTrainController::get_acceleration() const {
         return mover != nullptr ? mover->AccS : 0.0;
     }
 
-    double MoverVehicleController::get_mass_total() const {
+    double MoverTrainController::get_mass_total() const {
         return mover != nullptr ? mover->TotalMass : 0.0;
     }
 
-    double MoverVehicleController::get_total_distance() const {
+    double MoverTrainController::get_total_distance() const {
         return mover != nullptr ? mover->DistCounter : 0.0;
     }
 
-    int MoverVehicleController::get_direction() const {
+    int MoverTrainController::get_direction() const {
         return mover != nullptr ? mover->DirActive : 0;
     }
 
-    void MoverVehicleController::battery(const bool p_enabled) const {
+    void MoverTrainController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
     }
 
-    void MoverVehicleController::converter(const bool p_enabled) const {
+    void MoverTrainController::converter(const bool p_enabled) const {
         mover->ConverterSwitch(p_enabled);
     }
 
     // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
-    void MoverVehicleController::cab_activation(const bool p_enabled) const {
+    void MoverTrainController::cab_activation(const bool p_enabled) const {
         if (p_enabled) {
             mover->CabActivisation();
             return;
@@ -634,62 +634,62 @@ namespace godot {
 
     // Original engine: taking over a vehicle activates its cab if the FIZ allows automatic
     // activation (Train.cpp:9086, 9147); otherwise the driver uses cab_activation
-    void MoverVehicleController::cab_activation_auto() const {
+    void MoverTrainController::cab_activation_auto() const {
         mover->CabActivisationAuto(true);
     }
 
     // Original engine: TTrain::CabChange() (Train.cpp:8516) - steps 1 -> 0 (machine room) -> -1.
-    void MoverVehicleController::cab_change(const int p_direction) const {
+    void MoverTrainController::cab_change(const int p_direction) const {
         mover->CabDeactivisationAuto();
         mover->ChangeCab(p_direction);
         mover->CabActivisationAuto();
     }
 
-    void MoverVehicleController::ground_relay_reset() const {
+    void MoverTrainController::ground_relay_reset() const {
         mover->RelayReset(Maszyna::maincircuitground);
     }
 
-    void MoverVehicleController::antislip() const {
+    void MoverTrainController::antislip() const {
         mover->AntiSlippingButton();
     }
 
-    void MoverVehicleController::main_controller_increase(const int p_step) const {
+    void MoverTrainController::main_controller_increase(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
-    void MoverVehicleController::main_controller_decrease(const int p_step) const {
+    void MoverTrainController::main_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
     // Original engine: OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), regular mode
-    void MoverVehicleController::second_controller_increase(const int p_step) const {
+    void MoverTrainController::second_controller_increase(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->IncScndCtrl(step);
     }
 
-    void MoverVehicleController::second_controller_decrease(const int p_step) const {
+    void MoverTrainController::second_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->DecScndCtrl(step);
     }
 
-    void MoverVehicleController::direction_increase() const {
+    void MoverTrainController::direction_increase() const {
         mover->DirectionForward();
     }
 
-    void MoverVehicleController::direction_decrease() const {
+    void MoverTrainController::direction_decrease() const {
         mover->DirectionBackward();
     }
 
     // Original engine: TTrain::OnCommand_distancecounteractivate (Train.cpp:1552), single-press form
-    void MoverVehicleController::distance_counter_activate(const bool p_pressed) {
+    void MoverTrainController::distance_counter_activate(const bool p_pressed) {
         if (p_pressed) {
             distance_counter = 0.0;
         }
     }
 
-    double MoverVehicleController::get_distance_counter() const {
+    double MoverTrainController::get_distance_counter() const {
         return distance_counter;
     }
 } // namespace godot

@@ -1,3 +1,4 @@
+#include "../core/TrainController.hpp"
 #include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
@@ -216,15 +217,15 @@ namespace godot {
         p_mover->EnginePowerSource.SourceType = mover_power_source(p_engine->get_power_source());
 
         switch (p_engine->get_power_source()) {
-            case VehicleController::POWER_SOURCE_INTERNAL: {
+            case TrainController::POWER_SOURCE_INTERNAL: {
                 p_mover->EnginePowerSource.PowerType = mover_power_type(p_engine->get_power_cable_source());
                 break;
             }
-            case VehicleController::POWER_SOURCE_TRANSDUCER: {
+            case TrainController::POWER_SOURCE_TRANSDUCER: {
                 p_mover->EnginePowerSource.Transducer.InputVoltage = p_engine->get_power_transducer_input_voltage();
                 break;
             }
-            case VehicleController::POWER_SOURCE_GENERATOR: {
+            case TrainController::POWER_SOURCE_GENERATOR: {
                 // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
                 // (MOVER.h:551) - nothing currently dereferences EnginePowerSource's copy of it,
                 // but HeatingPowerSource's copy does (see VehicleHeating.cpp), so it's pointed at
@@ -233,12 +234,12 @@ namespace godot {
                 generator_params.engine_revolutions = &p_mover->enrot;
                 break;
             }
-            case VehicleController::POWER_SOURCE_ACCUMULATOR: {
+            case TrainController::POWER_SOURCE_ACCUMULATOR: {
                 p_mover->EnginePowerSource.RAccumulator.RechargeSource =
                         mover_power_source(p_engine->get_power_accumulator_recharge_source());
                 break;
             }
-            case VehicleController::POWER_SOURCE_CURRENTCOLLECTOR: {
+            case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
                 p_mover->EnginePowerSource.CollectorParameters.MinH =
                         p_engine->get_power_current_collector_min_collector_lifting();
                 p_mover->EnginePowerSource.CollectorParameters.MaxH =
@@ -267,7 +268,7 @@ namespace godot {
                         p_engine->get_power_current_collector_physical_layout();
                 break;
             }
-            case VehicleController::POWER_SOURCE_POWERCABLE: {
+            case TrainController::POWER_SOURCE_POWERCABLE: {
                 p_mover->EnginePowerSource.RPowerCable.PowerTrans =
                         mover_power_type(p_engine->get_power_cable_source());
                 if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
@@ -275,8 +276,8 @@ namespace godot {
                 }
                 break;
             }
-            case VehicleController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
-            case VehicleController::POWER_SOURCE_NOT_DEFINED:;
+            case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
+            case TrainController::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
 

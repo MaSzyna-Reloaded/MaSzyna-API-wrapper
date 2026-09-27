@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/TrainController.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 
@@ -105,7 +106,7 @@ namespace godot {
             };
 
             static void _bind_methods();
-            VehicleController::TrainPowerSource power_source = VehicleController::POWER_SOURCE_NOT_DEFINED;
+            TrainController::TrainPowerSource power_source = TrainController::POWER_SOURCE_NOT_DEFINED;
             MAKE_MEMBER_GS(int, power_current_collector_number_of_collectors, 0);
             MAKE_MEMBER_GS(float, power_current_collector_max_voltage, 0.0);
             MAKE_MEMBER_GS(float, power_current_collector_max_current, 0.0);
@@ -122,11 +123,11 @@ namespace godot {
                     0.6f * power_current_collector_max_voltage);
             MAKE_MEMBER_GS(float, power_transducer_input_voltage, 0.0f);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, power_accumulator_recharge_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED);
+                    TrainController::TrainPowerSource, power_accumulator_recharge_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerType, power_cable_source,
-                    VehicleController::TrainPowerType::POWER_TYPE_NONE);
+                    TrainController::TrainPowerType, power_cable_source,
+                    TrainController::TrainPowerType::POWER_TYPE_NONE);
             MAKE_MEMBER_GS(float, power_cable_steam_pressure, 0.0f);
             MAKE_MEMBER_GS(int, power_current_collector_physical_layout, 0);
 
@@ -175,8 +176,8 @@ namespace godot {
             static const char *pantograph_up_signal;
             static const char *pantograph_down_signal;
 
-            void set_power_source(VehicleController::TrainPowerSource p_source);
-            VehicleController::TrainPowerSource get_power_source() const;
+            void set_power_source(TrainController::TrainPowerSource p_source);
+            TrainController::TrainPowerSource get_power_source() const;
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
             void pantographs_valve_operate(ValveOperation p_operation);

@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 
 namespace godot {
@@ -7,8 +7,8 @@ namespace godot {
      * the volume are the cab radio's own settings (TTrain's iRadioChannel and m_radiovolume in
      * the original, Train.h:918); whether the radio is on, powered, and what a Radio-Stop does
      * to the vehicle are the backend's to answer. */
-    class VehicleRadio : public VehicleComponent {
-            GDCLASS(VehicleRadio, VehicleComponent);
+    class VehicleRadio : public TrainComponent {
+            GDCLASS(VehicleRadio, TrainComponent);
 
         public:
             VehicleComponentType::Type get_component_type() const override {

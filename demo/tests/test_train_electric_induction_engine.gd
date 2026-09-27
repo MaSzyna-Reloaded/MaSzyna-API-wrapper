@@ -7,7 +7,7 @@ func before_each():
     train = build_vehicle("TestTrain")
 
     engine = MoverVehicleElectricInductionEngine.new()
-    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
 
@@ -66,7 +66,7 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # the breaker is checked against the voltage in TractionForce(), run only with Power > 0
     driven.power = 5600.0
     var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
-    eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    eim.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)
@@ -111,7 +111,7 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     wheels.axle_arrangement = "Bo'Bo'"
     driven.add_component(wheels)
     var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
-    eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    eim.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)

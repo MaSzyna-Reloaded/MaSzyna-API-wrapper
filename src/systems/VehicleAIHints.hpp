@@ -1,12 +1,12 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class VehicleController;
-    class VehicleAIHints : public VehicleComponent {
-            GDCLASS(VehicleAIHints, VehicleComponent);
+    class VehicleAIHints : public TrainComponent {
+            GDCLASS(VehicleAIHints, TrainComponent);
 
 
         public:

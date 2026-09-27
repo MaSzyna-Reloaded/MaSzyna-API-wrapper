@@ -82,7 +82,7 @@ namespace godot {
             Node3D *camera = nullptr;
             Node *cabin_player = nullptr;
             int cabin_show_frames = 0;
-            VehicleController *controller = nullptr;
+            TrainController *controller = nullptr;
             VehicleElectricEngine *electric_engine = nullptr;
             /* The components this node draws from, taken when the vehicle's parts are adopted
              * rather than looked for per frame. Each is null on a vehicle that has not got one. */
@@ -133,11 +133,11 @@ namespace godot {
             bool pantograph_rear_converged = true;
             TypedArray<Dictionary> pantograph_wire_cache;
 
-            VehicleController *_resolve_controller(const NodePath &p_node_path) const;
+            TrainController *_resolve_controller(const NodePath &p_node_path) const;
             void _jump_into_cabin(Node3D *p_cabin, Node *p_player);
             void _show_cabin_after_frames();
             void _apply_cabin_camera_configuration();
-            void _on_controller_changed(VehicleController *p_controller);
+            void _on_controller_changed(TrainController *p_controller);
             void _on_vehicle_changed();
             void _bind_vehicle_node();
             const VehicleBuffCoupl *_coupler() const;
@@ -218,7 +218,7 @@ namespace godot {
             void enter_cabin(Node *p_player);
             void leave_cabin(Node *p_player);
             void process_manually(const Variant &p_delta);
-            VehicleController *get_controller() const;
+            TrainController *get_controller() const;
             /// This vehicle's handle in RailVehicleServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.
             RID get_rid() const;

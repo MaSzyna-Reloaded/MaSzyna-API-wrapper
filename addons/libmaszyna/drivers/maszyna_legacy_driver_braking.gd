@@ -242,9 +242,9 @@ func _init() -> void:
 ## (UpdateSituation(), Driver.cpp:6023-6031). `in_control`: it may set the brakes of its own vehicle.
 func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset, in_control:bool) -> void:
     var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
-    var train_type:int = int(config.get("train_type", VehicleController.TRAIN_TYPE_DEFAULT))
-    var emu:bool = train_type == VehicleController.TRAIN_TYPE_EZT
-    var dmu:bool = train_type == VehicleController.TRAIN_TYPE_DMU
+    var train_type:int = int(config.get("train_type", TrainController.TRAIN_TYPE_DEFAULT))
+    var emu:bool = train_type == TrainController.TRAIN_TYPE_EZT
+    var dmu:bool = train_type == TrainController.TRAIN_TYPE_DMU
     _dmu = dmu
     var engine_type:VehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(vehicle).get(
             "engine_type", VehicleEngine.NONE)) as VehicleEngine.EngineType
@@ -565,10 +565,10 @@ func release_local_brake(vehicle:RID, cab:int) -> void:
 ## fuller than the pipe keeps braking otherwise
 func _control_releaser(vehicle:RID, cab:int, acceleration:float) -> void:
     var brake:VehicleBrake = _brake(vehicle)
-    var train_type:VehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
-            "train_type", VehicleController.TRAIN_TYPE_DEFAULT)) as VehicleController.TrainType
+    var train_type:TrainController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
+            "train_type", TrainController.TRAIN_TYPE_DEFAULT)) as TrainController.TrainType
     if brake == null or not brake.cntrl_brake_system == VehicleBrake.BRAKE_SYSTEM_PNEUMATIC \
-            or train_type == VehicleController.TRAIN_TYPE_EZT or train_type == VehicleController.TRAIN_TYPE_DMU \
+            or train_type == TrainController.TRAIN_TYPE_EZT or train_type == TrainController.TRAIN_TYPE_DMU \
             or not brake.cntrl_brake_handle_type in RELEASER_HANDLES:
         return
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
@@ -856,13 +856,13 @@ func _add_position(change:float) -> bool:
 ## only engines coupled to be driven together
 func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var vehicle:RID = situation.vehicle
-    var train_type:VehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
-            "train_type", VehicleController.TRAIN_TYPE_DEFAULT)) as VehicleController.TrainType
+    var train_type:TrainController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
+            "train_type", TrainController.TRAIN_TYPE_DEFAULT)) as TrainController.TrainType
     var trainset:MaszynaLegacyDriverTrainset = situation.trainset
-    if train_type == VehicleController.TRAIN_TYPE_ET41 or train_type == VehicleController.TRAIN_TYPE_ET42:
+    if train_type == TrainController.TRAIN_TYPE_ET41 or train_type == TrainController.TRAIN_TYPE_ET42:
         # a unit of two joined for good, with nothing beyond it
         return RailVehicleServer.vehicle_get_coupled(
-                vehicle, MaszynaLegacyDriverTrainset.FRONT_END, VehicleController.COUPLING_ELEMENT_PERMANENT).size() \
+                vehicle, MaszynaLegacyDriverTrainset.FRONT_END, TrainController.COUPLING_ELEMENT_PERMANENT).size() \
                 == trainset.vehicles.size()
     if _dmu:
         return false
@@ -871,7 +871,7 @@ func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 < situation.route.velocity_plus + situation.route.velocity_minus:
         return true
     var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL)
+            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, TrainController.COUPLING_ELEMENT_CONTROL)
     if not controlled.size() == trainset.vehicles.size():
         return false
     for other:RID in trainset.vehicles:
@@ -949,8 +949,8 @@ static func _brake(vehicle:RID) -> VehicleBrake:
 
 ## is_emu() (Driver.h:259)
 static func is_emu(vehicle:RID) -> bool:
-    return int(RailVehicleServer.vehicle_dump_config(vehicle).get("train_type", VehicleController.TRAIN_TYPE_DEFAULT)) \
-            == VehicleController.TRAIN_TYPE_EZT
+    return int(RailVehicleServer.vehicle_dump_config(vehicle).get("train_type", TrainController.TRAIN_TYPE_DEFAULT)) \
+            == TrainController.TRAIN_TYPE_EZT
 
 
 static func _induction(vehicle:RID) -> bool:

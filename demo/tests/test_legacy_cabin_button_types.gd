@@ -100,7 +100,7 @@ func test_an_impulse_pantograph_lever_goes_up_and_back_to_rest():
 
 func _electric_components(impulse:bool) -> Array[VehicleComponent]:
     var engine := MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_number_of_collectors = 2
     var switches := MoverVehicleSwitches.new()
     switches.pantograph_impulse = impulse

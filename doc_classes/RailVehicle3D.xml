@@ -14,7 +14,7 @@
 			</description>
 		</method>
 		<method name="get_controller" qualifiers="const">
-			<return type="VehicleController" />
+			<return type="TrainController" />
 			<description>
 			</description>
 		</method>
@@ -59,6 +59,8 @@
 		</member>
 		<member name="lights" type="Dictionary[String, bool]" setter="set_lights" getter="get_lights" default="{}">
 		</member>
+		<member name="load_model_path" type="NodePath" setter="set_load_model_path" getter="get_load_model_path" default="NodePath(&quot;&quot;)">
+		</member>
 		<member name="low_poly_cabin_emission_energy" type="float" setter="set_low_poly_cabin_emission_energy" getter="get_low_poly_cabin_emission_energy" default="0.2">
 		</member>
 		<member name="low_poly_cabin_emission_fade_time" type="float" setter="set_low_poly_cabin_emission_fade_time" getter="get_low_poly_cabin_emission_fade_time" default="0.2">
@@ -92,4 +94,10 @@
 		<member name="wiper_arm_paths" type="NodePath[]" setter="set_wiper_arm_paths" getter="get_wiper_arm_paths" default="[]">
 		</member>
 	</members>
+	<signals>
+		<signal name="controller_changed">
+			<description>
+			</description>
+		</signal>
+	</signals>
 </class>

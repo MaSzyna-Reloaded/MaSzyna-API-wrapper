@@ -1,11 +1,11 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
-    class VehicleSecuritySystem : public VehicleComponent {
-            GDCLASS(VehicleSecuritySystem, VehicleComponent)
+    class VehicleSecuritySystem : public TrainComponent {
+            GDCLASS(VehicleSecuritySystem, TrainComponent)
 
         public:
             VehicleComponentType::Type get_component_type() const override {

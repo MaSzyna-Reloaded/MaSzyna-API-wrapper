@@ -139,7 +139,7 @@ interface.
   and `BrakeLevelSet()` returns early when `fBrakeCtrlPos` already equals the new position - so a
   vehicle set up a second time kept its FV4a handle at lap and never charged the pipe
   (`FINDINGS.md`, 2026-09-26). Wrapper: `fBrakeCtrlPos` synced before `BrakeLevelSet()` in
-  `MoverVehicleController::initialize_mover_state()`.
+  `MoverTrainController::initialize_mover_state()`.
 * **`BrakeOpModes` defaults to a mode no FIZ asks for.** Wrapper: `BRAKE_OP_MODE_NONE` as the
   default, `pnep` parsed.
 * **The spring brake reads its two valve areas crossed.** FIZ `ValveOnArea` goes into

@@ -52,7 +52,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if engine == null:
         return false
     # an engine running off its battery reckons with the battery's voltage (Driver.cpp:3424-3426)
-    if int(state.get("power_source", VehicleController.POWER_SOURCE_NOT_DEFINED)) == VehicleController.POWER_SOURCE_ACCUMULATOR:
+    if int(state.get("power_source", TrainController.POWER_SOURCE_NOT_DEFINED)) == TrainController.POWER_SOURCE_ACCUMULATOR:
         voltage = float(state.get("battery_voltage", 0.0))
     if situation.trainset.motor_overload_relay_open or state.get("pressure_switch_tripped", false):
         return false
@@ -79,7 +79,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var engines:int = trainset.controlled_engines
     var gravity:float = trainset.gravity_acceleration
     # ET42 uses these variables for another purpose (Driver.cpp:3430)
-    var et42:bool = int(config.get("train_type", 0)) == VehicleController.TRAIN_TYPE_ET42
+    var et42:bool = int(config.get("train_type", 0)) == TrainController.TRAIN_TYPE_ET42
     var engine_voltage:float = absf(float(state.get("engine_voltage", 0.0)))
     var slope:float = HIGH_THRESHOLD_GRAVITY_FLAT if gravity == HIGH_THRESHOLD_GRAVITY else gravity - HIGH_THRESHOLD_GRAVITY
     var use_high_threshold:bool = not et42 and engine.circuit_imax_high > engine.circuit_imax_low \
@@ -92,7 +92,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var branches:int = (relays[main] as RelayListItem).branch_count
     var series_shunting:bool = second > 0 and branches == 1
     var parallel_shunting:bool = second > 0 and branches > 1
-    var collector:bool = int(state.get("power_source", VehicleController.POWER_SOURCE_NOT_DEFINED)) == VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var collector:bool = int(state.get("power_source", TrainController.POWER_SOURCE_NOT_DEFINED)) == TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     var min_voltage:float = float(state.get("current_collector/min_main_switch_voltage", 0.0)) if collector else 0.0
     var max_voltage:float = float(state.get("current_collector/max_voltage", 0.0)) if collector else 0.0
     var series_mode_voltage:float = lerpf(min_voltage, max_voltage, HEAVY_SERIES_VOLTAGE_SHARE if heavy else SERIES_VOLTAGE_SHARE)

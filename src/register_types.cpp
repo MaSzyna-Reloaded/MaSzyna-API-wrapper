@@ -19,10 +19,11 @@
 #include "drivers/DriverDelegate.hpp"
 #include "drivers/DriverSystem.hpp"
 #include "core/MaszynaTranslationServer.hpp"
-#include "core/MoverVehicleController.hpp"
+#include "core/MoverTrainController.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/UserSettings.hpp"
+#include "core/TrainComponent.hpp"
 #include "core/VehicleComponent.hpp"
 #include "core/VehicleComponentModel.hpp"
 #include "core/VehicleComponentType.hpp"
@@ -210,6 +211,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(VehicleModel);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
+        GDREGISTER_ABSTRACT_CLASS(TrainComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponentNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
@@ -229,9 +231,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
         GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
         GDREGISTER_ABSTRACT_CLASS(VehicleController);
-        GDREGISTER_CLASS(MoverVehicleController);
+        GDREGISTER_ABSTRACT_CLASS(TrainController);
+        GDREGISTER_CLASS(MoverTrainController);
         // the vehicles are simulated on the vendored Mover
-        VehiclePhysicsNode::set_controller_implementation(MoverVehicleController::get_class_static());
+        VehiclePhysicsNode::set_controller_implementation(MoverTrainController::get_class_static());
         GDREGISTER_CLASS(Cabin3D);
         GDREGISTER_CLASS(CabinHUDMouseSystem);
         GDREGISTER_CLASS(RailVehicle3D);

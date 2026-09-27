@@ -82,11 +82,11 @@ static func control(
                     if setup & VehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)
         return
     # the regular layout: a lone vehicle, an EMU, an ET41 (Driver.cpp:6243-6246)
-    var train_type:VehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(unit).get(
-            "train_type", VehicleController.TRAIN_TYPE_DEFAULT)) as VehicleController.TrainType
+    var train_type:TrainController.TrainType = int(RailVehicleServer.vehicle_dump_config(unit).get(
+            "train_type", TrainController.TRAIN_TYPE_DEFAULT)) as TrainController.TrainType
     var regular:bool = RailVehicleServer.vehicle_get_coupled(
-            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL).size() == 1 \
-            or emu or train_type == VehicleController.TRAIN_TYPE_ET41
+            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, TrainController.COUPLING_ELEMENT_CONTROL).size() == 1 \
+            or emu or train_type == TrainController.TRAIN_TYPE_ET41
     var collectors:int = engine.power_current_collector_number_of_collectors
     var voltage:float = float(state.get("current_collector/voltage", 0.0))
     var front_voltage:float = float(state.get("current_collector/pantograph_first_voltage", 0.0))

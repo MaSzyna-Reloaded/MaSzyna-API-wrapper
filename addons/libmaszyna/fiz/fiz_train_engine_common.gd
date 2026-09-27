@@ -49,7 +49,7 @@ static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: Fi
 
     # PressureSwitch's absent-key default (true, unless the vehicle is EZT) differs from the
     # compiled default (false).
-    var pressure_switch_default: bool = context.train_type != VehicleController.TRAIN_TYPE_EZT
+    var pressure_switch_default: bool = context.train_type != TrainController.TRAIN_TYPE_EZT
     node.pressure_switch_present = FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default)
 
 

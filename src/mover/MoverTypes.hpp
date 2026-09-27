@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/TrainController.hpp"
 #include "../core/VehicleController.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
@@ -21,15 +22,15 @@ namespace godot {
         return map.at(p_mode);
     }
 
-    inline Maszyna::start_t mover_start_mode(const VehicleController::StartMode p_mode) {
-        static const std::map<VehicleController::StartMode, Maszyna::start_t> map = {
-                {VehicleController::START_MODE_DISABLED, Maszyna::start_t::disabled},
-                {VehicleController::START_MODE_MANUAL, Maszyna::start_t::manual},
-                {VehicleController::START_MODE_AUTOMATIC, Maszyna::start_t::automatic},
-                {VehicleController::START_MODE_MANUAL_WITH_AUTO_FALLBACK, Maszyna::start_t::manualwithautofallback},
-                {VehicleController::START_MODE_CONVERTER, Maszyna::start_t::converter},
-                {VehicleController::START_MODE_BATTERY, Maszyna::start_t::battery},
-                {VehicleController::START_MODE_DIRECTION, Maszyna::start_t::direction},
+    inline Maszyna::start_t mover_start_mode(const TrainController::StartMode p_mode) {
+        static const std::map<TrainController::StartMode, Maszyna::start_t> map = {
+                {TrainController::START_MODE_DISABLED, Maszyna::start_t::disabled},
+                {TrainController::START_MODE_MANUAL, Maszyna::start_t::manual},
+                {TrainController::START_MODE_AUTOMATIC, Maszyna::start_t::automatic},
+                {TrainController::START_MODE_MANUAL_WITH_AUTO_FALLBACK, Maszyna::start_t::manualwithautofallback},
+                {TrainController::START_MODE_CONVERTER, Maszyna::start_t::converter},
+                {TrainController::START_MODE_BATTERY, Maszyna::start_t::battery},
+                {TrainController::START_MODE_DIRECTION, Maszyna::start_t::direction},
         };
         return map.at(p_mode);
     }
@@ -49,43 +50,43 @@ namespace godot {
         return map.at(p_type);
     }
 
-    inline Maszyna::TPowerSource mover_power_source(const VehicleController::TrainPowerSource p_source) {
-        static const std::map<VehicleController::TrainPowerSource, Maszyna::TPowerSource> map = {
-                {VehicleController::POWER_SOURCE_NOT_DEFINED, Maszyna::TPowerSource::NotDefined},
-                {VehicleController::POWER_SOURCE_INTERNAL, Maszyna::TPowerSource::InternalSource},
-                {VehicleController::POWER_SOURCE_TRANSDUCER, Maszyna::TPowerSource::Transducer},
-                {VehicleController::POWER_SOURCE_GENERATOR, Maszyna::TPowerSource::Generator},
-                {VehicleController::POWER_SOURCE_ACCUMULATOR, Maszyna::TPowerSource::Accumulator},
-                {VehicleController::POWER_SOURCE_CURRENTCOLLECTOR, Maszyna::TPowerSource::CurrentCollector},
-                {VehicleController::POWER_SOURCE_POWERCABLE, Maszyna::TPowerSource::PowerCable},
-                {VehicleController::POWER_SOURCE_HEATER, Maszyna::TPowerSource::Heater},
-                {VehicleController::POWER_SOURCE_MAIN, Maszyna::TPowerSource::Main},
+    inline Maszyna::TPowerSource mover_power_source(const TrainController::TrainPowerSource p_source) {
+        static const std::map<TrainController::TrainPowerSource, Maszyna::TPowerSource> map = {
+                {TrainController::POWER_SOURCE_NOT_DEFINED, Maszyna::TPowerSource::NotDefined},
+                {TrainController::POWER_SOURCE_INTERNAL, Maszyna::TPowerSource::InternalSource},
+                {TrainController::POWER_SOURCE_TRANSDUCER, Maszyna::TPowerSource::Transducer},
+                {TrainController::POWER_SOURCE_GENERATOR, Maszyna::TPowerSource::Generator},
+                {TrainController::POWER_SOURCE_ACCUMULATOR, Maszyna::TPowerSource::Accumulator},
+                {TrainController::POWER_SOURCE_CURRENTCOLLECTOR, Maszyna::TPowerSource::CurrentCollector},
+                {TrainController::POWER_SOURCE_POWERCABLE, Maszyna::TPowerSource::PowerCable},
+                {TrainController::POWER_SOURCE_HEATER, Maszyna::TPowerSource::Heater},
+                {TrainController::POWER_SOURCE_MAIN, Maszyna::TPowerSource::Main},
         };
         return map.at(p_source);
     }
 
-    inline VehicleController::TrainPowerSource power_source_of_mover(const Maszyna::TPowerSource p_source) {
-        static const std::map<Maszyna::TPowerSource, VehicleController::TrainPowerSource> map = {
-                {Maszyna::TPowerSource::NotDefined, VehicleController::POWER_SOURCE_NOT_DEFINED},
-                {Maszyna::TPowerSource::InternalSource, VehicleController::POWER_SOURCE_INTERNAL},
-                {Maszyna::TPowerSource::Transducer, VehicleController::POWER_SOURCE_TRANSDUCER},
-                {Maszyna::TPowerSource::Generator, VehicleController::POWER_SOURCE_GENERATOR},
-                {Maszyna::TPowerSource::Accumulator, VehicleController::POWER_SOURCE_ACCUMULATOR},
-                {Maszyna::TPowerSource::CurrentCollector, VehicleController::POWER_SOURCE_CURRENTCOLLECTOR},
-                {Maszyna::TPowerSource::PowerCable, VehicleController::POWER_SOURCE_POWERCABLE},
-                {Maszyna::TPowerSource::Heater, VehicleController::POWER_SOURCE_HEATER},
-                {Maszyna::TPowerSource::Main, VehicleController::POWER_SOURCE_MAIN},
+    inline TrainController::TrainPowerSource power_source_of_mover(const Maszyna::TPowerSource p_source) {
+        static const std::map<Maszyna::TPowerSource, TrainController::TrainPowerSource> map = {
+                {Maszyna::TPowerSource::NotDefined, TrainController::POWER_SOURCE_NOT_DEFINED},
+                {Maszyna::TPowerSource::InternalSource, TrainController::POWER_SOURCE_INTERNAL},
+                {Maszyna::TPowerSource::Transducer, TrainController::POWER_SOURCE_TRANSDUCER},
+                {Maszyna::TPowerSource::Generator, TrainController::POWER_SOURCE_GENERATOR},
+                {Maszyna::TPowerSource::Accumulator, TrainController::POWER_SOURCE_ACCUMULATOR},
+                {Maszyna::TPowerSource::CurrentCollector, TrainController::POWER_SOURCE_CURRENTCOLLECTOR},
+                {Maszyna::TPowerSource::PowerCable, TrainController::POWER_SOURCE_POWERCABLE},
+                {Maszyna::TPowerSource::Heater, TrainController::POWER_SOURCE_HEATER},
+                {Maszyna::TPowerSource::Main, TrainController::POWER_SOURCE_MAIN},
         };
         return map.at(p_source);
     }
 
-    inline Maszyna::TPowerType mover_power_type(const VehicleController::TrainPowerType p_type) {
-        static const std::map<VehicleController::TrainPowerType, Maszyna::TPowerType> map = {
-                {VehicleController::POWER_TYPE_NONE, Maszyna::TPowerType::NoPower},
-                {VehicleController::POWER_TYPE_BIO, Maszyna::TPowerType::BioPower},
-                {VehicleController::POWER_TYPE_MECH, Maszyna::TPowerType::MechPower},
-                {VehicleController::POWER_TYPE_ELECTRIC, Maszyna::TPowerType::ElectricPower},
-                {VehicleController::POWER_TYPE_STEAM, Maszyna::TPowerType::SteamPower},
+    inline Maszyna::TPowerType mover_power_type(const TrainController::TrainPowerType p_type) {
+        static const std::map<TrainController::TrainPowerType, Maszyna::TPowerType> map = {
+                {TrainController::POWER_TYPE_NONE, Maszyna::TPowerType::NoPower},
+                {TrainController::POWER_TYPE_BIO, Maszyna::TPowerType::BioPower},
+                {TrainController::POWER_TYPE_MECH, Maszyna::TPowerType::MechPower},
+                {TrainController::POWER_TYPE_ELECTRIC, Maszyna::TPowerType::ElectricPower},
+                {TrainController::POWER_TYPE_STEAM, Maszyna::TPowerType::SteamPower},
         };
         return map.at(p_type);
     }

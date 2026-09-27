@@ -7,7 +7,7 @@ func before_each():
     train = build_vehicle("TestTrain")
 
     engine = MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
+    engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
     train.add_component(engine)
     await wait_idle_frames(2)
 
@@ -31,7 +31,7 @@ func _pantograph_vehicle(master_valve_start:VehicleEngine.StartMode) -> VehicleC
     var vehicle:VehicleController = build_vehicle("TestPantographValves")
     vehicle.battery_voltage = 110.0
     var electric := MoverVehicleElectricSeriesEngine.new()
-    electric.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    electric.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     electric.power_current_collector_number_of_collectors = 1
     electric.cntrl_pantographs_valve_start_mode = master_valve_start
     vehicle.add_component(electric)

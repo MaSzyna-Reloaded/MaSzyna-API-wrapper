@@ -71,13 +71,13 @@ const CONNECT_DISTANCE:float = 20.0
 const ATTACH_DISTANCE:float = 2.0
 ## The coupling elements a `Shunt` asks for, by the original's bits (coupling::, MOVER.h:159-171);
 ## the high voltage and the power lines have no element a shunter joins
-const COUPLING_BITS:Dictionary[int, VehicleController.CouplingElement] = {
-    1: VehicleController.COUPLING_ELEMENT_COUPLER,
-    2: VehicleController.COUPLING_ELEMENT_BRAKEHOSE,
-    4: VehicleController.COUPLING_ELEMENT_CONTROL,
-    16: VehicleController.COUPLING_ELEMENT_GANGWAY,
-    32: VehicleController.COUPLING_ELEMENT_MAINHOSE,
-    64: VehicleController.COUPLING_ELEMENT_HEATING,
+const COUPLING_BITS:Dictionary[int, TrainController.CouplingElement] = {
+    1: TrainController.COUPLING_ELEMENT_COUPLER,
+    2: TrainController.COUPLING_ELEMENT_BRAKEHOSE,
+    4: TrainController.COUPLING_ELEMENT_CONTROL,
+    16: TrainController.COUPLING_ELEMENT_GANGWAY,
+    32: TrainController.COUPLING_ELEMENT_MAINHOSE,
+    64: TrainController.COUPLING_ELEMENT_HEATING,
 }
 
 
@@ -574,7 +574,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
             while index >= 0:
                 var current:RID = vehicles[index]
                 end = _end_towards_front(state.trainset, index)
-                if _is_coupled_by(current, end, VehicleController.COUPLING_ELEMENT_PERMANENT):
+                if _is_coupled_by(current, end, TrainController.COUPLING_ELEMENT_PERMANENT):
                     count += 1
                 if not current == vehicle:
                     # released, to be pressed together
@@ -590,7 +590,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
             else:
                 # refused until the buffers are pressed enough: it presses on
                 RailVehicleServer.vehicle_send_command(decoupled, "coupler_disconnect", end)
-                if not _is_coupled_by(decoupled, end, VehicleController.COUPLING_ELEMENT_COUPLER):
+                if not _is_coupled_by(decoupled, end, TrainController.COUPLING_ELEMENT_COUPLER):
                     state.vehicle_count = -2
         if not state.pressing:
             if state.direction_backup == 0:
@@ -715,9 +715,9 @@ func _take_shunt(driver:RID, state:DriverState, loose:bool, vehicles:float, coup
     elif vehicles >= 0.0:
         var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
         var behind:bool = _is_coupled_by(
-                vehicle, REAR_END if state.direction > 0 else FRONT_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+                vehicle, REAR_END if state.direction > 0 else FRONT_END, TrainController.COUPLING_ELEMENT_COUPLER)
         var ahead:bool = _is_coupled_by(
-                vehicle, FRONT_END if state.direction > 0 else REAR_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+                vehicle, FRONT_END if state.direction > 0 else REAR_END, TrainController.COUPLING_ELEMENT_COUPLER)
         if not behind and ahead:
             # the vehicles are in front: turn first, then leave them
             state.direction_order = -state.direction
@@ -751,7 +751,7 @@ func _direction_towards(driver:RID, position:Vector3, value:float) -> int:
 
 ## Whether something is joined at the vehicle's end by `element` - the walk out through that end
 ## starts beyond it
-static func _is_coupled_by(vehicle:RID, end:int, element:VehicleController.CouplingElement) -> bool:
+static func _is_coupled_by(vehicle:RID, end:int, element:TrainController.CouplingElement) -> bool:
     var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, end, element)
     return not coupled.is_empty() and not coupled[0] == vehicle
 
@@ -770,7 +770,7 @@ static func _end_towards_front(trainset:MaszynaLegacyDriverTrainset, index:int) 
         return FRONT_END if trainset.front_direction > 0 else REAR_END
     var vehicle:RID = trainset.vehicles[index]
     var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+            vehicle, FRONT_END, TrainController.COUPLING_ELEMENT_COUPLER)
     var position:int = coupled.find(vehicle)
     # beyond the front end come first
     return FRONT_END if position > 0 and coupled[position - 1] == trainset.vehicles[index - 1] else REAR_END

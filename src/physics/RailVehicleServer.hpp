@@ -1,6 +1,6 @@
 #pragma once
 #include "../core/VehicleComponentType.hpp"
-#include "../core/VehicleController.hpp"
+#include "../core/TrainController.hpp"
 #include "../radio/VehicleRadio.hpp"
 
 #include "../tracks/TrackManager.hpp"
@@ -136,7 +136,7 @@ namespace godot {
             TypedArray<VehicleController> stepped_controllers;
             HashMap<RID, Vector<RID>> track_vehicles;
 
-            VehicleController *_get_controller(const VehiclePlacement &p_placement) const;
+            TrainController *_get_controller(const VehiclePlacement &p_placement) const;
             /* The controller's own events, relayed under the handle, so whoever follows a vehicle
              * never holds its controller - connected when a controller is attached, disconnected
              * when it is replaced or the vehicle is freed */
@@ -158,7 +158,7 @@ namespace godot {
             void _refresh_stepping();
             void _set_stepping(bool p_stepping);
             void _on_simulation_advanced(double p_seconds);
-            void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
+            void _clear_neighbour(TrainController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
                     const RID &p_vehicle, const VehiclePlacement &p_placement, int p_end, double p_scan_range,
@@ -215,7 +215,7 @@ namespace godot {
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
             TypedArray<RID>
-            vehicle_get_coupled(const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
+            vehicle_get_coupled(const RID &p_vehicle, int p_end, TrainController::CouplingElement p_element) const;
             /* The vehicle a cab's controls drive (TDynamicObject::FindPowered(), DynObj.cpp:7772): this
              * one if it has power, else the nearest with power joined to it - within an EMU's or DMU's
              * unit, else by the control line; this one when there is none */

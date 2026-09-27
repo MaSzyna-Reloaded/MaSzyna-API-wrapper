@@ -258,15 +258,6 @@
 				Returns the system's sources, in the order they were added.
 			</description>
 		</method>
-		<method name="system_publish_event">
-			<return type="void" />
-			<param index="0" name="system" type="RID" />
-			<param index="1" name="event" type="StringName" />
-			<param index="2" name="arguments" type="Dictionary" default="{}" />
-			<description>
-				What a delegate announces - an aspect, a speed, anything the vocabulary of its system has. Emits [signal system_event_published]; the server does nothing else with it.
-			</description>
-		</method>
 		<method name="system_remove_semaphore">
 			<return type="void" />
 			<param index="0" name="system" type="RID" />
@@ -335,14 +326,6 @@
 			<param index="1" name="name" type="StringName" />
 			<description>
 				Emitted when the semaphore's [param name] is unregistered - on a rename, or when the semaphore is freed.
-			</description>
-		</signal>
-		<signal name="system_event_published">
-			<param index="0" name="system" type="RID" />
-			<param index="1" name="event" type="StringName" />
-			<param index="2" name="arguments" type="Dictionary" />
-			<description>
-				Emitted when the system's delegate publishes the [param event] ([method system_publish_event]).
 			</description>
 		</signal>
 		<signal name="system_semaphore_added">

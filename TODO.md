@@ -573,7 +573,7 @@ semaphore's kind is made of the `lights` events aimed at it, and the original's
   Scenario events).
 * **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
   `getvalues` - is read by the driver's speed table (`MaszynaLegacyDriverRoute`); a semaphore
-  delegate still only publishes its aspect with `system_publish_event`.
+  delegate has only the lights, nothing it shows reaches a train.
 * **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the semaphore
   API has no light that follows the daylight; the legacy kind factory warns and keeps the light.
 * **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).

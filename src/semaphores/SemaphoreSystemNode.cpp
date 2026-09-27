@@ -3,8 +3,6 @@
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 
 namespace godot {
-    const char *SemaphoreSystemNode::event_published_signal = "event_published";
-
     void SemaphoreSystemNode::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_delegate", "delegate"), &SemaphoreSystemNode::set_delegate);
         ClassDB::bind_method(D_METHOD("get_delegate"), &SemaphoreSystemNode::get_delegate);
@@ -21,10 +19,6 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::PACKED_STRING_ARRAY, "semaphore_names"), "set_semaphore_names",
                 "get_semaphore_names");
-
-        ADD_SIGNAL(MethodInfo(
-                event_published_signal, PropertyInfo(Variant::STRING_NAME, "event"),
-                PropertyInfo(Variant::DICTIONARY, "arguments")));
     }
 
     void SemaphoreSystemNode::_notification(const int p_what) {
@@ -40,9 +34,6 @@ namespace godot {
                 server->connect(
                         SemaphoreServer::semaphore_registered_signal,
                         callable_mp(this, &SemaphoreSystemNode::_on_semaphore_registered));
-                server->connect(
-                        SemaphoreServer::system_event_published_signal,
-                        callable_mp(this, &SemaphoreSystemNode::_on_system_event_published));
                 for (const String &name: semaphore_names) {
                     if (const RID semaphore = server->semaphore_get_rid_by_name(name); semaphore.is_valid()) {
                         server->system_add_semaphore(system, semaphore);
@@ -53,9 +44,6 @@ namespace godot {
                 server->disconnect(
                         SemaphoreServer::semaphore_registered_signal,
                         callable_mp(this, &SemaphoreSystemNode::_on_semaphore_registered));
-                server->disconnect(
-                        SemaphoreServer::system_event_published_signal,
-                        callable_mp(this, &SemaphoreSystemNode::_on_system_event_published));
                 server->system_free(system);
                 system = RID();
             } break;
@@ -76,13 +64,6 @@ namespace godot {
             return; // renamed within the list
         }
         server->system_add_semaphore(system, p_semaphore);
-    }
-
-    void SemaphoreSystemNode::_on_system_event_published(
-            const RID &p_system, const StringName &p_event, const Dictionary &p_arguments) {
-        if (p_system == system) {
-            emit_signal(event_published_signal, p_event, p_arguments);
-        }
     }
 
     void SemaphoreSystemNode::set_delegate(const Ref<SemaphoreSystemDelegate> &p_delegate) {

@@ -131,6 +131,8 @@ anything. Open work belongs in `TODO.md`.
   player starts it afresh. *(09-27 the AI stood at a clear signal)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
   the driver exists. *(09-27 the AI drove the cab the player started in)*
+* Whoever attaches something shared per vehicle takes away only what it attached - another owner
+  may have replaced it meanwhile. *(09-27 the AI stood still in the cab the player left)*
 * Simulated time has one clock, `SimulationServer`'s: read `get_simulation_time()` or take
   `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
   clocks)*

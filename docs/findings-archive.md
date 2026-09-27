@@ -1375,3 +1375,18 @@ lighting or the consist.
   `vehicle_is_control_active()` reads it, so a driver attached later starts not driving.
 * **Rule:** a fact about a vehicle is kept per vehicle, never on an object that may not exist yet
   when the fact is set - otherwise the order of creation decides whether it is lost.
+
+
+## 2026-09-27 - the AI stood still in the cab the player left
+
+* **Symptom:** Stary Jawor, the SU46 the player starts in: once the player left the cab, its AI
+  driver did not move it at all.
+* **Cause:** the player enters before `SceneryInstancer._build_drivers()`. The cab
+  (`MaszynaDynamicTrainCabin._on_vehicle_rid_changed()`) found no cab logic and attached its own,
+  keeping only the vehicle's RID; `_build_drivers()` then replaced it with the driver's. The cab
+  leaving the tree detached "the vehicle's" logic - the driver's - so every `CabinSystem.act()` of
+  the AI found no handler ("Unknown cabin control") and it never got past `PREPARE_ENGINE`.
+* **Fix:** the cab keeps the logic it attached and detaches it only while it is still the one
+  attached (`test_a_cab_leaving_keeps_the_logic_that_replaced_its_own`).
+* **Rule:** whoever attaches something shared per vehicle takes away only what it attached -
+  another owner may have replaced it meanwhile.

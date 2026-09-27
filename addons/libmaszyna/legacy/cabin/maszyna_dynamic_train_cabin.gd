@@ -42,9 +42,10 @@ var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
 ## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
 var _occluders:Array[RID] = []
-## The vehicle whose cab logic this cab attached - and takes away when the player leaves; the AI's
-## stays with its vehicle
+## The cab logic this cab attached and its vehicle - taken away when the player leaves, unless the
+## AI's replaced it meanwhile (SceneryInstancer._build_drivers()); the AI's stays with its vehicle
 var _cab_logic_vehicle_rid:RID
+var _cab_logic:LegacyCabinLogic
 ## The cab radio's loudspeaker
 var _radio_player:SfxPlayer
 
@@ -68,14 +69,16 @@ func _ready() -> void:
 func _on_vehicle_rid_changed(_vehicle_rid:RID) -> void:
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
-    if _cab_logic_vehicle_rid:
+    if _cab_logic and CabinSystem.vehicle_get_cab_logic(_cab_logic_vehicle_rid) == _cab_logic:
         CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
-        _cab_logic_vehicle_rid = RID()
+    _cab_logic_vehicle_rid = RID()
+    _cab_logic = null
     # the cab logic of the original engine is the vehicle's, not this cab's: an AI-driven vehicle
     # already has it (SceneryInstancer._build_drivers())
     if get_vehicle_rid() and mmd_filename and not CabinSystem.vehicle_get_cab_logic(get_vehicle_rid()):
-        CabinSystem.vehicle_attach_cab_logic(get_vehicle_rid(), LegacyCabinLogic.from_mmd(data_path, mmd_filename))
+        _cab_logic = LegacyCabinLogic.from_mmd(data_path, mmd_filename)
         _cab_logic_vehicle_rid = get_vehicle_rid()
+        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, _cab_logic)
     _rebuild_generated()
 
 
@@ -85,9 +88,10 @@ func _exit_tree() -> void:
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    if _cab_logic_vehicle_rid:
+    if _cab_logic and CabinSystem.vehicle_get_cab_logic(_cab_logic_vehicle_rid) == _cab_logic:
         CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
-        _cab_logic_vehicle_rid = RID()
+    _cab_logic_vehicle_rid = RID()
+    _cab_logic = null
     set_vehicle_rid(RID())
     _free_occluders()
 

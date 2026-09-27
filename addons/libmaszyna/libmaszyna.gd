@@ -24,6 +24,7 @@ func _enable_plugin():
     add_autoload_singleton("MaszynaRailVehicle3DManager", "res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d_manager.gd")
     add_autoload_singleton("MaszynaVehicleProfileManager", "res://addons/libmaszyna/legacy/vehicle/maszyna_vehicle_profile_manager.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
+    add_autoload_singleton("TranscriptSystem", "res://addons/libmaszyna/sound/transcript_system.gd")
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("CabinSystem", "res://addons/libmaszyna/cabin/cabin_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/legacy/fiz/fiz_resource_loader_registrar.gd")
@@ -96,6 +97,7 @@ func _disable_plugin():
 
     remove_autoload_singleton("TrainSoundSystem")
     remove_autoload_singleton("CabinSystem")
+    remove_autoload_singleton("TranscriptSystem")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("MaszynaVehicleProfileManager")

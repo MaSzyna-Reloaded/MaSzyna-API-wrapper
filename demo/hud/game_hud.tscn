@@ -18,6 +18,7 @@
 [ext_resource type="Script" path="res://hud/game_hud.gd" id="game_hud"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
 [ext_resource type="PackedScene" path="res://addons/libmaszyna/cabin/cabin_control_tooltip.tscn" id="23_cabin_tooltip"]
+[ext_resource type="PackedScene" path="res://hud/transcripts_panel.tscn" id="24_transcripts"]
 
 [sub_resource type="Theme" id="Theme_control_windows"]
 default_font_size = 12
@@ -58,6 +59,16 @@ prefer_global_menu = false
 
 [node name="PopupMenu" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
 title = "Controls"
+
+[node name="View" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar"]
+unique_name_in_owner = true
+title = "View"
+hide_on_checkable_item_selection = false
+item_count = 1
+item_0/text = "Transcripts"
+item_0/checkable = 1
+item_0/checked = true
+item_0/id = 0
 
 [node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer" unique_id=1886226088]
 clip_contents = true
@@ -331,5 +342,10 @@ layout_mode = 2
 [node name="CabinControlTooltip" parent="." instance=ExtResource("23_cabin_tooltip")]
 layout_mode = 0
 
+[node name="TranscriptsPanel" parent="." instance=ExtResource("24_transcripts")]
+unique_name_in_owner = true
+layout_mode = 1
+
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]

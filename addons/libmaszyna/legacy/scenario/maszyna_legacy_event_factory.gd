@@ -149,6 +149,7 @@ static func build(
     # a scenery sound is a player of its own with a bank of its one file, played once or looped
     var players_by_name:Dictionary[String, SfxPlayer3D] = {}
     var reaches_by_name:Dictionary[String, float] = {}
+    var transcripts_by_name:Dictionary[String, Transcript] = {}
     for sound:MaszynaSoundData in sounds:
         # heard as far as a vehicle's sound of the same range (sound_source::range(), sound.cpp:364-389)
         var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
@@ -176,6 +177,7 @@ static func build(
         player.global_position = sound.position
         players_by_name[sound.name.to_lower()] = player
         reaches_by_name[sound.name.to_lower()] = sound.range_max
+        transcripts_by_name[sound.name.to_lower()] = MaszynaLegacySoundCaption.from_sound_file(sound.file)
 
     # the isolated sections, named by a track's `isolated`, an `isolated` block or an `area`
     var sections:Dictionary[String, RID] = {}
@@ -333,13 +335,16 @@ static func build(
             "sound":
                 var players:Array[SfxPlayer3D] = []
                 var reaches:PackedFloat64Array = []
+                var transcripts:Array[Transcript] = []
                 for target:String in event.targets:
                     if players_by_name.has(target):
                         players.append(players_by_name[target])
                         reaches.append(reaches_by_name[target])
+                        transcripts.append(transcripts_by_name[target])
                 var action:MaszynaLegacySoundAction = MaszynaLegacySoundAction.new()
                 action.players = players
                 action.reaches = reaches
+                action.transcripts = transcripts
                 action.mode = SOUND_MODES.get(int(event.parameters[0]), MaszynaLegacySoundAction.Mode.STOP)
                 # the optional radio channel it is a message on (Event.cpp:1382-1386)
                 if event.parameters.size() > 1 and event.parameters[1].is_valid_int():

@@ -32,6 +32,10 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
 const RADIO_MESSAGE:StringName = &"radio_message"
 ## The quietest gain a radio turned all the way down plays at, above linear_to_db()'s -inf
 const MUTED_GAIN:float = 0.0001
+## What the driver reads when a Radio-Stop brakes the vehicle, and for how long [s]
+## (TDynamicObject::RadioStop(), DynObj.cpp:7242)
+const RADIO_STOP_TRANSCRIPT:String = "!! RADIO-STOP !!"
+const RADIO_STOP_TRANSCRIPT_SECONDS:float = 10.0
 ## Distance of the cab light below the found ceiling lamp - inside the lamp's shadow casting mesh
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
@@ -56,6 +60,7 @@ func _ready() -> void:
     _radio_player.name = "RadioSfxPlayer"
     add_child(_radio_player)
     CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
+    RailVehicleServer.vehicle_radio_stop_received.connect(_on_vehicle_radio_stop_received)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
     # placed in a scene rather than built by RailVehicle3D.enter_cabin(), which names it itself.
     if controller_path:
@@ -87,6 +92,7 @@ func _exit_tree() -> void:
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
+    RailVehicleServer.vehicle_radio_stop_received.disconnect(_on_vehicle_radio_stop_received)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     if _cab_logic and CabinSystem.vehicle_get_cab_logic(_cab_logic_vehicle_rid) == _cab_logic:
         CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
@@ -99,8 +105,11 @@ func _exit_tree() -> void:
 ## TTrain::radio_message() (Train.cpp:11034-11049): a message within reach of the vehicle, heard
 ## on its radio switched on, powered and tuned to the message's channel, at the radio's volume.
 ## The original plays the others muted and raises them when the radio is tuned mid-message
-## (update_sounds_radio(), Train.cpp:10251-10268); here they are not played (TODO.md).
-func _on_radio_message_sent(message:SfxEvent, channel:int, position:Vector3, reach:float) -> void:
+## (update_sounds_radio(), Train.cpp:10251-10268); here they are not played (TODO.md). Its
+## transcript is shown when it is heard at all (sound_source::update_counter(), sound.cpp:955).
+func _on_radio_message_sent(
+    message:SfxEvent, transcript:Transcript, channel:int, position:Vector3, reach:float
+) -> void:
     var vehicle:RID = get_vehicle_rid()
     if not vehicle or message == null:
         return
@@ -119,6 +128,15 @@ func _on_radio_message_sent(message:SfxEvent, channel:int, position:Vector3, rea
     bank.events = events
     _radio_player.bank = bank
     _radio_player.play(RADIO_MESSAGE)
+    if transcript and float(state.get("radio_volume", 0.0)) > 0.0:
+        TranscriptSystem.add(transcript)
+
+
+## The driver sitting in this cab reads it when a Radio-Stop brakes the vehicle
+## (TDynamicObject::RadioStop(), DynObj.cpp:7242 - for a vehicle a human drives)
+func _on_vehicle_radio_stop_received(vehicle:RID) -> void:
+    if vehicle == get_vehicle_rid():
+        TranscriptSystem.add_line(RADIO_STOP_TRANSCRIPT, 0.0, RADIO_STOP_TRANSCRIPT_SECONDS)
 
 
 # Keys of controls no widget of this cab takes - the catalog controls the cab does not model and

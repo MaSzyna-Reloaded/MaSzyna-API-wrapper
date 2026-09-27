@@ -55,14 +55,15 @@ namespace godot {
     // Original engine: TDynamicObject::RadioStop (DynObj.cpp:7229) - a vehicle with somebody
     // driving it, Radio-Stop fitted and the radio on brakes in emergency; the driver's
     // "Emergency_brake" command lands in RadiostopSwitch (Driver.cpp:4487, Mover.cpp:9462)
-    void MoverRailVehicleRadio::radio_stop_receive() {
+    bool MoverRailVehicleRadio::radio_stop_receive() {
         TMoverParameters *mover = get_mover();
         const VehicleController *controller = get_controller();
-        ASSERT_MOVER(mover);
-        if (controller == nullptr || controller->get_driver_type() == VehicleController::DRIVER_NOBODY ||
+        if (mover == nullptr || controller == nullptr ||
+            controller->get_driver_type() == VehicleController::DRIVER_NOBODY ||
             !mover->SecuritySystem.radiostop_available() || !mover->Radio) {
-            return;
+            return false;
         }
         mover->RadiostopSwitch(true);
+        return true;
     }
 } // namespace godot

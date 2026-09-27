@@ -41,6 +41,12 @@ msgstr "Složka s daty hry MaSzyna není nastavena nebo je neplatná."
 msgid "Controls"
 msgstr "Ovládání"
 
+msgid "View"
+msgstr "Zobrazení"
+
+msgid "Transcripts"
+msgstr "Přepisy"
+
 msgid "Toggle controls"
 msgstr "Přepnout ovládání"
 

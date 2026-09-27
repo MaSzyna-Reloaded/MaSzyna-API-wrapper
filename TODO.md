@@ -636,6 +636,7 @@ closes both level crossings). Left:
   `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a radio message (a `sound` event with a channel)
   tuned in or the radio switched on mid-message is not raised, as `update_sounds_radio()` does -
   it is played only when heard at its start, and at the cab's radio volume of that moment.
+  Its transcript likewise shows only when it is heard at its start.
 * **Scenery sounds** use the player's defaults for everything but `max_distance` (the node's
   range); an ambient one (range under -1) is on the listener, 0.4 as loud and cut at 1.25 of its
   range - the original fades it out between the range and that, and starts it only within

@@ -22,6 +22,9 @@ const LOOP_EVENT:StringName = &"loop"
 var players:Array[SfxPlayer3D] = []
 ## Each player's range [m] (the scenery node's rmax): a radio message reaches only as far
 var reaches:PackedFloat64Array = []
+## Each player's transcript, null for a sound with none, shown when the sound starts as heard
+## (sound_source::update_counter(), sound.cpp:950-960)
+var transcripts:Array[Transcript] = []
 @export var mode:Mode = Mode.PLAY
 ## The radio channel the sound is a message on, 0 for none
 @export var radio_channel:int = 0
@@ -34,7 +37,8 @@ func _run(_event:RID, _activator:RID) -> void:
             continue
         if mode == Mode.PLAY and radio_channel > 0:
             CabinSystem.send_radio_message(
-                    player.bank.get_event(PLAY_EVENT), radio_channel, player.global_position, reaches[index])
+                    player.bank.get_event(PLAY_EVENT), transcripts[index], radio_channel, player.global_position,
+                    reaches[index])
             continue
         if mode == Mode.STOP:
             player.stop()
@@ -44,3 +48,5 @@ func _run(_event:RID, _activator:RID) -> void:
         if player.is_playing(PLAY_EVENT) or player.is_playing(LOOP_EVENT):
             continue
         player.play(PLAY_EVENT if mode == Mode.PLAY else LOOP_EVENT)
+        if transcripts[index]:
+            TranscriptSystem.add(transcripts[index])

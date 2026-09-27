@@ -41,6 +41,12 @@ msgstr "A MaSzyna játékmappa nincs beállítva vagy érvénytelen."
 msgid "Controls"
 msgstr "Kezelőszervek"
 
+msgid "View"
+msgstr "Nézet"
+
+msgid "Transcripts"
+msgstr "Átiratok"
+
 msgid "Toggle controls"
 msgstr "Kezelőszervek be/ki"
 

@@ -41,6 +41,12 @@ msgstr "未设置 MaSzyna 游戏数据文件夹或其无效。"
 msgid "Controls"
 msgstr "控制"
 
+msgid "View"
+msgstr "视图"
+
+msgid "Transcripts"
+msgstr "字幕"
+
 msgid "Toggle controls"
 msgstr "切换控制"
 

@@ -95,14 +95,17 @@ static func open_line_breaker(vehicle:RID, cab:int) -> void:
 
 
 ## mastercontrollersetzerospeed (ZeroSpeed(), Driver.cpp:3683): both controllers back to no power,
-## a step at a time as the handle goes; the positions bound the steps.
+## a step at a time as the handle goes; the positions bound the steps. The master controller stops
+## at its no-power position (DecMainCtrl(MainCtrlPowerPos()), Driver.cpp:3712): below it a universal
+## controller brakes (SM42 6Dg, UCList with IntegratedLocBrake).
 static func set_zero_speed(vehicle:RID, cab:int) -> void:
     # the controllers are the driven engine's (mvControlling)
     var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
     for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_second_position", 0)):
         CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
     var controller:StringName = master_controller(vehicle, cab)
-    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)):
+    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)) \
+            - int(CabinSystem.vehicle_state_value(controlled, "controller_main_no_power_position", 0)):
         CabinSystem.act(vehicle, cab, controller, &"decrease")
 
 

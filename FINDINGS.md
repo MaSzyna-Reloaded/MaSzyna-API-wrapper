@@ -92,6 +92,10 @@ anything. Open work belongs in `TODO.md`.
 * A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
   `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 
+* A shadow's normal bias is texel x `shadow_normal_bias` per cascade: compute it against the
+  thinnest caster before tuning; two shadowed directional lights halve the atlas. *(09-27 thin
+  station objects lost their sun shadows)*
+
 ## State, ownership, events
 * A geometric value nobody publishes reads as zero, not as missing, and zero makes two things
   identical - grep for assignments to an exported property before trusting it is filled, and treat

@@ -69,16 +69,24 @@ namespace godot {
             /// A lamp must not shadow its own light. With one light per arm each arm was lit by its
             /// neighbours; economy mode leaves a single light in the middle, below which the arms
             /// and the pole throw long dark spokes right across the pool. The geometry of a model
-            /// that carries a light goes on this layer as well as its own, and every scenery light
-            /// leaves the layer out of its shadow caster mask - so the lamp still renders, is still
-            /// lit, and still casts a shadow from the sun, just not into its own light.
+            /// that carries a light goes on this layer alone (a layer kept beside it would still
+            /// match the caster mask), and every scenery light leaves the layer out of its shadow
+            /// caster mask - so the lamp still renders, is still lit, and still casts a shadow from
+            /// the sun, just not into its own light.
             static constexpr uint32_t SCENERY_LIGHT_OWNER_LAYER = 1u << 19;
             /// A light created through RenderingServer starts with the server's own parameters,
-            /// not with the ones SpotLight3D/OmniLight3D set in their constructors - without these
-            /// the ground self-shadows into stripes. Same values a node would use.
-            static constexpr float SPOT_LIGHT_SHADOW_BIAS = 0.03;
+            /// not with the ones SpotLight3D/OmniLight3D set in their constructors - they have to
+            /// be set, or the ground self-shadows into stripes. A node's values (spot 0.03, normal
+            /// 1.0) are not enough for a street lamp: its cone reaches ~60 degrees off the axis
+            /// and its map is 128-256 px, so a texel on the ground is 0.0135-0.027 x the distance.
+            /// The depth bias (applied before the perspective divide, ~20 x bias x distance of
+            /// depth) covers the ground near the axis at 128 px; the normal bias, which Godot
+            /// scales by 10 / map size and by 1 - cos(angle), needs ~2.5 at 30-45 degrees off the
+            /// axis to cover one texel of slope plus the PCF kernel, so 3.0 (see FINDINGS.md,
+            /// 2026-09-27 thin station objects).
+            static constexpr float SPOT_LIGHT_SHADOW_BIAS = 0.06;
             static constexpr float OMNI_LIGHT_SHADOW_BIAS = 0.1;
-            static constexpr float LIGHT_SHADOW_NORMAL_BIAS = 1.0;
+            static constexpr float LIGHT_SHADOW_NORMAL_BIAS = 3.0;
             static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/scenery/lights/energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_ENERGY = 1.0;
             /// How much of the lamp's own colour is mixed into a white light. A sodium lamp's

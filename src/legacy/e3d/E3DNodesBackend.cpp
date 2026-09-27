@@ -76,6 +76,13 @@ namespace godot {
             _set_node_visible(light->value.off, !enabled);
             _set_node_visible(light->value.spotlight, enabled);
         }
+        for (const KeyValue<E3DSubModel *, ObjectID> &submodel_node: p_instance.submodel_nodes) {
+            if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(
+                        ObjectDB::get_instance(submodel_node.value));
+                geometry != nullptr) {
+                geometry->set_layer_mask(p_instance.layer_mask);
+            }
+        }
     }
 
     void E3DNodesBackend::_add_submodels(
@@ -183,7 +190,7 @@ namespace godot {
                         settings->get_setting("maszyna/vehicles/lights_volumetric_fog_energy", 4.0));
                 spotlight->set_shadow(true);
                 spotlight->set_shadow_reverse_cull_face(
-                        settings->get_setting("maszyna/lights/reverse_cull_face", true));
+                        settings->get_setting("maszyna/lights/reverse_cull_face", false));
                 spotlight->set_enable_distance_fade(true);
                 spotlight->set_distance_fade_begin(150.0);
                 spotlight->set_distance_fade_shadow(100.0);

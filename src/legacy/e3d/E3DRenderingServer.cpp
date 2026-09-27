@@ -621,10 +621,10 @@ namespace godot {
                     light->light, RenderingServer::LIGHT_PARAM_SHADOW_NORMAL_BIAS, LIGHT_SHADOW_NORMAL_BIAS);
             // Must be set explicitly, like the biases above: a RenderingServer light does not get
             // it from Light3D's constructor and starts with it on, which stripes the ground with
-            // shadow acne. The setting carries the project's own quirk (the original renders
-            // shadow maps with front faces culled, opengl33renderer.cpp:1634).
+            // shadow acne. The setting can bring back the original's front-face culling in shadow
+            // maps (opengl33renderer.cpp:1758); off by default, like a Light3D.
             rs->light_set_reverse_cull_face_mode(
-                    light->light, settings->get_setting(LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, true));
+                    light->light, settings->get_setting(LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, false));
             // The light keeps reaching as far as it is streamed; only its shadow map stops early,
             // because a scenery puts 152 of these within 300 m
             const float distance =
@@ -694,10 +694,11 @@ namespace godot {
                     p_instance, placement.light_name, params.omni ? LIGHT_KIND_OMNI : LIGHT_KIND_SPOT, params,
                     placement.synthesized);
         }
-        // the model now owns a light, so keep its own geometry out of every scenery shadow map
-        if (!p_instance_data.light_objects.is_empty() &&
-            (p_instance_data.layer_mask & SCENERY_LIGHT_OWNER_LAYER) == 0) {
-            p_instance_data.layer_mask |= SCENERY_LIGHT_OWNER_LAYER;
+        // The model now owns a light, so keep its own geometry out of every scenery shadow map.
+        // Only this layer: Godot casts when (layer_mask & shadow_caster_mask) is non-zero
+        // (renderer_scene_cull.cpp:2427), so any layer kept beside it would still cast.
+        if (!p_instance_data.light_objects.is_empty() && p_instance_data.layer_mask != SCENERY_LIGHT_OWNER_LAYER) {
+            p_instance_data.layer_mask = SCENERY_LIGHT_OWNER_LAYER;
             _update_if_built(p_instance_data);
         }
     }

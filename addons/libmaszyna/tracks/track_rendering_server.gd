@@ -102,6 +102,8 @@ var _next_track_render_id: int = 0
 var _stream_owner: int = -1
 var _rail_profile_cache: Dictionary = {}
 var _rail_profile_regex: RegEx = RegEx.new()
+## Created in _ready(): this autoload is instantiated before MaterialManager
+var _track_material_options: MaterialManager.MaterialOptions
 const _SWITCH_TRACKBED_Z_FIGHT_OFFSET: float = 0.025
 const _SWITCH_BLADE_OFFSET: float = 0.1
 const _TRACKBED_SECTION_POINT_COUNT: int = 5
@@ -114,6 +116,8 @@ func _init() -> void:
 
 
 func _ready() -> void:
+    _track_material_options = MaterialManager.MaterialOptions.new()
+    _track_material_options.cull_disabled = true
     TrackServer.topology_rebuilt.connect(_on_topology_rebuilt)
     TrackServer.switch_offset_updated.connect(_on_switch_offset_updated)
 
@@ -270,9 +274,11 @@ func set_track_render_options(
     state.material_trackbed_name = material_trackbed
     # An unnamed slot has no material at all - MaterialManager would hand back the
     # missing-texture placeholder instead (Track.cpp:485-491 keeps a null handle here).
-    state.material1 = MaterialManager.get_material("", material1) if material1 else null
-    state.material2 = MaterialManager.get_material("", material2) if material2 else null
-    state.material_trackbed = MaterialManager.get_material("", material_trackbed) if material_trackbed else null
+    state.material1 = MaterialManager.get_material("", material1, _track_material_options) if material1 else null
+    state.material2 = MaterialManager.get_material("", material2, _track_material_options) if material2 else null
+    state.material_trackbed = (
+        MaterialManager.get_material("", material_trackbed, _track_material_options) if material_trackbed else null
+    )
     state.resolved_trackbed_material_valid = false
     state.railprofile = railprofile
     state.rail_visible = rail_visible

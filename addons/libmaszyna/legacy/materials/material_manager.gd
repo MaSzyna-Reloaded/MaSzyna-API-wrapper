@@ -26,6 +26,10 @@ class MaterialOptions:
     # E3D translucent submodels are rendered in a separate alpha-blended pass.
     var force_transparent: bool = false
     var alpha_scissor_threshold: float = 0.5
+    # Tracks draw both faces - the original disables culling for them in the shadow pass, "roads-based
+    # platforms tend to miss parts of shadows" (opengl33renderer.cpp:3609), and an open rail profile
+    # with its front faces culled casts almost nothing
+    var cull_disabled: bool = false
 
 
 @export var season := MaszynaEnvironment.Season.SEASON_SUMMER:
@@ -200,6 +204,7 @@ func _compute_cache_hash(
         options.selfillum_enabled,
         options.selfillum_color.to_html(true),
         options.selfillum_energy,
+        options.cull_disabled,
     ].map(str)).md5_text()
     return model_path.path_join("%s_%s.res" % [material_path, options_hash])
 

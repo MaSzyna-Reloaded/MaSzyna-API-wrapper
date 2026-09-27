@@ -226,10 +226,13 @@ namespace godot {
                 }
 
                 p_file->seek(pos + chunk.data_len);
-            } else if (chunk.id == "VNT2") {
+            } else if (chunk.id == "VNT0" || chunk.id == "VNT2") {
+                // VNT0 is the legacy layout without tangents, VNT2 carries them (Model3d.cpp:2011)
+                const bool has_tangents = chunk.id == "VNT2";
+                const uint64_t vertex_size = has_tangents ? VNT2_VERTEX_SIZE : VNT0_VERTEX_SIZE;
                 const uint64_t pos = p_file->get_position();
                 for (SubModelData &submodel: submodels) {
-                    p_file->seek(pos + (static_cast<uint64_t>(submodel.first_vertex_idx) * 48));
+                    p_file->seek(pos + (static_cast<uint64_t>(submodel.first_vertex_idx) * vertex_size));
 
                     PackedVector3Array vertices;
                     PackedVector3Array normals;
@@ -246,22 +249,19 @@ namespace godot {
                         const float u = p_file->get_float();
                         const float v = p_file->get_float();
 
-                        const float tx = p_file->get_float();
-                        const float ty = p_file->get_float();
-                        const float tz = p_file->get_float();
-                        const float tw = p_file->get_float();
-
-                        Vector3 vertice(x, y, z);
-                        Vector3 normal(nx, ny, nz);
-                        Vector2 uv(u, v);
-
-                        vertices.append(vertice);
-                        normals.append(normal);
-                        uvs.append(uv);
-                        tangents.push_back(tx);
-                        tangents.push_back(ty);
-                        tangents.push_back(tz);
-                        tangents.push_back(tw);
+                        vertices.append(Vector3(x, y, z));
+                        normals.append(Vector3(nx, ny, nz));
+                        uvs.append(Vector2(u, v));
+                        if (has_tangents) {
+                            const float tx = p_file->get_float();
+                            const float ty = p_file->get_float();
+                            const float tz = p_file->get_float();
+                            const float tw = p_file->get_float();
+                            tangents.push_back(tx);
+                            tangents.push_back(ty);
+                            tangents.push_back(tz);
+                            tangents.push_back(tw);
+                        }
                     }
                     submodel.vertices = vertices;
                     submodel.normals = normals;
@@ -442,16 +442,19 @@ namespace godot {
                     Array triangles;
                     triangles.resize(ArrayMesh::ARRAY_MAX);
                     triangles.set(ArrayMesh::ARRAY_VERTEX, p_submodel.vertices);
-                    const PackedInt32Array indices = p_submodel.indices;
-                    PackedInt32Array ccw_indices;
-                    for (int i = 0; i < indices.size(); i += 3) {
-                        int32_t i1 = static_cast<int32_t>(indices.get(i));
-                        int32_t i2 = static_cast<int32_t>(indices.get(i + 1));
-                        int32_t i3 = static_cast<int32_t>(indices.get(i + 2));
-                        ccw_indices.append_array(PackedInt32Array({i1, i3, i2}));
+                    // The data is wound CCW (opengl33renderer.cpp:419), Godot's front face is CW. A
+                    // submodel without an IDX chunk is a plain triangle list and needs the same flip.
+                    const bool indexed = p_submodel.indices.size() > 0;
+                    const int64_t corner_count = indexed ? p_submodel.indices.size() : vertices_count;
+                    PackedInt32Array cw_indices;
+                    for (int32_t i = 0; i + 2 < corner_count; i += 3) {
+                        const int32_t i1 = indexed ? p_submodel.indices.get(i) : i;
+                        const int32_t i2 = indexed ? p_submodel.indices.get(i + 1) : i + 1;
+                        const int32_t i3 = indexed ? p_submodel.indices.get(i + 2) : i + 2;
+                        cw_indices.append_array(PackedInt32Array({i1, i3, i2}));
                     }
 
-                    p_submodel.indices = ccw_indices;
+                    p_submodel.indices = cw_indices;
                     if (p_submodel.normals.is_empty()) {
                         p_submodel.normals = _calculate_normals(p_submodel.vertices, p_submodel.indices);
                     }

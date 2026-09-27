@@ -17,6 +17,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_animation_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_light_statistics" qualifiers="const">
 			<return type="Dictionary" />
 			<description>
@@ -60,6 +65,12 @@
 				Frees the [param instance] with its [RenderingServer] instances or generated nodes.
 			</description>
 		</method>
+		<method name="instance_get_light_count" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="instance_register">
 			<return type="RID" />
 			<param index="0" name="data_path" type="String" />
@@ -80,6 +91,24 @@
 			<param index="1" name="mask" type="int" />
 			<description>
 				Render layers of an [constant INSTANCER_OPTIMIZED] instance.
+			</description>
+		</method>
+		<method name="instance_set_light_blink">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="light" type="int" />
+			<param index="2" name="on_time" type="float" />
+			<param index="3" name="off_time" type="float" />
+			<param index="4" name="phase" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="instance_set_light_mode">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="light" type="int" />
+			<param index="2" name="mode" type="int" enum="E3DRenderingServer.LightMode" />
+			<description>
 			</description>
 		</method>
 		<method name="instance_set_lights_colors">
@@ -133,6 +162,24 @@
 				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
 			</description>
 		</method>
+		<method name="instance_set_submodel_rotation">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<param index="2" name="degrees" type="Vector3" />
+			<param index="3" name="speed" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="instance_set_submodel_translation">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<param index="2" name="offset" type="Vector3" />
+			<param index="3" name="speed" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="instance_set_transform">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -181,6 +228,12 @@
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="light_name" type="String" />
 			<param index="2" name="submodel_path" type="NodePath" />
+			<description>
+			</description>
+		</method>
+		<method name="set_animation_speed">
+			<return type="void" />
+			<param index="0" name="speed" type="float" />
 			<description>
 			</description>
 		</method>
@@ -248,6 +301,24 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="instance_built">
+			<param index="0" name="instance" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="instance_freed">
+			<param index="0" name="instance" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="submodel_animation_finished">
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<description>
+			</description>
+		</signal>
+	</signals>
 	<constants>
 		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
 			Renders submodels as [RenderingServer] instances, without nodes.

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="DriverSystem" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="driver_attach_delegate">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="delegate" type="DriverDelegate" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_attach_vehicle">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_create">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_free">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_get_delegate" qualifiers="const">
+			<return type="DriverDelegate" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_get_vehicle" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_schedule_update">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="seconds" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_send_command">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="command" type="String" />
+			<param index="2" name="value1" type="float" />
+			<param index="3" name="value2" type="float" />
+			<param index="4" name="position" type="Vector3" default="Vector3(0, 0, 0)" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_driver" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_is_control_active" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_control_active">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="active" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

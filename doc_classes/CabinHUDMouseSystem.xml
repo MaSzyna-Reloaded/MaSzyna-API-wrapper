@@ -27,6 +27,13 @@
 				Registers the mesh with instance id [param mesh_instance_id] as a control. [param pressed] and [param released] are called when the left button goes down on it and up again; a valid [param increase] makes it draggable, [param increase] and [param decrease] being called per step. An empty [param caption] shows no caption; [param hints] are the keys that work the control. A non-zero [param drag_signs] fixes which way an increase goes on each mouse axis (x: +1 right, y: +1 down) instead of taking it from the control's grip. A valid [param drag] makes the control move continuously instead: it is called with the travel of every mouse motion, in pixels along the control's movement on screen, and the steps are not used. One increase turns the mesh by [param step_rotation] in its own space and shifts it by [param step_offset] in its parent's - the drag direction on screen comes from that.
 			</description>
 		</method>
+		<method name="control_free">
+			<return type="void" />
+			<param index="0" name="control" type="RID" />
+			<description>
+				Forgets the control, ending a hover or a drag it is part of.
+			</description>
+		</method>
 		<method name="control_set_state">
 			<return type="void" />
 			<param index="0" name="control" type="RID" />
@@ -35,11 +42,17 @@
 				What the control shows now - a position, a level - as its owner words it. Shown under the caption, and announced with [signal control_state_changed] while the control is hovered.
 			</description>
 		</method>
-		<method name="control_free">
-			<return type="void" />
-			<param index="0" name="control" type="RID" />
+		<method name="get_hovered_control" qualifiers="const">
+			<return type="RID" />
 			<description>
-				Forgets the control, ending a hover or a drag it is part of.
+				The control under the cursor, or an empty [RID].
+			</description>
+		</method>
+		<method name="input">
+			<return type="bool" />
+			<param index="0" name="event" type="InputEvent" />
+			<description>
+				Feeds one input event. Returns [code]true[/code] when the event operated a control and should be consumed.
 			</description>
 		</method>
 		<method name="occluder_create">
@@ -54,19 +67,6 @@
 			<param index="0" name="occluder" type="RID" />
 			<description>
 				Forgets the occluder.
-			</description>
-		</method>
-		<method name="get_hovered_control" qualifiers="const">
-			<return type="RID" />
-			<description>
-				The control under the cursor, or an empty [RID].
-			</description>
-		</method>
-		<method name="input">
-			<return type="bool" />
-			<param index="0" name="event" type="InputEvent" />
-			<description>
-				Feeds one input event. Returns [code]true[/code] when the event operated a control and should be consumed.
 			</description>
 		</method>
 		<method name="set_camera">

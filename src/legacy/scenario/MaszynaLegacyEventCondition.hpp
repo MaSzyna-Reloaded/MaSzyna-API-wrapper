@@ -1,6 +1,6 @@
 #pragma once
-#include "ScenarioEventCondition.hpp"
-#include "ScenarioEventServer.hpp"
+#include "scenario/ScenarioEventCondition.hpp"
+#include "scenario/ScenarioEventServer.hpp"
 #include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {

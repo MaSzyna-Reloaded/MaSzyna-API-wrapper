@@ -1,5 +1,5 @@
 #pragma once
-#include "ScenarioEventAction.hpp"
+#include "scenario/ScenarioEventAction.hpp"
 
 namespace godot {
     /// The original's `putvalues` and `getvalues` events (Event.cpp:577-844): a command - its own, or

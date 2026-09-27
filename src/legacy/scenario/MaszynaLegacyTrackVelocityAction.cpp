@@ -1,4 +1,4 @@
-#include "../tracks/TrackServer.hpp"
+#include "tracks/TrackServer.hpp"
 #include "MaszynaLegacyTrackVelocityAction.hpp"
 
 namespace godot {

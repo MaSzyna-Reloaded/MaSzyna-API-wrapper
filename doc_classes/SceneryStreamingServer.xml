@@ -12,6 +12,11 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="drain">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="get_camera_position" qualifiers="const">
 			<return type="Vector3" />
 			<description>
@@ -48,6 +53,11 @@
 				Returns whether the current camera revision has been scanned and every wanted piece in the camera chunk plus [param chunk_radius] neighbouring chunks has been built. A radius of [code]1[/code] describes the 3×3 starting area used by the demo loading screen; work farther away may still be pending.
 			</description>
 		</method>
+		<method name="is_streaming_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="owner_create">
 			<return type="int" />
 			<param index="0" name="preload" type="Callable" />
@@ -63,6 +73,12 @@
 			<param index="0" name="camera" type="Camera3D" />
 			<description>
 				Camera the streaming follows; without one nothing is ever built. Passing [code]null[/code] stops the streaming, leaving whatever is built in place. In game this is the player's camera, in the editor the camera of the 3D view.
+			</description>
+		</method>
+		<method name="set_streaming_enabled">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
 			</description>
 		</method>
 		<method name="stream_free">

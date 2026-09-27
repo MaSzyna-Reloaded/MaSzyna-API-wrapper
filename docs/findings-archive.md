@@ -4,6 +4,150 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - the AI stood at a clear signal: a stop behind it, and a takeover that remembered
+
+* **Symptom:** on Stary Jawor the player drove the SU46 to the signal before the station, left the
+  cab, and when the SM42 and the eszelon had come and the signal cleared, the SU46 did not move.
+  Headless the same: the AI's SU46 turned on n176 and stood on n174 for good - shunting, 40
+  allowed, the signal ahead at 40, the engine ready, but 0 km/h wanted.
+* **What proved it:** the driver's route dumped where it stood: `velocity_limit = 0` from
+  `signal_velocity_last = 0` - the speed of the last signal passed, a stop it had passed before
+  turning, now behind it; the shunting signal ahead read 40.
+* **Causes:** two parts of the original not ported. Turning, the original clears its speed table
+  and lets go of a stop of the signal passed ("don't allow potential red light overrun keep us
+  from reversing", TableCheck(), Driver.cpp:510-526). Taking the vehicle over from a player, it
+  forgets the way it drove ("kierunek jazdy trzeba dopiero zgadnąć") and clears the table, "the
+  player may have driven against the signals" (TakeControl(), Driver.cpp:5700-5712), then guesses
+  the way from the active cab or the movement (PrepareDirection(), Driver.cpp:5088-5116).
+  `leave_cabin()` only switched the AI back on.
+* **Fix:** the route reads the tracks afresh when the driver's way changes - the events ahead not
+  taken as passed, no stop point done, the stop of a signal passed let go - and `forget()` makes
+  the next reading a fresh one. `DriverSystem.vehicle_set_control_active()` tells the delegate
+  (`_control_taken()`), which guesses the way again and forgets the route.
+* **Follow-up, same day:** the first takeover fix guessed the way but left the reverser where the
+  player had put it - the player put it backwards and left, the AI read the clear signal ahead,
+  gave power, and ran backwards into the passenger coaches behind it, unseen by a scan that looked
+  ahead. `PrepareDirection()` does both halves: the way guessed, then the master controller at zero
+  and the reverser put that way (Driver.cpp:5116-5121); and `TakeControl()` switches the cab on
+  first (`CabActivisation(true)`, Driver.cpp:5705) - without it a cab left inactive multiplies the
+  reverser by zero. Both ported (`_prepare_direction()`, the `CAB_ACTIVATION` hint).
+* **Rule:** whatever the AI remembers of the tracks belongs to one way of driving; a turn or a
+  takeover starts it afresh.
+* **Follow-up, same day (x10 on Stary Jawor):** the stop came back after the turn - the route took
+  as passed every event gone from its reading, and the reading shrinks from 1500 m to ~750 m as
+  the train moves off: the H2 signal at stop, 880 m ahead, was "passed", its stop became the stop
+  of the signal passed. Passed is now only what would still be read were it ahead (its last
+  distance inside the reach). And the eszelon, told to uncouple, turned its reverser towards a
+  `direction_order` that was never set (0), took neutral for its way, thought itself standing and
+  coasted into the SU46 without braking: set to the way it faces when the driver is made, as
+  `iDirectionOrder = CabActive` (Driver.cpp:1872). A `ShuntVelocity` from a shunting signal read
+  in the middle of uncoupling reset the count of vehicles and cancelled it: the route gives the
+  signals' speeds only to a driving order, as check_route_ahead() does (Driver.cpp:8321-8335).
+
+## 2026-09-27 - couplers stiffened by a long frame
+
+* **Symptom:** once the physics ran at the simulation speed (the one clock, below), the eszelon
+  at speed 5 headless would not pull away: full power (391 kN, master controller 15), brakes
+  released, 0.18 m/s for minutes, the trainset's acceleration jumping +-18 m/s2. At speed 1 the
+  same start pulled away cleanly. Earlier "dead stops" of the eszelon at speed 5 were the same.
+* **Wrong turns:** the physics catch-up jump (no warning logged), another train in the way (none
+  within 150 m), a 0.2 s cap on the frame (still locked up), a driver fault (it drove the same in
+  both runs).
+* **What proved it:** the eszelon loaded, settled for 60 frames, then the clock advanced by hand
+  (`MaszynaRuntime.advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
+  and with 0.17 s frames - same scenery, same driver, only the frame length different: 14 m/s
+  after 80 s against 0.18 m/s. Then the locations and neighbour distances refreshed before every
+  sub-step instead of once a frame: 14.06 against 14.09 m/s.
+* **Cause:** `TMoverParameters::CouplerForce()` (Mover.cpp:4779-4784, the original's own code)
+  measures a coupler as the distance set by the last refresh plus ten times the relative
+  `dMoveLen` since. The original refreshes once a frame (DynObj.cpp:8691-8699), so a coupler's
+  load depends on the frame length; at the original's usual 60 fps it does not show.
+* **Fix:** `RailVehicleServer::step()` refreshes `update_location()` and `_update_neighbours()`
+  before every sub-step (a location only for a vehicle that moved); the position is still
+  announced once a frame. The Mover is untouched.
+* **Rule:** whatever the Mover measures from "since the last refresh" is refreshed every
+  sub-step, not every frame - otherwise its behaviour depends on the frame rate.
+
+## 2026-09-27 - three clocks: the physics ran at real time, events and drivers at the speed set
+
+* **Symptom:** headless probes at simulation speed 5 behaved oddly - trains reached places long
+  after the events and the drivers expected them, and the analysis of a stop leaned on times
+  that did not match.
+* **What proved it:** reading who advances time. `RailVehicleStepper` handed `step_frame()` the
+  raw frame delta; `ScenarioEventServer` and `DriverSystem` each added `delta *
+  simulation_speed`, capped at 1 s, on `process_frame`; the sky backends counted the time of day
+  themselves and pushed it to `MaszynaRuntime` once a second. At any speed but 1 the physics ran
+  at a fifth (or a tenth) of the pace of the events, the drivers and the clock of the day.
+* **Fix:** one clock in `MaszynaRuntime` (Timer::UpdateTimers(), Timer.cpp:79-87): a
+  `SimulationClock` node, processed first, advances it by the frame's delta times the speed, at
+  most 1 s, adds that to the simulation time and the time of day and emits
+  `simulation_advanced(seconds)`. The physics integrates exactly those seconds in steps of at most
+  0.01 s (drivermode.cpp:193-206) - no debt, no catch-up jump; a machine that cannot keep up runs
+  the simulation slower. The events and the drivers read `get_simulation_time()`; the sky reads
+  the time of day, and the environment only sets it (a jump). Whoever needs time holds the clock
+  (`clock_hold()`/`clock_release()`); paused, it stands.
+* **Rule:** anything that measures simulated time reads `MaszynaRuntime` - never its own
+  `delta * simulation_speed`.
+* **Follow-up:** one `simulation_advanced` per frame left the drivers reacting once a frame: at
+  1 s frames (x20) the eszelon's driver stepped its controller every second instead of every
+  0.5 s and pulled away at 1.21 m/s against 3.24 m/s at 0.03 s frames (t = 20 s). The clock now
+  hands a frame out in equal slices of at most 0.1 s (`MaszynaRuntime::MAX_SLICE_TIME`, the
+  quickest driver reaction), physics, events and drivers each slice in turn: 2.61 / 9.03 / 14.31
+  m/s at 20 / 40 / 80 s against 3.24 / 9.24 / 14.09 at short frames.
+* **Second follow-up:** with the couplers per step and the slices, a long frame simulates the same,
+  so the original's cap of 1 s of simulation a frame (Timer.cpp:84, there because its Mover broke
+  on long frames) only kept the speed from being honoured - x100 ran at about x60 at 60 fps. The
+  cap is now on the real time a frame counts (`MAX_FRAME_DELTA`, 0.25 s), times the speed: x100
+  is x100 down to 4 fps, and a hitch is not multiplied into a spiral. The speed goes up to 100.
+
+## 2026-09-26 - FV4a handle left at lap: the train brake never released
+
+* **Symptom:** Stary Jawor's eszelon (ST44, 20 wagons) would not start, or crawled as if braked
+  and stalled: with the FV4a handle at running the brake pipe stayed at 4.2-4.9 bar or slowly
+  fell, and the wagons' brakes held. SU46 and SM42-099 (FV4a) the same; SM42-1273 (MHZ_K8P) held
+  5.0 bar.
+* **Ruled out, by measurement:** the feed pipe (7 bar), `LockPipe`, the compressor, `BCPN`.
+* **Proof:** the driver's valve flow (`dpMainValve`) of every FV4a was exactly 0. A temporary
+  state key showed `fBrakeCtrlPos = 0`, `BrakeCtrlPos = 0` but `BrakeCtrlPosR = -2` (lap) already
+  after loading, before any driver acted. At lap FV4aM's flow is `PF(..., S = 0)` = 0.
+* **Cause:** the wrapper sets a vehicle up more than once (`apply_configuration()` itself runs
+  `CheckLocomotiveParameters()` and `initialize_mover_state()`). `CheckLocomotiveParameters()`
+  moves `BrakeCtrlPos` and `BrakeCtrlPosR` but not `fBrakeCtrlPos`; `initialize_mover_state()`
+  then asks `BrakeLevelSet()` for the position `fBrakeCtrlPos` already holds, which returns at
+  once - `BrakeCtrlPosR` stays where `CheckLocomotiveParameters()` put it. On FV4a lap is -2 while
+  running is 0; on MHZ_K8P both are 0, which is why it worked.
+* **Fix:** `initialize_mover_state()` aligns `fBrakeCtrlPos` with `BrakeCtrlPosR` before
+  `BrakeLevelSet()`. Found on the way, and also against the original: `BrakeOpModes` defaulted to
+  `PNEPMED` where the original has 0 (`Mover.cpp:10746`) - with `bom_PS` the Mover works the
+  handle only from an occupied cab.
+* **Rule:** the Mover's handle has three positions (`fBrakeCtrlPos`, `BrakeCtrlPos`,
+  `BrakeCtrlPosR`) and only `BrakeLevelSet()` moves them together, comparing with the first one;
+  after anything that sets them apart, re-align before setting. Read `dpMainValve` before theorising
+  about the pipe.
+
+## 2026-09-26 - headless test crashes at teardown: the dummy renderer is not thread safe
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` crashed in about half of the runs, in
+  `MaszynaInclude._free_owned_rids()` -> `E3DRenderingServer::instance_free()` ->
+  `E3DOptimizedBackend::clear()` -> `RenderingServer::free_rid()`, SIGSEGV. Other runs logged
+  `mesh_add_surface: Parameter "m" is null` from `E3DModelManager.load_model()` while the cab
+  loaded, "unimplemented base type encountered in renderer scene cull", or aborted with glibc
+  `double free or corruption (!prev)` right after those errors.
+* **Proof:** gdb on the crash: a built optimized instance, its model still referenced, its three
+  render instances freed one by one. The crash is at the commit before too (2 of 4). No crash in 6
+  runs with the scenery freed before the player, nor in 6 with streaming stopped first, but one
+  of those aborted with the heap corrupted during the cab model load - so the teardown is only
+  where the damage shows. In the engine source (4.7.2) the dummy renderer's mesh storage is
+  `RID_Owner<DummyMesh>`, not thread safe, while the real one is `RID_Owner<Mesh, true>`.
+* **Cause:** the streaming worker preloads E3D models, which creates meshes, while the main thread
+  loads the cab's model (`MmdCabinInstancer.build_into()` -> `E3DModelManager.load_model()`). The
+  RenderingServer allows mesh creation from any thread; the headless dummy renderer does not
+  honour it, and two threads allocating in its mesh owner corrupt the heap.
+* **Fix:** none yet (TODO.md, "Tests").
+* **Rule:** a headless crash or heap corruption in rendering code that meshes are created in from
+  two threads is the dummy renderer before it is our code - check whether a worker was loading
+  models at the same time.
+
 ## 2026-09-26 - semaphore lost its model
 
 * **Symptom:** `SemaphoreNode.model` in `demo_3d.tscn` was empty in the editor, and after the
@@ -441,11 +585,12 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   nodes are processed. It pushed placement onto `RailVehicle3D` afterwards, but other readers
   (`ExternalCamera._process()`) saw the previous frame.
 * **Fix:** `RailVehicleStepper` (`process_priority = -100`) calls
-  `RailVehicleServer::step_frame()`.
-* **Follow-up:** past 0.2 s, `sub_step = delta / MAX_PHYSICS_ITERATIONS` exceeds `PHYSICS_STEP`.
-  Time drives events and multiplayer, so `step_frame()` owes the excess to the next frames. Only
-  past `maszyna/physics/catch_up_limit` does it take the debt in one logged jump. The debt resets
-  when stepping starts.
+  `RailVehicleServer::step_frame()` - since 2026-09-27 `SimulationClock`, the same priority,
+  ticking `MaszynaRuntime`'s clock.
+* **Follow-up (superseded 2026-09-27, "three clocks"):** past 0.2 s, `sub_step = delta /
+  MAX_PHYSICS_ITERATIONS` exceeded `PHYSICS_STEP`, so `step_frame()` owed the excess to the next
+  frames and past `maszyna/physics/catch_up_limit` took it in one jump. Gone: the frame is capped
+  at 1 s and integrated whole, as the original does.
 * **Test trap:** `test_process_movement_with_invalid_controller_reference_is_noop` relied on the
   old order. `controller = null` does not detach, so the test now detaches the controller.
 * **Rules:**

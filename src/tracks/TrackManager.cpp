@@ -14,6 +14,10 @@ namespace godot {
     const char *TrackManager::tracks_changed_signal = "tracks_changed";
     const char *TrackManager::topology_rebuilt_signal = "topology_rebuilt";
     const char *TrackManager::topology_changed_signal = "topology_changed";
+    const char *TrackManager::isolated_occupied_signal = "isolated_occupied";
+    const char *TrackManager::isolated_freed_signal = "isolated_freed";
+    const char *TrackManager::isolated_vehicle_entered_signal = "isolated_vehicle_entered";
+    const char *TrackManager::isolated_vehicle_left_signal = "isolated_vehicle_left";
 
     double TrackManager::TrackSegment::get_length(const int p_switch_track) const {
         if (p_switch_track == TRACK_DIVERGING && curve2.is_valid()) {
@@ -55,6 +59,21 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("track_get_quality_flag", "track"), &TrackManager::track_get_quality_flag);
         ClassDB::bind_method(D_METHOD("track_get_environment", "track"), &TrackManager::track_get_environment);
         ClassDB::bind_method(D_METHOD("track_get_sound_distance", "track"), &TrackManager::track_get_sound_distance);
+        ClassDB::bind_method(D_METHOD("track_set_velocity", "track", "velocity"), &TrackManager::track_set_velocity);
+        ClassDB::bind_method(D_METHOD("track_get_velocity", "track"), &TrackManager::track_get_velocity);
+        ClassDB::bind_method(
+                D_METHOD("track_vehicle_entered", "track", "vehicle"), &TrackManager::track_vehicle_entered);
+        ClassDB::bind_method(D_METHOD("track_vehicle_left", "track", "vehicle"), &TrackManager::track_vehicle_left);
+        ClassDB::bind_method(D_METHOD("track_is_occupied", "track"), &TrackManager::track_is_occupied);
+        ClassDB::bind_method(D_METHOD("track_get_vehicles", "track"), &TrackManager::track_get_vehicles);
+        ClassDB::bind_method(D_METHOD("isolated_create"), &TrackManager::isolated_create);
+        ClassDB::bind_method(D_METHOD("isolated_free", "isolated"), &TrackManager::isolated_free);
+        ClassDB::bind_method(D_METHOD("isolated_set_name", "isolated", "name"), &TrackManager::isolated_set_name);
+        ClassDB::bind_method(D_METHOD("isolated_get_name", "isolated"), &TrackManager::isolated_get_name);
+        ClassDB::bind_method(D_METHOD("isolated_get_rid_by_name", "name"), &TrackManager::isolated_get_rid_by_name);
+        ClassDB::bind_method(D_METHOD("isolated_add_track", "isolated", "track"), &TrackManager::isolated_add_track);
+        ClassDB::bind_method(D_METHOD("isolated_set_parent", "isolated", "parent"), &TrackManager::isolated_set_parent);
+        ClassDB::bind_method(D_METHOD("isolated_is_occupied", "isolated"), &TrackManager::isolated_is_occupied);
         ClassDB::bind_method(D_METHOD("track_get_endpoints", "track"), &TrackManager::track_get_endpoints);
         ClassDB::bind_method(
                 D_METHOD("track_get_common_endpoint_index", "track"), &TrackManager::track_get_common_endpoint_index);
@@ -86,6 +105,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("switch_track_get_neighbors", "track", "switch_track"),
                 &TrackManager::switch_track_get_neighbors);
+        ClassDB::bind_method(D_METHOD("track_get_next", "track", "endpoint_index"), &TrackManager::track_get_next);
         ClassDB::bind_method(D_METHOD("track_is_switch", "track"), &TrackManager::track_is_switch);
         ClassDB::bind_method(D_METHOD("switch_is_right", "track"), &TrackManager::switch_is_right);
         ClassDB::bind_method(D_METHOD("switch_get_active_track", "track"), &TrackManager::switch_get_active_track);
@@ -154,6 +174,12 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(tracks_changed_signal));
         ADD_SIGNAL(MethodInfo(topology_rebuilt_signal));
         ADD_SIGNAL(MethodInfo(topology_changed_signal));
+        for (const char *signal:
+             {isolated_occupied_signal, isolated_freed_signal, isolated_vehicle_entered_signal,
+              isolated_vehicle_left_signal}) {
+            ADD_SIGNAL(
+                    MethodInfo(signal, PropertyInfo(Variant::RID, "isolated"), PropertyInfo(Variant::RID, "vehicle")));
+        }
     }
 
     double TrackManager::get_switch_max_offset() const {
@@ -483,6 +509,11 @@ namespace godot {
             }
         }
         spatial_index->remove(p_track);
+        for (const RID &isolated: tracks.getptr(p_track)->isolated) {
+            if (IsolatedData *section = isolated_sections.getptr(isolated); section != nullptr) {
+                section->tracks.erase(p_track);
+            }
+        }
         tracks.erase(p_track);
         _clear_topology();
         _mark_topology_changed();
@@ -656,6 +687,148 @@ namespace godot {
         return track != nullptr ? track->sound_distance : -1.0;
     }
 
+    void TrackManager::track_set_velocity(const RID &p_track, const double p_velocity) {
+        TrackSegment *track = tracks.getptr(p_track);
+        ERR_FAIL_NULL(track);
+        track->velocity = p_velocity;
+    }
+
+    double TrackManager::track_get_velocity(const RID &p_track) const {
+        const TrackSegment *track = tracks.getptr(p_track);
+        return track != nullptr ? track->velocity : -1.0;
+    }
+
+    void TrackManager::track_vehicle_entered(const RID &p_track, const RID &p_vehicle) {
+        TrackSegment *track = tracks.getptr(p_track);
+        if (track == nullptr) {
+            return; // a vehicle off the tracks, or a track already gone
+        }
+        track->vehicles.push_back(p_vehicle);
+        // copied: a listener may add the track to a section
+        const Vector<RID> isolated = track->isolated;
+        for (const RID &section: isolated) {
+            _count_isolated(section, 1, p_vehicle);
+        }
+    }
+
+    void TrackManager::track_vehicle_left(const RID &p_track, const RID &p_vehicle) {
+        TrackSegment *track = tracks.getptr(p_track);
+        if (track == nullptr) {
+            return; // the track went first
+        }
+        track->vehicles.erase(p_vehicle);
+        const Vector<RID> isolated = track->isolated;
+        for (const RID &section: isolated) {
+            _count_isolated(section, -1, p_vehicle);
+        }
+    }
+
+    bool TrackManager::track_is_occupied(const RID &p_track) const {
+        const TrackSegment *track = tracks.getptr(p_track);
+        return track != nullptr && !track->vehicles.is_empty();
+    }
+
+    TypedArray<RID> TrackManager::track_get_vehicles(const RID &p_track) const {
+        TypedArray<RID> result;
+        if (const TrackSegment *track = tracks.getptr(p_track); track != nullptr) {
+            for (const RID &vehicle: track->vehicles) {
+                result.push_back(vehicle);
+            }
+        }
+        return result;
+    }
+
+    /// TIsolated::Modify() (Track.cpp:118-170)
+    void TrackManager::_count_isolated(const RID &p_isolated, const int p_delta, const RID &p_vehicle) {
+        IsolatedData *section = isolated_sections.getptr(p_isolated);
+        if (section == nullptr) {
+            return;
+        }
+        const int previous = section->vehicle_count;
+        section->vehicle_count += p_delta;
+        const int current = section->vehicle_count;
+        const RID parent = section->parent;
+        if (previous == 0 && current > 0) {
+            emit_signal(isolated_occupied_signal, p_isolated, p_vehicle);
+        } else if (previous > 0 && current == 0) {
+            emit_signal(isolated_freed_signal, p_isolated, p_vehicle);
+        }
+        emit_signal(
+                p_delta > 0 ? isolated_vehicle_entered_signal : isolated_vehicle_left_signal, p_isolated, p_vehicle);
+        if (parent.is_valid()) {
+            _count_isolated(parent, p_delta, p_vehicle);
+        }
+    }
+
+    RID TrackManager::isolated_create() {
+        const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        isolated_sections.insert(rid, IsolatedData());
+        return rid;
+    }
+
+    void TrackManager::isolated_free(const RID &p_isolated) {
+        const IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL(section);
+        for (const RID &track_rid: section->tracks) {
+            if (TrackSegment *track = tracks.getptr(track_rid); track != nullptr) {
+                track->isolated.erase(p_isolated);
+            }
+        }
+        if (const RID *named = isolated_by_name.getptr(section->name); named != nullptr && *named == p_isolated) {
+            isolated_by_name.erase(section->name);
+        }
+        isolated_sections.erase(p_isolated);
+    }
+
+    void TrackManager::isolated_set_name(const RID &p_isolated, const StringName &p_name) {
+        IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL(section);
+        if (const RID *named = isolated_by_name.getptr(section->name); named != nullptr && *named == p_isolated) {
+            isolated_by_name.erase(section->name);
+        }
+        section->name = p_name;
+        if (!p_name.is_empty()) {
+            isolated_by_name.insert(p_name, p_isolated);
+        }
+    }
+
+    StringName TrackManager::isolated_get_name(const RID &p_isolated) const {
+        const IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL_V(section, StringName());
+        return section->name;
+    }
+
+    RID TrackManager::isolated_get_rid_by_name(const StringName &p_name) const {
+        const RID *rid = isolated_by_name.getptr(p_name);
+        return rid != nullptr ? *rid : RID();
+    }
+
+    /// The track's vehicles count for the section from now on
+    void TrackManager::isolated_add_track(const RID &p_isolated, const RID &p_track) {
+        IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL(section);
+        TrackSegment *track = tracks.getptr(p_track);
+        ERR_FAIL_NULL(track);
+        if (track->isolated.has(p_isolated)) {
+            return; // named by the track and by an `isolated` block both
+        }
+        track->isolated.push_back(p_isolated);
+        section->tracks.push_back(p_track);
+        section->vehicle_count += track->vehicles.size();
+    }
+
+    void TrackManager::isolated_set_parent(const RID &p_isolated, const RID &p_parent) {
+        IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL(section);
+        section->parent = p_parent;
+    }
+
+    bool TrackManager::isolated_is_occupied(const RID &p_isolated) const {
+        const IsolatedData *section = isolated_sections.getptr(p_isolated);
+        ERR_FAIL_NULL_V(section, false);
+        return section->vehicle_count > 0;
+    }
+
     PackedVector3Array TrackManager::track_get_endpoints(const RID &p_track) {
         TrackSegment *track = tracks.getptr(p_track);
         return track != nullptr ? _endpoints(*track) : PackedVector3Array();
@@ -809,6 +982,108 @@ namespace godot {
             neighbors->set_next_endpoint_index(connection->get_endpoint_index());
         }
         return neighbors;
+    }
+
+    /* The single track a movement leaving p_track at p_endpoint_index continues onto, and the
+     * switch branch it forces when it enters a switch from a branch side (NO_FORCED_SWITCH_TRACK
+     * otherwise); false when the node is open or ambiguous. Nothing is changed. */
+    bool TrackManager::track_find_next(
+            const RID &p_track, const int p_endpoint_index, RID &r_track, int &r_endpoint,
+            int &r_forced_switch_track) {
+        if (!track_exists(p_track)) {
+            return false;
+        }
+        const TypedArray<TrackEndpointRef> connections =
+                track_get_endpoint_connections(p_track, p_endpoint_index);
+
+        bool has_unique = false;
+        RID unique_track;
+        int unique_endpoint = 0;
+        int unique_forced_switch_track = TrackManager::TRACK_COMMON;
+        bool has_unique_forced_switch_track = false;
+
+        for (int index = 0; index < connections.size(); ++index) {
+            const Ref<TrackEndpointRef> raw = connections[index];
+            RID candidate_track = raw->get_track_rid();
+            int candidate_endpoint = raw->get_endpoint_index();
+            int candidate_forced_switch_track = TrackManager::TRACK_COMMON;
+            bool has_candidate_forced_switch_track = false;
+
+            if (track_is_switch(candidate_track)) {
+                const PackedInt32Array common_endpoints = switch_get_common_endpoints(candidate_track);
+                if (common_endpoints.has(raw->get_endpoint_index())) {
+                    // Entering from the common point follows whichever branch is active; remap the
+                    // shared endpoint to the active branch endpoint at the same physical point.
+                    const int active_track = switch_get_active_track(candidate_track);
+                    const int branch_start = switch_get_branch_start_endpoint(candidate_track, active_track);
+                    candidate_endpoint =
+                            common_endpoints.has(branch_start)
+                                    ? branch_start
+                                    : switch_get_branch_end_endpoint(candidate_track, active_track);
+                } else {
+                    candidate_forced_switch_track =
+                            switch_get_endpoint_branch(candidate_track, raw->get_endpoint_index());
+                    has_candidate_forced_switch_track = true;
+                }
+            }
+
+            // Discard endpoints that cannot be used for motion on the selected route. Branch-side
+            // switch entry is allowed because it will force that branch.
+            bool is_motion_accessible = false;
+            if (track_is_switch(candidate_track)) {
+                const int active_track = switch_get_active_track(candidate_track);
+                is_motion_accessible =
+                        candidate_endpoint == switch_get_branch_start_endpoint(candidate_track, active_track) ||
+                        candidate_endpoint == switch_get_branch_end_endpoint(candidate_track, active_track);
+            } else {
+                is_motion_accessible =
+                        candidate_endpoint == TrackManager::CURVE1_P1 || candidate_endpoint == TrackManager::CURVE1_P2;
+            }
+            if (!is_motion_accessible && !has_candidate_forced_switch_track) {
+                continue;
+            }
+
+            if (!has_unique) {
+                has_unique = true;
+                unique_track = candidate_track;
+                unique_endpoint = candidate_endpoint;
+                unique_forced_switch_track = candidate_forced_switch_track;
+                has_unique_forced_switch_track = has_candidate_forced_switch_track;
+                continue;
+            }
+
+            // More than one different usable target means the node is ambiguous. Identical
+            // candidates can happen at switch common points and still count as one route.
+            const bool is_same_candidate =
+                    unique_track == candidate_track && unique_endpoint == candidate_endpoint &&
+                    has_unique_forced_switch_track == has_candidate_forced_switch_track &&
+                    (!has_unique_forced_switch_track || unique_forced_switch_track == candidate_forced_switch_track);
+            if (!is_same_candidate) {
+                return false;
+            }
+        }
+
+        if (!has_unique) {
+            return false;
+        }
+        r_track = unique_track;
+        r_endpoint = unique_endpoint;
+        r_forced_switch_track = has_unique_forced_switch_track ? unique_forced_switch_track : NO_FORCED_SWITCH_TRACK;
+        return true;
+    }
+
+    Ref<TrackEndpointRef> TrackManager::track_get_next(const RID &p_track, const int p_endpoint_index) {
+        RID next_track;
+        int next_endpoint = 0;
+        int forced_switch_track = NO_FORCED_SWITCH_TRACK;
+        if (!track_find_next(p_track, p_endpoint_index, next_track, next_endpoint, forced_switch_track)) {
+            return Ref<TrackEndpointRef>();
+        }
+        Ref<TrackEndpointRef> next;
+        next.instantiate();
+        next->set_track_rid(next_track);
+        next->set_endpoint_index(next_endpoint);
+        return next;
     }
 
     bool TrackManager::track_is_switch(const RID &p_track) const {

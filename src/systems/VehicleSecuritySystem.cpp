@@ -22,6 +22,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &VehicleSecuritySystem::security_acknowledge);
         ClassDB::bind_method(
                 D_METHOD("security_cabsignal_acknowledge"), &VehicleSecuritySystem::security_cabsignal_acknowledge);
+        ClassDB::bind_method(
+                D_METHOD("security_cabsignal_trigger"), &VehicleSecuritySystem::security_cabsignal_trigger);
+        ClassDB::bind_method(D_METHOD("security_radiostop", "enabled"), &VehicleSecuritySystem::security_radiostop);
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
 
@@ -88,10 +91,14 @@ namespace godot {
     void VehicleSecuritySystem::_register_commands() {
         register_command("security_acknowledge", Callable(this, "security_acknowledge"));
         register_command("security_cabsignal_acknowledge", Callable(this, "security_cabsignal_acknowledge"));
+        register_command("security_cabsignal_trigger", Callable(this, "security_cabsignal_trigger"));
+        register_command("security_radiostop", Callable(this, "security_radiostop"));
     }
 
     void VehicleSecuritySystem::_unregister_commands() {
         unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
         unregister_command("security_cabsignal_acknowledge", Callable(this, "security_cabsignal_acknowledge"));
+        unregister_command("security_cabsignal_trigger", Callable(this, "security_cabsignal_trigger"));
+        unregister_command("security_radiostop", Callable(this, "security_radiostop"));
     }
 } // namespace godot

@@ -100,6 +100,14 @@ anything. Open work belongs in `TODO.md`.
 ## Godot / GDExtension
 * `process_frame` is the end of a frame. What `_process` reads is produced before it, ordered by
   `process_priority`. *(09-24 simulation stepped after readers)*
+* The Mover measures couplers from "the last refresh plus ten times the movement since": refresh
+  locations and neighbours every physics sub-step, never once a frame, or the result depends on
+  the frame rate. *(09-27 couplers stiffened by a long frame)*
+* What the AI remembers of the tracks belongs to one way of driving: a turn or a takeover from a
+  player starts it afresh. *(09-27 the AI stood at a clear signal)*
+* Simulated time has one clock, `MaszynaRuntime`'s: read `get_simulation_time()` or take
+  `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
+  clocks)*
 * A C++ class under an existing GDScript subclass keeps its lifecycle in `_notification()`, never
   in `_ready()`/`_process()`. A script shadows a native method only for `call()` callers.
   *(09-23 subclass replaced _ready())*
@@ -132,6 +140,10 @@ anything. Open work belongs in `TODO.md`.
   and `add_translation()`/`remove_translation()` send no `NOTIFICATION_TRANSLATION_CHANGED`.
   The code that swaps it notifies the main loop. *(09-25 catalogue swapped, UI unchanged)*
 
+* The Mover's train brake handle has three positions and only `BrakeLevelSet()` moves them
+  together, comparing with `fBrakeCtrlPos`: a second setup leaves `BrakeCtrlPosR` at lap. A pipe
+  that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
+
 ## Threads and teardown
 * Every worker needs an owner that stops it before the scripts go. A destructor runs too late. A
   stop must not wait for the whole job, and a drain must not drop tasks someone waits on.
@@ -163,6 +175,9 @@ anything. Open work belongs in `TODO.md`.
 * The headless dummy renderer keeps no texture data. A vehicle without mass or a track is NaN, and
   NaN never compares equal or culls. *(09-24 Python screens; 09-24 parked vehicle; 09-22 sound
   cost)*
+* The headless dummy renderer's mesh storage is not thread safe: meshes created on the streaming
+  worker and on the main thread at once corrupt the heap, and the crash shows later, at teardown.
+  *(09-26 headless test crashes at teardown)*
 
 ## Sound
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through

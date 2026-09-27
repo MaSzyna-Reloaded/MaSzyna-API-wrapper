@@ -38,6 +38,9 @@ var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
 ## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
 var _occluders:Array[RID] = []
+## The vehicle whose cab logic this cab attached - and takes away when the player leaves; the AI's
+## stays with its vehicle
+var _cab_logic_vehicle_rid:RID
 
 
 func _ready() -> void:
@@ -55,6 +58,14 @@ func _ready() -> void:
 func _on_vehicle_rid_changed(_vehicle_rid:RID) -> void:
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
+    if _cab_logic_vehicle_rid:
+        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
+        _cab_logic_vehicle_rid = RID()
+    # the cab logic of the original engine is the vehicle's, not this cab's: an AI-driven vehicle
+    # already has it (SceneryInstancer._build_drivers())
+    if get_vehicle_rid() and mmd_filename and not CabinSystem.vehicle_get_cab_logic(get_vehicle_rid()):
+        CabinSystem.vehicle_attach_cab_logic(get_vehicle_rid(), LegacyCabinLogic.from_mmd(data_path, mmd_filename))
+        _cab_logic_vehicle_rid = get_vehicle_rid()
     _rebuild_generated()
 
 
@@ -63,8 +74,19 @@ func _exit_tree() -> void:
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
+    if _cab_logic_vehicle_rid:
+        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
+        _cab_logic_vehicle_rid = RID()
     set_vehicle_rid(RID())
     _free_occluders()
+
+
+# Keys of controls no widget of this cab takes - the catalog controls the cab does not model and
+# the keyboard-only ones
+func _unhandled_input(event:InputEvent) -> void:
+    var logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(get_vehicle_rid())
+    if logic:
+        logic.input(event)
 
 
 func get_diagnostics() -> Array[Dictionary]:
@@ -150,12 +172,6 @@ func _rebuild_generated() -> void:
     windscreen_wipers.name = "WindscreenWipers"
     windscreen_wipers.vehicle_rid = get_vehicle_rid()
     _generated.add_child(windscreen_wipers)
-    # cabin logic of the original engine (CabinSystem callbacks) - added last, after every control
-    var logic := LegacyCabinLogicDelegate.new()
-    logic.name = "LegacyCabinLogic"
-    logic.vehicle_rid = get_vehicle_rid()
-    logic.cab = cab_number
-    _generated.add_child(logic)
     camera_configuration_changed.emit()
 
     print("DynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [

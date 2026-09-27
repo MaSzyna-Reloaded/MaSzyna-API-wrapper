@@ -1,8 +1,10 @@
 #pragma once
 #include "../core/VehicleComponentType.hpp"
 #include "../core/VehicleController.hpp"
+#include "../radio/VehicleRadio.hpp"
 
 #include "../tracks/TrackManager.hpp"
+#include "VehicleNeighbour.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -31,25 +33,15 @@ namespace godot {
             GDCLASS(RailVehicleServer, Object)
 
         public:
-            /* Original engine: primary physics update rate and the iteration limit per frame
-             * (drivermode.cpp:186-206) */
+            /* Original engine: the primary physics update rate - a frame is integrated whole, in as
+             * many steps as keep each at or below it (drivermode.cpp:193-206) */
             static constexpr double PHYSICS_STEP = 0.01;
-            static constexpr int MAX_PHYSICS_ITERATIONS = 20;
 
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
             }
 
         private:
-            /* Simulation time owed but not yet integrated - see step_frame(). Kept in seconds,
-             * never dropped while it stays under the catch-up limit. */
-            double owed_seconds = 0.0;
-            /* How much owed time may pile up before the simulation stops spreading it and takes
-             * it in one step instead. A setting, because the answer depends on the machine. */
-            static constexpr const char *CATCH_UP_LIMIT_SETTING = "maszyna/physics/catch_up_limit";
-            static constexpr double DEFAULT_CATCH_UP_LIMIT = 1.0;
-            /// Read once - step_frame() runs every frame and must not look a setting up there.
-            double catch_up_limit = DEFAULT_CATCH_UP_LIMIT;
             /* Distance the neighbour scan steps past a track endpoint to enter the next track */
             static constexpr double SCAN_ENDPOINT_EPSILON = 0.001;
             /* 10 m is about 140 km/h at 4 fps, plus a safety margin (DynObj.cpp:7160) */
@@ -61,6 +53,15 @@ namespace godot {
             static constexpr double DIAGNOSTICS_MAX_ACCELERATION = 3.0;
             /* Movement below this is not worth walking the route for (m) */
             static constexpr double MOVEMENT_EPSILON = 0.0001;
+            /* Below this speed (km/h) a vehicle stands - TTrackFollower::Move(), TrkFoll.cpp:104 */
+            static constexpr double STANDING_SPEED = 0.01;
+
+            /* What a vehicle last did on its track, as the track signals reported it */
+            enum TrackHeading {
+                HEADING_STANDING,
+                HEADING_TO_START,
+                HEADING_TO_END,
+            };
             /* How far a Radio-Stop carries (m) - basic_region::RadioStop, scene.cpp:1271 */
             static constexpr double RADIO_STOP_RANGE = 2000.0;
             /* How far ahead and behind the transform samples the curve to find its heading (m) */
@@ -78,8 +79,16 @@ namespace godot {
                      * track never turns into one, so it is asked when the vehicle changes track
                      * rather than on every step. */
                     bool track_is_switch = false;
-                    /* Moved since the simulated vehicle's location was last updated */
+                    /* Which way the last movement went along `track`: towards its end (+1) or its
+                     * start (-1) */
+                    double travel_sign = 0.0;
+                    /* The track and heading last reported by the track signals */
+                    RID reported_track;
+                    TrackHeading reported_heading = HEADING_STANDING;
+                    /* Moved since its position was last announced (once a frame), and since the
+                     * simulated vehicle's location was last set (every sub-step) */
                     bool moved = true;
+                    bool location_stale = true;
                     /* The body's transform and whether it still describes the placement above. A
                      * parked vehicle is asked for it every frame by everything that draws it or
                      * listens from it, and composing it samples the track twice. */
@@ -116,10 +125,9 @@ namespace godot {
             int64_t next_vehicle_id = 0;
             bool diagnostics = false;
             HashMap<uint64_t, double> diagnostics_velocity;
+            /// Stepping holds MaszynaRuntime's clock and steps as it advances
             bool stepping = false;
             bool stepping_enabled = true;
-            /// The node that drives step_frame(); freed when stepping stops.
-            uint64_t stepper_id = 0;
             /* Bumped once per step; a dump older than this is stale. Comparing a
              * serial beats clearing every vehicle's dump each frame. */
             uint64_t step_serial = 1;
@@ -149,6 +157,7 @@ namespace godot {
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
             void _refresh_stepping();
             void _set_stepping(bool p_stepping);
+            void _on_simulation_advanced(double p_seconds);
             void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
@@ -164,6 +173,13 @@ namespace godot {
             static const char *vehicle_command_received_signal;
             static const char *vehicle_occupied_cab_changed_signal;
             static const char *vehicle_freed_signal;
+            /* The vehicle has started moving along the track towards its start, its end, or has
+             * stopped on it - once per change, what a scenery's track events are fired by
+             * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
+            static const char *vehicle_heading_to_track_start_signal;
+            static const char *vehicle_heading_to_track_end_signal;
+            static const char *vehicle_stopped_on_track_signal;
+            static const char *vehicle_radio_called_signal;
 
             RailVehicleServer();
             ~RailVehicleServer() override;
@@ -180,6 +196,8 @@ namespace godot {
              * same shape, for the same reason). */
             void vehicle_set_name(const RID &p_vehicle, const String &p_name);
             String vehicle_get_name(const RID &p_vehicle) const;
+            /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
+            VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
             /* Every vehicle the server holds, and those whose position falls in p_rect (x, z) */
             TypedArray<RID> get_vehicles() const;
@@ -201,6 +219,11 @@ namespace godot {
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
             void vehicle_radio_stop(const RID &p_vehicle);
+            /* A Radio-Stop sent from a place rather than a vehicle - a scenery's `Emergency_brake` -
+             * heard by every vehicle within RADIO_STOP_RANGE */
+            void radio_stop(const Vector3 &p_position);
+            /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
+            void vehicle_radio_call(const RID &p_vehicle, VehicleRadio::RadioCall p_call);
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;
@@ -219,16 +242,23 @@ namespace godot {
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);
 
-            /* One whole step of every registered vehicle. Driven by `process_frame`, and callable
-             * directly with an explicit delta where the caller wants to decide when it happens. */
+            /* One whole step of every registered vehicle. Driven by MaszynaRuntime's clock, and
+             * callable directly with an explicit delta where the caller wants to decide when it
+             * happens. */
             void step(double p_delta);
-            /* One frame's worth of simulation, called by RailVehicleStepper before any node has
-             * been processed - see that class for why the timing matters. */
-            void step_frame(double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;
+            /* The tracks ahead of the vehicle the way p_direction leads - +1 towards its front, as
+             * the mover's V > 0 moves it, -1 towards its rear - as far as p_distance [m], the one it
+             * stands on first */
+            TypedArray<TrackRouteSegment>
+            vehicle_trace_route(const RID &p_vehicle, int p_direction, double p_distance);
+            /* The nearest vehicle along the route from the vehicle's p_end (0 front, 1 rear), on the
+             * tracks entered within p_distance [m] of its centre, null when there is none
+             * (TDynamicObject::find_vehicle(), DynObj.cpp:7688) */
+            Ref<VehicleNeighbour> vehicle_find_vehicle(const RID &p_vehicle, int p_end, double p_distance);
             /* Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */

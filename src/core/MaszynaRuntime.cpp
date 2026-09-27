@@ -1,8 +1,12 @@
 #include "MaszynaRuntime.hpp"
 
+#include "SimulationClock.hpp"
 #include "UserSettings.hpp"
 
 #include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -12,6 +16,9 @@ namespace godot {
     const char *MaszynaRuntime::language_changed_signal = "language_changed";
     const char *MaszynaRuntime::paused_signal = "paused";
     const char *MaszynaRuntime::unpaused_signal = "unpaused";
+    const char *MaszynaRuntime::simulation_speed_changed_signal = "simulation_speed_changed";
+    const char *MaszynaRuntime::time_of_day_changed_signal = "time_of_day_changed";
+    const char *MaszynaRuntime::simulation_advanced_signal = "simulation_advanced";
 
     namespace {
         constexpr const char *LANGUAGE_SECTION = "maszyna";
@@ -25,11 +32,21 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_time_of_day", "hours"), &MaszynaRuntime::set_time_of_day);
         ClassDB::bind_method(D_METHOD("get_time_of_day"), &MaszynaRuntime::get_time_of_day);
+        ClassDB::bind_method(D_METHOD("set_simulation_speed", "speed"), &MaszynaRuntime::set_simulation_speed);
+        ClassDB::bind_method(D_METHOD("get_simulation_speed"), &MaszynaRuntime::get_simulation_speed);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &MaszynaRuntime::set_light_level);
         ClassDB::bind_method(D_METHOD("get_light_level"), &MaszynaRuntime::get_light_level);
         ClassDB::bind_method(D_METHOD("set_air_temperature", "temperature"), &MaszynaRuntime::set_air_temperature);
         ClassDB::bind_method(D_METHOD("get_air_temperature"), &MaszynaRuntime::get_air_temperature);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "time_of_day"), "set_time_of_day", "get_time_of_day");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "simulation_speed"), "set_simulation_speed", "get_simulation_speed");
+        ADD_SIGNAL(MethodInfo(simulation_speed_changed_signal));
+        ADD_SIGNAL(MethodInfo(time_of_day_changed_signal));
+        ClassDB::bind_method(D_METHOD("get_simulation_time"), &MaszynaRuntime::get_simulation_time);
+        ClassDB::bind_method(D_METHOD("clock_hold"), &MaszynaRuntime::clock_hold);
+        ClassDB::bind_method(D_METHOD("clock_release"), &MaszynaRuntime::clock_release);
+        ClassDB::bind_method(D_METHOD("advance", "frame_delta"), &MaszynaRuntime::advance);
+        ADD_SIGNAL(MethodInfo(simulation_advanced_signal, PropertyInfo(Variant::FLOAT, "seconds")));
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "light_level"), "set_light_level", "get_light_level");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_temperature"), "set_air_temperature", "get_air_temperature");
         ClassDB::bind_method(D_METHOD("set_language", "language"), &MaszynaRuntime::set_language);
@@ -47,11 +64,88 @@ namespace godot {
     }
 
     void MaszynaRuntime::set_time_of_day(const double p_hours) {
+        if (time_of_day == p_hours) {
+            return;
+        }
         time_of_day = p_hours;
+        emit_signal(time_of_day_changed_signal);
     }
 
     double MaszynaRuntime::get_time_of_day() const {
         return time_of_day;
+    }
+
+    double MaszynaRuntime::get_simulation_time() const {
+        return simulation_time;
+    }
+
+    void MaszynaRuntime::clock_hold() {
+        ++clock_holders;
+        _refresh_clock();
+    }
+
+    void MaszynaRuntime::clock_release() {
+        ERR_FAIL_COND(clock_holders <= 0);
+        --clock_holders;
+        _refresh_clock();
+    }
+
+    /// The node ticks while the clock is held and the runtime is not paused
+    void MaszynaRuntime::_refresh_clock() {
+        const bool ticking = clock_holders > 0 && !paused;
+        Node *clock = Object::cast_to<Node>(ObjectDB::get_instance(clock_id));
+        if (ticking == (clock != nullptr)) {
+            return;
+        }
+        if (!ticking) {
+            // at once, not at the end of the frame the node is freed in
+            clock->set_process(false);
+            clock->queue_free();
+            clock_id = ObjectID();
+            return;
+        }
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        if (tree == nullptr) {
+            return;
+        }
+        SimulationClock *node = memnew(SimulationClock);
+        clock_id = node->get_instance_id();
+        // internal, so a node nobody declared does not turn up in the root's children and
+        // surprise whatever walks the tree
+        tree->get_root()->add_child(node, false, Node::INTERNAL_MODE_FRONT);
+    }
+
+    void MaszynaRuntime::advance(const double p_frame_delta) {
+        const double seconds = MIN(p_frame_delta, MAX_FRAME_DELTA) * simulation_speed;
+        if (seconds <= 0.0) {
+            return;
+        }
+        // equal slices, so a frame of 0.25 s is 3 x 0.083 s and not 0.1 + 0.1 + 0.05
+        const int slices = static_cast<int>(Math::ceil(seconds / MAX_SLICE_TIME));
+        const double slice = seconds / slices;
+        for (int index = 0; index < slices; ++index) {
+            simulation_time += slice;
+            // the launchers look at whole minutes (EvLaunch.cpp:197-211): the clock says so when
+            // one passes, not every slice
+            const double previous = time_of_day;
+            time_of_day = Math::fposmod(time_of_day + slice / SECONDS_PER_HOUR, HOURS_PER_DAY);
+            if (!(Math::floor(previous * MINUTES_PER_HOUR) == Math::floor(time_of_day * MINUTES_PER_HOUR))) {
+                emit_signal(time_of_day_changed_signal);
+            }
+            emit_signal(simulation_advanced_signal, slice);
+        }
+    }
+
+    void MaszynaRuntime::set_simulation_speed(const double p_speed) {
+        if (simulation_speed == p_speed) {
+            return;
+        }
+        simulation_speed = p_speed;
+        emit_signal(simulation_speed_changed_signal);
+    }
+
+    double MaszynaRuntime::get_simulation_speed() const {
+        return simulation_speed;
     }
 
     void MaszynaRuntime::set_light_level(const double p_level) {
@@ -91,6 +185,7 @@ namespace godot {
             return;
         }
         paused = true;
+        _refresh_clock();
         emit_signal(paused_signal);
     }
 
@@ -99,6 +194,7 @@ namespace godot {
             return;
         }
         paused = false;
+        _refresh_clock();
         emit_signal(unpaused_signal);
     }
 

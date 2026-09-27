@@ -15,6 +15,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("volume_increase", "step"), &VehicleRadio::volume_increase, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("volume_decrease", "step"), &VehicleRadio::volume_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("radio_stop", "pressed"), &VehicleRadio::radio_stop);
+        ClassDB::bind_method(D_METHOD("radio_call", "pressed", "call"), &VehicleRadio::radio_call);
+        BIND_ENUM_CONSTANT(RADIO_CALL1);
+        BIND_ENUM_CONSTANT(RADIO_CALL3);
 
         ClassDB::bind_method(D_METHOD("get_enabled"), &VehicleRadio::get_enabled);
         ADD_PROPERTY(
@@ -96,6 +99,8 @@ namespace godot {
         register_command("radio_volume_increase", Callable(this, "volume_increase"));
         register_command("radio_volume_decrease", Callable(this, "volume_decrease"));
         register_command("radio_stop", Callable(this, "radio_stop"));
+        register_command("radio_call1", Callable(this, "radio_call").bind(RADIO_CALL1));
+        register_command("radio_call3", Callable(this, "radio_call").bind(RADIO_CALL3));
     }
 
     void VehicleRadio::_unregister_commands() {

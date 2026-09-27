@@ -2,8 +2,6 @@
 #include "../radio/VehicleRadio.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
-#include "RailVehicleStepper.hpp"
-#include <godot_cpp/classes/window.hpp>
 
 #include "../core/GameLog.hpp"
 #include "../core/MaszynaRuntime.hpp"
@@ -12,7 +10,6 @@
 
 #include <godot_cpp/classes/curve3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
-#include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -24,18 +21,21 @@ namespace godot {
     const char *RailVehicleServer::vehicle_command_received_signal = "vehicle_command_received";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
     const char *RailVehicleServer::vehicle_freed_signal = "vehicle_freed";
+    const char *RailVehicleServer::vehicle_heading_to_track_start_signal = "vehicle_heading_to_track_start";
+    const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
+    const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
+    const char *RailVehicleServer::vehicle_radio_called_signal = "vehicle_radio_called";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
         diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
-        catch_up_limit = settings->get_setting(CATCH_UP_LIMIT_SETTING, DEFAULT_CATCH_UP_LIMIT);
-        // The world stands still while the runtime is paused. No explicit disconnect: callable_mp
-        // reports this instance as the callable's object, so the engine drops the connection when
-        // the instance dies.
+        // The world steps by the runtime's clock, which stands still while paused. No explicit
+        // disconnect: callable_mp reports this instance as the callable's object, so the engine
+        // drops the connection when the instance dies.
         MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
         ERR_FAIL_NULL(runtime);
-        runtime->connect(MaszynaRuntime::paused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
-        runtime->connect(MaszynaRuntime::unpaused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
+        runtime->connect(
+                MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &RailVehicleServer::_on_simulation_advanced));
     }
 
     RailVehicleServer::~RailVehicleServer() {
@@ -51,6 +51,8 @@ namespace godot {
                 &RailVehicleServer::vehicle_attach_controller);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
         ClassDB::bind_method(D_METHOD("get_vehicles"), &RailVehicleServer::get_vehicles);
         ClassDB::bind_method(D_METHOD("get_vehicles_in_rect", "rect"), &RailVehicleServer::get_vehicles_in_rect);
@@ -64,6 +66,11 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
+        ClassDB::bind_method(D_METHOD("radio_stop", "position"), &RailVehicleServer::radio_stop);
+        ClassDB::bind_method(D_METHOD("vehicle_radio_call", "vehicle", "call"), &RailVehicleServer::vehicle_radio_call);
+        ADD_SIGNAL(MethodInfo(
+                vehicle_radio_called_signal, PropertyInfo(Variant::RID, "vehicle"), PropertyInfo(Variant::INT, "call"),
+                PropertyInfo(Variant::VECTOR3, "position")));
 
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
@@ -72,7 +79,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
-        ClassDB::bind_method(D_METHOD("step_frame", "delta"), &RailVehicleServer::step_frame);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
@@ -88,6 +94,12 @@ namespace godot {
                 &RailVehicleServer::vehicle_get_transform_at_distance);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_track_position", "vehicle"), &RailVehicleServer::vehicle_get_track_position);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_trace_route", "vehicle", "direction", "distance"),
+                &RailVehicleServer::vehicle_trace_route);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_find_vehicle", "vehicle", "end", "distance"),
+                &RailVehicleServer::vehicle_find_vehicle);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
         ClassDB::bind_method(
@@ -107,6 +119,15 @@ namespace godot {
                 vehicle_occupied_cab_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::INT, "cab")));
         ADD_SIGNAL(MethodInfo(vehicle_freed_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_heading_to_track_start_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_heading_to_track_end_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_stopped_on_track_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "track")));
     }
 
     void RailVehicleServer::vehicle_attach_rail_vehicle(const RID &p_vehicle, const uint64_t p_rail_vehicle_id) {
@@ -131,38 +152,31 @@ namespace godot {
         return stepping_enabled;
     }
 
-    /// Steps while stepping is enabled, the runtime is not paused and the world holds a vehicle
+    /// Steps while stepping is enabled and the world holds a vehicle
     void RailVehicleServer::_refresh_stepping() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        _set_stepping(stepping_enabled && !vehicles.is_empty() && runtime != nullptr && !runtime->is_paused());
+        _set_stepping(stepping_enabled && !vehicles.is_empty());
     }
 
-    /// The step runs only while the world holds a vehicle, the same shape as E3DRenderingServer's
-    /// smoke tick.
+    /// Stepping holds the runtime's clock, so time passes while there is a vehicle to move
     void RailVehicleServer::_set_stepping(const bool p_stepping) {
         if (stepping == p_stepping) {
             return;
         }
-        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
-            return;
-        }
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
         stepping = p_stepping;
-        // a simulation that is starting owes nothing: whatever passed while it was stopped is not
-        // time it failed to integrate
-        owed_seconds = 0.0;
         if (p_stepping) {
-            RailVehicleStepper *stepper = memnew(RailVehicleStepper);
-            stepper_id = stepper->get_instance_id();
-            // internal, so a node nobody declared does not turn up in the root's children and
-            // surprise whatever walks the tree
-            tree->get_root()->add_child(stepper, false, Node::INTERNAL_MODE_FRONT);
+            runtime->clock_hold();
             return;
         }
-        if (Node *stepper = Object::cast_to<Node>(ObjectDB::get_instance(ObjectID(stepper_id))); stepper != nullptr) {
-            stepper->queue_free();
+        runtime->clock_release();
+    }
+
+    /// One frame of the clock, before any node has been processed (SimulationClock)
+    void RailVehicleServer::_on_simulation_advanced(const double p_seconds) {
+        if (stepping && !Engine::get_singleton()->is_editor_hint()) {
+            step(p_seconds);
         }
-        stepper_id = 0;
     }
 
     VehicleController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
@@ -192,7 +206,11 @@ namespace godot {
         if (const RID *named = vehicles_by_name.getptr(placement->name); named != nullptr && *named == p_vehicle) {
             vehicles_by_name.erase(placement->name);
         }
+        const RID reported_track = placement->reported_track;
         vehicles.erase(p_vehicle);
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr && reported_track.is_valid()) {
+            tracks->track_vehicle_left(reported_track, p_vehicle);
+        }
         if (vehicles.is_empty()) {
             _set_stepping(false);
         }
@@ -226,6 +244,13 @@ namespace godot {
         vehicles_by_name[p_name] = p_vehicle;
     }
 
+    VehicleController::DriverType RailVehicleServer::vehicle_get_driver_type(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(placement, VehicleController::DRIVER_NOBODY);
+        const VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_driver_type() : VehicleController::DRIVER_NOBODY;
+    }
+
     String RailVehicleServer::vehicle_get_name(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         return placement != nullptr ? placement->name : String();
@@ -234,11 +259,14 @@ namespace godot {
     void RailVehicleServer::vehicle_radio_stop(const RID &p_vehicle) {
         const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(sender);
-        const Vector3 origin = _placement_transform(*sender).origin;
+        radio_stop(_placement_transform(*sender).origin);
+    }
+
+    void RailVehicleServer::radio_stop(const Vector3 &p_position) {
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             VehicleController *controller = _get_controller(entry.value);
             if (controller == nullptr ||
-                _placement_transform(entry.value).origin.distance_to(origin) > RADIO_STOP_RANGE) {
+                _placement_transform(entry.value).origin.distance_to(p_position) > RADIO_STOP_RANGE) {
                 continue;
             }
             if (VehicleRadio *radio =
@@ -247,6 +275,12 @@ namespace godot {
                 radio->radio_stop_receive();
             }
         }
+    }
+
+    void RailVehicleServer::vehicle_radio_call(const RID &p_vehicle, const VehicleRadio::RadioCall p_call) {
+        const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(sender);
+        emit_signal(vehicle_radio_called_signal, p_vehicle, p_call, _placement_transform(*sender).origin);
     }
 
     RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {
@@ -405,6 +439,7 @@ namespace godot {
         placement->track = p_track;
         placement->track_direction = p_track_direction;
         placement->moved = true;
+        placement->location_stale = true;
         placement->body_transform_valid = false;
         placement->track_is_switch = tracks->track_is_switch(p_track);
         placement->switch_track =
@@ -438,6 +473,7 @@ namespace godot {
         TrackManager *tracks = TrackManager::get_instance();
         ERR_FAIL_NULL(tracks);
         p_placement.moved = true;
+        p_placement.location_stale = true;
 
         RID current_track = p_placement.track;
         TrackManager::SwitchTrack current_switch_track = p_placement.switch_track;
@@ -534,6 +570,7 @@ namespace godot {
 
         p_placement.track = current_track;
         p_placement.track_is_switch = current_is_switch;
+        p_placement.travel_sign = movement_sign;
         p_placement.track_offset = current_track_offset;
         p_placement.track_direction = current_track_direction;
         p_placement.switch_track = current_switch_track;
@@ -708,6 +745,94 @@ namespace godot {
         return result;
     }
 
+    TypedArray<TrackRouteSegment>
+    RailVehicleServer::vehicle_trace_route(const RID &p_vehicle, const int p_direction, const double p_distance) {
+        TypedArray<TrackRouteSegment> route;
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        TrackManager *tracks = TrackManager::get_instance();
+        if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
+            return route;
+        }
+        RID track = placement->track;
+        int branch = placement->switch_track;
+        bool is_switch = placement->track_is_switch;
+        double length = tracks->track_get_length(track, branch);
+        const double offset = CLAMP(placement->track_offset, 0.0, length);
+        // as _move_placement(): positive moves toward the branch end. Its distance counts from the
+        // rear, the vehicle's front (the mover's V > 0) is its negative (vehicle_process_movement())
+        double movement_sign = (placement->track_direction == TrackManager::DIRECTION_NORMAL ? -1.0 : 1.0) *
+                               (p_direction < 0 ? 1.0 : -1.0);
+        double covered = movement_sign > 0.0 ? length - offset : offset;
+        double start = covered - length;
+        while (true) {
+            Ref<TrackRouteSegment> segment;
+            segment.instantiate();
+            segment->set_track_rid(track);
+            segment->set_distance(start);
+            segment->set_length(length);
+            segment->set_velocity(tracks->track_get_velocity(track));
+            segment->set_track_switch(is_switch);
+            segment->set_toward_end(movement_sign > 0.0);
+            route.push_back(segment);
+            if (covered >= p_distance) {
+                break;
+            }
+            const int endpoint = is_switch ? (movement_sign > 0.0 ? tracks->switch_get_branch_end_endpoint(track, branch)
+                                                                  : tracks->switch_get_branch_start_endpoint(track, branch))
+                                           : (movement_sign > 0.0 ? TrackManager::CURVE1_P2 : TrackManager::CURVE1_P1);
+            RID next_track;
+            int next_endpoint = 0;
+            int forced_switch_track = TrackManager::NO_FORCED_SWITCH_TRACK;
+            if (!tracks->track_find_next(track, endpoint, next_track, next_endpoint, forced_switch_track)) {
+                segment->set_line_end(true);
+                break;
+            }
+            track = next_track;
+            is_switch = tracks->track_is_switch(track);
+            branch = TrackManager::TRACK_COMMON;
+            if (is_switch) {
+                // the branch it would be forced onto, or the one the node leads to
+                branch = forced_switch_track == TrackManager::NO_FORCED_SWITCH_TRACK
+                                 ? tracks->switch_get_endpoint_branch(track, next_endpoint)
+                                 : forced_switch_track;
+                movement_sign = next_endpoint == tracks->switch_get_branch_end_endpoint(track, branch) ? -1.0 : 1.0;
+            } else {
+                movement_sign = next_endpoint == TrackManager::CURVE1_P2 ? -1.0 : 1.0;
+            }
+            length = tracks->track_get_length(track, branch);
+            start = covered;
+            covered += length;
+        }
+        return route;
+    }
+
+    Ref<VehicleNeighbour>
+    RailVehicleServer::vehicle_find_vehicle(const RID &p_vehicle, const int p_end, const double p_distance) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const TrackManager *tracks = TrackManager::get_instance();
+        if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
+            return Ref<VehicleNeighbour>();
+        }
+        RID found;
+        int found_end = 0;
+        double found_distance = 0.0;
+        if (!_find_vehicle(p_vehicle, *placement, p_end, p_distance, found, found_end, found_distance)) {
+            return Ref<VehicleNeighbour>();
+        }
+        // the scan measures between the centres (MoverVehicleController::update_neighbour())
+        const VehicleController *controller = _get_controller(*placement);
+        const VehicleController *other = _get_controller(*vehicles.getptr(found));
+        const double half_lengths =
+                0.5 * ((controller != nullptr ? controller->get_dimensions_length() : 0.0) +
+                       (other != nullptr ? other->get_dimensions_length() : 0.0));
+        Ref<VehicleNeighbour> neighbour;
+        neighbour.instantiate();
+        neighbour->set_vehicle_rid(found);
+        neighbour->set_end(found_end);
+        neighbour->set_distance(found_distance - half_lengths);
+        return neighbour;
+    }
+
     Dictionary RailVehicleServer::vehicle_get_curve(const RID &p_vehicle, const double p_bogie_pivot_spacing) {
         Dictionary result;
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
@@ -736,96 +861,24 @@ namespace godot {
         return result;
     }
 
-    /* The single track a movement may continue onto, or false when the node is ambiguous. Entering
-     * a switch from a branch side physically selects that branch, so it is forced - but only after
-     * the connection has been proven unique, so an ambiguous node cannot change switch state as a
-     * side effect. */
+    /* The next track (TrackManager::track_find_next()); entering a switch from a branch side
+     * physically selects that branch, so it is forced here - after the connection was proven
+     * unique, so an ambiguous node cannot change switch state as a side effect. */
     bool RailVehicleServer::_motion_connection(
             const RID &p_track, const int p_endpoint_index, const bool p_force_switch_state, RID &p_track_out,
             int &p_endpoint_out) {
         TrackManager *tracks = TrackManager::get_instance();
-        if (tracks == nullptr || !tracks->track_exists(p_track)) {
+        if (tracks == nullptr) {
             return false;
         }
-        const TypedArray<TrackEndpointRef> connections =
-                tracks->track_get_endpoint_connections(p_track, p_endpoint_index);
-
-        bool has_unique = false;
-        RID unique_track;
-        int unique_endpoint = 0;
-        int unique_forced_switch_track = TrackManager::TRACK_COMMON;
-        bool has_unique_forced_switch_track = false;
-
-        for (int index = 0; index < connections.size(); ++index) {
-            const Ref<TrackEndpointRef> raw = connections[index];
-            RID candidate_track = raw->get_track_rid();
-            int candidate_endpoint = raw->get_endpoint_index();
-            int candidate_forced_switch_track = TrackManager::TRACK_COMMON;
-            bool has_candidate_forced_switch_track = false;
-
-            if (tracks->track_is_switch(candidate_track)) {
-                const PackedInt32Array common_endpoints = tracks->switch_get_common_endpoints(candidate_track);
-                if (common_endpoints.has(raw->get_endpoint_index())) {
-                    // Entering from the common point follows whichever branch is active; remap the
-                    // shared endpoint to the active branch endpoint at the same physical point.
-                    const int active_track = tracks->switch_get_active_track(candidate_track);
-                    const int branch_start = tracks->switch_get_branch_start_endpoint(candidate_track, active_track);
-                    candidate_endpoint =
-                            common_endpoints.has(branch_start)
-                                    ? branch_start
-                                    : tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
-                } else {
-                    candidate_forced_switch_track =
-                            tracks->switch_get_endpoint_branch(candidate_track, raw->get_endpoint_index());
-                    has_candidate_forced_switch_track = true;
-                }
-            }
-
-            // Discard endpoints that cannot be used for motion on the selected route. Branch-side
-            // switch entry is allowed because it will force that branch.
-            bool is_motion_accessible = false;
-            if (tracks->track_is_switch(candidate_track)) {
-                const int active_track = tracks->switch_get_active_track(candidate_track);
-                is_motion_accessible =
-                        candidate_endpoint == tracks->switch_get_branch_start_endpoint(candidate_track, active_track) ||
-                        candidate_endpoint == tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
-            } else {
-                is_motion_accessible =
-                        candidate_endpoint == TrackManager::CURVE1_P1 || candidate_endpoint == TrackManager::CURVE1_P2;
-            }
-            if (!is_motion_accessible && !has_candidate_forced_switch_track) {
-                continue;
-            }
-
-            if (!has_unique) {
-                has_unique = true;
-                unique_track = candidate_track;
-                unique_endpoint = candidate_endpoint;
-                unique_forced_switch_track = candidate_forced_switch_track;
-                has_unique_forced_switch_track = has_candidate_forced_switch_track;
-                continue;
-            }
-
-            // More than one different usable target means the node is ambiguous. Identical
-            // candidates can happen at switch common points and still count as one route.
-            const bool is_same_candidate =
-                    unique_track == candidate_track && unique_endpoint == candidate_endpoint &&
-                    has_unique_forced_switch_track == has_candidate_forced_switch_track &&
-                    (!has_unique_forced_switch_track || unique_forced_switch_track == candidate_forced_switch_track);
-            if (!is_same_candidate) {
-                return false;
-            }
-        }
-
-        if (!has_unique) {
+        int forced_switch_track = TrackManager::NO_FORCED_SWITCH_TRACK;
+        if (!tracks->track_find_next(p_track, p_endpoint_index, p_track_out, p_endpoint_out, forced_switch_track)) {
             return false;
         }
-        if (has_unique_forced_switch_track && p_force_switch_state &&
-            tracks->switch_get_active_track(unique_track) != unique_forced_switch_track) {
-            tracks->switch_set_active_track(unique_track, unique_forced_switch_track);
+        if (p_force_switch_state && !(forced_switch_track == TrackManager::NO_FORCED_SWITCH_TRACK) &&
+            !(tracks->switch_get_active_track(p_track_out) == forced_switch_track)) {
+            tracks->switch_set_active_track(p_track_out, forced_switch_track);
         }
-        p_track_out = unique_track;
-        p_endpoint_out = unique_endpoint;
         return true;
     }
 
@@ -933,44 +986,6 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    /* Simulation time is never dropped: the scenario's events and, later, multiplayer are driven
-     * by it, so a simulation that quietly ran slower than the clock would drift out of both.
-     *
-     * A frame therefore hands over its whole delta, and what cannot be integrated now is owed and
-     * paid off by the frames that follow. What "cannot be integrated now" means is one thing:
-     * the sub-step must stay at or below PHYSICS_STEP, because that is what the coupler springs
-     * were tuned for - integrate a stiff spring with a step several times larger and the consist
-     * kicks. MAX_PHYSICS_ITERATIONS sub-steps of PHYSICS_STEP is the most a frame can honestly
-     * take, so that product is the budget.
-     *
-     * Every frame still integrates at least its own delta, so nothing is quantised and the motion
-     * stays as smooth as the frame rate - only the backlog is spread.
-     *
-     * Past CATCH_UP_LIMIT_SETTING the machine is not stalling, it is too slow to simulate in real
-     * time, and spreading the debt would only add work to frames that are already late. There the
-     * debt is taken in one step: the step is too large for the couplers and the consist visibly
-     * jumps, which is the deliberate choice - a jump that can be seen beats a clock that silently
-     * lies. It is logged, so it is not mistaken for a physics bug. */
-    void RailVehicleServer::step_frame(const double p_delta) {
-        if (!stepping_enabled || Engine::get_singleton()->is_editor_hint() || p_delta <= 0.0) {
-            return;
-        }
-        owed_seconds += p_delta;
-
-        double budget = MIN(owed_seconds, MAX_PHYSICS_ITERATIONS * PHYSICS_STEP);
-        if (owed_seconds > catch_up_limit) {
-            if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
-                game_log->warning(
-                        vformat("RailVehicleServer: %.2f s of simulation owed, over the %.2f s catch-up "
-                                "limit - taking it in one step, so the vehicles jump",
-                                owed_seconds, catch_up_limit));
-            }
-            budget = owed_seconds;
-        }
-        owed_seconds -= budget;
-        step(budget);
-    }
-
     void RailVehicleServer::step(const double p_delta) {
         if (p_delta <= 0.0) {
             return;
@@ -995,23 +1010,50 @@ namespace godot {
 
         for (int index = 0; index < stepped_vehicles.size(); ++index) {
             VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-            VehicleController *controller = Object::cast_to<VehicleController>(stepped_controllers[index]);
-            // a vehicle that has not moved keeps its location - sampling the track is not needed
             if (placement->moved) {
-                controller->update_location();
-                controller->emit_position_changed_if_needed();
+                Object::cast_to<VehicleController>(stepped_controllers[index])->emit_position_changed_if_needed();
             }
             placement->moved = false;
             track_vehicles[placement->track].push_back(stepped_vehicles[index]);
         }
-        // once per update, like the original (DynObj.cpp:8691-8699)
-        for (const RID &vehicle_rid: stepped_vehicles) {
-            _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
-        }
 
-        const int iterations = CLAMP(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1, MAX_PHYSICS_ITERATIONS);
+        // the whole frame, in steps no longer than PHYSICS_STEP; the clock caps the frame
+        // (drivermode.cpp:193-206)
+        const int iterations = MAX(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1);
         const double sub_step = p_delta / iterations;
         for (int iteration = 0; iteration < iterations; ++iteration) {
+            // DELIBERATE DEPARTURE FROM THE ORIGINAL - do not move this back out of the loop.
+            //
+            // The original refreshes the vehicles' locations and neighbour distances once a frame
+            // (vehicle_table::update(), DynObj.cpp:8691-8699), before all its sub-steps. The Mover
+            // does not measure a coupler from the positions, though: CouplerForce()
+            // (Mover.cpp:4779-4784) takes the distance set by that refresh and adds TEN TIMES what
+            // the two vehicles moved relative to each other since (dMoveLen, reset with the
+            // location). The error of that term grows with the time since the refresh, so the
+            // longer the frame, the stiffer and more wrongly loaded every coupler is. At 60 fps
+            // (1-2 sub-steps) it does not show; at 0.17 s a frame (17 sub-steps - a slow machine,
+            // or any simulation speed above 1) the eszelon's 21 vehicles locked up: 391 kN at
+            // the wheels, 0.18 m/s, for minutes. Measured with the same start stepped at 0.03 s
+            // and at 0.17 s a frame (FINDINGS.md, 2026-09-27 "couplers stiffened by a long
+            // frame").
+            //
+            // Refreshed here, before every sub-step, the ten-fold term only ever spans one
+            // PHYSICS_STEP whatever the frame length, which is what the original does at 100 fps;
+            // the two frame lengths then give the same run to within 0.1 m/s. The Mover itself
+            // (vendored) is left as it is. The cost: the locations and the neighbour scan run per
+            // sub-step, not per frame - at 60 fps the same as before, on a slow frame up to
+            // MAX_FRAME_TIME / PHYSICS_STEP times. A vehicle that has not moved keeps its
+            // location, sampling the track is not needed.
+            for (int index = 0; index < stepped_vehicles.size(); ++index) {
+                VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
+                if (placement->location_stale) {
+                    Object::cast_to<VehicleController>(stepped_controllers[index])->update_location();
+                }
+                placement->location_stale = false;
+            }
+            for (const RID &vehicle_rid: stepped_vehicles) {
+                _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
+            }
             // the original computes the forces of every vehicle before moving any of them, so
             // coupled vehicles see a consistent state (DynObj.cpp:8199-8205)
             for (int index = 0; index < stepped_vehicles.size(); ++index) {
@@ -1039,6 +1081,39 @@ namespace godot {
                 controller->update_state();
             }
             controller->process_components(p_delta);
+
+            // reported on a change only: the track events hang on what it was, not on every step
+            VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
+            const TrackHeading heading = controller->get_speed() <= STANDING_SPEED ? HEADING_STANDING
+                                         : placement->travel_sign > 0.0            ? HEADING_TO_END
+                                                                                   : HEADING_TO_START;
+            if (heading == placement->reported_heading && placement->track == placement->reported_track) {
+                continue;
+            }
+            if (!(placement->track == placement->reported_track)) {
+                // the new track first, so a section both belong to never reads empty (TrkFoll.cpp:88-91)
+                TrackManager *tracks = TrackManager::get_instance();
+                ERR_CONTINUE(tracks == nullptr);
+                tracks->track_vehicle_entered(placement->track, stepped_vehicles[index]);
+                if (placement->reported_track.is_valid()) {
+                    tracks->track_vehicle_left(placement->reported_track, stepped_vehicles[index]);
+                }
+                placement = vehicles.getptr(stepped_vehicles[index]); // the section signals may have rehashed
+            }
+            placement->reported_heading = heading;
+            placement->reported_track = placement->track;
+            const RID track = placement->track;
+            switch (heading) {
+                case HEADING_STANDING:
+                    emit_signal(vehicle_stopped_on_track_signal, stepped_vehicles[index], track);
+                    break;
+                case HEADING_TO_START:
+                    emit_signal(vehicle_heading_to_track_start_signal, stepped_vehicles[index], track);
+                    break;
+                case HEADING_TO_END:
+                    emit_signal(vehicle_heading_to_track_end_signal, stepped_vehicles[index], track);
+                    break;
+            }
         }
         if (diagnostics) {
             _check_velocity_jumps(p_delta);

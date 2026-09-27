@@ -8,6 +8,8 @@ namespace godot {
         p_state["dynamic_brake_active"] = get_dynamic_brake_active();
         p_state["fuse_active"] = get_fuse_active();
         p_state["motor_connectors_open"] = get_motor_connectors_open();
+        p_state["line_contactor_closed"] = is_line_contactor_closed();
+        p_state["pressure_switch_tripped"] = is_pressure_switch_tripped();
     }
 
     void VehicleDieselElectricEngine::_bind_methods() {

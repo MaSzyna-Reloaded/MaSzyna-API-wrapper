@@ -55,7 +55,6 @@ namespace godot {
             virtual bool get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const = 0;
             virtual void apply_configuration(const VehicleElectricEngine *p_engine) const = 0;
             virtual void converter(const VehicleElectricEngine *p_engine, bool p_enabled) const = 0;
-            virtual void compressor(const VehicleElectricEngine *p_engine, bool p_enabled) const = 0;
             virtual void converter_fuse_reset(const VehicleElectricEngine *p_engine) const = 0;
             virtual void pantographs_valve(const VehicleElectricEngine *p_engine, bool p_enabled) const = 0;
             virtual void pantographs_valve_operate(

@@ -9,6 +9,11 @@ class_name TrainSet3D
 
 ## Coupling flags between child vehicle i and i + 1 (the scenery "couplingdata" of vehicle i).
 @export var couplings:PackedInt32Array = []
+## The trainset's timetable (a file in the scenery's directory, `none` for none) and the velocity
+## it starts with - its driver's first orders (deserialize_endtrainset(),
+## simulationstateserializer.cpp:839-848)
+@export var timetable:String = ""
+@export var velocity:float = 0.0
 
 var _coupling_dirty:bool = true
 

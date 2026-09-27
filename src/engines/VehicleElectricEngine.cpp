@@ -252,7 +252,6 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, cntrl_main_switch_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleElectricEngine::compressor);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &VehicleElectricEngine::converter);
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &VehicleElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &VehicleElectricEngine::pantographs_valve);
@@ -613,6 +612,8 @@ namespace godot {
         p_state["dynamic_brake_active"] = get_dynamic_brake_active();
         p_state["fuse_active"] = get_fuse_active();
         p_state["motor_connectors_open"] = get_motor_connectors_open();
+        p_state["line_contactor_closed"] = is_line_contactor_closed();
+        p_state["pressure_switch_tripped"] = is_pressure_switch_tripped();
         VehicleEngine::_fill_state_dictionary(p_state);
         if (!is_simulation_ready()) {
             return;
@@ -667,12 +668,6 @@ namespace godot {
     void VehicleElectricEngine::converter(const bool p_enabled) {
         if (electric_backend != nullptr) {
             electric_backend->converter(this, p_enabled);
-        }
-    }
-
-    void VehicleElectricEngine::compressor(const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->compressor(this, p_enabled);
         }
     }
 
@@ -741,7 +736,6 @@ namespace godot {
         VehicleEngine::_register_commands();
         register_command("converter", Callable(this, "converter"));
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
-        register_command("compressor", Callable(this, "compressor"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
         register_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
         register_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
@@ -755,7 +749,6 @@ namespace godot {
         VehicleEngine::_unregister_commands();
         unregister_command("converter", Callable(this, "converter"));
         unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
-        unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
         unregister_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
         unregister_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));

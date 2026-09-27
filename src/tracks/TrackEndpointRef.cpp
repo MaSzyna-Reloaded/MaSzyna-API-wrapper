@@ -82,4 +82,84 @@ namespace godot {
     int TrackBranchNeighbors::get_next_endpoint_index() const {
         return next_endpoint_index;
     }
+
+    void TrackRouteSegment::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("set_track_rid", "track_rid"), &TrackRouteSegment::set_track_rid);
+        ClassDB::bind_method(D_METHOD("get_track_rid"), &TrackRouteSegment::get_track_rid);
+        ADD_PROPERTY(PropertyInfo(Variant::RID, "track_rid"), "set_track_rid", "get_track_rid");
+        ClassDB::bind_method(D_METHOD("set_distance", "distance"), &TrackRouteSegment::set_distance);
+        ClassDB::bind_method(D_METHOD("get_distance"), &TrackRouteSegment::get_distance);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "distance"), "set_distance", "get_distance");
+        ClassDB::bind_method(D_METHOD("set_length", "length"), &TrackRouteSegment::set_length);
+        ClassDB::bind_method(D_METHOD("get_length"), &TrackRouteSegment::get_length);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "length"), "set_length", "get_length");
+        ClassDB::bind_method(D_METHOD("set_velocity", "velocity"), &TrackRouteSegment::set_velocity);
+        ClassDB::bind_method(D_METHOD("get_velocity"), &TrackRouteSegment::get_velocity);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "velocity"), "set_velocity", "get_velocity");
+        ClassDB::bind_method(D_METHOD("set_track_switch", "track_switch"), &TrackRouteSegment::set_track_switch);
+        ClassDB::bind_method(D_METHOD("get_track_switch"), &TrackRouteSegment::get_track_switch);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "track_switch"), "set_track_switch", "get_track_switch");
+        ClassDB::bind_method(D_METHOD("set_toward_end", "toward_end"), &TrackRouteSegment::set_toward_end);
+        ClassDB::bind_method(D_METHOD("get_toward_end"), &TrackRouteSegment::get_toward_end);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "toward_end"), "set_toward_end", "get_toward_end");
+        ClassDB::bind_method(D_METHOD("set_line_end", "line_end"), &TrackRouteSegment::set_line_end);
+        ClassDB::bind_method(D_METHOD("get_line_end"), &TrackRouteSegment::get_line_end);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "line_end"), "set_line_end", "get_line_end");
+    }
+
+    void TrackRouteSegment::set_track_rid(const RID &p_track_rid) {
+        track_rid = p_track_rid;
+    }
+
+    RID TrackRouteSegment::get_track_rid() const {
+        return track_rid;
+    }
+
+    void TrackRouteSegment::set_distance(const double p_distance) {
+        distance = p_distance;
+    }
+
+    double TrackRouteSegment::get_distance() const {
+        return distance;
+    }
+
+    void TrackRouteSegment::set_length(const double p_length) {
+        length = p_length;
+    }
+
+    double TrackRouteSegment::get_length() const {
+        return length;
+    }
+
+    void TrackRouteSegment::set_velocity(const double p_velocity) {
+        velocity = p_velocity;
+    }
+
+    double TrackRouteSegment::get_velocity() const {
+        return velocity;
+    }
+
+    void TrackRouteSegment::set_track_switch(const bool p_track_switch) {
+        track_switch = p_track_switch;
+    }
+
+    bool TrackRouteSegment::get_track_switch() const {
+        return track_switch;
+    }
+
+    void TrackRouteSegment::set_toward_end(const bool p_toward_end) {
+        toward_end = p_toward_end;
+    }
+
+    bool TrackRouteSegment::get_toward_end() const {
+        return toward_end;
+    }
+
+    void TrackRouteSegment::set_line_end(const bool p_line_end) {
+        line_end = p_line_end;
+    }
+
+    bool TrackRouteSegment::get_line_end() const {
+        return line_end;
+    }
 } // namespace godot

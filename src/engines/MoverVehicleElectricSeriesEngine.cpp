@@ -12,6 +12,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverVehicleElectricSeriesEngine::get_fuse_active);
         ClassDB::bind_method(
                 D_METHOD("get_motor_connectors_open"), &MoverVehicleElectricSeriesEngine::get_motor_connectors_open);
+        ClassDB::bind_method(D_METHOD("is_line_contactor_closed"), &MoverVehicleElectricSeriesEngine::is_line_contactor_closed);
+        ClassDB::bind_method(D_METHOD("is_pressure_switch_tripped"), &MoverVehicleElectricSeriesEngine::is_pressure_switch_tripped);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverVehicleElectricSeriesEngine::fuse_reset);
         ClassDB::bind_method(
                 D_METHOD("set_motor_connectors_open", "open"),
@@ -36,6 +38,14 @@ namespace godot {
 
     bool MoverVehicleElectricSeriesEngine::get_motor_connectors_open() const {
         return traction.get_motor_connectors_open(this);
+    }
+
+    bool MoverVehicleElectricSeriesEngine::is_line_contactor_closed() const {
+        return traction.is_line_contactor_closed(this);
+    }
+
+    bool MoverVehicleElectricSeriesEngine::is_pressure_switch_tripped() const {
+        return traction.is_pressure_switch_tripped(this);
     }
 
     void MoverVehicleElectricSeriesEngine::fuse_reset() {

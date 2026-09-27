@@ -1,5 +1,6 @@
 #include "../buffers/VehicleBuffCoupl.hpp"
 #include "../cabin/Cabin3D.hpp"
+#include "../drivers/DriverSystem.hpp"
 #include "../load/VehicleLoad.hpp"
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "../traction/TractionPowerServer.hpp"
@@ -181,6 +182,10 @@ namespace godot {
         }
         cabin = new_cabin;
         cabin_player = p_player;
+        // the player drives it now: its driver, if it has one, only takes orders
+        if (DriverSystem *drivers = DriverSystem::get_instance(); drivers != nullptr) {
+            drivers->vehicle_set_control_active(rid, false);
+        }
         // taking over the vehicle activates its cab when the FIZ allows it (Train.cpp:9147)
         if (controller != nullptr) {
             controller->cab_activation_auto();
@@ -254,6 +259,10 @@ namespace godot {
         cabin->queue_free();
         cabin = nullptr;
         _update_low_poly_cabs_visibility();
+        // the player left: its driver drives it again
+        if (DriverSystem *drivers = DriverSystem::get_instance(); drivers != nullptr) {
+            drivers->vehicle_set_control_active(rid, true);
+        }
     }
 
     void RailVehicle3D::_apply_cabin_camera_configuration() {

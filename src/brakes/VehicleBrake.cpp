@@ -92,7 +92,11 @@ namespace godot {
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, cntrl_brake_delay_3, "cntrl")
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, cntrl_brake_delay_4, "cntrl")
         BIND_PROPERTY_W_HINT(
-                VehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM, "PN:3,PNEPMED:15")
+                VehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM,
+                enum_hint({{"None", BRAKE_OP_MODE_NONE},
+                           {"PN", BRAKE_OP_MODE_PN},
+                           {"PNEP", BRAKE_OP_MODE_PNEP},
+                           {"PNEPMED", BRAKE_OP_MODE_PNEPMED}}))
         BIND_PROPERTY_W_HINT(
                 VehicleBrake, Variant::INT, cntrl_brake_handle_type, "cntrl", PROPERTY_HINT_ENUM,
                 "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
@@ -161,7 +165,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_DELAY_PR_MG);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR_MG);
 
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_NONE);
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PN);
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PNEP);
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PNEPMED);
 
         BIND_ENUM_CONSTANT(BRAKE_SYSTEM_INDIVIDUAL);
@@ -391,6 +397,16 @@ namespace godot {
                         Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_pipe_locked");
+        ClassDB::bind_method(D_METHOD("get_force"), &VehicleBrake::get_force);
+        ClassDB::bind_method(D_METHOD("get_force_at", "ratio", "velocity"), &VehicleBrake::get_force_at);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_force");
+        ClassDB::bind_method(D_METHOD("is_braking"), &VehicleBrake::is_braking);
+        ClassDB::bind_method(D_METHOD("is_holding"), &VehicleBrake::is_holding);
+        ClassDB::bind_method(D_METHOD("is_cut_off"), &VehicleBrake::is_cut_off);
     }
 
     void VehicleBrake::_register_commands() {

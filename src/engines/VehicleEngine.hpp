@@ -91,6 +91,7 @@ namespace godot {
             }
 
             bool main_switch(bool p_enabled);
+            void compressor(bool p_enabled);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 

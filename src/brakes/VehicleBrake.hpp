@@ -50,6 +50,17 @@ namespace godot {
             /* The main pipe is cut off from the brake valve (LockPipe, the i-mainpipelock lamp,
              * Train.cpp:11758) */
             virtual bool get_main_pipe_locked() const = 0;
+            /* Braking force of the vehicle [kN] (Fb) */
+            virtual double get_force() const = 0;
+            /* The force the vehicle's brake would give [N] at `p_ratio` of its full pressure and
+             * `p_velocity` [km/h] (BrakeForceR(), Mover.cpp:4606) - what a driver works out its
+             * braking from (TController::CheckVehicles(), Driver.cpp:2286-2291) */
+            virtual double get_force_at(double p_ratio, double p_velocity) const = 0;
+            /* The brake's status (GetBrakeStatus(), hamulce.h:55-64): braking - the cylinder
+             * filling (b_on), holding its pressure (b_hld), cut off from the train brake (b_dmg) */
+            virtual bool is_braking() const = 0;
+            virtual bool is_holding() const = 0;
+            virtual bool is_cut_off() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -137,8 +148,12 @@ namespace godot {
                 BRAKE_DELAY_GPR_MG = 15,
             };
             /* BrakeOpModes= */
+            /* BrakeOpModes= - the operating modes a brake can be set to (bom_PS/PN/EP/MED, MOVER.h:325-328);
+             * none when the FIZ does not say, as the original loads it (Mover.cpp:10743-10746) */
             enum BrakeOperationMode {
+                BRAKE_OP_MODE_NONE = 0,
                 BRAKE_OP_MODE_PN = 3,
+                BRAKE_OP_MODE_PNEP = 7,
                 BRAKE_OP_MODE_PNEPMED = 15,
             };
             /* BrakeSystem= */
@@ -239,7 +254,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 3.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 36.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 22.0);
-            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_PNEPMED);
+            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_NONE);
             MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
             MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
             MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);

@@ -330,12 +330,6 @@ namespace godot {
         mover->ConverterSwitch(p_enabled);
     }
 
-    void MoverElectricEngineBackend::compressor(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = owner.get_mover();
-        ASSERT_MOVER(mover);
-        mover->CompressorSwitch(p_enabled);
-    }
-
     void MoverElectricEngineBackend::converter_fuse_reset(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);

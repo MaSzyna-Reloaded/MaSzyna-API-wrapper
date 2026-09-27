@@ -7,8 +7,8 @@ extends Node
 ## Holds a CabinState per (vehicle, cab) and a registry of cabin control handlers. A vehicle is
 ## its RailVehicleServer handle - never its scenery name, which two vehicles may share and one may
 ## lack. Cabin controls only report manipulations through act(); the handlers are registered by
-## cabin logic delegates (e.g. LegacyCabinLogicDelegate) and translate them into vehicle commands.
-## CabinSystem itself has no cabin logic and forwards nothing by default.
+## the CabinLogic attached to the vehicle (e.g. LegacyCabinLogic) and translate them into vehicle
+## commands. CabinSystem itself has no cabin logic and forwards nothing by default.
 
 signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Variant)
 ## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
@@ -23,6 +23,7 @@ const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release"
 var _states:Dictionary = {}
 var _controls:Dictionary = {}
 var _processes:Dictionary = {}
+var _cab_logics:Dictionary[RID, CabinLogic] = {}
 
 
 func _ready() -> void:
@@ -39,6 +40,9 @@ func _exit_tree() -> void:
 
 ## A freed vehicle takes its cabins along - a handle is never reused for another vehicle.
 func _on_vehicle_freed(vehicle_rid:RID) -> void:
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics.erase(vehicle_rid)
     for cab:int in [1, 0, -1]:
         var key:String = _key(vehicle_rid, cab)
         _states.erase(key)
@@ -51,6 +55,11 @@ func _on_vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p
 
 
 func _on_vehicle_occupied_cab_changed(vehicle_rid:RID, cabin_occupied:int) -> void:
+    # the crew moved: the controls are those of the other cab now, before anybody hears of the move
+    # (DynamicTrainCabin rebuilds its widgets on the relayed signal)
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics[vehicle_rid].register(vehicle_rid, cabin_occupied)
     vehicle_cabin_occupied_changed.emit(vehicle_rid, cabin_occupied)
 
 
@@ -82,6 +91,22 @@ func vehicle_component(vehicle_rid:RID, type:int) -> VehicleComponent:
 ## Which cab of this vehicle is occupied - 1, 0 (machine room) or -1, as CabinState keys on.
 func occupied_cab(vehicle_rid:RID) -> int:
     return int(vehicle_state(vehicle_rid).get("cabin_occupied", 1))
+
+
+## The cab logic of a driven vehicle, registered for its occupied cab; null detaches it. One per
+## vehicle, whoever drives it - the player's cab and the AI act on the same controls.
+func vehicle_attach_cab_logic(vehicle_rid:RID, logic:CabinLogic) -> void:
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics.erase(vehicle_rid)
+    if not logic:
+        return
+    _cab_logics[vehicle_rid] = logic
+    logic.register(vehicle_rid, occupied_cab(vehicle_rid))
+
+
+func vehicle_get_cab_logic(vehicle_rid:RID) -> CabinLogic:
+    return _cab_logics.get(vehicle_rid)
 
 
 static func _key(vehicle_rid:RID, cab:int) -> String:

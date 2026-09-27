@@ -37,6 +37,12 @@ namespace godot {
             };
             virtual void security_acknowledge(bool p_enabled) = 0;
             virtual void security_cabsignal_acknowledge() = 0;
+            /* The track's cab signal magnet reached the vehicle (SHP/Indusi; the scenery's
+             * `CabSignal` command, Mover.cpp:12649-12654) */
+            virtual void security_cabsignal_trigger() = 0;
+            /* The Radio-Stop emergency braking switched on or off from outside the cab (the
+             * scenery's `Emergency_brake` command, Mover.cpp:12624-12630) */
+            virtual void security_radiostop(bool p_enabled) = 0;
             MAKE_MEMBER_GS(bool, aware_system_active, false);
             MAKE_MEMBER_GS(bool, aware_system_cabsignal, false);
             MAKE_MEMBER_GS(bool, aware_system_separate_acknowledge, false);

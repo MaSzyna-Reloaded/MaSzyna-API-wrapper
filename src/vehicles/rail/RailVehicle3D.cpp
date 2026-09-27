@@ -13,6 +13,7 @@
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
+#include "vehicles/rail/RailVehicleWipers.hpp"
 #include "tracks/TrackServer.hpp"
 #include "logging/GameLog.hpp"
 
@@ -397,6 +398,7 @@ namespace godot {
         engine = nullptr;
         diesel_engine = nullptr;
         lighting = nullptr;
+        wipers = nullptr;
         for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
             pantograph_wire_cache[index] = Dictionary();
         }
@@ -409,6 +411,7 @@ namespace godot {
         diesel_engine = Object::cast_to<RailVehicleDieselEngine>(engine_component);
         lighting =
                 Object::cast_to<RailVehicleLighting>(controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
+        wipers = Object::cast_to<RailVehicleWipers>(controller->get_component(VehicleComponentType::COMPONENT_WIPERS));
         /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
          * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
          * exported width stands in for a vehicle with no electric engine to read it from. */
@@ -556,9 +559,8 @@ namespace godot {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
                 // the placement itself is applied by RailVehicleServer at the end of its step
                 if (electric_engine != nullptr) {
-                    const Dictionary state = controller->get_state();
-                    _update_pantograph_raise_state(p_delta, state);
-                    _update_pantograph_power(state);
+                    _update_pantograph_raise_state(p_delta);
+                    _update_pantograph_power();
                 }
             } else if (controller != nullptr && start_track_name.is_empty()) {
                 const double velocity = controller->get_velocity();
@@ -568,9 +570,8 @@ namespace godot {
                     _update_wheel_animation_state();
                 }
                 if (electric_engine != nullptr) {
-                    const Dictionary state = controller->get_state();
-                    _update_pantograph_raise_state(p_delta, state);
-                    _update_pantograph_power(state);
+                    _update_pantograph_raise_state(p_delta);
+                    _update_pantograph_power();
                 }
             }
             if (controller != nullptr) {
@@ -726,8 +727,7 @@ namespace godot {
                 low_poly_emissive_materials.append(shader_material);
             }
         }
-        const bool roof_light_enabled =
-                controller != nullptr && bool(controller->get_state().get("roof_light_enabled", false));
+        const bool roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
         _set_low_poly_emission_energy(roof_light_enabled ? low_poly_cabin_emission_energy : 0.0);
         _update_low_poly_cabs_visibility();
     }
@@ -1120,10 +1120,10 @@ namespace godot {
     /* FIXME(#184): a wiper's position is simulation, not drawing - the node should be handed
      * where the blades are, the way it is handed the state of a light. */
     void RailVehicle3D::_update_wipers() {
-        if (wiper_arm_nodes.is_empty()) {
+        if (wiper_arm_nodes.is_empty() || wipers == nullptr) {
             return;
         }
-        const PackedFloat64Array positions = controller->get_state().get("wiper_positions", PackedFloat64Array());
+        const PackedFloat64Array positions = wipers->get_sweep_positions();
         if (positions == wiper_applied_positions) {
             return;
         }
@@ -1380,7 +1380,7 @@ namespace godot {
      * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
      * thing a rendering layer must not do. Moving it needs the collector offsets below to reach
      * the vehicle first; the original keeps them in TAnimPant::vPos. */
-    void RailVehicle3D::_update_pantograph_power(const Dictionary &p_state) {
+    void RailVehicle3D::_update_pantograph_power() {
         if (Engine::get_singleton()->is_editor_hint() || electric_engine == nullptr || controller == nullptr) {
             return;
         }
@@ -1439,7 +1439,7 @@ namespace godot {
 
     /* FIXME(#184): the arm geometry is the vehicle's own state (TAnimPant, DynObj.h:106) and
      * belongs beside the Mover; only _apply_pantograph_animation() below is drawing. */
-    void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
+    void RailVehicle3D::_update_pantograph_raise_state(const double p_delta) {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
         }

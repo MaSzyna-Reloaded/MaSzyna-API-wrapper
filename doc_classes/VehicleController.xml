@@ -226,7 +226,7 @@
 			[code]Param.PWR[/code]
 		</member>
 		<member name="state" type="Dictionary" setter="" getter="get_state">
-			Actual state of the train
+			Everything this vehicle reports about itself, by name: its own values and those of every enabled component, in one flat dictionary. Answered from the per-vehicle cache in [RailVehicleServer], which is rebuilt when the simulation steps or a command runs against the vehicle, so reading it every frame costs a lookup rather than composing it again. A reader after a single value is better served by that value's component, see [method RailVehicleServer.vehicle_component_get].
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id">
 			The vehicle's scenery name. It may be empty or shared with another vehicle; it is only used to find the vehicle by name, see [method RailVehicleServer.vehicle_get_rid_by_name].

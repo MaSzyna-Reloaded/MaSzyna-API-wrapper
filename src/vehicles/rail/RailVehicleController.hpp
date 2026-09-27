@@ -177,6 +177,12 @@ namespace godot {
             virtual void coupler_disconnect(const Variant &p_where) = 0;
             virtual RailVehicleController *get_coupled_controller(int p_end) const = 0;
             virtual int get_coupled_end(int p_end) const = 0;
+            /* Answered from RailVehicleServer's per-vehicle cache, which is keyed on the
+             * physics step and on the command serial, so a reader per frame costs a lookup rather
+             * than a rebuild of the whole dictionary. A controller the server does not hold - the
+             * throwaway one the FIZ builder captures a VehicleModel from - has no state to give
+             * and answers an empty dictionary. */
+            Dictionary get_state() override;
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
             void update_state() override;
             void initialize() override;

@@ -1016,7 +1016,9 @@ namespace godot {
         if (placement->state_dump_step == step_serial && placement->state_dump_command_serial == command_serial) {
             return placement->state_dump;
         }
-        placement->state_dump = controller != nullptr ? controller->get_state() : Dictionary();
+        // compose_state(), not get_state(): the controller's accessor asks this cache, so calling
+        // it here would recurse.
+        placement->state_dump = controller != nullptr ? controller->compose_state() : Dictionary();
         placement->state_dump_step = step_serial;
         placement->state_dump_command_serial = command_serial;
         return placement->state_dump;

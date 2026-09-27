@@ -174,7 +174,13 @@ namespace godot {
             // cntrl_battery_start_mode.
             MAKE_MEMBER_GS(double, initial_velocity, 0.0);
 
-            Dictionary get_state();
+            /* The whole state of this vehicle, by name. Answered by the server that owns the
+             * handle, from its per-vehicle cache, so a reader may call this per frame without
+             * paying for a rebuild each time. */
+            virtual Dictionary get_state() = 0;
+            /* Builds the state dictionary from this vehicle and every enabled component. The one
+             * place that composes it, called by the owner of the cache on a miss. */
+            Dictionary compose_state();
 
             /* This vehicle's components, in the order they joined - which is the order of the
              * FIZ sections that built them. They announce themselves rather than being searched

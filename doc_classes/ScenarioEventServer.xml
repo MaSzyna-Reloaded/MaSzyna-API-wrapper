@@ -385,6 +385,12 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="event_dequeued">
+			<param index="0" name="event" type="RID" />
+			<description>
+				A queued event left the queue without launching - it was freed (its scenery unloaded). The RID is no longer valid.
+			</description>
+		</signal>
 		<signal name="event_launched">
 			<param index="0" name="event" type="RID" />
 			<param index="1" name="activator" type="RID" />

@@ -9,6 +9,7 @@
 namespace godot {
     const char *ScenarioEventServer::event_queued_signal = "event_queued";
     const char *ScenarioEventServer::event_launched_signal = "event_launched";
+    const char *ScenarioEventServer::event_dequeued_signal = "event_dequeued";
     const char *ScenarioEventServer::memory_values_changed_signal = "memory_values_changed";
 
     void ScenarioEventServer::_bind_methods() {
@@ -120,6 +121,7 @@ namespace godot {
                 event_queued_signal, PropertyInfo(Variant::RID, "event"), PropertyInfo(Variant::RID, "activator")));
         ADD_SIGNAL(MethodInfo(
                 event_launched_signal, PropertyInfo(Variant::RID, "event"), PropertyInfo(Variant::RID, "activator")));
+        ADD_SIGNAL(MethodInfo(event_dequeued_signal, PropertyInfo(Variant::RID, "event")));
         ADD_SIGNAL(MethodInfo(memory_values_changed_signal, PropertyInfo(Variant::RID, "memory")));
     }
 
@@ -454,12 +456,17 @@ namespace godot {
         return rid;
     }
 
-    /// A queued entry of the event is left in the queue and skipped when its time comes
+    /// A queued entry of the event is left in the queue and skipped when its time comes; that the
+    /// event will never launch is announced by event_dequeued, once it is gone
     void ScenarioEventServer::event_free(const RID &p_event) {
         const EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL(event);
+        const bool queued = event->queued_sequence > 0;
         _rename(events_by_name, event->name, StringName(), p_event);
         events.erase(p_event);
+        if (queued) {
+            emit_signal(event_dequeued_signal, p_event);
+        }
     }
 
     void ScenarioEventServer::event_set_name(const RID &p_event, const StringName &p_name) {

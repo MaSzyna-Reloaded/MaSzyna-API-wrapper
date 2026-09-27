@@ -60,6 +60,7 @@ namespace godot {
 
             static const char *event_queued_signal;
             static const char *event_launched_signal;
+            static const char *event_dequeued_signal;
             static const char *memory_values_changed_signal;
 
             static ScenarioEventServer *get_instance() {

@@ -44,6 +44,18 @@ and the rule. Headings keep their date and title, because comments in the code c
   in the middle of uncoupling reset the count of vehicles and cancelled it: the route gives the
   signals' speeds only to a driving order, as check_route_ahead() does (Driver.cpp:8321-8335).
 
+## 2026-09-27 - the cab's relays ran on real time: the AI's line breaker never closed at x5
+
+* **Symptom:** an AI EU07 on a synthetic track with a live catenary kept its line breaker open;
+  `main_switch_closable` was true.
+* **Proof:** `LegacyCabinMainSwitch` closes after `main_on_bt` is held for `InitialCtrlDelay`,
+  counted in `CabinSystem._process(delta)` - real seconds. The driver holds the button from one
+  update to the next, `PREPARE_TIME` of simulation time: at x5 that is 0.4 s of real time, short of
+  the delay. The original counts it in `TTrain::Update(dt)` with the scaled time.
+* **Fix:** `CabinSystem` runs the cabs' processes on `MaszynaRuntime.simulation_advanced`.
+* **Rule:** every timer of the simulated train - the cab's relays included - runs on the
+  simulation clock, never on the frame.
+
 ## 2026-09-27 - couplers stiffened by a long frame
 
 * **Symptom:** once the physics ran at the simulation speed (the one clock, below), the eszelon

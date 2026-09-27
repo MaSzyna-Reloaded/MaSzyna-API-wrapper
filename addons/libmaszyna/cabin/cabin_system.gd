@@ -27,12 +27,14 @@ var _cab_logics:Dictionary[RID, CabinLogic] = {}
 
 
 func _ready() -> void:
+    MaszynaRuntime.simulation_advanced.connect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.connect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
 
 
 func _exit_tree() -> void:
+    MaszynaRuntime.simulation_advanced.disconnect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.disconnect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
@@ -183,8 +185,11 @@ func get_state(vehicle_rid:RID, cab:int) -> Dictionary:
     return get_cabin_state(vehicle_rid, cab).values.duplicate()
 
 
-func _process(delta:float) -> void:
+## The cabs' own timing runs on the simulation's clock, as the original's TTrain::Update(dt) does
+## with the scaled time (Train.cpp:8436-8474): a relay held for its delay at x10 closes in a tenth
+## of the real time, and nothing runs while paused
+func _on_simulation_advanced(seconds:float) -> void:
     for key:String in _processes:
         var state:CabinState = _states.get(key)
         for callable:Callable in _processes[key].duplicate():
-            callable.call(state, delta)
+            callable.call(state, seconds)

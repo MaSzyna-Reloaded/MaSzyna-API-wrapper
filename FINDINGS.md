@@ -77,6 +77,9 @@ anything. Open work belongs in `TODO.md`.
 * Check sun-altitude thresholds against a winter day. *(09-20 orange fog)*
 
 ## State, ownership, events
+* Every timer of the simulated train, the cab's relays included, runs on the simulation clock
+  (`MaszynaRuntime.simulation_advanced`), never on the frame. *(09-27 the cab's relays ran on real
+  time)*
 * One piece of state, one writer. Two writers that both look correct disagree only where the
   geometry shows it. *(09-24 parked vehicle jumping)*
 * A getter never changes state. A value that depends on how often it is read stays invisible until

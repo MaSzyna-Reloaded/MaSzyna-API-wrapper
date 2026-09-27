@@ -42,6 +42,25 @@ and the rule. Headings keep their date and title, because comments in the code c
   today, so the trap of 2026-09-23 (a script replacing a native virtual) is not active - but it is
   one subclass away. Recorded in `TODO.md`.
 
+## 2026-09-27 - the SM42 stood braked: "zero speed" took its controller into the braking positions
+
+* **Symptom:** on Stary Jawor the goods train SM42-1273 (6Dg) got its order from the scenario
+  (`roz_uruchom_tow`, SetVelocity 70) and never moved: 70 km/h wanted, `trainset.ready` false for
+  good, the master controller at 0 and the locomotive's cylinder at 6.2 bar.
+* **What proved it:** the brake inputs per vehicle (only the locomotive braked, pipe 5.0), then a
+  trace of the controller and a listener on `RailVehicleServer.vehicle_command_received` printing
+  `get_stack()`: in one driver update `_decrease_eim()` stepped the controller up to 3 and
+  `_control_releaser()` -> `MaszynaLegacyDriverHints.set_zero_speed()` stepped it back to 0.
+* **Cause:** the 6Dg's universal controller works its local brake (`UCList: IntegratedLocBrake=yes`,
+  `EIMCtrlType=3`): the Mover takes the local brake from `eimic_real` (`Mover.cpp:4503-4506`), and
+  positions 0-2 brake, 3 is the no-power position. The original's `ZeroSpeed()` steps the master
+  controller down only by `MainCtrlPowerPos()` (`Driver.cpp:3712`) - to the no-power position;
+  `set_zero_speed()` stepped it down to 0.
+* **Fix:** `set_zero_speed()` steps down by `controller_main_position -
+  controller_main_no_power_position`. The SM42 releases, powers and runs through Roztocze.
+* **Rule:** "zero" of a controller is its no-power position, not position 0 - on a universal
+  controller the positions below it brake.
+
 ## 2026-09-27 - every rebuilt state dump stayed in memory: godot-cpp's Dictionary move
 
 * **Symptom:** on Stary Jawor at x10/x20 memory grew by about 55 MB a second, paused as much as

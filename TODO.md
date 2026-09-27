@@ -852,7 +852,10 @@ ported, into a delegate.
   seen after godot-cpp was raised to `507ed9d` (2026-09-27); not checked whether it hung before.
 * Stary Jawor's eszelon at x10 (headless, 2026-09-27) runs at about 20 km/h wanting 70: the master
   controller jumps 0-7 and `Ft` is 0 half of the time; at x20 the same run reaches 51 km/h. Not
-  looked into.
+  looked into. At x1 (headless, two runs) it stood once 100 m short of E4 for ~17 s wanting
+  70 km/h: not ready while 20 wagons (G) released after braking for E4, the FV4a handle at
+  running and the pipe climbing from 4.63 bar; not checked whether the original fills the pipe
+  faster there. The operator's stop with the local brake applied in full is not reproduced yet.
 
 * `test_weather_controls.gd` fails since `2f4740239`: the scene's root became an `HFlowContainer`,
   the test still casts it `as VBoxContainer` and gets null.

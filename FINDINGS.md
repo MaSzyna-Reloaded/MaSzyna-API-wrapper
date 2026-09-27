@@ -85,6 +85,8 @@ anything. Open work belongs in `TODO.md`.
 * A loop that steps a control until it gets somewhere ends on "did not move", never on "is not
   there yet" - the vehicle may refuse the step. *(09-27 the driver's update hung on a refused
   controller)*
+* "Zero" of a master controller is its no-power position (`MainCtrlPowerPos()`), not position 0:
+  below it a universal controller brakes. *(09-27 the SM42 stood braked)*
 * A field goes where the original's loader reads it, not where its first consumer is (MCPN is
   every vehicle's, not the engine's). *(09-27 a control car had no controller)*
 * A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow

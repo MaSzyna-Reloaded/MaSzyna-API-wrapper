@@ -16,16 +16,23 @@ var _log:PackedStringArray = []
 func _ready() -> void:
     ScenarioEventServer.event_queued.connect(_on_event_queued)
     ScenarioEventServer.event_launched.connect(_on_event_launched)
+    ScenarioEventServer.event_dequeued.connect(_on_event_dequeued)
     _refresh()
 
 
 func _exit_tree() -> void:
     ScenarioEventServer.event_queued.disconnect(_on_event_queued)
     ScenarioEventServer.event_launched.disconnect(_on_event_launched)
+    ScenarioEventServer.event_dequeued.disconnect(_on_event_dequeued)
 
 
 func _on_event_queued(event:RID, activator:RID) -> void:
     _queued[event] = activator
+
+
+## Freed while queued (its scenery unloaded): it will never launch
+func _on_event_dequeued(event:RID) -> void:
+    _queued.erase(event)
 
 
 func _on_event_launched(event:RID, activator:RID) -> void:
@@ -43,8 +50,7 @@ func _refresh() -> void:
     %Time.text = tr("Simulation time: %.1f s") % now
     var rows:Array[Array] = []
     for event:RID in _queued:
-        # an event freed while queued (a scenery unloaded) is no longer asked about
-        var run_time:float = ScenarioEventServer.event_get_run_time(event) if ScenarioEventServer.event_is_queued(event) else -1.0
+        var run_time:float = ScenarioEventServer.event_get_run_time(event)
         if run_time < 0.0:
             continue
         rows.append([run_time, event])

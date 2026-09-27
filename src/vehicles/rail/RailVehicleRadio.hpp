@@ -64,8 +64,8 @@ namespace godot {
             /* radiostop_sw: pressed sends Radio-Stop to every vehicle in range (Train.cpp:8149) */
             virtual void radio_stop(bool p_pressed) = 0;
             /* A Radio-Stop sent by a vehicle in range reached this one (TDynamicObject::RadioStop,
-             * DynObj.cpp:7229) */
-            virtual void radio_stop_receive() = 0;
+             * DynObj.cpp:7229); true when it braked the vehicle */
+            virtual bool radio_stop_receive() = 0;
             /* radiocall1_sw:/radiocall3_sw: pressed sends the call to whatever listens in range
              * (TTrain::OnCommand_radiocall1send/3send, Train.cpp:8209-8236) */
             virtual void radio_call(bool p_pressed, RadioCall p_call) = 0;

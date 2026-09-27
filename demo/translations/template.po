@@ -41,6 +41,12 @@ msgstr ""
 msgid "Controls"
 msgstr ""
 
+msgid "View"
+msgstr ""
+
+msgid "Transcripts"
+msgstr ""
+
 msgid "Toggle controls"
 msgstr ""
 

@@ -180,6 +180,9 @@ namespace godot {
             static const char *vehicle_heading_to_track_end_signal;
             static const char *vehicle_stopped_on_track_signal;
             static const char *vehicle_radio_called_signal;
+            /* A Radio-Stop reached the vehicle and braked it (TDynamicObject::RadioStop,
+             * DynObj.cpp:7229) */
+            static const char *vehicle_radio_stop_received_signal;
 
             RailVehicleServer();
             ~RailVehicleServer() override;

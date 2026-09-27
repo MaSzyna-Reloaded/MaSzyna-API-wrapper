@@ -41,6 +41,12 @@ msgstr "Katalog z danymi gry MaSzyna nie jest ustawiony lub jest nieprawidłowy.
 msgid "Controls"
 msgstr "Sterowanie"
 
+msgid "View"
+msgstr "Widok"
+
+msgid "Transcripts"
+msgstr "Transkrypcje"
+
 msgid "Toggle controls"
 msgstr "Przełącz sterowanie"
 

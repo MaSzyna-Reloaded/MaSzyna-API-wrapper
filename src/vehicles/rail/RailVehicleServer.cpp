@@ -27,6 +27,7 @@ namespace godot {
     const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
     const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
     const char *RailVehicleServer::vehicle_radio_called_signal = "vehicle_radio_called";
+    const char *RailVehicleServer::vehicle_radio_stop_received_signal = "vehicle_radio_stop_received";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -118,6 +119,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 vehicle_moved_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(vehicle_radio_stop_received_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(
                 vehicle_command_received_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
@@ -278,8 +280,8 @@ namespace godot {
             }
             if (RailVehicleRadio *radio =
                         Object::cast_to<RailVehicleRadio>(controller->get_component(VehicleComponentType::COMPONENT_RADIO));
-                radio != nullptr) {
-                radio->radio_stop_receive();
+                radio != nullptr && radio->radio_stop_receive()) {
+                emit_signal(vehicle_radio_stop_received_signal, entry.key);
             }
         }
     }

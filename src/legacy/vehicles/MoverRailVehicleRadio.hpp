@@ -22,7 +22,7 @@ namespace godot {
             bool get_powered() const override;
             void radio(bool p_enabled) override;
             void radio_stop(bool p_pressed) override;
-            void radio_stop_receive() override;
+            bool radio_stop_receive() override;
             void radio_call(bool p_pressed, RadioCall p_call) override;
     };
 } // namespace godot

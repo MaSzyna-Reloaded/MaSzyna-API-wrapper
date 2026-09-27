@@ -55,6 +55,12 @@ func _on_popup_menu_index_pressed(index: int) -> void:
     _bind_vehicle(win)
 
 
+## The "View" menu: its one entry shows or hides the transcripts
+func _on_view_menu_index_pressed(index: int) -> void:
+    %View.toggle_item_checked(index)
+    %TranscriptsPanel.set_shown(%View.is_item_checked(index))
+
+
 func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
     for win: Node in $ControlWindows.get_children():
         win.visible = toggled_on

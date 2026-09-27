@@ -559,6 +559,24 @@ namespace godot {
         return mover != nullptr ? mover->MainCtrlActualPos : 0;
     }
 
+    bool MoverVehicleController::get_controller_main_delayed() const {
+        return mover != nullptr ? mover->DelayCtrlFlag : false;
+    }
+
+    bool MoverVehicleController::get_coupler_stretched() const {
+        return mover != nullptr
+               && (mover->Couplers[end::front].stretch_duration > 0.0f
+                   || mover->Couplers[end::rear].stretch_duration > 0.0f);
+    }
+
+    int MoverVehicleController::get_controller_main_no_power_position() const {
+        return mover != nullptr ? mover->MainCtrlNoPowerPos() : 0;
+    }
+
+    bool MoverVehicleController::get_radio_stop_active() const {
+        return mover != nullptr && mover->RadioStopFlag;
+    }
+
     int MoverVehicleController::get_circuit_rlist_size() const {
         return mover != nullptr ? mover->RlistSize : 0;
     }
@@ -611,6 +629,14 @@ namespace godot {
         mover->CabDeactivisationAuto();
         mover->ChangeCab(p_direction);
         mover->CabActivisationAuto();
+    }
+
+    void MoverVehicleController::ground_relay_reset() const {
+        mover->RelayReset(Maszyna::maincircuitground);
+    }
+
+    void MoverVehicleController::antislip() const {
+        mover->AntiSlippingButton();
     }
 
     void MoverVehicleController::main_controller_increase(const int p_step) const {

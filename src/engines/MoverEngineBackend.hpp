@@ -29,9 +29,12 @@ namespace godot {
             int get_damage(const VehicleEngine *p_engine) const override;
             double get_main_switch_time(const VehicleEngine *p_engine) const override;
             bool get_main_no_power_pos(const VehicleEngine *p_engine) const override;
+            bool get_motor_overload_relay_high_threshold(const VehicleEngine *p_engine) const override;
+            double get_eimic_real(const VehicleEngine *p_engine) const override;
             void apply_configuration(const VehicleEngine *p_engine) const override;
             bool main_switch(const VehicleEngine *p_engine, bool p_enabled) const override;
             void compressor(const VehicleEngine *p_engine, bool p_enabled) const override;
+            bool motor_overload_relay_threshold(const VehicleEngine *p_engine, bool p_high) const override;
             void process(const VehicleEngine *p_engine, double p_delta) const override;
             void fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const override;
     };

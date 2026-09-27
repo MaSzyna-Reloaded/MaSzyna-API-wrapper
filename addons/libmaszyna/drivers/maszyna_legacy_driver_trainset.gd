@@ -9,9 +9,8 @@ class_name MaszynaLegacyDriverTrainset
 ## sign of its orientation; here each vehicle's front is taken along the way the driver drives,
 ## which is what those signs mean.
 ##
-## Not read yet: the stretched couplers, the doors, the light, the relays of the other vehicles
-## under control; the individual release of an overcharged vehicle (Driver.cpp:6059-6078) - see
-## TODO.md, "Drivers".
+## Not read yet: the doors, the light, the relays other than the motor overload relay; the
+## individual release of an overcharged vehicle (Driver.cpp:6059-6078) - see TODO.md, "Drivers".
 
 ## Original engine: MOVER.h:87 g [m/s2]
 const GRAVITY:float = 9.81
@@ -35,6 +34,8 @@ const ENGINE_STARTED_RATIO:float = 0.8
 const MOVEMENT_SPEED:float = 1.0
 ## A vehicle slower than this [km/h] stands (EU07_AI_NOMOVEMENT, Driver.h:25)
 const NO_MOVEMENT_SPEED:float = 0.05
+## A vehicle with more power than this [kW] is an engine (Power > 1.0, DynObj.cpp:7793)
+const POWERED:float = 1.0
 ## The vehicle's couplers (end::front, end::rear)
 const FRONT_END:int = 0
 const REAR_END:int = 1
@@ -60,6 +61,22 @@ var braked:bool = false
 var gravity_acceleration:float = 0.0
 ## AbsAccS - the trainset's acceleration along the way the driver drives [m/s2]
 var acceleration:float = 0.0
+## mvControlling (FindPowered(), DynObj.cpp:7772): the engine the driver's controls drive - its
+## own vehicle when that has power, else the nearest one joined to it by the control line, or by the
+## unit's permanent coupling in an EMU or DMU
+var controlling:RID = RID()
+## mvPantographUnit (FindPantographCarrier(), DynObj.cpp:7798): the vehicle whose pantographs the
+## driver raises - first of its own unit, then of the vehicles under its control; none without
+var pantograph_unit:RID = RID()
+## ControlledEnginesCount (Driver.cpp:2470-2489): the engines driven by the driver's controls
+var controlled_engines:int = 0
+## IsAnyMotorOverloadRelayOpen (Driver.cpp:6135): the motor overload relay of a vehicle under the
+## driver's control tripped
+var motor_overload_relay_open:bool = false
+## IsAnyCouplerStretched (Driver.cpp:6087-6090): a coupler pulled past its strength
+var coupler_stretched:bool = false
+## FmaxC of the driver's vehicle's coupler behind it, the way it drives [N] (Driver.cpp:7784)
+var coupler_strength:float = 0.0
 ## movePushPull - its front and rear are joined by the control line, a lone vehicle too: it turns
 ## by changing the cab, not by shunting (Driver.cpp:2540-2549)
 var push_pull:bool = false
@@ -74,6 +91,43 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     if vehicles:
         push_pull = RailVehicleServer.vehicle_get_coupled(
                 vehicles[0], FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL).has(vehicles[-1])
+    # the vehicles its controls reach (FindPowered(), the vehicles under control of UpdateSituation());
+    # the original counts the front vehicle twice when it is not the driver's own
+    # (Driver.cpp:2470-2489, MASZYNA_ORIGINAL_QUIRKS.md) - here every engine counts once
+    var train_type:int = int(RailVehicleServer.vehicle_dump_config(vehicle).get("train_type", VehicleController.TRAIN_TYPE_DEFAULT))
+    var unit:bool = train_type == VehicleController.TRAIN_TYPE_EZT or train_type == VehicleController.TRAIN_TYPE_DMU
+    var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL)
+    var joined:Array[RID] = RailVehicleServer.vehicle_get_coupled(
+            vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_PERMANENT) if unit else controlled
+    controlling = vehicle
+    var own:int = joined.find(vehicle)
+    var nearest:int = joined.size()
+    if float(RailVehicleServer.vehicle_dump_config(vehicle).get("power", 0.0)) <= POWERED:
+        for index:int in joined.size():
+            if absi(index - own) < nearest and float(RailVehicleServer.vehicle_dump_config(joined[index]).get("power", 0.0)) > POWERED:
+                nearest = absi(index - own)
+                controlling = joined[index]
+    pantograph_unit = RID()
+    for chain:Array[RID] in [RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_PERMANENT),
+            controlled]:
+        for other:RID in chain:
+            var engine:VehicleElectricEngine = RailVehicleServer.vehicle_component_get(
+                    other, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+            if engine and engine.power_source == VehicleController.POWER_SOURCE_CURRENTCOLLECTOR \
+                    and engine.power_current_collector_number_of_collectors > 0:
+                pantograph_unit = other
+                break
+        if pantograph_unit.is_valid():
+            break
+    controlled_engines = 0
+    motor_overload_relay_open = false
+    for other:RID in controlled:
+        if float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED:
+            controlled_engines += 1
+        motor_overload_relay_open = motor_overload_relay_open or RailVehicleServer.vehicle_dump_state(other).get("fuse_active", false)
+    var strengths:PackedFloat64Array = RailVehicleServer.vehicle_dump_config(vehicle).get("coupler_max_force", PackedFloat64Array())
+    var behind:int = REAR_END if direction >= 0 else FRONT_END
+    coupler_strength = strengths[behind] if strengths.size() > behind else 0.0
     var driving:Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle).basis.z * direction
     var driven:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
     ready = true
@@ -85,8 +139,10 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     var gravity_force:float = 0.0
     var momentum_change:float = 0.0
     var moving:bool = float(driven.get("speed", 0.0)) > NO_MOVEMENT_SPEED
+    coupler_stretched = false
     for other:RID in vehicles:
         var state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
+        coupler_stretched = coupler_stretched or state.get("coupler_stretched", false)
         var brake_pressure:float = maxf(0.0, float(state.get("brake_air_pressure", 0.0)))
         if ready and (state.get("brake_is_holding", false) or state.get("brake_is_braking", false)
                 or (brake_pressure > RELEASED_BRAKE_PRESSURE if float(state.get("speed", 0.0)) < STARTING_SPEED

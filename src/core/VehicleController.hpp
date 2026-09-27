@@ -99,6 +99,16 @@ namespace godot {
             virtual int get_controller_main_position() const = 0;
             virtual int get_controller_joint_position() const = 0;
             virtual int get_controller_main_actual_position() const = 0;
+            /* DelayCtrlFlag: the master controller waits on its first position for the line
+             * contactors (Mover.cpp) */
+            virtual bool get_controller_main_delayed() const = 0;
+            /* A coupler pulled past its strength (stretch_duration > 0, Mover.cpp:5405) */
+            virtual bool get_coupler_stretched() const = 0;
+            /* The last master controller position that gives no power (MainCtrlNoPowerPos(),
+             * Mover.cpp:2694): 0, or the EIM controller's own */
+            virtual int get_controller_main_no_power_position() const = 0;
+            /* The Radio-Stop received and not yet acknowledged (RadioStopFlag) */
+            virtual bool get_radio_stop_active() const = 0;
             virtual int get_circuit_rlist_size() const = 0;
 
 
@@ -201,6 +211,10 @@ namespace godot {
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
             virtual void cab_change(int p_direction) const = 0;
+            /* The main circuit's ground relay reset (maincircuitgroundreset, RelayReset(), Mover.cpp:6653) */
+            virtual void ground_relay_reset() const = 0;
+            /* The anti-slip brake pressed (antislip, AntiSlippingButton()) */
+            virtual void antislip() const = 0;
             virtual void main_controller_increase(int p_step = 1) const = 0;
             virtual void main_controller_decrease(int p_step = 1) const = 0;
             virtual void second_controller_increase(int p_step = 1) const = 0;

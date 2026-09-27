@@ -708,31 +708,44 @@ ported, into a delegate.
       waiting told to stop here. Left: the next speed and its distance (with the speed table),
       obstacles ahead, the load exchange, waiting (`fStopTime`), an aggressive driver, EMU/DMU
       thresholds, the cargo trains' and couplers' acceleration limits, the braking test.
-   3. Diesel-electric done: tractive force through the cab (`MaszynaLegacyDriverTraction`,
-      `control_tractive_force()`, `IncSpeed()`/`DecSpeed()`); the vehicle publishes
-      `line_contactor_closed` (`StLinFlag`) and `pressure_switch_tripped`
-      (`ControlPressureSwitch`). The driver acknowledges the vigilance and SHP
-      (`control_security_system()`), and releases the brakes when it wants to accelerate.
-      Checked on Stary Jawor: SM42-1273 with five wagons, `ShuntVelocity 20`, starts, reaches
-      20 km/h and coasts. Left: the diesel-mechanical engine and its gearbox (`SpeedSet()`,
-      `MotorParam`, sa134, WMB10), the electric series and induction motors, the cruise control,
-      the stretched couplers, spring brake, doors and departure signal before adding power, the
-      radio off after a Radio-Stop.
-   4. Braking through the cab done for shunting (`MaszynaLegacyDriverBraking`,
-      `control_braking_force()`, `IncBrake()`/`DecBrake()`, `control_releaser()`): the driver's
-      own handle position (`BrakeCtrlPosition`) put on an FV4a or MHZ_K8P/EN57 handle, the local
-      brake of an engine alone, the independent brake at a stop, the releaser. The vehicle
-      publishes `brake_system`, `brake_delay_times`, `brake_delay_setting`,
-      `brake_control_reservoir_pressure`, `brake_handle_time_controlled`,
-      `brake_pipe_pressure_high/_delta` and `train_type`; `DeltaPipePress` is now derived as
-      `LoadFIZ` does. Unmodelled knobs (`brakectrl`, `localbrake`) are registered for the AI to set.
-      Checked on Stary Jawor: SM42-1273 with five wagons stops from 20 km/h with the train brake;
-      SU46 alone with its local brake. Left: the braking table (`fBrake_a0/a1` from
-      `BrakeForceR()`, needed for train running - zero now, as for shunting), the time-controlled
-      handles (MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405: sa134, BR285 - the original moves them
-      every frame; an event-driven way is a short scheduled update back to lap), the EP and
-      EMU/DMU braking, `BrakeAccFactor()`, the manual brake, unlocking the pipe before the
-      releaser, the individual release of an overcharged wagon, the braking test.
+   3. Tractive force through the cab for every engine type (`MaszynaLegacyDriverTraction` and one
+      subclass per engine, chosen by the driver's vehicle's engine: series motor, diesel-electric,
+      induction motor, plain diesel, an EMU's control car; `control_tractive_force()`,
+      `IncSpeed()`/`DecSpeed()`, `SpeedSet()`, `control_handles()`, the engine's part of
+      `Check/SetTimeControllers()`), with the relays reset, sanding and the anti-slip brake, the
+      power off after a Radio-Stop, the cruise control (`SpeedCntrl()`), the stretched couplers and
+      the spring brake before adding power. The vehicle publishes what it needs
+      (`controller_main_delayed`, `circuit_imin`, `engine_voltage`, `eimic_real`,
+      `coupler_stretched`, `radio_stop_active`, `motor_overload_relay_high_threshold`...) and takes
+      the commands a player gives (`motor_overload_relay_threshold` and `maxcurrent_sw`,
+      `ground_relay_reset`, `antislip`, `speed_control_*`); `ESMVelocity()` is
+      `VehicleElectricSeriesEngine.get_next_position_velocity()`. The pantographs
+      (`MaszynaLegacyDriverPantographs`): the pantograph compressor and its three-way valve while
+      preparing, the rear one up on the move. Checked on Stary Jawor (diesel-electric) and on a
+      synthetic track with a catenary: EU07 with eight wagons prepares itself, runs up the
+      resistors to 28 and the shunt, holds 40 km/h. **Not checked yet:** EN57 (the control car's
+      class is chosen, but the unit does not prepare - 0 V, reverser at 0: `Activation()`'s move to
+      the unit's other vehicles is not ported), SN61 and SA134 (the gearbox, the DMU's power share),
+      EU47 (the EIM controller, the cruise control). Left: the doors closed and the departure signal switched off before adding power
+      (`Doors()`, `DepartureSignal` not published); the no-current sections (`fOverhead2`,
+      `iOverheadZero`); the shunting mode of a 2Ls150 (`AnPos` in `SpeedSet()`) and of an induction
+      motor; SN61's idle position after the reverser (`DirectionForward()`, Driver.cpp:5778); the
+      input action for `maxcurrent_sw` (Ctrl+F); the diesels' cooling keys of `Engine:`
+      (`HeaterMin/MaxTemperature`, `NominalCoolingPower`, the heat model's `Water*`/`Heat*`);
+      the radio off after a Radio-Stop.
+   4. Braking through the cab for every brake system (`MaszynaLegacyDriverBraking`,
+      `control_braking_force()`, `IncBrake()`/`DecBrake()`/`LapBrake()`, `Inc/DecBrakeEIM()`,
+      `control_releaser()`, the brake part of `Check/SetTimeControllers()`): the individual brake
+      (local or manual), the pneumatic one with the braking table, the electro-pneumatic one (its
+      operation mode, the handle between EP releasing and braking, or held by time with the EP
+      switch), an EMU's own braking, the EIM controllers' braking, the time-controlled handles
+      (MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405 - set at the end of an update, back to holding at
+      the next), the universal brake buttons, a DMU's handle following its universal controller.
+      The vehicle publishes `brake_operation_mode`, the EP handle positions and
+      `brake_handle_ep_time_controlled`, and takes `brake_operation_mode_increase/decrease` and
+      `ep_brake`. Left: the braking test (`ForcePNBrake`, `DynamicBrakeTest`), unlocking the pipe
+      before the releaser (`control_main_pipe()`), the individual release of an overcharged wagon,
+      the manual brake applied on putting away (`manualbrakon`), the weather's friction.
    A player in the cab takes over: `RailVehicle3D.enter_cabin()`/`leave_cabin()` switch the
    vehicle's driver off and on (`DriverSystem.vehicle_set_control_active()`); switched off it takes
    orders and reads its trainset, but touches no control. Left: the player's "AI driver on/off"
@@ -777,10 +790,9 @@ ported, into a delegate.
       vehicles' `BrakeForceR()` (`VehicleBrake.get_force_at()`), `fAccThreshold`, the brake
       reaction, the cargo flags, the brake setting per vehicle (`auto_rewident`),
       `BrakeAccFactor()` and `braking_distance_multiplier()`. The eszelon at x20 now stops 7 m
-      short of E4 (was 44 m past). Left: the acceleration limit by the couplers' strength
-      (`MaxAcc` from `FmaxC`, Driver.cpp:7784-7788), the downhill branch and the final
-      `BrakeAccFactor()` check of `adjust_desired_speed_for_current_speed()` (Driver.cpp:7747-7843),
-      the manual and spring brake let off by the crew, the weather's friction; and why the eszelon
+      short of E4 (was 44 m past). The acceleration limit by the couplers' strength, the downhill branch and
+      the final `BrakeAccFactor()` check of `adjust_desired_speed_for_current_speed()` are ported
+      (2026-09-27). Left: the weather's friction; and why the eszelon
       almost stopped on n226 before E4 and pulled away again (x20, not looked into).
    7. Coupling up and uncoupling (`UpdateConnect()`, `UpdateDisconnect()`,
       `determine_proximity_ranges()`): within 20 m of the vehicle ahead the front vehicle starts

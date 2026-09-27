@@ -50,6 +50,14 @@ namespace godot {
     bool VehicleEngine::get_main_no_power_pos() const {
         return engine_backend != nullptr ? engine_backend->get_main_no_power_pos(this) : false;
     }
+
+    double VehicleEngine::get_eimic_real() const {
+        return engine_backend != nullptr ? engine_backend->get_eimic_real(this) : 0.0;
+    }
+
+    bool VehicleEngine::get_motor_overload_relay_high_threshold() const {
+        return engine_backend != nullptr ? engine_backend->get_motor_overload_relay_high_threshold(this) : false;
+    }
     void VehicleEngine::_apply_configuration() {
         VehicleComponent::_apply_configuration();
         if (engine_backend != nullptr) {
@@ -66,6 +74,8 @@ namespace godot {
     void VehicleEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &VehicleEngine::main_switch);
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleEngine::compressor);
+        ClassDB::bind_method(
+                D_METHOD("motor_overload_relay_threshold", "high"), &VehicleEngine::motor_overload_relay_threshold);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         BIND_PROPERTY(VehicleEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
@@ -221,6 +231,20 @@ namespace godot {
                         Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_no_power_pos");
+        ClassDB::bind_method(
+                D_METHOD("get_motor_overload_relay_high_threshold"),
+                &VehicleEngine::get_motor_overload_relay_high_threshold);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "motor_overload_relay_high_threshold", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_overload_relay_high_threshold");
+        ClassDB::bind_method(D_METHOD("get_eimic_real"), &VehicleEngine::get_eimic_real);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "eimic_real", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_eimic_real");
     }
 
     // Original engine: the main switch closing and opening is what "the engine started/stopped"
@@ -264,10 +288,16 @@ namespace godot {
         p_state["engine_damage"] = get_damage();
         p_state["main_switch_time"] = get_main_switch_time();
         p_state["main_no_power_pos"] = get_main_no_power_pos();
+        p_state["motor_overload_relay_high_threshold"] = get_motor_overload_relay_high_threshold();
+        p_state["eimic_real"] = get_eimic_real();
     }
 
     bool VehicleEngine::main_switch(const bool p_enabled) {
         return engine_backend != nullptr ? engine_backend->main_switch(this, p_enabled) : false;
+    }
+
+    bool VehicleEngine::motor_overload_relay_threshold(const bool p_high) {
+        return engine_backend != nullptr ? engine_backend->motor_overload_relay_threshold(this, p_high) : false;
     }
 
     void VehicleEngine::compressor(const bool p_enabled) {
@@ -279,10 +309,12 @@ namespace godot {
     void VehicleEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
         register_command("compressor", Callable(this, "compressor"));
+        register_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
     }
 
     void VehicleEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
         unregister_command("compressor", Callable(this, "compressor"));
+        unregister_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
     }
 } // namespace godot

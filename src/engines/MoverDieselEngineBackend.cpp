@@ -5,6 +5,9 @@
 #include "VehicleDieselEngine.hpp"
 
 namespace godot {
+    /* dizel_nreg_min = dizel_nmin * 0.98 (Mover.cpp:11173) */
+    static constexpr double NREG_MIN_SHARE = 0.98;
+
     double MoverDieselEngineBackend::get_rpm(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM() : 0.0;
@@ -104,6 +107,25 @@ namespace godot {
         p_mover->dizel_AIM = p_engine->get_mechanical_inertia();
         p_mover->engageupspeed = p_engine->get_mechanical_clutch_engage_speed();
         p_mover->engagedownspeed = p_engine->get_mechanical_clutch_disengage_speed();
+        p_mover->dizel_nmin_hdrive = p_engine->get_mechanical_min_rpm_hydro_drive();
+        p_mover->dizel_nmin_hdrive_factor = p_engine->get_mechanical_min_rpm_hydro_drive_factor();
+        p_mover->dizel_nmin_retarder = p_engine->get_mechanical_min_rpm_retarder();
+        p_mover->nmax = p_engine->get_mechanical_nominal_max_rpm();
+        p_mover->dizel_nreg_acc = p_engine->get_mechanical_regulator_acceleration();
+        p_mover->dizel_RevolutionsDecreaseRate = p_engine->get_mechanical_rpm_decrease_rate();
+        p_mover->AnPos = p_engine->get_mechanical_shunt_mode_ratio();
+        p_mover->dizel_minVelfullengage = p_engine->get_clutch_min_velocity_full_engage();
+        p_mover->dizel_engageDia = p_engine->get_clutch_diameter();
+        p_mover->dizel_engageMaxForce = p_engine->get_clutch_max_force();
+        p_mover->dizel_engagefriction = p_engine->get_clutch_friction();
+        p_mover->dizel_maxVelANS = p_engine->get_torque_converter_unlock_velocity();
+        p_mover->hydro_R_EngageVel = p_engine->get_retarder_engage_velocity();
+        p_mover->hydro_R_Clutch = p_engine->get_retarder_clutch();
+        p_mover->hydro_R_ClutchSpeed = p_engine->get_retarder_clutch_speed();
+        p_mover->hydro_R_WithIndividual = p_engine->get_retarder_with_individual();
+        // LoadFIZ_Engine (Mover.cpp:11172-11203): derived from what was read
+        p_mover->dizel_nreg_min = p_engine->get_mechanical_min_rpm() * NREG_MIN_SHARE;
+        p_mover->ShuntModeAllow = p_engine->get_mechanical_shunt_mode_ratio() > 0.0;
 
         p_mover->hydro_TC = p_engine->get_torque_converter_present();
         p_mover->hydro_TC_TMMax = p_engine->get_torque_converter_max_torque_ratio();

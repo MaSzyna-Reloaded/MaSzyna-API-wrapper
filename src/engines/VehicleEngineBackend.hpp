@@ -29,10 +29,16 @@ namespace godot {
             virtual int get_damage(const VehicleEngine *p_engine) const = 0;
             virtual double get_main_switch_time(const VehicleEngine *p_engine) const = 0;
             virtual bool get_main_no_power_pos(const VehicleEngine *p_engine) const = 0;
+            virtual bool get_motor_overload_relay_high_threshold(const VehicleEngine *p_engine) const = 0;
+            /* The power the EIM controller actually asks for, 0..1, braking below (eimic_real) */
+            virtual double get_eimic_real(const VehicleEngine *p_engine) const = 0;
             virtual void apply_configuration(const VehicleEngine *p_engine) const = 0;
             virtual bool main_switch(const VehicleEngine *p_engine, bool p_enabled) const = 0;
             /* The compressor's switch (CompressorSwitch(), any engine - Mover.cpp) */
             virtual void compressor(const VehicleEngine *p_engine, bool p_enabled) const = 0;
+            /* The motor overload relay's high threshold, or the shunting mode of an engine that has
+             * one (CurrentSwitch(), Mover.cpp:805) */
+            virtual bool motor_overload_relay_threshold(const VehicleEngine *p_engine, bool p_high) const = 0;
             /* One simulation step of the engine, for the work the simulation leaves to its owner. */
             virtual void process(const VehicleEngine *p_engine, double p_delta) const = 0;
             virtual void fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const = 0;

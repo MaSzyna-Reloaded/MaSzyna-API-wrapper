@@ -749,6 +749,19 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # The motor overload relay's threshold, high start (Train.cpp:11830 "maxcurrent_sw:" ->
+        # ggMaxCurrentCtrl, OnCommand_motoroverloadrelaythresholdsetlow/sethigh -> CurrentSwitch(),
+        # Train.cpp:5123-5145). The original's key (Ctrl+F) has no input action yet.
+        "maxcurrent_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "motor_overload_relay_threshold",
+                "state_property": "motor_overload_relay_high_threshold",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Confirmed against VehicleElectricEngine.cpp:159,170,323 - compressor()/compressor_enabled -
         # the switch label (vehicle/Train.cpp:11875, "compressor_sw:" -> ggCompressorButton), not
         # to be confused with "compressor:"/"compressorb:" (the pressure GAUGE, still genuinely

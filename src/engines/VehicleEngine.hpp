@@ -41,6 +41,8 @@ namespace godot {
             int get_damage() const;
             double get_main_switch_time() const;
             bool get_main_no_power_pos() const;
+            bool get_motor_overload_relay_high_threshold() const;
+            double get_eimic_real() const;
 
             enum EngineType {
                 NONE,
@@ -92,6 +94,7 @@ namespace godot {
 
             bool main_switch(bool p_enabled);
             void compressor(bool p_enabled);
+            bool motor_overload_relay_threshold(bool p_high);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 

@@ -56,6 +56,56 @@ and the rule. Headings keep their date and title, because comments in the code c
 * **Rule:** every timer of the simulated train - the cab's relays included - runs on the
   simulation clock, never on the frame.
 
+## 2026-09-27 - the series motor's automatic start had no thresholds (Imin, Imax 0)
+
+* **Symptom:** the AI EU07 ready, wanting to go, its controller at 0: `IncSpeed()` steps on only
+  while `Im < Imin`, and `circuit_imin` read 0.
+* **Proof:** the backend copied `IminLo`/`IminHi`/`ImaxLo`/`ImaxHi`, but never set `Imin` and
+  `Imax` themselves, which `LoadFIZ_Circuit` starts at the low ones (`Mover.cpp:11424-11425`).
+  `compute_movement_()` moves `Imax` only where `ImaxHi > ImaxLo` (`Mover.cpp:1554`), so a vehicle
+  with one threshold kept 0 for good, and `Imin` stayed 0 on every vehicle - the automatic start
+  relay and the overload relay of the player's vehicle as much as the AI's.
+* **Fix:** `MoverElectricEngineBackend` sets `Imin = IminLo`, `Imax = ImaxLo` after them. The EU07
+  then starts: position 28 and the shunt at 32 km/h, 40 km/h in half a minute with eight wagons.
+* **Rule:** a loader's derived fields are part of the port - the ones it sets from the ones read.
+
+## 2026-09-27 - SA134 without a gearbox: the plain diesel's FIZ never reached the Mover
+
+* **Symptom:** found while porting the AI's diesel traction. A dump of the model built of
+  `sa134_v1/214m.fiz` showed `mechanical_min_rpm`, the clutch, the torque converter and the
+  retarder at their defaults, and an empty gearbox.
+* **Proof:** `FizTrainEngineParser` built a plain `DieselEngine` in a stub branch that applied only
+  the keys common to every engine; `Engine:`'s own keys (`nmin`, `nmax`, `AIM`, `EUS`/`EDS`,
+  `IsTC`, `TC_*`, `IsRetarder`, `R_*`, `ShuntMode`, `MaxVelANS`...) were never read. The
+  `MotorParamTable:` section - a diesel's gears - is registered to the diesel-electric parser,
+  whose `_get_node()` cast the engine to `VehicleDieselElectricEngine`: null for a plain diesel,
+  so every row went nowhere. Its header, where the original reads the clutch
+  (`LoadFIZ_MotorParamTable`, `Mover.cpp:11394`), was thrown away. `nmax` stayed 0, and
+  `EngineRPMRatio()` divides by it (`Mover.cpp:1159`). Nothing sent `MotorParam[].AutoSwitch` to
+  the Mover for any engine. `VehicleUniversalController` defaulted `integrated_brake` and
+  `integrated_brake_pn` to true where the Mover has false.
+* **Fix:** `FizTrainDieselEngineParser.apply_engine_fields()` for the whole `DieselEngine` case of
+  `LoadFIZ_Engine`, in the Mover's units and with its defaults; `apply_clutch()` from the
+  `MotorParamTable:` header; the rows read by `parse_diesel_gear_row()` (`readMPTDieselEngine()`)
+  for a plain diesel; `AutoSwitch` applied; the universal controller's defaults the Mover's.
+  After it: 214m has `nmin` 16.7 1/s, the converter and the retarder, and three gears.
+* **Rules:**
+  * A section is parsed for every `EngineType` that has it, and a parser never reaches its node by
+    a cast to one engine class.
+  * A property's default is the Mover's.
+
+## 2026-09-27 - the driver's update hung on a refused controller
+
+* **Symptom:** on Stary Jawor at x20 the probe stopped printing at t=91 s; the process ran on
+  until the timeout at 100 % CPU.
+* **Proof:** `MaszynaLegacyDriverDieselElectricTraction.decrease()` took the second controller to zero and
+  returned true whenever it stood above zero. `DecScndCtrl()` refuses a diesel-electric engine
+  with its automatic relay on (`Mover.cpp:2815`), so the position stayed, and `zero()`'s
+  `while decrease()` never ended.
+* **Fix:** the controller setters return whether the controller moved, and every step of power
+  or brake returns that.
+* **Rule:** a loop that steps a control ends on "did not move", never on "is not there yet".
+
 ## 2026-09-27 - couplers stiffened by a long frame
 
 * **Symptom:** once the physics ran at the simulation speed (the one clock, below), the eszelon

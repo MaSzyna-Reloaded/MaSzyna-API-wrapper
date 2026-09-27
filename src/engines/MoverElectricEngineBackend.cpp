@@ -298,6 +298,10 @@ namespace godot {
         p_mover->ImaxHi = p_engine->get_circuit_imax_high();
         p_mover->IminLo = p_engine->get_circuit_imin_low();
         p_mover->IminHi = p_engine->get_circuit_imin_high();
+        // LoadFIZ_Circuit (Mover.cpp:11424-11425): the thresholds in use start at the low ones -
+        // Imax is moved by the relay only where ImaxHi > ImaxLo, Imin only by its switch
+        p_mover->Imin = p_mover->IminLo;
+        p_mover->Imax = p_mover->ImaxLo;
         p_mover->TUHEX_Sum = p_engine->get_circuit_tuhex_sum();
         p_mover->TUHEX_Diff = p_engine->get_circuit_tuhex_diff();
         p_mover->TUHEX_MinIw = p_engine->get_circuit_tuhex_min_current();

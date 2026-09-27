@@ -63,10 +63,8 @@ const NO_MOVEMENT_SPEED:float = 0.05
 const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
 ## Crew moves one cab at a time, 1 -> 0 -> -1 (TMoverParameters::ChangeCab(), Mover.cpp:784)
 const CAB_CHANGE_STEPS:int = 2
-## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334), with up to
-## PRESSING_FORCE of tractive force [N] (bufferscompress, driverhints.cpp:587-592)
+## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334)
 const PRESSING_VELOCITY:float = 2.0
-const PRESSING_FORCE:float = 50000.0
 ## Coupling up: it starts within this of the vehicle ahead, and couples within ATTACH_DISTANCE [m]
 ## (UpdateConnect(), Driver.cpp:7005-7040)
 const CONNECT_DISTANCE:float = 20.0
@@ -130,6 +128,8 @@ class DriverState:
     var speed:MaszynaLegacyDriverSpeed = MaszynaLegacyDriverSpeed.new()
     ## Its own train brake handle position and brake timing
     var braking:MaszynaLegacyDriverBraking = MaszynaLegacyDriverBraking.new()
+    ## How it drives the engine of its vehicle - the kind of engine's own (create())
+    var traction:MaszynaLegacyDriverTraction = MaszynaLegacyDriverTraction.create(VehicleEngine.NONE)
     ## What it reads of the tracks ahead
     var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
 
@@ -374,19 +374,42 @@ func _update(driver:RID) -> void:
             state.shunt_velocity, state.timetable.velocity,
             directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking)
     state.reaction_time = state.speed.reaction_time
+    var cab:int = CabinSystem.occupied_cab(vehicle)
+    # the engine it drives decides how (IncSpeed()'s switch on the engine type, Driver.cpp:3409)
+    var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", VehicleEngine.NONE)) \
+            as VehicleEngine.EngineType
+    if not state.traction.engine_type == engine_type:
+        state.traction = MaszynaLegacyDriverTraction.create(engine_type)
+    var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
+    situation.vehicle = vehicle
+    situation.cab = cab
+    situation.controlling = state.trainset.controlling
+    situation.order = state.orders[state.order_position]
+    situation.speed = state.speed
+    situation.trainset = state.trainset
+    situation.route = state.route
+    situation.braking = state.braking
+    situation.directional_speed = directional_speed
+    situation.pressing = state.pressing
+    situation.coupling = state.coupling_vehicle.is_valid() and bool(situation.order & Order.CONNECT)
+    state.traction.read(situation, elapsed)
     # a player drives it: the driver takes orders and reads the trainset, and touches nothing
     if not DriverSystem.vehicle_is_control_active(vehicle):
         DriverSystem.driver_schedule_update(driver, state.reaction_time)
         return
-    _control_security_system(vehicle, CabinSystem.occupied_cab(vehicle))
-    # the power and the brakes, as the original's AI decides them on every update (UpdateSituation())
-    MaszynaLegacyDriverTraction.control(
-            vehicle, CabinSystem.occupied_cab(vehicle), state.speed, state.trainset, state.route, directional_speed,
-            state.pressing)
-    state.braking.control(
-            vehicle, CabinSystem.occupied_cab(vehicle), state.orders[state.order_position], state.speed,
-            state.trainset, state.route, directional_speed, elapsed)
-    var cab:int = CabinSystem.occupied_cab(vehicle)
+    _control_security_system(vehicle, cab)
+    if state.engine_active:
+        MaszynaLegacyDriverPantographs.control(vehicle, cab, state.trainset, state.direction,
+                MaszynaLegacyDriverBraking.is_emu(vehicle), state.traction.action_time <= 0.0)
+    # the controllers held by time back to holding, the power and the brakes, the controllers
+    # held by time set to work until the next update (UpdateSituation(), Driver.cpp:5016-5027)
+    state.traction.check_time_controllers(situation)
+    state.braking.check_time_controllers(situation)
+    if state.traction.prepare(situation):
+        state.traction.control(situation)
+        state.braking.control(situation, elapsed)
+    state.traction.set_time_controllers(situation)
+    state.braking.set_time_controllers(situation)
     var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
     # a vehicle somebody powered up gets ready to drive (the original's HACK, Driver.cpp:7226-7231)
     if state.orders[state.order_position] == Order.WAIT_FOR_ORDERS and not state.engine_active \
@@ -404,7 +427,7 @@ func _update(driver:RID) -> void:
         Order.CONNECT:
             _update_connect(state)
         Order.DISCONNECT:
-            _update_disconnect(state, vehicle, cab)
+            _update_disconnect(state, situation)
     if state.orders[state.order_position] & Order.CHANGE_DIRECTION and standing:
         _activation(state, vehicle)
         if state.direction == state.direction_order:
@@ -424,9 +447,8 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     if _has_diesel_engine(vehicle):
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.OIL_PUMP_ON)
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_ON)
-    # both pantographs up (Driver.cpp:2822-2826)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON)
+    # the pantographs' air, and both up (Driver.cpp:2782-2811)
+    MaszynaLegacyDriverPantographs.prepare(vehicle, cab, state.trainset, MaszynaLegacyDriverBraking.is_emu(vehicle))
     _prepare_direction(state, vehicle, cab)
     var converter_overload:bool = CabinSystem.vehicle_state_value(vehicle, "converter_overload", false)
     if converter_overload:
@@ -523,7 +545,9 @@ func _update_connect(state:DriverState) -> void:
 ## of the vehicles released and the coupler undone by the shunter - the vehicles' `brake_releaser`
 ## and `coupler_disconnect`, as the player's crew does - (3rd); the direction restored and the next
 ## order (4th, 5th). The coupler adapter is not ported (TODO.md).
-func _update_disconnect(state:DriverState, vehicle:RID, cab:int) -> void:
+func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction.Situation) -> void:
+    var vehicle:RID = situation.vehicle
+    var cab:int = situation.cab
     if state.vehicle_count >= 0:
         if not state.direction == state.direction_order:
             _reverse(state, vehicle, cab)
@@ -532,8 +556,7 @@ func _update_disconnect(state:DriverState, vehicle:RID, cab:int) -> void:
         # free coupler and took the uncoupling as done (FINDINGS.md, 2026-09-27)
         if state.pressing and state.direction == state.direction_order and state.trainset.direction == state.direction:
             state.braking.release_local_brake(vehicle, cab)
-            if absf(float(CabinSystem.vehicle_state_value(vehicle, "Ft", 0.0))) < PRESSING_FORCE:
-                MaszynaLegacyDriverTraction.increase(vehicle, cab, state.trainset, true)
+            state.traction.press(situation)
             # from the driver's vehicle into the ones pressed, as many as stay; a unit counts once
             var vehicles:Array[RID] = state.trainset.vehicles
             var index:int = vehicles.find(vehicle)
@@ -607,7 +630,8 @@ func _control_security_system(vehicle:RID, cab:int) -> void:
 
 
 static func _has_diesel_engine(vehicle:RID) -> bool:
-    var engine_type:int = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", VehicleEngine.NONE))
+    var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", VehicleEngine.NONE)) \
+            as VehicleEngine.EngineType
     return engine_type == VehicleEngine.DIESEL or engine_type == VehicleEngine.DIESEL_ELECTRIC
 
 

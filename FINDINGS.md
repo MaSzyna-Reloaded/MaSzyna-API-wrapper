@@ -75,6 +75,16 @@ anything. Open work belongs in `TODO.md`.
 * When porting a contract consumed by scripts nobody here maintains, run the real scripts against
   it. *(09-24 Python cab screens)*
 * Check sun-altitude thresholds against a winter day. *(09-20 orange fog)*
+* A section is parsed for every `EngineType` that has it, and a parser never reaches its engine
+  node by a cast to one engine class - a failed cast drops the section without a word. Check each
+  `EngineType` against its `LoadFIZ_*` case and its `readMPT*()`. *(09-27 SA134 without a gearbox)*
+* A property's default is the Mover's default, not a value that looks sensible. *(09-27 SA134
+  without a gearbox)*
+* A loader's derived fields are part of the port: the fields it sets from the ones it read
+  (`Imin = IminLo`). *(09-27 automatic start without thresholds)*
+* A loop that steps a control until it gets somewhere ends on "did not move", never on "is not
+  there yet" - the vehicle may refuse the step. *(09-27 the driver's update hung on a refused
+  controller)*
 
 ## State, ownership, events
 * Every timer of the simulated train, the cab's relays included, runs on the simulation clock

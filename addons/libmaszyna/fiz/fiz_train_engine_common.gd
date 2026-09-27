@@ -169,6 +169,21 @@ static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool =
     return item
 
 
+## A gear of a plain diesel engine (readMPTDieselEngine, Mover.cpp:9175): idx, mIsat, fi, mfi -
+## the gear's ratio, and the lowest and highest speed it is driven in [km/h] - then an optional
+## flag of a gear the controller passes by itself
+static func parse_diesel_gear_row(p: MaszynaParser) -> MotorParameter:
+    var tokens: Array = p.get_tokens(5)
+    if tokens.size() < 4:
+        return null
+    var item := MotorParameter.new()
+    item.saturation_current_multiplier = float(tokens[1]) # mIsat
+    item.voltage_constant = float(tokens[2])              # fi
+    item.voltage_constant_multiplier = float(tokens[3])   # mfi
+    item.auto_switch = tokens.size() >= 5 and int(tokens[4]) == 1
+    return item
+
+
 ## Power:'s fields, common to the whole VehicleElectricEngine family (Series + Induction).
 ## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
 ## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.

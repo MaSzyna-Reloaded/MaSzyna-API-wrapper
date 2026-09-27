@@ -51,6 +51,21 @@ interface.
 * **A coupler number can ask for what no shunter joins.** `Shunt <n> <coupler>` takes the raw
   `coupling::` bits, so it can ask for high voltage or a power line; `Attach()` sets them
   (`Driver.cpp:7021`), a player's crew cannot. Wrapper: only the elements a shunter joins count.
+* **The front engine counts twice.** `CheckVehicles()` starts `ControlledEnginesCount` at 1 for a
+  powered front vehicle, then counts again every powered vehicle under control that is not the
+  driver's own - the front one among them when the driver sits elsewhere (`Driver.cpp:2470-2489`).
+  Wrapper: every engine under control once (`MaszynaLegacyDriverTrainset._read_control()`).
+* **A series motor's power is "taken off" when it is not.** `DecMainCtrl(2)` of an electric series
+  motor returns true whatever it did (`Mover.cpp:2616-2622`), so `ZeroSpeed()`'s loop ends only
+  on the next position check. Wrapper: true only when the controller moved - a controller the
+  vehicle refuses to turn back would otherwise hang the driver's update.
+* **Releasing the EP brake switches it on.** `DecBrake()` of a handle whose EP holding equals its
+  releasing calls `SwitchEPBrake(1)` (`Driver.cpp:3326-3328`), the same as `IncBrake()`. Kept as
+  is.
+* **`std::clamp()` with a lower bound over the upper one.** The coupler limit clamps
+  `MaxAcc` between `HeavyCargoTrainAcceleration` (0.1) and `AccPreferred`, which falls to -0.3
+  near a vehicle ahead (`Driver.cpp:7788`) - undefined behaviour. Wrapper: `clampf()`, the lower
+  bound wins.
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 
@@ -137,6 +152,13 @@ interface.
 * **The FIZ loader is not in the vendored copy.** Ours is 9598 lines against the original's 12813
   and holds no `LoadFIZ_*` at all, so every quirk of how a FIZ key reaches a Mover field has to be
   read in `~/src/maszyna`, not in `src/maszyna`.
+
+* **`LoadFIZ_Engine` and `readMPT()` pick their keys by the engine type.** The clutch of a plain
+  diesel (`minVelfullengage`, `engageDia`, `engageMaxForce`, `engagefriction`) is read from the
+  header of `MotorParamTable:`, not from `Engine:` (`Mover.cpp:11394-11406`), and the rows of that
+  same section are motor parameters of an electric motor or the gears of a diesel
+  (`readMPTDieselEngine()`, `Mover.cpp:9175`: idx, mIsat, fi, mfi - the ratio, the lowest and the
+  top speed of the gear).
 
 ## Cab definitions (MMD data)
 

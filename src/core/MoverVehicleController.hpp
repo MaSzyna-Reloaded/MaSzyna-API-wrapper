@@ -72,6 +72,10 @@ namespace godot {
             int get_controller_main_position() const override;
             int get_controller_joint_position() const override;
             int get_controller_main_actual_position() const override;
+            bool get_controller_main_delayed() const override;
+            bool get_coupler_stretched() const override;
+            int get_controller_main_no_power_position() const override;
+            bool get_radio_stop_active() const override;
             int get_circuit_rlist_size() const override;
 
         public:
@@ -85,6 +89,8 @@ namespace godot {
             void cab_activation(bool p_enabled) const override;
             void cab_activation_auto() const override;
             void cab_change(int p_direction) const override;
+            void ground_relay_reset() const override;
+            void antislip() const override;
             void main_controller_increase(int p_step = 1) const override;
             void main_controller_decrease(int p_step = 1) const override;
             void second_controller_increase(int p_step = 1) const override;

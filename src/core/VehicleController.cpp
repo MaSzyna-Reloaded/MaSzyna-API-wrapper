@@ -53,6 +53,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &VehicleController::cab_activation);
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &VehicleController::cab_activation_auto);
         ClassDB::bind_method(D_METHOD("cab_change", "direction"), &VehicleController::cab_change);
+        ClassDB::bind_method(D_METHOD("ground_relay_reset"), &VehicleController::ground_relay_reset);
+        ClassDB::bind_method(D_METHOD("antislip"), &VehicleController::antislip);
         ClassDB::bind_method(
                 D_METHOD("main_controller_increase", "step"), &VehicleController::main_controller_increase, DEFVAL(1));
         ClassDB::bind_method(
@@ -402,6 +404,33 @@ namespace godot {
                         Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_main_actual_position");
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_delayed"), &VehicleController::get_controller_main_delayed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "controller_main_delayed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_main_delayed");
+        ClassDB::bind_method(D_METHOD("get_coupler_stretched"), &VehicleController::get_coupler_stretched);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "coupler_stretched", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_coupler_stretched");
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_no_power_position"),
+                &VehicleController::get_controller_main_no_power_position);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::INT, "controller_main_no_power_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_main_no_power_position");
+        ClassDB::bind_method(D_METHOD("get_radio_stop_active"), &VehicleController::get_radio_stop_active);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "radio_stop_active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_radio_stop_active");
         ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &VehicleController::get_circuit_rlist_size);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -469,6 +498,8 @@ namespace godot {
         }
         register_command("battery", Callable(this, "battery"));
         register_command("cab_change", Callable(this, "cab_change"));
+        register_command("ground_relay_reset", Callable(this, "ground_relay_reset"));
+        register_command("antislip", Callable(this, "antislip"));
         register_command("cab_activation", Callable(this, "cab_activation"));
         register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
         register_command("main_controller_increase", Callable(this, "main_controller_increase"));
@@ -566,6 +597,10 @@ namespace godot {
         p_state["controller_main_position"] = get_controller_main_position();
         p_state["controller_joint_position"] = get_controller_joint_position();
         p_state["controller_main_actual_position"] = get_controller_main_actual_position();
+        p_state["controller_main_delayed"] = get_controller_main_delayed();
+        p_state["coupler_stretched"] = get_coupler_stretched();
+        p_state["controller_main_no_power_position"] = get_controller_main_no_power_position();
+        p_state["radio_stop_active"] = get_radio_stop_active();
         p_state["circuit_rlist_size"] = get_circuit_rlist_size();
     }
 
@@ -626,6 +661,8 @@ namespace godot {
     void VehicleController::shutdown() {
         unregister_command("battery");
         unregister_command("cab_change");
+        unregister_command("ground_relay_reset");
+        unregister_command("antislip");
         unregister_command("cab_activation");
         unregister_command("cab_activation_auto");
         unregister_command("main_controller_increase");

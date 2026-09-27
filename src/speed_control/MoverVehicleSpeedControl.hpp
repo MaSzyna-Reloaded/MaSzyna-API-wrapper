@@ -20,5 +20,12 @@ namespace godot {
             double get_desired_velocity() const override;
             double get_desired_power() const override;
             double get_selected_velocity() const override;
+            double get_set_velocity() const override;
+            void speed_control_increase() override;
+            void speed_control_decrease() override;
+            void speed_control_power_increase() override;
+            void speed_control_power_decrease() override;
+            void speed_control_button(int p_button) override;
+            void speed_control_set(double p_velocity) override;
     };
 } // namespace godot

@@ -286,6 +286,14 @@ namespace godot {
             virtual void manual_brake_increase() = 0;
             virtual void manual_brake_decrease() = 0;
             virtual void auto_rewident(int p_brake_delay) = 0;
+            /* The next or the previous operation mode the brake has (BrakeOpModeFlag, one bit of
+             * BrakeOpModes; OnCommand_trainbrakeoperationmodeincrease/decrease, Train.cpp:2445-2478) */
+            virtual void brake_operation_mode_increase() = 0;
+            virtual void brake_operation_mode_decrease() = 0;
+            /* The electro-pneumatic brake applied or released (SwitchEPBrake(), Mover.cpp:4153); true
+             * when it changed */
+            virtual bool ep_brake(bool p_applied) = 0;
+            virtual int get_operation_mode() const = 0;
             virtual void brake_level_charging(bool p_active) = 0;
             virtual void alarm_chain(bool p_pulled) = 0;
             /* One of the vehicle's universal brake buttons (UBB1..3 in the FIZ), 0-based */

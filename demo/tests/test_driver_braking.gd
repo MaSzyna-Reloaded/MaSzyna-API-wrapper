@@ -36,24 +36,40 @@ func after_each():
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
+## One update of the driver: its decision, then the handles set (control_braking_force(),
+## SetTimeControllers())
+func _decide() -> void:
+    var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
+    situation.vehicle = vehicle
+    situation.cab = 1
+    situation.controlling = vehicle
+    situation.order = Order.SHUNT
+    situation.speed = speed
+    situation.trainset = trainset
+    situation.route = route
+    situation.braking = braking
+    braking.control(situation, STEP)
+    braking.set_time_controllers(situation)
+
+
 func test_standing_it_holds_the_locomotive_with_its_own_brake():
     speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking)
 
     # the fixture's handle starts at lap: the train brake to running first, then the local brake
-    braking.control(vehicle, 1, Order.SHUNT, speed, trainset, route, 0.0, STEP)
-    braking.control(vehicle, 1, Order.SHUNT, speed, trainset, route, 0.0, STEP)
+    _decide()
+    _decide()
 
     assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
 
 func test_wanting_to_go_it_releases():
     speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking)
-    braking.control(vehicle, 1, Order.SHUNT, speed, trainset, route, 0.0, STEP)
-    braking.control(vehicle, 1, Order.SHUNT, speed, trainset, route, 0.0, STEP)
+    _decide()
+    _decide()
     assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
     speed.pick(Order.SHUNT, true, false, 20.0, 20.0, -1.0, 0.0, trainset, route, REACTION, braking)
-    braking.control(vehicle, 1, Order.SHUNT, speed, trainset, route, 0.0, STEP)
+    _decide()
 
     assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_RELEASED)
     assert_eq(braking.position, MaszynaLegacyDriverBraking.POSITION_RUNNING, "the train brake at running")

@@ -1,6 +1,7 @@
 #include "../mover/MoverBackend.hpp"
 #include "MoverVehicleElectricSeriesEngine.hpp"
 #include <algorithm>
+#include <limits>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -115,6 +116,16 @@ namespace godot {
         return mover != nullptr ? mover->RventRot : 0.0;
     }
 
+    double MoverVehicleElectricSeriesEngine::get_circuit_imin() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Imin : 0.0;
+    }
+
+    double MoverVehicleElectricSeriesEngine::get_engine_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EngineVoltage : 0.0;
+    }
+
     void MoverVehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleElectricSeriesEngine::_fill_config_dictionary(p_config);
         TMoverParameters *mover = get_mover();
@@ -122,5 +133,51 @@ namespace godot {
             return;
         }
         p_config["resistor_fan_max_rpm"] = mover->RVentnmax;
+    }
+
+    // Original engine: TController::ESMVelocity() (Driver.cpp:2344-2382) - the current is iterated five
+    // times towards the one the adhesion allows, then held under 90% of the relay's
+    double MoverVehicleElectricSeriesEngine::get_next_position_velocity(const bool p_main_controller) const {
+        constexpr double CURRENT_SHARE = 0.9;
+        constexpr double FRICTION_SHARE = 0.85;
+        constexpr int CURRENT_ITERATIONS = 5;
+        /* RList[].ScndAct of a position that sets no field shunt of its own */
+        constexpr int NO_SHUNT = 255;
+        constexpr double SECONDS_PER_HOUR_PER_KILOMETRE = 3.6;
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return 0.0;
+        }
+        int main_position = mover->MainCtrlActualPos;
+        int shunt_position = mover->ScndCtrlActualPos;
+        if (p_main_controller) {
+            main_position += 1;
+        } else {
+            shunt_position += 1;
+        }
+        const TScheme &step = mover->RList[main_position];
+        if (step.ScndAct < NO_SHUNT && mover->ScndCtrlActualPos == 0) {
+            shunt_position = step.ScndAct;
+        }
+        const double friction_max = mover->Mass * g * mover->Adhesive(mover->RunningTrack.friction) * FRICTION_SHARE;
+        double current = mover->Imax;
+        for (int i = 0; i < CURRENT_ITERATIONS; i++) {
+            const double momentum = mover->MomentumF(current, current, shunt_position);
+            const double force_max =
+                    momentum * step.Bn * step.Mn * 2 / mover->WheelDiameter * mover->Transmision.Ratio;
+            if (force_max == 0.0) {
+                current = std::numeric_limits<double>::max();
+                break;
+            }
+            current = 0.5 * current * (1 + friction_max / force_max);
+        }
+        current = std::min(current, mover->Imax * CURRENT_SHARE);
+        const double resistance = step.R + mover->CircuitRes + step.Mn * mover->WindingRes;
+        const TMotorParameters &motor = mover->MotorParam[shunt_position];
+        const double flux =
+                motor.fi * std::max(std::abs(current) / (std::abs(current) + motor.Isat) - motor.fi0, 0.0);
+        const double voltage = std::abs(mover->EngineVoltage) - current * resistance;
+        const double revolutions = std::max(0.0, voltage / (flux * step.Mn));
+        return revolutions * mover->WheelDiameter * Math_PI * SECONDS_PER_HOUR_PER_KILOMETRE / mover->Transmision.Ratio;
     }
 } // namespace godot

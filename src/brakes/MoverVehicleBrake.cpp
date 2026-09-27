@@ -127,6 +127,35 @@ namespace godot {
         mover->SpringBrake.Activate = false;
     }
 
+    // Original engine: TTrain::OnCommand_trainbrakeoperationmodeincrease (Train.cpp:2447-2460)
+    void MoverVehicleBrake::brake_operation_mode_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (((mover->BrakeOpModeFlag << 1) & mover->BrakeOpModes) != 0) {
+            mover->BrakeOpModeFlag <<= 1;
+        }
+    }
+
+    // Original engine: TTrain::OnCommand_trainbrakeoperationmodedecrease (Train.cpp:2463-2476)
+    void MoverVehicleBrake::brake_operation_mode_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (((mover->BrakeOpModeFlag >> 1) & mover->BrakeOpModes) != 0) {
+            mover->BrakeOpModeFlag >>= 1;
+        }
+    }
+
+    bool MoverVehicleBrake::ep_brake(const bool p_applied) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover, false);
+        return mover->SwitchEPBrake(p_applied ? 1 : 0);
+    }
+
+    int MoverVehicleBrake::get_operation_mode() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->BrakeOpModeFlag : 0;
+    }
+
     // Original engine: TTrain::OnCommand_trainbrakecharging (Train.cpp:1686) - held, the handle stays in the
     // charging position -1; released, only self-returning EP handles go back to the running position
     // (zero_charging_train_brake(), Train.cpp:960), an FV4a stays where it is
@@ -192,6 +221,13 @@ namespace godot {
         p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
         p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
         p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
+        // the electro-pneumatic range: releasing, holding and full braking (bh_EPR/EPN/EPB); a
+        // handle whose holding equals releasing works the EP brake by a switch (hamulce.h:173-177)
+        p_config["brakes_controller_position_ep_release"] = mover->Handle->GetPos(bh_EPR);
+        p_config["brakes_controller_position_ep_hold"] = mover->Handle->GetPos(bh_EPN);
+        p_config["brakes_controller_position_ep_brake"] = mover->Handle->GetPos(bh_EPB);
+        // the EP brake is applied by how long the handle is held (TDriverHandle::TimeEP)
+        p_config["brake_handle_ep_time_controlled"] = mover->Handle->TimeEP;
         // a handle that sets the pipe pressure by how long it is held, not by where it stands
         // (TDriverHandle::Time, hamulce.cpp: MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405)
         p_config["brake_handle_time_controlled"] = mover->Handle->Time;
@@ -413,6 +449,7 @@ namespace godot {
         p_state["brake_local_aeim_position"] = get_local_aeim_position();
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
+        p_state["brake_operation_mode"] = get_operation_mode();
         p_state["main_pipe_locked"] = get_main_pipe_locked();
         p_state["brake_force"] = get_force();
         p_state["brake_is_braking"] = is_braking();

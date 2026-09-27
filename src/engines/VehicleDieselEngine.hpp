@@ -61,6 +61,38 @@ namespace godot {
             MAKE_MEMBER_GS(double, mechanical_inertia, 1.0);
             MAKE_MEMBER_GS(double, mechanical_clutch_engage_speed, 0.5);
             MAKE_MEMBER_GS(double, mechanical_clutch_disengage_speed, 0.9);
+            /* nmin_hdrive [1/s]: the idle speed while driving on the torque converter */
+            MAKE_MEMBER_GS(double, mechanical_min_rpm_hydro_drive, 0.0);
+            /* nmin_hdrive_factor [1/s]: its rise with the power asked for */
+            MAKE_MEMBER_GS(double, mechanical_min_rpm_hydro_drive_factor, 0.0);
+            /* nmin_retarder [1/s]: the speed while the retarder brakes */
+            MAKE_MEMBER_GS(double, mechanical_min_rpm_retarder, 0.0);
+            /* Engine: nmax [1/s]: the engine's top speed (not DList's) */
+            MAKE_MEMBER_GS(double, mechanical_nominal_max_rpm, 0.0);
+            /* nreg_acc [1/s2]: how fast the governor raises the speed */
+            MAKE_MEMBER_GS(double, mechanical_regulator_acceleration, 999.0);
+            /* RPMDecRate */
+            MAKE_MEMBER_GS(double, mechanical_rpm_decrease_rate, 2.0);
+            /* ShuntMode: the extra gear of a shunting mode (2Ls150), 0 without one */
+            MAKE_MEMBER_GS(double, mechanical_shunt_mode_ratio, 0.0);
+            /* minVelfullengage [km/h]: the clutch holds without slip above it */
+            MAKE_MEMBER_GS(double, clutch_min_velocity_full_engage, 0.0);
+            /* engageDia [m] */
+            MAKE_MEMBER_GS(double, clutch_diameter, 0.5);
+            /* engageMaxForce [N] */
+            MAKE_MEMBER_GS(double, clutch_max_force, 6000.0);
+            /* engagefriction */
+            MAKE_MEMBER_GS(double, clutch_friction, 0.5);
+            /* MaxVelANS [km/h]: the converter disengages below it */
+            MAKE_MEMBER_GS(double, torque_converter_unlock_velocity, 3.0);
+            /* R_EngageVel [km/h] */
+            MAKE_MEMBER_GS(double, retarder_engage_velocity, 1.0);
+            /* R_IsClutch: the retarder has its own clutch */
+            MAKE_MEMBER_GS(bool, retarder_clutch, false);
+            /* R_ClutchSpeed */
+            MAKE_MEMBER_GS(double, retarder_clutch_speed, 10.0);
+            /* R_WithIndividual */
+            MAKE_MEMBER_GS(bool, retarder_with_individual, false);
             MAKE_MEMBER_GS(bool, torque_converter_present, false);
             MAKE_MEMBER_GS(double, torque_converter_max_torque_ratio, 2.0);
             MAKE_MEMBER_GS(double, torque_converter_coupling_point, 0.85);

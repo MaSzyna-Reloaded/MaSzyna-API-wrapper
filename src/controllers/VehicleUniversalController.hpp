@@ -18,8 +18,10 @@ namespace godot {
             static void _bind_methods();
 
         public:
-            MAKE_MEMBER_GS(bool, integrated_brake_pn, true);
-            MAKE_MEMBER_GS(bool, integrated_brake, true);
+            MAKE_MEMBER_GS(bool, integrated_brake_pn, false);
+            MAKE_MEMBER_GS(bool, integrated_brake, false);
+            /* IntegratedLocBrake: the controller's braking positions work the local brake */
+            MAKE_MEMBER_GS(bool, integrated_local_brake, false);
             MAKE_MEMBER_GS(int, selector_position, 0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<UniversalControllerListItem>, positions)
     };

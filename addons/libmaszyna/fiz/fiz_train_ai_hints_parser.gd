@@ -19,7 +19,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     context.add_part("VehicleAIHints", node)
 
     if kv.has("Pantstate"):
-        node.pantograph_state = FizLineUtil.get_int(kv, "Pantstate", VehicleAIHints.PANTOGRAPH_STATE_FRONT)
+        node.pantograph_state = FizLineUtil.get_int(kv, "Pantstate", VehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC)
     if kv.has("LocalBrakeAccFactor"):
         node.local_brake_acceleration_factor = FizLineUtil.get_float(kv, "LocalBrakeAccFactor")
     if kv.has("IdlePantUp"):

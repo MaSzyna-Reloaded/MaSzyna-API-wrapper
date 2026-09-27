@@ -7,9 +7,9 @@ class_name MaszynaLegacyDriverSpeed
 ## the shunting speed, the speed allowed by the orders, the track's limit; then the acceleration
 ## towards it (adjust_desired_speed_for_target_speed(), adjust_desired_speed_for_current_speed()).
 ##
-## The tracks and the vehicles ahead come from the speed table (MaszynaLegacyDriverRoute). Not ported
-## yet: the load exchange and waiting (fStopTime); the braking characteristic (fBrake_a0/a1) and the
-## coupler strength limit come with the brakes - see TODO.md, "Drivers".
+## The tracks and the vehicles ahead come from the speed table (MaszynaLegacyDriverRoute), the
+## braking characteristic from MaszynaLegacyDriverBraking. Not ported yet: the load exchange and
+## waiting (fStopTime) - see TODO.md, "Drivers".
 
 ## AccPreferred of a calm driver [m/s2] (EasyAcceleration, Driver.cpp:152)
 const EASY_ACCELERATION:float = 0.85
@@ -72,6 +72,28 @@ const OBSTACLE_SPEED_MARGIN:float = 5.0
 ## OBSTACLE_FAR, OBSTACLE_CONNECT_NEAR_SPEED nearer [km/h]
 const OBSTACLE_CONNECT_FAR_SPEED:float = 20.0
 const OBSTACLE_CONNECT_NEAR_SPEED:float = 4.0
+## Downhill past this [m/s2] the brakes' reaction is reckoned with: the speed gained over this many
+## seconds (Driver.cpp:7747-7750); a goods train's a0 over CARGO_LATE_A0 brakes up to CARGO_LATE_EXTRA
+## more (Driver.cpp:7762-7765); over the speed allowed OVERSPEED_BRAKING per km/h, up to
+## OVERSPEED_LIMIT km/h of it (Driver.cpp:7779)
+const DOWNHILL_GRAVITY:float = 0.025
+const DOWNHILL_REACTION:float = 30.0
+const CARGO_LATE_A0:float = 0.2
+const CARGO_LATE_EXTRA:float = 0.15
+const OVERSPEED_BRAKING:float = 0.15
+const OVERSPEED_LIMIT:float = 5.0
+## Half the coupler's strength over the train's mass, of a train with wagons the more the faster up
+## to 40 km/h, never under a heavy goods train's HeavyCargoTrainAcceleration (Driver.cpp:157,
+## 7784-7788)
+const COUPLER_SHARE:float = 0.5
+const COUPLER_SPEED_SHARE:float = 0.025
+const COUPLER_SPEED_MIN:float = 0.2
+const HEAVY_CARGO_ACCELERATION:float = 0.10
+## The final check (Driver.cpp:7829-7836): a0 of this share unless ready and the next speed not
+## within NEAR_NEXT_VELOCITY [km/h]; the braking distance's multiplier taken this many times
+const NOT_READY_BRAKE_SHARE:float = 0.8
+const NEAR_NEXT_VELOCITY:float = 40.0
+const DISTANCE_MULTIPLIER_SHARE:float = 1.2
 ## Close to a vehicle ahead or a stop, the driver reacts this often [s] (Driver.cpp:7501, 7684)
 const HURRIED_REACTION_TIME:float = 0.1
 
@@ -139,6 +161,7 @@ func pick(
             acceleration_desired = minf(acceleration_desired, NO_ACCELERATION + braking.acceleration_threshold)
         else:
             acceleration_desired = minf(acceleration_desired, maxf(0.0, acceleration_preferred))
+    _adjust_for_slope_and_couplers(speed, trainset, route, braking)
     # pick_optimal_speed() (Driver.cpp:7383-7398)
     if acceleration_desired > NO_ACCELERATION:
         _acceleration_average = SMOOTHING_NEW * acceleration_desired + SMOOTHING_KEPT * _acceleration_average
@@ -249,6 +272,49 @@ func _adjust_for_target_speed(
         elif speed <= next + route.velocity_plus:
             acceleration_desired = maxf(0.0, acceleration_preferred)
         reaction_time = HURRIED_REACTION_TIME
+
+
+## The rest of adjust_desired_speed_for_current_speed() (Driver.cpp:7747-7843): downhill braking
+## starts before the brakes would catch up; a train with wagons accelerates no harder than half its
+## coupler's strength allows, less at low speed; and it does not ask for power it would have to
+## brake off again at once
+func _adjust_for_slope_and_couplers(
+    speed:float, trainset:MaszynaLegacyDriverTrainset, route:MaszynaLegacyDriverRoute,
+    braking:MaszynaLegacyDriverBraking
+) -> void:
+    var gravity:float = trainset.gravity_acceleration
+    if gravity > DOWNHILL_GRAVITY:
+        # the speed the train gains before the brakes work
+        var estimate:float = speed + (1.0 - braking.table_a0) * DOWNHILL_REACTION * trainset.acceleration
+        if estimate > velocity_desired:
+            if velocity_desired == 0.0:
+                acceleration_desired = minf(acceleration_desired, STOP_ACCELERATION)
+            else:
+                acceleration_desired = minf(acceleration_desired, NO_ACCELERATION + braking.acceleration_threshold)
+                # a goods train braking late crosses its threshold
+                if braking.cargo and braking.table_a0 > CARGO_LATE_A0:
+                    acceleration_desired -= clampf(braking.table_a0 - CARGO_LATE_A0, 0.0, CARGO_LATE_EXTRA)
+        elif route.velocity_minus > 0.0:
+            # ease off closing in on the speed wanted
+            acceleration_desired = minf(acceleration_desired, lerpf(NO_ACCELERATION, acceleration_preferred,
+                    clampf(velocity_desired - estimate, 0.0, route.velocity_minus) / route.velocity_minus))
+        if speed > MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
+            acceleration_desired -= gravity
+            # over the speed allowed something went wrong: brake harder
+            acceleration_desired -= OVERSPEED_BRAKING * clampf(speed - velocity_desired, 0.0, OVERSPEED_LIMIT)
+    # to spare the couplers sudden jolts (Driver.cpp:7784-7789)
+    if trainset.mass > 0.0:
+        var acceleration_max:float = COUPLER_SHARE * trainset.coupler_strength / trainset.mass
+        if trainset.vehicles.size() - trainset.controlled_engines > 0:
+            acceleration_max *= clampf(speed * COUPLER_SPEED_SHARE, COUPLER_SPEED_MIN, 1.0)
+        acceleration_desired = minf(acceleration_desired, clampf(acceleration_max, HEAVY_CARGO_ACCELERATION, acceleration_preferred))
+    # not above the speed wanted: power it would brake off at once is not asked for (Driver.cpp:7826-7838)
+    if speed < velocity_desired:
+        var limit:float = braking.table_a0 * NOT_READY_BRAKE_SHARE \
+                if not trainset.ready or velocity_next > speed - NEAR_NEXT_VELOCITY else -braking.acceleration_threshold
+        if -acceleration_desired * braking.factor(self, route, trainset, speed) \
+                < limit / (DISTANCE_MULTIPLIER_SHARE * braking.distance_multiplier(velocity_next, speed, trainset)):
+            acceleration_desired = maxf(NO_ACCELERATION, acceleration_desired)
 
 
 ## min_speed() (utilities.h:284): the lower of two speeds, where NO_LIMIT is none

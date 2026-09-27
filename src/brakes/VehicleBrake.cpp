@@ -241,6 +241,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("manual_brake_increase"), &VehicleBrake::manual_brake_increase);
         ClassDB::bind_method(D_METHOD("manual_brake_decrease"), &VehicleBrake::manual_brake_decrease);
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &VehicleBrake::auto_rewident);
+        ClassDB::bind_method(
+                D_METHOD("brake_operation_mode_increase"), &VehicleBrake::brake_operation_mode_increase);
+        ClassDB::bind_method(
+                D_METHOD("brake_operation_mode_decrease"), &VehicleBrake::brake_operation_mode_decrease);
+        ClassDB::bind_method(D_METHOD("ep_brake", "applied"), &VehicleBrake::ep_brake);
+        ClassDB::bind_method(D_METHOD("get_operation_mode"), &VehicleBrake::get_operation_mode);
         ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &VehicleBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &VehicleBrake::alarm_chain);
         ClassDB::bind_method(
@@ -421,6 +427,9 @@ namespace godot {
         register_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         register_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         register_command("auto_rewident", Callable(this, "auto_rewident"));
+        register_command("brake_operation_mode_increase", Callable(this, "brake_operation_mode_increase"));
+        register_command("brake_operation_mode_decrease", Callable(this, "brake_operation_mode_decrease"));
+        register_command("ep_brake", Callable(this, "ep_brake"));
         register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
         register_command("universal_brake_button", Callable(this, "universal_brake_button"));
@@ -438,6 +447,9 @@ namespace godot {
         unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         unregister_command("auto_rewident", Callable(this, "auto_rewident"));
+        unregister_command("brake_operation_mode_increase", Callable(this, "brake_operation_mode_increase"));
+        unregister_command("brake_operation_mode_decrease", Callable(this, "brake_operation_mode_decrease"));
+        unregister_command("ep_brake", Callable(this, "ep_brake"));
         unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
         unregister_command("universal_brake_button", Callable(this, "universal_brake_button"));

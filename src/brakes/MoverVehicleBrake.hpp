@@ -144,6 +144,10 @@ namespace godot {
             void manual_brake_increase() override;
             void manual_brake_decrease() override;
             void auto_rewident(int p_brake_delay) override;
+            void brake_operation_mode_increase() override;
+            void brake_operation_mode_decrease() override;
+            bool ep_brake(bool p_applied) override;
+            int get_operation_mode() const override;
             void brake_level_charging(bool p_active) override;
             void alarm_chain(bool p_pulled) override;
             void universal_brake_button(int p_button, bool p_pressed) override;

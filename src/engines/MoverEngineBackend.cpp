@@ -81,6 +81,16 @@ namespace godot {
         return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
     }
 
+    bool MoverEngineBackend::get_motor_overload_relay_high_threshold(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->MotorOverloadRelayHighThreshold : false;
+    }
+
+    double MoverEngineBackend::get_eimic_real(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->eimic_real : 0.0;
+    }
+
     void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         p_mover->EngineType = mover_engine_type(p_engine->get_engine_type());
@@ -150,6 +160,8 @@ namespace godot {
             p_mover->MotorParam[i].fi = row->get_voltage_constant();
             p_mover->MotorParam[i].mfi = row->get_voltage_constant_multiplier();
             p_mover->MotorParam[i].Isat = row->get_saturation_current();
+            // a gear or a field shunt the controller passes by itself (readMPT0/readMPTDieselEngine)
+            p_mover->MotorParam[i].AutoSwitch = row->get_auto_switch();
             // readMPT0's default case (Mover.cpp:8948, what "MotorParamTable0:" rows actually go
             // through) reads these two as real columns, unlike readMPTElectricSeries - see
             // FizTrainEngineCommon.parse_motor_param_row's doc comment for the full story. fi0 in
@@ -176,6 +188,11 @@ namespace godot {
     bool MoverEngineBackend::main_switch(const VehicleEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
+    }
+
+    bool MoverEngineBackend::motor_overload_relay_threshold(const VehicleEngine *p_engine, const bool p_high) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->CurrentSwitch(p_high) : false;
     }
 
     void MoverEngineBackend::compressor(const VehicleEngine *p_engine, const bool p_enabled) const {

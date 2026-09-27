@@ -817,6 +817,15 @@ ported, into a delegate.
       uncoupling position (`bh_EPB`); a coupling a player left half done under another order; the
       margins of modern vehicles and of the weather, and a late train's (`moveLate`).
 
+### Cab targets (2026-09-27)
+
+* Gauges read the occupied vehicle unless the MMD catalog tags them: the ammeters, voltmeters and
+  lamps of the motor car (`Train.cpp` `mvControlled` in `update_gauges`) need `target` in
+  `MmdSemanticCatalog`.
+* EN57 `ra` has no engine, so no `MainCtrlPosNo`: no reverser and no master controller in the
+  control car. The planned `VehicleMasterController` component carries MCPN/SCPN, the delays,
+  `CoupledCtrl` and `MainCtrlMaxDirChangePos` for every vehicle.
+
 ## Tests
 
 * `test_weather_controls.gd` fails since `2f4740239`: the scene's root became an `HFlowContainer`,

@@ -85,6 +85,8 @@ anything. Open work belongs in `TODO.md`.
 * A loop that steps a control until it gets somewhere ends on "did not move", never on "is not
   there yet" - the vehicle may refuse the step. *(09-27 the driver's update hung on a refused
   controller)*
+* A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
+  `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 
 ## State, ownership, events
 * Every timer of the simulated train, the cab's relays included, runs on the simulation clock

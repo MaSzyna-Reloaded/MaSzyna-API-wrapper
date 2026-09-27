@@ -30,8 +30,14 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         push_warning("FIZ Cntrl.: no VehicleBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
 
     # Engine:'s controller-position-count subset (MCPN, SCPN, AutoRelay, ...) is applied once
-    # Engine: creates the VehicleEngine-family node, since Cntrl. conventionally precedes Engine:.
+    # Engine: creates the VehicleEngine-family node when Cntrl. precedes it, or here when it comes
+    # after - EN57's Cntrl. is in the brake include that follows its Engine:
     context.cntrl_kv = kv
+    var engine: VehicleEngine = context.get_part("VehicleEngine") as VehicleEngine
+    if engine:
+        FizTrainEngineCommon.apply_cntrl_engine_subset(engine, kv)
+        if engine is VehicleElectricEngine:
+            FizTrainEngineCommon.apply_cntrl_electric_subset(engine as VehicleElectricEngine, kv)
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:

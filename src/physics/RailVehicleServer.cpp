@@ -1,4 +1,5 @@
 #include "../core/VehicleComponent.hpp"
+#include "../engines/VehicleElectricEngine.hpp"
 #include "../radio/VehicleRadio.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
@@ -65,6 +66,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_commands", "vehicle"), &RailVehicleServer::vehicle_get_commands);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_find_powered", "vehicle"), &RailVehicleServer::vehicle_find_powered);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_find_pantograph_carrier", "vehicle"),
+                &RailVehicleServer::vehicle_find_pantograph_carrier);
         ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
         ClassDB::bind_method(D_METHOD("radio_stop", "position"), &RailVehicleServer::radio_stop);
         ClassDB::bind_method(D_METHOD("vehicle_radio_call", "vehicle", "call"), &RailVehicleServer::vehicle_radio_call);
@@ -317,6 +323,68 @@ namespace godot {
             end = 1 - entered;
         }
         return result;
+    }
+
+    /* TDynamicObject::find_vehicle() (DynObj.h:886-903): this vehicle, then those joined towards its
+     * rear, then towards its front - the first that satisfies p_predicate */
+    template <typename Predicate>
+    static VehicleController *
+    find_joined(VehicleController *p_first, const VehicleController::CouplingElement p_element, Predicate p_predicate) {
+        if (p_predicate(p_first)) {
+            return p_first;
+        }
+        for (const int start : {1, 0}) {
+            VehicleController *vehicle = p_first;
+            int end = start;
+            while (vehicle->is_coupled_by(end, p_element)) {
+                const int entered = vehicle->get_coupled_end(end);
+                vehicle = vehicle->get_coupled_controller(end);
+                end = 1 - entered;
+                if (p_predicate(vehicle)) {
+                    return vehicle;
+                }
+            }
+        }
+        return nullptr;
+    }
+
+    RID RailVehicleServer::vehicle_find_powered(const RID &p_vehicle) const {
+        /* Power > 1.0 (DynObj.cpp:7793) */
+        constexpr double POWERED = 1.0;
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (first == nullptr) {
+            return RID();
+        }
+        const VehicleController::TrainType train_type = first->get_train_type();
+        const VehicleController::CouplingElement element =
+                train_type == VehicleController::TRAIN_TYPE_EZT || train_type == VehicleController::TRAIN_TYPE_DMU
+                        ? VehicleController::COUPLING_ELEMENT_PERMANENT
+                        : VehicleController::COUPLING_ELEMENT_CONTROL;
+        const VehicleController *powered = find_joined(
+                first, element, [](const VehicleController *p_vehicle) { return p_vehicle->get_power() > POWERED; });
+        return powered != nullptr ? powered->get_rid() : p_vehicle;
+    }
+
+    RID RailVehicleServer::vehicle_find_pantograph_carrier(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (first == nullptr) {
+            return RID();
+        }
+        const auto carries = [](const VehicleController *p_vehicle) {
+            const VehicleElectricEngine *engine = Object::cast_to<VehicleElectricEngine>(
+                    p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE));
+            return engine != nullptr && engine->get_power_source() == VehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
+                   engine->get_power_current_collector_number_of_collectors() > 0;
+        };
+        for (const VehicleController::CouplingElement element :
+             {VehicleController::COUPLING_ELEMENT_PERMANENT, VehicleController::COUPLING_ELEMENT_CONTROL}) {
+            if (const VehicleController *carrier = find_joined(first, element, carries); carrier != nullptr) {
+                return carrier->get_rid();
+            }
+        }
+        return RID();
     }
 
     void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {

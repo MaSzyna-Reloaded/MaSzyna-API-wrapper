@@ -97,26 +97,29 @@ static func open_line_breaker(vehicle:RID, cab:int) -> void:
 ## mastercontrollersetzerospeed (ZeroSpeed(), Driver.cpp:3683): both controllers back to no power,
 ## a step at a time as the handle goes; the positions bound the steps.
 static func set_zero_speed(vehicle:RID, cab:int) -> void:
-    for _step:int in int(CabinSystem.vehicle_state_value(vehicle, "controller_second_position", 0)):
+    # the controllers are the driven engine's (mvControlling)
+    var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
+    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_second_position", 0)):
         CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
     var controller:StringName = master_controller(vehicle, cab)
-    for _step:int in int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0)):
+    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)):
         CabinSystem.act(vehicle, cab, controller, &"decrease")
 
 
 ## mastercontrollersetidle (driverhints.cpp:489-501): a diesel's master controller up to its first
 ## position with the clutch in (RList[].Mn), so that it does not stall - SN61's idle
 static func set_idle(vehicle:RID, cab:int) -> void:
+    var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
     var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            vehicle, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+            controlled, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
     if engine == null:
         return
     var positions:Array = engine.throttle_table_positions
     var controller:StringName = master_controller(vehicle, cab)
-    var position:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+    var position:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
     while position < positions.size() and (positions[position] as ThrottlePositionItem).clutch_behavior == 0:
         CabinSystem.act(vehicle, cab, controller, &"increase")
-        var stepped:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+        var stepped:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
         if stepped == position:
             return
         position = stepped
@@ -129,8 +132,9 @@ static func master_controller(vehicle:RID, cab:int) -> StringName:
 
 
 static func is_zero_speed(vehicle:RID) -> bool:
-    return int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0)) == 0 \
-            and int(CabinSystem.vehicle_state_value(vehicle, "controller_second_position", 0)) == 0
+    var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
+    return int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)) == 0 \
+            and int(CabinSystem.vehicle_state_value(controlled, "controller_second_position", 0)) == 0
 
 
 ## directionforward/directionbackward/directionnone (DirectionForward(), ZeroDirection(),

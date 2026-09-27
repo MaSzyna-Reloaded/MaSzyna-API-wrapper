@@ -6,6 +6,8 @@ class_name LegacyCabinPantographsDropAll
 ## pantographs down while it is held. The original does nothing in a cab without the gauge
 ## (Train.cpp:3342).
 
+## All pantographs down is the carrier's (OnCommand_pantographlowerall: mvPantographUnit)
+const TARGET:CabinState.Target = CabinState.Target.PANTOGRAPH_UNIT
 const CONTROL:StringName = &"pantalloff_sw"
 
 var _button_type:CabinButton.ButtonType
@@ -39,10 +41,10 @@ func _drop_all(state:CabinState, action:StringName, value:Variant) -> Variant:
     if _button_type == CabinButton.ButtonType.TOGGLE:
         if action == &"release":
             return null
-        var dropped:bool = (not state.vehicle_state_value("current_collector/pantographs_dropped", false)
+        var dropped:bool = (not state.vehicle_state_value("current_collector/pantographs_dropped", false, TARGET)
                 if value == null or action == &"hold" else bool(value))
         state.set_value(CONTROL, dropped)
-        return state.send_vehicle_command("pantographs_drop_all", dropped)
+        return state.send_vehicle_command("pantographs_drop_all", dropped, null, TARGET)
     var held:bool = state.is_pressed(CONTROL, action, value)
     state.set_value(CONTROL, held)
-    return state.send_vehicle_command("pantographs_drop_all", held)
+    return state.send_vehicle_command("pantographs_drop_all", held, null, TARGET)

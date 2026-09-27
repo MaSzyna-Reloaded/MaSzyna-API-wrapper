@@ -35,6 +35,8 @@ static func _ensure_built() -> void:
 
     _catalog = {
         "mainctrl": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinSwitch,
             "fixed_fields": {
                 "switch_min_position": 0,
@@ -53,6 +55,8 @@ static func _ensure_built() -> void:
         # shunt (field weakening) controller: Train.cpp:10023 "scndctrl:" -> ggScndCtrl,
         # OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), Num / and Num *
         "scndctrl": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinSwitch,
             "fixed_fields": {
                 "switch_min_position": 0,
@@ -194,6 +198,8 @@ static func _ensure_built() -> void:
         # state_property, same shape as security_reset_bt/releaser_bt above - fuse_reset() takes
         # no arguments and isn't a persistent toggle.
         "fuse_bt": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -212,6 +218,8 @@ static func _ensure_built() -> void:
         # ("sand_bt:" -> ggSandButton) - momentary, matching the original's press/release shape
         # (sand only while held), same as fuse_bt/converterfuse_bt above.
         "sand_bt": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -255,6 +263,8 @@ static func _ensure_built() -> void:
         # compressor_sw/converter_sw's monostable:false shape, sending the CabinButton's own
         # flipped `pushed` state as the command's bool argument).
         "stlinoff_bt": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
@@ -265,6 +275,8 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         "converterfuse_bt": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -753,6 +765,8 @@ static func _ensure_built() -> void:
         # ggMaxCurrentCtrl, OnCommand_motoroverloadrelaythresholdsetlow/sethigh -> CurrentSwitch(),
         # Train.cpp:5123-5145). The original's key (Ctrl+F) has no input action yet.
         "maxcurrent_sw": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
@@ -780,6 +794,8 @@ static func _ensure_built() -> void:
         # Auxiliary pantograph compressor, runs while held (Train.cpp:10114 "pantcompressor_sw:" ->
         # ggPantCompressorButton, OnCommand_pantographcompressoractivate, Shift+V).
         "pantcompressor_sw": {
+            # the original's handler acts on mvPantographUnit
+            "target": CabinState.Target.PANTOGRAPH_UNIT,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -793,6 +809,8 @@ static func _ensure_built() -> void:
         # tank (Train.cpp:10115 "pantcompressorvalve_sw:" -> ggPantCompressorValve,
         # OnCommand_pantographcompressorvalvetoggle, Ctrl+V).
         "pantcompressorvalve_sw": {
+            # the original's handler acts on mvControlled
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,

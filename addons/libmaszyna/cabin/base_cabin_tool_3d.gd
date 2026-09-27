@@ -23,6 +23,9 @@ signal vehicle_rid_changing
 ## right, y: +1 down). Zero, the default, follows the control's grip on screen; the MMD catalog
 ## sets it for a control where that does not work.
 @export var mouse_drag_signs:Vector2 = Vector2.ZERO
+## The vehicle of the cab this element reads - the one it is in, the one its controls drive, or the
+## pantographs' (MmdSemanticCatalog's `target`)
+@export var target:CabinState.Target = CabinState.Target.OCCUPIED
 
 
 ## The vehicle this element sits in, as the cabin root hands it down.
@@ -43,7 +46,7 @@ func get_vehicle_rid() -> RID:
 ## One named value of the vehicle's state - what a control reads, being driven by a property name
 ## out of the MMD. The dump behind it is built once a frame for the whole cab.
 func _vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
-    return CabinSystem.vehicle_state_value(_vehicle_rid, key, default_value)
+    return CabinSystem.vehicle_state_value(CabinState.vehicle_of(_vehicle_rid, target), key, default_value)
 
 
 ## The whole of it, for the few places that genuinely read several unrelated values at once.

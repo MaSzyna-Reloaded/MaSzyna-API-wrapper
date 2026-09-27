@@ -62,8 +62,8 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if not (situation.trainset.ready or situation.pressing):
         return false
     var relays:Array = engine.relay_list
-    var main:int = _position(situation, "controller_main_position")
-    var second:int = _position(situation, "controller_second_position")
+    var main:int = controller_position(situation, "controller_main_position")
+    var second:int = controller_position(situation, "controller_second_position")
     var config:Dictionary = RailVehicleServer.vehicle_dump_config(situation.controlling)
     var main_max:int = int(config.get("main_controller_position_max", 0))
     var second_max:int = int(config.get("second_controller_position_max", 0))
@@ -115,14 +115,14 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 if branches > 1:
                     set_second_controller(situation, 0)
                     while not CabinSystem.vehicle_state_value(situation.vehicle, "main_no_power_pos", true) \
-                            and (relays[_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
+                            and (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
                             and step_main(situation, -1):
                         pass
                 RailVehicleServer.vehicle_send_command(situation.controlling, "motor_overload_relay_threshold", true)
         elif high_on and current < engine.circuit_imax_low:
             RailVehicleServer.vehicle_send_command(situation.controlling, "motor_overload_relay_threshold", false)
-    main = _position(situation, "controller_main_position")
-    second = _position(situation, "controller_second_position")
+    main = controller_position(situation, "controller_main_position")
+    second = controller_position(situation, "controller_second_position")
     var safe_velocity:float = ANY_VELOCITY
     if (second < second_max) if use_field_shunt else (main < main_max):
         safe_velocity = engine.get_next_position_velocity(not use_field_shunt)
@@ -143,18 +143,18 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
             and not CabinSystem.vehicle_state_value(situation.vehicle, "controller_main_delayed", false):
         moved = step_main(situation, 1)
     # no current on the further positions: the relay tripped or the engine is not on
-    if float(state.get("Im", 0.0)) == 0.0 and main_power_position(situation) > 1:
+    if float(state.get("Im", 0.0)) == 0.0 and main_powercontroller_position(situation) > 1:
         retry = true
     return moved
 
 
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = false) -> bool:
     # the field shunt off first
-    if _position(situation, "controller_second_position") > 0:
+    if controller_position(situation, "controller_second_position") > 0:
         return set_second_controller(situation, 0)
     # DecMainCtrl(min(MainCtrlPowerPos(), 2)): one position, or back to the previous resistorless
     # one (Mover.cpp:2607-2619)
-    var power:int = main_power_position(situation)
+    var power:int = main_powercontroller_position(situation)
     if power <= 0:
         return false
     if power == 1:
@@ -162,15 +162,15 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
     var engine:VehicleElectricSeriesEngine = RailVehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricSeriesEngine
     var relays:Array = engine.relay_list if engine else []
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     if main >= relays.size():
         return step_main(situation, -1)
     if (relays[main] as RelayListItem).resistance == 0.0:
         step_main(situation, -1)
-    while (relays[_position(situation, "controller_main_position")] as RelayListItem).resistance > 0.0 \
+    while (relays[controller_position(situation, "controller_main_position")] as RelayListItem).resistance > 0.0 \
             and step_main(situation, -1):
         pass
-    return not _position(situation, "controller_main_position") == main
+    return not controller_position(situation, "controller_main_position") == main
 
 
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:

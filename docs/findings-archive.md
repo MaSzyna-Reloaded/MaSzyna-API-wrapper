@@ -1311,3 +1311,15 @@ lighting or the consist.
   * A setting registered by an EditorPlugin does not exist in an export unless it is in
     `project.godot`, and values equal to the default are exactly the ones kept out.
   * Test the invariant, not the intermediate (density × length, not density).
+
+## 2026-09-27 - EN57's motor car refused its line breaker: no master controller positions
+
+* **Symptom:** EN57 `s` had its pantographs up at 3300 V and reported `main_switch_closable`, but
+  `main_switch` was refused.
+* **Proof:** `s`'s dump read `MainCtrlPosNo` 0. `MainSwitch_()` and `DirectionForward()` do
+  nothing when it is 0 (Mover.cpp). The FIZ gives `MCPN=3` in `Cntrl.`, which EN57 keeps in the
+  brake include that comes *after* `Engine:`.
+* **Cause:** `FizTrainCntrlParser` only stored the section for `Engine:` to apply when it created
+  the engine node; with the order reversed nobody applied it.
+* **Fix:** `Cntrl.` applies its engine subset to an engine that already exists.
+* **Rule:** a FIZ section is applied whatever the order the file gives it in.

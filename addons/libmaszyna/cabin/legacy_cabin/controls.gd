@@ -20,6 +20,8 @@ var _classes:Dictionary[StringName, Variant] = {}
 ## control_id -> the fixed fields of its catalog entry
 var _fields:Dictionary[StringName, Dictionary] = {}
 var _button_types:Dictionary[StringName, CabinButton.ButtonType] = {}
+## control_id -> the vehicle of the cab its command goes to (the catalog entry's `target`)
+var _targets:Dictionary[StringName, CabinState.Target] = {}
 
 
 ## The controls of the cab the MMD defines as `cab` (1, 0, or -1 for the rear one)
@@ -44,7 +46,8 @@ static func from_definition(definition:MmdCabinDefinition) -> LegacyCabinControl
             continue
         controls.add_control(
                 control_id, entry["widget_class"], entry["fixed_fields"],
-                MmdCabinInstancer.BUTTON_TYPES.get(descriptor.button_type, CabinButton.ButtonType.TOGGLE))
+                MmdCabinInstancer.BUTTON_TYPES.get(descriptor.button_type, CabinButton.ButtonType.TOGGLE),
+                entry.get("target", CabinState.Target.OCCUPIED))
     controls.add_control(
             BRAKE_LEVEL_DRIVE, CabinCommand, {"command": "brake_level_set_position", "command_param": "drive"})
     return controls
@@ -52,11 +55,13 @@ static func from_definition(definition:MmdCabinDefinition) -> LegacyCabinControl
 
 func add_control(
     control_id:StringName, widget_class:Variant, fields:Dictionary,
-    button_type:CabinButton.ButtonType = CabinButton.ButtonType.TOGGLE
+    button_type:CabinButton.ButtonType = CabinButton.ButtonType.TOGGLE,
+    target:CabinState.Target = CabinState.Target.OCCUPIED
 ) -> void:
     _classes[control_id] = widget_class
     _fields[control_id] = fields
     _button_types[control_id] = button_type
+    _targets[control_id] = target
 
 
 func has_control(control_id:StringName) -> bool:
@@ -71,7 +76,9 @@ func button_type(control_id:StringName) -> CabinButton.ButtonType:
 
 ## The vehicle command the control is wired to (LegacyCabinForwardCommands.wiring())
 func wiring(control_id:StringName) -> Dictionary:
-    return LegacyCabinForwardCommands.wiring(_classes[control_id], _fields[control_id]) if has_control(control_id) else {}
+    if not has_control(control_id):
+        return {}
+    return LegacyCabinForwardCommands.wiring(_classes[control_id], _fields[control_id], _targets[control_id])
 
 
 func get_control_ids() -> Array[StringName]:

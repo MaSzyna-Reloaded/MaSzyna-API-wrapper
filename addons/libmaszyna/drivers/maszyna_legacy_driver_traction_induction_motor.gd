@@ -43,7 +43,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 ## CheckTimeControllers() 3.-4. (Driver.cpp:4280-4299): a Traxx's controller to its holding driving
 ## or braking position, an Elf's by what it asks for, the impulse lever back to its middle
 func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     match eim_control_type(situation):
         VehicleEngine.EIM_CONTROL_TYPE_1:
             if main > TRAXX_NEUTRAL:

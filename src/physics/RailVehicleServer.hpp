@@ -216,6 +216,14 @@ namespace godot {
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
             TypedArray<RID>
             vehicle_get_coupled(const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
+            /* The vehicle a cab's controls drive (TDynamicObject::FindPowered(), DynObj.cpp:7772): this
+             * one if it has power, else the nearest with power joined to it - within an EMU's or DMU's
+             * unit, else by the control line; this one when there is none */
+            RID vehicle_find_powered(const RID &p_vehicle) const;
+            /* The vehicle whose pantographs the cab raises (FindPantographCarrier(), DynObj.cpp:7798):
+             * one fed by a current collector, of the unit first, then of the vehicles under control;
+             * an invalid RID when there is none */
+            RID vehicle_find_pantograph_carrier(const RID &p_vehicle) const;
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
             void vehicle_radio_stop(const RID &p_vehicle);

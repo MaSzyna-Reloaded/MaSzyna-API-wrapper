@@ -14,6 +14,9 @@ class_name LegacyCabinPantographs
 ## A cab with a pantograph selector (pantselect_sw) leaves the individual valves alone.
 
 ## control -> the pantograph it works, and whether it is the lowering button
+## The pantographs' valves are their carrier's - an EMU's motor car, where the original's cab car
+## sends them along its couplers unswapped (RunCommand("PantValve") noswap for dt_EZT, Mover.cpp:9433)
+const TARGET:CabinState.Target = CabinState.Target.PANTOGRAPH_UNIT
 const SWITCHES:Dictionary[StringName, Array] = {
     &"pantfront_sw": [VehicleElectricEngine.PANTOGRAPH_FIRST, false],
     &"pantrear_sw": [VehicleElectricEngine.PANTOGRAPH_SECOND, false],
@@ -74,22 +77,22 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
         # Train.cpp:3170 - impulse switches return to neutral, and so does the valve
         if impulse:
             return state.send_vehicle_command("pantograph_valve_operate", selector,
-                    VehicleElectricEngine.VALVE_OPERATION_NONE)
+                    VehicleElectricEngine.VALVE_OPERATION_NONE, TARGET)
         return null
     var pantograph:Array = PANTOGRAPHS[selector]
     # Train.cpp:3161 - the switch lowers a pantograph whose valve is open or which is up
-    var lower:bool = lowering_button or state.vehicle_state_value(pantograph[2], false) \
-            or state.vehicle_state_value(pantograph[3], false)
+    var lower:bool = lowering_button or state.vehicle_state_value(pantograph[2], false, TARGET) \
+            or state.vehicle_state_value(pantograph[3], false, TARGET)
     if lower:
         # Train.cpp:3285 - lowering needs the switch, or the lowering button for an impulse type
         if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[1] if impulse else pantograph[0], false):
             return null
         return state.send_vehicle_command("pantograph_valve_operate", selector,
                 VehicleElectricEngine.VALVE_OPERATION_DISABLE_ON if impulse
-                else VehicleElectricEngine.VALVE_OPERATION_DISABLE)
+                else VehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
     # Train.cpp:3228 - raising needs the switch
     if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[0], false):
         return null
     return state.send_vehicle_command("pantograph_valve_operate", selector,
             VehicleElectricEngine.VALVE_OPERATION_ENABLE_ON if impulse
-            else VehicleElectricEngine.VALVE_OPERATION_ENABLE)
+            else VehicleElectricEngine.VALVE_OPERATION_ENABLE, TARGET)

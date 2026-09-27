@@ -39,7 +39,8 @@ func register(vehicle_rid:RID, cab:int) -> void:
             continue
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
         var fields:Dictionary = entry["fixed_fields"]
-        var wiring:Dictionary = LegacyCabinForwardCommands.wiring(entry["widget_class"], fields)
+        var wiring:Dictionary = LegacyCabinForwardCommands.wiring(
+                entry["widget_class"], fields, entry.get("target", CabinState.Target.OCCUPIED))
         var actions:Array = ACTION_FIELDS.map(func(field:String) -> String: return fields.get(field, ""))
         actions = actions.filter(func(action:String) -> bool: return not action == "")
         if not actions or actions.any(func(action:String) -> bool: return taken_actions.has(action)):

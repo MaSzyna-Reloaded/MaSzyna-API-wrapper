@@ -750,7 +750,7 @@ func _ep_share(situation:MaszynaLegacyDriverTraction.Situation) -> float:
 func _increase_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var vehicle:RID = situation.vehicle
     var engine:VehicleEngine = RailVehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
-    var main:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+    var main:int = MaszynaLegacyDriverTraction.controller_position(situation, "controller_main_position")
     match MaszynaLegacyDriverTraction.eim_control_type(situation):
         VehicleEngine.EIM_CONTROL_TYPE_0:
             if _med_max_deceleration(vehicle) == NO_MED_DECELERATION:
@@ -778,7 +778,7 @@ func _increase_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 ## DecBrakeEIM() (Driver.cpp:3367-3404): braking off by the EIM controller's kind
 func _decrease_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var vehicle:RID = situation.vehicle
-    var main:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+    var main:int = MaszynaLegacyDriverTraction.controller_position(situation, "controller_main_position")
     match MaszynaLegacyDriverTraction.eim_control_type(situation):
         VehicleEngine.EIM_CONTROL_TYPE_0:
             if _med_max_deceleration(vehicle) == NO_MED_DECELERATION:
@@ -840,7 +840,7 @@ func _hold_universal_controller(situation:MaszynaLegacyDriverTraction.Situation)
     if not engine_type == VehicleEngine.DIESEL or controller == null:
         return
     var positions:Array = controller.positions
-    var main:int = int(CabinSystem.vehicle_state_value(situation.vehicle, "controller_main_position", 0))
+    var main:int = MaszynaLegacyDriverTraction.controller_position(situation, "controller_main_position")
     if main < positions.size():
         _set_handle(situation.vehicle, situation.cab, float((positions[main] as UniversalControllerListItem).pneumatic_brake_position))
 

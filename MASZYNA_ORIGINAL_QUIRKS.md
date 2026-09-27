@@ -73,6 +73,18 @@ interface.
   position with the clutch in, before closing the circuit and after setting the reverser
   (`Driver.cpp:2840-2843, 5778-5784`). Wrapper: `MaszynaLegacyDriverHints.set_idle()` before the
   line breaker, as the original; the reverser's copy is not ported.
+* **One cab, three vehicles, two ways to reach them.** An EMU's cab car (EN57's `ra`/`rb`, the
+  control cars with `EngineType` none) has no engine, no pantographs and no battery of its own:
+  the motor car `s` has the first two, the other cab car `rb` the battery (`BatteryStart=Disabled`
+  in `ra` and `s`, `misc/fiz_brakes_*_oerlikon.inc`). The cab acts on three `TMoverParameters` at
+  once - `mvOccupied` (the car it is in), `mvControlled` (`FindPowered()`: 83 `OnCommand_*`
+  handlers go straight there - line breaker, converter, compressor, controllers, reverser,
+  pumps) and `mvPantographUnit` (`FindPantographCarrier()`) - while other commands go to the cab
+  car and reach the rest through `SendCtrlToNext()` along the couplers (the battery, the brakes).
+  The AI keeps the same three (`mvOccupied`, `mvControlling`, `mvPantographUnit`) and checks each
+  step on whichever of them holds the device. Which command takes which path is written nowhere
+  but in each handler. Wrapper: the driver reads the three (`MaszynaLegacyDriverTrainset`); the
+  cab's own `mvControlled` - see TODO.md.
 * **9.81 means "no blended brake".** `IncBrakeEIM()`/`DecBrakeEIM()` test `MED_amax != 9.81`
   (the struct's default) to tell a vehicle with the blended EP/ED brake from one without
   (`Driver.cpp:3208, 3373`), and brake with the driver's own hard-coded `fMedAmax` = 0.8 instead of

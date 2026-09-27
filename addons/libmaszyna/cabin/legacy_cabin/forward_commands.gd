@@ -41,21 +41,24 @@ func unregister() -> void:
 
 
 ## The wiring of a control of the catalog class, by the fields of its catalog entry - the fields a
-## widget of that class would have been given (MmdCabinInstancer._build_widget); a gauge has none
-static func wiring(widget_class:Variant, fields:Dictionary) -> Dictionary:
+## widget of that class would have been given (MmdCabinInstancer._build_widget) - and the vehicle of
+## the cab its commands go to; a gauge has none
+static func wiring(
+    widget_class:Variant, fields:Dictionary, target:CabinState.Target = CabinState.Target.OCCUPIED
+) -> Dictionary:
     if widget_class == CabinButton:
         return {"kind": &"button", "command": fields.get("command", ""),
                 "command_param": fields.get("command_param"),
-                "controller_mode": fields.get("controller_mode", CabinButton.ControllerMode.OnOff)}
+                "controller_mode": fields.get("controller_mode", CabinButton.ControllerMode.OnOff), "target": target}
     if widget_class == CabinSwitch:
         return {"kind": &"switch", "command_increase": fields.get("command_increase", ""),
                 "command_decrease": fields.get("command_decrease", ""),
-                "command_set": fields.get("command_set", "")}
+                "command_set": fields.get("command_set", ""), "target": target}
     if widget_class == CabinKnob:
-        return {"kind": &"knob", "command": fields.get("command", "")}
+        return {"kind": &"knob", "command": fields.get("command", ""), "target": target}
     if widget_class == CabinCommand:
         return {"kind": &"command", "command": fields.get("command", ""),
-                "command_param": fields.get("command_param")}
+                "command_param": fields.get("command_param"), "target": target}
     return {}
 
 
@@ -68,10 +71,10 @@ static func _handle(state:CabinState, action:StringName, value:Variant, wiring:D
         &"knob":
             state.set_value(wiring["control_id"], value)
             if wiring["command"]:
-                return state.send_vehicle_command(wiring["command"], value)
+                return state.send_vehicle_command(wiring["command"], value, null, wiring["target"])
         &"command":
             if wiring["command"]:
-                return state.send_vehicle_command(wiring["command"], wiring["command_param"])
+                return state.send_vehicle_command(wiring["command"], wiring["command_param"], null, wiring["target"])
     return null
 
 
@@ -87,14 +90,14 @@ static func _handle_button(state:CabinState, action:StringName, value:Variant, w
     match int(wiring["controller_mode"]):
         CabinButton.ControllerMode.OnOff:
             if not wiring["command_param"] == null:
-                return state.send_vehicle_command(command, wiring["command_param"], pressed)
-            return state.send_vehicle_command(command, pressed)
+                return state.send_vehicle_command(command, wiring["command_param"], pressed, wiring["target"])
+            return state.send_vehicle_command(command, pressed, null, wiring["target"])
         CabinButton.ControllerMode.On:
             if pressed:
-                return state.send_vehicle_command(command, true)
+                return state.send_vehicle_command(command, true, null, wiring["target"])
         CabinButton.ControllerMode.Off:
             if pressed:
-                return state.send_vehicle_command(command, false)
+                return state.send_vehicle_command(command, false, null, wiring["target"])
     return null
 
 
@@ -106,7 +109,7 @@ static func _handle_switch(state:CabinState, action:StringName, value:Variant, w
             wiring["command_increase"] if action == &"increase"
             else wiring["command_decrease"] if action == &"decrease" else "")
     if step_command:
-        result = state.send_vehicle_command(step_command)
+        result = state.send_vehicle_command(step_command, null, null, wiring["target"])
     if wiring["command_set"] and not value == null:
-        result = state.send_vehicle_command(wiring["command_set"], int(value))
+        result = state.send_vehicle_command(wiring["command_set"], int(value), null, wiring["target"])
     return result

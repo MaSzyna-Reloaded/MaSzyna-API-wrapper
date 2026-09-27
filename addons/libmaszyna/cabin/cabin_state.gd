@@ -7,6 +7,20 @@ class_name CabinState
 ##
 ## The vehicle is reached only by its RailVehicleServer handle (commands and state), never through
 ## the Mover directly.
+##
+## A cab works three vehicles, as the original's TTrain does: the one it is in (mvOccupied), the one
+## its controls drive (mvControlled, FindPowered() - an EMU's motor car) and the one carrying its
+## pantographs (mvPantographUnit). A control names its own (MmdSemanticCatalog's `target`, a cabin
+## logic's constant), as the original's OnCommand_* handler does.
+
+enum Target {
+    ## mvOccupied: the vehicle the cab is in
+    OCCUPIED,
+    ## mvControlled: the vehicle its controls drive
+    CONTROLLED,
+    ## mvPantographUnit: the vehicle carrying its pantographs, the controlled one without it
+    PANTOGRAPH_UNIT,
+}
 
 var vehicle_rid:RID
 var cab:int = 1
@@ -48,10 +62,25 @@ func vehicle_state() -> Dictionary:
     return CabinSystem.vehicle_state(vehicle_rid)
 
 
-## One named value of it - what a control driven by an MMD property name actually reads.
-func vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
-    return CabinSystem.vehicle_state_value(vehicle_rid, key, default_value)
+## The vehicle of a target of the cab in `occupied`
+static func vehicle_of(occupied:RID, target:Target) -> RID:
+    match target:
+        Target.CONTROLLED:
+            return RailVehicleServer.vehicle_find_powered(occupied)
+        Target.PANTOGRAPH_UNIT:
+            var carrier:RID = RailVehicleServer.vehicle_find_pantograph_carrier(occupied)
+            # without one the controlled vehicle stands in (Driver.cpp:5901-5904)
+            return carrier if carrier.is_valid() else RailVehicleServer.vehicle_find_powered(occupied)
+    return occupied
 
 
-func send_vehicle_command(command:String, p1:Variant = null, p2:Variant = null) -> Variant:
-    return RailVehicleServer.vehicle_send_command(vehicle_rid, command, p1, p2)
+## One named value of a target's state - what a control driven by an MMD property name reads
+func vehicle_state_value(key:String, default_value:Variant = null, target:Target = Target.OCCUPIED) -> Variant:
+    return CabinSystem.vehicle_state_value(vehicle_of(vehicle_rid, target), key, default_value)
+
+
+## A command of a control, to its target
+func send_vehicle_command(
+    command:String, p1:Variant = null, p2:Variant = null, target:Target = Target.OCCUPIED
+) -> Variant:
+    return RailVehicleServer.vehicle_send_command(vehicle_of(vehicle_rid, target), command, p1, p2)

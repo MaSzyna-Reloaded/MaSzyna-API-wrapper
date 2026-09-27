@@ -26,10 +26,10 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 
 
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = false) -> bool:
-    if _position(situation, "controller_second_position") > 0:
+    if controller_position(situation, "controller_second_position") > 0:
         return set_second_controller(situation, 0)
     # DecMainCtrl(min(MainCtrlPowerPos(), 2 + MainCtrlPowerPos() / 2)), Driver.cpp:3712
-    var power:int = main_power_position(situation)
+    var power:int = main_powercontroller_position(situation)
     var moved:bool = false
     for _step:int in mini(power, 2 + power / 2):
         moved = step_main(situation, -1) or moved
@@ -39,9 +39,9 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
     if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
-            and main_power_position(situation) > 1:
+            and main_powercontroller_position(situation) > 1:
         zero(situation)
-    if not situation.trainset.ready and main_power_position(situation) > 1:
+    if not situation.trainset.ready and main_powercontroller_position(situation) > 1:
         zero(situation)
 
 

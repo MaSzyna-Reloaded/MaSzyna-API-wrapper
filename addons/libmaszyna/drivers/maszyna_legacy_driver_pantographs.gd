@@ -47,7 +47,7 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
             RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor", false)
     # pantographsvalveon: the pantographs' master valve (OperatePantographsValve(), no cab control)
     if not state.get("current_collector/valve_active", true):
-        RailVehicleServer.vehicle_send_command(vehicle, "pantographs_valve", true)
+        RailVehicleServer.vehicle_send_command(unit, "pantographs_valve", true)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
 

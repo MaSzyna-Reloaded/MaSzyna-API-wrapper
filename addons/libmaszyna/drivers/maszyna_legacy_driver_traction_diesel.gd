@@ -59,7 +59,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
             var control:VehicleSpeedControl = RailVehicleServer.vehicle_component_get(
                     situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
             var cruising:bool = control != null and control.speed_control_enabled \
-                    and _position(situation, "controller_second_position") > 0
+                    and controller_position(situation, "controller_second_position") > 0
             power_percentage = FULL_POWER if velocity > engine.clutch_min_velocity_full_engage or cruising else STARTING_POWER
         return false
     if situation.trainset.ready:
@@ -98,7 +98,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
         if _clutch(situation, engine) > 0:
             moved = step_main(situation, -1)
     else:
-        while _clutch(situation, engine) > 0 and main_power_position(situation) > 1 and step_main(situation, -1):
+        while _clutch(situation, engine) > 0 and main_powercontroller_position(situation) > 1 and step_main(situation, -1):
             moved = true
     if force:
         # DecMainCtrl(2) of a diesel: to zero (Mover.cpp:2638-2643)
@@ -118,7 +118,7 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     # of the gear's top speed, down under its lowest, the power off for the shift and neutral gears
     # passed. The shunting mode's extra gear (AnPos) is not read.
     var gears:Array = engine.motor_param_table
-    var gear:int = _position(situation, "controller_second_position")
+    var gear:int = controller_position(situation, "controller_second_position")
     if gear >= gears.size():
         return
     var parameters:MotorParameter = gears[gear]
@@ -130,12 +130,12 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     if velocity > GEAR_UP_SHARE * parameters.voltage_constant_multiplier:
         if gear < second_max:
             set_main_controller(situation, 0)
-            while step_second(situation, 1) and _neutral(gears, _position(situation, "controller_second_position")):
+            while step_second(situation, 1) and _neutral(gears, controller_position(situation, "controller_second_position")):
                 pass
     elif velocity < parameters.voltage_constant and gear > 1:
         set_main_controller(situation, 0)
-        while _position(situation, "controller_second_position") > 1 and step_second(situation, -1) \
-                and _neutral(gears, _position(situation, "controller_second_position")):
+        while controller_position(situation, "controller_second_position") > 1 and step_second(situation, -1) \
+                and _neutral(gears, controller_position(situation, "controller_second_position")):
             pass
 
 
@@ -156,7 +156,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
                 situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
         var wanted:int = power_percentage
         var min_velocity:float = minf(engine.torque_converter_lockup_speed, velocity_max * MIN_VELOCITY_SHARE)
-        if control and control.speed_control_enabled and _position(situation, "controller_second_position") > 0:
+        if control and control.speed_control_enabled and controller_position(situation, "controller_second_position") > 0:
             # keep the last position to start
             if velocity < 1.0 + control.start_velocity and power_percentage > 0:
                 wanted = HOLD_POWER
@@ -198,7 +198,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         while index > 1 and (positions[index] as ThrottlePositionItem).clutch_behavior > 0:
             min_position = index
             index -= 1
-        var main:int = _position(situation, "controller_main_position")
+        var main:int = controller_position(situation, "controller_main_position")
         var velocity_desired:float = situation.speed.velocity_desired
         if not (max_position > min_position and main > 0 and situation.speed.acceleration_desired > 0.0):
             return
@@ -210,17 +210,17 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
                 * ((velocity_desired - velocity) / factor if velocity_desired > velocity else 0.0)), min_position, max_position)
         if state.get("slipping_wheels", false):
             return
-        while _position(situation, "controller_main_position") > wanted and step_main(situation, -1):
+        while controller_position(situation, "controller_main_position") > wanted and step_main(situation, -1):
             pass
         if velocity > engine.clutch_min_velocity_full_engage:
-            while _position(situation, "controller_main_position") < wanted and step_main(situation, 1):
+            while controller_position(situation, "controller_main_position") < wanted and step_main(situation, 1):
                 pass
 
 
 ## RList[MainCtrlPos].Mn of a diesel: the clutch at the master controller's position (0 idle)
 func _clutch(situation:MaszynaLegacyDriverTraction.Situation, engine:VehicleDieselEngine) -> int:
     var positions:Array = engine.throttle_table_positions
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     return (positions[main] as ThrottlePositionItem).clutch_behavior if main < positions.size() else 0
 
 
@@ -249,6 +249,6 @@ func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> 
             neutral = index
             break
     var actual:int = int(PERCENT_SCALE * float(RailVehicleServer.vehicle_dump_state(situation.controlling).get("eimic_real", 0.0)))
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     if (actual >= power_percentage_speed and main > neutral) or (actual <= power_percentage_speed and main < neutral):
         set_main_controller(situation, neutral)

@@ -11,6 +11,8 @@ class_name LegacyCabinPantographSelected
 ## on release (NONE). With pantselectedoff_sw the two buttons raise and lower each on their own.
 ## Selecting which pantographs (pantselect_sw, PantsPreset) is not ported.
 
+## The pantographs' master valve is their carrier's (OperatePantographsValve() sent along the couplers)
+const TARGET:CabinState.Target = CabinState.Target.PANTOGRAPH_UNIT
 const RAISE:StringName = &"pantselected_sw"
 const LOWER:StringName = &"pantselectedoff_sw"
 ## The lever's pose: up raising, down lowering, and an impulse one doing both rests midway
@@ -54,14 +56,14 @@ func unregister() -> void:
 func _raise(state:CabinState, action:StringName, value:Variant) -> Variant:
     if state.is_pressed(RAISE, action, value) or action == &"toggle":
         state.set_value(RAISE, LEVER_UP)
-        if not _has_lower_button and (state.vehicle_state_value("current_collector/valve_enabled", false)
-                or state.vehicle_state_value("current_collector/valve_active", false)):
+        if not _has_lower_button and (state.vehicle_state_value("current_collector/valve_enabled", false, TARGET)
+                or state.vehicle_state_value("current_collector/valve_active", false, TARGET)):
             return _lower_selected(state)
         # Train.cpp:3472 - raise selected
         return state.send_vehicle_command("pantographs_valve_operate",
                 VehicleElectricEngine.VALVE_OPERATION_ENABLE
                 if _raise_button_type == CabinButton.ButtonType.TOGGLE
-                else VehicleElectricEngine.VALVE_OPERATION_ENABLE_ON)
+                else VehicleElectricEngine.VALVE_OPERATION_ENABLE_ON, null, TARGET)
     return _release(state)
 
 
@@ -80,7 +82,7 @@ func _lower_selected(state:CabinState) -> Variant:
     return state.send_vehicle_command("pantographs_valve_operate",
             VehicleElectricEngine.VALVE_OPERATION_DISABLE
             if _lower_button_type == CabinButton.ButtonType.TOGGLE
-            else VehicleElectricEngine.VALVE_OPERATION_DISABLE_ON)
+            else VehicleElectricEngine.VALVE_OPERATION_DISABLE_ON, null, TARGET)
 
 
 # Train.cpp:3427-3457 - only impulse buttons react to a release
@@ -90,15 +92,15 @@ func _release(state:CabinState) -> Variant:
         if not _raise_button_type == CabinButton.ButtonType.TOGGLE:
             state.set_value(RAISE, LEVER_DOWN)
             result = state.send_vehicle_command(
-                    "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_ENABLE_OFF)
+                    "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_ENABLE_OFF, null, TARGET)
         if not _lower_button_type == CabinButton.ButtonType.TOGGLE:
             state.set_value(LOWER, LEVER_DOWN)
             result = state.send_vehicle_command(
-                    "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_DISABLE_OFF)
+                    "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_DISABLE_OFF, null, TARGET)
         return result
     if not _raise_button_type == CabinButton.ButtonType.TOGGLE:
         # one impulse switch doing both, with its neutral position midway
         state.set_value(RAISE, LEVER_REST)
         result = state.send_vehicle_command(
-                "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_NONE)
+                "pantographs_valve_operate", VehicleElectricEngine.VALVE_OPERATION_NONE, null, TARGET)
     return result

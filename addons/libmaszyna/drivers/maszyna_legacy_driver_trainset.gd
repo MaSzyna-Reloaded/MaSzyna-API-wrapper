@@ -34,7 +34,7 @@ const ENGINE_STARTED_RATIO:float = 0.8
 const MOVEMENT_SPEED:float = 1.0
 ## A vehicle slower than this [km/h] stands (EU07_AI_NOMOVEMENT, Driver.h:25)
 const NO_MOVEMENT_SPEED:float = 0.05
-## A vehicle with more power than this [kW] is an engine (Power > 1.0, DynObj.cpp:7793)
+## A vehicle with more power than this [kW] is an engine (Power > 1.0, Driver.cpp:2470-2489)
 const POWERED:float = 1.0
 ## The vehicle's couplers (end::front, end::rear)
 const FRONT_END:int = 0
@@ -94,31 +94,9 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     # the vehicles its controls reach (FindPowered(), the vehicles under control of UpdateSituation());
     # the original counts the front vehicle twice when it is not the driver's own
     # (Driver.cpp:2470-2489, MASZYNA_ORIGINAL_QUIRKS.md) - here every engine counts once
-    var train_type:int = int(RailVehicleServer.vehicle_dump_config(vehicle).get("train_type", VehicleController.TRAIN_TYPE_DEFAULT))
-    var unit:bool = train_type == VehicleController.TRAIN_TYPE_EZT or train_type == VehicleController.TRAIN_TYPE_DMU
+    controlling = RailVehicleServer.vehicle_find_powered(vehicle)
+    pantograph_unit = RailVehicleServer.vehicle_find_pantograph_carrier(vehicle)
     var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL)
-    var joined:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_PERMANENT) if unit else controlled
-    controlling = vehicle
-    var own:int = joined.find(vehicle)
-    var nearest:int = joined.size()
-    if float(RailVehicleServer.vehicle_dump_config(vehicle).get("power", 0.0)) <= POWERED:
-        for index:int in joined.size():
-            if absi(index - own) < nearest and float(RailVehicleServer.vehicle_dump_config(joined[index]).get("power", 0.0)) > POWERED:
-                nearest = absi(index - own)
-                controlling = joined[index]
-    pantograph_unit = RID()
-    for chain:Array[RID] in [RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_PERMANENT),
-            controlled]:
-        for other:RID in chain:
-            var engine:VehicleElectricEngine = RailVehicleServer.vehicle_component_get(
-                    other, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
-            if engine and engine.power_source == VehicleController.POWER_SOURCE_CURRENTCOLLECTOR \
-                    and engine.power_current_collector_number_of_collectors > 0:
-                pantograph_unit = other
-                break
-        if pantograph_unit.is_valid():
-            break
     controlled_engines = 0
     motor_overload_relay_open = false
     for other:RID in controlled:

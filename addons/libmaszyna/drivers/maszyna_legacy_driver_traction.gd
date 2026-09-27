@@ -255,7 +255,7 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
             situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
     if control == null or not control.speed_control_enabled:
         return
-    var second:int = _position(situation, "controller_second_position")
+    var second:int = controller_position(situation, "controller_second_position")
     var second_max:int = int(RailVehicleServer.vehicle_dump_config(situation.controlling).get("second_controller_position_max", 0))
     if engine_type == VehicleEngine.DIESEL:
         if velocity < SPEED_CONTROL_TARGET_FROM:
@@ -270,7 +270,7 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
     elif second_max > 1 and not control.impulse_lever:
         var velocity_max:float = float(RailVehicleServer.vehicle_dump_config(situation.controlling).get("max_speed", 0.0))
         set_second_controller(situation, 1 + int(second_max * ((velocity - 1.0) / velocity_max)))
-    if control.power_step > 0.0 and _position(situation, "controller_second_position") > 0:
+    if control.power_step > 0.0 and controller_position(situation, "controller_second_position") > 0:
         while float(CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/desired_power", 0.0)) < control.max_power:
             RailVehicleServer.vehicle_send_command(situation.vehicle, "speed_control_power_increase")
 
@@ -295,17 +295,17 @@ func cruise(situation:Situation) -> void:
         set_second_controller(situation, 0)
 
 
-## A controller's position of the driver's own vehicle - the controllers of the vehicles it drives
-## follow it (SendCtrlToNext())
-static func _position(situation:Situation, key:String) -> int:
-    return int(CabinSystem.vehicle_state_value(situation.vehicle, key, 0))
+## A controller's position of the engine the controls drive (mvControlling->MainCtrlPos) - the
+## cab's controllers act on it (CabinState.CONTROLLED_COMMANDS)
+static func controller_position(situation:Situation, key:String) -> int:
+    return int(CabinSystem.vehicle_state_value(situation.controlling, key, 0))
 
 
 ## A step of a controller; true when its position moved
 static func step(situation:Situation, control:StringName, action:StringName, key:String) -> bool:
-    var before:int = _position(situation, key)
+    var before:int = controller_position(situation, key)
     CabinSystem.act(situation.vehicle, situation.cab, control, action)
-    return not _position(situation, key) == before
+    return not controller_position(situation, key) == before
 
 
 ## A step of the master controller up (+1) or down (-1); true when it moved
@@ -321,20 +321,20 @@ static func step_second(situation:Situation, direction:int) -> bool:
 
 ## The master controller stepped to `position`, as far as it goes; true when it moved
 static func set_main_controller(situation:Situation, position:int) -> bool:
-    var start:int = _position(situation, "controller_main_position")
+    var start:int = controller_position(situation, "controller_main_position")
     var current:int = start
     while not current == position and step_main(situation, signi(position - current)):
-        current = _position(situation, "controller_main_position")
+        current = controller_position(situation, "controller_main_position")
     return not current == start
 
 
 ## The second controller stepped to `position`, as far as it goes (DecScndCtrl(2) to 0); true when
 ## it moved
 static func set_second_controller(situation:Situation, position:int) -> bool:
-    var start:int = _position(situation, "controller_second_position")
+    var start:int = controller_position(situation, "controller_second_position")
     var current:int = start
     while not current == position and step_second(situation, signi(position - current)):
-        current = _position(situation, "controller_second_position")
+        current = controller_position(situation, "controller_second_position")
     return not current == start
 
 
@@ -348,7 +348,7 @@ static func eim_control_type(situation:Situation) -> VehicleEngine.EimControlTyp
 ## IncSpeedEIM() (Driver.cpp:3761-3789): power by the EIM controller's kind - a step, or straight to
 ## its driving position (Traxx 6, Elf 4); true when it moved
 func increase_eim(situation:Situation) -> bool:
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     match eim_control_type(situation):
         VehicleEngine.EIM_CONTROL_TYPE_0:
             return step_main(situation, 1)
@@ -364,7 +364,7 @@ func increase_eim(situation:Situation) -> bool:
 ## DecSpeedEIM() (Driver.cpp:3791-3826): power off by the EIM controller's kind - a step, to its
 ## neutral position, or the cruise control's power down while the driver still wants to go
 func decrease_eim(situation:Situation) -> bool:
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     match eim_control_type(situation):
         VehicleEngine.EIM_CONTROL_TYPE_0:
             return step_main(situation, -1)
@@ -397,12 +397,12 @@ func control_series_motor_handles(situation:Situation) -> void:
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
     # the line contactors dropped out: back to zero
     if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
-            and main_power_position(situation) > 1:
+            and main_powercontroller_position(situation) > 1:
         zero(situation)
     # a heavily burdened substation: series mode, to lessen the load
     if voltage <= series_voltage(situation):
         set_series_mode(situation)
-    if not situation.trainset.ready and main_power_position(situation) > 1:
+    if not situation.trainset.ready and main_powercontroller_position(situation) > 1:
         zero(situation)
 
 
@@ -413,16 +413,16 @@ func set_series_mode(situation:Situation) -> void:
     if engine == null:
         return
     var relays:Array = engine.relay_list
-    if _position(situation, "controller_main_position") >= relays.size() \
-            or (relays[_position(situation, "controller_main_position")] as RelayListItem).branch_count <= 1:
+    if controller_position(situation, "controller_main_position") >= relays.size() \
+            or (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count <= 1:
         return
     set_second_controller(situation, 0)
-    while (relays[_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
+    while (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
             and step_main(situation, -1):
         pass
 
 
 ## MainCtrlPowerPos(): the master controller's position past the last without power
-static func main_power_position(situation:Situation) -> int:
-    return _position(situation, "controller_main_position") \
-            - _position(situation, "controller_main_no_power_position")
+static func main_powercontroller_position(situation:Situation) -> int:
+    return controller_position(situation, "controller_main_position") \
+            - controller_position(situation, "controller_main_no_power_position")

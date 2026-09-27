@@ -7,6 +7,8 @@ class_name LegacyCabinJointController
 ## controller branches of OnCommand_independentbrakeincrease/decrease (Train.cpp:1449-1510).
 ## The handle shows controller_joint_position (Train.cpp:7699-7714).
 
+## The master controller is the driven vehicle's, the local brake the cab's own (OnCommand_jointcontrollerset)
+const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 const CONTROL:StringName = &"jointctrl"
 
 var _vehicle_rid:RID
@@ -32,10 +34,10 @@ func _joint_controller(state:CabinState, action:StringName, _value:Variant) -> V
         # Train.cpp:1098 - an applied local brake is released first
         if float(state.vehicle_state_value("brake_local_position_normalized", 0.0)) > 0.0:
             return state.send_vehicle_command("local_brake_decrease")
-        return state.send_vehicle_command("main_controller_increase")
+        return state.send_vehicle_command("main_controller_increase", null, null, TARGET)
     if action == &"decrease":
         # Train.cpp:1138 - below the no-power position the handle applies the local brake
-        if state.vehicle_state_value("main_no_power_pos", false):
+        if state.vehicle_state_value("main_no_power_pos", false, TARGET):
             return state.send_vehicle_command("local_brake_increase")
-        return state.send_vehicle_command("main_controller_decrease")
+        return state.send_vehicle_command("main_controller_decrease", null, null, TARGET)
     return null

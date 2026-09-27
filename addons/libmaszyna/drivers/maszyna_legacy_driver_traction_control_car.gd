@@ -27,7 +27,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
     driving = false
     # at a cab's activation it goes to zero at once
     if force and int(RailVehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)) > 0:
-        for _step:int in mini(main_power_position(situation), 2):
+        for _step:int in mini(main_powercontroller_position(situation), 2):
             step_main(situation, -1)
     return false
 
@@ -55,7 +55,7 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     if int(CabinSystem.vehicle_state_value(situation.vehicle, "direction", 0)) > 0:
         CabinSystem.act(situation.vehicle, situation.cab, MaszynaLegacyDriverHints.REVERSER, &"increase")
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
-    var main:int = _position(situation, "controller_main_position")
+    var main:int = controller_position(situation, "controller_main_position")
     if main > 0 and not state.get("line_contactor_closed", false):
         # the line contactors open: to zero, and wait for the camshaft to turn back
         for _step:int in 2:
@@ -65,5 +65,5 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
         for position:int in range(main, POSITION_VELOCITIES.size()):
             if situation.speed.velocity_desired >= POSITION_VELOCITIES[position]:
                 step_main(situation, 1)
-    if _position(situation, "controller_main_position") > 0:
+    if controller_position(situation, "controller_main_position") > 0:
         action_time = -HOLD_TIME

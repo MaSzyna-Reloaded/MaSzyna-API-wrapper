@@ -209,13 +209,13 @@ func drag(travel:float) -> void:
             return
         travel = _detent_pull - signf(_detent_pull) * DETENT_BREAKAWAY_PIXELS
         _detent_pull = 0.0
-    var target:float = position + travel / MOUSE_PIXELS_PER_RANGE * (position_max - position_min)
+    var wanted:float = position + travel / MOUSE_PIXELS_PER_RANGE * (position_max - position_min)
     # the next notch ahead stops the move
     if travel > 0.0:
-        target = minf(target, floorf(position + POSITION_TOLERANCE) + 1.0)
+        wanted = minf(wanted, floorf(position + POSITION_TOLERANCE) + 1.0)
     else:
-        target = maxf(target, ceilf(position - POSITION_TOLERANCE) - 1.0)
-    _set_position_from_input(target)
+        wanted = maxf(wanted, ceilf(position - POSITION_TOLERANCE) - 1.0)
+    _set_position_from_input(wanted)
 
 ## Where the knob stands in its positions.
 func _position() -> float:

@@ -3,9 +3,9 @@ extends MaszynaGutTest
 const MATERIALS_GAME_DIR = "res://tests/materials"
 const MATERIAL_NAME = "seasonal_manager"
 const NONTRANSPARENT_MATERIAL_NAME = "nontransparent_manager"
-const NORMALMAP_SHADER_PATH = "res://addons/libmaszyna/materials/types/normalmap.gdshader"
-const SHADOWLESS_SHADER_PATH = "res://addons/libmaszyna/materials/types/shadowlessnormalmap.gdshader"
-const WATER_SHADER_PATH = "res://addons/libmaszyna/materials/types/water.gdshader"
+const NORMALMAP_SHADER_PATH = "res://addons/libmaszyna/legacy/materials/types/normalmap.gdshader"
+const SHADOWLESS_SHADER_PATH = "res://addons/libmaszyna/legacy/materials/types/shadowlessnormalmap.gdshader"
+const WATER_SHADER_PATH = "res://addons/libmaszyna/legacy/materials/types/water.gdshader"
 
 var _previous_game_dir: String = ""
 var _previous_season: MaszynaEnvironment.Season
@@ -116,7 +116,7 @@ func test_texture_transparency_suffix_sets_material_transparent() -> void:
 
 func test_create_sets_alpha_scissor_for_transparent_material() -> void:
     var mmat: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
-    var material: ShaderMaterial = MaterialFactory.create(mmat) as ShaderMaterial
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(mmat) as ShaderMaterial
 
     assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.AlphaScissor)
     assert_eq(material.get_shader_parameter("alpha_scissor_threshold"), 0.5)
@@ -126,7 +126,7 @@ func test_create_sets_alpha_blending_for_e3d_translucent_submodel() -> void:
     var mmat: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
     var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
     options.force_transparent = true
-    var material: ShaderMaterial = MaterialFactory.create(
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat,
         "",
         MaszynaEnvironment.Season.SEASON_SUMMER,
@@ -143,7 +143,7 @@ func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void
     var diffuse_color: Color = Color(0.25, 0.5, 0.75, 1.0)
     var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
     options.diffuse_color = diffuse_color
-    var material: ShaderMaterial = MaterialFactory.create(
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat,
         "",
         MaszynaEnvironment.Season.SEASON_SUMMER,
@@ -164,7 +164,7 @@ func test_create_uses_diffuse_color_for_default_shader_with_texture() -> void:
     var diffuse_color: Color = Color(0.0, 0.749, 0.0, 1.0)
     var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
     options.diffuse_color = diffuse_color
-    var material: ShaderMaterial = MaterialFactory.create(
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat,
         "",
         MaszynaEnvironment.Season.SEASON_SUMMER,
@@ -181,7 +181,7 @@ func test_create_uses_diffuse_color_for_parallax_shader_without_texture() -> voi
     var diffuse_color: Color = Color(0.3, 0.4, 0.5, 1.0)
     var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
     options.diffuse_color = diffuse_color
-    var material: ShaderMaterial = MaterialFactory.create(
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat,
         "",
         MaszynaEnvironment.Season.SEASON_SUMMER,
@@ -195,9 +195,9 @@ func test_create_uses_diffuse_color_for_parallax_shader_without_texture() -> voi
 func test_apply_updates_existing_material_transparency_state() -> void:
     var transparent_mmat: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
     var nontransparent_mmat: MaszynaMaterial = MaterialManager.load_material("", NONTRANSPARENT_MATERIAL_NAME)
-    var material: ShaderMaterial = MaterialFactory.create(transparent_mmat) as ShaderMaterial
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(transparent_mmat) as ShaderMaterial
 
-    MaterialFactory.apply(
+    MaszynaMaterialFactory.apply(
         material,
         nontransparent_mmat,
         "",
@@ -212,7 +212,7 @@ func test_apply_updates_existing_material_transparency_state() -> void:
 func test_default_shader_name_uses_default_material() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "default_shader_manager") as ShaderMaterial
 
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/default.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/default.gdshader")
 
 
 ## mat_detail_normalmap.frag - normalmap plus a tiled detail normal map.
@@ -221,7 +221,7 @@ func test_detail_normalmap_shader_applies_detail_parameters() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "detail_normalmap_manager") as ShaderMaterial
 
     assert_eq(mmat.default.get_texture_path("detailnormalmap"), "fx/t_detail_normal_3")
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/detail_normalmap.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/detail_normalmap.gdshader")
     assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
     assert_almost_eq(float(material.get_shader_parameter("detail_height_scale")), 0.45, 0.00001)
     assert_not_null(material.get_shader_parameter("texture_detail_normal"))
@@ -233,7 +233,7 @@ func test_shader_name_is_case_insensitive() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "mixed_case_shader_manager") as ShaderMaterial
 
     assert_eq(mmat.default.shader, "default_1")
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/default.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/default.gdshader")
     assert_eq(material.get_shader_parameter("metallic_texture_channel"), Vector4(1.0, 0.0, 0.0, 0.0))
 
 
@@ -257,10 +257,10 @@ func test_reflmap_shader_applies_reflection_parameter() -> void:
 ## material.cpp:117-134 - without "shader:" the bound textures pick default_0/1/2 (colored, default, reflmap)
 func test_shaderless_material_with_second_texture_uses_reflmap() -> void:
     var mmat: MaszynaMaterial = MaterialManager.load_material("", "shaderless_two_textures_manager")
-    var clear_material: ShaderMaterial = MaterialFactory.create(
+    var clear_material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat, "", MaszynaEnvironment.Season.SEASON_SUMMER, MaszynaEnvironment.Weather.WEATHER_CLEAR
     ) as ShaderMaterial
-    var rain_material: ShaderMaterial = MaterialFactory.create(
+    var rain_material: ShaderMaterial = MaszynaMaterialFactory.create(
         mmat, "", MaszynaEnvironment.Season.SEASON_SUMMER, MaszynaEnvironment.Weather.WEATHER_RAIN
     ) as ShaderMaterial
 
@@ -282,7 +282,7 @@ func test_colored_shader_uses_color_parameter() -> void:
 func test_default_detail_shader_binds_second_texture_as_detail_normal_map() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "default_detail_manager") as ShaderMaterial
 
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/detail_normalmap.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/detail_normalmap.gdshader")
     assert_not_null(material.get_shader_parameter("texture_detail_normal"))
     assert_null(material.get_shader_parameter("texture_normal"))
     assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
@@ -291,7 +291,7 @@ func test_default_detail_shader_binds_second_texture_as_detail_normal_map() -> v
 func test_detail_parallax_specgloss_shader_binds_detail_and_specgloss_textures() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "detail_parallax_specgloss_manager") as ShaderMaterial
 
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/parallax_specgloss.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/parallax_specgloss.gdshader")
     assert_true(material.get_shader_parameter("use_detail_normal"))
     assert_not_null(material.get_shader_parameter("specgloss_texture"))
 
@@ -299,7 +299,7 @@ func test_detail_parallax_specgloss_shader_binds_detail_and_specgloss_textures()
 func test_rain_windscreen_shader_binds_textures_and_grid_size() -> void:
     var material: ShaderMaterial = MaterialManager.get_material("", "rain_windscreen_manager") as ShaderMaterial
 
-    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/rain_windscreen.gdshader")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/legacy/materials/types/rain_windscreen.gdshader")
     assert_not_null(material.get_shader_parameter("diffuse_texture"))
     assert_not_null(material.get_shader_parameter("raindrops_atlas"))
     assert_not_null(material.get_shader_parameter("wiper_mask"))

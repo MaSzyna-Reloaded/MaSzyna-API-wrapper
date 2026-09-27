@@ -1,4 +1,4 @@
-#include "../semaphores/MaszynaLegacySemaphoreDelegate.hpp"
+#include "legacy/semaphores/MaszynaLegacySemaphoreDelegate.hpp"
 #include "../semaphores/SemaphoreServer.hpp"
 #include "MaszynaLegacyLightsAction.hpp"
 

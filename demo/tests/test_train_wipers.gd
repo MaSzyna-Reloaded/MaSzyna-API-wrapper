@@ -1,17 +1,17 @@
 extends MaszynaGutTest
 
-## VehicleWipers: the wiper switch (Train.cpp:2638-2661) and the movement of the wipers
+## RailVehicleWipers: the wiper switch (Train.cpp:2638-2661) and the movement of the wipers
 ## (DynObj.cpp:4048-4115), both kept in the node - the vendored Mover has neither.
 
 var train: VehicleController
-var wipers: VehicleWipers
+var wipers: RailVehicleWipers
 
 
 func before_each():
     train = build_vehicle("TestTrainWipers")
     train.battery_voltage = 110.0
     train.apply_configuration()
-    wipers = MoverVehicleWipers.new()
+    wipers = MoverRailVehicleWipers.new()
     # WiperList: of ep09_v2/104e-mod-dod-zal.fiz - mask, sweep time, interval, delay at the far end
     wipers.positions = [
         _item(0, 1.0, 0.0, 0.5),
@@ -23,8 +23,8 @@ func before_each():
     await wait_idle_frames(2)
 
 
-func _item(mask: int, transit_time: float, period: float, return_delay: float) -> WiperListItem:
-    var item: WiperListItem = WiperListItem.new()
+func _item(mask: int, transit_time: float, period: float, return_delay: float) -> RailVehicleWiperListItem:
+    var item: RailVehicleWiperListItem = RailVehicleWiperListItem.new()
     item.wiper_mask = mask
     item.transit_time = transit_time
     item.period = period
@@ -33,7 +33,7 @@ func _item(mask: int, transit_time: float, period: float, return_delay: float) -
 
 
 func test_defaults():
-    var defaults: VehicleWipers = MoverVehicleWipers.new()
+    var defaults: RailVehicleWipers = MoverRailVehicleWipers.new()
 
     assert_eq(defaults.angle, 0.0)
     assert_eq(defaults.default_position, 0)
@@ -54,8 +54,8 @@ func test_round_trip_and_update_without_crashing():
 
     assert_eq(wipers.angle, 58.0)
     assert_eq(wipers.positions.size(), 4)
-    assert_eq((wipers.positions[1] as WiperListItem).period, 7.0)
-    assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring VehicleWipers")
+    assert_eq((wipers.positions[1] as RailVehicleWiperListItem).period, 7.0)
+    assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring RailVehicleWipers")
 
 
 func test_switch_is_limited_to_the_wiper_list():

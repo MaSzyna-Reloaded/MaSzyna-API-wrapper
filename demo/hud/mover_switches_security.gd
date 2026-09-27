@@ -1,11 +1,11 @@
 extends "res://hud/mover_switches_section.gd"
 
-var _security:VehicleSecuritySystem
+var _security:RailVehicleSecuritySystem
 
 
 func _do_update():
     super._do_update()
-    _security = _component(VehicleComponentType.COMPONENT_SECURITY) as VehicleSecuritySystem
+    _security = _component(VehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
 
 
 func _on_refresh_timer_timeout() -> void:

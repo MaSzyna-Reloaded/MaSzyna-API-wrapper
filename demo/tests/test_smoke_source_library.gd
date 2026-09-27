@@ -33,12 +33,12 @@ func after_each() -> void:
     ProjectSettings.set_setting(SmokeSourceLibrary.LIFETIME_STATIC_SETTING, _previous_static_lifetime)
 
 
-func _parse() -> MaszynaSmokeSource:
+func _parse() -> SmokeSource:
     return SmokeSourceLibrary.parse_file(FIXTURE)
 
 
 func test_parses_every_block_of_a_template() -> void:
-    var source:MaszynaSmokeSource = _parse()
+    var source:SmokeSource = _parse()
 
     assert_not_null(source, "A readable template should parse")
     assert_almost_eq(source.spawn_rate, 30.0, 0.001, "spawn_rate is a top level key")
@@ -54,7 +54,7 @@ func test_parses_every_block_of_a_template() -> void:
 
 
 func test_derives_the_lifetime_and_the_particle_budget() -> void:
-    var source:MaszynaSmokeSource = _parse()
+    var source:SmokeSource = _parse()
 
     # a particle dies when its opacity reaches zero (particles.cpp:132)
     assert_almost_eq(source.get_particle_lifetime(), 4.0, 0.001, "0.6 opacity faded at 0.15 per second")
@@ -63,7 +63,7 @@ func test_derives_the_lifetime_and_the_particle_budget() -> void:
 
 
 func test_terminal_size_follows_the_linear_growth() -> void:
-    var source:MaszynaSmokeSource = _parse()
+    var source:SmokeSource = _parse()
 
     # mean initial size 0.4, growing by 0.8 per second over 4 seconds, under the 40.0 limit
     assert_almost_eq(source.get_terminal_size(4.0), 3.6, 0.001, "size grows linearly over the lifetime")
@@ -105,7 +105,7 @@ func test_a_vehicle_and_the_scenery_take_their_own_density() -> void:
 
 
 func test_the_density_multiplies_the_particle_budget() -> void:
-    var source:MaszynaSmokeSource = _parse()
+    var source:SmokeSource = _parse()
 
     # the pool has to grow with the rate, or the emitter runs out of slots and spawns less
     assert_eq(source.get_particle_amount(500, 1.0, 4.0), 120, "30 particles per second over one lifetime")
@@ -115,7 +115,7 @@ func test_the_density_multiplies_the_particle_budget() -> void:
 func test_a_static_emitter_is_given_a_shorter_lifetime() -> void:
     ProjectSettings.set_setting(SmokeSourceLibrary.LIFETIME_DYNAMIC_SETTING, 1.0)
     ProjectSettings.set_setting(SmokeSourceLibrary.LIFETIME_STATIC_SETTING, 0.5)
-    var source:MaszynaSmokeSource = _parse()
+    var source:SmokeSource = _parse()
 
     assert_almost_eq(
         SmokeSourceLibrary.get_lifetime(source, E3DRenderingServer.INSTANCE_KIND_DYNAMIC), 4.0, 0.001,

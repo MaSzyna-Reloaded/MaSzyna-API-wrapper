@@ -89,7 +89,7 @@ func _frame_model() -> void:
     %Camera.look_at(Vector3.ZERO)
 
 
-## Skins of the vehicle (VehicleSkins), each as a tile of the grid
+## Skins of the vehicle (MaszynaVehicleSkins), each as a tile of the grid
 func _build_skin_grid() -> void:
     _skins.clear()
     # the trainset can give the vehicle a skin that is not listed - it is still a skin, and it goes
@@ -97,7 +97,7 @@ func _build_skin_grid() -> void:
     if _skin:
         _skins.append(_skin)
     var vehicle_dir: String = UserSettings.get_maszyna_game_dir().path_join(_data_path)
-    for skin: String in VehicleSkins.list_skins(vehicle_dir, _vehicle.file_name):
+    for skin: String in MaszynaVehicleSkins.list_skins(vehicle_dir, _vehicle.file_name):
         if not skin == _skin.to_lower():
             _skins.append(skin)
     var tiles: Array[TileGrid.Tile] = []

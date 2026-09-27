@@ -1,4 +1,4 @@
-#include "../e3d/E3DRenderingServer.hpp"
+#include "legacy/e3d/E3DRenderingServer.hpp"
 #include "../macros.hpp"
 #include "MaszynaLegacyAnimationAction.hpp"
 

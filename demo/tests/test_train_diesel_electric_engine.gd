@@ -1,17 +1,17 @@
 extends MaszynaGutTest
 
 var train: VehicleController
-var engine: VehicleDieselElectricEngine
+var engine: RailVehicleDieselElectricEngine
 
 func before_each():
     train = build_vehicle("TestTrain")
 
-    engine = MoverVehicleDieselElectricEngine.new()
+    engine = MoverRailVehicleDieselElectricEngine.new()
     train.add_component(engine)
     await wait_idle_frames(2)
 
-func _make_row(rpm: float, gen_power: float) -> WWListItem:
-    var item = WWListItem.new()
+func _make_row(rpm: float, gen_power: float) -> RailVehicleWWListItem:
+    var item = RailVehicleWWListItem.new()
     item.rpm = rpm
     item.max_power = gen_power
     return item
@@ -44,10 +44,10 @@ func test_round_trip_and_wwlist_update():
     assert_true(engine.generator_voltage_flat)
     assert_eq(engine.rpm_change_rate, 1.25)
     assert_eq(engine.wwlist.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "VehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
+    assert_true(train.state.has("main_switch_enabled"), "RailVehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
 
 func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
-    # VehicleDieselElectricEngine inherits VehicleDieselEngine's mechanical-transmission
+    # RailVehicleDieselElectricEngine inherits RailVehicleDieselEngine's mechanical-transmission
     # properties, but a diesel-electric vehicle should simply leave them at their defaults.
     await wait_idle_frames(2)
     assert_false(engine.torque_converter_present)
@@ -55,7 +55,7 @@ func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
 
 func test_fiz_wwlist_row_uses_canonical_shunting_property():
     var context: FizImportContext = FizImportContext.new()
-    context.add_part("VehicleEngine", engine)
+    context.add_part("RailVehicleEngine", engine)
     var parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
     var header: MaszynaParser = MaszynaParser.new()
     header.initialize(PackedByteArray())
@@ -66,4 +66,4 @@ func test_fiz_wwlist_row_uses_canonical_shunting_property():
     parser.end_table(context)
 
     assert_eq(engine.wwlist.size(), 1)
-    assert_true((engine.wwlist[0] as WWListItem).has_shunting)
+    assert_true((engine.wwlist[0] as RailVehicleWWListItem).has_shunting)

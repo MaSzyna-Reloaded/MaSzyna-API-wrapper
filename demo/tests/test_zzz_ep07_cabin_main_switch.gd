@@ -51,7 +51,7 @@ func _power_up() -> void:
     await wait_idle_frames(2)
     RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", true)
     RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", false)
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:

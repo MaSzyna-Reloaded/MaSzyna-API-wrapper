@@ -40,7 +40,7 @@ const SAMPLE_FRAMES: int = 30
 const MICROSECONDS_PER_MILLISECOND: float = 1000.0
 
 ## What one TrainSoundSystem update pulls out of a vehicle per tick: the brake automation
-## parameters and gates of BrakeSfxEventFactory, the MMD trigger properties of
+## parameters and gates of MaszynaBrakeSfxEventFactory, the MMD trigger properties of
 ## mmd_sound_catalog.gd, and what RunningSoundModel reads. Kept as the strings the sound system
 ## itself uses, because the point of the measurement is what a by-name read costs today.
 const SOUND_KEYS: PackedStringArray = [
@@ -65,14 +65,14 @@ func before_all() -> void:
     var build_started: int = Time.get_ticks_usec()
     var track_count: int = ceili((VEHICLE_COUNT * VEHICLE_SPACING + TRACK_MARGIN) / TRACK_LENGTH)
     for index: int in track_count:
-        var curve: MaszynaTrackCurve = MaszynaTrackCurve.new()
+        var curve: TrackCurve = TrackCurve.new()
         curve.p1 = Vector3(index * TRACK_LENGTH, 0.0, 0.0)
         curve.p2 = Vector3((index + 1) * TRACK_LENGTH, 0.0, 0.0)
-        var track_rid: RID = TrackManager.track_create()
-        TrackManager.track_update_curves(track_rid, curve, null)
-        TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "", TRACK_GAUGE)
+        var track_rid: RID = TrackServer.track_create()
+        TrackServer.track_update_curves(track_rid, curve, null)
+        TrackServer.track_update(track_rid, TrackServer.TRACK_NORMAL, "", TRACK_GAUGE)
         _tracks.append(track_rid)
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
     # the vehicle is configured by its model, before the Mover is initialised - applying a FIZ
     # afterwards leaves the backend running on the zeros it started with (mass 0 -> NaN velocity)
@@ -86,12 +86,12 @@ func before_all() -> void:
         var controller: VehicleController = physics_node.get_controller()
 
         # the two biggest publishers the fixture has no section for, added as a scene would
-        var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
-        engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
+        var engine: RailVehicleElectricSeriesEngine = MoverRailVehicleElectricSeriesEngine.new()
+        engine.power_source = RailVehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_component(engine)
-        var lighting: VehicleLighting = MoverVehicleLighting.new()
+        var lighting: RailVehicleLighting = MoverRailVehicleLighting.new()
         controller.add_component(lighting)
-        var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()
+        var spring_brake: RailVehicleSpringBrake = MoverRailVehicleSpringBrake.new()
         controller.add_component(spring_brake)
 
         _controllers.append(controller)
@@ -104,7 +104,7 @@ func before_all() -> void:
         var track_rid: RID = _tracks[int(offset / TRACK_LENGTH)]
         RailVehicleServer.vehicle_set_track(
             vehicle_rid, track_rid, fmod(offset, TRACK_LENGTH),
-            TrackManager.DIRECTION_NORMAL)
+            TrackServer.DIRECTION_NORMAL)
 
     await wait_idle_frames(2)
     print("[bench] built %d vehicles in %.1f ms" % [
@@ -120,10 +120,10 @@ func after_all() -> void:
         physics_node.free()
     _vehicle_nodes.clear()
     for track_rid: RID in _tracks:
-        if TrackManager.track_exists(track_rid):
-            TrackManager.track_free(track_rid)
+        if TrackServer.track_exists(track_rid):
+            TrackServer.track_free(track_rid)
     _tracks.clear()
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
 
 ## Every vehicle has to be on the track and publishing state, or the three measurements below

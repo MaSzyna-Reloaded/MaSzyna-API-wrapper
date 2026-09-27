@@ -185,7 +185,7 @@ func process(_delta: float) -> void:
     pass
 
 
-## Holds the weather (rain, lightning) still while the runtime is paused (MaszynaRuntime.pause()).
+## Holds the weather (rain, lightning) still while the runtime is paused (SimulationServer.pause()).
 ## A backend without weather of its own has nothing to hold.
 func pause_weather() -> void:
     pass

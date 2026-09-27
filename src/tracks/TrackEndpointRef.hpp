@@ -5,7 +5,7 @@
 #include <godot_cpp/variant/rid.hpp>
 
 namespace godot {
-    /* One endpoint of one registered track. Was TrackManager's own EndpointRef, an inner class of the
+    /* One endpoint of one registered track. Was TrackServer's own EndpointRef, an inner class of the
      * GDScript autoload - GDExtension has no equivalent, so it is a class of its own. */
     class TrackEndpointRef : public RefCounted {
             GDCLASS(TrackEndpointRef, RefCounted)
@@ -24,7 +24,7 @@ namespace godot {
             int get_endpoint_index() const;
     };
 
-    /* The tracks connected before and after one branch of a switch. Was TrackManager's own
+    /* The tracks connected before and after one branch of a switch. Was TrackServer's own
      * BranchNeighbors. */
     class TrackBranchNeighbors : public RefCounted {
             GDCLASS(TrackBranchNeighbors, RefCounted)

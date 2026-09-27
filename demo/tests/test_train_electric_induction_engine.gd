@@ -1,18 +1,18 @@
 extends MaszynaGutTest
 
 var train: VehicleController
-var engine: VehicleElectricInductionEngine
+var engine: RailVehicleElectricInductionEngine
 
 func before_each():
     train = build_vehicle("TestTrain")
 
-    engine = MoverVehicleElectricInductionEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine = MoverRailVehicleElectricInductionEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
 
-func _make_point(x: float, y: float) -> CurvePointItem:
-    var item = CurvePointItem.new()
+func _make_point(x: float, y: float) -> VehicleCurvePointItem:
+    var item = VehicleCurvePointItem.new()
     item.x = x
     item.y = y
     return item
@@ -51,7 +51,7 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.slip_current_ratio, 0.1)
     assert_eq(engine.max_power, 1200.0)
     assert_eq(engine.max_power_table.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "VehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
+    assert_true(train.state.has("main_switch_enabled"), "RailVehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
 
 func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # Regression: CollectorParameters.MaxV (FIZ MaxVoltage, Mover.cpp:11622) was never set, so an
@@ -65,9 +65,9 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     driven.battery_voltage = 110.0
     # the breaker is checked against the voltage in TractionForce(), run only with Power > 0
     driven.power = 5600.0
-    var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
-    eim.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
-    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
+    eim.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)
     eim.power_current_collector_max_voltage = 3900.0
@@ -79,17 +79,17 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     await wait_idle_frames(2)
     driven.send_command("battery", true)
     await wait_idle_frames(2)
-    driven.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in 10:
-        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
-    eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+    eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
     assert_true(driven.state["main_switch_closable"], "the line breaker should be closable at 3000 V")
 
     driven.send_command("main_switch", true)
     for i in 5:
-        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
 
     assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
@@ -106,13 +106,13 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.battery_voltage = 110.0
     driven.power = 5600.0
     driven.mass = 81000.0
-    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.powered_wheel_diameter = 1.25
     wheels.axle_arrangement = "Bo'Bo'"
     driven.add_component(wheels)
-    var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
-    eim.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
-    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
+    eim.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)
     eim.transmission_gear_teeth_motor = 48
@@ -132,15 +132,15 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.send_command("battery", true)
     # the crew switches its cab on - no cab is active before (CabActive = 0, MOVER.h:2090)
     driven.send_command("cab_activation", true)
-    driven.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in 10:
-        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
     driven.send_command("main_switch", true)
     driven.send_command("direction_increase")
     for i in 5:
-        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
     return driven
 
@@ -160,10 +160,10 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
     # Regression: the setpoint of an integrated controller is computed by DynObj.cpp:3246-3283
     # (CheckEIMIC), which the wrapper did not call - the controller moved and Ft stayed 0
     var driven: VehicleController = await _powered_up_eim("TestEimTraction")
-    var engine: VehicleElectricEngine = driven.get_component(VehicleComponentType.COMPONENT_ENGINE)
+    var engine: RailVehicleElectricEngine = driven.get_component(VehicleComponentType.COMPONENT_ENGINE)
     driven.send_command("main_controller_increase")
     for i in 30:
-        engine.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
 
     assert_gt(float(driven.state["Ft"]), 0.0, "a driven induction motor should pull with the controller up")

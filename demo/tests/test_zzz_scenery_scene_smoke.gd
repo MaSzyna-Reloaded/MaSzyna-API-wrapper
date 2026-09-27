@@ -26,10 +26,10 @@ func test_demo_scenery_loading_scene_instantiates() -> void:
 
     assert_gt(scenery._track_rids.size(), 0, "scenery load should have created at least one track RID")
 
-    # TrackManager is an engine singleton, not a node under /root - it has been since it moved
+    # TrackServer is an engine singleton, not a node under /root - it has been since it moved
     # to C++, and looking it up by path is what AGENTS.md forbids
-    var summary:Dictionary = TrackManager.topology_get_summary()
-    assert_gt((summary["graphs"] as Array).size() + summary["orphaned_tracks_count"], 0, "at least one track should have registered with TrackManager")
+    var summary:Dictionary = TrackServer.topology_get_summary()
+    assert_gt((summary["graphs"] as Array).size() + summary["orphaned_tracks_count"], 0, "at least one track should have registered with TrackServer")
 
     remove_child(instance)
     instance.free()

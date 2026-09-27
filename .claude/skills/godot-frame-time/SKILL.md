@@ -73,7 +73,7 @@ split, this is where each part lives.
   that reduces work per frame - changing the physics tick rate does not, because
   the iteration count compensates exactly.
 - **Script Functions dominated by `track_*` / `switch_*` calls** → the hot path
-  queries `TrackManager` (GDScript) across the autoload boundary hundreds of
+  queries `TrackServer` (GDScript) across the autoload boundary hundreds of
   times per frame. Hoisting a repeated query out of a loop is worth more than it
   looks; a query answered by a value already in hand is pure profit.
 - **Renderer CPU/GPU genuinely high** → geometry actually in range. The lever is
@@ -85,7 +85,7 @@ split, this is where each part lives.
   low fps an idle budget takes minutes.
 - **Vehicles juddering or "kicking"** → a visual transform read at a different
   rate than it is written. `RailVehicle3D::_process_impl()`
-  (`src/core/RailVehicle3D.cpp:368`) recomputes the transform every rendered
+  (`src/vehicles/rail/RailVehicle3D.cpp:368`) recomputes the transform every rendered
   frame from the simulation's track offset; if the simulation runs on a
   different clock, every other frame repeats a position. Godot's built-in
   physics interpolation does **not** help here, because the transform is set in

@@ -1,5 +1,5 @@
 #pragma once
-#include "../tracks/TrackManager.hpp"
+#include "../tracks/TrackServer.hpp"
 #include "ScenarioEventAction.hpp"
 #include <godot_cpp/variant/typed_array.hpp>
 
@@ -11,7 +11,7 @@ namespace godot {
 
         private:
             TypedArray<RID> tracks;
-            TrackManager::SwitchTrack active_track = TrackManager::TRACK_COMMON;
+            TrackServer::SwitchTrack active_track = TrackServer::TRACK_COMMON;
 
         protected:
             static void _bind_methods();
@@ -21,7 +21,7 @@ namespace godot {
         public:
             void set_tracks(const TypedArray<RID> &p_tracks);
             TypedArray<RID> get_tracks() const;
-            void set_active_track(TrackManager::SwitchTrack p_active_track);
-            TrackManager::SwitchTrack get_active_track() const;
+            void set_active_track(TrackServer::SwitchTrack p_active_track);
+            TrackServer::SwitchTrack get_active_track() const;
     };
 } // namespace godot

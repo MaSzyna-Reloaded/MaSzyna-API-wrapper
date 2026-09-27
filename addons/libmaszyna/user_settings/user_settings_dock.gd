@@ -36,7 +36,7 @@ func _on_directory_selector_dialog_dir_selected(dir):
 
 func _on_clear_cache_button_button_up():
     var fn = func():
-        MaszynaRuntime.clear_cache()
+        SimulationServer.clear_cache()
 
     call_func_with_message_window("Clering caches...", "Please wait.\nClearing caches in progress...", fn)
 

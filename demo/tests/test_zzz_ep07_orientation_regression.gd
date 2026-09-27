@@ -107,7 +107,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:

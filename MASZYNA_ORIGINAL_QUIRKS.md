@@ -123,7 +123,7 @@ interface.
 * **`ls_winter` (5) is declared and never handled** (`AnimModel.h:34`): `RaPrepare()` has no case
   for it, so such a light stays as it was. Wrapper: parsed as off.
 
-## Mover (`src/maszyna`, vendored)
+## Mover (`src/legacy/maszyna-mover`, vendored)
 
 * **A cab switched on sends itself only backwards.** `SendCtrlToNext()` picks the coupler from the
   sign of the cab (`d = (1 + Sign(dir)) / 2`, "wysyłanie tylko w tył"), and `CabActivisation()`
@@ -139,7 +139,7 @@ interface.
   and `BrakeLevelSet()` returns early when `fBrakeCtrlPos` already equals the new position - so a
   vehicle set up a second time kept its FV4a handle at lap and never charged the pipe
   (`FINDINGS.md`, 2026-09-26). Wrapper: `fBrakeCtrlPos` synced before `BrakeLevelSet()` in
-  `MoverTrainController::initialize_mover_state()`.
+  `MoverRailVehicleController::initialize_mover_state()`.
 * **`BrakeOpModes` defaults to a mode no FIZ asks for.** Wrapper: `BRAKE_OP_MODE_NONE` as the
   default, `pnep` parsed.
 * **The spring brake reads its two valve areas crossed.** FIZ `ValveOnArea` goes into
@@ -166,7 +166,7 @@ interface.
   `std::abs`'s overloads in the global namespace. Without it the unqualified `abs()` in
   `hamulce.cpp` (11 calls) is C's `int abs(int)`, so every difference below 1 bar truncates to
   zero and the control reservoir of `MHZ_6P`, `MHZ_EN57`, `MHZ_K5P`, `M394` and `St113` freezes.
-  It compiles silently. Wrapper: CMake force-includes `stdlib.h` into `src/maszyna/*.cpp`.
+  It compiles silently. Wrapper: CMake force-includes `stdlib.h` into `src/legacy/maszyna-mover/*.cpp`.
 * **The pantographs' master valve opens by itself unless the FIZ says otherwise.** The struct
   default of every `basic_device` is `start_t::manual` (`McZapkie/MOVER.h:1323`), but
   `LoadFIZ_Cntrl` gives `PantsValve` a missing `PantEPValveStart` as automatic, "legacy code
@@ -174,7 +174,7 @@ interface.
   pantograph's own valve stays manual. The E186 declares none of these keys, so in the original
   `P` alone raises its pantograph; porting only the keys that are present left the master valve
   shut, and the wrapper grew a workaround opening it on every raise. Wrapper: the loader's
-  defaults in `VehicleElectricEngine`, the workaround removed.
+  defaults in `RailVehicleElectricEngine`, the workaround removed.
 * **The couplers depend on the frame rate.** `CouplerForce()` (`Mover.cpp:4779-4784`) takes a
   coupler's length as the distance set by the last refresh plus *ten times* the relative
   movement since (`dMoveLen`), and the original refreshes once a frame, before all its physics
@@ -185,7 +185,7 @@ interface.
   every sub-step (`RailVehicleServer::step()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
 * **The FIZ loader is not in the vendored copy.** Ours is 9598 lines against the original's 12813
   and holds no `LoadFIZ_*` at all, so every quirk of how a FIZ key reaches a Mover field has to be
-  read in `~/src/maszyna`, not in `src/maszyna`.
+  read in `~/src/maszyna`, not in `src/legacy/maszyna-mover`.
 
 * **`LoadFIZ_Engine` and `readMPT()` pick their keys by the engine type.** The clutch of a plain
   diesel (`minVelfullengage`, `engageDia`, `engageMaxForce`, `engagefriction`) is read from the
@@ -278,7 +278,7 @@ interface.
   original's own TODO to make it "a sound event for specific pantograph"), so raising a
   pantograph under a dead or missing wire is silent. `sPantDown` follows the pantograph's
   `is_active` instead (`vehicle/DynObj.cpp:4007-4036`). Wrapper: the same two conditions, reported
-  as `VehicleElectricEngine.pantograph_up`/`pantograph_down`; which pantograph it was is not yet
+  as `RailVehicleElectricEngine.pantograph_up`/`pantograph_down`; which pantograph it was is not yet
   used for the sound's position (`TODO.md`).
 
 ## Cab Python screens (`pyscreen:`, the original's Python 2 scripts)

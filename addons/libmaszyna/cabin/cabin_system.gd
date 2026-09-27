@@ -31,14 +31,14 @@ var _cab_logics:Dictionary[RID, CabinLogic] = {}
 
 
 func _ready() -> void:
-    MaszynaRuntime.simulation_advanced.connect(_on_simulation_advanced)
+    SimulationServer.simulation_advanced.connect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.connect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
 
 
 func _exit_tree() -> void:
-    MaszynaRuntime.simulation_advanced.disconnect(_on_simulation_advanced)
+    SimulationServer.simulation_advanced.disconnect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.disconnect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
@@ -62,7 +62,7 @@ func _on_vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p
 
 func _on_vehicle_occupied_cab_changed(vehicle_rid:RID, cabin_occupied:int) -> void:
     # the crew moved: the controls are those of the other cab now, before anybody hears of the move
-    # (DynamicTrainCabin rebuilds its widgets on the relayed signal)
+    # (MaszynaDynamicTrainCabin rebuilds its widgets on the relayed signal)
     if _cab_logics.has(vehicle_rid):
         _cab_logics[vehicle_rid].unregister()
         _cab_logics[vehicle_rid].register(vehicle_rid, cabin_occupied)

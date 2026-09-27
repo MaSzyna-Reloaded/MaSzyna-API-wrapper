@@ -1,11 +1,11 @@
 extends "res://hud/mover_switches_section.gd"
 
-var _brakes:VehicleBrake
+var _brakes:RailVehicleBrake
 
 
 func _do_update():
     super._do_update()
-    _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake
+    _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
 
 
 func _on_refresh_timer_timeout() -> void:

@@ -21,13 +21,13 @@ Read top to bottom: each layer may use the ones below it and must know nothing o
 
 | Layer | Who | Owns | Must never |
 |---|---|---|---|
-| Backend | `src/maszyna/` (vendored `TMoverParameters`) | physical quantities, the original's own model | be edited. It is vendored; a divergence is ported around it, never into it |
-| Backend adapters | `Mover*` classes (`MoverTrainController`, `MoverVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
-| Vehicle model | `VehicleController` (an `Object`, any vehicle) and `TrainController` (a railway one: cabs, couplers, controllers, relays), `VehicleComponent` / `TrainComponent` + `Vehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
-| Servers | `RailVehicleServer`, `TrackManager`, `TractionPowerServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SemaphoreServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `SceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
+| Backend | `src/legacy/maszyna-mover/` (vendored `TMoverParameters`) | physical quantities, the original's own model | be edited. It is vendored; a divergence is ported around it, never into it |
+| Backend adapters | `Mover*` classes (`MoverRailVehicleController`, `MoverRailVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
+| Vehicle model | `VehicleController` (an `Object`, any vehicle) and `RailVehicleController` (a railway one: cabs, couplers, controllers, relays), `VehicleComponent` / `RailVehicleComponent` + `RailVehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
+| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SemaphoreServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
 | Systems | `CabinSystem` (a cab per vehicle RID and cab), `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
 | Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets, `SemaphoreNode`/`SemaphoreSystemNode` (proxies holding a server RID) | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
-| Importers | `src/parsers/`, `addons/libmaszyna/fiz/`, `.../mmd/`, `.../importer/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
+| Importers | `src/legacy/parsers/`, `src/legacy/e3d/`, `addons/libmaszyna/legacy/fiz/`, `.../legacy/mmd/`, `.../legacy/scenery/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
 
 Autoloads are listed in `demo/project.godot`; C++ singletons are registered in
 `src/register_types.cpp`. A singleton is reached by its typed `get_instance()` and the result is
@@ -36,8 +36,8 @@ null-checked - never by node path, never by `call("name")`.
 ## The five boundaries that carry the design
 
 **1. The backend never appears above its adapter.** No `Vehicle*.hpp` interface mentions
-`TMoverParameters`, and only `Mover*` files hold one. Every one of the 21 `MoverVehicle<Domain>`
-implementations has a `Vehicle<Domain>` interface of the same name, and none of those interfaces
+`TMoverParameters`, and only `Mover*` files hold one. Every one of the `MoverRailVehicle<Domain>`
+implementations has a `RailVehicle<Domain>` interface of the same name, and none of those interfaces
 names the backend. A component reaches the backend through `MoverComponent` - which is not
 an `Object`, so it needs `dynamic_cast`, not `Object::cast_to<>`, and the two base pointers of one
 object differ in address.
@@ -88,7 +88,7 @@ of two same-named vehicles lost its commands and its cab (TrainSystem, removed 2
 * **Something an instancer must honour** - the server, not the node that happens to create the
   instance. The moment a second instancer appeared without nodes, every feature parked on a node
   silently stopped existing.
-* **A new component** - a `Vehicle<Domain>` interface plus a `Mover<Domain>` implementation, added
+* **A new component** - a `RailVehicle<Domain>` interface plus a `MoverRailVehicle<Domain>` implementation, added
   with `add_component()` and reached with `get_component(VehicleComponentType::TYPE)`.
 * **Behaviour that differs between variants of one server object** - a delegate, not a subclass
   of the object: an interface class of `GDVIRTUAL`s whose C++ virtuals forward to the script

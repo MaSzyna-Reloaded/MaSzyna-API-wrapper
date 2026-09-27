@@ -36,7 +36,7 @@ is_header_tidy_file() {
 }
 
 is_excluded_file() {
-    [[ "$1" == src/maszyna/* || "$1" == src/gen/* ]]
+    [[ "$1" == src/legacy/maszyna-mover/* || "$1" == src/gen/* ]]
 }
 
 resolve_target_file() {
@@ -67,7 +67,7 @@ resolve_target_file() {
 run_clang_format() {
     if [ "$#" -eq 0 ]; then
         find "${ROOT_DIR}/src" \( -name "*.cpp" -or -name "*.hpp" -or -name "*.h" \) \
-            -not -path "${ROOT_DIR}/src/maszyna/*" \
+            -not -path "${ROOT_DIR}/src/legacy/maszyna-mover/*" \
             -not -path "${ROOT_DIR}/src/gen/*" \
             -exec clang-format --dry-run --Werror --style=file {} +
     elif is_supported_format_file "$1"; then
@@ -84,7 +84,7 @@ run_clang_tidy() {
             files+=("${file#${ROOT_DIR}/}")
         done < <(
             find "${ROOT_DIR}/src" \( -name "*.cpp" -or -name "*.cc" -or -name "*.cxx" -or -name "*.c" -or -name "*.hpp" -or -name "*.h" \) \
-                -not -path "${ROOT_DIR}/src/maszyna/*" \
+                -not -path "${ROOT_DIR}/src/legacy/maszyna-mover/*" \
                 -not -path "${ROOT_DIR}/src/gen/*"
         )
     elif is_supported_tidy_file "$1"; then

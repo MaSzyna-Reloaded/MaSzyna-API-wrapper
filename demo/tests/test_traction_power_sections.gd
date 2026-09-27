@@ -20,25 +20,25 @@ var _sources:Array[RID] = []
 
 func after_each() -> void:
     for wire:RID in _wires:
-        TractionPowerServer.wire_free(wire)
+        TractionServer.wire_free(wire)
     for source:RID in _sources:
-        TractionPowerServer.power_source_free(source)
+        TractionServer.power_source_free(source)
     _wires.clear()
     _sources.clear()
 
 
 func _add_source(name:String, voltage:float, is_section:bool) -> RID:
-    var source:RID = TractionPowerServer.power_source_create()
+    var source:RID = TractionServer.power_source_create()
     _sources.append(source)
-    TractionPowerServer.power_source_set_params(
+    TractionServer.power_source_set_params(
             source, name, voltage, 0.0, 0.2, 4500.0, 1.0, 3, 60.0, false, false, is_section)
     return source
 
 
 func _add_wire(index:int, supply:String) -> RID:
-    var wire:RID = TractionPowerServer.wire_create()
+    var wire:RID = TractionServer.wire_create()
     _wires.append(wire)
-    TractionPowerServer.wire_set_params(
+    TractionServer.wire_set_params(
             wire,
             Vector3(0.0, WIRE_HEIGHT, index * SPAN_LENGTH),
             Vector3(0.0, WIRE_HEIGHT, (index + 1) * SPAN_LENGTH),
@@ -51,10 +51,10 @@ func _add_wire(index:int, supply:String) -> RID:
 func test_a_span_on_a_substation_takes_the_substation_voltage() -> void:
     _add_source("pwr01", SUBSTATION_VOLTAGE, false)
     var wire:RID = _add_wire(0, "pwr01")
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     assert_almost_eq(
-            TractionPowerServer.wire_get_voltage(wire, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
+            TractionServer.wire_get_voltage(wire, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
             "a directly powered span carries what the substation gives it")
 
 
@@ -64,13 +64,13 @@ func test_a_span_on_a_section_is_fed_along_the_wires() -> void:
     var fed:RID = _add_wire(0, "podstacja")
     _add_source("podstacja", SUBSTATION_VOLTAGE, false)
     var on_section:RID = _add_wire(1, "sekcja")
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     assert_almost_eq(
-            TractionPowerServer.wire_get_voltage(fed, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
+            TractionServer.wire_get_voltage(fed, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
             "the span the substation sits on carries its voltage")
     assert_gt(
-            TractionPowerServer.wire_get_voltage(on_section, 0.0, NO_CURRENT), 0.0,
+            TractionServer.wire_get_voltage(on_section, 0.0, NO_CURRENT), 0.0,
             "and the neighbouring span of the section is fed along the wire")
 
 
@@ -81,10 +81,10 @@ func test_the_last_declaration_of_a_name_is_the_one_a_span_gets() -> void:
     _add_source("pwr17", 3400.0, true)
     _add_source("pwr17", SUBSTATION_VOLTAGE, false)
     var wire:RID = _add_wire(0, "pwr17")
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     assert_almost_eq(
-            TractionPowerServer.wire_get_voltage(wire, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
+            TractionServer.wire_get_voltage(wire, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
             "the substation declared last feeds the span, not the section declared before it")
 
 
@@ -92,10 +92,10 @@ func test_the_last_declaration_of_a_name_is_the_one_a_span_gets() -> void:
 ## hangs between sections are written that way ("*").
 func test_a_span_with_no_supply_keeps_its_own_voltage() -> void:
     var wire:RID = _add_wire(0, "*")
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     assert_almost_eq(
-            TractionPowerServer.wire_get_voltage(wire, 0.0, NO_CURRENT), NOMINAL_VOLTAGE, 1.0,
+            TractionServer.wire_get_voltage(wire, 0.0, NO_CURRENT), NOMINAL_VOLTAGE, 1.0,
             "no section and no supply means the span's own nominal voltage")
 
 
@@ -112,11 +112,11 @@ func test_a_loaded_span_a_kilometre_from_the_substation_keeps_its_voltage() -> v
     var far:RID = RID()
     for i in range(1, SPANS_PER_KILOMETRE + 1):
         far = _add_wire(i, "sekcja")
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     var voltage:float = SUBSTATION_VOLTAGE
     for i in 30:
-        voltage = TractionPowerServer.wire_get_voltage(far, voltage, LOAD_CURRENT)
+        voltage = TractionServer.wire_get_voltage(far, voltage, LOAD_CURRENT)
         await wait_idle_frames(1)
 
     assert_gt(voltage, MIN_VOLTAGE_UNDER_LOAD, "a kilometre of wire should cost tens of volts, not the line")

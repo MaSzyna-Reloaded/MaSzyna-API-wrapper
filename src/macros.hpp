@@ -1,6 +1,6 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
-#include "core/utils.hpp"
+#include "utils/utils.hpp"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
@@ -200,8 +200,8 @@ namespace libmaszyna::internal {
  * Binds a property and its conventionally named setter and getter. An optional slash-separated grouping path accepts
  * a group and a subgroup. Group markers are generated from the path automatically.
  * <example>
- * BIND_PROPERTY(VehicleWheels, Variant::FLOAT, bogie_pivot_spacing);
- * BIND_PROPERTY(VehicleBrake, Variant::FLOAT, brake_force_max, "brake_force");
+ * BIND_PROPERTY(RailVehicleWheels, Variant::FLOAT, bogie_pivot_spacing);
+ * BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, brake_force_max, "brake_force");
  * </example>
  */
 #define INTERNAL_BIND_PROPERTY(p_class, p_type, p_name)                                                                \

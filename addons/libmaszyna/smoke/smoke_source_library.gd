@@ -56,7 +56,7 @@ const ATLAS_FRAMES_SETTING:String = "maszyna/smoke/modern/atlas_frames"
 ## their own and must not be listed here
 const _STOP_CHARS:Array = [" ", "\t", "\n", "\r", ";", ",", "[", "]"]
 
-## Block key -> property of [MaszynaSmokeSource], the shape the original's own variablemaps have
+## Block key -> property of [SmokeSource], the shape the original's own variablemaps have
 ## (particles.cpp:24-33, particles.h:222-226)
 const _INITIALIZER_FIELDS:Dictionary = {
     "min_inclination:": "inclination_min",
@@ -79,7 +79,7 @@ const _OPACITY_CHANGE_FIELDS:Dictionary = {
     "max:": "opacity_limit_max",
 }
 
-var _sources:Dictionary[String, MaszynaSmokeSource] = {}
+var _sources:Dictionary[String, SmokeSource] = {}
 ## One memo per instance kind: the same template comes out denser on a vehicle than on a chimney
 var _render_data:Dictionary[int, Dictionary] = {
     E3DRenderingServer.INSTANCE_KIND_STATIC: {},
@@ -101,7 +101,7 @@ func build_render_data(template_name:String, kind:int) -> Dictionary:
         return memo[template_name]
 
     var data:Dictionary = {}
-    var source:MaszynaSmokeSource = get_source(template_name)
+    var source:SmokeSource = get_source(template_name)
     if source:
         data = _build_render_data(
             source, template_name, get_density(kind), get_lifetime(source, kind), get_max_particles(kind))
@@ -111,7 +111,7 @@ func build_render_data(template_name:String, kind:int) -> Dictionary:
 
 ## How long a particle of an emitter of [param kind] lives, the template's own scaled by the
 ## setting - a scenery prop does not need a minute of smoke hanging over it.
-func get_lifetime(source:MaszynaSmokeSource, kind:int) -> float:
+func get_lifetime(source:SmokeSource, kind:int) -> float:
     var scale:float = (
         ProjectSettings.get_setting(LIFETIME_DYNAMIC_SETTING, DEFAULT_LIFETIME_DYNAMIC)
         if kind == E3DRenderingServer.INSTANCE_KIND_DYNAMIC
@@ -136,12 +136,12 @@ func get_density(kind:int) -> float:
     return maxf(ProjectSettings.get_setting(setting, DEFAULT_DENSITY), 0.0)
 
 
-func get_source(template_name:String) -> MaszynaSmokeSource:
+func get_source(template_name:String) -> SmokeSource:
     if _sources.has(template_name):
         return _sources[template_name]
 
     var path:String = UserSettings.get_maszyna_game_dir().path_join("data").path_join(template_name + ".txt")
-    var source:MaszynaSmokeSource = parse_file(path)
+    var source:SmokeSource = parse_file(path)
     _sources[template_name] = source
     return source
 
@@ -153,7 +153,7 @@ func clear_cache() -> void:
 
 
 ## Parses one template file. Returns null when it cannot be read.
-static func parse_file(abs_path:String) -> MaszynaSmokeSource:
+static func parse_file(abs_path:String) -> SmokeSource:
     var file:FileAccess = FileAccess.open(abs_path, FileAccess.READ)
     if not file:
         push_error("[SmokeSourceLibrary] Particle source template not found: %s" % abs_path)
@@ -169,8 +169,8 @@ static func parse_file(abs_path:String) -> MaszynaSmokeSource:
     return _parse_tokens(tokens)
 
 
-static func _parse_tokens(tokens:Array[String]) -> MaszynaSmokeSource:
-    var source:MaszynaSmokeSource = MaszynaSmokeSource.new()
+static func _parse_tokens(tokens:Array[String]) -> SmokeSource:
+    var source:SmokeSource = SmokeSource.new()
     var i:int = 0
     while i < tokens.size():
         var key:String = tokens[i].to_lower()
@@ -192,7 +192,7 @@ static func _parse_tokens(tokens:Array[String]) -> MaszynaSmokeSource:
 ## Reads a `{ key: value ... }` block into the properties [param fields] maps the keys to.
 ## Returns the index just past the closing brace.
 static func _parse_block(
-        tokens:Array[String], start:int, source:MaszynaSmokeSource,
+        tokens:Array[String], start:int, source:SmokeSource,
         fields:Dictionary, with_color:bool) -> int:
     var i:int = start
     if i < tokens.size() and tokens[i] == "{":
@@ -211,7 +211,7 @@ static func _parse_block(
 
 
 func _build_render_data(
-        source:MaszynaSmokeSource, template_name:String, density:float, lifetime:float,
+        source:SmokeSource, template_name:String, density:float, lifetime:float,
         max_particles:int) -> Dictionary:
     var amount:int = source.get_particle_amount(max_particles, density, lifetime)
     if not lifetime or not amount:
@@ -236,7 +236,7 @@ func _build_render_data(
 
 
 func _build_process_material(
-        source:MaszynaSmokeSource, lifetime:float, density:float) -> ParticleProcessMaterial:
+        source:SmokeSource, lifetime:float, density:float) -> ParticleProcessMaterial:
     var material:ParticleProcessMaterial = ParticleProcessMaterial.new()
     # the original launches every particle along the owner's up axis, within the inclination cone
     # (particles.cpp:58-76)
@@ -307,7 +307,7 @@ func get_atlas() -> Texture2D:
 ## (particles.cpp:73)
 ## Each particle is divided by the density, so twice as many of them add up to the same plume
 ## instead of twice the soot (particles.cpp:73)
-func _build_opacity_ramp(source:MaszynaSmokeSource, density:float) -> GradientTexture1D:
+func _build_opacity_ramp(source:SmokeSource, density:float) -> GradientTexture1D:
     var scale:float = 1.0 / maxf(density, 0.001)
     var gradient:Gradient = Gradient.new()
     gradient.set_color(0, Color(1.0, 1.0, 1.0, source.opacity_min * scale))

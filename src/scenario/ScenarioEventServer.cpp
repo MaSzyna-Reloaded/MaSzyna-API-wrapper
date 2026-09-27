@@ -1,7 +1,7 @@
-#include "../core/MaszynaRuntime.hpp"
-#include "../e3d/E3DRenderingServer.hpp"
-#include "../physics/RailVehicleServer.hpp"
-#include "../tracks/TrackManager.hpp"
+#include "simulation/SimulationServer.hpp"
+#include "legacy/e3d/E3DRenderingServer.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
+#include "../tracks/TrackServer.hpp"
 #include "ScenarioEventServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -126,11 +126,11 @@ namespace godot {
     /// No explicit disconnect: callable_mp reports this instance as the callable's object, so the
     /// engine drops the connections when the instance dies.
     ScenarioEventServer::ScenarioEventServer() {
-        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         // a launcher at an hour looks at the time of day, which the runtime's clock runs
         runtime->connect(
-                MaszynaRuntime::time_of_day_changed_signal,
+                SimulationServer::time_of_day_changed_signal,
                 callable_mp(this, &ScenarioEventServer::_on_time_of_day_changed));
         // the track events hang on what the vehicles do on their tracks
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
@@ -150,17 +150,17 @@ namespace godot {
                 RailVehicleServer::vehicle_radio_called_signal,
                 callable_mp(this, &ScenarioEventServer::_on_vehicle_radio_called));
         // ...and the isolated sections' events on what the sections report
-        TrackManager *track_manager = TrackManager::get_instance();
-        ERR_FAIL_NULL(track_manager);
-        track_manager->connect(
-                TrackManager::isolated_occupied_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_occupied));
-        track_manager->connect(
-                TrackManager::isolated_freed_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_freed));
-        track_manager->connect(
-                TrackManager::isolated_vehicle_entered_signal,
+        TrackServer *track_server = TrackServer::get_instance();
+        ERR_FAIL_NULL(track_server);
+        track_server->connect(
+                TrackServer::isolated_occupied_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_occupied));
+        track_server->connect(
+                TrackServer::isolated_freed_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_freed));
+        track_server->connect(
+                TrackServer::isolated_vehicle_entered_signal,
                 callable_mp(this, &ScenarioEventServer::_on_isolated_vehicle_entered));
-        track_manager->connect(
-                TrackManager::isolated_vehicle_left_signal,
+        track_server->connect(
+                TrackServer::isolated_vehicle_left_signal,
                 callable_mp(this, &ScenarioEventServer::_on_isolated_vehicle_left));
         // ...and the animations' `:done` events on what the rendering server reports
         E3DRenderingServer *rendering = E3DRenderingServer::get_instance();
@@ -179,7 +179,7 @@ namespace godot {
     /// TEventLauncher::check_activation() (EvLaunch.cpp:197-211): a launcher fires when the clock
     /// shows its HH:MM, once, and is armed again when the hour is another
     void ScenarioEventServer::_on_time_of_day_changed() {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         const double now = runtime->get_time_of_day();
         const int hour = static_cast<int>(now);
@@ -206,7 +206,7 @@ namespace godot {
     /// event_manager::queue_receivers() (Event.cpp:2255-2268): only a launcher's first event, and
     /// with no activator
     void ScenarioEventServer::_on_vehicle_radio_called(
-            const RID &p_vehicle, const VehicleRadio::RadioCall p_call, const Vector3 &p_position) {
+            const RID &p_vehicle, const RailVehicleRadio::RadioCall p_call, const Vector3 &p_position) {
         // copied: firing queues events, and a listener may create launchers
         const Vector<RID> listening = radio_launchers;
         for (const RID &rid: listening) {
@@ -231,17 +231,17 @@ namespace godot {
         if (processing == p_processing) {
             return;
         }
-        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         processing = p_processing;
         if (p_processing) {
             runtime->clock_hold();
             runtime->connect(
-                    MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
+                    SimulationServer::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
             return;
         }
         runtime->disconnect(
-                MaszynaRuntime::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
+                SimulationServer::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
         runtime->clock_release();
     }
 
@@ -250,7 +250,7 @@ namespace godot {
     /// even for now, runs on the next frame, as in the original - so an event that queues itself
     /// again cannot keep the pass going.
     void ScenarioEventServer::_process_queue(double /* p_seconds */) {
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         const double time = runtime->get_simulation_time();
         const uint64_t pass_end = next_sequence;
@@ -548,7 +548,7 @@ namespace godot {
         if (event->passive || event->queued_sequence > 0) {
             return false;
         }
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL_V(runtime, false);
         const double run_time = runtime->get_simulation_time() + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
         event->queued_sequence = _schedule(p_event, run_time, p_activator);
@@ -806,7 +806,7 @@ namespace godot {
         if (p_seconds <= 0.0) {
             return;
         }
-        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         launcher->scheduled_sequence = _schedule(p_launcher, runtime->get_simulation_time() + p_seconds, RID());
     }
@@ -825,7 +825,7 @@ namespace godot {
         }
     }
 
-    void ScenarioEventServer::launcher_set_radio_call(const RID &p_launcher, const VehicleRadio::RadioCall p_call) {
+    void ScenarioEventServer::launcher_set_radio_call(const RID &p_launcher, const RailVehicleRadio::RadioCall p_call) {
         LauncherData *launcher = launchers.getptr(p_launcher);
         ERR_FAIL_NULL(launcher);
         launcher->radio_call = p_call;

@@ -42,7 +42,7 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
         pending("real SU46 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = DynamicRailVehicle3DManager.load(
+    vehicle = MaszynaRailVehicle3DManager.load(
             "dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_machine_room", 0.0, null)
     add_child(vehicle)
     for i in range(20):

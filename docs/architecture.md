@@ -7,9 +7,10 @@ title: "Overall Architecture"
   **Multiplayer**, **Sound**, **Assets Pipeline**, **Utilities**,
   **Node system**, **Resources handling**, **Scene system**,
   **Input system**, **GDExtension** as programming interface
-* High-Level API for two-way communication between all high-level components and external systems
-* Godot Nodes interface for internal communication (inside a high-level
-  components)
+* High-Level API - servers addressed by RIDs - for communication between all high-level components and external
+  systems
+* Godot nodes as the *presence* of a component in the scene tree: a thin proxy that owns a handle, not the
+  implementation
 
 
 
@@ -20,6 +21,9 @@ title: "Overall Architecture"
 ![Overall architecture](assets/overall-architecture-1.png)
 
 #### Communication example diagram
+
+A conceptual picture: "LegacyTrain" stands for a vehicle simulated on the vendored Mover, see
+[Wrapping the MOVER](wrapping-mover.html) for how it is actually built.
 
 ![Overall architecture](assets/overall-architecture-2.png)
 
@@ -38,15 +42,31 @@ Examples of High-Level Components in the game:
 - game's scenario system
 - UART communication system
 
+#### Nodes are proxies, servers hold the implementation
+
+A High-Level Component is not implemented by its nodes. The node standing in the scene is a proxy: it owns a handle
+(an `RID`) to an object held by a server and builds that object, and the object is what simulates, configures and
+answers commands. A vehicle is the reference case:
+
+* `VehiclePhysicsNode` is the vehicle's presence in the tree. It builds the vehicle from a `VehicleModel` (the parsed
+  `.fiz`, supplied by `FizVehiclePhysicsNode`), owns its `RailVehicleServer` handle and frees both with itself.
+* The vehicle - a `VehicleController` and the `VehicleComponent`s it is made of - is a plain `Object`, not a node. It
+  is held by `RailVehicleServer`, stepped by it once per rendered frame, and reached by its RID.
+* What draws the vehicle (`RailVehicle3D`), its cabin and its sounds read the vehicle's components; they do not own
+  them.
+
+The class diagrams are in [Wrapping the MOVER](wrapping-mover.html#class-diagrams).
+
 #### Communication between game objects
 
 The communication between High-Level Components (a game objects) **must be**
-implemented through **High-Level API** like **RailVehicleServer**, **CabinSystem**.
+implemented through **High-Level API** like **RailVehicleServer**.
 
-The communication is based on commands identified by unique string names. Commands are handled by High-Level API
-dispatchers like **RailVehicleServer**, where every vehicle or its element can register own commands and handlers. Every
-game object can handle own subset of all commands, which can be inspected at runtime. Adding and removing commands
-is also possible at runtime, because commands are dynamic.
+The communication is based on commands identified by unique string names. A vehicle and each of its components
+register the commands they answer to on the vehicle itself; `RailVehicleServer` dispatches a command to the vehicle a
+RID names. Every vehicle handles its own subset of all commands, which can be inspected at runtime
+(`vehicle_get_commands`). Adding and removing commands is also possible at runtime, because commands are dynamic - a
+disabled component gives its commands back.
 
 A vehicle is addressed by its `RailVehicleServer` handle (RID). One known only by its scenery name - which may be
 empty or shared by several vehicles - is found first. For example, to enable battery in the `train1` vehicle:
@@ -55,15 +75,20 @@ var vehicle: RID = RailVehicleServer.vehicle_get_rid_by_name("train1")
 RailVehicleServer.vehicle_send_command(vehicle, "battery", true)
 ```
 
-Communication is asynchronous, because command execution may take the time (i.e. some systems must spin up). To check if
-the command was executed successfully, you must inspect the vehicle state:
+A command runs on the vehicle immediately, but its effect may take time (i.e. some systems must spin up). To see
+where the vehicle is, read the component that owns the value - a typed property, read straight from the simulation:
 
 ```gdscript
-RailVehicleServer.vehicle_dump_state(vehicle).get("battery_enabled")
+var switches: RailVehicleSwitches = RailVehicleServer.vehicle_component_get(
+        vehicle, VehicleComponentType.COMPONENT_SWITCHES)
 ```
 
-> **_NOTE_**
-> In the future some feedback may be exposed through High-Level API signals 
+`RailVehicleServer.vehicle_dump_state(vehicle)` returns everything the vehicle publishes in one `Dictionary`. It is
+built at most once per step and is meant for a console, a test or a diagnostic - not for a reader that wants one
+value every frame.
+
+The cabin is a layer of its own: `CabinSystem` (the counterpart of the original engine's `TTrain`) receives what the
+player does with cab controls and turns it into vehicle commands through `RailVehicleServer`.
 
 
 #### Internal communication
@@ -72,69 +97,42 @@ High-Level Components are usually built from many sub-components, which will
 handle a subset of a logic or rendering. The communication between these
 components is private, should be fastest as possible and
 straightforward. Because HLC (High-Level Component) know it's internal
-structure, it can communicate with subcompones using direct method
+structure, it can communicate with subcomponents using direct method
 calls, accessing properties, signals.
 
-Because there is no reasons to use High-Level APIs for internal communication,
-nodes usually have public interface by plain methods and properties:
+Inside a vehicle that means typed calls on its components: a component reaches the vehicle it belongs to with
+`get_controller()` and the other components through it, the way the wrapper's own components do.
+
+A script adds its own part to a vehicle through a second proxy, `GenericVehicleComponentNode`, placed under the
+vehicle's `VehiclePhysicsNode`. The node puts a `GenericVehicleComponent` into the vehicle, and the component calls
+back into the script:
 
 ```gdscript
-extends TrainPart
+extends GenericVehicleComponentNode
 
-var internal_state: bool = false
+var locked: bool = false
 
-func operate_something(new_state:bool):
+func _ready():
+    register_command("lock_power", self._on_lock_power)
+
+func _on_lock_power(p1, _p2):
+    locked = true if p1 else false
+
+func _process_component(delta):
+    var controller: RailVehicleController = get_controller()
+    if not locked and controller.get_power24_available():
+        operate_something()
+
+func operate_something():
     # some logic here
-    internal_state = new_state
+    pass
 ```
 
-But part of these methos can be also bound as command handlers for
-High-Level API:
+`demo/examples/powered_train_part.gd` is a complete example. What the script declares, other parts of the same
+vehicle can call directly. Any other game object (HLC) goes through the **High-Level API**:
 
 ```gdscript
-extends TrainPart
-
-var internal_state: bool = false
-
-func _enter_tree():
-    register_command("operate_custom_part", self.operate_something)
-
-func _exit_tree():
-    unregister_command("operate_custom_part", self.operate_something)
-
-func operate_something(new_state:bool):
-    # some logic here
-    internal_state = new_state
-```
-
-Assume that there is a custom train composed like this, which has name
-set to `example_train`.
-
-```
-+ TrainController
-  +-- TrainPart (with attached script as above)
-```
-
-Because `TrainController` "knows" the structure, it's script can communicate
-with `TrainPart` directly:
-
-```gdscript
-extends TrainController
-
-func _process(delta):
-    if something:
-        $TrainPart.operate_something(true)
-```
-
-But any other game objects (HLCs) should call `operate_something()`
-through **CommandsAPI**:
-
-```gdscript
-
-func _process(delta):
-    if something:
-        RailVehicleServer.vehicle_send_command(
-            vehicle_rid, "operate_custom_part", true)
+RailVehicleServer.vehicle_send_command(vehicle_rid, "lock_power", true)
 ```
 
 This approach hides internal structure of the vehicle and creates a

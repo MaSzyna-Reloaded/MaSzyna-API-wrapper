@@ -29,7 +29,7 @@ var _music_tween: Tween
 
 ## Before _ready(): the children must not read a cache left by another build
 func _enter_tree() -> void:
-    MaszynaRuntime.check_build_version()
+    SimulationServer.check_build_version()
 
 
 func _ready() -> void:
@@ -42,7 +42,7 @@ func _on_scenery_selector_scenery_selected(
 ) -> void:
     _play_music(MUSIC_LOADING_VOLUME_DB)
     # the world starts while the loading screen fades out, not when it is built
-    MaszynaRuntime.pause()
+    SimulationServer.pause()
     $GameHud.visible = false
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
@@ -64,7 +64,7 @@ func _on_scenery_selector_scenery_selected(
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
-    tween.parallel().tween_callback(MaszynaRuntime.unpause).set_delay(SIMULATION_START_DELAY)
+    tween.parallel().tween_callback(SimulationServer.unpause).set_delay(SIMULATION_START_DELAY)
     await tween.finished
     $LoadingScreen.visible = false
     $LoadingScreen.modulate.a = 1.0
@@ -115,7 +115,7 @@ func _exit_to_menu() -> void:
     _play_music(MUSIC_MENU_VOLUME_DB)
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     # the world stops once the spinner covers it, and stays stopped until the next scenery shows
-    MaszynaRuntime.pause()
+    SimulationServer.pause()
     $GameHud.visible = false
     SceneryStreamingServer.set_camera(null)
     await $Player.clear_start_train()

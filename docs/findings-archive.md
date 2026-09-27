@@ -52,7 +52,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   counted in `CabinSystem._process(delta)` - real seconds. The driver holds the button from one
   update to the next, `PREPARE_TIME` of simulation time: at x5 that is 0.4 s of real time, short of
   the delay. The original counts it in `TTrain::Update(dt)` with the scaled time.
-* **Fix:** `CabinSystem` runs the cabs' processes on `MaszynaRuntime.simulation_advanced`.
+* **Fix:** `CabinSystem` runs the cabs' processes on `SimulationServer.simulation_advanced`.
 * **Rule:** every timer of the simulated train - the cab's relays included - runs on the
   simulation clock, never on the frame.
 
@@ -116,7 +116,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   within 150 m), a 0.2 s cap on the frame (still locked up), a driver fault (it drove the same in
   both runs).
 * **What proved it:** the eszelon loaded, settled for 60 frames, then the clock advanced by hand
-  (`MaszynaRuntime.advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
+  (`SimulationServer.advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
   and with 0.17 s frames - same scenery, same driver, only the frame length different: 14 m/s
   after 80 s against 0.18 m/s. Then the locations and neighbour distances refreshed before every
   sub-step instead of once a frame: 14.06 against 14.09 m/s.
@@ -138,9 +138,9 @@ and the rule. Headings keep their date and title, because comments in the code c
 * **What proved it:** reading who advances time. `RailVehicleStepper` handed `step_frame()` the
   raw frame delta; `ScenarioEventServer` and `DriverSystem` each added `delta *
   simulation_speed`, capped at 1 s, on `process_frame`; the sky backends counted the time of day
-  themselves and pushed it to `MaszynaRuntime` once a second. At any speed but 1 the physics ran
+  themselves and pushed it to `SimulationServer` once a second. At any speed but 1 the physics ran
   at a fifth (or a tenth) of the pace of the events, the drivers and the clock of the day.
-* **Fix:** one clock in `MaszynaRuntime` (Timer::UpdateTimers(), Timer.cpp:79-87): a
+* **Fix:** one clock in `SimulationServer` (Timer::UpdateTimers(), Timer.cpp:79-87): a
   `SimulationClock` node, processed first, advances it by the frame's delta times the speed, at
   most 1 s, adds that to the simulation time and the time of day and emits
   `simulation_advanced(seconds)`. The physics integrates exactly those seconds in steps of at most
@@ -148,12 +148,12 @@ and the rule. Headings keep their date and title, because comments in the code c
   the simulation slower. The events and the drivers read `get_simulation_time()`; the sky reads
   the time of day, and the environment only sets it (a jump). Whoever needs time holds the clock
   (`clock_hold()`/`clock_release()`); paused, it stands.
-* **Rule:** anything that measures simulated time reads `MaszynaRuntime` - never its own
+* **Rule:** anything that measures simulated time reads `SimulationServer` - never its own
   `delta * simulation_speed`.
 * **Follow-up:** one `simulation_advanced` per frame left the drivers reacting once a frame: at
   1 s frames (x20) the eszelon's driver stepped its controller every second instead of every
   0.5 s and pulled away at 1.21 m/s against 3.24 m/s at 0.03 s frames (t = 20 s). The clock now
-  hands a frame out in equal slices of at most 0.1 s (`MaszynaRuntime::MAX_SLICE_TIME`, the
+  hands a frame out in equal slices of at most 0.1 s (`SimulationServer::MAX_SLICE_TIME`, the
   quickest driver reaction), physics, events and drivers each slice in turn: 2.61 / 9.03 / 14.31
   m/s at 20 / 40 / 80 s against 3.24 / 9.24 / 14.09 at short frames.
 * **Second follow-up:** with the couplers per step and the slices, a long frame simulates the same,
@@ -361,7 +361,7 @@ visible that way.
   2267 -> 1889 V over 1 m of travel, and the breaker opened the frame it passed `MinV` (1900 V).
 * **Cause:** a scenery gives resistivity in Ohm/km (`traction pwr01 3500 4500 0.01`), and the
   original converts it to Ohm/m (`fResistivity *= 0.001`, Traction.cpp:112, with 0.01 read as the
-  default 0.075). `TractionPowerServer` multiplied the raw value by metres. Only a vehicle drawing
+  default 0.075). `TractionServer` multiplied the raw value by metres. Only a vehicle drawing
   real current shows it.
 * **Fix:** `wire_set_params()` takes Ohm/km and stores Ohm/m. The same run now reaches 44 km/h at
   3547 V.
@@ -379,7 +379,7 @@ visible that way.
   in the global namespace. The vendored files have no `stdafx.h`. This hits the control reservoir
   of `MHZ_EN57`, `MHZ_K5P`, `MHZ_6P`, `M394` and `St113`, and the EP step of `TEStEP1` (11 calls
   in `hamulce.cpp`). `FV4a` does not use it.
-* **Fix:** CMake force-includes `stdlib.h` into `src/maszyna/*.cpp` (non-MSVC). The vendored files
+* **Fix:** CMake force-includes `stdlib.h` into `src/legacy/maszyna-mover/*.cpp` (non-MSVC). The vendored files
   stay untouched.
 * **Rule:** the vendored engine was written against its own precompiled header. A name that
   resolves differently without it compiles silently (vendored files build with warnings off), so
@@ -457,7 +457,7 @@ visible that way.
 
 * **Symptom:** throwing a switch changes the route, but the blades stay put. `TrackSwitch3D` in
   `demo_3d` still animates.
-* **Cause:** `TrackManager::_process_switches()` emits `switch_offset_updated`, and the only
+* **Cause:** `TrackServer::_process_switches()` emits `switch_offset_updated`, and the only
   listener was `TrackSwitch3D`. Since `923b293` a scenery builds tracks through
   `TrackRenderingServer`'s RID API with no nodes, so the blades were posed once in
   `_stream_build()` and never again.
@@ -648,7 +648,7 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   (`ExternalCamera._process()`) saw the previous frame.
 * **Fix:** `RailVehicleStepper` (`process_priority = -100`) calls
   `RailVehicleServer::step_frame()` - since 2026-09-27 `SimulationClock`, the same priority,
-  ticking `MaszynaRuntime`'s clock.
+  ticking `SimulationServer`'s clock.
 * **Follow-up (superseded 2026-09-27, "three clocks"):** past 0.2 s, `sub_step = delta /
   MAX_PHYSICS_ITERATIONS` exceeded `PHYSICS_STEP`, so `step_frame()` owed the excess to the next
   frames and past `maszyna/physics/catch_up_limit` took it in one jump. Gone: the frame is capped
@@ -664,7 +664,7 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 ## 2026-09-23 - a GDScript subclass silently replaced the native _ready()
 
 * **Symptom:** after `Cabin3D` moved to C++, the camera stopped entering the cab, silently.
-* **Cause:** C++ `_ready()` emitted `cabin_ready`, but `DynamicTrainCabin` (GDScript) defines
+* **Cause:** C++ `_ready()` emitted `cabin_ready`, but `MaszynaDynamicTrainCabin` (GDScript) defines
   `_ready()`, which **replaces** a native virtual. `super._ready()` is refused for native
   virtuals.
 * **Fix:** `_notification()` with `NOTIFICATION_READY` / `NOTIFICATION_PROCESS`, which reaches
@@ -764,7 +764,7 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 
 ## 2026-09-22 - "the C++ port made it 4x slower" was a GPU that never woke up
 
-* **Symptom:** `td.scn` ran at ~30 fps instead of ~200 right after `TrackManager`/`SpatialIndex`
+* **Symptom:** `td.scn` ran at ~30 fps instead of ~200 right after `TrackServer`/`SpatialIndex`
   moved to C++.
 * **Cause:** the discrete GPU stayed in powersave, so the integrated RX 780M rendered. The GPU
   frame time was over 40 ms from the first measurement.
@@ -820,10 +820,10 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 
 ## 2026-09-22 - an unguarded singleton dereference only crashes at teardown
 
-* **Symptom:** signal 11 in `_free_owned_rids` -> `TrackManager.track_free` in
+* **Symptom:** signal 11 in `_free_owned_rids` -> `TrackServer.track_free` in
   `test_zzz_ep07_cabin_main_switch`.
 * **Cause:** `track_free()` emits `tracks_changed`, and `RailVehicle3D`'s handler called
-  `TrackManager::get_instance()->...` with no null check after the singletons were unregistered.
+  `TrackServer::get_instance()->...` with no null check after the singletons were unregistered.
   The untyped `->call()` it replaced had only warned.
 * **Fix:** every `get_instance()` result in `RailVehicle3D` goes into a local and is checked.
 * **Rules:**
@@ -832,18 +832,18 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 
 ## 2026-09-22 - what porting an autoload to C++ actually costs, and the crash it hides
 
-`TrackManager` (1023 lines) and `SpatialIndex` (55) became C++ singletons (#184 stage 2). What
+`TrackServer` (1023 lines) and `SpatialIndex` (55) became C++ singletons (#184 stage 2). What
 GDExtension cannot carry over:
 
-* Enums flatten: `TrackManager.TrackType.TRACK_NORMAL` -> `TrackManager.TRACK_NORMAL`, 370 call
+* Enums flatten: `TrackServer.TrackType.TRACK_NORMAL` -> `TrackServer.TRACK_NORMAL`, 370 call
   sites.
 * No inner classes (`EndpointRef` -> `TrackEndpointRef`), and no constructor arguments, so
   `X.new(a, b)` becomes `X.new()` plus assignments.
-* No float/RID constants, so they became read-only properties (`TrackManager.rail_height`), and
+* No float/RID constants, so they became read-only properties (`TrackServer.rail_height`), and
   `UNDEFINED_TRACK` -> `RID()`.
 * `Array[Vector3]` -> `PackedVector3Array`, and GUT will not compare packed arrays with literals.
 * **The crash:** `RailVehicle3D::_apply_start_track()` used
-  `get_node_or_null("TrackManager")->call(...)`, which returned nullptr once the autoload was gone.
+  `get_node_or_null("TrackServer")->call(...)`, which returned nullptr once the autoload was gone.
   This is why reaching a singleton by path and calling by name are prohibited.
 * **Trap:** the first headless run after a rebuild re-imports and can take minutes. Run `--import`
   alone first.
@@ -876,7 +876,7 @@ Found by reading every `_do_fetch_state_from_mover()` in #184 stage 1:
   5.0, `_update_triggers` 4.8, `_update_brake_sounds` 1.5 and `_ensure_brake_events` 0.23. The
   walk over all banks took 0.35 ms.
 * **Cause:** untyped trigger Dictionaries re-read and converted per tick, and
-  `BrakeSfxEventFactory` tables plus `_primary_source()` walked per event per tick.
+  `MaszynaBrakeSfxEventFactory` tables plus `_primary_source()` walked per event per tick.
 * **Fix:** `Trigger`/`BrakeEvent` records resolved once. The frame went 11.8 -> 2.35 ms, and the
   bulk left is `TrainController.state` (~17 us per controller).
 * **Rule:** measure by phase before restructuring. The loop the eye finds was 3% of the cost.
@@ -960,7 +960,7 @@ lighting or the consist.
   `structure-vN`. OPTIMIZED creates no nodes, so there was no `cabN` to hide and no material to
   dim. "Clear cache" missed `rail_vehicle`, `fiz` and `vehicle_profiles`, and `user://cache`
   survives a checkout, so every bisect step was "bad".
-* **Fix:** `structure-v12`. "Clear cache" covers every `ResourceCache` (`VehicleProfileManager`
+* **Fix:** `structure-v12`. "Clear cache" covers every `ResourceCache` (`MaszynaVehicleProfileManager`
   became `@tool`). The low-poly interior switches instancer with distance
   (`_update_model_detail()`) and restores `cabN` visibility on `e3d_loaded`.
 * **Rule:** code whose output is cached on disk bumps the cache tag in the same commit, and a new
@@ -981,7 +981,7 @@ lighting or the consist.
 
 * **Measurements:** *Unshaded* was uniform (so lighting). *Normal Buffer* varied (so the material,
   on flat terrain). `grass_normal.dds` R,G is 0.500 at mip 0 and 0.530-0.532 from mip 2 (DXT).
-* **Cause:** `material_factory.gd` set `normal_scale = -5.0` (since `f4138c4`, #74), while the
+* **Cause:** `maszyna_material_factory.gd` set `normal_scale = -5.0` (since `f4138c4`, #74), while the
   original applies the map as is (`mat_normalmap.frag:46-48`). The mip bias became a 24 degree
   tilt. `detail_normalmap.gdshader` (registered in `dc25b6f`) applied it to the combined normal of
   `grass.mat`'s detail map (`param_detail_scale: 0.00125`, `param_detail_height_scale: 0.45`,
@@ -1193,7 +1193,7 @@ lighting or the consist.
 * **Proof:** only 1 of 1344 `airsound*` declarations sets `placement:`. The rest default to
   `general`, which `TrainSoundSystem._soundproofing()` short-circuits to 1.0.
 * **Fix:** `pipe_hiss`, `local_brake_hiss` and `emergency_brake_hiss` get a
-  `listener_inside` -> GAIN modulation baked by `BrakeSfxEventFactory`, fed 0/1 from
+  `listener_inside` -> GAIN modulation baked by `MaszynaBrakeSfxEventFactory`, fed 0/1 from
   `_inside_vehicle()`.
 * **Rule:** check what the MMD data declares before modulating a sound with a parameter.
 

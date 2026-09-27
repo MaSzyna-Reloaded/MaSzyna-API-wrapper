@@ -5,7 +5,7 @@ description: Wire a new player-facing Mover control end-to-end in this Godot wra
 
 # Wiring a new Mover cabin control end-to-end
 
-This wrapper exposes the vendored `TMoverParameters` (`src/maszyna/`, never edited
+This wrapper exposes the vendored `TMoverParameters` (`src/legacy/maszyna-mover/`, never edited
 directly - see [[mover-parity-check]] for tracing *what* the original does) to the
 player through several independent layers. A control that "does nothing" is almost
 always missing one specific layer, not all of them - find the missing layer instead of
@@ -15,7 +15,7 @@ in any layer before.
 
 ## The five layers, outside-in
 
-1. **Vendored Mover method** (`src/maszyna/McZapkie/Mover.cpp`/`MOVER.h`) - the ground
+1. **Vendored Mover method** (`src/legacy/maszyna-mover/McZapkie/Mover.cpp`/`MOVER.h`) - the ground
    truth. Find it via [[mover-parity-check]]'s Step 2-3 first: what method mutates the
    field (`IncLocalBrakeLevel`/`DecLocalBrakeLevel` for `LocalBrakePosA`), and what real
    command/key triggers it in `~/src/maszyna/Train.cpp` + `command.h` +
@@ -23,16 +23,16 @@ in any layer before.
 
 2. **Wrapper command** - every component is an interface/implementation pair, and the
    backend never appears in the interface (`AGENTS.md`):
-   - **Interface** `VehicleX` (`src/brakes/VehicleBrake.hpp`, `src/engines/VehicleEngine.hpp`,
-     `src/core/VehicleController.hpp`, ...): declare the command as pure virtual next to its
-     sibling (`virtual void local_brake_increase() = 0;`, `VehicleBrake.hpp:262`), bind it with
+   - **Interface** `VehicleX` (`src/vehicles/rail/RailVehicleBrake.hpp`, `src/vehicles/rail/RailVehicleEngine.hpp`,
+     `src/vehicles/base/VehicleController.hpp`, ...): declare the command as pure virtual next to its
+     sibling (`virtual void local_brake_increase() = 0;`, `RailVehicleBrake.hpp:262`), bind it with
      `ClassDB::bind_method(...)` in `_bind_methods()`, and add it to both
-     `_register_commands()` and `_unregister_commands()` (`VehicleBrake.cpp:369,385`) - forgetting
+     `_register_commands()` and `_unregister_commands()` (`RailVehicleBrake.cpp:369,385`) - forgetting
      the second leaks a dangling command entry when the node is freed.
-   - **Implementation** `MoverVehicleX` (`src/brakes/MoverVehicleBrake.cpp`,
-     `src/core/MoverTrainController.cpp`, ...): the `override` takes the Mover with
-     `get_mover()` (from `MoverComponent`, `src/mover/MoverComponent.hpp`) and calls the vendored
-     method directly (`mover->IncLocalBrakeLevel(1)`, `MoverVehicleBrake.cpp:91`).
+   - **Implementation** `MoverVehicleX` (`src/legacy/vehicles/MoverRailVehicleBrake.cpp`,
+     `src/legacy/vehicles/MoverRailVehicleController.cpp`, ...): the `override` takes the Mover with
+     `get_mover()` (from `MoverComponent`, `src/legacy/vehicles/MoverComponent.hpp`) and calls the vendored
+     method directly (`mover->IncLocalBrakeLevel(1)`, `MoverRailVehicleBrake.cpp:91`).
    - Keep the existing step-size convention: one command invocation is one notch/step, like
      `main_controller_increase(step=1)`, not a new continuous-time API. The original's
      key-hold behavior is a UI-layer concern (repeat-fire).
@@ -46,17 +46,17 @@ in any layer before.
    are only toggled, not displayed continuously.
    - **Interface:** a pure virtual const getter plus a read-only `ADD_PROPERTY`
      (`PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY`), next to the closest analogous one
-     (`get_local_position_normalized`, `VehicleBrake.hpp:34`, `VehicleBrake.cpp:290-294`).
+     (`get_local_position_normalized`, `RailVehicleBrake.hpp:34`, `RailVehicleBrake.cpp:290-294`).
    - **Implementation:** the getter reads the Mover field and stores nothing
-     (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverVehicleBrake.cpp:266`).
+     (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverRailVehicleBrake.cpp:266`).
      A getter never changes state - no filters, flags or signals in it (`CODE_STYLE.md`).
    - **Dump key:** publish it in the implementation's `_fill_state_dictionary()` next to its
      sibling (`p_state["brake_local_position_normalized"] = get_local_position_normalized();`,
-     `MoverVehicleBrake.cpp:351`). This key, as it appears in
+     `MoverRailVehicleBrake.cpp:351`). This key, as it appears in
      `RailVehicleServer.vehicle_dump_state(rid)`, is what a catalog entry's `state_property` and
      `CabinState.vehicle_state_value()` read.
 
-4. **MMD cabin catalog entry** (`addons/libmaszyna/mmd/mmd_semantic_catalog.gd`) - this
+4. **MMD cabin catalog entry** (`addons/libmaszyna/legacy/mmd/mmd_semantic_catalog.gd`) - this
    is what makes the *mouse* reach the command. Find the real MMD label first
    (`grep` the vehicle's actual `.mmd` under `~/Games/Maszyna/dynamic/...` - confirmed
    against the original's own `initialize_gauge()`/`initialize_button()` label tables in
@@ -95,7 +95,7 @@ in any layer before.
    checking).
    For a control with **no MMD instrument at all** (a pure keyboard driver aid, like
    `brake_level_set_position("drive")`), skip layer 4 and instead add a `CabinCommand`
-   node in `dynamic_train_cabin.gd`'s `_build_driver_aid_commands()` (see
+   node in `maszyna_dynamic_train_cabin.gd`'s `_build_driver_aid_commands()` (see
    `BrakeLevelSet_Drive` there for the exact pattern:
    `action_name`/`command`/`command_param`/`controller_path`).
 
@@ -111,8 +111,8 @@ where the composition already holds that controller (e.g. `VehicleComponent`s).
 (`hold`/`release`/`toggle`/`increase`/`decrease`/`set`) with
 `CabinSystem.act(train_id, cab, control_id, action, value)`. `control_id` is the MMD label, set by
 `MmdCabinInstancer._build_widget()`. What a manipulation does is decided by handlers registered in
-`CabinSystem` by `LegacyCabinLogic` (`addons/libmaszyna/cabin/legacy_cabin/cabin_logic.gd`), the
-vehicle's cab logic - attached with `CabinSystem.vehicle_attach_cab_logic()` by `DynamicTrainCabin`
+`CabinSystem` by `LegacyCabinLogic` (`addons/libmaszyna/legacy/cabin/cabin_logic.gd`), the
+vehicle's cab logic - attached with `CabinSystem.vehicle_attach_cab_logic()` by `MaszynaDynamicTrainCabin`
 for the player and by `SceneryInstancer._build_drivers()` for the AI, and registered for the
 occupied cab. It needs no widget: the cab's controls are read from its MMD (`LegacyCabinControls`):
 - `forward_commands.gd` wires every remaining control straight to its vehicle command (the
@@ -160,7 +160,7 @@ submodel, which is how TGauge shows a lit control (`Gauge.cpp:204-210`). A submo
 not wired to any mesh.
 
 Keep the original's operation enums out of the interface. For example, the pantograph valves take
-our `VehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
+our `RailVehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
 `operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
 `LoadFIZ_Cntrl`.
 
@@ -187,7 +187,7 @@ clicked" is usually missing one of these:
   desk. A control is its mesh **and every mesh under it**: SM42's brake valve `zasadniczy` has the
   handle `raczkaKranu` and the knob `glowka` as child submodels that rotate with it. Dump a cab's
   E3D tree with `E3DParser.parse(FileAccess)` and `E3DSubModel.resource_name`/`.submodels` to see it.
-- **Occlusion.** `DynamicTrainCabin` registers every mesh of its `CabModel` as an occluder once the
+- **Occlusion.** `MaszynaDynamicTrainCabin` registers every mesh of its `CabModel` as an occluder once the
   model is loaded (`e3d_loaded`): the desk hides the shaft under it, like the original's pick buffer
   (`opengl33renderer.cpp:1188-1214`). Hand-authored cabin scenes register none (`TODO.md`).
 - **Near misses.** Without an exact hit, the control whose middle is within
@@ -209,7 +209,7 @@ clicked" is usually missing one of these:
   (`SMALL_CONTROL_SIZE`) get a heavier ring and a faint tint, large ones a thin ring only.
 - **Captions** come from `MmdCabControlCaptions` (port of `locale::label_cab_control`,
   `translation.cpp:174-347`, keyed by MMD label without the colon) through
-  `MaszynaLocale.gettext()`, which reads `<game_dir>/lang/<MaszynaRuntime.language>.po`. There is
+  `MaszynaLocale.gettext()`, which reads `<game_dir>/lang/<SimulationServer.language>.po`. There is
   no `en.po` - English is the msgids themselves. Key hints come from the widget's InputMap actions;
   captions are taken when the cab is built.
 - **State** under the caption is the widget's own (`_set_mouse_state()` -> `control_set_state`):

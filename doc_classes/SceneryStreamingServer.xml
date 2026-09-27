@@ -7,7 +7,7 @@
 		A real scenery places hundreds of thousands of pieces - models, merged terrain meshes, tracks, traction spans - and building them all while loading costs both the loading time and the frame rate, because most of them are nowhere near the camera.
 		A rendering server registers itself as an owner with [method owner_create] and then registers each of its pieces with [method stream_register], saying where it is and how far it is meant to be visible. The piece is built once the camera set with [method set_camera] comes within that range of the 1[code] [/code]km chunk holding it, and cleared again when the camera leaves. Pieces that declare no range of their own are streamed up to [method get_draw_distance] ([code]maszyna/rendering/scenery_draw_distance[/code]).
 		Planning runs on a worker thread, together with whatever an owner wants prepared off the main thread (the [code]preload[/code] callable - loading a model, building a mesh). Building and clearing run on the main thread within a per-frame time budget, because they touch [RenderingServer] and GDScript.
-		Owners: [E3DRenderingServer] (scenery models), [code]SceneryChunkRenderingServer[/code] (merged terrain meshes), [code]TrackRenderingServer[/code] and [code]TractionRenderingServer[/code].
+		Owners: [E3DRenderingServer] (scenery models), [code]MaszynaSceneryChunkRenderingServer[/code] (merged terrain meshes), [code]TrackRenderingServer[/code] and [code]TractionRenderingServer[/code].
 	</description>
 	<tutorials>
 	</tutorials>

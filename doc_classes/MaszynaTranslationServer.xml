@@ -4,7 +4,7 @@
 		The one catalogue [TranslationServer] translates with: the wrapper's strings and the game's own.
 	</brief_description>
 	<description>
-		In the language of [member MaszynaRuntime.language], merges the wrapper's own [code].po[/code] files (project setting [code]maszyna/locale/translations[/code]) and, over them, the game's [code]&lt;game_dir&gt;/lang/&lt;language&gt;.po[/code] - the original engine's [code]locale[/code] (translation.cpp) - into a single [Translation], so the game's translation of a msgid wins. It is rebuilt on start, whenever the language changes and whenever the game directory changes.
+		In the language of [member SimulationServer.language], merges the wrapper's own [code].po[/code] files (project setting [code]maszyna/locale/translations[/code]) and, over them, the game's [code]&lt;game_dir&gt;/lang/&lt;language&gt;.po[/code] - the original engine's [code]locale[/code] (translation.cpp) - into a single [Translation], so the game's translation of a msgid wins. It is rebuilt on start, whenever the language changes and whenever the game directory changes.
 		The merged catalogue is the only translation in [TranslationServer]: every [Control], [method Object.tr] and [method Node.atr] looks up through it, and the scene tree re-translates itself on every rebuild.
 	</description>
 	<tutorials>

@@ -96,7 +96,7 @@ class Trigger extends RefCounted:
     var last_value:float = INF
 
 
-## One brake event of a bank, with the static tables of BrakeSfxEventFactory already resolved
+## One brake event of a bank, with the static tables of MaszynaBrakeSfxEventFactory already resolved
 ## into it - they are walked per event per tick otherwise.
 class BrakeEvent extends RefCounted:
     var name:StringName = &""
@@ -108,8 +108,8 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
-## The coupling elements the physics side reports, in the order of TrainController.CouplingElement,
-## attach first and detach second, then the pantograph events of VehicleElectricEngine - the layout
+## The coupling elements the physics side reports, in the order of RailVehicleController.CouplingElement,
+## attach first and detach second, then the pantograph events of RailVehicleElectricEngine - the layout
 ## of a vehicle's entry in _vehicle_events.
 const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/attach_coupler": 0,
@@ -146,7 +146,7 @@ var _vehicle_events:Dictionary[RID, PackedInt32Array] = {}
 var _coupler_sources:Dictionary[RID, VehicleController] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
-var _pantograph_sources:Dictionary[RID, VehicleElectricEngine] = {}
+var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
 ## Controllers of the listener's own consist, refreshed with the sweep and on a context change
 var _listener_consist_ids:Dictionary = {}
 var _culling_distance:float = 1000.0
@@ -163,8 +163,8 @@ func _ready() -> void:
     _sweep_timer.timeout.connect(_refresh_active_banks)
     add_child(_sweep_timer)
     _sweep_timer.start()
-    MaszynaRuntime.paused.connect(_on_runtime_paused)
-    MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.paused.connect(_on_runtime_paused)
+    SimulationServer.unpaused.connect(_on_runtime_unpaused)
 
 
 func set_listener(listener:TrainSoundListener3D) -> void:
@@ -354,8 +354,8 @@ func _resolve_controller(runtime:BankRuntime) -> void:
     _coupler_sources[runtime.vehicle_rid] = runtime.controller
     runtime.controller.coupler_attached.connect(_on_coupler_attached.bind(runtime.vehicle_rid))
     runtime.controller.coupler_detached.connect(_on_coupler_detached.bind(runtime.vehicle_rid))
-    var engine:VehicleElectricEngine = runtime.controller.get_component(
-            VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+    var engine:RailVehicleElectricEngine = runtime.controller.get_component(
+            VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if engine:
         _pantograph_sources[runtime.vehicle_rid] = engine
         engine.pantograph_up.connect(_on_pantograph_up.bind(runtime.vehicle_rid))
@@ -368,7 +368,7 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
     if is_instance_valid(counted):
         counted.coupler_attached.disconnect(_on_coupler_attached.bind(vehicle_rid))
         counted.coupler_detached.disconnect(_on_coupler_detached.bind(vehicle_rid))
-    var engine:VehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
+    var engine:RailVehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
     if is_instance_valid(engine):
         engine.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
@@ -376,11 +376,11 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
     _pantograph_sources.erase(vehicle_rid)
 
 
-func _on_coupler_attached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_attached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][element] += 1
 
 
-func _on_coupler_detached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_detached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 
@@ -395,10 +395,10 @@ func _on_pantograph_down(_selector:int, vehicle_rid:RID) -> void:
 
 
 ## Builds the bank's brake events from its MMD sources and resolves the static tables of
-## BrakeSfxEventFactory into BrakeEvents. Runs once, as soon as the sweep sees a controller -
+## MaszynaBrakeSfxEventFactory into BrakeEvents. Runs once, as soon as the sweep sees a controller -
 ## the config it needs does not exist before that.
 func _build_brake_events(runtime:BankRuntime) -> void:
-    var built:Array[SfxEvent] = BrakeSfxEventFactory.build_events(
+    var built:Array[SfxEvent] = MaszynaBrakeSfxEventFactory.build_events(
             runtime.brake_sources, runtime.controller.config)
     if not built:
         return
@@ -406,16 +406,16 @@ func _build_brake_events(runtime:BankRuntime) -> void:
     events.append_array(built)
     runtime.player.bank.events = events
     runtime.events_built = true
-    for event_name:StringName in BrakeSfxEventFactory.EVENT_PARAMETERS:
+    for event_name:StringName in MaszynaBrakeSfxEventFactory.EVENT_PARAMETERS:
         if not runtime.player.bank.get_event(event_name):
             continue
         var brake_event := BrakeEvent.new()
         brake_event.name = event_name
-        var parameters:Dictionary = BrakeSfxEventFactory.EVENT_PARAMETERS[event_name]
+        var parameters:Dictionary = MaszynaBrakeSfxEventFactory.EVENT_PARAMETERS[event_name]
         for parameter_name:StringName in parameters:
             brake_event.parameter_names.append(parameter_name)
             brake_event.state_keys.append(String(parameters[parameter_name]))
-        var gate:Array = BrakeSfxEventFactory.EVENT_GATES.get(event_name, [])
+        var gate:Array = MaszynaBrakeSfxEventFactory.EVENT_GATES.get(event_name, [])
         if gate:
             brake_event.gate_key = String(gate[0])
             brake_event.gate_on = float(gate[1])
@@ -695,7 +695,7 @@ func _volume_factor(runtime:BankRuntime) -> float:
 
 
 func _primary_source(runtime:BankRuntime, event_name:StringName) -> MmdSoundSourceDefinition:
-    for label:String in BrakeSfxEventFactory.EVENT_LABEL_GROUPS.get(event_name, []):
+    for label:String in MaszynaBrakeSfxEventFactory.EVENT_LABEL_GROUPS.get(event_name, []):
         if runtime.brake_sources.has(label):
             return runtime.brake_sources[label] as MmdSoundSourceDefinition
     for trigger:Trigger in runtime.triggers:
@@ -796,7 +796,7 @@ func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
     return false
 
 
-## The world is paused (MaszynaRuntime.pause()): the system stops updating the banks, and the
+## The world is paused (SimulationServer.pause()): the system stops updating the banks, and the
 ## buses the vehicles are heard on go silent - with every voice on them, including those that start
 ## while the pause lasts (a scenery being loaded)
 func _on_runtime_paused() -> void:

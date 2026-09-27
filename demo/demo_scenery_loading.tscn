@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="1_env"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="2_player"]
-[ext_resource type="Script" uid="uid://b1awg5iad35ss" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_scenery"]
+[ext_resource type="Script" uid="uid://b1awg5iad35ss" path="res://addons/libmaszyna/legacy/scenery/maszyna_scenery.gd" id="3_scenery"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
 [ext_resource type="Script" uid="uid://bdukhyjwpbfvl" path="res://demo_scenery_loading.gd" id="7_demo"]
 [ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="11_loading_screen"]

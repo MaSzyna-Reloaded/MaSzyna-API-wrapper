@@ -74,12 +74,12 @@ func test_triangle_chunk_out_of_range_is_not_built() -> void:
     chunk.mesh = _create_mesh()
     chunk.position = Vector3.ZERO
     chunk.range_max = 200.0
-    var rid:RID = SceneryChunkRenderingServer.create_chunk(chunk, get_tree().root.world_3d.scenario)
+    var rid:RID = MaszynaSceneryChunkRenderingServer.create_chunk(chunk, get_tree().root.world_3d.scenario)
 
     await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
     assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "chunk built while out of range")
 
-    SceneryChunkRenderingServer.free_chunk(rid)
+    MaszynaSceneryChunkRenderingServer.free_chunk(rid)
     await _move_camera(Vector3.ZERO)
     assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "a freed chunk was built")
 

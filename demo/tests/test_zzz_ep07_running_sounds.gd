@@ -53,16 +53,16 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     scenery = MaszynaSceneryNode.new()
     scenery.filename = "td.scn"
     add_child(scenery)
-    var template:DynamicRailVehicle3D = null
+    var template:MaszynaRailVehicle3D = null
     for i in range(40):
-        template = scenery.find_child("EP07-424", true, false) as DynamicRailVehicle3D
+        template = scenery.find_child("EP07-424", true, false) as MaszynaRailVehicle3D
         if template:
             break
         await wait_seconds(0.5)
     assert_not_null(template, "EP07-424 should exist under the loaded scenery")
     if not template:
         return
-    var vehicle := DynamicRailVehicle3D.new()
+    var vehicle := MaszynaRailVehicle3D.new()
     vehicle.data_path = template.data_path
     vehicle.file_name = template.file_name
     vehicle.skin = template.skin

@@ -84,7 +84,7 @@ namespace godot {
             Operator get_value2_operator() const;
             void set_pass(Pass p_pass);
             Pass get_pass() const;
-            /// TrackManager tracks every one of which has to be as track_test says
+            /// TrackServer tracks every one of which has to be as track_test says
             void set_tracks(const TypedArray<RID> &p_tracks);
             TypedArray<RID> get_tracks() const;
             void set_track_test(TrackTest p_track_test);

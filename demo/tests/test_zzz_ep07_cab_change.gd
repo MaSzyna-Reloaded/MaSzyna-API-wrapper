@@ -47,7 +47,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
         pending("real EP07 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = DynamicRailVehicle3DManager.load(
+    vehicle = MaszynaRailVehicle3DManager.load(
             "dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change", 0.0, null)
     add_child(vehicle)
     for i in range(20):
@@ -75,7 +75,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     controller.send_command("cab_change", -1)
     await wait_idle_frames(3)
 
-    var machine_room:DynamicTrainCabin = camera.get_parent() as DynamicTrainCabin
+    var machine_room:MaszynaDynamicTrainCabin = camera.get_parent() as MaszynaDynamicTrainCabin
     assert_eq(controller.state.get("cabin_occupied", 1), 0)
     assert_not_null(machine_room, "camera should stay in the cabin in the machine room")
     if not machine_room:

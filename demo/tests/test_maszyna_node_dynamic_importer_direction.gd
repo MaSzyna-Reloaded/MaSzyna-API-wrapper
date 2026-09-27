@@ -15,12 +15,12 @@ const LONG_LENGTH:float = 16.0
 
 var importer:RefCounted
 var _previous_game_dir:String
-var _vehicles:Array[DynamicRailVehicle3D] = []
+var _vehicles:Array[MaszynaRailVehicle3D] = []
 var _trainsets:Array[TrainSet3D] = []
 
 
 func before_each() -> void:
-    importer = load("res://addons/libmaszyna/importer/maszyna_node_dynamic_importer.gd").new()
+    importer = load("res://addons/libmaszyna/legacy/scenery/maszyna_node_dynamic_importer.gd").new()
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
     var fixture_dir:String = TEST_GAME_DIR.path_join("dynamic/fixtures")
     DirAccess.make_dir_recursive_absolute(fixture_dir)
@@ -30,7 +30,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-    for vehicle:DynamicRailVehicle3D in _vehicles:
+    for vehicle:MaszynaRailVehicle3D in _vehicles:
         vehicle.free()
     _vehicles.clear()
     for trainset:TrainSet3D in _trainsets:
@@ -49,38 +49,38 @@ func _trainset_context(offset:float) -> MaszynaImporterContext:
     var context := MaszynaImporterContext.new()
     var parser := MaszynaParser.new()
     parser.initialize(("consist start %s 0" % offset).to_utf8_buffer(), [])
-    var trainset_importer:RefCounted = load("res://addons/libmaszyna/importer/maszyna_trainset_importer.gd").new()
+    var trainset_importer:RefCounted = load("res://addons/libmaszyna/legacy/scenery/maszyna_trainset_importer.gd").new()
     _trainsets.append_array(trainset_importer.import(parser, context))
     return context
 
 
-func _import(context:MaszynaImporterContext, text:String) -> DynamicRailVehicle3D:
+func _import(context:MaszynaImporterContext, text:String) -> MaszynaRailVehicle3D:
     var parser := MaszynaParser.new()
     parser.initialize(text.to_utf8_buffer(), [])
-    var vehicle:DynamicRailVehicle3D = importer.import(parser, context)
+    var vehicle:MaszynaRailVehicle3D = importer.import(parser, context)
     _vehicles.append(vehicle)
     return vehicle
 
 
 func test_offset_minus_one_sentinel_imports_as_reversed() -> void:
-    var vehicle:DynamicRailVehicle3D = _import(
+    var vehicle:MaszynaRailVehicle3D = _import(
             _trainset_context(20.0), "fixtures skin short -1.0 headdriver 99 0 enddynamic")
-    assert_eq(vehicle.start_direction, TrackManager.DIRECTION_REVERSED)
+    assert_eq(vehicle.start_direction, TrackServer.DIRECTION_REVERSED)
     assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 
 func test_normal_offset_imports_as_normal_direction() -> void:
-    var vehicle:DynamicRailVehicle3D = _import(
+    var vehicle:MaszynaRailVehicle3D = _import(
             _trainset_context(20.0), "fixtures skin short 0 headdriver 99 0 enddynamic")
-    assert_eq(vehicle.start_direction, TrackManager.DIRECTION_NORMAL)
+    assert_eq(vehicle.start_direction, TrackServer.DIRECTION_NORMAL)
     assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 
 func test_trainset_vehicles_of_different_length_touch_without_overlap() -> void:
     var context:MaszynaImporterContext = _trainset_context(20.0)
-    var first:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
-    var second:DynamicRailVehicle3D = _import(context, "fixtures skin long 0 nobody 3 0 enddynamic")
-    var third:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
+    var first:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
+    var second:MaszynaRailVehicle3D = _import(context, "fixtures skin long 0 nobody 3 0 enddynamic")
+    var third:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
 
     assert_almost_eq(first.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
     assert_almost_eq(
@@ -95,9 +95,9 @@ func test_trainset_vehicles_of_different_length_touch_without_overlap() -> void:
 ## DynObj.cpp:1812-1825 - the driver type picks the occupied cab.
 func test_driver_type_selects_occupied_cab() -> void:
     var context:MaszynaImporterContext = _trainset_context(20.0)
-    var head:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
-    var rear:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 reardriver 3 0 enddynamic")
-    var nobody:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
+    var head:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
+    var rear:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 reardriver 3 0 enddynamic")
+    var nobody:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
 
     assert_eq(head.driver_type, VehicleController.DRIVER_HEAD)
     assert_eq(rear.driver_type, VehicleController.DRIVER_REAR)
@@ -109,10 +109,10 @@ func test_driver_type_selects_occupied_cab() -> void:
 ## (simulationstateserializer.cpp:1031), which is how a `dynamic` ending right there reads.
 func test_the_load_a_dynamic_declares_reaches_the_vehicle() -> void:
     var context:MaszynaImporterContext = _trainset_context(20.0)
-    var loaded:DynamicRailVehicle3D = _import(
+    var loaded:MaszynaRailVehicle3D = _import(
             context, "fixtures skin short 0 nobody 3 24 coal enddynamic")
-    var empty:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
-    var unnamed:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 24 enddynamic")
+    var empty:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
+    var unnamed:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 24 enddynamic")
 
     assert_eq(loaded.load_name, "coal", "the cargo is named as the scenery names it")
     assert_almost_eq(loaded.load_amount, 24.0, 0.001, "and carried in the amount it declares")

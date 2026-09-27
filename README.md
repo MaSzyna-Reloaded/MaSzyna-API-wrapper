@@ -161,7 +161,7 @@ light masks, foliage) and avoids transparency sorting issues.
 
 Some content needs real alpha blending instead - most commonly a self-contained cabin interior,
 where the scissor cutout looks visibly wrong across the board (glass, instrument backlight glow).
-Two opt-in overrides exist on `E3DModelInstance` (`addons/libmaszyna/e3d/e3d_model_instance.gd`),
+Two opt-in overrides exist on `E3DModelInstance` (`addons/libmaszyna/legacy/e3d/e3d_model_instance.gd`),
 both only affecting submodels already flagged `material_transparent` - opaque submodels are never
 pulled into the alpha-blended pass:
 
@@ -199,7 +199,7 @@ To apply automatic formatting and clang-tidy fixes:
 make style-fix
 ```
 
-Both targets use the repository `.clang-format` and `.clang-tidy` configuration. They skip legacy/generated code under `src/maszyna` and `src/gen`.
+Both targets use the repository `.clang-format` and `.clang-tidy` configuration. They skip legacy/generated code under `src/legacy/maszyna-mover` and `src/gen`.
 
 To check or fix a single file, use `./scripts/style-check <path>` and `./scripts/style-fix <path>`.
 

@@ -1,5 +1,5 @@
 #include "SemaphoreServer.hpp"
-#include "../e3d/E3DRenderingServer.hpp"
+#include "legacy/e3d/E3DRenderingServer.hpp"
 #include "../macros.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>

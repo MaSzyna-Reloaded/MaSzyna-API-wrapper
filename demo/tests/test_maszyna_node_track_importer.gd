@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## maszyna_node_track_importer.gd - the ".scn track node" reader.
 
-const TrackImporter = preload("res://addons/libmaszyna/importer/maszyna_node_track_importer.gd")
+const TrackImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_track_importer.gd")
 
 ## A "normal" track whose trackbed slot holds the format's "no texture" sentinel, followed by a
 ## marker token so the parser position after the node can be checked.

@@ -53,7 +53,7 @@ func update(
                 controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
     var track_rid:RID = shape.get("track_rid", RID())
     var quality_volume:float = lerpf(
-            0.8, 1.2, clampf(TrackManager.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))
+            0.8, 1.2, clampf(TrackServer.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))
 
     var results:Dictionary = {}
     var levels:Dictionary = {}
@@ -98,18 +98,18 @@ func _traction_motor(
         return []
     var max_rpm:float = float(state.get("circuit_nmax_rpm", 0.0))
     var engine_power:float = float(state.get("engine_power", 0.0))
-    var engine_type:int = int(state.get("engine_type", VehicleEngine.NONE))
+    var engine_type:int = int(state.get("engine_type", RailVehicleEngine.NONE))
     # combined motor sound selects its chunks in motor rpm
     var normalizer:float = 60.0 * 0.01 if _is_combined(source) else 1.0
     var motor_revolutions:float = wheel_revolutions * float(config.get("transmission_ratio", 1.0))
     var frequency:float = source.frequency_offset + source.frequency_factor * motor_revolutions * normalizer
     var amplitude_factor:float = source.amplitude_factor / (max_rpm + power * 3.0)
     var volume:float = source.amplitude_offset + amplitude_factor * motor_revolutions * 60.0
-    if engine_type == VehicleEngine.ELECTRIC_INDUCTION_MOTOR:
+    if engine_type == RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 2.0)
-    elif engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+    elif engine_type == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 60.0)
-    if engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+    if engine_type == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
         if volume < 1.0 and engine_power < 100.0:
             var variation:float = (
                     randf_range(0.0, 100.0) * float(state.get("engine_rpm_count", 0.0))
@@ -153,7 +153,7 @@ func _curve(
             velocity * velocity / radius - GRAVITY * absf(float(shape.get("cant", 0.0))) / track_width)
     var volume:float = lateral_acceleration * lerpf(0.5, 1.0, clampf(speed / 40.0, 0.0, 1.0))
     var track_rid:RID = shape.get("track_rid", RID())
-    if TrackManager.track_is_switch(track_rid) and radius < 1500.0:
+    if TrackServer.track_is_switch(track_rid) and radius < 1500.0:
         volume *= 100.0
     if volume <= 0.05:
         return []
@@ -216,7 +216,7 @@ func _wheel_clatter(
     var source:MmdSoundSourceDefinition = entry["source"]
     var event_name:StringName = entry["event"]
     var track_rid:RID = shape.get("track_rid", RID())
-    var sound_distance:float = TrackManager.track_get_sound_distance(track_rid)
+    var sound_distance:float = TrackServer.track_get_sound_distance(track_rid)
     if is_equal_approx(sound_distance, -1.0):
         return
     if not is_equal_approx(sound_distance, _rail_length):
@@ -241,7 +241,7 @@ func _wheel_clatter(
     if speed <= 0.1:
         return
     var volume:float = quality_volume
-    match TrackManager.track_get_environment(track_rid):
+    match TrackServer.track_get_environment(track_rid):
         _ENVIRONMENT_TUNNEL: volume *= 1.1
         _ENVIRONMENT_BRIDGE: volume *= 1.2
     if not _is_combined(source):

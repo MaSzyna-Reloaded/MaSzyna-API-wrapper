@@ -21,10 +21,10 @@ func after_each() -> void:
     created_vehicles.clear()
     created_vehicle_nodes.clear()
     for track_rid:RID in created_tracks:
-        if TrackManager.track_exists(track_rid):
-            TrackManager.track_free(track_rid)
+        if TrackServer.track_exists(track_rid):
+            TrackServer.track_free(track_rid)
     created_tracks.clear()
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
 
 func test_a_vehicle_at_rest_keeps_its_transform() -> void:
@@ -38,28 +38,28 @@ func test_a_vehicle_at_rest_on_a_curve_keeps_its_transform() -> void:
 
 
 func _straight_track() -> String:
-    var curve := MaszynaTrackCurve.new()
+    var curve := TrackCurve.new()
     curve.p1 = Vector3(0.0, 0.0, 0.0)
     curve.p2 = Vector3(200.0, 0.0, 0.0)
-    var track:RID = TrackManager.track_create()
+    var track:RID = TrackServer.track_create()
     created_tracks.append(track)
-    TrackManager.track_update_curves(track, curve, null)
-    TrackManager.track_update(track, TrackManager.TRACK_NORMAL, "rest", 1.435)
-    TrackManager.topology_rebuild()
+    TrackServer.track_update_curves(track, curve, null)
+    TrackServer.track_update(track, TrackServer.TRACK_NORMAL, "rest", 1.435)
+    TrackServer.topology_rebuild()
     return "rest"
 
 
 func _curved_track() -> String:
-    var curve := MaszynaTrackCurve.new()
+    var curve := TrackCurve.new()
     curve.p1 = Vector3(0.0, 0.0, 0.0)
     curve.p2 = Vector3(80.0, 0.0, 80.0)
     curve.c1 = Vector3(60.0, 0.0, 0.0)
     curve.c2 = Vector3(0.0, 0.0, -60.0)
-    var track:RID = TrackManager.track_create()
+    var track:RID = TrackServer.track_create()
     created_tracks.append(track)
-    TrackManager.track_update_curves(track, curve, null)
-    TrackManager.track_update(track, TrackManager.TRACK_NORMAL, "rest_curve", 1.435)
-    TrackManager.topology_rebuild()
+    TrackServer.track_update_curves(track, curve, null)
+    TrackServer.track_update(track, TrackServer.TRACK_NORMAL, "rest_curve", 1.435)
+    TrackServer.topology_rebuild()
     return "rest_curve"
 
 
@@ -69,7 +69,7 @@ func _assert_still(track_name:String, offset:float, where:String) -> void:
     model.properties = {"train_id": "test_at_rest", "mass": 74000.0, "type_name": "test"}
     var physics_node:VehiclePhysicsNode = build_vehicle_node("test_at_rest", model)
     created_vehicle_nodes.append(physics_node)
-    var wheels:VehicleWheels = MoverVehicleWheels.new()
+    var wheels:RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.bogie_pivot_spacing = 6.0
     physics_node.get_controller().add_component(wheels)
 

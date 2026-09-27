@@ -12,7 +12,7 @@ const FADE_TIME: float = 0.5
 
 func _ready() -> void:
     # A cache on disk outlives the build that wrote it, so a new build starts from clean data
-    MaszynaRuntime.check_build_version()
+    SimulationServer.check_build_version()
     ResourceLoader.load_threaded_request(MAIN_SCENE)
 
 

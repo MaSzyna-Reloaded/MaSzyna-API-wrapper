@@ -27,14 +27,14 @@ var _wires:Array[RID] = []
 
 func after_each() -> void:
     for wire:RID in _wires:
-        TractionPowerServer.wire_free(wire)
+        TractionServer.wire_free(wire)
     _wires.clear()
 
 
 func _add_wire(from:Vector3, to:Vector3) -> RID:
-    var wire:RID = TractionPowerServer.wire_create()
+    var wire:RID = TractionServer.wire_create()
     _wires.append(wire)
-    TractionPowerServer.wire_set_params(wire, from, to, "test_power", 3000.0, 2000.0, 0.01)
+    TractionServer.wire_set_params(wire, from, to, "test_power", 3000.0, 2000.0, 0.01)
     return wire
 
 
@@ -47,12 +47,12 @@ func _add_chain(count:int, lateral:float = 0.0) -> Array[RID]:
         chain.append(_add_wire(
                 Vector3(lateral, WIRE_HEIGHT, index * SPAN_LENGTH),
                 Vector3(lateral, WIRE_HEIGHT, (index + 1) * SPAN_LENGTH)))
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
     return chain
 
 
 func _follow(from:RID, along:float) -> Dictionary:
-    return TractionPowerServer.wire_follow_above(
+    return TractionServer.wire_follow_above(
             from, Vector3(0.0, 0.0, along), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
 
 
@@ -99,7 +99,7 @@ func test_the_chain_is_not_followed_at_the_end_of_a_section() -> void:
 func test_the_area_search_still_finds_a_span_at_a_section_end() -> void:
     var chain:Array[RID] = _add_chain(7)
 
-    var found:Dictionary = TractionPowerServer.wire_find_above_with_height(
+    var found:Dictionary = TractionServer.wire_find_above_with_height(
             Vector3(0.0, 0.0, 0.5 * SPAN_LENGTH), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
     assert_eq(found["rid"], chain[0], "the end span is still the wire overhead")
 
@@ -121,7 +121,7 @@ func test_spans_are_joined_at_the_distance_the_original_joins_them() -> void:
         _add_wire(
                 Vector3(0.0, WIRE_HEIGHT, start),
                 Vector3(0.0, WIRE_HEIGHT, (index + 1) * SPAN_LENGTH))
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
     assert_false(
             RID(_follow(_wires[2], 3.0 * SPAN_LENGTH + 1.0)["rid"]).is_valid(),
             "ends further apart are two wires, and the chain ends there")
@@ -135,7 +135,7 @@ func test_a_lower_crossing_wire_does_not_steal_the_contact() -> void:
     _add_wire(
             Vector3(0.0, WIRE_HEIGHT - 0.2, 3.0 * SPAN_LENGTH),
             Vector3(0.0, WIRE_HEIGHT - 0.2, 4.0 * SPAN_LENGTH))
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     var found:Dictionary = _follow(chain[3], 3.5 * SPAN_LENGTH)
     assert_eq(found["rid"], chain[3], "the span being followed keeps the contact")
@@ -149,9 +149,9 @@ func test_a_wire_over_the_horn_is_still_caught_and_reads_higher() -> void:
     var wire:RID = _add_wire(
             Vector3(SLIDER_HALF_WIDTH + overhang, WIRE_HEIGHT, 0.0),
             Vector3(SLIDER_HALF_WIDTH + overhang, WIRE_HEIGHT, SPAN_LENGTH))
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
-    var found:Dictionary = TractionPowerServer.wire_find_above_with_height(
+    var found:Dictionary = TractionServer.wire_find_above_with_height(
             Vector3(0.0, 0.0, 10.0), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
     assert_eq(found["rid"], wire, "a wire on the horn is in reach")
     assert_gt(float(found["height"]), WIRE_HEIGHT, "and counts as higher than one on the slider")
@@ -161,9 +161,9 @@ func test_a_wire_beyond_the_horn_is_out_of_reach() -> void:
     _add_wire(
             Vector3(SLIDER_HALF_WIDTH + HORN_WIDTH + 0.1, WIRE_HEIGHT, 0.0),
             Vector3(SLIDER_HALF_WIDTH + HORN_WIDTH + 0.1, WIRE_HEIGHT, SPAN_LENGTH))
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
-    var found:Dictionary = TractionPowerServer.wire_find_above_with_height(
+    var found:Dictionary = TractionServer.wire_find_above_with_height(
             Vector3(0.0, 0.0, 10.0), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
     assert_false(RID(found["rid"]).is_valid(), "past the horn there is nothing to collect from")
 
@@ -172,8 +172,8 @@ func test_a_wire_beyond_the_horn_is_out_of_reach() -> void:
 ## chain, so it can only be found by looking around (Traction.cpp:838-852).
 func test_a_span_with_a_parallel_run_is_not_followed() -> void:
     var chain:Array[RID] = _add_chain(7)
-    TractionPowerServer.wire_set_parallel(chain[3], "some_other_span")
-    TractionPowerServer.network_build()
+    TractionServer.wire_set_parallel(chain[3], "some_other_span")
+    TractionServer.network_build()
 
     assert_false(
             RID(_follow(chain[3], 3.5 * SPAN_LENGTH)["rid"]).is_valid(),

@@ -1,14 +1,14 @@
 extends MaszynaGutTest
 
-const EventImporter = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd")
-const NodeImporter = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd")
-const IsolatedImporter = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd")
+const EventImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd")
+const NodeImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd")
+const IsolatedImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd")
 const MAX_WAIT:float = 5.0
 ## Longer than any test runs, so the event stays queued
 const NEVER:float = 3600.0
 ## Fast enough for one frame to pass the cap
 const FAST_SPEED:float = 1000.0
-## MaszynaRuntime::MAX_FRAME_DELTA
+## SimulationServer::MAX_FRAME_DELTA
 const MAX_FRAME_DELTA:float = 0.25
 
 
@@ -122,20 +122,20 @@ func test_pause_stops_the_time_and_the_speed_scales_it() -> void:
     var event:RID = _create_event(RecordingAction.new(), NEVER)
     ScenarioEventServer.event_queue(event)
 
-    MaszynaRuntime.pause()
-    var paused_at:float = MaszynaRuntime.get_simulation_time()
+    SimulationServer.pause()
+    var paused_at:float = SimulationServer.get_simulation_time()
     await get_tree().process_frame
     await get_tree().process_frame
-    assert_eq(MaszynaRuntime.get_simulation_time(), paused_at, "the time should stand while paused")
-    MaszynaRuntime.unpause()
+    assert_eq(SimulationServer.get_simulation_time(), paused_at, "the time should stand while paused")
+    SimulationServer.unpause()
 
-    MaszynaRuntime.simulation_speed = FAST_SPEED
-    var fast_from:float = MaszynaRuntime.get_simulation_time()
+    SimulationServer.simulation_speed = FAST_SPEED
+    var fast_from:float = SimulationServer.get_simulation_time()
     await get_tree().process_frame
-    var advanced:float = MaszynaRuntime.get_simulation_time() - fast_from
+    var advanced:float = SimulationServer.get_simulation_time() - fast_from
     assert_gt(advanced, 0.0, "the time should run at the speed")
     assert_lte(advanced, MAX_FRAME_DELTA * FAST_SPEED, "a frame counts at most MAX_FRAME_DELTA, sped up")
-    MaszynaRuntime.simulation_speed = 1.0
+    SimulationServer.simulation_speed = 1.0
     _free_events([event])
 
 
@@ -167,8 +167,8 @@ func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
     var far:RID = _create_event(RecordingAction.new(), NEVER)
     var other_call:RID = _create_event(RecordingAction.new(), NEVER)
     var launchers:Array[RID] = []
-    for setup:Array in [[near, VehicleRadio.RADIO_CALL3, Vector3.ZERO], [far, VehicleRadio.RADIO_CALL3, Vector3(500, 0, 0)],
-            [other_call, VehicleRadio.RADIO_CALL1, Vector3.ZERO]]:
+    for setup:Array in [[near, RailVehicleRadio.RADIO_CALL3, Vector3.ZERO], [far, RailVehicleRadio.RADIO_CALL3, Vector3(500, 0, 0)],
+            [other_call, RailVehicleRadio.RADIO_CALL1, Vector3.ZERO]]:
         var launcher:RID = ScenarioEventServer.launcher_create()
         ScenarioEventServer.launcher_set_events(launcher, setup[0], RID())
         ScenarioEventServer.launcher_set_radio_call(launcher, setup[1])
@@ -176,7 +176,7 @@ func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
         ScenarioEventServer.launcher_set_radius(launcher, 100.0)
         launchers.append(launcher)
 
-    RailVehicleServer.vehicle_radio_called.emit(RID(), VehicleRadio.RADIO_CALL3, Vector3(10, 0, 0))
+    RailVehicleServer.vehicle_radio_called.emit(RID(), RailVehicleRadio.RADIO_CALL3, Vector3(10, 0, 0))
 
     assert_true(ScenarioEventServer.event_is_queued(near), "call 3 within 100 m")
     assert_false(ScenarioEventServer.event_is_queued(far), "out of range")
@@ -204,20 +204,20 @@ func test_putvalues_cab_signal_reaches_the_security_system() -> void:
 
 
 func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
-    var clock:float = MaszynaRuntime.time_of_day
+    var clock:float = SimulationServer.time_of_day
     var event:RID = _create_event(RecordingAction.new(), NEVER)
     var launcher:RID = ScenarioEventServer.launcher_create()
     ScenarioEventServer.launcher_set_events(launcher, event, RID())
     ScenarioEventServer.launcher_set_time_of_day(launcher, 10, 50)
 
-    MaszynaRuntime.time_of_day = 10.5
+    SimulationServer.time_of_day = 10.5
     assert_false(ScenarioEventServer.event_is_queued(event), "10:30 is not its time")
-    MaszynaRuntime.time_of_day = 10.0 + 50.5 / 60.0
+    SimulationServer.time_of_day = 10.0 + 50.5 / 60.0
     assert_true(ScenarioEventServer.event_is_queued(event), "10:50 is")
 
     ScenarioEventServer.launcher_free(launcher)
     _free_events([event])
-    MaszynaRuntime.time_of_day = clock
+    SimulationServer.time_of_day = clock
 
 
 func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
@@ -387,8 +387,8 @@ func test_scenery_animation_turns_the_submodel() -> void:
 
 
 func test_scenery_voltage_event_sets_the_power_source() -> void:
-    var power_source:RID = TractionPowerServer.power_source_create()
-    TractionPowerServer.power_source_set_params(power_source, "Pwr1", 3000.0, 0.0, 0.2, 1000.0, 1.0, 3, 60.0, false)
+    var power_source:RID = TractionServer.power_source_create()
+    TractionServer.power_source_set_params(power_source, "Pwr1", 3000.0, 0.0, 0.2, 1000.0, 1.0, 3, 60.0, false)
     var root:MaszynaIncludeNode = MaszynaIncludeNode.new()
     root.autoload = false
     add_child(root)
@@ -407,9 +407,9 @@ func test_scenery_voltage_event_sets_the_power_source() -> void:
 
     await _run_event(&"keyctrl05")
 
-    assert_eq(TractionPowerServer.power_source_get_nominal_voltage(power_source), 2400.0)
+    assert_eq(TractionServer.power_source_get_nominal_voltage(power_source), 2400.0)
     root.free()
-    TractionPowerServer.power_source_free(power_source)
+    TractionServer.power_source_free(power_source)
 
 
 func test_shift_and_a_digit_queue_the_keyctrl_event() -> void:
@@ -430,7 +430,7 @@ func test_shift_and_a_digit_queue_the_keyctrl_event() -> void:
 
 
 func test_scenery_isolated_section_fires_busy_and_marks_its_memory() -> void:
-    var track:RID = TrackManager.track_create()
+    var track:RID = TrackServer.track_create()
     var vehicle:RID = ScenarioEventServer.memory_create() # stands in for a vehicle
     var tracks:Dictionary[String, RID] = {"t1": track}
     var models:Array[MaszynaModelData] = []
@@ -440,23 +440,23 @@ func test_scenery_isolated_section_fires_busy_and_marks_its_memory() -> void:
         + "event s1:busy updatevalues 0 c1 busy * * endevent",
         models, {}, tracks
     )
-    var section:RID = TrackManager.isolated_get_rid_by_name(&"s1")
+    var section:RID = TrackServer.isolated_get_rid_by_name(&"s1")
     var cell:RID = ScenarioEventServer.memory_get_rid_by_name(&"c1")
     var own_memory:RID = ScenarioEventServer.memory_get_rid_by_name(&"s1")
     assert_true(own_memory.is_valid(), "a section has a memory of its name")
 
-    TrackManager.track_vehicle_entered(track, vehicle)
-    assert_true(TrackManager.isolated_is_occupied(section))
+    TrackServer.track_vehicle_entered(track, vehicle)
+    assert_true(TrackServer.isolated_is_occupied(section))
     await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "busy", MAX_WAIT)
     assert_eq(ScenarioEventServer.memory_get_text(cell), "busy")
     assert_eq(int(ScenarioEventServer.memory_get_value2(own_memory)) & 1, 1, "value 2 made odd")
 
-    TrackManager.track_vehicle_left(track, vehicle)
-    assert_false(TrackManager.isolated_is_occupied(section))
+    TrackServer.track_vehicle_left(track, vehicle)
+    assert_false(TrackServer.isolated_is_occupied(section))
     await wait_until(func() -> bool: return ScenarioEventServer.memory_get_value2(own_memory) == 0.0, MAX_WAIT)
     assert_eq(ScenarioEventServer.memory_get_value2(own_memory), 0.0, "the low byte cleared")
     root.free()
-    TrackManager.track_free(track)
+    TrackServer.track_free(track)
     ScenarioEventServer.memory_free(vehicle)
 
 
@@ -484,21 +484,21 @@ func test_memcompareex_and_track_tests() -> void:
     assert_eq(action.runs.size(), 1, "any: \"b\" > \"a\" passes although 5 < 3 does not")
     assert_eq(action.else_runs.size(), 1, "all: 5 < 3 fails")
 
-    var track:RID = TrackManager.track_create()
+    var track:RID = TrackServer.track_create()
     var condition_tracks:Array[RID] = [track]
     condition.mask = 0
     condition.tracks = condition_tracks
     condition.track_test = MaszynaLegacyEventCondition.TRACK_TEST_OCCUPIED
     ScenarioEventServer.event_queue(event)
     await wait_until(func() -> bool: return action.else_runs.size() == 2, MAX_WAIT)
-    TrackManager.track_vehicle_entered(track, memory)
+    TrackServer.track_vehicle_entered(track, memory)
     ScenarioEventServer.event_queue(event)
     await wait_until(func() -> bool: return action.runs.size() == 2, MAX_WAIT)
     assert_eq(action.else_runs.size(), 2, "an empty track is not occupied")
     assert_eq(action.runs.size(), 2, "a track with a vehicle is")
 
-    TrackManager.track_vehicle_left(track, memory)
-    TrackManager.track_free(track)
+    TrackServer.track_vehicle_left(track, memory)
+    TrackServer.track_free(track)
     _free_events([event])
     ScenarioEventServer.memory_free(memory)
 

@@ -304,10 +304,10 @@ func _create_placeholder(size: Vector2) -> ColorRect:
     return placeholder
 
 
-## Side view from VehicleProfileManager (rendered on the spot when the data has no image of it)
+## Side view from MaszynaVehicleProfileManager (rendered on the spot when the data has no image of it)
 func _load_profile(preview: TextureButton, tile: Tile) -> void:
     # nothing of the button is drawn while it has no texture - the placeholder is what shows
-    var profile: Texture2D = await VehicleProfileManager.get_profile(
+    var profile: Texture2D = await MaszynaVehicleProfileManager.get_profile(
         tile.data_path, tile.file_name, tile.skin
     )
     if not is_instance_valid(preview):

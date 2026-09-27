@@ -6,24 +6,24 @@ extends HBoxContainer
 
 
 func _ready() -> void:
-    TrackManager.topology_changed.connect(_on_tracks_topology_changed)
+    TrackServer.topology_changed.connect(_on_tracks_topology_changed)
     _on_tracks_topology_changed()
 
 func _exit_tree() -> void:
-    TrackManager.topology_changed.disconnect(_on_tracks_topology_changed)
+    TrackServer.topology_changed.disconnect(_on_tracks_topology_changed)
 
 func _on_tracks_topology_changed() -> void:
     var btn:Button = $RebuildTopologyButton
-    if btn.text.begins_with("*") and not TrackManager.is_topology_changed:
+    if btn.text.begins_with("*") and not TrackServer.is_topology_changed:
         btn.text = btn.text.substr(2)
-    elif not btn.text.begins_with("*") and TrackManager.is_topology_changed:
+    elif not btn.text.begins_with("*") and TrackServer.is_topology_changed:
         btn.text = "* %s" % btn.text
 
 func _on_rebuild_topology_button_pressed() -> void:
     _info_window.show_message("Rebuilding...")
     # Give the UI a frame to show "Rebuilding..." before blocking for rebuild
     await get_tree().process_frame
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
     _show_summary()
 
     _on_tracks_topology_changed()
@@ -32,7 +32,7 @@ func _on_view_topology_button_pressed() -> void:
     _show_summary()
 
 func _show_summary() -> void:
-    var summary:Dictionary = TrackManager.topology_get_summary()
+    var summary:Dictionary = TrackServer.topology_get_summary()
     var graph_stats:Array[String] = []
     for graph:Dictionary in summary.graphs:
         if graph.num_tracks > 1:

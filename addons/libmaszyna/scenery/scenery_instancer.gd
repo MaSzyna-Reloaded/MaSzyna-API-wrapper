@@ -1,26 +1,26 @@
 @tool
 extends Node
 
-static var sky_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
-static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_atmo_importer.gd").new()
-static var time_importer = preload("res://addons/libmaszyna/importer/maszyna_time_importer.gd").new()
-static var config_importer = preload("res://addons/libmaszyna/importer/maszyna_config_importer.gd").new()
-static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
-static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
+static var sky_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_sky_importer.gd").new()
+static var atmo_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_atmo_importer.gd").new()
+static var time_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_time_importer.gd").new()
+static var config_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_config_importer.gd").new()
+static var node_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd").new()
+static var event_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd").new()
 ## A lit model no `lights` event is aimed at - it has lights but no aspects
 ## The one delegate every scenery driver shares; it keeps their state per driver
 static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
 const GENERIC_SEMAPHORE_KIND:SemaphoreKind = preload("../semaphores/generic_semaphore_kind.tres")
-static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()
-static var endorigin_importer = preload("res://addons/libmaszyna/importer/maszyna_endorigin_importer.gd").new()
-static var rotate_importer = preload("res://addons/libmaszyna/importer/maszyna_rotate_importer.gd").new()
-static var terrain_importer = preload("res://addons/libmaszyna/importer/maszyna_terrain_importer.gd").new()
-static var include_importer = preload("res://addons/libmaszyna/importer/maszyna_include_importer.gd").new()
-static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna_trainset_importer.gd").new()
-static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
-static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
-static var isolated_importer = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd").new()
-static var area_importer = preload("res://addons/libmaszyna/importer/maszyna_area_importer.gd").new()
+static var origin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_origin_importer.gd").new()
+static var endorigin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_endorigin_importer.gd").new()
+static var rotate_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_rotate_importer.gd").new()
+static var terrain_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_terrain_importer.gd").new()
+static var include_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_include_importer.gd").new()
+static var trainset_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_trainset_importer.gd").new()
+static var endtrainset_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_endtrainset_importer.gd").new()
+static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_firstinit_importer.gd").new()
+static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
+static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
 const CACHE_FORMAT_VERSION:int = 24
 const CACHE_DIRECTORY:String = "scenery_compiled"
@@ -68,10 +68,10 @@ static func clear_cache() -> void:
 
 ## Parses root.filename and (re-)populates root with everything the scenery declares.
 ##
-## Tracks, traction, models and merged terrain meshes are built directly against TrackManager/
-## TrackRenderingServer/TractionRenderingServer/E3DRenderingServer/SceneryChunkRenderingServer's
+## Tracks, traction, models and merged terrain meshes are built directly against TrackServer/
+## TrackRenderingServer/TractionRenderingServer/E3DRenderingServer/MaszynaSceneryChunkRenderingServer's
 ## RID-based API (_build_track()/_build_traction()/_build_model()/_build_triangle_chunks() below)
-## instead of instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D/E3DModelInstance nodes -
+## instead of instantiating TrackNormal3D/TrackSwitch3D/Traction3D/E3DModelInstance nodes -
 ## a real scenery can have thousands of these, and a Node per segment (each with its own @tool
 ## script and per-frame _process()) is overhead that only actually earns its keep for a handful of
 ## hand-authored pieces edited directly in a scene like demo_3d.tscn. root keeps the resulting RIDs
@@ -162,13 +162,13 @@ static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, 
     await _report_progress(root, progress, message)
 
 
-## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached, and the vehicle
+## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached, and the vehicle
 ## is placed on its track in its own _process after that - the trainsets are coupled only then, as a
 ## coupler measures from the positions. A vehicle that failed to load has no controller.
 static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
-    var vehicles:Array[Node] = root.find_children("", "DynamicRailVehicle3D", true, false)
+    var vehicles:Array[Node] = root.find_children("", "MaszynaRailVehicle3D", true, false)
     for node:Node in vehicles:
-        var vehicle:DynamicRailVehicle3D = node
+        var vehicle:MaszynaRailVehicle3D = node
         while not vehicle.is_built() or (vehicle.get_controller() and not vehicle.is_placed()):
             await _report_progress(root, 0.9, "Instancing vehicles")
     root.load_progress.emit(1.0, "")
@@ -182,8 +182,8 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
     # (simulationstateserializer.cpp:818-840) - what the driver does first is sent along the couplers
     for node:Node in root.find_children("", "TrainSet3D", true, false):
         (node as TrainSet3D).couple()
-    for node:Node in root.find_children("", "DynamicRailVehicle3D", true, false):
-        var vehicle_node:DynamicRailVehicle3D = node
+    for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
+        var vehicle_node:MaszynaRailVehicle3D = node
         var controller:VehicleController = vehicle_node.get_controller()
         if not controller or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
             continue
@@ -200,7 +200,7 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         var trainset:TrainSet3D = node
         var trainset_driver:RID = RID()
         for child:Node in trainset.get_children():
-            var vehicle_node:DynamicRailVehicle3D = child as DynamicRailVehicle3D
+            var vehicle_node:MaszynaRailVehicle3D = child as MaszynaRailVehicle3D
             var controller:VehicleController = vehicle_node.get_controller() if vehicle_node else null
             var driver:RID = DriverSystem.vehicle_get_driver(controller.get_rid()) if controller else RID()
             if driver.is_valid():
@@ -248,10 +248,10 @@ static func _instantiate_server_data(
         built_count += 1
         await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering traction")
     if root._wire_power_rids.size() > 0:
-        TractionPowerServer.network_build()
+        TractionServer.network_build()
 
     if root._track_rids.size() > 0:
-        TrackManager.topology_rebuild()
+        TrackServer.topology_rebuild()
 
     # the original's semaphores: every lit model, driven by the scenery's own `lights` events
     var semaphore_system:RID = SemaphoreServer.system_create()
@@ -274,13 +274,13 @@ static func _instantiate_server_data(
     )
 
 
-## Registers the merged meshes with SceneryChunkRenderingServer; they are rendered only while the
+## Registers the merged meshes with MaszynaSceneryChunkRenderingServer; they are rendered only while the
 ## camera is within range of their chunk (see the server's doc comment for why)
 static func _build_triangle_chunks(
     root:MaszynaIncludeNode, chunks:Array[MaszynaTrianglesChunkData], world_3d:World3D
 ) -> void:
     for chunk:MaszynaTrianglesChunkData in chunks:
-        root._triangle_chunk_rids.append(SceneryChunkRenderingServer.create_chunk(chunk, world_3d.scenario))
+        root._triangle_chunk_rids.append(MaszynaSceneryChunkRenderingServer.create_chunk(chunk, world_3d.scenario))
 
 
 static func _build_triangle_chunk_data(triangles:Array) -> Array[MaszynaTrianglesChunkData]:
@@ -345,9 +345,9 @@ static func _apply_skin_overrides(root:MaszynaIncludeNode, node:Node) -> void:
     if not root.skin_overrides:
         return
     var vehicles:Array[Node] = [node]
-    vehicles.append_array(node.find_children("", "DynamicRailVehicle3D", true, false))
+    vehicles.append_array(node.find_children("", "MaszynaRailVehicle3D", true, false))
     for candidate:Node in vehicles:
-        var vehicle:DynamicRailVehicle3D = candidate as DynamicRailVehicle3D
+        var vehicle:MaszynaRailVehicle3D = candidate as MaszynaRailVehicle3D
         if vehicle and root.skin_overrides.has(vehicle.train_id):
             vehicle.skin = root.skin_overrides[vehicle.train_id]
 
@@ -680,18 +680,18 @@ static func _make_importer_callback(importer, context) -> Callable:
 ## track_switch_3d.gd), minus the Node - see instantiate()'s doc comment for why. The rendering
 ## meshes are not built here: stream_track() leaves that to SceneryStreamingServer.
 static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dictionary:
-    var track_rid:RID = TrackManager.track_create()
+    var track_rid:RID = TrackServer.track_create()
     var track_render_rid:RID = TrackRenderingServer.create_track(track_rid)
     TrackRenderingServer.set_track_scenario(track_render_rid, world_3d.scenario)
 
-    TrackManager.track_update_curves(track_rid, track_data.curve, track_data.diverging_curve)
-    TrackManager.track_update(track_rid, track_data.type, track_data.track_name, track_data.width)
-    TrackManager.track_update_properties(
+    TrackServer.track_update_curves(track_rid, track_data.curve, track_data.diverging_curve)
+    TrackServer.track_update(track_rid, track_data.type, track_data.track_name, track_data.width)
+    TrackServer.track_update_properties(
             track_rid, track_data.quality_flag, track_data.environment, track_data.sound_distance)
-    if track_data.type == TrackManager.TRACK_SWITCH:
-        TrackManager.switch_set_active_track(track_rid, TrackManager.TRACK_COMMON)
+    if track_data.type == TrackServer.TRACK_SWITCH:
+        TrackServer.switch_set_active_track(track_rid, TrackServer.TRACK_COMMON)
     # the speed limit a `trackvel` event changes (Track.cpp:851-858)
-    TrackManager.track_set_velocity(track_rid, float(track_data.parameters.get("velocity", -1.0)))
+    TrackServer.track_set_velocity(track_rid, float(track_data.parameters.get("velocity", -1.0)))
 
     TrackRenderingServer.set_track_render_options(
         track_render_rid,
@@ -712,8 +712,8 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
     return {"track_rid": track_rid, "track_render_rid": track_render_rid}
 
 
-## Mirrors MaszynaTraction3D's own _enter_tree()/_update() (addons/libmaszyna/traction/
-## maszyna_traction_3d.gd), minus the Node. contact_p1/p2/support_p1/p2 are already absolute
+## Mirrors Traction3D's own _enter_tree()/_update() (addons/libmaszyna/traction/
+## traction_3d.gd), minus the Node. contact_p1/p2/support_p1/p2 are already absolute
 ## world coordinates read straight from the .scn (same as track curve points), so the traction's
 ## own transform is identity - there's nothing local left to place.
 static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D) -> RID:
@@ -802,10 +802,10 @@ static func _build_model(model_data:MaszynaModelData, world_3d:World3D, semaphor
 
 
 ## Mirrors _build_traction() - a tractionpowersource node has no visual representation, so this
-## only ever registers electrical data against TractionPowerServer.
+## only ever registers electrical data against TractionServer.
 static func _build_power_source(power_source_data:MaszynaPowerSourceData) -> RID:
-    var power_source_rid:RID = TractionPowerServer.power_source_create()
-    TractionPowerServer.power_source_set_params(
+    var power_source_rid:RID = TractionServer.power_source_create()
+    TractionServer.power_source_set_params(
         power_source_rid,
         power_source_data.name,
         power_source_data.nominal_voltage,
@@ -823,10 +823,10 @@ static func _build_power_source(power_source_data:MaszynaPowerSourceData) -> RID
 
 
 ## Registers a traction wire's electrical data (as opposed to _build_traction()'s visual mesh)
-## against TractionPowerServer - a second, purely-electrical RID for the same wire span.
+## against TractionServer - a second, purely-electrical RID for the same wire span.
 static func _build_wire_power(traction_data:MaszynaTractionData) -> RID:
-    var wire_rid:RID = TractionPowerServer.wire_create()
-    TractionPowerServer.wire_set_params(
+    var wire_rid:RID = TractionServer.wire_create()
+    TractionServer.wire_set_params(
         wire_rid,
         traction_data.contact_p1,
         traction_data.contact_p2,
@@ -836,15 +836,15 @@ static func _build_wire_power(traction_data:MaszynaTractionData) -> RID:
         traction_data.resistivity,
     )
     # the span this one shares its running with, which a pantograph cannot reach along the chain
-    TractionPowerServer.wire_set_parallel(wire_rid, traction_data.parallel)
+    TractionServer.wire_set_parallel(wire_rid, traction_data.parallel)
     return wire_rid
 
 
 static func _get_traction_material(traction_data:MaszynaTractionData) -> Material:
     var is_copper:bool = traction_data.material == 0 # TractionMaterial.COPPER
-    if traction_data.damage_flag & MaszynaTraction3D.DamageFlag.PATINA:
+    if traction_data.damage_flag & Traction3D.DamageFlag.PATINA:
         return (
-            MaszynaTraction3D.TRACTION_CU_PATINA_MATERIAL if is_copper
-            else MaszynaTraction3D.TRACTION_AL_PATINA_MATERIAL
+            Traction3D.TRACTION_CU_PATINA_MATERIAL if is_copper
+            else Traction3D.TRACTION_AL_PATINA_MATERIAL
         )
-    return MaszynaTraction3D.TRACTION_CU_MATERIAL if is_copper else MaszynaTraction3D.TRACTION_AL_MATERIAL
+    return Traction3D.TRACTION_CU_MATERIAL if is_copper else Traction3D.TRACTION_AL_MATERIAL

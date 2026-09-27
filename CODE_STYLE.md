@@ -303,7 +303,7 @@ electric_engine->set_pantograph_wire_voltage(TrainElectricEngine::PANTOGRAPH_FIR
 ```
 
 A singleton is reached the same way - a typed `static X *get_instance()` and typed methods, the
-shape `RailVehicleServer`, `SceneryStreamingServer` and `MaszynaRuntime` already have. Not a name looked
+shape `RailVehicleServer`, `SceneryStreamingServer` and `SimulationServer` already have. Not a name looked
 up on an `Object`, and not `get_tree()->get_root()->get_node_or_null(name)` standing in for one.
 
 A string call is allowed only where the class genuinely cannot be known at build time - a GDScript
@@ -317,7 +317,7 @@ Applies to C++ above all, and to servers first. A public method takes and return
 
 ```cpp
 // not this - the server now depends on a lifetime it does not own
-RID controller_create(TrainController *p_controller);
+RID controller_create(RailVehicleController *p_controller);
 
 // this - Godot's own servers are the reference
 // (PhysicsServer3D::body_attach_object_instance_id)

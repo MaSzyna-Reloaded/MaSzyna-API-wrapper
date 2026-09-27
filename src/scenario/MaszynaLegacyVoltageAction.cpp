@@ -1,4 +1,4 @@
-#include "../traction/TractionPowerServer.hpp"
+#include "../traction/TractionServer.hpp"
 #include "MaszynaLegacyVoltageAction.hpp"
 
 namespace godot {
@@ -16,7 +16,7 @@ namespace godot {
     }
 
     void MaszynaLegacyVoltageAction::run(const RID &p_event, const RID &p_activator) {
-        TractionPowerServer *server = TractionPowerServer::get_instance();
+        TractionServer *server = TractionServer::get_instance();
         ERR_FAIL_NULL(server);
         for (int i = 0; i < power_sources.size(); i++) {
             server->power_source_set_nominal_voltage(power_sources[i], voltage);

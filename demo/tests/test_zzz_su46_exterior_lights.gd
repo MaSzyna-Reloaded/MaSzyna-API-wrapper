@@ -26,7 +26,7 @@ func test_exterior_lights_resolve_and_switch() -> void:
         pending("real SU46 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = DynamicRailVehicle3DManager.load("dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_lights", 0.0, null)
+    vehicle = MaszynaRailVehicle3DManager.load("dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_lights", 0.0, null)
     add_child(vehicle)
     var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
     for i in range(60):

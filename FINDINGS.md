@@ -99,7 +99,7 @@ anything. Open work belongs in `TODO.md`.
   cab's activation, not by a component's `enabled`. *(09-27 EN57 vented its pipe from the rear
   cab)*
 * Every timer of the simulated train, the cab's relays included, runs on the simulation clock
-  (`MaszynaRuntime.simulation_advanced`), never on the frame. *(09-27 the cab's relays ran on real
+  (`SimulationServer.simulation_advanced`), never on the frame. *(09-27 the cab's relays ran on real
   time)*
 * One piece of state, one writer. Two writers that both look correct disagree only where the
   geometry shows it. *(09-24 parked vehicle jumping)*
@@ -129,7 +129,7 @@ anything. Open work belongs in `TODO.md`.
   the frame rate. *(09-27 couplers stiffened by a long frame)*
 * What the AI remembers of the tracks belongs to one way of driving: a turn or a takeover from a
   player starts it afresh. *(09-27 the AI stood at a clear signal)*
-* Simulated time has one clock, `MaszynaRuntime`'s: read `get_simulation_time()` or take
+* Simulated time has one clock, `SimulationServer`'s: read `get_simulation_time()` or take
   `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
   clocks)*
 * A C++ class under an existing GDScript subclass keeps its lifecycle in `_notification()`, never

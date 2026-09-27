@@ -5,7 +5,7 @@ extends MaszynaGutTest
 ## with +Z = direction of travel (TDynamicObject::mMatrix, DynObj.cpp:2506-2508); RailVehicle3D
 ## uses Godot's -Z forward. MaszynaRailVehicle3DInstancer._build_structure() converts all of them
 ## with the same 180 degree yaw - these tests spawn the REAL SM42 via
-## DynamicRailVehicle3DManager.load() and check every part ends up in the same frame, facing
+## MaszynaRailVehicle3DManager.load() and check every part ends up in the same frame, facing
 ## the vehicle's own forward.
 
 class PlayerStub extends Node3D:
@@ -39,7 +39,7 @@ func _spawn_sm42() -> bool:
         pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
         return false
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = DynamicRailVehicle3DManager.load("dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rotation", 0.0, null)
+    vehicle = MaszynaRailVehicle3DManager.load("dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rotation", 0.0, null)
     add_child(vehicle)
     var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
     for i in range(20):

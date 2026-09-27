@@ -1,7 +1,7 @@
 extends MarginContainer
 class_name LanguageSwitcher
 
-## The language of the game's strings (MaszynaRuntime.language): one flag for every catalogue
+## The language of the game's strings (SimulationServer.language): one flag for every catalogue
 ## MaszynaTranslationServer finds in the game's lang/, English alone when there is none. Its left
 ## margin keeps it clear of what stands before it in a row.
 
@@ -35,10 +35,10 @@ func _ready() -> void:
             button.custom_minimum_size = FLAG_SIZE
         else:
             button.text = language.to_upper()
-        button.button_pressed = language == MaszynaRuntime.language
+        button.button_pressed = language == SimulationServer.language
         button.pressed.connect(_on_language_pressed.bind(language))
         %Flags.add_child(button)
 
 
 func _on_language_pressed(language:String) -> void:
-    MaszynaRuntime.language = language
+    SimulationServer.language = language

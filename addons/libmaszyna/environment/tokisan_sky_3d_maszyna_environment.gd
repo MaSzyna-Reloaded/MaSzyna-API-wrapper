@@ -171,7 +171,7 @@ func process(delta: float) -> void:
     if _time_update_elapsed < TIME_UPDATE_INTERVAL:
         return
     _time_update_elapsed = 0.0
-    var now: float = MaszynaRuntime.time_of_day
+    var now: float = SimulationServer.time_of_day
     time_of_day.current_time = now + HOURS_PER_DAY if now < time_of_day.current_time else now
 
 

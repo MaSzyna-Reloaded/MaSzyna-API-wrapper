@@ -1,11 +1,11 @@
 extends "res://hud/mover_switches_section.gd"
 
-var _doors:VehicleDoors
+var _doors:RailVehicleDoors
 
 
 func _do_update():
     super._do_update()
-    _doors = _component(VehicleComponentType.COMPONENT_DOORS) as VehicleDoors
+    _doors = _component(VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
 
 
 func _on_refresh_timer_timeout() -> void:

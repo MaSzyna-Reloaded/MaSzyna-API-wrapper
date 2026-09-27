@@ -5,17 +5,17 @@
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_qg2pq"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
+[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/legacy/e3d/e3d_model_instance.gd" id="4_drlsl"]
 [ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
-[ext_resource type="Script" uid="uid://q5rsmctbnhqt" path="res://addons/libmaszyna/tracks/maszyna_track_curve.gd" id="22_track_curve"]
+[ext_resource type="Script" uid="uid://q5rsmctbnhqt" path="res://addons/libmaszyna/tracks/track_curve.gd" id="22_track_curve"]
 [ext_resource type="Script" uid="uid://crnc02lngpqkm" path="res://addons/libmaszyna/tracks/track_normal_3d.gd" id="23_track_normal"]
-[ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
-[ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
+[ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/traction_3d.gd" id="24_6m450"]
+[ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/traction_line.gd" id="25_jchga"]
 [ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
-[ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
+[ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d.gd" id="29_dcvyd"]
 [ext_resource type="SemaphoreSystemDelegate" path="res://semaphores/demo_block_delegate.tres" id="demo_block_delegate"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
@@ -1268,7 +1268,7 @@ curve = SubResource("TrackCurve_left_diverging")
 [node name="TractionExample" type="Node3D" parent="." unique_id=2005792960]
 transform = Transform3D(0.99787855, -0.017198822, 0.06279014, 0.0174523, 0.99984163, -0.0034906515, -0.062720165, 0.0045790784, 0.99802065, -24.347713, 0, 28.925892)
 
-[node name="MaszynaTraction3D" type="Node3D" parent="TractionExample" unique_id=737516648]
+[node name="Traction3D" type="Node3D" parent="TractionExample" unique_id=737516648]
 transform = Transform3D(1, 0, 0, 0, 0.999979, -0.00651009, 0, 0.00651009, 0.999979, 0, 0, 0)
 script = ExtResource("24_6m450")
 wires = 1

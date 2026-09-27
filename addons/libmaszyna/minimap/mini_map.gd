@@ -40,13 +40,13 @@ func _ready() -> void:
     $UIContainer/BtnReset.pressed.connect(func(): zoom = 1.0; view_offset = Vector2.ZERO)
 
 func _enter_tree() -> void:
-    TrackManager.switch_active_track_changed.connect(_on_switch_changed)
-    TrackManager.topology_changed.connect(_on_topology_changed)
+    TrackServer.switch_active_track_changed.connect(_on_switch_changed)
+    TrackServer.topology_changed.connect(_on_topology_changed)
     RailVehicleServer.vehicle_moved.connect(_on_vehicle_moved)
 
 func _exit_tree() -> void:
-    TrackManager.switch_active_track_changed.disconnect(_on_switch_changed)
-    TrackManager.topology_changed.disconnect(_on_topology_changed)
+    TrackServer.switch_active_track_changed.disconnect(_on_switch_changed)
+    TrackServer.topology_changed.disconnect(_on_topology_changed)
     RailVehicleServer.vehicle_moved.disconnect(_on_vehicle_moved)
 
     resized.disconnect(_sync_switch_handles)
@@ -80,7 +80,7 @@ func _on_switch_changed(_rid: RID, _state: int) -> void:
 func _sync_switch_handles() -> void:
     if not is_visible_in_tree(): return
     var cam: Dictionary = _get_cam_data()
-    var current_rids: Array = TrackManager.track_get_rids()
+    var current_rids: Array = TrackServer.track_get_rids()
     var current_rids_map: Dictionary = {}
     for rid in current_rids: current_rids_map[rid] = true
 
@@ -90,18 +90,18 @@ func _sync_switch_handles() -> void:
             _switch_handles.erase(rid)
 
     for rid: RID in current_rids:
-        if TrackManager.track_is_switch(rid):
+        if TrackServer.track_is_switch(rid):
             if not _switch_handles.has(rid):
                 var sh: Control = _create_switch_handle(rid)
                 add_child(sh)
                 _switch_handles[rid] = sh
             var sh: Control = _switch_handles[rid]
-            var common_idx: int = TrackManager.track_get_common_endpoint_index(rid)
-            var endpoints: PackedVector3Array = TrackManager.track_get_endpoints(rid)
-            if not common_idx == TrackManager.POINT_NONE and common_idx < endpoints.size():
+            var common_idx: int = TrackServer.track_get_common_endpoint_index(rid)
+            var endpoints: PackedVector3Array = TrackServer.track_get_endpoints(rid)
+            if not common_idx == TrackServer.POINT_NONE and common_idx < endpoints.size():
                 sh.position = _world_to_view_centered(endpoints[common_idx], cam.pos, cam.rot) - sh.size * 0.5
                 sh.visible = true
-                sh.modulate = Color.WHITE if TrackManager.switch_get_active_track(rid) == TrackManager.TRACK_COMMON else Color.GRAY
+                sh.modulate = Color.WHITE if TrackServer.switch_get_active_track(rid) == TrackServer.TRACK_COMMON else Color.GRAY
             else:
                 sh.visible = false
         elif _switch_handles.has(rid):
@@ -133,14 +133,14 @@ func _draw() -> void:
 
     if not visible_rect == _cached_visible_rect:
         _cached_visible_rect = visible_rect
-        _cached_tracks = TrackManager.tracks_find_in_aabb(visible_rect)
+        _cached_tracks = TrackServer.tracks_find_in_aabb(visible_rect)
 
     for rid in _cached_tracks:
-        var is_switch: bool = TrackManager.track_is_switch(rid)
-        var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.TRACK_COMMON)
-        var curve2: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.TRACK_DIVERGING)
-        var switch_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(rid)
-        var track_name: String = TrackManager.track_get_name(rid)
+        var is_switch: bool = TrackServer.track_is_switch(rid)
+        var curve1: TrackCurve = TrackServer.track_get_curve(rid, TrackServer.TRACK_COMMON)
+        var curve2: TrackCurve = TrackServer.track_get_curve(rid, TrackServer.TRACK_DIVERGING)
+        var switch_track: TrackServer.SwitchTrack = TrackServer.switch_get_active_track(rid)
+        var track_name: String = TrackServer.track_get_name(rid)
 
         _draw_track_curves(curve1, curve2, switch_track, is_switch, cam.pos, cam.rot)
         _draw_track_label(track_name, curve1, cam.pos, cam.rot)
@@ -160,32 +160,32 @@ func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void
             draw_string(_font, view_pos + Vector2(square_size * 0.7, font_size * 0.3), vehicle_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.GREEN)
 
 func _draw_track_curves(
-    curve1: MaszynaTrackCurve,
-    curve2: MaszynaTrackCurve,
-    switch_track: TrackManager.SwitchTrack,
+    curve1: TrackCurve,
+    curve2: TrackCurve,
+    switch_track: TrackServer.SwitchTrack,
     is_switch: bool,
     cam_pos: Vector2,
     cam_rot: float
 ) -> void:
     if curve1:
-        _draw_curve(curve1, switch_active_color if is_switch and switch_track == TrackManager.TRACK_COMMON else track_color, cam_pos, cam_rot)
+        _draw_curve(curve1, switch_active_color if is_switch and switch_track == TrackServer.TRACK_COMMON else track_color, cam_pos, cam_rot)
     if curve2:
-        _draw_curve(curve2, switch_active_color if is_switch and switch_track == TrackManager.TRACK_DIVERGING else track_color, cam_pos, cam_rot)
+        _draw_curve(curve2, switch_active_color if is_switch and switch_track == TrackServer.TRACK_DIVERGING else track_color, cam_pos, cam_rot)
 
-func _draw_track_label(track_name: String, curve1: MaszynaTrackCurve, cam_pos: Vector2, cam_rot: float) -> void:
+func _draw_track_label(track_name: String, curve1: TrackCurve, cam_pos: Vector2, cam_rot: float) -> void:
     if not track_name or not curve1: return
     var view_pos:Vector2 = _world_to_view_centered(_sample_bezier(curve1, 0.5), cam_pos, cam_rot)
     var font_size:int = 12
     draw_string(_font, view_pos - _font.get_string_size(track_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size) * 0.5 + Vector2(0, font_size * 0.25), track_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_color)
 
-func _draw_curve(curve: MaszynaTrackCurve, color: Color, cam_pos: Vector2, cam_rot: float) -> void:
+func _draw_curve(curve: TrackCurve, color: Color, cam_pos: Vector2, cam_rot: float) -> void:
     if not curve: return
     var points: PackedVector2Array = []
     for i in range(17):
         points.append(_world_to_view_centered(_sample_bezier(curve, float(i) / 16.0), cam_pos, cam_rot))
     draw_polyline(points, color, 1.0, true)
 
-func _sample_bezier(curve: MaszynaTrackCurve, t: float) -> Vector3:
+func _sample_bezier(curve: TrackCurve, t: float) -> Vector3:
     var p0:Vector3 = curve.p1
     var p1:Vector3 = curve.p1 + curve.c1
     var p2:Vector3 = curve.p2 + curve.c2

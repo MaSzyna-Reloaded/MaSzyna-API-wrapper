@@ -65,7 +65,7 @@ namespace godot {
 
         public:
             /* Notifications, not the _ready()/_process() virtuals: a GDScript subclass that
-             * defines _ready() *replaces* the native virtual, and DynamicTrainCabin does - the
+             * defines _ready() *replaces* the native virtual, and MaszynaDynamicTrainCabin does - the
              * cab would then never announce itself and the camera would never enter it. A
              * notification reaches the native class and the script alike. */
             void _notification(int p_what);

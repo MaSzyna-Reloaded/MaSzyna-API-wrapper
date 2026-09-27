@@ -1,5 +1,5 @@
-#include "../drivers/DriverSystem.hpp"
-#include "../physics/RailVehicleServer.hpp"
+#include "../driver/DriverSystem.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 #include "MaszynaLegacyVehicleCommandAction.hpp"
 #include "ScenarioEventServer.hpp"
 

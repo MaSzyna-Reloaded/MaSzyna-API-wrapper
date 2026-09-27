@@ -22,7 +22,7 @@ var _rows:Dictionary[String, Label] = {}
 var _elapsed:float = 0.0
 ## Taken once per vehicle rather than looked up per refresh; null for anything that is not
 ## electric, and then the traction rows have nothing to say.
-var _engine:VehicleElectricEngine = null
+var _engine:RailVehicleElectricEngine = null
 var _engine_vehicle:RailVehicle3D = null
 
 
@@ -67,16 +67,16 @@ func _refresh() -> void:
     var placement:Dictionary = RailVehicleServer.vehicle_get_track_position(rid)
     var track:RID = placement["track_rid"]
     if track.is_valid():
-        var track_name:String = TrackManager.track_get_name(track)
+        var track_name:String = TrackServer.track_get_name(track)
         _rows["Track"].text = track_name if track_name else "(unnamed)"
         _rows["Offset"].text = "%.2f m" % float(placement["along"])
-        _rows["Track length"].text = "%.2f m" % TrackManager.track_get_length(track)
+        _rows["Track length"].text = "%.2f m" % TrackServer.track_get_length(track)
         _rows["Switch"].text = (
             tr("yes, branch %d%s") % [
-                TrackManager.switch_get_active_track(track),
-                tr(" (right)") if TrackManager.switch_is_right(track) else tr(" (left)"),
+                TrackServer.switch_get_active_track(track),
+                tr(" (right)") if TrackServer.switch_is_right(track) else tr(" (left)"),
             ]
-            if TrackManager.track_is_switch(track) else "no"
+            if TrackServer.track_is_switch(track) else "no"
         )
     else:
         _rows["Track"].text = "none"
@@ -90,7 +90,7 @@ func _refresh() -> void:
     if not _engine_vehicle == vehicle:
         _engine_vehicle = vehicle
         _engine = RailVehicleServer.vehicle_component_get(
-                rid, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+                rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if not _engine:
         _rows["Slider"].text = "-"
         for number:int in [1, 2]:
@@ -127,7 +127,7 @@ func _report_pantograph(
 
     var transform:Transform3D = vehicle.global_transform
     var contact_point:Vector3 = transform * offset
-    var found:Dictionary = TractionPowerServer.wire_find_above_with_height(
+    var found:Dictionary = TractionServer.wire_find_above_with_height(
             contact_point, transform.basis.y, -transform.basis.z, -transform.basis.x,
             half_width, HORN_WIDTH)
     var wire:RID = found["rid"]
@@ -135,7 +135,7 @@ func _report_pantograph(
         wire_row.text = "NO WIRE in reach"
         return
     wire_row.text = tr("%.2f m above, %.0f V") % [
-        float(found["height"]), TractionPowerServer.wire_get_voltage(wire, voltage, 0.0),
+        float(found["height"]), TractionServer.wire_get_voltage(wire, voltage, 0.0),
     ]
 
 

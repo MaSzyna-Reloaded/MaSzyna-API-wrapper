@@ -4,7 +4,11 @@
 C++ classes come from doc_classes/*.xml (Godot's class reference format, dumped by
 `make docs`); GDScript classes from the `##` doc comments of every script with a
 `class_name` under addons/libmaszyna. Each class becomes docs/api/<Class>.md, and
-docs/api/index.md lists them all. The output is generated, not versioned.
+docs/api/index.md lists them all, grouped by namespace. C++ has no namespaces of its own, so a
+class's namespace is the directory of its source: src/<dir> for C++ (the header declaring its
+GDCLASS), addons/libmaszyna/<dir> for GDScript. The two languages are listed apart, each with
+its own namespaces. The pages use docs/_layouts/api.html, whose sidebar lists them from the
+api_* keys of their front matter. The output is generated, not versioned.
 
 Usage: scripts/make-api-docs [output dir, default docs/api]
 """
@@ -17,12 +21,18 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 XML_DIR = ROOT / "doc_classes"
+SRC_DIR = ROOT / "src"
 GDSCRIPT_DIR = ROOT / "addons" / "libmaszyna"
 GODOT_CLASS_URL = "https://docs.godotengine.org/en/stable/classes/class_{}.html"
 PLUGIN = GDSCRIPT_DIR / "libmaszyna.gd"
 GODOT_API = ROOT / "godot-cpp" / "gdextension" / "extension_api.json"
 REGISTER_TYPES = ROOT / "src" / "register_types.cpp"
 PROJECT = ROOT / "demo" / "project.godot"
+# the namespace of a class declared at the top of src/ or addons/libmaszyna/
+ROOT_NAMESPACE = "libmaszyna"
+# the namespace of a doc_classes XML whose GDCLASS is found nowhere in src/ (a stale dump)
+UNKNOWN_NAMESPACE = "unknown"
+LANGUAGES = ("C++", "GDScript")
 
 
 @dataclass
@@ -50,6 +60,7 @@ class ClassDoc:
     signals: list = field(default_factory=list)
     constants: list = field(default_factory=list)
     singleton: bool = False
+    namespace: str = ""
 
 
 # ---------------------------------------------------------------- C++ (doc_classes XML)
@@ -63,10 +74,24 @@ def _params(node) -> list:
             for p in sorted(node.findall("param"), key=lambda p: int(p.get("index", 0)))]
 
 
-def read_xml(path: Path) -> ClassDoc:
+def _namespace(directory: Path, source_root: Path) -> str:
+    return directory.relative_to(source_root).as_posix() if directory != source_root else ROOT_NAMESPACE
+
+
+def cpp_namespaces() -> dict:
+    """C++ class name -> namespace, the directory of the header declaring its GDCLASS."""
+    found = {}
+    for path in sorted(SRC_DIR.rglob("*.h*")):
+        for name in re.findall(r"GDCLASS\(\s*(\w+)\s*,", path.read_text(encoding="utf-8", errors="replace")):
+            found[name] = _namespace(path.parent, SRC_DIR)
+    return found
+
+
+def read_xml(path: Path, namespace: str) -> ClassDoc:
     root = ElementTree.parse(path).getroot()
     doc = ClassDoc(root.get("name"), root.get("inherits", ""), "C++", f"doc_classes/{path.name}",
-                   _text(root.find("brief_description")), _text(root.find("description")))
+                   _text(root.find("brief_description")), _text(root.find("description")),
+                   namespace=namespace)
     for node in root.iterfind("members/member"):
         doc.properties.append(Member(node.get("name"), node.get("type", ""), node.get("default", ""),
                                      description=(node.text or "").strip()))
@@ -158,7 +183,8 @@ def read_gdscript(path: Path, singleton_name: str = "") -> ClassDoc | None:
             inherits = match.group(1).strip('"')
     if not name:
         return None
-    doc = ClassDoc(name, inherits, "GDScript", str(path.relative_to(ROOT)), singleton=bool(singleton_name))
+    doc = ClassDoc(name, inherits, "GDScript", str(path.relative_to(ROOT)), singleton=bool(singleton_name),
+                   namespace=_namespace(path.parent, GDSCRIPT_DIR))
     pending: list = []
     class_doc_open = True
     enum_owner = ""
@@ -275,7 +301,10 @@ class Writer:
         return f"{member.name}({params})"
 
     def page(self, doc: ClassDoc) -> str:
-        out = ["---", "layout: page", f"title: {doc.name}", "---", ""]
+        out = ["---", "layout: api", f"title: {doc.name}", f'api_language: "{doc.language}"',
+               f"api_language_anchor: {self.language_anchor(doc.language)}",
+               f'api_namespace: "{doc.namespace}"',
+               f"api_namespace_anchor: {self.namespace_anchor(doc.language, doc.namespace)}", "---", ""]
         chain = [doc.inherits]
         while chain[-1] in self.classes and self.classes[chain[-1]].inherits:
             chain.append(self.classes[chain[-1]].inherits)
@@ -285,6 +314,7 @@ class Writer:
         if children:
             out.append("**Inherited by:** " + ", ".join(self.type_link(c) for c in children) + "  ")
         kind = (" engine singleton" if doc.language == "C++" else " autoload singleton") if doc.singleton else ""
+        out.append(f"**Namespace:** [{doc.namespace}](index.html#{self.namespace_anchor(doc.language, doc.namespace)})  ")
         out.append(f"**Language:** {doc.language}{kind} - `{doc.source}`")
         out.append("")
         if doc.brief:
@@ -338,18 +368,39 @@ class Writer:
                         self.bbcode(method.description, doc.name) or "*No description.*", ""]
         return "\n".join(out) + "\n"
 
+    @staticmethod
+    def language_anchor(language: str) -> str:
+        return language.replace("+", "p").lower()
+
+    @classmethod
+    def namespace_anchor(cls, language: str, namespace: str) -> str:
+        return cls.language_anchor(language) + "-" + re.sub(r"[^a-z0-9]+", "-", namespace.lower())
+
     def index(self) -> str:
-        out = ["---", "layout: page", "title: API reference", "permalink: /api/", "---", "",
+        out = ["---", "layout: api", "title: API reference", "permalink: /api/", "---", "",
                "Every class libmaszyna registers (C++) or declares with `class_name` (GDScript), generated from "
-               "`doc_classes/*.xml` and the scripts' `##` doc comments by `scripts/make-api-docs`.", ""]
-        for language in ("C++", "GDScript"):
-            docs = sorted((d for d in self.classes.values() if d.language == language), key=lambda d: d.name)
-            out += [f"## {language} ({len(docs)})", "", "| Class | Inherits | Summary |", "|---|---|---|"]
-            for doc in docs:
-                summary = self.bbcode(doc.brief, doc.name, "index").replace("\n", " ").replace("|", "\\|")
-                singleton = " *(singleton)*" if doc.singleton else ""
-                out.append(f"| [{doc.name}]({doc.name}.html){singleton} | {self.type_link(doc.inherits)} | {summary} |")
+               "`doc_classes/*.xml` and the scripts' `##` doc comments by `scripts/make-api-docs`. A namespace is "
+               "the directory of the class's source: `src/<namespace>` or `addons/libmaszyna/<namespace>`.", "",
+               " - ".join(f"[{language}](#{self.language_anchor(language)})" for language in LANGUAGES), ""]
+        for language in LANGUAGES:
+            namespaces = {}
+            for doc in sorted((d for d in self.classes.values() if d.language == language), key=lambda d: d.name):
+                namespaces.setdefault(doc.namespace, []).append(doc)
+            out += [f"## {language} ({sum(len(docs) for docs in namespaces.values())})",
+                    "{: #" + self.language_anchor(language) + "}", ""]
+            for namespace in sorted(namespaces):
+                out.append(f"* [{namespace}](#{self.namespace_anchor(language, namespace)}) "
+                           f"({len(namespaces[namespace])})")
             out.append("")
+            for namespace in sorted(namespaces):
+                out += [f"### {namespace}", "{: #" + self.namespace_anchor(language, namespace) + "}", "",
+                        "| Class | Inherits | Summary |", "|---|---|---|"]
+                for doc in namespaces[namespace]:
+                    summary = self.bbcode(doc.brief, doc.name, "index").replace("\n", " ").replace("|", "\\|")
+                    singleton = " *(singleton)*" if doc.singleton else ""
+                    out.append(f"| [{doc.name}]({doc.name}.html){singleton} | {self.type_link(doc.inherits)} "
+                               f"| {summary} |")
+                out.append("")
         return "\n".join(out) + "\n"
 
 
@@ -357,8 +408,9 @@ def main() -> None:
     output = Path(sys.argv[1]) if len(sys.argv) > 1 else ROOT / "docs" / "api"
     classes: dict = {}
     engine_singletons = set(re.findall(r'register_singleton\("(\w+)"', REGISTER_TYPES.read_text()))
+    namespaces = cpp_namespaces()
     for path in sorted(XML_DIR.glob("*.xml")):
-        doc = read_xml(path)
+        doc = read_xml(path, namespaces.get(path.stem, UNKNOWN_NAMESPACE))
         doc.singleton = doc.name in engine_singletons
         classes[doc.name] = doc
     singletons = autoloads()
@@ -378,7 +430,7 @@ def main() -> None:
     for doc in classes.values():
         (output / f"{doc.name}.md").write_text(writer.page(doc), encoding="utf-8")
     (output / "index.md").write_text(writer.index(), encoding="utf-8")
-    counts = {lang: sum(1 for d in classes.values() if d.language == lang) for lang in ("C++", "GDScript")}
+    counts = {lang: sum(1 for d in classes.values() if d.language == lang) for lang in LANGUAGES}
     print(f"{len(classes)} classes ({counts['C++']} C++, {counts['GDScript']} GDScript) -> {output}")
 
 

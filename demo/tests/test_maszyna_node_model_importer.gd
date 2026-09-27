@@ -3,7 +3,7 @@ extends MaszynaGutTest
 ## Scenery "node model" becomes MaszynaModelData (built as an E3DRenderingServer RID by
 ## SceneryInstancer), not an E3DModelInstance node.
 
-const NodeImporter = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd")
+const NodeImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd")
 
 
 func test_model_node_is_imported_as_data_with_context_transform() -> void:

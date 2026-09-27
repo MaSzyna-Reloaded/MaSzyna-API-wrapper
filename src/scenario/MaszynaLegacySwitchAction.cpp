@@ -15,16 +15,16 @@ namespace godot {
                 PropertyInfo(
                         Variant::INT, "active_track", PROPERTY_HINT_ENUM,
                         enum_hint(
-                                {{"Common", TrackManager::TRACK_COMMON},
-                                 {"Diverging", TrackManager::TRACK_DIVERGING}})),
+                                {{"Common", TrackServer::TRACK_COMMON},
+                                 {"Diverging", TrackServer::TRACK_DIVERGING}})),
                 "set_active_track", "get_active_track");
     }
 
     void MaszynaLegacySwitchAction::run(const RID &p_event, const RID &p_activator) {
-        TrackManager *track_manager = TrackManager::get_instance();
-        ERR_FAIL_NULL(track_manager);
+        TrackServer *track_server = TrackServer::get_instance();
+        ERR_FAIL_NULL(track_server);
         for (int i = 0; i < tracks.size(); i++) {
-            track_manager->switch_set_active_track(tracks[i], active_track);
+            track_server->switch_set_active_track(tracks[i], active_track);
         }
     }
 
@@ -36,11 +36,11 @@ namespace godot {
         return tracks;
     }
 
-    void MaszynaLegacySwitchAction::set_active_track(const TrackManager::SwitchTrack p_active_track) {
+    void MaszynaLegacySwitchAction::set_active_track(const TrackServer::SwitchTrack p_active_track) {
         active_track = p_active_track;
     }
 
-    TrackManager::SwitchTrack MaszynaLegacySwitchAction::get_active_track() const {
+    TrackServer::SwitchTrack MaszynaLegacySwitchAction::get_active_track() const {
         return active_track;
     }
 } // namespace godot

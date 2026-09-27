@@ -3,7 +3,7 @@ extends Track3D
 class_name TrackNormal3D
 
 func _init() -> void:
-    type = TrackManager.TRACK_NORMAL
+    type = TrackServer.TRACK_NORMAL
 
 @export var material1: String = "":
     set(value):
@@ -87,7 +87,7 @@ func _exit_tree():
     super._exit_tree()
 
 func _update_track_curve() -> void:
-    TrackManager.track_update_curves(_track_rid, curve, null)
+    TrackServer.track_update_curves(_track_rid, curve, null)
 
 func _update_track_data() -> void:
     if not _track_rid.is_valid():
@@ -96,13 +96,13 @@ func _update_track_data() -> void:
     self.global_position = _get_global_aabb().get_center()
     _update_track_curve()
 
-    TrackManager.track_update(
+    TrackServer.track_update(
         _track_rid,
         type,
         track_name,
         width,
     )
-    TrackManager.track_update_properties(_track_rid, quality_flag, environment, sound_distance)
+    TrackServer.track_update_properties(_track_rid, quality_flag, environment, sound_distance)
 
 func _process_dirty(_delta: float) -> void:
     super._process_dirty(_delta)
@@ -132,7 +132,7 @@ func _update_track_rendering():
 
 func _create_track() -> void:
     _free_track()
-    _track_rid = TrackManager.track_create()
+    _track_rid = TrackServer.track_create()
     _track_render_rid = TrackRenderingServer.create_track(_track_rid)
     TrackRenderingServer.set_track_scenario(_track_render_rid, get_world_3d().scenario)
 
@@ -140,6 +140,6 @@ func _free_track() -> void:
     if _track_render_rid.is_valid():
         TrackRenderingServer.free_track(_track_render_rid)
     if _track_rid.is_valid():
-        TrackManager.track_free(_track_rid)
+        TrackServer.track_free(_track_rid)
     _track_rid = RID()
     _track_render_rid = RID()

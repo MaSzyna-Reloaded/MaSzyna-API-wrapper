@@ -19,8 +19,8 @@ var _previous_language:String
 
 
 func before_all() -> void:
-    _previous_language = MaszynaRuntime.language
-    MaszynaRuntime.language = FIXTURE_LANGUAGE
+    _previous_language = SimulationServer.language
+    SimulationServer.language = FIXTURE_LANGUAGE
 
 
 func before_each() -> void:
@@ -28,7 +28,7 @@ func before_each() -> void:
 
 
 func after_all() -> void:
-    MaszynaRuntime.language = _previous_language
+    SimulationServer.language = _previous_language
 
 
 func test_translates_a_game_msgid() -> void:

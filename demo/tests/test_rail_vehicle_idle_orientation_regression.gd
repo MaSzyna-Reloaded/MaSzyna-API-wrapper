@@ -45,14 +45,14 @@ func after_each() -> void:
     created_vehicle_nodes.clear()
 
     for track_rid:RID in created_tracks:
-        if TrackManager.track_exists(track_rid):
-            TrackManager.track_free(track_rid)
+        if TrackServer.track_exists(track_rid):
+            TrackServer.track_free(track_rid)
     created_tracks.clear()
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
 
 func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_NORMAL)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackServer.DIRECTION_NORMAL)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -78,7 +78,7 @@ func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> 
 ## already parked reversed relative to the track, so a further flip would put it back to
 ## looking "normal", which is just as wrong for a REVERSED vehicle).
 func test_reversed_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_REVERSED)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackServer.DIRECTION_REVERSED)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -97,20 +97,20 @@ func test_reversed_direction_vehicle_orientation_does_not_flip_once_it_moves() -
     )
 
 
-func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
+func _spawn_bogie_vehicle(direction:TrackServer.Direction) -> RailVehicle3D:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TRACK_NORMAL,
+        TrackServer.TRACK_NORMAL,
         "start",
     )
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
     var physics_node: VehiclePhysicsNode = _create_vehicle_node()
     var controller: VehicleController = physics_node.get_controller()
     # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
     # composed configuration - so the vehicle has to actually have wheels
-    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.bogie_pivot_spacing = 6.0
     controller.add_component(wheels)
 
@@ -145,20 +145,20 @@ func _create_vehicle_node() -> VehiclePhysicsNode:
 
 
 func _register_track(
-    curve1:MaszynaTrackCurve,
-    curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TRACK_NORMAL,
+    curve1:TrackCurve,
+    curve2:TrackCurve = null,
+    type:int = TrackServer.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
-    var track_rid:RID = TrackManager.track_create()
+    var track_rid:RID = TrackServer.track_create()
     created_tracks.append(track_rid)
-    TrackManager.track_update_curves(track_rid, curve1, curve2)
-    TrackManager.track_update(track_rid, type, name, 1.435)
+    TrackServer.track_update_curves(track_rid, curve1, curve2)
+    TrackServer.track_update(track_rid, type, name, 1.435)
     return track_rid
 
 
-func _curve(p1:Vector3, p2:Vector3, roll1:float = 0.0, roll2:float = 0.0) -> MaszynaTrackCurve:
-    var curve:MaszynaTrackCurve = MaszynaTrackCurve.new()
+func _curve(p1:Vector3, p2:Vector3, roll1:float = 0.0, roll2:float = 0.0) -> TrackCurve:
+    var curve:TrackCurve = TrackCurve.new()
     curve.p1 = p1
     curve.p2 = p2
     curve.roll1 = roll1

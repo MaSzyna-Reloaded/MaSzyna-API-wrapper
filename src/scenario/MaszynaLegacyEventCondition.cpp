@@ -1,5 +1,5 @@
 #include "../macros.hpp"
-#include "../tracks/TrackManager.hpp"
+#include "../tracks/TrackServer.hpp"
 #include "MaszynaLegacyEventCondition.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -120,10 +120,10 @@ namespace godot {
             return false;
         }
         if (!(track_test == TRACK_TEST_NONE)) {
-            const TrackManager *track_manager = TrackManager::get_instance();
-            ERR_FAIL_NULL_V(track_manager, false);
+            const TrackServer *track_server = TrackServer::get_instance();
+            ERR_FAIL_NULL_V(track_server, false);
             for (int i = 0; i < tracks.size(); i++) {
-                if (!(track_manager->track_is_occupied(tracks[i]) == (track_test == TRACK_TEST_OCCUPIED))) {
+                if (!(track_server->track_is_occupied(tracks[i]) == (track_test == TRACK_TEST_OCCUPIED))) {
                     return false;
                 }
             }

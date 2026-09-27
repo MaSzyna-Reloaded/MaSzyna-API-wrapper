@@ -34,7 +34,7 @@ func test_real_vehicle_excludes_rain_over_its_body() -> void:
         pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    var vehicle: RailVehicle3D = DynamicRailVehicle3DManager.load(
+    var vehicle: RailVehicle3D = MaszynaRailVehicle3DManager.load(
         "dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rain", 0.0, null
     )
     add_child_autofree(vehicle)

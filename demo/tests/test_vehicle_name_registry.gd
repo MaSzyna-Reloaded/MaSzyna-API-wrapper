@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## A vehicle's name belongs to the server that owns its handle: whoever knows a vehicle only by
 ## name - a scenery event, the console, a `.scn` command - asks the server for the handle, and
-## everything that already holds the vehicle never comes through here at all. TrackManager has the
+## everything that already holds the vehicle never comes through here at all. TrackServer has the
 ## same pair for tracks, for the same reason.
 
 var _controller:VehicleController = null
@@ -78,7 +78,7 @@ func test_a_vehicle_named_nothing_or_none_is_not_looked_up_but_takes_commands() 
 ## Whether a command sent by the vehicle's handle changes its state - the radio channel, which
 ## needs no power configured
 func _takes_a_command(vehicle:VehicleController) -> bool:
-    vehicle.add_component(MoverVehicleRadio.new())
+    vehicle.add_component(MoverRailVehicleRadio.new())
     var before:int = int(RailVehicleServer.vehicle_dump_state(vehicle.get_rid()).get("radio_channel", -1))
     RailVehicleServer.vehicle_send_command(vehicle.get_rid(), "radio_channel_set", before + 1)
     return int(RailVehicleServer.vehicle_dump_state(vehicle.get_rid()).get("radio_channel", -1)) == before + 1

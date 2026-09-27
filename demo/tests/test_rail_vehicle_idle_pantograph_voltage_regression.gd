@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## Regression test for the reported "na postoju elektrowozom flapuje napiecie z drutow i nie da
 ## sie uruchomic, bo wywala wylacznik szybki" bug. Drives a real RailVehicle3D + VehicleController
-## + VehicleElectricSeriesEngine + a real overhead wire/power source (TractionPowerServer) through
+## + RailVehicleElectricSeriesEngine + a real overhead wire/power source (TractionServer) through
 ## Godot's actual per-frame _process(), exactly like an electric locomotive sitting at a
 ## platform with its pantograph raised and main switch closed.
 ##
@@ -14,7 +14,7 @@ extends MaszynaGutTest
 ## instant it moved - see that test's header comment and the RailVehicle3D.cpp fix). The
 ## pantograph/main-switch symptom is suspected to be downstream of that same flip (a flipped
 ## global_transform feeds _pantograph_frame_axes(), which _update_pantograph_power() uses to
-## search TractionPowerServer for the overhead wire - a wrong axis could lose wire contact), but
+## search TractionServer for the overhead wire - a wrong axis could lose wire contact), but
 ## that has NOT been proven - this fixture would need bogies added, and the vehicle would need
 ## to actually move, to test that theory directly. Kept as a green regression test for the
 ## "stays parked, never touched, voltage/main switch should stay stable" case on its own merits.
@@ -25,7 +25,7 @@ var created_power_sources:Array[RID] = []
 var vehicle:RailVehicle3D
 var controller:VehicleController
 var physics_node:VehiclePhysicsNode
-var engine:VehicleElectricSeriesEngine
+var engine:RailVehicleElectricSeriesEngine
 
 
 func after_each() -> void:
@@ -38,37 +38,37 @@ func after_each() -> void:
     engine = null
 
     for wire_rid:RID in created_wires:
-        TractionPowerServer.wire_free(wire_rid)
+        TractionServer.wire_free(wire_rid)
     created_wires.clear()
     for source_rid:RID in created_power_sources:
-        TractionPowerServer.power_source_free(source_rid)
+        TractionServer.power_source_free(source_rid)
     created_power_sources.clear()
 
     for track_rid:RID in created_tracks:
-        if TrackManager.track_exists(track_rid):
-            TrackManager.track_free(track_rid)
+        if TrackServer.track_exists(track_rid):
+            TrackServer.track_free(track_rid)
     created_tracks.clear()
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
 
 func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_closed() -> void:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TRACK_NORMAL,
+        TrackServer.TRACK_NORMAL,
         "start",
     )
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
-    var source_rid:RID = TractionPowerServer.power_source_create()
+    var source_rid:RID = TractionServer.power_source_create()
     created_power_sources.append(source_rid)
-    TractionPowerServer.power_source_set_params(
+    TractionServer.power_source_set_params(
         source_rid, "test_power", 3000.0, 0.0, 0.2, 2000.0, 1.0, 3, 60.0, false)
-    var wire_rid:RID = TractionPowerServer.wire_create()
+    var wire_rid:RID = TractionServer.wire_create()
     created_wires.append(wire_rid)
-    TractionPowerServer.wire_set_params(
+    TractionServer.wire_set_params(
         wire_rid, Vector3(0.0, 5.5, -50.0), Vector3(0.0, 5.5, 100.0), "test_power", 3000.0, 2000.0, 0.01)
-    TractionPowerServer.network_build()
+    TractionServer.network_build()
 
     # the vehicle's own configuration is authored, not written afterwards - a property set after
     # the vehicle is built does not reach the backend until apply_configuration()
@@ -77,12 +77,12 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     physics_node = build_vehicle_node("test_idle_pantograph_train", model)
     controller = physics_node.get_controller()
 
-    engine = MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine = MoverRailVehicleElectricSeriesEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 1
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
-    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 6
     controller.add_component(master_controller)
     controller.add_component(engine)
@@ -90,14 +90,14 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
-    vehicle.start_direction = TrackManager.DIRECTION_NORMAL
+    vehicle.start_direction = TrackServer.DIRECTION_NORMAL
     vehicle.pantograph_collector_width = 0.5
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(physics_node)
     await wait_idle_frames(2)
 
     controller.send_command("battery", true)
-    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     var voltage_reached:bool = false
     for i in range(60):
         await wait_idle_frames(1)
@@ -162,20 +162,20 @@ func _dump(controller:VehicleController) -> String:
 
 
 func _register_track(
-    curve1:MaszynaTrackCurve,
-    curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TRACK_NORMAL,
+    curve1:TrackCurve,
+    curve2:TrackCurve = null,
+    type:int = TrackServer.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
-    var track_rid:RID = TrackManager.track_create()
+    var track_rid:RID = TrackServer.track_create()
     created_tracks.append(track_rid)
-    TrackManager.track_update_curves(track_rid, curve1, curve2)
-    TrackManager.track_update(track_rid, type, name, 1.435)
+    TrackServer.track_update_curves(track_rid, curve1, curve2)
+    TrackServer.track_update(track_rid, type, name, 1.435)
     return track_rid
 
 
-func _curve(p1:Vector3, p2:Vector3, roll1:float = 0.0, roll2:float = 0.0) -> MaszynaTrackCurve:
-    var curve:MaszynaTrackCurve = MaszynaTrackCurve.new()
+func _curve(p1:Vector3, p2:Vector3, roll1:float = 0.0, roll2:float = 0.0) -> TrackCurve:
+    var curve:TrackCurve = TrackCurve.new()
     curve.p1 = p1
     curve.p2 = p2
     curve.roll1 = roll1

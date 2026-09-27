@@ -96,7 +96,7 @@ func test_moving_a_model_does_not_reapply_its_lights_state() -> void:
 ## Regression: the E3D submodel material override (now MaterialManager.get_submodel_material())
 ## never populated MaterialOptions.diffuse_color from the real parsed submodel (left as a TODO, silently leaving
 ## every textured/named-material submodel's albedo at the shader's default white) - unlike
-## test_material_manager_variants.gd's MaterialFactory-level coverage, which only ever built
+## test_material_manager_variants.gd's MaszynaMaterialFactory-level coverage, which only ever built
 ## MaterialOptions by hand and so never exercised this real instancing call path, this test goes
 ## through the actual material resolver entry point a real model load uses. Confirmed real: EP07's
 ## "wylszybki_on"/"_off" main-breaker indicator lamp submodels, diffuse (0, 0.749, 0) over a

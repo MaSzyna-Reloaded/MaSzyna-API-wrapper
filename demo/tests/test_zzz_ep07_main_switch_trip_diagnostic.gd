@@ -8,7 +8,7 @@ extends MaszynaGutTest
 ##
 ## Root cause (confirmed via this test's own diagnostic dumps before the fix): FizTrainElectric
 ## SeriesEngineParser.apply_engine_fields() divided "nmax" by 60 in GDScript AND
-## VehicleElectricSeriesEngine::_do_update_internal_mover divided by 60 again in C++ - nmax ended up
+## RailVehicleElectricSeriesEngine::_do_update_internal_mover divided by 60 again in C++ - nmax ended up
 ## 3600x too small. Mover's own motor-overspeed damage check (Mover.cpp:446, FuzzyLogic(abs(enrot),
 ## nmax*1.11, p_elengproblem)) then had a chance to fire at a tiny fraction of a km/h instead of
 ## near the real max speed, latching DamageFlag's dtrain_engine bit almost immediately once any
@@ -90,7 +90,7 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
     # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
     # voltage instead of a fixed short wait, same as test_ep07_controller_actual_position_diagnostic
@@ -200,7 +200,7 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (valve/lift delay) - poll for real wire voltage instead of a
     # fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd, so main_switch below isn't
     # sent before EnginePowerSourceVoltage() has anything to report (MainSwitchCheck's

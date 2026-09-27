@@ -1,4 +1,4 @@
-#include "../tracks/TrackManager.hpp"
+#include "../tracks/TrackServer.hpp"
 #include "MaszynaLegacyTrackVelocityAction.hpp"
 
 namespace godot {
@@ -14,10 +14,10 @@ namespace godot {
     }
 
     void MaszynaLegacyTrackVelocityAction::run(const RID &p_event, const RID &p_activator) {
-        TrackManager *track_manager = TrackManager::get_instance();
-        ERR_FAIL_NULL(track_manager);
+        TrackServer *track_server = TrackServer::get_instance();
+        ERR_FAIL_NULL(track_server);
         for (int i = 0; i < tracks.size(); i++) {
-            track_manager->track_set_velocity(tracks[i], velocity);
+            track_server->track_set_velocity(tracks[i], velocity);
         }
     }
 

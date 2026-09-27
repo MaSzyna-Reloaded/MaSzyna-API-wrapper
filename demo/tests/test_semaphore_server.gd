@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-const EventImporter = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd")
+const EventImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd")
 
 
 class RecordingDelegate extends SemaphoreSystemDelegate:

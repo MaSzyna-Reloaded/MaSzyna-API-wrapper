@@ -106,7 +106,7 @@ func _make_context() -> MaszynaImporterContext:
     context.register_dependency(_nested_path)
     var track := MaszynaTrackData.new()
     track.track_name = "test"
-    track.curve = MaszynaTrackCurve.new()
+    track.curve = TrackCurve.new()
     track.curve.p2 = Vector3(10.0, 0.0, 0.0)
     context.tracks.append(track)
     return context

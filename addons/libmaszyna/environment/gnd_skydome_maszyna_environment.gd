@@ -303,7 +303,7 @@ func process(delta: float) -> void:
         _read_system_time()
     else:
         # the time the simulation's clock ran to; past midnight it is the next day
-        var now: float = MaszynaRuntime.time_of_day
+        var now: float = SimulationServer.time_of_day
         if now < _current_time:
             _normalize_date(_year, _month, _day + 1)
         _current_time = now

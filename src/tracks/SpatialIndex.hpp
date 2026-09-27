@@ -10,8 +10,8 @@
 
 namespace godot {
     /* A uniform grid over the XZ plane: every item is filed in each cell its AABB touches, and a
-     * query returns the items of the touched cells. Shared by TrackManager and by
-     * TractionPowerServer, which is why it is a class of its own rather than a member of either. */
+     * query returns the items of the touched cells. Shared by TrackServer and by
+     * TractionServer, which is why it is a class of its own rather than a member of either. */
     class SpatialIndex : public RefCounted {
             GDCLASS(SpatialIndex, RefCounted)
 

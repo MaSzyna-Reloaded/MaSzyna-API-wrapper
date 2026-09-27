@@ -33,8 +33,8 @@ func _ready() -> void:
     _weather.thunder.connect(_on_weather_thunder)
     _weather.rain_strength_changed.connect(_on_weather_rain_strength_changed)
     _weather.rain_local_strength_changed.connect(_on_weather_rain_local_strength_changed)
-    MaszynaRuntime.paused.connect(_on_runtime_paused)
-    MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.paused.connect(_on_runtime_paused)
+    SimulationServer.unpaused.connect(_on_runtime_unpaused)
     # The weather state was already applied while MaszynaEnvironmentNode got ready.
     _on_weather_rain_strength_changed(_weather.precipitation_intensity)
 
@@ -43,8 +43,8 @@ func _exit_tree() -> void:
     _weather.thunder.disconnect(_on_weather_thunder)
     _weather.rain_strength_changed.disconnect(_on_weather_rain_strength_changed)
     _weather.rain_local_strength_changed.disconnect(_on_weather_rain_local_strength_changed)
-    MaszynaRuntime.paused.disconnect(_on_runtime_paused)
-    MaszynaRuntime.unpaused.disconnect(_on_runtime_unpaused)
+    SimulationServer.paused.disconnect(_on_runtime_paused)
+    SimulationServer.unpaused.disconnect(_on_runtime_unpaused)
 
 
 ## The rain and the thunder go silent while the world is paused

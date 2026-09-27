@@ -21,10 +21,10 @@ func after_each() -> void:
     _created_vehicle_nodes.clear()
 
     for track_rid: RID in _created_tracks:
-        if TrackManager.track_exists(track_rid):
-            TrackManager.track_free(track_rid)
+        if TrackServer.track_exists(track_rid):
+            TrackServer.track_free(track_rid)
     _created_tracks.clear()
-    TrackManager.topology_rebuild()
+    TrackServer.topology_rebuild()
 
 
 func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void:
@@ -71,11 +71,11 @@ func test_vehicle_server_stops_relaying_a_detached_controller() -> void:
 
 
 func _create_fixture(offset: float, train_id: String = "test_train") -> Dictionary:
-    var track_rid: RID = TrackManager.track_create()
+    var track_rid: RID = TrackServer.track_create()
     _created_tracks.append(track_rid)
-    TrackManager.track_update_curves(track_rid, _curve(Vector3(0.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)), null)
-    TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "start", 1.435)
-    TrackManager.topology_rebuild()
+    TrackServer.track_update_curves(track_rid, _curve(Vector3(0.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)), null)
+    TrackServer.track_update(track_rid, TrackServer.TRACK_NORMAL, "start", 1.435)
+    TrackServer.topology_rebuild()
 
     var physics_node: VehiclePhysicsNode = build_vehicle_node(train_id)
     var controller: VehicleController = physics_node.get_controller()
@@ -85,7 +85,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = offset
-    vehicle.set("start_direction", TrackManager.DIRECTION_REVERSED)
+    vehicle.set("start_direction", TrackServer.DIRECTION_REVERSED)
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(physics_node)
     _created_vehicles.append(vehicle)
@@ -97,8 +97,8 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     }
 
 
-func _curve(p1: Vector3, p2: Vector3) -> MaszynaTrackCurve:
-    var curve: MaszynaTrackCurve = MaszynaTrackCurve.new()
+func _curve(p1: Vector3, p2: Vector3) -> TrackCurve:
+    var curve: TrackCurve = TrackCurve.new()
     curve.p1 = p1
     curve.p2 = p2
     return curve

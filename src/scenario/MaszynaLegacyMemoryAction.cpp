@@ -1,6 +1,6 @@
 #include "../macros.hpp"
-#include "../drivers/DriverSystem.hpp"
-#include "../tracks/TrackManager.hpp"
+#include "../driver/DriverSystem.hpp"
+#include "../tracks/TrackServer.hpp"
 #include "MaszynaLegacyMemoryAction.hpp"
 
 namespace godot {
@@ -88,7 +88,7 @@ namespace godot {
                 continue;
             }
             const RID track = server->memory_get_track(memory);
-            TrackManager *tracks = TrackManager::get_instance();
+            TrackServer *tracks = TrackServer::get_instance();
             DriverSystem *drivers = DriverSystem::get_instance();
             if (!track.is_valid() || tracks == nullptr || drivers == nullptr) {
                 continue;

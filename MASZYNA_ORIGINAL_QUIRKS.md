@@ -66,6 +66,19 @@ interface.
   `MaxAcc` between `HeavyCargoTrainAcceleration` (0.1) and `AccPreferred`, which falls to -0.3
   near a vehicle ahead (`Driver.cpp:7788`) - undefined behaviour. Wrapper: `clampf()`, the lower
   bound wins.
+* **SN61 would not start without the AI's hack.** `dizel_StartupCheck()` refuses a plain diesel
+  whose master controller stands where the throttle table gives no fuel (`RList[].R == 0`,
+  `Mover.cpp:7841`) and drops the start-up; SN61's position 0 is such one. The AI gets round it
+  with a special case, "specjalnie dla SN61 żeby nie zgasł" - the controller up to the first
+  position with the clutch in, before closing the circuit and after setting the reverser
+  (`Driver.cpp:2840-2843, 5778-5784`). Wrapper: `MaszynaLegacyDriverHints.set_idle()` before the
+  line breaker, as the original; the reverser's copy is not ported.
+* **9.81 means "no blended brake".** `IncBrakeEIM()`/`DecBrakeEIM()` test `MED_amax != 9.81`
+  (the struct's default) to tell a vehicle with the blended EP/ED brake from one without
+  (`Driver.cpp:3208, 3373`), and brake with the driver's own hard-coded `fMedAmax` = 0.8 instead of
+  the vehicle's (`Driver.h:377`). Kept as is (`NO_MED_DECELERATION`, `EIM_MAX_DECELERATION`).
+* **IncBrake() divides by `ActualProximityDist` unguarded** in the DMU's stronger braking
+  (`fBrakeDist / ActualProximityDist`, `Driver.cpp:3140`). Kept as is.
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 

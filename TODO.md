@@ -723,10 +723,11 @@ ported, into a delegate.
       (`MaszynaLegacyDriverPantographs`): the pantograph compressor and its three-way valve while
       preparing, the rear one up on the move. Checked on Stary Jawor (diesel-electric) and on a
       synthetic track with a catenary: EU07 with eight wagons prepares itself, runs up the
-      resistors to 28 and the shunt, holds 40 km/h. **Not checked yet:** EN57 (the control car's
-      class is chosen, but the unit does not prepare - 0 V, reverser at 0: `Activation()`'s move to
-      the unit's other vehicles is not ported), SN61 and SA134 (the gearbox, the DMU's power share),
-      EU47 (the EIM controller, the cruise control). Left: the doors closed and the departure signal switched off before adding power
+      resistors to 28 and the shunt, holds 40 km/h. Also checked there: SN61 (started at its idle
+      position, 40 km/h), SA134 (the DMU's universal controller holding its share of power), EU47
+      with eight wagons (the EIM controller, the cruise control holding 40.0 km/h). **Not checked
+      yet:** EN57 (the control car's class is chosen, but the unit does not prepare - 0 V, reverser
+      at 0: `Activation()`'s move to the unit's other vehicles is not ported). Left: the doors closed and the departure signal switched off before adding power
       (`Doors()`, `DepartureSignal` not published); the no-current sections (`fOverhead2`,
       `iOverheadZero`); the shunting mode of a 2Ls150 (`AnPos` in `SpeedSet()`) and of an induction
       motor; SN61's idle position after the reverser (`DirectionForward()`, Driver.cpp:5778); the

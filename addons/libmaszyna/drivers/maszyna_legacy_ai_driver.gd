@@ -459,6 +459,11 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     var mains:bool = CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false)
     if not mains:
         MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
+        # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
+        var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
+                VehicleEngine.NONE)) as VehicleEngine.EngineType
+        if engine_type == VehicleEngine.DIESEL:
+            MaszynaLegacyDriverHints.set_idle(vehicle, cab)
         MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
     elif not converter_overload:
         var converter_enabled:bool = MaszynaLegacyDriverHints.cue(

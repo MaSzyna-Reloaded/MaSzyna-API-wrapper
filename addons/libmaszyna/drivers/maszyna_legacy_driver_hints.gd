@@ -100,6 +100,24 @@ static func set_zero_speed(vehicle:RID, cab:int) -> void:
         CabinSystem.act(vehicle, cab, controller, &"decrease")
 
 
+## mastercontrollersetidle (driverhints.cpp:489-501): a diesel's master controller up to its first
+## position with the clutch in (RList[].Mn), so that it does not stall - SN61's idle
+static func set_idle(vehicle:RID, cab:int) -> void:
+    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    if engine == null:
+        return
+    var positions:Array = engine.throttle_table_positions
+    var controller:StringName = master_controller(vehicle, cab)
+    var position:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+    while position < positions.size() and (positions[position] as ThrottlePositionItem).clutch_behavior == 0:
+        CabinSystem.act(vehicle, cab, controller, &"increase")
+        var stepped:int = int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0))
+        if stepped == position:
+            return
+        position = stepped
+
+
 ## The cab's master controller - a joint controller where the cab has one in its place (SM42's)
 static func master_controller(vehicle:RID, cab:int) -> StringName:
     return (MASTER_CONTROLLER if CabinSystem.has_control(vehicle, cab, MASTER_CONTROLLER)

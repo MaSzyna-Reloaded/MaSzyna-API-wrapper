@@ -33,22 +33,23 @@ namespace godot {
      * script cannot be known at build time, which is why the calls go by name. */
     void GenericVehicleComponent::_do_process_component(const double p_delta) {
         script_target()->call("_process_component", p_delta);
-        internal_state = script_target()->call("_get_component_state");
     }
 
     /* The script's own default, for a script that does not override it. */
     void GenericVehicleComponent::_process_component(const double p_delta) {}
     Dictionary GenericVehicleComponent::_get_component_state() {
-        return internal_state;
+        return Dictionary();
     };
     Dictionary GenericVehicleComponent::_get_component_config() {
         return {};
     };
 
-    /* The script's own keys. They are still pulled per tick rather than being properties of the
-     * component, which stage C replaces - see TODO.md. */
+    /* The script's own keys, asked for when the dump is composed - the same way the
+     * configuration above is. Pulling them in the tick instead meant every vehicle carrying a
+     * modder's component paid for a dictionary per tick whether or not anything read it. */
     void GenericVehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {
-        p_state.merge(internal_state, true);
+        Object *target = const_cast<GenericVehicleComponent *>(this)->script_target();
+        p_state.merge(target->call("_get_component_state"), true);
     }
 
     Dictionary GenericVehicleComponent::get_vehicle_state() {

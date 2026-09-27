@@ -19,7 +19,6 @@ namespace godot {
             /* The node carrying the modder's script. A component is not a node, so the script
              * lives on the proxy that authored it and the calls go back there. */
             Node *script_owner = nullptr;
-            Dictionary internal_state;
 
         protected:
             void _apply_configuration() override;

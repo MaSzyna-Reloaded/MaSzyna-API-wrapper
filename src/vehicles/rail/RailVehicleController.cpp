@@ -1,4 +1,5 @@
 #include "RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
     const char *RailVehicleController::power_changed_signal = "power_changed";
@@ -6,6 +7,16 @@ namespace godot {
     const char *RailVehicleController::consist_changed_signal = "consist_changed";
     const char *RailVehicleController::coupler_attached_signal = "coupler_attached";
     const char *RailVehicleController::coupler_detached_signal = "coupler_detached";
+
+    Dictionary RailVehicleController::get_state() {
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return Dictionary();
+        }
+        // An unknown or invalid handle has no placement, so the server answers an empty dictionary
+        // on its own - there is no second way of producing the state here.
+        return server->vehicle_dump_state(get_rid());
+    }
 
     void RailVehicleController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &RailVehicleController::battery);

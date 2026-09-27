@@ -19,6 +19,7 @@ namespace godot {
     class RailVehicleElectricEngine;
     class RailVehicleDieselEngine;
     class RailVehicleLighting;
+    class RailVehicleWipers;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
@@ -89,6 +90,7 @@ namespace godot {
             RailVehicleEngine *engine = nullptr;
             RailVehicleDieselEngine *diesel_engine = nullptr;
             RailVehicleLighting *lighting = nullptr;
+            RailVehicleWipers *wipers = nullptr;
             VehiclePhysicsNode *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
@@ -189,13 +191,14 @@ namespace godot {
             };
 
             PantographFrame _pantograph_frame() const;
-            /// The controller state is fetched once per frame and handed down - every one of these
-            /// used to ask for it again, and a scenery runs hundreds of powered vehicles
-            void _update_pantograph_power(const Dictionary &p_state);
+            /// Both of these read the electric engine and the controller through their typed
+            /// accessors - neither needs the vehicle's whole state, and a scenery runs hundreds of
+            /// powered vehicles
+            void _update_pantograph_power();
             double _pantograph_wire_voltage(
                     int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, double p_assumed_voltage,
                     double p_current);
-            void _update_pantograph_raise_state(double p_delta, const Dictionary &p_state);
+            void _update_pantograph_raise_state(double p_delta);
             bool _update_pantograph_arm(
                     int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, bool p_is_active,
                     double p_delta);

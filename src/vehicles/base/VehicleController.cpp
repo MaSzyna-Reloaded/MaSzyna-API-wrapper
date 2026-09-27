@@ -310,7 +310,7 @@ namespace godot {
         }
     }
 
-    Dictionary VehicleController::get_state() {
+    Dictionary VehicleController::compose_state() {
         Dictionary result;
         _fill_state_dictionary(result);
         for (VehicleComponent *component: components) {

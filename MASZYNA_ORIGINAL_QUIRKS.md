@@ -139,7 +139,7 @@ interface.
   and `BrakeLevelSet()` returns early when `fBrakeCtrlPos` already equals the new position - so a
   vehicle set up a second time kept its FV4a handle at lap and never charged the pipe
   (`FINDINGS.md`, 2026-09-26). Wrapper: `fBrakeCtrlPos` synced before `BrakeLevelSet()` in
-  `MoverTrainController::initialize_mover_state()`.
+  `MoverRailVehicleController::initialize_mover_state()`.
 * **`BrakeOpModes` defaults to a mode no FIZ asks for.** Wrapper: `BRAKE_OP_MODE_NONE` as the
   default, `pnep` parsed.
 * **The spring brake reads its two valve areas crossed.** FIZ `ValveOnArea` goes into
@@ -174,7 +174,7 @@ interface.
   pantograph's own valve stays manual. The E186 declares none of these keys, so in the original
   `P` alone raises its pantograph; porting only the keys that are present left the master valve
   shut, and the wrapper grew a workaround opening it on every raise. Wrapper: the loader's
-  defaults in `VehicleElectricEngine`, the workaround removed.
+  defaults in `RailVehicleElectricEngine`, the workaround removed.
 * **The couplers depend on the frame rate.** `CouplerForce()` (`Mover.cpp:4779-4784`) takes a
   coupler's length as the distance set by the last refresh plus *ten times* the relative
   movement since (`dMoveLen`), and the original refreshes once a frame, before all its physics
@@ -278,7 +278,7 @@ interface.
   original's own TODO to make it "a sound event for specific pantograph"), so raising a
   pantograph under a dead or missing wire is silent. `sPantDown` follows the pantograph's
   `is_active` instead (`vehicle/DynObj.cpp:4007-4036`). Wrapper: the same two conditions, reported
-  as `VehicleElectricEngine.pantograph_up`/`pantograph_down`; which pantograph it was is not yet
+  as `RailVehicleElectricEngine.pantograph_up`/`pantograph_down`; which pantograph it was is not yet
   used for the sound's position (`TODO.md`).
 
 ## Cab Python screens (`pyscreen:`, the original's Python 2 scripts)

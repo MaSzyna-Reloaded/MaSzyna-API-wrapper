@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainLightingParser
 
-## Light: and Headlights: sections -> VehicleLighting. LoadFIZ_Light: Mover.cpp:11035,
+## Light: and Headlights: sections -> RailVehicleLighting. LoadFIZ_Light: Mover.cpp:11035,
 ## LoadFIZ_Headlights: Mover.cpp:10328, LoadFIZ_PowerParamsDecode: Mover.cpp:11547.
 ## LightsList: header (Size/Wrap/Default) and rows of two light bitmasks, the occupied cab's end
 ## and the other one (LoadFIZ_LightsList, readLightsList, Mover.cpp:8558).
@@ -32,11 +32,11 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     _parse_light(FizLineUtil.read_key_values(p), context)
 
 
-func _get_node(context: FizImportContext) -> VehicleLighting:
-    var node: VehicleLighting = context.get_part("VehicleLighting")
+func _get_node(context: FizImportContext) -> RailVehicleLighting:
+    var node: RailVehicleLighting = context.get_part("RailVehicleLighting")
     if node == null:
-        node = MoverVehicleLighting.new()
-        context.add_part("VehicleLighting", node)
+        node = MoverRailVehicleLighting.new()
+        context.add_part("RailVehicleLighting", node)
     return node
 
 
@@ -52,7 +52,7 @@ func _parse_light(kv: Dictionary, context: FizImportContext) -> void:
     if kv.has("AlterLMaxVoltage"):
         node.light_alternative_max_voltage = FizLineUtil.get_float(kv, "AlterLMaxVoltage")
 
-    # LMaxVoltage feeds VehicleController.battery_voltage, not a VehicleLighting property - see
+    # LMaxVoltage feeds VehicleController.battery_voltage, not a RailVehicleLighting property - see
     # doc_classes/VehicleController.xml ([code]Light:LMaxVoltage[/code]).
     if kv.has("LMaxVoltage"):
         context.controller.battery_voltage = FizLineUtil.get_float(kv, "LMaxVoltage")

@@ -81,8 +81,11 @@ zwiekszenie nacisku przy duzych predkosciach w hamulcach Oerlikona
 ...
 */
 
+// WRAPPER WORKAROUND, to clean up: the wrapper's alerter component reads and writes
+// TSecuritySystem's private fields through this friend - the only wrapper name in the vendored
+// Mover. To go once TSecuritySystem is configured without reaching into it.
 namespace godot {
-    class MoverVehicleSecuritySystem;
+    class MoverRailVehicleSecuritySystem;
 }
 
 namespace Maszyna {
@@ -689,7 +692,8 @@ namespace Maszyna {
     using TUniversalCtrlTable = std::array<TUniversalCtrl, UniversalCtrlArraySize + 1>;
 
     class TSecuritySystem {
-            friend class godot::MoverVehicleSecuritySystem;
+            // WRAPPER WORKAROUND, to clean up (see the forward declaration of godot::MoverRailVehicleSecuritySystem)
+            friend class godot::MoverRailVehicleSecuritySystem;
             bool vigilance_enabled = false;
             bool cabsignal_enabled = false;
             bool radiostop_enabled = false;

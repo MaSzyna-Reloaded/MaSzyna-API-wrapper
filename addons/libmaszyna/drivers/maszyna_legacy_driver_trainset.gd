@@ -86,17 +86,17 @@ var push_pull:bool = false
 func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     direction = driver_direction
     vehicles = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END if direction >= 0 else REAR_END, TrainController.COUPLING_ELEMENT_COUPLER)
+            vehicle, FRONT_END if direction >= 0 else REAR_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
     push_pull = false
     if vehicles:
         push_pull = RailVehicleServer.vehicle_get_coupled(
-                vehicles[0], FRONT_END, TrainController.COUPLING_ELEMENT_CONTROL).has(vehicles[-1])
+                vehicles[0], FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL).has(vehicles[-1])
     # the vehicles its controls reach (FindPowered(), the vehicles under control of UpdateSituation());
     # the original counts the front vehicle twice when it is not the driver's own
     # (Driver.cpp:2470-2489, MASZYNA_ORIGINAL_QUIRKS.md) - here every engine counts once
     controlling = RailVehicleServer.vehicle_find_powered(vehicle)
     pantograph_unit = RailVehicleServer.vehicle_find_pantograph_carrier(vehicle)
-    var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, TrainController.COUPLING_ELEMENT_CONTROL)
+    var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     controlled_engines = 0
     motor_overload_relay_open = false
     for other:RID in controlled:

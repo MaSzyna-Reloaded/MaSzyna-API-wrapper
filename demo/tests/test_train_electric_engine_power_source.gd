@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-## Regression test: VehicleElectricEngine::_do_fetch_state_from_mover used to unconditionally
+## Regression test: RailVehicleElectricEngine::_do_fetch_state_from_mover used to unconditionally
 ## reverse-map EnginePowerSource.RAccumulator.RechargeSource and .RPowerCable.PowerTrans, both
 ## of which are only initialized by _do_update_internal_mover() when power_source is the
 ## matching variant (Accumulator / PowerCable respectively). For any other power_source -
@@ -16,8 +16,8 @@ func before_each():
 
 
 func test_current_collector_power_source_does_not_crash_on_process():
-    var engine := MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    var engine := MoverRailVehicleElectricSeriesEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(3)
 
@@ -29,7 +29,7 @@ func test_current_collector_power_source_does_not_crash_on_process():
 
 func test_default_power_source_does_not_crash_on_process():
     # The compiled default (power_source == NotDefined) hits the same unconditional-read path.
-    var engine := MoverVehicleElectricSeriesEngine.new()
+    var engine := MoverRailVehicleElectricSeriesEngine.new()
     train.add_component(engine)
     await wait_idle_frames(3)
 
@@ -37,10 +37,10 @@ func test_default_power_source_does_not_crash_on_process():
 
 
 func test_accumulator_power_source_still_reports_recharge_source():
-    var engine := MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
-    engine.power_accumulator_recharge_source = TrainController.POWER_SOURCE_GENERATOR
+    var engine := MoverRailVehicleElectricSeriesEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_ACCUMULATOR
+    engine.power_accumulator_recharge_source = RailVehicleController.POWER_SOURCE_GENERATOR
     train.add_component(engine)
     await wait_idle_frames(3)
 
-    assert_eq(engine.get_state().get("accumulator/recharge_source"), TrainController.POWER_SOURCE_GENERATOR)
+    assert_eq(engine.get_state().get("accumulator/recharge_source"), RailVehicleController.POWER_SOURCE_GENERATOR)

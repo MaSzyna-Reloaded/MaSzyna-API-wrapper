@@ -13,7 +13,7 @@ func before_each():
     train.battery_voltage = 110.0
     train.apply_configuration()
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
-    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
     train.add_component(master_controller)
     var controls: LegacyCabinControls = LegacyCabinControls.new()

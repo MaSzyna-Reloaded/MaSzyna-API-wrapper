@@ -110,8 +110,8 @@ static func set_zero_speed(vehicle:RID, cab:int) -> void:
 ## position with the clutch in (RList[].Mn), so that it does not stall - SN61's idle
 static func set_idle(vehicle:RID, cab:int) -> void:
     var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            controlled, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            controlled, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return
     var positions:Array = engine.throttle_table_positions

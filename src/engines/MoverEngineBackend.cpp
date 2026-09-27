@@ -2,88 +2,88 @@
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
 #include "MoverEngineBackend.hpp"
-#include "VehicleEngine.hpp"
+#include "RailVehicleEngine.hpp"
 #include <algorithm>
 
 namespace godot {
-    bool MoverEngineBackend::get_main_switch_enabled(const VehicleEngine *p_engine) const {
+    bool MoverEngineBackend::get_main_switch_enabled(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Mains : false;
     }
 
-    bool MoverEngineBackend::get_main_switch_closable(const VehicleEngine *p_engine) const {
+    bool MoverEngineBackend::get_main_switch_closable(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MainSwitchCheck() : false;
     }
 
-    double MoverEngineBackend::get_motor_torque(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_motor_torque(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Mm : 0.0;
     }
 
-    double MoverEngineBackend::get_wheel_torque(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_wheel_torque(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Mw : 0.0;
     }
 
-    double MoverEngineBackend::get_wheel_force(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_wheel_force(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Fw : 0.0;
     }
 
-    double MoverEngineBackend::get_tractive_force(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_tractive_force(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
 
 
 
-    double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_power(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePower : 0.0;
     }
 
-    double MoverEngineBackend::get_rpm_count(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_rpm_count(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->enrot : 0.0;
     }
 
-    double MoverEngineBackend::get_rpm_ratio(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_rpm_ratio(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;
     }
 
-    double MoverEngineBackend::get_circuit_nmax_rpm(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_circuit_nmax_rpm(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->nmax * 60.0 : 0.0;
     }
 
-    int MoverEngineBackend::get_damage(const VehicleEngine *p_engine) const {
+    int MoverEngineBackend::get_damage(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngDmgFlag : 0;
     }
 
-    double MoverEngineBackend::get_main_switch_time(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_main_switch_time(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MainsInitTimeCountdown : 0.0;
     }
 
-    bool MoverEngineBackend::get_main_no_power_pos(const VehicleEngine *p_engine) const {
+    bool MoverEngineBackend::get_main_no_power_pos(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
     }
 
-    bool MoverEngineBackend::get_motor_overload_relay_high_threshold(const VehicleEngine *p_engine) const {
+    bool MoverEngineBackend::get_motor_overload_relay_high_threshold(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MotorOverloadRelayHighThreshold : false;
     }
 
-    double MoverEngineBackend::get_eimic_real(const VehicleEngine *p_engine) const {
+    double MoverEngineBackend::get_eimic_real(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->eimic_real : 0.0;
     }
 
-    void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
+    void MoverEngineBackend::apply_configuration(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         p_mover->EngineType = mover_engine_type(p_engine->get_engine_type());
 
@@ -136,7 +136,7 @@ namespace godot {
             const Ref<MotorParameter> &row = p_engine->get_motor_param_table()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleEngine]: p_engine->get_motor_param_table() property is null at index " +
+                        "[RailVehicleEngine]: p_engine->get_motor_param_table() property is null at index " +
                         String::num(i));
                 return;
             }
@@ -160,7 +160,7 @@ namespace godot {
         }
     }
 
-    void MoverEngineBackend::fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const {
+    void MoverEngineBackend::fill_config(const RailVehicleEngine *p_engine, Dictionary &p_config) const {
         TMoverParameters *p_mover = owner.get_mover();
         if (p_mover == nullptr) {
             return;
@@ -168,18 +168,18 @@ namespace godot {
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
     }
 
-    bool MoverEngineBackend::main_switch(const VehicleEngine *p_engine, const bool p_enabled) const {
+    bool MoverEngineBackend::main_switch(const RailVehicleEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
     }
 
-    bool MoverEngineBackend::motor_overload_relay_threshold(const VehicleEngine *p_engine, const bool p_high) const {
+    bool MoverEngineBackend::motor_overload_relay_threshold(const RailVehicleEngine *p_engine, const bool p_high) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->CurrentSwitch(p_high) : false;
     }
 
 
-    void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
+    void MoverEngineBackend::process(const RailVehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();
         const VehicleController *controller = p_engine->get_controller();
         if (p_mover == nullptr || controller == nullptr ||

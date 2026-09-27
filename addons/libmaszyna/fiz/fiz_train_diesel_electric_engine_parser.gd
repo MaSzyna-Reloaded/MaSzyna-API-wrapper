@@ -2,12 +2,12 @@
 extends RefCounted
 class_name FizTrainDieselElectricEngineParser
 
-## VehicleDieselElectricEngine's own subset of Engine: (EngineType=DieselElectric/DumbDE, called
+## RailVehicleDieselElectricEngine's own subset of Engine: (EngineType=DieselElectric/DumbDE, called
 ## directly by FizTrainEngineParser once it creates the node), plus WWList:+rows and
 ## MotorParamTable:+rows (both registered directly in FizVehicleBuilder's section
 ## table, using the standard parse()/parse_row()/end_table() interface).
 ##
-## WWList: rows map 1:1 onto VehicleDieselElectricEngine.wwlist (WWListItem), which
+## WWList: rows map 1:1 onto RailVehicleDieselElectricEngine.wwlist (WWListItem), which
 ## _do_update_internal_mover already pushes into the mover's DElist/SST tables - that C++ side
 ## was already fully wired, only the FIZ-side parser was missing (this is what blocked
 ## main_switch/direction/brake on any DumbDE vehicle: DElist stayed all-zero, and MainCtrlPosNo
@@ -20,7 +20,7 @@ class_name FizTrainDieselElectricEngineParser
 ##
 ## MotorParamTable: (the diesel/diesel-electric variant, no "0" suffix - distinct from
 ## MotorParamTable0:, which only ElectricSeriesMotor uses) rows share FizTrainEngineCommon's
-## parse_motor_param_row() and populate the same VehicleEngine.motor_param_table -> mover
+## parse_motor_param_row() and populate the same RailVehicleEngine.motor_param_table -> mover
 ## MotorParam[] used by TractionForce()'s DieselElectric branch for Im (motor current). Without
 ## it MotorParam[] stays all-zero, which divides by zero computing Im (-> inf), which then
 ## zeroes Ft via the "clamp Im to tempImax" step (Mover.cpp ~5403-5423) - this is what left a
@@ -42,13 +42,13 @@ var _active_table: String = ""
 var _diesel: bool = false
 
 
-func create_node() -> VehicleDieselElectricEngine:
-    return MoverVehicleDieselElectricEngine.new()
+func create_node() -> RailVehicleDieselElectricEngine:
+    return MoverRailVehicleDieselElectricEngine.new()
 
 
 ## The diesel-electric-specific subset of Engine:'s key/value set (common fields already
 ## applied by FizTrainEngineCommon via FizTrainEngineParser).
-func apply_engine_fields(kv: Dictionary, node: VehicleDieselElectricEngine) -> void:
+func apply_engine_fields(kv: Dictionary, node: RailVehicleDieselElectricEngine) -> void:
     if kv.has("Flat"):
         # Original quirk: compares to the literal string "1", not the normal Yes/No convention.
         node.generator_voltage_flat = FizLineUtil.get_string(kv, "Flat") == "1"
@@ -76,9 +76,9 @@ func apply_engine_fields(kv: Dictionary, node: VehicleDieselElectricEngine) -> v
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     # the header's key=value pairs (e.g. WWList's "Size=") - rows are self-terminating either way
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    _diesel = context.engine_type == VehicleEngine.DIESEL
+    _diesel = context.engine_type == RailVehicleEngine.DIESEL
     if prefix == "MotorParamTable:" and _diesel:
-        var node: VehicleDieselEngine = context.get_part("VehicleEngine") as VehicleDieselEngine
+        var node: RailVehicleDieselEngine = context.get_part("RailVehicleEngine") as RailVehicleDieselEngine
         if node:
             FizTrainDieselEngineParser.apply_clutch(kv, node)
     if prefix == "MotorParamTable:":
@@ -89,9 +89,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _wwlist_rows = []
 
 
-func _get_node(context: FizImportContext) -> VehicleDieselEngine:
-    var node: VehicleComponent = context.get_part("VehicleEngine")
-    return node as VehicleDieselEngine
+func _get_node(context: FizImportContext) -> RailVehicleDieselEngine:
+    var node: VehicleComponent = context.get_part("RailVehicleEngine")
+    return node as RailVehicleDieselEngine
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
@@ -131,7 +131,7 @@ func end_table(context: FizImportContext) -> void:
         _motor_param_rows = []
         return
     if _wwlist_rows:
-        (node as VehicleDieselElectricEngine).wwlist = _wwlist_rows
+        (node as RailVehicleDieselElectricEngine).wwlist = _wwlist_rows
     if _motor_param_rows:
         node.motor_param_table = _motor_param_rows
     _wwlist_rows = []

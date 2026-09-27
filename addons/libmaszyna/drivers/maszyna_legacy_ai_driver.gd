@@ -71,13 +71,13 @@ const CONNECT_DISTANCE:float = 20.0
 const ATTACH_DISTANCE:float = 2.0
 ## The coupling elements a `Shunt` asks for, by the original's bits (coupling::, MOVER.h:159-171);
 ## the high voltage and the power lines have no element a shunter joins
-const COUPLING_BITS:Dictionary[int, TrainController.CouplingElement] = {
-    1: TrainController.COUPLING_ELEMENT_COUPLER,
-    2: TrainController.COUPLING_ELEMENT_BRAKEHOSE,
-    4: TrainController.COUPLING_ELEMENT_CONTROL,
-    16: TrainController.COUPLING_ELEMENT_GANGWAY,
-    32: TrainController.COUPLING_ELEMENT_MAINHOSE,
-    64: TrainController.COUPLING_ELEMENT_HEATING,
+const COUPLING_BITS:Dictionary[int, RailVehicleController.CouplingElement] = {
+    1: RailVehicleController.COUPLING_ELEMENT_COUPLER,
+    2: RailVehicleController.COUPLING_ELEMENT_BRAKEHOSE,
+    4: RailVehicleController.COUPLING_ELEMENT_CONTROL,
+    16: RailVehicleController.COUPLING_ELEMENT_GANGWAY,
+    32: RailVehicleController.COUPLING_ELEMENT_MAINHOSE,
+    64: RailVehicleController.COUPLING_ELEMENT_HEATING,
 }
 
 
@@ -129,7 +129,7 @@ class DriverState:
     ## Its own train brake handle position and brake timing
     var braking:MaszynaLegacyDriverBraking = MaszynaLegacyDriverBraking.new()
     ## How it drives the engine of its vehicle - the kind of engine's own (create())
-    var traction:MaszynaLegacyDriverTraction = MaszynaLegacyDriverTraction.create(VehicleEngine.NONE)
+    var traction:MaszynaLegacyDriverTraction = MaszynaLegacyDriverTraction.create(RailVehicleEngine.NONE)
     ## What it reads of the tracks ahead
     var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
 
@@ -376,8 +376,8 @@ func _update(driver:RID) -> void:
     state.reaction_time = state.speed.reaction_time
     var cab:int = CabinSystem.occupied_cab(vehicle)
     # the engine it drives decides how (IncSpeed()'s switch on the engine type, Driver.cpp:3409)
-    var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", VehicleEngine.NONE)) \
-            as VehicleEngine.EngineType
+    var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", RailVehicleEngine.NONE)) \
+            as RailVehicleEngine.EngineType
     if not state.traction.engine_type == engine_type:
         state.traction = MaszynaLegacyDriverTraction.create(engine_type)
     var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
@@ -463,9 +463,9 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     if not mains:
         MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
         # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
-        var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
-                VehicleEngine.NONE)) as VehicleEngine.EngineType
-        if engine_type == VehicleEngine.DIESEL:
+        var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
+                RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
+        if engine_type == RailVehicleEngine.DIESEL:
             MaszynaLegacyDriverHints.set_idle(vehicle, cab)
         MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
     elif not converter_overload:
@@ -537,7 +537,7 @@ func _update_connect(state:DriverState) -> void:
             state.coupling_end = FRONT_END if state.trainset.front_direction > 0 else REAR_END
         return
     if not _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
-        var neighbour:VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
+        var neighbour:RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
                 state.coupling_vehicle, state.coupling_end, MaszynaLegacyDriverRoute.OBSTACLE_RANGE)
         if neighbour and neighbour.distance < ATTACH_DISTANCE:
             RailVehicleServer.vehicle_send_command(state.coupling_vehicle, "coupler_connect", state.coupling_end)
@@ -574,7 +574,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
             while index >= 0:
                 var current:RID = vehicles[index]
                 end = _end_towards_front(state.trainset, index)
-                if _is_coupled_by(current, end, TrainController.COUPLING_ELEMENT_PERMANENT):
+                if _is_coupled_by(current, end, RailVehicleController.COUPLING_ELEMENT_PERMANENT):
                     count += 1
                 if not current == vehicle:
                     # released, to be pressed together
@@ -590,7 +590,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
             else:
                 # refused until the buffers are pressed enough: it presses on
                 RailVehicleServer.vehicle_send_command(decoupled, "coupler_disconnect", end)
-                if not _is_coupled_by(decoupled, end, TrainController.COUPLING_ELEMENT_COUPLER):
+                if not _is_coupled_by(decoupled, end, RailVehicleController.COUPLING_ELEMENT_COUPLER):
                     state.vehicle_count = -2
         if not state.pressing:
             if state.direction_backup == 0:
@@ -638,9 +638,9 @@ func _control_security_system(vehicle:RID, cab:int) -> void:
 
 
 static func _has_diesel_engine(vehicle:RID) -> bool:
-    var engine_type:VehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", VehicleEngine.NONE)) \
-            as VehicleEngine.EngineType
-    return engine_type == VehicleEngine.DIESEL or engine_type == VehicleEngine.DIESEL_ELECTRIC
+    var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", RailVehicleEngine.NONE)) \
+            as RailVehicleEngine.EngineType
+    return engine_type == RailVehicleEngine.DIESEL or engine_type == RailVehicleEngine.DIESEL_ELECTRIC
 
 
 ## `Timetable:<name> <velocity> <minutes>` (Driver.cpp:4494-4576): the timetable, the first station
@@ -715,9 +715,9 @@ func _take_shunt(driver:RID, state:DriverState, loose:bool, vehicles:float, coup
     elif vehicles >= 0.0:
         var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
         var behind:bool = _is_coupled_by(
-                vehicle, REAR_END if state.direction > 0 else FRONT_END, TrainController.COUPLING_ELEMENT_COUPLER)
+                vehicle, REAR_END if state.direction > 0 else FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
         var ahead:bool = _is_coupled_by(
-                vehicle, FRONT_END if state.direction > 0 else REAR_END, TrainController.COUPLING_ELEMENT_COUPLER)
+                vehicle, FRONT_END if state.direction > 0 else REAR_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
         if not behind and ahead:
             # the vehicles are in front: turn first, then leave them
             state.direction_order = -state.direction
@@ -751,7 +751,7 @@ func _direction_towards(driver:RID, position:Vector3, value:float) -> int:
 
 ## Whether something is joined at the vehicle's end by `element` - the walk out through that end
 ## starts beyond it
-static func _is_coupled_by(vehicle:RID, end:int, element:TrainController.CouplingElement) -> bool:
+static func _is_coupled_by(vehicle:RID, end:int, element:RailVehicleController.CouplingElement) -> bool:
     var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, end, element)
     return not coupled.is_empty() and not coupled[0] == vehicle
 
@@ -770,7 +770,7 @@ static func _end_towards_front(trainset:MaszynaLegacyDriverTrainset, index:int) 
         return FRONT_END if trainset.front_direction > 0 else REAR_END
     var vehicle:RID = trainset.vehicles[index]
     var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, TrainController.COUPLING_ELEMENT_COUPLER)
+            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
     var position:int = coupled.find(vehicle)
     # beyond the front end come first
     return FRONT_END if position > 0 and coupled[position - 1] == trainset.vehicles[index - 1] else REAR_END

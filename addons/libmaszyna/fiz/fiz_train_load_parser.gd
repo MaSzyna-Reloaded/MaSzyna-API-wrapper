@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainLoadParser
 
-## Load: section parser -> VehicleLoad. Registered directly in FizVehicleBuilder's
+## Load: section parser -> RailVehicleLoad. Registered directly in FizVehicleBuilder's
 ## section table. Real syntax is a single scalar line (confirmed against ~25 real vehicle
 ## files, wagons/locomotives alike, all matching this shape exactly):
 ## `Load: MaxLoad=64 LoadQ=tonns LoadAccepted=Coal,Ore,Calcium LoadSpeed=1 UnLoadSpeed=0.1
@@ -10,21 +10,21 @@ class_name FizTrainLoadParser
 ## corresponding key in any real file checked - left at compiled defaults.
 
 
-func create_node() -> VehicleLoad:
-    return MoverVehicleLoad.new()
+func create_node() -> RailVehicleLoad:
+    return MoverRailVehicleLoad.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("VehicleLoad", node)
+    context.add_part("RailVehicleLoad", node)
 
     if kv.has("MaxLoad"):
         node.max_load = FizLineUtil.get_float(kv, "MaxLoad")
     if kv.has("LoadQ"):
         match FizLineUtil.get_string(kv, "LoadQ").to_lower():
-            "pieces": node.load_unit = VehicleLoad.LOAD_UNIT_PIECES
-            "tonns", "tons": node.load_unit = VehicleLoad.LOAD_UNIT_TONS
+            "pieces": node.load_unit = RailVehicleLoad.LOAD_UNIT_PIECES
+            "tonns", "tons": node.load_unit = RailVehicleLoad.LOAD_UNIT_TONS
     if kv.has("LoadAccepted"):
         var loads: PackedStringArray = FizLineUtil.get_string(kv, "LoadAccepted").split(",")
         var accepted: Array[String] = []

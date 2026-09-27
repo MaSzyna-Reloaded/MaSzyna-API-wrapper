@@ -379,7 +379,7 @@ static func _domain_clip_automation(
 
 
 ## "localbrakesound" (release, rsSBHiss) + "localbrakesound2" (engage, rsSBHissU) - both keyed off
-## brake_loco_pressure's rate of change, published from VehicleBrake.cpp as two already-non-negative
+## brake_loco_pressure's rate of change, published from RailVehicleBrake.cpp as two already-non-negative
 ## magnitudes (brake_loco_pressure_fall_rate/rise_rate) - two tracks of one independent-brake-
 ## cylinder hiss, one continuously-playing event.
 static func _build_local_brake_hiss(
@@ -418,11 +418,11 @@ static func _build_pipe_hiss(sources:Dictionary, config:Dictionary) -> SfxEvent:
         return null
 
     var brake_handle_type:int = int(config.get(
-            "brake_handle_type", VehicleBrake.BRAKE_HANDLE_TYPE_NO_HANDLE))
+            "brake_handle_type", RailVehicleBrake.BRAKE_HANDLE_TYPE_NO_HANDLE))
     var fv_sound_model:bool = (
-            brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FV4A
-            or brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FVEL6)
-    var fv4a_model:bool = brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FV4A
+            brake_handle_type == RailVehicleBrake.BRAKE_HANDLE_TYPE_FV4A
+            or brake_handle_type == RailVehicleBrake.BRAKE_HANDLE_TYPE_FVEL6)
+    var fv4a_model:bool = brake_handle_type == RailVehicleBrake.BRAKE_HANDLE_TYPE_FV4A
     var fv_flow_scale:Dictionary = {
         "airsound": 100000.0,
         "airsound2": 800000.0,

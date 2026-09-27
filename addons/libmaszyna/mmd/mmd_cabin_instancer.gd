@@ -947,9 +947,9 @@ static func _add_control_sound(
 ##
 ## `entry["animation_range_config_properties"]`, when present, is `[min_key, max_key]` into
 ## CabinSystem.vehicle_config(vehicle_rid) - MMD's scale is calibrated against MaSzyna's raw value domain for a
-## property (e.g. VehicleBrake's fBrakeCtrlPos), but the widget may be bound to an already-
+## property (e.g. RailVehicleBrake's fBrakeCtrlPos), but the widget may be bound to an already-
 ## normalized (0..1) state_property instead (brakectrl: the command it sends,
-## VehicleBrake::brake_level_set, itself expects a normalized level, so the widget's value/command
+## RailVehicleBrake::brake_level_set, itself expects a normalized level, so the widget's value/command
 ## domain has to stay normalized even though that's not what MMD's scale assumes). Multiplying
 ## the raw-domain-derived degrees/position by (max-min) - the same range the state's own
 ## normalization divides by - converts it to the correct per-normalized-unit amount without

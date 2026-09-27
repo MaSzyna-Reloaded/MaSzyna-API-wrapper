@@ -206,7 +206,7 @@ namespace godot {
     /// event_manager::queue_receivers() (Event.cpp:2255-2268): only a launcher's first event, and
     /// with no activator
     void ScenarioEventServer::_on_vehicle_radio_called(
-            const RID &p_vehicle, const VehicleRadio::RadioCall p_call, const Vector3 &p_position) {
+            const RID &p_vehicle, const RailVehicleRadio::RadioCall p_call, const Vector3 &p_position) {
         // copied: firing queues events, and a listener may create launchers
         const Vector<RID> listening = radio_launchers;
         for (const RID &rid: listening) {
@@ -825,7 +825,7 @@ namespace godot {
         }
     }
 
-    void ScenarioEventServer::launcher_set_radio_call(const RID &p_launcher, const VehicleRadio::RadioCall p_call) {
+    void ScenarioEventServer::launcher_set_radio_call(const RID &p_launcher, const RailVehicleRadio::RadioCall p_call) {
         LauncherData *launcher = launchers.getptr(p_launcher);
         ERR_FAIL_NULL(launcher);
         launcher->radio_call = p_call;

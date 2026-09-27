@@ -84,7 +84,7 @@ func test_a_vehicle_running_away_is_not_minded():
     assert_eq(speed.velocity_desired, SHUNT_VELOCITY)
 
 
-func _vehicle_ahead(distance:float) -> VehicleNeighbour:
-    var neighbour:VehicleNeighbour = VehicleNeighbour.new()
+func _vehicle_ahead(distance:float) -> RailVehicleNeighbour:
+    var neighbour:RailVehicleNeighbour = RailVehicleNeighbour.new()
     neighbour.distance = distance
     return neighbour

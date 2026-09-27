@@ -11,21 +11,21 @@ var include_depth: int = 0
 
 var controller: VehicleController = null
 
-## EngineType decided by Engine: (VehicleEngine.EngineType) - later sections' defaults
+## EngineType decided by Engine: (RailVehicleEngine.EngineType) - later sections' defaults
 ## (MotorParamTable row format, ReleaserPowerPosLock default, ...) depend on this.
-var engine_type: int = VehicleEngine.NONE
-## TrainType decided by Param. (TrainController.TrainType) - some defaults are dt_EZT-specific.
-var train_type: int = TrainController.TRAIN_TYPE_DEFAULT
-## BrakeSystem decided by Cntrl. (VehicleBrake.BrakeSystemType) - most of Cntrl.'s brake-related
+var engine_type: int = RailVehicleEngine.NONE
+## TrainType decided by Param. (RailVehicleController.TrainType) - some defaults are dt_EZT-specific.
+var train_type: int = RailVehicleController.TRAIN_TYPE_DEFAULT
+## BrakeSystem decided by Cntrl. (RailVehicleBrake.BrakeSystemType) - most of Cntrl.'s brake-related
 ## fields are only meaningful when this isn't Individual.
-var brake_system: int = VehicleBrake.BRAKE_SYSTEM_INDIVIDUAL
+var brake_system: int = RailVehicleBrake.BRAKE_SYSTEM_INDIVIDUAL
 
 ## Full Cntrl. key/value set, stashed by FizTrainCntrlParser for the Engine: parser to consume
-## once it creates the VehicleEngine-family node (Cntrl. conventionally precedes Engine:).
+## once it creates the RailVehicleEngine-family node (Cntrl. conventionally precedes Engine:).
 var cntrl_kv: Dictionary = {}
 
 ## Full Power: key/value set, stashed by FizTrainPowerParser for the concrete engine parser to
-## consume once it creates the VehicleElectricEngine-family node (Power: conventionally precedes
+## consume once it creates the RailVehicleElectricEngine-family node (Power: conventionally precedes
 ## Engine: in real files).
 var power_kv: Dictionary = {}
 

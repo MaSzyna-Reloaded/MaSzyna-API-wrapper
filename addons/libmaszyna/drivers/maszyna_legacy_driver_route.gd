@@ -163,7 +163,7 @@ var velocity_minus:float = OTHER_VELOCITY_MINUS
 var signal_velocity:float = 0.0
 var commands:Array[Array] = []
 ## The nearest vehicle ahead (Obstacle), null for none, and its speed [km/h]
-var obstacle:VehicleNeighbour = null
+var obstacle:RailVehicleNeighbour = null
 var obstacle_speed:float = 0.0
 ## Standing at its passenger stop (IsAtPassengerStop)
 var at_passenger_stop:bool = false

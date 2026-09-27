@@ -5,30 +5,30 @@ class_name FizTrainEngineCommon
 ## Field-application helpers shared by every concrete engine parser (Diesel/DieselElectric/
 ## ElectricSeries/ElectricInduction) - NOT a section parser itself (no parse()/prefix), just
 ## the common part of Engine:'s and Cntrl.'s field sets, factored out because every concrete
-## VehicleEngine subclass inherits these Godot properties. LoadFIZ_Engine common subset:
+## RailVehicleEngine subclass inherits these Godot properties. LoadFIZ_Engine common subset:
 ## Mover.cpp:11119; Cntrl. engine subset: Mover.cpp:10707.
 
 
-## EngineType= decode (VehicleEngine.EngineType - the enum this class family owns).
+## EngineType= decode (RailVehicleEngine.EngineType - the enum this class family owns).
 ## LoadFIZ_EngineDecode: Mover.cpp:11689. Used by Engine: and by other sections that reference
 ## an engine type (Light:/Clima: generator engine).
-static func parse_engine_type(value: String, default_value: int = VehicleEngine.NONE) -> int:
+static func parse_engine_type(value: String, default_value: int = RailVehicleEngine.NONE) -> int:
     if not value:
         return default_value
     match value.to_lower():
-        "electricseriesmotor": return VehicleEngine.ELECTRIC_SERIES_MOTOR
-        "dieselengine": return VehicleEngine.DIESEL
-        "steamengine": return VehicleEngine.STEAM
-        "wheelsdriven": return VehicleEngine.WHEELS_DRIVEN
-        "dumb": return VehicleEngine.DUMB
-        "dieselelectric", "dumbde": return VehicleEngine.DIESEL_ELECTRIC
-        "electricinductionmotor": return VehicleEngine.ELECTRIC_INDUCTION_MOTOR
-        "main": return VehicleEngine.MAIN
-        _: return VehicleEngine.NONE
+        "electricseriesmotor": return RailVehicleEngine.ELECTRIC_SERIES_MOTOR
+        "dieselengine": return RailVehicleEngine.DIESEL
+        "steamengine": return RailVehicleEngine.STEAM
+        "wheelsdriven": return RailVehicleEngine.WHEELS_DRIVEN
+        "dumb": return RailVehicleEngine.DUMB
+        "dieselelectric", "dumbde": return RailVehicleEngine.DIESEL_ELECTRIC
+        "electricinductionmotor": return RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR
+        "main": return RailVehicleEngine.MAIN
+        _: return RailVehicleEngine.NONE
 
 
 ## Engine: fields common to every EngineType (Trans=, TransEff, motor blowers, ...).
-static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: FizImportContext) -> void:
+static func apply_engine_common(node: RailVehicleEngine, kv: Dictionary, context: FizImportContext) -> void:
     if kv.has("Trans"):
         var parts: PackedStringArray = FizLineUtil.get_string(kv, "Trans").split(":")
         if parts.size() == 2:
@@ -49,7 +49,7 @@ static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: Fi
 
     # PressureSwitch's absent-key default (true, unless the vehicle is EZT) differs from the
     # compiled default (false).
-    var pressure_switch_default: bool = context.train_type != TrainController.TRAIN_TYPE_EZT
+    var pressure_switch_default: bool = context.train_type != RailVehicleController.TRAIN_TYPE_EZT
     node.pressure_switch_present = FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default)
 
 
@@ -59,27 +59,27 @@ static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: Fi
 ## compressor, its automatic valve, the master valve and each pantograph's own. The defaults are
 ## the properties' own: the master valve automatic, each pantograph's valve manual. PantAutoValve
 ## defaults to true for an EZT in the original (Mover.cpp:10925) - not ported with the train type.
-static func apply_cntrl_electric_subset(node: VehicleElectricEngine, cntrl_kv: Dictionary) -> void:
+static func apply_cntrl_electric_subset(node: RailVehicleElectricEngine, cntrl_kv: Dictionary) -> void:
     if cntrl_kv.has("PantCompressorStart"):
         node.cntrl_pantograph_compressor_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), VehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), RailVehicleEngine.START_MODE_MANUAL)
     if cntrl_kv.has("PantAutoValve"):
         node.cntrl_pantograph_auto_valve = FizLineUtil.get_bool(cntrl_kv, "PantAutoValve")
     if cntrl_kv.has("PantEPValveStart"):
         node.cntrl_pantographs_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), VehicleEngine.START_MODE_AUTOMATIC)
+                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), RailVehicleEngine.START_MODE_AUTOMATIC)
     if cntrl_kv.has("PantEPValveSpring"):
         node.cntrl_pantographs_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantEPValveSpring")
     if cntrl_kv.has("PantValveStart"):
         node.cntrl_pantograph_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), VehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), RailVehicleEngine.START_MODE_MANUAL)
     if cntrl_kv.has("PantValveSpring"):
         node.cntrl_pantograph_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantValveSpring")
     if cntrl_kv.has("PantValveSolenoid"):
         node.cntrl_pantograph_valve_solenoid = FizLineUtil.get_bool(cntrl_kv, "PantValveSolenoid")
 
 
-static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary) -> void:
+static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Dictionary) -> void:
     if not cntrl_kv:
         return
     if cntrl_kv.has("Camshaft"):
@@ -96,14 +96,14 @@ static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary)
         node.cntrl_eim_control_type = clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3)
     if cntrl_kv.has("MotorBlowersStart"):
         node.motor_blowers_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), VehicleEngine.START_MODE_MANUAL)
-    if node is VehicleDieselEngine and cntrl_kv.has("OilStart"):
-        (node as VehicleDieselEngine).oil_pump_start_mode = FizTrainControllerParser.parse_start_mode(
-                        FizLineUtil.get_string(cntrl_kv, "OilStart"), VehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), RailVehicleEngine.START_MODE_MANUAL)
+    if node is RailVehicleDieselEngine and cntrl_kv.has("OilStart"):
+        (node as RailVehicleDieselEngine).oil_pump_start_mode = FizTrainControllerParser.parse_start_mode(
+                        FizLineUtil.get_string(cntrl_kv, "OilStart"), RailVehicleEngine.START_MODE_MANUAL)
 
     match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
-        "optional": node.cntrl_auto_relay_mode = VehicleEngine.AUTO_RELAY_OPTIONAL
-        "yes": node.cntrl_auto_relay_mode = VehicleEngine.AUTO_RELAY_YES
+        "optional": node.cntrl_auto_relay_mode = RailVehicleEngine.AUTO_RELAY_OPTIONAL
+        "yes": node.cntrl_auto_relay_mode = RailVehicleEngine.AUTO_RELAY_YES
 
 
 ## Shared MotorParamTable0:/MotorParamTable: row parser. These are TWO DIFFERENT sections in the
@@ -169,10 +169,10 @@ static func parse_diesel_gear_row(p: MaszynaParser) -> MotorParameter:
     return item
 
 
-## Power:'s fields, common to the whole VehicleElectricEngine family (Series + Induction).
+## Power:'s fields, common to the whole RailVehicleElectricEngine family (Series + Induction).
 ## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
 ## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.
-static func apply_power(node: VehicleElectricEngine, power_kv: Dictionary) -> void:
+static func apply_power(node: RailVehicleElectricEngine, power_kv: Dictionary) -> void:
     if not power_kv:
         return
     if power_kv.has("EnginePower"):

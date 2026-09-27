@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## Regression test for the reported "na postoju elektrowozom flapuje napiecie z drutow i nie da
 ## sie uruchomic, bo wywala wylacznik szybki" bug. Drives a real RailVehicle3D + VehicleController
-## + VehicleElectricSeriesEngine + a real overhead wire/power source (TractionPowerServer) through
+## + RailVehicleElectricSeriesEngine + a real overhead wire/power source (TractionPowerServer) through
 ## Godot's actual per-frame _process(), exactly like an electric locomotive sitting at a
 ## platform with its pantograph raised and main switch closed.
 ##
@@ -25,7 +25,7 @@ var created_power_sources:Array[RID] = []
 var vehicle:RailVehicle3D
 var controller:VehicleController
 var physics_node:VehiclePhysicsNode
-var engine:VehicleElectricSeriesEngine
+var engine:RailVehicleElectricSeriesEngine
 
 
 func after_each() -> void:
@@ -77,12 +77,12 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     physics_node = build_vehicle_node("test_idle_pantograph_train", model)
     controller = physics_node.get_controller()
 
-    engine = MoverVehicleElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine = MoverRailVehicleElectricSeriesEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 1
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
-    var master_controller: VehicleMasterController = MoverVehicleMasterController.new()
+    var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 6
     controller.add_component(master_controller)
     controller.add_component(engine)
@@ -97,7 +97,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     await wait_idle_frames(2)
 
     controller.send_command("battery", true)
-    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     var voltage_reached:bool = false
     for i in range(60):
         await wait_idle_frames(1)

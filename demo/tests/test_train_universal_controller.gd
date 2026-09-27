@@ -1,12 +1,12 @@
 extends MaszynaGutTest
 
 var train: VehicleController
-var universal_controller: VehicleUniversalController
+var universal_controller: RailVehicleUniversalController
 
 func before_each():
     train = build_vehicle("TestTrain")
 
-    universal_controller = MoverVehicleUniversalController.new()
+    universal_controller = MoverRailVehicleUniversalController.new()
     train.add_component(universal_controller)
     await wait_idle_frames(2)
 

@@ -11,11 +11,11 @@
 
 
 namespace godot {
-    class VehicleBrake;
+    class RailVehicleBrake;
     class VehicleComponent;
-    class VehicleEngine;
-    class VehicleSecuritySystem;
-    class VehicleLighting;
+    class RailVehicleEngine;
+    class RailVehicleSecuritySystem;
+    class RailVehicleLighting;
 
 
     /// The vehicle itself: its configuration, its components and the operations that change them,
@@ -198,7 +198,7 @@ namespace godot {
             void free_components();
             /* The lighting component, kept because the vehicle raises roof_light_changed for it.
              * Resolved when the component joins, not searched for per frame. */
-            VehicleLighting *lighting = nullptr;
+            RailVehicleLighting *lighting = nullptr;
             RID rid;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };

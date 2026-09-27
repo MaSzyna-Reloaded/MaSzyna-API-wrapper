@@ -16,7 +16,7 @@ class_name MaszynaRailVehicle3DInstancer
 ## axles into front-rolling/powered/rear-rolling groups based on AxleArangement letters/digits
 ## (DynObj.cpp:5150-5176), but only when a vehicle's rolling-wheel diameter differs from its
 ## powered-wheel diameter - no vehicle in the current game data needs that, and it would require
-## threading the parsed VehicleWheels config through to spawn time. Left unimplemented until an
+## threading the parsed RailVehicleWheels config through to spawn time. Left unimplemented until an
 ## actual vehicle needs it.
 const COUPLER_SUBMODEL_NAMES:Array[String] = [
     "coupler1", "coupler2",
@@ -361,13 +361,13 @@ static func _find_pantograph_arm_paths(
     return paths
 
 
-## VehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
+## RailVehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
 static func _apply_wiper_count(physics_node:VehiclePhysicsNode, vehicle:RailVehicle3D) -> void:
     var controller:VehicleController = physics_node.get_controller()
     if not controller:
         return
-    var wipers:VehicleWipers = controller.get_component(VehicleComponentType.COMPONENT_WIPERS) as VehicleWipers
+    var wipers:RailVehicleWipers = controller.get_component(VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
     if wipers:
         wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
         wipers.apply_config()

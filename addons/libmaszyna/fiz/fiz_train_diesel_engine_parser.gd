@@ -2,15 +2,15 @@
 extends RefCounted
 class_name FizTrainDieselEngineParser
 
-## VehicleDieselEngine's own subset of Engine: (apply_engine_fields(), called by
+## RailVehicleDieselEngine's own subset of Engine: (apply_engine_fields(), called by
 ## FizTrainEngineParser once it created the node), the clutch of its gearbox's header
 ## (apply_clutch()), and the DList:/DMList:/HTCList:/V2NList: table sections, registered directly
 ## in FizVehicleBuilder's section table.
 ##
 ## DList: header keys confirmed against a real vehicle line: `DList: Size=10 Mmax=2750
 ## nMmax=18.3 nmax=33.3 Mnmax=2142 nominalfill=1.0 Mstand=250.0 NomFuelConsRate=220`, cross-
-## checked directly against VehicleDieselEngine::_do_update_internal_mover's own field mapping
-## (`dizel_nominalfill = nominal_fuel_dose` etc.) - all six keys map onto VehicleDieselEngine's
+## checked directly against RailVehicleDieselEngine::_do_update_internal_mover's own field mapping
+## (`dizel_nominalfill = nominal_fuel_dose` etc.) - all six keys map onto RailVehicleDieselEngine's
 ## existing throttle_table-related properties. Row format confirmed via readDList
 ## (Mover.cpp:8444-8456): 3 columns, `Relay R Mn` -> ThrottlePositionItem's
 ## throttle_position/fuel_dose/clutch_behavior.
@@ -39,7 +39,7 @@ const SECONDS_PER_MINUTE: float = 60.0
 ## Engine:'s plain DieselEngine subset (LoadFIZ_Engine, Mover.cpp:11169-11241), applied by
 ## FizTrainEngineParser once it created the node. Each key only when present, so the properties
 ## keep the Mover's own defaults.
-func apply_engine_fields(kv: Dictionary, node: VehicleDieselEngine) -> void:
+func apply_engine_fields(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
     var min_rpm: float = FizLineUtil.get_float(kv, "nmin") / SECONDS_PER_MINUTE
     node.mechanical_min_rpm = min_rpm
     # nmin_hdrive and nmin_retarder fall back to nmin when absent or zero (Mover.cpp:11177-11189)
@@ -72,7 +72,7 @@ func apply_engine_fields(kv: Dictionary, node: VehicleDieselEngine) -> void:
 
 ## The clutch, from the header of the gearbox's MotorParamTable: (LoadFIZ_MotorParamTable,
 ## Mover.cpp:11394-11406)
-static func apply_clutch(kv: Dictionary, node: VehicleDieselEngine) -> void:
+static func apply_clutch(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
     if kv.has("minVelfullengage"):
         node.clutch_min_velocity_full_engage = FizLineUtil.get_float(kv, "minVelfullengage")
     if kv.has("engageDia"):
@@ -85,7 +85,7 @@ static func apply_clutch(kv: Dictionary, node: VehicleDieselEngine) -> void:
 
 ## Engine:'s keys both diesel engine kinds share (Mover.cpp:11326-11338); the cooling ones
 ## (HeaterMin/MaxTemperature, NominalCoolingPower) are not mapped yet (TODO.md).
-static func apply_diesel_common(kv: Dictionary, node: VehicleDieselEngine) -> void:
+static func apply_diesel_common(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
     if kv.has("OilMinPressure"):
         node.oil_pump_pressure_minimum = FizLineUtil.get_float(kv, "OilMinPressure")
     if kv.has("OilMaxPressure"):
@@ -93,7 +93,7 @@ static func apply_diesel_common(kv: Dictionary, node: VehicleDieselEngine) -> vo
 
 
 ## The torque converter and the retarder behind it (Mover.cpp:11214-11241)
-func _apply_torque_converter(kv: Dictionary, node: VehicleDieselEngine) -> void:
+func _apply_torque_converter(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
     if kv.has("TC_TMMax"):
         node.torque_converter_max_torque_ratio = FizLineUtil.get_float(kv, "TC_TMMax")
     if kv.has("TC_CP"):
@@ -124,7 +124,7 @@ func _apply_torque_converter(kv: Dictionary, node: VehicleDieselEngine) -> void:
     if not node.retarder_present:
         return
     if kv.has("R_Place"):
-        node.retarder_placement = FizLineUtil.get_int(kv, "R_Place") as VehicleDieselEngine.RetarderPlacement
+        node.retarder_placement = FizLineUtil.get_int(kv, "R_Place") as RailVehicleDieselEngine.RetarderPlacement
     if kv.has("R_TII"):
         node.retarder_torque_in_in = FizLineUtil.get_float(kv, "R_TII")
     if kv.has("R_MT"):
@@ -145,9 +145,9 @@ func _apply_torque_converter(kv: Dictionary, node: VehicleDieselEngine) -> void:
     node.retarder_with_individual = FizLineUtil.get_bool(kv, "R_WithIndividual")
 
 
-func _get_node(context: FizImportContext) -> VehicleDieselEngine:
-    var node: VehicleComponent = context.get_part("VehicleEngine")
-    return node as VehicleDieselEngine
+func _get_node(context: FizImportContext) -> RailVehicleDieselEngine:
+    var node: VehicleComponent = context.get_part("RailVehicleEngine")
+    return node as RailVehicleDieselEngine
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:

@@ -97,8 +97,8 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
 
     # the vehicles of this unit and of everything under its control, in the order find_vehicle()
     # searches them: this one, then towards the rear, then towards the front (DynObj.h:889)
-    var unit:Array[Dictionary] = _search_order(vehicle, TrainController.COUPLING_ELEMENT_PERMANENT)
-    var controlled_by:Array[Dictionary] = _search_order(vehicle, TrainController.COUPLING_ELEMENT_CONTROL)
+    var unit:Array[Dictionary] = _search_order(vehicle, RailVehicleController.COUPLING_ELEMENT_PERMANENT)
+    var controlled_by:Array[Dictionary] = _search_order(vehicle, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     var controlled:Dictionary = state
     # FindPowered() searches only the unit of an EZT/DMU; the train type is not in the config dump
     # (TODO.md), so every vehicle searches everything under its control
@@ -145,7 +145,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     # TTrain::Update(), Train.cpp:8644-8768 - the cars under control, from the end the occupied
     # cab faces (GetFirstDynamic(CabOccupied < 0 ? rear : front, control))
     var cab_end:int = 1 if state.get("cabin_occupied", 1) < 0 else 0
-    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, TrainController.COUPLING_ELEMENT_CONTROL)
+    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     var powered:int = 0
     var unit_number:int = 1
     var compressors:int = 0
@@ -174,7 +174,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
                 result["eimp_u%d_pr" % unit_number] = result["eimp_u%d_pr" % unit_number] or car_state.get("current_collector/pantograph_second_active", false)
             # CompressorStart is never automatic here - the wrapper does not set it
             result["eimp_u%d_comp_a" % unit_number] = result["eimp_u%d_comp_a" % unit_number] or car_state.get("compressor_allowed", false)
-        var brake:VehicleBrake = RailVehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake
+        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
         if brake and brake.compressor_speed > COMPRESSOR_SPEED_THRESHOLD:
             if unit_number <= EIM_CAR_COUNT:
                 result["eimp_u%d_comp_w" % unit_number] = result["eimp_u%d_comp_w" % unit_number] or car_state.get("compressor_enabled", false)
@@ -182,11 +182,11 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
             result["compressors_%d_allow" % compressors] = car_state.get("compressor_allowed", false)
             result["compressors_%d_work" % compressors] = car_state.get("compressor_enabled", false)
             result["compressors_%d_car_no" % compressors] = index
-        var engine_type:int = car_state.get("engine_type", VehicleEngine.NONE)
+        var engine_type:int = car_state.get("engine_type", RailVehicleEngine.NONE)
         # eimc[eimc_p_Pmax] > 1 - an induction motor car; the diesels by their engine type
-        if powered < EIM_CAR_COUNT and engine_type in [VehicleEngine.ELECTRIC_INDUCTION_MOTOR, VehicleEngine.DIESEL, VehicleEngine.DIESEL_ELECTRIC]:
+        if powered < EIM_CAR_COUNT and engine_type in [RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR, RailVehicleEngine.DIESEL, RailVehicleEngine.DIESEL_ELECTRIC]:
             var powered_number:int = powered + 1
-            if not engine_type == VehicleEngine.ELECTRIC_INDUCTION_MOTOR:
+            if not engine_type == RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR:
                 result["diesel_param_%d_enrot" % powered_number] = car_state.get("engine_rpm_count", 0.0) * SECONDS_PER_MINUTE   # enrot * 60
                 result["diesel_param_%d_nrot" % powered_number] = car_state.get("wheel_rotation_speed_rps", 0.0)   # nrot
                 result["diesel_param_%d_fill_real" % powered_number] = car_state.get("diesel_fill", 0.0)   # dizel_fill
@@ -199,7 +199,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
             result["eimp_c%d_heat" % powered_number] = car_state.get("heating_enabled", false)   # Heating
             powered = powered_number
         # a control coupling that is not a permanent one ends a unit (Train.cpp:8757)
-        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, TrainController.COUPLING_ELEMENT_PERMANENT):
+        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, RailVehicleController.COUPLING_ELEMENT_PERMANENT):
             unit_number += 1
     result["car_no"] = mini(cars.size(), CAR_COUNT)
     result["power_no"] = powered
@@ -219,7 +219,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
 ## The state and config of every vehicle joined to this one by `element`, in the order
 ## TDynamicObject::find_vehicle() searches them: the vehicle itself, then towards its rear, then
 ## towards its front (DynObj.h:889)
-static func _search_order(vehicle:RID, element:TrainController.CouplingElement) -> Array[Dictionary]:
+static func _search_order(vehicle:RID, element:RailVehicleController.CouplingElement) -> Array[Dictionary]:
     var joined:Array = RailVehicleServer.vehicle_get_coupled(vehicle, 0, element)
     var own:int = joined.find(vehicle)
     var order:Array = [vehicle] + joined.slice(own + 1)

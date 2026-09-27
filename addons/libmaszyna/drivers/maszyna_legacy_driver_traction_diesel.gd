@@ -48,16 +48,16 @@ var power_percentage_speed:int = 0
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     cruise(situation)
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
-    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return false
     var velocity:float = float(state.get("speed", 0.0))
     var moved:bool = false
-    if not eim_control_type(situation) == VehicleEngine.EIM_CONTROL_TYPE_0:
+    if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_0:
         if situation.trainset.ready:
-            var control:VehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-                    situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
+            var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+                    situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
             var cruising:bool = control != null and control.speed_control_enabled \
                     and controller_position(situation, "controller_second_position") > 0
             power_percentage = FULL_POWER if velocity > engine.clutch_min_velocity_full_engage or cruising else STARTING_POWER
@@ -80,14 +80,14 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 
 
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = false) -> bool:
-    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return false
-    if not eim_control_type(situation) == VehicleEngine.EIM_CONTROL_TYPE_0:
+    if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_0:
         power_percentage = 0
-        var control:VehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-                situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
+        var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+                situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
         var velocity_desired:float = situation.speed.velocity_desired
         if force or (control and velocity_desired > SPEED_CONTROL_TARGET_FROM and control.min_velocity > velocity_desired):
             set_cruise_control(situation, 0.0)
@@ -110,8 +110,8 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
 
 
 func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return
     # SpeedSet() (Driver.cpp:3964-4001): the gearbox shifted by hand - up a gear past three quarters
@@ -140,11 +140,11 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
 
 
 func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var engine:VehicleDieselEngine = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as VehicleDieselEngine
+    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return
-    if eim_control_type(situation) == VehicleEngine.EIM_CONTROL_TYPE_3:
+    if eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3:
         # 5.1 (Driver.cpp:4140-4193): a DMU's universal controller, held at the position that adds
         # power until the share wanted is reached, or at the one that takes it
         var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
@@ -152,8 +152,8 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         var velocity:float = float(state.get("speed", 0.0))
         var velocity_max:float = float(config.get("max_speed", 0.0))
         var velocity_desired:float = situation.speed.velocity_desired
-        var control:VehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-                situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
+        var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+                situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
         var wanted:int = power_percentage
         var min_velocity:float = minf(engine.torque_converter_lockup_speed, velocity_max * MIN_VELOCITY_SHARE)
         if control and control.speed_control_enabled and controller_position(situation, "controller_second_position") > 0:
@@ -171,8 +171,8 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
             wanted = mini(power_percentage, 1 if velocity < CREEPING_SHARE * velocity_desired else 0)
         power_percentage_speed = wanted
         var actual:int = int(PERCENT_SCALE * float(state.get("eimic_real", 0.0)))
-        var controller:VehicleUniversalController = RailVehicleServer.vehicle_component_get(
-                situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as VehicleUniversalController
+        var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
+                situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
         if controller == null or wanted == actual:
             return
         var positions:Array = controller.positions
@@ -218,7 +218,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 
 
 ## RList[MainCtrlPos].Mn of a diesel: the clutch at the master controller's position (0 idle)
-func _clutch(situation:MaszynaLegacyDriverTraction.Situation, engine:VehicleDieselEngine) -> int:
+func _clutch(situation:MaszynaLegacyDriverTraction.Situation, engine:RailVehicleDieselEngine) -> int:
     var positions:Array = engine.throttle_table_positions
     var main:int = controller_position(situation, "controller_main_position")
     return (positions[main] as ThrottlePositionItem).clutch_behavior if main < positions.size() else 0
@@ -232,10 +232,10 @@ static func _neutral(gears:Array, gear:int) -> bool:
 ## CheckTimeControllers() 5.1 (Driver.cpp:4303-4321): a DMU's universal controller not braking goes
 ## back to its position that holds the power, from either side of it, once the share is reached
 func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    if not eim_control_type(situation) == VehicleEngine.EIM_CONTROL_TYPE_3 or situation.braking.position >= MaszynaLegacyDriverBraking.BRAKING_FROM:
+    if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3 or situation.braking.position >= MaszynaLegacyDriverBraking.BRAKING_FROM:
         return
-    var controller:VehicleUniversalController = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as VehicleUniversalController
+    var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
     if controller == null:
         return
     var positions:Array = controller.positions

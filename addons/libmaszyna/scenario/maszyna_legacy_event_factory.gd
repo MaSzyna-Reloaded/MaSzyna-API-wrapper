@@ -89,9 +89,9 @@ const MEMORY_FIELDS:Array[int] = [
     ScenarioEventServer.MEMORY_FIELD_TEXT, ScenarioEventServer.MEMORY_FIELD_VALUE1, ScenarioEventServer.MEMORY_FIELD_VALUE2
 ]
 ## A launcher's key that is a radio call (EvLaunch.cpp:67-79)
-const RADIO_CALLS:Dictionary[String, VehicleRadio.RadioCall] = {
-    "radio_call1": VehicleRadio.RADIO_CALL1,
-    "radio_call3": VehicleRadio.RADIO_CALL3,
+const RADIO_CALLS:Dictionary[String, RailVehicleRadio.RadioCall] = {
+    "radio_call1": RailVehicleRadio.RADIO_CALL1,
+    "radio_call3": RailVehicleRadio.RADIO_CALL3,
 }
 ## `sound <mode>`: 1 plays, -1 loops, 0 stops (Event.cpp:1379-1390)
 const SOUND_MODES:Dictionary[int, MaszynaLegacySoundAction.Mode] = {

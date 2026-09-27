@@ -135,7 +135,7 @@ func _open(state:CabinState) -> Variant:
 func _close_released(state:CabinState) -> Variant:
     var result:Variant = null
     if state.data.get("linebreaker_state", OPEN) == READY \
-            and int(state.vehicle_state_value("engine_type", 0, TARGET)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+            and int(state.vehicle_state_value("engine_type", 0, TARGET)) == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
         result = state.send_vehicle_command("main_switch", true, null, TARGET)
         state.data["linebreaker_state"] = CLOSED if result else OPEN
     state.data["relay_timer"] = 0.0
@@ -167,7 +167,7 @@ func _process(state:CabinState, delta:float) -> void:
         linebreaker_state = READY
     # Train.cpp:8467 - without main_on_bt, or for anything but a series motor, closing completes here
     if linebreaker_state == READY and (not _has_on_button
-            or not int(state.vehicle_state_value("engine_type", 0, TARGET)) == VehicleEngine.ELECTRIC_SERIES_MOTOR):
+            or not int(state.vehicle_state_value("engine_type", 0, TARGET)) == RailVehicleEngine.ELECTRIC_SERIES_MOTOR):
         linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true, null, TARGET) else OPEN
 
     state.data["linebreaker_state"] = linebreaker_state

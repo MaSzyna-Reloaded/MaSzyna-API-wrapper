@@ -12,7 +12,7 @@ var vehicle:VehicleController:
 var controller:VehicleController
 ## Taken once per vehicle rather than looked up per frame - a component is a live view on the
 ## vehicle, valid for as long as the vehicle is.
-var universal_controller:VehicleUniversalController
+var universal_controller:RailVehicleUniversalController
 
 
 func _ready() -> void:
@@ -20,7 +20,7 @@ func _ready() -> void:
 
 func _do_update():
     controller = vehicle
-    universal_controller = _component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as VehicleUniversalController
+    universal_controller = _component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
 
 
 func _component(type:VehicleComponentType.Type) -> VehicleComponent:

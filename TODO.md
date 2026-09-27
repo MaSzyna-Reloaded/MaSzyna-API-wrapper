@@ -5,11 +5,11 @@
 The vehicle becomes an object owned by a server, addressed by RID, with thin `*Node` proxies for
 the editor. Each stage is one PR, titled `(#184) <area> - <what>`, and each leaves the game
 runnable. Stages 1-3 are done (`RailVehicleServer` owns placement, movement and the step;
-`MoverTrainController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
+`MoverRailVehicleController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
 
 Design that replaced the withdrawn stage 4 (a global name registry, now deleted):
 
-* **State is a typed property whose getter reads the backend field** (`VehicleBrake::get_pipe_pressure()`
+* **State is a typed property whose getter reads the backend field** (`RailVehicleBrake::get_pipe_pressure()`
   returns `mover->PipePress`). A component keeps only what the Mover has not got: the brake
   pressure filter, the door interpolation, the wiper positions, a `_prev` for change detection.
 * **Config stays the wrapper's**, deliberately - written at (re)configuration, read rarely. It is
@@ -29,7 +29,7 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   common values (`velocity`, `speed`, `mass_total`, `total_distance`, `direction`) is a property;
   only the first two have a server forwarder. `Dictionary config` has left the controller.
 * **C - partial.** Done: the component is an `Object`, fetch/tick split, interface/implementation
-  split (21 `MoverVehicle<Domain>` classes, each with a `Vehicle<Domain>` interface of the same
+  split (`MoverRailVehicle<Domain>` classes, each with a `RailVehicle<Domain>` interface of the same
   name, none of which names the Mover), and **`vehicle_component_get(rid, type)` now exists and is
   bound** (`RailVehicleServer.hpp:222`). Missing: `vehicle_component_create` (zero occurrences) -
   components still come from `ClassDBSingleton::instantiate()`/`memnew`;
@@ -64,7 +64,7 @@ against this file; the 09-24 list had already gone stale in G by the time it was
 * **H - not started.** No `UpdatePhase`; the order is hand-written in
   `RailVehicleServer::step_frame()` (`:803`). Check it against
   `TMoverParameters::ComputeMovement`/`Update` and the three ordering bugs on record (#57 line
-  breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` must exist first - `VehicleDoors`
+  breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` must exist first - `RailVehicleDoors`
   ticks and has no test.
 * **I - two of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone, and so is
   `TrainSystem`: vehicles are held and commanded by RID, and `train_id` is only the scenery name in
@@ -103,7 +103,7 @@ RID in one pass.
 
 **The pantograph's power path is simulation living in a node.**
 `RailVehicle3D::_update_pantograph_power()` computes contact points, asks `TractionPowerServer`
-for the span and writes the voltage into `VehicleElectricEngine` every frame. It belongs in
+for the span and writes the voltage into `RailVehicleElectricEngine` every frame. It belongs in
 `RailVehicleServer`'s step (with the remembered span per pantograph); the node keeps
 `_apply_pantograph_animation()`. `pantograph_front_offset`/`pantograph_rear_offset` are exported on
 the node but are the vehicle's geometry (`TAnimPant::vPos`). Weaker: the wiper *positions* in
@@ -157,13 +157,13 @@ every registered C++ class.
 ### Rail concepts in interfaces named "Vehicle"
 
 `VehicleComponent`/`VehicleController` are generic on purpose (road vehicles), but several
-interfaces are rail-only (rail-term count per header): `VehicleBrake` 43 (brake pipe, W/Lu/L,
-W/Lu/VI, W/Lu/XR, K valves, FV4a), `VehicleElectricEngine` 34 (pantographs), `VehicleBuffCoupl` 13,
-`VehicleWheels` 12 (bogies, pivot spacing, `get_bogie_transform()`), `VehicleSecuritySystem` 2,
-`VehicleSpringBrake`/`VehicleElectroPneumaticDynamicBrake` 1-3. Generic and correct:
-`VehicleWipers`, `VehicleUniversalController`, `VehicleSpeedControl`, `VehicleHorns`,
-`VehicleDoors`, `VehicleHeating`, `VehicleLighting`, `VehicleLoad`. Either rename to `Train*`
-(cost: `VehicleWheels` 13 files / 50 mentions, `VehicleBrake` 24 / 283) or split a generic base
+interfaces are rail-only (rail-term count per header): `RailVehicleBrake` 43 (brake pipe, W/Lu/L,
+W/Lu/VI, W/Lu/XR, K valves, FV4a), `RailVehicleElectricEngine` 34 (pantographs), `RailVehicleBuffCoupl` 13,
+`RailVehicleWheels` 12 (bogies, pivot spacing, `get_bogie_transform()`), `RailVehicleSecuritySystem` 2,
+`RailVehicleSpringBrake`/`RailVehicleElectroPneumaticDynamicBrake` 1-3. Generic and correct:
+`RailVehicleWipers`, `RailVehicleUniversalController`, `RailVehicleSpeedControl`, `RailVehicleHorns`,
+`RailVehicleDoors`, `RailVehicleHeating`, `RailVehicleLighting`, `RailVehicleLoad`. Either rename to `Train*`
+(cost: `RailVehicleWheels` 13 files / 50 mentions, `RailVehicleBrake` 24 / 283) or split a generic base
 from a rail subclass - only worth it once something road-side shares the base. Either way the
 interfaces keep naming no backend.
 
@@ -319,9 +319,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Rest of TDynamicObject::Update's driver block (DynObj.cpp:3240-3400) not ported: the train-wide
   ED/PN brake force split of an induction motor consist, `EqvtPipePress = GetEPP()`, and the
   unpowered-car copy of MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
-* `VehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
+* `RailVehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
   `set_pantograph_wire_voltage()` and read by nothing.
-* Wheels turn at half speed: `MoverVehicleWheels::_do_process_component` adds `rad_to_deg(V*dt/D)`,
+* Wheels turn at half speed: `MoverRailVehicleWheels::_do_process_component` adds `rad_to_deg(V*dt/D)`,
   the original `114.59155... * V * dt / D` = `rad_to_deg(2*V*dt/D)` (DynObj.cpp:3780-3784 at
   df5a8a8). Waiting for the operator.
 * Source citations drifted: many `DynObj.cpp`/`Train.cpp`/`Mover.cpp` line numbers point at an
@@ -403,7 +403,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   original skips `Update()`).
 * The rest of `LoadFIZ_Cntrl`'s start modes never reach the Mover: `CompressorStart`,
   `PantCompressorStart`, `MainStart` and `ConverterOverloadWhenMainIsOff` (Mover.cpp:10905-10925)
-  are not parsed, and their properties sit on `VehicleElectricEngine`, so a diesel could not
+  are not parsed, and their properties sit on `RailVehicleElectricEngine`, so a diesel could not
   carry them anyway. `ConverterStart`/`ConverterStartDelay` moved to `VehicleController`; the
   others belong there too. The `converter` command is still an electric engine's only.
 * `BrakeValveParams` (the raw `BrakeValve=` string, Mover.cpp:10397) is never set, so
@@ -723,7 +723,7 @@ ported, into a delegate.
       `coupler_stretched`, `radio_stop_active`, `motor_overload_relay_high_threshold`...) and takes
       the commands a player gives (`motor_overload_relay_threshold` and `maxcurrent_sw`,
       `ground_relay_reset`, `antislip`, `speed_control_*`); `ESMVelocity()` is
-      `VehicleElectricSeriesEngine.get_next_position_velocity()`. The pantographs
+      `RailVehicleElectricSeriesEngine.get_next_position_velocity()`. The pantographs
       (`MaszynaLegacyDriverPantographs`): the pantograph compressor and its three-way valve while
       preparing, the rear one up on the move. Checked on Stary Jawor (diesel-electric) and on a
       synthetic track with a catenary: EU07 with eight wagons prepares itself, runs up the
@@ -792,7 +792,7 @@ ported, into a delegate.
       a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
       `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
    Braking table (2026-09-27): `CheckVehicles()` ported - the table `fBrake_a0/a1` from the
-      vehicles' `BrakeForceR()` (`VehicleBrake.get_force_at()`), `fAccThreshold`, the brake
+      vehicles' `BrakeForceR()` (`RailVehicleBrake.get_force_at()`), `fAccThreshold`, the brake
       reaction, the cargo flags, the brake setting per vehicle (`auto_rewident`),
       `BrakeAccFactor()` and `braking_distance_multiplier()`. The eszelon at x20 now stops 7 m
       short of E4 (was 44 m past). The acceleration limit by the couplers' strength, the downhill branch and
@@ -851,7 +851,7 @@ ported, into a delegate.
   worker only with a real renderer.
 
 * **No HUD panel test on a non-diesel.** `mover_gauges.gd` broke on an induction motor (it asked
-  `VehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `VehicleDieselEngine`'s);
+  `RailVehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `RailVehicleDieselEngine`'s);
   fixtures build a diesel. Needs a panel test per engine kind (diesel, series, induction), for the
   other migrated panels too.
 * **A dump key does not name the class owning its getter** - check the declaring header, not the

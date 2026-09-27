@@ -1,17 +1,17 @@
-#include "brakes/MoverVehicleBrake.hpp"
-#include "brakes/MoverVehicleElectroPneumaticDynamicBrake.hpp"
-#include "brakes/MoverVehicleSpringBrake.hpp"
-#include "brakes/VehicleBrake.hpp"
-#include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
-#include "brakes/VehicleSpringBrake.hpp"
-#include "buffers/MoverVehicleBuffCoupl.hpp"
-#include "buffers/VehicleBuffCoupl.hpp"
+#include "brakes/MoverRailVehicleBrake.hpp"
+#include "brakes/MoverRailVehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/MoverRailVehicleSpringBrake.hpp"
+#include "brakes/RailVehicleBrake.hpp"
+#include "brakes/RailVehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/RailVehicleSpringBrake.hpp"
+#include "buffers/MoverRailVehicleBuffCoupl.hpp"
+#include "buffers/RailVehicleBuffCoupl.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "cabin/CabinHUDMouseSystem.hpp"
-#include "controllers/MoverVehicleMasterController.hpp"
-#include "controllers/MoverVehicleUniversalController.hpp"
-#include "controllers/VehicleMasterController.hpp"
-#include "controllers/VehicleUniversalController.hpp"
+#include "controllers/MoverRailVehicleMasterController.hpp"
+#include "controllers/MoverRailVehicleUniversalController.hpp"
+#include "controllers/RailVehicleMasterController.hpp"
+#include "controllers/RailVehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
@@ -19,49 +19,49 @@
 #include "drivers/DriverDelegate.hpp"
 #include "drivers/DriverSystem.hpp"
 #include "core/MaszynaTranslationServer.hpp"
-#include "core/MoverTrainController.hpp"
+#include "core/MoverRailVehicleController.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/UserSettings.hpp"
-#include "core/TrainComponent.hpp"
+#include "core/RailVehicleComponent.hpp"
 #include "core/VehicleComponent.hpp"
 #include "core/VehicleComponentModel.hpp"
 #include "core/VehicleComponentType.hpp"
 #include "core/VehicleController.hpp"
 #include "core/VehicleModel.hpp"
 #include "core/VehiclePhysicsNode.hpp"
-#include "doors/MoverVehicleDoors.hpp"
-#include "doors/VehicleDoors.hpp"
+#include "doors/MoverRailVehicleDoors.hpp"
+#include "doors/RailVehicleDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
 #include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
-#include "engines/MoverVehicleDieselElectricEngine.hpp"
-#include "engines/MoverVehicleDieselEngine.hpp"
-#include "engines/MoverVehicleElectricInductionEngine.hpp"
-#include "engines/MoverVehicleElectricSeriesEngine.hpp"
-#include "engines/VehicleDieselElectricEngine.hpp"
-#include "engines/VehicleDieselEngine.hpp"
-#include "engines/VehicleElectricEngine.hpp"
-#include "engines/VehicleElectricInductionEngine.hpp"
-#include "engines/VehicleElectricSeriesEngine.hpp"
-#include "engines/VehicleEngine.hpp"
-#include "heating/MoverVehicleHeating.hpp"
-#include "heating/VehicleHeating.hpp"
-#include "lighting/MoverVehicleLighting.hpp"
-#include "lighting/VehicleLighting.hpp"
-#include "load/MoverVehicleLoad.hpp"
-#include "load/VehicleLoad.hpp"
+#include "engines/MoverRailVehicleDieselElectricEngine.hpp"
+#include "engines/MoverRailVehicleDieselEngine.hpp"
+#include "engines/MoverRailVehicleElectricInductionEngine.hpp"
+#include "engines/MoverRailVehicleElectricSeriesEngine.hpp"
+#include "engines/RailVehicleDieselElectricEngine.hpp"
+#include "engines/RailVehicleDieselEngine.hpp"
+#include "engines/RailVehicleElectricEngine.hpp"
+#include "engines/RailVehicleElectricInductionEngine.hpp"
+#include "engines/RailVehicleElectricSeriesEngine.hpp"
+#include "engines/RailVehicleEngine.hpp"
+#include "heating/MoverRailVehicleHeating.hpp"
+#include "heating/RailVehicleHeating.hpp"
+#include "lighting/MoverRailVehicleLighting.hpp"
+#include "lighting/RailVehicleLighting.hpp"
+#include "load/MoverRailVehicleLoad.hpp"
+#include "load/RailVehicleLoad.hpp"
 #include "loaders/E3DResourceFormatLoader.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "physics/RailVehicleServer.hpp"
 #include "core/SimulationClock.hpp"
-#include "physics/VehicleNeighbour.hpp"
-#include "radio/MoverVehicleRadio.hpp"
-#include "radio/VehicleRadio.hpp"
+#include "physics/RailVehicleNeighbour.hpp"
+#include "radio/MoverRailVehicleRadio.hpp"
+#include "radio/RailVehicleRadio.hpp"
 #include "register_types.h"
 #include "resources/brakes/BrakePressureTableItem.hpp"
 #include "resources/brakes/CompressorListItem.hpp"
@@ -102,24 +102,24 @@
 #include "scenario/ScenarioEventServer.hpp"
 #include "scenario/Timetable.hpp"
 #include "scenario/TimetableEntry.hpp"
-#include "speed_control/MoverVehicleSpeedControl.hpp"
-#include "speed_control/VehicleSpeedControl.hpp"
-#include "switches/MoverVehicleSwitches.hpp"
-#include "switches/VehicleSwitches.hpp"
-#include "systems/MoverVehicleAIHints.hpp"
-#include "systems/MoverVehicleHorns.hpp"
-#include "systems/MoverVehicleSecuritySystem.hpp"
-#include "systems/VehicleAIHints.hpp"
-#include "systems/VehicleHorns.hpp"
-#include "systems/VehicleSecuritySystem.hpp"
+#include "speed_control/MoverRailVehicleSpeedControl.hpp"
+#include "speed_control/RailVehicleSpeedControl.hpp"
+#include "switches/MoverRailVehicleSwitches.hpp"
+#include "switches/RailVehicleSwitches.hpp"
+#include "systems/MoverRailVehicleAIHints.hpp"
+#include "systems/MoverRailVehicleHorns.hpp"
+#include "systems/MoverRailVehicleSecuritySystem.hpp"
+#include "systems/RailVehicleAIHints.hpp"
+#include "systems/RailVehicleHorns.hpp"
+#include "systems/RailVehicleSecuritySystem.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackManager.hpp"
 #include "traction/TractionPowerServer.hpp"
-#include "wheels/MoverVehicleWheels.hpp"
-#include "wheels/VehicleWheels.hpp"
-#include "wipers/MoverVehicleWipers.hpp"
-#include "wipers/VehicleWipers.hpp"
+#include "wheels/MoverRailVehicleWheels.hpp"
+#include "wheels/RailVehicleWheels.hpp"
+#include "wipers/MoverRailVehicleWipers.hpp"
+#include "wipers/RailVehicleWipers.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -168,7 +168,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
         GDREGISTER_INTERNAL_CLASS(SimulationClock);
-        GDREGISTER_CLASS(VehicleNeighbour);
+        GDREGISTER_CLASS(RailVehicleNeighbour);
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
@@ -211,70 +211,70 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(VehicleModel);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
-        GDREGISTER_ABSTRACT_CLASS(TrainComponent);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponentNode);
-        GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
-        GDREGISTER_CLASS(MoverVehicleBrake);
-        GDREGISTER_ABSTRACT_CLASS(VehicleSpringBrake);
-        GDREGISTER_CLASS(MoverVehicleSpringBrake);
-        GDREGISTER_ABSTRACT_CLASS(VehicleDoors);
-        GDREGISTER_CLASS(MoverVehicleDoors);
-        GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
-        GDREGISTER_ABSTRACT_CLASS(VehicleDieselEngine);
-        GDREGISTER_CLASS(MoverVehicleDieselEngine);
-        GDREGISTER_ABSTRACT_CLASS(VehicleDieselElectricEngine);
-        GDREGISTER_CLASS(MoverVehicleDieselElectricEngine);
-        GDREGISTER_ABSTRACT_CLASS(VehicleElectricEngine);
-        GDREGISTER_ABSTRACT_CLASS(VehicleElectricSeriesEngine);
-        GDREGISTER_CLASS(MoverVehicleElectricSeriesEngine);
-        GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
-        GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleBrake);
+        GDREGISTER_CLASS(MoverRailVehicleBrake);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSpringBrake);
+        GDREGISTER_CLASS(MoverRailVehicleSpringBrake);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleDoors);
+        GDREGISTER_CLASS(MoverRailVehicleDoors);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleDieselEngine);
+        GDREGISTER_CLASS(MoverRailVehicleDieselEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleDieselElectricEngine);
+        GDREGISTER_CLASS(MoverRailVehicleDieselElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectricSeriesEngine);
+        GDREGISTER_CLASS(MoverRailVehicleElectricSeriesEngine);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectricInductionEngine);
+        GDREGISTER_CLASS(MoverRailVehicleElectricInductionEngine);
         GDREGISTER_ABSTRACT_CLASS(VehicleController);
-        GDREGISTER_ABSTRACT_CLASS(TrainController);
-        GDREGISTER_CLASS(MoverTrainController);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleController);
+        GDREGISTER_CLASS(MoverRailVehicleController);
         // the vehicles are simulated on the vendored Mover
-        VehiclePhysicsNode::set_controller_implementation(MoverTrainController::get_class_static());
+        VehiclePhysicsNode::set_controller_implementation(MoverRailVehicleController::get_class_static());
         GDREGISTER_CLASS(Cabin3D);
         GDREGISTER_CLASS(CabinHUDMouseSystem);
         GDREGISTER_CLASS(RailVehicle3D);
-        GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
-        GDREGISTER_CLASS(MoverVehicleHeating);
-        GDREGISTER_ABSTRACT_CLASS(VehicleRadio);
-        GDREGISTER_CLASS(MoverVehicleRadio);
-        GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
-        GDREGISTER_CLASS(MoverVehicleWheels);
-        GDREGISTER_ABSTRACT_CLASS(VehicleSecuritySystem);
-        GDREGISTER_CLASS(MoverVehicleSecuritySystem);
-        GDREGISTER_ABSTRACT_CLASS(VehicleHorns);
-        GDREGISTER_CLASS(MoverVehicleHorns);
-        GDREGISTER_ABSTRACT_CLASS(VehicleAIHints);
-        GDREGISTER_CLASS(MoverVehicleAIHints);
-        GDREGISTER_ABSTRACT_CLASS(VehicleLighting)
-        GDREGISTER_CLASS(MoverVehicleLighting)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleHeating);
+        GDREGISTER_CLASS(MoverRailVehicleHeating);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleRadio);
+        GDREGISTER_CLASS(MoverRailVehicleRadio);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleWheels);
+        GDREGISTER_CLASS(MoverRailVehicleWheels);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSecuritySystem);
+        GDREGISTER_CLASS(MoverRailVehicleSecuritySystem);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleHorns);
+        GDREGISTER_CLASS(MoverRailVehicleHorns);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleAIHints);
+        GDREGISTER_CLASS(MoverRailVehicleAIHints);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleLighting)
+        GDREGISTER_CLASS(MoverRailVehicleLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_ABSTRACT_CLASS(VehicleElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(MoverVehicleElectroPneumaticDynamicBrake)
-        GDREGISTER_ABSTRACT_CLASS(VehicleLoad)
-        GDREGISTER_CLASS(MoverVehicleLoad)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(MoverRailVehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleLoad)
+        GDREGISTER_CLASS(MoverRailVehicleLoad)
         GDREGISTER_CLASS(LoadListItem)
-        GDREGISTER_ABSTRACT_CLASS(VehicleBuffCoupl)
-        GDREGISTER_CLASS(MoverVehicleBuffCoupl)
-        GDREGISTER_ABSTRACT_CLASS(VehicleSpeedControl)
-        GDREGISTER_CLASS(MoverVehicleSpeedControl)
-        GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)
-        GDREGISTER_CLASS(MoverVehicleUniversalController)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleBuffCoupl)
+        GDREGISTER_CLASS(MoverRailVehicleBuffCoupl)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSpeedControl)
+        GDREGISTER_CLASS(MoverRailVehicleSpeedControl)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleUniversalController)
+        GDREGISTER_CLASS(MoverRailVehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
-        GDREGISTER_ABSTRACT_CLASS(VehicleMasterController)
-        GDREGISTER_CLASS(MoverVehicleMasterController)
-        GDREGISTER_ABSTRACT_CLASS(VehicleWipers)
-        GDREGISTER_CLASS(MoverVehicleWipers)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleMasterController)
+        GDREGISTER_CLASS(MoverRailVehicleMasterController)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleWipers)
+        GDREGISTER_CLASS(MoverRailVehicleWipers)
         GDREGISTER_CLASS(WiperListItem)
-        GDREGISTER_ABSTRACT_CLASS(VehicleSwitches)
-        GDREGISTER_CLASS(MoverVehicleSwitches)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSwitches)
+        GDREGISTER_CLASS(MoverRailVehicleSwitches)
         GDREGISTER_CLASS(DimmerListItem)
         GDREGISTER_CLASS(BrakePressureTableItem)
         GDREGISTER_CLASS(CompressorListItem)

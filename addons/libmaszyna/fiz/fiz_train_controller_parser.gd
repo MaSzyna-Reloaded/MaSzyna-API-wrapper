@@ -20,16 +20,16 @@ const _CATEGORY_MAP := {
 }
 
 const _TRAIN_TYPE_MAP := {
-    "pseudodiesel": TrainController.TRAIN_TYPE_PSEUDODIESEL,
-    "ezt": TrainController.TRAIN_TYPE_EZT,
-    "dmu": TrainController.TRAIN_TYPE_DMU,
-    "sn61": TrainController.TRAIN_TYPE_SN61,
-    "et22": TrainController.TRAIN_TYPE_ET22,
-    "et40": TrainController.TRAIN_TYPE_ET40,
-    "et41": TrainController.TRAIN_TYPE_ET41,
-    "et42": TrainController.TRAIN_TYPE_ET42,
-    "ep05": TrainController.TRAIN_TYPE_EP05,
-    "181": TrainController.TRAIN_TYPE_181,
+    "pseudodiesel": RailVehicleController.TRAIN_TYPE_PSEUDODIESEL,
+    "ezt": RailVehicleController.TRAIN_TYPE_EZT,
+    "dmu": RailVehicleController.TRAIN_TYPE_DMU,
+    "sn61": RailVehicleController.TRAIN_TYPE_SN61,
+    "et22": RailVehicleController.TRAIN_TYPE_ET22,
+    "et40": RailVehicleController.TRAIN_TYPE_ET40,
+    "et41": RailVehicleController.TRAIN_TYPE_ET41,
+    "et42": RailVehicleController.TRAIN_TYPE_ET42,
+    "ep05": RailVehicleController.TRAIN_TYPE_EP05,
+    "181": RailVehicleController.TRAIN_TYPE_181,
     # "182" has no corresponding dt_* constant in this port's MOVER.h - left unmapped.
 }
 
@@ -69,7 +69,7 @@ func _parse_param(kv: Dictionary, context: FizImportContext) -> void:
     # Type= has no "absent" fallback distinct from the compiled default (dt_Default == 0),
     # but context.train_type must always be set (later sections' defaults depend on it) even
     # when Type= wasn't in this line.
-    var train_type: int = _TRAIN_TYPE_MAP.get(FizLineUtil.get_string(kv, "Type").to_lower(), TrainController.TRAIN_TYPE_DEFAULT)
+    var train_type: int = _TRAIN_TYPE_MAP.get(FizLineUtil.get_string(kv, "Type").to_lower(), RailVehicleController.TRAIN_TYPE_DEFAULT)
     if kv.has("Type"):
         controller.train_type = train_type
     context.train_type = train_type
@@ -99,67 +99,67 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
     if kv.has("AutomaticCabActivation"):
         controller.cntrl_automatic_cab_activation = FizLineUtil.get_bool(kv, "AutomaticCabActivation")
     if kv.has("BatteryStart"):
-        controller.cntrl_battery_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "BatteryStart"), TrainController.START_MODE_MANUAL)
+        controller.cntrl_battery_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "BatteryStart"), RailVehicleController.START_MODE_MANUAL)
     if kv.has("ConverterStart"):
-        controller.cntrl_converter_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "ConverterStart"), TrainController.START_MODE_MANUAL)
+        controller.cntrl_converter_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "ConverterStart"), RailVehicleController.START_MODE_MANUAL)
     if kv.has("ConverterStartDelay"):
         controller.cntrl_converter_start_delay = FizLineUtil.get_float(kv, "ConverterStartDelay")
 
     # GroundRelayStart's default depends on TrainType (EZT), which differs from the compiled
     # default - so this one is always applied, even when the key is absent.
     var ground_relay_default: int = (
-            TrainController.START_MODE_AUTOMATIC if context.train_type == TrainController.TRAIN_TYPE_EZT
-            else TrainController.START_MODE_MANUAL)
+            RailVehicleController.START_MODE_AUTOMATIC if context.train_type == RailVehicleController.TRAIN_TYPE_EZT
+            else RailVehicleController.START_MODE_MANUAL)
     controller.cntrl_ground_relay_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "GroundRelayStart"), ground_relay_default)
 
     if kv.has("CompartmentLightsStart"):
-        controller.cntrl_compartment_lights_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "CompartmentLightsStart"), TrainController.START_MODE_DISABLED)
+        controller.cntrl_compartment_lights_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "CompartmentLightsStart"), RailVehicleController.START_MODE_DISABLED)
     if kv.has("InactiveCabFlag"):
         controller.cntrl_inactive_cab_flag = FizLineUtil.get_int(kv, "InactiveCabFlag")
 
 
-## Shared `...Start=` device activation mode decode (TrainController.StartMode - the enum this
-## class owns; VehicleEngine.StartMode is a duplicate of the same values to avoid a circular
+## Shared `...Start=` device activation mode decode (RailVehicleController.StartMode - the enum this
+## class owns; RailVehicleEngine.StartMode is a duplicate of the same values to avoid a circular
 ## include, see VehicleController.hpp). Used by Cntrl., Engine:, and other sections.
 static func parse_start_mode(value: String, default_value: int) -> int:
     if not value:
         return default_value
     match value.to_lower():
-        "disabled": return TrainController.START_MODE_DISABLED
-        "manual": return TrainController.START_MODE_MANUAL
-        "automatic": return TrainController.START_MODE_AUTOMATIC
-        "mixed": return TrainController.START_MODE_MANUAL_WITH_AUTO_FALLBACK
-        "battery": return TrainController.START_MODE_BATTERY
-        "converter": return TrainController.START_MODE_CONVERTER
-        "direction": return TrainController.START_MODE_DIRECTION
+        "disabled": return RailVehicleController.START_MODE_DISABLED
+        "manual": return RailVehicleController.START_MODE_MANUAL
+        "automatic": return RailVehicleController.START_MODE_AUTOMATIC
+        "mixed": return RailVehicleController.START_MODE_MANUAL_WITH_AUTO_FALLBACK
+        "battery": return RailVehicleController.START_MODE_BATTERY
+        "converter": return RailVehicleController.START_MODE_CONVERTER
+        "direction": return RailVehicleController.START_MODE_DIRECTION
         _: return default_value
 
 
-## Power-source decode (TrainController.TrainPowerSource - the enum this class owns).
+## Power-source decode (RailVehicleController.TrainPowerSource - the enum this class owns).
 ## LoadFIZ_SourceDecode: Mover.cpp:11677. Used by Light:/Clima:/Power:.
-static func parse_power_source(value: String, default_value: int = TrainController.POWER_SOURCE_NOT_DEFINED) -> int:
+static func parse_power_source(value: String, default_value: int = RailVehicleController.POWER_SOURCE_NOT_DEFINED) -> int:
     if not value:
         return default_value
     match value.to_lower():
-        "transducer": return TrainController.POWER_SOURCE_TRANSDUCER
-        "generator": return TrainController.POWER_SOURCE_GENERATOR
-        "accu", "accumulator": return TrainController.POWER_SOURCE_ACCUMULATOR
-        "currentcollector": return TrainController.POWER_SOURCE_CURRENTCOLLECTOR
-        "powercable": return TrainController.POWER_SOURCE_POWERCABLE
-        "heater": return TrainController.POWER_SOURCE_HEATER
-        "internal": return TrainController.POWER_SOURCE_INTERNAL
-        "main": return TrainController.POWER_SOURCE_MAIN
-        _: return TrainController.POWER_SOURCE_NOT_DEFINED
+        "transducer": return RailVehicleController.POWER_SOURCE_TRANSDUCER
+        "generator": return RailVehicleController.POWER_SOURCE_GENERATOR
+        "accu", "accumulator": return RailVehicleController.POWER_SOURCE_ACCUMULATOR
+        "currentcollector": return RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+        "powercable": return RailVehicleController.POWER_SOURCE_POWERCABLE
+        "heater": return RailVehicleController.POWER_SOURCE_HEATER
+        "internal": return RailVehicleController.POWER_SOURCE_INTERNAL
+        "main": return RailVehicleController.POWER_SOURCE_MAIN
+        _: return RailVehicleController.POWER_SOURCE_NOT_DEFINED
 
 
-## Power-type decode (TrainController.TrainPowerType - the enum this class owns).
+## Power-type decode (RailVehicleController.TrainPowerType - the enum this class owns).
 ## LoadFIZ_PowerDecode: Mover.cpp:11668.
-static func parse_power_type(value: String, default_value: int = TrainController.POWER_TYPE_NONE) -> int:
+static func parse_power_type(value: String, default_value: int = RailVehicleController.POWER_TYPE_NONE) -> int:
     if not value:
         return default_value
     match value.to_lower():
-        "biopower": return TrainController.POWER_TYPE_BIO
-        "mechpower": return TrainController.POWER_TYPE_MECH
-        "electricpower": return TrainController.POWER_TYPE_ELECTRIC
-        "steampower": return TrainController.POWER_TYPE_STEAM
-        _: return TrainController.POWER_TYPE_NONE
+        "biopower": return RailVehicleController.POWER_TYPE_BIO
+        "mechpower": return RailVehicleController.POWER_TYPE_MECH
+        "electricpower": return RailVehicleController.POWER_TYPE_ELECTRIC
+        "steampower": return RailVehicleController.POWER_TYPE_STEAM
+        _: return RailVehicleController.POWER_TYPE_NONE

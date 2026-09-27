@@ -5,13 +5,13 @@ extends MaszynaGutTest
 
 var _rid: RID = RID()
 var _controller: VehicleController = null
-var _radio: VehicleRadio = null
+var _radio: RailVehicleRadio = null
 
 
 func before_each() -> void:
     _controller = build_vehicle("dump_cache_test")
     _controller.type_name = "test"
-    _radio = MoverVehicleRadio.new()
+    _radio = MoverRailVehicleRadio.new()
     _controller.add_component(_radio)
     _rid = RailVehicleServer.vehicle_create()
     RailVehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
@@ -75,7 +75,7 @@ func test_a_freed_vehicle_dumps_nothing() -> void:
 ## The public way in: a consumer names the kind, not the implementation, and gets the interface
 ## that kind promises - whatever the vehicle turns out to be built from.
 func test_a_component_is_reached_by_its_kind() -> void:
-    var heating: MoverVehicleHeating = MoverVehicleHeating.new()
+    var heating: MoverRailVehicleHeating = MoverRailVehicleHeating.new()
     _controller.add_component(heating)
     await wait_idle_frames(2)
 
@@ -83,7 +83,7 @@ func test_a_component_is_reached_by_its_kind() -> void:
         _rid, VehicleComponentType.COMPONENT_HEATING
     )
     assert_same(found, heating, "the vehicle answers with its heating")
-    assert_true(found is VehicleHeating, "and it is the interface that kind promises")
+    assert_true(found is RailVehicleHeating, "and it is the interface that kind promises")
     assert_null(
         RailVehicleServer.vehicle_component_get(_rid, VehicleComponentType.COMPONENT_DOORS),
         "a kind this vehicle has not got answers with nothing"

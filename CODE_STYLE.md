@@ -317,7 +317,7 @@ Applies to C++ above all, and to servers first. A public method takes and return
 
 ```cpp
 // not this - the server now depends on a lifetime it does not own
-RID controller_create(TrainController *p_controller);
+RID controller_create(RailVehicleController *p_controller);
 
 // this - Godot's own servers are the reference
 // (PhysicsServer3D::body_attach_object_instance_id)

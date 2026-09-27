@@ -34,9 +34,9 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
 
 ## control_handles() goes by the engine the car drives (mvControlling, Driver.cpp:6440)
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var controlled:VehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(situation.controlling).get(
-            "engine_type", VehicleEngine.NONE)) as VehicleEngine.EngineType
-    if controlled == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+    var controlled:RailVehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(situation.controlling).get(
+            "engine_type", RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
+    if controlled == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
         control_series_motor_handles(situation)
 
 

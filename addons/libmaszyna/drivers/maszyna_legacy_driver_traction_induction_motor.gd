@@ -45,12 +45,12 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var main:int = controller_position(situation, "controller_main_position")
     match eim_control_type(situation):
-        VehicleEngine.EIM_CONTROL_TYPE_1:
+        RailVehicleEngine.EIM_CONTROL_TYPE_1:
             if main > TRAXX_NEUTRAL:
                 set_main_controller(situation, TRAXX_DRIVING_HOLD)
             elif main < TRAXX_NEUTRAL:
                 set_main_controller(situation, TRAXX_BRAKING_HOLD)
-        VehicleEngine.EIM_CONTROL_TYPE_2:
+        RailVehicleEngine.EIM_CONTROL_TYPE_2:
             var asked:float = float(CabinSystem.vehicle_state_value(situation.vehicle, "eimic_real", 0.0))
             if asked > 0.0:
                 set_main_controller(situation, ELF_DRIVING_HOLD)
@@ -77,7 +77,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 
 ## A cruise control with an impulse lever of four positions (SpeedCtrlTypeTime)
 func _impulse_lever(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    var control:VehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-            situation.vehicle, VehicleComponentType.COMPONENT_SPEED_CONTROL) as VehicleSpeedControl
+    var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+            situation.vehicle, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
     var second_max:int = int(RailVehicleServer.vehicle_dump_config(situation.vehicle).get("second_controller_position_max", 0))
     return control != null and control.impulse_lever and second_max == IMPULSE_LEVER_POSITIONS

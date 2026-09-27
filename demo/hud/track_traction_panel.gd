@@ -22,7 +22,7 @@ var _rows:Dictionary[String, Label] = {}
 var _elapsed:float = 0.0
 ## Taken once per vehicle rather than looked up per refresh; null for anything that is not
 ## electric, and then the traction rows have nothing to say.
-var _engine:VehicleElectricEngine = null
+var _engine:RailVehicleElectricEngine = null
 var _engine_vehicle:RailVehicle3D = null
 
 
@@ -90,7 +90,7 @@ func _refresh() -> void:
     if not _engine_vehicle == vehicle:
         _engine_vehicle = vehicle
         _engine = RailVehicleServer.vehicle_component_get(
-                rid, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+                rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if not _engine:
         _rows["Slider"].text = "-"
         for number:int in [1, 2]:

@@ -3,9 +3,9 @@ extends RefCounted
 class_name FizTrainCntrlParser
 
 ## Cntrl. section dispatcher: this single FIZ section's keys fan out to several different
-## Godot classes (VehicleController general subset, VehicleMasterController - every vehicle's,
-## an engine's or not -, VehicleBrake brake subset, and later
-## VehicleEngine's controller-position-count subset once Engine: creates that node - Cntrl.
+## Godot classes (VehicleController general subset, RailVehicleMasterController - every vehicle's,
+## an engine's or not -, RailVehicleBrake brake subset, and later
+## RailVehicleEngine's controller-position-count subset once Engine: creates that node - Cntrl.
 ## conventionally appears before Engine: in real files, so the engine-relevant keys are
 ## stashed on the context for Engine:'s parser to pick up). Also owns the brake-position table
 ## (BPT) that immediately follows the Cntrl. line, by delegating to the brake parser.
@@ -24,7 +24,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     controller_parser.apply_cntrl(kv, context)
 
-    var master_controller:MoverVehicleMasterController = MoverVehicleMasterController.new()
+    var master_controller:MoverRailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = FizLineUtil.get_int(kv, "MCPN")
     master_controller.second_position_count = FizLineUtil.get_int(kv, "SCPN")
     master_controller.direction_change_max_position = FizLineUtil.get_int(kv, "DirChangeMaxPos")
@@ -33,23 +33,23 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     master_controller.step_delay = FizLineUtil.get_float(kv, "SCDelay")
     # without SCDDelay stepping down is as slow as up (Mover.cpp:10868)
     master_controller.step_down_delay = FizLineUtil.get_float(kv, "SCDDelay", master_controller.step_delay)
-    context.add_part("VehicleMasterController", master_controller)
+    context.add_part("RailVehicleMasterController", master_controller)
 
-    var brake: VehicleBrake = context.get_part("VehicleBrake")
+    var brake: RailVehicleBrake = context.get_part("RailVehicleBrake")
     if brake != null:
         brake_parser.apply_cntrl(kv, brake, context)
     else:
-        push_warning("FIZ Cntrl.: no VehicleBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
+        push_warning("FIZ Cntrl.: no RailVehicleBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
 
     # Engine:'s subset (AutoRelay, Camshaft, ...) is applied once
-    # Engine: creates the VehicleEngine-family node when Cntrl. precedes it, or here when it comes
+    # Engine: creates the RailVehicleEngine-family node when Cntrl. precedes it, or here when it comes
     # after - EN57's Cntrl. is in the brake include that follows its Engine:
     context.cntrl_kv = kv
-    var engine: VehicleEngine = context.get_part("VehicleEngine") as VehicleEngine
+    var engine: RailVehicleEngine = context.get_part("RailVehicleEngine") as RailVehicleEngine
     if engine:
         FizTrainEngineCommon.apply_cntrl_engine_subset(engine, kv)
-        if engine is VehicleElectricEngine:
-            FizTrainEngineCommon.apply_cntrl_electric_subset(engine as VehicleElectricEngine, kv)
+        if engine is RailVehicleElectricEngine:
+            FizTrainEngineCommon.apply_cntrl_electric_subset(engine as RailVehicleElectricEngine, kv)
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:

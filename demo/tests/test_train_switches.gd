@@ -1,12 +1,12 @@
 extends MaszynaGutTest
 
 var train: VehicleController
-var switches: VehicleSwitches
+var switches: RailVehicleSwitches
 
 func before_each():
     train = build_vehicle("TestTrain")
 
-    switches = MoverVehicleSwitches.new()
+    switches = MoverRailVehicleSwitches.new()
     train.add_component(switches)
     await wait_idle_frames(2)
 
@@ -46,4 +46,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(switches.pantograph_presets.size(), 4)
     var dimmer_list: Array = switches.dimmer_list_positions
     assert_eq(dimmer_list.size(), 2)
-    assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring VehicleSwitches")
+    assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring RailVehicleSwitches")

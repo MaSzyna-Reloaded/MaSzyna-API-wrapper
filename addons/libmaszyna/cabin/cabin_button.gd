@@ -50,7 +50,7 @@ enum ButtonType {
 
 @export var command = ""
 ## Fixed leading argument sent before `pushed`, for commands that take a selector as their first
-## parameter (e.g. VehicleElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
+## parameter (e.g. RailVehicleElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
 ## every single-argument command, which keeps existing widgets (fuelpump_sw, battery_sw, ...)
 ## sending exactly the same single-argument call as before.
 @export var command_param:Variant

@@ -93,7 +93,7 @@ func test_bogies_follow_track_tangents() -> void:
     # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
     # composed configuration - so the vehicle has to actually have wheels
     # a component is configured and then attached - attaching is what writes it to the backend
-    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.bogie_pivot_spacing = 6.0
     controller.add_component(wheels)
     var vehicle:RailVehicle3D = RailVehicle3D.new()
@@ -226,9 +226,9 @@ func test_find_vehicle_measures_between_the_ends_across_tracks() -> void:
     var lengths: float = (searching["controller"] as VehicleController).get_dimensions_length() \
             + (standing["controller"] as VehicleController).get_dimensions_length()
 
-    var ahead: VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 0, 1000.0)
-    var behind: VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 1, 1000.0)
-    var found: VehicleNeighbour = ahead if ahead else behind
+    var ahead: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 0, 1000.0)
+    var behind: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 1, 1000.0)
+    var found: RailVehicleNeighbour = ahead if ahead else behind
 
     assert_not_null(found, "the other vehicle is on the next track")
     assert_true(ahead == null or behind == null, "and only one way")

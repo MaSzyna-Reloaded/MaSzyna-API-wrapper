@@ -118,7 +118,7 @@
 			</description>
 		</method>
 		<method name="vehicle_find_vehicle">
-			<return type="VehicleNeighbour" />
+			<return type="RailVehicleNeighbour" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="end" type="int" />
 			<param index="2" name="distance" type="float" />
@@ -142,7 +142,7 @@
 			<return type="RID[]" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="end" type="int" />
-			<param index="2" name="element" type="int" enum="VehicleController.CouplingElement" />
+			<param index="2" name="element" type="int" enum="RailVehicleController.CouplingElement" />
 			<description>
 			</description>
 		</method>
@@ -219,7 +219,7 @@
 		<method name="vehicle_radio_call">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="call" type="int" enum="VehicleRadio.RadioCall" />
+			<param index="1" name="call" type="int" enum="RailVehicleRadio.RadioCall" />
 			<description>
 			</description>
 		</method>

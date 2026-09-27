@@ -5,12 +5,12 @@ extends MaszynaGutTest
 ## TDynamicObject::SetLights, DynObj.cpp:7322).
 
 var train: VehicleController
-var lighting: VehicleLighting
+var lighting: RailVehicleLighting
 
 
 func before_each():
     train = build_vehicle("TestLightPresets")
-    lighting = MoverVehicleLighting.new()
+    lighting = MoverRailVehicleLighting.new()
     var upper := LightListItem.new()
     upper.cabin_a_head_light = true
     upper.cabin_b_left_red_signal = true

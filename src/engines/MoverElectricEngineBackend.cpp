@@ -1,214 +1,214 @@
-#include "../core/TrainController.hpp"
+#include "../core/RailVehicleController.hpp"
 #include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
 #include "MoverElectricEngineBackend.hpp"
-#include "VehicleElectricEngine.hpp"
+#include "RailVehicleElectricEngine.hpp"
 #include <unordered_map>
 
 namespace godot {
     namespace {
-        const std::unordered_map<VehicleElectricEngine::ValveOperation, Maszyna::operation_t> VALVE_OPERATIONS = {
-                {VehicleElectricEngine::VALVE_OPERATION_NONE, Maszyna::operation_t::none},
-                {VehicleElectricEngine::VALVE_OPERATION_ENABLE, Maszyna::operation_t::enable},
-                {VehicleElectricEngine::VALVE_OPERATION_DISABLE, Maszyna::operation_t::disable},
-                {VehicleElectricEngine::VALVE_OPERATION_ENABLE_ON, Maszyna::operation_t::enable_on},
-                {VehicleElectricEngine::VALVE_OPERATION_ENABLE_OFF, Maszyna::operation_t::enable_off},
-                {VehicleElectricEngine::VALVE_OPERATION_DISABLE_ON, Maszyna::operation_t::disable_on},
-                {VehicleElectricEngine::VALVE_OPERATION_DISABLE_OFF, Maszyna::operation_t::disable_off},
+        const std::unordered_map<RailVehicleElectricEngine::ValveOperation, Maszyna::operation_t> VALVE_OPERATIONS = {
+                {RailVehicleElectricEngine::VALVE_OPERATION_NONE, Maszyna::operation_t::none},
+                {RailVehicleElectricEngine::VALVE_OPERATION_ENABLE, Maszyna::operation_t::enable},
+                {RailVehicleElectricEngine::VALVE_OPERATION_DISABLE, Maszyna::operation_t::disable},
+                {RailVehicleElectricEngine::VALVE_OPERATION_ENABLE_ON, Maszyna::operation_t::enable_on},
+                {RailVehicleElectricEngine::VALVE_OPERATION_ENABLE_OFF, Maszyna::operation_t::enable_off},
+                {RailVehicleElectricEngine::VALVE_OPERATION_DISABLE_ON, Maszyna::operation_t::disable_on},
+                {RailVehicleElectricEngine::VALVE_OPERATION_DISABLE_OFF, Maszyna::operation_t::disable_off},
         };
     } // namespace
 
 
 
 
-    double MoverElectricEngineBackend::get_collector_max_voltage(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_max_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.MaxVoltage : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_collector_max_current(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_max_current(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.MaxCurrent : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_collector_max_lifting(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_max_lifting(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MaxH : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_collector_min_lifting(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_min_lifting(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinH : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_collector_sliding_width(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_sliding_width(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.CSW : 0.0;
     }
 
     double
-    MoverElectricEngineBackend::get_collector_min_main_switch_voltage(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_min_main_switch_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinV : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_min_pantograph_tank_pressure(
-            const VehicleElectricEngine *p_engine) const {
+            const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinPress : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_max_pantograph_tank_pressure(
-            const VehicleElectricEngine *p_engine) const {
+            const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MaxPress : 0.0;
     }
 
     double
-    MoverElectricEngineBackend::get_collector_pantograph_tank_pressure(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_tank_pressure(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantPress : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_pressure_switch_armed(
-            const VehicleElectricEngine *p_engine) const {
+            const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantPressSwitchActive : false;
     }
 
     bool
-    MoverElectricEngineBackend::get_collector_pantograph_compressor_valve(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_compressor_valve(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? !p_mover->bPantKurek3 : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_compressor_enabled(
-            const VehicleElectricEngine *p_engine) const {
+            const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantCompFlag : false;
     }
 
-    bool MoverElectricEngineBackend::get_collector_overvoltage_relay(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_collector_overvoltage_relay(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.OVP : false;
     }
 
     double MoverElectricEngineBackend::get_collector_required_main_switch_voltage(
-            const VehicleElectricEngine *p_engine) const {
+            const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.InsetV : 0.0;
     }
 
-    bool MoverElectricEngineBackend::get_collector_valve_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_collector_valve_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantsValve.is_active : false;
     }
 
-    bool MoverElectricEngineBackend::get_collector_valve_enabled(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_collector_valve_enabled(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantsValve.is_enabled : false;
     }
 
-    bool MoverElectricEngineBackend::get_collector_pantographs_dropped(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_collector_pantographs_dropped(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantAllDown : false;
     }
 
     bool
-    MoverElectricEngineBackend::get_collector_pantograph_first_active(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_first_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Pantographs[0].is_active : false;
     }
 
     double
-    MoverElectricEngineBackend::get_collector_pantograph_first_voltage(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_first_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Pantographs[0].voltage : 0.0;
     }
 
     bool
-    MoverElectricEngineBackend::get_collector_pantograph_second_active(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_second_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Pantographs[1].is_active : false;
     }
 
     double
-    MoverElectricEngineBackend::get_collector_pantograph_second_voltage(const VehicleElectricEngine *p_engine) const {
+    MoverElectricEngineBackend::get_collector_pantograph_second_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Pantographs[1].voltage : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_collector_voltage(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_collector_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantographVoltage : 0.0;
     }
 
-    bool MoverElectricEngineBackend::get_contactors_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_contactors_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr
                        ? (p_mover->StLinFlag || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0)
                        : false;
     }
 
-    bool MoverElectricEngineBackend::get_diff_relay_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_diff_relay_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr
                        ? (p_mover->GroundRelay || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0)
                        : false;
     }
 
-    bool MoverElectricEngineBackend::get_resistors_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_resistors_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->StLinFlag ? p_mover->ResistorsFlagCheck() : false : false;
     }
 
-    bool MoverElectricEngineBackend::get_vent_overload_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_vent_overload_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? (p_mover->RventRot < 5.0) && p_mover->ResistorsFlagCheck() : false;
     }
 
-    bool MoverElectricEngineBackend::get_highcurrent_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_highcurrent_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? !(p_mover->Imax < p_mover->ImaxHi) : false;
     }
 
-    bool MoverElectricEngineBackend::get_mainbreaker_active(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_mainbreaker_active(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Mains : false;
     }
 
-    double MoverElectricEngineBackend::get_transducer_input_voltage(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_transducer_input_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnginePowerSource.Transducer.InputVoltage : 0.0;
     }
 
-    bool MoverElectricEngineBackend::get_camshaft_available(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_camshaft_available(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->HasCamshaft : false;
     }
 
-    bool MoverElectricEngineBackend::get_converter_overload(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_converter_overload(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->ConvOvldFlag : false;
     }
 
-    double MoverElectricEngineBackend::get_line_breaker_delay(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_line_breaker_delay(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->CtrlDelay : 0.0;
     }
 
-    double MoverElectricEngineBackend::get_line_breaker_initial_delay(const VehicleElectricEngine *p_engine) const {
+    double MoverElectricEngineBackend::get_line_breaker_initial_delay(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->InitialCtrlDelay : 0.0;
     }
 
-    bool MoverElectricEngineBackend::get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const {
+    bool MoverElectricEngineBackend::get_line_breaker_closes_at_no_power(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->LineBreakerClosesOnlyAtNoPowerPos : false;
     }
 
-    void MoverElectricEngineBackend::apply_configuration(const VehicleElectricEngine *p_engine) const {
+    void MoverElectricEngineBackend::apply_configuration(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         // Pantographs[*].voltage/PantFrontVolt/PantRearVolt/PantographVoltage are NOT set here:
         // this only runs when the controller is dirty (effectively once, at startup), but wire
@@ -217,29 +217,29 @@ namespace godot {
         p_mover->EnginePowerSource.SourceType = mover_power_source(p_engine->get_power_source());
 
         switch (p_engine->get_power_source()) {
-            case TrainController::POWER_SOURCE_INTERNAL: {
+            case RailVehicleController::POWER_SOURCE_INTERNAL: {
                 p_mover->EnginePowerSource.PowerType = mover_power_type(p_engine->get_power_cable_source());
                 break;
             }
-            case TrainController::POWER_SOURCE_TRANSDUCER: {
+            case RailVehicleController::POWER_SOURCE_TRANSDUCER: {
                 p_mover->EnginePowerSource.Transducer.InputVoltage = p_engine->get_power_transducer_input_voltage();
                 break;
             }
-            case TrainController::POWER_SOURCE_GENERATOR: {
+            case RailVehicleController::POWER_SOURCE_GENERATOR: {
                 // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
                 // (MOVER.h:551) - nothing currently dereferences EnginePowerSource's copy of it,
-                // but HeatingPowerSource's copy does (see VehicleHeating.cpp), so it's pointed at
+                // but HeatingPowerSource's copy does (see RailVehicleHeating.cpp), so it's pointed at
                 // enrot (the vehicle's own engine revolutions counter) here too, defensively.
                 engine_generator &generator_params{p_mover->EnginePowerSource.EngineGenerator};
                 generator_params.engine_revolutions = &p_mover->enrot;
                 break;
             }
-            case TrainController::POWER_SOURCE_ACCUMULATOR: {
+            case RailVehicleController::POWER_SOURCE_ACCUMULATOR: {
                 p_mover->EnginePowerSource.RAccumulator.RechargeSource =
                         mover_power_source(p_engine->get_power_accumulator_recharge_source());
                 break;
             }
-            case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
+            case RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR: {
                 p_mover->EnginePowerSource.CollectorParameters.MinH =
                         p_engine->get_power_current_collector_min_collector_lifting();
                 p_mover->EnginePowerSource.CollectorParameters.MaxH =
@@ -268,7 +268,7 @@ namespace godot {
                         p_engine->get_power_current_collector_physical_layout();
                 break;
             }
-            case TrainController::POWER_SOURCE_POWERCABLE: {
+            case RailVehicleController::POWER_SOURCE_POWERCABLE: {
                 p_mover->EnginePowerSource.RPowerCable.PowerTrans =
                         mover_power_type(p_engine->get_power_cable_source());
                 if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
@@ -276,8 +276,8 @@ namespace godot {
                 }
                 break;
             }
-            case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
-            case TrainController::POWER_SOURCE_NOT_DEFINED:;
+            case RailVehicleController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
+            case RailVehicleController::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
 
@@ -318,7 +318,7 @@ namespace godot {
     }
 
 
-    void MoverElectricEngineBackend::converter_fuse_reset(const VehicleElectricEngine *p_engine) const {
+    void MoverElectricEngineBackend::converter_fuse_reset(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_converteroverloadrelayreset (Train.cpp:3567-3585) ->
@@ -328,7 +328,7 @@ namespace godot {
     }
 
     void
-    MoverElectricEngineBackend::pantographs_valve(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
+    MoverElectricEngineBackend::pantographs_valve(const RailVehicleElectricEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
@@ -337,7 +337,7 @@ namespace godot {
     // Train.cpp:3456-3510 OnCommand_pantographraiseselected/lowerselected - the selected
     // pantographs' master valve
     void MoverElectricEngineBackend::pantographs_valve_operate(
-            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::ValveOperation p_operation) const {
+            const RailVehicleElectricEngine *p_engine, const RailVehicleElectricEngine::ValveOperation p_operation) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->OperatePantographsValve(VALVE_OPERATIONS.at(p_operation));
@@ -345,14 +345,14 @@ namespace godot {
 
     // Train.cpp:3336 OnCommand_pantographlowerall
     void MoverElectricEngineBackend::pantographs_drop_all(
-            const VehicleElectricEngine *p_engine, const bool p_enabled) const {
+            const RailVehicleElectricEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->DropAllPantographs(p_enabled);
     }
 
     void MoverElectricEngineBackend::pantograph_compressor(
-            const VehicleElectricEngine *p_engine, const bool p_enabled) const {
+            const RailVehicleElectricEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressoractivate (Train.cpp:2912) - runs while held,
@@ -367,7 +367,7 @@ namespace godot {
     }
 
     void MoverElectricEngineBackend::pantograph_compressor_valve(
-            const VehicleElectricEngine *p_engine, const bool p_to_compressor) const {
+            const RailVehicleElectricEngine *p_engine, const bool p_to_compressor) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressorvalveenable/disable (Train.cpp:2869-2909)
@@ -375,36 +375,36 @@ namespace godot {
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_valve_enabled(
-            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector) const {
+            const RailVehicleElectricEngine *p_engine, const RailVehicleElectricEngine::PantographSelector p_selector) const {
         const TMoverParameters *mover = owner.get_mover();
         const Maszyna::end end =
-                p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
+                p_selector == RailVehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
         return mover != nullptr ? mover->Pantographs[end].valve.is_enabled : false;
     }
 
     // Train.cpp:3218-3300 OnCommand_pantographraisefront/lowerfront and their rear twins
     void MoverElectricEngineBackend::pantograph_valve_operate(
-            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
-            const VehicleElectricEngine::ValveOperation p_operation) const {
+            const RailVehicleElectricEngine *p_engine, const RailVehicleElectricEngine::PantographSelector p_selector,
+            const RailVehicleElectricEngine::ValveOperation p_operation) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         const Maszyna::end end =
-                p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
+                p_selector == RailVehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, VALVE_OPERATIONS.at(p_operation));
     }
 
     void MoverElectricEngineBackend::pantograph(
-            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
+            const RailVehicleElectricEngine *p_engine, const RailVehicleElectricEngine::PantographSelector p_selector,
             const bool p_enabled) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         const Maszyna::end end =
-                (p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
+                (p_selector == RailVehicleElectricEngine::PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
     void MoverElectricEngineBackend::set_pantograph_wire_voltage(
-            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
+            const RailVehicleElectricEngine *p_engine, const RailVehicleElectricEngine::PantographSelector p_selector,
             const float p_voltage) const {
         TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
@@ -412,7 +412,7 @@ namespace godot {
         // (pantograph(), pantographs_valve()) - _apply_configuration() only runs when the
         // controller is dirty (effectively once, at startup), so stashing this in a member for
         // that path to pick up later would mean every subsequent frame's wire voltage is ignored.
-        if (p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST) {
+        if (p_selector == RailVehicleElectricEngine::PANTOGRAPH_FIRST) {
             mover->Pantographs[0].voltage = p_voltage;
             mover->PantFrontVolt = mover->Pantographs[0].is_active ? p_voltage : 0.0;
         } else {

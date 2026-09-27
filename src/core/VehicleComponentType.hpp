@@ -7,7 +7,7 @@ namespace godot {
      *
      * A consumer names the kind, not the implementation:
      * `vehicle_component_get(rid, VehicleComponentType.COMPONENT_ENGINE)` answers with a
-     * VehicleEngine whether the vehicle is diesel or electric.
+     * RailVehicleEngine whether the vehicle is diesel or electric.
      *
      * It is a class of its own, holding nothing, for two reasons: GDScript only sees an enum's
      * constants as members of a registered class, and the component and the vehicle include each

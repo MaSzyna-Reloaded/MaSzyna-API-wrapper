@@ -108,8 +108,8 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
-## The coupling elements the physics side reports, in the order of TrainController.CouplingElement,
-## attach first and detach second, then the pantograph events of VehicleElectricEngine - the layout
+## The coupling elements the physics side reports, in the order of RailVehicleController.CouplingElement,
+## attach first and detach second, then the pantograph events of RailVehicleElectricEngine - the layout
 ## of a vehicle's entry in _vehicle_events.
 const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/attach_coupler": 0,
@@ -146,7 +146,7 @@ var _vehicle_events:Dictionary[RID, PackedInt32Array] = {}
 var _coupler_sources:Dictionary[RID, VehicleController] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
-var _pantograph_sources:Dictionary[RID, VehicleElectricEngine] = {}
+var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
 ## Controllers of the listener's own consist, refreshed with the sweep and on a context change
 var _listener_consist_ids:Dictionary = {}
 var _culling_distance:float = 1000.0
@@ -354,8 +354,8 @@ func _resolve_controller(runtime:BankRuntime) -> void:
     _coupler_sources[runtime.vehicle_rid] = runtime.controller
     runtime.controller.coupler_attached.connect(_on_coupler_attached.bind(runtime.vehicle_rid))
     runtime.controller.coupler_detached.connect(_on_coupler_detached.bind(runtime.vehicle_rid))
-    var engine:VehicleElectricEngine = runtime.controller.get_component(
-            VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+    var engine:RailVehicleElectricEngine = runtime.controller.get_component(
+            VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if engine:
         _pantograph_sources[runtime.vehicle_rid] = engine
         engine.pantograph_up.connect(_on_pantograph_up.bind(runtime.vehicle_rid))
@@ -368,7 +368,7 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
     if is_instance_valid(counted):
         counted.coupler_attached.disconnect(_on_coupler_attached.bind(vehicle_rid))
         counted.coupler_detached.disconnect(_on_coupler_detached.bind(vehicle_rid))
-    var engine:VehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
+    var engine:RailVehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
     if is_instance_valid(engine):
         engine.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
@@ -376,11 +376,11 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
     _pantograph_sources.erase(vehicle_rid)
 
 
-func _on_coupler_attached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_attached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][element] += 1
 
 
-func _on_coupler_detached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_detached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 

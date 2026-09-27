@@ -1,7 +1,7 @@
 #include "../core/VehicleComponent.hpp"
 #include "../core/VehicleController.hpp"
-#include "../engines/VehicleEngine.hpp"
-#include "../lighting/VehicleLighting.hpp"
+#include "../engines/RailVehicleEngine.hpp"
+#include "../lighting/RailVehicleLighting.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -296,7 +296,7 @@ namespace godot {
     void VehicleController::register_component(VehicleComponent *p_component) {
         components.push_back(p_component);
         _component_attached(p_component);
-        if (VehicleLighting *component_lighting = Object::cast_to<VehicleLighting>(p_component);
+        if (RailVehicleLighting *component_lighting = Object::cast_to<RailVehicleLighting>(p_component);
             component_lighting != nullptr) {
             lighting = component_lighting;
         }

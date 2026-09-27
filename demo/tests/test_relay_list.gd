@@ -1,17 +1,17 @@
 extends MaszynaGutTest
 
 var train: VehicleController
-var engine: VehicleElectricSeriesEngine
+var engine: RailVehicleElectricSeriesEngine
 
 func before_each():
     train = build_vehicle("TestTrain")
 
-    engine = MoverVehicleElectricSeriesEngine.new()
+    engine = MoverRailVehicleElectricSeriesEngine.new()
     # NOTE: engine_power_source must be set explicitly here - a freshly created engine without
-    # a configured power source hits a pre-existing bug in VehicleElectricEngine's state fetch
+    # a configured power source hits a pre-existing bug in RailVehicleElectricEngine's state fetch
     # (RAccumulator.RechargeSource is read uninitialized), unrelated to relay_list itself.
     # The canonical property name is power_source; the Inspector grouping is independent.
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
 
@@ -64,4 +64,4 @@ func test_oversized_relay_list_is_truncated_without_crashing():
 
     # The mover only has room for ResArraySize (64) + 1 relay list positions; assigning more
     # than that must not corrupt memory or crash the train, it should simply be truncated.
-    assert_true(is_instance_valid(engine), "VehicleElectricSeriesEngine should keep functioning after an oversized relay_list")
+    assert_true(is_instance_valid(engine), "RailVehicleElectricSeriesEngine should keep functioning after an oversized relay_list")

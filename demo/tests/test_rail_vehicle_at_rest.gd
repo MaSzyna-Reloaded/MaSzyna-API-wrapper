@@ -69,7 +69,7 @@ func _assert_still(track_name:String, offset:float, where:String) -> void:
     model.properties = {"train_id": "test_at_rest", "mass": 74000.0, "type_name": "test"}
     var physics_node:VehiclePhysicsNode = build_vehicle_node("test_at_rest", model)
     created_vehicle_nodes.append(physics_node)
-    var wheels:VehicleWheels = MoverVehicleWheels.new()
+    var wheels:RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.bogie_pivot_spacing = 6.0
     physics_node.get_controller().add_component(wheels)
 

@@ -167,8 +167,8 @@ func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
     var far:RID = _create_event(RecordingAction.new(), NEVER)
     var other_call:RID = _create_event(RecordingAction.new(), NEVER)
     var launchers:Array[RID] = []
-    for setup:Array in [[near, VehicleRadio.RADIO_CALL3, Vector3.ZERO], [far, VehicleRadio.RADIO_CALL3, Vector3(500, 0, 0)],
-            [other_call, VehicleRadio.RADIO_CALL1, Vector3.ZERO]]:
+    for setup:Array in [[near, RailVehicleRadio.RADIO_CALL3, Vector3.ZERO], [far, RailVehicleRadio.RADIO_CALL3, Vector3(500, 0, 0)],
+            [other_call, RailVehicleRadio.RADIO_CALL1, Vector3.ZERO]]:
         var launcher:RID = ScenarioEventServer.launcher_create()
         ScenarioEventServer.launcher_set_events(launcher, setup[0], RID())
         ScenarioEventServer.launcher_set_radio_call(launcher, setup[1])
@@ -176,7 +176,7 @@ func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
         ScenarioEventServer.launcher_set_radius(launcher, 100.0)
         launchers.append(launcher)
 
-    RailVehicleServer.vehicle_radio_called.emit(RID(), VehicleRadio.RADIO_CALL3, Vector3(10, 0, 0))
+    RailVehicleServer.vehicle_radio_called.emit(RID(), RailVehicleRadio.RADIO_CALL3, Vector3(10, 0, 0))
 
     assert_true(ScenarioEventServer.event_is_queued(near), "call 3 within 100 m")
     assert_false(ScenarioEventServer.event_is_queued(far), "out of range")

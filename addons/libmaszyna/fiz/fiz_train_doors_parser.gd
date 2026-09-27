@@ -2,38 +2,38 @@
 extends RefCounted
 class_name FizTrainDoorsParser
 
-## Doors: section -> VehicleDoors. LoadFIZ_Doors: Mover.cpp:10537.
+## Doors: section -> RailVehicleDoors. LoadFIZ_Doors: Mover.cpp:10537.
 ##
-## Setters are only called when the corresponding FIZ key is present - VehicleDoors' own
+## Setters are only called when the corresponding FIZ key is present - RailVehicleDoors' own
 ## compiled-in property defaults already match the FIZ format's "key absent" behavior, except
 ## `voltage` (default depends on open/close method) and `max_shift` (two alternate source
 ## keys with a priority rule), which are genuine cross-field/conditional defaults.
 
 const _CONTROLS_MAP := {
-    "passenger": VehicleDoors.CONTROLS_PASSENGER,
-    "automaticctrl": VehicleDoors.CONTROLS_AUTOMATIC,
-    "driverctrl": VehicleDoors.CONTROLS_DRIVER,
-    "conductor": VehicleDoors.CONTROLS_CONDUCTOR,
-    "mixed": VehicleDoors.CONTROLS_MIXED,
+    "passenger": RailVehicleDoors.CONTROLS_PASSENGER,
+    "automaticctrl": RailVehicleDoors.CONTROLS_AUTOMATIC,
+    "driverctrl": RailVehicleDoors.CONTROLS_DRIVER,
+    "conductor": RailVehicleDoors.CONTROLS_CONDUCTOR,
+    "mixed": RailVehicleDoors.CONTROLS_MIXED,
 }
 
 const _TYPE_MAP := {
-    "shift": VehicleDoors.TYPE_SHIFT,
-    "rotate": VehicleDoors.TYPE_ROTATE,
-    "fold": VehicleDoors.TYPE_FOLD,
-    "plug": VehicleDoors.TYPE_PLUG,
+    "shift": RailVehicleDoors.TYPE_SHIFT,
+    "rotate": RailVehicleDoors.TYPE_ROTATE,
+    "fold": RailVehicleDoors.TYPE_FOLD,
+    "plug": RailVehicleDoors.TYPE_PLUG,
 }
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := MoverVehicleDoors.new()
+    var node := MoverRailVehicleDoors.new()
 
-    var open_method: int = _CONTROLS_MAP.get(FizLineUtil.get_string(kv, "OpenCtrl").to_lower(), VehicleDoors.CONTROLS_PASSENGER)
+    var open_method: int = _CONTROLS_MAP.get(FizLineUtil.get_string(kv, "OpenCtrl").to_lower(), RailVehicleDoors.CONTROLS_PASSENGER)
     if kv.has("OpenCtrl"):
         node.open_method = open_method
     if kv.has("CloseCtrl"):
-        node.close_method = _CONTROLS_MAP.get(FizLineUtil.get_string(kv, "CloseCtrl").to_lower(), VehicleDoors.CONTROLS_PASSENGER)
+        node.close_method = _CONTROLS_MAP.get(FizLineUtil.get_string(kv, "CloseCtrl").to_lower(), RailVehicleDoors.CONTROLS_PASSENGER)
 
     if kv.has("DoorStayOpen"):
         node.open_time = FizLineUtil.get_float(kv, "DoorStayOpen")
@@ -67,21 +67,21 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.max_shift_plug = FizLineUtil.get_float(kv, "DoorMaxShiftPlug")
 
     if kv.has("DoorOpenMethod"):
-        node.type = _TYPE_MAP.get(FizLineUtil.get_string(kv, "DoorOpenMethod").to_lower(), VehicleDoors.TYPE_ROTATE)
+        node.type = _TYPE_MAP.get(FizLineUtil.get_string(kv, "DoorOpenMethod").to_lower(), RailVehicleDoors.TYPE_ROTATE)
 
     # DoorVoltage's absent-key default depends on whether doors are remote-controlled, which
     # differs from the compiled default (0/unset) for driver/conductor/mixed doors.
     var voltage_str: String = FizLineUtil.get_string(kv, "DoorVoltage")
     if not voltage_str:
-        var remote: bool = open_method in [VehicleDoors.CONTROLS_DRIVER, VehicleDoors.CONTROLS_CONDUCTOR, VehicleDoors.CONTROLS_MIXED]
+        var remote: bool = open_method in [RailVehicleDoors.CONTROLS_DRIVER, RailVehicleDoors.CONTROLS_CONDUCTOR, RailVehicleDoors.CONTROLS_MIXED]
         if remote:
-            node.voltage = VehicleDoors.VOLTAGE_24
+            node.voltage = RailVehicleDoors.VOLTAGE_24
     else:
         match voltage_str.to_int():
-            12: node.voltage = VehicleDoors.VOLTAGE_12
-            24: node.voltage = VehicleDoors.VOLTAGE_24
-            112: node.voltage = VehicleDoors.VOLTAGE_112
-            0: node.voltage = VehicleDoors.VOLTAGE_0
+            12: node.voltage = RailVehicleDoors.VOLTAGE_12
+            24: node.voltage = RailVehicleDoors.VOLTAGE_24
+            112: node.voltage = RailVehicleDoors.VOLTAGE_112
+            0: node.voltage = RailVehicleDoors.VOLTAGE_0
             _: push_warning("FIZ Doors:DoorVoltage: unexpected value '%s'" % voltage_str)
 
     if kv.has("DoorNeedPermit"):
@@ -105,12 +105,12 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.platform_max_speed = FizLineUtil.get_float(kv, "PlatformMaxSpeed")
     if kv.has("PlatformOpenMethod"):
         node.platform_type = (
-                VehicleDoors.PLATFORM_TYPE_SHIFT if FizLineUtil.get_string(kv, "PlatformOpenMethod").to_lower() == "shift"
-                else VehicleDoors.PLATFORM_TYPE_ROTATE)
+                RailVehicleDoors.PLATFORM_TYPE_SHIFT if FizLineUtil.get_string(kv, "PlatformOpenMethod").to_lower() == "shift"
+                else RailVehicleDoors.PLATFORM_TYPE_ROTATE)
 
     if kv.has("MirrorMaxShift"):
         node.mirror_max_shift = FizLineUtil.get_float(kv, "MirrorMaxShift")
     if kv.has("MirrorVelClose"):
         node.mirror_close_velocity = FizLineUtil.get_float(kv, "MirrorVelClose")
 
-    context.add_part("VehicleDoors", node)
+    context.add_part("RailVehicleDoors", node)

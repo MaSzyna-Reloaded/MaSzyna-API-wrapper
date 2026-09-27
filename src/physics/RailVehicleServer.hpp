@@ -1,10 +1,10 @@
 #pragma once
 #include "../core/VehicleComponentType.hpp"
-#include "../core/TrainController.hpp"
-#include "../radio/VehicleRadio.hpp"
+#include "../core/RailVehicleController.hpp"
+#include "../radio/RailVehicleRadio.hpp"
 
 #include "../tracks/TrackManager.hpp"
-#include "VehicleNeighbour.hpp"
+#include "RailVehicleNeighbour.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -136,7 +136,7 @@ namespace godot {
             TypedArray<VehicleController> stepped_controllers;
             HashMap<RID, Vector<RID>> track_vehicles;
 
-            TrainController *_get_controller(const VehiclePlacement &p_placement) const;
+            RailVehicleController *_get_controller(const VehiclePlacement &p_placement) const;
             /* The controller's own events, relayed under the handle, so whoever follows a vehicle
              * never holds its controller - connected when a controller is attached, disconnected
              * when it is replaced or the vehicle is freed */
@@ -158,7 +158,7 @@ namespace godot {
             void _refresh_stepping();
             void _set_stepping(bool p_stepping);
             void _on_simulation_advanced(double p_seconds);
-            void _clear_neighbour(TrainController *p_controller, VehiclePlacement &p_placement, int p_end);
+            void _clear_neighbour(RailVehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
                     const RID &p_vehicle, const VehiclePlacement &p_placement, int p_end, double p_scan_range,
@@ -215,7 +215,7 @@ namespace godot {
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
             TypedArray<RID>
-            vehicle_get_coupled(const RID &p_vehicle, int p_end, TrainController::CouplingElement p_element) const;
+            vehicle_get_coupled(const RID &p_vehicle, int p_end, RailVehicleController::CouplingElement p_element) const;
             /* The vehicle a cab's controls drive (TDynamicObject::FindPowered(), DynObj.cpp:7772): this
              * one if it has power, else the nearest with power joined to it - within an EMU's or DMU's
              * unit, else by the control line; this one when there is none */
@@ -231,7 +231,7 @@ namespace godot {
              * heard by every vehicle within RADIO_STOP_RANGE */
             void radio_stop(const Vector3 &p_position);
             /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
-            void vehicle_radio_call(const RID &p_vehicle, VehicleRadio::RadioCall p_call);
+            void vehicle_radio_call(const RID &p_vehicle, RailVehicleRadio::RadioCall p_call);
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;
@@ -266,7 +266,7 @@ namespace godot {
             /* The nearest vehicle along the route from the vehicle's p_end (0 front, 1 rear), on the
              * tracks entered within p_distance [m] of its centre, null when there is none
              * (TDynamicObject::find_vehicle(), DynObj.cpp:7688) */
-            Ref<VehicleNeighbour> vehicle_find_vehicle(const RID &p_vehicle, int p_end, double p_distance);
+            Ref<RailVehicleNeighbour> vehicle_find_vehicle(const RID &p_vehicle, int p_end, double p_distance);
             /* Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */

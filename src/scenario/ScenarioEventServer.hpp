@@ -1,5 +1,5 @@
 #pragma once
-#include "../radio/VehicleRadio.hpp"
+#include "../radio/RailVehicleRadio.hpp"
 #include "ScenarioEventAction.hpp"
 #include "ScenarioEventCondition.hpp"
 #include <functional>
@@ -104,7 +104,7 @@ namespace godot {
                     /// (iHour, iMinute, UpdatedTime - EvLaunch.cpp:197-211)
                     int hour = -1;
                     /// The radio call it answers, when it is on radio_launchers
-                    VehicleRadio::RadioCall radio_call = VehicleRadio::RADIO_CALL1;
+                    RailVehicleRadio::RadioCall radio_call = RailVehicleRadio::RADIO_CALL1;
                     int minute = 0;
                     bool armed = true;
                     /// The sequence of its scheduled firing in the queue, 0 while none is
@@ -164,7 +164,7 @@ namespace godot {
 
             void _on_time_of_day_changed();
             void
-            _on_vehicle_radio_called(const RID &p_vehicle, VehicleRadio::RadioCall p_call, const Vector3 &p_position);
+            _on_vehicle_radio_called(const RID &p_vehicle, RailVehicleRadio::RadioCall p_call, const Vector3 &p_position);
             void _on_vehicle_heading_to_track_start(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_heading_to_track_end(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_stopped_on_track(const RID &p_vehicle, const RID &p_track);
@@ -278,7 +278,7 @@ namespace godot {
             void launcher_set_time_of_day(const RID &p_launcher, int p_hour, int p_minute);
             /// Fires when a vehicle's radio sends the call within the radius
             /// (event_manager::queue_receivers(), Event.cpp:2255-2268)
-            void launcher_set_radio_call(const RID &p_launcher, VehicleRadio::RadioCall p_call);
+            void launcher_set_radio_call(const RID &p_launcher, RailVehicleRadio::RadioCall p_call);
             TypedArray<RID> get_launchers() const;
             /// Queues the launcher's event if its condition passes
             void launcher_fire(const RID &p_launcher);

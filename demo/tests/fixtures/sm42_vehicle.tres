@@ -1,7 +1,7 @@
 [gd_resource type="VehicleModel" format=3 uid="uid://bgo2aii4u3lg2"]
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_0"]
-implementation = &"MoverVehicleBrake"
+implementation = &"MoverRailVehicleBrake"
 properties = {
 "brake_force_max": 85.0,
 "compressor_cab_a_max_pressure": 8.0,
@@ -132,7 +132,7 @@ voltage_constant = 2000.0
 saturation_current = 49.0
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_1"]
-implementation = &"MoverVehicleDieselElectricEngine"
+implementation = &"MoverRailVehicleDieselElectricEngine"
 properties = {
 "maximum_traction_force": 228000.0,
 "motor_param_table": Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")]),
@@ -141,7 +141,7 @@ properties = {
 }
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_2"]
-implementation = &"MoverVehicleSecuritySystem"
+implementation = &"MoverRailVehicleSecuritySystem"
 properties = {
 "aware_delay": 60.0,
 "aware_system_active": true,
@@ -152,13 +152,13 @@ properties = {
 }
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_3"]
-implementation = &"MoverVehicleElectroPneumaticDynamicBrake"
+implementation = &"MoverRailVehicleElectroPneumaticDynamicBrake"
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_4"]
-implementation = &"MoverVehicleSpringBrake"
+implementation = &"MoverRailVehicleSpringBrake"
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_5"]
-implementation = &"MoverVehicleMasterController"
+implementation = &"MoverRailVehicleMasterController"
 properties = {
 "main_position_count": 11
 }

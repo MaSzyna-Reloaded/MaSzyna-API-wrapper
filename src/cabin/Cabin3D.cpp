@@ -1,5 +1,5 @@
 #include "../core/VehicleComponentType.hpp"
-#include "../engines/VehicleDieselEngine.hpp"
+#include "../engines/RailVehicleDieselEngine.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include "Cabin3D.hpp"
 #include <godot_cpp/classes/engine.hpp>
@@ -146,7 +146,7 @@ namespace godot {
         if (server == nullptr || !vehicle_rid.is_valid()) {
             return 0.0;
         }
-        const VehicleDieselEngine *engine = Object::cast_to<VehicleDieselEngine>(
+        const RailVehicleDieselEngine *engine = Object::cast_to<RailVehicleDieselEngine>(
                 server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE));
         return engine != nullptr ? Math::abs(engine->get_rpm_count()) : 0.0;
     }

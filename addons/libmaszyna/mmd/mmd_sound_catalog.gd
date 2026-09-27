@@ -5,9 +5,9 @@ class_name MmdSoundCatalog
 ## way MmdSemanticCatalog is: state_property names are copied from demo/vehicles/sm42/sm_42.tscn's
 ## already-working hand-authored TrainSoundTrigger wiring (oil_pump_active/engine_rpm) or from the
 ## C++ VehicleComponent state each other label's own property is confirmed to expose (fuel_pump_active -
-## VehicleDieselEngine.cpp:180, battery_enabled - VehicleController.cpp:428, compressor_enabled -
-## VehicleEngine.cpp:197/VehicleElectricEngine.cpp:169, horn_low_active/horn_high_active/whistle_active
-## - VehicleHorns.cpp). Any MMD sound label not listed here is parsed (so the token stream stays
+## RailVehicleDieselEngine.cpp:180, battery_enabled - VehicleController.cpp:428, compressor_enabled -
+## RailVehicleEngine.cpp:197/RailVehicleElectricEngine.cpp:169, horn_low_active/horn_high_active/whistle_active
+## - RailVehicleHorns.cpp). Any MMD sound label not listed here is parsed (so the token stream stays
 ## aligned) but produces no bank event and no trigger - same "nothing built rather than something
 ## wrong" discipline as MmdSemanticCatalog.
 ##
@@ -129,7 +129,7 @@ static func _ensure_built() -> void:
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
         # A pantograph touching the wire and dropping (DynObj.cpp:3881-3934, 4007-4036),
-        # reported by VehicleElectricEngine.pantograph_up / pantograph_down and counted by
+        # reported by RailVehicleElectricEngine.pantograph_up / pantograph_down and counted by
         # TrainSoundSystem like the coupler events
         "pantographup": {
             "event_name": &"pantograph_up",
@@ -141,7 +141,7 @@ static func _ensure_built() -> void:
             "state_property": "pantograph_sound/down",
             "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
         },
-        # horn1/horn2/horn3 map onto VehicleHorns' low/high/whistle bits, in that fixed order -
+        # horn1/horn2/horn3 map onto RailVehicleHorns' low/high/whistle bits, in that fixed order -
         # confirmed via the original engine's Train.cpp (OnCommand_hornlowactivate/
         # OnCommand_hornhighactivate/OnCommand_whistleactivate) and DynObj.cpp's per-frame
         # WarningSignal bit 1/2/4 -> sHorn1/sHorn2/sHorn3 dispatch, NOT by the sample names
@@ -167,7 +167,7 @@ static func _ensure_built() -> void:
         # parse_internal_data()) drive a LOOPING sound while the alerter is actively unacknowledged
         # (Train.cpp:10111-10151: dsbBuzzer/dsbBuzzerShp play() while is_beeping()/
         # is_cabsignal_beeping(), stop() otherwise) - a SEPARATE, later-triggered stage from the
-        # light's own on/off click (VehicleSecuritySystem::is_beeping(), Mover.cpp:186:
+        # light's own on/off click (RailVehicleSecuritySystem::is_beeping(), Mover.cpp:186:
         # `alert_timer > SoundSignalDelay` - the buzzer only starts SoundSignalDelay seconds after
         # the light already began blinking, not simultaneously).
         "buzzer": {

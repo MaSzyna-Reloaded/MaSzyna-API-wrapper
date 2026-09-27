@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-## The train radio is a component of its own (VehicleRadio): the cab radio's channel and volume,
+## The train radio is a component of its own (RailVehicleRadio): the cab radio's channel and volume,
 ## the Mover's Radio flag, and Radio-Stop.
 
 ## Global.DefaultRadioVolume (Globals.h:181) and one press (Train.cpp:8252)
@@ -8,12 +8,12 @@ const VOLUME_DEFAULT:float = 0.75
 const VOLUME_STEP:float = 0.125
 
 var train: VehicleController
-var radio: VehicleRadio
+var radio: RailVehicleRadio
 
 
 func before_each():
     train = build_vehicle("TestRadio")
-    radio = MoverVehicleRadio.new()
+    radio = MoverRailVehicleRadio.new()
     train.add_component(radio)
     await wait_idle_frames(2)
 

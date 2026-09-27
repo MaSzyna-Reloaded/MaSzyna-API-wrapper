@@ -9,11 +9,11 @@ extends MaszynaGutTest
 ## since nothing anywhere sets radio_channel_min/max.
 
 var train: VehicleController
-var radio: VehicleRadio
+var radio: RailVehicleRadio
 
 func before_each():
     train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
-    radio = MoverVehicleRadio.new()
+    radio = MoverRailVehicleRadio.new()
     train.add_component(radio)
     train.battery_voltage = 110.0
     train.apply_configuration()

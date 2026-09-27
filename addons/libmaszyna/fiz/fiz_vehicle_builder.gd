@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 19
+const FIZ_PARSER_FORMAT_VERSION := 20
 
 ## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
 const _COMPONENT_TYPES:Array[int] = [
@@ -109,7 +109,7 @@ static func _static_init() -> void:
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
         # MotorParamTable0: is what ElectricSeriesMotor vehicles use; MotorParamTable: (no "0")
         # is the same row shape for DieselElectric vehicles' traction motors - both populate
-        # VehicleEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
+        # RailVehicleEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
         {"prefix": "MotorParamTable0:", "parser": electric_series_parser, "table_end": "END-MPT"},
         {"prefix": "MotorParamTable:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
@@ -154,16 +154,16 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     for part_name: String in context.parts:
         target.add_component(context.parts[part_name])
 
-    # VehicleHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
-    # mover-level horn count config - see VehicleHorns.hpp's header comment: a vehicle's 0-3 horn
+    # RailVehicleHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
+    # mover-level horn count config - see RailVehicleHorns.hpp's header comment: a vehicle's 0-3 horn
     # complement is implied entirely by which MMD cabin-button/sound labels it declares), so
     # unlike every other VehicleComponent above it's attached unconditionally here rather than only when
     # a matching section is found - every VehicleController gets one, same as a hand-authored scene
     # (e.g. sm_42v_1.tscn's own "Horns" node) would.
-    target.add_component(MoverVehicleHorns.new())
+    target.add_component(MoverRailVehicleHorns.new())
     # The train radio has no FIZ section either - in the original it is the cab's (TTrain's
     # channel and volume) and the Mover's Radio flag, present on every vehicle
-    target.add_component(MoverVehicleRadio.new())
+    target.add_component(MoverRailVehicleRadio.new())
 
 ## Same on-disk cache used by E3DModelManager for parsed E3D models (addons/libmaszyna/e3d/
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
@@ -205,7 +205,7 @@ static func build_model_at(fiz_path: String) -> VehicleModel:
         return model
 
     # FIZ is the Mover's own format, so the vehicle it describes is built on the Mover
-    var root: MoverTrainController = MoverTrainController.new()
+    var root: MoverRailVehicleController = MoverRailVehicleController.new()
     build_into(root, fiz_path)
     model = VehicleModel.new()
     model.properties = VehicleModel.capture(root)
@@ -397,7 +397,7 @@ static func _dispatch_header(
         section["parser"].parse(line_parser, context, prefix)
 
     # Cntrl. additionally opens the brake-position table (only when BrakeSystem != Individual,
-    # decided by Brake:/Cntrl. themselves inside VehicleBrake's own parser)
+    # decided by Brake:/Cntrl. themselves inside RailVehicleBrake's own parser)
     if prefix == "Cntrl." and section["parser"] != null and section["parser"].wants_bpt_table(context):
         table_state["prefix"] = "BPT"
         table_state["parser"] = section["parser"]

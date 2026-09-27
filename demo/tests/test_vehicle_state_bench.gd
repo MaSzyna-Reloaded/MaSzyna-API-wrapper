@@ -86,12 +86,12 @@ func before_all() -> void:
         var controller: VehicleController = physics_node.get_controller()
 
         # the two biggest publishers the fixture has no section for, added as a scene would
-        var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
-        engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
+        var engine: RailVehicleElectricSeriesEngine = MoverRailVehicleElectricSeriesEngine.new()
+        engine.power_source = RailVehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_component(engine)
-        var lighting: VehicleLighting = MoverVehicleLighting.new()
+        var lighting: RailVehicleLighting = MoverRailVehicleLighting.new()
         controller.add_component(lighting)
-        var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()
+        var spring_brake: RailVehicleSpringBrake = MoverRailVehicleSpringBrake.new()
         controller.add_component(spring_brake)
 
         _controllers.append(controller)

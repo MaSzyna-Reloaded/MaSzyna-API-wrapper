@@ -23,16 +23,16 @@ in any layer before.
 
 2. **Wrapper command** - every component is an interface/implementation pair, and the
    backend never appears in the interface (`AGENTS.md`):
-   - **Interface** `VehicleX` (`src/brakes/VehicleBrake.hpp`, `src/engines/VehicleEngine.hpp`,
+   - **Interface** `VehicleX` (`src/brakes/RailVehicleBrake.hpp`, `src/engines/RailVehicleEngine.hpp`,
      `src/core/VehicleController.hpp`, ...): declare the command as pure virtual next to its
-     sibling (`virtual void local_brake_increase() = 0;`, `VehicleBrake.hpp:262`), bind it with
+     sibling (`virtual void local_brake_increase() = 0;`, `RailVehicleBrake.hpp:262`), bind it with
      `ClassDB::bind_method(...)` in `_bind_methods()`, and add it to both
-     `_register_commands()` and `_unregister_commands()` (`VehicleBrake.cpp:369,385`) - forgetting
+     `_register_commands()` and `_unregister_commands()` (`RailVehicleBrake.cpp:369,385`) - forgetting
      the second leaks a dangling command entry when the node is freed.
-   - **Implementation** `MoverVehicleX` (`src/brakes/MoverVehicleBrake.cpp`,
-     `src/core/MoverTrainController.cpp`, ...): the `override` takes the Mover with
+   - **Implementation** `MoverVehicleX` (`src/brakes/MoverRailVehicleBrake.cpp`,
+     `src/core/MoverRailVehicleController.cpp`, ...): the `override` takes the Mover with
      `get_mover()` (from `MoverComponent`, `src/mover/MoverComponent.hpp`) and calls the vendored
-     method directly (`mover->IncLocalBrakeLevel(1)`, `MoverVehicleBrake.cpp:91`).
+     method directly (`mover->IncLocalBrakeLevel(1)`, `MoverRailVehicleBrake.cpp:91`).
    - Keep the existing step-size convention: one command invocation is one notch/step, like
      `main_controller_increase(step=1)`, not a new continuous-time API. The original's
      key-hold behavior is a UI-layer concern (repeat-fire).
@@ -46,13 +46,13 @@ in any layer before.
    are only toggled, not displayed continuously.
    - **Interface:** a pure virtual const getter plus a read-only `ADD_PROPERTY`
      (`PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY`), next to the closest analogous one
-     (`get_local_position_normalized`, `VehicleBrake.hpp:34`, `VehicleBrake.cpp:290-294`).
+     (`get_local_position_normalized`, `RailVehicleBrake.hpp:34`, `RailVehicleBrake.cpp:290-294`).
    - **Implementation:** the getter reads the Mover field and stores nothing
-     (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverVehicleBrake.cpp:266`).
+     (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverRailVehicleBrake.cpp:266`).
      A getter never changes state - no filters, flags or signals in it (`CODE_STYLE.md`).
    - **Dump key:** publish it in the implementation's `_fill_state_dictionary()` next to its
      sibling (`p_state["brake_local_position_normalized"] = get_local_position_normalized();`,
-     `MoverVehicleBrake.cpp:351`). This key, as it appears in
+     `MoverRailVehicleBrake.cpp:351`). This key, as it appears in
      `RailVehicleServer.vehicle_dump_state(rid)`, is what a catalog entry's `state_property` and
      `CabinState.vehicle_state_value()` read.
 
@@ -160,7 +160,7 @@ submodel, which is how TGauge shows a lit control (`Gauge.cpp:204-210`). A submo
 not wired to any mesh.
 
 Keep the original's operation enums out of the interface. For example, the pantograph valves take
-our `VehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
+our `RailVehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
 `operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
 `LoadFIZ_Cntrl`.
 

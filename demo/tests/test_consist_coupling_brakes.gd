@@ -27,7 +27,7 @@ const PRESSURE_TOLERANCE:float = 0.1
 const SERVICE_BRAKING_PIPE_DROP:float = 1.0
 
 var controllers:Array[VehicleController] = []
-var brakes:Array[VehicleBrake] = []
+var brakes:Array[RailVehicleBrake] = []
 
 
 func before_each() -> void:
@@ -44,7 +44,7 @@ func before_each() -> void:
         add_child_autofree(node)
         var controller:VehicleController = node.get_controller()
         controllers.append(controller)
-        brakes.append(controller.get_component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake)
+        brakes.append(controller.get_component(VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
     await wait_idle_frames(2)
     for index:int in range(1, VEHICLE_COUNT):
         controllers[index - 1].couple(controllers[index], REAR_END, FRONT_END, COUPLING_WITH_BRAKE_HOSE)
@@ -58,16 +58,16 @@ func after_each() -> void:
 func test_every_vehicle_is_joined_by_the_brake_hose() -> void:
     for index:int in range(VEHICLE_COUNT - 1):
         assert_true(controllers[index].is_coupled(REAR_END), "vehicle %d rear coupler" % index)
-        assert_true(controllers[index].is_coupled_by(REAR_END, TrainController.COUPLING_ELEMENT_BRAKEHOSE),
+        assert_true(controllers[index].is_coupled_by(REAR_END, RailVehicleController.COUPLING_ELEMENT_BRAKEHOSE),
                 "vehicle %d rear brake hose" % index)
         assert_eq(controllers[index].get_coupled_controller(REAR_END), controllers[index + 1])
     var joined:Array = RailVehicleServer.vehicle_get_coupled(
-            controllers[0].get_rid(), FRONT_END, TrainController.COUPLING_ELEMENT_BRAKEHOSE)
+            controllers[0].get_rid(), FRONT_END, RailVehicleController.COUPLING_ELEMENT_BRAKEHOSE)
     assert_eq(joined.size(), VEHICLE_COUNT)
 
 
 func test_the_pipe_of_the_last_vehicle_follows_the_handle() -> void:
-    var last:VehicleBrake = brakes[VEHICLE_COUNT - 1]
+    var last:RailVehicleBrake = brakes[VEHICLE_COUNT - 1]
     assert_almost_eq(last.pipe_pressure, CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "a ready train starts charged")
 
     controllers[0].send_command("brake_level_set_position", "full")

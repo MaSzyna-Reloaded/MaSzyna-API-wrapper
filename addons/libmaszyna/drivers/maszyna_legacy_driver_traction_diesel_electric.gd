@@ -49,13 +49,13 @@ func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
 ## Driver.cpp:4217-4246): the position that adds, keeps or takes power, as the trainset accelerates
 ## less or more than wanted
 func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    if not eim_control_type(situation) == VehicleEngine.EIM_CONTROL_TYPE_3:
+    if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3:
         return
     var acceleration:float = situation.speed.acceleration_desired
     if acceleration < 0.0 or not RailVehicleServer.vehicle_dump_state(situation.controlling).get("line_contactor_closed", false):
         return
-    var controller:VehicleUniversalController = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as VehicleUniversalController
+    var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
     if controller == null:
         return
     var positions:Array = controller.positions

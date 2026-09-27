@@ -13,8 +13,7 @@ namespace godot {
     /// A semaphore is the lights of one model instance; it lives exactly as long as that
     /// instance. Low level, its lights are switched one by one. High level, semaphores and event
     /// sources are grouped into systems, and a system's SemaphoreSystemDelegate decides what an
-    /// event means. The server knows no aspects - "S1" or "Sz" is the vocabulary of a delegate,
-    /// which announces it with system_publish_event().
+    /// event means and shows it on the system's semaphores.
     class SemaphoreServer : public Object {
             GDCLASS(SemaphoreServer, Object)
 
@@ -37,7 +36,6 @@ namespace godot {
             static const char *system_semaphore_removed_signal;
             static const char *system_source_added_signal;
             static const char *system_source_removed_signal;
-            static const char *system_event_published_signal;
 
             /// The PROPERTY_HINT_ENUM string of LightState
             static String light_state_hint();
@@ -125,7 +123,6 @@ namespace godot {
             void system_remove_source(const RID &p_system, const RID &p_source);
             TypedArray<RID> system_get_sources(const RID &p_system) const;
             void system_send_event(const RID &p_system, const StringName &p_event, const Dictionary &p_arguments);
-            void system_publish_event(const RID &p_system, const StringName &p_event, const Dictionary &p_arguments);
 
             RID source_create();
             void source_free(const RID &p_source);

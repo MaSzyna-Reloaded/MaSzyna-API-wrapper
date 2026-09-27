@@ -14,7 +14,6 @@ namespace godot {
     const char *SemaphoreServer::system_semaphore_removed_signal = "system_semaphore_removed";
     const char *SemaphoreServer::system_source_added_signal = "system_source_added";
     const char *SemaphoreServer::system_source_removed_signal = "system_source_removed";
-    const char *SemaphoreServer::system_event_published_signal = "system_event_published";
 
     void SemaphoreServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("semaphore_create", "instance"), &SemaphoreServer::semaphore_create);
@@ -65,9 +64,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("system_send_event", "system", "event", "arguments"), &SemaphoreServer::system_send_event,
                 DEFVAL(Dictionary()));
-        ClassDB::bind_method(
-                D_METHOD("system_publish_event", "system", "event", "arguments"),
-                &SemaphoreServer::system_publish_event, DEFVAL(Dictionary()));
 
         ClassDB::bind_method(D_METHOD("source_create"), &SemaphoreServer::source_create);
         ClassDB::bind_method(D_METHOD("source_free", "source"), &SemaphoreServer::source_free);
@@ -109,9 +105,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 system_source_removed_signal, PropertyInfo(Variant::RID, "system"),
                 PropertyInfo(Variant::RID, "source")));
-        ADD_SIGNAL(MethodInfo(
-                system_event_published_signal, PropertyInfo(Variant::RID, "system"),
-                PropertyInfo(Variant::STRING_NAME, "event"), PropertyInfo(Variant::DICTIONARY, "arguments")));
     }
 
     String SemaphoreServer::light_state_hint() {
@@ -530,13 +523,6 @@ namespace godot {
         const Ref<SemaphoreSystemDelegate> delegate = system->delegate;
         ERR_FAIL_COND_MSG(delegate.is_null(), "The system has no delegate.");
         delegate->handle_event(p_system, p_event, p_arguments);
-    }
-
-    /// What the delegate announces - an aspect, a speed, anything its vocabulary has
-    void SemaphoreServer::system_publish_event(
-            const RID &p_system, const StringName &p_event, const Dictionary &p_arguments) {
-        ERR_FAIL_COND(!systems.has(p_system));
-        emit_signal(system_event_published_signal, p_system, p_event, p_arguments);
     }
 
     // --- source ---

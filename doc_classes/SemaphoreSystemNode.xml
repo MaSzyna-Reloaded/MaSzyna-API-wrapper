@@ -27,12 +27,4 @@
 		<member name="semaphore_names" type="PackedStringArray" setter="set_semaphore_names" getter="get_semaphore_names" default="PackedStringArray()">
 		</member>
 	</members>
-	<signals>
-		<signal name="event_published">
-			<param index="0" name="event" type="StringName" />
-			<param index="1" name="arguments" type="Dictionary" />
-			<description>
-			</description>
-		</signal>
-	</signals>
 </class>

@@ -209,7 +209,8 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 * `headlights_dimmed` is state only - nothing renders a headlight beam to dim.
 * Distance counter: the double-press start (FIZ `DCMB`/`DCDPP`, not in the vendored Mover), the
   switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
-* The radio volume is state only - the wrapper plays no radio messages.
+* The radio plays the scenery's radio messages (`DynamicTrainCabin`), non-positional - not yet
+  at `m_radiosound`'s own place in the cab.
 
 ### Gauge lamps (`<name>_on`)
 
@@ -602,10 +603,13 @@ closes both level crossings). Left:
 * **Event types without an action**: `whois`
   (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
   `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
-  `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a `sound` event with a radio channel
-  (`simulation::radio_message`) is played as a plain sound.
+  `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a radio message (a `sound` event with a channel)
+  tuned in or the radio switched on mid-message is not raised, as `update_sounds_radio()` does -
+  it is played only when heard at its start, and at the cab's radio volume of that moment.
 * **Scenery sounds** use the player's defaults for everything but `max_distance` (the node's
-  range); their bank was not dumped nor checked by ear.
+  range); an ambient one (range under -1) is on the listener, 0.4 as loud and cut at 1.25 of its
+  range - the original fades it out between the range and that, and starts it only within
+  2750 m (`audiorenderer.cpp:184-199`, `sound.cpp:364-371`). Not checked by ear.
 * **Memory and the AI**: pushing a memory to the vehicles on its track when it changes
   (`Event.cpp:538-548`), `bCommand`/`CommandCheck` and `:sent` (`MemCell.cpp:52-99`, `196-205`).
 * **`departuredelay`** is read and dropped - needs the activator's timetable (`Event.cpp:2412-2425`).

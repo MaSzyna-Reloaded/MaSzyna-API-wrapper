@@ -15,6 +15,15 @@ class_name MaszynaLegacyEventFactory
 ## events named `<track>:<slot>` (Track.cpp:970-983); the isolated sections with their own memory and
 ## `<section>:busy/:free/:inc/:dec` events. The other types get an event without an action (TODO.md).
 
+## A scenery sound's range of -1 is heard everywhere; under it, an ambient sound is 0.4 as loud,
+## fades out past its range to AMBIENT_FADE_END of it, and is not heard further than
+## AMBIENT_CUTOFF_RANGE [m] from its place (sound.cpp:364-371, 1021-1024,
+## audiorenderer.cpp:184-199: the fade reaches 0 at range + 0.75 range, squared - 1.25 range)
+const UNLIMITED_RANGE:float = -1.0
+const AMBIENT_GAIN:float = 0.4
+const AMBIENT_FADE_END:float = 1.25
+const AMBIENT_CUTOFF_RANGE:float = 2750.0
+
 ## "Leave this field as it is" (Event.cpp:491-503)
 const FIELD_KEPT:String = "*"
 ## Splits a `multiple` event's list (Event.cpp:1266-1278)
@@ -139,16 +148,26 @@ static func build(
 
     # a scenery sound is a player of its own with a bank of its one file, played once or looped
     var players_by_name:Dictionary[String, SfxPlayer3D] = {}
+    var reaches_by_name:Dictionary[String, float] = {}
     for sound:MaszynaSoundData in sounds:
         # heard as far as a vehicle's sound of the same range (sound_source::range(), sound.cpp:364-389)
         var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
         source.range = sound.range_max
         var spatial_config:SfxSpatialConfig = MmdSoundEventBuilder._build_spatial_config(source)
+        # a range under -1 is an ambient sound: on the listener, as a negative range always is, but
+        # heard only within reach of its place and 0.4 as loud (sound.cpp:364-371, 1021-1024,
+        # audiorenderer.cpp:158-199); -1 is heard everywhere
+        var ambient:bool = sound.range_max < UNLIMITED_RANGE
+        if ambient:
+            spatial_config.max_distance = minf(absf(sound.range_max) * AMBIENT_FADE_END, AMBIENT_CUTOFF_RANGE)
         var bank:SfxBank = SfxBank.new()
         var bank_events:Array[SfxEvent] = [
             _build_sound_event(MaszynaLegacySoundAction.PLAY_EVENT, sound.file, false, spatial_config),
             _build_sound_event(MaszynaLegacySoundAction.LOOP_EVENT, sound.file, true, spatial_config),
         ]
+        if ambient:
+            for sound_event:SfxEvent in bank_events:
+                sound_event.master_track.volume_db = linear_to_db(AMBIENT_GAIN)
         bank.events = bank_events
         var player:SfxPlayer3D = SfxPlayer3D.new()
         player.name = sound.name if sound.name else "sound"
@@ -156,6 +175,7 @@ static func build(
         root.add_child(player)
         player.global_position = sound.position
         players_by_name[sound.name.to_lower()] = player
+        reaches_by_name[sound.name.to_lower()] = sound.range_max
 
     # the isolated sections, named by a track's `isolated`, an `isolated` block or an `area`
     var sections:Dictionary[String, RID] = {}
@@ -312,12 +332,18 @@ static func build(
                         rid, ScenarioEventServer.memory_get_text(action.source) in PASSIVE_GET_COMMANDS)
             "sound":
                 var players:Array[SfxPlayer3D] = []
+                var reaches:PackedFloat64Array = []
                 for target:String in event.targets:
                     if players_by_name.has(target):
                         players.append(players_by_name[target])
+                        reaches.append(reaches_by_name[target])
                 var action:MaszynaLegacySoundAction = MaszynaLegacySoundAction.new()
                 action.players = players
+                action.reaches = reaches
                 action.mode = SOUND_MODES.get(int(event.parameters[0]), MaszynaLegacySoundAction.Mode.STOP)
+                # the optional radio channel it is a message on (Event.cpp:1382-1386)
+                if event.parameters.size() > 1 and event.parameters[1].is_valid_int():
+                    action.radio_channel = int(event.parameters[1])
                 ScenarioEventServer.event_attach_action(rid, action)
             "animation":
                 var mode:String = event.parameters[0].to_lower()

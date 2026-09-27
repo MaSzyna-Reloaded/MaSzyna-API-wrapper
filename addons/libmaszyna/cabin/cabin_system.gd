@@ -16,6 +16,10 @@ signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Va
 signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant)
 ## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
 signal vehicle_cabin_occupied_changed(vehicle_rid:RID, cabin_occupied:int)
+## A radio message sent from `position`: heard on the radio of the player's cab tuned to
+## `channel`, within `reach` [m] of it when that is positive (simulation::radio_message(),
+## simulation.cpp:506)
+signal radio_message_sent(message:SfxEvent, channel:int, position:Vector3, reach:float)
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
@@ -179,6 +183,11 @@ func act(vehicle_rid:RID, cab:int, control_id:StringName, action:StringName, val
 
 func get_control(vehicle_rid:RID, cab:int, control_id:StringName) -> Variant:
     return get_cabin_state(vehicle_rid, cab).get_value(control_id)
+
+
+## A scenery's radio message, to the cab radio of whoever listens (radio_message_sent)
+func send_radio_message(message:SfxEvent, channel:int, position:Vector3, reach:float) -> void:
+    radio_message_sent.emit(message, channel, position, reach)
 
 
 func get_state(vehicle_rid:RID, cab:int) -> Dictionary:

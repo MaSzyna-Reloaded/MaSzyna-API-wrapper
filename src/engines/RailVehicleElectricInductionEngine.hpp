@@ -1,8 +1,8 @@
 #pragma once
 #include "RailVehicleElectricEngine.hpp"
 #include "macros.hpp"
-#include "resources/engines/CurvePointItem.hpp"
-#include "resources/engines/WWListItem.hpp"
+#include "resources/engines/VehicleCurvePointItem.hpp"
+#include "resources/engines/RailVehicleWWListItem.hpp"
 
 namespace godot {
     class VehicleController;
@@ -18,17 +18,17 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            TypedArray<WWListItem> wwlist;
+            TypedArray<RailVehicleWWListItem> wwlist;
 
         protected:
             EngineType get_engine_type() const override;
 
         public:
-            TypedArray<WWListItem> get_wwlist() {
+            TypedArray<RailVehicleWWListItem> get_wwlist() {
                 return wwlist;
             }
 
-            void set_wwlist(const TypedArray<WWListItem> &p_wwlist) {
+            void set_wwlist(const TypedArray<RailVehicleWWListItem> &p_wwlist) {
                 wwlist.clear();
                 wwlist.append_array(p_wwlist);
             }
@@ -53,7 +53,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, braking_decay_velocity, 0.0);
             MAKE_MEMBER_GS(double, braking_decay_start_velocity, 0.0);
             MAKE_MEMBER_GS(double, motor_max_current, 0.0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, max_power_table)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<VehicleCurvePointItem>, max_power_table)
 
         private:
             /* The rest of the FIZ Engine: line of an induction motor. */

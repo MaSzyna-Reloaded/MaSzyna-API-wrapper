@@ -110,8 +110,8 @@
 		<member name="lights_default_selector_position" type="int" setter="set_lights_default_selector_position" getter="get_lights_default_selector_position" default="0">
 			An integer representing the default position of the light selector
 		</member>
-		<member name="lights_list" type="LightListItem[]" setter="set_lights_list" getter="get_lights_list" default="[]">
-			An array of LightListItem objects, each representing a light configuration for one selector position
+		<member name="lights_list" type="RailVehicleLightListItem[]" setter="set_lights_list" getter="get_lights_list" default="[]">
+			An array of RailVehicleLightListItem objects, each representing a light configuration for one selector position
 		</member>
 		<member name="lights_wrap_selector" type="bool" setter="set_lights_wrap_selector" getter="get_lights_wrap_selector" default="false">
 			If true, rotating the selector past the last position will return to the first position. If false, it will stop at the last position.

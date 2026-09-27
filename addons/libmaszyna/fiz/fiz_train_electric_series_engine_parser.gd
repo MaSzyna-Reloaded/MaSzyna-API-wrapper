@@ -16,8 +16,8 @@ class_name FizTrainElectricSeriesEngineParser
 ## dispatches to, NOT readMPTElectricSeries (a different, 4-column reader for the separate,
 ## unsuffixed "MotorParamTable:" header) - rather than the wiki's own "?"-marked column names.
 
-var _relay_rows: Array[RelayListItem] = []
-var _motor_param_rows: Array[MotorParameter] = []
+var _relay_rows: Array[RailVehicleRelayListItem] = []
+var _motor_param_rows: Array[RailVehicleMotorParameter] = []
 var _active_table: String = ""
 
 
@@ -130,7 +130,7 @@ func _parse_rlist_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(6)
     if tokens.size() < 5:
         return
-    var item := RelayListItem.new()
+    var item := RailVehicleRelayListItem.new()
     item.relay_position = int(tokens[0])
     item.resistance = float(tokens[1])
     item.branch_count = int(tokens[2])

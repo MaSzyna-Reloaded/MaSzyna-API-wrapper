@@ -6,7 +6,7 @@ class_name FizTrainLoadParser
 ## section table. Real syntax is a single scalar line (confirmed against ~25 real vehicle
 ## files, wagons/locomotives alike, all matching this shape exactly):
 ## `Load: MaxLoad=64 LoadQ=tonns LoadAccepted=Coal,Ore,Calcium LoadSpeed=1 UnLoadSpeed=0.1
-## OverLoadFactor=2`. `minimum_load_offsets`/`load_list` (LoadListItem rows) have no
+## OverLoadFactor=2`. `minimum_load_offsets`/`load_list` (RailVehicleLoadListItem rows) have no
 ## corresponding key in any real file checked - left at compiled defaults.
 
 

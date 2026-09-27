@@ -68,10 +68,10 @@
 			[code]Engine:Pmax[/code]
 			Maximum traction power.
 		</member>
-		<member name="max_power_table" type="CurvePointItem[]" setter="set_max_power_table" getter="get_max_power_table" default="[]">
+		<member name="max_power_table" type="VehicleCurvePointItem[]" setter="set_max_power_table" getter="get_max_power_table" default="[]">
 			[code]Pmaxlist[/code] (undocumented on the wiki)
 			Maximum power as a function of velocity; Each
-			item's [member CurvePointItem.x] is velocity and [member CurvePointItem.y] is the maximum power at that
+			item's [member VehicleCurvePointItem.x] is velocity and [member VehicleCurvePointItem.y] is the maximum power at that
 			velocity.
 		</member>
 		<member name="max_slip" type="float" setter="set_max_slip" getter="get_max_slip" default="0.0">
@@ -108,7 +108,7 @@
 			[code]Engine:dfic[/code]
 			Ratio of motor current to the difference between field and motor speed.
 		</member>
-		<member name="wwlist" type="WWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
+		<member name="wwlist" type="RailVehicleWWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 		</member>
 	</members>
 </class>

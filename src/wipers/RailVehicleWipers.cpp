@@ -9,7 +9,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleWipers, Variant::INT, default_position);
         BIND_PROPERTY(RailVehicleWipers, Variant::INT, wiper_count);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleWipers, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING, "WiperListItem");
+                RailVehicleWipers, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING, "RailVehicleWiperListItem");
 
         ClassDB::bind_method(D_METHOD("get_switch_position"), &RailVehicleWipers::get_switch_position);
         ADD_PROPERTY(

@@ -24,8 +24,8 @@ class_name FizTrainElectricInductionEngineParser
 ## on those two prefixes.
 
 
-var _wwlist_rows: Array[WWListItem] = []
-var _max_power_rows: Array[CurvePointItem] = []
+var _wwlist_rows: Array[RailVehicleWWListItem] = []
+var _max_power_rows: Array[VehicleCurvePointItem] = []
 var _active_table: String = ""
 
 
@@ -126,11 +126,11 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
 
 func _parse_ff_row(p: MaszynaParser) -> void:
     # readFFList (Mover.cpp:8530-8543): 2 columns, RPM and GenPower - same DElist row shape as
-    # WWList's first two columns, reused via WWListItem (max_voltage/max_current stay at 0.0).
+    # WWList's first two columns, reused via RailVehicleWWListItem (max_voltage/max_current stay at 0.0).
     var tokens: Array = p.get_tokens(2)
     if tokens.size() < 2:
         return
-    var item := WWListItem.new()
+    var item := RailVehicleWWListItem.new()
     item.rpm = float(tokens[0])
     item.max_power = float(tokens[1])
     _wwlist_rows.append(item)
@@ -140,7 +140,7 @@ func _parse_curve_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(2)
     if tokens.size() < 2:
         return
-    var item := CurvePointItem.new()
+    var item := VehicleCurvePointItem.new()
     item.x = float(tokens[0])
     item.y = float(tokens[1])
     _max_power_rows.append(item)

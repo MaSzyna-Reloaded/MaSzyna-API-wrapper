@@ -64,7 +64,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
     var keep_position:int = 0
     var decrease_position:int = 0
     for index:int in range(increase_position, -1, -1):
-        var item:UniversalControllerListItem = positions[index]
+        var item:RailVehicleUniversalControllerListItem = positions[index]
         if item.target_value > 0.0:
             continue
         if item.decrease_speed == 0.0:

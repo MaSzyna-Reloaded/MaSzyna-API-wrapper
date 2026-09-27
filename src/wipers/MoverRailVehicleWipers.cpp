@@ -13,7 +13,7 @@ namespace godot {
         if (count == 0) {
             int mask = 0;
             for (int i = 0; i < get_positions().size(); i++) {
-                const Ref<WiperListItem> item = get_positions()[i];
+                const Ref<RailVehicleWiperListItem> item = get_positions()[i];
                 if (item.is_valid()) {
                     mask |= item->get_wiper_mask();
                 }
@@ -54,7 +54,7 @@ namespace godot {
         if (get_positions().size() == 0) {
             return;
         }
-        const Ref<WiperListItem> switched = get_positions()[switch_position];
+        const Ref<RailVehicleWiperListItem> switched = get_positions()[switch_position];
         const int count = static_cast<int>(wipers.size());
         for (int i = 0; i < count; i++) {
             Wiper &wiper = wipers[i];
@@ -75,7 +75,7 @@ namespace godot {
             }
 
             // the parameters of the position the wiper started its sweep with
-            const Ref<WiperListItem> working = get_positions()[wiper.working_switch_position];
+            const Ref<RailVehicleWiperListItem> working = get_positions()[wiper.working_switch_position];
             if (working.is_null() || working->get_transit_time() <= 0.0) {
                 continue;
             }

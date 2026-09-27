@@ -73,12 +73,12 @@ namespace godot {
                     {TBrakeValve::EP1, TBrakeSubSystem::ss_ESt},   {TBrakeValve::KE, TBrakeSubSystem::ss_KE},
                     {TBrakeValve::CV1, TBrakeSubSystem::ss_Dako},  {TBrakeValve::CV1_L_TR, TBrakeSubSystem::ss_Dako},
                     {TBrakeValve::LSt, TBrakeSubSystem::ss_LSt},   {TBrakeValve::EStED, TBrakeSubSystem::ss_LSt}};
-            const std::unordered_map<BrakePressureTableItem::BrakeType, Maszyna::TBrakeSystem>
+            const std::unordered_map<RailVehicleBrakePressureTableItem::BrakeType, Maszyna::TBrakeSystem>
                     brake_pressure_table_type_map = {
-                            {BrakePressureTableItem::BRAKE_TYPE_PNEUMATIC, Maszyna::TBrakeSystem::Pneumatic},
-                            {BrakePressureTableItem::BRAKE_TYPE_ELECTRO_PNEUMATIC,
+                            {RailVehicleBrakePressureTableItem::BRAKE_TYPE_PNEUMATIC, Maszyna::TBrakeSystem::Pneumatic},
+                            {RailVehicleBrakePressureTableItem::BRAKE_TYPE_ELECTRO_PNEUMATIC,
                              Maszyna::TBrakeSystem::ElectroPneumatic},
-                            {BrakePressureTableItem::BRAKE_TYPE_INDIVIDUAL, Maszyna::TBrakeSystem::Individual},
+                            {RailVehicleBrakePressureTableItem::BRAKE_TYPE_INDIVIDUAL, Maszyna::TBrakeSystem::Individual},
                     };
             const std::unordered_map<BrakeHandleType, Maszyna::TBrakeHandle> brake_handle_type_map = {
                     {BRAKE_HANDLE_TYPE_NO_HANDLE, Maszyna::TBrakeHandle::NoHandle},

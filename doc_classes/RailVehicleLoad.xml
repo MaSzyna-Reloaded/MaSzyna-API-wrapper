@@ -21,8 +21,8 @@
 		<member name="accepted_loads" type="String[]" setter="set_accepted_loads" getter="get_accepted_loads" default="[]">
 			Type of cargo (pantstate — start with the pantograph raised on the electric locomotive).
 		</member>
-		<member name="load_list" type="LoadListItem[]" setter="set_load_list" getter="get_load_list" default="[]">
-			List of [code]LoadListItem[/code] resources specifying load parameters for each car separately
+		<member name="load_list" type="RailVehicleLoadListItem[]" setter="set_load_list" getter="get_load_list" default="[]">
+			List of [code]RailVehicleLoadListItem[/code] resources specifying load parameters for each car separately
 		</member>
 		<member name="load_speed" type="float" setter="set_load_speed" getter="get_load_speed" default="0.0">
 			Rate at which cargo can be loaded per second.

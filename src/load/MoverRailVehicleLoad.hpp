@@ -12,18 +12,18 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            TypedArray<LoadListItem> load_list;
+            TypedArray<RailVehicleLoadListItem> load_list;
 
         protected:
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
         public:
-            void set_load_list(const TypedArray<LoadListItem> &p_load_list) override {
+            void set_load_list(const TypedArray<RailVehicleLoadListItem> &p_load_list) override {
                 load_list.clear();
                 load_list.append_array(p_load_list);
             }
-            TypedArray<LoadListItem> get_load_list() override {
+            TypedArray<RailVehicleLoadListItem> get_load_list() override {
                 return load_list;
             }
     };

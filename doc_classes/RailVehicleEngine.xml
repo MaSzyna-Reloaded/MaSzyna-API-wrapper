@@ -85,7 +85,7 @@
 		</member>
 		<member name="motor_overload_relay_high_threshold" type="bool" setter="" getter="get_motor_overload_relay_high_threshold">
 		</member>
-		<member name="motor_param_table" type="MotorParameter[]" setter="set_motor_param_table" getter="get_motor_param_table">
+		<member name="motor_param_table" type="RailVehicleMotorParameter[]" setter="set_motor_param_table" getter="get_motor_param_table">
 			[code]MotorParamTable[/code]
 			FIXME: original FIZ file has multiple MotorParamTable sections depending of the engine type. Their values are parsed individually. This property should be a part of a specific train engine.
 		</member>

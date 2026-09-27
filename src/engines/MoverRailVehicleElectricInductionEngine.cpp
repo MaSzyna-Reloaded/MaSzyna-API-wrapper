@@ -111,7 +111,7 @@ namespace godot {
         /* Pmaxlist: tabela mocy maksymalnej od predkosci (niedokumentowana na wiki, patrz EIM_Pmax_Table w MOVER.h) */
         p_mover->EIM_Pmax_Table.clear();
         for (int i = 0; i < get_max_power_table().size(); i++) {
-            const Ref<CurvePointItem> &row = get_max_power_table()[i];
+            const Ref<VehicleCurvePointItem> &row = get_max_power_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[MoverRailVehicleElectricInductionEngine]: max_power_table property is null at index " +
@@ -129,7 +129,7 @@ namespace godot {
         const int wwlist_size = static_cast<int>(get_wwlist().size());
         p_mover->RlistSize = std::min(max_delist, wwlist_size);
         for (int i = 0; i < p_mover->RlistSize; i++) {
-            const Ref<WWListItem> &row = get_wwlist()[i];
+            const Ref<RailVehicleWWListItem> &row = get_wwlist()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[MoverRailVehicleElectricInductionEngine]: wwlist property is null at index " + String::num(i));

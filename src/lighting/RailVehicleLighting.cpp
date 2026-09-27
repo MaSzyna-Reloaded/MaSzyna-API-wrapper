@@ -11,7 +11,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleLighting, Variant::INT, lights_default_selector_position, "lights");
         BIND_PROPERTY(RailVehicleLighting, Variant::BOOL, lights_wrap_selector, "lights");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleLighting, Variant::ARRAY, lights_list, "lights", PROPERTY_HINT_TYPE_STRING, "LightListItem");
+                RailVehicleLighting, Variant::ARRAY, lights_list, "lights", PROPERTY_HINT_TYPE_STRING, "RailVehicleLightListItem");
         BIND_PROPERTY_W_HINT(
                 RailVehicleLighting, Variant::INT, light_source, "light", PROPERTY_HINT_ENUM,
                 "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");

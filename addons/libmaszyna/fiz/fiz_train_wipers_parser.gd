@@ -10,7 +10,7 @@ class_name FizTrainWipersParser
 ## Size= bounds the list (WiperListSize, Train.cpp:2643): real data ends it with a foreign marker
 ## ("endL" instead of "endwl", e186_v2/eu47.fiz), so rows of whatever follows could get in.
 
-var _rows: Array[WiperListItem] = []
+var _rows: Array[RailVehicleWiperListItem] = []
 var _size: int = 0
 
 
@@ -35,7 +35,7 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     var tokens: Array = p.get_tokens(4)
     if tokens.size() < 4 or (_size > 0 and _rows.size() >= _size):
         return
-    var item := WiperListItem.new()
+    var item := RailVehicleWiperListItem.new()
     item.wiper_mask = int(tokens[0])
     item.transit_time = float(tokens[1])
     item.period = float(tokens[2])

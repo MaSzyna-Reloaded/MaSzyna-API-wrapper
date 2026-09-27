@@ -189,7 +189,7 @@
 			[code]DList:nominalfill[/code]
 			Nominal (rated) fuel dose, dimensionless (0..1).
 		</member>
-		<member name="throttle_table_positions" type="ThrottlePositionItem[]" setter="set_throttle_table_positions" getter="get_throttle_table_positions" default="[]">
+		<member name="throttle_table_positions" type="RailVehicleThrottlePositionItem[]" setter="set_throttle_table_positions" getter="get_throttle_table_positions" default="[]">
 			[code]DList[/code]
 			Throttle table: for each throttle position (starting from 0), the fuel dose and clutch/governor behavior.
 		</member>
@@ -231,11 +231,11 @@
 			[code]Engine:IsTC[/code]
 			Whether the vehicle has a hydraulic torque converter.
 		</member>
-		<member name="torque_converter_table" type="CurvePointItem[]" setter="set_torque_converter_table" getter="get_torque_converter_table" default="[]">
+		<member name="torque_converter_table" type="VehicleCurvePointItem[]" setter="set_torque_converter_table" getter="get_torque_converter_table" default="[]">
 			[code]HTCList[/code]
 			Torque converter's torque-ratio table. Recommended when the converter's real characteristic is known and
-			cannot be reproduced with the basic formula. Each item's [member CurvePointItem.x] is the output/input
-			RPM ratio and [member CurvePointItem.y] is the torque multiplication ratio.
+			cannot be reproduced with the basic formula. Each item's [member VehicleCurvePointItem.x] is the output/input
+			RPM ratio and [member VehicleCurvePointItem.y] is the torque multiplication ratio.
 		</member>
 		<member name="torque_converter_torque_in_in" type="float" setter="set_torque_converter_torque_in_in" getter="get_torque_converter_torque_in_in" default="4.5">
 			[code]Engine:TC_TII[/code]
@@ -259,12 +259,12 @@
 		</member>
 		<member name="torque_converter_unlock_velocity" type="float" setter="set_torque_converter_unlock_velocity" getter="get_torque_converter_unlock_velocity" default="3.0">
 		</member>
-		<member name="torque_table" type="CurvePointItem[]" setter="set_torque_table" getter="get_torque_table" default="[]">
+		<member name="torque_table" type="VehicleCurvePointItem[]" setter="set_torque_table" getter="get_torque_table" default="[]">
 			[code]DMList[/code]
-			Linearly-interpolated engine torque curve. Each item's [member CurvePointItem.x] is engine speed in RPM
-			and [member CurvePointItem.y] is torque in Nm.
+			Linearly-interpolated engine torque curve. Each item's [member VehicleCurvePointItem.x] is engine speed in RPM
+			and [member VehicleCurvePointItem.y] is torque in Nm.
 		</member>
-		<member name="vel2nmax_table" type="CurvePointItem[]" setter="set_vel2nmax_table" getter="get_vel2nmax_table" default="[]">
+		<member name="vel2nmax_table" type="VehicleCurvePointItem[]" setter="set_vel2nmax_table" getter="get_vel2nmax_table" default="[]">
 		</member>
 		<member name="water_pump_start_mode" type="int" setter="set_water_pump_start_mode" getter="get_water_pump_start_mode" enum="RailVehicleEngine.StartMode" default="1">
 			[code]Cntrl.WaterStart[/code]

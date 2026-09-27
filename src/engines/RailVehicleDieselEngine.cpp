@@ -117,9 +117,9 @@ namespace godot {
         BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, torque_converter_unlock_speed, "torque_converter");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleDieselEngine, Variant::ARRAY, torque_converter_table, "torque_converter",
-                PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+                PROPERTY_HINT_TYPE_STRING, "VehicleCurvePointItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleDieselEngine, Variant::ARRAY, vel2nmax_table, PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+                RailVehicleDieselEngine, Variant::ARRAY, vel2nmax_table, PROPERTY_HINT_TYPE_STRING, "VehicleCurvePointItem");
         BIND_PROPERTY(RailVehicleDieselEngine, Variant::BOOL, retarder_present, "retarder");
         BIND_PROPERTY_W_HINT(
                 RailVehicleDieselEngine, Variant::INT, retarder_placement, "retarder", PROPERTY_HINT_ENUM,
@@ -142,9 +142,9 @@ namespace godot {
                 "throttle_table_positions");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleDieselEngine, Variant::ARRAY, throttle_table_positions, "throttle_table_positions",
-                PROPERTY_HINT_TYPE_STRING, "ThrottlePositionItem");
+                PROPERTY_HINT_TYPE_STRING, "RailVehicleThrottlePositionItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleDieselEngine, Variant::ARRAY, torque_table, PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+                RailVehicleDieselEngine, Variant::ARRAY, torque_table, PROPERTY_HINT_TYPE_STRING, "VehicleCurvePointItem");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &RailVehicleDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &RailVehicleDieselEngine::oil_pump);
         ClassDB::bind_method(D_METHOD("fuel_pump_switch_off", "enabled"), &RailVehicleDieselEngine::fuel_pump_switch_off);

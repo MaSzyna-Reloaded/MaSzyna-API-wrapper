@@ -47,7 +47,7 @@
 			[code]Engine:Volt[/code]
 			Rated voltage of the motor, in volts
 		</member>
-		<member name="relay_list" type="RelayListItem[]" setter="set_relay_list" getter="get_relay_list" default="[]">
+		<member name="relay_list" type="RailVehicleRelayListItem[]" setter="set_relay_list" getter="get_relay_list" default="[]">
 			[code]RList[/code]
 			Automatic starting sequence table: for each resistor-start controller position (starting from 1, not
 			counting position 0), the starting resistance and motor branch configuration.

@@ -613,7 +613,7 @@ namespace godot {
         /* BPT: tabelka hamulcowa, wyszczegolnienie cisnien w rurze wg pozycji krana */
         p_mover->BrakePressureTable.clear();
         for (int i = 0; i < get_brake_pressure_table().size(); i++) {
-            const Ref<BrakePressureTableItem> &row = get_brake_pressure_table()[i];
+            const Ref<RailVehicleBrakePressureTableItem> &row = get_brake_pressure_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleBrake]: get_brake_pressure_table() property is null at index " + String::num(i));
@@ -636,7 +636,7 @@ namespace godot {
                     " entries, exceeding the mover's limit of " + String::num(MAX_COMPRESSOR_LIST) + "; truncating.");
         }
         for (int i = 0; i < std::min(MAX_COMPRESSOR_LIST, compressor_list_size); i++) {
-            const Ref<CompressorListItem> &row = get_compressor_list()[i];
+            const Ref<RailVehicleCompressorListItem> &row = get_compressor_list()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleBrake]: get_compressor_list() property is null at index " + String::num(i));

@@ -44,7 +44,7 @@
 			dependent, 41/45/46 - extended variants for specific locomotive types.
 		</member>
 		<member name="type" type="int" setter="" getter="get_type" overrides="RailVehicleEngine" default="7" />
-		<member name="wwlist" type="WWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
+		<member name="wwlist" type="RailVehicleWWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 			[code]WWList[/code]
 			Diesel-electric generator characteristics table. Each item describes a main controller position starting
 			from 0.

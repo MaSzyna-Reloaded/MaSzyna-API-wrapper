@@ -87,7 +87,7 @@ namespace godot {
         constexpr int MAX = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
         const int wwlist_size = static_cast<int>(get_wwlist().size());
         for (int i = 0; i < std::min(MAX, wwlist_size); i++) {
-            const Ref<WWListItem> &row = get_wwlist()[i];
+            const Ref<RailVehicleWWListItem> &row = get_wwlist()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {
                 UtilityFunctions::push_warning(
                         "[MoverRailVehicleDieselElectricEngine]: wwlist property is null at index " + String::num(i));

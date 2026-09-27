@@ -10,6 +10,6 @@ namespace godot {
         BIND_PROPERTY(RailVehicleUniversalController, Variant::INT, selector_position);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleUniversalController, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING,
-                "UniversalControllerListItem");
+                "RailVehicleUniversalControllerListItem");
     }
 } // namespace godot

@@ -414,10 +414,10 @@ func set_series_mode(situation:Situation) -> void:
         return
     var relays:Array = engine.relay_list
     if controller_position(situation, "controller_main_position") >= relays.size() \
-            or (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count <= 1:
+            or (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count <= 1:
         return
     set_second_controller(situation, 0)
-    while (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
+    while (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count > 1 \
             and step_main(situation, -1):
         pass
 

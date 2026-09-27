@@ -96,7 +96,7 @@ namespace godot {
         }
         p_mover->RlistSize = std::min(MAX_RELAY_LIST, relay_list_size);
         for (int i = 0; i < p_mover->RlistSize; i++) {
-            const Ref<RelayListItem> &row = get_relay_list()[i];
+            const Ref<RailVehicleRelayListItem> &row = get_relay_list()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[MoverRailVehicleElectricSeriesEngine]: relay_list property is null at index " + String::num(i));

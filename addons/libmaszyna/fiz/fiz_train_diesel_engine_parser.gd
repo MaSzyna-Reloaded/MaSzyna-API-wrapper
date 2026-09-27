@@ -12,23 +12,23 @@ class_name FizTrainDieselEngineParser
 ## checked directly against RailVehicleDieselEngine::_do_update_internal_mover's own field mapping
 ## (`dizel_nominalfill = nominal_fuel_dose` etc.) - all six keys map onto RailVehicleDieselEngine's
 ## existing throttle_table-related properties. Row format confirmed via readDList
-## (Mover.cpp:8444-8456): 3 columns, `Relay R Mn` -> ThrottlePositionItem's
+## (Mover.cpp:8444-8456): 3 columns, `Relay R Mn` -> RailVehicleThrottlePositionItem's
 ## throttle_position/fuel_dose/clutch_behavior.
 ##
-## DMList: rows -> torque_table (CurvePointItem). The C++ side already applies /60.0 to x
+## DMList: rows -> torque_table (VehicleCurvePointItem). The C++ side already applies /60.0 to x
 ## (rpm -> rev/s) when pushing to the mover, matching readV2NMAXList's sibling readMPTDiesel-
 ## adjacent convention - so this parser pushes the raw rpm value unconverted.
 ##
-## HTCList: rows -> torque_converter_table (CurvePointItem), no conversion either side.
+## HTCList: rows -> torque_converter_table (VehicleCurvePointItem), no conversion either side.
 ##
-## V2NList: rows -> vel2nmax_table (CurvePointItem) - see fiz_train_controller_instancer.gd's
+## V2NList: rows -> vel2nmax_table (VehicleCurvePointItem) - see fiz_train_controller_instancer.gd's
 ## comment on this prefix for why it's implemented despite 0 occurrences in the operator's
 ## corpus (dizel_vel2nmax_Table has a real, confirmed consumer at Mover.cpp:7183-7185).
 
-var _throttle_rows: Array[ThrottlePositionItem] = []
-var _torque_rows: Array[CurvePointItem] = []
-var _tc_rows: Array[CurvePointItem] = []
-var _v2n_rows: Array[CurvePointItem] = []
+var _throttle_rows: Array[RailVehicleThrottlePositionItem] = []
+var _torque_rows: Array[VehicleCurvePointItem] = []
+var _tc_rows: Array[VehicleCurvePointItem] = []
+var _v2n_rows: Array[VehicleCurvePointItem] = []
 var _active_table: String = ""
 
 
@@ -197,18 +197,18 @@ func _parse_throttle_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(3)
     if tokens.size() < 3:
         return
-    var item := ThrottlePositionItem.new()
+    var item := RailVehicleThrottlePositionItem.new()
     item.throttle_position = int(tokens[0])
     item.fuel_dose = float(tokens[1])
     item.clutch_behavior = int(tokens[2])
     _throttle_rows.append(item)
 
 
-func _parse_curve_row(p: MaszynaParser, rows: Array[CurvePointItem]) -> void:
+func _parse_curve_row(p: MaszynaParser, rows: Array[VehicleCurvePointItem]) -> void:
     var tokens: Array = p.get_tokens(2)
     if tokens.size() < 2:
         return
-    var item := CurvePointItem.new()
+    var item := VehicleCurvePointItem.new()
     item.x = float(tokens[0])
     item.y = float(tokens[1])
     rows.append(item)

@@ -133,7 +133,7 @@ namespace godot {
         /* motor param table */
         constexpr int MAX = Maszyna::MotorParametersArraySize;
         for (int i = 0; i < std::min(MAX, static_cast<int>(p_engine->get_motor_param_table().size())); i++) {
-            const Ref<MotorParameter> &row = p_engine->get_motor_param_table()[i];
+            const Ref<RailVehicleMotorParameter> &row = p_engine->get_motor_param_table()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleEngine]: p_engine->get_motor_param_table() property is null at index " +

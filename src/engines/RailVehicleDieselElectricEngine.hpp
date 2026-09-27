@@ -1,7 +1,7 @@
 #pragma once
 #include "RailVehicleDieselEngine.hpp"
 #include "macros.hpp"
-#include "resources/engines/WWListItem.hpp"
+#include "resources/engines/RailVehicleWWListItem.hpp"
 
 namespace godot {
     class RailVehicleDieselElectricEngine : public RailVehicleDieselEngine {
@@ -23,7 +23,7 @@ namespace godot {
 
         private:
             static void _bind_methods();
-            TypedArray<WWListItem> wwlist;
+            TypedArray<RailVehicleWWListItem> wwlist;
 
             /* Engine: (Kont.), przekladnia elektryczna */
             MAKE_MEMBER_GS(bool, generator_voltage_flat, false);
@@ -39,11 +39,11 @@ namespace godot {
             RailVehicleEngine::EngineType get_engine_type() const override;
 
         public:
-            TypedArray<WWListItem> get_wwlist() {
+            TypedArray<RailVehicleWWListItem> get_wwlist() {
                 return wwlist;
             }
 
-            void set_wwlist(const TypedArray<WWListItem> &p_wwlist) {
+            void set_wwlist(const TypedArray<RailVehicleWWListItem> &p_wwlist) {
                 wwlist.clear();
                 wwlist.append_array(p_wwlist);
             }

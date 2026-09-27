@@ -24,7 +24,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleSwitches, Variant::INT, dimmer_list_default_position, "dimmer_list_positions");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleSwitches, Variant::ARRAY, dimmer_list_positions, "dimmer_list_positions",
-                PROPERTY_HINT_TYPE_STRING, "DimmerListItem");
+                PROPERTY_HINT_TYPE_STRING, "RailVehicleDimmerListItem");
         ClassDB::bind_method(D_METHOD("sand", "active"), &RailVehicleSwitches::sand);
 
         ClassDB::bind_method(D_METHOD("get_sand_active"), &RailVehicleSwitches::get_sand_active);

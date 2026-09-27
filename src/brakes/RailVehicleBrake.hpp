@@ -1,8 +1,8 @@
 #pragma once
 #include "../core/RailVehicleComponent.hpp"
 #include "macros.hpp"
-#include "resources/brakes/BrakePressureTableItem.hpp"
-#include "resources/brakes/CompressorListItem.hpp"
+#include "resources/brakes/RailVehicleBrakePressureTableItem.hpp"
+#include "resources/brakes/RailVehicleCompressorListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
 
@@ -248,8 +248,8 @@ namespace godot {
             MAKE_MEMBER_GS(int, universal_brake_button_1, 0);
             MAKE_MEMBER_GS(int, universal_brake_button_2, 0);
             MAKE_MEMBER_GS(int, universal_brake_button_3, 0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<BrakePressureTableItem>, brake_pressure_table)
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CompressorListItem>, compressor_list)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleBrakePressureTableItem>, brake_pressure_table)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleCompressorListItem>, compressor_list)
             /* Cntrl. (czesc dotyczaca hamulca) */
             MAKE_MEMBER_GS_NR(BrakeSystemType, cntrl_brake_system, BRAKE_SYSTEM_PNEUMATIC);
             MAKE_MEMBER_GS(int, cntrl_brake_ctrl_position_count, 6);

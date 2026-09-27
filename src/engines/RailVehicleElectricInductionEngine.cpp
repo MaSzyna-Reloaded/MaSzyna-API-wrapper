@@ -30,9 +30,9 @@ namespace godot {
         BIND_PROPERTY(RailVehicleElectricInductionEngine, Variant::BOOL, flat_force_characteristic);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleElectricInductionEngine, Variant::ARRAY, max_power_table, PROPERTY_HINT_TYPE_STRING,
-                "CurvePointItem");
+                "VehicleCurvePointItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
+                RailVehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "RailVehicleWWListItem");
     }
 
     RailVehicleEngine::EngineType RailVehicleElectricInductionEngine::get_engine_type() const {

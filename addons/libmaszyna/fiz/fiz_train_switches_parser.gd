@@ -13,10 +13,10 @@ class_name FizTrainSwitchesParser
 ## RailVehicleSwitches.hpp's class doc) but are still parsed and stored on the node faithfully.
 ##
 ## DimmerList: row format has no real example in the operator's ~1300-file corpus (0
-## occurrences) - the 3-column mapping to DimmerListItem's high_beam/dimmed/off booleans is a
+## occurrences) - the 3-column mapping to RailVehicleDimmerListItem's high_beam/dimmed/off booleans is a
 ## best-effort guess from the field names alone, not confirmed against any real file.
 
-var _dimmer_rows: Array[DimmerListItem] = []
+var _dimmer_rows: Array[RailVehicleDimmerListItem] = []
 
 
 func create_node() -> RailVehicleSwitches:
@@ -73,7 +73,7 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     var tokens: Array = p.get_tokens(3)
     if tokens.size() < 3:
         return
-    var item := DimmerListItem.new()
+    var item := RailVehicleDimmerListItem.new()
     item.high_beam = String(tokens[0]).to_lower() in ["1", "yes", "true"]
     item.dimmed = String(tokens[1]).to_lower() in ["1", "yes", "true"]
     item.off = String(tokens[2]).to_lower() in ["1", "yes", "true"]

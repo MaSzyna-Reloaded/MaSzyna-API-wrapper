@@ -33,7 +33,7 @@
 		<member name="dimmer_list_default_position" type="int" setter="set_dimmer_list_default_position" getter="get_dimmer_list_default_position" default="0">
 			[code]DimmerList:DefaultPos[/code]
 		</member>
-		<member name="dimmer_list_positions" type="DimmerListItem[]" setter="set_dimmer_list_positions" getter="get_dimmer_list_positions" default="[]">
+		<member name="dimmer_list_positions" type="RailVehicleDimmerListItem[]" setter="set_dimmer_list_positions" getter="get_dimmer_list_positions" default="[]">
 			[code]DimmerList[/code]
 			The dimmer switch's position table.
 		</member>

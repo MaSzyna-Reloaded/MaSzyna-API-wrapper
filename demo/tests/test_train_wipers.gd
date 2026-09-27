@@ -23,8 +23,8 @@ func before_each():
     await wait_idle_frames(2)
 
 
-func _item(mask: int, transit_time: float, period: float, return_delay: float) -> WiperListItem:
-    var item: WiperListItem = WiperListItem.new()
+func _item(mask: int, transit_time: float, period: float, return_delay: float) -> RailVehicleWiperListItem:
+    var item: RailVehicleWiperListItem = RailVehicleWiperListItem.new()
     item.wiper_mask = mask
     item.transit_time = transit_time
     item.period = period
@@ -54,7 +54,7 @@ func test_round_trip_and_update_without_crashing():
 
     assert_eq(wipers.angle, 58.0)
     assert_eq(wipers.positions.size(), 4)
-    assert_eq((wipers.positions[1] as WiperListItem).period, 7.0)
+    assert_eq((wipers.positions[1] as RailVehicleWiperListItem).period, 7.0)
     assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring RailVehicleWipers")
 
 

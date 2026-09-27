@@ -11,8 +11,8 @@ func before_each():
     train.add_component(engine)
     await wait_idle_frames(2)
 
-func _make_point(x: float, y: float) -> CurvePointItem:
-    var item = CurvePointItem.new()
+func _make_point(x: float, y: float) -> VehicleCurvePointItem:
+    var item = VehicleCurvePointItem.new()
     item.x = x
     item.y = y
     return item

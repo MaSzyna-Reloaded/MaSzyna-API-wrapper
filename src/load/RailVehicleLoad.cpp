@@ -2,7 +2,7 @@
 
 namespace godot {
     void RailVehicleLoad::_bind_methods() {
-        BIND_PROPERTY_W_HINT_RES_ARRAY(RailVehicleLoad, Variant::ARRAY, load_list, PROPERTY_HINT_ARRAY_TYPE, "LoadListItem")
+        BIND_PROPERTY_W_HINT_RES_ARRAY(RailVehicleLoad, Variant::ARRAY, load_list, PROPERTY_HINT_ARRAY_TYPE, "RailVehicleLoadListItem")
         BIND_PROPERTY_W_HINT(RailVehicleLoad, Variant::INT, load_unit, PROPERTY_HINT_ENUM, "Tons,Pieces");
         BIND_PROPERTY(RailVehicleLoad, Variant::FLOAT, overload_factor);
         BIND_PROPERTY(RailVehicleLoad, Variant::FLOAT, load_speed);

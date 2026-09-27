@@ -45,7 +45,7 @@ namespace godot {
             static constexpr int LIGHTS_LIST_CAPACITY = 17;
             /* the preset that lights both ends of every vehicle (DynObj.cpp:7337) */
             static constexpr int LIGHTS_POSITION_ALL_ENDS = 18;
-            TypedArray<LightListItem> light_position_list;
+            TypedArray<RailVehicleLightListItem> light_position_list;
             bool roof_light_active = false;
             /* DynObj's DimHeadlights - the vendored Mover has no dimmer of its own */
             bool headlights_dimmed = false;
@@ -72,10 +72,10 @@ namespace godot {
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
         public:
-            TypedArray<LightListItem> get_lights_list() override {
+            TypedArray<RailVehicleLightListItem> get_lights_list() override {
                 return light_position_list;
             };
-            void set_lights_list(const TypedArray<LightListItem> &p_list) override {
+            void set_lights_list(const TypedArray<RailVehicleLightListItem> &p_list) override {
                 light_position_list.clear();
                 light_position_list.append_array(p_list);
             };

@@ -117,7 +117,7 @@ static func set_idle(vehicle:RID, cab:int) -> void:
     var positions:Array = engine.throttle_table_positions
     var controller:StringName = master_controller(vehicle, cab)
     var position:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
-    while position < positions.size() and (positions[position] as ThrottlePositionItem).clutch_behavior == 0:
+    while position < positions.size() and (positions[position] as RailVehicleThrottlePositionItem).clutch_behavior == 0:
         CabinSystem.act(vehicle, cab, controller, &"increase")
         var stepped:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
         if stepped == position:

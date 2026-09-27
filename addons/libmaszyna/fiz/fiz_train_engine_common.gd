@@ -129,12 +129,12 @@ static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Diction
 ##   shunting_up/shunting_down thresholds (p_is_diesel_electric selects this variant - this
 ##   wrapper has no plain-ElectricSeriesMotor caller for "MotorParamTable:" today, only
 ##   "MotorParamTable0:", so that reader's shape is documented here for completeness but unused).
-static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool = false) -> MotorParameter:
+static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool = false) -> RailVehicleMotorParameter:
     var tokens: Array = p.get_tokens(8)
     var min_tokens: int = (7 if p_is_diesel_electric else 7)
     if tokens.size() < min_tokens:
         return null
-    var item := MotorParameter.new()
+    var item := RailVehicleMotorParameter.new()
     if p_is_diesel_electric:
         item.voltage_constant_multiplier = float(tokens[1])   # mfi
         item.saturation_current_multiplier = float(tokens[2]) # mIsat
@@ -157,11 +157,11 @@ static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool =
 ## A gear of a plain diesel engine (readMPTDieselEngine, Mover.cpp:9175): idx, mIsat, fi, mfi -
 ## the gear's ratio, and the lowest and highest speed it is driven in [km/h] - then an optional
 ## flag of a gear the controller passes by itself
-static func parse_diesel_gear_row(p: MaszynaParser) -> MotorParameter:
+static func parse_diesel_gear_row(p: MaszynaParser) -> RailVehicleMotorParameter:
     var tokens: Array = p.get_tokens(5)
     if tokens.size() < 4:
         return null
-    var item := MotorParameter.new()
+    var item := RailVehicleMotorParameter.new()
     item.saturation_current_multiplier = float(tokens[1]) # mIsat
     item.voltage_constant = float(tokens[2])              # fi
     item.voltage_constant_multiplier = float(tokens[3])   # mfi

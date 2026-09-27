@@ -1,7 +1,7 @@
 #pragma once
 #include "RailVehicleElectricEngine.hpp"
 #include "macros.hpp"
-#include "resources/engines/RelayListItem.hpp"
+#include "resources/engines/RailVehicleRelayListItem.hpp"
 
 namespace godot {
     class VehicleController;
@@ -48,7 +48,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, dynamic_brake_resistance, 5.8);
             MAKE_MEMBER_GS(double, dynamic_brake_resistance_1, 5.8);
             MAKE_MEMBER_GS(double, dynamic_brake_resistance_2, 5.8);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RelayListItem>, relay_list)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleRelayListItem>, relay_list)
     };
 } // namespace godot
 VARIANT_ENUM_CAST(RailVehicleElectricSeriesEngine::FanType)

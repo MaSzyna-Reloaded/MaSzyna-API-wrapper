@@ -261,8 +261,8 @@ func wants_bpt_table(context: FizImportContext) -> bool:
     return true
 
 
-var _bpt_rows: Array[BrakePressureTableItem] = []
-var _compressor_rows: Array[CompressorListItem] = []
+var _bpt_rows: Array[RailVehicleBrakePressureTableItem] = []
+var _compressor_rows: Array[RailVehicleCompressorListItem] = []
 var _active_table: String = ""
 
 
@@ -276,15 +276,15 @@ func _parse_bpt_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(5)
     if tokens.size() < 5:
         return
-    var item := BrakePressureTableItem.new()
+    var item := RailVehicleBrakePressureTableItem.new()
     item.handle_position = int(tokens[0])
     item.pipe_pressure = float(tokens[1])
     item.brake_cylinder_pressure = float(tokens[2])
     item.fill_speed = float(tokens[3])
     match String(tokens[4]).to_lower():
-        "pneumatic", "p": item.brake_type = BrakePressureTableItem.BRAKE_TYPE_PNEUMATIC
-        "electropneumatic", "ep": item.brake_type = BrakePressureTableItem.BRAKE_TYPE_ELECTRO_PNEUMATIC
-        _: item.brake_type = BrakePressureTableItem.BRAKE_TYPE_INDIVIDUAL
+        "pneumatic", "p": item.brake_type = RailVehicleBrakePressureTableItem.BRAKE_TYPE_PNEUMATIC
+        "electropneumatic", "ep": item.brake_type = RailVehicleBrakePressureTableItem.BRAKE_TYPE_ELECTRO_PNEUMATIC
+        _: item.brake_type = RailVehicleBrakePressureTableItem.BRAKE_TYPE_INDIVIDUAL
     _bpt_rows.append(item)
 
 
@@ -292,7 +292,7 @@ func _parse_compressor_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(4)
     if tokens.size() < 4:
         return
-    var item := CompressorListItem.new()
+    var item := RailVehicleCompressorListItem.new()
     item.allow = int(tokens[0])
     item.speed_factor = int(tokens[1])
     item.min_pressure_factor = int(tokens[2])

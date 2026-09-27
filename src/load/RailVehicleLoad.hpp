@@ -1,7 +1,7 @@
 #pragma once
 #include "../core/RailVehicleComponent.hpp"
 #include "../macros.hpp"
-#include "../resources/load/LoadListItem.hpp"
+#include "../resources/load/RailVehicleLoadListItem.hpp"
 
 namespace godot {
     class RailVehicleLoad : public RailVehicleComponent {
@@ -28,8 +28,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, overload_factor, 0.0f);
             MAKE_MEMBER_GS(float, load_speed, 0.0f);
             MAKE_MEMBER_GS(float, unload_speed, 0.0f);
-            virtual void set_load_list(const TypedArray<LoadListItem> &p_load_list) = 0;
-            virtual TypedArray<LoadListItem> get_load_list() = 0;
+            virtual void set_load_list(const TypedArray<RailVehicleLoadListItem> &p_load_list) = 0;
+            virtual TypedArray<RailVehicleLoadListItem> get_load_list() = 0;
     };
 } // namespace godot
 

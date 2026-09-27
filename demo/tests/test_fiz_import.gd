@@ -70,11 +70,11 @@ func test_brake_and_bpt_table():
 
     var bpt: Array = brake.brake_pressure_table
     assert_eq(bpt.size(), 3)
-    var row0: BrakePressureTableItem = bpt[0]
+    var row0: RailVehicleBrakePressureTableItem = bpt[0]
     assert_eq(row0.handle_position, -1)
     assert_eq(row0.pipe_pressure, 0.0)
     assert_eq(row0.brake_cylinder_pressure, -1.0)
-    var row2: BrakePressureTableItem = bpt[2]
+    var row2: RailVehicleBrakePressureTableItem = bpt[2]
     assert_eq(row2.handle_position, 3)
     assert_eq(row2.pipe_pressure, 3.5)
 
@@ -113,12 +113,12 @@ func test_lights_list():
     assert_true(lighting.lights_wrap_selector)
     assert_eq(lighting.lights_default_selector_position, 2)
     assert_eq(lighting.lights_list.size(), 2)
-    var first: LightListItem = lighting.lights_list[0]
+    var first: RailVehicleLightListItem = lighting.lights_list[0]
     assert_true(first.cabin_a_head_light, "4 - the upper headlight")
     assert_true(first.cabin_b_left_red_signal, "34 - both red markers")
     assert_true(first.cabin_b_right_red_signal)
     assert_false(first.cabin_b_end_signals)
-    var second: LightListItem = lighting.lights_list[1]
+    var second: RailVehicleLightListItem = lighting.lights_list[1]
     assert_true(second.cabin_a_left_white_signal, "17 - both lower headlights")
     assert_true(second.cabin_a_right_white_signal)
     assert_true(second.cabin_b_end_signals, "64 - the end-of-train plates")

@@ -26,7 +26,7 @@ namespace godot {
         p_mover->UniCtrlListSize = std::min(MAX_POSITIONS, requested_size);
 
         for (int i = 0; i < p_mover->UniCtrlListSize; ++i) {
-            Ref<UniversalControllerListItem> item = get_positions()[i];
+            Ref<RailVehicleUniversalControllerListItem> item = get_positions()[i];
             if (item.is_valid()) {
                 p_mover->UniCtrlList[i].mode = item->get_pneumatic_brake_position();
                 p_mover->UniCtrlList[i].MinCtrlVal = item->get_min_percentage();

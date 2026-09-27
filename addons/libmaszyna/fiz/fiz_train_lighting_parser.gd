@@ -18,7 +18,7 @@ const LIGHT_AUXILIARY_LEFT: int = 1 << 7
 const LIGHT_AUXILIARY_RIGHT: int = 1 << 8
 
 ## Rows of the LightsList: table being read, and its declared Size= (LightsPosNo)
-var _lights_rows: Array[LightListItem] = []
+var _lights_rows: Array[RailVehicleLightListItem] = []
 var _lights_size: int = 0
 
 
@@ -95,7 +95,7 @@ func parse_row(p: MaszynaParser, _context: FizImportContext) -> void:
         return
     var cabin_a: int = int(tokens[0])
     var cabin_b: int = int(tokens[1])
-    var item := LightListItem.new()
+    var item := RailVehicleLightListItem.new()
     item.cabin_a_head_light = bool(cabin_a & LIGHT_HEADLIGHT_UPPER)
     item.cabin_a_left_white_signal = bool(cabin_a & LIGHT_HEADLIGHT_LEFT)
     item.cabin_a_left_red_signal = bool(cabin_a & LIGHT_REDMARKER_LEFT)

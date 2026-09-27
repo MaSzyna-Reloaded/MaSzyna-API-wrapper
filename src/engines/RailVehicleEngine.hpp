@@ -2,7 +2,7 @@
 #include "../core/RailVehicleComponent.hpp"
 #include "RailVehicleEngineBackend.hpp"
 #include "macros.hpp"
-#include "resources/engines/MotorParameter.hpp"
+#include "resources/engines/RailVehicleMotorParameter.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
@@ -81,11 +81,11 @@ namespace godot {
             };
 
 
-            TypedArray<MotorParameter> get_motor_param_table() const {
+            TypedArray<RailVehicleMotorParameter> get_motor_param_table() const {
                 return motor_param_table;
             }
 
-            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table) {
+            void set_motor_param_table(const TypedArray<RailVehicleMotorParameter> &p_motor_param_table) {
                 motor_param_table.clear();
                 motor_param_table.append_array(p_motor_param_table);
             }
@@ -93,7 +93,7 @@ namespace godot {
             bool main_switch(bool p_enabled);
             bool motor_overload_relay_threshold(bool p_high);
             static void _bind_methods();
-            TypedArray<MotorParameter> motor_param_table;
+            TypedArray<RailVehicleMotorParameter> motor_param_table;
 
             /* Engine: (wspolne pola dla wszystkich typow napedu) */
             MAKE_MEMBER_GS(int, transmission_gear_teeth_motor, 0);

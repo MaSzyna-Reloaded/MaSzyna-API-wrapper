@@ -176,7 +176,7 @@
 		<member name="brake_method" type="int" setter="set_brake_method" getter="get_brake_method" enum="RailVehicleBrake.BrakeMethod" default="0">
 			Friction material used by the brake blocks or discs.
 		</member>
-		<member name="brake_pressure_table" type="BrakePressureTableItem[]" setter="set_brake_pressure_table" getter="get_brake_pressure_table" default="[]">
+		<member name="brake_pressure_table" type="RailVehicleBrakePressureTableItem[]" setter="set_brake_pressure_table" getter="get_brake_pressure_table" default="[]">
 			[code]BPT[/code]
 			The brake pressure table, right after the [code]Cntrl.[/code] section in the FIZ file. Each item maps a brake
 			handle position to the resulting pipe/cylinder pressures and brake type.
@@ -269,7 +269,7 @@
 		<member name="compressor_higher_emergency_closing_pressure" type="float" setter="set_compressor_higher_emergency_closing_pressure" getter="get_compressor_higher_emergency_closing_pressure" default="-1.0">
 			Main tank safety valve unlocking pressure
 		</member>
-		<member name="compressor_list" type="CompressorListItem[]" setter="set_compressor_list" getter="get_compressor_list" default="[]">
+		<member name="compressor_list" type="RailVehicleCompressorListItem[]" setter="set_compressor_list" getter="get_compressor_list" default="[]">
 			[code]CompressorList[/code]
 			Compressor programmer table (not documented on the FIZ wiki). Each item is one programmer position controlling whether the compressor is allowed
 			to run and multipliers for its speed and cut-in/cut-out pressure thresholds.

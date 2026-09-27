@@ -1,7 +1,7 @@
 #pragma once
 #include "../core/RailVehicleComponent.hpp"
 #include "macros.hpp"
-#include "resources/controllers/UniversalControllerListItem.hpp"
+#include "resources/controllers/RailVehicleUniversalControllerListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
@@ -23,6 +23,6 @@ namespace godot {
             /* IntegratedLocBrake: the controller's braking positions work the local brake */
             MAKE_MEMBER_GS(bool, integrated_local_brake, false);
             MAKE_MEMBER_GS(int, selector_position, 0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<UniversalControllerListItem>, positions)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleUniversalControllerListItem>, positions)
     };
 } // namespace godot

@@ -1,7 +1,7 @@
 #pragma once
 #include "../core/RailVehicleComponent.hpp"
 #include "macros.hpp"
-#include "resources/wipers/WiperListItem.hpp"
+#include "resources/wipers/RailVehicleWiperListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/packed_float64_array.hpp>
 #include <vector>
@@ -42,6 +42,6 @@ namespace godot {
             // Number of wipers of the vehicle model (the original counts its animated submodels,
             // DynObj.cpp:5842), set by the vehicle factory. 0: the highest wiper the list switches on.
             MAKE_MEMBER_GS(int, wiper_count, 0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<WiperListItem>, positions)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleWiperListItem>, positions)
     };
 } // namespace godot

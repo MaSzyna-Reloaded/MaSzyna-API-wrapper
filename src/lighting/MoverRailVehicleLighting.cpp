@@ -16,7 +16,7 @@ namespace godot {
         // readLightsList (Mover.cpp:8558) - one row per preset, the table holds LIGHTS_LIST_CAPACITY
         const int presets = std::min(static_cast<int>(light_position_list.size()), LIGHTS_LIST_CAPACITY);
         for (int preset = 0; preset < presets; ++preset) {
-            const Ref<LightListItem> item = light_position_list[preset];
+            const Ref<RailVehicleLightListItem> item = light_position_list[preset];
             if (item.is_null()) {
                 continue;
             }

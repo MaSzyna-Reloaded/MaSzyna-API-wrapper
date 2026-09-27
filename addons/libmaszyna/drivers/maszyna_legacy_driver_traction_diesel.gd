@@ -121,7 +121,7 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var gear:int = controller_position(situation, "controller_second_position")
     if gear >= gears.size():
         return
-    var parameters:MotorParameter = gears[gear]
+    var parameters:RailVehicleMotorParameter = gears[gear]
     if parameters.auto_switch:
         return
     var second_max:int = mini(gears.size() - 1,
@@ -179,7 +179,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         var increase_position:int = mini(positions.size() - 1, int(config.get("main_controller_position_max", 0)))
         var decrease_position:int = 0
         for index:int in range(increase_position, -1, -1):
-            var item:UniversalControllerListItem = positions[index]
+            var item:RailVehicleUniversalControllerListItem = positions[index]
             if item.target_value <= 0.0 and item.decrease_speed > UNIVERSAL_DECREASING_SPEED:
                 decrease_position = index
                 break
@@ -195,7 +195,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
                 int(RailVehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)))
         var min_position:int = max_position
         var index:int = max_position
-        while index > 1 and (positions[index] as ThrottlePositionItem).clutch_behavior > 0:
+        while index > 1 and (positions[index] as RailVehicleThrottlePositionItem).clutch_behavior > 0:
             min_position = index
             index -= 1
         var main:int = controller_position(situation, "controller_main_position")
@@ -221,12 +221,12 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 func _clutch(situation:MaszynaLegacyDriverTraction.Situation, engine:RailVehicleDieselEngine) -> int:
     var positions:Array = engine.throttle_table_positions
     var main:int = controller_position(situation, "controller_main_position")
-    return (positions[main] as ThrottlePositionItem).clutch_behavior if main < positions.size() else 0
+    return (positions[main] as RailVehicleThrottlePositionItem).clutch_behavior if main < positions.size() else 0
 
 
 ## A neutral gear, to be passed (MotorParam[].mIsat == 0)
 static func _neutral(gears:Array, gear:int) -> bool:
-    return gear < gears.size() and (gears[gear] as MotorParameter).saturation_current_multiplier == 0.0
+    return gear < gears.size() and (gears[gear] as RailVehicleMotorParameter).saturation_current_multiplier == 0.0
 
 
 ## CheckTimeControllers() 5.1 (Driver.cpp:4303-4321): a DMU's universal controller not braking goes
@@ -244,7 +244,7 @@ func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> 
     # the last but one should hold - the original's working hypothesis
     var neutral:int = main_max - 1
     for index:int in range(main_max, -1, -1):
-        var item:UniversalControllerListItem = positions[index]
+        var item:RailVehicleUniversalControllerListItem = positions[index]
         if item.target_value <= 0.0 and item.decrease_speed < UNIVERSAL_DECREASING_SPEED:
             neutral = index
             break

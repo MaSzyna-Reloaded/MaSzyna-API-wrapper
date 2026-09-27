@@ -89,7 +89,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var sufficient_force:bool = absf(float(state.get("Ft", 0.0))) * engines > (HEAVY_SUFFICIENT_FORCE if heavy else SUFFICIENT_FORCE)
     var sufficient_acceleration:bool = trainset.acceleration >= (HEAVY_SUFFICIENT_ACCELERATION if heavy
             else GOODS_SUFFICIENT_ACCELERATION if cargo else SUFFICIENT_ACCELERATION)
-    var branches:int = (relays[main] as RelayListItem).branch_count
+    var branches:int = (relays[main] as RailVehicleRelayListItem).branch_count
     var series_shunting:bool = second > 0 and branches == 1
     var parallel_shunting:bool = second > 0 and branches > 1
     var collector:bool = int(state.get("power_source", RailVehicleController.POWER_SOURCE_NOT_DEFINED)) == RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
@@ -106,7 +106,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
             and velocity <= (GOODS_PARALLEL_VELOCITY if cargo else PARALLEL_VELOCITY) \
                 + (SHUNTING_VELOCITY_BONUS if parallel_shunting else 0.0)
     var use_field_shunt:bool = state.get("line_contactor_closed", false) \
-            and (relays[main] as RelayListItem).resistance < RESISTORLESS \
+            and (relays[main] as RailVehicleRelayListItem).resistance < RESISTORLESS \
             and (branches == 1 if use_series else (branches > 1 if parallel_early else main == main_max))
     if not et42:
         if use_high_threshold:
@@ -115,7 +115,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 if branches > 1:
                     set_second_controller(situation, 0)
                     while not CabinSystem.vehicle_state_value(situation.vehicle, "main_no_power_pos", true) \
-                            and (relays[controller_position(situation, "controller_main_position")] as RelayListItem).branch_count > 1 \
+                            and (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count > 1 \
                             and step_main(situation, -1):
                         pass
                 RailVehicleServer.vehicle_send_command(situation.controlling, "motor_overload_relay_threshold", true)
@@ -137,7 +137,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     set_second_controller(situation, 0)
     # don't draw too much power: keep from dropping into series mode entering the parallel one, and
     # from shutting down in the series one
-    var next_branches:int = (relays[mini(main + 1, main_max)] as RelayListItem).branch_count
+    var next_branches:int = (relays[mini(main + 1, main_max)] as RailVehicleRelayListItem).branch_count
     var moved:bool = true
     if voltage - (min_voltage if next_branches == 1 else series_mode_voltage) > margin \
             and not CabinSystem.vehicle_state_value(situation.vehicle, "controller_main_delayed", false):
@@ -165,9 +165,9 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
     var main:int = controller_position(situation, "controller_main_position")
     if main >= relays.size():
         return step_main(situation, -1)
-    if (relays[main] as RelayListItem).resistance == 0.0:
+    if (relays[main] as RailVehicleRelayListItem).resistance == 0.0:
         step_main(situation, -1)
-    while (relays[controller_position(situation, "controller_main_position")] as RelayListItem).resistance > 0.0 \
+    while (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).resistance > 0.0 \
             and step_main(situation, -1):
         pass
     return not controller_position(situation, "controller_main_position") == main

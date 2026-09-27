@@ -14,7 +14,7 @@ namespace godot {
 
     void RailVehicleDieselElectricEngine::_bind_methods() {
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleDieselElectricEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
+                RailVehicleDieselElectricEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "RailVehicleWWListItem");
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::BOOL, generator_voltage_flat);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, hyperbolic_speed);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, additional_speed);

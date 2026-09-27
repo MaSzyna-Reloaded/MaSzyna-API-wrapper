@@ -63,18 +63,18 @@
 #include "radio/MoverRailVehicleRadio.hpp"
 #include "radio/RailVehicleRadio.hpp"
 #include "register_types.h"
-#include "resources/brakes/BrakePressureTableItem.hpp"
-#include "resources/brakes/CompressorListItem.hpp"
-#include "resources/controllers/UniversalControllerListItem.hpp"
-#include "resources/engines/CurvePointItem.hpp"
-#include "resources/engines/MotorParameter.hpp"
-#include "resources/engines/RelayListItem.hpp"
-#include "resources/engines/ThrottlePositionItem.hpp"
-#include "resources/engines/WWListItem.hpp"
-#include "resources/lighting/LightListItem.hpp"
-#include "resources/load/LoadListItem.hpp"
-#include "resources/switches/DimmerListItem.hpp"
-#include "resources/wipers/WiperListItem.hpp"
+#include "resources/brakes/RailVehicleBrakePressureTableItem.hpp"
+#include "resources/brakes/RailVehicleCompressorListItem.hpp"
+#include "resources/controllers/RailVehicleUniversalControllerListItem.hpp"
+#include "resources/engines/VehicleCurvePointItem.hpp"
+#include "resources/engines/RailVehicleMotorParameter.hpp"
+#include "resources/engines/RailVehicleRelayListItem.hpp"
+#include "resources/engines/RailVehicleThrottlePositionItem.hpp"
+#include "resources/engines/RailVehicleWWListItem.hpp"
+#include "resources/lighting/RailVehicleLightListItem.hpp"
+#include "resources/load/RailVehicleLoadListItem.hpp"
+#include "resources/switches/RailVehicleDimmerListItem.hpp"
+#include "resources/wipers/RailVehicleWiperListItem.hpp"
 #include "scenery/MaszynaTrianglesImporter.hpp"
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
@@ -253,34 +253,34 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(RailVehicleLighting)
         GDREGISTER_CLASS(MoverRailVehicleLighting)
         GDREGISTER_CLASS(GameLog);
-        GDREGISTER_CLASS(WWListItem);
-        GDREGISTER_CLASS(MotorParameter);
-        GDREGISTER_CLASS(LightListItem)
+        GDREGISTER_CLASS(RailVehicleWWListItem);
+        GDREGISTER_CLASS(RailVehicleMotorParameter);
+        GDREGISTER_CLASS(RailVehicleLightListItem)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleElectroPneumaticDynamicBrake)
         GDREGISTER_CLASS(MoverRailVehicleElectroPneumaticDynamicBrake)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleLoad)
         GDREGISTER_CLASS(MoverRailVehicleLoad)
-        GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(RailVehicleLoadListItem)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleBuffCoupl)
         GDREGISTER_CLASS(MoverRailVehicleBuffCoupl)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleSpeedControl)
         GDREGISTER_CLASS(MoverRailVehicleSpeedControl)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleUniversalController)
         GDREGISTER_CLASS(MoverRailVehicleUniversalController)
-        GDREGISTER_CLASS(UniversalControllerListItem)
+        GDREGISTER_CLASS(RailVehicleUniversalControllerListItem)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleMasterController)
         GDREGISTER_CLASS(MoverRailVehicleMasterController)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleWipers)
         GDREGISTER_CLASS(MoverRailVehicleWipers)
-        GDREGISTER_CLASS(WiperListItem)
+        GDREGISTER_CLASS(RailVehicleWiperListItem)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleSwitches)
         GDREGISTER_CLASS(MoverRailVehicleSwitches)
-        GDREGISTER_CLASS(DimmerListItem)
-        GDREGISTER_CLASS(BrakePressureTableItem)
-        GDREGISTER_CLASS(CompressorListItem)
-        GDREGISTER_CLASS(RelayListItem)
-        GDREGISTER_CLASS(CurvePointItem)
-        GDREGISTER_CLASS(ThrottlePositionItem)
+        GDREGISTER_CLASS(RailVehicleDimmerListItem)
+        GDREGISTER_CLASS(RailVehicleBrakePressureTableItem)
+        GDREGISTER_CLASS(RailVehicleCompressorListItem)
+        GDREGISTER_CLASS(RailVehicleRelayListItem)
+        GDREGISTER_CLASS(VehicleCurvePointItem)
+        GDREGISTER_CLASS(RailVehicleThrottlePositionItem)
 
         user_settings_singleton = memnew(UserSettings);
         maszyna_runtime_singleton = memnew(MaszynaRuntime);

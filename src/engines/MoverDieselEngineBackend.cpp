@@ -143,7 +143,7 @@ namespace godot {
 
         p_mover->hydro_TC_Table.clear();
         for (int i = 0; i < p_engine->get_torque_converter_table().size(); i++) {
-            const Ref<CurvePointItem> &row = p_engine->get_torque_converter_table()[i];
+            const Ref<VehicleCurvePointItem> &row = p_engine->get_torque_converter_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleDieselEngine]: p_engine->get_torque_converter_table() property is null at index " +
@@ -155,7 +155,7 @@ namespace godot {
 
         p_mover->dizel_vel2nmax_Table.clear();
         for (int i = 0; i < p_engine->get_vel2nmax_table().size(); i++) {
-            const Ref<CurvePointItem> &row = p_engine->get_vel2nmax_table()[i];
+            const Ref<VehicleCurvePointItem> &row = p_engine->get_vel2nmax_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleDieselEngine]: p_engine->get_vel2nmax_table() property is null at index " +
@@ -192,7 +192,7 @@ namespace godot {
                     String::num_int64(MAX_THROTTLE_TABLE) + "; truncating.");
         }
         for (int i = 0; i < std::min(MAX_THROTTLE_TABLE, throttle_table_size); i++) {
-            const Ref<ThrottlePositionItem> &row = p_engine->get_throttle_table_positions()[i];
+            const Ref<RailVehicleThrottlePositionItem> &row = p_engine->get_throttle_table_positions()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleDieselEngine]: p_engine->get_throttle_table_positions() property is null at index " +
@@ -207,7 +207,7 @@ namespace godot {
         /* DMList: charakterystyka momentu obrotowego silnika spalinowego */
         p_mover->dizel_Momentum_Table.clear();
         for (int i = 0; i < p_engine->get_torque_table().size(); i++) {
-            const Ref<CurvePointItem> &row = p_engine->get_torque_table()[i];
+            const Ref<VehicleCurvePointItem> &row = p_engine->get_torque_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
                         "[RailVehicleDieselEngine]: p_engine->get_torque_table() property is null at index " +

@@ -10,8 +10,8 @@ func before_each():
     train.add_component(switches)
     await wait_idle_frames(2)
 
-func _make_dimmer(high_beam: bool, dimmed: bool, off: bool) -> DimmerListItem:
-    var item = DimmerListItem.new()
+func _make_dimmer(high_beam: bool, dimmed: bool, off: bool) -> RailVehicleDimmerListItem:
+    var item = RailVehicleDimmerListItem.new()
     item.high_beam = high_beam
     item.dimmed = dimmed
     item.off = off

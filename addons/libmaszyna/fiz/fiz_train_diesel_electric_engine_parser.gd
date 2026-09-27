@@ -7,7 +7,7 @@ class_name FizTrainDieselElectricEngineParser
 ## MotorParamTable:+rows (both registered directly in FizVehicleBuilder's section
 ## table, using the standard parse()/parse_row()/end_table() interface).
 ##
-## WWList: rows map 1:1 onto RailVehicleDieselElectricEngine.wwlist (WWListItem), which
+## WWList: rows map 1:1 onto RailVehicleDieselElectricEngine.wwlist (RailVehicleWWListItem), which
 ## _do_update_internal_mover already pushes into the mover's DElist/SST tables - that C++ side
 ## was already fully wired, only the FIZ-side parser was missing (this is what blocked
 ## main_switch/direction/brake on any DumbDE vehicle: DElist stayed all-zero, and MainCtrlPosNo
@@ -35,8 +35,8 @@ class_name FizTrainDieselElectricEngineParser
 ## and the Flat/ShuntMode literal-"1" comparison (documented server-side quirk, replicated from
 ## the original research pass over upstream eu07/maszyna) are best-effort.
 
-var _wwlist_rows: Array[WWListItem] = []
-var _motor_param_rows: Array[MotorParameter] = []
+var _wwlist_rows: Array[RailVehicleWWListItem] = []
+var _motor_param_rows: Array[RailVehicleMotorParameter] = []
 var _active_table: String = ""
 ## The MotorParamTable: being read is a plain diesel engine's gearbox
 var _diesel: bool = false
@@ -104,7 +104,7 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
     var tokens: Array = p.get_tokens(7)
     if tokens.size() < 4:
         return
-    var item := WWListItem.new()
+    var item := RailVehicleWWListItem.new()
     item.rpm = float(tokens[0])
     item.max_power = float(tokens[1])
     item.max_voltage = float(tokens[2])
@@ -118,7 +118,7 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
 
 
 func _parse_motor_param_row(p: MaszynaParser) -> void:
-    var item: MotorParameter = FizTrainEngineCommon.parse_diesel_gear_row(p) if _diesel \
+    var item: RailVehicleMotorParameter = FizTrainEngineCommon.parse_diesel_gear_row(p) if _diesel \
             else FizTrainEngineCommon.parse_motor_param_row(p, true)
     if item:
         _motor_param_rows.append(item)

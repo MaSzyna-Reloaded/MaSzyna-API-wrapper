@@ -3,7 +3,7 @@
 #include "../core/RailVehicleComponent.hpp"
 #include "../engines/RailVehicleElectricEngine.hpp"
 #include "macros.hpp"
-#include "resources/lighting/LightListItem.hpp"
+#include "resources/lighting/RailVehicleLightListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
 
@@ -87,8 +87,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, head_light_high_beam_dimmed_multiplier, 2.5);
             MAKE_MEMBER_GS(double, head_light_high_beam_normal_multiplier, 2.8);
             MAKE_MEMBER_GS(int, instrument_type, 0);
-            virtual TypedArray<LightListItem> get_lights_list() = 0;
-            virtual void set_lights_list(const TypedArray<LightListItem> &p_list) = 0;
+            virtual TypedArray<RailVehicleLightListItem> get_lights_list() = 0;
+            virtual void set_lights_list(const TypedArray<RailVehicleLightListItem> &p_list) = 0;
             virtual void increase_light_selector_position() = 0;
             virtual void decrease_light_selector_position() = 0;
             /* The headlights dimmer (dimheadlights_sw:, Train.cpp:6125) */

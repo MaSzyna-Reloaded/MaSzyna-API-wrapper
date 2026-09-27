@@ -31,7 +31,7 @@
 			[code]WiperList:Default[/code]
 			Starting switch position, counting from 0.
 		</member>
-		<member name="positions" type="WiperListItem[]" setter="set_positions" getter="get_positions" default="[]">
+		<member name="positions" type="RailVehicleWiperListItem[]" setter="set_positions" getter="get_positions" default="[]">
 			[code]WiperList[/code]
 			The wiper switch's position table.
 		</member>

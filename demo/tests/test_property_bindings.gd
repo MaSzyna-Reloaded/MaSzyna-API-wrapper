@@ -1,17 +1,17 @@
 extends MaszynaGutTest
 
 const BOUND_CLASSES: Array[StringName] = [
-    &"BrakePressureTableItem",
-    &"CompressorListItem",
-    &"CurvePointItem",
-    &"DimmerListItem",
+    &"RailVehicleBrakePressureTableItem",
+    &"RailVehicleCompressorListItem",
+    &"VehicleCurvePointItem",
+    &"RailVehicleDimmerListItem",
     &"E3DModel",
     &"E3DSubModel",
-    &"LightListItem",
-    &"LoadListItem",
-    &"MotorParameter",
-    &"RelayListItem",
-    &"ThrottlePositionItem",
+    &"RailVehicleLightListItem",
+    &"RailVehicleLoadListItem",
+    &"RailVehicleMotorParameter",
+    &"RailVehicleRelayListItem",
+    &"RailVehicleThrottlePositionItem",
     &"RailVehicleAIHints",
     &"RailVehicleBrake",
     &"RailVehicleBuffCoupl",
@@ -35,9 +35,9 @@ const BOUND_CLASSES: Array[StringName] = [
     &"RailVehicleUniversalController",
     &"RailVehicleWheels",
     &"RailVehicleWipers",
-    &"UniversalControllerListItem",
-    &"WWListItem",
-    &"WiperListItem",
+    &"RailVehicleUniversalControllerListItem",
+    &"RailVehicleWWListItem",
+    &"RailVehicleWiperListItem",
 ]
 
 
@@ -77,7 +77,7 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     electric_engine.power_cable_source = RailVehicleController.POWER_TYPE_STEAM
     assert_eq(electric_engine.power_cable_source, RailVehicleController.POWER_TYPE_STEAM)
 
-    var lights: LightListItem = LightListItem.new()
+    var lights: RailVehicleLightListItem = RailVehicleLightListItem.new()
     lights.cabin_a_left_white_signal = false
     lights.cabin_a_right_white_signal = true
     assert_false(lights.cabin_a_left_white_signal)

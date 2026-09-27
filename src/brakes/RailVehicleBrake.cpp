@@ -67,9 +67,9 @@ namespace godot {
         BIND_PROPERTY(RailVehicleBrake, Variant::BOOL, main_pipe_emergency_cuts_off_handle, "main_pipe")
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleBrake, Variant::ARRAY, brake_pressure_table, PROPERTY_HINT_TYPE_STRING,
-                "BrakePressureTableItem");
+                "RailVehicleBrakePressureTableItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING, "CompressorListItem");
+                RailVehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING, "RailVehicleCompressorListItem");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, compressor_emergency_valve_area, "compressor")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, universal_brake_button_1, "universal_brake_button", PROPERTY_HINT_FLAGS,

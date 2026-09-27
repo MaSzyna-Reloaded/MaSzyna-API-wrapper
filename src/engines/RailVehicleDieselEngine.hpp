@@ -2,8 +2,8 @@
 #include "RailVehicleDieselEngineBackend.hpp"
 #include "RailVehicleEngine.hpp"
 #include "macros.hpp"
-#include "resources/engines/CurvePointItem.hpp"
-#include "resources/engines/ThrottlePositionItem.hpp"
+#include "resources/engines/VehicleCurvePointItem.hpp"
+#include "resources/engines/RailVehicleThrottlePositionItem.hpp"
 
 namespace godot {
     class VehicleController;
@@ -106,9 +106,9 @@ namespace godot {
             MAKE_MEMBER_GS(double, torque_converter_torque_out_out, 0.0);
             MAKE_MEMBER_GS(double, torque_converter_lockup_speed, 1.0);
             MAKE_MEMBER_GS(double, torque_converter_unlock_speed, 1.0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_converter_table)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<VehicleCurvePointItem>, torque_converter_table)
             /* V2NList: predkosc -> maksymalne obroty silnika (dizel_vel2nmax_Table) */
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, vel2nmax_table)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<VehicleCurvePointItem>, vel2nmax_table)
             MAKE_MEMBER_GS(bool, retarder_present, false);
             MAKE_MEMBER_GS_NR(RetarderPlacement, retarder_placement, RETARDER_PLACEMENT_AFTER_GEARBOX);
             MAKE_MEMBER_GS(double, retarder_torque_in_in, 1.0);
@@ -125,10 +125,10 @@ namespace godot {
             MAKE_MEMBER_GS(double, throttle_table_nominal_fuel_dose, 0.0);
             MAKE_MEMBER_GS(double, throttle_table_resistance_torque, 0.0);
             MAKE_MEMBER_GS(double, throttle_table_nominal_fuel_consumption_rate, 250.0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<ThrottlePositionItem>, throttle_table_positions)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleThrottlePositionItem>, throttle_table_positions)
 
             /* DMList: charakterystyka momentu obrotowego */
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_table)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<VehicleCurvePointItem>, torque_table)
 
         private:
         protected:

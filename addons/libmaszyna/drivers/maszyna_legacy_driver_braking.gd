@@ -842,7 +842,7 @@ func _hold_universal_controller(situation:MaszynaLegacyDriverTraction.Situation)
     var positions:Array = controller.positions
     var main:int = MaszynaLegacyDriverTraction.controller_position(situation, "controller_main_position")
     if main < positions.size():
-        _set_handle(situation.vehicle, situation.cab, float((positions[main] as UniversalControllerListItem).pneumatic_brake_position))
+        _set_handle(situation.vehicle, situation.cab, float((positions[main] as RailVehicleUniversalControllerListItem).pneumatic_brake_position))
 
 
 ## BrakeLevelAdd() (Driver.cpp:3836): false once it would leave the range

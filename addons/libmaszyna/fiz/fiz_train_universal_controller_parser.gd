@@ -9,11 +9,11 @@ class_name FizTrainUniversalControllerParser
 ## a leading index (discarded, matches every other List's convention) then 9 data columns in
 ## this exact order: mode, MinCtrlVal, MaxCtrlVal, SetCtrlVal, SpeedUp, SpeedDown,
 ## ReturnPosition, NextPosFastInc, PrevPosFastDec - mapping 1:1 onto
-## UniversalControllerListItem's pneumatic_brake_position/min_percentage/max_percentage/
+## RailVehicleUniversalControllerListItem's pneumatic_brake_position/min_percentage/max_percentage/
 ## target_value/increase_speed/decrease_speed/bounce_back_position/nearest_stable_up/
 ## nearest_stable_down.
 
-var _rows: Array[UniversalControllerListItem] = []
+var _rows: Array[RailVehicleUniversalControllerListItem] = []
 
 
 func create_node() -> RailVehicleUniversalController:
@@ -38,7 +38,7 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     var tokens: Array = p.get_tokens(10)
     if tokens.size() < 10:
         return
-    var item := UniversalControllerListItem.new()
+    var item := RailVehicleUniversalControllerListItem.new()
     item.pneumatic_brake_position = int(tokens[1])
     item.min_percentage = float(tokens[2])
     item.max_percentage = float(tokens[3])

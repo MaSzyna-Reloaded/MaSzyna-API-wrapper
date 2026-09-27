@@ -22,7 +22,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleElectricSeriesEngine, Variant::FLOAT, dynamic_brake_resistance_1);
         BIND_PROPERTY(RailVehicleElectricSeriesEngine, Variant::FLOAT, dynamic_brake_resistance_2);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleElectricSeriesEngine, Variant::ARRAY, relay_list, PROPERTY_HINT_TYPE_STRING, "RelayListItem");
+                RailVehicleElectricSeriesEngine, Variant::ARRAY, relay_list, PROPERTY_HINT_TYPE_STRING, "RailVehicleRelayListItem");
 
         BIND_ENUM_CONSTANT(FAN_TYPE_NONE);
         BIND_ENUM_CONSTANT(FAN_TYPE_YES);

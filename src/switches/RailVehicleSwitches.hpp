@@ -1,7 +1,7 @@
 #pragma once
 #include "../core/RailVehicleComponent.hpp"
 #include "macros.hpp"
-#include "resources/switches/DimmerListItem.hpp"
+#include "resources/switches/RailVehicleDimmerListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
@@ -43,7 +43,7 @@ namespace godot {
             MAKE_MEMBER_GS(bool, modern_dimmer, false);
             MAKE_MEMBER_GS(bool, dimmer_list_cycle, false);
             MAKE_MEMBER_GS(int, dimmer_list_default_position, 0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<DimmerListItem>, dimmer_list_positions)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleDimmerListItem>, dimmer_list_positions)
             virtual void sand(bool p_active) = 0;
             void _register_commands() override;
             void _unregister_commands() override;

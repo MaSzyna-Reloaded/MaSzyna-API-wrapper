@@ -10,8 +10,8 @@ func before_each():
     train.add_component(brake)
     await wait_idle_frames(2)
 
-func _make_row(allow: int, speed_factor: int, min_factor: int, max_factor: int) -> CompressorListItem:
-    var item = CompressorListItem.new()
+func _make_row(allow: int, speed_factor: int, min_factor: int, max_factor: int) -> RailVehicleCompressorListItem:
+    var item = RailVehicleCompressorListItem.new()
     item.allow = allow
     item.speed_factor = speed_factor
     item.min_pressure_factor = min_factor
@@ -19,7 +19,7 @@ func _make_row(allow: int, speed_factor: int, min_factor: int, max_factor: int) 
     return item
 
 func test_default_row_has_expected_defaults():
-    var item = CompressorListItem.new()
+    var item = RailVehicleCompressorListItem.new()
     assert_eq(item.allow, 0, "allow should default to 0 (unchanged)")
     assert_eq(item.speed_factor, 1, "speed_factor should default to 1")
     assert_eq(item.min_pressure_factor, 1, "min_pressure_factor should default to 1")
@@ -33,7 +33,7 @@ func test_row_round_trips_values():
     assert_eq(item.max_pressure_factor, 1)
 
 func test_compressor_list_property_accepts_items():
-    var rows: Array[CompressorListItem] = [
+    var rows: Array[RailVehicleCompressorListItem] = [
         _make_row(2, 1, 1, 1),
         _make_row(1, 0, 1, 1),
     ]
@@ -44,7 +44,7 @@ func test_compressor_list_property_accepts_items():
     assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after assigning compressor_list")
 
 func test_oversized_compressor_list_is_truncated_without_crashing():
-    var rows: Array[CompressorListItem] = []
+    var rows: Array[RailVehicleCompressorListItem] = []
     for i in range(12):
         rows.append(_make_row(2, 1, 1, 1))
     brake.compressor_list = rows

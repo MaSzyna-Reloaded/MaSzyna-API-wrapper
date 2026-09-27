@@ -10,8 +10,8 @@ func before_each():
     train.add_component(engine)
     await wait_idle_frames(2)
 
-func _make_row(rpm: float, gen_power: float) -> WWListItem:
-    var item = WWListItem.new()
+func _make_row(rpm: float, gen_power: float) -> RailVehicleWWListItem:
+    var item = RailVehicleWWListItem.new()
     item.rpm = rpm
     item.max_power = gen_power
     return item
@@ -66,4 +66,4 @@ func test_fiz_wwlist_row_uses_canonical_shunting_property():
     parser.end_table(context)
 
     assert_eq(engine.wwlist.size(), 1)
-    assert_true((engine.wwlist[0] as WWListItem).has_shunting)
+    assert_true((engine.wwlist[0] as RailVehicleWWListItem).has_shunting)

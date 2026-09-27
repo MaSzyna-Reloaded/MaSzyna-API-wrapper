@@ -85,30 +85,27 @@ namespace godot {
     }
 
     void DriverSystem::vehicle_set_control_active(const RID &p_vehicle, const bool p_active) {
-        const RID *driver = drivers_by_vehicle.getptr(p_vehicle);
-        if (driver == nullptr) {
+        if (!(player_controlled_vehicles.has(p_vehicle) == p_active)) {
             return;
         }
-        DriverData *data = drivers.getptr(*driver);
-        if (data == nullptr || data->control_active == p_active) {
+        if (!p_active) {
+            player_controlled_vehicles.insert(p_vehicle);
             return;
         }
-        data->control_active = p_active;
+        player_controlled_vehicles.erase(p_vehicle);
         // taken back: the delegate learns it drives a vehicle a player left as it is now
         // (TController::TakeControl(), Driver.cpp:5700-5712)
-        if (p_active && data->delegate.is_valid()) {
-            // held, with the driver copied: the delegate may change the drivers, which rehashes the
-            // tables
+        const RID driver_rid = vehicle_get_driver(p_vehicle);
+        const DriverData *data = drivers.getptr(driver_rid);
+        if (data != nullptr && data->delegate.is_valid()) {
+            // held: the delegate may change the drivers, which rehashes the table
             const Ref<DriverDelegate> delegate = data->delegate;
-            const RID driver_rid = *driver;
             delegate->control_taken(driver_rid);
         }
     }
 
     bool DriverSystem::vehicle_is_control_active(const RID &p_vehicle) const {
-        const RID *driver = drivers_by_vehicle.getptr(p_vehicle);
-        const DriverData *data = driver != nullptr ? drivers.getptr(*driver) : nullptr;
-        return data != nullptr && data->control_active;
+        return drivers_by_vehicle.has(p_vehicle) && !player_controlled_vehicles.has(p_vehicle);
     }
 
     void DriverSystem::driver_schedule_update(const RID &p_driver, const double p_seconds) {
@@ -122,6 +119,7 @@ namespace godot {
     }
 
     void DriverSystem::_on_vehicle_freed(const RID &p_vehicle) {
+        player_controlled_vehicles.erase(p_vehicle);
         const RID *driver = drivers_by_vehicle.getptr(p_vehicle);
         if (driver == nullptr) {
             return;

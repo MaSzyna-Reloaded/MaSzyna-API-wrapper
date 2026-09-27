@@ -3,6 +3,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/hash_set.hpp>
 #include <queue>
 #include <vector>
 
@@ -30,8 +31,6 @@ namespace godot {
                     RID vehicle;
                     /// The sequence of its scheduled update in the queue, 0 while none is
                     uint64_t update_sequence = 0;
-                    /// It drives; off while a player sits in the vehicle's cab
-                    bool control_active = true;
             };
 
             /// A driver's update at a time; the sequence keeps entries of one time in the order
@@ -48,6 +47,9 @@ namespace godot {
 
             HashMap<RID, DriverData> drivers;
             HashMap<RID, RID> drivers_by_vehicle;
+            /// Vehicles a player drives - kept by the vehicle, not by its driver: a player may take
+            /// the cab before the vehicle's driver is created, and that driver starts not driving
+            HashSet<RID> player_controlled_vehicles;
             std::priority_queue<UpdateEntry, std::vector<UpdateEntry>, std::greater<UpdateEntry>> updates;
             uint64_t next_sequence = 1;
             /// While something is scheduled it holds the runtime's clock and runs as it advances
@@ -82,8 +84,9 @@ namespace godot {
             /// replaces the one pending
             void driver_schedule_update(const RID &p_driver, double p_seconds);
             /// Whether the vehicle's driver drives it - off while a player drives it
-            /// (RailVehicle3D::enter_cabin()); the driver still takes its orders then, but touches no
-            /// control. False for a vehicle without a driver.
+            /// (RailVehicle3D::enter_cabin()), also when it gets its driver only later; the driver
+            /// still takes its orders then, but touches no control. False for a vehicle without a
+            /// driver.
             void vehicle_set_control_active(const RID &p_vehicle, bool p_active);
             bool vehicle_is_control_active(const RID &p_vehicle) const;
     };

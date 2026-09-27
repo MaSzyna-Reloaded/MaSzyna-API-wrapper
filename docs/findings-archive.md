@@ -1360,3 +1360,18 @@ lighting or the consist.
 * **Fix:** `VehicleMasterController` component, created from every `Cntrl.` section.
 * **Rule:** a field goes where the original's loader reads it, not where its first consumer is.
 
+
+## 2026-09-27 - the AI drove the cab the player started the scenery in
+
+* **Symptom:** a scenery started with the player in a trainset's cab; the AI driver kept operating
+  its controls. Leaving the cab and entering again gave it to the player.
+* **Cause:** the player's `_process` enters the start vehicle as soon as it has a controller -
+  while `SceneryInstancer._wait_for_vehicles()` still awaits frames, before `_build_drivers()`.
+  `RailVehicle3D.enter_cabin()` then called `DriverSystem.vehicle_set_control_active(rid, false)`
+  on a vehicle without a driver, which returned without recording anything; the driver created
+  next started with its own `control_active = true`.
+* **Fix:** `DriverSystem` keeps the vehicles a player drives per vehicle
+  (`player_controlled_vehicles`), recorded whether the vehicle has a driver yet or not;
+  `vehicle_is_control_active()` reads it, so a driver attached later starts not driving.
+* **Rule:** a fact about a vehicle is kept per vehicle, never on an object that may not exist yet
+  when the fact is set - otherwise the order of creation decides whether it is lost.

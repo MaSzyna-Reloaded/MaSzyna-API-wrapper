@@ -1,3 +1,4 @@
+#include "../core/TrainController.hpp"
 #include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
@@ -15,7 +16,7 @@ namespace godot {
         p_mover->HeatingPowerSource.MaxVoltage = get_heating_max_voltage();
 
         switch (get_heating_source()) {
-            case VehicleController::POWER_SOURCE_GENERATOR: {
+            case TrainController::POWER_SOURCE_GENERATOR: {
                 // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
                 // (MOVER.h:551); HeatingCheck() dereferences it unconditionally whenever
                 // SourceType == Generator, so it must be pointed at a real double before that can
@@ -27,7 +28,7 @@ namespace godot {
                 p_mover->HeatingPowerSource.EngineGenerator.voltage_max = get_heating_generator_max_voltage();
                 break;
             }
-            case VehicleController::POWER_SOURCE_POWERCABLE: {
+            case TrainController::POWER_SOURCE_POWERCABLE: {
                 p_mover->HeatingPowerSource.RPowerCable.PowerTrans = mover_power_type(get_heating_power_cable_type());
                 break;
             }

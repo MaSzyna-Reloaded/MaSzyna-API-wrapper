@@ -75,8 +75,32 @@ anything. Open work belongs in `TODO.md`.
 * When porting a contract consumed by scripts nobody here maintains, run the real scripts against
   it. *(09-24 Python cab screens)*
 * Check sun-altitude thresholds against a winter day. *(09-20 orange fog)*
+* A section is parsed for every `EngineType` that has it, and a parser never reaches its engine
+  node by a cast to one engine class - a failed cast drops the section without a word. Check each
+  `EngineType` against its `LoadFIZ_*` case and its `readMPT*()`. *(09-27 SA134 without a gearbox)*
+* A property's default is the Mover's default, not a value that looks sensible. *(09-27 SA134
+  without a gearbox)*
+* A loader's derived fields are part of the port: the fields it sets from the ones it read
+  (`Imin = IminLo`). *(09-27 automatic start without thresholds)*
+* A loop that steps a control until it gets somewhere ends on "did not move", never on "is not
+  there yet" - the vehicle may refuse the step. *(09-27 the driver's update hung on a refused
+  controller)*
+* A field goes where the original's loader reads it, not where its first consumer is (MCPN is
+  every vehicle's, not the engine's). *(09-27 a control car had no controller)*
+* A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
+  `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 
 ## State, ownership, events
+* A command the original sends along the couplers (`SendCtrlToNext`) is sent only once the
+  trainset is coupled: couple at endtrainset, after the vehicles stand on their tracks, then give
+  the driver its orders. A cab switched on before that leaves the unit's other cabs inactive.
+  *(09-27 EN57 vented its pipe from the rear cab)*
+* Configuration never sets what the original switches at run time: the alerter is enabled by the
+  cab's activation, not by a component's `enabled`. *(09-27 EN57 vented its pipe from the rear
+  cab)*
+* Every timer of the simulated train, the cab's relays included, runs on the simulation clock
+  (`MaszynaRuntime.simulation_advanced`), never on the frame. *(09-27 the cab's relays ran on real
+  time)*
 * One piece of state, one writer. Two writers that both look correct disagree only where the
   geometry shows it. *(09-24 parked vehicle jumping)*
 * A getter never changes state. A value that depends on how often it is read stays invisible until
@@ -100,6 +124,14 @@ anything. Open work belongs in `TODO.md`.
 ## Godot / GDExtension
 * `process_frame` is the end of a frame. What `_process` reads is produced before it, ordered by
   `process_priority`. *(09-24 simulation stepped after readers)*
+* The Mover measures couplers from "the last refresh plus ten times the movement since": refresh
+  locations and neighbours every physics sub-step, never once a frame, or the result depends on
+  the frame rate. *(09-27 couplers stiffened by a long frame)*
+* What the AI remembers of the tracks belongs to one way of driving: a turn or a takeover from a
+  player starts it afresh. *(09-27 the AI stood at a clear signal)*
+* Simulated time has one clock, `MaszynaRuntime`'s: read `get_simulation_time()` or take
+  `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
+  clocks)*
 * A C++ class under an existing GDScript subclass keeps its lifecycle in `_notification()`, never
   in `_ready()`/`_process()`. A script shadows a native method only for `call()` callers.
   *(09-23 subclass replaced _ready())*
@@ -132,6 +164,10 @@ anything. Open work belongs in `TODO.md`.
   and `add_translation()`/`remove_translation()` send no `NOTIFICATION_TRANSLATION_CHANGED`.
   The code that swaps it notifies the main loop. *(09-25 catalogue swapped, UI unchanged)*
 
+* The Mover's train brake handle has three positions and only `BrakeLevelSet()` moves them
+  together, comparing with `fBrakeCtrlPos`: a second setup leaves `BrakeCtrlPosR` at lap. A pipe
+  that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
+
 ## Threads and teardown
 * Every worker needs an owner that stops it before the scripts go. A destructor runs too late. A
   stop must not wait for the whole job, and a drain must not drop tasks someone waits on.
@@ -163,6 +199,9 @@ anything. Open work belongs in `TODO.md`.
 * The headless dummy renderer keeps no texture data. A vehicle without mass or a track is NaN, and
   NaN never compares equal or culls. *(09-24 Python screens; 09-24 parked vehicle; 09-22 sound
   cost)*
+* The headless dummy renderer's mesh storage is not thread safe: meshes created on the streaming
+  worker and on the main thread at once corrupt the heap, and the crash shows later, at teardown.
+  *(09-26 headless test crashes at teardown)*
 
 ## Sound
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through

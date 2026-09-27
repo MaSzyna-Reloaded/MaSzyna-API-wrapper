@@ -1,7 +1,7 @@
 extends MaszynaGutTest
 
 ## Cabin layer (#94) on the REAL EP07-424 from td.scn with the player in the cab: cabin controls go
-## through CabinSystem, whose callbacks are registered by LegacyCabinLogicDelegate. The line breaker
+## through CabinSystem, whose callbacks are registered by LegacyCabinLogic. The line breaker
 ## closes only after main_on_bt is held for InitialCtrlDelay and then released (Train.cpp:2976-3070,
 ## 6779-6827), while the vehicle-level "main_switch" command still acts immediately and returns its
 ## result (#43).
@@ -120,7 +120,10 @@ func test_cabin_controls_are_registered_and_forwarded() -> void:
 
     player.start_train_id = ""
     await wait_idle_frames(5)
-    assert_false(CabinSystem.has_control(vehicle_rid, cab, &"battery_sw"), "leaving the cab unregisters callbacks")
+    # the cab logic is the vehicle's: a crewed vehicle keeps it for its driver (SceneryInstancer._build_drivers())
+    var crewed:bool = DriverSystem.vehicle_get_driver(vehicle_rid).is_valid()
+    assert_eq(CabinSystem.has_control(vehicle_rid, cab, &"battery_sw"), crewed,
+            "leaving the cab unregisters the callbacks, unless a driver is aboard")
     assert_eq(CabinSystem.get_control(vehicle_rid, cab, &"battery_sw"), true, "cabin state survives leaving the cab")
 
 

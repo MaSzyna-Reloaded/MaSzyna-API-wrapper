@@ -14,6 +14,7 @@ namespace godot {
 
         p_mover->UniCtrlIntegratedBrakePNCtrl = get_integrated_brake_pn();
         p_mover->UniCtrlIntegratedBrakeCtrl = get_integrated_brake();
+        p_mover->UniCtrlIntegratedLocalBrakeCtrl = get_integrated_local_brake();
 
         constexpr int MAX_POSITIONS = Maszyna::UniversalCtrlArraySize;
         const int requested_size = static_cast<int>(get_positions().size());

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleWheels" inherits="VehicleComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleWheels" inherits="TrainComponent" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Class used to configure wheel geometry and expose wheel-related runtime state.
 	</brief_description>
@@ -8,7 +8,21 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="get_bogie_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="bogie" type="int" enum="VehicleWheels.Bogie" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
+		<member name="angle_front_deg" type="float" setter="" getter="get_angle_front_deg" default="0.0">
+		</member>
+		<member name="angle_powered_deg" type="float" setter="" getter="get_angle_powered_deg" default="0.0">
+		</member>
+		<member name="angle_rear_deg" type="float" setter="" getter="get_angle_rear_deg" default="0.0">
+		</member>
 		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="&quot;&quot;">
 			[code]Wheels:Axle[/code]
 			Axle arrangement string, for example [code]Bo'Bo'[/code].
@@ -29,6 +43,8 @@
 			[code]Wheels:Bd[/code]
 			Distance between bogie pivots, or axle spacing for non-bogie vehicles.
 		</member>
+		<member name="flat" type="float" setter="" getter="get_flat" default="0.0">
+		</member>
 		<member name="front_rolling_wheel_diameter" type="float" setter="set_front_rolling_wheel_diameter" getter="get_front_rolling_wheel_diameter" default="0.0">
 			[code]Wheels:Dl[/code]
 			Diameter of the front rolling wheels. When unset, the powered wheel diameter is used.
@@ -45,12 +61,22 @@
 			[code]Wheels:Dt[/code]
 			Diameter of the rear rolling wheels. When unset, the powered wheel diameter is used.
 		</member>
+		<member name="rotation_acceleration_rps2" type="float" setter="" getter="get_rotation_acceleration_rps2" default="0.0">
+		</member>
+		<member name="rotation_speed_rps" type="float" setter="" getter="get_rotation_speed_rps" default="0.0">
+		</member>
+		<member name="slipping" type="bool" setter="" getter="get_slipping" default="false">
+		</member>
 		<member name="track_width" type="float" setter="set_track_width" getter="get_track_width" default="1.435">
 			[code]Wheels:Tw[/code]
 			Nominal track width in meters.
 		</member>
 	</members>
 	<constants>
+		<constant name="BOGIE_FRONT" value="0" enum="Bogie">
+		</constant>
+		<constant name="BOGIE_REAR" value="1" enum="Bogie">
+		</constant>
 		<constant name="BEARING_TYPE_SLIDE" value="0" enum="BearingType">
 		</constant>
 		<constant name="BEARING_TYPE_ROLL" value="1" enum="BearingType">

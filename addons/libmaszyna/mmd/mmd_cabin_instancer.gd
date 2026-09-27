@@ -818,6 +818,8 @@ static func _build_widget(
 
     for field_name:String in entry["fixed_fields"]:
         widget.set(field_name, entry["fixed_fields"][field_name])
+    if "target" in widget:
+        widget.target = entry.get("target", CabinState.Target.OCCUPIED)
 
     # names of positions that lie where the vehicle says - a brake valve's, per its handle type
     var position_names_config:Dictionary = entry.get("position_names_config", {})

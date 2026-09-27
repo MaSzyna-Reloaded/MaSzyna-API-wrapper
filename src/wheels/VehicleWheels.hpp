@@ -1,12 +1,12 @@
 #pragma once
 
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "../macros.hpp"
 #include <godot_cpp/variant/transform3d.hpp>
 
 namespace godot {
-    class VehicleWheels : public VehicleComponent {
-            GDCLASS(VehicleWheels, VehicleComponent)
+    class VehicleWheels : public TrainComponent {
+            GDCLASS(VehicleWheels, TrainComponent)
 
 
         public:

@@ -8,17 +8,22 @@
 #include "buffers/VehicleBuffCoupl.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "cabin/CabinHUDMouseSystem.hpp"
+#include "controllers/MoverVehicleMasterController.hpp"
 #include "controllers/MoverVehicleUniversalController.hpp"
+#include "controllers/VehicleMasterController.hpp"
 #include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
 #include "core/MaszynaRuntime.hpp"
+#include "drivers/DriverDelegate.hpp"
+#include "drivers/DriverSystem.hpp"
 #include "core/MaszynaTranslationServer.hpp"
-#include "core/MoverVehicleController.hpp"
+#include "core/MoverTrainController.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/UserSettings.hpp"
+#include "core/TrainComponent.hpp"
 #include "core/VehicleComponent.hpp"
 #include "core/VehicleComponentModel.hpp"
 #include "core/VehicleComponentType.hpp"
@@ -53,7 +58,8 @@
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "physics/RailVehicleServer.hpp"
-#include "physics/RailVehicleStepper.hpp"
+#include "core/SimulationClock.hpp"
+#include "physics/VehicleNeighbour.hpp"
 #include "radio/MoverVehicleRadio.hpp"
 #include "radio/VehicleRadio.hpp"
 #include "register_types.h"
@@ -82,6 +88,20 @@
 #include "semaphores/SemaphoreServer.hpp"
 #include "semaphores/SemaphoreSystemDelegate.hpp"
 #include "semaphores/SemaphoreSystemNode.hpp"
+#include "scenario/MaszynaLegacyAnimationAction.hpp"
+#include "scenario/MaszynaLegacyEventCondition.hpp"
+#include "scenario/MaszynaLegacyLightsAction.hpp"
+#include "scenario/MaszynaLegacyMemoryAction.hpp"
+#include "scenario/MaszynaLegacyMultipleAction.hpp"
+#include "scenario/MaszynaLegacySwitchAction.hpp"
+#include "scenario/MaszynaLegacyTrackVelocityAction.hpp"
+#include "scenario/MaszynaLegacyVehicleCommandAction.hpp"
+#include "scenario/MaszynaLegacyVoltageAction.hpp"
+#include "scenario/ScenarioEventAction.hpp"
+#include "scenario/ScenarioEventCondition.hpp"
+#include "scenario/ScenarioEventServer.hpp"
+#include "scenario/Timetable.hpp"
+#include "scenario/TimetableEntry.hpp"
 #include "speed_control/MoverVehicleSpeedControl.hpp"
 #include "speed_control/VehicleSpeedControl.hpp"
 #include "switches/MoverVehicleSwitches.hpp"
@@ -122,6 +142,8 @@ PythonScreenServer *python_screen_server_singleton = nullptr;
 MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 SemaphoreServer *semaphore_server_singleton = nullptr;
+ScenarioEventServer *scenario_event_server_singleton = nullptr;
+DriverSystem *driver_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -145,10 +167,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
-        GDREGISTER_INTERNAL_CLASS(RailVehicleStepper);
+        GDREGISTER_INTERNAL_CLASS(SimulationClock);
+        GDREGISTER_CLASS(VehicleNeighbour);
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
+        GDREGISTER_CLASS(TrackRouteSegment);
         GDREGISTER_CLASS(TrackBranchNeighbors);
         GDREGISTER_CLASS(TrackManager);
         GDREGISTER_CLASS(SemaphoreServer);
@@ -159,6 +183,22 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaLegacySemaphoreDelegate);
         GDREGISTER_CLASS(SemaphoreNode);
         GDREGISTER_CLASS(SemaphoreSystemNode);
+        GDREGISTER_CLASS(ScenarioEventServer);
+        GDREGISTER_CLASS(DriverSystem);
+        GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
+        GDREGISTER_VIRTUAL_CLASS(ScenarioEventAction);
+        GDREGISTER_VIRTUAL_CLASS(ScenarioEventCondition);
+        GDREGISTER_CLASS(MaszynaLegacyMemoryAction);
+        GDREGISTER_CLASS(MaszynaLegacyMultipleAction);
+        GDREGISTER_CLASS(MaszynaLegacyLightsAction);
+        GDREGISTER_CLASS(MaszynaLegacySwitchAction);
+        GDREGISTER_CLASS(MaszynaLegacyVoltageAction);
+        GDREGISTER_CLASS(MaszynaLegacyTrackVelocityAction);
+        GDREGISTER_CLASS(MaszynaLegacyAnimationAction);
+        GDREGISTER_CLASS(MaszynaLegacyVehicleCommandAction);
+        GDREGISTER_CLASS(TimetableEntry);
+        GDREGISTER_CLASS(Timetable);
+        GDREGISTER_CLASS(MaszynaLegacyEventCondition);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
@@ -171,6 +211,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(VehicleModel);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
+        GDREGISTER_ABSTRACT_CLASS(TrainComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponentNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
@@ -190,9 +231,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
         GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
         GDREGISTER_ABSTRACT_CLASS(VehicleController);
-        GDREGISTER_CLASS(MoverVehicleController);
+        GDREGISTER_ABSTRACT_CLASS(TrainController);
+        GDREGISTER_CLASS(MoverTrainController);
         // the vehicles are simulated on the vendored Mover
-        VehiclePhysicsNode::set_controller_implementation(MoverVehicleController::get_class_static());
+        VehiclePhysicsNode::set_controller_implementation(MoverTrainController::get_class_static());
         GDREGISTER_CLASS(Cabin3D);
         GDREGISTER_CLASS(CabinHUDMouseSystem);
         GDREGISTER_CLASS(RailVehicle3D);
@@ -226,6 +268,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)
         GDREGISTER_CLASS(MoverVehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
+        GDREGISTER_ABSTRACT_CLASS(VehicleMasterController)
+        GDREGISTER_CLASS(MoverVehicleMasterController)
         GDREGISTER_ABSTRACT_CLASS(VehicleWipers)
         GDREGISTER_CLASS(MoverVehicleWipers)
         GDREGISTER_CLASS(WiperListItem)
@@ -269,6 +313,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after E3DRenderingServer is registered: the constructor follows its freed instances
         semaphore_server_singleton = memnew(SemaphoreServer);
         Engine::get_singleton()->register_singleton("SemaphoreServer", semaphore_server_singleton); // 15
+        // after MaszynaRuntime is registered: the constructor follows its pause and speed
+        scenario_event_server_singleton = memnew(ScenarioEventServer);
+        Engine::get_singleton()->register_singleton("ScenarioEventServer", scenario_event_server_singleton); // 16
+        // after RailVehicleServer is registered: the constructor follows its freed vehicles
+        driver_system_singleton = memnew(DriverSystem);
+        Engine::get_singleton()->register_singleton("DriverSystem", driver_system_singleton); // 17
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -292,6 +342,22 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("DriverSystem")) {
+        Engine::get_singleton()->unregister_singleton("DriverSystem"); // 17
+    }
+    if (driver_system_singleton != nullptr) {
+        memdelete(driver_system_singleton);
+        driver_system_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("ScenarioEventServer")) {
+        Engine::get_singleton()->unregister_singleton("ScenarioEventServer"); // 16
+    }
+    if (scenario_event_server_singleton != nullptr) {
+        memdelete(scenario_event_server_singleton);
+        scenario_event_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("SemaphoreServer")) {

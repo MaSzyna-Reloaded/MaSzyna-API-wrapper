@@ -16,6 +16,12 @@ namespace godot {
                 &TractionPowerServer::power_source_set_params, DEFVAL(false), DEFVAL(false));
         ClassDB::bind_method(
                 D_METHOD("power_source_get_rid_by_name", "name"), &TractionPowerServer::power_source_get_rid_by_name);
+        ClassDB::bind_method(
+                D_METHOD("power_source_set_nominal_voltage", "power_source", "voltage"),
+                &TractionPowerServer::power_source_set_nominal_voltage);
+        ClassDB::bind_method(
+                D_METHOD("power_source_get_nominal_voltage", "power_source"),
+                &TractionPowerServer::power_source_get_nominal_voltage);
         ClassDB::bind_method(D_METHOD("power_source_free", "power_source"), &TractionPowerServer::power_source_free);
 
         ClassDB::bind_method(D_METHOD("wire_create"), &TractionPowerServer::wire_create);
@@ -168,6 +174,18 @@ namespace godot {
         if (!p_name.is_empty()) {
             power_sources_by_name.insert(p_name, p_power_source);
         }
+    }
+
+    void TractionPowerServer::power_source_set_nominal_voltage(const RID &p_power_source, const double p_voltage) {
+        PowerSource *source = power_sources.getptr(p_power_source);
+        ERR_FAIL_NULL(source);
+        source->nominal_voltage = p_voltage;
+    }
+
+    double TractionPowerServer::power_source_get_nominal_voltage(const RID &p_power_source) const {
+        const PowerSource *source = power_sources.getptr(p_power_source);
+        ERR_FAIL_NULL_V(source, 0.0);
+        return source->nominal_voltage;
     }
 
     RID TractionPowerServer::power_source_get_rid_by_name(const String &p_name) const {

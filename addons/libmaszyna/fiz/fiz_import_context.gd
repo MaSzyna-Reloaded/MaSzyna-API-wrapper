@@ -14,8 +14,8 @@ var controller: VehicleController = null
 ## EngineType decided by Engine: (VehicleEngine.EngineType) - later sections' defaults
 ## (MotorParamTable row format, ReleaserPowerPosLock default, ...) depend on this.
 var engine_type: int = VehicleEngine.NONE
-## TrainType decided by Param. (VehicleController.TrainType) - some defaults are dt_EZT-specific.
-var train_type: int = VehicleController.TRAIN_TYPE_DEFAULT
+## TrainType decided by Param. (TrainController.TrainType) - some defaults are dt_EZT-specific.
+var train_type: int = TrainController.TRAIN_TYPE_DEFAULT
 ## BrakeSystem decided by Cntrl. (VehicleBrake.BrakeSystemType) - most of Cntrl.'s brake-related
 ## fields are only meaningful when this isn't Individual.
 var brake_system: int = VehicleBrake.BRAKE_SYSTEM_INDIVIDUAL

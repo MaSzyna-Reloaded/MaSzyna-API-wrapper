@@ -1,5 +1,10 @@
 extends MaszynaGutTest
 
+## The clock driven by hand: x100, a quarter of a second a frame (MaszynaRuntime::MAX_FRAME_DELTA)
+const CLOCK_SPEED: float = 100.0
+const CLOCK_FRAME: float = 0.25
+const SECONDS_PER_HOUR: float = 3600.0
+
 var _previous_season: MaszynaEnvironment.Season
 var _previous_weather: MaszynaEnvironment.Weather
 
@@ -246,34 +251,45 @@ func test_applies_time_and_location_as_solar_time() -> void:
     assert_eq(skydome_environment.skydome.directional_light_path, NodePath("../SunLight"))
 
 
-func test_process_advances_time_with_simulation_speed() -> void:
+## The sky follows the simulation's clock (MaszynaRuntime): an hour of it past midnight is the
+## next day
+func test_process_follows_the_clock_past_midnight() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
     var skydome_environment: GndSkydomeMaszynaEnvironment = (
         _get_skydome_environment(environment_node)
     )
-
-    environment_node.simulation_speed = 3600.0
     environment_node.current_time = 23.5
     environment_node.set_date(2026, 12, 31)
     environment_node._process(0.0)
+    var speed: float = MaszynaRuntime.simulation_speed
+    MaszynaRuntime.simulation_speed = CLOCK_SPEED
 
+    # an hour of simulation, a quarter of a second of real time a frame at a time
+    for _frame: int in roundi(SECONDS_PER_HOUR / (CLOCK_FRAME * CLOCK_SPEED)):
+        MaszynaRuntime.advance(CLOCK_FRAME)
     skydome_environment.process(1.0)
+    MaszynaRuntime.simulation_speed = speed
 
-    assert_almost_eq(skydome_environment.get_current_time(), 0.5, 0.000001)
+    assert_almost_eq(skydome_environment.get_current_time(), 0.5, 0.001)
     assert_eq(skydome_environment.get_date(), Vector3i(2027, 1, 1))
 
 
+## The time the clock ran to stays when the speed changes - it is not set back to the configured one
 func test_changing_simulation_speed_keeps_running_time() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
-
-    environment_node.simulation_speed = 3600.0
     environment_node.current_time = 8.0
     environment_node._process(0.0)
+    var speed: float = MaszynaRuntime.simulation_speed
+    MaszynaRuntime.simulation_speed = CLOCK_SPEED
+
+    for _frame: int in roundi(SECONDS_PER_HOUR / (CLOCK_FRAME * CLOCK_SPEED)):
+        MaszynaRuntime.advance(CLOCK_FRAME)
     environment_node._process(1.0)
     environment_node.simulation_speed = 1.0
     environment_node._process(0.0)
+    MaszynaRuntime.simulation_speed = speed
 
-    assert_almost_eq(environment_node.current_time, 9.0, 0.000001)
+    assert_almost_eq(environment_node.current_time, 9.0, 0.001)
 
 
 func test_proxies_season_and_weather_to_material_manager() -> void:

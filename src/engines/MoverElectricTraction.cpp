@@ -28,6 +28,16 @@ namespace godot {
         return p_mover != nullptr && p_mover->StLinSwitchOff;
     }
 
+    bool MoverElectricTraction::is_line_contactor_closed(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr && p_mover->StLinFlag;
+    }
+
+    bool MoverElectricTraction::is_pressure_switch_tripped(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr && p_mover->ControlPressureSwitch;
+    }
+
     /* Original engine: OnCommand_motoroverloadrelayreset (Train.cpp:4061) calls this same FuseOn()
      * on press - "zbij nadmiarowy", clearing the overload trip (FuseFlag) that blocks
      * Mains/converter/compressor from re-enabling. */

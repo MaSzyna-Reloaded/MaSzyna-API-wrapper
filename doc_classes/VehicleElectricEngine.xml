@@ -9,20 +9,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="compressor">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Operate compressor
-			</description>
-		</method>
-		<method name="converter">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Operate converter
-			</description>
-		</method>
 		<method name="converter_fuse_reset">
 			<return type="void" />
 			<description>
@@ -223,13 +209,7 @@
 		</member>
 		<member name="contactors_active" type="bool" setter="" getter="get_contactors_active">
 		</member>
-		<member name="converted_allowed" type="bool" setter="" getter="get_converted_allowed">
-		</member>
-		<member name="converter_enabled" type="bool" setter="" getter="get_converter_enabled">
-		</member>
 		<member name="converter_overload" type="bool" setter="" getter="get_converter_overload">
-		</member>
-		<member name="converter_time_to_start" type="float" setter="" getter="get_converter_time_to_start">
 		</member>
 		<member name="diff_relay_active" type="bool" setter="" getter="get_diff_relay_active">
 		</member>

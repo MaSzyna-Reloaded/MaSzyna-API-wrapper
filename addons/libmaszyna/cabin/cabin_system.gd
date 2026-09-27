@@ -7,8 +7,8 @@ extends Node
 ## Holds a CabinState per (vehicle, cab) and a registry of cabin control handlers. A vehicle is
 ## its RailVehicleServer handle - never its scenery name, which two vehicles may share and one may
 ## lack. Cabin controls only report manipulations through act(); the handlers are registered by
-## cabin logic delegates (e.g. LegacyCabinLogicDelegate) and translate them into vehicle commands.
-## CabinSystem itself has no cabin logic and forwards nothing by default.
+## the CabinLogic attached to the vehicle (e.g. LegacyCabinLogic) and translate them into vehicle
+## commands. CabinSystem itself has no cabin logic and forwards nothing by default.
 
 signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Variant)
 ## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
@@ -16,6 +16,10 @@ signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Va
 signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant)
 ## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
 signal vehicle_cabin_occupied_changed(vehicle_rid:RID, cabin_occupied:int)
+## A radio message sent from `position`: heard on the radio of the player's cab tuned to
+## `channel`, within `reach` [m] of it when that is positive (simulation::radio_message(),
+## simulation.cpp:506)
+signal radio_message_sent(message:SfxEvent, channel:int, position:Vector3, reach:float)
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
@@ -23,15 +27,18 @@ const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release"
 var _states:Dictionary = {}
 var _controls:Dictionary = {}
 var _processes:Dictionary = {}
+var _cab_logics:Dictionary[RID, CabinLogic] = {}
 
 
 func _ready() -> void:
+    MaszynaRuntime.simulation_advanced.connect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.connect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
 
 
 func _exit_tree() -> void:
+    MaszynaRuntime.simulation_advanced.disconnect(_on_simulation_advanced)
     RailVehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.disconnect(_on_vehicle_occupied_cab_changed)
     RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
@@ -39,6 +46,9 @@ func _exit_tree() -> void:
 
 ## A freed vehicle takes its cabins along - a handle is never reused for another vehicle.
 func _on_vehicle_freed(vehicle_rid:RID) -> void:
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics.erase(vehicle_rid)
     for cab:int in [1, 0, -1]:
         var key:String = _key(vehicle_rid, cab)
         _states.erase(key)
@@ -51,6 +61,11 @@ func _on_vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p
 
 
 func _on_vehicle_occupied_cab_changed(vehicle_rid:RID, cabin_occupied:int) -> void:
+    # the crew moved: the controls are those of the other cab now, before anybody hears of the move
+    # (DynamicTrainCabin rebuilds its widgets on the relayed signal)
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics[vehicle_rid].register(vehicle_rid, cabin_occupied)
     vehicle_cabin_occupied_changed.emit(vehicle_rid, cabin_occupied)
 
 
@@ -82,6 +97,22 @@ func vehicle_component(vehicle_rid:RID, type:int) -> VehicleComponent:
 ## Which cab of this vehicle is occupied - 1, 0 (machine room) or -1, as CabinState keys on.
 func occupied_cab(vehicle_rid:RID) -> int:
     return int(vehicle_state(vehicle_rid).get("cabin_occupied", 1))
+
+
+## The cab logic of a driven vehicle, registered for its occupied cab; null detaches it. One per
+## vehicle, whoever drives it - the player's cab and the AI act on the same controls.
+func vehicle_attach_cab_logic(vehicle_rid:RID, logic:CabinLogic) -> void:
+    if _cab_logics.has(vehicle_rid):
+        _cab_logics[vehicle_rid].unregister()
+        _cab_logics.erase(vehicle_rid)
+    if not logic:
+        return
+    _cab_logics[vehicle_rid] = logic
+    logic.register(vehicle_rid, occupied_cab(vehicle_rid))
+
+
+func vehicle_get_cab_logic(vehicle_rid:RID) -> CabinLogic:
+    return _cab_logics.get(vehicle_rid)
 
 
 static func _key(vehicle_rid:RID, cab:int) -> String:
@@ -154,12 +185,20 @@ func get_control(vehicle_rid:RID, cab:int, control_id:StringName) -> Variant:
     return get_cabin_state(vehicle_rid, cab).get_value(control_id)
 
 
+## A scenery's radio message, to the cab radio of whoever listens (radio_message_sent)
+func send_radio_message(message:SfxEvent, channel:int, position:Vector3, reach:float) -> void:
+    radio_message_sent.emit(message, channel, position, reach)
+
+
 func get_state(vehicle_rid:RID, cab:int) -> Dictionary:
     return get_cabin_state(vehicle_rid, cab).values.duplicate()
 
 
-func _process(delta:float) -> void:
+## The cabs' own timing runs on the simulation's clock, as the original's TTrain::Update(dt) does
+## with the scaled time (Train.cpp:8436-8474): a relay held for its delay at x10 closes in a tenth
+## of the real time, and nothing runs while paused
+func _on_simulation_advanced(seconds:float) -> void:
     for key:String in _processes:
         var state:CabinState = _states.get(key)
         for callable:Callable in _processes[key].duplicate():
-            callable.call(state, delta)
+            callable.call(state, seconds)

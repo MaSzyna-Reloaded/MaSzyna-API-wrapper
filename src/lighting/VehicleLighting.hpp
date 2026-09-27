@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/TrainController.hpp"
 #include "../core/VehicleComponent.hpp"
 #include "../engines/VehicleElectricEngine.hpp"
 #include "macros.hpp"
@@ -68,18 +69,18 @@ namespace godot {
             MAKE_MEMBER_GS(bool, lights_wrap_selector, false);
             MAKE_MEMBER_GS(int, lights_default_selector_position, 0);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, light_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
+                    TrainController::TrainPowerSource, light_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_GENERATOR);
             MAKE_MEMBER_GS_NR(VehicleEngine::EngineType, source_generator_engine, VehicleEngine::EngineType::MAIN);
             MAKE_MEMBER_GS(double, source_accumulator_max_voltage, 0.0);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, light_alternative_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_ACCUMULATOR);
+                    TrainController::TrainPowerSource, light_alternative_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_ACCUMULATOR);
             MAKE_MEMBER_GS(double, light_alternative_max_voltage, 24.0);
             MAKE_MEMBER_GS(double, light_alternative_capacity, 495.0);
             MAKE_MEMBER_GS_NR(
-                    VehicleController::TrainPowerSource, source_accumulator_recharge_source,
-                    VehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
+                    TrainController::TrainPowerSource, source_accumulator_recharge_source,
+                    TrainController::TrainPowerSource::POWER_SOURCE_GENERATOR);
             MAKE_MEMBER_GS(Color, head_light_color, Color(255, 255, 255));
             MAKE_MEMBER_GS(double, head_light_dimmed_multiplier, 0.6);
             MAKE_MEMBER_GS(double, head_light_normal_multiplier, 1.0);

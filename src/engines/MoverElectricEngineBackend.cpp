@@ -1,3 +1,4 @@
+#include "../core/TrainController.hpp"
 #include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
@@ -18,20 +19,8 @@ namespace godot {
         };
     } // namespace
 
-    bool MoverElectricEngineBackend::get_converter_enabled(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterFlag : false;
-    }
 
-    bool MoverElectricEngineBackend::get_converted_allowed(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterAllow : false;
-    }
 
-    double MoverElectricEngineBackend::get_converter_time_to_start(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->ConverterStartDelayTimer : 0.0;
-    }
 
     double MoverElectricEngineBackend::get_collector_max_voltage(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
@@ -228,15 +217,15 @@ namespace godot {
         p_mover->EnginePowerSource.SourceType = mover_power_source(p_engine->get_power_source());
 
         switch (p_engine->get_power_source()) {
-            case VehicleController::POWER_SOURCE_INTERNAL: {
+            case TrainController::POWER_SOURCE_INTERNAL: {
                 p_mover->EnginePowerSource.PowerType = mover_power_type(p_engine->get_power_cable_source());
                 break;
             }
-            case VehicleController::POWER_SOURCE_TRANSDUCER: {
+            case TrainController::POWER_SOURCE_TRANSDUCER: {
                 p_mover->EnginePowerSource.Transducer.InputVoltage = p_engine->get_power_transducer_input_voltage();
                 break;
             }
-            case VehicleController::POWER_SOURCE_GENERATOR: {
+            case TrainController::POWER_SOURCE_GENERATOR: {
                 // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
                 // (MOVER.h:551) - nothing currently dereferences EnginePowerSource's copy of it,
                 // but HeatingPowerSource's copy does (see VehicleHeating.cpp), so it's pointed at
@@ -245,12 +234,12 @@ namespace godot {
                 generator_params.engine_revolutions = &p_mover->enrot;
                 break;
             }
-            case VehicleController::POWER_SOURCE_ACCUMULATOR: {
+            case TrainController::POWER_SOURCE_ACCUMULATOR: {
                 p_mover->EnginePowerSource.RAccumulator.RechargeSource =
                         mover_power_source(p_engine->get_power_accumulator_recharge_source());
                 break;
             }
-            case VehicleController::POWER_SOURCE_CURRENTCOLLECTOR: {
+            case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
                 p_mover->EnginePowerSource.CollectorParameters.MinH =
                         p_engine->get_power_current_collector_min_collector_lifting();
                 p_mover->EnginePowerSource.CollectorParameters.MaxH =
@@ -279,7 +268,7 @@ namespace godot {
                         p_engine->get_power_current_collector_physical_layout();
                 break;
             }
-            case VehicleController::POWER_SOURCE_POWERCABLE: {
+            case TrainController::POWER_SOURCE_POWERCABLE: {
                 p_mover->EnginePowerSource.RPowerCable.PowerTrans =
                         mover_power_type(p_engine->get_power_cable_source());
                 if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
@@ -287,8 +276,8 @@ namespace godot {
                 }
                 break;
             }
-            case VehicleController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
-            case VehicleController::POWER_SOURCE_NOT_DEFINED:;
+            case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
+            case TrainController::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
 
@@ -298,6 +287,10 @@ namespace godot {
         p_mover->ImaxHi = p_engine->get_circuit_imax_high();
         p_mover->IminLo = p_engine->get_circuit_imin_low();
         p_mover->IminHi = p_engine->get_circuit_imin_high();
+        // LoadFIZ_Circuit (Mover.cpp:11424-11425): the thresholds in use start at the low ones -
+        // Imax is moved by the relay only where ImaxHi > ImaxLo, Imin only by its switch
+        p_mover->Imin = p_mover->IminLo;
+        p_mover->Imax = p_mover->ImaxLo;
         p_mover->TUHEX_Sum = p_engine->get_circuit_tuhex_sum();
         p_mover->TUHEX_Diff = p_engine->get_circuit_tuhex_diff();
         p_mover->TUHEX_MinIw = p_engine->get_circuit_tuhex_min_current();
@@ -324,17 +317,6 @@ namespace godot {
         p_mover->MainsStart = mover_start_mode(p_engine->get_cntrl_main_switch_start_mode());
     }
 
-    void MoverElectricEngineBackend::converter(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = owner.get_mover();
-        ASSERT_MOVER(mover);
-        mover->ConverterSwitch(p_enabled);
-    }
-
-    void MoverElectricEngineBackend::compressor(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = owner.get_mover();
-        ASSERT_MOVER(mover);
-        mover->CompressorSwitch(p_enabled);
-    }
 
     void MoverElectricEngineBackend::converter_fuse_reset(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *mover = owner.get_mover();

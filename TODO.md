@@ -5,7 +5,7 @@
 The vehicle becomes an object owned by a server, addressed by RID, with thin `*Node` proxies for
 the editor. Each stage is one PR, titled `(#184) <area> - <what>`, and each leaves the game
 runnable. Stages 1-3 are done (`RailVehicleServer` owns placement, movement and the step;
-`MoverVehicleController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
+`MoverTrainController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
 
 Design that replaced the withdrawn stage 4 (a global name registry, now deleted):
 
@@ -209,7 +209,8 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 * `headlights_dimmed` is state only - nothing renders a headlight beam to dim.
 * Distance counter: the double-press start (FIZ `DCMB`/`DCDPP`, not in the vendored Mover), the
   switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
-* The radio volume is state only - the wrapper plays no radio messages.
+* The radio plays the scenery's radio messages (`DynamicTrainCabin`), non-positional - not yet
+  at `m_radiosound`'s own place in the cab.
 
 ### Gauge lamps (`<name>_on`)
 
@@ -304,7 +305,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Keyboard input per control, not per widget: each `CabinButton`/`CabinSwitch`/`CabinKnob` handles
   `action*` itself, so a repeated label (EP07 cab0 has two `cablight_sw:`) toggled itself back.
   The original maps a key to one command (`Cabine[].bLight`, `Train.cpp:10237`). Move key handling
-  to `CabinSystem`/`LegacyCabinLogicDelegate` (once per `control_id`), then drop the workaround in
+  to `CabinSystem`/`LegacyCabinLogic` (once per `control_id`), then drop the workaround in
   `MmdCabinInstancer.build_into()` clearing `action*` on repeated labels.
 * Diesel-electric shunt mode on the second controller: with `ShuntModeAllow`/`ShuntMode` the
   original moves `AnPos` by 0.025 per step, clamped 0..1 (`Train.cpp:1190-1197`, `1351-1357`);
@@ -551,17 +552,11 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 semaphore's kind is made of the `lights` events aimed at it, and the original's
 `MaszynaLegacySemaphoreDelegate` shows one of them when it is handed the event. Left:
 
-* **Scenery events are not run**: `maszyna_event_importer.gd` keeps only `lights` events (as the
-  aspects of the semaphores' kinds) and drops the rest - `multiple` with `condition`
-  (`memcompare`, `trackfree`/`trackoccupied`), `updatevalues`, `getvalues`, `animation`; memcells
-  are skipped (`maszyna_node_importer.gd`), and `TIsolated` `:busy`/`:free` is not generated. This
-  is an EventServer of its own; once it exists, `lights` goes to the legacy delegate
-  (`system_send_event(system, &"lights", {semaphore, aspect})`, the target by
-  `semaphore_get_rid_by_name`, the aspect by `MaszynaLegacySemaphoreKindFactory.get_aspect_name()`)
-  and the isolated sections become the system's sources.
+* **The isolated sections become the system's sources** once `TrackManager` has them (see
+  Scenario events).
 * **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
-  `getvalues` (`Driver.cpp:459-470`, `:292-419`) - has no counterpart; a delegate only publishes
-  its aspect with `system_publish_event`.
+  `getvalues` - is read by the driver's speed table (`MaszynaLegacyDriverRoute`); a semaphore
+  delegate still only publishes its aspect with `system_publish_event`.
 * **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the semaphore
   API has no light that follows the daylight; the legacy kind factory warns and keeps the light.
 * **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).
@@ -572,7 +567,288 @@ semaphore's kind is made of the `lights` events aimed at it, and the original's
   light states on the server read `LIGHT_STATE_OFF` until its first aspect, whatever E3D shows.
 * **`SemaphoreAspect.lights` are plain numbers** in the inspector (`LightCommand`), not an enum.
 
+## Scenario events
+
+`ScenarioEventServer` (events, the queue, the simulation time, memory, launchers, track events)
+runs the scenery's events; `MaszynaLegacyEventFactory` builds them from the `.scn` data once the
+include's server data is built. Built: `updatevalues`, `addvalues`, `copyvalues`, `multiple`,
+`lights`, `switch`, `trackvel`, `voltage`, `animation` (rotate, translate, with its
+`<model>.<submodel>:done`), `sound`; conditions `memcompare`, `memcompareex`, `probability`,
+`trackoccupied`, `trackfree`; a track's `event0/1/2`, `eventall0/1/2` and `<track>:<slot>` events;
+isolated sections (`TrackManager.isolated_*`, `isolated`/`area` blocks, `:busy/:free/:inc/:dec`, the
+section's own memory); `onstart` and negative-delay events; Shift+0..9 (`keyctrl00-09`), launcher
+keys (`ScenarioKeyboard`), HH:MM and radio call launchers (`radiocall1_sw`/`radiocall3_sw`,
+Backspace); the "Scenario and Events" HUD window. Checked on `td.scn` with a headless probe (Shift+8
+closes both level crossings). Left:
+
+* **Track events, as the original fires them**: the direction filter by the consist's intended
+  direction (`eventfilter`, `TrkFoll.cpp:117-121`) - here the actual direction of travel decides;
+  the vehicle's one placement point stands for the primary axle; events with a delay <= -1 queued
+  on every move along the same track (`TrkFoll.cpp:249-260`); a crewed vehicle is one with a
+  `driver_type`, the original's `Mechanik->primary()` is one per consist.
+* **Occupancy counts vehicles, not axles**: a vehicle is on the one track its placement point is
+  on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
+  occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
+* **Isolated sections are not yet a semaphore system's sources** (`SemaphoreServer.system_add_source`).
+* **`putvalues`/`getvalues`**: the passive ones (`SetVelocity`, `ShuntVelocity`, `RoadVelocity`,
+  `SectionVelocity`, `OutsideStation`, `PassengerStopPoint:`; a `getvalues` of a memory holding
+  `SetVelocity`/`ShuntVelocity`/`SetProximityVelocity` at the start) are never run - the driver
+  reads them ahead (`ScenarioEventServer.event_is_passive()`). `CabSignal` stays active, acting on
+  the vehicle crossing it, unlike the original where the driver's table does it: a vehicle the
+  player drives has no driver here. The Mover's other commands (`Load=`, `UnLoad=`, `BrakeDelay`,
+  ... `Mover.cpp:12187-12720`) are dropped.
+* **`updatevalues`/`addvalues` of a memory on a track** give its command to the driver of every
+  vehicle on that track (`Event.cpp:538-547`) - how Stary Jawor's eszelon is set going. Its `:sent`
+  event (`StopCommandSent()`) is not ported.
+* **Event types without an action**: `whois`
+  (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
+  `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
+  `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a radio message (a `sound` event with a channel)
+  tuned in or the radio switched on mid-message is not raised, as `update_sounds_radio()` does -
+  it is played only when heard at its start, and at the cab's radio volume of that moment.
+* **Scenery sounds** use the player's defaults for everything but `max_distance` (the node's
+  range); an ambient one (range under -1) is on the listener, 0.4 as loud and cut at 1.25 of its
+  range - the original fades it out between the range and that, and starts it only within
+  2750 m (`audiorenderer.cpp:184-199`, `sound.cpp:364-371`). Not checked by ear.
+* **Memory and the AI**: pushing a memory to the vehicles on its track when it changes
+  (`Event.cpp:538-548`), `bCommand`/`CommandCheck` and `:sent` (`MemCell.cpp:52-99`, `196-205`).
+* **`departuredelay`** is read and dropped - needs the activator's timetable (`Event.cpp:2412-2425`).
+* **Duplicate event names**: the later wins (with a warning); the original joins them as siblings
+  and ignores the first (`Event.cpp:2296-2349`).
+* **Launchers**: numeric key codes,
+  `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
+  train, not the camera), a click on a model firing the launcher of its name (`scene.cpp:33-43`).
+  Timed launchers are global here; the original polls non-global ones only near the camera.
+* **Stary Jawor, eszelon** (headless probe, 2026-09-26): both stations run their logic, the
+  shunting signals open (Roztocze Tm18, then Tm19/Tm20 with switches 74-76a once SU46 reaches
+  `n176`), the 10:50 launcher fires; it stops where it waits for the AI's eszelon (below).
+* **No AI trains**: a scenario whose stages wait for a train the AI drives stops there - e.g.
+  `stary_jawor_eszelon` waits for the eszelon to reach Roztocze (`n282:event2`,
+  `skp/skp_eszelon_events.ctr`). The track events fire for any moving vehicle with a driver, but no
+  such vehicle moves without the AI.
+* **A jump of the time of day** (the environment's time set, the system time) is not a running
+  clock: a time-of-day launcher whose minute is jumped over does not fire, and a timetable
+  compares its departures with the clock, so a train is late or early by the jump. The queue and
+  the drivers' updates run on the simulation time and do not notice. The original does the same.
+* The `queueevent` console command.
+* **Timetables** are followed by the drivers (Drivers, part 6). Not read: the station
+  announcements (`load_sounds()`, `mtable.cpp:644-671`). The original's quirks around them are in
+  `MASZYNA_ORIGINAL_QUIRKS.md`.
+* Events of one include cannot refer to events of another `MaszynaIncludeNode`.
+* Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
+  `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
+
+## Drivers (plan, #297)
+
+Agreed 2026-09-26. The AI drives a vehicle the way a player does - through the cab
+(`CabinSystem.act()`), never by a path of its own; while the player sits in the cab the AI does not
+drive. The original's `TController` is no architectural model: only its vocabulary of orders is
+ported, into a delegate.
+
+1. **Done: `Emergency_brake` as a Radio-Stop broadcast** - a scenery `putvalues`/`getvalues`
+   `Emergency_brake` is sent from the event's position (`putvalues x y z` plus the include's origin,
+   `Event.cpp:709-712`; the memcell's position for `getvalues`) to every vehicle within
+   `RADIO_STOP_RANGE`, as `RailVehicleServer.vehicle_radio_stop` does from a vehicle. `CabSignal`
+   stays the magnet acting on the activator. Both stay in the event system, not in a driver.
+   No test covers the broadcast: receiving it needs a vehicle with a driver, Radio-Stop fitted
+   and the radio on.
+2. **Done: cab logic without the 3D cab** - `LegacyCabinLogic` (a `CabinLogic`) is the vehicle's,
+   attached with `CabinSystem.vehicle_attach_cab_logic()` by `DynamicTrainCabin` (player) and
+   `SceneryInstancer._build_drivers()` (AI), registered for the occupied cab and moved along when
+   the crew changes cabs. The cab's controls come from its MMD (`LegacyCabinControls`), not from the
+   widgets. Left widget-side, so an AI caller must pass what a widget would have worked out: the
+   knob and switch position limits and spring return, the horn's value. `LegacyCabinControls` parses
+   the MMD with no random choices - a cab with random includes may differ from the player's widgets.
+   The `brake_level_drive` `CabinCommand` node still carries its `command`/`command_param`, now only
+   as the guard of its key (the wiring is `LegacyCabinControls.BRAKE_LEVEL_DRIVE`).
+3. **Orders taken; the engine and the turning carried out through the cab.** `DriverSystem` (C++,
+   not `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
+   `MaszynaLegacyAIDriver` (GDScript, acting through `CabinSystem`): a driver for every crewed
+   scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders ask for
+   (`get_state()`); Stary Jawor's SU46 gets its orders from the scenario. A driver acts one reaction
+   time apart (`DriverSystem.driver_schedule_update()`, `DriverDelegate._update()`).
+   `Prepare_engine`, `Release_engine` and `Change_direction` are carried out step by step through
+   the cab (`MaszynaLegacyDriverHints`, the original's `driver_hint`s): checked on Stary Jawor's SU46
+   - put away, prepared again, turned to its other cab. Left of `PrepareEngine()`/`ReleaseEngine()`
+   (`Driver.cpp:2759-3012`): the heating of a diesel (`PrepareHeating()`, the water pump and heater),
+   the pantograph air (the compressor, `bPantKurek3`, `PantsValve`) and the speed a pantograph
+   counts as up at, the ground and motor overload relay resets, the idle position of SN61's
+   controller, `mastercontrollersetreverserunlock`, the motor blowers, the spring brake and the
+   doors, lights, releaser and train or independent brake on putting away; the presence of a
+   compressor is not asked (readiness waits for the main reservoir only); the brake handle's
+   driving position is cued, not checked (the state does not say where it is). `Activation()`'s
+   move to another vehicle of the trainset (EN57, ET41) is not ported, nor `ShuntModeAllow`.
+   On Stary Jawor sa134-014 and WMB10-819 report their line breaker open after being prepared -
+   not looked into. Left besides: `engine_active` lost when the vehicle breaks down while driving
+   (`handle_engine()` prepares it again only for driving orders); the trainset's own timetable and
+   velocity from the `.scn` (`trainset <timetable> ... <velocity>` -> `OrdersInit`); a push-pull set
+   that only turns at `@` (`movePushPull`, `OrdersInit()`); what `OrderCheck()` does to the lights
+   and doors; `SetSignal`; the station announcements and guard signals of `Timetable:`.
+   The first plan read: driver RIDs,
+   `driver_attach_delegate`, `driver_send_command(driver, command, values)`;
+   `RailVehicleServer.vehicle_attach_driver(vehicle, driver)`, RIDs only. `MaszynaLegacyAIDriver` is
+   the original's implementation: it takes the orders (`SetVelocity`, `ShuntVelocity`,
+   `Prepare_engine`, `Change_direction`, `Shunt`, `Wait_for_orders`, `Timetable:`...,
+   `TController::PutCommand()`, `Driver.cpp:4468-4906`) and carries out those that are a sequence of
+   controls (`Prepare_engine`, `Change_direction`) through `CabinSystem.act()`. A driver for every
+   `headdriver`/`reardriver` vehicle of the `.scn`. The `putvalues`/`getvalues` action hands the
+   orders to the activator's driver. A future scenario kind (Lua...) is another delegate.
+4. **Driving** - the track ahead read over the existing topology (`_motion_connection`), the passive
+   events' positions and the speed table, speed control through the cab, the timetable followed.
+   In `MaszynaLegacyAIDriver` (the delegate), acting through `CabinSystem.act()`; the topology walk
+   is a `TrackManager` query, the passive events `ScenarioEventServer`'s, the signals
+   `SemaphoreServer`'s. In order:
+   1. Done: what the driver reads of its trainset (`MaszynaLegacyDriverTrainset`,
+      `Driver.cpp:6033-6190`): readiness of the brakes (`Ready`, `fReady`, `IsConsistBraked`), the
+      gravity along the track (`fAccGravity`) and the trainset's acceleration (`AbsAccS`); the
+      vehicle publishes `acceleration`, `brake_force`, `brake_is_braking`/`_holding`/`_cut_off`
+      and `engine_idle_rpm_count`. Left: the stretched couplers, doors, light, the relays of the
+      other vehicles under control, the individual release of an overcharged vehicle, the parking
+      brake of a speed control unit, EP brakes in `IsConsistBraked`, the pipe pressure a brake
+      counts as applied at (`BrakePressureActual.PipePressureVal`, taken as 3.9).
+   2. Done without a speed table: the speed and acceleration wanted
+      (`MaszynaLegacyDriverSpeed`, `pick_optimal_speed()`, `Driver.cpp:7297-7400`) - the
+      trainset's top speed, the timetable's, the shunting speed, the speed allowed, the track's,
+      waiting told to stop here. Left: the next speed and its distance (with the speed table),
+      obstacles ahead, the load exchange, waiting (`fStopTime`), an aggressive driver, EMU/DMU
+      thresholds, the cargo trains' and couplers' acceleration limits, the braking test.
+   3. Tractive force through the cab for every engine type (`MaszynaLegacyDriverTraction` and one
+      subclass per engine, chosen by the driver's vehicle's engine: series motor, diesel-electric,
+      induction motor, plain diesel, an EMU's control car; `control_tractive_force()`,
+      `IncSpeed()`/`DecSpeed()`, `SpeedSet()`, `control_handles()`, the engine's part of
+      `Check/SetTimeControllers()`), with the relays reset, sanding and the anti-slip brake, the
+      power off after a Radio-Stop, the cruise control (`SpeedCntrl()`), the stretched couplers and
+      the spring brake before adding power. The vehicle publishes what it needs
+      (`controller_main_delayed`, `circuit_imin`, `engine_voltage`, `eimic_real`,
+      `coupler_stretched`, `radio_stop_active`, `motor_overload_relay_high_threshold`...) and takes
+      the commands a player gives (`motor_overload_relay_threshold` and `maxcurrent_sw`,
+      `ground_relay_reset`, `antislip`, `speed_control_*`); `ESMVelocity()` is
+      `VehicleElectricSeriesEngine.get_next_position_velocity()`. The pantographs
+      (`MaszynaLegacyDriverPantographs`): the pantograph compressor and its three-way valve while
+      preparing, the rear one up on the move. Checked on Stary Jawor (diesel-electric) and on a
+      synthetic track with a catenary: EU07 with eight wagons prepares itself, runs up the
+      resistors to 28 and the shunt, holds 40 km/h. Also checked there: SN61 (started at its idle
+      position, 40 km/h), SA134 (the DMU's universal controller holding its share of power), EU47
+      with eight wagons (the EIM controller, the cruise control holding 40.0 km/h). **Not checked
+      yet:** EN57 (the control car's class is chosen, but the unit does not prepare - 0 V, reverser
+      at 0: `Activation()`'s move to the unit's other vehicles is not ported). Left: the doors closed and the departure signal switched off before adding power
+      (`Doors()`, `DepartureSignal` not published); the no-current sections (`fOverhead2`,
+      `iOverheadZero`); the shunting mode of a 2Ls150 (`AnPos` in `SpeedSet()`) and of an induction
+      motor; SN61's idle position after the reverser (`DirectionForward()`, Driver.cpp:5778); the
+      input action for `maxcurrent_sw` (Ctrl+F); the diesels' cooling keys of `Engine:`
+      (`HeaterMin/MaxTemperature`, `NominalCoolingPower`, the heat model's `Water*`/`Heat*`);
+      the radio off after a Radio-Stop.
+   4. Braking through the cab for every brake system (`MaszynaLegacyDriverBraking`,
+      `control_braking_force()`, `IncBrake()`/`DecBrake()`/`LapBrake()`, `Inc/DecBrakeEIM()`,
+      `control_releaser()`, the brake part of `Check/SetTimeControllers()`): the individual brake
+      (local or manual), the pneumatic one with the braking table, the electro-pneumatic one (its
+      operation mode, the handle between EP releasing and braking, or held by time with the EP
+      switch), an EMU's own braking, the EIM controllers' braking, the time-controlled handles
+      (MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405 - set at the end of an update, back to holding at
+      the next), the universal brake buttons, a DMU's handle following its universal controller.
+      The vehicle publishes `brake_operation_mode`, the EP handle positions and
+      `brake_handle_ep_time_controlled`, and takes `brake_operation_mode_increase/decrease` and
+      `ep_brake`. Left: the braking test (`ForcePNBrake`, `DynamicBrakeTest`), unlocking the pipe
+      before the releaser (`control_main_pipe()`), the individual release of an overcharged wagon,
+      the manual brake applied on putting away (`manualbrakon`), the weather's friction.
+   A player in the cab takes over: `RailVehicle3D.enter_cabin()`/`leave_cabin()` switch the
+   vehicle's driver off and on (`DriverSystem.vehicle_set_control_active()`); switched off it takes
+   orders and reads its trainset, but touches no control. Left: the player's "AI driver on/off"
+   keys.
+   5. The speed table (`MaszynaLegacyDriverRoute`, `TableTraceRoute()`/`TableUpdate()`/
+      `TableUpdateEvent()`): the tracks ahead from `RailVehicleServer.vehicle_trace_route()` (the
+      next-track rule now `TrackManager.track_find_next()`, shared with the movement), their
+      limits, switches and the end of the line, the passive events of `event1`/`event2`, the
+      signals' orders to itself (`SetVelocity`, `ShuntVelocity`) and a memory's command sent once;
+      `MaszynaLegacyDriverSpeed` brakes to the next speed within `fMin/MaxProximityDist`. Read
+      again on every update rather than kept and moved. Checked on Stary Jawor only standing
+      (every train sees its stop); a run past signals waits for the train brake to release (below).
+      The vehicles ahead (`scan_obstacles()`, `adjust_desired_speed_for_obstacles()`): the nearest
+      vehicle along the route from the trainset's front (`RailVehicleServer.vehicle_find_vehicle()`,
+      the gap between the ends at every distance, not the original's centres beyond 100 m); the
+      speed class keeps `AccPreferred`, `VelNext` and `ActualProximityDist` narrowed by it, and
+      `ReactionTime` 0.1 close to a stop or a vehicle.
+      Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL,
+      crossings, `BackwardTraceRoute`, the switch branch of an event on a switch, the cargo
+      train's distances; of the vehicles ahead: the scan from the rear end while rolling against
+      the way it drives (Driver.cpp:6642), a signal beyond a vehicle ahead being that vehicle's
+      (`isforsomeoneelse`, Driver.cpp:1566, 1709), the coupler adapters in the gap, and the
+      braking point offset (`braking_distance_multiplier()`) in the target speed.
+   Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
+   runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
+   The eszelon's lock-up at simulation speed 5 was the couplers stiffened by a long frame
+   (`docs/findings-archive.md`, 2026-09-27) - fixed in `RailVehicleServer::step()`.
+   6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
+      stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
+      parser does) - passed at speed where the train does not stop, else brought forward for the
+      train's length and the platform, stopped at, left at the departure time (a goods train at
+      once), the odd first number holding it for a clear signal; another station's stop close
+      ahead rewinds the timetable to it; `@` turns a push-pull train by its cab (a locomotive
+      goes on to its next order, `Disconnect`); the last station ends the
+      timetable. The timetable's speed per stretch (`TTVmax`).
+      Left: the load exchange and its waiting (`simulation::Station.update_load()`,
+      `WaitingSet()`, `fStopTime`), the doors, the announcements and the departure signal
+      (`tsGuardSignal`), the radio channel a station gives, the delay flag (`UpdateDelayFlag()`),
+      a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
+      `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
+   Braking table (2026-09-27): `CheckVehicles()` ported - the table `fBrake_a0/a1` from the
+      vehicles' `BrakeForceR()` (`VehicleBrake.get_force_at()`), `fAccThreshold`, the brake
+      reaction, the cargo flags, the brake setting per vehicle (`auto_rewident`),
+      `BrakeAccFactor()` and `braking_distance_multiplier()`. The eszelon at x20 now stops 7 m
+      short of E4 (was 44 m past). The acceleration limit by the couplers' strength, the downhill branch and
+      the final `BrakeAccFactor()` check of `adjust_desired_speed_for_current_speed()` are ported
+      (2026-09-27). Left: the weather's friction; and why the eszelon
+      almost stopped on n226 before E4 and pulled away again (x20, not looked into).
+   7. Coupling up and uncoupling (`UpdateConnect()`, `UpdateDisconnect()`,
+      `determine_proximity_ranges()`): within 20 m of the vehicle ahead the front vehicle starts
+      coupling, and within 2 m the shunter joins the elements the order's coupler number asks for
+      - the vehicle's `coupler_connect`, one element an update, as the player's crew does.
+      Uncoupling brakes the train, turns the reverser, presses the buffers at 2 km/h with up to
+      50 kN, releases the vehicles' brakes (`brake_releaser`) and undoes the coupler
+      (`coupler_disconnect`) the counted vehicles away, then turns back and takes the next order.
+      The distances kept and the speed margins (`fVelPlus`, `fVelMinus`) are the original's per
+      order now; they were the train's everywhere before.
+      **Not checked on a scenery** - Stary Jawor has no coupling; linia61 and calkowo do
+      (`l61_towarowy1_hn.scm`, `events_tartak.ctr`), too heavy for a headless probe so far.
+      Left: the coupler adapter (`couplingadapterattach/remove`); the high voltage and power
+      lines of a coupler number (no element a shunter joins); `coupler_connect` joins its elements
+      in a fixed order, so one asked for past a skipped one brings the skipped one too; the lights
+      after the trainset changed (`CheckVehicles()`); the electro-pneumatic brake's own
+      uncoupling position (`bh_EPB`); a coupling a player left half done under another order; the
+      margins of modern vehicles and of the weather, and a late train's (`moveLate`).
+
+### Cab targets (2026-09-27)
+
+* Gauges read the occupied vehicle unless the MMD catalog tags them: the ammeters, voltmeters and
+  lamps of the motor car (`Train.cpp` `mvControlled` in `update_gauges`) need `target` in
+  `MmdSemanticCatalog`.
+
 ## Tests
+
+* `test_weather_controls.gd` fails since `2f4740239`: the scene's root became an `HFlowContainer`,
+  the test still casts it `as VBoxContainer` and gets null.
+
+* **No regression test for the couplers stiffened by a long frame** (2026-09-27). A snatch of
+  `test_vehicle.fiz` wagons does not tell the fixed build from the broken one - the fixture
+  wagons stop within 3 s whatever the frame. It needs a free-rolling consist fixture (or a
+  powered one pulling a long train), stepped at 0.017 s and at 0.17 s a frame. Checked so far
+  by hand on Stary Jawor only (the eszelon at 0.03 s and 0.17 s: 14.09 and 14.06 m/s at 80 s).
+
+* `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not
+  accelerate past 2 m/s across 5 notches (it reads the game directory, see below).
+
+* `test_zzz_scenery_scene_smoke.gd` fails in a second: it waits for `scenery.loaded`, a signal
+  `MaszynaSceneryNode` does not have (`scenery_loaded`), and reads the private `_track_rids`.
+* `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
+  at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type
+  'Dictionary'") - not caused by the scenario work, not looked into.
+
+* `test_zzz_ep07_cabin_main_switch.gd` crashes (SIGSEGV) in about half of the runs, at `82cda7a30`
+  too: the headless dummy renderer's mesh storage is not thread safe, and the streaming worker
+  preloads models while the main thread loads the cab's (`docs/findings-archive.md`, 2026-09-26
+  "headless test crashes at teardown"). To decide: serialise model loading (one lock in
+  `E3DModelManager.load_model()` - costs the real game a wait on the main thread), or load on the
+  worker only with a real renderer.
 
 * **No HUD panel test on a non-diesel.** `mover_gauges.gd` broke on an induction motor (it asked
   `VehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `VehicleDieselEngine`'s);

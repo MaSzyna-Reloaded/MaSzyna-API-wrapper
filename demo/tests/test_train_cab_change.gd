@@ -10,8 +10,7 @@ func before_each():
     train = build_vehicle("TestCabChangeTrain")
 
 
-## An unmanned vehicle keeps its cab inactive (the original activates only a driven one,
-## Driver.cpp:2126) until the driver activates it (Train.cpp:2430).
+## No cab is active until the crew switches it on (CabActive = 0, MOVER.h:2090; Train.cpp:2430).
 func test_unmanned_vehicle_starts_in_cab_one_with_inactive_cab():
     assert_eq(train.state["cabin_occupied"], 1)
     assert_eq(train.state["cabin"], 0)
@@ -66,5 +65,9 @@ func test_starts_in_cab_two_for_rear_driver():
     var rear_train: VehicleController = physics_node.get_controller()
 
     assert_eq(rear_train.state["cabin_occupied"], -1)
+    assert_eq(rear_train.state["cabin"], 0)
+
+    rear_train.send_command("cab_activation", true)
+    rear_train.update_state()
     assert_eq(rear_train.state["cabin"], -1)
 

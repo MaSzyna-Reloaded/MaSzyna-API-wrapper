@@ -28,7 +28,7 @@ func test_param_and_dimensions():
     assert_eq(controller.max_velocity, 90.0)
     assert_eq(controller.power, 590.0)
     assert_eq(controller.category, VehicleController.CATEGORY_TRAIN)
-    assert_eq(controller.train_type, VehicleController.TRAIN_TYPE_DEFAULT)
+    assert_eq(controller.train_type, TrainController.TRAIN_TYPE_DEFAULT)
     assert_eq(controller.dimensions_length, 16.6)
     assert_eq(controller.dimensions_height, 4.28)
     assert_eq(controller.dimensions_width, 3.07)
@@ -37,9 +37,9 @@ func test_param_and_dimensions():
 
 func test_cntrl_general_subset():
     assert_true(controller.cntrl_automatic_cab_activation)
-    assert_eq(controller.cntrl_battery_start_mode, VehicleController.START_MODE_MANUAL)
-    assert_eq(controller.cntrl_ground_relay_start_mode, VehicleController.START_MODE_MANUAL)
-    assert_eq(controller.cntrl_converter_start_mode, VehicleController.START_MODE_AUTOMATIC)
+    assert_eq(controller.cntrl_battery_start_mode, TrainController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_ground_relay_start_mode, TrainController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_converter_start_mode, TrainController.START_MODE_AUTOMATIC)
     assert_eq(controller.cntrl_converter_start_delay, 10.0)
 
 

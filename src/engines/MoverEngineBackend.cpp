@@ -36,15 +36,7 @@ namespace godot {
         return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
 
-    bool MoverEngineBackend::get_compressor_enabled(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->CompressorFlag : false;
-    }
 
-    bool MoverEngineBackend::get_compressor_allowed(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? p_mover->CompressorAllow : false;
-    }
 
     double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
@@ -81,6 +73,16 @@ namespace godot {
         return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
     }
 
+    bool MoverEngineBackend::get_motor_overload_relay_high_threshold(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->MotorOverloadRelayHighThreshold : false;
+    }
+
+    double MoverEngineBackend::get_eimic_real(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->eimic_real : 0.0;
+    }
+
     void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         p_mover->EngineType = mover_engine_type(p_engine->get_engine_type());
@@ -107,19 +109,12 @@ namespace godot {
             fan.start_type = mover_start_mode(p_engine->get_motor_blowers_start_mode());
         }
 
-        p_mover->MainCtrlPosNo = p_engine->get_cntrl_main_controller_position_count();
-        p_mover->ScndCtrlPosNo = p_engine->get_cntrl_shunt_controller_position_count();
-        p_mover->MainCtrlMaxDirChangePos = p_engine->get_cntrl_direction_change_max_position();
         p_mover->EIMCtrlAdditionalZeros = p_engine->get_cntrl_eim_control_additional_zeros();
         p_mover->EIMCtrlEmergency = p_engine->get_cntrl_eim_control_emergency();
         p_mover->EIMCtrlType = p_engine->get_cntrl_eim_control_type();
         p_mover->AutoRelayType = p_engine->get_cntrl_auto_relay_mode();
-        p_mover->CoupledCtrl = p_engine->get_cntrl_coupled_controllers();
         p_mover->HasCamshaft = p_engine->get_cntrl_has_camshaft();
         p_mover->ScndS = p_engine->get_cntrl_series_shunt_on_series_position();
-        p_mover->InitialCtrlDelay = p_engine->get_cntrl_initial_controller_delay();
-        p_mover->CtrlDelay = p_engine->get_cntrl_controller_step_delay();
-        p_mover->CtrlDownDelay = p_engine->get_cntrl_controller_step_down_delay();
         p_mover->FastSerialCircuit = static_cast<int>(p_engine->get_cntrl_fast_series_circuit());
 
         // Original engine: GroundRelay/NoVoltRelay/OvervoltageRelay/DamageFlag/EngDmgFlag/
@@ -150,6 +145,8 @@ namespace godot {
             p_mover->MotorParam[i].fi = row->get_voltage_constant();
             p_mover->MotorParam[i].mfi = row->get_voltage_constant_multiplier();
             p_mover->MotorParam[i].Isat = row->get_saturation_current();
+            // a gear or a field shunt the controller passes by itself (readMPT0/readMPTDieselEngine)
+            p_mover->MotorParam[i].AutoSwitch = row->get_auto_switch();
             // readMPT0's default case (Mover.cpp:8948, what "MotorParamTable0:" rows actually go
             // through) reads these two as real columns, unlike readMPTElectricSeries - see
             // FizTrainEngineCommon.parse_motor_param_row's doc comment for the full story. fi0 in
@@ -168,8 +165,6 @@ namespace godot {
         if (p_mover == nullptr) {
             return;
         }
-        p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
-        p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
     }
 
@@ -177,6 +172,12 @@ namespace godot {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
     }
+
+    bool MoverEngineBackend::motor_overload_relay_threshold(const VehicleEngine *p_engine, const bool p_high) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->CurrentSwitch(p_high) : false;
+    }
+
 
     void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();

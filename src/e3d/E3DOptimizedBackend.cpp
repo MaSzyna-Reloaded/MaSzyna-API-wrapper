@@ -69,6 +69,24 @@ namespace godot {
         }
     }
 
+    /// The chain's transforms again, each submodel with its pose on top (TSubModel::RaAnimation(),
+    /// Model3d.cpp:1130-1160)
+    void E3DOptimizedBackend::apply_poses(E3DInstanceData &p_instance) {
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        for (int i = 0; i < p_instance.rids.size(); i++) {
+            Transform3D local_transform;
+            for (E3DSubModel *submodel: p_instance.chains[i]) {
+                local_transform = local_transform * submodel->get_transform();
+                if (const Transform3D *pose = p_instance.submodel_poses.getptr(submodel); pose != nullptr) {
+                    local_transform = local_transform * *pose;
+                }
+            }
+            p_instance.local_transforms.write[i] = local_transform;
+            rs->instance_set_transform(p_instance.rids[i], p_instance.transform * local_transform);
+        }
+    }
+
     void E3DOptimizedBackend::_add_submodels(
             E3DInstanceData &p_instance, const TypedArray<E3DSubModel> &p_submodels,
             const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,

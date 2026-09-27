@@ -97,8 +97,8 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
 
     # the vehicles of this unit and of everything under its control, in the order find_vehicle()
     # searches them: this one, then towards the rear, then towards the front (DynObj.h:889)
-    var unit:Array[Dictionary] = _search_order(vehicle, VehicleController.COUPLING_ELEMENT_PERMANENT)
-    var controlled_by:Array[Dictionary] = _search_order(vehicle, VehicleController.COUPLING_ELEMENT_CONTROL)
+    var unit:Array[Dictionary] = _search_order(vehicle, TrainController.COUPLING_ELEMENT_PERMANENT)
+    var controlled_by:Array[Dictionary] = _search_order(vehicle, TrainController.COUPLING_ELEMENT_CONTROL)
     var controlled:Dictionary = state
     # FindPowered() searches only the unit of an EZT/DMU; the train type is not in the config dump
     # (TODO.md), so every vehicle searches everything under its control
@@ -145,7 +145,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     # TTrain::Update(), Train.cpp:8644-8768 - the cars under control, from the end the occupied
     # cab faces (GetFirstDynamic(CabOccupied < 0 ? rear : front, control))
     var cab_end:int = 1 if state.get("cabin_occupied", 1) < 0 else 0
-    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, VehicleController.COUPLING_ELEMENT_CONTROL)
+    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, TrainController.COUPLING_ELEMENT_CONTROL)
     var powered:int = 0
     var unit_number:int = 1
     var compressors:int = 0
@@ -199,7 +199,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
             result["eimp_c%d_heat" % powered_number] = car_state.get("heating_enabled", false)   # Heating
             powered = powered_number
         # a control coupling that is not a permanent one ends a unit (Train.cpp:8757)
-        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, VehicleController.COUPLING_ELEMENT_PERMANENT):
+        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, TrainController.COUPLING_ELEMENT_PERMANENT):
             unit_number += 1
     result["car_no"] = mini(cars.size(), CAR_COUNT)
     result["power_no"] = powered
@@ -219,7 +219,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
 ## The state and config of every vehicle joined to this one by `element`, in the order
 ## TDynamicObject::find_vehicle() searches them: the vehicle itself, then towards its rear, then
 ## towards its front (DynObj.h:889)
-static func _search_order(vehicle:RID, element:VehicleController.CouplingElement) -> Array[Dictionary]:
+static func _search_order(vehicle:RID, element:TrainController.CouplingElement) -> Array[Dictionary]:
     var joined:Array = RailVehicleServer.vehicle_get_coupled(vehicle, 0, element)
     var own:int = joined.find(vehicle)
     var order:Array = [vehicle] + joined.slice(own + 1)

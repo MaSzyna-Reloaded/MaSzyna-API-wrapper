@@ -165,9 +165,9 @@ func test_lights_events_of_an_include_give_its_copies_one_kind() -> void:
         _create_model_data("house", PackedFloat32Array()),
     ]
 
-    SceneryInstancer.assign_semaphore_kinds(models, context.light_events)
+    SceneryInstancer.assign_semaphore_kinds(models, context.events)
 
-    assert_eq(context.light_events.size(), 4, "only lights events should be kept")
+    assert_eq(context.events.size(), 5, "every event should be kept, only lights events make aspects")
     var kind: SemaphoreKind = models[0].semaphore_kind
     assert_eq(kind.get_aspect_names(), PackedStringArray(["sem_ligh1", "sem_ligh3o"]))
     assert_eq(kind.get_aspect(&"sem_ligh3o").lights, PackedInt32Array([SemaphoreAspect.LIGHT_BLINK, 0, 0]))

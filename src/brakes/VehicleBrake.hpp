@@ -1,5 +1,5 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
+#include "../core/TrainComponent.hpp"
 #include "macros.hpp"
 #include "resources/brakes/BrakePressureTableItem.hpp"
 #include "resources/brakes/CompressorListItem.hpp"
@@ -8,8 +8,8 @@
 
 namespace godot {
     class VehicleController;
-    class VehicleBrake : public VehicleComponent {
-            GDCLASS(VehicleBrake, VehicleComponent)
+    class VehicleBrake : public TrainComponent {
+            GDCLASS(VehicleBrake, TrainComponent)
 
 
         public:
@@ -30,6 +30,10 @@ namespace godot {
             virtual double get_feed_pipe_pressure() const = 0;
             virtual double get_tank_volume() const = 0;
             virtual double get_compressor_pressure() const = 0;
+            /* CompressorFlag: the compressor runs */
+            virtual bool get_compressor_enabled() const = 0;
+            /* CompressorAllow: the compressor's switch is on */
+            virtual bool get_compressor_allowed() const = 0;
             virtual double get_controller_position() const = 0;
             virtual double get_controller_position_normalized() const = 0;
             virtual double get_local_position_normalized() const = 0;
@@ -50,6 +54,17 @@ namespace godot {
             /* The main pipe is cut off from the brake valve (LockPipe, the i-mainpipelock lamp,
              * Train.cpp:11758) */
             virtual bool get_main_pipe_locked() const = 0;
+            /* Braking force of the vehicle [kN] (Fb) */
+            virtual double get_force() const = 0;
+            /* The force the vehicle's brake would give [N] at `p_ratio` of its full pressure and
+             * `p_velocity` [km/h] (BrakeForceR(), Mover.cpp:4606) - what a driver works out its
+             * braking from (TController::CheckVehicles(), Driver.cpp:2286-2291) */
+            virtual double get_force_at(double p_ratio, double p_velocity) const = 0;
+            /* The brake's status (GetBrakeStatus(), hamulce.h:55-64): braking - the cylinder
+             * filling (b_on), holding its pressure (b_hld), cut off from the train brake (b_dmg) */
+            virtual bool is_braking() const = 0;
+            virtual bool is_holding() const = 0;
+            virtual bool is_cut_off() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -137,8 +152,12 @@ namespace godot {
                 BRAKE_DELAY_GPR_MG = 15,
             };
             /* BrakeOpModes= */
+            /* BrakeOpModes= - the operating modes a brake can be set to (bom_PS/PN/EP/MED, MOVER.h:325-328);
+             * none when the FIZ does not say, as the original loads it (Mover.cpp:10743-10746) */
             enum BrakeOperationMode {
+                BRAKE_OP_MODE_NONE = 0,
                 BRAKE_OP_MODE_PN = 3,
+                BRAKE_OP_MODE_PNEP = 7,
                 BRAKE_OP_MODE_PNEPMED = 15,
             };
             /* BrakeSystem= */
@@ -239,7 +258,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 3.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 36.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 22.0);
-            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_PNEPMED);
+            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_NONE);
             MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
             MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
             MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);
@@ -260,6 +279,9 @@ namespace godot {
 
         public:
             virtual void brake_releaser(bool p_pressed) = 0;
+            /* The compressor switched (CompressorSwitch(), Mover.cpp:3724): the cab's own, sent along
+             * the control line to the vehicles that carry one */
+            virtual void compressor(bool p_enabled) = 0;
             virtual void brake_level_set(double p_level) = 0;
             virtual void brake_level_set_position(BrakeHandlePosition p_position) = 0;
             virtual void brake_level_set_position_str(const String &p_position) = 0;
@@ -271,6 +293,14 @@ namespace godot {
             virtual void manual_brake_increase() = 0;
             virtual void manual_brake_decrease() = 0;
             virtual void auto_rewident(int p_brake_delay) = 0;
+            /* The next or the previous operation mode the brake has (BrakeOpModeFlag, one bit of
+             * BrakeOpModes; OnCommand_trainbrakeoperationmodeincrease/decrease, Train.cpp:2445-2478) */
+            virtual void brake_operation_mode_increase() = 0;
+            virtual void brake_operation_mode_decrease() = 0;
+            /* The electro-pneumatic brake applied or released (SwitchEPBrake(), Mover.cpp:4153); true
+             * when it changed */
+            virtual bool ep_brake(bool p_applied) = 0;
+            virtual int get_operation_mode() const = 0;
             virtual void brake_level_charging(bool p_active) = 0;
             virtual void alarm_chain(bool p_pulled) = 0;
             /* One of the vehicle's universal brake buttons (UBB1..3 in the FIZ), 0-based */

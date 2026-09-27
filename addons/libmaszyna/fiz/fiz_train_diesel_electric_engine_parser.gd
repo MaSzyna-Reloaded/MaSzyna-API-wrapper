@@ -38,6 +38,8 @@ class_name FizTrainDieselElectricEngineParser
 var _wwlist_rows: Array[WWListItem] = []
 var _motor_param_rows: Array[MotorParameter] = []
 var _active_table: String = ""
+## The MotorParamTable: being read is a plain diesel engine's gearbox
+var _diesel: bool = false
 
 
 func create_node() -> VehicleDieselElectricEngine:
@@ -67,9 +69,18 @@ func apply_engine_fields(kv: Dictionary, node: VehicleDieselElectricEngine) -> v
 
 ## Standard section-parser interface, used for "WWList:" and "MotorParamTable:" (registered
 ## directly against this instance in FizVehicleBuilder's section table).
+##
+## "MotorParamTable:" is a plain diesel engine's gearbox as well (readMPT(), Mover.cpp:9107 - the
+## reader by EngineType): its header carries the clutch (LoadFIZ_MotorParamTable, Mover.cpp:11394)
+## and its rows the gears (FizTrainEngineCommon.parse_diesel_gear_row()).
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
-    FizLineUtil.read_key_values(p) # header line's own key=value pairs (e.g. WWList's "Size=") -
-                                    # informational only, rows are self-terminating either way.
+    # the header's key=value pairs (e.g. WWList's "Size=") - rows are self-terminating either way
+    var kv: Dictionary = FizLineUtil.read_key_values(p)
+    _diesel = context.engine_type == VehicleEngine.DIESEL
+    if prefix == "MotorParamTable:" and _diesel:
+        var node: VehicleDieselEngine = context.get_part("VehicleEngine") as VehicleDieselEngine
+        if node:
+            FizTrainDieselEngineParser.apply_clutch(kv, node)
     if prefix == "MotorParamTable:":
         _active_table = "MotorParamTable"
         _motor_param_rows = []
@@ -78,9 +89,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _wwlist_rows = []
 
 
-func _get_node(context: FizImportContext) -> VehicleDieselElectricEngine:
+func _get_node(context: FizImportContext) -> VehicleDieselEngine:
     var node: VehicleComponent = context.get_part("VehicleEngine")
-    return node as VehicleDieselElectricEngine
+    return node as VehicleDieselEngine
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
@@ -107,7 +118,8 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
 
 
 func _parse_motor_param_row(p: MaszynaParser) -> void:
-    var item := FizTrainEngineCommon.parse_motor_param_row(p, true)
+    var item: MotorParameter = FizTrainEngineCommon.parse_diesel_gear_row(p) if _diesel \
+            else FizTrainEngineCommon.parse_motor_param_row(p, true)
     if item:
         _motor_param_rows.append(item)
 
@@ -119,7 +131,7 @@ func end_table(context: FizImportContext) -> void:
         _motor_param_rows = []
         return
     if _wwlist_rows:
-        node.wwlist = _wwlist_rows
+        (node as VehicleDieselElectricEngine).wwlist = _wwlist_rows
     if _motor_param_rows:
         node.motor_param_table = _motor_param_rows
     _wwlist_rows = []

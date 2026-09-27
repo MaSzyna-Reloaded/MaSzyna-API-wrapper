@@ -49,11 +49,38 @@ namespace godot {
                         Variant::FLOAT, "desired_power", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_desired_power");
+        ClassDB::bind_method(D_METHOD("speed_control_increase"), &VehicleSpeedControl::speed_control_increase);
+        ClassDB::bind_method(D_METHOD("speed_control_decrease"), &VehicleSpeedControl::speed_control_decrease);
+        ClassDB::bind_method(
+                D_METHOD("speed_control_power_increase"), &VehicleSpeedControl::speed_control_power_increase);
+        ClassDB::bind_method(
+                D_METHOD("speed_control_power_decrease"), &VehicleSpeedControl::speed_control_power_decrease);
+        ClassDB::bind_method(D_METHOD("speed_control_button", "button"), &VehicleSpeedControl::speed_control_button);
+        ClassDB::bind_method(D_METHOD("speed_control_set", "velocity"), &VehicleSpeedControl::speed_control_set);
+        ClassDB::bind_method(D_METHOD("get_set_velocity"), &VehicleSpeedControl::get_set_velocity);
         ClassDB::bind_method(D_METHOD("get_selected_velocity"), &VehicleSpeedControl::get_selected_velocity);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "selected_velocity", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_selected_velocity");
+    }
+
+    void VehicleSpeedControl::_register_commands() {
+        register_command("speed_control_increase", Callable(this, "speed_control_increase"));
+        register_command("speed_control_decrease", Callable(this, "speed_control_decrease"));
+        register_command("speed_control_power_increase", Callable(this, "speed_control_power_increase"));
+        register_command("speed_control_power_decrease", Callable(this, "speed_control_power_decrease"));
+        register_command("speed_control_button", Callable(this, "speed_control_button"));
+        register_command("speed_control_set", Callable(this, "speed_control_set"));
+    }
+
+    void VehicleSpeedControl::_unregister_commands() {
+        unregister_command("speed_control_increase", Callable(this, "speed_control_increase"));
+        unregister_command("speed_control_decrease", Callable(this, "speed_control_decrease"));
+        unregister_command("speed_control_power_increase", Callable(this, "speed_control_power_increase"));
+        unregister_command("speed_control_power_decrease", Callable(this, "speed_control_power_decrease"));
+        unregister_command("speed_control_button", Callable(this, "speed_control_button"));
+        unregister_command("speed_control_set", Callable(this, "speed_control_set"));
     }
 } // namespace godot

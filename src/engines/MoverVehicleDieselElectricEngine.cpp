@@ -13,6 +13,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverVehicleDieselElectricEngine::get_fuse_active);
         ClassDB::bind_method(
                 D_METHOD("get_motor_connectors_open"), &MoverVehicleDieselElectricEngine::get_motor_connectors_open);
+        ClassDB::bind_method(D_METHOD("is_line_contactor_closed"), &MoverVehicleDieselElectricEngine::is_line_contactor_closed);
+        ClassDB::bind_method(D_METHOD("is_pressure_switch_tripped"), &MoverVehicleDieselElectricEngine::is_pressure_switch_tripped);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverVehicleDieselElectricEngine::fuse_reset);
         ClassDB::bind_method(
                 D_METHOD("set_motor_connectors_open", "open"),
@@ -37,6 +39,14 @@ namespace godot {
 
     bool MoverVehicleDieselElectricEngine::get_motor_connectors_open() const {
         return traction.get_motor_connectors_open(this);
+    }
+
+    bool MoverVehicleDieselElectricEngine::is_line_contactor_closed() const {
+        return traction.is_line_contactor_closed(this);
+    }
+
+    bool MoverVehicleDieselElectricEngine::is_pressure_switch_tripped() const {
+        return traction.is_pressure_switch_tripped(this);
     }
 
     void MoverVehicleDieselElectricEngine::fuse_reset() {
@@ -76,7 +86,6 @@ namespace godot {
         /* WWList: tablica rezystorow rozr. (eng. Starting resistor array) aka DEList aka TDESchemeTable */
         constexpr int MAX = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
         const int wwlist_size = static_cast<int>(get_wwlist().size());
-        p_mover->MainCtrlPosNo = wwlist_size - 1;
         for (int i = 0; i < std::min(MAX, wwlist_size); i++) {
             const Ref<WWListItem> &row = get_wwlist()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {

@@ -90,7 +90,8 @@ namespace godot {
     void MoverVehicleSecuritySystem::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
-        p_mover->SecuritySystem.set_enabled(enabled);
+        // the alerter is switched on by the cab's activation and off by its deactivation
+        // (CabActivisation(), Mover.cpp:2905, 2956) - an inactive cab car's must not run
 
         p_mover->SecuritySystem.vigilance_enabled = get_aware_system_active();
         p_mover->SecuritySystem.cabsignal_enabled = get_aware_system_cabsignal();
@@ -129,6 +130,18 @@ namespace godot {
         if (mover->SecuritySystem.has_separate_acknowledge()) {
             mover->SecuritySystem.cabsignal_reset();
         }
+    }
+
+    void MoverVehicleSecuritySystem::security_cabsignal_trigger() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SecuritySystem.set_cabsignal();
+    }
+
+    void MoverVehicleSecuritySystem::security_radiostop(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->RadiostopSwitch(p_enabled);
     }
 
     void MoverVehicleSecuritySystem::security_acknowledge(const bool p_enabled) {

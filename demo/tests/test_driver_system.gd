@@ -162,6 +162,33 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
+func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverLateDriverTest", SM42)
+    train.battery_voltage = 110.0
+    train.apply_configuration()
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return controls))
+    # the player takes the cab while the scenery still loads, before the drivers are built
+    DriverSystem.vehicle_set_control_active(vehicle, false)
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    assert_false(DriverSystem.vehicle_is_control_active(vehicle), "the player drives it, not its new driver")
+
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    await wait_seconds(1.0)
+    assert_false(train.state["battery_enabled"], "the order is taken, the battery left alone")
+
+    DriverSystem.vehicle_set_control_active(vehicle, true)
+    await wait_until(func() -> bool: return train.state["battery_enabled"], MAX_WAIT)
+    assert_true(train.state["battery_enabled"], "the player gone, it carries the order out")
+    DriverSystem.driver_free(driver)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
 func test_the_driver_reads_its_trainset() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverTrainsetTest", SM42)

@@ -129,6 +129,8 @@ anything. Open work belongs in `TODO.md`.
   the frame rate. *(09-27 couplers stiffened by a long frame)*
 * What the AI remembers of the tracks belongs to one way of driving: a turn or a takeover from a
   player starts it afresh. *(09-27 the AI stood at a clear signal)*
+* Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
+  the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Simulated time has one clock, `SimulationServer`'s: read `get_simulation_time()` or take
   `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
   clocks)*

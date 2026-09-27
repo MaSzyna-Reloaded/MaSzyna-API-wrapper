@@ -450,13 +450,16 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     # the pantographs' air, and both up (Driver.cpp:2782-2811)
     MaszynaLegacyDriverPantographs.prepare(vehicle, cab, state.trainset, MaszynaLegacyDriverBraking.is_emu(vehicle))
     _prepare_direction(state, vehicle, cab)
-    var converter_overload:bool = CabinSystem.vehicle_state_value(vehicle, "converter_overload", false)
+    # the main circuit, the converter and the air are the engine's the controls drive - an EMU's
+    # motor car (mvControlling, Driver.cpp:2820-2870)
+    var controlling:RID = state.trainset.controlling
+    var converter_overload:bool = CabinSystem.vehicle_state_value(controlling, "converter_overload", false)
     if converter_overload:
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_OFF)
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_OFF)
         CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"hold")
         CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"release")
-    var mains:bool = CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false)
+    var mains:bool = CabinSystem.vehicle_state_value(controlling, "main_switch_enabled", false)
     if not mains:
         MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
         # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
@@ -467,15 +470,15 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
         MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
     elif not converter_overload:
         var converter_enabled:bool = MaszynaLegacyDriverHints.cue(
-                vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_ON)
+                vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_ON, controlling)
         if converter_enabled:
-            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON)
+            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON, controlling)
         MaszynaLegacyDriverHints.release_train_brake(vehicle, cab)
-    var converter:Variant = CabinSystem.vehicle_state_value(vehicle, "converter_enabled")
+    var converter:Variant = CabinSystem.vehicle_state_value(controlling, "converter_enabled")
     state.engine_active = not converter_overload and mains \
             and not int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0 \
             and (converter == null or bool(converter)) \
-            and float(CabinSystem.vehicle_state_value(vehicle, "compressor_pressure", 0.0)) > MIN_MAIN_RESERVOIR_PRESSURE
+            and float(CabinSystem.vehicle_state_value(controlling, "compressor_pressure", 0.0)) > MIN_MAIN_RESERVOIR_PRESSURE
     return state.engine_active
 
 

@@ -46,10 +46,10 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
         if state.get("current_collector/pantograph_compressor_enabled", false):
             RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor", false)
     # pantographsvalveon: the pantographs' master valve (OperatePantographsValve(), no cab control)
-    if not CabinSystem.vehicle_state_value(vehicle, "current_collector/valve_active", true):
+    if not state.get("current_collector/valve_active", true):
         RailVehicleServer.vehicle_send_command(vehicle, "pantographs_valve", true)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON)
+    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
+    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
 
 
 ## control_pantographs() (Driver.cpp:6219-6345), on every update the driver acts on: the main
@@ -77,9 +77,9 @@ static func control(
     if not setup == VehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC:
         if speed > SETUP_SPEED:
             MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON
-                    if setup & VehicleAIHints.PANTOGRAPH_STATE_FRONT else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF)
+                    if setup & VehicleAIHints.PANTOGRAPH_STATE_FRONT else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF, unit)
             MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
-                    if setup & VehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF)
+                    if setup & VehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)
         return
     # the regular layout: a lone vehicle, an EMU, an ET41 (Driver.cpp:6243-6246)
     var train_type:VehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(unit).get(
@@ -96,8 +96,8 @@ static func control(
     var raised_voltage:float = rear_voltage if on_rear else front_voltage
     if raised_voltage == 0.0 and (voltage == 0.0 or collectors > 1):
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
-                if on_rear else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON)
+                if on_rear else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
     # having gathered speed, the other one down once the first carries the current
     if speed > SETUP_SPEED and collectors > 1 and not front_voltage == 0.0 and not rear_voltage == 0.0:
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF
-                if on_rear else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF)
+                if on_rear else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)

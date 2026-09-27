@@ -31,7 +31,9 @@ enum Hint {
 
 ## A switch of the cab: its control, the state key that shows it done and the value that does
 const SWITCHES:Dictionary = {
-    Hint.BATTERY_ON: [&"battery_sw", "battery_enabled", true],
+    # on once the low voltage is there - a car without a battery of its own takes it from the
+    # unit's (batteryon's check, driverhints.cpp:88-91)
+    Hint.BATTERY_ON: [&"battery_sw", "power24_available", true],
     Hint.BATTERY_OFF: [&"battery_sw", "battery_enabled", false],
     Hint.CAB_ACTIVATION: [&"cabactivation_sw", "cabin_controleable", true],
     Hint.RADIO_ON: [&"radio_sw", "radio_enabled", true],
@@ -60,11 +62,13 @@ const CABSIGNAL_RESET:StringName = &"shp_reset_bt"
 
 
 ## Operates the switch unless the vehicle shows the step done; true when it is. A vehicle without
-## the device does not report its state, and has nothing to do.
-static func cue(vehicle:RID, cab:int, hint:Hint) -> bool:
+## the device does not report its state, and has nothing to do. `shown_by`: the vehicle whose
+## device the switch works, when it is another one of the unit - an EMU's pantographs are its
+## motor car's (mvPantographUnit)
+static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     var control:StringName = SWITCHES[hint][0]
     var wanted:bool = SWITCHES[hint][2]
-    var shown:Variant = CabinSystem.vehicle_state_value(vehicle, SWITCHES[hint][1])
+    var shown:Variant = CabinSystem.vehicle_state_value(shown_by if shown_by.is_valid() else vehicle, SWITCHES[hint][1])
     if shown == null or bool(shown) == wanted:
         return true
     CabinSystem.act(vehicle, cab, control, &"toggle", wanted)

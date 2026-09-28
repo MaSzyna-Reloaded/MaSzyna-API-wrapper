@@ -24,4 +24,9 @@ func _show_lines() -> void:
     var lines:PackedStringArray = TranscriptSystem.get_lines()
     %Lines.text = "\n".join(lines)
     visible = _shown and lines.size() > 0
-    reset_size()
+    # Collapse onto the anchor and let the minimum size grow it back - around the centre and up
+    # from the bottom (grow_horizontal/grow_vertical). reset_size() keeps the left edge instead,
+    # so every shorter text after a longer one left the panel further to the left.
+    offset_left = 0.0
+    offset_right = 0.0
+    offset_top = offset_bottom

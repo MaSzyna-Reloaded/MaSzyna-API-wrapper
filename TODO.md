@@ -662,8 +662,11 @@ closes both level crossings). Left:
   and ignores the first (`Event.cpp:2296-2349`).
 * **Launchers**: numeric key codes,
   `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
-  train, not the camera), a click on a model firing the launcher of its name (`scene.cpp:33-43`).
-  Timed launchers are global here; the original polls non-global ones only near the camera.
+  train, not the camera). Timed launchers are global here; the original polls non-global ones only
+  near the camera.
+* **A click on a scenery model** (`SceneryHUDMouseServer`) is not hidden by anything in front of
+  the model: a lever behind a building is picked through it, where the original's pick buffer
+  shows only what is seen. Picking also ignores the Alt picking toggle (`drivermode.cpp:493-500`).
 * **Stary Jawor, eszelon** (headless probe, 2026-09-26): both stations run their logic, the
   shunting signals open (Roztocze Tm18, then Tm19/Tm20 with switches 74-76a once SU46 reaches
   `n176`), the 10:50 launcher fires; it stops where it waits for the AI's eszelon (below).

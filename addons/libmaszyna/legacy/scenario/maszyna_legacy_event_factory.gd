@@ -463,9 +463,13 @@ static func build(
             if events_by_name.has(section_name + suffix):
                 ScenarioEventServer.isolated_add_event(section, ISOLATED_EVENTS[suffix], events_by_name[section_name + suffix])
 
+    var launchers_by_name:Dictionary[String, Array] = {}
     for launcher_data:MaszynaEventLauncherData in launchers:
         var launcher:RID = ScenarioEventServer.launcher_create()
         root._launcher_rids.append(launcher)
+        if not launchers_by_name.has(launcher_data.name.to_lower()):
+            launchers_by_name[launcher_data.name.to_lower()] = []
+        launchers_by_name[launcher_data.name.to_lower()].append([launcher_data, launcher])
         ScenarioEventServer.launcher_set_name(launcher, launcher_data.name)
         ScenarioEventServer.launcher_set_position(launcher, launcher_data.position)
         ScenarioEventServer.launcher_set_radius(launcher, launcher_data.radius)
@@ -488,6 +492,21 @@ static func build(
             ScenarioEventServer.launcher_set_time_of_day(launcher, floori(hhmm / float(HHMM_HOUR)), hhmm % HHMM_HOUR)
         elif launcher_data.delta_time < 0.0 and not launcher_data.delta_time == FIRE_ONCE_IN_RANGE:
             ScenarioEventServer.launcher_set_interval(launcher, -launcher_data.delta_time)
+
+    # a click on a model fires the launchers of its name that have it within their radius
+    # (basic_cell::on_click(), scene.cpp:33-43); a negative radius has nothing within it
+    # (EvLaunch.cpp:57-58)
+    for index:int in models.size():
+        for entry:Array in launchers_by_name.get(models[index].name.to_lower(), []):
+            var launcher_data:MaszynaEventLauncherData = entry[0]
+            if not launcher_data.position.distance_to(models[index].position) < launcher_data.radius:
+                continue
+            var launcher:RID = entry[1]
+            root._pickable_rids.append(SceneryHUDMouseServer.pickable_create(
+                model_rids[index],
+                ScenarioEventServer.launcher_fire.bind(launcher),
+                ScenarioEventServer.launcher_fire_shift.bind(launcher),
+            ))
 
     # queued at the start: a negative delay (InitEvents(), Event.cpp:2493-2499) and the first event
     # of each name containing "onstart" (Event.cpp:2336-2345)

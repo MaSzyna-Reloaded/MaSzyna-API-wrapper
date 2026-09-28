@@ -98,6 +98,9 @@ namespace godot {
             /// Spawn rate multiplier of those emitters (instance_set_smoke_intensity()), kept here so
             /// a rebuild gives the new emitters the rate the client last set
             float smoke_intensity = 1.0;
+            /// Drawn over every submodel (instance_set_material_overlay()), kept across a stream
+            /// clear/build cycle
+            Ref<Material> material_overlay;
             /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
             /// which is what a placement registered for streaming always is
             int instance_kind = 0;
@@ -136,8 +139,17 @@ namespace godot {
             virtual void apply_transform(const E3DInstanceData &p_instance) = 0;
             /// Places the submodels as submodel_poses says; called when an animation moved them
             virtual void apply_poses(E3DInstanceData &p_instance) = 0;
+            /// The nearest hit of the segment (world space) on the built meshes nearer than
+            /// `r_distance`: updates `r_distance` and `r_point` and returns true
+            virtual bool intersect_segment(
+                    const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
+                    Vector3 &r_point) const = 0;
 
         protected:
+            /// intersect_segment() of one mesh placed by `p_transform`
+            static bool _intersect_mesh(
+                    const Ref<Mesh> &p_mesh, const Transform3D &p_transform, const Vector3 &p_from, const Vector3 &p_to,
+                    double &r_distance, Vector3 &r_point);
             /// Whether a light's part is shown under its state and dimming
             static bool _light_part_visible(const E3DInstanceData &p_instance, const String &p_light_name,
                                             LightPart p_part, bool p_has_xon);

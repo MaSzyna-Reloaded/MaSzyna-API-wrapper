@@ -52,6 +52,7 @@ var _e3d_rids:Array[RID] = []
 var _signalling_system_rids:Array[RID] = []
 var _triangle_chunk_rids:Array[RID] = []
 var _launcher_rids:Array[RID] = []
+var _pickable_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
 var _memory_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
@@ -79,6 +80,7 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
         # first, so no queued event runs against what is freed after them
         [_driver_rids, DriverSystem.driver_free],
+        [_pickable_rids, SceneryHUDMouseServer.pickable_free],
         [_launcher_rids, ScenarioEventServer.launcher_free],
         [_event_rids, ScenarioEventServer.event_free],
         [_memory_rids, ScenarioEventServer.memory_free],

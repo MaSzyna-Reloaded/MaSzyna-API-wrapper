@@ -56,6 +56,7 @@
 #include "scenario/ScenarioEventServer.hpp"
 #include "scenario/Timetable.hpp"
 #include "scenario/TimetableEntry.hpp"
+#include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
@@ -145,6 +146,7 @@ MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 SignallingServer *signalling_server_singleton = nullptr;
 ScenarioEventServer *scenario_event_server_singleton = nullptr;
+SceneryHUDMouseServer *scenery_hud_mouse_server_singleton = nullptr;
 DriverSystem *driver_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -187,6 +189,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SignalHeadNode);
         GDREGISTER_CLASS(SignallingSystemNode);
         GDREGISTER_CLASS(ScenarioEventServer);
+        GDREGISTER_CLASS(SceneryHUDMouseServer);
         GDREGISTER_CLASS(DriverSystem);
         GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventAction);
@@ -323,6 +326,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after RailVehicleServer is registered: the constructor follows its freed vehicles
         driver_system_singleton = memnew(DriverSystem);
         Engine::get_singleton()->register_singleton("DriverSystem", driver_system_singleton); // 17
+        // after E3DRenderingServer is registered: it outlines and picks its instances
+        scenery_hud_mouse_server_singleton = memnew(SceneryHUDMouseServer);
+        Engine::get_singleton()->register_singleton("SceneryHUDMouseServer", scenery_hud_mouse_server_singleton); // 18
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -346,6 +352,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("SceneryHUDMouseServer")) {
+        Engine::get_singleton()->unregister_singleton("SceneryHUDMouseServer"); // 18
+    }
+    if (scenery_hud_mouse_server_singleton != nullptr) {
+        memdelete(scenery_hud_mouse_server_singleton);
+        scenery_hud_mouse_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("DriverSystem")) {

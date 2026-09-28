@@ -71,7 +71,16 @@
 			<description>
 			</description>
 		</method>
-		<method name="instance_register">
+		<method name="instance_intersect_segment" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="from" type="Vector3" />
+			<param index="2" name="to" type="Vector3" />
+			<description>
+				Where the segment [param from]..[param to] (world space) first meets the meshes of the instance: [code]{position, distance}[/code], the distance measured from [param from]. Empty when it misses, or when the instance is hidden or not built (not streamed in).
+			</description>
+		</method>
+				<method name="instance_register">
 			<return type="RID" />
 			<param index="0" name="data_path" type="String" />
 			<param index="1" name="model_filename" type="String" />
@@ -197,7 +206,15 @@
 				Global transform of an [constant INSTANCER_OPTIMIZED] instance. A node tree follows its attached node instead.
 			</description>
 		</method>
-		<method name="instance_set_visibility_range">
+		<method name="instance_set_material_overlay">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="material" type="Material" />
+			<description>
+				Draws [param material] over every submodel of the instance (an outline, a tint); [code]null[/code] for none. Kept while the instance is streamed out and in again.
+			</description>
+		</method>
+				<method name="instance_set_visibility_range">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="begin" type="float" />

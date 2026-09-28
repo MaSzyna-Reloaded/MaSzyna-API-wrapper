@@ -51,3 +51,16 @@ func test_the_selector_does_not_wrap_unless_told_to():
     train.send_command("increase_light_selector_position")
     train.send_command("increase_light_selector_position")
     assert_eq(train.state["light_position"], 2)
+
+
+# Train.cpp:2922-3135 - with a preset selector the single light switches do nothing
+func test_the_single_light_switches_do_nothing_with_a_selector():
+    # the upper preset, lit by stepping the selector away and back
+    train.send_command("increase_light_selector_position")
+    train.send_command("decrease_light_selector_position")
+    assert_true(train.state["lights/front_headlight_upper_enabled"])
+    train.send_command("light_switch", "leftlight", false)
+    train.send_command("light_switch", "upperlight", false)
+    assert_true(train.state["lights/front_headlight_upper_enabled"])
+    train.send_command("light_switch", "leftlight", true)
+    assert_false(train.state["lights/front_headlight_left_enabled"])

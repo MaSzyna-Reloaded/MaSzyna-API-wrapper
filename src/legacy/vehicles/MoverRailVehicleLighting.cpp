@@ -430,6 +430,11 @@ namespace godot {
     void MoverRailVehicleLighting::light_switch(const String &p_light, const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
+        // a vehicle with a light preset selector (LightsList) sets its lights through it alone -
+        // "lights are controlled by preset selector" (Train.cpp:2922-3135, 5300-5519)
+        if (mover->LightsPosNo > 0) {
+            return;
+        }
 
         const bool is_rear = p_light.begins_with("rear");
         const String suffix = is_rear ? p_light.substr(4) : p_light;

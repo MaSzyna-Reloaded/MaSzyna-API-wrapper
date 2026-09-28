@@ -190,6 +190,9 @@ namespace godot {
         instance.model = p_model;
         instance.instancer = p_instancer;
         instance.instance_kind = p_instance_kind;
+        // a vehicle's plume follows its engine, so it stays silent until the vehicle has said how
+        // much - a default rate would spawn a puff from an engine that is off
+        instance.smoke_intensity = p_instance_kind == INSTANCE_KIND_DYNAMIC ? 0.0 : 1.0;
         return rid;
     }
 
@@ -780,6 +783,7 @@ namespace godot {
             smoke.owner = p_instance;
             smoke.template_name = placement.template_name;
             smoke.offset = placement.offset;
+            smoke.intensity = p_instance_data.smoke_intensity;
             p_instance_data.smoke_objects.push_back(rid);
 
             // A scenery emitter streams with a range of its own, the way a scenery light does.
@@ -959,6 +963,7 @@ namespace godot {
     void E3DRenderingServer::instance_set_smoke_intensity(const RID &p_instance, const float p_intensity) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
+        instance->smoke_intensity = p_intensity;
         for (const RID &smoke_rid: instance->smoke_objects) {
             if (SmokeObject *smoke = smoke_objects.getptr(smoke_rid); smoke != nullptr) {
                 smoke->intensity = p_intensity;

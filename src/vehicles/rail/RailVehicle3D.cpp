@@ -641,6 +641,7 @@ namespace godot {
         }
         _sync_model_lights();
         _update_detection_area();
+        _update_smoke();
 
         if (low_poly_cabin != nullptr) {
             low_poly_cabin->disconnect("e3d_loaded", Callable(this, "_on_low_poly_cabin_e3d_loaded"));
@@ -738,6 +739,7 @@ namespace godot {
         animation_bindings_dirty = false;
         _cache_animation_bindings();
         force_detail_refresh = true;
+        _update_smoke();
     }
 
     void RailVehicle3D::_on_low_poly_cabin_e3d_loaded() {
@@ -1292,14 +1294,18 @@ namespace godot {
     /// (smoke_source::update(), particles.cpp:172-211) and the opacity its dizel_fill
     /// (particles.cpp:330), but only for a diesel: the original runs these branches for every
     /// engine type and reads the diesel-electric characteristic even on an electric. A vehicle
-    /// without a diesel engine keeps the template's own rate, like a scenery chimney.
-    /// Called from the 0.25 s block of _process_impl() - a plume changes slowly.
+    /// without a diesel engine gets the template's own rate, like a scenery chimney - the server
+    /// starts a vehicle's emitters silent, so even that has to be said.
+    /// Called from the 0.25 s block of _process_impl() - a plume changes slowly - and whenever the
+    /// model is (re)built, so new emitters never spawn at a rate the engine did not give them.
     void RailVehicle3D::_update_smoke() {
+        // the engine is adopted with the controller, so without one the engine type is unknown
         if (model_node == nullptr || controller == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
             return;
         }
         const int engine_type = engine != nullptr ? engine->get_type() : RailVehicleEngine::NONE;
         if (engine_type != RailVehicleEngine::DIESEL && engine_type != RailVehicleEngine::DIESEL_ELECTRIC) {
+            model_node->call("set_smoke_intensity", 1.0);
             return;
         }
 

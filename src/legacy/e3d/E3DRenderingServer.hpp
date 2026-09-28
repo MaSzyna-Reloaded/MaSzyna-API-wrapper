@@ -181,7 +181,7 @@ namespace godot {
                     float spawn_backlog = 0.0;    // fractional particles carried to the next tick
                     uint64_t last_spawn_usec = 0; // its own clock, so a skipped frame costs nothing
                     int amount = 0;               // pool size, the cap on one tick's spawns
-                    float intensity = 1.0;        // spawn rate multiplier
+                    float intensity = 1.0;        // spawn rate multiplier, mirrored from the owner instance
                     /// Mirrored from the owner instance whenever it moves or is shown/hidden, so
                     /// the per-frame tick is arithmetic on this struct alone and never looks an
                     /// instance up

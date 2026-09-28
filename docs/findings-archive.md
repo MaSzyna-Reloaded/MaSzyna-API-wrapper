@@ -1678,3 +1678,20 @@ lighting or the consist.
 * **Rule:** a component's default is what a vehicle without the key gets - it must be the
   original's default.
 
+
+## 2026-09-28 - a diesel that is off puffed smoke the first time the camera saw it
+
+* **Symptom:** a parked diesel with its engine off gave one puff of smoke the first time the camera
+  looked at it.
+* **Cause:** read from the code, not measured. `E3DRenderingServer::SmokeObject::intensity`
+  defaulted to `1.0`, and the emitters are built with the model. The engine's rate (0 when off)
+  came only from `RailVehicle3D::_update_smoke()` in its 0.25 s block, and on the first load even
+  later: the model builds in its own `_ready()`, before the vehicle wires `model_node`, and the
+  first `process_frame` after the loading frame has a long delta. Every detail switch
+  (`reload()`, as the camera comes close) built new emitters at `1.0` again. Probably (not checked
+  in the Godot source) Godot processes a culled particle system only once it is in view, so the
+  queued `particles_emit()` requests all appear when the vehicle first enters the view.
+* **Fix:** the instance owns `smoke_intensity`; an `INSTANCE_KIND_DYNAMIC` instance starts at 0
+  and a rebuild keeps the last value. The vehicle sets the rate when the model loads and when it
+  wires the model, and a vehicle without a diesel sets `1.0` itself.
+* **Rule:** an emitter whose rate its owner drives spawns nothing until the owner has set it.

@@ -95,6 +95,9 @@ namespace godot {
             HashMap<E3DSubModel *, Transform3D> submodel_poses;
             /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
             Vector<RID> smoke_objects;
+            /// Spawn rate multiplier of those emitters (instance_set_smoke_intensity()), kept here so
+            /// a rebuild gives the new emitters the rate the client last set
+            float smoke_intensity = 1.0;
             /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
             /// which is what a placement registered for streaming always is
             int instance_kind = 0;

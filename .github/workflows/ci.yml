@@ -1,0 +1,135 @@
+name: ci
+
+# The unit tests and the release of each platform, run with the double precision Godot fetched from
+# the godot-engine workflow's release. Both live in this one workflow so that the engine is checked
+# for, and after a GODOT_VERSION bump built, once. Only the Linux release needs a container
+# (ci/docker/linux-sdk, for an old glibc); the Windows and Android libraries are cross-compiled on
+# the runner.
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  godot-engine:
+    uses: ./.github/workflows/godot-engine.yml
+    permissions:
+      contents: write
+
+  run-tests:
+    needs: godot-engine
+    runs-on: ubuntu-24.04
+    env:
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Fetch the double precision Godot
+        run: |
+          ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # the addons the demo links in from the checkout (see .gitignore)
+      - name: Link the addons
+        run: |
+          ln -s ../../vendor/gut/addons/gut demo/addons/gut
+          ln -s ../../addons/libmaszyna demo/addons/libmaszyna
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: tests
+
+      # the tests need no old glibc, so the library is built on the runner itself; the empty
+      # overrides leave out the clang-tidy database compile-debug prepares for the IDE
+      - name: Build the library
+        run: make compile-debug CLANG_TIDY_COMPILE_COMMANDS_FILE= CLANG_TIDY_BINDINGS_FILE=
+
+      - name: Import the project
+        run: godot-double --headless --path demo --import
+
+      - name: Run the tests
+        run: >
+          godot-double --headless --path demo -s addons/gut/gut_cmdln.gd
+          -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: gut-test-results
+          path: demo/test_results.xml
+
+  build:
+    needs: godot-engine
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux
+            templates: godot.linuxbsd.template_release.double.x86_64
+            output: bin/linux/maszyna-reloaded-linux64.zip
+          - platform: windows
+            templates: godot.windows.template_release.double.x86_64.exe
+            output: bin/windows/maszyna-reloaded-win64.zip
+          - platform: android
+            templates: android_release.apk
+            output: bin/android/maszyna-reloaded-android-arm64.apk
+    runs-on: ubuntu-24.04
+    env:
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Fetch the double precision Godot
+        run: |
+          ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64 ${{ matrix.templates }}
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # the addon the demo links in from the checkout (see .gitignore)
+      - name: Link the addon
+        run: ln -s ../../addons/libmaszyna demo/addons/libmaszyna
+
+      - name: Install MinGW
+        if: matrix.platform == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - uses: actions/setup-java@v6
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # a throwaway key: this build is for testing, a published APK is signed elsewhere
+      - name: Create the release keystore
+        if: matrix.platform == 'android'
+        run: |
+          keytool -genkeypair -keystore "$RUNNER_TEMP/release.keystore" -alias maszyna \
+            -storepass maszyna -keypass maszyna -keyalg RSA -validity 1 -dname CN=maszyna
+          {
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=$RUNNER_TEMP/release.keystore"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=maszyna"
+            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=maszyna"
+          } >> "$GITHUB_ENV"
+
+      # the Linux library is built in the SDK container, which has no ccache
+      - uses: hendrikmuhs/ccache-action@v1.2
+        if: matrix.platform != 'linux'
+        with:
+          key: ${{ matrix.platform }}
+
+      - name: Build and export ${{ matrix.platform }}
+        run: make release-${{ matrix.platform }}
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: maszyna-reloaded-${{ matrix.platform }}
+          path: ${{ matrix.output }}
+          if-no-files-found: error

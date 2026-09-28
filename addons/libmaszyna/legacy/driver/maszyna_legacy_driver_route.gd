@@ -86,6 +86,14 @@ const EASING_BRAKING_SHARE:float = 1.2
 const BEHIND_ACCELERATION:float = -2.0
 ## -1 is no limit (min_speed())
 const NO_LIMIT:float = -1.0
+## DistCounter is in kilometres, the table in metres
+const METRES_PER_KILOMETRE:float = 1000.0
+## No current limit read, or no switch under the trainset (VelLimitLastDist, SwitchClearDist,
+## Driver.cpp:7247-7248)
+const NO_DISTANCE:float = -1.0
+## A current limit unbroken through the whole reading lasts at least this far [m]
+## (EU07_AI_SPEEDLIMITEXTENDSBEYONDSCANRANGE, Driver.h:27)
+const LIMIT_BEYOND_RANGE:float = 10000.0
 ## A speed the driver takes as an order to go (TableUpdateEvent(), Driver.cpp:1680)
 const GO_SPEED:float = 1.0
 ## A signal speaks to a driver only while it drives - shunting, as a train, banking - or waits for
@@ -151,6 +159,10 @@ var signal_velocity_next:float = 0.0
 var signal_velocity_last:float = NO_LIMIT
 ## The limit TableUpdate() puts on the speed wanted (fVelDes)
 var velocity_limit:float = NO_LIMIT
+## VelLimitLastDist: the speed wanted on the last update, and how far [m] the current limit under
+## it lasts - NO_DISTANCE while none holds
+var velocity_limit_last:float = NO_LIMIT
+var velocity_limit_last_distance:float = NO_DISTANCE
 ## fMinProximityDist, fMaxProximityDist, fBrakeDist
 var min_proximity:float = OTHER_MIN_PROXIMITY
 var max_proximity:float = OTHER_MAX_PROXIMITY
@@ -181,8 +193,10 @@ var _direction:int = 0
 ## The memories' commands it sent, by event, not to send them again until they change
 ## (StopCommandSent(), MemCell.cpp:196-205)
 var _sent:Dictionary[RID, String] = {}
-## The events ahead on the last update, to take the passed ones once
+## The events ahead on the last update, to take the passed ones once, and the vehicle's distance
+## counter then [km] (DistCounter), to tell how far it has driven since
 var _ahead:Dictionary[RID, Entry] = {}
+var _distance_counter:float = 0.0
 
 
 ## One reading of the tracks ahead (TableCheck(), TableUpdate(), check_route_ahead()) for the driver
@@ -229,23 +243,33 @@ func update(
     var signal_distance:float = NO_SIGNAL_DISTANCE
     var obey_train:bool = order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN
     # the events passed since the last update take effect once (TableUpdateEvent(), fDist < 0).
-    # Passed is one gone from the reading that would still be in it were it ahead - its last
-    # distance inside the reach. One that was further is only out of the reach, which shrinks as
-    # the train moves off (1500 m standing, ~750 m moving): taken as passed, a stop signal far
-    # ahead became the stop of the signal passed and held the train for good (FINDINGS.md,
-    # 2026-09-27 "the AI stood at a clear signal").
+    # Passed is one no longer ahead that the train has driven up to - its last distance within the
+    # distance driven since. One gone from the reading but not reached is not passed: it is out of
+    # the reach, which shrinks as the train moves off (FINDINGS.md, 2026-09-27 "the AI stood at a
+    # clear signal"), or off the route - a switch ahead thrown, the original reads the table afresh
+    # from it (TableCheck()); taken as passed, the stop of a signal no longer on the route held the
+    # train at the clear one before it (FINDINGS.md, 2026-09-29)
+    var distance_counter:float = float(RailVehicleServer.vehicle_dump_state(vehicle).get("total_distance", 0.0))
+    var driven:float = (distance_counter - _distance_counter) * METRES_PER_KILOMETRE
+    _distance_counter = distance_counter
     var seen:Dictionary[RID, Entry] = {}
     for entry:Entry in entries:
         if entry.event.is_valid() and entry.distance > 0.0:
             seen[entry.event] = entry
     for event:RID in _ahead:
-        if not seen.has(event) and _ahead[event].distance < reach:
+        if not seen.has(event) and _ahead[event].distance <= driven:
             allowed = _pass(_ahead[event], obey_train, allowed)
     _ahead = seen
 
     velocity_next = NO_LIMIT
     proximity_distance = reach
     velocity_limit = NO_LIMIT
+    velocity_limit_last = velocity_desired
+    velocity_limit_last_distance = NO_DISTANCE
+    # SwitchClearDist, and whether the current limit is unbroken through the reading
+    # (speedlimitiscontinuous, Driver.cpp:862)
+    var switch_clear_distance:float = NO_DISTANCE
+    var limit_continuous:bool = true
     var best_acceleration:float = acceleration
     var signal_found:bool = false
     var go:String = ""
@@ -259,6 +283,11 @@ func update(
                 continue
         var velocity:float = entry.velocity
         var distance:float = entry.distance
+        # a limit goes on through the switches and the passenger stops within it (Driver.cpp:1016)
+        var breaks_limit:bool = not (entry.kind == Kind.SWITCH or entry.kind == Kind.STOP_POINT)
+        if entry.kind == Kind.SWITCH:
+            # the trainset is on a switch until it has left it (Driver.cpp:880-883)
+            switch_clear_distance = distance + entry.length + trainset.length
         if entry.event.is_valid():
             if distance > 0.0:
                 if _is_proper_semaphore(entry.kind, obey_train):
@@ -296,6 +325,9 @@ func update(
                         continue
             elif entry.kind == Kind.OTHER or entry.kind == Kind.COMMAND:
                 continue
+        # a point without a limit breaks the current one (Driver.cpp:1022-1029)
+        if entry.velocity < 0.0 and breaks_limit:
+            limit_continuous = false
         var line_end:bool = entry.kind == Kind.LINE_END
         if velocity < 0.0 and not line_end:
             continue
@@ -319,6 +351,11 @@ func update(
             if velocity >= GO_SPEED and distance + entry.length < -trainset.length and not line_end:
                 continue
             velocity_limit = MaszynaLegacyDriverSpeed.min_speed(velocity_limit, velocity)
+            # the current limit lasts until the trainset has left it (Driver.cpp:945-951)
+            if velocity >= 0.0 and velocity < velocity_limit_last:
+                velocity_limit_last_distance = distance + entry.length + trainset.length
+            elif velocity_limit_last_distance > 0.0 and breaks_limit:
+                limit_continuous = false
             if not line_end:
                 continue
         if line_end:
@@ -338,11 +375,24 @@ func update(
             best_acceleration = wanted
             velocity_next = velocity
             proximity_distance = distance
+        # a point behind, or one right after the current limit, is part of it; an event has no
+        # length (Driver.cpp:1005-1019)
+        if velocity >= 0.0 and velocity < velocity_limit_last \
+                and (distance < 0.0 or velocity_limit_last_distance > 0.0):
+            velocity_limit_last_distance = distance + entry.length + trainset.length
+        elif breaks_limit:
+            limit_continuous = false
         if velocity_next == 0.0:
             break
     # no signal ahead any more: the last one's speed is forgotten on the line (Driver.cpp:1030-1034)
     if obey_train and not signal_found:
         signal_velocity_last = NO_LIMIT
+    # a limit unbroken through the reading lasts beyond it; a signal's lasts until the trainset has
+    # left the switches behind it (Driver.cpp:1050-1057)
+    if velocity_limit_last_distance > 0.0 and limit_continuous:
+        velocity_limit_last_distance = LIMIT_BEYOND_RANGE
+    if signal_velocity_last >= 0.0 and switch_clear_distance >= 0.0:
+        velocity_limit_last_distance = maxf(velocity_limit_last_distance, switch_clear_distance)
     # standing at its passenger stop, it holds there (Driver.cpp:1080-1082)
     if at_passenger_stop and absf(speed) < STOPPED_SPEED:
         velocity_limit = 0.0

@@ -27,6 +27,16 @@ enum Order {
     BANK = 256,
     JUMP_TO_FIRST_ORDER = 512,
 }
+## What PrepareEngine() waits for before the vehicle is ready (isready, Driver.cpp:2843-2851), as
+## bits: a converter overload relay open, the line breaker open, the reverser at neutral (DirActive),
+## the converter off, the air below MIN_MAIN_RESERVOIR_PRESSURE
+enum EngineCheck {
+    CONVERTER_OVERLOAD = 1,
+    LINE_BREAKER = 2,
+    DIRECTION = 4,
+    CONVERTER = 8,
+    AIR = 16,
+}
 
 ## Orders a driver's list holds (maxorders, Driver.h:191)
 const MAX_ORDERS:int = 64
@@ -86,8 +96,10 @@ class DriverState:
     var orders:PackedInt32Array = []
     var order_position:int = 0
     var order_top:int = 1
-    ## iEngineActive - the vehicle is ready to drive (_prepare_engine())
+    ## iEngineActive - the vehicle is ready to drive (_prepare_engine()), and the EngineCheck
+    ## flags that kept it from being ready on the last check
     var engine_active:bool = false
+    var engine_missing:int = 0
     ## iDirection (the cab it drives from, +1 or -1) and iDirectionOrder (the one it was told to)
     var direction:int = 1
     var direction_order:int = 0
@@ -241,6 +253,13 @@ func _get_state(driver:RID) -> Dictionary:
         "trainset_gravity_acceleration": state.trainset.gravity_acceleration,
         "trainset_acceleration": state.trainset.acceleration,
         "velocity_desired": state.speed.velocity_desired,
+        "stop_reason": state.speed.stop_reason,
+        "engine_active": state.engine_active,
+        "engine_missing": state.engine_missing,
+        "speed_velocity_next": state.speed.velocity_next,
+        "velocity_limit_last": state.route.velocity_limit_last,
+        "velocity_limit_last_distance": state.route.velocity_limit_last_distance,
+        "timetable_velocity": state.timetable.velocity,
         "acceleration_desired": state.speed.acceleration_desired,
         "brake_position": state.braking.position,
         "route_velocity_next": state.route.velocity_next,
@@ -510,10 +529,19 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
                 MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON, controlling)
             MaszynaLegacyDriverHints.release_train_brake(vehicle, cab)
     var converter:Variant = CabinSystem.vehicle_state_value(controlling, "converter_enabled")
-    state.engine_active = not converter_overload and mains \
-            and not int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0 \
-            and (converter == null or bool(converter)) \
-            and float(CabinSystem.vehicle_state_value(controlling, "compressor_pressure", 0.0)) > MIN_MAIN_RESERVOIR_PRESSURE
+    var missing:int = 0
+    if converter_overload:
+        missing |= EngineCheck.CONVERTER_OVERLOAD
+    if not mains:
+        missing |= EngineCheck.LINE_BREAKER
+    if int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0:
+        missing |= EngineCheck.DIRECTION
+    if not (converter == null or bool(converter)):
+        missing |= EngineCheck.CONVERTER
+    if float(CabinSystem.vehicle_state_value(controlling, "compressor_pressure", 0.0)) <= MIN_MAIN_RESERVOIR_PRESSURE:
+        missing |= EngineCheck.AIR
+    state.engine_missing = missing
+    state.engine_active = missing == 0
     return state.engine_active
 
 

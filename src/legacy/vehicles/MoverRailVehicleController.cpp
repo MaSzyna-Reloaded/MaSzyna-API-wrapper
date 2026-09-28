@@ -280,7 +280,7 @@ namespace godot {
             return;
         }
         mover->Dettach(p_end);
-        emit_signal(consist_changed_signal);
+        _consume_coupler_events();
     }
 
     bool MoverRailVehicleController::is_coupled(const int p_end) const {
@@ -386,7 +386,7 @@ namespace godot {
     /* The coupler events are consumed first, then the vehicle compares what it announces. */
     void MoverRailVehicleController::update_state() {
         if (mover != nullptr) {
-            _consume_coupler_sounds();
+            _consume_coupler_events();
         }
         RailVehicleController::update_state();
     }
@@ -397,14 +397,27 @@ namespace godot {
     //
     // Consuming is a tick job, not a read job: this clears the mover's flags, so doing it while
     // filling the state dictionary made the events belong to whoever happened to read first.
-    void MoverRailVehicleController::_consume_coupler_sounds() {
+    //
+    // The coupler itself joining or parting is a consist change, whichever way it came - a command,
+    // an automatic coupler meeting another (Mover.cpp:4894), Dettach(). The flag is set on the
+    // coupler that coupled only (Mover.cpp:593), so the vehicle it coupled to is told as well; a
+    // parted one is no longer known here, but it was in the same consist as this one.
+    void MoverRailVehicleController::_consume_coupler_events() {
         static const int flags[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
                                     sound::attachcontrol, sound::attachgangway,   sound::attachheating};
+        bool consist_changed = false;
         for (TCoupling &coupler: mover->Couplers) {
             if (coupler.sounds == sound::none) {
                 continue;
             }
             const bool detaching = (coupler.sounds & sound::detach) != 0;
+            if ((coupler.sounds & sound::attachcoupler) != 0) {
+                consist_changed = true;
+                if (const auto it = controllers_by_mover.find(coupler.Connected);
+                    !detaching && it != controllers_by_mover.end()) {
+                    it->second->emit_signal(consist_changed_signal);
+                }
+            }
             for (int index = 0; index < 6; ++index) {
                 if ((coupler.sounds & flags[index]) != 0) {
                     emit_signal(
@@ -413,6 +426,9 @@ namespace godot {
                 }
             }
             coupler.sounds = sound::none;
+        }
+        if (consist_changed) {
+            emit_signal(consist_changed_signal);
         }
     }
 

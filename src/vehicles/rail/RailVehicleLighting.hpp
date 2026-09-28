@@ -94,6 +94,9 @@ namespace godot {
             /* The headlights dimmer (dimheadlights_sw:, Train.cpp:6125) */
             virtual void headlights_dim(bool p_enabled) = 0;
             virtual bool get_headlights_dimmed() const = 0;
+            /* Compartment (roof) light dimmed (cablightdim_sw) - it then shines at part of its level */
+            virtual void roof_light_dim(bool p_enabled) = 0;
+            virtual bool get_roof_light_dimmed() const = 0;
             // Direct per-light override, independent of the selector/"light programator"
             // (LightsPos + light_position_list) system above - sets/clears a single bit of
             // iLights directly, for debugging/testing individual bulbs regardless of what the

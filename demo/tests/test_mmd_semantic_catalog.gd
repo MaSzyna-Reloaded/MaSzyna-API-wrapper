@@ -121,7 +121,8 @@ func test_cab_light_indicator_and_spotlight_are_separate():
     assert_eq(entry["fixed_fields"]["state_property"], "roof_light_enabled")
     assert_eq(entry["light_widget_class"], CabinSpotLight3D)
     assert_true(entry["flip_upward_spotlight"])
-    assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_enabled")
+    # the level: dimmed (cablightdim_sw) and 24 V-only it shines at part of its energy
+    assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_level")
     assert_true(entry["light_fixed_fields"]["light_enabled"])
 
 
@@ -175,3 +176,11 @@ func test_cabin_spot_light_3d_defaults_light_enabled_to_false():
     var widget := CabinSpotLight3D.new()
     add_child_autofree(widget)
     assert_false(widget.light_enabled)
+
+
+func test_cab_light_dim_switch_dims_the_roof_light():
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("cablightdim_sw")
+    assert_eq(entry["widget_class"], CabinButton)
+    assert_eq(entry["fixed_fields"]["command"], "roof_light_dim")
+    assert_eq(entry["fixed_fields"]["state_property"], "roof_light_dimmed")
+    assert_eq(entry["fixed_fields"]["action"], "cabin_light_dim_toggle")

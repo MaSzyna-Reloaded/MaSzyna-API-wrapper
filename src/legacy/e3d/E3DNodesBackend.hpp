@@ -12,7 +12,7 @@ namespace godot {
 
             struct LightRole {
                     String light_name;
-                    bool on = false;
+                    LightPart part = LIGHT_PART_ON;
             };
 
             void _add_submodels(

@@ -18,6 +18,22 @@ namespace godot {
         point_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
     }
 
+    bool E3DInstanceBackend::_light_part_visible(
+            const E3DInstanceData &p_instance, const String &p_light_name, const LightPart p_part,
+            const bool p_has_xon) {
+        const bool enabled = p_instance.lights_state.get(p_light_name, false);
+        const bool dimmed = p_has_xon && bool(p_instance.lights_dimmed.get(p_light_name, false));
+        switch (p_part) {
+            case LIGHT_PART_ON:
+                return enabled && !dimmed;
+            case LIGHT_PART_XON:
+                return enabled && dimmed;
+            case LIGHT_PART_OFF:
+                return !enabled;
+        }
+        return false;
+    }
+
     /// The colour is the submodel's, or the scenery node's `lightcolors` for its light
     /// (DiffuseOverride, opengl33renderer.cpp:4415); the cone and the range are the submodel's
     Dictionary E3DInstanceBackend::_free_spotlight_parameters(

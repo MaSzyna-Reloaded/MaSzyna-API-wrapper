@@ -31,6 +31,7 @@ namespace godot {
             String name;
             E3DSubModel *on = nullptr;
             E3DSubModel *off = nullptr;
+            E3DSubModel *xon = nullptr; // shown instead of "on" while the light is dimmed
     };
 
     /// A real light the model carries, already placed relative to the model root

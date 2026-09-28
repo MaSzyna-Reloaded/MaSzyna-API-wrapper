@@ -26,6 +26,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="roof_light_dim">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Dims the compartment (cab) light to 0.4 of its level ([code]cablightdim_sw[/code], original [code]Train.cpp:9745[/code]).
+			</description>
+		</method>
 		<method name="increase_light_selector_position">
 			<return type="void" />
 			<description>
@@ -92,6 +99,9 @@
 			Multiplier of headlights intensity
 		</member>
 		<member name="headlights_dimmed" type="bool" setter="" getter="get_headlights_dimmed" default="false">
+		</member>
+		<member name="roof_light_dimmed" type="bool" setter="" getter="get_roof_light_dimmed" default="false">
+			Whether the compartment (cab) light is dimmed.
 		</member>
 		<member name="instrument_type" type="int" setter="set_instrument_type" getter="get_instrument_type" default="0">
 		</member>

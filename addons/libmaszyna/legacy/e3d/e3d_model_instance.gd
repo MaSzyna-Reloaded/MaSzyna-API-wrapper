@@ -37,6 +37,20 @@ var _rid: RID = RID()
         if _rid.is_valid():
             E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
 
+## Light name -> dimmed: the "_xon" submodel instead of "_on", and the real light at
+## [member lights_dimmed_multiplier] (see [method E3DRenderingServer.instance_set_lights_dimmed])
+@export var lights_dimmed: Dictionary[String, bool] = {}:
+    set(x):
+        lights_dimmed = x
+        if _rid.is_valid():
+            E3DRenderingServer.instance_set_lights_dimmed(_rid, lights_dimmed, lights_dimmed_multiplier)
+
+@export var lights_dimmed_multiplier: float = 1.0:
+    set(x):
+        lights_dimmed_multiplier = x
+        if _rid.is_valid():
+            E3DRenderingServer.instance_set_lights_dimmed(_rid, lights_dimmed, lights_dimmed_multiplier)
+
 
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
 
@@ -206,6 +220,7 @@ func _create_instance() -> void:
     E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
     E3DRenderingServer.instance_set_layer_mask(_rid, layers)
     E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
+    E3DRenderingServer.instance_set_lights_dimmed(_rid, lights_dimmed, lights_dimmed_multiplier)
     E3DRenderingServer.instance_build(_rid)
     e3d_instance_created.emit(_rid)
     # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,

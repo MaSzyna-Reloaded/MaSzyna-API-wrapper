@@ -630,34 +630,42 @@ namespace godot {
 
             String light_name = base_name;
 
-            // Acceptable, e.g. wmb10.e3d: the original binds only the first match in tree order
-            // (TButton::Init() -> GetFromName(), Button.cpp:32); other copies stay hidden like any
-            // "_on" submodel (Model3d.cpp:252).
-            if (p_model->get_lights().has(light_name)) {
+            // "<name>_on" and "<name>_xon" are the same light, lit and dimmed (TButton::Init(),
+            // Button.cpp:32-40); the first of each in tree order is bound, as in the original
+            // (GetFromName()) - other copies stay hidden like any "_on" submodel (Model3d.cpp:252).
+            const bool dimmed = sm_name_lower.ends_with(LIGHT_ON_ALT_SUFFIX);
+            Ref<E3DModelLightDefinition> entry = p_model->get_lights().get(light_name, Ref<E3DModelLightDefinition>());
+            const bool registered = entry.is_valid();
+            if (!registered) {
+                entry.instantiate();
+            }
+            const NodePath path = _build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i));
+            if (!(dimmed ? entry->get_xon_submodel_path() : entry->get_on_submodel_path()).is_empty()) {
                 UtilityFunctions::push_warning(
-                        "[E3DParser]: Duplicate light name (first one is used, as in the original): " + light_name);
+                        "[E3DParser]: Duplicate light name (first one is used, as in the original): " + sm_name);
                 continue;
             }
+            if (dimmed) {
+                entry->set_xon_submodel_path(path);
+            } else {
+                entry->set_on_submodel_path(path);
+            }
 
-            Ref<E3DModelLightDefinition> entry;
-            entry.instantiate();
-            entry->set_on_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i)));
-
-            String off_name_lower = off_name.to_lower();
-            int found_off_index = -1;
-
-            for (size_t j = 0; j < p_submodels.size(); j++) {
-                if (used_off.find(j) == used_off.end() && p_submodels[j]->get_name().to_lower() == off_name_lower) {
-                    found_off_index = static_cast<int>(j);
-                    used_off.insert(j);
-                    break;
+            if (entry->get_off_submodel_path().is_empty()) {
+                String off_name_lower = off_name.to_lower();
+                for (size_t j = 0; j < p_submodels.size(); j++) {
+                    if (used_off.find(j) == used_off.end() && p_submodels[j]->get_name().to_lower() == off_name_lower) {
+                        used_off.insert(j);
+                        entry->set_off_submodel_path(
+                                _build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(j)));
+                        break;
+                    }
                 }
             }
-            if (found_off_index > -1) {
-                entry->set_off_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, found_off_index));
-            }
 
-            p_model->register_light(light_name, entry);
+            if (!registered) {
+                p_model->register_light(light_name, entry);
+            }
         }
     }
 

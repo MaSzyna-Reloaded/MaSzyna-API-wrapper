@@ -17,6 +17,7 @@ namespace godot {
             struct LightSubmodels {
                     E3DSubModel *on = nullptr;
                     E3DSubModel *off = nullptr;
+                    E3DSubModel *xon = nullptr;
             };
 
             /// A scenery node's `lights`/`lightcolors` entry for one light
@@ -48,7 +49,9 @@ namespace godot {
             struct LightNodes {
                     ObjectID on;
                     ObjectID off;
+                    ObjectID xon;
                     ObjectID spotlight;
+                    float spotlight_energy = 0.0; // undimmed, as _configure_spotlight() set it
                     E3DSubModel *submodel = nullptr; // first matched on/off submodel, configures the spotlight
             };
 
@@ -79,6 +82,10 @@ namespace godot {
             HashMap<String, LightDeclaration> light_declarations;
             /// Set through instance_set_lights_state(); wins over the declared mode
             Dictionary lights_override;
+            /// Light name -> dimmed (instance_set_lights_dimmed()): its "_xon" submodel is shown instead
+            /// of "_on" if it has one, and its real light shines at lights_dimmed_multiplier
+            Dictionary lights_dimmed;
+            float lights_dimmed_multiplier = 1.0;
             /// Real lights owned by this instance (E3DRenderingServer light RIDs)
             Vector<RID> light_objects;
             /// By lower-case submodel name, kept across a stream clear/build cycle
@@ -108,6 +115,10 @@ namespace godot {
     /// Builds and updates the content of E3DRenderingServer instances.
     class E3DInstanceBackend {
         public:
+            /// What a light shows: its "_on", its "_xon" while dimmed (the "_on" when it has none -
+            /// TButton::TurnxOnWithOnAsFallback(), DynObj.cpp:1218), its "_off" while out
+            enum LightPart { LIGHT_PART_ON, LIGHT_PART_OFF, LIGHT_PART_XON };
+
             E3DInstanceBackend();
             virtual ~E3DInstanceBackend() = default;
 
@@ -124,6 +135,9 @@ namespace godot {
             virtual void apply_poses(E3DInstanceData &p_instance) = 0;
 
         protected:
+            /// Whether a light's part is shown under its state and dimming
+            static bool _light_part_visible(const E3DInstanceData &p_instance, const String &p_light_name,
+                                            LightPart p_part, bool p_has_xon);
             /// The unit quad a free spotlight's point and glare are drawn with - the material's shaders
             /// place it on the screen (types/free_spotlight.gdshader)
             Ref<ArrayMesh> point_mesh;

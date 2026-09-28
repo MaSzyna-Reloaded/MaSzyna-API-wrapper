@@ -17,10 +17,13 @@ namespace godot {
         HashMap<E3DSubModel *, LightRole> light_roles;
         for (const E3DModelLight &light: p_instance.model_lights.lights) {
             if (light.on != nullptr && !light_roles.has(light.on)) {
-                light_roles[light.on] = {light.name, true};
+                light_roles[light.on] = {light.name, LIGHT_PART_ON};
             }
             if (light.off != nullptr && !light_roles.has(light.off)) {
-                light_roles[light.off] = {light.name, false};
+                light_roles[light.off] = {light.name, LIGHT_PART_OFF};
+            }
+            if (light.xon != nullptr && !light_roles.has(light.xon)) {
+                light_roles[light.xon] = {light.name, LIGHT_PART_XON};
             }
         }
 
@@ -72,9 +75,19 @@ namespace godot {
                 continue;
             }
             const bool enabled = p_instance.lights_state[light_name];
-            _set_node_visible(light->value.on, enabled);
-            _set_node_visible(light->value.off, !enabled);
+            const bool has_xon = light->value.xon.is_valid();
+            _set_node_visible(light->value.on, _light_part_visible(p_instance, light_name, LIGHT_PART_ON, has_xon));
+            _set_node_visible(light->value.off, _light_part_visible(p_instance, light_name, LIGHT_PART_OFF, has_xon));
+            _set_node_visible(light->value.xon, _light_part_visible(p_instance, light_name, LIGHT_PART_XON, has_xon));
             _set_node_visible(light->value.spotlight, enabled);
+            // a dimmed light shines at the vehicle's DimmedMultiplier (lightarray.cpp:77-78)
+            if (SpotLight3D *spotlight = Object::cast_to<SpotLight3D>(ObjectDB::get_instance(light->value.spotlight));
+                spotlight != nullptr) {
+                const bool dimmed = p_instance.lights_dimmed.get(light_name, false);
+                spotlight->set_param(
+                        Light3D::PARAM_ENERGY,
+                        light->value.spotlight_energy * (dimmed ? p_instance.lights_dimmed_multiplier : 1.0f));
+            }
         }
         for (const KeyValue<E3DSubModel *, ObjectID> &submodel_node: p_instance.submodel_nodes) {
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(
@@ -110,11 +123,18 @@ namespace godot {
                 if (light_nodes.submodel == nullptr) {
                     light_nodes.submodel = submodel.ptr();
                 }
-                if (role->value.on) {
-                    light_nodes.on = ObjectID(child->get_instance_id());
-                    light_name = role->value.light_name;
-                } else {
-                    light_nodes.off = ObjectID(child->get_instance_id());
+                switch (role->value.part) {
+                    case LIGHT_PART_ON:
+                        light_nodes.on = ObjectID(child->get_instance_id());
+                        light_name = role->value.light_name;
+                        break;
+                    case LIGHT_PART_XON:
+                        light_nodes.xon = ObjectID(child->get_instance_id());
+                        light_name = role->value.light_name;
+                        break;
+                    case LIGHT_PART_OFF:
+                        light_nodes.off = ObjectID(child->get_instance_id());
+                        break;
                 }
             }
 
@@ -150,6 +170,7 @@ namespace godot {
                     E3DInstanceData::LightNodes &light_nodes = p_instance.light_nodes[p_parent_light_name];
                     light_nodes.spotlight = ObjectID(spotlight->get_instance_id());
                     _configure_spotlight(spotlight, p_parent_light_name, light_nodes.submodel);
+                    light_nodes.spotlight_energy = static_cast<float>(spotlight->get_param(Light3D::PARAM_ENERGY));
                 }
                 // the point (and the glare) the original draws where the light is
                 // (opengl33renderer.cpp:4375-4500); it goes on and off with the spotlight node

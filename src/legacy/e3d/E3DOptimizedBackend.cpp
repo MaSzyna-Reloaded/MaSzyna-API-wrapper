@@ -8,6 +8,7 @@ namespace godot {
             E3DInstanceData::LightSubmodels light_submodels;
             light_submodels.on = light.on;
             light_submodels.off = light.off;
+            light_submodels.xon = light.xon;
             p_instance.light_submodels[light.name] = light_submodels;
         }
 
@@ -38,12 +39,15 @@ namespace godot {
             if (!p_instance.lights_state.has(light.key)) {
                 continue;
             }
-            const bool enabled = p_instance.lights_state[light.key];
+            const bool has_xon = light.value.xon != nullptr;
             if (light.value.on != nullptr) {
-                overrides[light.value.on] = enabled;
+                overrides[light.value.on] = _light_part_visible(p_instance, light.key, LIGHT_PART_ON, has_xon);
             }
             if (light.value.off != nullptr) {
-                overrides[light.value.off] = !enabled;
+                overrides[light.value.off] = _light_part_visible(p_instance, light.key, LIGHT_PART_OFF, has_xon);
+            }
+            if (has_xon) {
+                overrides[light.value.xon] = _light_part_visible(p_instance, light.key, LIGHT_PART_XON, has_xon);
             }
         }
 

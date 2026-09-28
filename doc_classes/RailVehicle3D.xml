@@ -67,6 +67,9 @@
 		</member>
 		<member name="low_poly_cabin_path" type="NodePath" setter="set_low_poly_cabin_path" getter="get_low_poly_cabin_path" default="NodePath(&quot;&quot;)">
 		</member>
+		<member name="mirror_paths" type="NodePath[]" setter="set_mirror_paths" getter="get_mirror_paths" default="[]">
+			The exterior mirrors in the original's numbering from 1: odd on the left, even on the right. The ones at the end of the occupied cab turn about their vertical axis by [member RailVehicleDoors.mirror_max_shift], as far as their side is unfolded.
+		</member>
 		<member name="model_instance_path" type="NodePath" setter="set_model_instance_path" getter="get_model_instance_path" default="NodePath(&quot;&quot;)">
 		</member>
 		<member name="pantograph_collector_width" type="float" setter="set_pantograph_collector_width" getter="get_pantograph_collector_width" default="0.5">

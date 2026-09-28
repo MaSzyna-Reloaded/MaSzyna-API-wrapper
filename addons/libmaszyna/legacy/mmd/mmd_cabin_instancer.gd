@@ -342,6 +342,32 @@ static func parse_wiper_prefix(abs_mmd_path:String) -> String:
     return tokens[index + 1]
 
 
+## Where the mirrors stand among the counts of the MMD's `animations:` line (DynObj.h:40 ANIM_MIRRORS).
+const ANIM_MIRRORS:int = 8
+
+
+## The mirror submodels of the vehicle model: `animmirrorprefix:` numbered from 1, as many as the
+## `animations:` line declares (DynObj.cpp:5309-5333, 5887-5910) - a count list ends at its first
+## negative number, and a vehicle without the line has no mirrors.
+static func parse_mirror_names(abs_mmd_path:String) -> PackedStringArray:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var names:PackedStringArray = PackedStringArray()
+    var prefix_index:int = _find_label_index(tokens, "animmirrorprefix:")
+    var counts_index:int = _find_label_index(tokens, "animations:")
+    if prefix_index == -1 or prefix_index + 1 >= tokens.size() or counts_index == -1:
+        return names
+    var mirror_count:int = 0
+    for type:int in range(ANIM_MIRRORS + 1):
+        var token_index:int = counts_index + 1 + type
+        if token_index >= tokens.size() or int(tokens[token_index]) < 0:
+            return names
+        mirror_count = int(tokens[token_index])
+    for number:int in range(1, mirror_count + 1):
+        names.append(tokens[prefix_index + 1] + str(number))
+    return names
+
+
 ## Reads `jointcabs:` from the MMD (DynObj.cpp:6626) - all virtual cabs share one location and
 ## model, so the whole low-poly cab is hidden from inside any of them.
 static func parse_joint_cabs(abs_mmd_path:String) -> bool:

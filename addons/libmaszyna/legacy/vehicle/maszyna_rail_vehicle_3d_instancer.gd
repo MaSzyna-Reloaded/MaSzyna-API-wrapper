@@ -93,6 +93,7 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> M
 
     structure.skins = PackedStringArray(MmdCabinInstancer.resolve_skins(normalized_data_path, skin))
     structure.wiper_prefix = MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path)
+    structure.mirror_names = MmdCabinInstancer.parse_mirror_names(abs_mmd_path)
     structure.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
     structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     return structure
@@ -232,7 +233,7 @@ static func initialize_instance(
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(structure.data_path)
             .path_join(structure.file_name + ".mmd"))
-    _bind_animation_paths(vehicle, model, structure.wiper_prefix)
+    _bind_animation_paths(vehicle, model, structure.wiper_prefix, structure.mirror_names)
     var sound_diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FizVehiclePhysicsNode", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
@@ -295,14 +296,17 @@ static func _build_cabin_scene(normalized_data_path:String, file_name:String, sk
 ## Resolves vehicle's bogie/wheel animation paths against model's submodel tree. model may not
 ## be e3d_loaded yet (E3DModelInstance builds its submodel tree in _process(), not synchronously
 ## in add_child()) - in that case resolution is deferred to model's own e3d_loaded signal.
-static func _bind_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String) -> void:
+static func _bind_animation_paths(
+        vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String, mirror_names:PackedStringArray) -> void:
     if model.is_e3d_loaded():
-        _resolve_animation_paths(vehicle, model, wiper_prefix)
+        _resolve_animation_paths(vehicle, model, wiper_prefix, mirror_names)
     else:
-        model.e3d_loaded.connect(_resolve_animation_paths.bind(vehicle, model, wiper_prefix), CONNECT_ONE_SHOT)
+        model.e3d_loaded.connect(
+                _resolve_animation_paths.bind(vehicle, model, wiper_prefix, mirror_names), CONNECT_ONE_SHOT)
 
 
-static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String) -> void:
+static func _resolve_animation_paths(
+        vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String, mirror_names:PackedStringArray) -> void:
     var submodel_index:Dictionary = {}
     _index_submodels(model, submodel_index)
 
@@ -334,6 +338,13 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
         var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
         fiz_controller.vehicle_changed.connect(_apply_wiper_count.bind(fiz_controller, vehicle))
         _apply_wiper_count(fiz_controller, vehicle)
+
+    if mirror_names:
+        var mirror_paths:Array[NodePath] = []
+        for mirror_name:String in mirror_names:
+            var mirror:Node3D = _find_submodel(submodel_index, [mirror_name.to_lower()])
+            mirror_paths.append(vehicle.get_path_to(mirror) if mirror else NodePath())
+        vehicle.mirror_paths = mirror_paths
 
     # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
     var coupler_paths:Dictionary = {}

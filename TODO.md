@@ -238,6 +238,12 @@ about forty more gauges (speed control buttons, door permits, door step, ...), e
 state key and a catalog `state_light`. The lamps also light without low voltage - TGauge gates
 them on it (Gauge.cpp:379).
 
+The door permit lamps (`doorleftpermit_sw`/`doorrightpermit_sw` `_on`, `i-doorpermit_left:`/
+`_right:`, Train.cpp:11754, 12033) show `m_doorspermitleft/right`: the permit of the cab's side,
+blinking by `DoorsPermitLightBlinking` unless a door of that side in the consist is open or only
+open (`IsAnyDoorOpen`/`IsAnyDoorOnlyOpen` of the driver, Train.cpp:8511-8516). The switches
+themselves are `LegacyCabinDoorPermits`.
+
 ### Mouse operation (CabinHUDMouseSystem) - not ported from drivermouseinput.cpp
 
 * Absolute slider for the `*set` levers (master controller, train and independent brake):

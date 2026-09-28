@@ -10,6 +10,7 @@
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/typed_dictionary.hpp>
+#include <vector>
 
 namespace godot {
     class Cabin3D;
@@ -20,6 +21,7 @@ namespace godot {
     class RailVehicleDieselEngine;
     class RailVehicleLighting;
     class RailVehicleWipers;
+    class RailVehicleDoors;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
@@ -56,6 +58,9 @@ namespace godot {
             TypedArray<NodePath> pantograph_rear_arm_paths;
             // three per wiper (arm 1, arm 2, blade), an empty path for a missing one
             TypedArray<NodePath> wiper_arm_paths;
+            // the mirrors in the original's order, <animmirrorprefix><number> from 1 - odd on the
+            // left, even on the right (DynObj.cpp:5887-5910), an empty path for a missing one
+            TypedArray<NodePath> mirror_paths;
             // coupler/hose submodels by lowercased name, e.g. "cpneumatic1r_on" (DynObj.cpp:2170-2181)
             Dictionary coupler_submodel_paths;
             String start_track_name;
@@ -91,6 +96,7 @@ namespace godot {
             RailVehicleDieselEngine *diesel_engine = nullptr;
             RailVehicleLighting *lighting = nullptr;
             RailVehicleWipers *wipers = nullptr;
+            RailVehicleDoors *doors = nullptr;
             VehiclePhysicsNode *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
@@ -129,6 +135,16 @@ namespace godot {
             TypedArray<Node3D> pantograph_rear_arm_nodes;
             TypedArray<Node3D> wiper_arm_nodes;
             PackedFloat64Array wiper_applied_positions;
+            struct MirrorNode {
+                    Node3D *node = nullptr;
+                    bool right = false;
+                    // at the front end of the model: the original's offset().z > 0 (DynObj.cpp:5903)
+                    bool front = false;
+            };
+            std::vector<MirrorNode> mirror_nodes;
+            double mirror_applied_left = -1.0;
+            double mirror_applied_right = -1.0;
+            int mirror_applied_cab = 0;
             Dictionary pantograph_front_geometry;
             Dictionary pantograph_rear_geometry;
             bool pantograph_front_converged = true;
@@ -176,6 +192,7 @@ namespace godot {
             void _show_air_coupler(const String &p_name, bool p_on, bool p_xon);
             void _update_couplers();
             void _update_wipers();
+            void _update_mirrors();
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_model_detail();
@@ -261,6 +278,8 @@ namespace godot {
             TypedArray<NodePath> get_pantograph_rear_arm_paths() const;
             void set_wiper_arm_paths(const TypedArray<NodePath> &p_value);
             TypedArray<NodePath> get_wiper_arm_paths() const;
+            void set_mirror_paths(const TypedArray<NodePath> &p_value);
+            TypedArray<NodePath> get_mirror_paths() const;
             void set_coupler_submodel_paths(const Dictionary &p_value);
             Dictionary get_coupler_submodel_paths() const;
             int get_pneumatic_layout(int p_end, bool p_brake_hose) const;

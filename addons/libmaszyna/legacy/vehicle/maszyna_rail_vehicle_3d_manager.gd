@@ -42,8 +42,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # v18: the cache holds a MaszynaVehicleStructure - what the MMD says the vehicle is built from -
     # instead of a PackedScene of the vehicle's nodes. v19: it carries the whole `loads:` block,
     # so a vehicle can be drawn with the cargo the scenery gave it. v19: spring brake, line breaker and cab gauge
-    # fixes of 2026-09-24 (catalog entries, component defaults) - bumped on request.
-    return ("structure-v20:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # fixes of 2026-09-24 (catalog entries, component defaults) - bumped on request. v21: the
+    # mirror submodels of `animmirrorprefix:` and the cab's mirrors_sw.
+    return ("structure-v21:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

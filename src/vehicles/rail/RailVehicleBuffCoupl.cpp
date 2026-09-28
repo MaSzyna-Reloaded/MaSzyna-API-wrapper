@@ -35,8 +35,6 @@ namespace godot {
                 "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY(RailVehicleBuffCoupl, Variant::STRING, control_type);
         BIND_PROPERTY_W_HINT(RailVehicleBuffCoupl, Variant::INT, buffer_location, PROPERTY_HINT_ENUM, "Front,Back,Both");
-        ClassDB::bind_method(D_METHOD("couple"), &RailVehicleBuffCoupl::couple);
-        ClassDB::bind_method(D_METHOD("decouple"), &RailVehicleBuffCoupl::decouple);
 
         BIND_ENUM_CONSTANT(COUPLER_TYPE_AUTOMATIC)
         BIND_ENUM_CONSTANT(COUPLER_TYPE_SCREW)
@@ -63,17 +61,5 @@ namespace godot {
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_FRONT)
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_BACK)
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_BOTH)
-    }
-
-    void RailVehicleBuffCoupl::_register_commands() {
-        register_command("buffer_couple", Callable(this, "couple"));
-        register_command("buffer_decouple", Callable(this, "decouple"));
-        VehicleComponent::_register_commands();
-    }
-
-    void RailVehicleBuffCoupl::_unregister_commands() {
-        unregister_command("buffer_couple", Callable(this, "couple"));
-        unregister_command("buffer_decouple", Callable(this, "decouple"));
-        VehicleComponent::_unregister_commands();
     }
 } // namespace godot

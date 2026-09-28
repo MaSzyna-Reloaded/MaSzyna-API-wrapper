@@ -188,6 +188,8 @@ namespace godot {
             /* The component of a kind, or null when this vehicle has none. One per kind: a
              * vehicle has one brake system and one engine, whatever kind it is. */
             VehicleComponent *get_component(VehicleComponentType::Type p_type) const;
+            /// Every component of a type - a vehicle has two couplers, one per end
+            TypedArray<VehicleComponent> find_components(VehicleComponentType::Type p_type) const;
             /* Every scripted component carrying this tag - modders add as many as they like */
             TypedArray<VehicleComponent> find_generic_components(const StringName &p_tag) const;
 

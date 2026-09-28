@@ -17,8 +17,6 @@ namespace godot {
             static void _bind_methods();
 
         protected:
-            void _register_commands() override;
-            void _unregister_commands() override;
 
         public:
             enum CouplerType {
@@ -54,7 +52,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, damping_beta, 0.0);
             MAKE_MEMBER_GS(int, allowed_flag, 0);
             MAKE_MEMBER_GS(int, automatic_flag, 0);
-            MAKE_MEMBER_GS(int, power_flag, 0);
+            // TCoupling::PowerFlag (MOVER.h:1215): 24V and 110V pass unless the FIZ says otherwise
+            MAKE_MEMBER_GS(int, power_flag, POWER_24V | POWER_110V);
             MAKE_MEMBER_GS(int, power_coupling, 128);
             MAKE_MEMBER_GS(String, control_type, "");
             MAKE_MEMBER_GS_NR(CouplerType, coupler_type, CouplerType::COUPLER_TYPE_AUTOMATIC);
@@ -74,8 +73,6 @@ namespace godot {
             /// The end of the neighbour this end is attached to.
             virtual End get_connected_end(End p_end) const = 0;
 
-            virtual void couple() = 0;
-            virtual void decouple() = 0;
     };
 } // namespace godot
 

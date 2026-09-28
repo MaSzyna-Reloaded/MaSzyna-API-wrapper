@@ -300,6 +300,38 @@ namespace godot {
             // relative to the game directory, which the original is always started in
             python.PyRun_SimpleStringFlags(
                     "import os, sys\nos.chdir(_maszyna_game_dir)\nsys.path.insert(0, _maszyna_game_dir)\n", nullptr);
+            // the data is made on Windows, whose file names ignore letter case, and the scripts
+            // name files as they please ("WS_gotowosc.png" for ws_gotowosc.png): a path that is
+            // not there as written is looked for letter case aside, one directory at a time -
+            // for open(), which PIL opens images with, and os.path.isfile(), which the scripts
+            // look for them with
+            python.PyRun_SimpleStringFlags(
+                    "import os, __builtin__\n"
+                    "_maszyna_exists = os.path.exists\n"
+                    "def _maszyna_find_path(path):\n"
+                    "    if not isinstance(path, basestring) or _maszyna_exists(path):\n"
+                    "        return path\n"
+                    "    parts = os.path.normpath(path).split(os.sep)\n"
+                    "    current = '.' if parts[0] else os.sep\n"
+                    "    for part in parts:\n"
+                    "        if not part:\n"
+                    "            continue\n"
+                    "        candidate = os.path.join(current, part)\n"
+                    "        if not _maszyna_exists(candidate):\n"
+                    "            try:\n"
+                    "                names = [name for name in os.listdir(current) if name.lower() == part.lower()]\n"
+                    "            except OSError:\n"
+                    "                return path\n"
+                    "            if not names:\n"
+                    "                return path\n"
+                    "            candidate = os.path.join(current, names[0])\n"
+                    "        current = candidate\n"
+                    "    return current\n"
+                    "_maszyna_open = __builtin__.open\n"
+                    "__builtin__.open = lambda name, *args, **kwargs: _maszyna_open(_maszyna_find_path(name), *args, **kwargs)\n"
+                    "_maszyna_isfile = os.path.isfile\n"
+                    "os.path.isfile = lambda path: _maszyna_isfile(_maszyna_find_path(path))\n",
+                    nullptr);
             // the base class of nearly every screen; a script that does not derive from it
             // still runs when it is missing
             python.run_file(main, p_game_dir.path_join("python/local/abstractscreenrenderer.py"));

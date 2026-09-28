@@ -37,6 +37,9 @@
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
 		</member>
+		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
+			The name of the vehicle's type - the original's CHK/MMD name ([code]TMoverParameters::TypeName[/code]), set on the vehicle every time one is built.
+		</member>
 	</members>
 	<signals>
 		<signal name="vehicle_changed">

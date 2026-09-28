@@ -29,6 +29,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &VehiclePhysicsNode::set_train_id);
         ClassDB::bind_method(D_METHOD("get_train_id"), &VehiclePhysicsNode::get_train_id);
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
+        ClassDB::bind_method(D_METHOD("set_type_name", "type_name"), &VehiclePhysicsNode::set_type_name);
+        ClassDB::bind_method(D_METHOD("get_type_name"), &VehiclePhysicsNode::get_type_name);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
         ClassDB::bind_method(D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
@@ -101,6 +104,7 @@ namespace godot {
             VehicleModel::apply(controller, p_model->get_properties());
         }
         controller->set_train_id(train_id);
+        controller->set_type_name(type_name);
         controller->set_initial_velocity(initial_velocity);
         controller->set_driver_type(driver_type);
         controller->set_load_name(load_name);
@@ -162,6 +166,17 @@ namespace godot {
 
     String VehiclePhysicsNode::get_train_id() const {
         return train_id;
+    }
+
+    void VehiclePhysicsNode::set_type_name(const String &p_type_name) {
+        type_name = p_type_name;
+        if (controller != nullptr) {
+            controller->set_type_name(type_name);
+        }
+    }
+
+    String VehiclePhysicsNode::get_type_name() const {
+        return type_name;
     }
 
     void VehiclePhysicsNode::set_initial_velocity(const double p_velocity) {

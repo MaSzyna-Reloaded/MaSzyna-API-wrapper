@@ -1,5 +1,6 @@
 #pragma once
 #include "RailVehicleElectricEngine.hpp"
+#include "RailVehicleInverter.hpp"
 #include "macros.hpp"
 #include "vehicles/base/VehicleCurvePointItem.hpp"
 #include "vehicles/rail/RailVehicleWWListItem.hpp"
@@ -22,8 +23,12 @@ namespace godot {
 
         protected:
             EngineType get_engine_type() const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
         public:
+            /// The state of each inverter (TMoverParameters::Inverters)
+            virtual TypedArray<RailVehicleInverter> get_inverters() const = 0;
+
             TypedArray<RailVehicleWWListItem> get_wwlist() {
                 return wwlist;
             }

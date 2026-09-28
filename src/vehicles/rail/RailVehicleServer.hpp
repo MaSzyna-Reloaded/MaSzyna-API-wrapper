@@ -193,12 +193,17 @@ namespace godot {
             /* The node driving this vehicle, by instance id - a public API carries no pointers
              * (PhysicsServer3D::body_attach_object_instance_id is the shape this follows). */
             void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
+            /* The instance id attached by vehicle_attach_controller(), 0 without one
+             * (PhysicsServer3D::body_get_object_instance_id) */
+            uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
             /* The scenery's name for this vehicle, and the way back from one. A name is what a
              * `.scn`, an event or the console has; everything that holds the vehicle uses its
              * handle and never comes through here (TrackServer::track_get_rid_by_name() is the
              * same shape, for the same reason). */
             void vehicle_set_name(const RID &p_vehicle, const String &p_name);
             String vehicle_get_name(const RID &p_vehicle) const;
+            /* The name of the vehicle's type (TMoverParameters::TypeName) */
+            String vehicle_get_type_name(const RID &p_vehicle) const;
             /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
             VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;

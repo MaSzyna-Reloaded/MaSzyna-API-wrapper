@@ -8,20 +8,6 @@
 	</description>
 	<tutorials>
 	</tutorials>
-	<methods>
-		<method name="couple">
-			<return type="void" />
-			<description>
-				Attempts to couple the train to a neighboring vehicle.
-			</description>
-		</method>
-		<method name="decouple">
-			<return type="void" />
-			<description>
-				Decouples the train from the attached vehicle.
-			</description>
-		</method>
-	</methods>
 	<members>
 		<member name="allowed_flag" type="int" setter="set_allowed_flag" getter="get_allowed_flag" default="0">
 			Bitmask defining the allowed connections (mechanical, pneumatic, electric, etc.). See [enum AllowedFlagBits].

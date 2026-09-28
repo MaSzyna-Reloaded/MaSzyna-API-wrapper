@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 21
+const FIZ_PARSER_FORMAT_VERSION := 24
 
 ## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
 const _COMPONENT_TYPES:Array[int] = [
@@ -210,15 +210,14 @@ static func build_model_at(fiz_path: String) -> VehicleModel:
     model = VehicleModel.new()
     model.properties = VehicleModel.capture(root)
     var components:Array[VehicleComponentModel] = []
+    # every component of a type - BuffCoupl1./BuffCoupl2. are two, one per end
     for type:int in _COMPONENT_TYPES:
-        var component:VehicleComponent = root.get_component(type)
-        if not component:
-            continue
-        var entry := VehicleComponentModel.new()
-        entry.type = type
-        entry.implementation = component.get_class()
-        entry.properties = VehicleModel.capture(component)
-        components.append(entry)
+        for component:VehicleComponent in root.find_components(type):
+            var entry := VehicleComponentModel.new()
+            entry.type = type
+            entry.implementation = component.get_class()
+            entry.properties = VehicleModel.capture(component)
+            components.append(entry)
     model.components = components
     root.free()
 

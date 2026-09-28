@@ -1519,3 +1519,89 @@ lighting or the consist.
   attached (`test_a_cab_leaving_keeps_the_logic_that_replaced_its_own`).
 * **Rule:** whoever attaches something shared per vehicle takes away only what it attached -
   another owner may have replaced it meanwhile.
+
+
+## 2026-09-28 - cab Python screens could not open their images
+
+* **Symptom:** the EN57 cab screens (`rozklad_aksel.py`, `screen_en57al.py`) raised in the Python
+  worker: `image not found: "./dynamic/pkp/en71aks_v1/cab/ekran"` (reported as `NameError:
+  FileNotFoundError` - a Python 3 name in a Python 2 script) and `IOError ... WS_gotowosc.png`.
+* **Cause:** two traps in the data. `akl_ra.mmd:247` passes `parameters: tex="./dynamic/..."`:
+  the original's `cParser::findQuotes()` (parser.cpp:248, 479) glues quoted text to the token and
+  drops the quotes, `MaszynaParser` had no quote handling and kept them in the path. And the
+  scripts name `WS_gotowosc.png` for `ws_gotowosc.png` on disk - fine on Windows, whose file
+  names ignore case, not on Linux.
+* **Fix:** `MaszynaParser::_read_token()` reads quoted text as `readQuotes()` does (no stops or
+  comments inside, backslash escapes); `PythonScreenServer`'s worker resolves a missing path
+  letter case aside, one directory at a time, for `open()` and `os.path.isfile()`.
+* **Rule:** the game data is written against Windows and `cParser` - quoted text is one token
+  without quotes, and a file name matches letter case aside.
+
+
+## 2026-09-28 - the ED72 could not be started, and the fix did not take
+
+* **Symptom:** zwierzyniec_ed72.scn, ED72 cab: no pantographs, no main switch, no lights; after the
+  fix a headless probe still read `get_power_flag()=0` on the driving car.
+* **Cause:** the ED72's battery is only in 5bs-rb (the other cars say `BatteryStart=Disabled`), its
+  24V reaches the unit over the couplers (`PowerCouplersCheck()`, Mover.cpp:1872), which pass it
+  only with `PowerFlag & power24v`. The original's default is `power110v | power24v`
+  (MOVER.h:1215); `RailVehicleBuffCoupl.power_flag` defaulted to 0, and no ED72 FIZ sets the key.
+  The probe then read a FIZ cache entry written at the same minute by the operator's game, which
+  still had the old library loaded but already the new scripts - the old default saved under the
+  bumped `FIZ_PARSER_FORMAT_VERSION`.
+* **Fix:** `power_flag` defaults to `POWER_24V | POWER_110V`; `FIZ_PARSER_FORMAT_VERSION` bumped
+  once more past the poisoned entries. Measured: battery -> 24V on every car, pantographs 3600 V on
+  the motor car, main switch, converter, 110V, lights.
+* **Rule:** a property default is the original's default for the absent key; and a cache bump only
+  holds when no process with the old library can write under the new version.
+
+
+## 2026-09-28 - the ED72's controller did not reach its motor cars
+
+* **Symptom:** ED72 in zwierzyniec_ed72.scn: the cab's master controller moved, but the motor car
+  (sa) never took a position; `get ED72-010sa` showed `"cabin": 0` while the driving car had 1.
+* **Cause:** `IncMainCtrl()` refuses on a vehicle with `CabActive == 0` (Mover.cpp). The motor
+  cars get it from the driving car's `CabActivisation()`, which sends it along the couplers
+  (`SendCtrlToNext`, Mover.cpp:2905, 12425). The player entered the cab - and activated it
+  (`RailVehicle3D::enter_cabin()` -> `cab_activation_auto()`) - while the scenery was still
+  loading: `demo_scenery_loading.gd` set `start_train_id` before `load()`, and the player's
+  `_process` took the vehicle as soon as it had a controller, before `_build_drivers()` coupled the
+  trainsets. The activation went out over couplers not connected yet.
+* **Fix:** the scene hands the player its train on `scenery_loaded`; `MaszynaPlayer.auto_start`
+  (off in that scene) keeps it from taking the first vehicle on its own meanwhile.
+* **Rule:** anything that sends along the couplers happens only once the trainset is coupled -
+  the player takes a vehicle only after the scenery says it is loaded.
+
+
+## 2026-09-28 - every rear coupler held 1 kN
+
+* **Symptom:** the ED72 pulled away and tore apart at once: sb `coupler_stretched`, `train_damage`
+  8 (dtrain_coupling), the alarm chain flag, rb left behind with its own pipe and battery - the
+  brake pipe and the 24V of the rest lost.
+* **Cause:** `FizVehicleBuilder.build_model_at()` saved the parsed vehicle one component per type
+  (`root.get_component(type)`), so of `BuffCoupl1.`/`BuffCoupl2.` only the first reached the model
+  and the vehicle. The rear coupler kept the Mover's defaults (Mover.cpp:487-488: SpringKC 1,
+  FmaxC 1000 N) - `vehicle_dump_config()` showed `coupler_max_force=[780000.0, 1000.0]` on every
+  car. Any pull stretched it past FmaxC and, after the Mover's one second of leeway, broke it
+  (Mover.cpp:4843-4857). Two coupler components also both registered the same (stub) commands.
+* **Fix:** `VehicleController.find_components(type)`; the builder captures every component of a
+  type; the stub `buffer_couple`/`buffer_decouple` commands removed. Measured: 780 kN at both ends
+  of every ED72 car. Test: `test_two_coupler_sections_reach_both_ends`.
+* **Rule:** a vehicle may carry several components of one type - never reduce them to one per type
+  when saving, copying or listing them.
+
+
+## 2026-09-28 - the ED72 never went into the field shunt
+
+* **Symptom:** the ED72 ran up to 36-43 km/h on the master controller's top position and no
+  further; the shunt keys did nothing.
+* **Cause:** with `CoupledCtrl=Yes` the original refuses `IncScndCtrl()` (Mover.cpp:2531) - the
+  master controller's shaft goes on into the shunt past its last main position (Mover.cpp:2335),
+  and the cab counts its range as `MainCtrlPosNo + ScndCtrlPosNo` and its position as `MainCtrlPos
+  + ScndCtrlPos` (Train.cpp:985, 1133, 9410). The catalog's `mainctrl` capped the cab widget at
+  `main_controller_position_max` (3), so the fourth press never went out.
+* **Fix:** `master_controller_position_max` and `master_controller_position` from the master
+  controller component, main + shunt when coupled; `mainctrl` uses them. Measured: position 6
+  (main 3, shunt 3), camshaft to 14, past 50 km/h and still accelerating.
+* **Rule:** a coupled controller's cab range is main + shunt - check `CoupledCtrl` before taking a
+  controller's range from one table.

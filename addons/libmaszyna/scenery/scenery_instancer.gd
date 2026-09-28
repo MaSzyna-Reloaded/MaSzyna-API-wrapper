@@ -169,7 +169,10 @@ static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
     var vehicles:Array[Node] = root.find_children("", "MaszynaRailVehicle3D", true, false)
     for node:Node in vehicles:
         var vehicle:MaszynaRailVehicle3D = node
-        while not vehicle.is_built() or (vehicle.get_controller() and not vehicle.is_placed()):
+        # every track is built by now: one missing is never built - a road car's (roads are not
+        # built yet, maszyna_node_track_importer.gd) - and its vehicle never placed
+        var on_track:bool = TrackServer.track_get_rid_by_name(vehicle.start_track_name).is_valid()
+        while not vehicle.is_built() or (on_track and vehicle.get_controller() and not vehicle.is_placed()):
             await _report_progress(root, 0.9, "Instancing vehicles")
     root.load_progress.emit(1.0, "")
 

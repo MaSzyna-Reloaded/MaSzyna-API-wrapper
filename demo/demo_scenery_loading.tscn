@@ -32,6 +32,7 @@ tonemap_agx_contrast = 1.1
 [node name="Player" parent="." unique_id=88536137 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
 sfx_bank = ExtResource("player_sfx_bank")
+auto_start = false
 
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
@@ -86,7 +87,6 @@ color = Color(0, 0, 0, 1)
 
 [connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
-[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]
 [connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
 [connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]

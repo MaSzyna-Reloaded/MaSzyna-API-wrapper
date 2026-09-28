@@ -15,7 +15,7 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.45)
+shadow_color = Color(0, 0, 0, 0.15)
 shadow_size = 12
 shadow_offset = Vector2(0, 4)
 
@@ -34,9 +34,6 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 12
-shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip_hover"]
 content_margin_left = 12.0
@@ -53,9 +50,6 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-shadow_color = Color(0, 0, 0, 0.45)
-shadow_size = 12
-shadow_offset = Vector2(0, 4)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_row"]
 content_margin_left = 8.0
@@ -167,6 +161,74 @@ corner_radius_bottom_left = 10
 content_margin_top = 1.0
 bg_color = Color(0.45, 0.72, 1, 0.18)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_speed_limit_sign"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.97, 0.97, 0.95, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.86, 0.14, 0.14, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+anti_aliasing_size = 1.5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stop_sign"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.86, 0.14, 0.14, 1)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.97, 0.97, 0.95, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+anti_aliasing_size = 1.5
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lamp"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 2.0
+bg_color = Color(0.15, 0.15, 0.15, 0.4)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.36, 0.36, 0.36, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lamp_lit"]
+content_margin_left = 10.0
+content_margin_top = 2.0
+content_margin_right = 10.0
+content_margin_bottom = 2.0
+bg_color = Color(0.92, 0.16, 0.14, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.5, 0.45, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(1, 0.15, 0.1, 0.55)
+shadow_size = 8
+
 [sub_resource type="SystemFont" id="SystemFont_digits"]
 font_names = PackedStringArray("JetBrains Mono", "DejaVu Sans Mono", "Consolas", "Monospace")
 
@@ -216,6 +278,52 @@ TimetableClock/base_type = &"Label"
 TimetableClock/fonts/font = SubResource("SystemFont_digits")
 TimetableClock/font_sizes/font_size = 20
 TimetableClock/colors/font_color = Color(0.72, 0.85, 1, 1)
+DrivingAidValue/base_type = &"Label"
+DrivingAidValue/fonts/font = SubResource("SystemFont_digits")
+DrivingAidValue/font_sizes/font_size = 24
+DrivingAidValue/colors/font_color = Color(1, 1, 1, 1)
+DrivingAidSpeed/base_type = &"Label"
+DrivingAidSpeed/fonts/font = SubResource("SystemFont_digits")
+DrivingAidSpeed/font_sizes/font_size = 38
+DrivingAidSpeed/colors/font_color = Color(1, 1, 1, 1)
+SpeedStopSign/base_type = &"PanelContainer"
+SpeedStopSign/styles/panel = SubResource("StyleBoxFlat_stop_sign")
+SpeedStopSignText/base_type = &"Label"
+SpeedStopSignText/fonts/font = SubResource("SystemFont_digits")
+SpeedStopSignText/font_sizes/font_size = 13
+SpeedStopSignText/colors/font_color = Color(1, 1, 1, 1)
+DrivingAidLamp/base_type = &"PanelContainer"
+DrivingAidLamp/styles/panel = SubResource("StyleBoxFlat_lamp")
+DrivingAidLampLit/base_type = &"PanelContainer"
+DrivingAidLampLit/styles/panel = SubResource("StyleBoxFlat_lamp_lit")
+DrivingAidLampLabel/base_type = &"Label"
+DrivingAidLampLabel/fonts/font = SubResource("SystemFont_digits")
+DrivingAidLampLabel/font_sizes/font_size = 13
+DrivingAidLampLabel/colors/font_color = Color(0.55, 0.55, 0.55, 1)
+DrivingAidLampLabelLit/base_type = &"Label"
+DrivingAidLampLabelLit/fonts/font = SubResource("SystemFont_digits")
+DrivingAidLampLabelLit/font_sizes/font_size = 13
+DrivingAidLampLabelLit/colors/font_color = Color(1, 1, 1, 1)
+DrivingAidCaption/base_type = &"Label"
+DrivingAidCaption/font_sizes/font_size = 12
+DrivingAidCaption/colors/font_color = Color(0.78, 0.78, 0.78, 1)
+DrivingAidMuted/base_type = &"Label"
+DrivingAidMuted/fonts/font = SubResource("SystemFont_digits")
+DrivingAidMuted/font_sizes/font_size = 12
+DrivingAidMuted/colors/font_color = Color(0.78, 0.78, 0.78, 1)
+DrivingAidStopReason/base_type = &"Label"
+DrivingAidStopReason/font_sizes/font_size = 15
+DrivingAidStopReason/colors/font_color = Color(1, 1, 1, 1)
+DrivingAidNextLimit/base_type = &"Label"
+DrivingAidNextLimit/fonts/font = SubResource("SystemFont_digits")
+DrivingAidNextLimit/font_sizes/font_size = 16
+DrivingAidNextLimit/colors/font_color = Color(1, 0.78, 0.35, 1)
+SpeedLimitSign/base_type = &"PanelContainer"
+SpeedLimitSign/styles/panel = SubResource("StyleBoxFlat_speed_limit_sign")
+SpeedLimitSignDigits/base_type = &"Label"
+SpeedLimitSignDigits/fonts/font = SubResource("SystemFont_digits")
+SpeedLimitSignDigits/font_sizes/font_size = 20
+SpeedLimitSignDigits/colors/font_color = Color(0.08, 0.08, 0.1, 1)
 TimetableClose/base_type = &"Button"
 TimetableClose/font_sizes/font_size = 14
 TimetableClose/colors/font_color = Color(0.6, 0.66, 0.75, 1)

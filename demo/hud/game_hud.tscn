@@ -24,6 +24,7 @@
 [ext_resource type="PackedScene" path="res://hud/script_editor_panel.tscn" id="27_script_editor"]
 [ext_resource type="PackedScene" path="res://hud/vehicle_selector_panel.tscn" id="28_vehicle_selector"]
 [ext_resource type="PackedScene" path="res://hud/vehicle_chip.tscn" id="29_vehicle_chip"]
+[ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
 [ext_resource type="Texture2D" path="res://hud/icons/cab.svg" id="31_cab"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
@@ -72,26 +73,30 @@ title = "Controls"
 unique_name_in_owner = true
 title = "View"
 hide_on_checkable_item_selection = false
-item_count = 6
+item_count = 7
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
 item_0/id = 0
-item_1/text = "Timetable"
+item_1/text = "Driving aid"
 item_1/checkable = 1
+item_1/checked = true
 item_1/id = 1
-item_2/text = "Scenario"
+item_2/text = "Timetable"
 item_2/checkable = 1
 item_2/id = 2
-item_3/text = "Toggle controls"
+item_3/text = "Scenario"
 item_3/checkable = 1
 item_3/id = 3
-item_4/text = "Lua scripts"
+item_4/text = "Toggle controls"
 item_4/checkable = 1
 item_4/id = 4
-item_5/text = "Trainset list"
+item_5/text = "Lua scripts"
 item_5/checkable = 1
 item_5/id = 5
+item_6/text = "Trainset list"
+item_6/checkable = 1
+item_6/id = 6
 
 [node name="MenuActions" type="Control" parent="."]
 visible = false
@@ -376,6 +381,10 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [node name="VehicleSelectorPanel" parent="." instance=ExtResource("28_vehicle_selector")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="DrivingAid" parent="." instance=ExtResource("33_driving_aid")]
 unique_name_in_owner = true
 layout_mode = 1
 

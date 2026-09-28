@@ -1018,3 +1018,45 @@ msgstr ""
 
 msgid "Trainset list"
 msgstr ""
+
+msgid "Driving aid"
+msgstr "Vezető információ"
+
+msgid "Driving Aid Toggle"
+msgstr "Vezető információ"
+
+msgid "Next limit"
+msgstr "Új limit"
+
+msgid "in %4.1f km"
+msgstr ""
+
+msgid "STOP"
+msgstr "ÁLLJ"
+
+msgid "Vehicle not ready"
+msgstr ""
+
+msgid "Waiting for orders"
+msgstr ""
+
+msgid "Signal at stop"
+msgstr ""
+
+msgid "Stop ahead"
+msgstr ""
+
+msgid "converter overload"
+msgstr ""
+
+msgid "line breaker"
+msgstr ""
+
+msgid "reverser"
+msgstr ""
+
+msgid "converter"
+msgstr ""
+
+msgid "main reservoir below %.1f bar"
+msgstr ""

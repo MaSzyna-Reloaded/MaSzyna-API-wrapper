@@ -908,6 +908,32 @@ ported, into a delegate.
   lamps of the motor car (`Train.cpp` `mvControlled` in `update_gauges`) need `target` in
   `MmdSemanticCatalog`.
 
+### Driving aid (`demo/hud/driving_aid.gd`, 2026-09-28)
+
+* Left out of the original's panel (`driveruipanels.cpp:42-205`): the reverser letter (D/N/R/T),
+  the grade, the slipping `!`, the brake cylinder pressure, the load exchange / vehicle ahead line
+  and the alerter/SHP line.
+* An EIM vehicle shows `MainCtrlPos + ScndCtrlPos` - the original shows `eimic_real` in % plus
+  `MainCtrlPos` (`EIMCtrlType` is not exposed), and the integrated brake's `eimic` braking
+  (`UniCtrlIntegratedBrakeCtrl`) instead of the brake handle.
+* The nearest signal and its lights (asked 2026-09-29, postponed). The driver knows the signal only
+  as the memcell its `SetVelocity` is read from (`(p1)_sem_mem`); the lights are another model
+  (`(p1)`, `(p1)_sk12`), so names do not tie them. What ties them is the scenery's own `multiple`
+  (`(p1)_s1` fires `lights` on the model and `updatevalues` on the memcell together,
+  `ss3zcbyw24.inc`) - a memcell → signal head link recorded from that. The lights' colours
+  (`Light_OnXX` material or the node's `lightcolors`) have no public getter in
+  `E3DRenderingServer`; wanted as coloured lamps.
+* The route is read anew on every update (`MaszynaLegacyDriverRoute.update()`), so a point at the
+  edge of the reach (`MOVING_RANGE` + the braking distance, which follows the speed) drops out and
+  comes back while the speed wobbles - measured on td.scn: a stop signal came into the reading at
+  876 m the moment the reach passed it. The original keeps the table and drops a point only once
+  passed (TableTraceRoute()); the driving aid's next limit flickers "0 ↔ nothing" there.
+* `PrepareEngine()`'s readiness (Driver.cpp:2843-2851) is ported without "any compressor enabled"
+  and the brake handle position, and compares the main reservoir (`compressor_pressure`) where
+  the original reads the feed pipe (`ScndPipePress`).
+* `VelLimitLastDist` is ported, `SwitchClearDist` only as far as it extends it; the original's
+  `moveSwitchFound`/`moveStopPointFound` in the reset of `VelSignalLast` (Driver.cpp:1043) are not.
+
 ## Tests
 
 * `test_e3d_rendering_server.gd` passes 9/9 but the process does not exit (timeout at 60 s),

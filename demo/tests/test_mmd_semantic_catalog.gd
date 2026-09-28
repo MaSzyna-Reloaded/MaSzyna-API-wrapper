@@ -184,3 +184,10 @@ func test_cab_light_dim_switch_dims_the_roof_light():
     assert_eq(entry["fixed_fields"]["command"], "roof_light_dim")
     assert_eq(entry["fixed_fields"]["state_property"], "roof_light_dimmed")
     assert_eq(entry["fixed_fields"]["action"], "cabin_light_dim_toggle")
+
+
+func test_every_speedometer_of_the_original_binds_its_speed():
+    # Train.cpp:12101-12134
+    assert_eq(MmdSemanticCatalog.get_entry("tachometerb")["fixed_fields"]["state_property"], "tachometer_speed_jump")
+    assert_eq(MmdSemanticCatalog.get_entry("tachometern")["fixed_fields"]["state_property"], "tachometer_speed")
+    assert_eq(MmdSemanticCatalog.get_entry("tachometerd")["fixed_fields"]["state_property"], "tachometer_speed")

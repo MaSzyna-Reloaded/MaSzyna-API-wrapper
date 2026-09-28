@@ -125,11 +125,14 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
     # once, then switch to looping main" state machine - the main clip's start is approximated
     # from the begin clip's own real duration (queried from the actual audio asset, not guessed)
     # so it starts right as the begin clip finishes.
-    var main_offset:float = _stream_length(definition.sound_begin)
+    var main_offset:float = stream_length(definition.sound_begin)
 
     if definition.sound_begin:
         var begin_clip := SfxClip.new()
         begin_clip.stream = _build_stream(definition.sound_begin, false)
+        # the span is known before the stream is loaded, so an event started past it
+        # (TrainSoundSystem, a running sound heard again) does not play it
+        begin_clip.length = main_offset
         clips.append(begin_clip)
 
     if definition.sound_main:
@@ -298,7 +301,7 @@ static func _build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
 ## first (same path formula as AudioStreamManager.get_stream()) rather than calling it directly,
 ## since that function warns on a miss - appropriate when actually resolving a clip to play, not
 ## for this best-effort lookup where "unknown length" is an expected, silent outcome.
-static func _stream_length(filename:String) -> float:
+static func stream_length(filename:String) -> float:
     if not filename:
         return 0.0
     var path:String = "%s/sounds/%s.ogg" % [UserSettings.get_maszyna_game_dir(), filename.to_lower()]

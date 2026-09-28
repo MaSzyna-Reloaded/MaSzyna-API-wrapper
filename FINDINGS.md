@@ -273,3 +273,7 @@ anything. Open work belongs in `TODO.md`.
 * A gain derived as a normalisation divisor is never also applied as a gain. *(09-21 +38 dB)*
 * Check what the MMD declares (`placement:`) before modulating with a parameter. *(09-21 brake
   hiss)*
+* Stopping a player resets what its triggers remember about playing. A sound that is due
+  out of earshot resumes past its opening bookend (sound.cpp:360). Skip a clip by not starting
+  it: an Ogg playback asked to start at its end starts at 0. *(09-28 engine silent after the
+  camera came back)*

@@ -1784,3 +1784,38 @@ lighting or the consist.
   battery; it then reaches 35 km/h on notch 6.
 * **Rule:** a test that drives a scenery vehicle by commands takes it from its driver and activates
   a cab first - neither happens without a player entering the cab.
+
+## 2026-09-28 - engine silent after the camera came back, or restarted from ignition
+
+* **Symptom:** after the camera watched a vehicle farther than 1 km away, the player's own running
+  engine (and compressor, pumps) stayed silent when the camera came back. When the camera reached
+  a vehicle whose engine had been running for a while, the engine started with its ignition clip.
+* **Proof:** read off `TrainSoundSystem._refresh_active_banks()`: culling stopped the bank's
+  player and nothing else, so each `Trigger.activated` stayed `true` and `_update_triggers()` never
+  called `play()` again. Brake and running sounds came back because they check
+  `player.is_playing()`. Every trigger start was `play()` at event time 0, and the engine event puts
+  its ignition bookend at 0. The original clears `m_playbeginning` when a sound is due out of range
+  (sound.cpp:360-367), and only a simulation-side `stop()` sets it again (sound.cpp:498).
+* **Fix:** `_silence_bank()` stops the player and resets each trigger (`activated`,
+  `play_beginning`, `last_value`). Culling and the cabin-only bank use it. A trigger starts at
+  `beginning_length` when `play_beginning` is false. The system culls no farther than
+  `gnd_sfx/hard_cut_distance`, beyond which `SfxPlayer3D.play()` drops the call.
+* **Second cause:** the in-game check showed that the ignition still played, but only the first
+  time a vehicle was heard. Starting the event at `beginning_length` asked the ignition clip to
+  start at its own end. Before its first play, a `MaszynaAudioStream` reports length 0, so gnd-sfx
+  could not clamp or end the voice. Godot's Ogg playback turns a seek at or past the length into
+  0 (`audio_stream_ogg_vorbis.cpp:286`), so the whole ignition played. From the second play the
+  length was known and the voice ended at once.
+* **Second fix:** gnd-sfx does not start a timeline clip whose span has passed when an event starts
+  at a position (FMOD's `setTimelinePosition`). `MmdSoundEventBuilder` gives the ignition clip its
+  measured length, so the span is known before the stream is loaded.
+* **Third miss:** the in-game check still heard the ignition. A headless reproduction with the
+  real `6d1.mmd` (camera away, AI prepares the engine to ~500 rpm, camera back) showed the event
+  starting at 10.38 s with the ignition clip active. `play()` skipped the passed clip but did not
+  mark it as triggered, so the first tick found it due and started it from 0. The gnd-sfx test
+  checked right after `play()`, with no tick, and with a WAV that knows its length.
+* **Rule:** code that stops a player also resets what its triggers remember about playing. A sound
+  that is due while out of earshot resumes past its opening bookend. Never skip a clip by starting
+  it at its end: an Ogg playback starts that at 0. A skipped clip is marked as done, or the next
+  tick starts it. A playback test ticks at least once, with a stream that does not know its length
+  before it is loaded.

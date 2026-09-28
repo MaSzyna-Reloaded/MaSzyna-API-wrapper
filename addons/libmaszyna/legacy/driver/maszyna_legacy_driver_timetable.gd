@@ -27,7 +27,8 @@ var station_index:int = 0
 var next_stop:String = ""
 ## The timetable's speed on the way to the next station [km/h], -1 for none (TTVmax)
 var velocity:float = MaszynaLegacyDriverSpeed.NO_LIMIT
-## Late on leaving the last station [min], early when negative (LastStationLatency)
+## Early on leaving the last station [min], late when negative (LastStationLatency: the departure
+## less the arrival, mtable.cpp:122; late is below 0, UpdateDelayFlag(), Driver.cpp:5605)
 var latency:float = 0.0
 ## It stops at passenger stops (moveStopPoint) - not while it couples up or turns there
 var stop_point:bool = true

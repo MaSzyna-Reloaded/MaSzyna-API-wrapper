@@ -10,6 +10,8 @@ const DEPARTURE:float = 10.5
 const MINUTE:float = 1.0 / 60.0
 ## A time left out of the table (TimetableEntry::NO_TIME)
 const NO_TIME:float = -1.0
+## Float rounding of the hours-to-minutes conversion
+const EPSILON:float = 1e-6
 
 var timetable:MaszynaLegacyDriverTimetable
 
@@ -43,6 +45,15 @@ func test_arriving_counts_once_and_leaving_moves_on():
     timetable.advance()
     assert_eq(timetable.next_stop, "Through")
     assert_false(timetable.is_stop(), "it only passes the next one")
+
+
+func test_latency_is_early_positive_late_negative():
+    # LastStationLatency is the departure less the arrival (mtable.cpp:122)
+    timetable.arrive(DEPARTURE - MINUTE)
+    assert_almost_eq(timetable.latency, 1.0, EPSILON, "a minute early")
+    timetable.take(timetable.timetable)
+    timetable.arrive(DEPARTURE + MINUTE)
+    assert_almost_eq(timetable.latency, -1.0, EPSILON, "a minute late")
 
 
 func test_it_leaves_at_the_departure_time():

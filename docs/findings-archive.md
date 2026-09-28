@@ -1888,3 +1888,16 @@ lighting or the consist.
   on, A is passed once at 0.48 m.
 * **Rule:** a point of the route is passed when the train has driven up to it, never because it
   is no longer read - the reach and the route both change without the train moving.
+
+## 2026-09-29 - a freight train early at a station was shown 7 min late
+
+* **Symptom:** Stary Jawor (night), ROS66383 at 21:17: Roztocze (dep. 21:20) already passed, and
+  the timetable panel said "+7 min" in red - late for a station not yet due.
+* **What proved it:** the original sets `LastStationLatency = CompareTime(now, departure)`, the
+  departure less the arrival (mtable.cpp:122), and `UpdateDelayFlag()` takes a value below 0 as
+  late (Driver.cpp:5605). The port computed the same, but its comment and all three displays
+  (timetable panel, vehicle card, selector row) took a positive value as late. A freight train
+  does not wait for the departure (Driver.cpp:1275), so it left Roztocze at ~21:13: 7 min early.
+* **Fix:** `latency` keeps the original's value and sign; the displays show its negative.
+* **Rule:** `LastStationLatency` is the departure less the arrival - positive is early; a shown
+  delay is its negative.

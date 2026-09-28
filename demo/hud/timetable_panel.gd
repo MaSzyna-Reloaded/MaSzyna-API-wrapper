@@ -116,7 +116,7 @@ func _follow_trainset() -> void:
         # a new timetable fits the card to what it shows; its size is the player's until the next
         reset_size()
     # late or early on leaving the last station [min]
-    var late_minutes:int = roundi(state.get("latency", 0.0))
+    var late_minutes:int = -roundi(state.get("latency", 0.0))
     %DelayText.text = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
     %DelayText.add_theme_color_override(&"font_color",
             ON_TIME_COLOR if late_minutes == 0 else (LATE_COLOR if late_minutes > 0 else EARLY_COLOR))

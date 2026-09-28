@@ -288,3 +288,5 @@ anything. Open work belongs in `TODO.md`.
 * A vehicle lamp's hotspot-to-falloff band is 1 deg wide (sm42 fspot 21.5-22.5), so anything
   ramped over it switches on and off; the glare fades over its own band. *(09-28 glare blinking
   with the viewing angle)*
+* `LastStationLatency` (driver `latency`) is the departure less the arrival: positive is early,
+  the delay shown is its negative. *(09-29 an early freight train shown 7 min late)*

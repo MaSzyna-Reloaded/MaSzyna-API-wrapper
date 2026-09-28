@@ -20,6 +20,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="screen_get_average_color" qualifiers="const">
+			<return type="Color" />
+			<param index="0" name="screen" type="RID" />
+			<description>
+				The average colour of the last frame the screen's script drew (black before the first) - what the screen throws around it.
+			</description>
+		</method>
 		<method name="screen_get_texture" qualifiers="const">
 			<return type="Texture2D" />
 			<param index="0" name="screen" type="RID" />
@@ -34,4 +41,12 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="screen_rendered">
+			<param index="0" name="screen" type="RID" />
+			<description>
+				A frame the script drew reached the screen's texture.
+			</description>
+		</signal>
+	</signals>
 </class>

@@ -14,6 +14,7 @@
 #endif
 
 namespace godot {
+    const char *PythonScreenServer::screen_rendered_signal = "screen_rendered";
     namespace {
         /// The part of the CPython 2.7 C API the screens need, resolved from the library at run
         /// time. PyObject stays opaque: references are counted through Py_IncRef/Py_DecRef, which
@@ -176,6 +177,9 @@ namespace godot {
                 D_METHOD("screen_create", "script_path", "commands_received"), &PythonScreenServer::screen_create);
         ClassDB::bind_method(D_METHOD("screen_get_texture", "screen"), &PythonScreenServer::screen_get_texture);
         ClassDB::bind_method(
+                D_METHOD("screen_get_average_color", "screen"), &PythonScreenServer::screen_get_average_color);
+        ADD_SIGNAL(MethodInfo(screen_rendered_signal, PropertyInfo(Variant::RID, "screen")));
+        ClassDB::bind_method(
                 D_METHOD("screen_request_render", "screen", "state"), &PythonScreenServer::screen_request_render);
         ClassDB::bind_method(D_METHOD("screen_free", "screen"), &PythonScreenServer::screen_free);
     }
@@ -227,6 +231,12 @@ namespace godot {
         return screen->texture;
     }
 
+    Color PythonScreenServer::screen_get_average_color(const RID &p_screen) const {
+        const Screen *screen = screens.getptr(p_screen);
+        ERR_FAIL_NULL_V(screen, Color());
+        return screen->average_color;
+    }
+
     void PythonScreenServer::screen_request_render(const RID &p_screen, const Dictionary &p_state) {
         const Screen *screen = screens.getptr(p_screen);
         ERR_FAIL_NULL(screen);
@@ -272,6 +282,19 @@ namespace godot {
             } else {
                 screen->texture->set_image(image);
             }
+            // a grid of samples is enough for the colour a screen throws around it
+            Color sum;
+            const uint8_t *pixels = p_pixels.ptr();
+            for (int row = 0; row < AVERAGE_COLOR_SAMPLES; row++) {
+                for (int column = 0; column < AVERAGE_COLOR_SAMPLES; column++) {
+                    const int x = (column * 2 + 1) * p_width / (AVERAGE_COLOR_SAMPLES * 2);
+                    const int y = (row * 2 + 1) * p_height / (AVERAGE_COLOR_SAMPLES * 2);
+                    const uint8_t *pixel = pixels + (static_cast<int64_t>(y) * p_width + x) * BYTES_PER_PIXEL;
+                    sum += Color::from_rgba8(pixel[0], pixel[1], pixel[2], pixel[3]);
+                }
+            }
+            screen->average_color = sum / static_cast<float>(AVERAGE_COLOR_SAMPLES * AVERAGE_COLOR_SAMPLES);
+            emit_signal(screen_rendered_signal, p_screen);
         }
         if (!p_commands.is_empty()) {
             screen->commands_received.call(p_commands);

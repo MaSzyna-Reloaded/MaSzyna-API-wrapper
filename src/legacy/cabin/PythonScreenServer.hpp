@@ -30,6 +30,10 @@ namespace godot {
         public:
             /// Every script is asked for RGBA (manul_set_format("RGBA"), PyInt.cpp:468)
             static constexpr int BYTES_PER_PIXEL = 4;
+            /// Samples per axis the average colour of a drawn frame is taken from
+            static constexpr int AVERAGE_COLOR_SAMPLES = 16;
+            /// A frame was drawn onto the screen's texture (screen: RID)
+            static const char *screen_rendered_signal;
 
             static PythonScreenServer *get_instance() {
                 return Object::cast_to<PythonScreenServer>(
@@ -41,6 +45,8 @@ namespace godot {
                     String script_path;
                     Ref<ImageTexture> texture;
                     Callable commands_received;
+                    /// Of the last drawn frame, what the screen throws around it
+                    Color average_color;
             };
 
             struct Request {
@@ -77,6 +83,8 @@ namespace godot {
             /// `p_script_path` is the script's absolute path without `.py`; `p_commands_received`
             /// is called with the commands the script returns (PackedStringArray), on the main thread
             RID screen_create(const String &p_script_path, const Callable &p_commands_received);
+            /// The average colour of the last frame the script drew, black before the first
+            Color screen_get_average_color(const RID &p_screen) const;
             /// The screen's texture - a blank one until the script has drawn the first frame
             Ref<Texture2D> screen_get_texture(const RID &p_screen) const;
             /// Queues a render with this state; a render still waiting for the same screen is

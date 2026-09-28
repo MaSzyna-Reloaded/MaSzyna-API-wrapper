@@ -192,8 +192,12 @@ func _input(event):
             _set_external_view(true)
 
     if event.is_action_pressed("cabin_mode_toggle", false, true):
-        if external_camera.current:
+        # the cab left behind takes the player back; on foot, the free camera goes on from where
+        # the external camera is
+        if external_camera.current and controlled_vehicle:
             _set_external_view(false)
+        elif external_camera.current:
+            leave_external_view()
         elif not controlled_vehicle:
             # the vehicle last driven may have gone with its scenery
             if is_instance_valid(last_controlled_vehicle):

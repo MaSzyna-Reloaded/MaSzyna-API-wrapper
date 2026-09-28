@@ -1,10 +1,21 @@
 extends MaszynaGutTest
 
+## The rail profile a track is drawn with (models/tory/railprofile_default.txt) comes from the
+## fixtures, not the game directory
+const FIXTURES_GAME_DIR: String = "res://tests/fixtures"
+
 var created_tracks: Array[TrackNormal3D] = []
 var created_track_rids: Array[RID] = []
+var _previous_game_dir: String = ""
+
+
+func before_each() -> void:
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
 
 
 func after_each() -> void:
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
     for track: TrackNormal3D in created_tracks:
         remove_child(track)
         track.queue_free()

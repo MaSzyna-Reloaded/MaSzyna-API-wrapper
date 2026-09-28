@@ -91,6 +91,15 @@ func test_uncouple_parts_the_vehicles() -> void:
     assert_false(controllers[1].is_coupled(FRONT_END))
 
 
+func test_uncoupling_announces_the_consist_change_once() -> void:
+    watch_signals(controllers[0])
+    controllers[0].uncouple(REAR_END)
+    assert_signal_emit_count(controllers[0], "consist_changed", 1)
+    # the coupler and the brake hose part; the coupler comes first
+    var first_detached:Array = get_signal_parameters(controllers[0], "coupler_detached", 0)
+    assert_eq(first_detached, [RailVehicleController.COUPLING_ELEMENT_COUPLER])
+
+
 func test_the_consist_releaser_is_held_only_while_the_brakes_brake() -> void:
     controllers[0].send_command("consist_releaser", true)
     assert_true(brakes[0].releaser_active, "switched on")

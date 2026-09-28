@@ -40,7 +40,7 @@ namespace godot {
             double distance_counter = DISTANCE_COUNTER_OFF;
             static constexpr double DISTANCE_COUNTER_OFF = -1.0;
             int _resolve_coupler_end(const Variant &p_where) const;
-            void _consume_coupler_sounds();
+            void _consume_coupler_events();
 
         protected:
             static void _bind_methods();

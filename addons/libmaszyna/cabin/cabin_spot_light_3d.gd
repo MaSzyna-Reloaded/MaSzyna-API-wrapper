@@ -94,8 +94,11 @@ func _on_blink_timeout():
     _update_state()
 
 func _update_state():
+    # a bool state, or a 0..1 light level (roof_light_level) the light shines at part of its energy
+    var level:float = 1.0
     if _vehicle_rid and state_property:
-        enabled = true if CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false) else false
+        level = float(CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false))
+        enabled = level > 0.0
 
     var active_now:bool
     if blink_time <= 0.0:
@@ -119,7 +122,9 @@ func _update_state():
         if sound_player and event:
             sound_player.play(event)
 
-    _target_light_energy = (light_energy_on if active_now else light_energy_off) if light_enabled else 0.0
+    _target_light_energy = (
+            (lerpf(light_energy_off, light_energy_on, level) if active_now else light_energy_off)
+            if light_enabled else 0.0)
     if _on_target:
         _on_target.visible = active_now
     if _off_target:

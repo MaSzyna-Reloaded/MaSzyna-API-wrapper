@@ -50,6 +50,9 @@ namespace godot {
                 D_METHOD("instance_set_lights_state", "instance", "lights_state"),
                 &E3DRenderingServer::instance_set_lights_state);
         ClassDB::bind_method(
+                D_METHOD("instance_set_lights_dimmed", "instance", "lights_dimmed", "multiplier"),
+                &E3DRenderingServer::instance_set_lights_dimmed);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_lights_modes", "instance", "modes"),
                 &E3DRenderingServer::instance_set_lights_modes);
         ClassDB::bind_method(
@@ -329,6 +332,18 @@ namespace godot {
         ERR_FAIL_NULL(instance);
         instance->lights_override = p_lights_state.duplicate();
         _resolve_lights(*instance);
+        _update_if_built(*instance);
+    }
+
+    /// Light name -> dimmed: a dimmed light shows its "_xon" submodel instead of "_on" when it has
+    /// one (TButton::TurnxOnWithOnAsFallback(), DynObj.cpp:1218), and its real light shines at
+    /// `p_multiplier` of its energy (the vehicle's DimmedMultiplier, lightarray.cpp:77-78)
+    void E3DRenderingServer::instance_set_lights_dimmed(
+            const RID &p_instance, const Dictionary &p_lights_dimmed, const float p_multiplier) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        instance->lights_dimmed = p_lights_dimmed.duplicate();
+        instance->lights_dimmed_multiplier = p_multiplier;
         _update_if_built(*instance);
     }
 

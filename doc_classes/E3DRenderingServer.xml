@@ -133,6 +133,15 @@
 				Light name to enabled state; shows the "on" or the "off" submodels of the model's lights (and the spotlights of [constant INSTANCER_NODES]).
 			</description>
 		</method>
+		<method name="instance_set_lights_dimmed">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="lights_dimmed" type="Dictionary" />
+			<param index="2" name="multiplier" type="float" />
+			<description>
+				Light name to dimmed: a dimmed light shows its "_xon" submodel instead of "_on" when it has one, and its spotlight ([constant INSTANCER_NODES]) shines at [param multiplier] of its energy.
+			</description>
+		</method>
 		<method name="instance_set_options">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />

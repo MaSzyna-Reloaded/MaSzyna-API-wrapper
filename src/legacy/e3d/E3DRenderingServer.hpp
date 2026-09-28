@@ -326,6 +326,7 @@ namespace godot {
             void instance_set_layer_mask(const RID &p_instance, uint32_t p_mask);
             void instance_set_visibility_range(const RID &p_instance, float p_begin, float p_end);
             void instance_set_lights_state(const RID &p_instance, const Dictionary &p_lights_state);
+            void instance_set_lights_dimmed(const RID &p_instance, const Dictionary &p_lights_dimmed, float p_multiplier);
             /// The scenery node's `lights` list, by light index (light 0 is "00", AnimModel.cpp:303)
             void instance_set_lights_modes(const RID &p_instance, const PackedFloat32Array &p_modes);
             /// The scenery node's `lightcolors` list, in the same order

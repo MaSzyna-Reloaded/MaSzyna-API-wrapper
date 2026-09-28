@@ -192,6 +192,7 @@ namespace godot {
             light.name = light_name;
             light.on = p_model->get_node_or_null(light_info->get_on_submodel_path()).ptr();
             light.off = p_model->get_node_or_null(light_info->get_off_submodel_path()).ptr();
+            light.xon = p_model->get_node_or_null(light_info->get_xon_submodel_path()).ptr();
             model_lights.lights.push_back(light);
             // a real light belongs to the light of its nearest "on" ancestor
             if (light.on != nullptr) {

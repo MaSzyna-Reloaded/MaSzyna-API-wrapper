@@ -39,22 +39,26 @@ namespace godot {
         /* Which submodel of the model shows which of the vehicle's lamps. The lamp is read off
          * the lighting component, so a renamed or removed one is a build error rather than a
          * light that silently stops working. */
+        /// Whether the headlights' dimming reaches a light: the headlamps only (DynObj.cpp:1212-1320)
+        enum LightDimming { LIGHT_DIMMING_NONE, LIGHT_DIMMING_HEADLIGHT };
+
         struct LightStateBinding {
                 const char *light_name;
                 bool (RailVehicleLighting::*is_enabled)() const;
+                LightDimming dimming;
         };
 
         constexpr std::array<LightStateBinding, 10> LIGHT_STATE_BINDINGS = {{
-                {"headlamp11", &RailVehicleLighting::get_front_headlight_upper_enabled},
-                {"headlamp12", &RailVehicleLighting::get_front_headlight_right_enabled},
-                {"headlamp13", &RailVehicleLighting::get_front_headlight_left_enabled},
-                {"headlamp21", &RailVehicleLighting::get_rear_headlight_upper_enabled},
-                {"headlamp22", &RailVehicleLighting::get_rear_headlight_right_enabled},
-                {"headlamp23", &RailVehicleLighting::get_rear_headlight_left_enabled},
-                {"endsignal12", &RailVehicleLighting::get_front_redmarker_right_enabled},
-                {"endsignal13", &RailVehicleLighting::get_front_redmarker_left_enabled},
-                {"endsignal22", &RailVehicleLighting::get_rear_redmarker_right_enabled},
-                {"endsignal23", &RailVehicleLighting::get_rear_redmarker_left_enabled},
+                {"headlamp11", &RailVehicleLighting::get_front_headlight_upper_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"headlamp12", &RailVehicleLighting::get_front_headlight_right_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"headlamp13", &RailVehicleLighting::get_front_headlight_left_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"headlamp21", &RailVehicleLighting::get_rear_headlight_upper_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"headlamp22", &RailVehicleLighting::get_rear_headlight_right_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"headlamp23", &RailVehicleLighting::get_rear_headlight_left_enabled, LIGHT_DIMMING_HEADLIGHT},
+                {"endsignal12", &RailVehicleLighting::get_front_redmarker_right_enabled, LIGHT_DIMMING_NONE},
+                {"endsignal13", &RailVehicleLighting::get_front_redmarker_left_enabled, LIGHT_DIMMING_NONE},
+                {"endsignal22", &RailVehicleLighting::get_rear_redmarker_right_enabled, LIGHT_DIMMING_NONE},
+                {"endsignal23", &RailVehicleLighting::get_rear_redmarker_left_enabled, LIGHT_DIMMING_NONE},
         }};
     } // namespace
 
@@ -701,6 +705,19 @@ namespace godot {
         }
         if (changed) {
             model_node->set("lights_state", lights);
+        }
+        // Headlights dimmed (DynamicObject->DimHeadlights): E3DModelInstance is a GDScript node,
+        // hence the property by name, as for lights_state above
+        if (const bool dimmed = lighting->get_headlights_dimmed(); dimmed != headlights_dimmed) {
+            headlights_dimmed = dimmed;
+            Dictionary lights_dimmed;
+            for (const LightStateBinding &binding: LIGHT_STATE_BINDINGS) {
+                if (binding.dimming == LIGHT_DIMMING_HEADLIGHT) {
+                    lights_dimmed[binding.light_name] = dimmed;
+                }
+            }
+            model_node->set("lights_dimmed_multiplier", lighting->get_head_light_dimmed_multiplier());
+            model_node->set("lights_dimmed", lights_dimmed);
         }
     }
 

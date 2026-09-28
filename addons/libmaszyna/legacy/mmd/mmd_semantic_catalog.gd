@@ -554,6 +554,19 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Train.cpp:11923 ggCabLightDimButton -> OnCommand_interiorlightdimtoggle (Train.cpp:6274):
+        # the cab light at 0.4 of its level (Train.cpp:9745), Ctrl+'
+        "cablightdim_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "roof_light_dim",
+                "state_property": "roof_light_dimmed",
+                "action": "cabin_light_dim_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "radio_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -1162,7 +1175,8 @@ static func _ensure_built() -> void:
             "flip_upward_spotlight": true,
             "spread_light_along_submodel": true,
             "light_fixed_fields": {
-                "state_property": "roof_light_enabled",
+                # the level, so that the dimmed and the 24 V-only light is dimmer (Train.cpp:9745)
+                "state_property": "roof_light_level",
                 "light_enabled": true,
                 "light_color": Color(0.960938, 0.881759, 0.75824, 1.0),
                 "light_energy_on": 0.411,

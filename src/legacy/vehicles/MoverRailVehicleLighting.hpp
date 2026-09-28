@@ -49,6 +49,11 @@ namespace godot {
             bool roof_light_active = false;
             /* DynObj's DimHeadlights - the vendored Mover has no dimmer of its own */
             bool headlights_dimmed = false;
+            bool roof_light_dimmed = false;
+            /// A dimmed compartment light's level (Train.cpp:9745)
+            static constexpr double ROOF_LIGHT_DIMMED_LEVEL = 0.4;
+            /// The compartment light's level fed from 24 V alone, without the 110 V converter (Train.cpp:9745)
+            static constexpr double ROOF_LIGHT_LOW_VOLTAGE_LEVEL = 0.5;
             bool devices_light_active = false;
             const std::unordered_map<LightEnd, Maszyna::end> light_end_map = {
                     {LIGHT_END_FRONT, Maszyna::end::front},
@@ -87,5 +92,7 @@ namespace godot {
             void devices_light(bool p_enabled) override;
             void headlights_dim(bool p_enabled) override;
             bool get_headlights_dimmed() const override;
+            void roof_light_dim(bool p_enabled) override;
+            bool get_roof_light_dimmed() const override;
     };
 } // namespace godot

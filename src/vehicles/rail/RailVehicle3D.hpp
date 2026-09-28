@@ -31,6 +31,8 @@ namespace godot {
         private:
             NodePath model_instance_path;
             TypedDictionary<String, bool> lights;
+            /// What the model's headlamps were last told about the headlights' dimming
+            bool headlights_dimmed = false;
             NodePath controller_path;
             NodePath front_bogie_path;
             NodePath rear_bogie_path;

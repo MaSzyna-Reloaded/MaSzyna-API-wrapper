@@ -192,11 +192,15 @@ namespace godot {
         return mover != nullptr ? devices_light_active && _is_powered(mover) : false;
     }
 
+    // Original engine: cablightlevel (Train.cpp:9745) - off, dimmed or full, and half of that
+    // without the 110 V converter
     double MoverRailVehicleLighting::get_roof_light_level() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr
-                       ? roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0
-                       : 0.0;
+        if (mover == nullptr || !roof_light_active || !_is_powered(mover)) {
+            return 0.0;
+        }
+        return (roof_light_dimmed ? ROOF_LIGHT_DIMMED_LEVEL : 1.0) *
+               (mover->Power110vIsAvailable ? 1.0 : ROOF_LIGHT_LOW_VOLTAGE_LEVEL);
     }
 
     void MoverRailVehicleLighting::_fill_state_dictionary(Dictionary &p_state) const {
@@ -208,6 +212,7 @@ namespace godot {
         // what lights_sw shows - LightsPos runs from 1 (Train.cpp:5220)
         p_state["light_selector_position"] = std::max(0, get_position() - 1);
         p_state["headlights_dimmed"] = get_headlights_dimmed();
+        p_state["roof_light_dimmed"] = get_roof_light_dimmed();
         p_state["light_power"] = get_power();
         p_state["light_power_source"] = get_power_source();
         p_state["lights/front_headlight_upper_enabled"] = get_front_headlight_upper_enabled();
@@ -336,6 +341,15 @@ namespace godot {
 
     bool MoverRailVehicleLighting::get_headlights_dimmed() const {
         return headlights_dimmed;
+    }
+
+    // Original engine: TTrain::OnCommand_interiorlightdimenable/disable (Train.cpp:6291-6340)
+    void MoverRailVehicleLighting::roof_light_dim(const bool p_enabled) {
+        roof_light_dimmed = p_enabled;
+    }
+
+    bool MoverRailVehicleLighting::get_roof_light_dimmed() const {
+        return roof_light_dimmed;
     }
 
     namespace {

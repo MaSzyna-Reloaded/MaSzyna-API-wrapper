@@ -39,6 +39,13 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &RailVehicleLighting::roof_light);
         ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &RailVehicleLighting::devices_light);
         ClassDB::bind_method(D_METHOD("headlights_dim", "enabled"), &RailVehicleLighting::headlights_dim);
+        ClassDB::bind_method(D_METHOD("roof_light_dim", "enabled"), &RailVehicleLighting::roof_light_dim);
+        ClassDB::bind_method(D_METHOD("get_roof_light_dimmed"), &RailVehicleLighting::get_roof_light_dimmed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "roof_light_dimmed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_roof_light_dimmed");
         ClassDB::bind_method(D_METHOD("get_headlights_dimmed"), &RailVehicleLighting::get_headlights_dimmed);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -233,6 +240,7 @@ namespace godot {
         register_command("roof_light", Callable(this, "roof_light"));
         register_command("devices_light", Callable(this, "devices_light"));
         register_command("headlights_dim", Callable(this, "headlights_dim"));
+        register_command("roof_light_dim", Callable(this, "roof_light_dim"));
         VehicleComponent::_register_commands();
     }
 
@@ -244,6 +252,7 @@ namespace godot {
         unregister_command("roof_light", Callable(this, "roof_light"));
         unregister_command("devices_light", Callable(this, "devices_light"));
         unregister_command("headlights_dim", Callable(this, "headlights_dim"));
+        unregister_command("roof_light_dim", Callable(this, "roof_light_dim"));
         VehicleComponent::_unregister_commands();
     }
 } // namespace godot

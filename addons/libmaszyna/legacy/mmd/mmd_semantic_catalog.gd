@@ -1,6 +1,14 @@
 extends RefCounted
 class_name MmdSemanticCatalog
 
+## A lamp whose "_on" mesh is several separate pieces - three alerter lamps in one submodel (SM42
+## "czuwak_on"), one backlight overlay per gauge - gets a light at each piece, following the
+## widget's lit_changed (MmdCabinInstancer._submodel_islands()):
+## GLOW - an omni light in the colour of the piece's own texture (maszyna/cabin/instrument_glow_*);
+## WIDGET_LIGHT - a copy of the widget's own light, aimed at the driver; the widget itself then
+## only switches the meshes, blinks and sounds.
+enum IslandLights { GLOW, WIDGET_LIGHT }
+
 ## Etap A+B's supported MMD label -> cabin widget mapping. command/state_property/action strings
 ## are copied from demo/vehicles/sm42/sm_42_cabin.tscn's already-shipped, already-working
 ## hand-authored wiring - those are wrapper-API choices (command names, state keys), not visual
@@ -1182,17 +1190,8 @@ static func _ensure_built() -> void:
             # blending (E3DModelInstance.force_alpha_submodel_paths) rather than the default
             # alpha-scissor, or the glow renders as a crisp, wrong-looking silhouette.
             "force_alpha": true,
-            "light_widget_class": CabinOmniLight3D,
-            "light_fixed_fields": {
-                "state_property": "devices_light_enabled",
-                "light_color": Color(0.808594, 0.518647, 0.06633, 1.0),
-                "light_energy_on": 0.002,
-                "light_energy_off": 0.0,
-                "light_indirect_energy": 0.525,
-                "light_size": 0.078,
-                "omni_range": 0.564628,
-                "omni_attenuation": 1.41,
-            },
+            # one glow per gauge's overlay, in that overlay's colour
+            "island_lights": IslandLights.GLOW,
         },
         # Confirmed against Mover.cpp:183-188 (is_cabsignal_blinking(): `return power &&
         # cabsignal_active` - same static "alert active" shape as is_blinking(), not a real-time
@@ -1239,6 +1238,8 @@ static func _ensure_built() -> void:
             "position_at_submodel": true,
             # the alerter lamp has to light the driver, whatever the lamp submodel's own axes are
             "aim_at_driver": true,
+            # SM42 has three alerter lamps in its one "czuwak_on" - each gets this light
+            "island_lights": IslandLights.WIDGET_LIGHT,
         },
         # Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
         # etc.) and RailVehicleLighting::light_switch()'s own doc comment (RailVehicleLighting.hpp) - these ten

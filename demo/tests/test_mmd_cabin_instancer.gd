@@ -394,13 +394,34 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     assert_eq(diagnostics.size(), 0)
 
 
-func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
+## A mesh of separate unit quads centred at the given points
+func _lamp_mesh(centres:Array[Vector3]) -> MeshInstance3D:
+    var vertices:PackedVector3Array = PackedVector3Array()
+    var indices:PackedInt32Array = PackedInt32Array()
+    for centre:Vector3 in centres:
+        var base:int = vertices.size()
+        for corner:Vector3 in [Vector3(-0.01, -0.01, 0.0), Vector3(0.01, -0.01, 0.0), Vector3(0.01, 0.01, 0.0), Vector3(-0.01, 0.01, 0.0)]:
+            vertices.append(centre + corner)
+        indices.append_array(PackedInt32Array([base, base + 2, base + 1, base, base + 3, base + 2]))
+    var arrays:Array = []
+    arrays.resize(Mesh.ARRAY_MAX)
+    arrays[Mesh.ARRAY_VERTEX] = vertices
+    arrays[Mesh.ARRAY_INDEX] = indices
+    var mesh:ArrayMesh = ArrayMesh.new()
+    mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+    var mesh_instance:MeshInstance3D = MeshInstance3D.new()
+    mesh_instance.mesh = mesh
+    return mesh_instance
+
+
+func test_build_instrument_light_glows_at_each_backlight_piece():
     var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
     descriptor.label = "i-instrumentlight"
     descriptor.submodel_name = "instrument_lamp"
     var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
 
-    var on_node:Node3D = add_child_autofree(Node3D.new())
+    var centres:Array[Vector3] = [Vector3(0.2, 0.0, 0.0), Vector3(0.5, 0.0, 0.0)]
+    var on_node:MeshInstance3D = add_child_autofree(_lamp_mesh(centres))
     on_node.position = Vector3(3.0, 2.0, 1.0)
     var submodel_index:Dictionary = {"instrument_lamp_on": [on_node]}
 
@@ -411,13 +432,42 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     MmdCabinInstancer._build_indicator_lights(
             descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
-    assert_eq(generated_root.get_child_count(), 2)
+    assert_eq(generated_root.get_child_count(), 3)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
-    var light:CabinOmniLight3D = generated_root.get_child(1)
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
-    assert_eq(light.global_position, on_node.global_position)
-    assert_eq(light.state_property, "devices_light_enabled")
+    for i:int in centres.size():
+        var glow:OmniLight3D = generated_root.get_child(i + 1)
+        assert_almost_eq(glow.global_position, on_node.position + centres[i], Vector3.ONE * 0.0001)
+        assert_eq(glow.visible, indicator.enabled)
     assert_eq(diagnostics.size(), 0)
+
+
+func test_build_alerter_lights_each_of_its_lamps_with_a_copy_of_its_light():
+    var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
+    descriptor.label = "i-security_aware"
+    descriptor.submodel_name = "czuwak"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
+
+    var centres:Array[Vector3] = [Vector3(0.0, 0.0, 0.0), Vector3(-1.3, 0.4, 0.0), Vector3(-1.1, -1.6, 0.4)]
+    var on_node:MeshInstance3D = add_child_autofree(_lamp_mesh(centres))
+    var submodel_index:Dictionary = {"czuwak_on": [on_node]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller: VehicleController = build_vehicle()
+    var diagnostics:Array[Dictionary] = []
+    var sound_events:Array[SfxEvent] = []
+    MmdCabinInstancer._build_indicator_lights(
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3(0.0, 1.0, 2.0), null, sound_events, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 4)
+    var widget:CabinSpotLight3D = generated_root.get_child(0)
+    assert_false(widget.light_enabled)
+    for i:int in centres.size():
+        var lamp:SpotLight3D = generated_root.get_child(i + 1)
+        # moved out of the lamp towards the driver, as a single alerter light is
+        assert_almost_eq(lamp.global_position.distance_to(centres[i]), MmdCabinInstancer.INDICATOR_LIGHT_OFFSET, 0.0001)
+        assert_eq(lamp.light_energy, widget.light_energy_on)
+        assert_eq(lamp.spot_range, widget.spot_range)
 
 
 func test_build_radio_indicator_adds_radio_power_led_omnilight():

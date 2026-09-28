@@ -243,6 +243,7 @@ namespace godot {
             Mutex models_mutex;
 
             E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance);
+            const E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance) const;
             void _rebuild_if_built(E3DInstanceData &p_instance);
             void _update_if_built(E3DInstanceData &p_instance);
             Ref<E3DModel> _load_model(const String &p_data_path, const String &p_model_filename);
@@ -329,6 +330,8 @@ namespace godot {
             void instance_set_visible(const RID &p_instance, bool p_visible);
             void instance_set_layer_mask(const RID &p_instance, uint32_t p_mask);
             void instance_set_visibility_range(const RID &p_instance, float p_begin, float p_end);
+            void instance_set_material_overlay(const RID &p_instance, const Ref<Material> &p_material);
+            Dictionary instance_intersect_segment(const RID &p_instance, const Vector3 &p_from, const Vector3 &p_to) const;
             void instance_set_lights_state(const RID &p_instance, const Dictionary &p_lights_state);
             void instance_set_lights_dimmed(const RID &p_instance, const Dictionary &p_lights_dimmed, float p_multiplier);
             /// The scenery node's `lights` list, by light index (light 0 is "00", AnimModel.cpp:303)

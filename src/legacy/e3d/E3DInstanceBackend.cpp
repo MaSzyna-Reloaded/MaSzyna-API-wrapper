@@ -1,4 +1,5 @@
 #include "E3DInstanceBackend.hpp"
+#include "rendering/MousePicking.hpp"
 #include <godot_cpp/classes/base_material3d.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -16,6 +17,33 @@ namespace godot {
         arrays[Mesh::ARRAY_INDEX] = PackedInt32Array({0, 2, 1, 0, 3, 2});
         point_mesh.instantiate();
         point_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+    }
+
+    bool E3DInstanceBackend::_intersect_mesh(
+            const Ref<Mesh> &p_mesh, const Transform3D &p_transform, const Vector3 &p_from, const Vector3 &p_to,
+            double &r_distance, Vector3 &r_point) {
+        const Transform3D inverse = p_transform.affine_inverse();
+        const Vector3 from = inverse.xform(p_from);
+        const Vector3 to = inverse.xform(p_to);
+        // the box first: it rejects nearly every mesh, and one entered farther than the nearest
+        // hit so far cannot hold a nearer triangle - only then are the triangles taken out of it
+        Vector3 entry;
+        if (!p_mesh->get_aabb().intersects_segment(from, to, &entry) ||
+            p_from.distance_to(p_transform.xform(entry)) >= r_distance) {
+            return false;
+        }
+        double t = 0.0;
+        if (!mouse_picking::intersect_faces(p_mesh->get_faces(), from, to, t)) {
+            return false;
+        }
+        const Vector3 point = p_transform.xform(from + (to - from) * t);
+        const double distance = p_from.distance_to(point);
+        if (distance >= r_distance) {
+            return false;
+        }
+        r_distance = distance;
+        r_point = point;
+        return true;
     }
 
     bool E3DInstanceBackend::_light_part_visible(

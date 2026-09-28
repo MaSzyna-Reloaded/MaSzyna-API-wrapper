@@ -52,6 +52,7 @@ namespace godot {
         }
 
         RenderingServer *rs = RenderingServer::get_singleton();
+        const RID overlay = p_instance.material_overlay.is_valid() ? p_instance.material_overlay->get_rid() : RID();
         for (int i = 0; i < p_instance.rids.size(); i++) {
             // A submodel is rendered only if all its ancestors are visible (node hierarchy semantics)
             bool visible = p_instance.visible;
@@ -62,6 +63,7 @@ namespace godot {
             rs->instance_set_transform(p_instance.rids[i], p_instance.transform * p_instance.local_transforms[i]);
             rs->instance_set_visible(p_instance.rids[i], visible);
             rs->instance_set_layer_mask(p_instance.rids[i], p_instance.layer_mask);
+            rs->instance_geometry_set_material_overlay(p_instance.rids[i], overlay);
         }
     }
 
@@ -71,6 +73,24 @@ namespace godot {
         for (int i = 0; i < p_instance.rids.size(); i++) {
             rs->instance_set_transform(p_instance.rids[i], p_instance.transform * p_instance.local_transforms[i]);
         }
+    }
+
+    bool E3DOptimizedBackend::intersect_segment(
+            const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
+            Vector3 &r_point) const {
+        bool hit = false;
+        for (int i = 0; i < p_instance.rids.size(); i++) {
+            // the chain ends with the submodel itself; a free spotlight's point quad is no geometry
+            const E3DSubModel *submodel = p_instance.chains[i][p_instance.chains[i].size() - 1];
+            if (submodel->get_submodel_type() != E3DSubModel::SUBMODEL_GL_TRIANGLES) {
+                continue;
+            }
+            hit = _intersect_mesh(
+                          submodel->get_mesh(), p_instance.transform * p_instance.local_transforms[i], p_from, p_to,
+                          r_distance, r_point) ||
+                  hit;
+        }
+        return hit;
     }
 
     /// The chain's transforms again, each submodel with its pose on top (TSubModel::RaAnimation(),

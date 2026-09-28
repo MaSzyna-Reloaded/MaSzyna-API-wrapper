@@ -47,6 +47,12 @@ namespace godot {
                 D_METHOD("instance_set_visibility_range", "instance", "begin", "end"),
                 &E3DRenderingServer::instance_set_visibility_range);
         ClassDB::bind_method(
+                D_METHOD("instance_set_material_overlay", "instance", "material"),
+                &E3DRenderingServer::instance_set_material_overlay);
+        ClassDB::bind_method(
+                D_METHOD("instance_intersect_segment", "instance", "from", "to"),
+                &E3DRenderingServer::instance_intersect_segment);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_lights_state", "instance", "lights_state"),
                 &E3DRenderingServer::instance_set_lights_state);
         ClassDB::bind_method(
@@ -151,6 +157,10 @@ namespace godot {
     }
 
     E3DInstanceBackend &E3DRenderingServer::_get_backend(const E3DInstanceData &p_instance) {
+        return const_cast<E3DInstanceBackend &>(static_cast<const E3DRenderingServer *>(this)->_get_backend(p_instance));
+    }
+
+    const E3DInstanceBackend &E3DRenderingServer::_get_backend(const E3DInstanceData &p_instance) const {
         switch (p_instance.instancer) {
             case INSTANCER_NODES:
                 return nodes_backend;
@@ -326,6 +336,33 @@ namespace godot {
         instance->visibility_range_begin = p_begin;
         instance->visibility_range_end = p_end;
         _rebuild_if_built(*instance);
+    }
+
+    /// A material drawn over every submodel of the instance (an outline, a tint); null for none
+    void E3DRenderingServer::instance_set_material_overlay(const RID &p_instance, const Ref<Material> &p_material) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        instance->material_overlay = p_material;
+        _update_if_built(*instance);
+    }
+
+    /// Where the segment (world space) first meets the instance's meshes: `{position, distance}`
+    /// (the distance from `p_from`), empty when it misses or the instance is hidden or not built
+    Dictionary E3DRenderingServer::instance_intersect_segment(
+            const RID &p_instance, const Vector3 &p_from, const Vector3 &p_to) const {
+        Dictionary hit;
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, hit);
+        if (!instance->built || !instance->visible) {
+            return hit;
+        }
+        double distance = p_from.distance_to(p_to);
+        Vector3 point;
+        if (_get_backend(*instance).intersect_segment(*instance, p_from, p_to, distance, point)) {
+            hit["position"] = point;
+            hit["distance"] = distance;
+        }
+        return hit;
     }
 
     /// Light name -> enabled; shows the "on" or "off" submodels of the model's lights. A value set

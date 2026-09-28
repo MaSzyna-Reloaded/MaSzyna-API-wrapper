@@ -54,6 +54,7 @@ func _ready() -> void:
     # scenery content is registered, not built - it is streamed around this camera
     SceneryStreamingServer.set_camera(get_camera())
     CabinHUDMouseSystem.set_camera(get_camera().get_instance_id())
+    SceneryHUDMouseServer.set_camera(get_camera().get_instance_id())
 
 
 func _exit_tree() -> void:
@@ -117,7 +118,7 @@ func clear_start_train() -> void:
         await controlled_vehicle_changed
 
 func _input(event):
-    if CabinHUDMouseSystem.input(event):
+    if CabinHUDMouseSystem.input(event) or SceneryHUDMouseServer.input(event):
         get_viewport().set_input_as_handled()
         return
     if event.is_action_pressed("flashlight_toggle", false, true):
@@ -264,6 +265,8 @@ func _update_cabin_view() -> void:
         return
     _cabin_view = in_cabin
     get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", in_cabin)
+    # scenery models are clicked only while walking (drivermouseinput.cpp:336)
+    SceneryHUDMouseServer.set_active(not in_cabin)
     cabin_view_changed.emit(in_cabin)
 
 func get_camera() -> FreeCamera3D:

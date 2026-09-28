@@ -1,4 +1,5 @@
 #include "CabinHUDMouseSystem.hpp"
+#include "rendering/MousePicking.hpp"
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/input.hpp>
 #include <godot_cpp/classes/input_event_mouse_button.hpp>
@@ -10,7 +11,6 @@
 
 namespace godot {
     namespace {
-        const Color OUTLINE_COLOR = Color(1.0, 0.85, 0.3);
         /// A control whose longest side is shorter than this, in metres, is a small one - a desk
         /// button or toggle. A thin ring is lost around it, so it gets a heavier one and its body
         /// is tinted too; a lever or a wheel is plain to see with a thin ring alone.
@@ -21,27 +21,6 @@ namespace godot {
         /// How strongly a small hovered control itself is tinted with the outline colour
         constexpr float SMALL_OUTLINE_FILL_ALPHA = 0.12;
 
-        /* Godot's stencil outline (BaseMaterial3D::STENCIL_MODE_OUTLINE) is meant for the mesh's
-         * own material: it writes the stencil and a grown next pass draws only outside it. The
-         * cab's materials are shared between meshes, so the pair goes into the overlay instead -
-         * the overlay writes the stencil and, with `p_fill_alpha`, tints the control. Both are
-         * transparent, so the preset's render priorities (writer 0, outline 1) keep them in order,
-         * and neither tests depth: the whole silhouette gets its ring, also where the control
-         * sinks into its panel. */
-        Ref<StandardMaterial3D> outline_material(const double p_width, const float p_fill_alpha) {
-            Ref<StandardMaterial3D> material;
-            material.instantiate();
-            material->set_transparency(BaseMaterial3D::TRANSPARENCY_ALPHA);
-            material->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);
-            material->set_albedo(Color(OUTLINE_COLOR, p_fill_alpha));
-            material->set_flag(BaseMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
-            material->set_stencil_mode(BaseMaterial3D::STENCIL_MODE_OUTLINE);
-            material->set_stencil_effect_color(OUTLINE_COLOR);
-            material->set_stencil_effect_outline_thickness(p_width);
-            const Ref<BaseMaterial3D> outline = material->get_next_pass();
-            outline->set_flag(BaseMaterial3D::FLAG_DISABLE_DEPTH_TEST, true);
-            return material;
-        }
         /// How far from a small control the cursor may be and still take it - a toggle a few
         /// pixels wide is otherwise hard to hit
         constexpr double PICK_TOLERANCE_PIXELS = 12.0;
@@ -75,8 +54,8 @@ namespace godot {
     const char *CabinHUDMouseSystem::control_state_changed_signal = "control_state_changed";
 
     CabinHUDMouseSystem::CabinHUDMouseSystem() {
-        small_outline_material = outline_material(SMALL_OUTLINE_WIDTH, SMALL_OUTLINE_FILL_ALPHA);
-        large_outline_material = outline_material(LARGE_OUTLINE_WIDTH, 0.0);
+        small_outline_material = mouse_picking::outline_material(SMALL_OUTLINE_WIDTH, SMALL_OUTLINE_FILL_ALPHA);
+        large_outline_material = mouse_picking::outline_material(LARGE_OUTLINE_WIDTH, 0.0);
     }
 
     void CabinHUDMouseSystem::_bind_methods() {
@@ -221,37 +200,11 @@ namespace godot {
             return false;
         }
 
-        // Moller-Trumbore over the segment from..to, t in [0, 1]
-        const Vector3 direction = to - from;
-        double nearest_t = 2.0;
-        const Vector3 *faces = p_pickable.faces.ptr();
-        for (int64_t i = 0; i + 2 < p_pickable.faces.size(); i += 3) {
-            const Vector3 edge_1 = faces[i + 1] - faces[i];
-            const Vector3 edge_2 = faces[i + 2] - faces[i];
-            const Vector3 p = direction.cross(edge_2);
-            const double determinant = edge_1.dot(p);
-            if (Math::is_zero_approx(determinant)) {
-                continue;
-            }
-            const Vector3 s = from - faces[i];
-            const double u = s.dot(p) / determinant;
-            if (u < 0.0 || u > 1.0) {
-                continue;
-            }
-            const Vector3 q = s.cross(edge_1);
-            const double v = direction.dot(q) / determinant;
-            if (v < 0.0 || u + v > 1.0) {
-                continue;
-            }
-            const double t = edge_2.dot(q) / determinant;
-            if (t >= 0.0 && t < nearest_t) {
-                nearest_t = t;
-            }
-        }
-        if (nearest_t > 1.0) {
+        double t = 0.0;
+        if (!mouse_picking::intersect_faces(p_pickable.faces, from, to, t)) {
             return false;
         }
-        const Vector3 point = transform.xform(from + direction * nearest_t);
+        const Vector3 point = transform.xform(from + (to - from) * t);
         const double distance = p_from.distance_to(point);
         if (distance >= r_distance) {
             return false;

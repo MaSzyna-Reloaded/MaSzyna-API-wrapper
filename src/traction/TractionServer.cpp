@@ -249,6 +249,7 @@ namespace godot {
         _resolve_parallel_spans();
         _mark_section_ends();
         _propagate_resistance();
+        _connect_section_ends();
     }
 
     /* Port of TTraction::WhereIs() (Traction.cpp:392), run over every span once the chain exists.
@@ -455,6 +456,82 @@ namespace godot {
             current_resistance += next_wire->resistivity * next_wire->length();
             current_wire_rid = next_rid;
             current_direction = next_direction ^ 1;
+        }
+    }
+
+    /* A chain of spans that shares no end with a powered one - the wire over a diverging track,
+     * starting beside the main line's span rather than at its end - is fed across the overlap:
+     * each open end of a section takes the power of the nearest powered span of the same section
+     * (basic_cell::find(), scene.cpp:579) and walks it along its own chain. Repeated while it
+     * connects anything, since a newly fed chain can feed the next one (Traction.cpp:858-895). */
+    void TractionServer::_connect_section_ends() {
+        Vector<RID> ends;
+        for (const KeyValue<RID, Wire> &entry: wires) {
+            if ((entry.value.last_flags & 1) != 0) {
+                ends.push_back(entry.key);
+            }
+        }
+        bool connected = true;
+        while (connected) {
+            connected = false;
+            for (int index = 0; index < ends.size(); ++index) {
+                Wire *end = wires.getptr(ends[index]);
+                if (end == nullptr) {
+                    continue;
+                }
+                // the chain goes on from one side, the search starts at the open other one
+                int direction = 0;
+                Vector3 point = end->p2;
+                if (end->next[1].is_valid() && !end->next[0].is_valid()) {
+                    direction = 1;
+                    point = end->p1;
+                } else if (!end->next[0].is_valid()) {
+                    // a lone span is not connected, as in the original (Traction.cpp:889)
+                    ends.write[index] = RID();
+                    continue;
+                }
+
+                const Vector3 end_vector = end->p2 - end->p1;
+                const Vector2 query_center(point.x, point.z);
+                const Rect2 query_aabb(
+                        query_center - (Vector2(1.0, 1.0) * SECTION_END_SEARCH_RADIUS),
+                        Vector2(1.0, 1.0) * SECTION_END_SEARCH_RADIUS * 2.0);
+                const TypedArray<RID> candidates = spatial_index->query(query_aabb);
+                RID match_source;
+                double match_resistance = 0.0;
+                double best_distance = SECTION_END_SEARCH_RADIUS * SECTION_END_SEARCH_RADIUS;
+                for (int candidate_index = 0; candidate_index < candidates.size(); ++candidate_index) {
+                    const RID candidate_rid = candidates[candidate_index];
+                    if (candidate_rid == ends[index] || candidate_rid == end->next[0] ||
+                        candidate_rid == end->next[1]) {
+                        continue;
+                    }
+                    const Wire *candidate = wires.getptr(candidate_rid);
+                    if (candidate == nullptr || candidate->section != end->section) {
+                        continue;
+                    }
+                    const int endpoint =
+                            (candidate->p2 - candidate->p1).dot(end_vector) >= 0.0 ? direction ^ 1 : direction;
+                    if (!candidate->power_near[endpoint].is_valid() || candidate->resistance[endpoint] < 0.0) {
+                        continue;
+                    }
+                    // the original measures to the span's location, its midpoint (Traction.cpp:156)
+                    const double distance = ((candidate->p1 + candidate->p2) * 0.5).distance_squared_to(point);
+                    if (distance < best_distance) {
+                        best_distance = distance;
+                        match_source = candidate->power_near[endpoint];
+                        match_resistance = candidate->resistance[endpoint];
+                    }
+                }
+                if (!match_source.is_valid()) {
+                    continue;
+                }
+                // ResistanceCalc(d, r, ps): the end itself learns the source on its open side
+                end->power_near[direction ^ 1] = match_source;
+                _resistance_walk(ends[index], direction, match_resistance, match_source);
+                ends.write[index] = RID();
+                connected = true;
+            }
         }
     }
 

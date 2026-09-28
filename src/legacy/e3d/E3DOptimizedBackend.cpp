@@ -104,11 +104,41 @@ namespace godot {
             const bool force_alpha =
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
 
-            // SUBMODEL_FREE_SPOTLIGHT draws nothing; E3DRenderingServer owns the light RIDs and
-            // streams them with a range of their own, far shorter than the model's
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
                 submodel->get_mesh().is_valid()) {
-                _add_submodel(p_instance, submodel.ptr(), local_transform, chain, force_alpha, p_material_resolver);
+                _add_submodel(
+                        p_instance, submodel.ptr(), submodel->get_mesh()->get_rid(),
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha), local_transform,
+                        chain);
+            }
+            // A free spotlight's light is E3DRenderingServer's (streamed with a range of its own);
+            // here it is only the point (and the glare) the original draws where the light is
+            // (opengl33renderer.cpp:4375-4500), when the resolver gives it a material
+            if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
+                const Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), false);
+                if (material.is_valid()) {
+                    const RID rid =
+                            _add_submodel(p_instance, submodel.ptr(), point_mesh->get_rid(), material, local_transform, chain);
+                    RenderingServer *rs = RenderingServer::get_singleton();
+                    // the quad is placed on the screen by its shaders - in a shadow map or in GI it
+                    // would be a stray square
+                    rs->instance_geometry_set_cast_shadows_setting(rid, RenderingServer::SHADOW_CASTING_SETTING_OFF);
+                    rs->instance_geometry_set_flag(rid, RenderingServer::INSTANCE_FLAG_USE_BAKED_LIGHT, false);
+                    // the light of the nearest "on" ancestor, as E3DLightFactory assigns it
+                    String light_name;
+                    for (int ancestor = chain.size() - 1; ancestor >= 0 && light_name.is_empty(); ancestor--) {
+                        for (const E3DModelLight &light: p_instance.model_lights.lights) {
+                            if (light.on == chain[ancestor]) {
+                                light_name = light.name;
+                            }
+                        }
+                    }
+                    const Dictionary parameters = _free_spotlight_parameters(p_instance, submodel.ptr(), light_name);
+                    const Array names = parameters.keys();
+                    for (int i = 0; i < names.size(); i++) {
+                        rs->instance_geometry_set_shader_parameter(rid, names[i], parameters[names[i]]);
+                    }
+                }
             }
 
             _add_submodels(
@@ -117,15 +147,15 @@ namespace godot {
         }
     }
 
-    void E3DOptimizedBackend::_add_submodel(
-            E3DInstanceData &p_instance, E3DSubModel *p_submodel, const Transform3D &p_local_transform,
-            const Vector<E3DSubModel *> &p_chain, const bool p_force_alpha, E3DMaterialResolver &p_material_resolver) {
+    RID E3DOptimizedBackend::_add_submodel(
+            E3DInstanceData &p_instance, E3DSubModel *p_submodel, const RID &p_mesh, const Ref<Material> &p_material,
+            const Transform3D &p_local_transform, const Vector<E3DSubModel *> &p_chain) {
         RenderingServer *rs = RenderingServer::get_singleton();
         const RID rid = rs->instance_create();
         if (p_instance.node_id.is_valid()) {
             rs->instance_attach_object_instance_id(rid, p_instance.node_id);
         }
-        rs->instance_set_base(rid, p_submodel->get_mesh()->get_rid());
+        rs->instance_set_base(rid, p_mesh);
         rs->instance_set_scenario(rid, p_instance.scenario);
 
         // the instance range (scenery node range_min/range_max) limits the submodel's own range
@@ -138,12 +168,11 @@ namespace godot {
         rs->instance_geometry_set_visibility_range(
                 rid, range_begin, range_end, 0.0, 0.0, RenderingServer::VISIBILITY_RANGE_FADE_DISABLED);
 
-        const Ref<Material> material = p_material_resolver.resolve(p_instance, p_submodel, p_force_alpha);
-        if (material.is_valid()) {
-            p_instance.materials.push_back(material);
-            rs->instance_geometry_set_material_override(rid, material->get_rid());
+        if (p_material.is_valid()) {
+            p_instance.materials.push_back(p_material);
+            rs->instance_geometry_set_material_override(rid, p_material->get_rid());
             // same as MeshInstance3D.sorting_offset = -1 in E3DNodesBackend
-            if (_requires_alpha_depth_prepass_sorting(material)) {
+            if (_requires_alpha_depth_prepass_sorting(p_material)) {
                 rs->instance_set_pivot_data(rid, -1.0, false);
             }
         }
@@ -154,5 +183,6 @@ namespace godot {
         p_instance.rids.push_back(rid);
         p_instance.local_transforms.push_back(p_local_transform);
         p_instance.chains.push_back(p_chain);
+        return rid;
     }
 } // namespace godot

@@ -2,6 +2,7 @@
 #include "E3DLightFactory.hpp"
 #include "E3DMaterialResolver.hpp"
 #include "E3DModel.hpp"
+#include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -107,6 +108,7 @@ namespace godot {
     /// Builds and updates the content of E3DRenderingServer instances.
     class E3DInstanceBackend {
         public:
+            E3DInstanceBackend();
             virtual ~E3DInstanceBackend() = default;
 
             virtual void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) = 0;
@@ -122,6 +124,13 @@ namespace godot {
             virtual void apply_poses(E3DInstanceData &p_instance) = 0;
 
         protected:
+            /// The unit quad a free spotlight's point and glare are drawn with - the material's shaders
+            /// place it on the screen (types/free_spotlight.gdshader)
+            Ref<ArrayMesh> point_mesh;
+
+            /// The instance shader parameters of a free spotlight's point, by name
+            static Dictionary _free_spotlight_parameters(
+                    const E3DInstanceData &p_instance, const E3DSubModel *p_submodel, const String &p_light_name);
             static bool _is_submodel_valid(const E3DSubModel *p_submodel, const Array &p_exclude_node_names);
             static Vector<E3DSubModel *> _get_force_alpha_submodels(const E3DInstanceData &p_instance);
             static bool _is_force_alpha(

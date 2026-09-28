@@ -5,6 +5,17 @@ static var UNKNOWN_MATERIAL = preload("res://addons/libmaszyna/legacy/materials/
 static var UNKNOWN_TEXTURE = preload("res://addons/libmaszyna/legacy/materials/missing_texture.png")
 const DDSTextureLoader = preload("res://addons/libmaszyna/legacy/materials/dds_texture_loader.gd")
 const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/legacy/e3d/colored.tres")
+## A free spotlight drawn as a point of a constant size on the screen (types/free_spotlight.gdshader)
+## and its glare (types/free_spotlight_glare.gdshader) as the next pass
+const FREE_SPOTLIGHT_MATERIAL: ShaderMaterial = preload("types/free_spotlight.tres")
+const FREE_SPOTLIGHT_GLARE_MATERIAL: ShaderMaterial = preload("types/free_spotlight_glare.tres")
+## The original's glare texture (opengl33renderer.cpp:102)
+const FREE_SPOTLIGHT_GLARE_TEXTURE: String = "fx/lightglare"
+## Whether free spotlights - signals, lamps - get that point and glare, as the original draws them
+const RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING: StringName = &"maszyna/scenery/railway_lights_visibility_improved"
+## How many times the original's pointsize the point is drawn (the original: 4)
+const RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING: StringName = &"maszyna/scenery/railway_lights_point_size_multiplier"
+const RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT: float = 2.0
 
 ## The cache key cannot see changes to MaszynaMaterialFactory's own code - bump this whenever that code
 ## changes what a built material holds. v2: normal_scale 1.0 like the original. v4: shaders moved
@@ -12,6 +23,8 @@ const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/legacy/e3d/c
 const CACHE_VERSION: int = 5
 
 var _materials_cache = ResourceCache.create("materials")
+## The point with its glare, built in _ready() when RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is on
+var _free_spotlight_material: ShaderMaterial = null
 var _managed_materials: Dictionary = {}
 var _dds_cache: Dictionary = {}
 
@@ -46,6 +59,13 @@ class MaterialOptions:
 
 
 func _ready() -> void:
+    if ProjectSettings.get_setting(RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING, true):
+        var glare: ShaderMaterial = FREE_SPOTLIGHT_GLARE_MATERIAL.duplicate()
+        glare.set_shader_parameter("glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
+        _free_spotlight_material = FREE_SPOTLIGHT_MATERIAL.duplicate()
+        _free_spotlight_material.set_shader_parameter("point_size_multiplier", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)))
+        _free_spotlight_material.next_pass = glare
     E3DRenderingServer.set_material_resolver(get_submodel_material)
     SimulationServer.cache_clear_requested.connect(clear_cache)
 
@@ -108,6 +128,10 @@ func get_submodel_material(
     skins: PackedStringArray,
     force_alpha: bool,
 ) -> Material:
+    # E3DOptimizedBackend draws a free spotlight only when it gets a material for it
+    if submodel.submodel_type == E3DSubModel.SUBMODEL_FREE_SPOTLIGHT:
+        return _free_spotlight_material
+
     var unprefixed_model_path: String = "/".join(data_path.split("/").slice(1))
     var options: MaterialOptions = MaterialOptions.new()
 

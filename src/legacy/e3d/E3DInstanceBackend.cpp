@@ -1,7 +1,41 @@
 #include "E3DInstanceBackend.hpp"
 #include <godot_cpp/classes/base_material3d.hpp>
+#include <godot_cpp/core/math.hpp>
 
 namespace godot {
+    E3DInstanceBackend::E3DInstanceBackend() {
+        // a mesh resource, because RenderingServer is not reachable yet while the servers register
+        PackedVector3Array vertices;
+        vertices.push_back(Vector3(-1.0, -1.0, 0.0));
+        vertices.push_back(Vector3(1.0, -1.0, 0.0));
+        vertices.push_back(Vector3(1.0, 1.0, 0.0));
+        vertices.push_back(Vector3(-1.0, 1.0, 0.0));
+        Array arrays;
+        arrays.resize(Mesh::ARRAY_MAX);
+        arrays[Mesh::ARRAY_VERTEX] = vertices;
+        arrays[Mesh::ARRAY_INDEX] = PackedInt32Array({0, 2, 1, 0, 3, 2});
+        point_mesh.instantiate();
+        point_mesh->add_surface_from_arrays(Mesh::PRIMITIVE_TRIANGLES, arrays);
+    }
+
+    /// The colour is the submodel's, or the scenery node's `lightcolors` for its light
+    /// (DiffuseOverride, opengl33renderer.cpp:4415); the cone and the range are the submodel's
+    Dictionary E3DInstanceBackend::_free_spotlight_parameters(
+            const E3DInstanceData &p_instance, const E3DSubModel *p_submodel, const String &p_light_name) {
+        Color color = p_submodel->get_diffuse_color();
+        const E3DInstanceData::LightDeclaration *declaration = p_instance.light_declarations.getptr(p_light_name);
+        if (declaration != nullptr && declaration->has_color) {
+            color = declaration->color;
+        }
+        Dictionary parameters;
+        parameters["light_color"] = color;
+        parameters["cos_hotspot_angle"] = p_submodel->get_cos_hotspot_angle();
+        parameters["cos_falloff_angle"] = Math::cos(Math::deg_to_rad(p_submodel->get_light_angle()));
+        parameters["max_distance"] = p_submodel->get_visibility_range_end();
+        parameters["lights_on_threshold"] = p_submodel->get_lights_on_threshold();
+        return parameters;
+    }
+
     bool E3DInstanceBackend::_is_submodel_valid(const E3DSubModel *p_submodel, const Array &p_exclude_node_names) {
         if (p_submodel->get_skip_rendering()) {
             return false;

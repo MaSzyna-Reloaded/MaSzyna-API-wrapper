@@ -480,6 +480,12 @@ namespace godot {
                 return submodel;
             }
             case E3DSubModel::SubModelType::SUBMODEL_FREE_SPOTLIGHT:
+                // drawn only within its range, and its point's size depends on it
+                // (opengl33renderer.cpp:4292,4450)
+                submodel->set_visibility_range_begin(std::sqrt(p_submodel.lod_min_distance));
+                submodel->set_visibility_range_end(std::sqrt(p_submodel.lod_max_distance));
+                // fLight: the glare shows below this light level (opengl33renderer.cpp:4383)
+                submodel->set_lights_on_threshold(p_submodel.lights_on_threshold);
                 submodel->set_light_range(p_submodel.light_range);
                 submodel->set_light_attenuation(p_submodel.light_attenuation);
                 submodel->set_light_angle(p_submodel.light_angle);

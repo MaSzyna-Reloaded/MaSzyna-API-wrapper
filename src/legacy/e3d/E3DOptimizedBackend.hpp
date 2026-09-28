@@ -10,9 +10,10 @@ namespace godot {
                     const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,
                     const Vector<E3DSubModel *> &p_force_alpha_submodels, bool p_force_alpha,
                     E3DMaterialResolver &p_material_resolver);
-            void _add_submodel(
-                    E3DInstanceData &p_instance, E3DSubModel *p_submodel, const Transform3D &p_local_transform,
-                    const Vector<E3DSubModel *> &p_chain, bool p_force_alpha, E3DMaterialResolver &p_material_resolver);
+            RID _add_submodel(
+                    E3DInstanceData &p_instance, E3DSubModel *p_submodel, const RID &p_mesh,
+                    const Ref<Material> &p_material, const Transform3D &p_local_transform,
+                    const Vector<E3DSubModel *> &p_chain);
 
         public:
             void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) override;

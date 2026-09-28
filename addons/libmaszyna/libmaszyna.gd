@@ -139,6 +139,14 @@ func _enter_tree():
         PROPERTY_HINT_RANGE, "10.0,1000.0,5.0,suffix:m"
     )
     add_custom_project_setting("maszyna/scenery/lights/cast_shadows", true, TYPE_BOOL)
+    # A signal's or a lamp's free spotlight is drawn as a point of a constant size on the screen, the
+    # way the original draws it, so it stays visible long after the lens is smaller than a pixel
+    add_custom_project_setting("maszyna/scenery/railway_lights_visibility_improved", true, TYPE_BOOL)
+    # How many times the original's pointsize such a point is drawn; the original's 4 makes blobs
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_point_size_multiplier", 2.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.5,8.0,0.1"
+    )
     # How much a scenery model's real lights are worth. "Lights off" renders only the model's own
     # lit submodels; "Economy" collapses the lights of one model light into a single one between
     # them, raised by the offset and widened to cover every cone it replaces (a five-armed lamp is

@@ -213,10 +213,11 @@ $(GODOT_BIN)/godot.windows.%.double.x86_64.exe: | $(GODOT_SOURCE_DIR)
 
 
 # The export presets do not use a gradle build, so the export takes the ready APKs; scons puts the
-# native libraries where gradle packs them from. Needs ANDROID_HOME and a JDK 17.
+# native libraries where gradle packs them from. Needs ANDROID_HOME and a JDK 17. Built without
+# the Swappy frame pacing library, which scons refuses to build without otherwise.
 $(ANDROID_TEMPLATES) &: | $(GODOT_SOURCE_DIR)
-	cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=android arch=arm64 target=template_release \
-	    && $(GODOT_SCONS) platform=android arch=arm64 target=template_debug \
+	cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=android arch=arm64 target=template_release swappy=no \
+	    && $(GODOT_SCONS) platform=android arch=arm64 target=template_debug swappy=no \
 	    && cd platform/android/java && ./gradlew generateGodotTemplates
 
 

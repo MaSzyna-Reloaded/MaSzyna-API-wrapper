@@ -4,6 +4,21 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-28 - the player could not start the ST45 the AI drove: FuelStart was never read
+
+* **Symptom:** in zwierzyniec_transport the player could not get ST45-03 (st45_v2, 301dd.fiz) to
+  move; the AI driver started and drove it.
+* **Proof:** a headless probe on the scenery took the vehicle from the AI and sent the cab's
+  commands step by step. Held main switch alone: main_switch_enabled stayed false, the fuel pump
+  never ran. The AI's own command log showed it sends `fuel_pump(true)` before the main switch.
+* **Cause:** `fiz_train_engine_common.gd` read `OilStart` but neither `FuelStart` nor `WaterStart`,
+  so every diesel's fuel pump stayed manual. 301dd.fiz says `FuelStart=Automatic` and its cab has
+  no fuel pump switch - the player had no way to feed the engine.
+* **Fix:** both keys read as the original does (`Mover.cpp:10948-10962`, manual when missing);
+  `FIZ_PARSER_FORMAT_VERSION` bumped, or the stale cached import keeps the old mode.
+* **Rule:** "the AI can, the player cannot" - log the AI's commands to the vehicle and replay them
+  against the player's path; the command the AI sends and the cab cannot is the missing piece.
+
 ## 2026-09-27 - thin station objects lost their sun shadows: a normal bias of whole metres
 
 * **Symptom:** on Stary Jawor, from the cab, the shadows of semaphores, switch indicators and a

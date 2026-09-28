@@ -107,6 +107,9 @@ anything. Open work belongs in `TODO.md`.
   thinnest caster before tuning; two shadowed directional lights halve the atlas. *(09-27 thin
   station objects lost their sun shadows)*
 
+* "The AI can drive it, the player cannot": log the AI's vehicle commands and replay them on the
+  player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
+
 ## State, ownership, events
 * A geometric value nobody publishes reads as zero, not as missing, and zero makes two things
   identical - grep for assignments to an exported property before trusting it is filled, and treat

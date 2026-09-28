@@ -1819,3 +1819,19 @@ lighting or the consist.
   it at its end: an Ogg playback starts that at 0. A skipped clip is marked as done, or the next
   tick starts it. A playback test ticks at least once, with a stream that does not know its length
   before it is loaded.
+
+## 2026-09-28 - a sound bank counted its vehicle's coupler events under a handle nothing read
+
+* **Symptom:** a test that registered a bank on a `RailVehicle3D` whose `controller_path` was
+  already set failed with "Signal 'coupler_attached' is already connected".
+* **Proof:** `RailVehicle3D.get_controller()` resolves the path at once, but `get_rid()` keeps the
+  node's own handle until `_on_controller_changed` adopts the controller's
+  (RailVehicle3D.cpp:451-462). `_resolve_controller()` connected under the first handle. On the
+  announcement it tried again under the second, and Godot refused, because a bound callable is
+  the same connection whatever its bound arguments are. Coupler and pantograph events went on
+  being counted under a handle that no trigger read. The game's order (bank before controller)
+  never showed it.
+* **Fix:** when the vehicle's handle has changed, `_resolve_controller()` stops counting under the
+  old one before it connects under the new one.
+* **Rule:** a connection keyed by a bound argument is one connection per method. When the key
+  changes, disconnect it before connecting again.

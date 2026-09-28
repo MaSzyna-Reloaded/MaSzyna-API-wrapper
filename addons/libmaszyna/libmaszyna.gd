@@ -171,6 +171,36 @@ func _enter_tree():
         "maszyna/scenery/railway_lights_point_size_multiplier", 2.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.5,8.0,0.1"
     )
+    # How much of the original's glare alpha the light's glare is drawn with; the full value makes the
+    # billboard read as an overlay
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_glare_intensity", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.05"
+    )
+    # The share of a light's cone (falloff angle) past which its glare fades out towards the cone's
+    # edge; 1.0 keeps only the model's own hotspot-to-falloff band, a degree wide on vehicle lamps
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_glare_fade_start", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.05"
+    )
+    # How many degrees a glare's rays turn per degree the camera goes off the light's axis; 0 keeps
+    # the same star from every side
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_glare_rotation_ratio", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,4.0,0.1"
+    )
+    # A glare's size at the edge of the light's cone, as a share of its size on the axis; 1.0 keeps
+    # the original's constant 2.5 m
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_glare_edge_size", 0.4, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.05"
+    )
+    # The least share of the screen's height a glare spans, however far the light; 0 lets it shrink
+    # with the distance like the original's 2.5 m
+    add_custom_project_setting(
+        "maszyna/scenery/railway_lights_glare_min_screen_size", 0.03, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,0.2,0.005"
+    )
     # How much a scenery model's real lights are worth. "Lights off" renders only the model's own
     # lit submodels; "Economy" collapses the lights of one model light into a single one between
     # them, raised by the offset and widened to cover every cone it replaces (a five-armed lamp is

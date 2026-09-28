@@ -1835,3 +1835,16 @@ lighting or the consist.
   old one before it connects under the new one.
 * **Rule:** a connection keyed by a bound argument is one connection per method. When the key
   changes, disconnect it before connecting again.
+
+## 2026-09-28 - a vehicle lamp's glare blinked on and off with the viewing angle
+
+* **Symptom:** the glare of a locomotive's headlight (SM42) did not fade as the camera went round
+  it: at some angle it was either there or gone. Smoothing the cone's linear ramp changed nothing.
+* **Proof:** a dump of the free spotlights (`TP_FREESPOTLIGHT`) in `dynamic/pkp/sm42_v1/*.e3d`:
+  every `fspot` declares falloff 22.5 deg and hotspot 21.5 deg. The original's angle factor
+  (opengl33renderer.cpp:4665) ramps between the two, so the whole fade fits into 1 deg.
+* **Fix:** the glare fades over its own band, from `railway_lights_glare_fade_start` of the falloff
+  angle out to the falloff, unless the hotspot starts it earlier. The point keeps the original's
+  band.
+* **Rule:** do not trust a model's hotspot-to-falloff band to be a fade: vehicle lamps declare a
+  1 deg one. Dump the angles before tuning anything that uses the cone.

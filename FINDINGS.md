@@ -194,6 +194,9 @@ anything. Open work belongs in `TODO.md`.
   light; 09-21 smoke at origin)*
 * `color`, `color_initial_ramp` and `amount_ratio` reach particles already in the air. Only the
   emission itself affects new ones. *(09-21 plume cut off)*
+* An emitter whose rate its owner drives spawns nothing until the owner has set it - a default
+  rate spawns before the first tick, and emits on a culled system burst when it comes into view.
+  *(09-28 puff from a diesel that is off)*
 * A valid RID does not mean its `Node3D` is in the tree. *(09-20 E3D node leaving tree)*
 * The sky and the geometry are fogged by different parameters. An opacity summed from two sources
   is summed where it is set, and unclamped values extrapolate. *(09-21 fogged sky)*

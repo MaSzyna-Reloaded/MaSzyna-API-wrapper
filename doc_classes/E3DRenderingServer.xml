@@ -167,7 +167,7 @@
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="intensity" type="float" />
 			<description>
-				Spawn rate multiplier of every particle emitter of the instance, as the engine state drives it. [code]1.0[/code] is the emitter template's own rate - what a scenery chimney keeps.
+				Spawn rate multiplier of every particle emitter of the instance, as the engine state drives it. [code]1.0[/code] is the emitter template's own rate - what a scenery chimney keeps. An [constant INSTANCE_KIND_DYNAMIC] instance starts at [code]0.0[/code] and spawns nothing until its client sets the rate.
 				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
 			</description>
 		</method>

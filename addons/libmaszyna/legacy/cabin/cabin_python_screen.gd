@@ -8,6 +8,17 @@ class_name CabinPythonScreen
 ## The albedo texture of the cab's materials (MaszynaMaterialFactory)
 const TEXTURE_PARAMETER:StringName = &"texture_albedo"
 const MSEC_PER_SEC:float = 1000.0
+## Whether the submodel's material shines (MaszynaMaterialFactory, from the E3D self-illumination)
+const SELF_ILLUMINATION_PARAMETER:StringName = &"emission_enabled"
+## The glow the screen throws onto the desk in the colour of what it shows: a weak light reaching
+## far, so that it lights the desk around the screen without dazzling
+const SCREEN_GLOW_ENABLED_SETTING:StringName = &"maszyna/cabin/screen_glow_enabled"
+const SCREEN_GLOW_ENERGY_SETTING:StringName = &"maszyna/cabin/screen_glow_energy"
+const SCREEN_GLOW_ENERGY_DEFAULT:float = 0.05
+const SCREEN_GLOW_RANGE_SETTING:StringName = &"maszyna/cabin/screen_glow_range"
+const SCREEN_GLOW_RANGE_DEFAULT:float = 1.0
+## How far in front of the screen the glow stands, so it is not inside the panel
+const SCREEN_GLOW_OFFSET:float = 0.05
 
 var vehicle_rid:RID
 ## Absolute path of the script, without ".py"
@@ -20,6 +31,8 @@ var update_time_msec:int = 0
 var mesh:MeshInstance3D = null
 
 var _screen:RID = RID()
+## Lit in the average colour of each frame the script draws; null without a mesh or the setting
+var _glow:OmniLight3D = null
 ## Script commands with no wrapper equivalent yet, reported once each
 var _unsupported_commands:Dictionary[String, bool] = {}
 
@@ -31,10 +44,37 @@ func _enter_tree() -> void:
         var material:ShaderMaterial = mesh.material_override.duplicate()
         material.set_shader_parameter(TEXTURE_PARAMETER, PythonScreenServer.screen_get_texture(_screen))
         mesh.material_override = material
+    # only a screen that shines - a self-illuminated submodel; E186's log book "okladka" is paper
+    # the script only draws on
+    if (mesh and mesh.mesh and ProjectSettings.get_setting(SCREEN_GLOW_ENABLED_SETTING, true)
+            and (mesh.material_override as ShaderMaterial).get_shader_parameter(SELF_ILLUMINATION_PARAMETER)):
+        _glow = OmniLight3D.new()
+        _glow.name = "Glow"
+        _glow.light_color = Color.BLACK
+        _glow.light_energy = float(ProjectSettings.get_setting(SCREEN_GLOW_ENERGY_SETTING, SCREEN_GLOW_ENERGY_DEFAULT))
+        _glow.omni_range = float(ProjectSettings.get_setting(SCREEN_GLOW_RANGE_SETTING, SCREEN_GLOW_RANGE_DEFAULT))
+        _glow.shadow_enabled = false
+        add_child(_glow)
+        # in front of the screen: its centre, moved along the way its face looks
+        var normal_sum:Vector3 = Vector3.ZERO
+        for surface:int in mesh.mesh.get_surface_count():
+            var normals:PackedVector3Array = mesh.mesh.surface_get_arrays(surface)[Mesh.ARRAY_NORMAL]
+            for normal:Vector3 in normals:
+                normal_sum += normal
+        var facing:Vector3 = (mesh.global_basis * normal_sum).normalized()
+        _glow.global_position = mesh.to_global(mesh.get_aabb().get_center()) + facing * SCREEN_GLOW_OFFSET
+        PythonScreenServer.screen_rendered.connect(_on_screen_rendered)
 
 
 func _exit_tree() -> void:
+    if _glow:
+        PythonScreenServer.screen_rendered.disconnect(_on_screen_rendered)
     PythonScreenServer.screen_free(_screen)
+
+
+func _on_screen_rendered(screen:RID) -> void:
+    if screen == _screen:
+        _glow.light_color = PythonScreenServer.screen_get_average_color(_screen)
 
 
 func _ready() -> void:

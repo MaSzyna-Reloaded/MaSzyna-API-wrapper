@@ -130,6 +130,13 @@ func _enter_tree():
     # A lamp of several pieces - three alerter lamps in one mesh, a backlight overlay per gauge -
     # gets a light at each piece, the backlight in each overlay's own colour
     add_custom_project_setting("maszyna/cabin/real_instruments_lights", true, TYPE_BOOL)
+    # A Python cab screen throws a glow in the colour of what it shows - weak, but far enough to
+    # light the desk around it
+    add_custom_project_setting("maszyna/cabin/screen_glow_enabled", true, TYPE_BOOL)
+    add_custom_project_setting(
+        "maszyna/cabin/screen_glow_energy", 0.05, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,2.0,0.005")
+    add_custom_project_setting(
+        "maszyna/cabin/screen_glow_range", 1.0, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.05,4.0,0.05,suffix:m")
     add_custom_project_setting(
         "maszyna/cabin/instrument_glow_energy", 0.002, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,1.0,0.001")
     add_custom_project_setting(

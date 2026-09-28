@@ -88,11 +88,16 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
 ## widgets used to be given a NodePath into the vehicle's own subtree and resolve it themselves,
 ## which reached across two scenes and could resolve before the vehicle had been built. They are
 ## given the vehicle itself now, and the player says when it changes.
+## Each window gets the vehicle its target names (HUDWindow.vehicle_target), as a cab control does.
 func _bind_vehicle(node: Node = null) -> void:
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     var vehicle: RailVehicle3D = player.controlled_vehicle if player else null
     var controller: VehicleController = vehicle.get_controller() if vehicle else null
-    _propagate_vehicle(node if node else $ControlWindows, controller)
+    for window: HUDWindow in ([node] if node else _windows):
+        var target: RID = CabinState.vehicle_of(controller.get_rid(), window.vehicle_target) if controller else RID()
+        var target_controller: VehicleController = instance_from_id(
+                RailVehicleServer.vehicle_get_controller_instance_id(target)) as VehicleController if target.is_valid() else null
+        _propagate_vehicle(window, target_controller)
 
 
 func _propagate_vehicle(node: Node, controller: VehicleController) -> void:

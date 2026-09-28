@@ -26,6 +26,7 @@ namespace godot {
             Ref<VehicleModel> model;
             void _build(const Ref<VehicleModel> &p_model);
             String train_id;
+            String type_name;
             double initial_velocity = 0.0;
             VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
             String load_name;
@@ -58,6 +59,10 @@ namespace godot {
              * model came from - a scenery names its vehicles, a .fiz does not. */
             void set_train_id(const String &p_train_id);
             String get_train_id() const;
+            /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
+             * as TypeName (DynObj.cpp:2019) */
+            void set_type_name(const String &p_type_name);
+            String get_type_name() const;
             void set_initial_velocity(double p_velocity);
             double get_initial_velocity() const;
             void set_driver_type(VehicleController::DriverType p_driver_type);

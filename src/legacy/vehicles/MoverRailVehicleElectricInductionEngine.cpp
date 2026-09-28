@@ -48,6 +48,23 @@ namespace godot {
         return traction.is_pressure_switch_tripped(this);
     }
 
+    TypedArray<RailVehicleInverter> MoverRailVehicleElectricInductionEngine::get_inverters() const {
+        TypedArray<RailVehicleInverter> inverters;
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return inverters;
+        }
+        for (const Maszyna::inverter &inverter: mover->Inverters) {
+            Ref<RailVehicleInverter> state;
+            state.instantiate();
+            state->set_active(inverter.IsActive);
+            state->set_error(inverter.Error);
+            state->set_allow(inverter.Activate);
+            inverters.append(state);
+        }
+        return inverters;
+    }
+
     void MoverRailVehicleElectricInductionEngine::fuse_reset() {
         traction.reset_fuse(this);
     }

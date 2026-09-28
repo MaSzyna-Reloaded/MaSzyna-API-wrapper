@@ -52,8 +52,13 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_controller", "vehicle", "controller_id"),
                 &RailVehicleServer::vehicle_attach_controller);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_controller_instance_id", "vehicle"),
+                &RailVehicleServer::vehicle_get_controller_instance_id);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_type_name", "vehicle"), &RailVehicleServer::vehicle_get_type_name);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
@@ -265,6 +270,13 @@ namespace godot {
         return placement != nullptr ? placement->name : String();
     }
 
+    String RailVehicleServer::vehicle_get_type_name(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(placement, String());
+        const RailVehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_type_name() : String();
+    }
+
     void RailVehicleServer::vehicle_radio_stop(const RID &p_vehicle) {
         const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(sender);
@@ -388,6 +400,11 @@ namespace godot {
             }
         }
         return RID();
+    }
+
+    uint64_t RailVehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? static_cast<uint64_t>(placement->controller_id) : 0;
     }
 
     void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {

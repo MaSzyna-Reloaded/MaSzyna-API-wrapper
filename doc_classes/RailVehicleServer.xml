@@ -159,10 +159,24 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_controller_instance_id" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The instance id attached by [method vehicle_attach_controller], 0 without one.
+			</description>
+		</method>
 		<method name="vehicle_get_name" qualifiers="const">
 			<return type="String" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_type_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The name of the vehicle's type - the original's CHK/MMD name ([code]TMoverParameters::TypeName[/code]).
 			</description>
 		</method>
 		<method name="vehicle_get_rid_by_name" qualifiers="const">

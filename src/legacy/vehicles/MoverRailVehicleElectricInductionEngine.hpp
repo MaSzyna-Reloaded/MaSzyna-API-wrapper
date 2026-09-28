@@ -33,6 +33,7 @@ namespace godot {
             bool get_motor_connectors_open() const override;
             bool is_line_contactor_closed() const override;
             bool is_pressure_switch_tripped() const override;
+            TypedArray<RailVehicleInverter> get_inverters() const override;
             void fuse_reset() override;
             void set_motor_connectors_open(bool p_open) override;
             void _register_commands() override;

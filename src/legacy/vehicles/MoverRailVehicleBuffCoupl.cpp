@@ -120,6 +120,25 @@ namespace godot {
     }
 
 
+    /* How far each coupler is stretched (+) or its buffers pressed (-) [m], and the force it passes
+     * [N] (TCoupling::Dist, CForce) - what decides whether it breaks (Mover.cpp:4843-4857) */
+    void MoverRailVehicleBuffCoupl::_fill_state_dictionary(Dictionary &p_state) const {
+        RailVehicleBuffCoupl::_fill_state_dictionary(p_state);
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        // each coupler part publishes its own end; a single BuffCoupl. entry is both
+        if (get_buffer_location() != BufferLocation::BUFFER_LOCATION_BACK) {
+            p_state["coupler_front_distance"] = mover->Couplers[end::front].Dist;
+            p_state["coupler_front_force"] = mover->Couplers[end::front].CForce;
+        }
+        if (get_buffer_location() != BufferLocation::BUFFER_LOCATION_FRONT) {
+            p_state["coupler_rear_distance"] = mover->Couplers[end::rear].Dist;
+            p_state["coupler_rear_force"] = mover->Couplers[end::rear].CForce;
+        }
+    }
+
     void MoverRailVehicleBuffCoupl::_fill_config_dictionary(Dictionary &p_config) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -143,30 +162,5 @@ namespace godot {
         // what the Mover made of it: each coupler's strength [N], front and rear (FmaxC)
         p_config["coupler_max_force"] =
                 PackedFloat64Array({mover->Couplers[end::front].FmaxC, mover->Couplers[end::rear].FmaxC});
-    }
-
-
-    void MoverRailVehicleBuffCoupl::couple() {
-        const TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-
-        UtilityFunctions::push_warning(
-                "[RailVehicleBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles "
-                "simultaneously");
-        log_warning(
-                "[RailVehicleBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles "
-                "simultaneously");
-    }
-
-    void MoverRailVehicleBuffCoupl::decouple() {
-        TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-
-        UtilityFunctions::push_warning(
-                "[RailVehicleBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles "
-                "simultaneously");
-        log_warning(
-                "[RailVehicleBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles "
-                "simultaneously");
     }
 } // namespace godot

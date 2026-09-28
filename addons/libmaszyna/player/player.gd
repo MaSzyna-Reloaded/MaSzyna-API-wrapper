@@ -13,6 +13,11 @@ signal cabin_view_changed(in_cabin:bool)
                 _auto_start_pending = false
             _dirty = true
 
+## Without a start_train_id the player takes the first vehicle that has a controller. Off where the
+## scene names the train itself once its scenery is loaded - a vehicle taken while the scenery still
+## loads is not coupled yet, and the cab it activates reaches no other car of its unit.
+@export var auto_start:bool = true
+
 ## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
 @export var sfx_bank:SfxBank
 
@@ -28,7 +33,7 @@ var _camera:FreeCamera3D
 ## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
 @onready var sfx_player:SfxPlayer = $PlayerSfx
 var _dirty: bool = true
-var _auto_start_pending:bool = true
+var _auto_start_pending:bool = false
 ## The vehicle the player chose in the world (or re-enters); a vehicle is held, never looked up by
 ## its scenery name, which two vehicles may share and one may lack
 var _requested_vehicle:RailVehicle3D
@@ -36,6 +41,7 @@ var _released_vehicle:RID
 var _cabin_view:bool = false
 
 func _ready() -> void:
+    _auto_start_pending = auto_start and not start_train_id
     sfx_player.bank = sfx_bank
     headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     # the glow follows the spot: both are children of the camera, so their transform is view space
@@ -94,11 +100,6 @@ func clear_start_train() -> void:
     _request_vehicle(null)
     if controlled_vehicle:
         await controlled_vehicle_changed
-
-## Sets start_train_id unless the player already has one (e.g. from MaszynaSceneryNode.scenery_loaded)
-func set_start_train_if_empty(train_id:String) -> void:
-    if not start_train_id:
-        start_train_id = train_id
 
 func _input(event):
     if CabinHUDMouseSystem.input(event):

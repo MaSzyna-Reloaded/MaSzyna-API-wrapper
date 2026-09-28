@@ -71,6 +71,7 @@
 #include "vehicles/rail/RailVehicleRelayListItem.hpp"
 #include "vehicles/rail/RailVehicleThrottlePositionItem.hpp"
 #include "vehicles/rail/RailVehicleWWListItem.hpp"
+#include "vehicles/rail/RailVehicleInverter.hpp"
 #include "vehicles/rail/RailVehicleLightListItem.hpp"
 #include "vehicles/rail/RailVehicleLoadListItem.hpp"
 #include "vehicles/rail/RailVehicleDimmerListItem.hpp"
@@ -254,6 +255,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MoverRailVehicleLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(RailVehicleWWListItem);
+        GDREGISTER_CLASS(RailVehicleInverter);
         GDREGISTER_CLASS(RailVehicleMotorParameter);
         GDREGISTER_CLASS(RailVehicleLightListItem)
         GDREGISTER_ABSTRACT_CLASS(RailVehicleElectroPneumaticDynamicBrake)

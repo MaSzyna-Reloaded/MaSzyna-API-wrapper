@@ -91,6 +91,17 @@ anything. Open work belongs in `TODO.md`.
   every vehicle's, not the engine's). *(09-27 a control car had no controller)*
 * A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
   `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
+* The game data is written for Windows and `cParser`: a quoted text is one token without its
+  quotes, and a file name matches letter case aside. *(09-28 timetable screens without their
+  background)*
+* The player takes a vehicle only once the scenery is loaded: a cab activated before the
+  trainset is coupled reaches no other car (`SendCtrlToNext`). *(09-28 ED72 motor cars dead)*
+* A vehicle may have several components of one type (two couplers): capture and keep them all,
+  never one per type. *(09-28 ED72 tore apart on the first pull)*
+* A coupled controller (`CoupledCtrl`) goes on into the field shunt: the cab's range and position
+  are main + shunt (Train.cpp:985, 9410). *(09-28 ED72 stuck at 36-43 km/h)*
+* A property default is the original's default for the absent key (`TCoupling::PowerFlag` is
+  24V|110V, not 0) - a wrong one breaks every vehicle that omits the key. *(09-28 ED72 dead)*
 
 * A shadow's normal bias is texel x `shadow_normal_bias` per cascade: compute it against the
   thinnest caster before tuning; two shadowed directional lights halve the atlas. *(09-27 thin
@@ -200,6 +211,8 @@ anything. Open work belongs in `TODO.md`.
   not also belong in the synchronous API. *(09-22 sfx tick off main thread)*
 
 ## Build, release, export
+* A game or editor still running the old library writes cache entries under a version the new
+  scripts bumped - rebuild with Godot closed, or bump the version again. *(09-28 ED72 cache)*
 * glibc is only forward compatible. Check the highest `GLIBC_` of every shipped binary, and build
   on an old sysroot. *(09-24 Linux release glibc)*
 * A path handed to `FileAccess` is absolute, or it is silently `res://`. *(09-23 game dir ".")*

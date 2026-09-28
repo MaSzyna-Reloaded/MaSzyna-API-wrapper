@@ -25,6 +25,8 @@ const EXIT_SPINNER_HOLD_TIME: float = 0.5
 const QUIT_FADE_TIME: float = 0.5
 
 var _music_tween: Tween
+## The consist chosen in the selector, handed to the player once the scenery is loaded
+var _chosen_train_id: String = ""
 
 
 ## Before _ready(): the children must not read a cache left by another build
@@ -56,8 +58,7 @@ func _on_scenery_selector_scenery_selected(
     $MaszynaSceneryNode.filename = filename
     $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
     await $Player.clear_start_train()
-    # the consist chosen in the selector; an empty one lets the scenery pick its own driver
-    $Player.start_train_id = train_id
+    _chosen_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
     SceneryStreamingServer.set_camera($Player.get_camera())
@@ -136,7 +137,11 @@ func _play_music(volume_db: float) -> void:
         $Music.play()
 
 
-func _on_scenery_loaded(_first_train_id: String) -> void:
+## The player takes the consist only now: the trainsets are coupled, so the cab it activates on
+## entering reaches every car of its unit (CabActivisation() sends to the coupled ones, Mover.cpp:2905).
+## The consist chosen in the selector; none chosen, the scenery's own driver.
+func _on_scenery_loaded(first_train_id: String) -> void:
+    $Player.start_train_id = _chosen_train_id if _chosen_train_id else first_train_id
     _music_tween = create_tween()
     _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)
     _music_tween.tween_callback($Music.stop)

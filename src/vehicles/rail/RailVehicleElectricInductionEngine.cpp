@@ -39,6 +39,11 @@ namespace godot {
         return RailVehicleEngine::EngineType::ELECTRIC_INDUCTION_MOTOR;
     }
 
+    void RailVehicleElectricInductionEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        p_state["inverters"] = get_inverters();
+        RailVehicleElectricEngine::_fill_state_dictionary(p_state);
+    }
+
     void RailVehicleElectricInductionEngine::set_nominal_voltage(const double p_value) {
         nominal_voltage = p_value;
     }

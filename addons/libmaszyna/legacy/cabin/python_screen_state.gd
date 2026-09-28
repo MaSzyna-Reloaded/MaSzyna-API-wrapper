@@ -147,6 +147,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     var cab_end:int = 1 if state.get("cabin_occupied", 1) < 0 else 0
     var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     var powered:int = 0
+    var induction_cars:int = 0
     var unit_number:int = 1
     var compressors:int = 0
     for index:int in mini(cars.size(), CAR_COUNT):
@@ -167,6 +168,8 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
         result["doorstep_l_%d" % car_number] = car_state.get("doors_left_step_position", 0.0) > 0.0
         result["doorstep_r_%d" % car_number] = car_state.get("doors_right_step_position", 0.0) > 0.0
         result["car_name%d" % car_number] = RailVehicleServer.vehicle_get_name(car)
+        # the unit and the last letter of the vehicle's type (Train.cpp:895, 8687-8688)
+        result["code_%d" % car_number] = "%d%s" % [unit_number, RailVehicleServer.vehicle_get_type_name(car).right(1)]
         result["slip_%d" % car_number] = car_state.get("slipping_wheels", false)
         if unit_number <= EIM_CAR_COUNT:
             if COLLECTOR_KEY in car_state:
@@ -198,6 +201,18 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
             result["eimp_c%d_conv" % powered_number] = car_state.get("converter_enabled", false)   # ConverterFlag
             result["eimp_c%d_heat" % powered_number] = car_state.get("heating_enabled", false)   # Heating
             powered = powered_number
+        # Train.cpp:856-870 - the inverters of each induction motor car (eimc[eimc_p_Pmax] > 1),
+        # numbered apart from the diesels
+        if induction_cars < EIM_CAR_COUNT and engine_type == RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR:
+            induction_cars += 1
+            var inverters:Array = car_state.get("inverters", [])
+            result["eimp_c%d_invno" % induction_cars] = inverters.size()   # InvertersNo
+            for inverter_index:int in inverters.size():
+                var inverter:RailVehicleInverter = inverters[inverter_index]
+                var prefix:String = "eimp_c%d_inv%d_" % [induction_cars, inverter_index + 1]
+                result[prefix + "act"] = inverter.active   # IsActive
+                result[prefix + "error"] = inverter.error   # Error
+                result[prefix + "allow"] = inverter.allow   # Activate
         # a control coupling that is not a permanent one ends a unit (Train.cpp:8757)
         if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, RailVehicleController.COUPLING_ELEMENT_PERMANENT):
             unit_number += 1

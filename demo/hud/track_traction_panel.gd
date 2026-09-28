@@ -87,10 +87,12 @@ func _refresh() -> void:
     var origin:Vector3 = vehicle.global_position
     _rows["Position"].text = "%.1f, %.1f, %.1f" % [origin.x, origin.y, origin.z]
 
+    # the pantographs are the carrier's - a unit's motor car, not the driving car the player sits in
+    var carrier:RID = CabinState.vehicle_of(rid, CabinState.Target.PANTOGRAPH_UNIT)
     if not _engine_vehicle == vehicle:
         _engine_vehicle = vehicle
         _engine = RailVehicleServer.vehicle_component_get(
-                rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+                carrier, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if not _engine:
         _rows["Slider"].text = "-"
         for number:int in [1, 2]:
@@ -104,18 +106,19 @@ func _refresh() -> void:
         half_width = 0.5 * sliding_width
     _rows["Slider"].text = tr("%.3f m half width + %.3f m horn") % [half_width, HORN_WIDTH]
 
+    var carrier_transform:Transform3D = RailVehicleServer.vehicle_get_transform(carrier)
     _report_pantograph(
-            vehicle, 1, _engine.power_current_collector_first_position, half_width,
+            carrier_transform, 1, _engine.power_current_collector_first_position, half_width,
             _engine.get_collector_pantograph_first_active(),
             _engine.get_collector_pantograph_first_voltage())
     _report_pantograph(
-            vehicle, 2, _engine.power_current_collector_second_position, half_width,
+            carrier_transform, 2, _engine.power_current_collector_second_position, half_width,
             _engine.get_collector_pantograph_second_active(),
             _engine.get_collector_pantograph_second_voltage())
 
 
 func _report_pantograph(
-        vehicle:RailVehicle3D, number:int, offset:Vector3, half_width:float,
+        transform:Transform3D, number:int, offset:Vector3, half_width:float,
         is_active:bool, voltage:float) -> void:
     var pantograph_row:Label = _rows["Pantograph %d" % number]
     var wire_row:Label = _rows["Wire %d" % number]
@@ -125,7 +128,6 @@ func _report_pantograph(
         return
     pantograph_row.text = tr("up, %.0f V") % voltage
 
-    var transform:Transform3D = vehicle.global_transform
     var contact_point:Vector3 = transform * offset
     var found:Dictionary = TractionServer.wire_find_above_with_height(
             contact_point, transform.basis.y, -transform.basis.z, -transform.basis.x,

@@ -96,6 +96,8 @@ func test_buff_coupl():
     assert_eq(coupler.coupler_max_tension_tolerance, 1000.0) # FmaxC in kN
     assert_eq(coupler.buffer_location, RailVehicleBuffCoupl.BUFFER_LOCATION_BOTH)
     assert_eq(coupler.allowed_flag, 63)
+    # no PowerFlag in the fixture: 24V and 110V pass, as TCoupling::PowerFlag (MOVER.h:1215)
+    assert_eq(coupler.power_flag, RailVehicleBuffCoupl.POWER_24V | RailVehicleBuffCoupl.POWER_110V)
 
 
 
@@ -122,3 +124,19 @@ func test_lights_list():
     assert_true(second.cabin_a_left_white_signal, "17 - both lower headlights")
     assert_true(second.cabin_a_right_white_signal)
     assert_true(second.cabin_b_end_signals, "64 - the end-of-train plates")
+
+
+## BuffCoupl1./BuffCoupl2. are two components, one per end - both reach the vehicle (the model
+## once kept one per type and left the rear coupler at the Mover's 1000 N default)
+func test_two_coupler_sections_reach_both_ends() -> void:
+    var two_couplers := VehiclePhysicsNode.new()
+    add_child_autofree(two_couplers)
+    two_couplers.set_model(FizVehicleBuilder.build_model_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
+    await wait_idle_frames(2)
+
+    var couplers:Array = two_couplers.get_controller().find_components(VehicleComponentType.COMPONENT_BUFFERS)
+    assert_eq(couplers.size(), 2)
+    var locations:Array = couplers.map(func(c: RailVehicleBuffCoupl) -> int: return c.buffer_location)
+    assert_has(locations, RailVehicleBuffCoupl.BUFFER_LOCATION_FRONT)
+    assert_has(locations, RailVehicleBuffCoupl.BUFFER_LOCATION_BACK)
+

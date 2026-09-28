@@ -156,6 +156,18 @@ func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan()
     assert_false(is_nan(float(driven.state["Ft"])), "traction force should not be NaN")
 
 
+func test_the_state_carries_each_inverter():
+    # a powered EIM without InvNo has one inverter (Mover.cpp:11302), active and allowed
+    var driven: VehicleController = await _powered_up_eim("TestEimInverterState")
+
+    var inverters: Array = driven.state["inverters"]
+    assert_eq(inverters.size(), 1)
+    var inverter: RailVehicleInverter = inverters[0]
+    assert_true(inverter.active)
+    assert_false(inverter.error)
+    assert_true(inverter.allow)
+
+
 func test_driven_induction_motor_pulls_once_the_controller_moves():
     # Regression: the setpoint of an integrated controller is computed by DynObj.cpp:3246-3283
     # (CheckEIMIC), which the wrapper did not call - the controller moved and Ft stayed 0

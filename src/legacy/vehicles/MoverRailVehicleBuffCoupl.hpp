@@ -14,6 +14,7 @@ namespace godot {
         protected:
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
         public:
             bool is_coupled(End p_end) const override;
@@ -22,7 +23,5 @@ namespace godot {
             bool is_coupling_owner(End p_end) const override;
             End get_connected_end(End p_end) const override;
 
-            void couple() override;
-            void decouple() override;
     };
 } // namespace godot

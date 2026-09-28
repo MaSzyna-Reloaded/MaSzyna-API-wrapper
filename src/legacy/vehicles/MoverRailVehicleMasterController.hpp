@@ -14,5 +14,6 @@ namespace godot {
         protected:
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
     };
 } // namespace godot

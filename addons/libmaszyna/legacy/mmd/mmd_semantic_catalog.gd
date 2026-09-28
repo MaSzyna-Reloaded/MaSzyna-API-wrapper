@@ -43,13 +43,14 @@ static func _ensure_built() -> void:
                 "switch_max_position": 10,
                 "command_increase": "main_controller_increase",
                 "command_decrease": "main_controller_decrease",
-                "state_property": "controller_main_position",
+                "state_property": "master_controller_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
                 # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
                 "repeat_on_hold": true,
             },
-            "config_max_property": "main_controller_position_max",
+            # with a coupled controller the shunt steps follow the main positions (Train.cpp:985)
+            "config_max_property": "master_controller_position_max",
             "mesh_path_field": "mesh_path",
         },
         # shunt (field weakening) controller: Train.cpp:10023 "scndctrl:" -> ggScndCtrl,

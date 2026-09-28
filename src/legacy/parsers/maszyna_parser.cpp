@@ -193,6 +193,26 @@ namespace godot {
                 break;
             }
 
+            // a quoted text is glued to the token without its quotes - no stops and no comments
+            // inside, a backslash takes the next character as it is (cParser::findQuotes(),
+            // readQuotes(), parser.cpp:425-490)
+            if (c == '"') {
+                bool escaped = false;
+                while (!eof_reached()) {
+                    const int quoted = get8();
+                    if (quoted == -1 || (!escaped && quoted == '"')) {
+                        break;
+                    }
+                    if (!escaped && quoted == '\\') {
+                        escaped = true;
+                        continue;
+                    }
+                    escaped = false;
+                    raw += static_cast<char>(quoted);
+                }
+                continue;
+            }
+
             raw += c;
         }
 

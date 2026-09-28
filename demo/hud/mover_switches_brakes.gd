@@ -13,3 +13,4 @@ func _on_refresh_timer_timeout() -> void:
         return
     %BrakeCylinderPressure.value = _brakes.get_air_pressure()
     %BrakePipePressure.value = _brakes.get_pipe_pressure()
+    %LocalBrake.value = _brakes.get_local_position_normalized()

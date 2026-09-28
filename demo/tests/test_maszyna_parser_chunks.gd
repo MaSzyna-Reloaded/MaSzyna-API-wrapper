@@ -27,3 +27,12 @@ func test_chunks_match_whole_parse() -> void:
     assert_gt(positions.size(), 1, "small chunks should take more than one step")
     assert_eq(positions[-1], parser.get_length())
     assert_eq(parser.get_length(), SOURCE.to_utf8_buffer().size())
+
+
+## cParser::findQuotes() (parser.cpp:479): a quoted text is glued to its token without the quotes -
+## spaces and "//" inside kept, a backslash taking the next character as it is
+func test_a_quoted_text_is_glued_to_its_token_without_quotes() -> void:
+    var parser:MaszynaParser = MaszynaParser.new()
+    parser.initialize('parameters: tex="./dynamic/a b//c" next "say \\"hi\\"" end'.to_utf8_buffer())
+
+    assert_eq(parser.get_tokens_until("end"), ["parameters:", "tex=./dynamic/a b//c", "next", 'say "hi"', "end"])

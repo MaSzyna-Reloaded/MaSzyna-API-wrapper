@@ -236,6 +236,7 @@ offset_top = 505.0
 offset_right = 236.0
 offset_bottom = 654.0
 script = ExtResource("9_window")
+vehicle_target = 1
 title = "Controller"
 
 [node name="ControllerScroll" type="ScrollContainer" parent="ControlWindows/Controller"]

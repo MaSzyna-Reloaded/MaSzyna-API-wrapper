@@ -36,3 +36,4 @@ func _on_refresh_timer_timeout() -> void:
         %OilPressure.value = _diesel_engine.get_oil_pump_pressure()
     if _electric_engine:
         %EngineCurrent.value = _electric_engine.get_motor_current()
+        %PantographTankPressure.value = _electric_engine.get_collector_pantograph_tank_pressure()

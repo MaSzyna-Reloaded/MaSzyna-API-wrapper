@@ -59,6 +59,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
+        ClassDB::bind_method(D_METHOD("find_components", "type"), &VehicleController::find_components);
         /* Read by whoever caches this vehicle's dump: a command runs synchronously, in the middle
          * of a step, so the step alone does not say whether a dump is still current. */
         ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
@@ -251,6 +252,16 @@ namespace godot {
             }
         }
         return nullptr;
+    }
+
+    TypedArray<VehicleComponent> VehicleController::find_components(const VehicleComponentType::Type p_type) const {
+        TypedArray<VehicleComponent> found;
+        for (VehicleComponent *component: components) {
+            if (component->get_component_type() == p_type) {
+                found.push_back(component);
+            }
+        }
+        return found;
     }
 
     TypedArray<VehicleComponent> VehicleController::find_generic_components(const StringName &p_tag) const {

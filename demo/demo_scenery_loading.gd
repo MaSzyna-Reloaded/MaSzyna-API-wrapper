@@ -51,6 +51,7 @@ func _on_scenery_selector_scenery_selected(
     SceneryStreamingServer.set_camera(null)
     # the title from the .scn header ("//$n"), not the file name
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
+    $GameHud.show_scenario(info, train_id)
     $LoadingScreen.show_loading(info.title if info.title else filename.get_basename())
     # the selector dissolves into the loading screen and hides once it is done; the loading below
     # blocks the main thread, so it waits for the dissolve not to stutter

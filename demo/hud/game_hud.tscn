@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" path="res://addons/libmaszyna/cabin/cabin_control_tooltip.tscn" id="23_cabin_tooltip"]
 [ext_resource type="PackedScene" path="res://hud/transcripts_panel.tscn" id="24_transcripts"]
 [ext_resource type="PackedScene" path="res://hud/timetable_panel.tscn" id="25_timetable"]
+[ext_resource type="PackedScene" path="res://hud/scenario_panel.tscn" id="26_scenario"]
 
 [sub_resource type="Theme" id="Theme_control_windows"]
 default_font_size = 12
@@ -65,7 +66,7 @@ title = "Controls"
 unique_name_in_owner = true
 title = "View"
 hide_on_checkable_item_selection = false
-item_count = 2
+item_count = 3
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -73,6 +74,9 @@ item_0/id = 0
 item_1/text = "Timetable"
 item_1/checkable = 1
 item_1/id = 1
+item_2/text = "Scenario"
+item_2/checkable = 1
+item_2/id = 2
 
 [node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer" unique_id=1886226088]
 clip_contents = true
@@ -352,6 +356,10 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [node name="TimetablePanel" parent="." instance=ExtResource("25_timetable")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="ScenarioPanel" parent="." instance=ExtResource("26_scenario")]
 unique_name_in_owner = true
 layout_mode = 1
 

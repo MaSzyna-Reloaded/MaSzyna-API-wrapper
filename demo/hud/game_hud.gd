@@ -6,7 +6,7 @@ extends Control
 ## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
 
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, TIMETABLE }
+enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO }
 
 ## The player whose vehicle the control windows drive
 @export var player_path: NodePath
@@ -48,9 +48,12 @@ func _input(event: InputEvent) -> void:
         $TopBar/HBoxContainer/ToggleAllControls.button_pressed = not $TopBar/HBoxContainer/ToggleAllControls.button_pressed
     if event.is_action_pressed("toggle_weather_controls"):
         $ControlWindows/WeatherAndTime.visible = not $ControlWindows/WeatherAndTime.visible
-    # F2, as the original's (driveruilayer.cpp:155)
-    if event.is_action_pressed("timetable_toggle"):
+    # F2, as the original's (driveruilayer.cpp:155); exact, so that Shift+F2 is not F2 as well
+    if event.is_action_pressed("timetable_toggle", false, true):
         _on_view_menu_index_pressed(ViewItem.TIMETABLE)
+    # Shift+F2 - free in the original, whose F-keys ignore modifiers (driveruilayer.cpp:115)
+    if event.is_action_pressed("scenario_toggle", false, true):
+        _on_view_menu_index_pressed(ViewItem.SCENARIO)
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:
@@ -70,6 +73,14 @@ func _on_view_menu_index_pressed(index: int) -> void:
             %TranscriptsPanel.set_shown(%View.is_item_checked(index))
         ViewItem.TIMETABLE:
             %TimetablePanel.visible = %View.is_item_checked(index)
+        ViewItem.SCENARIO:
+            %ScenarioPanel.visible = %View.is_item_checked(index)
+
+
+## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until
+## the player opens it
+func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
+    %ScenarioPanel.show_scenario(info, train_id)
 
 
 ## The timetable shown is the one of the trainset the player's vehicle belongs to

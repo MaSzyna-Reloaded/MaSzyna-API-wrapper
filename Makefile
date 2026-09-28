@@ -1,4 +1,4 @@
-.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
+.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
@@ -263,6 +263,29 @@ docs-install:
 # Generates the class reference and serves the site; without Ruby on the host, both run in Docker
 docs-server:
 	cd docs && make runserver
+
+
+# The site as one PDF: the home page, the guides in the order of its menu and the class reference
+# (scripts/make-docs-book). The diagrams are drawn by mermaid-cli and the book typeset by pandoc
+# with XeLaTeX, both in Docker, as the host user so that bin/docs stays the host's
+DOCS_PDF_DIR:=bin/docs
+DOCS_BOOK_DIR:=$(DOCS_PDF_DIR)/book
+DOCS_PDF:=$(DOCS_PDF_DIR)/maszyna-reloaded-core.pdf
+DOCS_PANDOC_IMAGE:=pandoc/extra:3.7
+DOCS_MERMAID_IMAGE:=minlag/mermaid-cli:11.4.2
+DOCS_DOCKER_RUN:=docker run --rm --user "$(shell id -u):$(shell id -g)" -v "$(CURDIR):/data" -w /data
+docs-pdf:
+	rm -rf $(DOCS_BOOK_DIR)
+	mkdir -p $(DOCS_BOOK_DIR)
+	scripts/make-api-docs $(DOCS_BOOK_DIR)/api
+	scripts/make-docs-book $(DOCS_BOOK_DIR)
+	for diagram in $(DOCS_BOOK_DIR)/*.mmd; do \
+		$(DOCS_DOCKER_RUN) $(DOCS_MERMAID_IMAGE) -q -b white -s 2 -i "/data/$$diagram" -o "/data/$${diagram%.mmd}.png" || exit 1; \
+	done
+	$(DOCS_DOCKER_RUN) $(DOCS_PANDOC_IMAGE) $(DOCS_BOOK_DIR)/book.md --metadata-file=scripts/docs-pdf.yaml \
+		--resource-path=$(DOCS_BOOK_DIR):docs --pdf-engine=xelatex --toc --toc-depth=2 \
+		--top-level-division=chapter -o $(DOCS_PDF)
+	@echo "Documentation: $(DOCS_PDF)"
 
 
 watch-and-compile:

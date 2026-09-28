@@ -9,6 +9,9 @@ func set_vehicle_rid(vehicle_rid:RID) -> void:
     _dirty = true
 
 
+## The lamp came on or went out - its glow (mmd_cabin_instancer.gd) follows it
+signal lit_changed(lit:bool)
+
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
 var _vehicle_rid:RID
 var _on_target:Node3D
@@ -69,7 +72,10 @@ func _update_state() -> void:
                 value = float(state) == 0.0
             LitCondition.NEGATIVE:
                 value = float(state) < 0.0
-        enabled = not value if invert_value else value
+        var lit:bool = not value if invert_value else value
+        if not lit == enabled:
+            enabled = lit
+            lit_changed.emit(lit)
     if _on_target:
         _on_target.visible = enabled
     if _off_target:

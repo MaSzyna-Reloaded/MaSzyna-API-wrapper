@@ -796,10 +796,11 @@ ported, into a delegate.
       `ep_brake`. Left: the braking test (`ForcePNBrake`, `DynamicBrakeTest`), unlocking the pipe
       before the releaser (`control_main_pipe()`), the individual release of an overcharged wagon,
       the manual brake applied on putting away (`manualbrakon`), the weather's friction.
-   A player in the cab takes over: `RailVehicle3D.enter_cabin()`/`leave_cabin()` switch the
-   vehicle's driver off and on (`DriverSystem.vehicle_set_control_active()`); switched off it takes
-   orders and reads its trainset, but touches no control. Left: the player's "AI driver on/off"
-   keys.
+   A player taking a vehicle takes over: `MaszynaPlayer` switches the vehicle's driver off
+   (`DriverSystem.vehicle_set_control_active()`); switched off it takes orders and reads its
+   trainset, but touches no control. The train left on foot (F4) stays the player's; its driver
+   takes the trainset back when the player takes a vehicle of another trainset, or on Shift+Q
+   (`ai_driver_enable`), and Q (`ai_driver_disable`) takes it again.
    5. The speed table (`MaszynaLegacyDriverRoute`, `TableTraceRoute()`/`TableUpdate()`/
       `TableUpdateEvent()`): the tracks ahead from `RailVehicleServer.vehicle_trace_route()` (the
       next-track rule now `TrackServer.track_find_next()`, shared with the movement), their

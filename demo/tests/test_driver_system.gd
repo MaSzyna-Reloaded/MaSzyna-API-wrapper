@@ -149,7 +149,7 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
     assert_true(DriverSystem.vehicle_is_control_active(vehicle), "its driver drives it")
 
-    # a player in the cab (RailVehicle3D.enter_cabin())
+    # a player in the cab (MaszynaPlayer)
     DriverSystem.vehicle_set_control_active(vehicle, false)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
     await wait_seconds(1.0)

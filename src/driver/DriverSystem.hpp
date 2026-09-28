@@ -86,7 +86,7 @@ namespace godot {
             /// replaces the one pending
             void driver_schedule_update(const RID &p_driver, double p_seconds);
             /// Whether the vehicle's driver drives it - off while a player drives it
-            /// (RailVehicle3D::enter_cabin()), also when it gets its driver only later; the driver
+            /// (MaszynaPlayer), also when it gets its driver only later; the driver
             /// still takes its orders then, but touches no control. False for a vehicle without a
             /// driver.
             void vehicle_set_control_active(const RID &p_vehicle, bool p_active);

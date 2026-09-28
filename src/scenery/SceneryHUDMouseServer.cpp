@@ -11,19 +11,17 @@
 
 namespace godot {
     namespace {
-        /// How far the outline reaches out of the model's silhouette, in metres. A lever stands
-        /// metres to tens of metres away, where a cab control's few millimetres are not a pixel.
-        constexpr double OUTLINE_WIDTH = 0.03;
-        /// How strongly the hovered model itself is tinted with the outline colour - at a distance
-        /// the ring alone is thin
-        constexpr float OUTLINE_FILL_ALPHA = 0.15;
+        /// How far the outline reaches out of the model's silhouette per metre from the camera, so
+        /// it looks on screen like a cab lever's thin ring (CabinHUDMouseSystem, 3 mm seen from
+        /// the driver's seat about 0.75 m away) wherever the model stands; untinted, as a lever's
+        constexpr double OUTLINE_WIDTH_PER_METRE = 0.004;
     } // namespace
 
     const char *SceneryHUDMouseServer::pickable_hovered_signal = "pickable_hovered";
     const char *SceneryHUDMouseServer::pickable_unhovered_signal = "pickable_unhovered";
 
     SceneryHUDMouseServer::SceneryHUDMouseServer() {
-        outline_material = mouse_picking::outline_material(OUTLINE_WIDTH, OUTLINE_FILL_ALPHA);
+        outline_material = mouse_picking::outline_material(OUTLINE_WIDTH_PER_METRE, 0.0);
     }
 
     void SceneryHUDMouseServer::_bind_methods() {
@@ -99,6 +97,9 @@ namespace godot {
                 }
             }
             _set_hovered(nearest);
+            if (nearest.is_valid()) {
+                outline_material->set_stencil_effect_outline_thickness(nearest_distance * OUTLINE_WIDTH_PER_METRE);
+            }
             return false;
         }
 

@@ -31,6 +31,16 @@ class Trainset:
     var description:String = ""
     var vehicles:Array[Vehicle] = []
 
+    ## A driver sits in one of its vehicles, so the player can take the trainset - the original's
+    ## launcher refuses one without ("Trainset not occupied", scenery_list.cpp:135-153); only
+    ## "headdriver" and "reardriver" steer a cab, "passenger" and "nobody" are no driver
+    ## (DynObj.cpp:1994-2001)
+    func is_occupied() -> bool:
+        for vehicle:Vehicle in vehicles:
+            if vehicle.driver_type == "headdriver" or vehicle.driver_type == "reardriver":
+                return true
+        return false
+
     ## Vehicle the player starts in: the one with a headdriver, else any with a driver
     func get_driver_train_id() -> String:
         for vehicle:Vehicle in vehicles:

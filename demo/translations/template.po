@@ -11,6 +11,9 @@ msgstr ""
 msgid "Trainset"
 msgstr ""
 
+msgid "Show trainsets that cannot be driven"
+msgstr ""
+
 msgid "Load"
 msgstr ""
 

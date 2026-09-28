@@ -28,6 +28,9 @@ var _files: PackedStringArray = []
 var _titles: PackedStringArray = []
 var _ui_sounds: SfxPlayer
 var _info: MaszynaSceneryInfo = null
+## The trainsets of the scenery the list shows, in its order - the occupied ones, or all of them
+## while the check box asks for those that cannot be driven as well
+var _listed_trainsets: Array[MaszynaSceneryInfo.Trainset] = []
 ## Vehicles of the shown trainset, in the order they run
 var _vehicles: Array[MaszynaSceneryInfo.Vehicle] = []
 ## Vehicle whose viewer is open
@@ -205,12 +208,13 @@ func _on_trainset_list_item_selected(index: int) -> void:
     _show_trainset(index)
 
 
-## Loads the scenery the list has selected, and does nothing while a search has left none selected.
-## The "Load" button and Enter on a row are both wired straight to this, in the scene.
+## Loads the scenery the list has selected, and does nothing while "Load" is disabled - no scenery
+## selected, or a trainset nobody can drive. The "Load" button and Enter on a row are both wired
+## straight to this, in the scene.
 func load_selected_scenery() -> void:
-    var index: int = %SceneryList.get_selected()
-    if index < 0:
+    if %LoadButton.disabled:
         return
+    var index: int = %SceneryList.get_selected()
     _ui_sounds.play(&"load_scenery")
     %Content.visible = false
     scenery_selected.emit(
@@ -234,13 +238,12 @@ func _get_selected_train_id() -> String:
     var index: int = %TrainsetList.get_selected()
     if not _info or index < 0:
         return ""
-    return _info.trainsets[index].get_driver_train_id()
+    return _listed_trainsets[index].get_driver_train_id()
 
 
 func _show_details(index: int) -> void:
     # another scenery brings other trainsets and other vehicles
     reset_focus_history()
-    %LoadButton.disabled = index < 0
     %Image.texture = null
     %Image.visible = false
     _info = null
@@ -249,8 +252,10 @@ func _show_details(index: int) -> void:
         %FileName.text = ""
         %Description.text = ""
         %TrainsetsHeader.visible = false
+        %UndrivableCheckBox.visible = false
         %TrainsetList.visible = false
-        # an empty list reports no selection, which takes the vehicles down with it
+        _listed_trainsets.clear()
+        # an empty list reports no selection, which takes the vehicles and "Load" down with it
         %TrainsetList.set_rows(PackedStringArray(), PackedStringArray())
         return
     _info = MaszynaSceneryInfo.read(_files[index])
@@ -262,20 +267,38 @@ func _show_details(index: int) -> void:
         if image:
             %Image.texture = ImageTexture.create_from_image(image)
             %Image.visible = true
+    var has_trainsets: bool = _info.trainsets.size() > 0
+    %TrainsetsHeader.visible = has_trainsets
+    %UndrivableCheckBox.visible = has_trainsets
+    _list_trainsets()
+
+
+## The trainsets of the scenery on the list: the occupied ones, and those that cannot be driven as
+## well while the check box is on - they can be looked at and reskinned, not loaded
+func _list_trainsets() -> void:
+    _listed_trainsets.clear()
     var names: PackedStringArray = []
     var notes: PackedStringArray = []
     for trainset: MaszynaSceneryInfo.Trainset in _info.trainsets:
+        if not trainset.is_occupied() and not %UndrivableCheckBox.button_pressed:
+            continue
+        _listed_trainsets.append(trainset)
         names.append(_get_trainset_name(trainset))
         notes.append(_format_trainset_note(trainset))
-    var has_trainsets: bool = names.size() > 0
-    %TrainsetsHeader.visible = has_trainsets
-    %TrainsetList.visible = has_trainsets
+    %TrainsetList.visible = names.size() > 0
     # the list selects its first trainset and reports it back, so the vehicles follow from here on
     %TrainsetList.set_rows(names, notes)
 
 
-## The vehicles of the trainset go to the preview, its mission description to the details
+func _on_undrivable_check_box_toggled(_toggled_on: bool) -> void:
+    _list_trainsets()
+
+
+## The vehicles of the trainset go to the preview, its mission description to the details; "Load"
+## takes a scenery, and refuses a trainset nobody can drive - a scenery without a trainset listed
+## is loaded to walk around it
 func _show_trainset(index: int) -> void:
+    %LoadButton.disabled = not _info or (index >= 0 and not _listed_trainsets[index].is_occupied())
     # the viewer shows a vehicle of the trainset that is going away
     if %VehicleViewer.visible:
         %VehicleViewer.close()
@@ -285,7 +308,7 @@ func _show_trainset(index: int) -> void:
     # the refusal is a runtime error - the grid would keep the vehicles of the scenery before
     var tiles: Array[TileGrid.Tile] = []
     if _info and index >= 0:
-        var trainset: MaszynaSceneryInfo.Trainset = _info.trainsets[index]
+        var trainset: MaszynaSceneryInfo.Trainset = _listed_trainsets[index]
         %Description.text = (
             "%s\n\n%s" % [trainset.description, _info.description]
             if trainset.description

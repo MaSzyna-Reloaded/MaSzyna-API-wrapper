@@ -195,6 +195,13 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Trainset"
 
+[node name="UndrivableCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+focus_mode = 0
+text = "Show trainsets that cannot be driven"
+
 [node name="TrainsetList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=219649123 instance=ExtResource("6_list")]
 unique_name_in_owner = true
 visible = false
@@ -306,3 +313,4 @@ layout_mode = 2
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
 [connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]
+[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/UndrivableCheckBox" to="." method="_on_undrivable_check_box_toggled"]

@@ -11,6 +11,9 @@ msgstr ""
 msgid "Trainset"
 msgstr "编组"
 
+msgid "Show trainsets that cannot be driven"
+msgstr ""
+
 msgid "Load"
 msgstr "载入"
 

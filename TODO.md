@@ -438,6 +438,18 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ## Rendering
 
+### Mirror reflections (`PlanarMirror3D`) are smeared
+
+The mirror mechanics work (unfolding, `mirrors_sw`, door permits), but the reflection a mirror glass
+shows is a blurred smear, not a mirror image (reported 2026-09-28 on the Impuls 36WEa, `td_impuls`).
+Not yet measured: whether the project's TAA (`anti_aliasing/quality/use_taa=true`) smears the
+overlay whose picture changes every frame, whether the mirror camera's framing and projection
+(`mirror_view_projection`) match what the glass samples, and the texture size actually used in the
+game (the headless window is 64x64, so a headless probe cannot tell). Dump the mirror's viewport
+texture from a running game and look at it before changing a number. The glass is found by name
+(a leaf `zwierciad*`/`*luster*`/`*lustr*`), reflects on the side away from its housing, and is
+switched by `maszyna/rendering/real_mirrors`.
+
 ### A light's submodels have two managers
 
 `E3DRenderingServer` resolves `lights_state` (modes, override, time of day) and shows `_on`/`_off`;

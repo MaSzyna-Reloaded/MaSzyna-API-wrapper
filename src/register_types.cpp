@@ -36,6 +36,7 @@
 #include "legacy/e3d/E3DModelLightDefinition.hpp"
 #include "legacy/e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
+#include "rendering/PlanarMirror3D.hpp"
 #include "legacy/e3d/E3DSubModel.hpp"
 #include "legacy/vehicles/MoverRailVehicleDieselElectricEngine.hpp"
 #include "legacy/vehicles/MoverRailVehicleDieselEngine.hpp"
@@ -166,6 +167,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelLightDefinition);
         GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
+        GDREGISTER_CLASS(PlanarMirror3D);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
         GDREGISTER_INTERNAL_CLASS(SimulationClock);

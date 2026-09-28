@@ -162,6 +162,10 @@ func _enter_tree():
     # A signal's or a lamp's free spotlight is drawn as a point of a constant size on the screen, the
     # way the original draws it, so it stays visible long after the lens is smaller than a pixel
     add_custom_project_setting("maszyna/scenery/railway_lights_visibility_improved", true, TYPE_BOOL)
+    # A vehicle's mirror glass reflects the scene: a camera mirrored across it renders the glass at
+    # its size on the screen while the mirror is in view within 30 m (PlanarMirror3D) - a scene
+    # render per mirror
+    add_custom_project_setting("maszyna/rendering/real_mirrors", true, TYPE_BOOL)
     # How many times the original's pointsize such a point is drawn; the original's 4 makes blobs
     add_custom_project_setting(
         "maszyna/scenery/railway_lights_point_size_multiplier", 2.0, TYPE_FLOAT,

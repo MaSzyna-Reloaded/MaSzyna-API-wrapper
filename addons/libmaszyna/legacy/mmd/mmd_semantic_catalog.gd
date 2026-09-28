@@ -768,6 +768,203 @@ static func _ensure_built() -> void:
         # CabinSpotLight3D itself instead, so this stays one widget per MMD label.
         # Confirmed against VehicleController.cpp:46/265,429 - exact command+state pair already
         # proven in production via SM42's own hand-authored Battery node.
+        # Train.cpp:11928-11929 ggBatteryOnButton/ggBatteryOffButton -> OnCommand_batteryenable/disable
+        # (Train.cpp:2939-3070): pressed they switch the battery, then spring back - LegacyCabinBattery
+        "batteryon_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "batteryoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11829 ggBrakeOperationModeCtrl -> OnCommand_trainbrakeoperationmodeincrease/decrease
+        # (Train.cpp:2447-2477), showing log2 of BrakeOpModeFlag; Ctrl+Num2 / Ctrl+Num8
+        "brakeopmode_sw": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "switch_max_position": 3,
+                "command_increase": "brake_operation_mode_increase",
+                "command_decrease": "brake_operation_mode_decrease",
+                "state_property": "brake_operation_mode_position",
+                "action_increase": "brake_operation_mode_increase",
+                "action_decrease": "brake_operation_mode_decrease",
+            },
+            "config_max_property": "brake_operation_mode_position_max",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:12019-12031 - the speed control's buttons, lit while it is active
+        # (SpeedCtrlUnit.IsActive); OnCommand_speedcontrol* act on the press (Train.cpp:6887-6975)
+        # and have no default key
+        "speedinc_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_increase",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speeddec_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_decrease",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedctrlpowerinc_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_power_increase",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedctrlpowerdec_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_power_decrease",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton0": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 0,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton1": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 1,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton2": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 2,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton3": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 3,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton4": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 4,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton5": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 5,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton6": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 6,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton7": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 7,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton8": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 8,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "speedbutton9": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "speed_control_button",
+                "command_param": 9,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "battery_sw": {
             "widget_class": CabinButton,
             # its original handler branches on the kind of switch (ggBatteryButton.type(), Train.cpp:2929)

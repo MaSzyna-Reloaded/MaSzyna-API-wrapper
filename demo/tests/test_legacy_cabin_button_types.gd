@@ -10,7 +10,8 @@ var logic: LegacyCabinLogic
 
 
 func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
-        model:VehicleModel = SM42, components:Array[VehicleComponent] = []) -> void:
+        model:VehicleModel = SM42, components:Array[VehicleComponent] = [],
+        fields:Dictionary[StringName, Dictionary] = {}) -> void:
     train = build_vehicle("TestButtonTypes", model)
     for component:VehicleComponent in components:
         train.add_component(component)
@@ -18,7 +19,7 @@ func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
     train.apply_configuration()
     var cab_controls: LegacyCabinControls = LegacyCabinControls.new()
     for control_id:StringName in controls:
-        cab_controls.add_control(control_id, CabinButton, {}, controls[control_id])
+        cab_controls.add_control(control_id, CabinButton, fields.get(control_id, {}), controls[control_id])
     logic = LegacyCabinLogic.new(func(_cab: int) -> LegacyCabinControls: return cab_controls)
     logic.register(train.get_rid(), 1)
     await wait_idle_frames(2)
@@ -139,3 +140,40 @@ func test_two_state_pantograph_switch_keeps_its_valve():
     assert_true(train.state["current_collector/pantograph_first_valve_enabled"])
     CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"toggle", false)
     assert_false(train.state["current_collector/pantograph_first_valve_enabled"])
+
+
+# Train.cpp:2939-3070 - batteryon_sw/batteryoff_sw switch the battery on their press
+func test_battery_on_and_off_buttons_switch_the_battery():
+    var controls:Dictionary[StringName, CabinButton.ButtonType] = {
+        &"batteryon_sw": CabinButton.ButtonType.PUSH, &"batteryoff_sw": CabinButton.ButtonType.PUSH}
+    await _build_cab(controls)
+    CabinSystem.act(train.get_rid(), 1, &"batteryon_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"batteryon_sw", &"release")
+    await wait_idle_frames(2)
+    assert_true(train.state["battery_enabled"], "on")
+    CabinSystem.act(train.get_rid(), 1, &"batteryoff_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"batteryoff_sw", &"release")
+    await wait_idle_frames(2)
+    assert_false(train.state["battery_enabled"], "off")
+
+
+var _sent:Array = []
+
+
+func _on_command(_vehicle:RID, command:String, p1:Variant, _p2:Variant) -> void:
+    _sent.append([command, p1])
+
+
+# Train.cpp:6955 - speedbuttonN picks speed N on its press, and nothing on the release
+func test_speed_button_sends_its_number_on_the_press():
+    var controls:Dictionary[StringName, CabinButton.ButtonType] = {&"speedbutton3": CabinButton.ButtonType.PUSH}
+    var fields:Dictionary[StringName, Dictionary] = {
+        &"speedbutton3": MmdSemanticCatalog.get_entry("speedbutton3")["fixed_fields"]}
+    var components:Array[VehicleComponent] = [MoverRailVehicleSpeedControl.new()]
+    await _build_cab(controls, SM42, components, fields)
+    RailVehicleServer.vehicle_command_received.connect(_on_command)
+    CabinSystem.act(train.get_rid(), 1, &"speedbutton3", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"speedbutton3", &"release")
+    RailVehicleServer.vehicle_command_received.disconnect(_on_command)
+    assert_eq(_sent.filter(func(sent:Array) -> bool: return sent[0] == "speed_control_button"), [["speed_control_button", 3]])
+

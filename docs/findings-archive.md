@@ -1663,6 +1663,23 @@ lighting or the consist.
 * **Rule:** a ported formula carries the original's frame with it - compare world coordinates of
   both sides, not the formulas.
 
+## 2026-09-28 - a gap between the trackbed and the terrain: the bed shaded its own slopes
+
+* **Symptom:** on elektrocieplownia (near the SM42, `tor_53`) the ballast bed seemed to stand
+  above the terrain with a dark gap between them; the original shows the same bed flush.
+* **Proof:** the data puts every track point 0.2 m over terrain at 0.0 with `tex_height 0.2`, and
+  the built bed ends exactly at y 0.000 - geometry as in the original. An off-screen render
+  (`xvfb-run`) beside the track, grass hidden: the slope facing the camera at 0.21 against the
+  terrain's 0.33. A camera on the slope aimed at the sun saw only sky - no caster. Turning off
+  shadow casting for the rails or the stitches changed nothing, for the bed alone gave 0.34; a
+  back-culled bed material changed nothing, and only a sun bias of 5 cleared it. The slope
+  (0.2 m over 1.1 m) is lit at N.L 0.25 by a 22.7 deg sun: acne of the bed on itself.
+* **Fix:** the trackbed and its stitches cast no sun shadow (`create_track()`); the rails still
+  do. Measured: slope 0.285 against terrain 0.294, 0.293 with no shadows at all.
+* **Rule:** a surface lying on the ground and lit at a grazing angle shadows itself; do not
+  raise the light's bias for it (09-27 thin objects), take the surface out of the casters. Before
+  blaming the geometry, render the spot with its shadow off.
+
 ## 2026-09-28 - switch trackbed dark after the cant fix, and ballast wings at every switch joint
 
 * **Symptom:** on td.scn the ballast of both switches was much darker than plain ballast (before

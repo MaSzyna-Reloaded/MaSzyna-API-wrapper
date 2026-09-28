@@ -114,6 +114,9 @@ anything. Open work belongs in `TODO.md`.
 * A shadow's normal bias is texel x `shadow_normal_bias` per cascade: compute it against the
   thinnest caster before tuning; two shadowed directional lights halve the atlas. *(09-27 thin
   station objects lost their sun shadows)*
+* A ground-level surface lit at a grazing angle shadows itself: take it out of the casters rather
+  than raise the light's bias, and render the spot without shadows before blaming geometry.
+  *(09-28 a gap between the trackbed and the terrain)*
 * A RenderingServer light starts with the server's defaults, not a node's: diff the whole
   `Light3D` constructor against `_light_initialize()` - `shadow_blur` 0 zeroes a spot's depth
   bias. *(09-28 street lamps shadowed their own pool)*

@@ -502,8 +502,19 @@ static func build(
             if not launcher_data.position.distance_to(models[index].position) < launcher_data.radius:
                 continue
             var launcher:RID = entry[1]
+            # the launcher's key does what a click does, with Shift the second event
+            # (scenario_keyboard.gd)
+            var hints:PackedStringArray = []
+            var key:Key = ScenarioEventServer.launcher_get_key(launcher)
+            if not key == KEY_NONE:
+                var key_text:String = OS.get_keycode_string(key)
+                hints.append(key_text)
+                if not launcher_data.event2 == "":
+                    hints.append("Shift+" + key_text)
             root._pickable_rids.append(SceneryHUDMouseServer.pickable_create(
                 model_rids[index],
+                launcher_data.name,
+                " / ".join(hints),
                 ScenarioEventServer.launcher_fire.bind(launcher),
                 ScenarioEventServer.launcher_fire_shift.bind(launcher),
             ))

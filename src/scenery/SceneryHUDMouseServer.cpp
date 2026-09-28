@@ -19,6 +19,9 @@ namespace godot {
         constexpr float OUTLINE_FILL_ALPHA = 0.15;
     } // namespace
 
+    const char *SceneryHUDMouseServer::pickable_hovered_signal = "pickable_hovered";
+    const char *SceneryHUDMouseServer::pickable_unhovered_signal = "pickable_unhovered";
+
     SceneryHUDMouseServer::SceneryHUDMouseServer() {
         outline_material = mouse_picking::outline_material(OUTLINE_WIDTH, OUTLINE_FILL_ALPHA);
     }
@@ -27,11 +30,16 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_camera", "camera_id"), &SceneryHUDMouseServer::set_camera);
         ClassDB::bind_method(D_METHOD("set_active", "active"), &SceneryHUDMouseServer::set_active);
         ClassDB::bind_method(
-                D_METHOD("pickable_create", "instance", "pressed", "shift_pressed"),
+                D_METHOD("pickable_create", "instance", "caption", "hints", "pressed", "shift_pressed"),
                 &SceneryHUDMouseServer::pickable_create);
         ClassDB::bind_method(D_METHOD("pickable_free", "pickable"), &SceneryHUDMouseServer::pickable_free);
         ClassDB::bind_method(D_METHOD("input", "event"), &SceneryHUDMouseServer::input);
         ClassDB::bind_method(D_METHOD("get_hovered_pickable"), &SceneryHUDMouseServer::get_hovered_pickable);
+
+        ADD_SIGNAL(MethodInfo(
+                pickable_hovered_signal, PropertyInfo(Variant::STRING, "caption"),
+                PropertyInfo(Variant::STRING, "hints")));
+        ADD_SIGNAL(MethodInfo(pickable_unhovered_signal));
     }
 
     void SceneryHUDMouseServer::set_camera(const uint64_t p_camera_id) {
@@ -46,9 +54,10 @@ namespace godot {
     }
 
     RID SceneryHUDMouseServer::pickable_create(
-            const RID &p_instance, const Callable &p_pressed, const Callable &p_shift_pressed) {
+            const RID &p_instance, const String &p_caption, const String &p_hints, const Callable &p_pressed,
+            const Callable &p_shift_pressed) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
-        pickables.insert(rid, Pickable{p_instance, p_pressed, p_shift_pressed});
+        pickables.insert(rid, Pickable{p_instance, p_caption, p_hints, p_pressed, p_shift_pressed});
         return rid;
     }
 
@@ -126,8 +135,12 @@ namespace godot {
             e3d->instance_set_material_overlay(pickables[hovered].instance, Ref<Material>());
         }
         hovered = p_pickable;
-        if (hovered.is_valid()) {
-            e3d->instance_set_material_overlay(pickables[hovered].instance, outline_material);
+        if (!hovered.is_valid()) {
+            emit_signal(pickable_unhovered_signal);
+            return;
         }
+        const Pickable &pickable = pickables[hovered];
+        e3d->instance_set_material_overlay(pickable.instance, outline_material);
+        emit_signal(pickable_hovered_signal, pickable.caption, pickable.hints);
     }
 } // namespace godot

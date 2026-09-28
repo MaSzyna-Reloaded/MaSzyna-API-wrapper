@@ -25,6 +25,9 @@ namespace godot {
             GDCLASS(SceneryHUDMouseServer, Object)
 
         public:
+            static const char *pickable_hovered_signal;
+            static const char *pickable_unhovered_signal;
+
             static SceneryHUDMouseServer *get_instance() {
                 return Object::cast_to<SceneryHUDMouseServer>(
                         Engine::get_singleton()->get_singleton("SceneryHUDMouseServer"));
@@ -33,6 +36,8 @@ namespace godot {
         private:
             struct Pickable {
                     RID instance;
+                    String caption;
+                    String hints;
                     Callable pressed;
                     Callable shift_pressed;
             };
@@ -57,8 +62,11 @@ namespace godot {
             void set_active(bool p_active);
 
             /// A click on the instance's model calls `p_pressed`, with Shift `p_shift_pressed`.
-            /// Several pickables of one instance are all operated by a click on it.
-            RID pickable_create(const RID &p_instance, const Callable &p_pressed, const Callable &p_shift_pressed);
+            /// Several pickables of one instance are all operated by a click on it. `p_caption` and
+            /// `p_hints` (the keys that do the same) are what the tooltip shows while it is hovered.
+            RID pickable_create(
+                    const RID &p_instance, const String &p_caption, const String &p_hints, const Callable &p_pressed,
+                    const Callable &p_shift_pressed);
             /// Frees the pickable; free it before its instance
             void pickable_free(const RID &p_pickable);
 

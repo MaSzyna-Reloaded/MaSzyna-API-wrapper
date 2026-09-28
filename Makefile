@@ -190,6 +190,18 @@ compile-release-linux: $(BUILD_NUMBER_FILE) extension_api.json linux-sdk-image
 	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
 
 
+# The runtime of the cab Python screens, built in the SDK like the release. PythonScreenServer
+# looks for it in the game dir: cp -a build-python-runtime/python2.7 <game_dir>/
+PYTHON_RUNTIME_BUILD_DIR:=build-python-runtime
+PYTHON_RUNTIME_DIR:=$(PYTHON_RUNTIME_BUILD_DIR)/python2.7
+
+.PHONY: python-runtime
+python-runtime: $(PYTHON_RUNTIME_DIR)/lib/libpython2.7.so.1.0
+
+$(PYTHON_RUNTIME_DIR)/lib/libpython2.7.so.1.0: scripts/build-python-runtime | linux-sdk-image
+	$(LINUX_SDK_RUN) scripts/build-python-runtime $(PYTHON_RUNTIME_DIR) $(PYTHON_RUNTIME_BUILD_DIR)
+
+
 $(GODOT_SOURCE_DIR):
 	git clone --depth 1 --branch $(GODOT_VERSION)-stable https://github.com/godotengine/godot.git $@
 

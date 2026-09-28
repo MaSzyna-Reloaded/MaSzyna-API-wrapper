@@ -282,11 +282,8 @@ themselves are `LegacyCabinDoorPermits`.
 `PythonScreenServer` runs the original's Python 2 screen scripts, `CabinPythonScreen` draws them on
 the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` keys. Left out:
 
-* **The runtime is not shipped.** CPython 2.7.18 + Pillow 6.2.2 belong in `ci/docker/linux-sdk`
-  (like the export template, FINDINGS 2026-09-24 glibc), installed as `python2.7/` in the game
-  dir. The original's `linuxpython64` is a virtualenv without PIL. Windows untested; should use
-  the game dir's `python27.dll` and `python64/` (PyInt.cpp:233). The dev copy was built by hand and
-  links the system libjpeg/freetype/zlib.
+* **Windows runtime untested** - should use the game dir's `python27.dll` and `python64/`
+  (PyInt.cpp:233); `make python-runtime` builds only the Linux one.
 * **Keys with no source yet** - each needs its Mover field published by its component, then one
   line in `PythonScreenState`:
   * controlled vehicle: `pant_compressor` (PantCompFlag), `new_speed` (NewSpeed),

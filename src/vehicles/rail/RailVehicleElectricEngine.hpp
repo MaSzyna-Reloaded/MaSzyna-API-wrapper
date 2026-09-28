@@ -77,6 +77,9 @@ namespace godot {
             bool get_collector_pantograph_second_active() const;
             double get_collector_pantograph_second_voltage() const;
             double get_collector_voltage() const;
+            /* Energy drawn from the wire and returned to it [kWh], the returned one negative */
+            double get_energy_drawn() const;
+            double get_energy_returned() const;
             bool get_contactors_active() const;
             bool get_diff_relay_active() const;
             bool get_resistors_active() const;

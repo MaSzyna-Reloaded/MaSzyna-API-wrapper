@@ -1,0 +1,54 @@
+class_name VehicleActionsButton
+extends Button
+
+## The cog of a vehicle - the operator's actions the original's vehicle parameters panel offers
+## for its trainset (vehicleparams.cpp:264-303): release the brakes, stop, move or remove it. The
+## same menu stands in the trainset list's rows and on the vehicle card; the trainset is removed
+## only once the player confirms it, and whoever owns the scene does the removing.
+
+## The player confirmed that the vehicle's trainset is to be removed
+signal remove_confirmed(vehicle:RID)
+
+const FRONT_END:int = 0
+
+## The vehicle the actions are for
+var vehicle:RID = RID()
+
+
+## The moves are offered only to a standing trainset (vehicleparams.cpp:295)
+func _on_pressed() -> void:
+    var standing:bool = absf(RailVehicleServer.vehicle_get_velocity(vehicle)) < VehicleSelectorRow.STANDING_VELOCITY
+    for button:Button in %Moves.get_children():
+        button.disabled = not standing
+    var anchor:Rect2 = get_global_rect()
+    %ActionsPopup.popup(Rect2i(Vector2i(anchor.position + Vector2(0.0, anchor.size.y)), Vector2i.ZERO))
+
+
+## consistreleaser (simulation.cpp:184): every vehicle of the trainset; each holds its releaser
+## until its brakes stop braking
+func _on_release_brakes_pressed() -> void:
+    %ActionsPopup.hide()
+    for trainset_vehicle:RID in RailVehicleServer.vehicle_get_coupled(
+            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER):
+        RailVehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", true)
+
+
+func _on_emergency_stop_pressed() -> void:
+    %ActionsPopup.hide()
+    RailVehicleServer.vehicle_send_command(vehicle, "brake_level_set_position", "emergency")
+
+
+## The trainset moved [m], towards the vehicle's front when positive
+func _on_move_pressed(distance:float) -> void:
+    %ActionsPopup.hide()
+    RailVehicleServer.trainset_move(vehicle, distance)
+
+
+func _on_remove_pressed() -> void:
+    %ActionsPopup.hide()
+    %RemoveDialog.dialog_text = tr("Remove the trainset of %s?") % RailVehicleServer.vehicle_get_name(vehicle)
+    %RemoveDialog.popup_centered()
+
+
+func _on_remove_dialog_confirmed() -> void:
+    remove_confirmed.emit(vehicle)

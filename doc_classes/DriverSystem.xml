@@ -38,6 +38,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="driver_get_state" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				What the driver keeps, from its delegate ([method DriverDelegate._get_state]); empty without a delegate.
+			</description>
+		</method>
 		<method name="driver_get_timetable_state" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="driver" type="RID" />
@@ -75,6 +82,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_drivers" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Every driver there is.
+			</description>
+		</method>
 		<method name="vehicle_get_driver" qualifiers="const">
 			<return type="RID" />
 			<param index="0" name="vehicle" type="RID" />
@@ -96,10 +109,23 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="driver_freed">
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The driver was freed ([method driver_free]).
+			</description>
+		</signal>
 		<signal name="driver_timetable_changed">
 			<param index="0" name="driver" type="RID" />
 			<description>
 				The driver's timetable, or how far it got through it, has changed.
+			</description>
+		</signal>
+		<signal name="driver_vehicle_attached">
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+				The driver drives another vehicle ([method driver_attach_vehicle]); an invalid [param vehicle] when it has none, also when its vehicle was freed.
 			</description>
 		</signal>
 	</signals>

@@ -92,6 +92,13 @@
 				Switches the compressor ([code]CompressorSwitch()[/code]); the command is sent along the control line to the vehicles that carry one.
 			</description>
 		</method>
+		<method name="consist_releaser">
+			<return type="void" />
+			<param index="0" name="active" type="bool" />
+			<description>
+				Switches the releaser of this vehicle's valve directly, whatever the cab's conditions - what the original's [code]consistreleaser[/code] does to each vehicle of a trainset ([code]simulation.cpp:184[/code]). Switched on, it stays on until the brakes stop braking.
+			</description>
+		</method>
 		<method name="ep_brake">
 			<return type="bool" />
 			<param index="0" name="applied" type="bool" />

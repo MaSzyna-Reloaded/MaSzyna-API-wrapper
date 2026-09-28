@@ -19,6 +19,44 @@ shadow_color = Color(0, 0, 0, 0.45)
 shadow_size = 12
 shadow_offset = Vector2(0, 4)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.28)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip_hover"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.8)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_row"]
 content_margin_left = 8.0
 content_margin_top = 5.0
@@ -49,6 +87,22 @@ corner_radius_bottom_left = 6
 shadow_color = Color(0.45, 0.72, 1, 0.18)
 shadow_size = 6
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_vehicle_row"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(1, 1, 1, 0.05)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.1)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip"]
 content_margin_left = 6.0
 content_margin_top = 1.0
@@ -76,6 +130,39 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_player_pill"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 0.68, 0.18, 0.95)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ai_pill"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 2.0
+bg_color = Color(0.4, 0.85, 0.55, 0.2)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_unmanned_pill"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 2.0
+bg_color = Color(0.6, 0.63, 0.68, 0.18)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_separator"]
 content_margin_top = 1.0
 bg_color = Color(0.45, 0.72, 1, 0.18)
@@ -92,10 +179,28 @@ TimetableRow/base_type = &"PanelContainer"
 TimetableRow/styles/panel = SubResource("StyleBoxFlat_row")
 TimetableRowCurrent/base_type = &"PanelContainer"
 TimetableRowCurrent/styles/panel = SubResource("StyleBoxFlat_row_current")
+VehicleSelectorRow/base_type = &"PanelContainer"
+VehicleSelectorRow/styles/panel = SubResource("StyleBoxFlat_vehicle_row")
+FloatingChip/base_type = &"PanelContainer"
+FloatingChip/styles/panel = SubResource("StyleBoxFlat_floating_chip")
+FloatingChipHover/base_type = &"PanelContainer"
+FloatingChipHover/styles/panel = SubResource("StyleBoxFlat_floating_chip_hover")
 TimetableChip/base_type = &"PanelContainer"
 TimetableChip/styles/panel = SubResource("StyleBoxFlat_chip")
 TimetablePill/base_type = &"PanelContainer"
 TimetablePill/styles/panel = SubResource("StyleBoxFlat_pill")
+PlayerPill/base_type = &"PanelContainer"
+PlayerPill/styles/panel = SubResource("StyleBoxFlat_player_pill")
+PlayerBadge/base_type = &"Label"
+PlayerBadge/colors/font_color = Color(0.14, 0.09, 0.02, 1)
+AIPill/base_type = &"PanelContainer"
+AIPill/styles/panel = SubResource("StyleBoxFlat_ai_pill")
+AIBadge/base_type = &"Label"
+AIBadge/colors/font_color = Color(0.62, 0.92, 0.7, 1)
+UnmannedPill/base_type = &"PanelContainer"
+UnmannedPill/styles/panel = SubResource("StyleBoxFlat_unmanned_pill")
+UnmannedBadge/base_type = &"Label"
+UnmannedBadge/colors/font_color = Color(0.68, 0.71, 0.76, 1)
 TimetableSeparator/base_type = &"HSeparator"
 TimetableSeparator/styles/separator = SubResource("StyleBoxFlat_separator")
 TimetableTitle/base_type = &"Label"

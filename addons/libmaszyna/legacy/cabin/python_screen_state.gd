@@ -135,6 +135,9 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     result["indir_brake"] = state.get("brake_edb_cylinder_pressure", 0.0) > BRAKE_PRESSURE_THRESHOLD
     result["pantpress"] = absf(pantograph_unit.get("current_collector/pantograph_tank_pressure", 0.0))
     result["traction_voltage"] = absf(pantograph_unit.get("current_collector/voltage", 0.0))
+    # mvOccupied->EnergyMeter (Train.cpp:810-811)
+    result["power_drawn"] = state.get("power_drawn", 0.0)
+    result["power_returned"] = state.get("power_returned", 0.0)
     for end:String in ["front", "rear"]:
         var bits:int = 0
         for lamp:String in LIGHT_BITS:

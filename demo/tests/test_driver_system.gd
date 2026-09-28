@@ -18,13 +18,37 @@ func test_a_driver_is_attached_to_a_vehicle_by_rids() -> void:
     assert_false(DriverSystem.vehicle_get_driver(vehicle).is_valid(), "a freed driver leaves its vehicle")
 
 
+func test_the_drivers_are_listed_and_their_vehicles_announced() -> void:
+    var vehicle:RID = build_vehicle("DriverListTest").get_rid()
+    watch_signals(DriverSystem)
+    var driver:RID = DriverSystem.driver_create()
+
+    assert_has(DriverSystem.get_drivers(), driver)
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    assert_signal_emitted_with_parameters(DriverSystem, "driver_vehicle_attached", [driver, vehicle])
+    DriverSystem.driver_free(driver)
+    assert_signal_emitted_with_parameters(DriverSystem, "driver_freed", [driver])
+    assert_does_not_have(DriverSystem.get_drivers(), driver)
+
+
+func test_a_driver_state_comes_from_its_delegate() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var driver:RID = _create_driver(ai)
+    var bare:RID = DriverSystem.driver_create()
+
+    assert_has(DriverSystem.driver_get_state(driver), "orders")
+    assert_eq(DriverSystem.driver_get_state(bare), {}, "no delegate, no state")
+    DriverSystem.driver_free(driver)
+    DriverSystem.driver_free(bare)
+
+
 func test_shunt_velocity_starts_the_engine_and_then_shunts() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var driver:RID = _create_driver(ai)
 
     DriverSystem.driver_send_command(driver, "ShuntVelocity", 40.0, -1.0)
 
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     assert_eq(state["orders"], PackedInt32Array([Order.WAIT_FOR_ORDERS, Order.PREPARE_ENGINE, Order.SHUNT]))
     assert_eq(state["order"], Order.PREPARE_ENGINE, "the engine first")
     assert_eq(state["shunt_velocity"], 40.0)
@@ -37,11 +61,11 @@ func test_set_velocity_zero_keeps_it_standing_and_a_speed_makes_it_a_train() -> 
     var driver:RID = _create_driver(ai)
 
     DriverSystem.driver_send_command(driver, "SetVelocity", 0.0, 0.0)
-    assert_true(ai.get_state(driver)["stop_here"])
-    assert_eq(ai.get_state(driver)["orders"], PackedInt32Array([Order.WAIT_FOR_ORDERS]), "no order for a stop")
+    assert_true(DriverSystem.driver_get_state(driver)["stop_here"])
+    assert_eq(DriverSystem.driver_get_state(driver)["orders"], PackedInt32Array([Order.WAIT_FOR_ORDERS]), "no order for a stop")
 
     DriverSystem.driver_send_command(driver, "SetVelocity", 60.0, 40.0)
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     assert_eq(state["orders"], PackedInt32Array([Order.WAIT_FOR_ORDERS, Order.PREPARE_ENGINE, Order.OBEY_TRAIN]))
     assert_eq(state["velocity"], 60.0)
     assert_eq(state["velocity_next"], 40.0)
@@ -54,7 +78,7 @@ func test_no_timetable_means_shunting() -> void:
 
     DriverSystem.driver_send_command(driver, "Timetable:none", 30.0, 0.0)
 
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     assert_null(state["timetable"])
     assert_eq(state["orders"], PackedInt32Array([Order.WAIT_FOR_ORDERS, Order.PREPARE_ENGINE, Order.SHUNT]))
     assert_eq(state["order_position"], 1, "a speed starts it at the first order")
@@ -68,7 +92,7 @@ func test_shunt_with_nothing_coupled_stands() -> void:
 
     DriverSystem.driver_send_command(driver, "Shunt", 0.0, 0.0)
 
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     assert_true(state["stop_here"], "nothing on either side: it stands")
     assert_eq(state["velocity"], 0.0)
     assert_eq(state["vehicle_count"], 0)
@@ -89,7 +113,7 @@ func test_a_putvalues_order_reaches_the_activators_driver() -> void:
     ScenarioEventServer.event_queue(event, vehicle)
     await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), MAX_WAIT)
 
-    assert_eq(ai.get_state(driver)["radio_channel"], 4)
+    assert_eq(DriverSystem.driver_get_state(driver)["radio_channel"], 4)
     ScenarioEventServer.event_free(event)
     DriverSystem.driver_free(driver)
 
@@ -197,9 +221,9 @@ func test_the_driver_reads_its_trainset() -> void:
     DriverSystem.driver_attach_vehicle(driver, vehicle)
     DriverSystem.driver_attach_delegate(driver, ai)
 
-    await wait_until(func() -> bool: return not ai.get_state(driver)["trainset_vehicles"].is_empty(), MAX_WAIT)
+    await wait_until(func() -> bool: return not DriverSystem.driver_get_state(driver)["trainset_vehicles"].is_empty(), MAX_WAIT)
 
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     var alone:Array[RID] = [vehicle]
     assert_eq(state["trainset_vehicles"], alone, "a vehicle on its own is its whole trainset")
     assert_eq(state["trainset_mass"], float(train.state["mass_total"]))
@@ -211,7 +235,7 @@ func test_a_new_driver_is_told_to_drive_the_way_it_faces() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var driver:RID = _create_driver(ai)
 
-    var state:Dictionary = ai.get_state(driver)
+    var state:Dictionary = DriverSystem.driver_get_state(driver)
     assert_ne(state["direction_order"], 0, "never told to drive no way (Driver.cpp:1872)")
     assert_eq(state["direction_order"], state["direction"])
     DriverSystem.driver_free(driver)
@@ -238,7 +262,7 @@ func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
 
     DriverSystem.vehicle_set_control_active(vehicle, true)
 
-    var way:int = ai.get_state(driver)["direction"]
+    var way:int = DriverSystem.driver_get_state(driver)["direction"]
     var cab_active:int = int(train.state["cabin"])
     assert_eq(left_with, -1, "the player left the reverser backwards")
     assert_ne(cab_active, 0, "the driver switches its cab on")

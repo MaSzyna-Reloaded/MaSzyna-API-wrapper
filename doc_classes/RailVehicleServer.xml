@@ -59,6 +59,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="trainset_move">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+				Moves the whole trainset coupled to [param vehicle] by [param distance] meters towards the vehicle's front, every vehicle whichever way round it stands ([code]TDynamicObject::move_set()[/code], [code]DynObj.cpp:4302[/code]).
+			</description>
+		</method>
 		<method name="vehicle_attach_controller">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -138,6 +146,13 @@
 				Returns the commands [param vehicle] answers to.
 			</description>
 		</method>
+		<method name="vehicle_get_controller_instance_id" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The instance id attached by [method vehicle_attach_controller], 0 without one.
+			</description>
+		</method>
 		<method name="vehicle_get_coupled" qualifiers="const">
 			<return type="RID[]" />
 			<param index="0" name="vehicle" type="RID" />
@@ -159,24 +174,17 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_get_controller_instance_id" qualifiers="const">
-			<return type="int" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				The instance id attached by [method vehicle_attach_controller], 0 without one.
-			</description>
-		</method>
 		<method name="vehicle_get_name" qualifiers="const">
 			<return type="String" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_get_type_name" qualifiers="const">
-			<return type="String" />
+		<method name="vehicle_get_rail_vehicle" qualifiers="const">
+			<return type="int" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
-				The name of the vehicle's type - the original's CHK/MMD name ([code]TMoverParameters::TypeName[/code]).
+				The instance id of the [RailVehicle3D] attached by [method vehicle_attach_rail_vehicle], 0 without one.
 			</description>
 		</method>
 		<method name="vehicle_get_rid_by_name" qualifiers="const">
@@ -208,6 +216,13 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="distance" type="float" />
 			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_type_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The name of the vehicle's type - the original's CHK/MMD name ([code]TMoverParameters::TypeName[/code]).
 			</description>
 		</method>
 		<method name="vehicle_get_velocity" qualifiers="const">
@@ -324,6 +339,11 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="call" type="int" />
 			<param index="2" name="position" type="Vector3" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_radio_stop_received">
+			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</signal>

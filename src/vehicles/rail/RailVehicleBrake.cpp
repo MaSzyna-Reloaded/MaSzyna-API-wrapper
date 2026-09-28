@@ -229,6 +229,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
 
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &RailVehicleBrake::brake_releaser);
+        ClassDB::bind_method(D_METHOD("consist_releaser", "active"), &RailVehicleBrake::consist_releaser);
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &RailVehicleBrake::compressor);
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &RailVehicleBrake::brake_level_set);
         ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &RailVehicleBrake::brake_level_set_position);
@@ -430,6 +431,7 @@ namespace godot {
 
     void RailVehicleBrake::_register_commands() {
         register_command("brake_releaser", Callable(this, "brake_releaser"));
+        register_command("consist_releaser", Callable(this, "consist_releaser"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("brake_level_set", Callable(this, "brake_level_set"));
         register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
@@ -451,6 +453,7 @@ namespace godot {
 
     void RailVehicleBrake::_unregister_commands() {
         unregister_command("brake_releaser", Callable(this, "brake_releaser"));
+        unregister_command("consist_releaser", Callable(this, "consist_releaser"));
         unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("brake_level_set", Callable(this, "brake_level_set"));
         unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));

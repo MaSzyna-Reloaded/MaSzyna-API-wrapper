@@ -89,6 +89,7 @@ namespace godot {
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
                 &RailVehicleServer::vehicle_set_track);
         ClassDB::bind_method(D_METHOD("vehicle_move", "vehicle", "distance"), &RailVehicleServer::vehicle_move);
+        ClassDB::bind_method(D_METHOD("trainset_move", "vehicle", "distance"), &RailVehicleServer::trainset_move);
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
@@ -118,6 +119,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_rail_vehicle", "vehicle", "rail_vehicle_id"),
                 &RailVehicleServer::vehicle_attach_rail_vehicle);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_rail_vehicle", "vehicle"), &RailVehicleServer::vehicle_get_rail_vehicle);
         ClassDB::bind_method(D_METHOD("set_stepping_enabled", "enabled"), &RailVehicleServer::set_stepping_enabled);
         ClassDB::bind_method(D_METHOD("is_stepping_enabled"), &RailVehicleServer::is_stepping_enabled);
 
@@ -550,6 +553,48 @@ namespace godot {
         _move_placement(*placement, p_distance, true);
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
             controller->emit_position_changed_if_needed();
+        }
+    }
+
+    /* The original moves every vehicle by the distance times its own DirectionGet(), the way the
+     * trainset drives; here the way is the given vehicle's front, and each other vehicle's sign
+     * says whether it stands the same way round. The leading vehicle goes first, so that a switch
+     * on the way is set once for all of them. The couplers need nothing: the next sub-step
+     * refreshes every location and neighbour before any force. */
+    void RailVehicleServer::trainset_move(const RID &p_vehicle, const double p_distance) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (controller == nullptr) {
+            return;
+        }
+        // per end of the vehicle, its neighbours outwards and the sign of the distance each moves
+        Vector<RID> sides[2];
+        Vector<double> signs[2];
+        for (int side = 0; side < 2; side++) {
+            RailVehicleController *vehicle = controller;
+            int end = side;
+            double sign = 1.0;
+            while (vehicle->is_coupled_by(end, RailVehicleController::COUPLING_ELEMENT_COUPLER)) {
+                const int entered = vehicle->get_coupled_end(end);
+                vehicle = vehicle->get_coupled_controller(end);
+                // entered by the same end it was left by: that neighbour stands the other way round
+                if (entered == end) {
+                    sign = -sign;
+                }
+                end = 1 - entered;
+                sides[side].push_back(vehicle->get_rid());
+                signs[side].push_back(sign);
+            }
+        }
+        // the side the trainset moves towards leads, from its far end in; vehicle_move() measures
+        // towards the rear, as vehicle_process_movement() does
+        const int leading = p_distance > 0.0 ? 0 : 1;
+        for (int index = sides[leading].size() - 1; index >= 0; index--) {
+            vehicle_move(sides[leading][index], -p_distance * signs[leading][index]);
+        }
+        vehicle_move(p_vehicle, -p_distance);
+        for (int index = 0; index < sides[1 - leading].size(); index++) {
+            vehicle_move(sides[1 - leading][index], -p_distance * signs[1 - leading][index]);
         }
     }
 

@@ -8,6 +8,8 @@
 
 namespace godot {
     namespace {
+        // DynObj.cpp:3897 - the meter counts kWh
+        constexpr double JOULES_PER_KWH = 3600000.0;
         const std::unordered_map<RailVehicleElectricEngine::ValveOperation, Maszyna::operation_t> VALVE_OPERATIONS = {
                 {RailVehicleElectricEngine::VALVE_OPERATION_NONE, Maszyna::operation_t::none},
                 {RailVehicleElectricEngine::VALVE_OPERATION_ENABLE, Maszyna::operation_t::enable},
@@ -142,6 +144,39 @@ namespace godot {
     double MoverElectricEngineBackend::get_collector_voltage(const RailVehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->PantographVoltage : 0.0;
+    }
+
+    double MoverElectricEngineBackend::get_energy_drawn(const RailVehicleElectricEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EnergyMeter.first : 0.0;
+    }
+
+    double MoverElectricEngineBackend::get_energy_returned(const RailVehicleElectricEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EnergyMeter.second : 0.0;
+    }
+
+    // Original engine: DynObj.cpp:3798-3832 (the current through each pantograph on the wire) and
+    // 3897, 3942 (EnergyMeter). Each pantograph is counted with its own voltage and its own
+    // is_active; the original swaps the front and rear voltages and asks the front pantograph's
+    // is_active for both, which for two raised pantographs comes to the same sum.
+    void MoverElectricEngineBackend::meter_energy(const RailVehicleElectricEngine *p_engine, const double p_delta) const {
+        TMoverParameters *mover = owner.get_mover();
+        ASSERT_MOVER(mover);
+        if (mover->EnginePowerSource.SourceType != Maszyna::TPowerSource::CurrentCollector) {
+            return;
+        }
+        const double current = ((mover->DynamicBrakeFlag && mover->ResistorsFlag)
+                                        ? 0.0
+                                        : std::abs(mover->Itot) * mover->IsVehicleEIMBrakingFactor()) +
+                               mover->TotalCurrent;
+        // PantFrontVolt/PantRearVolt are zero for a pantograph that is not active or not on a wire
+        // (set_pantograph_wire_voltage())
+        const int active_pantographs = (mover->PantFrontVolt > 0.0 ? 1 : 0) + (mover->PantRearVolt > 0.0 ? 1 : 0);
+        const double pantograph_current = current / std::max(1, active_pantographs);
+        const double energy =
+                (mover->PantFrontVolt + mover->PantRearVolt) * pantograph_current * p_delta / JOULES_PER_KWH;
+        (pantograph_current > 0.0 ? mover->EnergyMeter.first : mover->EnergyMeter.second) += energy;
     }
 
     bool MoverElectricEngineBackend::get_contactors_active(const RailVehicleElectricEngine *p_engine) const {

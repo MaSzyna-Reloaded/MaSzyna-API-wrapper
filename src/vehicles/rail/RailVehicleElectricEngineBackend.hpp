@@ -38,6 +38,11 @@ namespace godot {
             virtual bool get_collector_pantograph_second_active(const RailVehicleElectricEngine *p_engine) const = 0;
             virtual double get_collector_pantograph_second_voltage(const RailVehicleElectricEngine *p_engine) const = 0;
             virtual double get_collector_voltage(const RailVehicleElectricEngine *p_engine) const = 0;
+            /* Energy drawn from the wire and returned to it [kWh], the returned one negative */
+            virtual double get_energy_drawn(const RailVehicleElectricEngine *p_engine) const = 0;
+            virtual double get_energy_returned(const RailVehicleElectricEngine *p_engine) const = 0;
+            /* The energy of p_delta seconds added to the meter */
+            virtual void meter_energy(const RailVehicleElectricEngine *p_engine, double p_delta) const = 0;
             virtual bool get_contactors_active(const RailVehicleElectricEngine *p_engine) const = 0;
             virtual bool get_diff_relay_active(const RailVehicleElectricEngine *p_engine) const = 0;
             virtual bool get_resistors_active(const RailVehicleElectricEngine *p_engine) const = 0;

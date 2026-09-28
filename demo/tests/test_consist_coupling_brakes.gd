@@ -25,12 +25,16 @@ const CHARGED_PIPE_PRESSURE:float = 5.0
 const PRESSURE_TOLERANCE:float = 0.1
 ## a service braking lowers the pipe by at least this much (FV4a full service: about 1.5 bar)
 const SERVICE_BRAKING_PIPE_DROP:float = 1.0
+## long enough for a few simulation ticks
+const RELEASER_TICK_SECONDS:float = 0.5
 
+var nodes:Array[VehiclePhysicsNode] = []
 var controllers:Array[VehicleController] = []
 var brakes:Array[RailVehicleBrake] = []
 
 
 func before_each() -> void:
+    nodes.clear()
     controllers.clear()
     brakes.clear()
     var model:VehicleModel = FizVehicleBuilder.build_model_at(FIXTURE_PATH)
@@ -42,6 +46,7 @@ func before_each() -> void:
         node.initial_velocity = READY_TO_DEPART_VELOCITY
         node.set_model(model)
         add_child_autofree(node)
+        nodes.append(node)
         var controller:VehicleController = node.get_controller()
         controllers.append(controller)
         brakes.append(controller.get_component(VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
@@ -51,6 +56,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+    nodes.clear()
     controllers.clear()
     brakes.clear()
 
@@ -83,3 +89,22 @@ func test_uncouple_parts_the_vehicles() -> void:
     controllers[0].uncouple(REAR_END)
     assert_false(controllers[0].is_coupled(REAR_END))
     assert_false(controllers[1].is_coupled(FRONT_END))
+
+
+func test_the_consist_releaser_is_held_only_while_the_brakes_brake() -> void:
+    controllers[0].send_command("consist_releaser", true)
+    assert_true(brakes[0].releaser_active, "switched on")
+    await wait_seconds(RELEASER_TICK_SECONDS)
+    assert_false(brakes[0].releaser_active, "a released brake lets go of it on the next tick")
+
+
+func test_a_freed_vehicle_leaves_its_neighbours_uncoupled() -> void:
+    var first:RID = controllers[0].get_rid()
+    watch_signals(controllers[0])
+    nodes[1].free()
+
+    assert_false(controllers[0].is_coupled(REAR_END), "the front neighbour lets go of the freed vehicle")
+    assert_false(controllers[2].is_coupled(FRONT_END), "the rear neighbour lets go of the freed vehicle")
+    assert_eq(RailVehicleServer.vehicle_get_coupled(
+            first, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER).size(), 1)
+    assert_signal_emitted(controllers[0], "consist_changed")

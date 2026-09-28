@@ -808,3 +808,210 @@ msgstr ""
 
 msgid "Departure"
 msgstr ""
+
+msgid "Vehicles"
+msgstr ""
+
+msgid "No vehicle has a driver"
+msgstr ""
+
+msgid "Show"
+msgstr ""
+
+msgid "Unmanned"
+msgstr ""
+
+msgid "Enable AI"
+msgstr ""
+
+msgid "Disable AI"
+msgstr ""
+
+msgid "Follow"
+msgstr ""
+
+msgid "Followed vehicle (click to open its card)"
+msgstr ""
+
+msgid "Your vehicle (click to enter the cab)"
+msgstr ""
+
+msgid "Operator actions"
+msgstr ""
+
+msgid "Release brakes"
+msgstr ""
+
+msgid "Emergency stop"
+msgstr ""
+
+msgid "AI"
+msgstr ""
+
+msgid "Standing"
+msgstr ""
+
+msgid "Running"
+msgstr ""
+
+msgid "Basic data"
+msgstr ""
+
+msgid "Current parameters"
+msgstr ""
+
+msgid "Driver"
+msgstr ""
+
+msgid "Motion"
+msgstr ""
+
+msgid "Brakes and air"
+msgstr ""
+
+msgid "Drive and electrics"
+msgstr ""
+
+msgid "File"
+msgstr ""
+
+msgid "Skin"
+msgstr ""
+
+msgid "Length"
+msgstr ""
+
+msgid "Mass"
+msgstr ""
+
+msgid "Axle arrangement"
+msgstr ""
+
+msgid "Axles"
+msgstr ""
+
+msgid "Track width"
+msgstr ""
+
+msgid "Maximum speed"
+msgstr ""
+
+msgid "Power"
+msgstr ""
+
+msgid "Brake system"
+msgstr ""
+
+msgid "Brake valve"
+msgstr ""
+
+msgid "Acceleration"
+msgstr ""
+
+msgid "Direction"
+msgstr ""
+
+msgid "Neutral"
+msgstr ""
+
+msgid "Distance"
+msgstr ""
+
+msgid "Brake pipe"
+msgstr ""
+
+msgid "Brake cylinder"
+msgstr ""
+
+msgid "Main reservoir"
+msgstr ""
+
+msgid "Feed pipe"
+msgstr ""
+
+msgid "Brake handle"
+msgstr ""
+
+msgid "Disabled"
+msgstr ""
+
+msgid "Line voltage"
+msgstr ""
+
+msgid "Engine speed"
+msgstr ""
+
+msgid "Master controller"
+msgstr ""
+
+msgid "Main switch"
+msgstr ""
+
+msgid "Energy drawn"
+msgstr ""
+
+msgid "Energy returned"
+msgstr ""
+
+msgid "Energy balance"
+msgstr ""
+
+msgid "Take over"
+msgstr ""
+
+msgid "Hand over to AI"
+msgstr ""
+
+msgid "Order"
+msgstr ""
+
+msgid "Speed allowed"
+msgstr ""
+
+msgid "Speed ahead"
+msgstr ""
+
+msgid "Next stop"
+msgstr ""
+
+msgid "At the platform"
+msgstr ""
+
+msgid "Yes"
+msgstr ""
+
+msgid "Stop time"
+msgstr ""
+
+msgid "No limit"
+msgstr ""
+
+msgid "Train"
+msgstr ""
+
+msgid "Relation"
+msgstr ""
+
+msgid "Delay"
+msgstr ""
+
+msgid "Last station"
+msgstr ""
+
+msgid "Then"
+msgstr ""
+
+msgid "Wait for orders"
+msgstr ""
+
+msgid "Remove trainset"
+msgstr ""
+
+msgid "Remove"
+msgstr ""
+
+msgid "Remove the trainset of %s?"
+msgstr ""
+
+msgid "Trainset list"
+msgstr ""

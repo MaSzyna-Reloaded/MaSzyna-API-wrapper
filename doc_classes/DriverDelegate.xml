@@ -25,6 +25,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="_get_state" qualifiers="virtual const">
+			<return type="Dictionary" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				What the driver keeps - its orders and what they asked for, in the delegate's own keys ([method DriverSystem.driver_get_state]); empty for a delegate that shows nothing.
+			</description>
+		</method>
 		<method name="_get_timetable_state" qualifiers="virtual const">
 			<return type="Dictionary" />
 			<param index="0" name="driver" type="RID" />

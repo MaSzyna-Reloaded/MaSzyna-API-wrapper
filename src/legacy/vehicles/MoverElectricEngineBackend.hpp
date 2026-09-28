@@ -43,6 +43,9 @@ namespace godot {
             bool get_collector_pantograph_second_active(const RailVehicleElectricEngine *p_engine) const override;
             double get_collector_pantograph_second_voltage(const RailVehicleElectricEngine *p_engine) const override;
             double get_collector_voltage(const RailVehicleElectricEngine *p_engine) const override;
+            double get_energy_drawn(const RailVehicleElectricEngine *p_engine) const override;
+            double get_energy_returned(const RailVehicleElectricEngine *p_engine) const override;
+            void meter_energy(const RailVehicleElectricEngine *p_engine, double p_delta) const override;
             bool get_contactors_active(const RailVehicleElectricEngine *p_engine) const override;
             bool get_diff_relay_active(const RailVehicleElectricEngine *p_engine) const override;
             bool get_resistors_active(const RailVehicleElectricEngine *p_engine) const override;

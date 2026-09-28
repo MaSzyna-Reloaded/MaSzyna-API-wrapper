@@ -1,6 +1,11 @@
 extends MaszynaGutTest
 
 
+## trainset_move(): the ends and the coupling of a coupler alone (coupling::coupler, MOVER.h:161)
+const FRONT_END: int = 0
+const COUPLING_COUPLER: int = 1
+const MOVE_DISTANCE: float = 10.0
+
 var created_tracks: Array[RID] = []
 var created_vehicle_rids: Array[RID] = []
 var created_controllers: Array[VehicleController] = []
@@ -295,6 +300,27 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
         moved_by.normalized().distance_to(forward) < 0.01,
         "positive mover velocity should move the vehicle toward its own front, got %s vs front %s" % [moved_by, forward]
     )
+
+
+func test_trainset_move_moves_every_vehicle_the_same_way() -> void:
+    _register_track(_curve(Vector3(0.0, 0.0, 0.0), Vector3(100.0, 0.0, 0.0)), null, TrackServer.TRACK_NORMAL)
+    TrackServer.topology_rebuild()
+    var first: VehicleController = _create_controller()
+    var second: VehicleController = _create_controller()
+    # the second stands the other way round: front to front
+    RailVehicleServer.vehicle_set_track(first.get_rid(), created_tracks[0], 40.0, TrackServer.DIRECTION_NORMAL)
+    RailVehicleServer.vehicle_set_track(second.get_rid(), created_tracks[0], 60.0, TrackServer.DIRECTION_REVERSED)
+    first.couple(second, FRONT_END, FRONT_END, COUPLING_COUPLER)
+    var forward: Vector3 = -RailVehicleServer.vehicle_get_transform(first.get_rid()).basis.z.normalized()
+    var first_start: Vector3 = RailVehicleServer.vehicle_get_transform(first.get_rid()).origin
+    var second_start: Vector3 = RailVehicleServer.vehicle_get_transform(second.get_rid()).origin
+
+    RailVehicleServer.trainset_move(first.get_rid(), MOVE_DISTANCE)
+
+    _assert_vector_eq(RailVehicleServer.vehicle_get_transform(first.get_rid()).origin,
+            first_start + forward * MOVE_DISTANCE, "the vehicle moved")
+    _assert_vector_eq(RailVehicleServer.vehicle_get_transform(second.get_rid()).origin,
+            second_start + forward * MOVE_DISTANCE, "the reversed vehicle moved with it")
 
 
 func test_process_movement_without_bound_controller_is_noop() -> void:

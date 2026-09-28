@@ -8,6 +8,7 @@ namespace godot {
         GDVIRTUAL_BIND(_update, "driver");
         GDVIRTUAL_BIND(_control_taken, "driver");
         GDVIRTUAL_BIND(_get_timetable_state, "driver");
+        GDVIRTUAL_BIND(_get_state, "driver");
     }
 
     void DriverDelegate::driver_attached(const RID &p_driver) {
@@ -35,6 +36,12 @@ namespace godot {
     Dictionary DriverDelegate::get_timetable_state(const RID &p_driver) const {
         Dictionary state;
         GDVIRTUAL_CALL(_get_timetable_state, p_driver, state);
+        return state;
+    }
+
+    Dictionary DriverDelegate::get_state(const RID &p_driver) const {
+        Dictionary state;
+        GDVIRTUAL_CALL(_get_state, p_driver, state);
         return state;
     }
 } // namespace godot

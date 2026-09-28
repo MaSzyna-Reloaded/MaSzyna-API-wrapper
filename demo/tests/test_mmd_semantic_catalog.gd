@@ -125,12 +125,16 @@ func test_cab_light_indicator_and_spotlight_are_separate():
     assert_true(entry["light_fixed_fields"]["light_enabled"])
 
 
-func test_instrument_light_indicator_and_omnilight_are_separate():
+func test_instrument_light_glows_at_each_backlight_piece():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-instrumentlight")
     assert_eq(entry["widget_class"], CabinIndicator3D)
     assert_eq(entry["fixed_fields"]["state_property"], "devices_light_enabled")
-    assert_eq(entry["light_widget_class"], CabinOmniLight3D)
-    assert_eq(entry["light_fixed_fields"]["state_property"], "devices_light_enabled")
+    assert_eq(entry["island_lights"], MmdSemanticCatalog.IslandLights.GLOW)
+
+
+func test_alerter_lights_each_of_its_lamps():
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
+    assert_eq(entry["island_lights"], MmdSemanticCatalog.IslandLights.WIDGET_LIGHT)
 
 
 func test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit():

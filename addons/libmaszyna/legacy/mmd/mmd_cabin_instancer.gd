@@ -25,6 +25,28 @@ const INDICATOR_GLOW_ENERGY_SETTING:StringName = &"maszyna/cabin/indicator_glow_
 const INDICATOR_GLOW_ENERGY_DEFAULT:float = 0.05
 const INDICATOR_GLOW_RANGE_SETTING:StringName = &"maszyna/cabin/indicator_glow_range"
 const INDICATOR_GLOW_RANGE_DEFAULT:float = 0.1
+## Whether a lamp of several pieces gets a light at each (MmdSemanticCatalog.IslandLights)
+const REAL_INSTRUMENTS_LIGHTS_SETTING:StringName = &"maszyna/cabin/real_instruments_lights"
+## The glow of each piece of an instrument backlight (MmdSemanticCatalog.IslandLights.GLOW); the
+## defaults and the fixed parameters are SM42's hand-authored backlight light
+const INSTRUMENT_GLOW_ENERGY_SETTING:StringName = &"maszyna/cabin/instrument_glow_energy"
+const INSTRUMENT_GLOW_ENERGY_DEFAULT:float = 0.002
+const INSTRUMENT_GLOW_RANGE_SETTING:StringName = &"maszyna/cabin/instrument_glow_range"
+const INSTRUMENT_GLOW_RANGE_DEFAULT:float = 0.564628
+const INSTRUMENT_GLOW_ATTENUATION:float = 1.41
+const INSTRUMENT_GLOW_SIZE:float = 0.078
+const INSTRUMENT_GLOW_INDIRECT_ENERGY:float = 0.525
+## Pieces of one lamp mesh closer than this are one lamp (a gauge's overlay split at a UV seam)
+const ISLAND_MERGE_DISTANCE:float = 0.02
+## No lamp gets more lights than this, whatever its mesh - the nearest pieces are merged first
+const ISLAND_LIGHT_MAX_COUNT:int = 16
+## Texture samples per axis over a piece's UV bounds when its colour is taken
+const ISLAND_COLOR_SAMPLES:int = 6
+## The spotlight parameters a WIDGET_LIGHT island light copies from its widget
+const WIDGET_LIGHT_PROPERTIES:Array[StringName] = [
+    &"light_color", &"light_size", &"light_specular", &"light_volumetric_fog_energy", &"shadow_enabled",
+    &"spot_range", &"spot_attenuation", &"spot_angle", &"spot_angle_attenuation",
+]
 const LAMP_LIGHT_MAX_COUNT:int = 6
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
@@ -1136,10 +1158,50 @@ static func _build_indicator_lights(
             widget.set("off_target_path", widget.get_path_to(off_node))
         widget.set_vehicle_rid(vehicle_rid)
 
+        # a lamp whose "_on" mesh is several pieces gets a light at each (MmdSemanticCatalog.IslandLights)
+        if (entry.has("island_lights") and on_node
+                and ProjectSettings.get_setting(REAL_INSTRUMENTS_LIGHTS_SETTING, true)):
+            var island_lights:MmdSemanticCatalog.IslandLights = entry["island_lights"]
+            var spot_widget:CabinSpotLight3D = widget as CabinSpotLight3D
+            var lit_changed:Signal = (
+                    spot_widget.lit_changed if spot_widget else (widget as CabinIndicator3D).lit_changed)
+            var lit:bool = spot_widget.enabled if spot_widget else (widget as CabinIndicator3D).enabled
+            if island_lights == MmdSemanticCatalog.IslandLights.WIDGET_LIGHT:
+                # the copies light the lamps, the widget only switches the meshes, blinks and sounds
+                spot_widget.light_enabled = false
+            for island:Dictionary in _submodel_islands(on_node):
+                var island_light:Light3D
+                if island_lights == MmdSemanticCatalog.IslandLights.GLOW:
+                    var glow_light:OmniLight3D = OmniLight3D.new()
+                    glow_light.light_color = island["color"]
+                    glow_light.light_energy = float(ProjectSettings.get_setting(
+                            INSTRUMENT_GLOW_ENERGY_SETTING, INSTRUMENT_GLOW_ENERGY_DEFAULT))
+                    glow_light.omni_range = float(ProjectSettings.get_setting(
+                            INSTRUMENT_GLOW_RANGE_SETTING, INSTRUMENT_GLOW_RANGE_DEFAULT))
+                    glow_light.omni_attenuation = INSTRUMENT_GLOW_ATTENUATION
+                    glow_light.light_size = INSTRUMENT_GLOW_SIZE
+                    glow_light.light_indirect_energy = INSTRUMENT_GLOW_INDIRECT_ENERGY
+                    island_light = glow_light
+                else:
+                    var spot_light:SpotLight3D = SpotLight3D.new()
+                    for property:StringName in WIDGET_LIGHT_PROPERTIES:
+                        spot_light.set(property, spot_widget.get(property))
+                    spot_light.light_energy = spot_widget.light_energy_on
+                    island_light = spot_light
+                island_light.name = "%s_%s_%d_island" % [descriptor.label, descriptor.submodel_name, i]
+                island_light.shadow_reverse_cull_face = ProjectSettings.get_setting(
+                        "maszyna/lights/reverse_cull_face", false)
+                island_light.visible = lit
+                generated_root.add_child(island_light)
+                island_light.global_position = island["position"]
+                if island_light is SpotLight3D:
+                    _aim_spotlight_at_driver(island_light as SpotLight3D, generated_root, driver_position)
+                lit_changed.connect(island_light.set_visible)
+
         # a lamp that is only its "_on" mesh also glows into the cab while it is lit, in its own
         # colour (the diffuse that tints the greyscale lamp texture, Model3d.cpp:1918); entries with
-        # a light of their own (i-cablight, i-instrumentlight, i-radio) keep that one instead
-        if (widget is CabinIndicator3D and not entry.has("light_widget_class")
+        # a light of their own (i-cablight, i-radio) or with island lights keep those instead
+        if (widget is CabinIndicator3D and not entry.has("light_widget_class") and not entry.has("island_lights")
                 and ProjectSettings.get_setting(INDICATOR_GLOW_ENABLED_SETTING, true)):
             var glow:OmniLight3D = OmniLight3D.new()
             glow.name = "%s_%s_%d_glow" % [descriptor.label, descriptor.submodel_name, i]
@@ -1181,6 +1243,122 @@ static func _build_indicator_lights(
                 if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
                     _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
                 light.set_vehicle_rid(vehicle_rid)
+
+
+## The separate pieces of a lamp's "_on" mesh and of the meshes under it: triangles joined by a
+## shared vertex are one piece, pieces nearer than ISLAND_MERGE_DISTANCE are one lamp, and at most
+## ISLAND_LIGHT_MAX_COUNT are kept by merging the nearest. Each is {position (global centre),
+## color}: the average of the piece's texture over its UV bounds, weighted by alpha and tinted by
+## the material's albedo, brought to full brightness - the light's energy says how bright.
+static func _submodel_islands(lamp:Node3D) -> Array[Dictionary]:
+    var pieces:Array[Dictionary] = []
+    var mesh_instances:Array[Node] = lamp.find_children("", "MeshInstance3D", true, false)
+    if lamp is MeshInstance3D:
+        mesh_instances.append(lamp)
+    for node:Node in mesh_instances:
+        var mesh_instance:MeshInstance3D = node as MeshInstance3D
+        if not mesh_instance.mesh:
+            continue
+        var material:ShaderMaterial = mesh_instance.material_override as ShaderMaterial
+        var tint:Color = Color.WHITE
+        var image:Image = null
+        if material:
+            var albedo:Variant = material.get_shader_parameter("albedo")
+            if albedo is Color:
+                tint = albedo
+            var texture:Texture2D = material.get_shader_parameter("texture_albedo") as Texture2D
+            if texture:
+                image = texture.get_image()
+                if image and image.is_compressed():
+                    image.decompress()
+                # only a texture with colour channels says what colour the lamp is (SM42's lamps
+                # are two-channel BC5) - otherwise the tint alone does
+                if image and not image.detect_used_channels() in [Image.USED_CHANNELS_RGB, Image.USED_CHANNELS_RGBA]:
+                    image = null
+        for surface:int in mesh_instance.mesh.get_surface_count():
+            var arrays:Array = mesh_instance.mesh.surface_get_arrays(surface)
+            var vertices:PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+            var uvs:PackedVector2Array = arrays[Mesh.ARRAY_TEX_UV] if arrays[Mesh.ARRAY_TEX_UV] else PackedVector2Array()
+            var indices:PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] else PackedInt32Array()
+            if not indices:
+                indices = PackedInt32Array(range(vertices.size()))
+            # union-find over the vertices of each triangle
+            var parent:PackedInt32Array = PackedInt32Array(range(vertices.size()))
+            for t:int in range(0, indices.size() - 2, 3):
+                for corner:int in [1, 2]:
+                    var a:int = _island_root(parent, indices[t])
+                    var b:int = _island_root(parent, indices[t + corner])
+                    if not a == b:
+                        parent[a] = b
+            var by_root:Dictionary[int, Dictionary] = {}
+            for v:int in vertices.size():
+                var root:int = _island_root(parent, v)
+                var global_vertex:Vector3 = mesh_instance.global_transform * vertices[v]
+                if not by_root.has(root):
+                    by_root[root] = {
+                        "bounds": AABB(global_vertex, Vector3.ZERO),
+                        "uv_bounds": Rect2(uvs[v], Vector2.ZERO) if uvs else Rect2(),
+                    }
+                var piece:Dictionary = by_root[root]
+                piece["bounds"] = (piece["bounds"] as AABB).expand(global_vertex)
+                if uvs:
+                    piece["uv_bounds"] = (piece["uv_bounds"] as Rect2).expand(uvs[v])
+            for piece:Dictionary in by_root.values():
+                piece["color_sum"] = Color(0.0, 0.0, 0.0, 0.0)
+                var uv_bounds:Rect2 = piece["uv_bounds"]
+                if image:
+                    for sample_x:int in ISLAND_COLOR_SAMPLES:
+                        for sample_y:int in ISLAND_COLOR_SAMPLES:
+                            var uv:Vector2 = uv_bounds.position + uv_bounds.size * Vector2(
+                                    (sample_x + 0.5) / ISLAND_COLOR_SAMPLES, (sample_y + 0.5) / ISLAND_COLOR_SAMPLES)
+                            var pixel:Color = image.get_pixel(
+                                    posmod(int(uv.x * image.get_width()), image.get_width()),
+                                    posmod(int(uv.y * image.get_height()), image.get_height()))
+                            piece["color_sum"] += Color(pixel.r, pixel.g, pixel.b, 1.0) * pixel.a
+                piece["tint"] = tint
+                pieces.append(piece)
+
+    # pieces nearer than ISLAND_MERGE_DISTANCE, then the nearest while there are too many
+    var merged:bool = true
+    while merged:
+        merged = false
+        var nearest:Vector2i = Vector2i(-1, -1)
+        var nearest_gap:float = INF
+        for a:int in pieces.size():
+            for b:int in range(a + 1, pieces.size()):
+                var gap:float = (pieces[a]["bounds"] as AABB).get_center().distance_to(
+                        (pieces[b]["bounds"] as AABB).get_center())
+                var bounds_gap:float = maxf(0.0, gap - ((pieces[a]["bounds"] as AABB).get_longest_axis_size()
+                        + (pieces[b]["bounds"] as AABB).get_longest_axis_size()) * 0.5)
+                if bounds_gap < nearest_gap:
+                    nearest_gap = bounds_gap
+                    nearest = Vector2i(a, b)
+        if nearest.x >= 0 and (nearest_gap < ISLAND_MERGE_DISTANCE or pieces.size() > ISLAND_LIGHT_MAX_COUNT):
+            var kept:Dictionary = pieces[nearest.x]
+            var gone:Dictionary = pieces[nearest.y]
+            kept["bounds"] = (kept["bounds"] as AABB).merge(gone["bounds"])
+            kept["color_sum"] += gone["color_sum"]
+            pieces.remove_at(nearest.y)
+            merged = true
+
+    var islands:Array[Dictionary] = []
+    for piece:Dictionary in pieces:
+        var color_sum:Color = piece["color_sum"]
+        var color:Color = piece["tint"]
+        if color_sum.a > 0.0:
+            color = Color(color_sum.r / color_sum.a, color_sum.g / color_sum.a, color_sum.b / color_sum.a) * piece["tint"]
+        var brightest:float = maxf(color.r, maxf(color.g, color.b))
+        if brightest > 0.0:
+            color = Color(color.r / brightest, color.g / brightest, color.b / brightest)
+        islands.append({"position": (piece["bounds"] as AABB).get_center(), "color": color})
+    return islands
+
+
+static func _island_root(parent:PackedInt32Array, vertex:int) -> int:
+    while not parent[vertex] == vertex:
+        parent[vertex] = parent[parent[vertex]]
+        vertex = parent[vertex]
+    return vertex
 
 
 ## Quirk for ceiling lamps: one lamp submodel may hold a whole row of bulbs (EP07 machine room

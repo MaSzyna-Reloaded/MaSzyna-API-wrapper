@@ -127,6 +127,13 @@ func _enter_tree():
         "maszyna/cabin/indicator_glow_energy", 0.05, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,2.0,0.005")
     add_custom_project_setting(
         "maszyna/cabin/indicator_glow_range", 0.1, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.01,2.0,0.01,suffix:m")
+    # A lamp of several pieces - three alerter lamps in one mesh, a backlight overlay per gauge -
+    # gets a light at each piece, the backlight in each overlay's own colour
+    add_custom_project_setting("maszyna/cabin/real_instruments_lights", true, TYPE_BOOL)
+    add_custom_project_setting(
+        "maszyna/cabin/instrument_glow_energy", 0.002, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,1.0,0.001")
+    add_custom_project_setting(
+        "maszyna/cabin/instrument_glow_range", 0.564628, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.01,2.0,0.01,suffix:m")
     # CPython 2.7 prefix PythonScreenServer runs the cab screens with (lib/libpython2.7.so.1.0 on
     # Linux); empty is python2.7 in the game directory on Linux and the original's python64 on Windows
     add_custom_project_setting("maszyna/python/home", "", TYPE_STRING, PROPERTY_HINT_GLOBAL_DIR)

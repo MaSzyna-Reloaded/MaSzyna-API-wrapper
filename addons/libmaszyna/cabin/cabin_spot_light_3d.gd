@@ -9,6 +9,10 @@ func set_vehicle_rid(vehicle_rid:RID) -> void:
     _dirty = true
 
 
+## The lamp came on or went out, each flash of a blink included - the lights that stand in for
+## its other lamps (mmd_cabin_instancer.gd, island lights) follow it
+signal lit_changed(lit:bool)
+
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
 var _vehicle_rid:RID
 
@@ -110,6 +114,7 @@ func _update_state():
     # session) - see this class's own header comment on sound_on_event/sound_off_event for why.
     if not active_now == _sound_enabled_last:
         _sound_enabled_last = active_now
+        lit_changed.emit(active_now)
         var event:StringName = sound_on_event if active_now else sound_off_event
         if sound_player and event:
             sound_player.play(event)

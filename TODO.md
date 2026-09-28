@@ -738,7 +738,7 @@ ported, into a delegate.
    the pantograph air (the compressor, `bPantKurek3`, `PantsValve`) and the speed a pantograph
    counts as up at, the ground and motor overload relay resets, the idle position of SN61's
    controller, `mastercontrollersetreverserunlock`, the motor blowers, the spring brake and the
-   doors, lights, releaser and train or independent brake on putting away; the presence of a
+   doors, releaser and train or independent brake on putting away; the presence of a
    compressor is not asked (readiness waits for the main reservoir only); the brake handle's
    driving position is cued, not checked (the state does not say where it is). `Activation()`'s
    move to another vehicle of the trainset (EN57, ET41) is not ported, nor `ShuntModeAllow`.
@@ -746,8 +746,12 @@ ported, into a delegate.
    not looked into. Left besides: `engine_active` lost when the vehicle breaks down while driving
    (`handle_engine()` prepares it again only for driving orders); the trainset's own timetable and
    velocity from the `.scn` (`trainset <timetable> ... <velocity>` -> `OrdersInit`); a push-pull set
-   that only turns at `@` (`movePushPull`, `OrdersInit()`); what `OrderCheck()` does to the lights
-   and doors; `SetSignal`; the station announcements and guard signals of `Timetable:`.
+   that only turns at `@` (`movePushPull`, `OrdersInit()`); what `OrderCheck()` does to the doors;
+   of the lights (`MaszynaLegacyDriverLights`) the model's lamp inventory (`iInventory` - a tail
+   without red markers shows them rather than plates), the far end put out on `Disconnect`
+   (`Driver.cpp:2510-2525`), the player's vehicle put out on taking over
+   (`TakeControl(false)`, `Driver.cpp:5662`) and `Global.AITrainman`'s Pc5 on a player's train;
+   `SetSignal`; the station announcements and guard signals of `Timetable:`.
    The first plan read: driver RIDs,
    `driver_attach_delegate`, `driver_send_command(driver, command, values)`;
    `RailVehicleServer.vehicle_attach_driver(vehicle, driver)`, RIDs only. `MaszynaLegacyAIDriver` is

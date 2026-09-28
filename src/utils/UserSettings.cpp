@@ -93,7 +93,9 @@ namespace godot {
     void UserSettings::save_setting(const String &p_section, const String &p_key, const Variant &p_value) {
         ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
 
-        Variant old_value = config->get_value(p_section, p_key, Variant());
+        // an empty Variant is no default to ConfigFile: a key not saved yet is looked up only if it is there
+        const Variant old_value =
+                config->has_section_key(p_section, p_key) ? config->get_value(p_section, p_key) : Variant();
 
         config->set_value(p_section, p_key, p_value);
 

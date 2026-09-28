@@ -550,8 +550,7 @@ func test_a_cab_leaving_keeps_the_logic_that_replaced_its_own():
     cabin.mmd_filename = FIXTURE_PATH.get_file().get_basename()
     add_child(cabin)
     cabin.set_vehicle_rid(vehicle)
-    # the fixture has no cab model to build: only the cab's logic matters here
-    assert_push_error_count(2, "the fixture has no cab model")
+    # the fixture has no cab model to build (a warning): only the cab's logic matters here
     assert_not_null(CabinSystem.vehicle_get_cab_logic(vehicle), "the cab attaches its logic")
     var driver_logic:LegacyCabinLogic = LegacyCabinLogic.from_mmd("", cabin.mmd_filename)
     CabinSystem.vehicle_attach_cab_logic(vehicle, driver_logic)

@@ -53,5 +53,7 @@ func load_model(data_path:String, filename: String) -> E3DModel:
         else:
             push_warning("File is not an E3DModel: "+path)
     else:
-        push_error("File does not exist: %s" % path)
+        # a vehicle or a scenery model without its model file is drawn without it; the original
+        # only logs it (Model3d.cpp:1657)
+        push_warning("File does not exist: %s" % path)
     return output

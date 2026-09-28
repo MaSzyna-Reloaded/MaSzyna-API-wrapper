@@ -206,14 +206,16 @@ func _refresh_window_state() -> void:
     if not is_node_ready():
         return
 
-    var minimum_size: Vector2 = get_combined_minimum_size()
-    if size == Vector2.ZERO:
-        size = minimum_size
-    else:
-        size = Vector2(
-            maxf(size.x, minimum_size.x),
-            maxf(size.y, minimum_size.y)
-        )
+    # a window stretched by its anchors (the top bar) takes its size from them
+    if anchor_left == anchor_right and anchor_top == anchor_bottom:
+        var minimum_size: Vector2 = get_combined_minimum_size()
+        if size == Vector2.ZERO:
+            size = minimum_size
+        else:
+            size = Vector2(
+                maxf(size.x, minimum_size.x),
+                maxf(size.y, minimum_size.y)
+            )
 
     _update_resize_handle()
     queue_sort()

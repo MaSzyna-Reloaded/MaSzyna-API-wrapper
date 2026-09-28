@@ -6,13 +6,10 @@ extends ScenarioScriptCabinDelegate
 ## back to the scripts that subscribed to it.
 
 
+## No disconnect: the engine drops a connection to an object that is freed, and at
+## NOTIFICATION_PREDELETE this script's methods are already out of reach
 func _init() -> void:
     CabinSystem.control_changed.connect(_on_control_changed)
-
-
-func _notification(what:int) -> void:
-    if what == NOTIFICATION_PREDELETE:
-        CabinSystem.control_changed.disconnect(_on_control_changed)
 
 
 func _on_control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Variant) -> void:

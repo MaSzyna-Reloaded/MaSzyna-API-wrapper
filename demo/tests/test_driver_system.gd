@@ -267,6 +267,29 @@ func test_a_turn_forgets_the_stop_of_a_signal_passed() -> void:
             "turned, the stop of the signal passed does not hold it (Driver.cpp:520-524)")
 
 
+func test_the_timetable_state_comes_from_the_delegate() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var driver:RID = _create_driver(ai)
+    watch_signals(DriverSystem)
+
+    DriverSystem.driver_send_command(driver, "Timetable:none", 30.0, 0.0)
+
+    var state:Dictionary = DriverSystem.driver_get_timetable_state(driver)
+    assert_null(state["timetable"])
+    assert_eq(state["station_index"], 0)
+    assert_eq(state["latency"], 0.0)
+    assert_false(state["at_passenger_stop"])
+    assert_signal_emitted_with_parameters(DriverSystem, "driver_timetable_changed", [driver])
+    DriverSystem.driver_free(driver)
+
+
+func test_a_driver_without_a_delegate_has_no_timetable_state() -> void:
+    var driver:RID = DriverSystem.driver_create()
+
+    assert_eq(DriverSystem.driver_get_timetable_state(driver), {})
+    DriverSystem.driver_free(driver)
+
+
 func _create_driver(ai:MaszynaLegacyAIDriver) -> RID:
     var driver:RID = DriverSystem.driver_create()
     DriverSystem.driver_attach_vehicle(driver, build_vehicle("AIDriverTest").get_rid())

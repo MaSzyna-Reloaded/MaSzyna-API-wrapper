@@ -775,3 +775,36 @@ msgstr "Przełącznik ogólny 8"
 
 msgid "Generic Toggle 9"
 msgstr "Przełącznik ogólny 9"
+
+msgid "Timetable"
+msgstr "Rozkład jazdy"
+
+msgid "Timetable Toggle"
+msgstr "Rozkład jazdy"
+
+msgid "No timetable"
+msgstr "Brak rozkładu jazdy"
+
+msgid "braked %d%%"
+msgstr "hamowanie %d%%"
+
+msgid "Line speed %d km/h, no stations"
+msgstr "Vmax %d km/h, bez stacji"
+
+msgid "The train follows no timetable"
+msgstr "Pociąg nie ma rozkładu jazdy"
+
+msgid "On time"
+msgstr "Punktualnie"
+
+msgid "Next station"
+msgstr "Następna stacja"
+
+msgid "Terminus"
+msgstr "Stacja końcowa"
+
+msgid "Stop · departure in %d:%02d"
+msgstr "Postój · odjazd za %d:%02d"
+
+msgid "Departure"
+msgstr "Odjazd"

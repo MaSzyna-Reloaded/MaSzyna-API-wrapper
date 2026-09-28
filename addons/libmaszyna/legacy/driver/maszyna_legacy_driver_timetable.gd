@@ -11,6 +11,9 @@ class_name MaszynaLegacyDriverTimetable
 ## there) - no timetable is no limit here; IsMaintenance(), whose flag the original reads from the
 ## wrong token and never sets (mtable.cpp:486).
 
+## The timetable, or how far the driver got through it, has changed
+signal changed
+
 const MINUTES_PER_HOUR:float = 60.0
 ## CompareTime() (utilities.cpp:50): a difference over half a day is the other way round the clock
 const HALF_DAY_MINUTES:float = 720.0
@@ -43,16 +46,15 @@ func take(new_timetable:Timetable) -> void:
     next_stop = ""
     _next_station = ""
     velocity = MaszynaLegacyDriverSpeed.NO_LIMIT
-    if not timetable:
-        return
     # a number instead of a timetable is the speed (mtable.cpp:279)
-    if timetable.velocity > 0.0:
+    if timetable and timetable.velocity > 0.0:
         velocity = timetable.velocity
-    if timetable.entries:
+    if timetable and timetable.entries:
         var first:TimetableEntry = timetable.entries[0]
         next_stop = first.station_name
         _next_station = next_stop
         velocity = first.velocity
+    changed.emit()
 
 
 ## The stations
@@ -85,6 +87,7 @@ func arrive(hours:float) -> bool:
         velocity = following.velocity
     else:
         _next_station = ""
+    changed.emit()
     return true
 
 
@@ -92,6 +95,7 @@ func arrive(hours:float) -> bool:
 func advance() -> void:
     station_index += 1
     next_stop = _next_station
+    changed.emit()
 
 
 ## Ended: no timetable any more (NewName("none"))
@@ -146,6 +150,7 @@ func rewind(station:String) -> bool:
             next_stop = entry.station_name
             _next_station = next_stop
             velocity = entry.velocity
+            changed.emit()
             return true
     return false
 

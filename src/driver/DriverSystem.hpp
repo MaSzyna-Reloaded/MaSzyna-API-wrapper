@@ -64,6 +64,8 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            static const char *driver_timetable_changed_signal;
+
             DriverSystem();
             ~DriverSystem() override;
 
@@ -89,5 +91,11 @@ namespace godot {
             /// driver.
             void vehicle_set_control_active(const RID &p_vehicle, bool p_active);
             bool vehicle_is_control_active(const RID &p_vehicle) const;
+            /// The driver's timetable and its progress (DriverDelegate::get_timetable_state()); empty
+            /// without a delegate
+            Dictionary driver_get_timetable_state(const RID &p_driver) const;
+            /// The driver's delegate reports that its timetable, or how far it got through it, has
+            /// changed - announced as driver_timetable_changed
+            void driver_report_timetable_changed(const RID &p_driver);
     };
 } // namespace godot

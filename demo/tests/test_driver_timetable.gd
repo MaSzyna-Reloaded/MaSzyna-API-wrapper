@@ -74,6 +74,17 @@ func test_without_a_timetable_there_is_no_limit():
     assert_true(timetable.is_stop(), "past the end it always stops")
 
 
+func test_every_step_through_it_is_announced():
+    watch_signals(timetable)
+    timetable.arrive(DEPARTURE)
+    timetable.arrive(DEPARTURE)
+    timetable.advance()
+    timetable.rewind("End")
+    timetable.rewind("Nowhere")
+    timetable.finish()
+    assert_signal_emit_count(timetable, "changed", 4, "arrival, leaving, a rewind and the end - not a repeated arrival nor an unknown station")
+
+
 func _entry(station:String, velocity:float, departure:float, facilities:String) -> TimetableEntry:
     var entry:TimetableEntry = TimetableEntry.new()
     entry.station_name = station

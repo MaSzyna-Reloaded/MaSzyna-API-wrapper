@@ -775,3 +775,36 @@ msgstr "通用开关 8"
 
 msgid "Generic Toggle 9"
 msgstr "通用开关 9"
+
+msgid "Timetable"
+msgstr ""
+
+msgid "Timetable Toggle"
+msgstr ""
+
+msgid "No timetable"
+msgstr ""
+
+msgid "braked %d%%"
+msgstr ""
+
+msgid "Line speed %d km/h, no stations"
+msgstr ""
+
+msgid "The train follows no timetable"
+msgstr ""
+
+msgid "On time"
+msgstr ""
+
+msgid "Next station"
+msgstr ""
+
+msgid "Terminus"
+msgstr ""
+
+msgid "Stop · departure in %d:%02d"
+msgstr ""
+
+msgid "Departure"
+msgstr ""

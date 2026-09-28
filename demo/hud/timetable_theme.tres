@@ -1,0 +1,113 @@
+[gd_resource type="Theme" format=3]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_card"]
+content_margin_left = 16.0
+content_margin_top = 14.0
+content_margin_right = 16.0
+content_margin_bottom = 14.0
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.28)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_row"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.35, 0.55, 0.9, 0)
+draw_center = false
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_row_current"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+bg_color = Color(0.35, 0.55, 0.9, 0.14)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.55)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0.45, 0.72, 1, 0.18)
+shadow_size = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_chip"]
+content_margin_left = 6.0
+content_margin_top = 1.0
+content_margin_right = 6.0
+content_margin_bottom = 1.0
+bg_color = Color(1, 1, 1, 0.06)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.16)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pill"]
+content_margin_left = 9.0
+content_margin_top = 2.0
+content_margin_right = 9.0
+content_margin_bottom = 2.0
+bg_color = Color(1, 1, 1, 0.1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_separator"]
+content_margin_top = 1.0
+bg_color = Color(0.45, 0.72, 1, 0.18)
+
+[sub_resource type="SystemFont" id="SystemFont_digits"]
+font_names = PackedStringArray("JetBrains Mono", "DejaVu Sans Mono", "Consolas", "Monospace")
+
+[resource]
+default_font_size = 14
+Label/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+TimetableCard/base_type = &"PanelContainer"
+TimetableCard/styles/panel = SubResource("StyleBoxFlat_card")
+TimetableRow/base_type = &"PanelContainer"
+TimetableRow/styles/panel = SubResource("StyleBoxFlat_row")
+TimetableRowCurrent/base_type = &"PanelContainer"
+TimetableRowCurrent/styles/panel = SubResource("StyleBoxFlat_row_current")
+TimetableChip/base_type = &"PanelContainer"
+TimetableChip/styles/panel = SubResource("StyleBoxFlat_chip")
+TimetablePill/base_type = &"PanelContainer"
+TimetablePill/styles/panel = SubResource("StyleBoxFlat_pill")
+TimetableSeparator/base_type = &"HSeparator"
+TimetableSeparator/styles/separator = SubResource("StyleBoxFlat_separator")
+TimetableTitle/base_type = &"Label"
+TimetableTitle/font_sizes/font_size = 24
+TimetableTitle/colors/font_color = Color(1, 1, 1, 1)
+TimetableMuted/base_type = &"Label"
+TimetableMuted/font_sizes/font_size = 12
+TimetableMuted/colors/font_color = Color(0.6, 0.66, 0.75, 1)
+TimetableDigits/base_type = &"Label"
+TimetableDigits/fonts/font = SubResource("SystemFont_digits")
+TimetableDigits/font_sizes/font_size = 14
+TimetableClock/base_type = &"Label"
+TimetableClock/fonts/font = SubResource("SystemFont_digits")
+TimetableClock/font_sizes/font_size = 20
+TimetableClock/colors/font_color = Color(0.72, 0.85, 1, 1)

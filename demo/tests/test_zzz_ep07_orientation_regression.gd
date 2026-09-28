@@ -22,6 +22,10 @@ extends MaszynaGutTest
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
 
+## How long the EP07 drives on its first notch [s of simulated time], and how often it is dumped
+const DRIVE_SECONDS:float = 2.0
+const DUMP_EVERY_FRAMES:int = 10
+
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 
@@ -133,9 +137,13 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
 
     controller.send_command("main_controller_increase")
     var tripped:bool = false
-    for i in range(120): # ~2s at 60fps
+    # simulated seconds, not frames: a headless run draws frames as fast as it can
+    var drive_until:float = SimulationServer.get_simulation_time() + DRIVE_SECONDS
+    var i:int = 0
+    while SimulationServer.get_simulation_time() < drive_until:
         await wait_idle_frames(1)
-        if i % 10 == 0:
+        i += 1
+        if i % DUMP_EVERY_FRAMES == 0:
             _dump_orientation("driving frame %d" % i, rail_vehicle, controller)
         if not controller.state.get("main_switch_enabled", false):
             _dump_orientation("MAIN SWITCH DROPPED at frame %d" % i, rail_vehicle, controller)

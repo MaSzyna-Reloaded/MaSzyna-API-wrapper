@@ -105,15 +105,20 @@ least two cores.
 
 ### Compatibility
 
-| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version     |
-|----------------|----------------------|---------|-------|--------|--------------------------|-----|--------------|---------------------|
-| 25.08.2024     | 4.3                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
-| 11.03.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
-| 11.04.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
-| 30.09.2025     | 4.5                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
-| 30.11.2025     | 4.5.x                | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11        |
-| 27.01.2026     | 4.6                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
-| 06.07.2026     | 4.7.x                | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
+### Compiling
+> [!IMPORTANT]
+> Versions from 03.10.2026 onward will require Godot Engine's double precision build
+
+| Plugin Version | Godot Engine version     | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version     |
+|----------------|--------------------------|---------|-------|--------|--------------------------|-----|--------------|---------------------|
+| 25.08.2024     | 4.3                      | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
+| 11.03.2025     | 4.4                      | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
+| 11.04.2025     | 4.4                      | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
+| 30.09.2025     | 4.5                      | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
+| 30.11.2025     | 4.5.x                    | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11        |
+| 27.01.2026     | 4.6                      | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
+| 06.07.2026     | 4.7.x                    | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
+| 03.10.2026     | 4.7.x (double precision) | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
 ### Documentation 
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

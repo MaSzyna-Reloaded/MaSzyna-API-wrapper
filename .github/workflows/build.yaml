@@ -13,15 +13,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         id: cache-restore
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-win64/
           key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
@@ -43,12 +44,13 @@ jobs:
           name: game-windows-${{ matrix.target }}-${{ matrix.arch }}
           path: build/windows
 
-      - uses: actions/cache/save@v5
+      - uses: actions/cache/save@v6
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-win64/
           key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
@@ -61,15 +63,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         id: cache-restore
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-linux64/
           key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
@@ -91,12 +94,13 @@ jobs:
           name: game-linux-${{ matrix.target }}-${{ matrix.arch }}
           path: build/linux
 
-      - uses: actions/cache/save@v5
+      - uses: actions/cache/save@v6
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-linux64/
           key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
@@ -109,18 +113,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v5
+      - uses: actions/cache/restore@v6
         id: cache-restore
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-android64/
-          key: ${{ matrix.target }}-android-godot-cpp
+          key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp
           restore-keys: |
             ${{ matrix.target }}-android-${{ matrix.arch }}-godot-
             ${{ matrix.target }}-android-
@@ -139,12 +144,13 @@ jobs:
           name: game-android-${{ matrix.target }}-${{ matrix.arch }}
           path: build/android
 
-      - uses: actions/cache/save@v5
+      - uses: actions/cache/save@v6
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
+            build-api/
             build-host/
             build-android64/
           key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp

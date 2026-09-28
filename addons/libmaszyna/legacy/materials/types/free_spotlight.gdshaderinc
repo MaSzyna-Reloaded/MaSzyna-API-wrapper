@@ -19,10 +19,15 @@ vec4 free_spotlight_center(mat4 modelview, float square_distance, float range) {
 	return modelview * vec4(0.0, 0.0, -offset, 1.0);
 }
 
+// fCosViewAngle: the cosine between the light's axis and the direction to the camera
+float free_spotlight_cos_view(mat4 modelview, vec4 center_view) {
+	vec3 axis_point = (modelview * vec4(0.0, 0.0, -1.0, 1.0)).xyz;
+	return dot(normalize(axis_point - center_view.xyz), normalize(-center_view.xyz));
+}
+
 // fCosViewAngle against the cone: 1 inside the hotspot, 0 outside the falloff
 float free_spotlight_angle_factor(mat4 modelview, vec4 center_view, float cos_hotspot, float cos_falloff) {
-	vec3 axis_point = (modelview * vec4(0.0, 0.0, -1.0, 1.0)).xyz;
-	float cos_view = dot(normalize(axis_point - center_view.xyz), normalize(-center_view.xyz));
+	float cos_view = free_spotlight_cos_view(modelview, center_view);
 	if (cos_view <= cos_falloff) {
 		return 0.0;
 	}

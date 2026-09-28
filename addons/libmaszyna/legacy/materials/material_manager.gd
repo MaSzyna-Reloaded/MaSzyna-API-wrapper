@@ -16,6 +16,21 @@ const RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING: StringName = &"maszyna/scenery
 ## How many times the original's pointsize the point is drawn (the original: 4)
 const RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING: StringName = &"maszyna/scenery/railway_lights_point_size_multiplier"
 const RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT: float = 2.0
+## How much of the original's glare alpha the glare is drawn with
+const RAILWAY_LIGHTS_GLARE_INTENSITY_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_intensity"
+const RAILWAY_LIGHTS_GLARE_INTENSITY_DEFAULT: float = 0.5
+## The share of a light's falloff angle past which its glare fades out
+const RAILWAY_LIGHTS_GLARE_FADE_START_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_fade_start"
+const RAILWAY_LIGHTS_GLARE_FADE_START_DEFAULT: float = 0.5
+## How many degrees the glare's rays turn per degree the camera goes off the light's axis
+const RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_rotation_ratio"
+const RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_DEFAULT: float = 1.0
+## The glare's size at the edge of the light's cone, as a share of its size on the axis
+const RAILWAY_LIGHTS_GLARE_EDGE_SIZE_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_edge_size"
+const RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT: float = 0.4
+## The least share of the screen's height a glare spans, however far the light
+const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_min_screen_size"
+const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT: float = 0.03
 
 ## The cache key cannot see changes to MaszynaMaterialFactory's own code - bump this whenever that code
 ## changes what a built material holds. v2: normal_scale 1.0 like the original. v4: shaders moved
@@ -62,6 +77,16 @@ func _ready() -> void:
     if ProjectSettings.get_setting(RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING, true):
         var glare: ShaderMaterial = FREE_SPOTLIGHT_GLARE_MATERIAL.duplicate()
         glare.set_shader_parameter("glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
+        glare.set_shader_parameter("glare_intensity", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_GLARE_INTENSITY_SETTING, RAILWAY_LIGHTS_GLARE_INTENSITY_DEFAULT)))
+        glare.set_shader_parameter("glare_fade_start", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_GLARE_FADE_START_SETTING, RAILWAY_LIGHTS_GLARE_FADE_START_DEFAULT)))
+        glare.set_shader_parameter("glare_rotation_ratio", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_SETTING, RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_DEFAULT)))
+        glare.set_shader_parameter("glare_edge_size", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_GLARE_EDGE_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT)))
+        glare.set_shader_parameter("glare_min_screen_size", float(ProjectSettings.get_setting(
+            RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT)))
         _free_spotlight_material = FREE_SPOTLIGHT_MATERIAL.duplicate()
         _free_spotlight_material.set_shader_parameter("point_size_multiplier", float(ProjectSettings.get_setting(
             RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)))

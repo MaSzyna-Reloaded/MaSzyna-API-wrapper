@@ -279,3 +279,6 @@ anything. Open work belongs in `TODO.md`.
   out of earshot resumes past its opening bookend (sound.cpp:360). Skip a clip by not starting
   it: an Ogg playback asked to start at its end starts at 0. *(09-28 engine silent after the
   camera came back)*
+* A vehicle lamp's hotspot-to-falloff band is 1 deg wide (sm42 fspot 21.5-22.5), so anything
+  ramped over it switches on and off; the glare fades over its own band. *(09-28 glare blinking
+  with the viewing angle)*

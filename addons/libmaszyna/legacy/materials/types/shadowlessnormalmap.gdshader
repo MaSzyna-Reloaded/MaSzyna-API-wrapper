@@ -1,7 +1,9 @@
 // NOTE: Shader automatically converted from Godot Engine 4.6.2.stable's StandardMaterial3D.
 
 shader_type spatial;
-render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx, shadows_disabled;
+// receives shadows, unlike the original (mat_shadowlessnormalmap.frag passes shadowtone 1.0) -
+// operator's decision: unshadowed grass glows inside the shadow of a building
+render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_disabled;
 
 #ifdef MASZYNA_SPECGLOSS
 // absolute: the variants MaszynaMaterialFactory builds from this code have no path of their own
@@ -14,14 +16,6 @@ uniform int transparency = 0;
 uniform float alpha_scissor_threshold : hint_range(0.0, 1.0) = 0.5;
 uniform ivec2 albedo_texture_size;
 uniform float point_size : hint_range(0.1, 128.0, 0.1);
-
-uniform float roughness : hint_range(0.0, 1.0);
-uniform sampler2D texture_metallic : hint_default_white, filter_linear_mipmap, repeat_enable;
-uniform vec4 metallic_texture_channel;
-uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, repeat_enable;
-
-uniform float specular : hint_range(0.0, 1.0, 0.01);
-uniform float metallic : hint_range(0.0, 1.0, 0.01);
 
 uniform bool emission_enabled = false;
 uniform vec4 emission_color : source_color = vec4(1.0);
@@ -49,13 +43,11 @@ void fragment() {
 	}
 	ALBEDO = albedo.rgb * albedo_tex.rgb;
 
-	float metallic_tex = dot(texture(texture_metallic, base_uv), metallic_texture_channel);
-	METALLIC = metallic_tex * metallic;
-	SPECULAR = specular;
-
-	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
-	float roughness_tex = dot(texture(texture_roughness, base_uv), roughness_texture_channel);
-	ROUGHNESS = roughness_tex * roughness;
+	// vegetation (grass, trees, crops): no specular, not even the sky reflection's grazing Fresnel -
+	// operator's decision; the original lights it with texture luminance (mat_shadowlessnormalmap.frag)
+	SPECULAR = 0.0;
+	METALLIC = 0.0;
+	ROUGHNESS = 1.0;
 
     if(emission_enabled) {
         EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;

@@ -126,7 +126,7 @@ namespace godot {
             if (submodel.is_null() || !_is_submodel_valid(submodel.ptr(), p_instance.exclude_node_names)) {
                 continue;
             }
-            Node3D *child = _create_submodel_node(submodel.ptr());
+            Node3D *child = _create_submodel_node(p_instance, submodel.ptr());
             if (child == nullptr) {
                 continue;
             }
@@ -220,7 +220,7 @@ namespace godot {
         }
     }
 
-    Node3D *E3DNodesBackend::_create_submodel_node(E3DSubModel *p_submodel) {
+    Node3D *E3DNodesBackend::_create_submodel_node(const E3DInstanceData &p_instance, E3DSubModel *p_submodel) {
         Node3D *node = nullptr;
         switch (p_submodel->get_submodel_type()) {
             case E3DSubModel::SUBMODEL_TRANSFORM:
@@ -259,7 +259,7 @@ namespace godot {
                 return nullptr;
         }
         node->set_name(p_submodel->get_name());
-        node->set_visible(p_submodel->get_visible());
+        node->set_visible(_is_submodel_shown(p_instance, p_submodel));
         return node;
     }
 

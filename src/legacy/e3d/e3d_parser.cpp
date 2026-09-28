@@ -392,10 +392,10 @@ namespace godot {
 
             if (submodel_name.to_lower().begins_with(LIGHT_ON_PREFIX)) {
                 submodel->set_visible(false);
-            } else if (submodel_name.to_lower().ends_with("_on")) {
-                submodel->set_visible(false);
-            } else if (submodel_name.to_lower().ends_with("_xon")) {
-                submodel->set_visible(false);
+            } else if (submodel_name.to_lower().ends_with(LIGHT_ON_SUFFIX)) {
+                submodel->set_dynamic_hidden(true);
+            } else if (submodel_name.to_lower().ends_with(LIGHT_ON_ALT_SUFFIX)) {
+                submodel->set_dynamic_hidden(true);
             } else if (submodel_name == "cien") {
                 submodel->set_visible(false);
                 submodel->set_skip_rendering(true);
@@ -632,7 +632,7 @@ namespace godot {
 
             // "<name>_on" and "<name>_xon" are the same light, lit and dimmed (TButton::Init(),
             // Button.cpp:32-40); the first of each in tree order is bound, as in the original
-            // (GetFromName()) - other copies stay hidden like any "_on" submodel (Model3d.cpp:252).
+            // (GetFromName()) - other copies keep the default of any "_on" submodel (Model3d.cpp:2221).
             const bool dimmed = sm_name_lower.ends_with(LIGHT_ON_ALT_SUFFIX);
             Ref<E3DModelLightDefinition> entry = p_model->get_lights().get(light_name, Ref<E3DModelLightDefinition>());
             const bool registered = entry.is_valid();
@@ -640,7 +640,15 @@ namespace godot {
                 entry.instantiate();
             }
             const NodePath path = _build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i));
-            if (!(dimmed ? entry->get_xon_submodel_path() : entry->get_on_submodel_path()).is_empty()) {
+            const NodePath bound_path = dimmed ? entry->get_xon_submodel_path() : entry->get_on_submodel_path();
+            if (!bound_path.is_empty()) {
+                // A copy nested under the bound one is part of that light: the original switches
+                // only the bound submodel, and its children show with it (sem/karzelki/ktmnb.e3d
+                // keeps the lens under a light_on00 transform of the same name)
+                if (String(path).begins_with(String(bound_path) + "/")) {
+                    sm->set_visible(true);
+                    continue;
+                }
                 UtilityFunctions::push_warning(
                         "[E3DParser]: Duplicate light name (first one is used, as in the original): " + sm_name);
                 continue;

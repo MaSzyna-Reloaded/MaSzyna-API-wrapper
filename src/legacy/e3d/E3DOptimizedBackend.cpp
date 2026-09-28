@@ -58,7 +58,8 @@ namespace godot {
             bool visible = p_instance.visible;
             for (E3DSubModel *submodel: p_instance.chains[i]) {
                 const HashMap<E3DSubModel *, bool>::ConstIterator override = overrides.find(submodel);
-                visible = visible && (override == overrides.end() ? submodel->get_visible() : override->value);
+                visible = visible &&
+                          (override == overrides.end() ? _is_submodel_shown(p_instance, submodel) : override->value);
             }
             rs->instance_set_transform(p_instance.rids[i], p_instance.transform * p_instance.local_transforms[i]);
             rs->instance_set_visible(p_instance.rids[i], visible);

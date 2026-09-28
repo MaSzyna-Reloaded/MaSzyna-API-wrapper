@@ -150,6 +150,7 @@ func _build_model(data_path:String, file_name:String, skin:String) -> bool:
         _model.queue_free()
     _model = E3DModelInstance.new()
     _model.instancer = E3DModelInstance.Instancer.OPTIMIZED
+    _model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
     _model.data_path = normalized_data_path
     _model.model = e3d_model
     # before entering the tree: the instance builds its materials there, an empty skin list

@@ -130,6 +130,9 @@ anything. Open work belongs in `TODO.md`.
   `Light3D` constructor against `_light_initialize()` - `shadow_blur` 0 zeroes a spot's depth
   bias. *(09-28 street lamps shadowed their own pool)*
 
+* A scenery model does not hide its `*_on` submodels - only a vehicle does (Model3d.cpp:2221);
+  dump the model's tree before calling a light missing. *(09-29 shunting signal dwarfs never lit)*
+
 * "The AI can drive it, the player cannot": log the AI's vehicle commands and replay them on the
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
 

@@ -424,6 +424,8 @@ static func build_into(
 
     var model := E3DModelInstance.new()
     model.name = "CabModel"
+    # the original loads a cab as a dynamic model (Train.cpp:10599), which hides its "_on" controls
+    model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
     model.data_path = data_path
     # the resource itself rather than its filename, so the indicator lights can read its submodels
     model.model = E3DModelManager.load_model(data_path, model_relpath)

@@ -63,7 +63,8 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
 
 ## What this placement is - a static scenery model or a dynamic one, in the words a [code].scn[/code]
 ## uses. Handed to the server when the instance is created, because the smoke density it selects is
-## baked into every emitter of the model; changing it reloads the instance, like the model itself.
+## baked into every emitter of the model, and a dynamic one hides its "_on" controls until they are
+## switched (Model3d.cpp:2221); changing it reloads the instance, like the model itself.
 @export var instance_kind: E3DRenderingServer.InstanceKind = E3DRenderingServer.INSTANCE_KIND_STATIC:
     set(x):
         if not x == instance_kind:

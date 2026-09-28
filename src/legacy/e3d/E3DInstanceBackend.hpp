@@ -161,6 +161,9 @@ namespace godot {
             static Dictionary _free_spotlight_parameters(
                     const E3DInstanceData &p_instance, const E3DSubModel *p_submodel, const String &p_light_name);
             static bool _is_submodel_valid(const E3DSubModel *p_submodel, const Array &p_exclude_node_names);
+            /// The submodel's own visibility in this instance: a "_on" control is hidden by default
+            /// only in a dynamic (vehicle) model (Model3d.cpp:275, 2221)
+            static bool _is_submodel_shown(const E3DInstanceData &p_instance, const E3DSubModel *p_submodel);
             static Vector<E3DSubModel *> _get_force_alpha_submodels(const E3DInstanceData &p_instance);
             static bool _is_force_alpha(
                     const E3DInstanceData &p_instance, E3DSubModel *p_submodel,

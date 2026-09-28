@@ -97,8 +97,14 @@ const DISTANCE_MULTIPLIER_SHARE:float = 1.2
 ## Close to a vehicle ahead or a stop, the driver reacts this often [s] (Driver.cpp:7501, 7684)
 const HURRIED_REACTION_TIME:float = 0.1
 
+## Why the driver wants to stand (velocity_desired 0), for whoever shows it: the vehicle is not
+## ready (iEngineActive), it has no order to drive, a signal ahead holds it (moveStopHere), or the
+## tracks and vehicles ahead do (a stop point, the end of the line, a vehicle, a speed of 0)
+enum StopReason { NONE, NOT_READY, WAITING_FOR_ORDERS, SIGNAL, AHEAD }
+
 ## VelDesired [km/h]
 var velocity_desired:float = 0.0
+var stop_reason:StopReason = StopReason.NONE
 ## AccDesired [m/s2]
 var acceleration_desired:float = 0.0
 ## AccPreferred [m/s2]: a calm driver's, lower near a vehicle ahead
@@ -123,6 +129,7 @@ func pick(
 ) -> void:
     reaction_time = reaction
     velocity_desired = trainset.velocity_max
+    stop_reason = StopReason.NONE
     acceleration_preferred = EASY_ACCELERATION
     acceleration_desired = acceleration_preferred
     velocity_next = route.velocity_next
@@ -134,6 +141,7 @@ func pick(
         velocity_desired = min_speed(velocity_desired, shunt_velocity)
     if not active:
         velocity_desired = 0.0
+        stop_reason = StopReason.NOT_READY
         velocity_next = 0.0
         acceleration_desired = minf(acceleration_desired, NO_ACCELERATION)
         return
@@ -152,6 +160,8 @@ func pick(
     if (order & driving and stop_here and absf(speed) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED
             and route.signal_velocity_next == 0.0) or order == MaszynaLegacyAIDriver.Order.WAIT_FOR_ORDERS:
         velocity_desired = 0.0
+        stop_reason = StopReason.WAITING_FOR_ORDERS if order == MaszynaLegacyAIDriver.Order.WAIT_FOR_ORDERS \
+                else StopReason.SIGNAL
     _adjust_for_target_speed(order, speed, route, braking, trainset)
     # adjust_desired_speed_for_current_speed() (Driver.cpp:7722-7760)
     if speed > velocity_desired:
@@ -169,6 +179,8 @@ func pick(
     if velocity_desired == 0.0:
         acceleration_desired = minf(acceleration_desired, NO_ACCELERATION)
     acceleration_desired = clampf(minf(acceleration_desired, acceleration_preferred), -MAX_ACCELERATION, MAX_ACCELERATION)
+    if velocity_desired == 0.0 and stop_reason == StopReason.NONE:
+        stop_reason = StopReason.AHEAD
 
 
 ## adjust_desired_speed_for_obstacles() (Driver.cpp:7405-7527): a vehicle ahead not running away

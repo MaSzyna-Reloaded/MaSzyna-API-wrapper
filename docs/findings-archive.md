@@ -1867,3 +1867,24 @@ lighting or the consist.
   band.
 * **Rule:** do not trust a model's hotspot-to-falloff band to be a fade: vehicle lamps declare a
   1 deg one. Dump the angles before tuning anything that uses the cone.
+
+## 2026-09-29 - a thrown switch ahead held the train at a clear signal
+
+* **Symptom:** on td.scn the EP07 stood before signal A with the engine ready; Shift+2 (keyctrl02:
+  switch `zwr01-` and A at S13, 40 km/h) cleared A, the driver took `SetVelocity 40`, and still
+  wanted 0 km/h until it had passed A. The driving aid showed "Stop ahead".
+* **What proved it:** a headless probe of the real scenery, the driver's route read each 0.1 s:
+  `velocity_limit = 0` from `signal_velocity_last = 0`, set on the update after keyctrl02. The
+  events ahead before it: `stacja1_k_sem_info@1179.9` (signal K, stop); after it:
+  `stacja1_j_sem_info@1180.1` - the switch had put signal J on the route instead of K, and K,
+  gone from the reading inside the reach, was taken as passed.
+* **Cause:** "passed" was "gone from the reading while its last distance was inside the reach" -
+  a guard against the shrinking reach (09-27), blind to the route changing ahead. The original
+  moves its table by the distance driven and passes a point only when its distance goes below 0;
+  a thrown switch re-traces the table from it (TableCheck()).
+* **Fix:** `MaszynaLegacyDriverRoute.update()` passes an event only when the distance driven since
+  the last update (the vehicle's `total_distance`, DistCounter) is at least its last distance.
+  Checked on the same run: after keyctrl02 the aid shows 40 with a stop 1.2 km ahead, and driving
+  on, A is passed once at 0.48 m.
+* **Rule:** a point of the route is passed when the train has driven up to it, never because it
+  is no longer read - the reach and the route both change without the train moving.

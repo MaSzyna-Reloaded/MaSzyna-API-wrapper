@@ -184,6 +184,9 @@ anything. Open work belongs in `TODO.md`.
   the frame rate. *(09-27 couplers stiffened by a long frame)*
 * What the AI remembers of the tracks belongs to one way of driving: a turn or a takeover from a
   player starts it afresh. *(09-27 the AI stood at a clear signal)*
+* A point of the route is passed when the train has driven up to it (distance counter), never
+  because it is no longer read - a thrown switch changes the route standing. *(09-29 a thrown
+  switch held the train at a clear signal)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
   the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Whoever attaches something shared per vehicle takes away only what it attached - another owner

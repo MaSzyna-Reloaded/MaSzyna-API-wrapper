@@ -1663,6 +1663,26 @@ lighting or the consist.
 * **Rule:** a ported formula carries the original's frame with it - compare world coordinates of
   both sides, not the formulas.
 
+## 2026-09-28 - the trackbed hung over the terrain: its slopes sampled the texture's transparent edge
+
+* **Symptom:** after the self-shadowing fix below, tracks still stood on a gap above the terrain
+  (elektrocieplownia at the `test_zwr07` lever, Glinojeck); the lever and the vehicles sat right
+  on the rails, and the original showed the ballast running flat out under the lever.
+* **Proof:** the built vertices were right (bed 0.000..0.210, terrain 0.000 under and beside it,
+  read from the real renderer's mesh arrays), but an orthographic cross-section drew the slopes
+  only halfway down. The autumn ballast texture (`1435mm/tpd-stone4-old3_autumn`, DXT5) is fully
+  transparent for u < 0.13 and u > 0.87. Our bed mapped u with the track's `tex_length` 4, so
+  the slopes reached u -0.08..1.08 and most of each was cut away; the original takes the length
+  from the material's `size: 6 6` (`texture_length()`, Track.cpp:2481-2493), u 0.111..0.889, and
+  keeps a fixed old mapping for exactly 4 m (Track.cpp:2855-2926).
+* **Fix:** `MaszynaMaterial.size` is the original's float with -1 for none; the trackbed resolves
+  its texture length with its material and uses it for the section mapping, the old mapping at
+  4 m, and the V along plain beds, switch beds and stitches. Measured: u 0.111..0.889, the slope
+  drawn down to the terrain.
+* **Rule:** a gap that the vertices do not show is a cut-out: look at the texture's alpha where
+  the UVs land. A value the original takes from the material (`size:`) is not the scenery's
+  number of the same name.
+
 ## 2026-09-28 - a gap between the trackbed and the terrain: the bed shaded its own slopes
 
 * **Symptom:** on elektrocieplownia (near the SM42, `tor_53`) the ballast bed seemed to stand

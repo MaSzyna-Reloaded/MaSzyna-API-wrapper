@@ -73,7 +73,7 @@ func _update_material(mat: MaszynaMaterial, data: Dictionary) -> void:
     mat.selfillum = float(_pop_dict(data, "selfillum", 0.0))
     mat.glossiness = float(_pop_dict(data, "glossiness", 0.0))
     mat.shadow_rank = int(_pop_dict(data, "glossiness", 0))
-    mat.size = _parse_vector2i(_pop_dict(data, "size", []))
+    mat.size = _parse_size(_pop_dict(data, "size", []))
 
     for key in data:
         var value = data[key]
@@ -138,11 +138,11 @@ func _pop_dict(dict: Dictionary, key: Variant, default: Variant=null) -> Variant
     dict.erase(key)
     return output
 
-func _parse_vector2i(value: Array) -> Vector2i:
-    if value:
-        if value.size() == 2:
-            return Vector2i(int(value[0].strip_edges()), int(value[1].strip_edges()))
-    return Vector2i.ONE
+## Metres, fractions allowed ("size: 0.4 0.4"); -1 when absent (material.cpp:399-403)
+func _parse_size(value: Array) -> Vector2:
+    if value.size() == 2:
+        return Vector2(float(value[0].strip_edges()), float(value[1].strip_edges()))
+    return Vector2(-1.0, -1.0)
 
 func _parse_vector4(value: Array) -> Vector4:
     if value.size() == 4:

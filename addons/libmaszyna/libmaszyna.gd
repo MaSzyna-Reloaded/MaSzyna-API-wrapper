@@ -166,6 +166,15 @@ func _enter_tree():
     # its size on the screen while the mirror is in view within 30 m (PlanarMirror3D) - a scene
     # render per mirror
     add_custom_project_setting("maszyna/rendering/real_mirrors", true, TYPE_BOOL)
+    # How close and how far the zoom takes the external view (Shift+F4) from what it looks at
+    add_custom_project_setting(
+        "maszyna/camera/external_view_min_distance", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,20.0,0.1,suffix:m"
+    )
+    add_custom_project_setting(
+        "maszyna/camera/external_view_max_distance", 200.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "10.0,2000.0,10.0,suffix:m"
+    )
     # How many times the original's pointsize such a point is drawn; the original's 4 makes blobs
     add_custom_project_setting(
         "maszyna/scenery/railway_lights_point_size_multiplier", 2.0, TYPE_FLOAT,

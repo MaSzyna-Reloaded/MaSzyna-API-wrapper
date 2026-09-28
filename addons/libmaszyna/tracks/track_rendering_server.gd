@@ -33,8 +33,6 @@ class TrackState:
     var switch_is_right: bool = false
     var trackbed_mesh_instance: RID = RID()
     var trackbed_mesh: Mesh
-    var trackbed_stitch_mesh_instance: RID = RID()
-    var trackbed_stitch_mesh: Mesh
     var tex_length: float = 4.0
     var tex_height: float = 0.0
     var tex_width: float = 0.0
@@ -118,9 +116,6 @@ const _TRACKBED_OLD_MAPPING_TEXTURE_LENGTH: float = 4.0
 const _TRACKBED_OLD_MAPPING_NORMAL_ANGLE: float = 75.0
 ## Original engine: Track.cpp:2869, 2877 - the old mapping's u at the slope's upper edges
 const _TRACKBED_OLD_MAPPING_BREAK_U: float = 0.33
-const _TRACKBED_STITCH_INSET_LENGTH: float = 0.5
-const _TRACKBED_STITCH_HEIGHT_OFFSET: float = 0.01
-const _TRACKBED_STITCH_WIDTH_FACTOR: float = 1.0
 
 func _init() -> void:
     _rail_profile_regex.compile("-?\\d+(?:\\.\\d+)?")
@@ -141,14 +136,12 @@ func create_track(track_rid: RID) -> RID:
     state.primary_blade_mesh_instance = RenderingServer.instance_create()
     state.secondary_blade_mesh_instance = RenderingServer.instance_create()
     state.trackbed_mesh_instance = RenderingServer.instance_create()
-    state.trackbed_stitch_mesh_instance = RenderingServer.instance_create()
     # The trackbed casts no sun shadow: a 0.2 m bed barely shades the ground, but its slopes, lit
     # at a grazing angle, shaded themselves - a dark band that read as a gap to the terrain
     # (FINDINGS.md, 2026-09-28)
-    for trackbed_instance: RID in [state.trackbed_mesh_instance, state.trackbed_stitch_mesh_instance]:
-        RenderingServer.instance_geometry_set_cast_shadows_setting(
-            trackbed_instance, RenderingServer.SHADOW_CASTING_SETTING_OFF
-        )
+    RenderingServer.instance_geometry_set_cast_shadows_setting(
+        state.trackbed_mesh_instance, RenderingServer.SHADOW_CASTING_SETTING_OFF
+    )
 
     _next_track_render_id += 1
     var track_render_rid: RID = rid_from_int64(_next_track_render_id)
@@ -176,15 +169,12 @@ func free_track(track_render_rid: RID) -> void:
         RenderingServer.free_rid(state.secondary_blade_mesh_instance)
     if state.trackbed_mesh_instance.is_valid():
         RenderingServer.free_rid(state.trackbed_mesh_instance)
-    if state.trackbed_stitch_mesh_instance.is_valid():
-        RenderingServer.free_rid(state.trackbed_stitch_mesh_instance)
 
     state.primary_rail_mesh = null
     state.secondary_rail_mesh = null
     state.primary_blade_mesh = null
     state.secondary_blade_mesh = null
     state.trackbed_mesh = null
-    state.trackbed_stitch_mesh = null
 
     if _track_render_rids_by_track.get(state.track_rid) == track_render_rid:
         _track_render_rids_by_track.erase(state.track_rid)
@@ -204,13 +194,6 @@ func _reset_track_instances(state: TrackState) -> void:
         RenderingServer.instance_set_transform(state.secondary_blade_mesh_instance, Transform3D.IDENTITY)
     if state.trackbed_mesh_instance.is_valid():
         RenderingServer.instance_set_base(state.trackbed_mesh_instance, RID())
-    _reset_track_stitch_instance(state)
-
-
-func _reset_track_stitch_instance(state: TrackState) -> void:
-    if state.trackbed_stitch_mesh_instance.is_valid():
-        RenderingServer.instance_set_base(state.trackbed_stitch_mesh_instance, RID())
-
 
 
 func set_track_visible(track_rid: RID, visible: bool) -> void:
@@ -223,7 +206,6 @@ func set_track_visible(track_rid: RID, visible: bool) -> void:
     RenderingServer.instance_set_visible(state.primary_blade_mesh_instance, visible)
     RenderingServer.instance_set_visible(state.secondary_blade_mesh_instance, visible)
     RenderingServer.instance_set_visible(state.trackbed_mesh_instance, visible)
-    RenderingServer.instance_set_visible(state.trackbed_stitch_mesh_instance, visible)
 
 
 func set_track_scenario(track_rid: RID, scenario: RID) -> void:
@@ -236,7 +218,6 @@ func set_track_scenario(track_rid: RID, scenario: RID) -> void:
     RenderingServer.instance_set_scenario(state.primary_blade_mesh_instance, scenario)
     RenderingServer.instance_set_scenario(state.secondary_blade_mesh_instance, scenario)
     RenderingServer.instance_set_scenario(state.trackbed_mesh_instance, scenario)
-    RenderingServer.instance_set_scenario(state.trackbed_stitch_mesh_instance, scenario)
 
 
 func set_switch_blade_offsets(track_render_rid: RID, f_offset1: float, f_offset2: float) -> void:
@@ -349,7 +330,6 @@ func _stream_build(track_render_rid: RID, _preloaded: Variant) -> void:
         return
     state.streamed = true
     rebuild_track(track_render_rid)
-    _rebuild_track_and_neighbor_stitches(track_render_rid)
 
 
 func _stream_clear(track_render_rid: RID) -> void:
@@ -373,7 +353,6 @@ func _clear_track_meshes(state: TrackState) -> void:
     state.primary_blade_angle_factor = 0.0
     state.secondary_blade_angle_factor = 0.0
     state.trackbed_mesh = null
-    state.trackbed_stitch_mesh = null
 
 
 func rebuild_track(track_render_rid: RID) -> void:
@@ -710,124 +689,11 @@ func rebuild_track(track_render_rid: RID) -> void:
             )
 
     set_switch_blade_offsets(track_render_rid, track.switch_f_offset1, track.switch_f_offset2)
-    if not TrackServer.is_topology_changed:
-        _rebuild_track_and_neighbor_stitches(track_render_rid)
-
-
-func _rebuild_track_and_neighbor_stitches(track_render_rid: RID) -> void:
-    rebuild_track_stitches(track_render_rid)
-    var state: TrackState = _tracks.get(track_render_rid)
-    if not state:
-        return
-    var rebuilt_neighbors: Dictionary[RID, bool] = {}
-    var endpoints: PackedVector3Array = TrackServer.track_get_endpoints(state.track_rid)
-    for endpoint_index_value: int in range(endpoints.size()):
-        var connections: Array[TrackEndpointRef] = TrackServer.track_get_endpoint_connections(
-            state.track_rid,
-            endpoint_index_value
-        )
-        for connection: TrackEndpointRef in connections:
-            var neighbor_render_rid: RID = _get_track_render_rid_by_track_rid(connection.track_rid)
-            if neighbor_render_rid.is_valid() and not rebuilt_neighbors.has(neighbor_render_rid):
-                rebuilt_neighbors[neighbor_render_rid] = true
-                rebuild_track_stitches(neighbor_render_rid)
-
-
-func rebuild_track_stitches(track_render_rid: RID) -> void:
-    var state: TrackState = _tracks.get(track_render_rid)
-    if not state:
-        return
-    if state.stream_rid.is_valid() and not state.streamed:
-        return # out of range, like rebuild_track()
-
-    _reset_track_stitch_instance(state)
-    state.trackbed_stitch_mesh = null
-
-    var track: TrackData = _get_track_data(state.track_rid)
-    if not track.is_valid() or not state.ballast_visible:
-        return
-
-    var trackbed_material: Material = _resolve_trackbed_material(state, track)
-    if not trackbed_material:
-        return
-
-    var vertices: PackedVector3Array = PackedVector3Array()
-    var normals: PackedVector3Array = PackedVector3Array()
-    var uvs: PackedVector2Array = PackedVector2Array()
-    var indices: PackedInt32Array = PackedInt32Array()
-    var rail_profile: RailProfile = _get_rail_profile(state.railprofile)
-    var rail_height: float = abs(float(rail_profile.rail[0][1]))
-    var endpoints: PackedVector3Array = _track_get_endpoints(track)
-
-    for endpoint_index_value: int in range(endpoints.size()):
-        var endpoint_index: TrackServer.EndpointIndex = endpoint_index_value
-        var connections: Array[TrackEndpointRef] = TrackServer.track_get_endpoint_connections(
-            state.track_rid,
-            endpoint_index
-        )
-        for connection: TrackEndpointRef in connections:
-            var connected_track_rid: RID = connection.track_rid
-            var connected_state: TrackState = _get_track_state_by_track_rid(connected_track_rid)
-            var connected_track: TrackData = _get_track_data(connected_track_rid)
-            if not connected_state or not connected_track.is_valid():
-                continue
-
-            var connected_track_render_rid: RID = _get_track_render_rid_by_track_rid(connected_track_rid)
-            if not _owns_trackbed_stitch(track_render_rid, track, connected_track_render_rid, connected_track):
-                continue
-
-            var section: Array = _build_trackbed_stitch_world_section(
-                state,
-                track,
-                endpoint_index,
-                rail_height
-            )
-            # its own trackbed texture length shapes its section
-            _resolve_trackbed_material(connected_state, connected_track)
-            var connected_rail_profile: RailProfile = _get_rail_profile(connected_state.railprofile)
-            var connected_rail_height: float = abs(float(connected_rail_profile.rail[0][1]))
-            var connected_section: Array = _build_trackbed_stitch_world_section(
-                connected_state,
-                connected_track,
-                connection.endpoint_index,
-                connected_rail_height
-            )
-            if section.size() < 2 or not section.size() == connected_section.size():
-                continue
-
-            if _is_section_reversed(section, connected_section):
-                connected_section.reverse()
-
-            _append_stitch_geometry(
-                vertices,
-                normals,
-                uvs,
-                indices,
-                section,
-                connected_section,
-                _get_stitch_section_uv_y(state, track, endpoint_index),
-                _get_section_center(section).distance_to(_get_section_center(connected_section)),
-                state.resolved_trackbed_texture_length
-            )
-
-    if not vertices:
-        return
-
-    state.trackbed_stitch_mesh = _build_array_mesh(vertices, normals, uvs, indices)
-    RenderingServer.instance_set_base(
-        state.trackbed_stitch_mesh_instance,
-        state.trackbed_stitch_mesh.get_rid()
-    )
-    RenderingServer.mesh_surface_set_material(
-        state.trackbed_stitch_mesh.get_rid(), 0, trackbed_material.get_rid()
-    )
 
 
 func _on_topology_rebuilt() -> void:
     for state: TrackState in _tracks.values():
         state.resolved_trackbed_material_valid = false
-    for track_render_rid: RID in _tracks.keys():
-        rebuild_track_stitches(track_render_rid)
 
 
 ## The blades follow the manager's animation step for every switch, scenery RIDs included -
@@ -844,188 +710,6 @@ func _get_track_render_rid_by_track_rid(track_rid: RID) -> RID:
     if not track_rid.is_valid():
         return RID()
     return _track_render_rids_by_track.get(track_rid, RID())
-
-
-func _owns_trackbed_stitch(
-    track_render_rid: RID,
-    track: TrackData,
-    connected_track_render_rid: RID,
-    connected_track: TrackData
-) -> bool:
-    if not connected_track_render_rid.is_valid():
-        return false
-
-    var is_switch_track: bool = _is_switch_track(track)
-    var is_connected_switch_track: bool = _is_switch_track(connected_track)
-    if is_switch_track and not is_connected_switch_track:
-        return true
-    if not is_switch_track and is_connected_switch_track:
-        return false
-    return track_render_rid.get_id() < connected_track_render_rid.get_id()
-
-
-func _get_endpoint_curve_data(track: TrackData, endpoint_index: int) -> TrackCurve:
-    var curve1: TrackCurve = track.curve1
-    var curve2: TrackCurve = track.curve2
-    if endpoint_index == TrackServer.CURVE1_P1 or endpoint_index == TrackServer.CURVE1_P2:
-        return curve1
-    if endpoint_index == TrackServer.CURVE2_P1 or endpoint_index == TrackServer.CURVE2_P2:
-        return curve2
-    return null
-
-
-func _build_trackbed_stitch_world_section(
-    state: TrackState,
-    track: TrackData,
-    endpoint_index: int,
-    rail_height: float
-) -> Array:
-    var curve_data: TrackCurve = _get_endpoint_curve_data(track, endpoint_index)
-    if not curve_data:
-        return []
-
-    var curve: Curve3D = _build_curve(curve_data)
-    var curve_length: float = curve.get_baked_length()
-    if curve_length <= 0.0:
-        return []
-
-    var is_end_point: bool = endpoint_index == TrackServer.CURVE1_P2 or endpoint_index == TrackServer.CURVE2_P2
-    var section: Array
-    if _is_switch_track(track):
-        # the switch's own trackbed profile is not what its bed shows (Track.cpp:2753-2809)
-        var branch: int = TrackServer.TRACK_COMMON if curve_data == track.curve1 else TrackServer.TRACK_DIVERGING
-        var sections: Array = _build_switch_trackbed_sections(
-            state, track, branch, curve_data.roll1, curve_data.roll2, rail_height
-        )
-        section = sections[1] if is_end_point else sections[0]
-    else:
-        var roll: float = _get_track_roll(track, endpoint_index)
-        section = _build_trackbed_section(
-            track.width,
-            state.tex_height + _get_roll_fix_height(roll),
-            state.tex_width,
-            state.tex_slope,
-            roll,
-            rail_height,
-            state.resolved_trackbed_texture_length
-        )
-    var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
-    var sample_distance: float = curve_length - sample_inset if is_end_point else sample_inset
-    var frame: Transform3D = _build_curve_distance_frame(curve, sample_distance)
-    frame.origin.y += rail_height + _TRACKBED_STITCH_HEIGHT_OFFSET
-
-    var world_section: Array = []
-    for point: Array in section:
-        var local_position: Vector3 = point[0] as Vector3
-        local_position.x *= _TRACKBED_STITCH_WIDTH_FACTOR
-        world_section.append([
-            frame * local_position,
-            (frame.basis * (point[1] as Vector3)).normalized(),
-            lerpf(0.5, float(point[2]), _TRACKBED_STITCH_WIDTH_FACTOR),
-        ])
-    return world_section
-
-
-func _get_stitch_section_uv_y(
-    state: TrackState,
-    track: TrackData,
-    endpoint_index: int
-) -> float:
-    var curve_data: TrackCurve = _get_endpoint_curve_data(track, endpoint_index)
-    if not curve_data:
-        return 0.0
-
-    var curve: Curve3D = _build_curve(curve_data)
-    var curve_length: float = curve.get_baked_length()
-    if curve_length <= 0.0:
-        return 0.0
-
-    var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
-    var sample_distance: float = sample_inset
-    if endpoint_index == TrackServer.CURVE1_P2 or endpoint_index == TrackServer.CURVE2_P2:
-        sample_distance = curve_length - sample_inset
-
-    var safe_tex_length: float = max(abs(state.resolved_trackbed_texture_length), 0.001)
-    if _is_switch_track(track):
-        return _clamp_circular(1.0 - sample_distance / safe_tex_length, 1.0)
-    return sample_distance / safe_tex_length
-
-
-func _build_curve_distance_frame(curve: Curve3D, distance: float) -> Transform3D:
-    var curve_length: float = curve.get_baked_length()
-    var safe_distance: float = clampf(distance, 0.0, curve_length)
-    var origin: Vector3 = curve.sample_baked(safe_distance, true)
-    var previous_distance: float = maxf(safe_distance - 0.1, 0.0)
-    var next_distance: float = minf(safe_distance + 0.1, curve_length)
-    var tangent: Vector3 = curve.sample_baked(next_distance, true) - curve.sample_baked(previous_distance, true)
-    if tangent.length_squared() <= 0.000001:
-        tangent = Vector3.FORWARD
-    else:
-        tangent = tangent.normalized()
-
-    var reference_up: Vector3 = Vector3.UP
-    if abs(tangent.dot(reference_up)) > 0.999:
-        reference_up = Vector3.RIGHT
-
-    var right: Vector3 = reference_up.cross(tangent).normalized()
-    var up: Vector3 = tangent.cross(right).normalized()
-    var basis: Basis = Basis(right, up, tangent).orthonormalized()
-    return Transform3D(basis, origin)
-
-
-func _is_section_reversed(section: Array, connected_section: Array) -> bool:
-    var last_index: int = section.size() - 1
-    var direct_distance: float = (
-        (section[0][0] as Vector3).distance_squared_to(connected_section[0][0] as Vector3)
-        + (section[last_index][0] as Vector3).distance_squared_to(connected_section[last_index][0] as Vector3)
-    )
-    var reversed_distance: float = (
-        (section[0][0] as Vector3).distance_squared_to(connected_section[last_index][0] as Vector3)
-        + (section[last_index][0] as Vector3).distance_squared_to(connected_section[0][0] as Vector3)
-    )
-    return reversed_distance < direct_distance
-
-
-func _append_stitch_geometry(
-    vertices: PackedVector3Array,
-    normals: PackedVector3Array,
-    uvs: PackedVector2Array,
-    indices: PackedInt32Array,
-    section: Array,
-    connected_section: Array,
-    section_uv_y: float,
-    stitch_length: float,
-    tex_length: float
-) -> void:
-    var base_vertex: int = vertices.size()
-    var safe_tex_length: float = max(abs(tex_length), 0.001)
-    var start_uv_y: float = section_uv_y
-    var end_uv_y: float = start_uv_y - stitch_length / safe_tex_length
-
-    for point: Array in section:
-        vertices.push_back(point[0] as Vector3)
-        normals.push_back(point[1] as Vector3)
-        uvs.push_back(Vector2(float(point[2]), start_uv_y))
-
-    for point_index: int in range(connected_section.size()):
-        var point: Array = connected_section[point_index]
-        vertices.push_back(point[0] as Vector3)
-        normals.push_back(point[1] as Vector3)
-        uvs.push_back(Vector2(float(section[point_index][2]), end_uv_y))
-
-    var first_index: int = indices.size()
-    _append_loft_strip_indices(indices, 2, section.size(), base_vertex)
-    # One face, turned up: the stitch runs either way along the track, and a second, reversed copy
-    # is drawn too by the double-sided track material - its underside lit dark over the joint.
-    # Godot's front face is clockwise, so the strip faces up when (across x along).y > 0.
-    var across: Vector3 = (section[section.size() - 1][0] as Vector3) - (section[0][0] as Vector3)
-    var along: Vector3 = (connected_section[0][0] as Vector3) - (section[0][0] as Vector3)
-    if across.cross(along).y < 0.0:
-        for index: int in range(first_index, indices.size(), 3):
-            var swapped: int = indices[index + 1]
-            indices[index + 1] = indices[index + 2]
-            indices[index + 2] = swapped
-
 
 
 func _build_curve(curve_data: TrackCurve) -> Curve3D:

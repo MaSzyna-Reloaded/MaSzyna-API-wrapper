@@ -54,14 +54,23 @@ static func load_texture(path:String, max_size:int) -> Texture2D:
         height /= 2
         mipmap_count -= 1
 
-    var data_size:int = file_size - data_start - offset
-    if data_size <= 0:
+    # Quirk: some data declares more levels than its size has (dynamic/pkp/e186_v2/szyba_1_refl.dds
+    # is 1x1 with 2), which Image.create_from_data() refuses and the original's loader shrugs off.
+    # Godot takes the whole chain down to 1x1 or the top level alone, so a shorter chain keeps the top.
+    var full_chain_levels:int = 1
+    while (width >> (full_chain_levels - 1)) > 1 or (height >> (full_chain_levels - 1)) > 1:
+        full_chain_levels += 1
+    var levels:int = full_chain_levels if mipmap_count >= full_chain_levels else 1
+    var data_size:int = 0
+    for level:int in levels:
+        data_size += ((maxi(width >> level, 1) + 3) / 4) * ((maxi(height >> level, 1) + 3) / 4) * block_size
+    if data_size > file_size - data_start - offset:
         return null
 
     file.seek(data_start + offset)
     var data:PackedByteArray = file.get_buffer(data_size)
 
-    var image:Image = Image.create_from_data(width, height, mipmap_count > 1, format, data)
+    var image:Image = Image.create_from_data(width, height, levels > 1, format, data)
     if not image:
         return null
     return ImageTexture.create_from_image(image)

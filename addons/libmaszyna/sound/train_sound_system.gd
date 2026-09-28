@@ -356,7 +356,13 @@ func _resolve_controller(runtime:BankRuntime) -> void:
     runtime.controller = runtime.vehicle.get_controller()
     if not runtime.controller:
         return
-    runtime.vehicle_rid = runtime.vehicle.get_rid()
+    var vehicle_rid:RID = runtime.vehicle.get_rid()
+    if not runtime.vehicle_rid == vehicle_rid:
+        # the vehicle took its controller's handle in place of its own
+        # (RailVehicle3D::_on_controller_changed) - the counting moves to the new one
+        _stop_counting_events(runtime.vehicle_rid)
+        _vehicle_events.erase(runtime.vehicle_rid)
+    runtime.vehicle_rid = vehicle_rid
     var counted:VehicleController = _coupler_sources.get(runtime.vehicle_rid)
     if counted == runtime.controller:
         return

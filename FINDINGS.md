@@ -268,6 +268,8 @@ anything. Open work belongs in `TODO.md`.
   moved)*
 
 ## Sound
+* A method bound with different arguments is still one connection: when the key changes
+  (a vehicle's RID), disconnect it first. *(09-28 coupler events under a handle nothing read)*
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through
   its own `AudioStream` player. *(09-25 cab clicks cut each other off)*
 * A gain derived as a normalisation divisor is never also applied as a gain. *(09-21 +38 dB)*

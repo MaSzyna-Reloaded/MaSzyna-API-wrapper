@@ -187,3 +187,13 @@ func test_one_shot_due_while_the_camera_is_away_is_dropped() -> void:
 
     assert_false(_playing(), "the change happened unheard")
 
+
+func test_bank_registered_after_its_vehicle_has_a_controller_is_heard() -> void:
+    _build_vehicle()
+    _attach_controller()
+    _register_bank(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
+    _camera.global_position = NEAR
+    RailVehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
+    await wait_until(_playing, MAX_WAIT)
+
+    assert_true(_playing())

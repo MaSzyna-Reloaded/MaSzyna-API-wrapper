@@ -97,9 +97,16 @@ static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Diction
     if cntrl_kv.has("MotorBlowersStart"):
         node.motor_blowers_start_mode = FizTrainControllerParser.parse_start_mode(
                 FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), RailVehicleEngine.START_MODE_MANUAL)
+    # Mover.cpp:10948-10962 - each pump's start, manual when the key is missing
+    if node is RailVehicleDieselEngine and cntrl_kv.has("FuelStart"):
+        (node as RailVehicleDieselEngine).fuel_pump_start_mode = FizTrainControllerParser.parse_start_mode(
+                        FizLineUtil.get_string(cntrl_kv, "FuelStart"), RailVehicleEngine.START_MODE_MANUAL)
     if node is RailVehicleDieselEngine and cntrl_kv.has("OilStart"):
         (node as RailVehicleDieselEngine).oil_pump_start_mode = FizTrainControllerParser.parse_start_mode(
                         FizLineUtil.get_string(cntrl_kv, "OilStart"), RailVehicleEngine.START_MODE_MANUAL)
+    if node is RailVehicleDieselEngine and cntrl_kv.has("WaterStart"):
+        (node as RailVehicleDieselEngine).water_pump_start_mode = FizTrainControllerParser.parse_start_mode(
+                        FizLineUtil.get_string(cntrl_kv, "WaterStart"), RailVehicleEngine.START_MODE_MANUAL)
 
     match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
         "optional": node.cntrl_auto_relay_mode = RailVehicleEngine.AUTO_RELAY_OPTIONAL

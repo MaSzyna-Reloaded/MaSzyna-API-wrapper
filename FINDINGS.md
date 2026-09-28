@@ -58,6 +58,9 @@ anything. Open work belongs in `TODO.md`.
 * A ported formula carries the original's frame with it: when our loft or basis maps an axis the
   other way (profile x to the left, not `RenderLoft`'s right), every angle in that plane flips.
   Compare world coordinates of both sides, not the formulas. *(09-28 cant reversed)*
+* Mirroring a loft's cross vector flips its winding: with culling off the face shows lit from
+  below. A joint between two meshes takes each side's section from the code that built that mesh.
+  *(09-28 switch trackbed dark, ballast wings)*
 * Before caching or dropping a call as redundant, open the callee and the original line cited
   above it. *(09-20 coupled wagons drifting)*
 * A tuning factor with no counterpart in the original scales the data's errors with the data.

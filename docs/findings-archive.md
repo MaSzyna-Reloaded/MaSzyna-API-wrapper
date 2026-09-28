@@ -1663,6 +1663,26 @@ lighting or the consist.
 * **Rule:** a ported formula carries the original's frame with it - compare world coordinates of
   both sides, not the formulas.
 
+## 2026-09-28 - switch trackbed dark after the cant fix, and ballast wings at every switch joint
+
+* **Symptom:** on td.scn the ballast of both switches was much darker than plain ballast (before
+  `02c54f6a1` made tracks `cull_disabled` it was not drawn at all), and at each switch end thin
+  ballast triangles stuck out several metres to both sides.
+* **Proof:** a headless probe over td.scn's tracks compared each trackbed triangle's front face
+  (Godot: clockwise) with its vertex normals: plain beds 112/112 agreeing, switch beds 0/192 with
+  the face pointing down (-0.99). The same probe paired the two sections of every stitch at a
+  switch: 0.6 m apart in the middle, 3.7 m at the outer edges - the switch side was about 6 m
+  wide. `zwr01` declares `tex_width 2.75 tex_slope 2.5`, its neighbours `0.5 1.1`; the switch bed
+  takes the neighbour's profile (`Track.cpp:2753-2809`), the stitch took the switch's own.
+* **Fix:** the switch strip is wound like `_append_loft_strip_indices()` now that it maps the
+  profile's x to the left (the reversed winding belonged to the right-hand mapping the cant fix
+  removed), and the stitch section at a switch endpoint comes from
+  `_build_switch_trackbed_sections()`, the bed's own. Measured: switch beds 192/192 facing up,
+  every stitch pair 0.57-0.62 m apart.
+* **Rule:** mirroring a loft's cross vector flips its triangle winding too - with culling off
+  the face does not vanish, it is lit from below. And geometry that joins two meshes takes each
+  side's section from the code that built that mesh, not from the raw track data.
+
 
 ## 2026-09-28 - no vehicle without DoorPermitList could permit its doors from the cab
 

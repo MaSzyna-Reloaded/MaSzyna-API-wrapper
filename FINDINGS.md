@@ -61,6 +61,9 @@ anything. Open work belongs in `TODO.md`.
 * Mirroring a loft's cross vector flips its winding: with culling off the face shows lit from
   below. A joint between two meshes takes each side's section from the code that built that mesh.
   *(09-28 switch trackbed dark, ballast wings)*
+* Geometry the original does not have is a workaround until measured: a stitch lifted 1 cm
+  over both beds fought them in depth, and closed gaps of 2-5 cm. *(09-28 trackbed stitches
+  flickered)*
 * Before caching or dropping a call as redundant, open the callee and the original line cited
   above it. *(09-20 coupled wagons drifting)*
 * A tuning factor with no counterpart in the original scales the data's errors with the data.

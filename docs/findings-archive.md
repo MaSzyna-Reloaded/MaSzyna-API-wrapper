@@ -1752,3 +1752,21 @@ lighting or the consist.
   and a rebuild keeps the last value. The vehicle sets the rate when the model loads and when it
   wires the model, and a vehicle without a diesel sets `1.0` itself.
 * **Rule:** an emitter whose rate its owner drives spawns nothing until the owner has set it.
+
+## 2026-09-28 - trackbed stitches flickered at every track and switch joint
+
+* **Symptom:** the ballast over each joint between two tracks, or between a switch and a track,
+  flickered like two coplanar surfaces fighting in depth.
+* **Proof:** a headless probe over td.scn cast a vertical ray from every stitch vertex and
+  triangle centre onto the beds of the tracks it joined. Every plain-joint sample that had a bed
+  below it (2398 of 2398) sat 8-12 mm above that bed. The stitch took its sections 0.5 m inside
+  each curve and lifted them 1 cm, so it lay as a second, nearly coplanar bed over the last
+  0.5 m of both neighbours: 215 m2 of overlap at plain joints and 30 m2 at switches. With the
+  sections moved to the endpoints, the stitches covered only 2.2 m2 and 0.3 m2, and the two
+  beds' end sections were at most 4.9 cm apart (most at 2.2 cm, the original's endpoint tolerance,
+  `Equal()`, Track.cpp:2121). The original has no stitch geometry at all.
+* **Fix:** the stitches are removed: their mesh and instance, `rebuild_track_stitches()` and its
+  helpers. The beds meet the way they do in the original.
+* **Rule:** do not lay a surface over another with a small lift to hide a seam, because the two
+  fight in depth. Before you keep geometry the original does not have, measure what it covers once
+  the bugs it was added to hide have been fixed.

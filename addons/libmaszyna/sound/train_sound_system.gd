@@ -12,6 +12,8 @@ const EXTERIOR_UNIT_SIZE_FACTOR:float = 1.0
 ## How far into its own sample a vehicle's looping running noise may start (DynObj.cpp:6511).
 const RUNNING_NOISE_MAX_START_FRACTION:float = 0.8
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
+## gnd_sfx/hard_cut_distance when the project does not set it (sfx_player_3d.gd:143)
+const HARD_CUT_DISTANCE_DEFAULT:float = 1000.0
 ## The cab wall, as heard from inside: everything on the Exterior bus goes through one low-pass
 ## whose corner follows the listener's context. A barrier is a property of the barrier, not of
 ## each source, so it belongs on the bus - the per-source share of it is soundproofing, which
@@ -92,8 +94,13 @@ class Trigger extends RefCounted:
     var event_index:int = -1
     ## Playing since the last time this trigger said so (TOGGLE/CONTINUOUS)
     var activated:bool = false
-    ## The value this trigger last saw, for TRIGGER_MODE_CHANGE; INF until the first tick
+    ## The value this trigger last saw, for TRIGGER_MODE_CHANGE; INF until the first tick heard
     var last_value:float = INF
+    ## The next start plays the opening bookend: cleared when the sound was due while out of
+    ## earshot, set again only when the vehicle turns it off (sound.cpp:360-367, :498)
+    var play_beginning:bool = true
+    ## How far into its event a start without the opening bookend begins
+    var beginning_length:float = 0.0
 
 
 ## One brake event of a bank, with the static tables of MaszynaBrakeSfxEventFactory already resolved
@@ -265,7 +272,12 @@ func _process(delta:float) -> void:
 ## Distance, culling and the set of banks a frame visits - the state this system owns about
 ## where the listener is. Driven by _sweep_timer, four times a second.
 func _refresh_active_banks() -> void:
-    _culling_distance = float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0))
+    # a player beyond its hard cut drops every play() silently, so the banks are culled - and
+    # their triggers know they are unheard - no farther than that
+    _culling_distance = minf(
+            float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0)),
+            float(ProjectSettings.get_setting(
+                    SfxPlayer3D.HARD_CUT_DISTANCE_SETTING, HARD_CUT_DISTANCE_DEFAULT)))
     _refresh_listener_consist()
     var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO
     for runtime:BankRuntime in _active:
@@ -286,7 +298,7 @@ func _refresh_active_banks() -> void:
         if distance > _culling_distance:
             if not runtime.culled:
                 runtime.culled = true
-                runtime.player.stop(false)
+                _silence_bank(runtime)
             continue
         runtime.culled = false
 
@@ -328,6 +340,8 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     trigger.threshold_max = float(descriptor.get("trigger_threshold_max", 1.0))
     trigger.placement = StringName(descriptor.get("sound_placement", &"general"))
     trigger.source = descriptor.get("source") as MmdSoundSourceDefinition
+    if trigger.source:
+        trigger.beginning_length = MmdSoundEventBuilder.stream_length(trigger.source.sound_begin)
     runtime.triggers.append(trigger)
     return trigger.id
 
@@ -471,13 +485,19 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
         var should_play:bool = value <= trigger.threshold_max and value >= trigger.threshold_min
         if trigger.trigger_mode == TRIGGER_MODE_TOGGLE:
             should_play = not is_zero_approx(value) and should_play
+        if not should_play:
+            trigger.play_beginning = true
         # a silent trigger that stays silent needs none of the listener-dependent parameters
         if not should_play and not trigger.activated:
             continue
 
         var parameters:Dictionary = _trigger_parameters(runtime, trigger, state, value)
         if should_play and not trigger.activated:
-            runtime.player.play(trigger.event_name, parameters)
+            runtime.player.play(
+                    trigger.event_name,
+                    0.0 if trigger.play_beginning else trigger.beginning_length,
+                    parameters)
+            trigger.play_beginning = false
             trigger.activated = true
         elif not should_play and trigger.activated:
             runtime.player.stop(trigger.event_name, false)
@@ -609,11 +629,20 @@ func _refresh_bank_context(runtime:BankRuntime) -> void:
     if not runtime.enabled == enabled:
         runtime.enabled = enabled
         if not enabled:
-            runtime.player.stop(false)
-            for trigger:Trigger in runtime.triggers:
-                trigger.activated = false
+            _silence_bank(runtime)
     if enabled:
         _update_spatial_anchors(runtime)
+
+
+## The bank goes out of earshot: its sounds stop, each one still running resumes past its opening
+## bookend when heard again, and a one-shot due while unheard is dropped (sound.cpp:360-367)
+func _silence_bank(runtime:BankRuntime) -> void:
+    runtime.player.stop(false)
+    for trigger:Trigger in runtime.triggers:
+        trigger.activated = false
+        trigger.play_beginning = false
+        trigger.last_value = INF
+    runtime.last_batch = {}
 
 
 func _inside_vehicle(vehicle:RailVehicle3D) -> bool:

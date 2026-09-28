@@ -59,6 +59,7 @@ var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
 var _driver_rids:Array[RID] = []
+var _script_context_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -74,11 +75,18 @@ func _exit_tree() -> void:
     _free_owned_rids()
 
 
+## The ScenarioScriptServer context the scenery's scripts run in, invalid while nothing is loaded
+func get_script_context() -> RID:
+    return _script_context_rids[0] if _script_context_rids else RID()
+
+
 ## budget_msec > 0 spreads the freeing over frames, so whatever covers the screen (the loading
 ## spinner) keeps animating; 0 frees everything at once (leaving the tree)
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
-        # first, so no queued event runs against what is freed after them
+        # first, so no queued event runs against what is freed after them - the scripts' own
+        # events with them
+        [_script_context_rids, ScenarioScriptServer.context_free],
         [_driver_rids, DriverSystem.driver_free],
         [_pickable_rids, SceneryHUDMouseServer.pickable_free],
         [_launcher_rids, ScenarioEventServer.launcher_free],

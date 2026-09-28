@@ -1,0 +1,106 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/script_editor_panel.gd" id="1_panel"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://hud/window_move_handle.gd" id="3_move"]
+[ext_resource type="Script" path="res://hud/window_resize_corner.gd" id="4_resize"]
+
+[sub_resource type="CodeHighlighter" id="CodeHighlighter_lua"]
+number_color = Color(0.63, 1, 0.88, 1)
+symbol_color = Color(0.67, 0.79, 1, 1)
+function_color = Color(0.34, 0.7, 1, 1)
+member_variable_color = Color(0.74, 0.88, 1, 1)
+keyword_colors = {"and": Color(1, 0.44, 0.52, 1), "break": Color(1, 0.44, 0.52, 1), "do": Color(1, 0.44, 0.52, 1), "else": Color(1, 0.44, 0.52, 1), "elseif": Color(1, 0.44, 0.52, 1), "end": Color(1, 0.44, 0.52, 1), "false": Color(1, 0.44, 0.52, 1), "for": Color(1, 0.44, 0.52, 1), "function": Color(1, 0.44, 0.52, 1), "goto": Color(1, 0.44, 0.52, 1), "if": Color(1, 0.44, 0.52, 1), "in": Color(1, 0.44, 0.52, 1), "local": Color(1, 0.44, 0.52, 1), "nil": Color(1, 0.44, 0.52, 1), "not": Color(1, 0.44, 0.52, 1), "or": Color(1, 0.44, 0.52, 1), "repeat": Color(1, 0.44, 0.52, 1), "return": Color(1, 0.44, 0.52, 1), "then": Color(1, 0.44, 0.52, 1), "true": Color(1, 0.44, 0.52, 1), "until": Color(1, 0.44, 0.52, 1), "while": Color(1, 0.44, 0.52, 1)}
+color_regions = {"\" \"": Color(1, 0.93, 0.63, 1), "' '": Color(1, 0.93, 0.63, 1), "--": Color(0.8, 0.81, 0.82, 0.5)}
+
+[node name="ScriptEditorPanel" type="PanelContainer"]
+visible = false
+custom_minimum_size = Vector2(560, 0)
+anchors_preset = 0
+offset_left = 460.0
+offset_top = 44.0
+offset_right = 1020.0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+theme_type_variation = &"TimetableCard"
+script = ExtResource("1_panel")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TitleBar" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MoveHandle" type="Control" parent="Content/TitleBar" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 13
+script = ExtResource("3_move")
+window = NodePath("../../..")
+
+[node name="CloseButton" type="Button" parent="Content/TitleBar"]
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TimetableClose"
+text = "✕"
+flat = true
+
+[node name="Title" type="Label" parent="Content"]
+layout_mode = 2
+theme_type_variation = &"TimetableTitle"
+text = "Lua scripts"
+
+[node name="Separator" type="HSeparator" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"TimetableSeparator"
+
+[node name="Code" type="CodeEdit" parent="Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 360)
+layout_mode = 2
+size_flags_vertical = 3
+placeholder_text = "local v = maszyna.vehicle.find(\"EU07-005\")"
+syntax_highlighter = SubResource("CodeHighlighter_lua")
+gutters_draw_line_numbers = true
+indent_automatic = true
+auto_brace_completion_enabled = true
+auto_brace_completion_highlight_matching = true
+
+[node name="Status" type="Label" parent="Content"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(1, 0)
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="Actions" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+alignment = 2
+
+[node name="CheckButton" type="Button" parent="Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Check"
+
+[node name="ApplyButton" type="Button" parent="Content/Actions"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Apply"
+
+[node name="ResizeCorner" type="Control" parent="Content" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_default_cursor_shape = 12
+script = ExtResource("4_resize")
+window = NodePath("../..")
+
+[connection signal="pressed" from="Content/TitleBar/CloseButton" to="." method="_on_close_button_pressed"]
+[connection signal="pressed" from="Content/Actions/CheckButton" to="." method="_on_check_button_pressed"]
+[connection signal="pressed" from="Content/Actions/ApplyButton" to="." method="_on_apply_button_pressed"]

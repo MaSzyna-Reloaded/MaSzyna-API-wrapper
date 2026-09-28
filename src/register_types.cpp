@@ -60,6 +60,9 @@
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
+#include "scripting/ScenarioScriptAction.hpp"
+#include "scripting/ScenarioScriptCabinDelegate.hpp"
+#include "scripting/ScenarioScriptServer.hpp"
 #include "signalling/SignalAspect.hpp"
 #include "signalling/SignalHeadKind.hpp"
 #include "signalling/SignalHeadNode.hpp"
@@ -147,6 +150,7 @@ CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 SignallingServer *signalling_server_singleton = nullptr;
 ScenarioEventServer *scenario_event_server_singleton = nullptr;
 SceneryHUDMouseServer *scenery_hud_mouse_server_singleton = nullptr;
+ScenarioScriptServer *scenario_script_server_singleton = nullptr;
 DriverSystem *driver_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -194,6 +198,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventAction);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventCondition);
+        GDREGISTER_CLASS(ScenarioScriptServer);
+        GDREGISTER_VIRTUAL_CLASS(ScenarioScriptCabinDelegate);
+        GDREGISTER_INTERNAL_CLASS(ScenarioScriptAction);
         GDREGISTER_CLASS(MaszynaLegacyMemoryAction);
         GDREGISTER_CLASS(MaszynaLegacyMultipleAction);
         GDREGISTER_CLASS(MaszynaLegacyLightsAction);
@@ -329,6 +336,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after E3DRenderingServer is registered: it outlines and picks its instances
         scenery_hud_mouse_server_singleton = memnew(SceneryHUDMouseServer);
         Engine::get_singleton()->register_singleton("SceneryHUDMouseServer", scenery_hud_mouse_server_singleton); // 18
+        // last: the constructor follows what the servers above report to the scripts
+        scenario_script_server_singleton = memnew(ScenarioScriptServer);
+        Engine::get_singleton()->register_singleton("ScenarioScriptServer", scenario_script_server_singleton); // 19
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -352,6 +362,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("ScenarioScriptServer")) {
+        Engine::get_singleton()->unregister_singleton("ScenarioScriptServer"); // 19
+    }
+    if (scenario_script_server_singleton != nullptr) {
+        memdelete(scenario_script_server_singleton);
+        scenario_script_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("SceneryHUDMouseServer")) {

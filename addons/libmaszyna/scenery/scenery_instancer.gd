@@ -21,8 +21,9 @@ static var endtrainset_importer = preload("res://addons/libmaszyna/legacy/scener
 static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_firstinit_importer.gd").new()
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
+static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 25
+const CACHE_FORMAT_VERSION:int = 26
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -115,6 +116,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
         await _wait_for_vehicles(root)
         _build_drivers(root)
+        _run_scripts(root, compiled.scripts)
         return
 
     await _report_progress(root, 0.0, "Scanning includes")
@@ -144,6 +146,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _attach_objects(root, objects, 0.7, 0.9)
     await _wait_for_vehicles(root)
     _build_drivers(root)
+    _run_scripts(root, context.scripts)
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
@@ -211,6 +214,19 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         if trainset_driver.is_valid():
             DriverSystem.driver_send_command(
                     trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset.timetable, trainset.velocity, 0.0)
+
+
+## The scenery's script context, and its `lua` scripts run in it - last, when everything a script
+## may reach exists. The original runs them as it parses the file (simulationstateserializer.cpp:
+## 346-356); here the parsing runs on workers. Every scenery gets a context, so that a script can be
+## applied to it while it runs.
+static func _run_scripts(root:MaszynaIncludeNode, scripts:Array[String]) -> void:
+    var script_context:RID = ScenarioScriptServer.context_create(
+            UserSettings.get_maszyna_game_dir().path_join("scenery"))
+    root._script_context_rids.append(script_context)
+    ScenarioScriptServer.context_attach_cabin_delegate(script_context, CabinScriptDelegate.new())
+    for script_path:String in scripts:
+        ScenarioScriptServer.context_run_file(script_context, script_path)
 
 
 static func _instantiate_server_data(
@@ -380,6 +396,7 @@ static func _compile_scenery(
     compiled.launchers = context.launchers
     compiled.sounds = context.sounds
     compiled.isolated_sections = context.isolated_sections
+    compiled.scripts = context.scripts
     return compiled
 
 
@@ -664,11 +681,12 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
     parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
     parser.register_handler("isolated", _make_importer_callback(isolated_importer, context))
     parser.register_handler("area", _make_importer_callback(area_importer, context))
+    parser.register_handler("lua", _make_importer_callback(lua_importer, context))
     return parser
 
 
 func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
-    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit", "isolated", "area"]:
+    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit", "isolated", "area", "lua"]:
         parser.unregister_handler(token)
     context.end_file(_get_source_path(filename))
 

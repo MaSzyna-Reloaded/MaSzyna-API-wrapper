@@ -30,6 +30,7 @@ Resposibilities of the core:
 * [Overall architecture](architecture)
 * [API reference](api/) - every class of libmaszyna, C++ and GDScript
 * [Wrapping the original MaSzyna physics](wrapping-mover)
+* [Lua scenario scripts](lua-scripting) - the scripting API for sceneries, with examples
 
 ## Knowledge base
 

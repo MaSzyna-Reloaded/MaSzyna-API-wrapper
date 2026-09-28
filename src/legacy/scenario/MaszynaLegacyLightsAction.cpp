@@ -1,42 +1,44 @@
-#include "legacy/semaphores/MaszynaLegacySemaphoreDelegate.hpp"
-#include "semaphores/SemaphoreServer.hpp"
 #include "MaszynaLegacyLightsAction.hpp"
+#include "legacy/signalling/MaszynaLegacySignallingDelegate.hpp"
+#include "signalling/SignallingServer.hpp"
 
 namespace godot {
     void MaszynaLegacyLightsAction::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_semaphores", "semaphores"), &MaszynaLegacyLightsAction::set_semaphores);
-        ClassDB::bind_method(D_METHOD("get_semaphores"), &MaszynaLegacyLightsAction::get_semaphores);
+        ClassDB::bind_method(
+                D_METHOD("set_signal_heads", "signal_heads"), &MaszynaLegacyLightsAction::set_signal_heads);
+        ClassDB::bind_method(D_METHOD("get_signal_heads"), &MaszynaLegacyLightsAction::get_signal_heads);
         ClassDB::bind_method(D_METHOD("set_aspects", "aspects"), &MaszynaLegacyLightsAction::set_aspects);
         ClassDB::bind_method(D_METHOD("get_aspects"), &MaszynaLegacyLightsAction::get_aspects);
 
         ADD_PROPERTY(
-                PropertyInfo(Variant::ARRAY, "semaphores", PROPERTY_HINT_ARRAY_TYPE, "RID"), "set_semaphores",
-                "get_semaphores");
+                PropertyInfo(Variant::ARRAY, "signal_heads", PROPERTY_HINT_ARRAY_TYPE, "RID"), "set_signal_heads",
+                "get_signal_heads");
         ADD_PROPERTY(
                 PropertyInfo(Variant::ARRAY, "aspects", PROPERTY_HINT_ARRAY_TYPE, "StringName"), "set_aspects",
                 "get_aspects");
     }
 
     void MaszynaLegacyLightsAction::run(const RID &p_event, const RID &p_activator) {
-        ERR_FAIL_COND_MSG(!(semaphores.size() == aspects.size()), "Every semaphore needs its aspect.");
-        SemaphoreServer *server = SemaphoreServer::get_instance();
+        ERR_FAIL_COND_MSG(!(signal_heads.size() == aspects.size()), "Every signal head needs its aspect.");
+        SignallingServer *server = SignallingServer::get_instance();
         ERR_FAIL_NULL(server);
-        for (int i = 0; i < semaphores.size(); i++) {
-            const RID semaphore = semaphores[i];
+        for (int i = 0; i < signal_heads.size(); i++) {
+            const RID signal_head = signal_heads[i];
             Dictionary arguments;
-            arguments["semaphore"] = semaphore;
+            arguments["signal_head"] = signal_head;
             arguments["aspect"] = aspects[i];
             server->system_send_event(
-                    server->semaphore_get_system(semaphore), MaszynaLegacySemaphoreDelegate::LIGHTS_EVENT, arguments);
+                    server->signal_head_get_system(signal_head), MaszynaLegacySignallingDelegate::LIGHTS_EVENT,
+                    arguments);
         }
     }
 
-    void MaszynaLegacyLightsAction::set_semaphores(const TypedArray<RID> &p_semaphores) {
-        semaphores = p_semaphores;
+    void MaszynaLegacyLightsAction::set_signal_heads(const TypedArray<RID> &p_signal_heads) {
+        signal_heads = p_signal_heads;
     }
 
-    TypedArray<RID> MaszynaLegacyLightsAction::get_semaphores() const {
-        return semaphores;
+    TypedArray<RID> MaszynaLegacyLightsAction::get_signal_heads() const {
+        return signal_heads;
     }
 
     void MaszynaLegacyLightsAction::set_aspects(const TypedArray<StringName> &p_aspects) {

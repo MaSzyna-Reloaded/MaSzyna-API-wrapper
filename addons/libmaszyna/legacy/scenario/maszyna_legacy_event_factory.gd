@@ -268,13 +268,13 @@ static func build(
             "lights":
                 var aspects:Array[StringName] = []
                 for target:String in event.targets:
-                    var semaphore:RID = SemaphoreServer.semaphore_get_rid_by_name(model_names.get(target, ""))
-                    if not semaphore.is_valid():
+                    var signal_head:RID = SignallingServer.signal_head_get_rid_by_name(model_names.get(target, ""))
+                    if not signal_head.is_valid():
                         continue
-                    targets.append(semaphore)
-                    aspects.append(MaszynaLegacySemaphoreKindFactory.get_aspect_name(event.name, target))
+                    targets.append(signal_head)
+                    aspects.append(MaszynaLegacySignalHeadKindFactory.get_aspect_name(event.name, target))
                 var action:MaszynaLegacyLightsAction = MaszynaLegacyLightsAction.new()
-                action.semaphores = targets
+                action.signal_heads = targets
                 action.aspects = aspects
                 ScenarioEventServer.event_attach_action(rid, action)
             "switch":

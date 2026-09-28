@@ -24,9 +24,9 @@ Read top to bottom: each layer may use the ones below it and must know nothing o
 | Backend | `src/legacy/maszyna-mover/` (vendored `TMoverParameters`) | physical quantities, the original's own model | be edited. It is vendored; a divergence is ported around it, never into it |
 | Backend adapters | `Mover*` classes (`MoverRailVehicleController`, `MoverRailVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
 | Vehicle model | `VehicleController` (an `Object`, any vehicle) and `RailVehicleController` (a railway one: cabs, couplers, controllers, relays), `VehicleComponent` / `RailVehicleComponent` + `RailVehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
-| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SemaphoreServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
+| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SignallingServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
 | Systems | `CabinSystem` (a cab per vehicle RID and cab), `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
-| Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets, `SemaphoreNode`/`SemaphoreSystemNode` (proxies holding a server RID) | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
+| Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets, `SignalHeadNode`/`SignallingSystemNode` (proxies holding a server RID) | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
 | Importers | `src/legacy/parsers/`, `src/legacy/e3d/`, `addons/libmaszyna/legacy/fiz/`, `.../legacy/mmd/`, `.../legacy/scenery/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
 
 Autoloads are listed in `demo/project.godot`; C++ singletons are registered in
@@ -92,24 +92,24 @@ of two same-named vehicles lost its commands and its cab (TrainSystem, removed 2
   with `add_component()` and reached with `get_component(VehicleComponentType::TYPE)`.
 * **Behaviour that differs between variants of one server object** - a delegate, not a subclass
   of the object: an interface class of `GDVIRTUAL`s whose C++ virtuals forward to the script
-  (`SemaphoreSystemDelegate`), implemented in C++ (`MaszynaLegacySemaphoreDelegate`) or GDScript,
+  (`SignallingSystemDelegate`), implemented in C++ (`MaszynaLegacySignallingDelegate`) or GDScript,
   attached after `*_create()` (`system_attach_delegate`). Every callback carries the owner's RID,
   since a `Resource` is shared; the delegate changes state only through the server's API. The
   original's behaviour is one such delegate (`MaszynaLegacy*`), never the base.
 * **Something that lives as long as another server's handle** - follow the owner's freed signal
-  (`E3DRenderingServer.instance_freed` frees the instance's semaphore), not a validity check.
-* **Configuration of a handle** - the server's struct under the RID (`SemaphoreData`), set by
+  (`E3DRenderingServer.instance_freed` frees the instance's signal head), not a validity check.
+* **Configuration of a handle** - the server's struct under the RID (`SignalHeadData`), set by
   `<thing>_set_<field>` and announced by `<thing>_config_changed`. What the data already knows
-  is derived by the server, never typed in by the user (a semaphore's light count comes from its
+  is derived by the server, never typed in by the user (a signal head's light count comes from its
   model when `E3DRenderingServer` emits `instance_built`). Shared data describing a *kind* of
-  thing is a `Resource` handed to the server (`semaphore_set_kind(rid, SemaphoreKind)`), not
+  thing is a `Resource` handed to the server (`signal_head_set_kind(rid, SignalHeadKind)`), not
   fields copied onto each handle. Where the original has no such description, the importer
-  derives it from the data (`MaszynaLegacySemaphoreKindFactory` makes a kind of the `lights`
+  derives it from the data (`MaszynaLegacySignalHeadKindFactory` makes a kind of the `lights`
   events aimed at a model, and equal kinds become one resource) - the original's encoding is
   read once there and never reaches the server.
 * **A node over a handle** - its properties are proxies: getters read the server, setters call
   it, the server's change signals are relayed filtered to the node's RID and refresh the property
-  list (`SemaphoreNode`). The node keeps only what the scene sets before the handle exists
+  list (`SignalHeadNode`). The node keeps only what the scene sets before the handle exists
   (`kind`, the initial `aspect`) and hands it over once. A node-typed export in C++ is an
   `ObjectID`, not a `Node *` - the node it names may be freed first. A GDScript accessor on a
   native subclass needs a name the native class does not have (`get_e3d_instance`, not

@@ -378,7 +378,7 @@ and the rule. Headings keep their date and title, because comments in the code c
 
 ## 2026-09-26 - semaphore lost its model
 
-* **Symptom:** `SemaphoreNode.model` in `demo_3d.tscn` was empty in the editor, and after the
+* **Symptom:** `SignalHeadNode.model` in `demo_3d.tscn` was empty in the editor, and after the
   operator moved the semaphore model and saved, the `model = NodePath(...)` line was gone.
 * **Proof:** packing a scene with the property set from code wrote
   `node_paths=PackedStringArray("model")` into the node's header; the hand-written entry lacked it.

@@ -1,95 +1,17 @@
-#include "legacy/vehicles/MoverRailVehicleBrake.hpp"
-#include "legacy/vehicles/MoverRailVehicleElectroPneumaticDynamicBrake.hpp"
-#include "legacy/vehicles/MoverRailVehicleSpringBrake.hpp"
-#include "vehicles/rail/RailVehicleBrake.hpp"
-#include "vehicles/rail/RailVehicleElectroPneumaticDynamicBrake.hpp"
-#include "vehicles/rail/RailVehicleSpringBrake.hpp"
-#include "legacy/vehicles/MoverRailVehicleBuffCoupl.hpp"
-#include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "cabin/CabinHUDMouseSystem.hpp"
-#include "legacy/vehicles/MoverRailVehicleMasterController.hpp"
-#include "legacy/vehicles/MoverRailVehicleUniversalController.hpp"
-#include "vehicles/rail/RailVehicleMasterController.hpp"
-#include "vehicles/rail/RailVehicleUniversalController.hpp"
-#include "logging/GameLog.hpp"
-#include "vehicles/base/GenericVehicleComponent.hpp"
-#include "vehicles/base/GenericVehicleComponentNode.hpp"
-#include "simulation/SimulationServer.hpp"
+#include "cache/ResourceCache.hpp"
 #include "driver/DriverDelegate.hpp"
 #include "driver/DriverSystem.hpp"
-#include "utils/MaszynaTranslationServer.hpp"
-#include "legacy/vehicles/MoverRailVehicleController.hpp"
-#include "vehicles/rail/RailVehicle3D.hpp"
-#include "cache/ResourceCache.hpp"
-#include "utils/UserSettings.hpp"
-#include "vehicles/rail/RailVehicleComponent.hpp"
-#include "vehicles/base/VehicleComponent.hpp"
-#include "vehicles/base/VehicleComponentModel.hpp"
-#include "vehicles/base/VehicleComponentType.hpp"
-#include "vehicles/base/VehicleController.hpp"
-#include "vehicles/base/VehicleModel.hpp"
-#include "vehicles/base/VehiclePhysicsNode.hpp"
-#include "legacy/vehicles/MoverRailVehicleDoors.hpp"
-#include "vehicles/rail/RailVehicleDoors.hpp"
+#include "legacy/cabin/PythonScreenServer.hpp"
 #include "legacy/e3d/E3DModel.hpp"
 #include "legacy/e3d/E3DModelLightDefinition.hpp"
 #include "legacy/e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
-#include "rendering/PlanarMirror3D.hpp"
-#include "legacy/e3d/E3DSubModel.hpp"
-#include "legacy/vehicles/MoverRailVehicleDieselElectricEngine.hpp"
-#include "legacy/vehicles/MoverRailVehicleDieselEngine.hpp"
-#include "legacy/vehicles/MoverRailVehicleElectricInductionEngine.hpp"
-#include "legacy/vehicles/MoverRailVehicleElectricSeriesEngine.hpp"
-#include "vehicles/rail/RailVehicleDieselElectricEngine.hpp"
-#include "vehicles/rail/RailVehicleDieselEngine.hpp"
-#include "vehicles/rail/RailVehicleElectricEngine.hpp"
-#include "vehicles/rail/RailVehicleElectricInductionEngine.hpp"
-#include "vehicles/rail/RailVehicleElectricSeriesEngine.hpp"
-#include "vehicles/rail/RailVehicleEngine.hpp"
-#include "legacy/vehicles/MoverRailVehicleHeating.hpp"
-#include "vehicles/rail/RailVehicleHeating.hpp"
-#include "legacy/vehicles/MoverRailVehicleLighting.hpp"
-#include "vehicles/rail/RailVehicleLighting.hpp"
-#include "legacy/vehicles/MoverRailVehicleLoad.hpp"
-#include "vehicles/rail/RailVehicleLoad.hpp"
 #include "legacy/e3d/E3DResourceFormatLoader.hpp"
-#include "loaders/OggVorbisFormatLoader.hpp"
+#include "legacy/e3d/E3DSubModel.hpp"
 #include "legacy/e3d/e3d_parser.hpp"
 #include "legacy/parsers/maszyna_parser.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
-#include "simulation/SimulationClock.hpp"
-#include "vehicles/rail/RailVehicleNeighbour.hpp"
-#include "legacy/vehicles/MoverRailVehicleRadio.hpp"
-#include "vehicles/rail/RailVehicleRadio.hpp"
-#include "register_types.h"
-#include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
-#include "vehicles/rail/RailVehicleCompressorListItem.hpp"
-#include "vehicles/rail/RailVehicleUniversalControllerListItem.hpp"
-#include "vehicles/base/VehicleCurvePointItem.hpp"
-#include "vehicles/rail/RailVehicleMotorParameter.hpp"
-#include "vehicles/rail/RailVehicleRelayListItem.hpp"
-#include "vehicles/rail/RailVehicleThrottlePositionItem.hpp"
-#include "vehicles/rail/RailVehicleWWListItem.hpp"
-#include "vehicles/rail/RailVehicleInverter.hpp"
-#include "vehicles/rail/RailVehicleLightListItem.hpp"
-#include "vehicles/rail/RailVehicleLoadListItem.hpp"
-#include "vehicles/rail/RailVehicleDimmerListItem.hpp"
-#include "vehicles/rail/RailVehicleWiperListItem.hpp"
-#include "legacy/scenery/MaszynaTrianglesImporter.hpp"
-#include "scenery/SceneryLoadingTaskQueue.hpp"
-#include "scenery/SceneryStreamingServer.hpp"
-#include "scenery/SceneryTrianglesBuilder.hpp"
-#include "legacy/cabin/PythonScreenServer.hpp"
-#include "legacy/semaphores/MaszynaLegacySemaphoreDelegate.hpp"
-#include "legacy/semaphores/MaszynaLegacySemaphoreKindFactory.hpp"
-#include "semaphores/SemaphoreAspect.hpp"
-#include "semaphores/SemaphoreKind.hpp"
-#include "semaphores/SemaphoreNode.hpp"
-#include "semaphores/SemaphoreServer.hpp"
-#include "semaphores/SemaphoreSystemDelegate.hpp"
-#include "semaphores/SemaphoreSystemNode.hpp"
 #include "legacy/scenario/MaszynaLegacyAnimationAction.hpp"
 #include "legacy/scenario/MaszynaLegacyEventCondition.hpp"
 #include "legacy/scenario/MaszynaLegacyLightsAction.hpp"
@@ -99,28 +21,106 @@
 #include "legacy/scenario/MaszynaLegacyTrackVelocityAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVehicleCommandAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVoltageAction.hpp"
+#include "legacy/scenery/MaszynaTrianglesImporter.hpp"
+#include "legacy/signalling/MaszynaLegacySignalHeadKindFactory.hpp"
+#include "legacy/signalling/MaszynaLegacySignallingDelegate.hpp"
+#include "legacy/vehicles/MoverRailVehicleAIHints.hpp"
+#include "legacy/vehicles/MoverRailVehicleBrake.hpp"
+#include "legacy/vehicles/MoverRailVehicleBuffCoupl.hpp"
+#include "legacy/vehicles/MoverRailVehicleController.hpp"
+#include "legacy/vehicles/MoverRailVehicleDieselElectricEngine.hpp"
+#include "legacy/vehicles/MoverRailVehicleDieselEngine.hpp"
+#include "legacy/vehicles/MoverRailVehicleDoors.hpp"
+#include "legacy/vehicles/MoverRailVehicleElectricInductionEngine.hpp"
+#include "legacy/vehicles/MoverRailVehicleElectricSeriesEngine.hpp"
+#include "legacy/vehicles/MoverRailVehicleElectroPneumaticDynamicBrake.hpp"
+#include "legacy/vehicles/MoverRailVehicleHeating.hpp"
+#include "legacy/vehicles/MoverRailVehicleHorns.hpp"
+#include "legacy/vehicles/MoverRailVehicleLighting.hpp"
+#include "legacy/vehicles/MoverRailVehicleLoad.hpp"
+#include "legacy/vehicles/MoverRailVehicleMasterController.hpp"
+#include "legacy/vehicles/MoverRailVehicleRadio.hpp"
+#include "legacy/vehicles/MoverRailVehicleSecuritySystem.hpp"
+#include "legacy/vehicles/MoverRailVehicleSpeedControl.hpp"
+#include "legacy/vehicles/MoverRailVehicleSpringBrake.hpp"
+#include "legacy/vehicles/MoverRailVehicleSwitches.hpp"
+#include "legacy/vehicles/MoverRailVehicleUniversalController.hpp"
+#include "legacy/vehicles/MoverRailVehicleWheels.hpp"
+#include "legacy/vehicles/MoverRailVehicleWipers.hpp"
+#include "loaders/OggVorbisFormatLoader.hpp"
+#include "logging/GameLog.hpp"
+#include "register_types.h"
+#include "rendering/PlanarMirror3D.hpp"
 #include "scenario/ScenarioEventAction.hpp"
 #include "scenario/ScenarioEventCondition.hpp"
 #include "scenario/ScenarioEventServer.hpp"
 #include "scenario/Timetable.hpp"
 #include "scenario/TimetableEntry.hpp"
-#include "legacy/vehicles/MoverRailVehicleSpeedControl.hpp"
-#include "vehicles/rail/RailVehicleSpeedControl.hpp"
-#include "legacy/vehicles/MoverRailVehicleSwitches.hpp"
-#include "vehicles/rail/RailVehicleSwitches.hpp"
-#include "legacy/vehicles/MoverRailVehicleAIHints.hpp"
-#include "legacy/vehicles/MoverRailVehicleHorns.hpp"
-#include "legacy/vehicles/MoverRailVehicleSecuritySystem.hpp"
-#include "vehicles/rail/RailVehicleAIHints.hpp"
-#include "vehicles/rail/RailVehicleHorns.hpp"
-#include "vehicles/rail/RailVehicleSecuritySystem.hpp"
+#include "scenery/SceneryLoadingTaskQueue.hpp"
+#include "scenery/SceneryStreamingServer.hpp"
+#include "scenery/SceneryTrianglesBuilder.hpp"
+#include "signalling/SignalAspect.hpp"
+#include "signalling/SignalHeadKind.hpp"
+#include "signalling/SignalHeadNode.hpp"
+#include "signalling/SignallingServer.hpp"
+#include "signalling/SignallingSystemDelegate.hpp"
+#include "signalling/SignallingSystemNode.hpp"
+#include "simulation/SimulationClock.hpp"
+#include "simulation/SimulationServer.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackServer.hpp"
 #include "traction/TractionServer.hpp"
-#include "legacy/vehicles/MoverRailVehicleWheels.hpp"
+#include "utils/MaszynaTranslationServer.hpp"
+#include "utils/UserSettings.hpp"
+#include "vehicles/base/GenericVehicleComponent.hpp"
+#include "vehicles/base/GenericVehicleComponentNode.hpp"
+#include "vehicles/base/VehicleComponent.hpp"
+#include "vehicles/base/VehicleComponentModel.hpp"
+#include "vehicles/base/VehicleComponentType.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehicleCurvePointItem.hpp"
+#include "vehicles/base/VehicleModel.hpp"
+#include "vehicles/base/VehiclePhysicsNode.hpp"
+#include "vehicles/rail/RailVehicle3D.hpp"
+#include "vehicles/rail/RailVehicleAIHints.hpp"
+#include "vehicles/rail/RailVehicleBrake.hpp"
+#include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
+#include "vehicles/rail/RailVehicleBuffCoupl.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleCompressorListItem.hpp"
+#include "vehicles/rail/RailVehicleDieselElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleDieselEngine.hpp"
+#include "vehicles/rail/RailVehicleDimmerListItem.hpp"
+#include "vehicles/rail/RailVehicleDoors.hpp"
+#include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleElectricInductionEngine.hpp"
+#include "vehicles/rail/RailVehicleElectricSeriesEngine.hpp"
+#include "vehicles/rail/RailVehicleElectroPneumaticDynamicBrake.hpp"
+#include "vehicles/rail/RailVehicleEngine.hpp"
+#include "vehicles/rail/RailVehicleHeating.hpp"
+#include "vehicles/rail/RailVehicleHorns.hpp"
+#include "vehicles/rail/RailVehicleInverter.hpp"
+#include "vehicles/rail/RailVehicleLightListItem.hpp"
+#include "vehicles/rail/RailVehicleLighting.hpp"
+#include "vehicles/rail/RailVehicleLoad.hpp"
+#include "vehicles/rail/RailVehicleLoadListItem.hpp"
+#include "vehicles/rail/RailVehicleMasterController.hpp"
+#include "vehicles/rail/RailVehicleMotorParameter.hpp"
+#include "vehicles/rail/RailVehicleNeighbour.hpp"
+#include "vehicles/rail/RailVehicleRadio.hpp"
+#include "vehicles/rail/RailVehicleRelayListItem.hpp"
+#include "vehicles/rail/RailVehicleSecuritySystem.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
+#include "vehicles/rail/RailVehicleSpeedControl.hpp"
+#include "vehicles/rail/RailVehicleSpringBrake.hpp"
+#include "vehicles/rail/RailVehicleSwitches.hpp"
+#include "vehicles/rail/RailVehicleThrottlePositionItem.hpp"
+#include "vehicles/rail/RailVehicleUniversalController.hpp"
+#include "vehicles/rail/RailVehicleUniversalControllerListItem.hpp"
+#include "vehicles/rail/RailVehicleWWListItem.hpp"
 #include "vehicles/rail/RailVehicleWheels.hpp"
-#include "legacy/vehicles/MoverRailVehicleWipers.hpp"
+#include "vehicles/rail/RailVehicleWiperListItem.hpp"
 #include "vehicles/rail/RailVehicleWipers.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
@@ -143,7 +143,7 @@ SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
 MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
-SemaphoreServer *semaphore_server_singleton = nullptr;
+SignallingServer *signalling_server_singleton = nullptr;
 ScenarioEventServer *scenario_event_server_singleton = nullptr;
 DriverSystem *driver_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
@@ -178,14 +178,14 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrackRouteSegment);
         GDREGISTER_CLASS(TrackBranchNeighbors);
         GDREGISTER_CLASS(TrackServer);
-        GDREGISTER_CLASS(SemaphoreServer);
-        GDREGISTER_CLASS(SemaphoreAspect);
-        GDREGISTER_CLASS(SemaphoreKind);
-        GDREGISTER_ABSTRACT_CLASS(MaszynaLegacySemaphoreKindFactory);
-        GDREGISTER_VIRTUAL_CLASS(SemaphoreSystemDelegate);
-        GDREGISTER_CLASS(MaszynaLegacySemaphoreDelegate);
-        GDREGISTER_CLASS(SemaphoreNode);
-        GDREGISTER_CLASS(SemaphoreSystemNode);
+        GDREGISTER_CLASS(SignallingServer);
+        GDREGISTER_CLASS(SignalAspect);
+        GDREGISTER_CLASS(SignalHeadKind);
+        GDREGISTER_ABSTRACT_CLASS(MaszynaLegacySignalHeadKindFactory);
+        GDREGISTER_VIRTUAL_CLASS(SignallingSystemDelegate);
+        GDREGISTER_CLASS(MaszynaLegacySignallingDelegate);
+        GDREGISTER_CLASS(SignalHeadNode);
+        GDREGISTER_CLASS(SignallingSystemNode);
         GDREGISTER_CLASS(ScenarioEventServer);
         GDREGISTER_CLASS(DriverSystem);
         GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
@@ -302,21 +302,21 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                                // 3
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
-        Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);                  // 7
-        Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                      // 8
+        Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);              // 7
+        Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                        // 8
         // after SimulationServer is registered: the constructor follows its pause
         rail_vehicle_server_singleton = memnew(RailVehicleServer);
-        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton);     // 10
-        Engine::get_singleton()->register_singleton("TractionServer", traction_server_singleton); // 11
-        Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton);   // 12
+        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton);   // 10
+        Engine::get_singleton()->register_singleton("TractionServer", traction_server_singleton);          // 11
+        Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
         // after UserSettings is registered: the constructor reads the game directory from it
         maszyna_translation_server_singleton = memnew(MaszynaTranslationServer);
         Engine::get_singleton()->register_singleton(
                 "MaszynaTranslationServer", maszyna_translation_server_singleton);                            // 13
         Engine::get_singleton()->register_singleton("CabinHUDMouseSystem", cabin_hud_mouse_system_singleton); // 14
         // after E3DRenderingServer is registered: the constructor follows its freed instances
-        semaphore_server_singleton = memnew(SemaphoreServer);
-        Engine::get_singleton()->register_singleton("SemaphoreServer", semaphore_server_singleton); // 15
+        signalling_server_singleton = memnew(SignallingServer);
+        Engine::get_singleton()->register_singleton("SignallingServer", signalling_server_singleton); // 15
         // after SimulationServer is registered: the constructor follows its pause and speed
         scenario_event_server_singleton = memnew(ScenarioEventServer);
         Engine::get_singleton()->register_singleton("ScenarioEventServer", scenario_event_server_singleton); // 16
@@ -364,12 +364,12 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenario_event_server_singleton = nullptr;
     }
 
-    if (Engine::get_singleton()->has_singleton("SemaphoreServer")) {
-        Engine::get_singleton()->unregister_singleton("SemaphoreServer"); // 15
+    if (Engine::get_singleton()->has_singleton("SignallingServer")) {
+        Engine::get_singleton()->unregister_singleton("SignallingServer"); // 15
     }
-    if (semaphore_server_singleton != nullptr) {
-        memdelete(semaphore_server_singleton);
-        semaphore_server_singleton = nullptr;
+    if (signalling_server_singleton != nullptr) {
+        memdelete(signalling_server_singleton);
+        signalling_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("CabinHUDMouseSystem")) {

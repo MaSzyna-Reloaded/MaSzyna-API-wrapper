@@ -16,10 +16,10 @@
 [ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d.gd" id="29_dcvyd"]
-[ext_resource type="SemaphoreSystemDelegate" path="res://semaphores/demo_block_delegate.tres" id="demo_block_delegate"]
+[ext_resource type="SignallingSystemDelegate" path="res://signalling/demo_block_delegate.tres" id="demo_block_delegate"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
-[ext_resource type="SemaphoreKind" uid="uid://diyvl26to634d" path="res://semaphores/sbl_3.tres" id="sbl_3_kind"]
+[ext_resource type="SignalHeadKind" uid="uid://diyvl26to634d" path="res://signalling/sbl_3.tres" id="sbl_3_kind"]
 
 [sub_resource type="Resource" id="TrackCurve_common"]
 script = ExtResource("22_track_curve")
@@ -1379,15 +1379,15 @@ model_filename = "tra/-3d"
 skins = ["tra/betonrelief1"]
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
-[node name="SBLSemaphore" type="SemaphoreNode" parent="." unique_id=880412397 node_paths=PackedStringArray("model")]
-semaphore_name = &"demo_sbl"
+[node name="SBLSignal" type="SignalHeadNode" parent="." unique_id=880412397 node_paths=PackedStringArray("model")]
+signal_head_name = &"demo_sbl"
 model = NodePath("../Dekoracje/SBL")
 kind = ExtResource("sbl_3_kind")
 aspect = &"S1"
 
-[node name="DemoBlock" type="SemaphoreSystemNode" parent="." unique_id=1340977105]
+[node name="DemoBlock" type="SignallingSystemNode" parent="." unique_id=1340977105]
 delegate = ExtResource("demo_block_delegate")
-semaphore_names = PackedStringArray("demo_sbl")
+signal_head_names = PackedStringArray("demo_sbl")
 
 [node name="AspectCycle" type="Timer" parent="." unique_id=517233640]
 wait_time = 5.0

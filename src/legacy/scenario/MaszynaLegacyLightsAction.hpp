@@ -4,14 +4,14 @@
 
 namespace godot {
     /// The original's `lights` event (lights_event, Event.cpp:1741-1803). The event is an aspect of
-    /// each semaphore it is aimed at (MaszynaLegacySemaphoreKindFactory); this hands it to the
-    /// semaphore's system, whose MaszynaLegacySemaphoreDelegate shows it.
+    /// each signal head it is aimed at (MaszynaLegacySignalHeadKindFactory); this hands it to the
+    /// signal head's system, whose MaszynaLegacySignallingDelegate shows it.
     class MaszynaLegacyLightsAction : public ScenarioEventAction {
             GDCLASS(MaszynaLegacyLightsAction, ScenarioEventAction)
 
         private:
-            TypedArray<RID> semaphores;
-            /// The aspect each of the semaphores shows, in their order
+            TypedArray<RID> signal_heads;
+            /// The aspect each of the signal heads shows, in their order
             TypedArray<StringName> aspects;
 
         protected:
@@ -20,8 +20,8 @@ namespace godot {
             void run(const RID &p_event, const RID &p_activator) override;
 
         public:
-            void set_semaphores(const TypedArray<RID> &p_semaphores);
-            TypedArray<RID> get_semaphores() const;
+            void set_signal_heads(const TypedArray<RID> &p_signal_heads);
+            TypedArray<RID> get_signal_heads() const;
             void set_aspects(const TypedArray<StringName> &p_aspects);
             TypedArray<StringName> get_aspects() const;
     };

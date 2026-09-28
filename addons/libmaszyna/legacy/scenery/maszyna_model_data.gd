@@ -4,7 +4,7 @@ class_name MaszynaModelData
 
 ## Scenery "node model" - built by SceneryInstancer as an E3DRenderingServer instance, not a node.
 
-## The node's name, empty for "none"; a semaphore is registered under it
+## The node's name, empty for "none"; a signal head is registered under it
 @export var name:String = ""
 @export var data_path:String = ""
 @export var model_filename:String = ""
@@ -21,6 +21,6 @@ class_name MaszynaModelData
 ## The node's `lightcolors` list, in the same order; a negative colour is the data's "-1", which
 ## leaves the colour the model carries alone
 @export var light_colors:PackedColorArray = []
-## Set when the model is a semaphore - a lit model or one a `lights` event is aimed at
-## (see SceneryInstancer.assign_semaphore_kinds())
-@export var semaphore_kind:SemaphoreKind = null
+## Set when the model is a signal head - a lit model or one a `lights` event is aimed at
+## (see SceneryInstancer.assign_signal_head_kinds())
+@export var signal_head_kind:SignalHeadKind = null

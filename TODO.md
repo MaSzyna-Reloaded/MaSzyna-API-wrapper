@@ -957,4 +957,15 @@ ported, into a delegate.
 * `release-linux-symbols` (`compile-release-symbols`) still builds on the host, so it needs the
   host's glibc and won't start on the machines it should diagnose. Needs the `release-linux`
   container.
-* The debug export template (`linux_debug.x86_64`) is still host-built.
+* The debug export template (`linux_debug.x86_64`) is built in the SDK by the `godot-engine`
+  workflow now; a local install still holds the host-built one until `ci/fetch-godot.sh` replaces it.
+
+## CI
+
+* A pull request from a fork has a read-only token, so after a `GODOT_VERSION` bump it cannot
+  publish the engine release; one from this repository has to build it first.
+* The Linux library is built in the SDK container without ccache, so every CI run compiles it in
+  full (Windows, Android and the tests use ccache on the runner).
+* The engine is built without Swappy (Android frame pacing, `install_swappy_android.py`) and without
+  AccessKit (`install_accesskit.py`), both of which the official builds carry.
+* Android: only `arm64` is built and exported; the `android_x86_64` preset has no template.

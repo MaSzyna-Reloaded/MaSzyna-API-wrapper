@@ -1,9 +1,10 @@
-.PHONY: linux-sdk-image compile-release-linux docs compile watch-and-compile api-docs docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
+.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
 # same from build to build and does not carry a branch or a date
 LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
+ANDROID_APK:=bin/android/maszyna-reloaded-android-arm64.apk
 WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
 BUILD_NUMBER_FILE:=demo/build_number.txt
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
@@ -29,7 +30,10 @@ GODOT_VERSION:=4.7.2
 LINUX_SDK_IMAGE:=maszyna-linux-sdk
 LINUX_SDK_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(LINUX_SDK_IMAGE)
 GODOT_SOURCE_DIR:=build-godot-$(GODOT_VERSION)
-LINUX_TEMPLATE:=$(GODOT_SOURCE_DIR)/bin/godot.linuxbsd.template_release.double.x86_64
+GODOT_BIN:=$(GODOT_SOURCE_DIR)/bin
+GODOT_SCONS=scons precision=double production=yes -j$(CMAKE_BUILD_JOBS)
+LINUX_TEMPLATE:=$(GODOT_BIN)/godot.linuxbsd.template_release.double.x86_64
+ANDROID_TEMPLATES:=$(GODOT_BIN)/android_release.apk $(GODOT_BIN)/android_debug.apk
 LINUX_TEMPLATE_INSTALLED:=$(HOME)/.local/share/godot/export_templates/$(GODOT_VERSION).stable.double/linux_release.x86_64
 
 #Helper for CLion so it would see generated bindings
@@ -159,11 +163,29 @@ compile-windows-release: $(BUILD_NUMBER_FILE)
 	cmake --build build-win64-release --parallel $(CMAKE_BUILD_JOBS)
 
 
+# Any NDK will do for a GDExtension; GitHub's runners carry one in ANDROID_NDK_LATEST_HOME
+ANDROID_NDK_ROOT?=$(ANDROID_NDK_LATEST_HOME)
+
+compile-android-debug: $(BUILD_NUMBER_FILE)
+	cmake -B build-android-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
+	cmake --build build-android-debug --parallel $(CMAKE_BUILD_JOBS)
+
+
+compile-android-release: $(BUILD_NUMBER_FILE)
+	cmake -B build-android-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
+	cmake --build build-android-release --parallel $(CMAKE_BUILD_JOBS)
+
+
 linux-sdk-image:
 	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
 
 
-compile-release-linux: $(BUILD_NUMBER_FILE) linux-sdk-image
+# The SDK container has no Godot, so the API the build binds against is dumped on the host first
+extension_api.json:
+	$(GODOT) --headless --dump-extension-api
+
+
+compile-release-linux: $(BUILD_NUMBER_FILE) extension_api.json linux-sdk-image
 	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
 
 
@@ -171,9 +193,31 @@ $(GODOT_SOURCE_DIR):
 	git clone --depth 1 --branch $(GODOT_VERSION)-stable https://github.com/godotengine/godot.git $@
 
 
-# Built once per engine version - the editor's own template is linked against the host's glibc
-$(LINUX_TEMPLATE): | $(GODOT_SOURCE_DIR) linux-sdk-image
-	$(LINUX_SDK_RUN) sh -c 'cd $(GODOT_SOURCE_DIR) && scons platform=linuxbsd arch=x86_64 target=template_release precision=double production=yes -j$(CMAKE_BUILD_JOBS)'
+# Godot publishes no double precision build, so the engine is built here, once per engine version.
+# CI does it in .github/workflows/godot-engine.yml and every other run fetches the result into
+# $(GODOT_BIN) with ci/fetch-godot.sh, which is what keeps these rules from firing there.
+godot-version:
+	@echo $(GODOT_VERSION)
+
+
+# The editor too is built in the SDK - the host's own is linked against the host's glibc, and this
+# one runs on the CI runner as well
+$(GODOT_BIN)/godot.linuxbsd.%.double.x86_64: | $(GODOT_SOURCE_DIR) linux-sdk-image
+	$(LINUX_SDK_RUN) sh -c 'cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=linuxbsd arch=x86_64 target=$*'
+
+
+# Direct3D 12 is not supported by the project, so the template is built without it and needs none
+# of its SDK
+$(GODOT_BIN)/godot.windows.%.double.x86_64.exe: | $(GODOT_SOURCE_DIR)
+	cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=windows arch=x86_64 target=$* d3d12=no
+
+
+# The export presets do not use a gradle build, so the export takes the ready APKs; scons puts the
+# native libraries where gradle packs them from. Needs ANDROID_HOME and a JDK 17.
+$(ANDROID_TEMPLATES) &: | $(GODOT_SOURCE_DIR)
+	cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=android arch=arm64 target=template_release \
+	    && $(GODOT_SCONS) platform=android arch=arm64 target=template_debug \
+	    && cd platform/android/java && ./gradlew generateGodotTemplates
 
 
 $(LINUX_TEMPLATE_INSTALLED): $(LINUX_TEMPLATE)
@@ -192,6 +236,12 @@ release-windows: compile-windows-release
 	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
 	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
 	@echo "Exported: $(WINDOWS_ZIP)"
+
+
+release-android: compile-android-release
+	mkdir -p bin/android
+	cd demo && $(GODOT) --headless --export-release "android_arm64" ../$(ANDROID_APK)
+	@echo "Exported: $(ANDROID_APK)"
 
 
 release: release-linux release-windows

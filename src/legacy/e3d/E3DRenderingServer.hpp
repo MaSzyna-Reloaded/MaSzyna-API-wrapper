@@ -87,6 +87,10 @@ namespace godot {
             static constexpr float SPOT_LIGHT_SHADOW_BIAS = 0.06;
             static constexpr float OMNI_LIGHT_SHADOW_BIAS = 0.1;
             static constexpr float LIGHT_SHADOW_NORMAL_BIAS = 3.0;
+            /// Light3D's constructor value (light_3d.cpp:505); the server starts at 0, and a spot's
+            /// depth bias is multiplied by it (light_storage.cpp:1232) - at 0 the ground has no
+            /// depth bias at all and shadows itself across the whole pool
+            static constexpr float LIGHT_SHADOW_BLUR = 1.0;
             static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/scenery/lights/energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_ENERGY = 1.0;
             /// How much of the lamp's own colour is mixed into a white light. A sodium lamp's

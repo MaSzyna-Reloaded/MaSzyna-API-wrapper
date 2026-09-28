@@ -41,19 +41,27 @@ func _ready() -> void:
         var action: Button = child as Button
         menu.add_item(action.text)
         _menu_actions.append(action)
+    # the menus show their keys and handle them: a key picks its entry as a click would
+    menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))
+    # F2, as the original's (driveruilayer.cpp:155)
+    %View.set_item_shortcut(ViewItem.TIMETABLE, _action_shortcut(&"timetable_toggle"))
+    # Shift+F2 - free in the original, whose F-keys ignore modifiers (driveruilayer.cpp:115)
+    %View.set_item_shortcut(ViewItem.SCENARIO, _action_shortcut(&"scenario_toggle"))
+
+
+## A menu shortcut of an input action - the menu shows its key, and matches it exactly (F2 is not
+## Shift+F2)
+static func _action_shortcut(action: StringName) -> Shortcut:
+    var event: InputEventAction = InputEventAction.new()
+    event.action = action
+    var shortcut: Shortcut = Shortcut.new()
+    shortcut.events = [event]
+    return shortcut
 
 
 func _input(event: InputEvent) -> void:
     if event.is_action_pressed("hud_toggle"):
         $TopBar/HBoxContainer/ToggleAllControls.button_pressed = not $TopBar/HBoxContainer/ToggleAllControls.button_pressed
-    if event.is_action_pressed("toggle_weather_controls"):
-        $ControlWindows/WeatherAndTime.visible = not $ControlWindows/WeatherAndTime.visible
-    # F2, as the original's (driveruilayer.cpp:155); exact, so that Shift+F2 is not F2 as well
-    if event.is_action_pressed("timetable_toggle", false, true):
-        _on_view_menu_index_pressed(ViewItem.TIMETABLE)
-    # Shift+F2 - free in the original, whose F-keys ignore modifiers (driveruilayer.cpp:115)
-    if event.is_action_pressed("scenario_toggle", false, true):
-        _on_view_menu_index_pressed(ViewItem.SCENARIO)
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:

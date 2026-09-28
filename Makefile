@@ -9,10 +9,16 @@ CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
 CLANG_TIDY_BINDINGS_FILE=$(CLANG_TIDY_BUILD_DIR)/godot-cpp/gen/include/godot_cpp/classes/node.hpp
 LIBMASZYNA_DEBUG:=""
 CMAKE_GODOTCPP_API_VERSION=4.7
+CMAKE_GODOTCPP_PRECISION=double
+# godot-cpp bundles the single-precision API only; the double one is dumped from the local Godot
+CMAKE_GODOTCPP_API_FILE=$(CURDIR)/build-api/extension_api.json
+
+$(CMAKE_GODOTCPP_API_FILE):
+	mkdir -p $(dir $@) && cd $(dir $@) && godot --headless --dump-extension-api
 
 #Helper for CLion so it would see generated bindings
-generate-bindings:
-	cmake -B cmake-build-debug
+generate-bindings: $(CMAKE_GODOTCPP_API_FILE)
+	cmake -B cmake-build-debug -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build cmake-build-debug --target generate_bindings
 
 
@@ -37,29 +43,30 @@ cleanup-build-release:
 cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
-	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-debug: $(CMAKE_GODOTCPP_API_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
+	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-release:
-	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-release: $(CMAKE_GODOTCPP_API_FILE)
+	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
 compile-all: compile-debug compile-release
 
 
-cross-compile-release:
+cross-compile-release: $(CMAKE_GODOTCPP_API_FILE)
 	cmake -B build-linux64 \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
-           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
+          -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -68,17 +75,18 @@ cross-compile-release:
 	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 
 
-cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
+cross-compile-debug: $(CMAKE_GODOTCPP_API_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	cmake -B build-linux64 \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DLIBMASZYNA_DEBUG=ON \
-          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
+          -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -87,20 +95,21 @@ cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_F
 	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 
 
-release-linux:
+release-linux: $(CMAKE_GODOTCPP_API_FILE)
 	cmake -B build-linux64 \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
-          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
 
 
-release-windows:
+release-windows: $(CMAKE_GODOTCPP_API_FILE)
 	cmake -B build-win64 \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
            -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
+           -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -125,9 +134,9 @@ watch-and-compile:
 	sh scripts/autocompile.sh
 
 
-$(CLANG_TIDY_COMPILE_COMMANDS_FILE):
+$(CLANG_TIDY_COMPILE_COMMANDS_FILE): $(CMAKE_GODOTCPP_API_FILE)
 	@echo "Style: configuring clang-tidy database..." && \
-	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
 
 $(CLANG_TIDY_BINDINGS_FILE): $(CLANG_TIDY_BUILD_DIR)/CMakeCache.txt
 	@echo "Style: generating clang-tidy bindings..." && \

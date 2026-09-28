@@ -30,6 +30,11 @@ const WIPER_ELEMENT_SUFFIXES:Array[String] = ["_p1", "_p2", "_p3"]
 ## std::vector<bool>(8, false) wiperDirection of the original (DynObj.h:328)
 const MAX_WIPERS:int = 8
 const MAX_WHEEL_AXLES:int = 20
+## A mirror's glass is a submodel with nothing under it, named after a mirror - the data marks
+## mirrors by name only: dynamic/pkp/elf_v1 "zwierciadlo", dynamic/pkp/impuls_v1 "szybka_lusterko_l"
+const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
+## Whether the mirror glass reflects the scene (PlanarMirror3D)
+const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
 
 ## Fixed original-engine submodel naming convention for pantograph arms
 ## (DynObj.cpp's animpantrd1prefix:/rd2/rg1/rg2/sl tokens - configurable in
@@ -345,6 +350,13 @@ static func _resolve_animation_paths(
             var mirror:Node3D = _find_submodel(submodel_index, [mirror_name.to_lower()])
             mirror_paths.append(vehicle.get_path_to(mirror) if mirror else NodePath())
         vehicle.mirror_paths = mirror_paths
+
+    if ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true):
+        for submodel_name:String in submodel_index:
+            var glass:MeshInstance3D = submodel_index[submodel_name] as MeshInstance3D
+            if glass and glass.get_child_count(true) == 0 \
+                    and MIRROR_GLASS_NAME_PARTS.any(func(part:String) -> bool: return submodel_name.contains(part)):
+                glass.add_child(PlanarMirror3D.new())
 
     # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
     var coupler_paths:Dictionary = {}

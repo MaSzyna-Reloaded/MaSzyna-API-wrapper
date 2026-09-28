@@ -74,6 +74,36 @@ func test_a_span_on_a_section_is_fed_along_the_wires() -> void:
             "and the neighbouring span of the section is fed along the wire")
 
 
+## The wire over a diverging track starts beside a span of the main line, not at its end, so no
+## span of that chain is joined to a powered one. The original feeds it across the overlap from
+## the nearest powered span of the same section (Traction.cpp:858-895) - td.scn's second track
+## past zwr01 is wired exactly this way.
+func test_a_chain_starting_beside_a_powered_span_is_fed_across_the_overlap() -> void:
+    const BRANCH_OFFSET:float = 5.0
+    const BRANCH_SPANS:int = 3
+    const MAIN_SECTION_SPANS:int = 3
+    ## The branch hangs from the middle of main span 2, half a metre off its wire.
+    const BRANCH_START:Vector3 = Vector3(0.5, WIRE_HEIGHT, 2.5 * SPAN_LENGTH)
+    _add_source("sekcja", SUBSTATION_VOLTAGE, true)
+    _add_wire(0, "podstacja")
+    _add_source("podstacja", SUBSTATION_VOLTAGE, false)
+    for i in range(1, MAIN_SECTION_SPANS + 1):
+        _add_wire(i, "sekcja")
+    var branch_start:Vector3 = BRANCH_START
+    var far:RID = RID()
+    for i in BRANCH_SPANS:
+        var branch_end:Vector3 = Vector3(BRANCH_OFFSET, WIRE_HEIGHT, BRANCH_START.z + (i + 1) * SPAN_LENGTH)
+        far = TractionServer.wire_create()
+        _wires.append(far)
+        TractionServer.wire_set_params(far, branch_start, branch_end, "sekcja", NOMINAL_VOLTAGE, 2000.0, 0.01)
+        branch_start = branch_end
+    TractionServer.network_build()
+
+    assert_almost_eq(
+            TractionServer.wire_get_voltage(far, 0.0, NO_CURRENT), SUBSTATION_VOLTAGE, 1.0,
+            "the far span of the branch carries the substation's voltage")
+
+
 ## Where the data declares one name twice - a section and then a substation, which is how every
 ## supply of this datapack is written - the last declaration is the one a span gets, the way the
 ## original's own name table resolves a duplicate (Names.h:38).

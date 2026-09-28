@@ -80,6 +80,9 @@ anything. Open work belongs in `TODO.md`.
   cab that does not model it. *(09-20 E186 Ctrl+J)*
 * A pantograph at 0 V has three causes (no wire in reach, dead wire, no contact). Report them
   separately. *(09-24 pantograph)*
+* A wire chain that shares no end with a powered one is fed across the overlap by the section-ends
+  pass (Traction.cpp:858). Check the span's chain and its feed before the contact. *(09-29 td.scn's
+  second track dead)*
 * Survey the data (a histogram) before mapping a parameter or trusting a "supported" list, and
   read the geometry drawn for a glow before adding a tuning constant. *(09-21 spot cone, street
   lamp; 09-20 missing shaders)*

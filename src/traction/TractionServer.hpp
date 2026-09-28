@@ -13,7 +13,8 @@ namespace godot {
      * them, the same split TrackServer has against the track rendering. Ports
      * Traction.cpp/TractionPower.cpp of the original engine: named power sources feeding wire
      * spans, a resistive network built once per scenery load
-     * (traction_table::InitTraction()), and the geometric "which wire is above this point" query
+     * (traction_table::InitTraction(), including the pass that feeds a section's open end from
+     * the powered span it hangs beside), and the geometric "which wire is above this point" query
      * (scene::basic_cell::update_traction()).
      *
      * Not ported: TTraction::PowerSet()'s section-marker replacement (Traction.cpp:747-806, only
@@ -63,6 +64,10 @@ namespace godot {
             /* Either flag of TTraction::iLast sends the pantograph back to an area search
              * (DynObj.cpp:8747). */
             static constexpr int LAST_SPAN_FLAGS = 0x3;
+            /* How far from a section's open end the powered span it hangs beside may lie - the
+             * bounding radius of one scene cell the original searches (scene.h:221,
+             * 0.5 * sqrt(2) * EU07_CELLSIZE 250). */
+            static constexpr double SECTION_END_SEARCH_RADIUS = 176.78;
 
             /// Mirrors TTractionPowerSource's own members.
             struct PowerSource {
@@ -149,6 +154,8 @@ namespace godot {
             void _resolve_parallel_spans();
             void _propagate_resistance();
             void _resistance_walk(const RID &p_from_wire, int p_direction, double p_resistance, const RID &p_source);
+            /// Port of the section-ends pass of traction_table::InitTraction() (Traction.cpp:858-895).
+            void _connect_section_ends();
             /* Height of one wire above a point along the pantograph's plane; INF when the plane
              * misses the span, or the wire is below the point or beyond the reach of the collector
              * and its horns (scene::basic_cell::update_traction()'s geometry test). */

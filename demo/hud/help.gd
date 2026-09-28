@@ -20,7 +20,10 @@ const GROUPS: Dictionary = {
     ],
     "UI": [
         "hud_toggle",
+        "minimap_toggle",
         "toggle_weather_controls",
+        "timetable_toggle",
+        "scenario_toggle",
     ],
 }
 
@@ -48,6 +51,8 @@ func _ready() -> void:
         actions.sort()
         var foldable: FoldableContainer = FoldableContainer.new()
         foldable.title = group
+        # Tab and Space belong to the game, not to the focus of a HUD widget
+        foldable.focus_mode = Control.FOCUS_NONE
         var rows: VBoxContainer = VBoxContainer.new()
         for action: String in actions:
             rows.add_child(_make_row(action))

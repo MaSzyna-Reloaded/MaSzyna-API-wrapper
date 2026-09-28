@@ -66,7 +66,7 @@ title = "Controls"
 unique_name_in_owner = true
 title = "View"
 hide_on_checkable_item_selection = false
-item_count = 3
+item_count = 4
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -77,13 +77,9 @@ item_1/id = 1
 item_2/text = "Scenario"
 item_2/checkable = 1
 item_2/id = 2
-
-[node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer" unique_id=1886226088]
-clip_contents = true
-layout_mode = 2
-focus_mode = 0
-toggle_mode = true
-text = "Toggle controls"
+item_3/text = "Toggle controls"
+item_3/checkable = 1
+item_3/id = 3
 
 [node name="MenuActions" type="Control" parent="."]
 visible = false
@@ -364,5 +360,6 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
-[connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]
+[connection signal="close_requested" from="TimetablePanel" to="." method="_on_timetable_panel_close_requested"]
+[connection signal="close_requested" from="ScenarioPanel" to="." method="_on_scenario_panel_close_requested"]

@@ -808,3 +808,210 @@ msgstr "Postój · odjazd za %d:%02d"
 
 msgid "Departure"
 msgstr "Odjazd"
+
+msgid "Vehicles"
+msgstr "Pojazdy"
+
+msgid "No vehicle has a driver"
+msgstr "Żaden pojazd nie ma maszynisty"
+
+msgid "Show"
+msgstr "Pokaż"
+
+msgid "Unmanned"
+msgstr "Brak obsady"
+
+msgid "Enable AI"
+msgstr "Włącz AI"
+
+msgid "Disable AI"
+msgstr "Wyłącz AI"
+
+msgid "Follow"
+msgstr "Obserwuj"
+
+msgid "Followed vehicle (click to open its card)"
+msgstr "Obserwowany pojazd (kliknij, aby otworzyć kartę)"
+
+msgid "Your vehicle (click to enter the cab)"
+msgstr "Twój pojazd (kliknij, aby wejść do kabiny)"
+
+msgid "Operator actions"
+msgstr "Akcje dyżurnego"
+
+msgid "Release brakes"
+msgstr "Odhamuj"
+
+msgid "Emergency stop"
+msgstr "Zatrzymaj awaryjnie"
+
+msgid "AI"
+msgstr "AI"
+
+msgid "Standing"
+msgstr "Stoi"
+
+msgid "Running"
+msgstr "Jedzie"
+
+msgid "Basic data"
+msgstr "Podstawowe dane"
+
+msgid "Current parameters"
+msgstr "Bieżące parametry"
+
+msgid "Driver"
+msgstr "Maszynista"
+
+msgid "Motion"
+msgstr "Ruch"
+
+msgid "Brakes and air"
+msgstr "Hamulce i powietrze"
+
+msgid "Drive and electrics"
+msgstr "Napęd i elektryka"
+
+msgid "File"
+msgstr "Plik"
+
+msgid "Skin"
+msgstr "Malowanie"
+
+msgid "Length"
+msgstr "Długość"
+
+msgid "Mass"
+msgstr "Masa"
+
+msgid "Axle arrangement"
+msgstr "Układ osi"
+
+msgid "Axles"
+msgstr "Osie"
+
+msgid "Track width"
+msgstr "Rozstaw toru"
+
+msgid "Maximum speed"
+msgstr "Prędkość maksymalna"
+
+msgid "Power"
+msgstr "Moc"
+
+msgid "Brake system"
+msgstr "System hamulcowy"
+
+msgid "Brake valve"
+msgstr "Zawór rozrządczy"
+
+msgid "Acceleration"
+msgstr "Przyspieszenie"
+
+msgid "Direction"
+msgstr "Kierunek"
+
+msgid "Neutral"
+msgstr "Neutralny"
+
+msgid "Distance"
+msgstr "Przebyta droga"
+
+msgid "Brake pipe"
+msgstr "Przewód główny"
+
+msgid "Brake cylinder"
+msgstr "Cylinder hamulcowy"
+
+msgid "Main reservoir"
+msgstr "Zbiornik główny"
+
+msgid "Feed pipe"
+msgstr "Przewód zasilający"
+
+msgid "Brake handle"
+msgstr "Nastawnik hamulca"
+
+msgid "Disabled"
+msgstr "Wyłączony"
+
+msgid "Line voltage"
+msgstr "Napięcie sieci"
+
+msgid "Engine speed"
+msgstr "Obroty silnika"
+
+msgid "Master controller"
+msgstr "Nastawnik jazdy"
+
+msgid "Main switch"
+msgstr "Wyłącznik szybki"
+
+msgid "Energy drawn"
+msgstr "Energia pobrana"
+
+msgid "Energy returned"
+msgstr "Energia oddana"
+
+msgid "Energy balance"
+msgstr "Bilans energii"
+
+msgid "Take over"
+msgstr "Przejmij prowadzenie"
+
+msgid "Hand over to AI"
+msgstr "Oddaj prowadzenie AI"
+
+msgid "Order"
+msgstr "Rozkaz"
+
+msgid "Speed allowed"
+msgstr "Prędkość dozwolona"
+
+msgid "Speed ahead"
+msgstr "Prędkość dalej"
+
+msgid "Next stop"
+msgstr "Następny postój"
+
+msgid "At the platform"
+msgstr "Przy peronie"
+
+msgid "Yes"
+msgstr "Tak"
+
+msgid "Stop time"
+msgstr "Czas postoju"
+
+msgid "No limit"
+msgstr "Bez ograniczenia"
+
+msgid "Train"
+msgstr "Pociąg"
+
+msgid "Relation"
+msgstr "Relacja"
+
+msgid "Delay"
+msgstr "Opóźnienie"
+
+msgid "Last station"
+msgstr "Poprzednia stacja"
+
+msgid "Then"
+msgstr "Potem"
+
+msgid "Wait for orders"
+msgstr "Oczekiwać dalszych poleceń"
+
+msgid "Remove trainset"
+msgstr "Usuń skład"
+
+msgid "Remove"
+msgstr "Usuń"
+
+msgid "Remove the trainset of %s?"
+msgstr "Usunąć skład pojazdu %s?"
+
+msgid "Trainset list"
+msgstr "Lista składów"

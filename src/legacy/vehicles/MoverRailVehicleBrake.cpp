@@ -33,6 +33,17 @@ namespace godot {
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
+    // Original engine: simulation.cpp:184 consistreleaser - the valve's releaser, not
+    // BrakeReleaser(): no cab conditions, nothing sent along the control line. The original holds
+    // it while its button is held; here it is held until the brakes stop braking
+    // (_do_process_component()).
+    void MoverRailVehicleBrake::consist_releaser(const bool p_active) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->Hamulec->Releaser(p_active ? 1 : 0);
+        consist_releasing = p_active;
+    }
+
     void MoverRailVehicleBrake::compressor(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
@@ -254,6 +265,9 @@ namespace godot {
     void MoverRailVehicleBrake::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
+        if (consist_releasing && !is_braking()) {
+            consist_releaser(false);
+        }
         if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {
             const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / p_delta);
             local_brake_pressure_change_rate = local_brake_pressure_change_rate * 0.9 + raw_rate * 0.1;

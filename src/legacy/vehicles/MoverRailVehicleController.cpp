@@ -3,6 +3,7 @@
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
 #include <cmath>
+#include <tuple>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -123,11 +124,26 @@ namespace godot {
         emit_signal(simulation_initialized_signal);
     }
 
-    /* The base lets go of the components and the registration; the Mover goes last. */
+    /* The base lets go of the components and the registration; the Mover goes last. A neighbour
+     * still coupled to it is let go first: its coupler would point at a Mover that is gone. The
+     * original never deletes a vehicle - it takes the whole consist out of the simulation
+     * (vehicle_table::erase_disabled(), DynObj.cpp:8837) - so it has no counterpart; the coupler is
+     * cleared the way Dettach() clears a coupling at pressed buffers (Mover.cpp:634). */
     void MoverRailVehicleController::release() {
         VehicleController::release();
         if (mover == nullptr) {
             return;
+        }
+        for (TCoupling &coupler: mover->Couplers) {
+            if (coupler.Connected == nullptr) {
+                continue;
+            }
+            TCoupling &other_coupler = coupler.Connected->Couplers[coupler.ConnectedNr];
+            std::tie(other_coupler.Connected, other_coupler.ConnectedNr, other_coupler.CouplingFlag) =
+                    std::make_tuple(nullptr, -1, coupling::faux);
+            if (const auto it = controllers_by_mover.find(coupler.Connected); it != controllers_by_mover.end()) {
+                it->second->emit_signal(consist_changed_signal);
+            }
         }
         controllers_by_mover.erase(mover);
         delete mover;

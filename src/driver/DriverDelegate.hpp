@@ -27,6 +27,7 @@ namespace godot {
             GDVIRTUAL1(_update, RID)
             GDVIRTUAL1(_control_taken, RID)
             GDVIRTUAL1RC(Dictionary, _get_timetable_state, RID)
+            GDVIRTUAL1RC(Dictionary, _get_state, RID)
 
             /// Called by DriverSystem. A C++ delegate overrides these; the default forwards to the
             /// script.
@@ -46,5 +47,8 @@ namespace godot {
             /// last station [min], early when negative), "at_passenger_stop"; empty for a delegate
             /// that follows no timetable
             virtual Dictionary get_timetable_state(const RID &p_driver) const;
+            /// What the driver keeps - its orders and what they asked for; the keys are the
+            /// delegate's own, empty for a delegate that shows nothing
+            virtual Dictionary get_state(const RID &p_driver) const;
     };
 } // namespace godot

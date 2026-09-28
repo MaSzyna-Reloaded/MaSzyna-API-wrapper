@@ -32,6 +32,9 @@ namespace godot {
             previous_pantograph_live[selector] = live[selector];
             previous_pantograph_active[selector] = active[selector];
         }
+        if (electric_backend != nullptr) {
+            electric_backend->meter_energy(this, p_delta);
+        }
     }
 
     double RailVehicleElectricEngine::get_collector_max_voltage() const {
@@ -114,6 +117,12 @@ namespace godot {
     }
     double RailVehicleElectricEngine::get_collector_voltage() const {
         return electric_backend != nullptr ? electric_backend->get_collector_voltage(this) : 0.0;
+    }
+    double RailVehicleElectricEngine::get_energy_drawn() const {
+        return electric_backend != nullptr ? electric_backend->get_energy_drawn(this) : 0.0;
+    }
+    double RailVehicleElectricEngine::get_energy_returned() const {
+        return electric_backend != nullptr ? electric_backend->get_energy_returned(this) : 0.0;
     }
     bool RailVehicleElectricEngine::get_contactors_active() const {
         return electric_backend != nullptr ? electric_backend->get_contactors_active(this) : false;
@@ -625,6 +634,9 @@ namespace godot {
         p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
         p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();
         p_state["current_collector/voltage"] = get_collector_voltage();
+        // Train.cpp:810
+        p_state["power_drawn"] = get_energy_drawn();
+        p_state["power_returned"] = get_energy_returned();
         p_state["indicators/contactors_active"] = get_contactors_active();
         p_state["indicators/diff_relay_active"] = get_diff_relay_active();
         p_state["indicators/resistors_active"] = get_resistors_active();

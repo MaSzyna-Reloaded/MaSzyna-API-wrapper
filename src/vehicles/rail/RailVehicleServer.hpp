@@ -254,6 +254,10 @@ namespace godot {
                     const RID &p_vehicle, const RID &p_track, double p_track_offset,
                     TrackServer::Direction p_track_direction);
             void vehicle_move(const RID &p_vehicle, double p_distance);
+            /* The whole trainset coupled to the vehicle moved p_distance [m] towards the vehicle's
+             * front, every vehicle whichever way round it stands (TDynamicObject::move_set(),
+             * DynObj.cpp:4302) */
+            void trainset_move(const RID &p_vehicle, double p_distance);
             /* Walks one vehicle the distance its own simulation asked for. The step does this for
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);

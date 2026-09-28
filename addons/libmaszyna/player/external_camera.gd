@@ -20,6 +20,8 @@ enum View {CONSIST_FRONT, CONSIST_REAR, BOGIE, DRIVEBY}
 
 var vehicle:RailVehicle3D
 var view:View = View.CONSIST_FRONT
+## How fast the drone flies [m/s], for a camera taking over from it
+var velocity:Vector3 = Vector3.ZERO
 
 var _dirty:bool = false
 # the vehicle the view is attached to (null for the drive-by point) and its local offset
@@ -44,6 +46,13 @@ func activate(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
     _look_target = p_from.origin - p_from.basis.z * 10.0
     _dirty = true
     make_current()
+
+
+## The external view of any vehicle from the first view - the front of its trainset - whatever view
+## was selected last (the trainset list's Follow)
+func follow(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
+    view = View.CONSIST_FRONT
+    activate(p_vehicle, p_from)
 
 
 func next_view() -> void:
@@ -79,7 +88,10 @@ func _process(delta:float) -> void:
         arm = arm.rotated(pitch_axis.normalized(), _orbit.y)
 
     var weight:float = 1.0 - exp(-response * delta)
+    var previous_position:Vector3 = global_position
     global_position = global_position.lerp(look_target + arm, weight)
+    if delta > 0.0:
+        velocity = (global_position - previous_position) / delta
     _look_target = _look_target.lerp(look_target, weight)
     if not global_position.is_equal_approx(_look_target):
         look_at(_look_target, Vector3.UP)

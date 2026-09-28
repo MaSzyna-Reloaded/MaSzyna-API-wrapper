@@ -1,0 +1,75 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/vehicle_selector_row.gd" id="1_row"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_actions_button.tscn" id="2_actions"]
+
+[node name="VehicleSelectorRow" type="PanelContainer"]
+theme_type_variation = &"VehicleSelectorRow"
+script = ExtResource("1_row")
+
+[node name="Layout" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Info" type="VBoxContainer" parent="Layout"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Heading" type="HBoxContainer" parent="Layout/Info"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Name" type="Label" parent="Layout/Info/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+
+[node name="DriverPill" type="PanelContainer" parent="Layout/Info/Heading"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"TimetablePill"
+
+[node name="DriverBadge" type="Label" parent="Layout/Info/Heading/DriverPill"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 11
+
+[node name="Train" type="Label" parent="Layout/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Relation" type="Label" parent="Layout/Info"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableMuted"
+
+[node name="Status" type="HBoxContainer" parent="Layout/Info"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="Speed" type="Label" parent="Layout/Info/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableDigits"
+
+[node name="Motion" type="Label" parent="Layout/Info/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableMuted"
+
+[node name="Delay" type="Label" parent="Layout/Info/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ActionsButton" parent="Layout" instance=ExtResource("2_actions")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[connection signal="gui_input" from="." to="." method="_on_gui_input"]
+[connection signal="remove_confirmed" from="Layout/ActionsButton" to="." method="_on_actions_button_remove_confirmed"]

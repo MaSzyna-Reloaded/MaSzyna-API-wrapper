@@ -435,6 +435,13 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `TNESt3::SetSize()` builds every ESt distributor as an ESt4: `TRapid` instead of `TRura` and no
   `Podskok` for ESt3, and `AL2`, `PZZ`, `HBG300`, `3d`/`4d` and `-ED` are dropped. That covers
   about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
+* The energy meter (`MoverElectricEngineBackend::meter_energy()`, DynObj.cpp:3798-3832) ports the
+  original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
+  `ShowCurrent(0) / active` (`RailVehicle3D.cpp:1480`) - whether it should take the ported one is
+  open. The meter has no test: it needs an electric fixture drawing current under a live wire.
+* The vehicle selector's "Stop and repair", "Reset position", "Refill main tank" and "Rupture main
+  pipe" (vehicleparams.cpp:268-287) are not offered; its cog has the brake release, the emergency
+  brake and the trainset moves only.
 
 ## Rendering
 

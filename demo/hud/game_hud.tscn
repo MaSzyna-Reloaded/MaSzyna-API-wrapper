@@ -22,6 +22,11 @@
 [ext_resource type="PackedScene" path="res://hud/timetable_panel.tscn" id="25_timetable"]
 [ext_resource type="PackedScene" path="res://hud/scenario_panel.tscn" id="26_scenario"]
 [ext_resource type="PackedScene" path="res://hud/script_editor_panel.tscn" id="27_script_editor"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_selector_panel.tscn" id="28_vehicle_selector"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_chip.tscn" id="29_vehicle_chip"]
+[ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
+[ext_resource type="Texture2D" path="res://hud/icons/cab.svg" id="31_cab"]
+[ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
 
 [sub_resource type="Theme" id="Theme_control_windows"]
 default_font_size = 12
@@ -67,7 +72,7 @@ title = "Controls"
 unique_name_in_owner = true
 title = "View"
 hide_on_checkable_item_selection = false
-item_count = 5
+item_count = 6
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -84,6 +89,9 @@ item_3/id = 3
 item_4/text = "Lua scripts"
 item_4/checkable = 1
 item_4/id = 4
+item_5/text = "Trainset list"
+item_5/checkable = 1
+item_5/id = 5
 
 [node name="MenuActions" type="Control" parent="."]
 visible = false
@@ -367,8 +375,55 @@ layout_mode = 1
 unique_name_in_owner = true
 layout_mode = 1
 
+[node name="VehicleSelectorPanel" parent="." instance=ExtResource("28_vehicle_selector")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="FloatingButtons" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="FollowedVehicleChip" parent="FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Followed vehicle (click to open its card)"
+icon = ExtResource("30_eye")
+
+[node name="PlayerVehicleChip" parent="FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Your vehicle (click to enter the cab)"
+icon = ExtResource("31_cab")
+action_icon = ExtResource("32_hand_over")
+action_tooltip = "Hand over to AI"
+
+[node name="VehicleCards" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]
 [connection signal="close_requested" from="TimetablePanel" to="." method="_on_timetable_panel_close_requested"]
 [connection signal="close_requested" from="ScenarioPanel" to="." method="_on_scenario_panel_close_requested"]
 [connection signal="close_requested" from="ScriptEditorPanel" to="." method="_on_script_editor_panel_close_requested"]
+[connection signal="close_requested" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_close_requested"]
+[connection signal="vehicle_activated" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_vehicle_activated"]
+[connection signal="remove_trainset_requested" from="VehicleSelectorPanel" to="." method="_remove_trainset"]
+[connection signal="pressed" from="FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_pressed"]
+[connection signal="pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
+[connection signal="action_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]

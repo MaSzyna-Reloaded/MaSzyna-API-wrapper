@@ -279,6 +279,10 @@ namespace godot {
 
         public:
             virtual void brake_releaser(bool p_pressed) = 0;
+            /* The releaser of this vehicle's valve switched directly, whatever the cab's conditions
+             * - what the original's consistreleaser does to each vehicle of a trainset
+             * (simulation.cpp:184). Switched on, it stays on until the brakes stop braking. */
+            virtual void consist_releaser(bool p_active) = 0;
             /* The compressor switched (CompressorSwitch(), Mover.cpp:3724): the cab's own, sent along
              * the control line to the vehicles that carry one */
             virtual void compressor(bool p_enabled) = 0;

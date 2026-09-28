@@ -205,8 +205,8 @@ func _get_timetable_state(driver:RID) -> Dictionary:
     }
 
 
-## What the driver keeps: its orders and what they asked for
-func get_state(driver:RID) -> Dictionary:
+## What the driver keeps: its orders and what they asked for (DriverDelegate.get_state())
+func _get_state(driver:RID) -> Dictionary:
     var state:DriverState = _drivers.get(driver)
     if not state:
         return {}

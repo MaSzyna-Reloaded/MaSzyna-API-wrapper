@@ -6,10 +6,13 @@
 
 namespace godot {
     const char *DriverSystem::driver_timetable_changed_signal = "driver_timetable_changed";
+    const char *DriverSystem::driver_vehicle_attached_signal = "driver_vehicle_attached";
+    const char *DriverSystem::driver_freed_signal = "driver_freed";
 
     void DriverSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("driver_create"), &DriverSystem::driver_create);
         ClassDB::bind_method(D_METHOD("driver_free", "driver"), &DriverSystem::driver_free);
+        ClassDB::bind_method(D_METHOD("get_drivers"), &DriverSystem::get_drivers);
         ClassDB::bind_method(
                 D_METHOD("driver_attach_delegate", "driver", "delegate"), &DriverSystem::driver_attach_delegate);
         ClassDB::bind_method(D_METHOD("driver_get_delegate", "driver"), &DriverSystem::driver_get_delegate);
@@ -30,7 +33,12 @@ namespace godot {
                 D_METHOD("driver_get_timetable_state", "driver"), &DriverSystem::driver_get_timetable_state);
         ClassDB::bind_method(
                 D_METHOD("driver_report_timetable_changed", "driver"), &DriverSystem::driver_report_timetable_changed);
+        ClassDB::bind_method(D_METHOD("driver_get_state", "driver"), &DriverSystem::driver_get_state);
         ADD_SIGNAL(MethodInfo(driver_timetable_changed_signal, PropertyInfo(Variant::RID, "driver")));
+        ADD_SIGNAL(MethodInfo(
+                driver_vehicle_attached_signal, PropertyInfo(Variant::RID, "driver"),
+                PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(driver_freed_signal, PropertyInfo(Variant::RID, "driver")));
     }
 
     /// A freed vehicle leaves its driver without one. No explicit disconnect: callable_mp reports
@@ -131,16 +139,26 @@ namespace godot {
         if (driver == nullptr) {
             return;
         }
-        if (DriverData *data = drivers.getptr(*driver); data != nullptr) {
+        const RID driver_rid = *driver;
+        if (DriverData *data = drivers.getptr(driver_rid); data != nullptr) {
             data->vehicle = RID();
         }
         drivers_by_vehicle.erase(p_vehicle);
+        emit_signal(driver_vehicle_attached_signal, driver_rid, RID());
     }
 
     RID DriverSystem::driver_create() {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
         drivers.insert(rid, DriverData());
         return rid;
+    }
+
+    TypedArray<RID> DriverSystem::get_drivers() const {
+        TypedArray<RID> result;
+        for (const KeyValue<RID, DriverData> &entry : drivers) {
+            result.append(entry.key);
+        }
+        return result;
     }
 
     void DriverSystem::driver_free(const RID &p_driver) {
@@ -154,6 +172,7 @@ namespace godot {
         if (freed.delegate.is_valid()) {
             freed.delegate->driver_detached(p_driver);
         }
+        emit_signal(driver_freed_signal, p_driver);
     }
 
     void DriverSystem::driver_attach_delegate(const RID &p_driver, const Ref<DriverDelegate> &p_delegate) {
@@ -188,6 +207,7 @@ namespace godot {
         if (p_vehicle.is_valid()) {
             drivers_by_vehicle.insert(p_vehicle, p_driver);
         }
+        emit_signal(driver_vehicle_attached_signal, p_driver, p_vehicle);
     }
 
     RID DriverSystem::driver_get_vehicle(const RID &p_driver) const {
@@ -222,5 +242,11 @@ namespace godot {
     void DriverSystem::driver_report_timetable_changed(const RID &p_driver) {
         ERR_FAIL_COND(!drivers.has(p_driver));
         emit_signal(driver_timetable_changed_signal, p_driver);
+    }
+
+    Dictionary DriverSystem::driver_get_state(const RID &p_driver) const {
+        const DriverData *data = drivers.getptr(p_driver);
+        ERR_FAIL_NULL_V(data, Dictionary());
+        return data->delegate.is_valid() ? data->delegate->get_state(p_driver) : Dictionary();
     }
 } // namespace godot

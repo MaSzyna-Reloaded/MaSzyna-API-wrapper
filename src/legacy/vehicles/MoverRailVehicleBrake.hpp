@@ -125,6 +125,9 @@ namespace godot {
         private:
             double local_brake_pressure_previous = -1.0;
             double local_brake_pressure_change_rate = 0.0;
+            /* The releaser was switched on by consist_releaser() and is held until the brakes stop
+             * braking */
+            bool consist_releasing = false;
             static double _controller_position_normalized(const TMoverParameters *p_mover);
             static double _force_ratio(const TMoverParameters *p_mover);
 
@@ -135,6 +138,7 @@ namespace godot {
 
         public:
             void brake_releaser(bool p_pressed) override;
+            void consist_releaser(bool p_active) override;
             void compressor(bool p_enabled) override;
             void brake_level_set(double p_level) override;
             void brake_level_set_position(BrakeHandlePosition p_position) override;

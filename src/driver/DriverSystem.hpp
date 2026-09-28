@@ -4,6 +4,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/hash_set.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 #include <queue>
 #include <vector>
 
@@ -65,11 +66,15 @@ namespace godot {
 
         public:
             static const char *driver_timetable_changed_signal;
+            static const char *driver_vehicle_attached_signal;
+            static const char *driver_freed_signal;
 
             DriverSystem();
             ~DriverSystem() override;
 
             RID driver_create();
+            /// Every driver there is
+            TypedArray<RID> get_drivers() const;
             void driver_free(const RID &p_driver);
             void driver_attach_delegate(const RID &p_driver, const Ref<DriverDelegate> &p_delegate);
             Ref<DriverDelegate> driver_get_delegate(const RID &p_driver) const;
@@ -97,5 +102,7 @@ namespace godot {
             /// The driver's delegate reports that its timetable, or how far it got through it, has
             /// changed - announced as driver_timetable_changed
             void driver_report_timetable_changed(const RID &p_driver);
+            /// What the driver keeps (DriverDelegate::get_state()); empty without a delegate
+            Dictionary driver_get_state(const RID &p_driver) const;
     };
 } // namespace godot

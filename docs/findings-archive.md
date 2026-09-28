@@ -1770,3 +1770,17 @@ lighting or the consist.
 * **Rule:** do not lay a surface over another with a small lift to hide a seam, because the two
   fight in depth. Before you keep geometry the original does not have, measure what it covers once
   the bugs it was added to hide have been fixed.
+
+## 2026-09-28 - the EP07 trip test never moved: a driver held it and no cab was active
+
+* **Symptom:** `test_zzz_ep07_main_switch_trip_diagnostic.gd` failed with the vehicle at 0 m/s
+  after five `main_controller_increase` commands, `controller_main_position` staying 0 - on the
+  real td.scn since `9d9bff094` and on its fixture cut alike.
+* **Proof:** `DriverSystem.vehicle_is_control_active()` was true (td.scn gives EP07-424 a
+  `headdriver`), and after taking the control the position still stayed 0: `IncMainCtrl()` refuses
+  every step while `CabActive == 0` (Mover.cpp:2226), and nothing had activated a cab.
+* **Fix:** the test takes the vehicle from its driver, as a player does
+  (`vehicle_set_control_active(false)`, drivermode.cpp:266), and sends `cab_activation` after the
+  battery; it then reaches 35 km/h on notch 6.
+* **Rule:** a test that drives a scenery vehicle by commands takes it from its driver and activates
+  a cab first - neither happens without a player entering the cab.

@@ -1,10 +1,10 @@
 extends MaszynaGutTest
 
-## Cab switching on the REAL EP07 (dynamic/pkp/303e_v1): cab_change -1 moves the crew from cab 1
-## to the machine room (cab0definition:, Train.cpp:8908 - its own instruments up to the end of the
-## MMD) and then to cab 2. The camera looks along VectorFront * CabOccupied (drivermode.cpp:1071),
-## i.e. backward from cab 2. The low-poly interior stays visible from inside with only the
-## occupied "cabN" submodel hidden (DynObj.cpp:1211-1219), so the other cabs show through windows.
+## Cab switching on the EP07 (the EP07's own .fiz and .mmd, demo/tests/fixtures): cab_change -1
+## moves the crew from cab 1 to the machine room (cab0definition:, Train.cpp:8908 - its own
+## instruments up to the end of the MMD) and then to cab 2. The camera looks along VectorFront *
+## CabOccupied (drivermode.cpp:1071), i.e. backward from cab 2. The fixtures carry no models, so
+## the low-poly interior's cab visibility (DynObj.cpp:1211-1219) is not checked here.
 
 class PlayerStub extends Node3D:
     var camera:FreeCamera3D
@@ -13,7 +13,7 @@ class PlayerStub extends Node3D:
         return camera
 
 
-const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -22,6 +22,7 @@ var player:PlayerStub
 
 func before_each() -> void:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
 
 
 func after_each() -> void:
@@ -32,21 +33,7 @@ func after_each() -> void:
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _assert_low_poly_cabs_visible(expected:Array[bool], label:String) -> void:
-    var low_poly:Node3D = vehicle.get_node(vehicle.low_poly_cabin_path) as Node3D
-    assert_true(low_poly.visible, "%s: low-poly interior should stay visible" % label)
-    for cab_index:int in range(3):
-        var cab_node:Node3D = low_poly.find_child("cab%d" % cab_index, true, false) as Node3D
-        assert_not_null(cab_node, "EP07 low-poly interior should contain cab%d" % cab_index)
-        if cab_node:
-            assert_eq(cab_node.visible, expected[cab_index], "%s: low-poly cab%d visibility" % [label, cab_index])
-
-
 func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
-    if not DirAccess.dir_exists_absolute(REAL_GAME_DIR.path_join("dynamic/pkp/303e_v1")):
-        pending("real EP07 game data not available on this machine at %s" % REAL_GAME_DIR)
-        return
-    UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
     vehicle = MaszynaRailVehicle3DManager.load(
             "dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change", 0.0, null)
     add_child(vehicle)
@@ -70,7 +57,6 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     var vehicle_forward:Vector3 = -vehicle.global_basis.z
     var cab1_z:float = vehicle.to_local(camera.global_position).z
     assert_true((-camera.global_basis.z).dot(vehicle_forward) > 0.99, "cab 1 camera should look forward")
-    _assert_low_poly_cabs_visible([true, false, true], "cab 1")
 
     controller.send_command("cab_change", -1)
     await wait_idle_frames(3)
@@ -87,7 +73,6 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     )
     for diagnostic:Dictionary in machine_room.get_diagnostics():
         assert_false(diagnostic["code"] == "MMD_INVALID_CAB_DEFINITION", "EP07 declares cab0definition:")
-    _assert_low_poly_cabs_visible([false, true, true], "machine room")
 
     controller.send_command("cab_change", -1)
     await wait_idle_frames(3)
@@ -104,7 +89,5 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
         "cab 2 camera (z=%s) should sit at the other end than cab 1 (z=%s)" % [cab2_z, cab1_z],
     )
     assert_true((-camera.global_basis.z).dot(vehicle_forward) < -0.99, "cab 2 camera should look backward")
-    _assert_low_poly_cabs_visible([true, true, false], "cab 2")
 
     vehicle.leave_cabin(player)
-    _assert_low_poly_cabs_visible([true, true, true], "outside")

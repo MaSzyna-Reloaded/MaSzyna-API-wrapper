@@ -7,12 +7,19 @@ extends MaszynaGutTest
 ## (loads the whole scenery) and exists specifically to catch breaks in the RailVehicle3D
 ## geometry/wire-lookup path that a synthetic-controller test can't reach.
 
+## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+const SCENERY:String = "ep07.scn"
+
+var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 
 
 func before_each():
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     scenery = MaszynaSceneryNode.new()
-    scenery.filename = "td.scn"
+    scenery.filename = SCENERY
     add_child(scenery)
     for i in range(20):
         if scenery.get_child_count() > 0:
@@ -22,6 +29,7 @@ func before_each():
 
 func after_each():
     scenery.free()
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController:

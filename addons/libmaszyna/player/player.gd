@@ -39,6 +39,8 @@ var _auto_start_pending:bool = false
 var _requested_vehicle:RailVehicle3D
 var _released_vehicle:RID
 var _cabin_view:bool = false
+## The end vehicle_get_coupled() starts listing a trainset from
+const FRONT_END:int = 0
 
 func _ready() -> void:
     _auto_start_pending = auto_start and not start_train_id
@@ -71,6 +73,19 @@ func _process(_delta:float) -> void:
             _changed = true
 
         var target_vehicle:RailVehicle3D = _find_start_vehicle()
+        if target_vehicle and not target_vehicle == last_controlled_vehicle:
+            # a train left on foot (F4) stays the player's, and coming back to it (F4) changes
+            # nothing (drivermode.cpp:1244); its driver takes the trainset back only when the player
+            # takes a vehicle of another trainset (simulation.cpp:257-270)
+            if is_instance_valid(last_controlled_vehicle):
+                var trainset:Array[RID] = RailVehicleServer.vehicle_get_coupled(
+                        last_controlled_vehicle.get_rid(), FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+                if not trainset.has(target_vehicle.get_rid()):
+                    for vehicle:RID in trainset:
+                        DriverSystem.vehicle_set_control_active(vehicle, true)
+            # the player takes the vehicle over: its driver, if it has one, only takes orders
+            # (drivermode.cpp:266)
+            DriverSystem.vehicle_set_control_active(target_vehicle.get_rid(), false)
         if target_vehicle:
             controlled_vehicle = target_vehicle
             controlled_vehicle.enter_cabin(self)
@@ -131,6 +146,16 @@ func _input(event):
 
     if not controlled_vehicle:
         _walk_mode_input(event)
+
+    # Train.cpp:1088-1118 - Shift+Q hands the player's train to its driver, Q takes it back; on foot
+    # as well, the train left there is still the player's
+    if is_instance_valid(last_controlled_vehicle):
+        if event.is_action_pressed("ai_driver_enable", false, true):
+            # switched off first, as the original does, so that a driver already driving starts over
+            DriverSystem.vehicle_set_control_active(last_controlled_vehicle.get_rid(), false)
+            DriverSystem.vehicle_set_control_active(last_controlled_vehicle.get_rid(), true)
+        elif event.is_action_pressed("ai_driver_disable", false, true):
+            DriverSystem.vehicle_set_control_active(last_controlled_vehicle.get_rid(), false)
 
     # drivermode.cpp:803-804 - Shift+F4 cycles the external views, F4 returns from them to the cab
     if controlled_vehicle and event.is_action_pressed("external_view_cycle", false, true):

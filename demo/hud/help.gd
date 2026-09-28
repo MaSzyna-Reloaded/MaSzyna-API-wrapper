@@ -13,6 +13,8 @@ const GROUPS: Dictionary = {
         "cabin_next",
         "cabin_previous",
         "external_view_cycle",
+        "ai_driver_enable",
+        "ai_driver_disable",
         "flashlight_toggle",
         "coupler_connect",
         "coupler_disconnect",

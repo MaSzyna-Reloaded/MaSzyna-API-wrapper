@@ -561,7 +561,6 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * Nothing gives geometry back: `MaszynaSceneryChunkRenderingServer.ChunkState.mesh` and
   `E3DRenderingServer`'s model cache never evict. Needs the per-chunk disk cache.
 * In the editor streaming follows 3D viewport 0 only (`addons/libmaszyna/editor/scenery_streaming/`).
-* The trackbed of switches renders incorrectly.
 * `maszyna_node_track_importer.gd` drops every type but `switch`/`normal`: `road` (~16 700),
   `river` (~900), `cross` (72), `turn`, `table`. `road`/`river` need a flat surface path
   (`Track.cpp:1554` on); `cross` is a road intersection with four endpoints, no topology support.

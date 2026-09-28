@@ -869,20 +869,28 @@ func _build_trackbed_stitch_world_section(
     if curve_length <= 0.0:
         return []
 
-    var roll: float = _get_track_roll(track, endpoint_index)
-    var section: Array = _build_trackbed_section(
-        track.width,
-        state.tex_height + _get_roll_fix_height(roll),
-        state.tex_width,
-        state.tex_slope,
-        roll,
-        rail_height,
-        state.tex_length
-    )
+    var is_end_point: bool = endpoint_index == TrackServer.CURVE1_P2 or endpoint_index == TrackServer.CURVE2_P2
+    var section: Array
+    if _is_switch_track(track):
+        # the switch's own trackbed profile is not what its bed shows (Track.cpp:2753-2809)
+        var branch: int = TrackServer.TRACK_COMMON if curve_data == track.curve1 else TrackServer.TRACK_DIVERGING
+        var sections: Array = _build_switch_trackbed_sections(
+            state, track, branch, curve_data.roll1, curve_data.roll2, rail_height
+        )
+        section = sections[1] if is_end_point else sections[0]
+    else:
+        var roll: float = _get_track_roll(track, endpoint_index)
+        section = _build_trackbed_section(
+            track.width,
+            state.tex_height + _get_roll_fix_height(roll),
+            state.tex_width,
+            state.tex_slope,
+            roll,
+            rail_height,
+            state.tex_length
+        )
     var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
-    var sample_distance: float = sample_inset
-    if endpoint_index == TrackServer.CURVE1_P2 or endpoint_index == TrackServer.CURVE2_P2:
-        sample_distance = curve_length - sample_inset
+    var sample_distance: float = curve_length - sample_inset if is_end_point else sample_inset
     var frame: Transform3D = _build_curve_distance_frame(curve, sample_distance)
     frame.origin.y += rail_height + _TRACKBED_STITCH_HEIGHT_OFFSET
 
@@ -1723,8 +1731,9 @@ func _build_switch_trackbed_mesh(
         var secondary_chunk: Array = _duplicate_strip_chunk(secondary_chunks[segment_index])
 
         # Port of samplersoffset-based edge lowering from Track.cpp:3265-3299.
-        var primary_fallback_edge: Array = [2, 3] if is_right_switch else [6, 7]
-        var secondary_fallback_edge: Array = [6, 7] if is_right_switch else [2, 3]
+        # [2, 3] is the profile's +x edge, to the left of the track (_build_transition_loft_strip_chunks)
+        var primary_fallback_edge: Array = [6, 7] if is_right_switch else [2, 3]
+        var secondary_fallback_edge: Array = [2, 3] if is_right_switch else [6, 7]
         var primary_lower_edge: Array = _get_nearest_strip_inner_edge_indices(
             primary_chunk,
             secondary_chunk,
@@ -1744,11 +1753,11 @@ func _build_switch_trackbed_mesh(
         # connector triangles as visible geometry in Godot.
         var primary_base_vertex: int = trackbed_vertices.size()
         _append_strip_vertices(trackbed_vertices, trackbed_normals, trackbed_uvs, primary_chunk)
-        _append_strip_chunk_triangles(trackbed_indices, primary_base_vertex, primary_chunk.size(), true)
+        _append_strip_chunk_triangles(trackbed_indices, primary_base_vertex, primary_chunk.size())
 
         var secondary_base_vertex: int = trackbed_vertices.size()
         _append_strip_vertices(trackbed_vertices, trackbed_normals, trackbed_uvs, secondary_chunk)
-        _append_strip_chunk_triangles(trackbed_indices, secondary_base_vertex, secondary_chunk.size(), true)
+        _append_strip_chunk_triangles(trackbed_indices, secondary_base_vertex, secondary_chunk.size())
 
     return _build_array_mesh(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices)
 
@@ -1920,18 +1929,18 @@ func _get_nearest_strip_inner_edge_indices(chunk: Array, other_chunk: Array, fal
         return fallback_edge
 
     var other_center: Vector3 = ((other_chunk[4][0] as Vector3) + (other_chunk[5][0] as Vector3)) * 0.5
-    var right_edge_center: Vector3 = ((chunk[2][0] as Vector3) + (chunk[3][0] as Vector3)) * 0.5
-    var left_edge_center: Vector3 = ((chunk[6][0] as Vector3) + (chunk[7][0] as Vector3)) * 0.5
-    var right_delta: Vector3 = right_edge_center - other_center
+    var left_edge_center: Vector3 = ((chunk[2][0] as Vector3) + (chunk[3][0] as Vector3)) * 0.5
+    var right_edge_center: Vector3 = ((chunk[6][0] as Vector3) + (chunk[7][0] as Vector3)) * 0.5
     var left_delta: Vector3 = left_edge_center - other_center
-    right_delta.y = 0.0
+    var right_delta: Vector3 = right_edge_center - other_center
     left_delta.y = 0.0
+    right_delta.y = 0.0
 
-    var right_distance: float = right_delta.length_squared()
     var left_distance: float = left_delta.length_squared()
-    if is_equal_approx(right_distance, left_distance):
+    var right_distance: float = right_delta.length_squared()
+    if is_equal_approx(left_distance, right_distance):
         return fallback_edge
-    return [2, 3] if right_distance < left_distance else [6, 7]
+    return [2, 3] if left_distance < right_distance else [6, 7]
 
 
 # Port of strip vertex copying from Track.cpp:3280-3297.
@@ -1947,35 +1956,26 @@ func _append_strip_vertices(
         uvs.push_back(point[2] as Vector2)
 
 
-# Port of visible strip faces emitted per loft chunk by Segment.cpp:452-492.
+# Port of visible strip faces emitted per loft chunk by Segment.cpp:452-492. Wound like
+# _append_loft_strip_indices(): the chunk maps the profile's x to the left, so the original's
+# order faces up here without reversing it.
 func _append_strip_chunk_triangles(
     indices: PackedInt32Array,
     base_vertex: int,
-    vertex_count: int,
-    reverse_winding: bool
+    vertex_count: int
 ) -> void:
     for point_index: int in range(vertex_count - 2):
         var a: int = base_vertex + point_index
         var b: int = base_vertex + point_index + 1
         var c: int = base_vertex + point_index + 2
         if point_index % 2 == 0:
-            if reverse_winding:
-                indices.push_back(a)
-                indices.push_back(c)
-                indices.push_back(b)
-            else:
-                indices.push_back(a)
-                indices.push_back(b)
-                indices.push_back(c)
+            indices.push_back(a)
+            indices.push_back(b)
+            indices.push_back(c)
         else:
-            if reverse_winding:
-                indices.push_back(b)
-                indices.push_back(c)
-                indices.push_back(a)
-            else:
-                indices.push_back(b)
-                indices.push_back(a)
-                indices.push_back(c)
+            indices.push_back(b)
+            indices.push_back(a)
+            indices.push_back(c)
 
 
 func _get_baked_segment_length(baked_points: PackedVector3Array, start_sample: int, end_sample: int) -> float:

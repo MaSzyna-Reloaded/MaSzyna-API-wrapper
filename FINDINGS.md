@@ -263,6 +263,9 @@ anything. Open work belongs in `TODO.md`.
 * The headless dummy renderer's mesh storage is not thread safe: meshes created on the streaming
   worker and on the main thread at once corrupt the heap, and the crash shows later, at teardown.
   *(09-26 headless test crashes at teardown)*
+* A test that drives a scenery vehicle by commands takes it from its driver and activates a cab:
+  `IncMainCtrl()` refuses every step while no cab is active. *(09-28 the EP07 trip test never
+  moved)*
 
 ## Sound
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through

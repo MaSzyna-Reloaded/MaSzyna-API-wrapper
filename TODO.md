@@ -913,23 +913,11 @@ ported, into a delegate.
   running and the pipe climbing from 4.63 bar; not checked whether the original fills the pipe
   faster there. The operator's stop with the local brake applied in full is not reproduced yet.
 
-* `test_weather_controls.gd` fails since `2f4740239`: the scene's root became an `HFlowContainer`,
-  the test still casts it `as VBoxContainer` and gets null.
-
 * **No regression test for the couplers stiffened by a long frame** (2026-09-27). A snatch of
   `test_vehicle.fiz` wagons does not tell the fixed build from the broken one - the fixture
   wagons stop within 3 s whatever the frame. It needs a free-rolling consist fixture (or a
   powered one pulling a long train), stepped at 0.017 s and at 0.17 s a frame. Checked so far
   by hand on Stary Jawor only (the eszelon at 0.03 s and 0.17 s: 14.09 and 14.06 m/s at 80 s).
-
-* `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not
-  accelerate past 2 m/s across 5 notches (it reads the game directory, see below).
-
-* `test_zzz_scenery_scene_smoke.gd` fails in a second: it waits for `scenery.loaded`, a signal
-  `MaszynaSceneryNode` does not have (`scenery_loaded`), and reads the private `_track_rids`.
-* `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
-  at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type
-  'Dictionary'") - not caused by the scenario work, not looked into.
 
 * `test_zzz_ep07_cabin_main_switch.gd` crashes (SIGSEGV) in about half of the runs, at `82cda7a30`
   too: the headless dummy renderer's mesh storage is not thread safe, and the streaming worker
@@ -944,14 +932,13 @@ ported, into a delegate.
   other migrated panels too.
 * **A dump key does not name the class owning its getter** - check the declaring header, not the
   fill, when mapping keys to typed reads.
-* Tests reading game data (CI has none): `test_zzz_ep07_*` (cab_change, cabin_main_switch,
-  main_switch_trip_diagnostic, orientation_regression, pantograph_power_smoke, running_sounds),
-  `test_zzz_scenery_scene_smoke.gd` (instantiates `demo_scenery_loading.tscn`),
-  `test_zzz_sm42_exterior_model_rotation_regression.gd`, `test_zzz_su46_exterior_lights.gd`,
-  `test_zzz_su46_machine_room.gd`, `test_mmd_cabin_instancer.gd` (su45_v2),
-  `test_rail_vehicle_rain_exclusion.gd` (sm42_v1). Replace with fixtures in `demo/tests/fixtures/`:
-  a cut `.scn` with the track piece and trainset, fabricated vehicles with trimmed `.fiz`/`.mmd`,
-  no e3d.
+* Tests reading game data (CI has none): `test_zzz_sm42_exterior_model_rotation_regression.gd`,
+  `test_zzz_su46_exterior_lights.gd`, `test_zzz_su46_machine_room.gd`,
+  `test_rail_vehicle_rain_exclusion.gd` (sm42_v1). Replace with fixtures in `demo/tests/fixtures/`
+  as the EP07 tests were: a cut `.scn` (`scenery/ep07.scn`), the vehicle's own `.fiz`/`.mmd`, no
+  models and no sounds (a missing one is a warning).
+* The fixtures carry no models, so the low-poly interior's cab visibility (DynObj.cpp:1211-1219,
+  `test_zzz_ep07_cab_change.gd`) has no test any more.
 * Tests that switch the game dir with `UserSettings.save_maszyna_game_dir()` write the user's
   `settings.cfg`: `test_maszyna_rail_vehicle_3d_manager.gd`, `test_e3d_lights_state.gd`,
   `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,

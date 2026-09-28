@@ -6,6 +6,11 @@ extends MaszynaGutTest
 ## 6779-6827), while the vehicle-level "main_switch" command still acts immediately and returns its
 ## result (#43).
 
+## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+const SCENERY:String = "ep07.scn"
+
+var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 var player:MaszynaPlayer
 var controller:VehicleController
@@ -14,8 +19,10 @@ var vehicle_rid:RID
 
 
 func before_each():
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     scenery = MaszynaSceneryNode.new()
-    scenery.filename = "td.scn"
+    scenery.filename = SCENERY
     add_child(scenery)
     for i in range(20):
         if scenery.get_child_count() > 0:
@@ -40,6 +47,7 @@ func before_each():
 func after_each():
     player.free()
     scenery.free()
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func _cab() -> int:
@@ -138,20 +146,20 @@ func test_send_command_returns_result() -> void:
     assert_false(RailVehicleServer.vehicle_get_rid_by_name("no_such_train").is_valid(), "an unknown name reaches no vehicle")
 
 
-## Console "cabin <train> toggle battery_sw" - no value flips the control, and the cabin widget
-## shows the new position without reporting it back.
+## Console "cabin <train> toggle battery_sw" - no value flips the control, and a cabin widget of
+## it shows the new position without reporting it back. The fixture has no cab model to build
+## widgets from, so the widget is the test's own, bound as the cab instancer binds one.
 func test_toggle_without_value_flips_control_and_widget() -> void:
     assert_not_null(controller, "EP07-424 should exist")
     if not controller:
         return
     var cab:int = _cab()
-    var widget:CabinButton = null
-    for node:Node in player.get_camera().get_parent().find_children("*", "CabinButton", true, false):
-        if node.control_id == &"battery_sw":
-            widget = node
-    assert_not_null(widget, "EP07 cab should have a battery_sw widget")
-    if not widget:
-        return
+    var widget:CabinButton = CabinButton.new()
+    widget.control_id = &"battery_sw"
+    add_child_autofree(widget)
+    widget.set_vehicle_rid(vehicle_rid)
+    # the widget reports its own pose on its first frame, as a cab's widgets do when it is built
+    await wait_idle_frames(2)
 
     CabinSystem.act(vehicle_rid, cab, &"battery_sw", &"toggle")
     await wait_idle_frames(2)

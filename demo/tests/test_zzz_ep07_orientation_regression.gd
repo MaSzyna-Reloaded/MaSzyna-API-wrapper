@@ -18,12 +18,19 @@ extends MaszynaGutTest
 ## the same bug (that one is faster to run and easier to read; keep this real-scenery test too,
 ## since a synthetic fixture can miss real-world specifics like async E3D bogie resolution).
 
+## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+const SCENERY:String = "ep07.scn"
+
+var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 
 
 func before_each():
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     scenery = MaszynaSceneryNode.new()
-    scenery.filename = "td.scn"
+    scenery.filename = SCENERY
     add_child(scenery)
     for i in range(20):
         if scenery.get_child_count() > 0:
@@ -33,6 +40,7 @@ func before_each():
 
 func after_each():
     scenery.free()
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func _find_rail_vehicle(root:Node, vehicle_name:String) -> RailVehicle3D:

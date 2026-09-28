@@ -121,6 +121,8 @@ func _exit_to_menu() -> void:
     $GameHud.visible = false
     SceneryStreamingServer.set_camera(null)
     await $Player.clear_start_train()
+    # the scenery's script context goes with it
+    $GameHud.attach_script_context(RID())
     $MaszynaSceneryNode.filename = ""
     await $MaszynaSceneryNode.load()
     await get_tree().create_timer(EXIT_SPINNER_HOLD_TIME).timeout
@@ -143,6 +145,7 @@ func _play_music(volume_db: float) -> void:
 ## The consist chosen in the selector; none chosen, the scenery's own driver.
 func _on_scenery_loaded(first_train_id: String) -> void:
     $Player.start_train_id = _chosen_train_id if _chosen_train_id else first_train_id
+    $GameHud.attach_script_context($MaszynaSceneryNode.get_script_context())
     _music_tween = create_tween()
     _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)
     _music_tween.tween_callback($Music.stop)

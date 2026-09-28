@@ -6,7 +6,7 @@ extends Control
 ## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
 
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO, CONTROLS }
+enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS }
 
 ## The player whose vehicle the control windows drive
 @export var player_path: NodePath
@@ -72,8 +72,8 @@ func _on_popup_menu_index_pressed(index: int) -> void:
     _bind_vehicle(win)
 
 
-## The "View" menu: its entries show or hide the transcripts, the timetable, the scenario and
-## all the control windows at once
+## The "View" menu: its entries show or hide the transcripts, the timetable, the scenario, all the
+## control windows at once and the Lua editor
 func _on_view_menu_index_pressed(index: int) -> void:
     %View.toggle_item_checked(index)
     match index:
@@ -87,6 +87,8 @@ func _on_view_menu_index_pressed(index: int) -> void:
             for win: HUDWindow in _windows:
                 win.visible = %View.is_item_checked(index)
                 _bind_vehicle(win)
+        ViewItem.SCRIPTS:
+            %ScriptEditorPanel.visible = %View.is_item_checked(index)
 
 
 func _on_timetable_panel_close_requested() -> void:
@@ -95,6 +97,15 @@ func _on_timetable_panel_close_requested() -> void:
 
 func _on_scenario_panel_close_requested() -> void:
     _on_view_menu_index_pressed(ViewItem.SCENARIO)
+
+
+func _on_script_editor_panel_close_requested() -> void:
+    _on_view_menu_index_pressed(ViewItem.SCRIPTS)
+
+
+## The script context of the scenario being played, for the Lua editor; an invalid RID while none is
+func attach_script_context(context: RID) -> void:
+    %ScriptEditorPanel.attach_context(context)
 
 
 ## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until

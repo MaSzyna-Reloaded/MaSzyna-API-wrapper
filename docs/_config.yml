@@ -14,3 +14,4 @@ header_pages:
   - architecture.md
   - api/index.md
   - wrapping-mover.md
+  - lua-scripting.md

@@ -138,6 +138,13 @@ ENDIF ()
 
 FILE(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.hpp")
 
+# Scenario scripts (ScenarioScriptServer) run on Lua, the vendor/lua submodule. Without it the
+# server stays, and refuses every script as the original's build without Lua does
+OPTION(LIBMASZYNA_LUA "Run scenario scripts in Lua (vendor/lua)" ON)
+IF (NOT LIBMASZYNA_LUA)
+    LIST(FILTER SRC_FILES EXCLUDE REGEX "src/scripting/lua/|src/legacy/scenario/MaszynaLegacyLuaEventsModule")
+ENDIF ()
+
 IF (CMAKE_SYSTEM_NAME STREQUAL "Android")
     # Disable warnings for maszyna directory explicitly for Android
     FILE(GLOB_RECURSE MASZYNA_SRC_FILES "src/legacy/maszyna-mover/*.cpp")
@@ -169,6 +176,26 @@ ENDIF ()
 TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
 # PythonScreenServer loads CPython at run time (dlopen)
 TARGET_LINK_LIBRARIES(${LIBNAME} ${CMAKE_DL_LIBS})
+
+IF (LIBMASZYNA_LUA)
+    # The core and the libraries a scenario script may use - not the interpreters, the test
+    # harness, the amalgamation, nor io/os/debug/package, which a script has no business with
+    SET(LUA_SRC_FILES)
+    FOREACH (LUA_MODULE lapi lauxlib lbaselib lcode lcorolib lctype ldebug ldo ldump lfunc lgc llex
+             lmathlib lmem lobject lopcodes lparser lstate lstring lstrlib ltable ltablib ltm lundump
+             lutf8lib lvm lzio)
+        LIST(APPEND LUA_SRC_FILES "vendor/lua/${LUA_MODULE}.c")
+    ENDFOREACH ()
+    # Compiled as C++: a script error then unwinds as an exception (LUAI_THROW, ldo.c) instead of a
+    # longjmp over the String and Variant locals of the wrapper's own functions
+    SET_SOURCE_FILES_PROPERTIES(${LUA_SRC_FILES} PROPERTIES LANGUAGE CXX)
+    ADD_LIBRARY(maszyna_lua STATIC ${LUA_SRC_FILES})
+    SET_TARGET_PROPERTIES(maszyna_lua PROPERTIES POSITION_INDEPENDENT_CODE ON CXX_VISIBILITY_PRESET hidden)
+    TARGET_COMPILE_OPTIONS(maszyna_lua PRIVATE $<$<NOT:$<CXX_COMPILER_ID:MSVC>>:-w>)
+    TARGET_INCLUDE_DIRECTORIES(${LIBNAME} PRIVATE vendor/lua)
+    TARGET_COMPILE_DEFINITIONS(${LIBNAME} PRIVATE LIBMASZYNA_LUA)
+    TARGET_LINK_LIBRARIES(${LIBNAME} maszyna_lua)
+ENDIF ()
 
 # The build number is not stamped here. A stamp written while the library links is overwritten by
 # the next build of any other configuration, and the export then packs whichever one happened to

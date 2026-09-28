@@ -685,6 +685,19 @@ closes both level crossings). Left:
 * Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
   `ScenarioLauncherNode`, the `SignalHeadNode` pattern).
 
+## Scenario scripts (Lua)
+
+`ScenarioScriptServer` runs a scenery's `lua <file>` scripts (Lua 5.4, `vendor/lua`, build option
+`LIBMASZYNA_LUA`) with the `maszyna.*` modules and the original's `eu07.events` on top of them; the
+HUD's View > Lua scripts checks and applies code to the running scenario. Left:
+
+* **`dynobj_putvalues` on a vehicle nobody drives**: the original hands the command to the Mover
+  (`MoverParameters->PutCommand`, `lua.cpp:293-294`); here it goes to the driver only, as
+  `MaszynaLegacyVehicleCommandAction` does - without a driver it is dropped.
+* **Typing in the Lua editor drives the cab**: cab controls read their keys in `_input`
+  (`cabin_command.gd`, `cabin_button.gd`, `cabin_switch.gd`), before the GUI, so a key bound to a
+  control acts while the editor has the focus - the console has the same problem.
+
 ## Drivers (plan, #297)
 
 Agreed 2026-09-26. The AI drives a vehicle the way a player does - through the cab

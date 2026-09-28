@@ -85,6 +85,9 @@ func _ready() -> void:
     _container.add_theme_constant_override("separation", 8)
     _container.add_theme_constant_override("h_separation", 10)
     _container.add_theme_constant_override("v_separation", 10)
+    # a tile's place is known once the container has laid it out - after new tiles, and after a
+    # side view has given its tile its own width
+    _container.sort_children.connect(_scroll_to_selected)
     %Scroll.add_child(_container)
     %Scroll.vertical_scroll_mode = (
         ScrollContainer.SCROLL_MODE_DISABLED if layout == Layout.ROW
@@ -227,11 +230,23 @@ func _go_to(index: int) -> void:
     if clamped == _selected:
         return
     _ui_sounds.play(&"keystroke")
-    _select(clamped)
+    select(clamped)
+
+
+## The selection moved by the owner, silently, and scrolled into view
+func select(index: int) -> void:
+    _select(index)
+    _scroll_to_selected()
+
+
+## The selected tile scrolled into view, from where the container last laid it out
+func _scroll_to_selected() -> void:
+    if _selected < 0:
+        return
     if layout == Layout.ROW:
-        scroll_to_item_in_row(%Scroll, _controls[clamped])
+        scroll_to_item_in_row(%Scroll, _controls[_selected])
     else:
-        scroll_to_item(%Scroll, _controls[clamped])
+        scroll_to_item(%Scroll, _controls[_selected])
 
 
 func _select(index: int) -> void:

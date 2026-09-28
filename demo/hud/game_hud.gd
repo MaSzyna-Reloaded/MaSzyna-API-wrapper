@@ -42,6 +42,7 @@ func _ready() -> void:
         player.external_view_changed.connect(_on_player_external_view_changed)
         player.cabin_view_changed.connect(_on_player_cabin_view_changed.bind(player))
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
+    SceneryHUDMouseServer.vehicle_pressed.connect(_open_card)
     var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child: Node in $ControlWindows.get_children():
         var win: HUDWindow = child as HUDWindow
@@ -66,6 +67,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
+    SceneryHUDMouseServer.vehicle_pressed.disconnect(_open_card)
 
 
 ## A menu shortcut of an input action - the menu shows its key, and matches it exactly (F2 is not
@@ -140,7 +142,8 @@ func _on_followed_vehicle_chip_pressed() -> void:
 
 
 ## The card shows the vehicle, on top, and its row is lit; a card opened anew stands where the last
-## one was closed, and takes the place of the followed vehicle's floating button
+## one was closed, and takes the place of the followed vehicle's floating button. A click on a
+## vehicle's model in free camera opens it too (SceneryHUDMouseServer.vehicle_pressed)
 func _open_card(vehicle: RID) -> void:
     if not _card:
         _card = VEHICLE_CARD.instantiate()

@@ -10,7 +10,7 @@ static var event_importer = preload("res://addons/libmaszyna/legacy/scenery/masz
 ## A lit model no `lights` event is aimed at - it has lights but no aspects
 ## The one delegate every scenery driver shares; it keeps their state per driver
 static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-const GENERIC_SEMAPHORE_KIND:SemaphoreKind = preload("../semaphores/generic_semaphore_kind.tres")
+const GENERIC_SIGNAL_HEAD_KIND:SignalHeadKind = preload("../signalling/generic_signal_head_kind.tres")
 static var origin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_origin_importer.gd").new()
 static var endorigin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_endorigin_importer.gd").new()
 static var rotate_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_rotate_importer.gd").new()
@@ -22,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 24
+const CACHE_FORMAT_VERSION:int = 25
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -120,7 +120,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _report_progress(root, 0.0, "Scanning includes")
     var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
     var objects:Array = context.objects
-    assign_semaphore_kinds(context.models, context.events)
+    assign_signal_head_kinds(context.models, context.events)
 
     await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
     await _instantiate_server_data(
@@ -256,13 +256,13 @@ static func _instantiate_server_data(
     if root._track_rids.size() > 0:
         TrackServer.topology_rebuild()
 
-    # the original's semaphores: every lit model, driven by the scenery's own `lights` events
-    var semaphore_system:RID = SemaphoreServer.system_create()
-    SemaphoreServer.system_attach_delegate(semaphore_system, MaszynaLegacySemaphoreDelegate.new())
-    SemaphoreServer.system_set_name(semaphore_system, root.filename)
-    root._semaphore_system_rids.append(semaphore_system)
+    # the original's signal heads: every lit model, driven by the scenery's own `lights` events
+    var signalling_system:RID = SignallingServer.system_create()
+    SignallingServer.system_attach_delegate(signalling_system, MaszynaLegacySignallingDelegate.new())
+    SignallingServer.system_set_name(signalling_system, root.filename)
+    root._signalling_system_rids.append(signalling_system)
     for model_data:MaszynaModelData in models:
-        var e3d_rid:RID = _build_model(model_data, world_3d, semaphore_system)
+        var e3d_rid:RID = _build_model(model_data, world_3d, signalling_system)
         model_rids.append(e3d_rid)
         if e3d_rid.is_valid():
             root._e3d_rids.append(e3d_rid)
@@ -745,12 +745,12 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
 ## hundreds of thousands of submodels - instancing them all at load costs both the loading time and
 ## the frame rate). The server loads the model and builds the instance once the streaming camera
 ## comes within the node's range of the chunk it falls into, and clears it when the camera leaves.
-## The original's semaphores have no kind: a model shows whatever `lights` events the scenery aims
+## The original's signal heads have no kind: a model shows whatever `lights` events the scenery aims
 ## at it (Event.cpp:1741-1803). Every lit model, and every model such an event is aimed at, is
-## given a kind made of those events (MaszynaLegacySemaphoreKindFactory); the copies of one include
+## given a kind made of those events (MaszynaLegacySignalHeadKindFactory); the copies of one include
 ## end up with equal kinds, which are then one resource. A lit model no event reaches gets the
 ## generic kind. Target names are matched in lower case, as the original reads them (Event.cpp:327).
-static func assign_semaphore_kinds(
+static func assign_signal_head_kinds(
     models:Array[MaszynaModelData], scenery_events:Array[MaszynaEventData]
 ) -> void:
     var events_by_target:Dictionary[String, Array] = {}
@@ -761,11 +761,11 @@ static func assign_semaphore_kinds(
             if not events_by_target.has(target):
                 events_by_target[target] = []
             events_by_target[target].append(event)
-    var kinds:Dictionary[String, SemaphoreKind] = {}
+    var kinds:Dictionary[String, SignalHeadKind] = {}
     for model_data:MaszynaModelData in models:
         var events:Array = events_by_target.get(model_data.name.to_lower(), []) if model_data.name else []
         if not events:
-            model_data.semaphore_kind = GENERIC_SEMAPHORE_KIND if model_data.lights else null
+            model_data.signal_head_kind = GENERIC_SIGNAL_HEAD_KIND if model_data.lights else null
             continue
         var aspects:Dictionary = {}
         for event:MaszynaEventData in events:
@@ -773,14 +773,14 @@ static func assign_semaphore_kinds(
             var values:PackedFloat32Array = []
             for value:String in event.parameters:
                 values.append(float(value))
-            aspects[MaszynaLegacySemaphoreKindFactory.get_aspect_name(event.name, model_data.name)] = values
+            aspects[MaszynaLegacySignalHeadKindFactory.get_aspect_name(event.name, model_data.name)] = values
         var key:String = var_to_str(aspects)
         if not kinds.has(key):
-            kinds[key] = MaszynaLegacySemaphoreKindFactory.create_kind(aspects)
-        model_data.semaphore_kind = kinds[key]
+            kinds[key] = MaszynaLegacySignalHeadKindFactory.create_kind(aspects)
+        model_data.signal_head_kind = kinds[key]
 
 
-static func _build_model(model_data:MaszynaModelData, world_3d:World3D, semaphore_system:RID) -> RID:
+static func _build_model(model_data:MaszynaModelData, world_3d:World3D, signalling_system:RID) -> RID:
     var model_rid:RID = E3DRenderingServer.instance_register(
         model_data.data_path,
         model_data.model_filename,
@@ -793,12 +793,12 @@ static func _build_model(model_data:MaszynaModelData, world_3d:World3D, semaphor
     # the declared modes outlive the streaming, so they are set once here and not on every build
     if model_data.lights:
         E3DRenderingServer.instance_set_lights_modes(model_rid, model_data.lights)
-    if model_data.semaphore_kind:
+    if model_data.signal_head_kind:
         # goes with the instance when the include frees it
-        var semaphore:RID = SemaphoreServer.semaphore_create(model_rid)
-        SemaphoreServer.semaphore_set_kind(semaphore, model_data.semaphore_kind)
-        SemaphoreServer.semaphore_set_name(semaphore, model_data.name)
-        SemaphoreServer.system_add_semaphore(semaphore_system, semaphore)
+        var signal_head:RID = SignallingServer.signal_head_create(model_rid)
+        SignallingServer.signal_head_set_kind(signal_head, model_data.signal_head_kind)
+        SignallingServer.signal_head_set_name(signal_head, model_data.name)
+        SignallingServer.system_add_signal_head(signalling_system, signal_head)
     if model_data.light_colors:
         E3DRenderingServer.instance_set_lights_colors(model_rid, model_data.light_colors)
     return model_rid

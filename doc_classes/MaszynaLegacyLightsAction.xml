@@ -9,7 +9,7 @@
 	<members>
 		<member name="aspects" type="StringName[]" setter="set_aspects" getter="get_aspects" default="[]">
 		</member>
-		<member name="semaphores" type="RID[]" setter="set_semaphores" getter="get_semaphores" default="[]">
+		<member name="signal_heads" type="RID[]" setter="set_signal_heads" getter="get_signal_heads" default="[]">
 		</member>
 	</members>
 </class>

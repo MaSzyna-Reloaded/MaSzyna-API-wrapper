@@ -38,7 +38,7 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
 var _loading:bool = false
 
 ## Tracks, traction and models are built directly against TrackServer/TrackRenderingServer/
-## TractionRenderingServer/TractionServer/E3DRenderingServer/SemaphoreServer RIDs, not as scene nodes (see
+## TractionRenderingServer/TractionServer/E3DRenderingServer/SignallingServer RIDs, not as scene nodes (see
 ## scenery_instancer.gd's instantiate()
 ## doc comment for why) - so unlike triangle children, they aren't cleaned up just by
 ## removing children from the tree. scenery_instancer.gd appends the RIDs it creates here;
@@ -49,7 +49,7 @@ var _traction_rids:Array[RID] = []
 var _wire_power_rids:Array[RID] = []
 var _power_source_rids:Array[RID] = []
 var _e3d_rids:Array[RID] = []
-var _semaphore_system_rids:Array[RID] = []
+var _signalling_system_rids:Array[RID] = []
 var _triangle_chunk_rids:Array[RID] = []
 var _launcher_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
@@ -91,8 +91,8 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_wire_power_rids, TractionServer.wire_free],
         [_power_source_rids, TractionServer.power_source_free],
         [_e3d_rids, E3DRenderingServer.instance_free],
-        # after the instances, whose semaphores leave the system as they go
-        [_semaphore_system_rids, SemaphoreServer.system_free],
+        # after the instances, whose signal heads leave the system as they go
+        [_signalling_system_rids, SignallingServer.system_free],
         [_triangle_chunk_rids, MaszynaSceneryChunkRenderingServer.free_chunk],
     ]
     var frame_start:int = Time.get_ticks_msec()

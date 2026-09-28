@@ -5,7 +5,7 @@
 
 namespace godot {
     /// What a ScenarioEventServer event does when it runs. The server knows only the queue, the
-    /// time and the condition; the effect of an event (setting a memory, lighting a semaphore,
+    /// time and the condition; the effect of an event (setting a memory, lighting a signal head,
     /// throwing a switch, queueing other events) is its action. Implement it in C++ by overriding
     /// the virtual methods, or in GDScript by overriding their script counterparts.
     ///

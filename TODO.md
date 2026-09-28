@@ -195,7 +195,7 @@ moves to C++:
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
 `src/` is split into generic layers and the MaSzyna adapter (`src/legacy/`: `maszyna-mover`
-vendored, `vehicles`, `semaphores`, `e3d`, `parsers`, `scenery`, `cabin`). In `addons/libmaszyna/`
+vendored, `vehicles`, `signalling`, `e3d`, `parsers`, `scenery`, `cabin`). In `addons/libmaszyna/`
 `legacy/` holds `cabin`, `driver`, `e3d`, `fiz`, `materials`, `mmd`, `scenario`, `scenery`, `sound`
 and `vehicle` so far; the rest of the MaSzyna-specific scripts outside it (e.g. `sound/maszyna_*`)
 is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` references follow).
@@ -590,26 +590,26 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * `SimulationServer.pause()` holds the vehicle step, the weather and the world's sounds only - the
   environment clock, `TractionServer`, `TrackServer` switches and the smoke keep running.
 
-## Semaphores (#296)
+## Signalling (#296)
 
-`SemaphoreServer` with systems, delegates, sources, kinds and the nodes is in place; a scenery
-semaphore's kind is made of the `lights` events aimed at it, and the original's
-`MaszynaLegacySemaphoreDelegate` shows one of them when it is handed the event. Left:
+`SignallingServer` with systems, delegates, sources, kinds and the nodes is in place; a scenery
+signal head's kind is made of the `lights` events aimed at it, and the original's
+`MaszynaLegacySignallingDelegate` shows one of them when it is handed the event. Left:
 
 * **The isolated sections become the system's sources** once `TrackServer` has them (see
   Scenario events).
 * **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
-  `getvalues` - is read by the driver's speed table (`MaszynaLegacyDriverRoute`); a semaphore
+  `getvalues` - is read by the driver's speed table (`MaszynaLegacyDriverRoute`); a signalling
   delegate has only the lights, nothing it shows reaches a train.
-* **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the semaphore
+* **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the signal head
   API has no light that follows the daylight; the legacy kind factory warns and keeps the light.
 * **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).
-* **Every lit scenery model is a semaphore** (the operator's decision), street lamps with
-  `lights 3` included - telling semaphores apart is open.
+* **Every lit scenery model is a signal head** (the operator's decision), street lamps with
+  `lights 3` included - telling signal heads apart is open.
 * **Scenery kinds are made of `lights` events only**: a lit model no event reaches gets the generic
-  kind (lights, no aspects). The declared `lights` list is not an aspect, so a scenery semaphore's
+  kind (lights, no aspects). The declared `lights` list is not an aspect, so a scenery signal head's
   light states on the server read `LIGHT_STATE_OFF` until its first aspect, whatever E3D shows.
-* **`SemaphoreAspect.lights` are plain numbers** in the inspector (`LightCommand`), not an enum.
+* **`SignalAspect.lights` are plain numbers** in the inspector (`LightCommand`), not an enum.
 
 ## Scenario events
 
@@ -633,7 +633,7 @@ closes both level crossings). Left:
 * **Occupancy counts vehicles, not axles**: a vehicle is on the one track its placement point is
   on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
   occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
-* **Isolated sections are not yet a semaphore system's sources** (`SemaphoreServer.system_add_source`).
+* **Isolated sections are not yet a signalling system's sources** (`SignallingServer.system_add_source`).
 * **`putvalues`/`getvalues`**: the passive ones (`SetVelocity`, `ShuntVelocity`, `RoadVelocity`,
   `SectionVelocity`, `OutsideStation`, `PassengerStopPoint:`; a `getvalues` of a memory holding
   `SetVelocity`/`ShuntVelocity`/`SetProximityVelocity` at the start) are never run - the driver
@@ -681,7 +681,7 @@ closes both level crossings). Left:
   `MASZYNA_ORIGINAL_QUIRKS.md`.
 * Events of one include cannot refer to events of another `MaszynaIncludeNode`.
 * Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
-  `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
+  `ScenarioLauncherNode`, the `SignalHeadNode` pattern).
 
 ## Drivers (plan, #297)
 
@@ -742,7 +742,7 @@ ported, into a delegate.
    events' positions and the speed table, speed control through the cab, the timetable followed.
    In `MaszynaLegacyAIDriver` (the delegate), acting through `CabinSystem.act()`; the topology walk
    is a `TrackServer` query, the passive events `ScenarioEventServer`'s, the signals
-   `SemaphoreServer`'s. In order:
+   `SignallingServer`'s. In order:
    1. Done: what the driver reads of its trainset (`MaszynaLegacyDriverTrainset`,
       `Driver.cpp:6033-6190`): readiness of the brakes (`Ready`, `fReady`, `IsConsistBraked`), the
       gravity along the track (`fAccGravity`) and the trainset's acceleration (`AbsAccS`); the

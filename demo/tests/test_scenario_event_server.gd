@@ -281,13 +281,13 @@ func test_scenery_lights_event_shows_the_aspect() -> void:
     var instance:E3DModelInstance = E3DModelInstance.new()
     instance.model = E3DModel.new()
     add_child_autoqfree(instance)
-    var semaphore:RID = SemaphoreServer.semaphore_create(instance.get_e3d_instance())
-    SemaphoreServer.semaphore_set_name(semaphore, &"Sem_A")
+    var signal_head:RID = SignallingServer.signal_head_create(instance.get_e3d_instance())
+    SignallingServer.signal_head_set_name(signal_head, &"Sem_A")
     var aspects:Dictionary = {&"sem_ligh1": PackedFloat32Array([1.0])}
-    SemaphoreServer.semaphore_set_kind(semaphore, MaszynaLegacySemaphoreKindFactory.create_kind(aspects))
-    var system:RID = SemaphoreServer.system_create()
-    SemaphoreServer.system_attach_delegate(system, MaszynaLegacySemaphoreDelegate.new())
-    SemaphoreServer.system_add_semaphore(system, semaphore)
+    SignallingServer.signal_head_set_kind(signal_head, MaszynaLegacySignalHeadKindFactory.create_kind(aspects))
+    var system:RID = SignallingServer.system_create()
+    SignallingServer.system_attach_delegate(system, MaszynaLegacySignallingDelegate.new())
+    SignallingServer.system_add_signal_head(system, signal_head)
     var model_data:MaszynaModelData = MaszynaModelData.new()
     model_data.name = "Sem_A"
     var models:Array[MaszynaModelData] = [model_data]
@@ -295,10 +295,10 @@ func test_scenery_lights_event_shows_the_aspect() -> void:
 
     await _run_event(&"sem_a_sem_ligh1")
 
-    assert_eq(SemaphoreServer.semaphore_get_aspect(semaphore), &"sem_ligh1")
-    assert_eq(SemaphoreServer.semaphore_get_light_state(semaphore, 0), SemaphoreServer.LIGHT_STATE_ON)
+    assert_eq(SignallingServer.signal_head_get_aspect(signal_head), &"sem_ligh1")
+    assert_eq(SignallingServer.signal_head_get_light_state(signal_head, 0), SignallingServer.LIGHT_STATE_ON)
     root.free()
-    SemaphoreServer.system_free(system)
+    SignallingServer.system_free(system)
 
 
 func test_a_track_event_fires_once_per_entry_in_its_direction() -> void:

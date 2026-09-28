@@ -55,6 +55,14 @@ func _ready() -> void:
     add_child(_timer)
 
 
+## Leaving the tree ends the subscription: a neighbour freed with the scenery uncouples
+## (MoverRailVehicleController::release()) after this node is already out of it
+func _exit_tree() -> void:
+    if _controller:
+        _controller.consist_changed.disconnect(_on_consist_changed)
+        _controller = null
+
+
 func _check_consist() -> void:
     var vehicle:RailVehicle3D = get_parent() as RailVehicle3D
     var controller:VehicleController = vehicle.get_controller() if vehicle else null

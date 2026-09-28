@@ -149,6 +149,7 @@ func _driver_attached(driver:RID) -> void:
     # Driver.cpp:1872) - never none: turning towards none puts the reverser at neutral and takes
     # that for the way it drives
     state.direction_order = state.direction
+    state.timetable.changed.connect(DriverSystem.driver_report_timetable_changed.bind(driver))
     _drivers[driver] = state
     DriverSystem.driver_schedule_update(driver, 0.0)
 
@@ -189,6 +190,19 @@ func _prepare_direction(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
     var cab_active:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab))
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction * cab_active)
+
+
+## The timetable and how far the driver got through it (DriverDelegate.get_timetable_state())
+func _get_timetable_state(driver:RID) -> Dictionary:
+    var state:DriverState = _drivers.get(driver)
+    if not state:
+        return {}
+    return {
+        "timetable": state.timetable.timetable,
+        "station_index": state.timetable.station_index,
+        "latency": state.timetable.latency,
+        "at_passenger_stop": state.route.at_passenger_stop,
+    }
 
 
 ## What the driver keeps: its orders and what they asked for
@@ -393,8 +407,10 @@ func _update(driver:RID) -> void:
     situation.pressing = state.pressing
     situation.coupling = state.coupling_vehicle.is_valid() and bool(situation.order & Order.CONNECT)
     state.traction.read(situation, elapsed)
-    # a player drives it: the driver takes orders and reads the trainset, and touches nothing
+    # a player drives it: the driver takes orders and reads the trainset, and touches nothing - its
+    # orders still follow the vehicle the player gets ready, as the timetable's stops need them
     if not DriverSystem.vehicle_is_control_active(vehicle):
+        _handle_engine(state, vehicle, cab)
         DriverSystem.driver_schedule_update(driver, state.reaction_time)
         return
     _control_security_system(vehicle, cab)
@@ -411,15 +427,7 @@ func _update(driver:RID) -> void:
     state.traction.set_time_controllers(situation)
     state.braking.set_time_controllers(situation)
     var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
-    # a vehicle somebody powered up gets ready to drive (the original's HACK, Driver.cpp:7226-7231)
-    if state.orders[state.order_position] == Order.WAIT_FOR_ORDERS and not state.engine_active \
-            and CabinSystem.vehicle_state_value(vehicle, "power24_available", false):
-        _order_next(state, Order.PREPARE_ENGINE)
-    if state.orders[state.order_position] == Order.PREPARE_ENGINE:
-        if _prepare_engine(state, vehicle, cab):
-            _jump_to_next_order(state)
-    if state.orders[state.order_position] & DRIVING_ORDERS and not state.engine_active:
-        _prepare_engine(state, vehicle, cab)
+    _handle_engine(state, vehicle, cab)
     if state.orders[state.order_position] == Order.RELEASE_ENGINE and standing:
         if _release_engine(state, vehicle, cab):
             _jump_to_next_order(state)
@@ -436,44 +444,61 @@ func _update(driver:RID) -> void:
     DriverSystem.driver_schedule_update(driver, state.reaction_time)
 
 
+## handle_engine() (Driver.cpp:7223-7244): the engine's orders - a vehicle somebody powered up gets
+## ready to drive, and the driving orders follow once it is
+func _handle_engine(state:DriverState, vehicle:RID, cab:int) -> void:
+    # the original's HACK (Driver.cpp:7226-7231)
+    if state.orders[state.order_position] == Order.WAIT_FOR_ORDERS and not state.engine_active \
+            and CabinSystem.vehicle_state_value(vehicle, "power24_available", false):
+        _order_next(state, Order.PREPARE_ENGINE)
+    if state.orders[state.order_position] == Order.PREPARE_ENGINE:
+        if _prepare_engine(state, vehicle, cab):
+            _jump_to_next_order(state)
+    if state.orders[state.order_position] & DRIVING_ORDERS and not state.engine_active:
+        _prepare_engine(state, vehicle, cab)
+
+
 ## PrepareEngine() (Driver.cpp:2759-2916): the steps that get the vehicle ready, cued on every
-## update until it is. What the cab does not have yet is left out (TODO.md, "Drivers").
+## update until it is - to a player only hinted (cue_action()), so the driver then just reads
+## whether the vehicle is ready. What the cab does not have yet is left out (TODO.md, "Drivers").
 func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     var speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0))
     state.reaction_time = PREPARE_TIME if speed < ROLLING_START_SPEED else EASY_REACTION_TIME
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.BATTERY_ON)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.RADIO_ON)
-    if _has_diesel_engine(vehicle):
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.OIL_PUMP_ON)
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_ON)
-    # the pantographs' air, and both up (Driver.cpp:2782-2811)
-    MaszynaLegacyDriverPantographs.prepare(vehicle, cab, state.trainset, MaszynaLegacyDriverBraking.is_emu(vehicle))
-    _prepare_direction(state, vehicle, cab)
-    # the main circuit, the converter and the air are the engine's the controls drive - an EMU's
-    # motor car (mvControlling, Driver.cpp:2820-2870)
     var controlling:RID = state.trainset.controlling
     var converter_overload:bool = CabinSystem.vehicle_state_value(controlling, "converter_overload", false)
-    if converter_overload:
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_OFF)
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_OFF)
-        CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"hold")
-        CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"release")
     var mains:bool = CabinSystem.vehicle_state_value(controlling, "main_switch_enabled", false)
-    if not mains:
-        MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
-        # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
-        var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
-                RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
-        if engine_type == RailVehicleEngine.DIESEL:
-            MaszynaLegacyDriverHints.set_idle(vehicle, cab)
-        MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
-    elif not converter_overload:
-        var converter_enabled:bool = MaszynaLegacyDriverHints.cue(
-                vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_ON, controlling)
-        if converter_enabled:
-            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON, controlling)
-        MaszynaLegacyDriverHints.release_train_brake(vehicle, cab)
+    # to a player the steps are only hinted (cue_action()) - the driver just reads whether it is ready
+    if DriverSystem.vehicle_is_control_active(vehicle):
+        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.BATTERY_ON)
+        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
+        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.RADIO_ON)
+        if _has_diesel_engine(vehicle):
+            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.OIL_PUMP_ON)
+            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_ON)
+        # the pantographs' air, and both up (Driver.cpp:2782-2811)
+        MaszynaLegacyDriverPantographs.prepare(vehicle, cab, state.trainset, MaszynaLegacyDriverBraking.is_emu(vehicle))
+        _prepare_direction(state, vehicle, cab)
+        # the main circuit, the converter and the air are the engine's the controls drive - an EMU's
+        # motor car (mvControlling, Driver.cpp:2820-2870)
+        if converter_overload:
+            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_OFF)
+            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_OFF)
+            CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"hold")
+            CabinSystem.act(vehicle, cab, &"converterfuse_bt", &"release")
+        if not mains:
+            MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
+            # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
+            var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
+                    RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
+            if engine_type == RailVehicleEngine.DIESEL:
+                MaszynaLegacyDriverHints.set_idle(vehicle, cab)
+            MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
+        elif not converter_overload:
+            var converter_enabled:bool = MaszynaLegacyDriverHints.cue(
+                    vehicle, cab, MaszynaLegacyDriverHints.Hint.CONVERTER_ON, controlling)
+            if converter_enabled:
+                MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON, controlling)
+            MaszynaLegacyDriverHints.release_train_brake(vehicle, cab)
     var converter:Variant = CabinSystem.vehicle_state_value(controlling, "converter_enabled")
     state.engine_active = not converter_overload and mains \
             and not int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0 \

@@ -823,6 +823,17 @@ ported, into a delegate.
       (`tsGuardSignal`), the radio channel a station gives, the delay flag (`UpdateDelayFlag()`),
       a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
       `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
+      The player's timetable panel (`demo/hud/timetable_panel.gd`, F2 / View menu, fed by
+      `DriverSystem.driver_get_timetable_state()` and `driver_timetable_changed`) left out:
+      `StationStart` with its `fLastStopExpDist` counter (Driver.cpp:6581-6587) - the panel
+      lists every station, passed ones faded; the original's red row while loading
+      (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
+      consist weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
+      re-resolve which driver of the trainset the panel follows until the next timetable change
+      or a change of the player's vehicle.
+      The driver's hints to a player (`cue_action()` shown as the original's hint list,
+      `driver_hint`, Driver.cpp:2759-2916) are not shown - to be a tooltip-styled HUD panel;
+      today `MaszynaLegacyDriverHints.cue()` only acts when the driver drives.
    Braking table (2026-09-27): `CheckVehicles()` ported - the table `fBrake_a0/a1` from the
       vehicles' `BrakeForceR()` (`RailVehicleBrake.get_force_at()`), `fAccThreshold`, the brake
       reaction, the cargo flags, the brake setting per vehicle (`auto_rewident`),

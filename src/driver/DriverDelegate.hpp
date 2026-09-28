@@ -1,6 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/gdvirtual.gen.inc>
+#include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/vector3.hpp>
 
@@ -25,6 +26,7 @@ namespace godot {
             GDVIRTUAL5(_handle_command, RID, String, double, double, Vector3)
             GDVIRTUAL1(_update, RID)
             GDVIRTUAL1(_control_taken, RID)
+            GDVIRTUAL1RC(Dictionary, _get_timetable_state, RID)
 
             /// Called by DriverSystem. A C++ delegate overrides these; the default forwards to the
             /// script.
@@ -39,5 +41,10 @@ namespace godot {
             /// The driver drives its vehicle again - a player left the cab
             /// (DriverSystem.vehicle_set_control_active()); the vehicle is as the player left it
             virtual void control_taken(const RID &p_driver);
+            /// The driver's timetable and how far it got through it: "timetable" (Timetable or
+            /// null), "station_index" (the entry it drives to next), "latency" (late on leaving the
+            /// last station [min], early when negative), "at_passenger_stop"; empty for a delegate
+            /// that follows no timetable
+            virtual Dictionary get_timetable_state(const RID &p_driver) const;
     };
 } // namespace godot

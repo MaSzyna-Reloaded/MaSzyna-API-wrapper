@@ -1,0 +1,92 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/timetable_row.gd" id="1_row"]
+
+[node name="TimetableRow" type="PanelContainer"]
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_type_variation = &"TimetableRow"
+script = ExtResource("1_row")
+
+[node name="Columns" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="Line" type="Control" parent="Columns"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Station" type="VBoxContainer" parent="Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="StationName" type="Label" parent="Columns/Station"]
+unique_name_in_owner = true
+layout_mode = 2
+text_overrun_behavior = 3
+
+[node name="Details" type="HBoxContainer" parent="Columns/Station"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Kilometre" type="Label" parent="Columns/Station/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableMuted"
+
+[node name="Facilities" type="Label" parent="Columns/Station/Details"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TimetableMuted"
+text_overrun_behavior = 3
+
+[node name="Status" type="PanelContainer" parent="Columns/Station"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"TimetablePill"
+
+[node name="StatusText" type="Label" parent="Columns/Station/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+
+[node name="SpeedChip" type="PanelContainer" parent="Columns"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 0
+mouse_filter = 2
+theme_type_variation = &"TimetableChip"
+
+[node name="Speed" type="Label" parent="Columns/SpeedChip"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableMuted"
+
+[node name="Times" type="VBoxContainer" parent="Columns"]
+custom_minimum_size = Vector2(52, 0)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Arrival" type="Label" parent="Columns/Times"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableDigits"
+horizontal_alignment = 2
+
+[node name="Departure" type="Label" parent="Columns/Times"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableDigits"
+horizontal_alignment = 2
+
+[connection signal="draw" from="Columns/Line" to="." method="_draw_line"]

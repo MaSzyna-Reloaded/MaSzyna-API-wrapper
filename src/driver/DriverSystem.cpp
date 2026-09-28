@@ -5,6 +5,8 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    const char *DriverSystem::driver_timetable_changed_signal = "driver_timetable_changed";
+
     void DriverSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("driver_create"), &DriverSystem::driver_create);
         ClassDB::bind_method(D_METHOD("driver_free", "driver"), &DriverSystem::driver_free);
@@ -24,6 +26,11 @@ namespace godot {
                 D_METHOD("vehicle_set_control_active", "vehicle", "active"), &DriverSystem::vehicle_set_control_active);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_control_active", "vehicle"), &DriverSystem::vehicle_is_control_active);
+        ClassDB::bind_method(
+                D_METHOD("driver_get_timetable_state", "driver"), &DriverSystem::driver_get_timetable_state);
+        ClassDB::bind_method(
+                D_METHOD("driver_report_timetable_changed", "driver"), &DriverSystem::driver_report_timetable_changed);
+        ADD_SIGNAL(MethodInfo(driver_timetable_changed_signal, PropertyInfo(Variant::RID, "driver")));
     }
 
     /// A freed vehicle leaves its driver without one. No explicit disconnect: callable_mp reports
@@ -204,5 +211,16 @@ namespace godot {
             return;
         }
         delegate->handle_command(p_driver, p_command, p_value1, p_value2, p_position);
+    }
+
+    Dictionary DriverSystem::driver_get_timetable_state(const RID &p_driver) const {
+        const DriverData *data = drivers.getptr(p_driver);
+        ERR_FAIL_NULL_V(data, Dictionary());
+        return data->delegate.is_valid() ? data->delegate->get_timetable_state(p_driver) : Dictionary();
+    }
+
+    void DriverSystem::driver_report_timetable_changed(const RID &p_driver) {
+        ERR_FAIL_COND(!drivers.has(p_driver));
+        emit_signal(driver_timetable_changed_signal, p_driver);
     }
 } // namespace godot

@@ -6,6 +6,9 @@ extends PanelContainer
 ## the trainset the player's vehicle belongs to: the scenario gives it to one driver of the
 ## trainset only, not necessarily the one of the vehicle the player sits in.
 
+## The close button asks the owner of the View menu to hide the panel and untick its entry
+signal close_requested
+
 const ROW:PackedScene = preload("timetable_row.tscn")
 const FRONT_END:int = 0
 const MINUTES_PER_HOUR:float = 60.0
@@ -175,3 +178,7 @@ func _on_visibility_changed() -> void:
         return
     _tick()
     %Timer.start()
+
+
+func _on_close_button_pressed() -> void:
+    close_requested.emit()

@@ -25,12 +25,24 @@ layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 
-[node name="MoveHandle" type="Control" parent="Content" node_paths=PackedStringArray("window")]
+[node name="TitleBar" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MoveHandle" type="Control" parent="Content/TitleBar" node_paths=PackedStringArray("window")]
 custom_minimum_size = Vector2(0, 10)
 layout_mode = 2
+size_flags_horizontal = 3
 mouse_default_cursor_shape = 13
 script = ExtResource("3_move")
-window = NodePath("../..")
+window = NodePath("../../..")
+
+[node name="CloseButton" type="Button" parent="Content/TitleBar"]
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TimetableClose"
+text = "✕"
+flat = true
 
 [node name="Header" type="HBoxContainer" parent="Content"]
 layout_mode = 2
@@ -136,3 +148,4 @@ unique_name_in_owner = true
 [connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
 [connection signal="sort_children" from="Content/StationsScroll/Stations" to="." method="_scroll_to_next_station"]
 [connection signal="timeout" from="Timer" to="." method="_tick"]
+[connection signal="pressed" from="Content/TitleBar/CloseButton" to="." method="_on_close_button_pressed"]

@@ -6,7 +6,7 @@ extends Control
 ## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
 
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO }
+enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO, CONTROLS }
 
 ## The player whose vehicle the control windows drive
 @export var player_path: NodePath
@@ -43,10 +43,14 @@ func _ready() -> void:
         _menu_actions.append(action)
     # the menus show their keys and handle them: a key picks its entry as a click would
     menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))
+    # Tab, as the original's map panel (driveruilayer.cpp:136)
+    menu.set_item_shortcut(_windows.find($ControlWindows/MiniMap), _action_shortcut(&"minimap_toggle"))
     # F2, as the original's (driveruilayer.cpp:155)
     %View.set_item_shortcut(ViewItem.TIMETABLE, _action_shortcut(&"timetable_toggle"))
     # Shift+F2 - free in the original, whose F-keys ignore modifiers (driveruilayer.cpp:115)
     %View.set_item_shortcut(ViewItem.SCENARIO, _action_shortcut(&"scenario_toggle"))
+    # F12 - free in the original without Shift (driveruilayer.cpp:174)
+    %View.set_item_shortcut(ViewItem.CONTROLS, _action_shortcut(&"hud_toggle"))
 
 
 ## A menu shortcut of an input action - the menu shows its key, and matches it exactly (F2 is not
@@ -59,11 +63,6 @@ static func _action_shortcut(action: StringName) -> Shortcut:
     return shortcut
 
 
-func _input(event: InputEvent) -> void:
-    if event.is_action_pressed("hud_toggle"):
-        $TopBar/HBoxContainer/ToggleAllControls.button_pressed = not $TopBar/HBoxContainer/ToggleAllControls.button_pressed
-
-
 func _on_popup_menu_index_pressed(index: int) -> void:
     if index >= _windows.size():
         _menu_actions[index - _windows.size()].pressed.emit()
@@ -73,7 +72,8 @@ func _on_popup_menu_index_pressed(index: int) -> void:
     _bind_vehicle(win)
 
 
-## The "View" menu: its entries show or hide the transcripts and the timetable
+## The "View" menu: its entries show or hide the transcripts, the timetable, the scenario and
+## all the control windows at once
 func _on_view_menu_index_pressed(index: int) -> void:
     %View.toggle_item_checked(index)
     match index:
@@ -83,6 +83,18 @@ func _on_view_menu_index_pressed(index: int) -> void:
             %TimetablePanel.visible = %View.is_item_checked(index)
         ViewItem.SCENARIO:
             %ScenarioPanel.visible = %View.is_item_checked(index)
+        ViewItem.CONTROLS:
+            for win: HUDWindow in _windows:
+                win.visible = %View.is_item_checked(index)
+                _bind_vehicle(win)
+
+
+func _on_timetable_panel_close_requested() -> void:
+    _on_view_menu_index_pressed(ViewItem.TIMETABLE)
+
+
+func _on_scenario_panel_close_requested() -> void:
+    _on_view_menu_index_pressed(ViewItem.SCENARIO)
 
 
 ## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until
@@ -95,12 +107,6 @@ func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
 func _on_controlled_vehicle_changed(player: MaszynaPlayer) -> void:
     var vehicle: RailVehicle3D = player.controlled_vehicle
     %TimetablePanel.follow_vehicle(vehicle.get_rid() if vehicle else RID())
-
-
-func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
-    for win: Node in $ControlWindows.get_children():
-        win.visible = toggled_on
-        _bind_vehicle(win)
 
 
 ## The vehicle the player is driving, handed to every widget that shows something about it. The

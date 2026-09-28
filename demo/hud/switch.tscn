@@ -10,6 +10,7 @@ script = ExtResource("1_7hfja")
 
 [node name="Switch" type="CheckButton" parent="." unique_id=1943980002]
 layout_mode = 2
+focus_mode = 0
 disabled = true
 
 [node name="Label" type="Label" parent="." unique_id=1711133923]

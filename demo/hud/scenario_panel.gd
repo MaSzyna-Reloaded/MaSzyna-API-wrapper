@@ -4,6 +4,9 @@ extends PanelContainer
 ## image and description from the .scn header, and the mission of the trainset the player chose
 ## (the same header the scenario selector shows, MaszynaSceneryInfo).
 
+## The close button asks the owner of the View menu to hide the panel and untick its entry
+signal close_requested
+
 
 ## The scenario the player has started; an empty train_id lets the scenery pick its own driver, so
 ## there is no chosen trainset whose mission could be shown
@@ -23,3 +26,7 @@ func show_scenario(info:MaszynaSceneryInfo, train_id:String) -> void:
             %Mission.text = trainset.description
             break
     %MissionSection.visible = not %Mission.text == ""
+
+
+func _on_close_button_pressed() -> void:
+    close_requested.emit()

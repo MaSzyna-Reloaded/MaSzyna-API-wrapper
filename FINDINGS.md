@@ -111,6 +111,9 @@ anything. Open work belongs in `TODO.md`.
 * A shadow's normal bias is texel x `shadow_normal_bias` per cascade: compute it against the
   thinnest caster before tuning; two shadowed directional lights halve the atlas. *(09-27 thin
   station objects lost their sun shadows)*
+* A RenderingServer light starts with the server's defaults, not a node's: diff the whole
+  `Light3D` constructor against `_light_initialize()` - `shadow_blur` 0 zeroes a spot's depth
+  bias. *(09-28 street lamps shadowed their own pool)*
 
 * "The AI can drive it, the player cannot": log the AI's vehicle commands and replay them on the
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*

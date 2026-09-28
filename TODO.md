@@ -569,11 +569,6 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   `maszyna/rendering/scenery_light_tint`). Tinting emission needs a flag in the
   `E3DMaterialResolver` key (like `force_alpha`) - `latarnial_betdziur` shares
   `elektryczne/oprawa` between bulb and housing.
-* A lamp shadows its own light (economy mode spokes); `light_set_shadow_caster_mask(~SCENERY_LIGHT_OWNER_LAYER)`
-  does not remove them (checked 2026-09-21). Measure whether the clustered renderer ignores the
-  mask for spot/omni or the layer bit is not set - a scratchpad project with one box on a second
-  layer under a SpotLight3D. Fallbacks: `instance_geometry_set_cast_shadows_setting(..., OFF)` on
-  the light-owning model (loses sun shadow) or no shadows in economy mode.
 * An economy-mode merged light takes the max `energy` of the lights it replaces, not the sum;
   `maszyna/rendering/scenery_light_energy` compensates.
 * Scenery light brightness is calibrated by eye (`scenery_light_energy`, `scenery_light_tint`,

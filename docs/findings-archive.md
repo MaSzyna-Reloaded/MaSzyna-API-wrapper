@@ -4,6 +4,28 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-28 - street lamps shadowed their own pool: a server light starts with no shadow blur
+
+* **Symptom:** in stary_jawor_noc every street lamp (`linia053/lamp-5`) threw curved dark spokes
+  and bands across its own pool, still after the lamp's geometry was moved to
+  `SCENERY_LIGHT_OWNER_LAYER` alone (2026-09-27).
+* **Proof:** a scratch scene rendered off screen (`xvfb-run`) showed that Godot honours
+  `shadow_caster_mask` for a RenderingServer light and a node light alike - neither cast from the
+  excluded layer - but the RenderingServer spot darkened the ground straight under itself.
+  A one-lamp test scenery (`td_latarnia.scn`) through the real `SceneryInstancer` path gave the
+  same dark pool in economy mode and diagonal acne across the whole pool in high quality. Godot:
+  `_light_initialize()` sets `LIGHT_PARAM_SHADOW_BLUR = 0` (`light_storage.cpp:161`),
+  `Light3D`'s constructor sets 1.0 (`light_3d.cpp:505`), and a spot's depth bias is multiplied by
+  it (`light_storage.cpp:1232`). Every scenery spot had a depth bias of 0 - the tuned 0.06 never
+  applied - and its `size` never softened anything (PCSS is off at blur 0).
+* **Fix:** `_light_build()` sets `LIGHT_PARAM_SHADOW_BLUR` to 1.0 and gives omni lights
+  `LIGHT_OMNI_SHADOW_CUBE`, the rest of what the two constructors set. Both modes render a clean
+  pool.
+* **Rule:** porting a light from a node to a RID, diff the whole constructor
+  (`Light3D::Light3D(type)` and the subclass) against `_light_initialize()`, not only the
+  parameters that look related to the symptom. A parameter that scales another one hides as
+  "the bias is too small".
+
 ## 2026-09-28 - the player could not start the ST45 the AI drove: FuelStart was never read
 
 * **Symptom:** in zwierzyniec_transport the player could not get ST45-03 (st45_v2, 301dd.fiz) to

@@ -634,6 +634,11 @@ namespace godot {
                     light->kind == LIGHT_KIND_OMNI ? OMNI_LIGHT_SHADOW_BIAS : SPOT_LIGHT_SHADOW_BIAS);
             rs->light_set_param(
                     light->light, RenderingServer::LIGHT_PARAM_SHADOW_NORMAL_BIAS, LIGHT_SHADOW_NORMAL_BIAS);
+            rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_SHADOW_BLUR, LIGHT_SHADOW_BLUR);
+            // OmniLight3D's constructor (light_3d.cpp:663); the server starts with dual paraboloid
+            if (light->kind == LIGHT_KIND_OMNI) {
+                rs->light_omni_set_shadow_mode(light->light, RenderingServer::LIGHT_OMNI_SHADOW_CUBE);
+            }
             // Must be set explicitly, like the biases above: a RenderingServer light does not get
             // it from Light3D's constructor and starts with it on, which stripes the ground with
             // shadow acne. The setting can bring back the original's front-face culling in shadow

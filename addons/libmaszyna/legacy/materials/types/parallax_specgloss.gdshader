@@ -2,9 +2,11 @@ shader_type spatial;
 
 render_mode cull_back, depth_draw_opaque, diffuse_burley, specular_schlick_ggx;
 
+// absolute: the variants MaszynaMaterialFactory builds from this code have no path of their own
+#include "res://addons/libmaszyna/legacy/materials/types/specgloss.gdshaderinc"
+
 uniform sampler2D diffuse_texture : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D normal_texture : filter_linear_mipmap_anisotropic, repeat_enable;
-uniform sampler2D specgloss_texture : filter_linear_mipmap_anisotropic, repeat_enable;
 // detail_parallax_specgloss: a tiled detail normal map added to the normal map (mat_detail_parallax_specgloss.frag)
 uniform sampler2D detail_normal_texture : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform bool use_detail_normal = false;
@@ -14,9 +16,6 @@ uniform float detail_height_scale = 1.0;
 uniform vec4 albedo_multiplier : source_color = vec4(1.0);
 
 uniform float diffuse_strength : hint_range(0.0, 2.0) = 1.0;
-uniform float specular_strength : hint_range(0.0, 1.0) = 1.0;
-uniform float reflection_strength : hint_range(0.0, 1.0) = 0.0;
-uniform float glossiness = 10.0;
 
 uniform float height_scale : hint_range(0.0, 0.05) = 0.0;
 uniform float height_offset : hint_range(-1.0, 1.0) = 0.0;
@@ -44,22 +43,6 @@ void vertex() {
 
     v_position_view = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
     v_dist = length(v_position_view);
-}
-
-float glossiness_to_roughness(float source_glossiness) {
-    float g = abs(source_glossiness);
-
-    if(g < 0.0001) {
-        return 1.0;
-    }
-
-    float max_glossiness = 3500.0;
-    float min_roughness = 0.18;
-    float max_roughness = 0.75;
-
-    float t = log(g + 1.0) / log(max_glossiness + 1.0);
-
-    return mix(max_roughness, min_roughness, clamp(t, 0.0, 1.0));
 }
 
 float read_height(vec2 uv) {
@@ -178,16 +161,15 @@ void fragment() {
         METALLIC = 0.0;
         ROUGHNESS = 1.0;
     } else {
-        float source_specularity = specgloss_sample.r * specular_strength;
-        float source_glossiness = specgloss_sample.g * abs(glossiness);
-        float source_metallic = specgloss_sample.b;
-        float source_reflection = reflection_strength * normal_sample.a;
-
         ALBEDO = diffuse_sample.rgb * diffuse_strength;
 
-        SPECULAR = clamp(max(source_specularity, source_reflection), 0.0, 1.0);
-        METALLIC = clamp(source_metallic, 0.0, 1.0);
-        ROUGHNESS = glossiness_to_roughness(source_glossiness);
+        float source_specular;
+        float source_metallic;
+        float source_roughness;
+        evaluate_specgloss(specgloss_sample, normal_sample.a, source_specular, source_metallic, source_roughness);
+        SPECULAR = source_specular;
+        METALLIC = source_metallic;
+        ROUGHNESS = source_roughness;
 
         vec3 normal = decode_normal_from_rg(normal_sample) * 2.0 - 1.0;
         if (use_detail_normal) {

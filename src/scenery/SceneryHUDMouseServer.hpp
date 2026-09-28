@@ -12,11 +12,13 @@ namespace godot {
     /// handed in, Shift+click the other one - the original's click on a scenery model in free-fly
     /// mode (drivermouseinput.cpp:331-353, basic_cell::on_click(), scene.cpp:33-43 and 691-704),
     /// which is how a hand-thrown switch is set. The model under the cursor is outlined as a cab
-    /// control is (CabinHUDMouseSystem); the original shows nothing there.
+    /// control is (CabinHUDMouseSystem); the original shows nothing there. A vehicle's model is
+    /// picked the same way, and a click on it is announced with the vehicle's handle.
     ///
-    /// A pickable is an E3DRenderingServer instance and the operations its owner hands in; the
-    /// server knows nothing of what they do. Picking runs on mouse motion only and casts the cursor
-    /// ray against the registered instances alone - a handful per scenery, not its every model -
+    /// A pickable is an E3DRenderingServer instance and the operations its owner hands in, or the
+    /// vehicle it draws; the server knows nothing of what they do, and the pickable goes with its
+    /// instance. Picking runs on mouse motion only and casts the cursor ray against the registered
+    /// instances alone - a handful per scenery and the vehicles near the camera, not every model -
     /// of which only the ones built (streamed in) are tested.
     ///
     /// Unlike the original's pick buffer, nothing hides a model: one standing behind a building is
@@ -27,6 +29,7 @@ namespace godot {
         public:
             static const char *pickable_hovered_signal;
             static const char *pickable_unhovered_signal;
+            static const char *vehicle_pressed_signal;
 
             static SceneryHUDMouseServer *get_instance() {
                 return Object::cast_to<SceneryHUDMouseServer>(
@@ -40,15 +43,18 @@ namespace godot {
                     String hints;
                     Callable pressed;
                     Callable shift_pressed;
+                    RID vehicle;
             };
 
             HashMap<RID, Pickable> pickables;
             ObjectID camera;
             bool active = true;
             Ref<StandardMaterial3D> outline_material;
+            Ref<StandardMaterial3D> vehicle_outline_material;
             RID hovered;
 
             void _set_hovered(const RID &p_pickable);
+            void _on_instance_freed(const RID &p_instance);
 
         protected:
             static void _bind_methods();
@@ -67,7 +73,10 @@ namespace godot {
             RID pickable_create(
                     const RID &p_instance, const String &p_caption, const String &p_hints, const Callable &p_pressed,
                     const Callable &p_shift_pressed);
-            /// Frees the pickable; free it before its instance
+            /// A click on the instance's model, with or without Shift, emits `vehicle_pressed` with
+            /// `p_vehicle` - a RailVehicleServer handle; `p_caption` is what the tooltip shows
+            RID vehicle_pickable_create(const RID &p_instance, const String &p_caption, const RID &p_vehicle);
+            /// Frees the pickable; one whose instance is freed goes with it
             void pickable_free(const RID &p_pickable);
 
             /// Feeds one input event; true when the event operated a pickable and is consumed

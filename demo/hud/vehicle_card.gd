@@ -104,7 +104,11 @@ func _disconnect_controllers() -> void:
 ## shown as it is now
 func _show_trainset_vehicle(p_vehicle:RID) -> void:
     _shown = p_vehicle
-    %Trainset.set_marked(_trainset.find(_shown))
+    var index:int = _trainset.find(_shown)
+    # the grid starts on its first tile; the selection goes where the mark is
+    if index >= 0:
+        %Trainset.select(index)
+    %Trainset.set_marked(index)
     %ActionsButton.vehicle = _shown
     %FollowButton.set_pressed_no_signal(_followed == _shown)
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(_shown)

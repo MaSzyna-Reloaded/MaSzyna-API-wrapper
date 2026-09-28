@@ -112,6 +112,9 @@ namespace godot {
             static constexpr float VEHICLE_DETAIL_HYSTERESIS_MIN_M = 25.0;
             /// The model currently uses the node hierarchy (bogies, wheels, pantograph arms)
             bool model_detailed = true;
+            /// The model registered with SceneryHUDMouseServer - only while it is detailed, so
+            /// only the vehicles near the camera are tested under the cursor
+            RID pickable;
             bool force_detail_refresh = true;
             Transform3D last_body_transform;
             Node3D *low_poly_cabin = nullptr;
@@ -196,6 +199,7 @@ namespace godot {
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_model_detail();
+            void _register_pickable(const RID &p_instance);
             void _update_smoke();
             /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
             /// to be a Dictionary of three Vector3s, allocated and boxed again for every call, with

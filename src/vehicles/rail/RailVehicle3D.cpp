@@ -1,6 +1,7 @@
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
+#include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "traction/TractionServer.hpp"
 #include "vehicles/rail/RailVehicleWheels.hpp"
@@ -461,6 +462,10 @@ namespace godot {
                 rid = vehicle_rid;
                 rid_owned = false;
                 server->vehicle_attach_rail_vehicle(rid, get_instance_id());
+                if (model_node != nullptr) {
+                    // the model node is a GDScript E3DModelInstance, unknown at build time
+                    _register_pickable(model_node->call("get_e3d_instance"));
+                }
             }
             if (rid.is_valid()) {
                 server->vehicle_attach_controller(rid, controller != nullptr ? controller->get_instance_id() : 0);
@@ -512,8 +517,11 @@ namespace godot {
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
+            model_node->disconnect(
+                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
             model_node = nullptr;
         }
+        _register_pickable(RID());
         // only the handle this node created is this node's to free; an adopted one belongs to
         // the VehiclePhysicsNode that built the vehicle
         if (rid_owned && rid.is_valid()) {
@@ -633,11 +641,17 @@ namespace godot {
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
+            model_node->disconnect(
+                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
         }
         model_node = new_model_node;
         if (model_node != nullptr) {
             model_node->connect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->connect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
+            model_node->connect(
+                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
+            // the model node is a GDScript E3DModelInstance, unknown at build time
+            _register_pickable(model_node->call("get_e3d_instance"));
         }
         _sync_model_lights();
         _update_detection_area();
@@ -740,6 +754,22 @@ namespace godot {
         _cache_animation_bindings();
         force_detail_refresh = true;
         _update_smoke();
+    }
+
+    /// The model is clicked in free camera (SceneryHUDMouseServer) while it is detailed: a new
+    /// instance comes with every detail switch, and a far vehicle is left out of picking
+    void RailVehicle3D::_register_pickable(const RID &p_instance) {
+        SceneryHUDMouseServer *mouse = SceneryHUDMouseServer::get_instance();
+        if (Engine::get_singleton()->is_editor_hint() || mouse == nullptr) {
+            return;
+        }
+        mouse->pickable_free(pickable);
+        pickable = RID();
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (!model_detailed || !p_instance.is_valid() || !rid.is_valid() || server == nullptr) {
+            return;
+        }
+        pickable = mouse->vehicle_pickable_create(p_instance, server->vehicle_get_name(rid), rid);
     }
 
     void RailVehicle3D::_on_low_poly_cabin_e3d_loaded() {

@@ -15,13 +15,26 @@ namespace godot {
         /// it looks on screen like a cab lever's thin ring (CabinHUDMouseSystem, 3 mm seen from
         /// the driver's seat about 0.75 m away) wherever the model stands; untinted, as a lever's
         constexpr double OUTLINE_WIDTH_PER_METRE = 0.004;
+        /// A vehicle's outline, about a pixel wide (1080 lines, 75 degree field of view): a vehicle
+        /// fills much of the view, and the lever's ring around it reads as a thick frame
+        constexpr double VEHICLE_OUTLINE_WIDTH_PER_METRE = 0.0015;
     } // namespace
 
     const char *SceneryHUDMouseServer::pickable_hovered_signal = "pickable_hovered";
     const char *SceneryHUDMouseServer::pickable_unhovered_signal = "pickable_unhovered";
+    const char *SceneryHUDMouseServer::vehicle_pressed_signal = "vehicle_pressed";
 
     SceneryHUDMouseServer::SceneryHUDMouseServer() {
         outline_material = mouse_picking::outline_material(OUTLINE_WIDTH_PER_METRE, 0.0);
+        vehicle_outline_material = mouse_picking::outline_material(VEHICLE_OUTLINE_WIDTH_PER_METRE, 0.0);
+        // the bogies, wheels and interior inside the body would each draw their own ring through it
+        Ref<BaseMaterial3D>(vehicle_outline_material->get_next_pass())
+                ->set_flag(BaseMaterial3D::FLAG_DISABLE_DEPTH_TEST, false);
+        E3DRenderingServer *e3d = E3DRenderingServer::get_instance();
+        ERR_FAIL_NULL(e3d);
+        e3d->connect(
+                E3DRenderingServer::instance_freed_signal,
+                callable_mp(this, &SceneryHUDMouseServer::_on_instance_freed));
     }
 
     void SceneryHUDMouseServer::_bind_methods() {
@@ -30,6 +43,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("pickable_create", "instance", "caption", "hints", "pressed", "shift_pressed"),
                 &SceneryHUDMouseServer::pickable_create);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_pickable_create", "instance", "caption", "vehicle"),
+                &SceneryHUDMouseServer::vehicle_pickable_create);
         ClassDB::bind_method(D_METHOD("pickable_free", "pickable"), &SceneryHUDMouseServer::pickable_free);
         ClassDB::bind_method(D_METHOD("input", "event"), &SceneryHUDMouseServer::input);
         ClassDB::bind_method(D_METHOD("get_hovered_pickable"), &SceneryHUDMouseServer::get_hovered_pickable);
@@ -38,6 +54,7 @@ namespace godot {
                 pickable_hovered_signal, PropertyInfo(Variant::STRING, "caption"),
                 PropertyInfo(Variant::STRING, "hints")));
         ADD_SIGNAL(MethodInfo(pickable_unhovered_signal));
+        ADD_SIGNAL(MethodInfo(vehicle_pressed_signal, PropertyInfo(Variant::RID, "vehicle")));
     }
 
     void SceneryHUDMouseServer::set_camera(const uint64_t p_camera_id) {
@@ -55,8 +72,32 @@ namespace godot {
             const RID &p_instance, const String &p_caption, const String &p_hints, const Callable &p_pressed,
             const Callable &p_shift_pressed) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
-        pickables.insert(rid, Pickable{p_instance, p_caption, p_hints, p_pressed, p_shift_pressed});
+        pickables.insert(rid, Pickable{p_instance, p_caption, p_hints, p_pressed, p_shift_pressed, RID()});
         return rid;
+    }
+
+    RID SceneryHUDMouseServer::vehicle_pickable_create(
+            const RID &p_instance, const String &p_caption, const RID &p_vehicle) {
+        const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        pickables.insert(rid, Pickable{p_instance, p_caption, String(), Callable(), Callable(), p_vehicle});
+        return rid;
+    }
+
+    /// The instance is gone already - its pickables are dropped before the outline would be taken
+    /// off it
+    void SceneryHUDMouseServer::_on_instance_freed(const RID &p_instance) {
+        Vector<RID> freed;
+        for (const KeyValue<RID, Pickable> &entry: pickables) {
+            if (entry.value.instance == p_instance) {
+                freed.push_back(entry.key);
+            }
+        }
+        for (const RID &pickable: freed) {
+            pickables.erase(pickable);
+        }
+        if (freed.has(hovered)) {
+            _set_hovered(RID());
+        }
     }
 
     void SceneryHUDMouseServer::pickable_free(const RID &p_pickable) {
@@ -98,7 +139,12 @@ namespace godot {
             }
             _set_hovered(nearest);
             if (nearest.is_valid()) {
-                outline_material->set_stencil_effect_outline_thickness(nearest_distance * OUTLINE_WIDTH_PER_METRE);
+                if (pickables[nearest].vehicle.is_valid()) {
+                    vehicle_outline_material->set_stencil_effect_outline_thickness(
+                            nearest_distance * VEHICLE_OUTLINE_WIDTH_PER_METRE);
+                } else {
+                    outline_material->set_stencil_effect_outline_thickness(nearest_distance * OUTLINE_WIDTH_PER_METRE);
+                }
             }
             return false;
         }
@@ -110,7 +156,12 @@ namespace godot {
         }
         // every launcher of the model's name fires (basic_cell::on_click(), scene.cpp:36-43), the
         // second event with Shift (scene.cpp:691-704)
-        const RID instance = pickables[hovered].instance;
+        const Pickable &pressed = pickables[hovered];
+        if (pressed.vehicle.is_valid()) {
+            emit_signal(vehicle_pressed_signal, pressed.vehicle);
+            return true;
+        }
+        const RID instance = pressed.instance;
         Vector<Callable> operations;
         for (const KeyValue<RID, Pickable> &entry: pickables) {
             if (entry.value.instance == instance) {
@@ -132,8 +183,8 @@ namespace godot {
         }
         E3DRenderingServer *e3d = E3DRenderingServer::get_instance();
         ERR_FAIL_NULL(e3d);
-        if (hovered.is_valid()) {
-            e3d->instance_set_material_overlay(pickables[hovered].instance, Ref<Material>());
+        if (const Pickable *previous = pickables.getptr(hovered); previous != nullptr) {
+            e3d->instance_set_material_overlay(previous->instance, Ref<Material>());
         }
         hovered = p_pickable;
         if (!hovered.is_valid()) {
@@ -141,7 +192,8 @@ namespace godot {
             return;
         }
         const Pickable &pickable = pickables[hovered];
-        e3d->instance_set_material_overlay(pickable.instance, outline_material);
+        e3d->instance_set_material_overlay(
+                pickable.instance, pickable.vehicle.is_valid() ? vehicle_outline_material : outline_material);
         emit_signal(pickable_hovered_signal, pickable.caption, pickable.hints);
     }
 } // namespace godot

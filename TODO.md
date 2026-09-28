@@ -439,6 +439,11 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * The vehicle selector's "Stop and repair", "Reset position", "Refill main tank" and "Rupture main
   pipe" (vehicleparams.cpp:268-287) are not offered; its cog has the brake release, the emergency
   brake and the trainset moves only.
+* The vehicle whose card is open is not marked in the world. Idea: a diamond marker always on
+  screen over the vehicle, with its distance from the camera next to it.
+* A vehicle is clicked in free camera (`SceneryHUDMouseServer.vehicle_pressed`) only while its
+  model is detailed (within `maszyna/vehicles/detail_distance`); its tooltip caption is the
+  scenery name taken when the model instance is registered, so a name set later is not shown.
 
 ## Rendering
 

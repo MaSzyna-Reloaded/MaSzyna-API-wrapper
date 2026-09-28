@@ -3,6 +3,11 @@
 shader_type spatial;
 render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_schlick_ggx;
 
+#ifdef MASZYNA_SPECGLOSS
+// absolute: the variants MaszynaMaterialFactory builds from this code have no path of their own
+#include "res://addons/libmaszyna/legacy/materials/types/specgloss.gdshaderinc"
+#endif
+
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform int transparency = 0;
@@ -62,5 +67,15 @@ void fragment() {
         EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;
     }
 
-
+#ifdef MASZYNA_SPECGLOSS
+	// reflection mask: the normal map's alpha, or the reflmap's for reflmap_specgloss (mat_reflmap_specgloss.frag:47)
+	float specgloss_specular;
+	float specgloss_metallic;
+	float specgloss_roughness;
+	evaluate_specgloss(
+			texture(specgloss_texture, base_uv), texture(texture_normal, base_uv).a * texture(texture_metallic, base_uv).a, specgloss_specular, specgloss_metallic, specgloss_roughness);
+	SPECULAR = specgloss_specular;
+	METALLIC = specgloss_metallic;
+	ROUGHNESS = specgloss_roughness;
+#endif
 }

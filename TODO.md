@@ -504,9 +504,10 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   (`ab75bbe`).
 * Unmapped original shaders: `clouds`, `stars`, `invalid` (`textures/sky/stratus.mat`, `stars.mat`,
   `invalid.mat`) and `normalmap_phys` (`textures/pkp/wskazniki/w29.mat`, no shader file either).
-* `*_specgloss` shaders other than `parallax_specgloss`/`water_specgloss` ignore the specgloss
-  texture (`normalmap_`, `default_`, `reflmap_`, `detail_normalmap_`, `shadowlessnormalmap_`,
-  `sunlessnormalmap_`).
+* Specgloss types, what is still approximate: `detail_normalmap_specgloss` masks the reflection
+  with the normal map's alpha instead of the original's `reflblend`
+  (`mat_detail_normalmap_specgloss.frag:68`); `shadowlessnormalmap` binds no normal map at all, so
+  its reflection mask is 1.
 * `rain_windscreen.gdshader`: droplets ignore speed and wind (a TODO in the original too); it reads
   the screen texture, so transparent things behind the glass (rain particles) fade under the film.
   Film, large droplets and rivulets are the wrapper's own, tuned by eye (`heavy_rain_start`,

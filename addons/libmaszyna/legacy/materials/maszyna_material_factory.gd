@@ -99,9 +99,8 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
         preload("./types/normalmap_specgloss.tres"),
         TextureMap.new(["diffuse", "normalmap", "specgloss"]),
     ),
-    # The *_specgloss shaders below take specular/gloss/metal from the specgloss texture in the
-    # original; like normalmap_specgloss here they are approximated by their plain counterpart
-    # (default_specgloss: by the default material with specular enabled).
+    # The *_specgloss types below take specular/gloss/metal from the specgloss texture as in the
+    # original: their plain shader built with MASZYNA_SPECGLOSS (types/specgloss.gdshaderinc).
     "default_specgloss": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/normalmap_specgloss.tres"),
@@ -159,8 +158,10 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
     ),
 }
 
-## Shader variants by "source shader instance id:alpha blend:cull disabled"
+## Shader variants by "source shader instance id:alpha blend:cull disabled:specgloss"
 var _shader_variants: Dictionary[String, Shader] = {}
+## Turns on the specgloss texture (types/specgloss.gdshaderinc) in a type shader that offers it
+const SPECGLOSS_DEFINE: String = "MASZYNA_SPECGLOSS"
 
 
 func create(
@@ -252,12 +253,18 @@ func _apply(
         return
     var target_shader_material: ShaderMaterial = material as ShaderMaterial
     var source_shader_material: ShaderMaterial = shader_meta.base_material as ShaderMaterial
+    # a type shader that offers the specgloss texture as a variant (parallax_specgloss and
+    # water_specgloss read it unconditionally) gets it only when the material binds one
+    var specgloss: bool = (
+        source_shader_material.shader.code.contains(SPECGLOSS_DEFINE)
+        and not _texture_path(variant, texture_map, texture_map.specgloss) == ""
+    )
     for property: Dictionary in source_shader_material.get_property_list():
         var property_name: String = property.get("name", "")
         if property_name == "shader":
             target_shader_material.shader = (
-                _get_shader_variant(source_shader_material.shader, options)
-                if options.force_transparent or options.cull_disabled
+                _get_shader_variant(source_shader_material.shader, options, specgloss)
+                if options.force_transparent or options.cull_disabled or specgloss
                 else source_shader_material.shader
             )
         elif property_name == "render_priority" or property_name.begins_with("shader_parameter/"):
@@ -276,9 +283,9 @@ func _apply(
     target_shader_material.set_shader_parameter("emission_energy", options.selfillum_energy)
 
 
-func _get_shader_variant(source_shader: Shader, options: MaterialManager.MaterialOptions) -> Shader:
-    var cache_key: String = "%d:%s:%s" % [
-        source_shader.get_instance_id(), options.force_transparent, options.cull_disabled
+func _get_shader_variant(source_shader: Shader, options: MaterialManager.MaterialOptions, specgloss: bool) -> Shader:
+    var cache_key: String = "%d:%s:%s:%s" % [
+        source_shader.get_instance_id(), options.force_transparent, options.cull_disabled, specgloss
     ]
     var cached_shader: Shader = _shader_variants.get(cache_key)
     if cached_shader:
@@ -289,6 +296,10 @@ func _get_shader_variant(source_shader: Shader, options: MaterialManager.Materia
         code = code.replace("shader_type spatial;", "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND")
     if options.cull_disabled:
         code = code.replace("cull_back", "cull_disabled")
+    if specgloss:
+        # the specular term the texture scales has to exist (default, detail_normalmap disable it)
+        code = code.replace("shader_type spatial;", "shader_type spatial;\n#define %s" % SPECGLOSS_DEFINE)
+        code = code.replace("specular_disabled", "specular_schlick_ggx")
     var variant_shader: Shader = Shader.new()
     variant_shader.code = code
     _shader_variants[cache_key] = variant_shader
@@ -340,6 +351,15 @@ func _apply_default_material(
 
     if variant.has_parameter("reflection"):
         material.set_shader_parameter("metallic", variant.get_parameter("reflection"))
+
+    # the specgloss variant (see _apply()) reads the raw params the way parallax_specgloss does
+    var specgloss_texture: String = _texture_path(variant, texture_map, texture_map.specgloss)
+    if specgloss_texture:
+        material.set_shader_parameter(
+            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture, true))
+        material.set_shader_parameter("specular_strength", variant.get_parameter("specular", 0.5))
+        material.set_shader_parameter("reflection_strength", variant.get_parameter("reflection", 0.0))
+        material.set_shader_parameter("glossiness", variant.get_parameter("glossiness", 10.0))
     material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
     material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     material.set_shader_parameter("emission_energy", options.selfillum_energy)

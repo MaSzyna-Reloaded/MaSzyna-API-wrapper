@@ -8,8 +8,8 @@ const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/legacy/e3d/c
 
 ## The cache key cannot see changes to MaszynaMaterialFactory's own code - bump this whenever that code
 ## changes what a built material holds. v2: normal_scale 1.0 like the original. v4: shaders moved
-## to legacy/materials/types.
-const CACHE_VERSION: int = 4
+## to legacy/materials/types. v5: the specgloss texture of the *_specgloss types.
+const CACHE_VERSION: int = 5
 
 var _materials_cache = ResourceCache.create("materials")
 var _managed_materials: Dictionary = {}

@@ -48,6 +48,9 @@ class TrackState:
     var material_trackbed: Material
     ## Trackbed material after the neighbour walk, cached until the topology changes.
     var resolved_trackbed_material: Material
+    ## Length the trackbed texture covers - its material's size, else the track's own tex_length
+    ## (TTrack::texture_length(), Track.cpp:2481-2493); resolved with the material
+    var resolved_trackbed_texture_length: float = 4.0
     var resolved_trackbed_material_valid: bool = false
     var rail_visible: bool = true
     var ballast_visible: bool = true
@@ -101,12 +104,20 @@ var _track_render_rids_by_track: Dictionary[RID, RID] = {}
 var _next_track_render_id: int = 0
 var _stream_owner: int = -1
 var _rail_profile_cache: Dictionary = {}
+## Texture length ("size:" y) by material name, -1 for none - parsed once per material
+var _material_texture_lengths: Dictionary[String, float] = {}
 var _rail_profile_regex: RegEx = RegEx.new()
 ## Created in _ready(): this autoload is instantiated before MaterialManager
 var _track_material_options: MaterialManager.MaterialOptions
 const _SWITCH_TRACKBED_Z_FIGHT_OFFSET: float = 0.025
 const _SWITCH_BLADE_OFFSET: float = 0.1
 const _TRACKBED_SECTION_POINT_COUNT: int = 5
+## Original engine: Track.cpp:2855 - a trackbed texture 4 m long keeps the old fixed mapping
+const _TRACKBED_OLD_MAPPING_TEXTURE_LENGTH: float = 4.0
+## Original engine: Track.cpp:2857-2858 - the old mapping's slope normals, 75 degrees up
+const _TRACKBED_OLD_MAPPING_NORMAL_ANGLE: float = 75.0
+## Original engine: Track.cpp:2869, 2877 - the old mapping's u at the slope's upper edges
+const _TRACKBED_OLD_MAPPING_BREAK_U: float = 0.33
 const _TRACKBED_STITCH_INSET_LENGTH: float = 0.5
 const _TRACKBED_STITCH_HEIGHT_OFFSET: float = 0.01
 const _TRACKBED_STITCH_WIDTH_FACTOR: float = 1.0
@@ -621,7 +632,7 @@ func rebuild_track(track_render_rid: RID) -> void:
                 state.tex_slope,
                 curve1_data.roll1,
                 rail_height,
-                state.tex_length
+                state.resolved_trackbed_texture_length
             )
             var end_section: Array = _build_trackbed_section(
                 end_width,
@@ -630,9 +641,9 @@ func rebuild_track(track_render_rid: RID) -> void:
                 end_tex_slope,
                 curve1_data.roll2,
                 rail_height,
-                state.tex_length
+                state.resolved_trackbed_texture_length
             )
-            _append_loft_geometry(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices, curve1, start_section, end_section, state.tex_length, rail_height)
+            _append_loft_geometry(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices, curve1, start_section, end_section, state.resolved_trackbed_texture_length, rail_height)
 
             if curve2_data:
                 var second_curve: Curve3D = _build_curve(curve2_data)
@@ -643,7 +654,7 @@ func rebuild_track(track_render_rid: RID) -> void:
                     state.tex_slope,
                     curve2_data.roll1,
                     rail_height,
-                    state.tex_length
+                    state.resolved_trackbed_texture_length
                 )
                 var second_end_section: Array = _build_trackbed_section(
                     track_width,
@@ -652,9 +663,9 @@ func rebuild_track(track_render_rid: RID) -> void:
                     state.tex_slope,
                     curve2_data.roll2,
                     rail_height,
-                    state.tex_length
+                    state.resolved_trackbed_texture_length
                 )
-                _append_loft_geometry(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices, second_curve, second_start_section, second_end_section, state.tex_length, rail_height)
+                _append_loft_geometry(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices, second_curve, second_start_section, second_end_section, state.resolved_trackbed_texture_length, rail_height)
             state.trackbed_mesh = _build_array_mesh(trackbed_vertices, trackbed_normals, trackbed_uvs, trackbed_indices)
 
     if state.primary_rail_mesh:
@@ -771,6 +782,8 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
                 endpoint_index,
                 rail_height
             )
+            # its own trackbed texture length shapes its section
+            _resolve_trackbed_material(connected_state, connected_track)
             var connected_rail_profile: RailProfile = _get_rail_profile(connected_state.railprofile)
             var connected_rail_height: float = abs(float(connected_rail_profile.rail[0][1]))
             var connected_section: Array = _build_trackbed_stitch_world_section(
@@ -794,7 +807,7 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
                 connected_section,
                 _get_stitch_section_uv_y(state, track, endpoint_index),
                 _get_section_center(section).distance_to(_get_section_center(connected_section)),
-                state.tex_length
+                state.resolved_trackbed_texture_length
             )
 
     if not vertices:
@@ -894,7 +907,7 @@ func _build_trackbed_stitch_world_section(
             state.tex_slope,
             roll,
             rail_height,
-            state.tex_length
+            state.resolved_trackbed_texture_length
         )
     var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
     var sample_distance: float = curve_length - sample_inset if is_end_point else sample_inset
@@ -932,7 +945,7 @@ func _get_stitch_section_uv_y(
     if endpoint_index == TrackServer.CURVE1_P2 or endpoint_index == TrackServer.CURVE2_P2:
         sample_distance = curve_length - sample_inset
 
-    var safe_tex_length: float = max(abs(state.tex_length), 0.001)
+    var safe_tex_length: float = max(abs(state.resolved_trackbed_texture_length), 0.001)
     if _is_switch_track(track):
         return _clamp_circular(1.0 - sample_distance / safe_tex_length, 1.0)
     return sample_distance / safe_tex_length
@@ -1056,9 +1069,24 @@ func _get_roll_fix_height(roll_degrees: float) -> float:
 
 func _resolve_trackbed_material(state: TrackState, _track: TrackData) -> Material:
     if not state.resolved_trackbed_material_valid:
-        state.resolved_trackbed_material = _copy_adjacent_trackbed_material(state)
+        var owner: TrackState = _copy_adjacent_trackbed_material(state)
+        var material_name: String = ""
+        state.resolved_trackbed_material = null
+        if owner:
+            material_name = owner.material_trackbed_name if owner.material_trackbed_name else owner.material2_name
+            state.resolved_trackbed_material = owner.material_trackbed if owner.material_trackbed_name else owner.material2
+        # TTrack::texture_length() (Track.cpp:2481-2493): the material's size, else the track's own
+        var size_length: float = _get_material_texture_length(material_name) if material_name else -1.0
+        state.resolved_trackbed_texture_length = size_length if size_length >= 0.0 else state.tex_length
         state.resolved_trackbed_material_valid = true
     return state.resolved_trackbed_material
+
+
+## The length a material's texture covers ("size:" of its .mat), -1 if it declares none
+func _get_material_texture_length(material_name: String) -> float:
+    if not _material_texture_lengths.has(material_name):
+        _material_texture_lengths[material_name] = MaterialManager.load_material("", material_name).size.y
+    return _material_texture_lengths[material_name]
 
 
 ## Port of TTrack::copy_adjacent_trackbed_material() (Track.cpp:3326). A switch carries no
@@ -1066,24 +1094,25 @@ func _resolve_trackbed_material(state: TrackState, _track: TrackData) -> Materia
 ## the short connectors inside a switch group commonly declare "none", so the material is
 ## borrowed from a neighbour. [param visited] generalises the original's single-level Exclude
 ## argument, which cannot stop a longer loop of track from recursing forever.
-func _copy_adjacent_trackbed_material(state: TrackState, visited: Dictionary[RID, bool] = {}) -> Material:
+## Returns the track whose own trackbed material is used - its size sets the mapping too.
+func _copy_adjacent_trackbed_material(state: TrackState, visited: Dictionary[RID, bool] = {}) -> TrackState:
     if not state or visited.has(state.track_rid):
         return null
     visited[state.track_rid] = true
 
     if state.material_trackbed_name:
-        return state.material_trackbed
+        return state
     var is_switch: bool = TrackServer.track_is_switch(state.track_rid)
     if not is_switch and state.material2:
-        return state.material2
+        return state
 
     for neighbor_track_rid: RID in _get_trackbed_material_sources(state.track_rid, is_switch):
-        var material: Material = _copy_adjacent_trackbed_material(
+        var owner: TrackState = _copy_adjacent_trackbed_material(
             _get_track_state_by_track_rid(neighbor_track_rid),
             visited
         )
-        if material:
-            return material
+        if owner:
+            return owner
     return null
 
 
@@ -1177,7 +1206,7 @@ func _build_switch_trackbed_sections(
             start_tex_slope,
             start_roll,
             rail_height,
-            state.tex_length
+            state.resolved_trackbed_texture_length
         ),
         _build_trackbed_section(
             end_width,
@@ -1186,7 +1215,7 @@ func _build_switch_trackbed_sections(
             end_tex_slope,
             end_roll,
             rail_height,
-            state.tex_length
+            state.resolved_trackbed_texture_length
         ),
     ]
 
@@ -1545,9 +1574,18 @@ func _build_trackbed_section(
     var roll_radians: float = -deg_to_rad(roll)
     var sin_roll: float = sin(roll_radians)
     var cos_roll: float = cos(roll_radians)
+    # the texture's width is proportional to its length (fTexRatio2 is 1 for rail track,
+    # Track.cpp:2930-2932); a 4 m texture keeps the old fixed mapping (Track.cpp:2855-2926)
     var safe_tex_length: float = max(abs(tex_length), 0.001)
-    var map_inner: float = (half_width + side) / safe_tex_length
-    var map_outer: float = (half_width + side + hypot_value) / safe_tex_length
+    var u_inner: float = 0.5 - (half_width + side) / safe_tex_length
+    var u_outer: float = 0.5 - (half_width + side + hypot_value) / safe_tex_length
+    var slope_normal: Vector3 = Vector3(normal_x, normal_y, 0.0).normalized()
+    if is_equal_approx(tex_length, _TRACKBED_OLD_MAPPING_TEXTURE_LENGTH):
+        u_inner = _TRACKBED_OLD_MAPPING_BREAK_U
+        u_outer = 0.0
+        slope_normal = Vector3(
+            cos(deg_to_rad(_TRACKBED_OLD_MAPPING_NORMAL_ANGLE)), sin(deg_to_rad(_TRACKBED_OLD_MAPPING_NORMAL_ANGLE)), 0.0
+        )
 
     return [
         [
@@ -1556,8 +1594,8 @@ func _build_trackbed_section(
                 -spread * sin_roll - tex_height * cos_roll - rail_height,
                 0.0
             ),
-            Vector3(normal_x, normal_y, 0.0).normalized(),
-            0.5 - map_outer
+            slope_normal,
+            u_outer
         ],
         [
             Vector3(
@@ -1565,8 +1603,8 @@ func _build_trackbed_section(
                 -(half_width + side) * sin_roll - rail_height,
                 0.0
             ),
-            Vector3(normal_x, normal_y, 0.0).normalized(),
-            0.5 - map_inner
+            slope_normal,
+            u_inner
         ],
         [
             Vector3(0.0, -rail_height + 0.01, 0.0),
@@ -1579,8 +1617,8 @@ func _build_trackbed_section(
                 (half_width + side) * sin_roll - rail_height,
                 0.0
             ),
-            Vector3(-normal_x, normal_y, 0.0).normalized(),
-            0.5 + map_inner
+            Vector3(-slope_normal.x, slope_normal.y, 0.0),
+            1.0 - u_inner
         ],
         [
             Vector3(
@@ -1588,8 +1626,8 @@ func _build_trackbed_section(
                 spread * sin_roll - tex_height * cos_roll - rail_height,
                 0.0
             ),
-            Vector3(-normal_x, normal_y, 0.0).normalized(),
-            0.5 + map_outer
+            Vector3(-slope_normal.x, slope_normal.y, 0.0),
+            1.0 - u_outer
         ],
     ]
 
@@ -1725,14 +1763,14 @@ func _build_switch_trackbed_mesh(
         primary_curve,
         primary_sections[0],
         primary_sections[1],
-        state.tex_length,
+        state.resolved_trackbed_texture_length,
         rail_height,
     )
     var secondary_chunks: Array = _build_transition_loft_strip_chunks(
         secondary_curve,
         secondary_sections[0],
         secondary_sections[1],
-        state.tex_length,
+        state.resolved_trackbed_texture_length,
         rail_height,
     )
 

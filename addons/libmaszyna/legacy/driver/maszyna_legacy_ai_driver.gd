@@ -182,6 +182,8 @@ func _control_taken(driver:RID) -> void:
     state.route.forget()
     # and the reverser put that way - a player may have left it the other (PrepareDirection())
     _prepare_direction(state, vehicle, CabinSystem.occupied_cab(vehicle))
+    # the lights of its order (control_lights(), CheckVehicles(), Driver.cpp:5625, 5657)
+    _check_lights(state, vehicle)
 
 
 ## PrepareDirection() (Driver.cpp:5116-5121): the master controller at zero, then the reverser the
@@ -252,9 +254,10 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
     var state:DriverState = _drivers.get(driver)
     if not state:
         return
+    var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
     # the original writes every order to its log (TController::PutCommand(), Driver.cpp:4470)
     GameLog.debug("%s: %s %s %s (order %s)" % [
-            RailVehicleServer.vehicle_get_name(DriverSystem.driver_get_vehicle(driver)), command, value1, value2,
+            RailVehicleServer.vehicle_get_name(vehicle), command, value1, value2,
             state.orders[state.order_position]])
     if command.begins_with(TIMETABLE_PREFIX):
         _take_timetable(driver, state, command.trim_prefix(TIMETABLE_PREFIX), value1, value2, position)
@@ -266,7 +269,7 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
                 if not state.engine_active:
                     _order_next(state, Order.PREPARE_ENGINE)
                 _order_next(state, Order.OBEY_TRAIN)
-                _order_check(state)
+                _order_check(state, vehicle)
             state.stop_here = value1 == 0.0
             state.velocity = value1
             state.velocity_next = value2
@@ -311,14 +314,14 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
             if not state.engine_active:
                 _order_next(state, Order.PREPARE_ENGINE)
             _order_next(state, Order.OBEY_TRAIN if command == "Obey_train" else Order.BANK)
-            _order_check(state)
+            _order_check(state, vehicle)
         "Shunt", "Loose_shunt":
             _take_shunt(driver, state, command == "Loose_shunt", value1, value2)
         "Jump_to_first_order":
-            _jump_to_first_order(state)
+            _jump_to_first_order(state, vehicle)
         "Jump_to_order":
             if value1 == -1.0:
-                _jump_to_next_order(state)
+                _jump_to_next_order(state, vehicle)
             elif value1 >= 0.0 and value1 < MAX_ORDERS:
                 # the first position only starts it, for the old sceneries (Driver.cpp:4881-4884)
                 state.order_position = maxi(floori(value1), 1)
@@ -330,7 +333,10 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
             if value1 >= 0.0:
                 state.radio_channel = int(value1)
         "SetLights":
+            # the scenery's pattern, lit at once on a train (Driver.cpp:4807-4816)
             state.light_hints = Vector2i(int(value1), int(value2))
+            if state.orders[state.order_position] & Order.OBEY_TRAIN:
+                _check_lights(state, vehicle)
 
 
 ## One moment of the driver (TController::Update(), handle_engine(), handle_orders(),
@@ -380,7 +386,7 @@ func _update(driver:RID) -> void:
                             Order.OBEY_TRAIN if stop_order == MaszynaLegacyDriverRoute.StopOrder.TURN_THEN_TRAIN
                             else Order.SHUNT)
             MaszynaLegacyDriverRoute.StopOrder.NEXT_ORDER:
-                _jump_to_next_order(state)
+                _jump_to_next_order(state, vehicle)
     for command:Array in state.route.commands:
         _handle_command(driver, command[0], command[1], command[2], command[3])
     state.speed.pick(
@@ -417,6 +423,10 @@ func _update(driver:RID) -> void:
     if state.engine_active:
         MaszynaLegacyDriverPantographs.control(vehicle, cab, state.trainset, state.direction,
                 MaszynaLegacyDriverBraking.is_emu(vehicle), state.traction.action_time <= 0.0)
+        # the delayed actions: the lights of its order kept up (Driver.cpp:4933-4936)
+        if state.traction.action_time > 0.0:
+            MaszynaLegacyDriverLights.control(
+                    vehicle, state.direction, state.orders[state.order_position], state.light_hints)
     # the controllers held by time back to holding, the power and the brakes, the controllers
     # held by time set to work until the next update (UpdateSituation(), Driver.cpp:5016-5027)
     state.traction.check_time_controllers(situation)
@@ -430,17 +440,17 @@ func _update(driver:RID) -> void:
     _handle_engine(state, vehicle, cab)
     if state.orders[state.order_position] == Order.RELEASE_ENGINE and standing:
         if _release_engine(state, vehicle, cab):
-            _jump_to_next_order(state)
+            _jump_to_next_order(state, vehicle)
     match state.orders[state.order_position]:
         Order.CONNECT:
-            _update_connect(state)
+            _update_connect(state, vehicle)
         Order.DISCONNECT:
             _update_disconnect(state, situation)
     if state.orders[state.order_position] & Order.CHANGE_DIRECTION and standing:
         _activation(state, vehicle)
         if state.direction == state.direction_order:
             _prepare_engine(state, vehicle, CabinSystem.occupied_cab(vehicle))
-            _jump_to_next_order(state)
+            _jump_to_next_order(state, vehicle)
     DriverSystem.driver_schedule_update(driver, state.reaction_time)
 
 
@@ -453,7 +463,7 @@ func _handle_engine(state:DriverState, vehicle:RID, cab:int) -> void:
         _order_next(state, Order.PREPARE_ENGINE)
     if state.orders[state.order_position] == Order.PREPARE_ENGINE:
         if _prepare_engine(state, vehicle, cab):
-            _jump_to_next_order(state)
+            _jump_to_next_order(state, vehicle)
     if state.orders[state.order_position] & DRIVING_ORDERS and not state.engine_active:
         _prepare_engine(state, vehicle, cab)
 
@@ -518,6 +528,8 @@ func _release_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     MaszynaLegacyDriverHints.open_line_breaker(vehicle, cab)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF)
+    # lightsoff (Driver.cpp:2932)
+    MaszynaLegacyDriverLights.off(vehicle, state.direction)
     if not CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false):
         if _has_diesel_engine(vehicle):
             MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_OFF)
@@ -555,7 +567,7 @@ func _activation(state:DriverState, vehicle:RID) -> void:
 ## vehicle of the trainset starts coupling up; within ATTACH_DISTANCE the shunter joins an element
 ## a time - the vehicle's `coupler_connect`, as the player's crew does - and once every element
 ## asked for is joined, the next order follows. The coupler adapter is not ported (TODO.md).
-func _update_connect(state:DriverState) -> void:
+func _update_connect(state:DriverState, vehicle:RID) -> void:
     if not state.coupling_vehicle.is_valid():
         if state.route.obstacle and state.route.obstacle.distance <= CONNECT_DISTANCE and state.trainset.vehicles:
             state.coupling_vehicle = state.trainset.vehicles[0]
@@ -570,7 +582,7 @@ func _update_connect(state:DriverState) -> void:
     if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
         state.coupler = 0
         state.coupling_vehicle = RID()
-        _jump_to_next_order(state)
+        _jump_to_next_order(state, vehicle)
 
 
 ## UpdateDisconnect() (Driver.cpp:7101-7235): leaving all but `vehicle_count` vehicles from the
@@ -633,7 +645,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
             _reverse(state, vehicle, cab)
         if state.direction == state.direction_order:
             state.pressing = false
-            _jump_to_next_order(state)
+            _jump_to_next_order(state, vehicle)
 
 
 ## directionother (driverhints.cpp:935-946): the reverser the other way from the same cab, the
@@ -680,12 +692,12 @@ func _take_timetable(
     state.timetable.take(timetable)
     if not position == Vector3.ZERO:
         state.direction_order = _direction_towards(driver, position, velocity)
-    _orders_init(state, absf(velocity))
+    _orders_init(state, DriverSystem.driver_get_vehicle(driver), absf(velocity))
 
 
 ## The orders a timetable makes (OrdersInit(), Driver.cpp:5238-5319): start the engine, then shunt
 ## without a timetable, or drive it - turning where a station says `@` - and shunt after
-func _orders_init(state:DriverState, velocity:float) -> void:
+func _orders_init(state:DriverState, vehicle:RID, velocity:float) -> void:
     _orders_clear(state)
     _order_push(state, Order.PREPARE_ENGINE)
     var entries:Array = state.timetable.get_entries()
@@ -712,7 +724,7 @@ func _orders_init(state:DriverState, velocity:float) -> void:
     if not state.stop_here:
         # told to go: it draws up close to the next passenger stop (Driver.cpp:5305-5309)
         state.timetable.draw_up_close()
-    _jump_to_first_order(state)
+    _jump_to_first_order(state, vehicle)
     state.velocity = velocity if velocity >= 1.0 else 0.0
 
 
@@ -834,28 +846,41 @@ func _order_push(state:DriverState, order:int) -> void:
         state.order_top += 1
 
 
-func _jump_to_next_order(state:DriverState) -> void:
+func _jump_to_next_order(state:DriverState, vehicle:RID) -> void:
     var current:int = state.orders[state.order_position]
     if not current == Order.WAIT_FOR_ORDERS:
         if current & Order.CHANGE_DIRECTION and not current == Order.CHANGE_DIRECTION:
             # a change of direction on top of another order goes first
             state.orders[state.order_position] = current & ~Order.CHANGE_DIRECTION
-            _order_check(state)
+            _order_check(state, vehicle)
             return
         state.order_position = (state.order_position + 1) % MAX_ORDERS
-    _order_check(state)
+    _order_check(state, vehicle)
 
 
-func _jump_to_first_order(state:DriverState) -> void:
+## CheckVehicles()'s lights (Driver.cpp:2451, 2510-2512): set by a driver the computer is
+## (AIControllFlag) - to a player they are only hinted - once its vehicle is ready to drive
+## (iEngineActive)
+func _check_lights(state:DriverState, vehicle:RID) -> void:
+    if DriverSystem.vehicle_is_control_active(vehicle) and state.engine_active:
+        MaszynaLegacyDriverLights.check_vehicles(
+                vehicle, state.direction, state.orders[state.order_position], state.light_hints)
+
+
+func _jump_to_first_order(state:DriverState, vehicle:RID) -> void:
     state.order_position = 1
     state.order_top = maxi(state.order_top, 1)
-    _order_check(state)
+    _order_check(state, vehicle)
 
 
-## What a new order changes at once (OrderCheck(), Driver.cpp:5161-5185) - the lights and the doors
-## it checks belong to the driving (TODO.md)
-func _order_check(state:DriverState) -> void:
+## What a new order changes at once (OrderCheck(), Driver.cpp:5161-5185): the lights of the order
+## (CheckVehicles(), Driver.cpp:5084-5092) - the doors it checks belong to the driving (TODO.md)
+func _order_check(state:DriverState, vehicle:RID) -> void:
     var current:int = state.orders[state.order_position]
+    if not current == Order.OBEY_TRAIN:
+        state.light_hints = Vector2i(MaszynaLegacyDriverLights.NO_HINT, MaszynaLegacyDriverLights.NO_HINT)
+    if current & (Order.SHUNT | Order.LOOSE_SHUNT | Order.CONNECT | Order.OBEY_TRAIN | Order.BANK):
+        _check_lights(state, vehicle)
     if current & Order.CHANGE_DIRECTION:
         state.direction_order = -state.direction
     elif current == Order.OBEY_TRAIN:

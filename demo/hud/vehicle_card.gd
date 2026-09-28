@@ -209,13 +209,13 @@ func _on_refresh_timer_timeout() -> void:
 
     var brakes:Dictionary[String, String] = {}
     if state.has("brake_pipe_pressure"):
-        brakes[tr("Brake pipe")] = "%.2f MPa" % state["brake_pipe_pressure"]
+        brakes[tr("Brake pipe")] = "%.2f bar" % state["brake_pipe_pressure"]
     if state.has("brake_air_pressure"):
-        brakes[tr("Brake cylinder")] = "%.2f MPa" % state["brake_air_pressure"]
+        brakes[tr("Brake cylinder")] = "%.2f bar" % state["brake_air_pressure"]
     if state.has("compressor_pressure"):
-        brakes[tr("Main reservoir")] = "%.2f MPa" % state["compressor_pressure"]
+        brakes[tr("Main reservoir")] = "%.2f bar" % state["compressor_pressure"]
     if state.has("feed_pipe_pressure"):
-        brakes[tr("Feed pipe")] = "%.2f MPa" % state["feed_pipe_pressure"]
+        brakes[tr("Feed pipe")] = "%.2f bar" % state["feed_pipe_pressure"]
     if state.has("brake_controller_position"):
         brakes[tr("Brake handle")] = "%.1f" % state["brake_controller_position"]
     if state.has("brake_releaser_active"):

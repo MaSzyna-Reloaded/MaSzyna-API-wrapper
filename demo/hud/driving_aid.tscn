@@ -1,0 +1,252 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/driving_aid.gd" id="1_aid"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+
+[node name="DrivingAid" type="HBoxContainer"]
+offset_left = 16.0
+offset_top = 40.0
+offset_right = 16.0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+theme_override_constants/separation = 8
+script = ExtResource("1_aid")
+
+[node name="ControllerTile" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Layout" type="VBoxContainer" parent="ControllerTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="ControllerTile/Layout"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+text = "Controller"
+
+[node name="ControllerValue" type="Label" parent="ControllerTile/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 10
+theme_type_variation = &"DrivingAidValue"
+text = "0 + 0"
+
+[node name="BrakesTile" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Layout" type="VBoxContainer" parent="BrakesTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="BrakesTile/Layout"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+text = "Brakes"
+
+[node name="BrakesValue" type="Label" parent="BrakesTile/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 10
+theme_type_variation = &"DrivingAidValue"
+text = "0.0 + 0"
+
+[node name="BrakePipeTile" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Layout" type="VBoxContainer" parent="BrakePipeTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="BrakePipeTile/Layout"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+text = "Brake pipe"
+
+[node name="Reading" type="HBoxContainer" parent="BrakePipeTile/Layout"]
+layout_mode = 2
+size_flags_vertical = 10
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="BrakePipeValue" type="Label" parent="BrakePipeTile/Layout/Reading"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidValue"
+text = "0.00"
+
+[node name="Unit" type="Label" parent="BrakePipeTile/Layout/Reading"]
+layout_mode = 2
+size_flags_vertical = 8
+theme_type_variation = &"DrivingAidCaption"
+text = "bar"
+
+[node name="SpeedTile" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Reading" type="HBoxContainer" parent="SpeedTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="SpeedValue" type="Label" parent="SpeedTile/Reading"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(72, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DrivingAidSpeed"
+text = "0"
+horizontal_alignment = 2
+
+[node name="Unit" type="Label" parent="SpeedTile/Reading"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"DrivingAidCaption"
+text = "km/h"
+
+[node name="SecurityTile" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Lamps" type="VBoxContainer" parent="SecurityTile"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="VigilanceLamp" type="PanelContainer" parent="SecurityTile/Lamps"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 24)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"DrivingAidLamp"
+
+[node name="Caption" type="Label" parent="SecurityTile/Lamps/VigilanceLamp"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidLampLabel"
+text = "CA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CabSignalLamp" type="PanelContainer" parent="SecurityTile/Lamps"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 24)
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"DrivingAidLamp"
+
+[node name="Caption" type="Label" parent="SecurityTile/Lamps/CabSignalLamp"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidLampLabel"
+text = "SHP"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="LimitTile" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+top_level = true
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -16.0
+offset_top = 40.0
+offset_right = -16.0
+grow_horizontal = 0
+mouse_filter = 2
+theme_type_variation = &"FloatingChip"
+
+[node name="Layout" type="HBoxContainer" parent="LimitTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="NextLimit" type="VBoxContainer" parent="LimitTile/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(88, 0)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Caption" type="Label" parent="LimitTile/Layout/NextLimit"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+text = "Next limit"
+horizontal_alignment = 2
+
+[node name="NextLimitValue" type="Label" parent="LimitTile/Layout/NextLimit"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidNextLimit"
+horizontal_alignment = 2
+
+[node name="NextLimitDistance" type="Label" parent="LimitTile/Layout/NextLimit"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidMuted"
+horizontal_alignment = 2
+
+[node name="StopReason" type="VBoxContainer" parent="LimitTile/Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="StopReasonValue" type="Label" parent="LimitTile/Layout/StopReason"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidStopReason"
+horizontal_alignment = 2
+
+[node name="StopReasonDetail" type="Label" parent="LimitTile/Layout/StopReason"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+horizontal_alignment = 2
+
+[node name="LimitSign" type="PanelContainer" parent="LimitTile/Layout"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"SpeedLimitSign"
+
+[node name="LimitValue" type="Label" parent="LimitTile/Layout/LimitSign"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"SpeedLimitSignDigits"
+text = "0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="BlinkTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+
+[node name="RefreshTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.2
+
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]
+[connection signal="timeout" from="BlinkTimer" to="." method="_on_blink_timer_timeout"]

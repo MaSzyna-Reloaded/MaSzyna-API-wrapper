@@ -1018,3 +1018,45 @@ msgstr ""
 
 msgid "Trainset list"
 msgstr ""
+
+msgid "Driving aid"
+msgstr ""
+
+msgid "Driving Aid Toggle"
+msgstr ""
+
+msgid "Next limit"
+msgstr ""
+
+msgid "in %4.1f km"
+msgstr ""
+
+msgid "STOP"
+msgstr ""
+
+msgid "Vehicle not ready"
+msgstr ""
+
+msgid "Waiting for orders"
+msgstr ""
+
+msgid "Signal at stop"
+msgstr ""
+
+msgid "Stop ahead"
+msgstr ""
+
+msgid "converter overload"
+msgstr ""
+
+msgid "line breaker"
+msgstr ""
+
+msgid "reverser"
+msgstr ""
+
+msgid "converter"
+msgstr ""
+
+msgid "main reservoir below %.1f bar"
+msgstr ""

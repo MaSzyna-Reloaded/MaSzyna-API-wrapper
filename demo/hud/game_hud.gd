@@ -6,7 +6,7 @@ extends Control
 ## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
 
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS }
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 const FRONT_END:int = 0
@@ -63,6 +63,8 @@ func _ready() -> void:
     %View.set_item_shortcut(ViewItem.SCENARIO, _action_shortcut(&"scenario_toggle"))
     # F12 - free in the original without Shift (driveruilayer.cpp:174)
     %View.set_item_shortcut(ViewItem.CONTROLS, _action_shortcut(&"hud_toggle"))
+    # F1, as the original's driving aid (driveruilayer.cpp:76)
+    %View.set_item_shortcut(ViewItem.DRIVING_AID, _action_shortcut(&"driving_aid_toggle"))
 
 
 func _exit_tree() -> void:
@@ -90,7 +92,7 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 
 
 ## The "View" menu: its entries show or hide the transcripts, the timetable, the scenario, all the
-## control windows at once and the Lua editor
+## control windows at once, the Lua editor, the trainset list and the driving aid
 func _on_view_menu_index_pressed(index: int) -> void:
     %View.toggle_item_checked(index)
     match index:
@@ -109,6 +111,8 @@ func _on_view_menu_index_pressed(index: int) -> void:
         ViewItem.TRAINSETS:
             %VehicleSelectorPanel.visible = %View.is_item_checked(index)
             %View.hide()
+        ViewItem.DRIVING_AID:
+            %DrivingAid.visible = %View.is_item_checked(index)
 
 
 func _on_timetable_panel_close_requested() -> void:
@@ -210,6 +214,8 @@ func _on_vehicle_freed(vehicle: RID) -> void:
         %FollowedVehicleChip.show_vehicle(RID())
     if %PlayerVehicleChip.vehicle == vehicle:
         %PlayerVehicleChip.show_vehicle(RID())
+    if %DrivingAid.vehicle == vehicle:
+        %DrivingAid.show_vehicle(RID())
 
 
 ## The script context of the scenario being played, for the Lua editor; an invalid RID while none is
@@ -227,6 +233,7 @@ func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
 func _on_controlled_vehicle_changed(player: MaszynaPlayer) -> void:
     var vehicle: RailVehicle3D = player.controlled_vehicle
     %TimetablePanel.follow_vehicle(vehicle.get_rid() if vehicle else RID())
+    %DrivingAid.show_vehicle(vehicle.get_rid() if vehicle else RID())
     %VehicleSelectorPanel.follow_player_vehicle(_player_vehicle_rid(player))
     if _card:
         _card.show_player_vehicle(_player_vehicle_rid(player))

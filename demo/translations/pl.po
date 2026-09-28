@@ -1018,3 +1018,45 @@ msgstr "Usunąć skład pojazdu %s?"
 
 msgid "Trainset list"
 msgstr "Lista składów"
+
+msgid "Driving aid"
+msgstr "Pomocnik"
+
+msgid "Driving Aid Toggle"
+msgstr "Pomocnik"
+
+msgid "Next limit"
+msgstr "Nowy limit"
+
+msgid "in %4.1f km"
+msgstr "za %4.1f km"
+
+msgid "STOP"
+msgstr "STÓJ"
+
+msgid "Vehicle not ready"
+msgstr "Pojazd niegotowy"
+
+msgid "Waiting for orders"
+msgstr "Czeka na rozkaz"
+
+msgid "Signal at stop"
+msgstr "Semafor: stój"
+
+msgid "Stop ahead"
+msgstr "Stój przed nami"
+
+msgid "converter overload"
+msgstr "przekaźnik nadmiarowy przetwornicy"
+
+msgid "line breaker"
+msgstr "wyłącznik szybki"
+
+msgid "reverser"
+msgstr "nawrotnik"
+
+msgid "converter"
+msgstr "przetwornica"
+
+msgid "main reservoir below %.1f bar"
+msgstr "zbiornik główny poniżej %.1f bar"

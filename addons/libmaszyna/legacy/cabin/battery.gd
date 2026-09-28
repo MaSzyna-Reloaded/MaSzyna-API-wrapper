@@ -9,6 +9,9 @@ class_name LegacyCabinBattery
 ## vendored Mover.
 
 const CONTROL:StringName = &"battery_sw"
+## Two push buttons some cabs have instead (Train.cpp:11928-11929, OnCommand_batteryenable/disable)
+const CONTROL_ON:StringName = &"batteryon_sw"
+const CONTROL_OFF:StringName = &"batteryoff_sw"
 ## The pose of an impulse switch: up on, down off, midway at rest (Train.cpp:2918, 2929, 3003)
 const SWITCH_OFF:float = 0.0
 const SWITCH_ON:float = 1.0
@@ -16,20 +19,26 @@ const SWITCH_REST:float = 0.5
 
 var _vehicle_rid:RID
 var _cab:int
+var _battery_on:Callable = _battery_button.bind(CONTROL_ON, true)
+var _battery_off:Callable = _battery_button.bind(CONTROL_OFF, false)
 
 
 func control_ids() -> Array[StringName]:
-    return [CONTROL]
+    return [CONTROL, CONTROL_ON, CONTROL_OFF]
 
 
 func register(vehicle_rid:RID, cab:int) -> void:
     _vehicle_rid = vehicle_rid
     _cab = cab
     CabinSystem.register_control(vehicle_rid, cab, CONTROL, _battery)
+    CabinSystem.register_control(vehicle_rid, cab, CONTROL_ON, _battery_on)
+    CabinSystem.register_control(vehicle_rid, cab, CONTROL_OFF, _battery_off)
 
 
 func unregister() -> void:
     CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _battery)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL_ON, _battery_on)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL_OFF, _battery_off)
 
 
 func _battery(state:CabinState, action:StringName, value:Variant) -> Variant:
@@ -43,4 +52,16 @@ func _battery(state:CabinState, action:StringName, value:Variant) -> Variant:
             if value == null or action == &"hold" else bool(value))
     # an impulse switch is pushed up to switch on and down to switch off, then rests midway
     state.set_value(CONTROL, (SWITCH_ON if enabled else SWITCH_OFF) if action == &"hold" else enabled)
+    return state.send_vehicle_command("battery", enabled)
+
+
+## batteryon_sw / batteryoff_sw: the press switches the battery, the release lets the button back
+## (Train.cpp:2939-2960 and their disable twins)
+func _battery_button(state:CabinState, action:StringName, value:Variant, control:StringName, enabled:bool) -> Variant:
+    if action == &"release":
+        state.set_value(control, false)
+        return null
+    if not action in [&"hold", &"toggle"]:
+        return null
+    state.set_value(control, true)
     return state.send_vehicle_command("battery", enabled)

@@ -93,8 +93,10 @@ static func _handle_button(state:CabinState, action:StringName, value:Variant, w
                 return state.send_vehicle_command(command, wiring["command_param"], pressed, wiring["target"])
             return state.send_vehicle_command(command, pressed, null, wiring["target"])
         CabinButton.ControllerMode.On:
+            # a button that picks one of several (speedbutton0..9) sends which one it is
             if pressed:
-                return state.send_vehicle_command(command, true, null, wiring["target"])
+                var value_on:Variant = true if wiring["command_param"] == null else wiring["command_param"]
+                return state.send_vehicle_command(command, value_on, null, wiring["target"])
         CabinButton.ControllerMode.Off:
             if pressed:
                 return state.send_vehicle_command(command, false, null, wiring["target"])

@@ -191,3 +191,17 @@ func test_every_speedometer_of_the_original_binds_its_speed():
     assert_eq(MmdSemanticCatalog.get_entry("tachometerb")["fixed_fields"]["state_property"], "tachometer_speed_jump")
     assert_eq(MmdSemanticCatalog.get_entry("tachometern")["fixed_fields"]["state_property"], "tachometer_speed")
     assert_eq(MmdSemanticCatalog.get_entry("tachometerd")["fixed_fields"]["state_property"], "tachometer_speed")
+
+
+func test_brake_operation_mode_switch_shows_the_mode_position():
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("brakeopmode_sw")
+    assert_eq(entry["widget_class"], CabinSwitch)
+    assert_eq(entry["fixed_fields"]["state_property"], "brake_operation_mode_position")
+    assert_eq(entry["config_max_property"], "brake_operation_mode_position_max")
+
+
+func test_speed_control_buttons_are_lit_while_it_is_active():
+    for label:String in ["speedinc_bt", "speeddec_bt", "speedctrlpowerinc_bt", "speedctrlpowerdec_bt", "speedbutton0", "speedbutton9"]:
+        assert_eq(MmdSemanticCatalog.get_entry(label)["state_light"]["state_property"], "speed_control/active", label)
+    assert_eq(MmdSemanticCatalog.get_entry("speedbutton9")["fixed_fields"]["command_param"], 9)
+

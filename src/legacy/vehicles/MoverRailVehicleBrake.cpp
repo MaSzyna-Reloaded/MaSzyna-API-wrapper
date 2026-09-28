@@ -202,6 +202,9 @@ namespace godot {
         p_config["brake_valve_type"] = get_valve_type();
         // available brake delay settings (bdelay_* flags) and main reservoir, used by MaszynaAutoRewidentNode
         p_config["brake_delays"] = mover->BrakeDelays;
+        // brakeopmode_sw's last position: the highest mode the vehicle has
+        p_config["brake_operation_mode_position_max"] =
+                mover->BrakeOpModes > 0 ? static_cast<int>(std::log2(mover->BrakeOpModes)) : 0;
         p_config["brake_main_reservoir_volume"] = mover->VeselVolume;
         // the train's brake system and its brake's delays [s], per delay setting (BDelay1-4)
         p_config["brake_system"] = get_cntrl_brake_system();
@@ -468,6 +471,9 @@ namespace godot {
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
         p_state["brake_operation_mode"] = get_operation_mode();
+        // what brakeopmode_sw shows: the mode's bit (Train.cpp:2457)
+        p_state["brake_operation_mode_position"] =
+                get_operation_mode() > 0 ? static_cast<int>(std::log2(get_operation_mode())) : 0;
         p_state["main_pipe_locked"] = get_main_pipe_locked();
         p_state["brake_force"] = get_force();
         p_state["brake_is_braking"] = is_braking();

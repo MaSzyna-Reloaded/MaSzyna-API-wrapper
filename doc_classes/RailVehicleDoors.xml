@@ -23,6 +23,13 @@
 				Enable or disable doors remote control
 			</description>
 		</method>
+		<method name="forbid_mirrors">
+			<return type="void" />
+			<param index="0" name="state" type="bool" />
+			<description>
+				Keep the exterior mirrors folded ([code]MirrorForbidden[/code], the cab's [code]mirrors_sw[/code]). Command [code]mirrors_forbid[/code].
+			</description>
+		</method>
 		<method name="next_permit_preset">
 			<return type="void" />
 			<description>
@@ -155,9 +162,18 @@
 			[code]Doors:MirrorVelClose[/code]
 			Vehicle speed at which automatic closure of exterior mirrors occurs
 		</member>
+		<member name="mirror_left_position" type="float" setter="" getter="get_mirror_left_position" default="0.0">
+			How far the left exterior mirrors are unfolded, 0 folded to 1 out. They unfold with the left doors permitted and fold above [member mirror_close_velocity], with no cab active or when [member mirrors_forbidden].
+		</member>
 		<member name="mirror_max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="90.0">
 			[code]Doors:MirrorMaxShift[/code]
 			Rotation angle for a fully unfolded mirror
+		</member>
+		<member name="mirror_right_position" type="float" setter="" getter="get_mirror_right_position" default="0.0">
+			How far the right exterior mirrors are unfolded, 0 folded to 1 out. See [member mirror_left_position].
+		</member>
+		<member name="mirrors_forbidden" type="bool" setter="" getter="get_mirrors_forbidden" default="false">
+			The exterior mirrors are kept folded. See [method forbid_mirrors].
 		</member>
 		<member name="open_control" type="int" setter="" getter="get_open_control" default="0">
 		</member>
@@ -189,7 +205,7 @@
 			[code]Doors:DoorsPermitLightBlinking[/code]
 			Configuration of the permission light on the door
 		</member>
-		<member name="permit_list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[0, 0, 0]">
+		<member name="permit_list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[]">
 			[code]Doors:DoorPermitList[/code]
 			Door programmer configuration
 			[codeblocks]

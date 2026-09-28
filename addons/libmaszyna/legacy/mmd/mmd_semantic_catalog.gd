@@ -1753,6 +1753,42 @@ static func _ensure_built() -> void:
             "config_max_property": "doors_permit_preset_max",
             "mesh_path_field": "mesh_path",
         },
+        # Train.cpp:12033-12034 ggDoorLeft/RightPermitButton -> OnCommand_doorpermitleft/right
+        # (Train.cpp:7196-7294), Shift+, / Shift+. - LegacyCabinDoorPermits
+        "doorleftpermit_sw": {
+            "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggDoorLeftPermitButton.is_push(), Train.cpp:7213)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "doors_left_permit",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "doorrightpermit_sw": {
+            "widget_class": CabinButton,
+            # ggDoorRightPermitButton.is_push(), Train.cpp:7263
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "doors_right_permit",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:12065 "mirrors_sw:" shows MirrorForbidden, a press flips it
+        # (OnCommand_mirrorstoggle, Train.cpp:7726; drivermouseinput.cpp:744) - no key in the original
+        "mirrors_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "mirrors_forbid",
+                "state_property": "mirrors_forbidden",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Train.cpp:11865 ggDimHeadlightsButton -> OnCommand_headlightsdimtoggle (Train.cpp:6125), Ctrl+L
         "dimheadlights_sw": {
             "widget_class": CabinButton,

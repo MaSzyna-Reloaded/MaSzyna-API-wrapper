@@ -53,6 +53,8 @@ anything. Open work belongs in `TODO.md`.
 * A ported tolerance carries the original's value, never a rounder "safer" one. A tolerance that
   papers over data becomes load-bearing once something trusts the structure. *(09-20 double
   slips; 09-24 pantograph)*
+* A component's default is what a vehicle **without** the FIZ key gets - check it against the
+  original's default, not against a plausible value. *(09-28 `permit_list` [0, 0, 0])*
 * A ported formula carries the original's frame with it: when our loft or basis maps an axis the
   other way (profile x to the left, not `RenderLoft`'s right), every angle in that plane flips.
   Compare world coordinates of both sides, not the formulas. *(09-28 cant reversed)*

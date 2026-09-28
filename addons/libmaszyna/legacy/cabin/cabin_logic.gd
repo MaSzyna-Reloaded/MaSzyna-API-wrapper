@@ -69,6 +69,9 @@ func register(vehicle_rid:RID, cab:int) -> void:
         LegacyCabinPantographsDropAll.new(
                 controls.button_type(LegacyCabinPantographsDropAll.CONTROL),
                 controls.has_control(LegacyCabinPantographsDropAll.CONTROL)),
+        LegacyCabinDoorPermits.new(
+                controls.button_type(LegacyCabinDoorPermits.LEFT_SWITCH),
+                controls.button_type(LegacyCabinDoorPermits.RIGHT_SWITCH)),
     ]
     for behaviour:RefCounted in switch_behaviours:
         claimed.append_array(behaviour.control_ids())

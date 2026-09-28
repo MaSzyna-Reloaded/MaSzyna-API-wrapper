@@ -1640,3 +1640,19 @@ lighting or the consist.
   0.0028 m, at -Z 0.128 m, the vehicle's wheel on +Z at 0.0028 m.
 * **Rule:** a ported formula carries the original's frame with it - compare world coordinates of
   both sides, not the formulas.
+
+
+## 2026-09-28 - no vehicle without DoorPermitList could permit its doors from the cab
+
+* **Symptom:** the new door permit switches (`LegacyCabinDoorPermits`) did nothing on the Impuls
+  36WEa, whose FIZ has `DoorNeedPermit=Yes` and no `DoorPermitList`.
+* **Cause:** `RailVehicleDoors.permit_list` defaulted to `[0, 0, 0]`, so
+  `MoverRailVehicleDoors::_apply_configuration()` gave every such vehicle three permit presets. The
+  original has none unless `DoorPermitList` names them (Mover.cpp:10559), and its permit switches
+  step aside for the presets (Train.cpp:7203). The dump showed `doors_permit_preset_count=3`.
+* **Fix:** the default is an empty list; `FIZ_PARSER_FORMAT_VERSION` 26 drops the cached
+  vehicles built with it. Measured: `doors_permit_preset_count=0`, the switch permits the left
+  doors and the left mirror unfolds.
+* **Rule:** a component's default is what a vehicle without the key gets - it must be the
+  original's default.
+

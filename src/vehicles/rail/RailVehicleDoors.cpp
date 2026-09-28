@@ -47,6 +47,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("operate_doors", "side", "state"), &RailVehicleDoors::operate_doors);
         ClassDB::bind_method(D_METHOD("door_lock", "state"), &RailVehicleDoors::door_lock);
         ClassDB::bind_method(D_METHOD("door_remote_control", "state"), &RailVehicleDoors::door_remote_control);
+        ClassDB::bind_method(D_METHOD("forbid_mirrors", "state"), &RailVehicleDoors::forbid_mirrors);
 
 
         BIND_ENUM_CONSTANT(PERMIT_LIGHT_CONTINUOUS);
@@ -214,6 +215,24 @@ namespace godot {
                         Variant::BOOL, "right_step_operating", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_step_operating");
+        ClassDB::bind_method(D_METHOD("get_mirror_left_position"), &RailVehicleDoors::get_mirror_left_position);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "mirror_left_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_mirror_left_position");
+        ClassDB::bind_method(D_METHOD("get_mirror_right_position"), &RailVehicleDoors::get_mirror_right_position);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "mirror_right_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_mirror_right_position");
+        ClassDB::bind_method(D_METHOD("get_mirrors_forbidden"), &RailVehicleDoors::get_mirrors_forbidden);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "mirrors_forbidden", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_mirrors_forbidden");
     }
 
     void RailVehicleDoors::_register_commands() {
@@ -226,6 +245,7 @@ namespace godot {
         register_command("doors_right", Callable(this, "operate_right_doors"));
         register_command("doors_lock", Callable(this, "door_lock"));
         register_command("doors_remote_control", Callable(this, "door_remote_control"));
+        register_command("mirrors_forbid", Callable(this, "forbid_mirrors"));
     }
 
     void RailVehicleDoors::_unregister_commands() {
@@ -238,5 +258,6 @@ namespace godot {
         unregister_command("doors_right", Callable(this, "operate_right_doors"));
         unregister_command("doors_lock", Callable(this, "door_lock"));
         unregister_command("doors_remote_control", Callable(this, "door_remote_control"));
+        unregister_command("mirrors_forbid", Callable(this, "forbid_mirrors"));
     }
 } // namespace godot

@@ -167,12 +167,53 @@ namespace godot {
         p_state["doors_right_operating"] = get_right_operating();
         p_state["doors_right_step_position"] = get_right_step_position();
         p_state["doors_right_step_operating"] = get_right_step_operating();
+        p_state["mirror_left_position"] = get_mirror_left_position();
+        p_state["mirror_right_position"] = get_mirror_right_position();
+        p_state["mirrors_forbidden"] = get_mirrors_forbidden();
+        // what the cab's door permit switches check (Train.cpp:7203, 7220)
+        p_state["doors_permit_preset_count"] = static_cast<int>(mover->Doors.permit_presets.size());
+        p_state["doors_open_with_permit_after"] = mover->DoorsOpenWithPermitAfter;
     }
 
     void MoverRailVehicleDoors::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->update_doors(p_delta);
+
+        // DynObj.cpp:4207-4236: the mirrors fold above MirrorVelClose, with no cab active or when
+        // forbidden, and unfold on the side whose doors are permitted to open - a full travel per
+        // second. The original folds them with no cab active whatever its InactiveCabFlag says.
+        if (p_mover->Vel > p_mover->MirrorVelClose || p_mover->CabActive == 0 || p_mover->MirrorForbidden) {
+            mirror_left_position = std::max(0.0, mirror_left_position - p_delta);
+            mirror_right_position = std::max(0.0, mirror_right_position - p_delta);
+            return;
+        }
+        if (p_mover->Doors.instances[side::left].open_permit) {
+            mirror_left_position = std::min(1.0, mirror_left_position + p_delta);
+        }
+        if (p_mover->Doors.instances[side::right].open_permit) {
+            mirror_right_position = std::min(1.0, mirror_right_position + p_delta);
+        }
+    }
+
+    double MoverRailVehicleDoors::get_mirror_left_position() const {
+        return mirror_left_position;
+    }
+
+    double MoverRailVehicleDoors::get_mirror_right_position() const {
+        return mirror_right_position;
+    }
+
+    bool MoverRailVehicleDoors::get_mirrors_forbidden() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->MirrorForbidden : false;
+    }
+
+    // Train.cpp:7726 OnCommand_mirrorstoggle flips it on a press; the cab's two-state switch sets it
+    void MoverRailVehicleDoors::forbid_mirrors(const bool p_state) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->MirrorForbidden = p_state;
     }
 
     void MoverRailVehicleDoors::next_permit_preset() {

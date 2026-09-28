@@ -42,6 +42,10 @@ class_name MaszynaVehicleStructure
 ## Submodel name prefix of the wiper arms, "" when the vehicle models no wipers.
 @export var wiper_prefix:String = ""
 
+## The mirror submodels in the original's order (MmdCabinInstancer.parse_mirror_names()), empty
+## when the vehicle animates no mirrors.
+@export var mirror_names:PackedStringArray = PackedStringArray()
+
 ## The MMD's `jointcabs:` - both cabs of this vehicle are the same cab.
 @export var joint_cabs:bool = false
 

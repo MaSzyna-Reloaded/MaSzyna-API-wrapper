@@ -14,6 +14,7 @@
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include "vehicles/rail/RailVehicleWipers.hpp"
+#include "vehicles/rail/RailVehicleDoors.hpp"
 #include "tracks/TrackServer.hpp"
 #include "logging/GameLog.hpp"
 
@@ -107,6 +108,7 @@ namespace godot {
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_front_arm_paths);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_rear_arm_paths);
         BIND_RAIL_NODE_PATH_ARRAY(wiper_arm_paths);
+        BIND_RAIL_NODE_PATH_ARRAY(mirror_paths);
         BIND_RAIL_PROPERTY(coupler_submodel_paths, Variant::DICTIONARY);
         BIND_RAIL_PROPERTY(start_track_name, Variant::STRING);
         BIND_RAIL_PROPERTY(start_track_offset, Variant::FLOAT);
@@ -401,6 +403,7 @@ namespace godot {
         diesel_engine = nullptr;
         lighting = nullptr;
         wipers = nullptr;
+        doors = nullptr;
         for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
             pantograph_wire_cache[index] = Dictionary();
         }
@@ -414,6 +417,7 @@ namespace godot {
         lighting =
                 Object::cast_to<RailVehicleLighting>(controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
         wipers = Object::cast_to<RailVehicleWipers>(controller->get_component(VehicleComponentType::COMPONENT_WIPERS));
+        doors = Object::cast_to<RailVehicleDoors>(controller->get_component(VehicleComponentType::COMPONENT_DOORS));
         /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
          * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
          * exported width stands in for a vehicle with no electric engine to read it from. */
@@ -596,6 +600,7 @@ namespace godot {
                 if (is_visible) {
                     _update_couplers();
                     _update_wipers();
+                    _update_mirrors();
                 }
             }
         }
@@ -1020,6 +1025,26 @@ namespace godot {
             wiper_arm_nodes.append(node);
         }
 
+        mirror_nodes.clear();
+        mirror_applied_left = -1.0;
+        // resolved here: the bindings are cached before _process_dirty() takes model_node
+        const Node *model = model_instance_path.is_empty() ? nullptr : node_at<Node>(this, model_instance_path);
+        for (int index = 0; index < mirror_paths.size(); ++index) {
+            const NodePath path = mirror_paths[index];
+            Node3D *node = path.is_empty() ? nullptr : node_at<Node3D>(this, path);
+            if (node == nullptr) {
+                continue;
+            }
+            // the original's offset() is the position in the model, through every parent (Model3d.cpp:1584)
+            Transform3D model_transform = node->get_transform();
+            for (Node3D *parent = Object::cast_to<Node3D>(node->get_parent());
+                 parent != nullptr && parent != model; parent = Object::cast_to<Node3D>(parent->get_parent())) {
+                model_transform = parent->get_transform() * model_transform;
+            }
+            _capture_rest_basis(node);
+            mirror_nodes.push_back({node, index % 2 == 1, model_transform.origin.z > 0.0});
+        }
+
         pantograph_front_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_front_arm_paths);
         pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths);
         pantograph_front_geometry = _cache_pantograph_geometry(pantograph_front_arm_nodes);
@@ -1181,6 +1206,32 @@ namespace godot {
                                   Basis(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(element == 2 ? -angle : angle));
                 node->set_transform(transform);
             }
+        }
+    }
+
+    // TDynamicObject::UpdateMirror() (DynObj.cpp:748-766): the mirrors at the end of the occupied
+    // cab turn out about their vertical axis by MirrorMaxShift, as far as their side is unfolded.
+    void RailVehicle3D::_update_mirrors() {
+        if (mirror_nodes.empty() || doors == nullptr) {
+            return;
+        }
+        const double left = doors->get_mirror_left_position();
+        const double right = doors->get_mirror_right_position();
+        const int occupied_cab = controller->get_occupied_cab();
+        if (left == mirror_applied_left && right == mirror_applied_right && occupied_cab == mirror_applied_cab) {
+            return;
+        }
+        mirror_applied_left = left;
+        mirror_applied_right = right;
+        mirror_applied_cab = occupied_cab;
+        const double max_shift = Math::deg_to_rad(doors->get_mirror_max_shift());
+        for (const MirrorNode &mirror : mirror_nodes) {
+            const bool active = mirror.front ? occupied_cab > 0 : occupied_cab < 0;
+            const double angle = active ? max_shift * (mirror.right ? right : left) : 0.0;
+            Transform3D transform = mirror.node->get_transform();
+            transform.basis =
+                    Basis(node_rest_bases[mirror.node]) * Basis(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(angle));
+            mirror.node->set_transform(transform);
         }
     }
 
@@ -1648,6 +1699,7 @@ namespace godot {
     DEFINE_ARRAY_PROPERTY(pantograph_front_arm_paths)
     DEFINE_ARRAY_PROPERTY(pantograph_rear_arm_paths)
     DEFINE_ARRAY_PROPERTY(wiper_arm_paths)
+    DEFINE_ARRAY_PROPERTY(mirror_paths)
 
 #undef DEFINE_ARRAY_PROPERTY
 

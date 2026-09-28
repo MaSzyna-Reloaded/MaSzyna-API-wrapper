@@ -26,7 +26,7 @@ const WALL_OPEN_HZ:float = 20500.0
 const WALL_CABIN_HZ:float = 1600.0
 const WALL_WINDOW_HZ:float = 4000.0
 const WALL_OPEN_DB:float = 0.0
-const WALL_CABIN_DB:float = -4.0
+const WALL_CABIN_DB:float = -2.0
 const WALL_WINDOW_DB:float = -2.0
 ## Moving between the two is a transition, not a jump - a step in either clicks audibly.
 const WALL_FADE_SECONDS:float = 0.15

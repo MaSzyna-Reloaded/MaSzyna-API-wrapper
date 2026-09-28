@@ -184,12 +184,11 @@ func _input(event):
             DriverSystem.vehicle_set_control_active(last_controlled_vehicle.get_rid(), false)
 
     # drivermode.cpp:803-804 - Shift+F4 cycles the external views, F4 returns from them to the cab
-    if controlled_vehicle and event.is_action_pressed("external_view_cycle", false, true):
+    if event.is_action_pressed("external_view_cycle", false, true):
         if external_camera.current:
             external_camera.next_view()
-        else:
-            external_camera.activate(controlled_vehicle, get_camera().global_transform)
-            _set_external_view(true)
+        elif controlled_vehicle:
+            follow_vehicle(controlled_vehicle.get_rid())
 
     if event.is_action_pressed("cabin_mode_toggle", false, true):
         # the cab left behind takes the player back; on foot, the free camera goes on from where
@@ -338,13 +337,13 @@ func _leave_cabin() -> void:
     _auto_start_pending = false
     _request_vehicle(null)
 
-## The external camera follows the vehicle from its first view without taking it over - the player
-## keeps the cab, and F4 returns to it
+## The external views of the vehicle (Shift+F4, the vehicle card's Follow) without taking it over -
+## the player keeps the cab, and F4 returns to it
 func follow_vehicle(vehicle:RID) -> void:
     var node:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as RailVehicle3D
     if not node:
         return
-    external_camera.follow(node, (external_camera if external_camera.current else get_camera()).global_transform)
+    external_camera.activate(node, (external_camera if external_camera.current else get_camera()).global_transform)
     _set_external_view(true)
 
 ## The one writer of the vehicle the player asked to enter; null asks to leave the cab

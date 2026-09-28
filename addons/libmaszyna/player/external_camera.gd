@@ -4,16 +4,28 @@ class_name ExternalCamera3D
 ## External views of the driven train, cycled with Shift+F4 - driver_mode::ExternalView()
 ## (drivermode.cpp:916-1037). The camera flies to the selected view like a drone and always
 ## looks at the controlled vehicle. Dragging with the right mouse button orbits the view around
-## the vehicle, the arrow keys and PageUp/PageDown move the view offset. It is active while it
-## is the current camera.
+## the vehicle, the left/right arrows and PageUp/PageDown pan the view in the screen plane, the
+## up/down arrows and the mouse wheel bring it closer or farther. It is active while it is the
+## current camera.
 
 enum View {CONSIST_FRONT, CONSIST_REAR, BOGIE, DRIVEBY}
+
+## Distance scale per mouse wheel step towards the vehicle
+const ZOOM_STEP:float = 0.9
+## How fast the up/down arrows change the distance - e-fold per second, with Shift held
+const ZOOM_KEY_RATE:float = 1.0
+const ZOOM_KEY_RATE_FAST:float = 3.0
+## Closest and farthest the zoom takes the view from what it looks at (m)
+const MIN_DISTANCE_SETTING:StringName = &"maszyna/camera/external_view_min_distance"
+const MIN_DISTANCE_DEFAULT:float = 1.0
+const MAX_DISTANCE_SETTING:StringName = &"maszyna/camera/external_view_max_distance"
+const MAX_DISTANCE_DEFAULT:float = 200.0
 
 ## How fast the drone follows its target (1/s)
 @export var response:float = 2.0
 ## Mouse orbit sensitivity (degrees per pixel)
 @export var sensitivity:float = 0.25
-## Speed of moving the view offset with the arrow keys and PageUp/PageDown (m/s)
+## Speed of panning the view with the left/right arrows and PageUp/PageDown (m/s)
 @export var move_speed:float = 5.0
 ## The same speed with Shift held (m/s)
 @export var move_speed_fast:float = 20.0
@@ -31,7 +43,14 @@ var _view_offset:Vector3 = Vector3.ZERO
 var _bogie_look_offset:Vector3 = Vector3.ZERO
 var _look_target:Vector3 = Vector3.ZERO
 var _orbit:Vector2 = Vector2.ZERO
-# driver_mode::m_externalviewconfigs (drivermode.cpp:590-596) - per view offset and orbit of the
+# screen-plane shift of the view in metres (x right, y up) and scale of its distance to the target
+var _pan:Vector2 = Vector2.ZERO
+var _zoom:float = 1.0
+# the view's own distance from its target before the zoom, for the zoom to keep within the limits
+var _view_distance:float = 1.0
+var _min_distance:float = ProjectSettings.get_setting(MIN_DISTANCE_SETTING, MIN_DISTANCE_DEFAULT)
+var _max_distance:float = ProjectSettings.get_setting(MAX_DISTANCE_SETTING, MAX_DISTANCE_DEFAULT)
+# driver_mode::m_externalviewconfigs (drivermode.cpp:590-596) - per view pan, zoom and orbit of the
 # current vehicle, restored when the view is selected again; cleared when the vehicle changes
 var _view_configs:Dictionary = {}
 
@@ -46,13 +65,6 @@ func activate(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
     _look_target = p_from.origin - p_from.basis.z * 10.0
     _dirty = true
     make_current()
-
-
-## The external view of any vehicle from the first view - the front of its trainset - whatever view
-## was selected last (the trainset list's Follow)
-func follow(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
-    view = View.CONSIST_FRONT
-    activate(p_vehicle, p_from)
 
 
 func next_view() -> void:
@@ -70,15 +82,25 @@ func _input(event:InputEvent) -> void:
         _orbit.y = clampf(_orbit.y - deg_to_rad(event.relative.y * sensitivity), -1.4, 1.4)
 
 
+# the wheel is left to a HUD under the cursor first (the vehicle card scrolls with it)
+func _unhandled_input(event:InputEvent) -> void:
+    if not current or not event is InputEventMouseButton or not event.pressed:
+        return
+    if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+        _zoom_by(ZOOM_STEP)
+    elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+        _zoom_by(1.0 / ZOOM_STEP)
+
+
 func _process(delta:float) -> void:
     if not current or not vehicle:
         return
     if _dirty:
         _dirty = false
         _process_dirty()
-    _move_view_offset(delta)
+    _move_view(delta)
     if _view_vehicle:
-        _view_configs[view] = {"offset": _view_offset, "orbit": _orbit}
+        _view_configs[view] = {"pan": _pan, "zoom": _zoom, "orbit": _orbit}
 
     var look_target:Vector3 = _view_vehicle.global_transform * _bogie_look_offset if view == View.BOGIE else _get_vehicle_center(vehicle)
     var view_position:Vector3 = _view_vehicle.global_transform * _view_offset if _view_vehicle else _view_offset
@@ -86,6 +108,12 @@ func _process(delta:float) -> void:
     var pitch_axis:Vector3 = Vector3.UP.cross(arm)
     if not pitch_axis.is_zero_approx():
         arm = arm.rotated(pitch_axis.normalized(), _orbit.y)
+    _view_distance = arm.length()
+    arm *= _zoom
+    # the pan moves the target and the camera together along the screen axes, so the view slides
+    var forward:Vector3 = -arm.normalized()
+    var right:Vector3 = forward.cross(Vector3.UP).normalized()
+    look_target += right * _pan.x + right.cross(forward) * _pan.y
 
     var weight:float = 1.0 - exp(-response * delta)
     var previous_position:Vector3 = global_position
@@ -101,6 +129,8 @@ func _process(delta:float) -> void:
 ## the one remembered for this view.
 func _process_dirty() -> void:
     _orbit = Vector2.ZERO
+    _pan = Vector2.ZERO
+    _zoom = 1.0
     var controller:VehicleController = vehicle.get_controller()
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle.get_rid())
     var cabin_occupied:int = state.get("cabin_occupied", 0)
@@ -148,22 +178,29 @@ func _process_dirty() -> void:
     # restore view config (drivermode.cpp:942-946)
     var config:Dictionary = _view_configs.get(view, {})
     if config:
-        _view_offset = config["offset"]
+        _pan = config["pan"]
+        _zoom = config["zoom"]
         _orbit = config["orbit"]
 
 
-## TCamera::Update() (Camera.cpp:191-213) - in the external view the keys move the owner offset
-## relative to the camera heading (the original moves it at 2 m/s).
-func _move_view_offset(delta:float) -> void:
-    var move:Vector3 = Vector3(
+## The left/right arrows and PageUp/PageDown pan the view in the screen plane, the up/down arrows
+## zoom it. The original moves the owner offset relative to the camera heading instead
+## (TCamera::Update(), Camera.cpp:191-213).
+func _move_view(delta:float) -> void:
+    var pan:Vector2 = Vector2(
         float(Input.is_physical_key_pressed(KEY_RIGHT)) - float(Input.is_physical_key_pressed(KEY_LEFT)),
-        float(Input.is_physical_key_pressed(KEY_PAGEUP)) - float(Input.is_physical_key_pressed(KEY_PAGEDOWN)),
-        float(Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_UP)))
-    if move.is_zero_approx():
+        float(Input.is_physical_key_pressed(KEY_PAGEUP)) - float(Input.is_physical_key_pressed(KEY_PAGEDOWN)))
+    var zoom:float = float(Input.is_physical_key_pressed(KEY_DOWN)) - float(Input.is_physical_key_pressed(KEY_UP))
+    if pan.is_zero_approx() and zoom == 0.0:
         return
-    var speed:float = move_speed_fast if Input.is_key_pressed(KEY_SHIFT) else move_speed
-    var world_move:Vector3 = Basis(Vector3.UP, global_rotation.y) * move.normalized() * speed * delta
-    _view_offset += _view_vehicle.global_basis.inverse() * world_move if _view_vehicle else world_move
+    var fast:bool = Input.is_key_pressed(KEY_SHIFT)
+    _pan += pan.normalized() * (move_speed_fast if fast else move_speed) * delta
+    _zoom_by(exp(zoom * (ZOOM_KEY_RATE_FAST if fast else ZOOM_KEY_RATE) * delta))
+
+
+## Scales the view's distance, kept within the min/max distance settings
+func _zoom_by(p_factor:float) -> void:
+    _zoom = clampf(_zoom * p_factor, _min_distance / _view_distance, _max_distance / _view_distance)
 
 
 func _get_vehicle_center(p_vehicle:RailVehicle3D) -> Vector3:

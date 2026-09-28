@@ -120,6 +120,16 @@ interface.
 * **A negative dark/home value is never lit.** The mode is taken from `|value|`, the threshold from
   the signed value - `lsLights[i] - ls_Dark` (`AnimModel.cpp:601`, `:611` for `ls_Home`) - so
   `-3.4` gives a threshold of -6.4. Wrapper: the fraction of `|value|` (`LegacyLightMode`).
+* **A model hides different submodels depending on who loads it.** `TSubModel::Load()` and
+  `BinInit()` hide a `*_on` submodel only when the model is loaded as `dynamic` - a vehicle, its
+  cab, its load - and in any other model hide `Light_On*` alone, compared with its letter case
+  (Model3d.cpp:275, 2221). The same file thus shows its `_on` controls in the scenery and hides
+  them on a vehicle; a shunting dwarf (`sem/karzelki/ktmnb`) keeps its lamps under a transform
+  named `_on`. Wrapper: the parser marks `*_on`/`*_xon` `dynamic_hidden`, and only an
+  `INSTANCE_KIND_DYNAMIC` instance hides them; `light_on*` is hidden whatever its case.
+* **Only the first `Light_OnNN` of a name is switched** (GetFromName(), AnimModel.cpp:306); a copy
+  nested under it shows with it (`ktmnb` keeps each lens under a transform of the same name).
+  Wrapper: the same - a nested copy stays visible, any other copy stays hidden.
 * **`ls_winter` (5) is declared and never handled** (`AnimModel.h:34`): `RaPrepare()` has no case
   for it, so such a light stays as it was. Wrapper: parsed as off.
 

@@ -1,4 +1,5 @@
 #include "E3DInstanceBackend.hpp"
+#include "E3DRenderingServer.hpp"
 #include "rendering/MousePicking.hpp"
 #include <godot_cpp/classes/base_material3d.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -93,6 +94,11 @@ namespace godot {
             default:
                 return false;
         }
+    }
+
+    bool E3DInstanceBackend::_is_submodel_shown(const E3DInstanceData &p_instance, const E3DSubModel *p_submodel) {
+        const bool dynamic_instance = p_instance.instance_kind == E3DRenderingServer::INSTANCE_KIND_DYNAMIC;
+        return p_submodel->get_visible() && !(dynamic_instance && p_submodel->get_dynamic_hidden());
     }
 
     Vector<E3DSubModel *> E3DInstanceBackend::_get_force_alpha_submodels(const E3DInstanceData &p_instance) {

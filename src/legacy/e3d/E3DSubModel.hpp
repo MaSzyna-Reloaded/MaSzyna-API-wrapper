@@ -79,6 +79,11 @@ namespace godot {
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<E3DSubModel>, submodels)
             MAKE_MEMBER_GS_NR(bool, visible, true)
             MAKE_MEMBER_GS_NR(bool, skip_rendering, false)
+            /// A "<name>_on"/"<name>_xon" submodel: a control in its lit state, hidden by default
+            /// only in a dynamic (vehicle) model (Model3d.cpp:275, 2221)
+            bool dynamic_hidden = false;
+            void set_dynamic_hidden(bool p_dynamic_hidden);
+            bool get_dynamic_hidden() const;
 
             MAKE_MEMBER_GS_NR(float, light_range, 0.0)
             MAKE_MEMBER_GS_NR(float, light_attenuation, 1.0)

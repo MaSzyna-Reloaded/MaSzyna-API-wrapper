@@ -1901,3 +1901,20 @@ lighting or the consist.
 * **Fix:** `latency` keeps the original's value and sign; the displays show its negative.
 * **Rule:** `LastStationLatency` is the departure less the arrival - positive is early; a shown
   delay is its negative.
+
+## 2026-09-29 - shunting signal dwarfs never lit in the scenery
+
+* **Symptom:** Stary Jawor (and other sceneries): the Tm dwarfs (`ms2nbk.inc`,
+  `sem/karzelki/ktmnb`) stood by the tracks dark whatever their aspect; the main signal next to
+  them switched. `mini_tm.scn` (Tm heads and a main signal on Shift+1..4) showed the same.
+* **What proved it:** a headless dump of the model: both lamps sit under a transform named `_on`
+  (`karzel2/_on/light_on00`), and each lamp's lens is a mesh `light_on00` nested under the
+  `light_on00` transform. The parser hid every `*_on`/`*_xon` submodel and every `light_on*`
+  one, so `_on` hid both lamps and the nested lens stayed hidden under a lamp that was switched.
+  The original hides `*_on` only in a dynamic (vehicle) model (Model3d.cpp:275, 2221), and
+  switches only the first `Light_On00` it finds (GetFromName(), AnimModel.cpp:306).
+* **Fix:** the parser marks a `*_on`/`*_xon` submodel `dynamic_hidden`, and the backends hide it
+  only in an `INSTANCE_KIND_DYNAMIC` instance (vehicle parts, the cab, the vehicle preview); a
+  copy of a light's name nested under the bound one stays visible. Checked on `mini_tm.scn`.
+* **Rule:** what a model hides by default depends on who loads it: a vehicle hides its `_on`
+  controls, a scenery model does not. Read the model's tree before assuming a light is missing.

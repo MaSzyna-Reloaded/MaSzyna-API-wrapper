@@ -112,6 +112,7 @@ namespace godot {
 
         BIND_PROPERTY(E3DSubModel, Variant::BOOL, visible);
         BIND_PROPERTY(E3DSubModel, Variant::BOOL, skip_rendering);
+        BIND_PROPERTY(E3DSubModel, Variant::BOOL, dynamic_hidden);
 
         BIND_PROPERTY(E3DSubModel, Variant::FLOAT, light_range);
         BIND_PROPERTY(E3DSubModel, Variant::FLOAT, light_attenuation);
@@ -123,6 +124,14 @@ namespace godot {
         BIND_PROPERTY(E3DSubModel, Variant::FLOAT, cos_hotspot_angle);
         BIND_PROPERTY(E3DSubModel, Variant::FLOAT, cos_view_angle);
         BIND_PROPERTY(E3DSubModel, Variant::FLOAT, light_energy);
+    }
+
+    void E3DSubModel::set_dynamic_hidden(const bool p_dynamic_hidden) {
+        dynamic_hidden = p_dynamic_hidden;
+    }
+
+    bool E3DSubModel::get_dynamic_hidden() const {
+        return dynamic_hidden;
     }
 
     void E3DSubModel::add_child(const Ref<E3DSubModel> &p_sub_model) {

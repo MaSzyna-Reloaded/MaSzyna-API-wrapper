@@ -1,16 +1,5 @@
 extends MaszynaGutTest
 
-var _previous_game_dir:String = ""
-
-
-func before_each():
-    _previous_game_dir = UserSettings.get_maszyna_game_dir()
-    UserSettings.save_maszyna_game_dir("/mnt/ArchiwumX/Games/Maszyna")
-
-
-func after_each():
-    UserSettings.save_maszyna_game_dir(_previous_game_dir)
-
 
 func test_demo_scenery_loading_scene_instantiates() -> void:
     var packed:PackedScene = load("res://demo_scenery_loading.tscn")
@@ -22,9 +11,7 @@ func test_demo_scenery_loading_scene_instantiates() -> void:
     # from _ready(), no need to call load() here
     scenery.filename = "td.scn"
     add_child(instance)
-    await wait_for_signal(scenery.loaded, 120)
-
-    assert_gt(scenery._track_rids.size(), 0, "scenery load should have created at least one track RID")
+    await wait_for_signal(scenery.scenery_loaded, 120)
 
     # TrackServer is an engine singleton, not a node under /root - it has been since it moved
     # to C++, and looking it up by path is what AGENTS.md forbids

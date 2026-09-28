@@ -15,7 +15,7 @@ func after_each() -> void:
 
 func test_controls_drive_environment_node() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
-    var controls: VBoxContainer = WEATHER_CONTROLS_SCENE.instantiate() as VBoxContainer
+    var controls: HFlowContainer = WEATHER_CONTROLS_SCENE.instantiate() as HFlowContainer
     controls.environment_node_path = NodePath("../%s" % environment_node.name)
     add_child_autofree(controls)
 
@@ -36,7 +36,7 @@ func test_controls_drive_environment_node() -> void:
 
 func test_controls_follow_weather_preset() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
-    var controls: VBoxContainer = WEATHER_CONTROLS_SCENE.instantiate() as VBoxContainer
+    var controls: HFlowContainer = WEATHER_CONTROLS_SCENE.instantiate() as HFlowContainer
     controls.environment_node_path = NodePath("../%s" % environment_node.name)
     add_child_autofree(controls)
 

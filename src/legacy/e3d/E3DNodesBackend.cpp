@@ -151,6 +151,24 @@ namespace godot {
                     light_nodes.spotlight = ObjectID(spotlight->get_instance_id());
                     _configure_spotlight(spotlight, p_parent_light_name, light_nodes.submodel);
                 }
+                // the point (and the glare) the original draws where the light is
+                // (opengl33renderer.cpp:4375-4500); it goes on and off with the spotlight node
+                const Ref<Material> point_material = p_material_resolver.resolve(p_instance, submodel.ptr(), false);
+                if (point_material.is_valid()) {
+                    MeshInstance3D *point = memnew(MeshInstance3D);
+                    point->set_mesh(point_mesh);
+                    point->set_material_override(point_material);
+                    // placed on the screen by its shaders - in a shadow map or in GI a stray square
+                    point->set_cast_shadows_setting(GeometryInstance3D::SHADOW_CASTING_SETTING_OFF);
+                    point->set_gi_mode(GeometryInstance3D::GI_MODE_DISABLED);
+                    const Dictionary parameters =
+                            _free_spotlight_parameters(p_instance, submodel.ptr(), p_parent_light_name);
+                    const Array names = parameters.keys();
+                    for (int j = 0; j < names.size(); j++) {
+                        point->set_instance_shader_parameter(names[j], parameters[names[j]]);
+                    }
+                    spotlight->add_child(point, false, Node::INTERNAL_MODE_BACK);
+                }
             } else {
                 child->set_transform(submodel->get_transform());
             }

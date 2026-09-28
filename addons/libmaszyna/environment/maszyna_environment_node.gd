@@ -11,6 +11,14 @@ const CABIN_RENDER_LAYER: int = 1 << 18
 ## How often the time of day, the light level and the wind are pushed to E3DRenderingServer, which
 ## decides from the first two which scenery lights are lit (see _push_environment_state())
 const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
+## The original's Global.Overcast runs 0-1 for the cloud cover and on up to 2 for precipitation
+## (simulationenvironment.cpp:64-71); MaszynaScenery turns its heaviest step into a precipitation
+## of 0.4 (maszyna_scenery.gd PRECIPITATION_MEDIUM), which here is an overcast of 2 again
+const OVERCAST_MAX: float = 2.0
+const OVERCAST_FULL_PRECIPITATION: float = 0.4
+## The original's fog range with the fog switched off - the longest a scenery may declare
+## (simulationstateserializer.cpp:216)
+const FOG_RANGE_MAX: float = 25000.0
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
@@ -350,6 +358,17 @@ func _apply_visual_configuration() -> void:
     # active droplets and the time they take to return after a wiper pass
     RenderingServer.global_shader_parameter_set("maszyna_rain_intensity", precipitation)
     RenderingServer.global_shader_parameter_set("maszyna_wiper_regen_time", lerpf(15.0, 1.0, precipitation))
+    # the free spotlights' points and glare (types/free_spotlight*.gdshader) follow the original's
+    # Global.Overcast and m_fogrange (opengl33renderer.cpp:5009), which fog_distance is a multiple of
+    RenderingServer.global_shader_parameter_set(
+        "maszyna_overcast", clampf(cloudiness + precipitation / OVERCAST_FULL_PRECIPITATION, 0.0, OVERCAST_MAX))
+    RenderingServer.global_shader_parameter_set(
+        "maszyna_fog_range",
+        fog_distance / float(ProjectSettings.get_setting(
+            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
+            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
+        if fog_enabled
+        else FOG_RANGE_MAX)
     if not _environment or not _sky_environment:
         return
 
@@ -425,6 +444,8 @@ func _push_environment_state(delta: float) -> void:
     var light_level:float = _sky_environment.get_light_level()
     E3DRenderingServer.set_current_time(current_time)
     E3DRenderingServer.set_light_level(light_level)
+    # Global.fLuminance of the free spotlights' glare (types/free_spotlight_glare.gdshader)
+    RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
     SimulationServer.simulation_speed = simulation_speed
     _publish_animation_speed()
     SimulationServer.light_level = light_level

@@ -632,6 +632,18 @@ anti_aliasing/quality/use_taa=true
 
 [shader_globals]
 
+maszyna_overcast={
+"type": "float",
+"value": 0.0
+}
+maszyna_fog_range={
+"type": "float",
+"value": 25000.0
+}
+maszyna_light_level={
+"type": "float",
+"value": 1.0
+}
 maszyna_rain_intensity={
 "type": "float",
 "value": 0.0

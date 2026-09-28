@@ -131,6 +131,13 @@ func create_track(track_rid: RID) -> RID:
     state.secondary_blade_mesh_instance = RenderingServer.instance_create()
     state.trackbed_mesh_instance = RenderingServer.instance_create()
     state.trackbed_stitch_mesh_instance = RenderingServer.instance_create()
+    # The trackbed casts no sun shadow: a 0.2 m bed barely shades the ground, but its slopes, lit
+    # at a grazing angle, shaded themselves - a dark band that read as a gap to the terrain
+    # (FINDINGS.md, 2026-09-28)
+    for trackbed_instance: RID in [state.trackbed_mesh_instance, state.trackbed_stitch_mesh_instance]:
+        RenderingServer.instance_geometry_set_cast_shadows_setting(
+            trackbed_instance, RenderingServer.SHADOW_CASTING_SETTING_OFF
+        )
 
     _next_track_render_id += 1
     var track_render_rid: RID = rid_from_int64(_next_track_render_id)
@@ -995,11 +1002,16 @@ func _append_stitch_geometry(
 
     var first_index: int = indices.size()
     _append_loft_strip_indices(indices, 2, section.size(), base_vertex)
-    var last_index: int = indices.size()
-    for index: int in range(first_index, last_index, 3):
-        indices.push_back(indices[index])
-        indices.push_back(indices[index + 2])
-        indices.push_back(indices[index + 1])
+    # One face, turned up: the stitch runs either way along the track, and a second, reversed copy
+    # is drawn too by the double-sided track material - its underside lit dark over the joint.
+    # Godot's front face is clockwise, so the strip faces up when (across x along).y > 0.
+    var across: Vector3 = (section[section.size() - 1][0] as Vector3) - (section[0][0] as Vector3)
+    var along: Vector3 = (connected_section[0][0] as Vector3) - (section[0][0] as Vector3)
+    if across.cross(along).y < 0.0:
+        for index: int in range(first_index, indices.size(), 3):
+            var swapped: int = indices[index + 1]
+            indices[index + 1] = indices[index + 2]
+            indices[index + 2] = swapped
 
 
 

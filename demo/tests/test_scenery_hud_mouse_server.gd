@@ -49,7 +49,7 @@ func test_an_instance_not_built_is_not_hit() -> void:
 
 func test_a_click_calls_pressed_and_a_shift_click_shift_pressed() -> void:
     var instance:RID = _create_instance()
-    var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
+    var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, "lever", "", _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
 
     SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
     assert_eq(SceneryHUDMouseServer.get_hovered_pickable(), pickable)
@@ -64,7 +64,7 @@ func test_a_click_calls_pressed_and_a_shift_click_shift_pressed() -> void:
 
 func test_nothing_is_hovered_off_the_model_or_while_inactive() -> void:
     var instance:RID = _create_instance()
-    var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
+    var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, "lever", "", _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
 
     SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION + Vector3(5.0, 0.0, 0.0))))
     assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid(), "beside the model")
@@ -90,7 +90,7 @@ func test_a_scenery_model_fires_the_launcher_of_its_name_that_has_it_in_range() 
     # zwr1 is within 20 m of its launcher; zwr2's launcher has a negative radius, which the
     # original never finds a model within (EvLaunch.cpp:57-58, scene.cpp:37)
     var context:MaszynaImporterContext = _parse(
-        "node -1 0 zwr1 eventlauncher 0 0 0 20 none 0 zwr1+ zwr1- end "
+        "node -1 0 zwr1 eventlauncher 0 0 0 20 k 0 zwr1+ zwr1- end "
         + "node -1 0 zwr2 eventlauncher 0 0 0 -1 none 0 zwr2+ zwr2- end "
         + "event zwr1+ multiple %s none endevent " % NEVER
         + "event zwr1- multiple %s none endevent " % NEVER
@@ -108,10 +108,14 @@ func test_a_scenery_model_fires_the_launcher_of_its_name_that_has_it_in_range() 
         tracks, track_rids, models, model_rids, power_sources
     )
 
+    watch_signals(SceneryHUDMouseServer)
     SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    # the tooltip: the model's name and the launcher's key, with Shift for the second event
+    assert_signal_emitted_with_parameters(SceneryHUDMouseServer, "pickable_hovered", ["zwr1", "K / Shift+K"])
     SceneryHUDMouseServer.input(_click(true))
     SceneryHUDMouseServer.input(_motion(_camera.unproject_position(beside)))
     assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid(), "zwr2 is out of its launcher's range")
+    assert_signal_emitted(SceneryHUDMouseServer, "pickable_unhovered")
 
     assert_true(ScenarioEventServer.event_is_queued(ScenarioEventServer.event_get_rid_by_name(&"zwr1-")), "Shift fires event2")
     assert_false(ScenarioEventServer.event_is_queued(ScenarioEventServer.event_get_rid_by_name(&"zwr1+")))

@@ -26,10 +26,12 @@
 		<method name="pickable_create">
 			<return type="RID" />
 			<param index="0" name="instance" type="RID" />
-			<param index="1" name="pressed" type="Callable" />
-			<param index="2" name="shift_pressed" type="Callable" />
+			<param index="1" name="caption" type="String" />
+			<param index="2" name="hints" type="String" />
+			<param index="3" name="pressed" type="Callable" />
+			<param index="4" name="shift_pressed" type="Callable" />
 			<description>
-				Registers the [E3DRenderingServer] [param instance] as a pickable: a click on it calls [param pressed], a Shift+click [param shift_pressed].
+				Registers the [E3DRenderingServer] [param instance] as a pickable: a click on it calls [param pressed], a Shift+click [param shift_pressed]. [param caption] and [param hints] (the keys that do the same) are sent with [signal pickable_hovered] for the tooltip.
 			</description>
 		</method>
 		<method name="pickable_free">
@@ -54,4 +56,18 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="pickable_hovered">
+			<param index="0" name="caption" type="String" />
+			<param index="1" name="hints" type="String" />
+			<description>
+				The cursor came onto a pickable: its caption and key hints, for the tooltip.
+			</description>
+		</signal>
+		<signal name="pickable_unhovered">
+			<description>
+				No pickable is under the cursor any more.
+			</description>
+		</signal>
+	</signals>
 </class>

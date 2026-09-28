@@ -1,9 +1,9 @@
 extends PanelContainer
 class_name CabinControlTooltip
 
-## The caption of the cab control under the cursor (CabinHUDMouseSystem), drawn next to the cursor
-## as the original's tooltip is (uilayer.cpp:526): what the control is, what it shows now and the
-## keys that work it.
+## The caption of the cab control (CabinHUDMouseSystem) or the scenery model (SceneryHUDMouseServer)
+## under the cursor, drawn next to the cursor as the original's tooltip is (uilayer.cpp:526): what
+## the control is, what it shows now and the keys that work it. A scenery model has no state.
 
 ## Where the panel sits relative to the cursor, so the pointer does not cover the text
 const CURSOR_OFFSET:Vector2 = Vector2(16.0, 20.0)
@@ -14,6 +14,8 @@ const CURSOR_OFFSET:Vector2 = Vector2(16.0, 20.0)
 ## Where the cursor was last seen; a drag captures the mouse, and a captured mouse reports the
 ## centre of the window instead
 var _cursor_position:Vector2 = Vector2.ZERO
+## The scenery's hover with no state line - kept to disconnect the same callable
+var _on_pickable_hovered:Callable = _on_control_hovered.bind("")
 
 
 func _ready() -> void:
@@ -21,12 +23,16 @@ func _ready() -> void:
     CabinHUDMouseSystem.control_hovered.connect(_on_control_hovered)
     CabinHUDMouseSystem.control_unhovered.connect(hide)
     CabinHUDMouseSystem.control_state_changed.connect(_on_control_state_changed)
+    SceneryHUDMouseServer.pickable_hovered.connect(_on_pickable_hovered)
+    SceneryHUDMouseServer.pickable_unhovered.connect(hide)
 
 
 func _exit_tree() -> void:
     CabinHUDMouseSystem.control_hovered.disconnect(_on_control_hovered)
     CabinHUDMouseSystem.control_unhovered.disconnect(hide)
     CabinHUDMouseSystem.control_state_changed.disconnect(_on_control_state_changed)
+    SceneryHUDMouseServer.pickable_hovered.disconnect(_on_pickable_hovered)
+    SceneryHUDMouseServer.pickable_unhovered.disconnect(hide)
 
 
 func _input(event:InputEvent) -> void:

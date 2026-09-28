@@ -121,6 +121,12 @@ func _enter_tree():
     # The cab gets a sun of its own with sharp shadows over its few metres, and the world's sun keeps
     # its far cascades in the cab view too; costs a second shadow map and a twice larger atlas
     add_custom_project_setting("maszyna/cabin/improve_shadows_quality", true, TYPE_BOOL)
+    # The glow an indicator lamp throws into the cab while it is lit (an OmniLight3D at the lamp)
+    add_custom_project_setting("maszyna/cabin/indicator_glow_enabled", true, TYPE_BOOL)
+    add_custom_project_setting(
+        "maszyna/cabin/indicator_glow_energy", 0.05, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,2.0,0.005")
+    add_custom_project_setting(
+        "maszyna/cabin/indicator_glow_range", 0.1, TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.01,2.0,0.01,suffix:m")
     # CPython 2.7 prefix PythonScreenServer runs the cab screens with (lib/libpython2.7.so.1.0 on
     # Linux); empty is python2.7 in the game directory on Linux and the original's python64 on Windows
     add_custom_project_setting("maszyna/python/home", "", TYPE_STRING, PROPERTY_HINT_GLOBAL_DIR)

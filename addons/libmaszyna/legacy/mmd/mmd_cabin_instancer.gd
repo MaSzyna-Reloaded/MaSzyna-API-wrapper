@@ -18,6 +18,13 @@ class_name MmdCabinInstancer
 const INDICATOR_LIGHT_OFFSET:float = 0.05
 ## Spacing and limit of the lights spread along a long ceiling lamp (see _light_points_along_submodel()).
 const LAMP_LIGHT_SPACING:float = 2.0
+## An indicator lamp's glow into the cab: its brightness and reach. The defaults are SM42's
+## hand-authored radio LED (the "i-radio" entry of MmdSemanticCatalog).
+const INDICATOR_GLOW_ENABLED_SETTING:StringName = &"maszyna/cabin/indicator_glow_enabled"
+const INDICATOR_GLOW_ENERGY_SETTING:StringName = &"maszyna/cabin/indicator_glow_energy"
+const INDICATOR_GLOW_ENERGY_DEFAULT:float = 0.05
+const INDICATOR_GLOW_RANGE_SETTING:StringName = &"maszyna/cabin/indicator_glow_range"
+const INDICATOR_GLOW_RANGE_DEFAULT:float = 0.1
 const LAMP_LIGHT_MAX_COUNT:int = 6
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
@@ -1128,6 +1135,26 @@ static func _build_indicator_lights(
         if off_node:
             widget.set("off_target_path", widget.get_path_to(off_node))
         widget.set_vehicle_rid(vehicle_rid)
+
+        # a lamp that is only its "_on" mesh also glows into the cab while it is lit, in its own
+        # colour (the diffuse that tints the greyscale lamp texture, Model3d.cpp:1918); entries with
+        # a light of their own (i-cablight, i-instrumentlight, i-radio) keep that one instead
+        if (widget is CabinIndicator3D and not entry.has("light_widget_class")
+                and ProjectSettings.get_setting(INDICATOR_GLOW_ENABLED_SETTING, true)):
+            var glow:OmniLight3D = OmniLight3D.new()
+            glow.name = "%s_%s_%d_glow" % [descriptor.label, descriptor.submodel_name, i]
+            var glow_submodel:E3DSubModel = cab_model.model.get_node_or_null(cab_model.get_path_to(submodel))
+            if glow_submodel:
+                glow.light_color = glow_submodel.diffuse_color
+            glow.light_energy = float(ProjectSettings.get_setting(
+                    INDICATOR_GLOW_ENERGY_SETTING, INDICATOR_GLOW_ENERGY_DEFAULT))
+            glow.omni_range = float(ProjectSettings.get_setting(
+                    INDICATOR_GLOW_RANGE_SETTING, INDICATOR_GLOW_RANGE_DEFAULT))
+            glow.shadow_enabled = false
+            glow.visible = (widget as CabinIndicator3D).enabled
+            generated_root.add_child(glow)
+            _position_at_submodel_instance(glow, submodel)
+            (widget as CabinIndicator3D).lit_changed.connect(glow.set_visible)
 
         if entry.has("light_widget_class"):
             var light_points:Array[Vector3] = []

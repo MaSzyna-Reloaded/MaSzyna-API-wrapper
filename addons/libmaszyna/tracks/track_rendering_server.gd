@@ -1427,7 +1427,10 @@ func _append_switch_blade_geometry(
 func _build_rail_section(profile: Array, width: float, roll: float, mirrored: bool) -> Array:
     var section: Array = []
     var half_width: float = 0.5 * abs(width)
-    var roll_radians: float = deg_to_rad(roll)
+    # The loft frames here map the profile's x to the left of the track direction, the original's
+    # RenderLoft to the right (Segment.cpp:398 parallel): the profile is mirrored, so the cant
+    # (Track.cpp:2652) turns the other way
+    var roll_radians: float = -deg_to_rad(roll)
     var sin_roll: float = sin(roll_radians)
     var cos_roll: float = cos(roll_radians)
 
@@ -1518,7 +1521,8 @@ func _build_trackbed_section(
         normal_x = 1.0
         normal_y = 0.0
 
-    var roll_radians: float = deg_to_rad(roll)
+    # mirrored like the rail profile (_build_rail_section)
+    var roll_radians: float = -deg_to_rad(roll)
     var sin_roll: float = sin(roll_radians)
     var cos_roll: float = cos(roll_radians)
     var safe_tex_length: float = max(abs(tex_length), 0.001)
@@ -1775,8 +1779,9 @@ func _build_transition_loft_strip_chunks(
         # original switch segments used by RenderLoft are already lifted by railheight.
         var pos1: Vector3 = sampled_points[segment_index] + Vector3(0.0, rail_height, 0.0)
         var pos2: Vector3 = sampled_points[segment_index + 1] + Vector3(0.0, rail_height, 0.0)
-        var parallel1: Vector3 = _build_planar_parallel(sampled_points, segment_index)
-        var parallel2: Vector3 = _build_planar_parallel(sampled_points, segment_index + 1)
+        # to the left, as every loft here maps the profile's x (_build_rail_section)
+        var parallel1: Vector3 = -_build_planar_parallel(sampled_points, segment_index)
+        var parallel2: Vector3 = -_build_planar_parallel(sampled_points, segment_index + 1)
         var m1: float = float(segment_index) / float(segment_count)
         var m2: float = float(segment_index + 1) / float(segment_count)
         var jmm1: float = 1.0 - m1

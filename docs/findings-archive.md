@@ -1620,3 +1620,23 @@ lighting or the consist.
   (main 3, shunt 3), camshaft to 14, past 50 km/h and still accelerating.
 * **Rule:** a coupled controller's cab range is main + shunt - check `CoupledCtrl` before taking a
   controller's range from one table.
+
+
+## 2026-09-28 - the cant tilted the rails the other way than the vehicles (#292)
+
+* **Symptom:** on every canted curve the body leaned the opposite way to the track and the wheels
+  of one side hung above the rail.
+* **Cause:** `RailVehicleServer._placement_transform()` rolls the vehicle as `DynObj.cpp:2694`
+  does (the right side of the track direction down on a positive roll). The track renderer copied
+  the original's rail and trackbed cross-sections (`Track.cpp:2652`), but its loft frame
+  (`_build_curve_frame`) maps the profile's x to the *left* of the track direction, where the
+  original's `RenderLoft` maps it to the right (`Segment.cpp:398`, `parallel = (-dir.z, 0,
+  dir.x)`) - the profile was mirrored and the cant with it. A probe on a straight track along +X
+  with a 5 deg roll: the vehicle's wheel on +Z at 0.0028 m, the rendered rail on +Z at 0.128 m -
+  the high side. The switch trackbed (`_build_transition_loft_strip_chunks`) used `parallel` and
+  tilted like the vehicle, the plain trackbed the other way.
+* **Fix:** the rail and trackbed sections turn the cant the other way to match the mirrored
+  frame; the switch trackbed maps x to the left like every other loft. Measured: rail at +Z
+  0.0028 m, at -Z 0.128 m, the vehicle's wheel on +Z at 0.0028 m.
+* **Rule:** a ported formula carries the original's frame with it - compare world coordinates of
+  both sides, not the formulas.

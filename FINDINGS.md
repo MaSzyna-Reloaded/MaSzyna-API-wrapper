@@ -53,6 +53,9 @@ anything. Open work belongs in `TODO.md`.
 * A ported tolerance carries the original's value, never a rounder "safer" one. A tolerance that
   papers over data becomes load-bearing once something trusts the structure. *(09-20 double
   slips; 09-24 pantograph)*
+* A ported formula carries the original's frame with it: when our loft or basis maps an axis the
+  other way (profile x to the left, not `RenderLoft`'s right), every angle in that plane flips.
+  Compare world coordinates of both sides, not the formulas. *(09-28 cant reversed)*
 * Before caching or dropping a call as redundant, open the callee and the original line cited
   above it. *(09-20 coupled wagons drifting)*
 * A tuning factor with no counterpart in the original scales the data's errors with the data.

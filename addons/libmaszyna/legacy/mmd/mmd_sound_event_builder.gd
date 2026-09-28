@@ -296,8 +296,8 @@ static func _build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
 ## can't be resolved (e.g. in a test environment with no game data configured), which degrades to
 ## the main clip simply starting at the same time as begin instead of after it. Checks existence
 ## first (same path formula as AudioStreamManager.get_stream()) rather than calling it directly,
-## since that function push_errors on a miss - appropriate when actually resolving a clip to play,
-## not for this best-effort lookup where "unknown length" is an expected, silent outcome.
+## since that function warns on a miss - appropriate when actually resolving a clip to play, not
+## for this best-effort lookup where "unknown length" is an expected, silent outcome.
 static func _stream_length(filename:String) -> float:
     if not filename:
         return 0.0

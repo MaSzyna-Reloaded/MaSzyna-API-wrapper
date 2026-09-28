@@ -30,10 +30,7 @@ border_color = Color(0, 0, 0, 1)
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wi7ft"]
 shader = ExtResource("3_5prnv")
-shader_parameter/blur_type = 0
 shader_parameter/blur_amount = 16
-shader_parameter/blur_radius = 1.0
-shader_parameter/blur_direction = Vector2(1, 1)
 
 [sub_resource type="Animation" id="Animation_08ss8"]
 length = 2.0

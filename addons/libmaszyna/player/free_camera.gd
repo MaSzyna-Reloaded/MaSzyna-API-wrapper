@@ -46,6 +46,8 @@ var _mouse_look_velocity: Vector2 = Vector2.ZERO
 var _looking: bool = false
 # The velocity the camera keeps after a hand-over, until deceleration stops it [m/s]
 var _glide_velocity: Vector3 = Vector3.ZERO
+# The keys have steered the camera since the hand-over: the glide only fades out
+var _glide_steered: bool = false
 
 # Keyboard state
 var _w: float = 0.0
@@ -111,9 +113,10 @@ func _input(event):
         _pending_mouse_delta += event.relative
 
 ## Keeps the camera moving at the velocity [m/s] another camera had when it handed over, slowing
-## down by deceleration until it stops
+## down by deceleration until it stops - or, once the keys steer it, fading into their speed
 func glide(p_velocity:Vector3) -> void:
     _glide_velocity = p_velocity
+    _glide_steered = false
 
 
 # Updates mouselook and movement every frame
@@ -126,14 +129,21 @@ func _process(delta: float) -> void:
 func _update_movement(delta: float) -> void:
     var smoothing_weight: float = _get_smoothing_weight(MOVEMENT_SMOOTHING, delta)
 
-    if not _glide_velocity.is_zero_approx():
-        _glide_velocity = _glide_velocity.move_toward(Vector3.ZERO, deceleration * delta)
-        global_position += _glide_velocity * delta
-
     # Computes desired direction from key states
     _direction = Vector3(_d - _a, _e - _q, _s - _w)
     if not _direction.is_zero_approx():
         _direction = _direction.normalized()
+
+    if not _glide_velocity.is_zero_approx():
+        # once the keys steer, the glide fades as fast as their own speed builds up, so the one
+        # blends into the other and is not counted after; left alone, it slows down by the
+        # deceleration
+        _glide_steered = _glide_steered or not _direction.is_zero_approx()
+        if _glide_steered:
+            _glide_velocity = _glide_velocity.lerp(Vector3.ZERO, smoothing_weight)
+        else:
+            _glide_velocity = _glide_velocity.move_toward(Vector3.ZERO, deceleration * delta)
+        global_position += _glide_velocity * delta
 
     _smoothed_direction = _smoothed_direction.lerp(_direction, smoothing_weight)
 

@@ -291,8 +291,8 @@ func _on_cabin_camera_configuration_changed() -> void:
 
 ## The camera of the view: from the cab camera the free camera steps out beside the vehicle
 ## (driver_mode::DistantView(true), drivermode.cpp:1054-1069), from the following camera it goes on
-## from where that one was and as fast (drivermode.cpp:1093); the following camera follows from where
-## the free camera or its own previous target's view is, until Shift+F4 selects a view
+## from where that one was and as fast (drivermode.cpp:1093); the following camera flies to the view of
+## the vehicle it follows
 func _on_camera_changed() -> void:
     var previous:Camera3D = get_viewport().get_camera_3d()
     var camera:Camera3D = _mode_camera()
@@ -309,19 +309,20 @@ func _on_camera_changed() -> void:
         free_camera.glide(Vector3.ZERO)
     elif camera == free_camera and previous == external_camera:
         free_camera.global_transform = external_camera.global_transform
+        # the free camera zooms by its field of view, the following one by its distance: the view
+        # goes on as it was
+        free_camera.fov = external_camera.fov
         free_camera.glide(external_camera.velocity)
     elif camera == external_camera:
         var target_rid:RID = PlayerCameraServer.camera_get_target()
         var target:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(target_rid)) as RailVehicle3D
         external_camera.view = PlayerCameraServer.camera_get_follow_view() as ExternalCamera3D.View
-        var from:Transform3D = previous.global_transform
-        var far:bool = from.origin.distance_to(target.global_position) > _follow_jump_distance
-        if far:
-            from = PlayerCameraServer.camera_get_show_transform(target_rid)
-        # another target while following: only the vehicle looked at changes, the camera stays
-        if far or previous == free_camera or (previous == external_camera and not external_camera.vehicle == target):
-            external_camera.attach(target, from)
-        elif not previous == external_camera:
+        # another vehicle, or following anew: its view applied in full, flown to from where the view
+        # is - or from beside the vehicle, when it is far; the same one keeps its view and offsets
+        if not (previous == external_camera and external_camera.vehicle == target):
+            var from:Transform3D = previous.global_transform
+            if from.origin.distance_to(target.global_position) > _follow_jump_distance:
+                from = PlayerCameraServer.camera_get_show_transform(target_rid)
             external_camera.activate(target, from)
     if not camera == previous:
         _show_camera(camera)

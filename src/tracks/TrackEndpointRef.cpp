@@ -99,6 +99,16 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_track_switch", "track_switch"), &TrackRouteSegment::set_track_switch);
         ClassDB::bind_method(D_METHOD("get_track_switch"), &TrackRouteSegment::get_track_switch);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "track_switch"), "set_track_switch", "get_track_switch");
+        ClassDB::bind_method(D_METHOD("set_branch", "branch"), &TrackRouteSegment::set_branch);
+        ClassDB::bind_method(D_METHOD("get_branch"), &TrackRouteSegment::get_branch);
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "branch"), "set_branch", "get_branch");
+        ClassDB::bind_method(
+                D_METHOD("set_branch_from_setting", "branch_from_setting"),
+                &TrackRouteSegment::set_branch_from_setting);
+        ClassDB::bind_method(D_METHOD("get_branch_from_setting"), &TrackRouteSegment::get_branch_from_setting);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "branch_from_setting"), "set_branch_from_setting",
+                "get_branch_from_setting");
         ClassDB::bind_method(D_METHOD("set_toward_end", "toward_end"), &TrackRouteSegment::set_toward_end);
         ClassDB::bind_method(D_METHOD("get_toward_end"), &TrackRouteSegment::get_toward_end);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "toward_end"), "set_toward_end", "get_toward_end");
@@ -145,6 +155,22 @@ namespace godot {
 
     bool TrackRouteSegment::get_track_switch() const {
         return track_switch;
+    }
+
+    void TrackRouteSegment::set_branch(const int p_branch) {
+        branch = p_branch;
+    }
+
+    int TrackRouteSegment::get_branch() const {
+        return branch;
+    }
+
+    void TrackRouteSegment::set_branch_from_setting(const bool p_branch_from_setting) {
+        branch_from_setting = p_branch_from_setting;
+    }
+
+    bool TrackRouteSegment::get_branch_from_setting() const {
+        return branch_from_setting;
     }
 
     void TrackRouteSegment::set_toward_end(const bool p_toward_end) {

@@ -106,6 +106,11 @@ namespace godot {
                 D_METHOD("switch_track_get_neighbors", "track", "switch_track"),
                 &TrackServer::switch_track_get_neighbors);
         ClassDB::bind_method(D_METHOD("track_get_next", "track", "endpoint_index"), &TrackServer::track_get_next);
+        ClassDB::bind_method(
+                D_METHOD(
+                        "track_trace_route", "track", "branch", "branch_from_setting", "toward_end", "start",
+                        "distance"),
+                &TrackServer::track_trace_route);
         ClassDB::bind_method(D_METHOD("track_is_switch", "track"), &TrackServer::track_is_switch);
         ClassDB::bind_method(D_METHOD("switch_is_right", "track"), &TrackServer::switch_is_right);
         ClassDB::bind_method(D_METHOD("switch_get_active_track", "track"), &TrackServer::switch_get_active_track);
@@ -986,6 +991,69 @@ namespace godot {
     /* The single track a movement leaving p_track at p_endpoint_index continues onto, and the
      * switch branch it forces when it enters a switch from a branch side (NO_FORCED_SWITCH_TRACK
      * otherwise); false when the node is open or ambiguous. Nothing is changed. */
+    TypedArray<TrackRouteSegment> TrackServer::track_trace_route(
+            const RID &p_track, const int p_branch, const bool p_branch_from_setting, const bool p_toward_end,
+            const double p_start, const double p_distance) {
+        TypedArray<TrackRouteSegment> route;
+        if (!track_exists(p_track)) {
+            return route;
+        }
+        RID track = p_track;
+        int branch = p_branch;
+        bool branch_from_setting = p_branch_from_setting;
+        bool is_switch = track_is_switch(track);
+        double movement_sign = p_toward_end ? 1.0 : -1.0;
+        double length = track_get_length(track, branch);
+        double start = p_start;
+        double covered = start + length;
+        while (true) {
+            Ref<TrackRouteSegment> segment;
+            segment.instantiate();
+            segment->set_track_rid(track);
+            segment->set_distance(start);
+            segment->set_length(length);
+            segment->set_velocity(track_get_velocity(track));
+            segment->set_track_switch(is_switch);
+            segment->set_branch(branch);
+            segment->set_branch_from_setting(branch_from_setting);
+            segment->set_toward_end(movement_sign > 0.0);
+            route.push_back(segment);
+            if (covered >= p_distance) {
+                break;
+            }
+            int endpoint_index = 0;
+            if (is_switch) {
+                endpoint_index = movement_sign > 0.0 ? switch_get_branch_end_endpoint(track, branch)
+                                                     : switch_get_branch_start_endpoint(track, branch);
+            } else {
+                endpoint_index = movement_sign > 0.0 ? CURVE1_P2 : CURVE1_P1;
+            }
+            RID next_track;
+            int next_endpoint = 0;
+            int forced_switch_track = NO_FORCED_SWITCH_TRACK;
+            if (!track_find_next(track, endpoint_index, next_track, next_endpoint, forced_switch_track)) {
+                segment->set_line_end(true);
+                break;
+            }
+            track = next_track;
+            is_switch = track_is_switch(track);
+            branch = TRACK_COMMON;
+            branch_from_setting = false;
+            if (is_switch) {
+                // the branch it would be forced onto, or the one the node leads to - the setting
+                branch_from_setting = forced_switch_track == NO_FORCED_SWITCH_TRACK;
+                branch = branch_from_setting ? switch_get_endpoint_branch(track, next_endpoint) : forced_switch_track;
+                movement_sign = next_endpoint == switch_get_branch_end_endpoint(track, branch) ? -1.0 : 1.0;
+            } else {
+                movement_sign = next_endpoint == CURVE1_P2 ? -1.0 : 1.0;
+            }
+            length = track_get_length(track, branch);
+            start = covered;
+            covered += length;
+        }
+        return route;
+    }
+
     bool TrackServer::track_find_next(
             const RID &p_track, const int p_endpoint_index, RID &p_r_track, int &p_r_endpoint,
             int &p_r_forced_switch_track) {

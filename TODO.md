@@ -934,11 +934,6 @@ ported, into a delegate.
   `ss3zcbyw24.inc`) - a memcell → signal head link recorded from that. The lights' colours
   (`Light_OnXX` material or the node's `lightcolors`) have no public getter in
   `E3DRenderingServer`; wanted as coloured lamps.
-* The route is read anew on every update (`MaszynaLegacyDriverRoute.update()`), so a point at the
-  edge of the reach (`MOVING_RANGE` + the braking distance, which follows the speed) drops out and
-  comes back while the speed wobbles - measured on td.scn: a stop signal came into the reading at
-  876 m the moment the reach passed it. The original keeps the table and drops a point only once
-  passed (TableTraceRoute()); the driving aid's next limit flickers "0 ↔ nothing" there.
 * `PrepareEngine()`'s readiness (Driver.cpp:2843-2851) is ported without "any compressor enabled"
   and the brake handle position, and compares the main reservoir (`compressor_pressure`) where
   the original reads the feed pipe (`ScndPipePress`).

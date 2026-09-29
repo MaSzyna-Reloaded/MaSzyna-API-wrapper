@@ -1882,8 +1882,10 @@ lighting or the consist.
   a guard against the shrinking reach (09-27), blind to the route changing ahead. The original
   moves its table by the distance driven and passes a point only when its distance goes below 0;
   a thrown switch re-traces the table from it (TableCheck()).
-* **Fix:** `MaszynaLegacyDriverRoute.update()` passes an event only when the distance driven since
-  the last update (the vehicle's `total_distance`, DistCounter) is at least its last distance.
+* **Fix:** first an event was passed only once the distance driven (DistCounter) reached it;
+  then, the same day, the route got the original's table: kept between updates, moved as the
+  trainset drives, traced again from a switch thrown ahead (TrackRouteSegment
+  `branch_from_setting`), an event passed when its distance along the table reaches the front.
   Checked on the same run: after keyctrl02 the aid shows 40 with a stop 1.2 km ahead, and driving
   on, A is passed once at 0.48 m.
 * **Rule:** a point of the route is passed when the train has driven up to it, never because it
@@ -1939,3 +1941,21 @@ lighting or the consist.
 * **Rule:** clang-tidy findings are fixed by hand, across the tree; every header includes or
   forward-declares what it names; every touched C++ file is formatted before commit; the style
   check sees the same precision as the build.
+
+## 2026-09-29 - after the double extension_api.json, the debug library would not load
+
+* **Symptom:** after pulling `70ee1b4a` (godot-cpp bound to the versioned double
+  `extension_api.json`), `make compile-debug` succeeded, but Godot could not open
+  `libmaszyna.debug.64.so` - "undefined symbol: _ZN5godot8Resource21_setup_local_to_sceneEv" - so
+  every C++ class was missing: the tests hung, `release-linux` failed while exporting (the headless
+  editor loads the debug library, not the release one).
+* **What proved it:** `nm` on `build-debug/bin/libgodot-cpp...template_debug.double.x86_64.a`
+  showed `Resource::_setup_local_to_scene()` only as undefined references, while the regenerated
+  `gen/src/classes/resource.cpp` defines it: the archive held objects of the previous generation.
+  The library was not even relinked on a second build.
+* **Fix:** remove `build-debug/godot-cpp/CMakeFiles/godot-cpp.dir` and the godot-cpp archive in
+  `build-debug/bin`, build again; `nm -D -C --undefined-only` on the library shows no `godot::`
+  symbol afterwards. The release build dir, configured afresh, was not affected.
+* **Rule:** when the API godot-cpp is generated from changes (`extension_api.json`, precision,
+  `GODOT_VERSION`), rebuild godot-cpp from clean objects in every build dir; check the library with
+  `nm -D -C --undefined-only ... | grep godot::` before trusting a green build.

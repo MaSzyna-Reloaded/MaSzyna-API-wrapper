@@ -41,6 +41,7 @@ var _released_vehicle:RID
 ## the cab's widgets take the keys (CabinButton, CabinSwitch), so it stands while the player looks
 ## from outside too
 var _cabin_vehicle:RailVehicle3D
+var _follow_jump_distance:float = ProjectSettings.get_setting(FOLLOW_JUMP_DISTANCE_SETTING, FOLLOW_JUMP_DISTANCE_DEFAULT)
 ## Stepping out of the cab, driver_mode::DistantView(true) (drivermode.cpp:1060): beside the vehicle
 ## on the side of the occupied cab, this far beyond its width and this high above it [m]
 const DISTANT_VIEW_SIDE_MARGIN:float = 1.25
@@ -53,6 +54,10 @@ const CABIN_BOUND_CEILING_RAISE:float = 1.8
 ## (TDynamicObject::RadioStop(), DynObj.cpp:7242 - for a vehicle a human drives)
 const RADIO_STOP_TRANSCRIPT:String = "!! RADIO-STOP !!"
 const RADIO_STOP_TRANSCRIPT_SECONDS:float = 10.0
+## A vehicle to follow farther than this from the view is not flown to: the view jumps beside it, where
+## the crosshair puts it, and follows from there [m]
+const FOLLOW_JUMP_DISTANCE_SETTING:StringName = &"maszyna/camera/follow_jump_distance"
+const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 10000.0
 
 func _ready() -> void:
     _auto_start_pending = auto_start and not start_train_id
@@ -306,14 +311,18 @@ func _on_camera_changed() -> void:
         free_camera.global_transform = external_camera.global_transform
         free_camera.glide(external_camera.velocity)
     elif camera == external_camera:
-        var target:RailVehicle3D = instance_from_id(
-                RailVehicleServer.vehicle_get_rail_vehicle(PlayerCameraServer.camera_get_target())) as RailVehicle3D
+        var target_rid:RID = PlayerCameraServer.camera_get_target()
+        var target:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(target_rid)) as RailVehicle3D
         external_camera.view = PlayerCameraServer.camera_get_follow_view() as ExternalCamera3D.View
+        var from:Transform3D = previous.global_transform
+        var far:bool = from.origin.distance_to(target.global_position) > _follow_jump_distance
+        if far:
+            from = PlayerCameraServer.camera_get_show_transform(target_rid)
         # another target while following: only the vehicle looked at changes, the camera stays
-        if previous == free_camera or (previous == external_camera and not external_camera.vehicle == target):
-            external_camera.attach(target, previous.global_transform)
+        if far or previous == free_camera or (previous == external_camera and not external_camera.vehicle == target):
+            external_camera.attach(target, from)
         elif not previous == external_camera:
-            external_camera.activate(target, previous.global_transform)
+            external_camera.activate(target, from)
     if not camera == previous:
         _show_camera(camera)
 

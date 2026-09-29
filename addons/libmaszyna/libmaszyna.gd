@@ -181,6 +181,12 @@ func _enter_tree():
         "maszyna/camera/external_view_max_distance", 200.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "10.0,2000.0,10.0,suffix:m"
     )
+    # A vehicle to follow farther than this from the view is not flown to: the view jumps beside it
+    # (the vehicle card's crosshair) and follows from there
+    add_custom_project_setting(
+        "maszyna/camera/follow_jump_distance", 10000.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "100.0,100000.0,100.0,suffix:m"
+    )
     # How many times the original's pointsize such a point is drawn; the original's 4 makes blobs
     add_custom_project_setting(
         "maszyna/scenery/railway_lights_point_size_multiplier", 2.0, TYPE_FLOAT,

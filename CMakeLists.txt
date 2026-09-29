@@ -2,20 +2,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_EXTENSIONS ON)
 SET(CMAKE_COLOR_DIAGNOSTICS ON)
-# scripts/style-check only parses the sources, never links or runs them, so it binds against the
-# single-precision API godot-cpp ships and needs no Godot at all
-OPTION(LIBMASZYNA_STYLE_CHECK "Configure for scripts/style-check, against godot-cpp's own API" OFF)
-IF (LIBMASZYNA_STYLE_CHECK)
-    SET(LIBMASZYNA_PRECISION "single")
-    SET(LIBMASZYNA_API_FILE "${CMAKE_SOURCE_DIR}/godot-cpp/gdextension/extension_api-4-7.json")
-ELSE ()
-    SET(LIBMASZYNA_PRECISION "double")
-    SET(LIBMASZYNA_API_FILE "${CMAKE_SOURCE_DIR}/extension_api.json")
-ENDIF ()
-set(GODOTCPP_PRECISION "${LIBMASZYNA_PRECISION}" CACHE STRING "" FORCE)
-set(GODOTCPP_CUSTOM_API_FILE "${LIBMASZYNA_API_FILE}" CACHE FILEPATH "" FORCE)
+# scripts/style-check binds the same double-precision API as the build, so clang-tidy sees the
+# same types; the file is versioned, so it needs no Godot
+set(GODOTCPP_PRECISION "double" CACHE STRING "" FORCE)
+set(GODOTCPP_CUSTOM_API_FILE "${CMAKE_SOURCE_DIR}/extension_api.json" CACHE FILEPATH "" FORCE)
 # godot-cpp ships the single-precision API only, so the double one is dumped once from a
-# double-precision Godot and not versioned; delete the file to dump it again
+# double-precision Godot and versioned; delete it to dump it again after a GODOT_VERSION bump
 IF (NOT EXISTS "${GODOTCPP_CUSTOM_API_FILE}")
     FIND_PROGRAM(
         GODOT_EXECUTABLE NAMES godot-double godot REQUIRED

@@ -151,6 +151,11 @@ Checks:
 
 Before every commit:
 
+* REQUIRED, ABSOLUTE: **every C++ line committed is formatted by `.clang-format`** - no exceptions,
+  no "later", no leaving it to CI. Run `make style-fix STYLE_FILE=<file>` (clang-format) on every
+  C++ file you touched, then `make style-check STYLE_FILE=<file>` must pass - it also runs
+  clang-tidy, whose findings are fixed by hand. Unformatted code fails `style-check` on the PR -
+  see `CODE_STYLE.md`
 * REQUIRED: **review the diff being committed against `CODE_STYLE.md` and the rules above,
   before committing it** - `git diff --staged`, line by line. Look for: state written from outside
   its owner, a getter with a side effect, a magic number, a `->call("name")` where the class is

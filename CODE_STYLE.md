@@ -29,6 +29,24 @@ void set_door_open(bool p_state) {
 func _process(delta):
     return delta * 2
 ```
+### Formatting is mandatory
+Every C++ line that reaches a commit is formatted by `.clang-format`, without exception. This is
+not cosmetic: the `style-check` workflow fails the PR on a single violation, and a backlog of them
+hides the new ones.
+
+* Format **the files you touched**, before committing: `clang-format -i <file>`, then
+  `clang-format --dry-run <file>` must print nothing.
+* `make style-fix` (or `make style-fix STYLE_FILE=<file>`) runs clang-format only. clang-tidy
+  findings are fixed by hand: its `--fix` run file by file renamed a declaration without its uses
+  in other files and broke the build.
+* **A header is self-contained**: it includes or forward-declares everything it names. clang-format
+  sorts includes and puts a file's own header first, so a header that compiled only thanks to an
+  earlier `#include` in the `.cpp` breaks as soon as the file is formatted.
+* The `clang-tidy` stage of `make style-check` runs after clang-format and fails on any warning
+  (`WarningsAsErrors: "*"`). A ported external name that the naming rule rejects (the Python C API
+  in `PythonScreenServer`) is fenced with `NOLINTBEGIN/END(readability-identifier-naming)` and a
+  comment saying why - never renamed.
+
 ### GDScript
 The short GDScript rules (singleton guards, `/root/...`, `is_connected()`, setters and `_dirty`,
 `not ... == ...`, `RailVehicleServer.vehicle_send_command`) are listed in `AGENTS.md`.

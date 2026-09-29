@@ -49,7 +49,7 @@ namespace godot {
             int get_next_endpoint_index() const;
     };
 
-    /* One track of the route ahead of a vehicle (RailVehicleServer::vehicle_trace_route()). */
+    /* One track of a traced route (TrackServer::track_trace_route()). */
     class TrackRouteSegment : public RefCounted {
             GDCLASS(TrackRouteSegment, RefCounted)
 
@@ -64,6 +64,11 @@ namespace godot {
             double velocity = -1.0;
             /* a switch, passed as it is set */
             bool track_switch = false;
+            /* the switch's branch the route takes */
+            int branch = 0;
+            /* the branch is the switch's setting (entered at its common end), not the one entered on:
+             * throwing the switch changes the route from here */
+            bool branch_from_setting = false;
             /* driven towards its end (event2), not its start (event1) */
             bool toward_end = false;
             /* nothing follows it */
@@ -83,6 +88,10 @@ namespace godot {
             double get_velocity() const;
             void set_track_switch(bool p_track_switch);
             bool get_track_switch() const;
+            void set_branch(int p_branch);
+            int get_branch() const;
+            void set_branch_from_setting(bool p_branch_from_setting);
+            bool get_branch_from_setting() const;
             void set_toward_end(bool p_toward_end);
             bool get_toward_end() const;
             void set_line_end(bool p_line_end);

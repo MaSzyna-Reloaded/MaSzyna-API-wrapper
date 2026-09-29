@@ -336,6 +336,12 @@ namespace godot {
             bool track_find_next(
                     const RID &p_track, int p_endpoint_index, RID &p_r_track, int &p_r_endpoint,
                     int &p_r_forced_switch_track);
+            /* The tracks a movement goes over from p_track (on p_branch, toward its end or its start),
+             * entered p_start [m] from where it is measured, until p_distance [m] from there; the
+             * first is p_track itself, the last marked line_end when nothing follows it */
+            TypedArray<TrackRouteSegment> track_trace_route(
+                    const RID &p_track, int p_branch, bool p_branch_from_setting, bool p_toward_end, double p_start,
+                    double p_distance);
             /* The endpoint of the track a movement continues onto, null when there is none */
             Ref<TrackEndpointRef> track_get_next(const RID &p_track, int p_endpoint_index);
             bool track_is_switch(const RID &p_track) const;

@@ -883,67 +883,20 @@ namespace godot {
 
     TypedArray<TrackRouteSegment>
     RailVehicleServer::vehicle_trace_route(const RID &p_vehicle, const int p_direction, const double p_distance) {
-        TypedArray<TrackRouteSegment> route;
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         TrackServer *tracks = TrackServer::get_instance();
         if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
-            return route;
+            return TypedArray<TrackRouteSegment>();
         }
-        RID track = placement->track;
-        int branch = placement->switch_track;
-        bool is_switch = placement->track_is_switch;
-        double length = tracks->track_get_length(track, branch);
+        const double length = tracks->track_get_length(placement->track, placement->switch_track);
         const double offset = CLAMP(placement->track_offset, 0.0, length);
         // as _move_placement(): positive moves toward the branch end. Its distance counts from the
         // rear, the vehicle's front (the mover's V > 0) is its negative (vehicle_process_movement())
-        double movement_sign = (placement->track_direction == TrackServer::DIRECTION_NORMAL ? -1.0 : 1.0) *
-                               (p_direction < 0 ? 1.0 : -1.0);
-        double covered = movement_sign > 0.0 ? length - offset : offset;
-        double start = covered - length;
-        while (true) {
-            Ref<TrackRouteSegment> segment;
-            segment.instantiate();
-            segment->set_track_rid(track);
-            segment->set_distance(start);
-            segment->set_length(length);
-            segment->set_velocity(tracks->track_get_velocity(track));
-            segment->set_track_switch(is_switch);
-            segment->set_toward_end(movement_sign > 0.0);
-            route.push_back(segment);
-            if (covered >= p_distance) {
-                break;
-            }
-            int endpoint_index = 0;
-            if (is_switch) {
-                endpoint_index = movement_sign > 0.0 ? tracks->switch_get_branch_end_endpoint(track, branch)
-                                                     : tracks->switch_get_branch_start_endpoint(track, branch);
-            } else {
-                endpoint_index = movement_sign > 0.0 ? TrackServer::CURVE1_P2 : TrackServer::CURVE1_P1;
-            }
-            RID next_track;
-            int next_endpoint = 0;
-            int forced_switch_track = TrackServer::NO_FORCED_SWITCH_TRACK;
-            if (!tracks->track_find_next(track, endpoint_index, next_track, next_endpoint, forced_switch_track)) {
-                segment->set_line_end(true);
-                break;
-            }
-            track = next_track;
-            is_switch = tracks->track_is_switch(track);
-            branch = TrackServer::TRACK_COMMON;
-            if (is_switch) {
-                // the branch it would be forced onto, or the one the node leads to
-                branch = forced_switch_track == TrackServer::NO_FORCED_SWITCH_TRACK
-                                 ? tracks->switch_get_endpoint_branch(track, next_endpoint)
-                                 : forced_switch_track;
-                movement_sign = next_endpoint == tracks->switch_get_branch_end_endpoint(track, branch) ? -1.0 : 1.0;
-            } else {
-                movement_sign = next_endpoint == TrackServer::CURVE1_P2 ? -1.0 : 1.0;
-            }
-            length = tracks->track_get_length(track, branch);
-            start = covered;
-            covered += length;
-        }
-        return route;
+        const bool toward_end = (placement->track_direction == TrackServer::DIRECTION_NORMAL) == (p_direction >= 0);
+        // the track it stands on is entered behind it; its branch is where it stands, not a setting
+        const double start = (toward_end ? length - offset : offset) - length;
+        return tracks->track_trace_route(
+                placement->track, placement->switch_track, false, toward_end, start, p_distance);
     }
 
     Ref<RailVehicleNeighbour>

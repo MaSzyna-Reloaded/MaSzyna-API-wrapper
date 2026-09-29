@@ -11,10 +11,10 @@ class_name MaszynaLegacyDriverRoute
 ## (VelSignalNext), a limit of the speed wanted, and the orders the driver gives itself when it sees
 ## a signal (SetVelocity, ShuntVelocity) or reaches a memory's command.
 ##
-## The original keeps the table between updates and moves it by the distance driven; here it is
-## read again on every update (RailVehicleServer.vehicle_trace_route()) and the events passed
-## since the last one take effect once. The passenger stops (`PassengerStopPoint:`) are driven by
-## the timetable (TableUpdateStopPoint()). Not ported yet: the section and road speeds, stopping at an
+## As the original, the table is kept between updates: traced once, moved as the trainset drives,
+## traced on at its end as the reach needs, traced again from a switch thrown ahead, and the events
+## the front reaches take effect once (TableCheck(), TableTraceRoute()). The passenger stops
+## (`PassengerStopPoint:`) are driven by the timetable (TableUpdateStopPoint()). Not ported yet: the section and road speeds, stopping at an
 ## automatic block signal (spStopOnSBL), the crossings, the turn back at the end of shunting
 ## (BackwardTraceRoute), the load exchange and the doors at a stop - see TODO.md, "Drivers".
 
@@ -86,8 +86,6 @@ const EASING_BRAKING_SHARE:float = 1.2
 const BEHIND_ACCELERATION:float = -2.0
 ## -1 is no limit (min_speed())
 const NO_LIMIT:float = -1.0
-## DistCounter is in kilometres, the table in metres
-const METRES_PER_KILOMETRE:float = 1000.0
 ## No current limit read, or no switch under the trainset (VelLimitLastDist, SwitchClearDist,
 ## Driver.cpp:7247-7248)
 const NO_DISTANCE:float = -1.0
@@ -148,6 +146,13 @@ class Entry:
     var value2:float
     ## where the event stands, sent with its command
     var position:Vector3
+    ## where it stands along the table [m], and the track it is on
+    var along:float
+    var segment:TrackRouteSegment
+    ## the event's action, its command read again on every update (TSpeedPos::Update())
+    var action:MaszynaLegacyVehicleCommandAction
+    ## the front has reached it, or it was behind the front when traced
+    var passed:bool
 
 ## VelNext, ActualProximityDist
 var velocity_next:float = NO_LIMIT
@@ -193,10 +198,14 @@ var _direction:int = 0
 ## The memories' commands it sent, by event, not to send them again until they change
 ## (StopCommandSent(), MemCell.cpp:196-205)
 var _sent:Dictionary[RID, String] = {}
-## The events ahead on the last update, to take the passed ones once, and the vehicle's distance
-## counter then [km] (DistCounter), to tell how far it has driven since
-var _ahead:Dictionary[RID, Entry] = {}
-var _distance_counter:float = 0.0
+## The table (sSpeedTable): the tracks traced from the front vehicle, entered at `distance` along
+## the table, and the entries on them, nearest first; along the table counts from where the front
+## vehicle's middle stood when the table was first traced [m]
+var _segments:Array[TrackRouteSegment] = []
+var _table:Array[Entry] = []
+## The vehicle the table is traced from, and where its middle is along the table [m]
+var _front:RID = RID()
+var _front_along:float = 0.0
 
 
 ## One reading of the tracks ahead (TableCheck(), TableUpdate(), check_route_ahead()) for the driver
@@ -217,7 +226,7 @@ func update(
     # and the stop of a signal passed does not keep it from reversing (TableCheck(), Driver.cpp:510-526)
     if not trainset.direction == _direction:
         _direction = trainset.direction
-        _ahead.clear()
+        _clear_table()
         _stops_done.clear()
         _stops_moved.clear()
         if signal_velocity_last == 0.0:
@@ -228,10 +237,10 @@ func update(
     _determine_distances(vehicle, order, speed, trainset, shunt_velocity, velocity_desired, coupling, cargo,
             braking.acceleration_threshold)
     reach = maxf(MIN_RANGE, MOVING_RANGE + brake_distance if absf(speed) > MOVEMENT_SPEED else STANDING_RANGE)
-    var entries:Array[Entry] = _read(reach, trainset)
+    _update_table(reach, trainset)
     # the passenger stops left behind are forgotten
     var read:Dictionary[RID, bool] = {}
-    for entry:Entry in entries:
+    for entry:Entry in _table:
         if entry.kind == Kind.STOP_POINT:
             read[entry.event] = true
     for event:RID in _stops_done.keys():
@@ -242,24 +251,13 @@ func update(
             _stops_moved.erase(event)
     var signal_distance:float = NO_SIGNAL_DISTANCE
     var obey_train:bool = order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN
-    # the events passed since the last update take effect once (TableUpdateEvent(), fDist < 0).
-    # Passed is one no longer ahead that the train has driven up to - its last distance within the
-    # distance driven since. One gone from the reading but not reached is not passed: it is out of
-    # the reach, which shrinks as the train moves off (FINDINGS.md, 2026-09-27 "the AI stood at a
-    # clear signal"), or off the route - a switch ahead thrown, the original reads the table afresh
-    # from it (TableCheck()); taken as passed, the stop of a signal no longer on the route held the
-    # train at the clear one before it (FINDINGS.md, 2026-09-29)
-    var distance_counter:float = float(RailVehicleServer.vehicle_dump_state(vehicle).get("total_distance", 0.0))
-    var driven:float = (distance_counter - _distance_counter) * METRES_PER_KILOMETRE
-    _distance_counter = distance_counter
-    var seen:Dictionary[RID, Entry] = {}
-    for entry:Entry in entries:
-        if entry.event.is_valid() and entry.distance > 0.0:
-            seen[entry.event] = entry
-    for event:RID in _ahead:
-        if not seen.has(event) and _ahead[event].distance <= driven:
-            allowed = _pass(_ahead[event], obey_train, allowed)
-    _ahead = seen
+    # the events the front has reached take effect once (TableUpdateEvent(), fDist < 0); one
+    # dropped from the table unreached - a switch ahead thrown - is not passed (FINDINGS.md,
+    # 2026-09-29)
+    for entry:Entry in _table:
+        if entry.event.is_valid() and not entry.passed and entry.distance <= 0.0:
+            entry.passed = true
+            allowed = _pass(entry, obey_train, allowed)
 
     velocity_next = NO_LIMIT
     proximity_distance = reach
@@ -274,7 +272,7 @@ func update(
     var signal_found:bool = false
     var go:String = ""
     var command_entry:Entry = null
-    for entry:Entry in entries:
+    for entry:Entry in _table:
         if entry.kind == Kind.STOP_POINT:
             var result:StopResult = _update_stop_point(entry, order, absf(speed), cargo, trainset, timetable, hours, signal_distance)
             if result == StopResult.READY and go.is_empty():
@@ -429,44 +427,132 @@ func update(
         obstacle_speed = RailVehicleServer.vehicle_get_speed(obstacle.vehicle_rid)
 
 
-## The entries of the tracks ahead, nearest first (TableTraceRoute(), Driver.cpp:589-779)
-func _read(reach:float, trainset:MaszynaLegacyDriverTrainset) -> Array[Entry]:
-    var entries:Array[Entry] = []
-    if trainset.vehicles.is_empty():
-        return entries
+## The table brought up to date (TableCheck(), TableTraceRoute(), Driver.cpp:430-779): where the
+## front is along it, traced again from a switch ahead thrown since, the tracks the whole trainset
+## has left dropped, traced on to cover `reach` [m], and every entry's distance from the front and
+## its command read again. Traced afresh from the front vehicle when it changed or the table does not
+## hold the track it stands on.
+func _update_table(reach:float, trainset:MaszynaLegacyDriverTrainset) -> void:
+    var here:Array[TrackRouteSegment] = []
+    if trainset.vehicles:
+        here = RailVehicleServer.vehicle_trace_route(trainset.vehicles[0], trainset.front_direction, 0.0)
+    if not here:
+        _clear_table()
+        return
     var front:RID = trainset.vehicles[0]
-    # the placement is the vehicle's middle; the table counts from the trainset's front
+    # the placement is the vehicle's middle; the distances count from the trainset's front
     var front_offset:float = float(RailVehicleServer.vehicle_dump_config(front).get("length", 0.0)) / 2.0
-    var last_velocity:float = NO_LIMIT - 1.0
-    for segment:TrackRouteSegment in RailVehicleServer.vehicle_trace_route(front, trainset.front_direction, reach + front_offset):
-        var start:float = segment.distance - front_offset
+    var found:bool = false
+    var along:float = 0.0
+    if front == _front:
+        # the track it stands on, the entry nearest where it was should the route cross it twice
+        for segment:TrackRouteSegment in _segments:
+            if segment.track_rid == here[0].track_rid and segment.toward_end == here[0].toward_end:
+                var candidate:float = segment.distance - here[0].distance
+                if not found or absf(candidate - _front_along) < absf(along - _front_along):
+                    along = candidate
+                found = true
+    if not found:
+        # traced afresh: what is behind the front already is not passed now
+        _clear_table()
+        _front = front
+        _append(here, front_offset)
+    _front_along = along
+    var front_along:float = along + front_offset
+    for index:int in _segments.size():
+        var segment:TrackRouteSegment = _segments[index]
+        if segment.branch_from_setting and segment.distance > front_along \
+                and not TrackServer.switch_get_active_track(segment.track_rid) == segment.branch:
+            _forget_segments(_segments.slice(index))
+            break
+    var left:Array[TrackRouteSegment] = []
+    for segment:TrackRouteSegment in _segments.slice(0, _segments.size() - 1):
+        if segment.distance + segment.length >= front_along - trainset.length:
+            break
+        left.append(segment)
+    _forget_segments(left)
+    # the last track traced again with what follows: it may turn out to end the line
+    var last:TrackRouteSegment = _segments.back()
+    if not last.line_end and last.distance + last.length < front_along + reach:
+        var last_only:Array[TrackRouteSegment] = [last]
+        _forget_segments(last_only)
+        _append(TrackServer.track_trace_route(last.track_rid, last.branch, last.branch_from_setting, last.toward_end,
+                last.distance, front_along + reach), front_along)
+    for entry:Entry in _table:
+        entry.distance = entry.along - front_along
+        if entry.action:
+            _read_command(entry)
+        else:
+            # a trackvel event changes a track's limit (TSpeedPos::Update(), Driver.cpp:295-301)
+            entry.velocity = TrackServer.track_get_velocity(entry.segment.track_rid)
+
+
+## `segments`, traced on from the table's end, added with what stands on them: a track where the
+## limit changes, a switch or the end of the line, and the passive events (TableTraceRoute(),
+## Driver.cpp:589-779); an event behind `front_along` [m] already counts as passed
+func _append(segments:Array[TrackRouteSegment], front_along:float) -> void:
+    var last_velocity:float = _segments.back().velocity if _segments else NO_LIMIT - 1.0
+    var added:Array[Entry] = []
+    for segment:TrackRouteSegment in segments:
+        _segments.append(segment)
         # the events first, as the track is entered
         var slot:int = EVENTS_TOWARD_END if segment.toward_end else EVENTS_TOWARD_START
         for event:RID in ScenarioEventServer.track_get_events(segment.track_rid, slot):
-            if ScenarioEventServer.event_is_passive(event):
-                var entry:Entry = _event_entry(event, segment, start)
-                if entry:
-                    entries.append(entry)
+            var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event) as MaszynaLegacyVehicleCommandAction
+            if not ScenarioEventServer.event_is_passive(event) or not action:
+                continue
+            var entry:Entry = Entry.new()
+            entry.event = event
+            entry.action = action
+            entry.segment = segment
+            entry.position = action.position
+            # where its position meets the track (GetDistanceToEvent())
+            var curve:Curve3D = TrackServer.track_get_domain_curve(segment.track_rid)
+            var offset:float = curve.get_closest_offset(action.position) if curve else 0.0
+            entry.along = segment.distance + (offset if segment.toward_end else segment.length - offset)
+            entry.passed = entry.along <= front_along
+            _read_command(entry)
+            added.append(entry)
         if segment.track_switch or segment.velocity == 0.0 or not segment.velocity == last_velocity or segment.line_end:
             var entry:Entry = Entry.new()
             entry.kind = Kind.LINE_END if segment.line_end else (Kind.SWITCH if segment.track_switch else Kind.TRACK)
-            entry.distance = start
+            entry.segment = segment
+            entry.along = segment.distance
             entry.velocity = segment.velocity
             entry.length = segment.length
-            entries.append(entry)
+            added.append(entry)
         last_velocity = segment.velocity
-    entries.sort_custom(func(a:Entry, b:Entry) -> bool: return a.distance < b.distance)
-    return entries
+    added.sort_custom(func(a:Entry, b:Entry) -> bool: return a.along < b.along)
+    _table.append_array(added)
 
 
-## A passive event as an entry (TSpeedPos::Set(), CommandCheck(), Driver.cpp:203-290, 390-419): its
-## command read live, placed where its position meets the track (GetDistanceToEvent())
-func _event_entry(event:RID, segment:TrackRouteSegment, start:float) -> Entry:
-    var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event) as MaszynaLegacyVehicleCommandAction
-    if not action:
-        return null
-    var entry:Entry = Entry.new()
-    entry.event = event
+## The table emptied, to be traced afresh from the front on the next update (TableClear())
+func _clear_table() -> void:
+    _front = RID()
+    _segments.clear()
+    _table.clear()
+
+
+## `segments` taken out of the table, with what stands on them
+func _forget_segments(segments:Array[TrackRouteSegment]) -> void:
+    if not segments:
+        return
+    var kept:Array[TrackRouteSegment] = []
+    for segment:TrackRouteSegment in _segments:
+        if not segments.has(segment):
+            kept.append(segment)
+    _segments = kept
+    var kept_entries:Array[Entry] = []
+    for entry:Entry in _table:
+        if not segments.has(entry.segment):
+            kept_entries.append(entry)
+    _table = kept_entries
+
+
+## An event's command read from its memory, or its action, and what it means to the table
+## (TSpeedPos::CommandCheck(), Driver.cpp:201-286)
+func _read_command(entry:Entry) -> void:
+    var action:MaszynaLegacyVehicleCommandAction = entry.action
     if action.source.is_valid():
         entry.command = ScenarioEventServer.memory_get_text(action.source)
         entry.value1 = ScenarioEventServer.memory_get_value1(action.source)
@@ -475,10 +561,6 @@ func _event_entry(event:RID, segment:TrackRouteSegment, start:float) -> Entry:
         entry.command = action.command
         entry.value1 = action.value1
         entry.value2 = action.value2
-    var curve:Curve3D = TrackServer.track_get_domain_curve(segment.track_rid)
-    var along:float = curve.get_closest_offset(action.position) if curve else 0.0
-    entry.distance = start + (along if segment.toward_end else segment.length - along)
-    entry.position = action.position
     match entry.command:
         "ShuntVelocity":
             entry.kind = Kind.SHUNT_SEMAPHORE
@@ -502,7 +584,6 @@ func _event_entry(event:RID, segment:TrackRouteSegment, start:float) -> Entry:
                 # any other text is a command for a standing driver: it stops there for it
                 entry.kind = Kind.COMMAND
                 entry.velocity = 0.0
-    return entry
 
 
 ## What was read of the tracks is forgotten, read afresh on the next update - a player drove the

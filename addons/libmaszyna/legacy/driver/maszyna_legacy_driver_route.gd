@@ -349,6 +349,15 @@ func update(
                 # (TableUpdateEvent(), Driver.cpp:1618-1626)
                 let_go.append(entry)
                 continue
+            elif (entry.kind == Kind.SEMAPHORE or (entry.kind == Kind.OUTSIDE_STATION and obey_train)) \
+                    and (velocity < 0.0 or velocity >= GO_SPEED) and go.is_empty():
+                # passed showing the way on, it gives its speed and is let go of: its fall to stop
+                # behind the train holds nothing - kept, it braked the train hard every time a
+                # signal behind it closed (TableUpdateEvent(), Driver.cpp:1662-1679)
+                go = "SetVelocity"
+                allowed = NO_LIMIT
+                let_go.append(entry)
+                continue
         # a point without a limit breaks the current one (Driver.cpp:1022-1029)
         if entry.velocity < 0.0 and breaks_limit:
             limit_continuous = false

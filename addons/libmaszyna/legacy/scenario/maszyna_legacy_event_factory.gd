@@ -439,7 +439,9 @@ static func build(
         var track_data:MaszynaTrackData = tracks[index]
         var bound:bool = false
         for key:String in TRACK_EVENTS:
-            var names:PackedStringArray = [str(track_data.parameters.get(key, "")).to_lower()]
+            var names:PackedStringArray = []
+            for event_name:String in track_data.events.get(key, PackedStringArray()):
+                names.append(event_name.to_lower())
             if track_data.track_name:
                 names.append(track_data.track_name.to_lower() + ":" + key)
             for event_name:String in names:

@@ -69,6 +69,10 @@ Code generation:
   `navigate_right`); a choice that travels is an **enum**, never a bare number or a nameless
   `bool` - see `CODE_STYLE.md`
 * names come from the vocabulary of the data and of the original engine (`trainset`, not a synonym)
+* PROHIBITED: **no identifying elements by name.** An element its owner already holds (a list, a
+  reference, a menu index) is addressed through that, never through a name added only to find it
+  again (`@export var panel: StringName` on every window, looked up by `win.panel == name`) -
+  see `CODE_STYLE.md`
 * a server's (a `*Server`/`*System` singleton's) method is `<subject>_<action>()` and its signal
   `<subject>_<what>_changed` for a change of state or `<subject>_<past-tense verb>` for an event,
   as Godot's own servers (`camera_set_mode`, `player_get_vehicle`,

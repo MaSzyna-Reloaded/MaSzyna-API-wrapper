@@ -48,10 +48,6 @@ var _resize_handle: TextureRect
 ## (a unit's motor car), as the cab's controls pick theirs (CabinState.Target)
 @export var vehicle_target: CabinState.Target = CabinState.Target.OCCUPIED
 
-## The window's name in HUDServer - it is shown and hidden there, and its close button closes it
-## there
-@export var panel: StringName = &""
-
 @export var title: String = "":
     set(value):
         title = value
@@ -297,7 +293,7 @@ func _gui_input(event: InputEvent) -> void:
 
     _bring_to_front()
     if window_decorations and allow_close and _get_close_button_rect().has_point(mouse_button.position):
-        HUDServer.panel_set_visible(panel, false)
+        visible = false
         get_viewport().set_input_as_handled()
         return
     if not window_decorations or not drag_enabled:

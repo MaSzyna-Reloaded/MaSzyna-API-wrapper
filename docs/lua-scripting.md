@@ -159,6 +159,38 @@ lighting a head.
 | `send_event(system, event, arguments)` | e.g. `send_event(system, "lights", {signal_head = h, aspect = "S1"})` |
 | `on_aspect_changed(h, fn)` | `fn(aspect)` whenever the head shows another aspect |
 
+### `maszyna.player` - what the player drives
+
+| Function | Returns / does |
+|---|---|
+| `vehicle()` | the vehicle the player drives; `nil` for none |
+| `enter(v)` | the player takes the vehicle over and sits in its cab; its driver only takes orders meanwhile |
+| `leave()` | the player lets the trainset go; its drivers drive it again |
+
+### `maszyna.camera` - where the player looks from
+
+| Function | Returns / does |
+|---|---|
+| `mode()`, `set_mode(mode)` | `"cabin"` (only with a vehicle driven), `"free"` or `"follow"` (only with a target) |
+| `target()`, `set_target(v)` | the vehicle the following camera follows |
+| `follow_view()`, `set_follow_view(view)` | `"consist_front"`, `"consist_rear"`, `"bogie"` or `"driveby"` |
+| `cycle_follow_view()` | Shift+F4: following, the next view; else the player's vehicle followed |
+| `toggle_cabin()` | F4: from outside (following or walking) back into the cab of the vehicle driven - following with none, the free camera; in the cab, out of it |
+| `show_vehicle(v)` | the free camera beside the vehicle, looking at it |
+
+Looking from outside is only a view: the player keeps driving the vehicle and its controls work.
+
+### `maszyna.hud` - what the HUD shows
+
+A panel is named by the HUD that shows it; the demo's are `transcripts`, `driving_aid`,
+`timetable`, `scenario`, `controls` (every control window at once), `scripts`, `trainsets`, and
+one per control window (`general`, `engine`, `brakes`, ..., `mini_map`, `weather_and_time`, `help`).
+
+| Function | Returns / does |
+|---|---|
+| `show(panel)`, `hide(panel)`, `toggle(panel)`, `is_visible(panel)` | |
+| `open_card(v)`, `close_card()`, `card()` | the vehicle card; `card()` is `nil` while it is closed |
+
 ### `maszyna.log`
 
 `debug(text)`, `info(text)`, `warning(text)`, `error(text)` - to the game log.

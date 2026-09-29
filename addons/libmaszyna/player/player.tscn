@@ -35,6 +35,7 @@ script = ExtResource("1_t4mm8")
 [node name="Camera3D" type="Camera3D" parent="." unique_id=2023831069]
 fov = 45.0
 script = ExtResource("1_iuonp")
+velocity_multiplier = 0.2
 
 [node name="Headlamp" type="SpotLight3D" parent="Camera3D" unique_id=121900474]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31600000000617, -0.28100000000267755, -0.05)

@@ -45,7 +45,7 @@ func _on_scenery_selector_scenery_selected(
     _play_music(MUSIC_LOADING_VOLUME_DB)
     # the world starts while the loading screen fades out, not when it is built
     SimulationServer.pause()
-    $GameHud.visible = false
+    HUDServer.hud_set_visible(false)
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
     SceneryStreamingServer.set_camera(null)
@@ -62,7 +62,7 @@ func _on_scenery_selector_scenery_selected(
     _chosen_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
-    SceneryStreamingServer.set_camera($Player.get_view_camera())
+    SceneryStreamingServer.set_camera(get_viewport().get_camera_3d())
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
@@ -70,14 +70,14 @@ func _on_scenery_selector_scenery_selected(
     await tween.finished
     $LoadingScreen.visible = false
     $LoadingScreen.modulate.a = 1.0
-    $GameHud.visible = true
+    HUDServer.hud_set_visible(true)
 
 
 ## The player gets its vehicle a few frames after the scenery is loaded, and the cabin is built
 ## a few frames later still - without this the game pops in half-built behind the loading screen
 func _wait_for_cabin() -> void:
     var waited: int = 0
-    while not $Player.occupied_cabin and waited < VEHICLE_WAIT_FRAMES:
+    while not PlayerServer.player_get_vehicle().is_valid() and waited < VEHICLE_WAIT_FRAMES:
         await get_tree().process_frame
         waited += 1
     for frame: int in CABIN_SETTLE_FRAMES:
@@ -118,7 +118,7 @@ func _exit_to_menu() -> void:
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     # the world stops once the spinner covers it, and stays stopped until the next scenery shows
     SimulationServer.pause()
-    $GameHud.visible = false
+    HUDServer.hud_set_visible(false)
     SceneryStreamingServer.set_camera(null)
     $Player.clear_start_train()
     # the scenery's script context goes with it

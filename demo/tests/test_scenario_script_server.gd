@@ -6,6 +6,9 @@ const OUTPUT:StringName = &"lua_test_output"
 const MAX_WAIT:float = 5.0
 ## Enough frames for a queued event to have run, were it going to
 const SETTLE_FRAMES:int = 5
+## The track the player's vehicle stands on
+const PLAYER_TRACK:String = "lua_player_test"
+const PLAYER_TRACK_LENGTH:float = 200.0
 
 
 class RecordingCabin extends ScenarioScriptCabinDelegate:
@@ -223,6 +226,47 @@ func test_the_cabs_are_reached_through_the_delegate() -> void:
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"cabin", source))
 
     assert_eq(cabin.acts, [[controller.get_rid(), 1, &"main_switch", &"toggle", null]])
+
+
+## maszyna.player, maszyna.camera and maszyna.hud reach PlayerServer, PlayerCameraServer and
+## HUDServer by the scripts' vehicle handles
+func test_the_player_its_view_and_the_hud_are_reached_by_vehicle_handles() -> void:
+    var track:RID = build_track(PLAYER_TRACK, PLAYER_TRACK_LENGTH)
+    var node:RailVehicle3D = build_rail_vehicle("LuaPlayerTrain", PLAYER_TRACK, PLAYER_TRACK_LENGTH / 2.0)
+    await wait_idle_frames(SETTLE_FRAMES)
+    var source:String = (
+        "local v = maszyna.vehicle.find('LuaPlayerTrain')\n"
+        + "assert(maszyna.camera.mode() == 'free')\n"
+        + "maszyna.player.enter(v)\n"
+        + "assert(maszyna.player.vehicle() == v)\n"
+        + "assert(maszyna.camera.mode() == 'cabin')\n"
+        + "maszyna.camera.toggle_cabin()\n"
+        + "assert(maszyna.camera.mode() == 'free')\n"
+        + "maszyna.camera.set_follow_view('bogie')\n"
+        + "assert(maszyna.camera.follow_view() == 'bogie')\n"
+        + "maszyna.camera.set_target(v)\n"
+        + "maszyna.camera.set_mode('follow')\n"
+        + "assert(maszyna.camera.target() == v and maszyna.camera.mode() == 'follow')\n"
+        + "maszyna.camera.show_vehicle(v)\n"
+        + "assert(maszyna.camera.mode() == 'free')\n"
+        + "maszyna.hud.show('lua_test_panel')\n"
+        + "assert(maszyna.hud.is_visible('lua_test_panel'))\n"
+        + "maszyna.hud.hide('lua_test_panel')\n"
+        + "maszyna.hud.open_card(v)\n"
+        + "assert(maszyna.hud.card() == v)\n"
+        + "maszyna.hud.close_card()\n"
+        + "assert(maszyna.hud.card() == nil)\n"
+        + "maszyna.player.leave()\n"
+        + "assert(maszyna.player.vehicle() == nil)"
+    )
+
+    assert_true(ScenarioScriptServer.context_apply_source(_context, &"player", source))
+
+    PlayerCameraServer.camera_set_target(RID())
+    PlayerCameraServer.camera_set_follow_view(PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_FRONT)
+    free_rail_vehicle(node)
+    TrackServer.track_free(track)
+    TrackServer.topology_rebuild()
 
 
 func test_the_original_api_runs_an_onstart_event() -> void:

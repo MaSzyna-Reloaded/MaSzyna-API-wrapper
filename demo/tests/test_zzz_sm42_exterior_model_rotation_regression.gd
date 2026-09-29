@@ -8,18 +8,13 @@ extends MaszynaGutTest
 ## MaszynaRailVehicle3DManager.load() and check every part ends up in the same frame, facing
 ## the vehicle's own forward.
 
-class PlayerStub extends Node3D:
-    var camera:FreeCamera3D
-
-    func get_camera() -> FreeCamera3D:
-        return camera
-
+const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
-var player:PlayerStub
+var player:MaszynaPlayer
 
 
 func before_each() -> void:
@@ -27,6 +22,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+    # out of the cab before the vehicle goes: the player's cab camera is in it
+    PlayerServer.player_leave_vehicle()
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):
@@ -102,15 +99,14 @@ func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
     if not vehicle.get_controller():
         return
 
-    player = PlayerStub.new()
-    player.camera = FreeCamera3D.new()
-    player.add_child(player.camera)
+    player = PLAYER_SCENE.instantiate()
+    player.auto_start = false
     add_child(player)
-    vehicle.enter_cabin(player)
+    PlayerServer.player_enter_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
 
-    var camera:FreeCamera3D = player.camera
-    assert_false(camera.get_parent() == player, "camera should have moved into the cabin")
+    var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D
+    assert_true(camera.get_parent() is Cabin3D, "camera should have moved into the cabin")
     var camera_local:Vector3 = vehicle.to_local(camera.global_position)
     var exterior_cab_z:float = _exterior_cab_z()
     assert_true(

@@ -8,7 +8,7 @@ class_name MmdCabinDefinition
 ## MMD cab section number: 0 (machine room), 1 or 2.
 var cab_number:int = 1
 
-## Raw MMD camera bounds - RailVehicle3D.enter_cabin() adds the +0.5/+1.8 Y offset itself,
+## Raw MMD camera bounds - MaszynaPlayer adds the +0.5/+1.8 Y offset itself,
 ## do not add it again here.
 var bounds_min:Vector3 = Vector3.ZERO
 var bounds_max:Vector3 = Vector3.ZERO

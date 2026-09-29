@@ -136,17 +136,15 @@ namespace godot {
                 "set_head_display_material", "get_head_display_material");
         BIND_RAIL_NODE_PATH(head_display_node_path, "MeshInstance3D");
 
-        ClassDB::bind_method(D_METHOD("enter_cabin", "player"), &RailVehicle3D::enter_cabin);
-        ClassDB::bind_method(D_METHOD("leave_cabin", "player"), &RailVehicle3D::leave_cabin);
+        ClassDB::bind_method(D_METHOD("show_cabin"), &RailVehicle3D::show_cabin);
+        ClassDB::bind_method(D_METHOD("hide_cabin"), &RailVehicle3D::hide_cabin);
+        ClassDB::bind_method(D_METHOD("get_cabin"), &RailVehicle3D::get_cabin);
         ClassDB::bind_method(D_METHOD("get_controller"), &RailVehicle3D::get_controller);
         ClassDB::bind_method(D_METHOD("get_rid"), &RailVehicle3D::get_rid);
         ClassDB::bind_method(D_METHOD("move_on_track", "distance"), &RailVehicle3D::move_on_track);
         ClassDB::bind_method(D_METHOD("_process", "delta"), &RailVehicle3D::process_manually);
         ClassDB::bind_method(D_METHOD("_process_dirty"), &RailVehicle3D::_process_dirty);
-        ClassDB::bind_method(D_METHOD("_jump_into_cabin", "cabin", "player"), &RailVehicle3D::_jump_into_cabin);
         ClassDB::bind_method(D_METHOD("_show_cabin_after_frames"), &RailVehicle3D::_show_cabin_after_frames);
-        ClassDB::bind_method(
-                D_METHOD("_apply_cabin_camera_configuration"), &RailVehicle3D::_apply_cabin_camera_configuration);
         ClassDB::bind_method(D_METHOD("_on_controller_changed", "controller"), &RailVehicle3D::_on_controller_changed);
         ClassDB::bind_method(D_METHOD("_schedule_head_display_update"), &RailVehicle3D::_schedule_head_display_update);
         ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loading"), &RailVehicle3D::_on_model_node_e3d_loading);
@@ -171,35 +169,24 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(controller_changed_signal));
     }
 
-    void RailVehicle3D::enter_cabin(Node *p_player) {
+    /// The cab interior, built from cabin_scene into the vehicle - only a view: the cab logic is
+    /// the vehicle's (CabinSystem). A cab is built within add_child() (Cabin3D's cabin_ready comes
+    /// from its NOTIFICATION_READY), so get_cabin() returns it built once this returns.
+    void RailVehicle3D::show_cabin() {
+        if (cabin != nullptr) {
+            return;
+        }
         if (cabin_scene.is_null()) {
             UtilityFunctions::push_warning(get_name(), " has no cabin_scene; cabin entry not yet supported");
             return;
         }
-
-        camera = Object::cast_to<Node3D>(p_player->call("get_camera"));
         Cabin3D *new_cabin = Object::cast_to<Cabin3D>(cabin_scene->instantiate());
         if (new_cabin == nullptr) {
             UtilityFunctions::push_error("Root node of cabin scene must be a Cabin3D");
-            if (new_cabin != nullptr) {
-                new_cabin->queue_free();
-            }
             return;
         }
         cabin = new_cabin;
-        cabin_player = p_player;
-        // taking over the vehicle activates its cab when the FIZ allows it (Train.cpp:9147)
-        if (controller != nullptr) {
-            controller->cab_activation_auto();
-        }
-
         cabin->set_visible(false);
-        cabin->connect(
-                Cabin3D::cabin_ready_signal, Callable(this, "_jump_into_cabin").bind(cabin, p_player),
-                Object::CONNECT_ONE_SHOT);
-        cabin->connect(
-                Cabin3D::camera_configuration_changed_signal,
-                callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
         cabin->connect(
                 Cabin3D::camera_configuration_changed_signal,
                 callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
@@ -213,22 +200,10 @@ namespace godot {
          * there, and told here rather than at the next controller change, which for an existing
          * vehicle never comes. */
         cabin->set_vehicle_rid(rid);
+        _update_low_poly_cabs_visibility();
 
         cabin_show_frames = 2;
         get_tree()->connect("process_frame", Callable(this, "_show_cabin_after_frames"), Object::CONNECT_ONE_SHOT);
-    }
-
-    void RailVehicle3D::_jump_into_cabin(Node3D *p_cabin, Node *p_player) {
-        if (cabin != p_cabin) {
-            return;
-        }
-
-        _update_low_poly_cabs_visibility();
-
-        p_player->remove_child(camera);
-        cabin->add_child(camera);
-        _apply_cabin_camera_configuration();
-        camera->set("velocity_multiplier", 0.2);
     }
 
     void RailVehicle3D::_show_cabin_after_frames() {
@@ -240,20 +215,16 @@ namespace godot {
         }
     }
 
-    void RailVehicle3D::leave_cabin(Node *p_player) {
-        Transform3D camera_transform = camera->get_global_transform();
-        cabin->remove_child(camera);
-        p_player->add_child(camera);
-        camera->set("bound_enabled", false);
-        camera->set_global_transform(camera_transform);
-        camera_transform = camera->get_global_transform();
-        camera_transform.origin = get_global_transform().origin + Vector3(5.0, 1.75, 0.0);
-        camera->set_global_transform(camera_transform);
-        camera->look_at(get_global_position() + Vector3(0.0, 1.75, -5.0));
-        camera->set("velocity_multiplier", 1.0);
-        cabin->disconnect(
-                Cabin3D::camera_configuration_changed_signal,
-                callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+    /// The cab interior freed; a camera put into it is to be taken out first
+    void RailVehicle3D::hide_cabin() {
+        if (cabin == nullptr) {
+            return;
+        }
+        // hidden before it was shown: the frames counted for it stop
+        if (cabin_show_frames > 0) {
+            get_tree()->disconnect("process_frame", Callable(this, "_show_cabin_after_frames"));
+            cabin_show_frames = 0;
+        }
         cabin->disconnect(
                 Cabin3D::camera_configuration_changed_signal,
                 callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
@@ -263,27 +234,8 @@ namespace godot {
         _update_low_poly_cabs_visibility();
     }
 
-    void RailVehicle3D::_apply_cabin_camera_configuration() {
-        if (cabin == nullptr || camera == nullptr || camera->get_parent() != cabin) {
-            return;
-        }
-        camera->set("bound_enabled", cabin->get_camera_bound_enabled());
-        Vector3 bound_min = cabin->get_camera_bound_min();
-        Vector3 bound_max = cabin->get_camera_bound_max();
-        bound_min.y += 0.5;
-        bound_max.y += 1.8;
-        camera->set("bound_min", bound_min);
-        camera->set("bound_max", bound_max);
-        camera->set_global_transform(cabin->get_camera_transform());
-        // Original engine looks along VectorFront * CabOccupied (drivermode.cpp:1071), so cab 2
-        // faces the opposite way.
-        const bool rear_cab = cabin->get_cab_number() < 0;
-        if (cabin_rotate_180deg != rear_cab) {
-            camera->set_global_basis(get_global_basis());
-        } else {
-            camera->set_global_basis(
-                    get_global_basis().rotated(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(Math::deg_to_rad(180.0))));
-        }
+    Cabin3D *RailVehicle3D::get_cabin() const {
+        return cabin;
     }
 
     RailVehicleController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {

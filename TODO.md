@@ -190,7 +190,6 @@ moves to C++:
 | `E3DModelInstance` | 15 | `is_e3d_loaded` x6, `reload` x2, `get_aabb`, `set_smoke_intensity`, `instancer` x2, `lights_state` x3 |
 | `TrackCurve` | 10 | `p1`, `c1`, `c2`, `p2`, `roll1`, `roll2` in `TrackServer` and `RailVehicleServer` |
 | `RainVolume` | 6 | `velocity_multiplier`, `bound_enabled`, `bound_min`, `bound_max` |
-| `MaszynaPlayer` | 1 | `get_camera` |
 
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
@@ -203,11 +202,18 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 ## Player and HUD - one owner of the player's vehicle and view
 
 * The HUD keeps copies of the player's state: `DrivingAid.vehicle`, `FollowedVehicleChip.vehicle`,
-  `PlayerVehicleChip.vehicle`, `VehicleCard._followed`/`_player_vehicle`, the Follow button state.
-* The cab interior stays shown while the player looks from outside; the original hides it
-  (`vehicle->bDisplayCab = false`, drivermode.cpp:1265) - RailVehicle3D has no call for it yet.
-* `RailVehicle3D.leave_cabin()` still puts the cab camera 5 m beside the vehicle
-  (RailVehicle3D.cpp:249) - the player's view owns placement now, the lines are dead.
+  `PlayerVehicleChip.vehicle` (set from `PlayerServer`/`PlayerCameraServer` signals).
+* **The cab's keys live in the 3D cab's widgets (a view) - SoC breach.** `CabinButton._input`
+  (cabin_button.gd:120), `CabinSwitch._input` (cabin_switch.gd:154) and `CabinCommand._input`
+  (cabin_command.gd:21) catch their input actions and call `CabinSystem.act()` themselves;
+  `CabinLogic.input()` takes only the controls no widget has. So the 3D cab has to stand the whole
+  time the player drives (`MaszynaPlayer._show_cabin()` on taking over), also while looking from
+  outside - hidden there (2026-09-29), the keys stopped working. The original hides it
+  (`vehicle->bDisplayCab = false`, drivermode.cpp:1265). To do: the action -> control binding
+  (increase/decrease/toggle/hold, repeat, monostable) goes to the cab logic, built from the same
+  MMD/catalog as the widgets (`MmdCabinInstancer`, `LegacyCabinControls`); the player's keys reach
+  it through `CabinSystem.act()`; the widgets only draw and take the mouse. Then the 3D cab can
+  exist only in the CABIN view (`RailVehicle3D.show_cabin()`/`hide_cabin()` are ready for it).
 * The start vehicle is still looked for every frame until the scenery has it
   (`MaszynaPlayer._find_start_vehicle()`), instead of an event saying the trainset is built.
 

@@ -9,13 +9,11 @@ var listener_vehicle:RailVehicle3D
 var listener_cabin:Cabin3D
 var listener_context:int = EXTERIOR_CONTEXT
 
-var _player:MaszynaPlayer
 var _camera:Camera3D
 
 
 func _ready() -> void:
-    _player = get_parent() as MaszynaPlayer
-    _camera = _player.get_camera() as Camera3D
+    _camera = get_viewport().get_camera_3d()
     make_current()
     _refresh_context()
     TrainSoundSystem.set_listener(self)
@@ -38,7 +36,8 @@ func is_inside_vehicle(vehicle:RailVehicle3D) -> bool:
 
 func _refresh_context() -> void:
     var cabin:Cabin3D = _camera_cabin()
-    var vehicle:RailVehicle3D = _player.occupied_cabin if not cabin == null else null
+    # a cab is a child of its vehicle (RailVehicle3D.show_cabin())
+    var vehicle:RailVehicle3D = cabin.get_parent() as RailVehicle3D if not cabin == null else null
     var context:int = cabin.get_sound_listener_context() if not cabin == null else EXTERIOR_CONTEXT
     if listener_vehicle == vehicle and listener_cabin == cabin and listener_context == context:
         return

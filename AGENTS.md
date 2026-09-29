@@ -6,6 +6,12 @@ Planning and architecture:
 * REQUIRED: **separation of concerns, enforced, not aspired to.** A layer owns one kind of thing
   and knows nothing of the layers above it. State that only one layer needs lives in that layer.
   The test: if this layer were replaced wholesale, would the field go with it? - see `CODE_STYLE.md`
+* REQUIRED, ALARM: **a design or a change that would break separation of concerns is reported to
+  the operator, not worked around.** When a layer would need state, a call or knowledge of another
+  layer that the rule forbids - a camera holding the player's vehicle, a lower layer calling an
+  upper one, two layers each calling the other - stop, name the breach (which layer, which field or
+  call, which rule) and ask. No shim, no copy, no "temporary" reach-through, no quiet redesign in
+  the middle of the work - see `.claude/skills/maszyna-architecture/SKILL.md`
 * REQUIRED: the backend a layer happens to be implemented on (e.g. the vendored Mover) **never
   appears in its public interface** - not in a method name, a parameter or a returned type
 
@@ -23,13 +29,14 @@ Code generation:
   a key, a button, a signal, another object - calls that operation, not a private helper chain
   (`_request_*` -> `_dirty` -> `_process` -> ...) that ends up in the same place by another road.
   A second road to the same effect is deleted, not added. Example: the player leaves a vehicle
-  only through `RailVehicle3D.leave_cabin()` (`enter_cabin()` leaves the current one itself), and a
-  camera or view operation (follow, unfollow, Shift+F4) never leads there
-* PROHIBITED: **treating a view change as leaving the cab.** The player occupies a cab
-  (`MaszynaPlayer.occupied_cabin`, the original's `simulation::Train`) until `leave_cabin()`;
-  `external_view`, `external_view_mode` (FREE/FOLLOW), `follow_target_rid` and
-  `external_view_follow_cam` only choose the camera. The cab, its controls and everything the HUD
-  shows of the player's train stay while the player looks from outside
+  only through `PlayerServer.player_leave_vehicle()` (`player_enter_vehicle()` leaves the current
+  one itself), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
+  leads there
+* PROHIBITED: **treating a view change as leaving the cab.** The player drives a vehicle
+  (`PlayerServer.player_get_vehicle()`, the original's `simulation::Train`) until
+  `player_leave_vehicle()`; `PlayerCameraServer`'s mode (CABIN/FREE/FOLLOW), target and follow
+  view only choose the camera. The cab, its controls and everything the HUD shows of the player's
+  train stay while the player looks from outside
 * for unclear/critical sections, or logic ported from the original engine instead of wrapped from Mover,
   leave a short comment pointing to the original source (e.g. `Train.cpp:8516`, `DynObj.cpp:1812`)
 * GDSCRIPT: avoid type interference, use explicit type declaration

@@ -10,8 +10,11 @@ class_name MaszynaDynamicTrainCabin
 ## cabin_ready immediately, before this class's own children (cab model, widgets) exist -
 ## readiness here must wait until the whole MMD-derived "Generated" subtree is actually built.
 ## Everything below runs synchronously within one _ready() call (MMD parsing and E3D loading
-## are both synchronous), so RailVehicle3D.enter_cabin()'s one-shot wait on cabin_ready still
-## resolves within the same add_child() call that creates this node.
+## are both synchronous), so RailVehicle3D.show_cabin()'s wait on cabin_ready still resolves
+## within the same add_child() call that creates this node.
+##
+## A view of the vehicle's cab only: the cab logic it shows is the vehicle's
+## (MaszynaRailVehicle3D attaches it), and the player's keys reach it without this node (MaszynaPlayer).
 
 @export var data_path:String = ""
 @export var mmd_filename:String = ""
@@ -32,10 +35,6 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
 const RADIO_MESSAGE:StringName = &"radio_message"
 ## The quietest gain a radio turned all the way down plays at, above linear_to_db()'s -inf
 const MUTED_GAIN:float = 0.0001
-## What the driver reads when a Radio-Stop brakes the vehicle, and for how long [s]
-## (TDynamicObject::RadioStop(), DynObj.cpp:7242)
-const RADIO_STOP_TRANSCRIPT:String = "!! RADIO-STOP !!"
-const RADIO_STOP_TRANSCRIPT_SECONDS:float = 10.0
 ## Distance of the cab light below the found ceiling lamp - inside the lamp's shadow casting mesh
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
@@ -46,10 +45,6 @@ var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
 ## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
 var _occluders:Array[RID] = []
-## The cab logic this cab attached and its vehicle - taken away when the player leaves, unless the
-## AI's replaced it meanwhile (SceneryInstancer._build_drivers()); the AI's stays with its vehicle
-var _cab_logic_vehicle_rid:RID
-var _cab_logic:LegacyCabinLogic
 ## The cab radio's loudspeaker
 var _radio_player:SfxPlayer
 
@@ -60,9 +55,8 @@ func _ready() -> void:
     _radio_player.name = "RadioSfxPlayer"
     add_child(_radio_player)
     CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
-    RailVehicleServer.vehicle_radio_stop_received.connect(_on_vehicle_radio_stop_received)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
-    # placed in a scene rather than built by RailVehicle3D.enter_cabin(), which names it itself.
+    # placed in a scene rather than built by RailVehicle3D.show_cabin(), which names it itself.
     if controller_path:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
         set_vehicle_rid(physics_node.vehicle_rid if physics_node else "")
@@ -74,16 +68,6 @@ func _ready() -> void:
 func _on_vehicle_rid_changed(_vehicle_rid:RID) -> void:
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
-    if _cab_logic and CabinSystem.vehicle_get_cab_logic(_cab_logic_vehicle_rid) == _cab_logic:
-        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
-    _cab_logic_vehicle_rid = RID()
-    _cab_logic = null
-    # the cab logic of the original engine is the vehicle's, not this cab's: an AI-driven vehicle
-    # already has it (SceneryInstancer._build_drivers())
-    if get_vehicle_rid() and mmd_filename and not CabinSystem.vehicle_get_cab_logic(get_vehicle_rid()):
-        _cab_logic = LegacyCabinLogic.from_mmd(data_path, mmd_filename)
-        _cab_logic_vehicle_rid = get_vehicle_rid()
-        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, _cab_logic)
     _rebuild_generated()
 
 
@@ -92,12 +76,7 @@ func _exit_tree() -> void:
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
-    RailVehicleServer.vehicle_radio_stop_received.disconnect(_on_vehicle_radio_stop_received)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    if _cab_logic and CabinSystem.vehicle_get_cab_logic(_cab_logic_vehicle_rid) == _cab_logic:
-        CabinSystem.vehicle_attach_cab_logic(_cab_logic_vehicle_rid, null)
-    _cab_logic_vehicle_rid = RID()
-    _cab_logic = null
     set_vehicle_rid(RID())
     _free_occluders()
 
@@ -130,21 +109,6 @@ func _on_radio_message_sent(
     _radio_player.play(RADIO_MESSAGE)
     if transcript and float(state.get("radio_volume", 0.0)) > 0.0:
         TranscriptSystem.add(transcript)
-
-
-## The driver sitting in this cab reads it when a Radio-Stop brakes the vehicle
-## (TDynamicObject::RadioStop(), DynObj.cpp:7242 - for a vehicle a human drives)
-func _on_vehicle_radio_stop_received(vehicle:RID) -> void:
-    if vehicle == get_vehicle_rid():
-        TranscriptSystem.add_line(RADIO_STOP_TRANSCRIPT, 0.0, RADIO_STOP_TRANSCRIPT_SECONDS)
-
-
-# Keys of controls no widget of this cab takes - the catalog controls the cab does not model and
-# the keyboard-only ones
-func _unhandled_input(event:InputEvent) -> void:
-    var logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(get_vehicle_rid())
-    if logic:
-        logic.input(event)
 
 
 func get_diagnostics() -> Array[Dictionary]:

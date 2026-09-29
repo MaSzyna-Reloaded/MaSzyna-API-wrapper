@@ -33,6 +33,21 @@ Autoloads are listed in `demo/project.godot`; C++ singletons are registered in
 `src/register_types.cpp`. A singleton is reached by its typed `get_instance()` and the result is
 null-checked - never by node path, never by `call("name")`.
 
+## A breach is an alarm, not a problem to solve quietly
+
+When the work at hand would break a boundary - a field in a layer that does not own it, a lower
+layer calling or naming an upper one, two layers each calling the other, a copy of state kept "for
+convenience" - **stop and report it to the operator before writing it**: which layer, which field
+or call, which rule it breaks, and the options you see. Do not invent a workaround (a shim, a
+cached copy, a signal relayed through a third party to hide the dependency, a string `call()`), and
+do not redesign in silence halfway through a task. The operator decides.
+
+Examples of what must raise the alarm:
+* a camera server holding what the player drives (the player's state, not the view's);
+* the player's server calling the camera server while the camera server reads the player's -
+  a cycle: one of them must only read and listen;
+* a HUD component keeping its own copy of a vehicle RID another server owns.
+
 ## The five boundaries that carry the design
 
 **1. The backend never appears above its adapter.** No `Vehicle*.hpp` interface mentions

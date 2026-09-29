@@ -16,8 +16,6 @@ const FALLBACK_SLIDER_HALF_WIDTH:float = 0.5
 ## DynObj.cpp:93 fWidthExtra - the guide horn beyond the slider.
 const HORN_WIDTH:float = 0.381
 
-@export var player_path:NodePath
-
 var _rows:Dictionary[String, Label] = {}
 var _elapsed:float = 0.0
 ## Taken once per vehicle rather than looked up per refresh; null for anything that is not
@@ -51,8 +49,8 @@ func _process(delta:float) -> void:
 
 
 func _refresh() -> void:
-    var player:MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    var vehicle:RailVehicle3D = player.occupied_cabin if player else null
+    var vehicle:RailVehicle3D = instance_from_id(
+            RailVehicleServer.vehicle_get_rail_vehicle(PlayerServer.player_get_vehicle())) as RailVehicle3D
     if not vehicle:
         _rows["Vehicle"].text = "none"
         _engine = null

@@ -281,7 +281,7 @@ static func configure_head_display(
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by
-## FizVehicleBuilder.build_scene() - lets RailVehicle3D.enter_cabin()'s existing
+## FizVehicleBuilder.build_scene() - lets RailVehicle3D.show_cabin()'s existing
 ## cabin_scene.instantiate() produce a correctly pre-configured MaszynaDynamicTrainCabin every time,
 ## with no changes to rail_vehicle_3d.gd.
 static func _build_cabin_scene(normalized_data_path:String, file_name:String, skin:String) -> PackedScene:

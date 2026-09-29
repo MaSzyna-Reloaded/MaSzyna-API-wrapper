@@ -10,17 +10,21 @@ const SETTLE_FRAMES:int = 4
 const TRACK_NAME:String = "player_cabin_test"
 const TRACK_LENGTH:float = 200.0
 const TRACK_OFFSET:float = 100.0
-## A track long enough for a vehicle past MaszynaPlayer's follow jump distance, and where the two
-## vehicles stand on it: one near the view, one 20 km off [m]
+## A track long enough for a vehicle past MaszynaPlayer's follow jump distance (10 km), and where the
+## vehicles stand on it: two within it, one 20 km off [m]
 const LONG_TRACK_LENGTH:float = 25000.0
 const NEAR_OFFSET:float = 200.0
+const SECOND_OFFSET:float = 5200.0
 const FAR_OFFSET:float = 20200.0
-## MaszynaPlayer.FOLLOW_JUMP_DISTANCE_DEFAULT - the default of the Project Setting [m]
-const FOLLOW_JUMP_DISTANCE:float = 10000.0
-## How high above the near vehicle the view stands before following [m]
-const VIEW_HEIGHT:float = 100.0
+## How high above the near vehicle the view stands before following - too far for a view [m]
+const VIEW_HEIGHT:float = 2000.0
+## Long enough for the following camera to have flown to its view (ExternalCamera3D.response 2/s) [s]
+const FLIGHT_TIME:float = 3.0
+## A view stands within this of its vehicle [m]
+const VIEW_REACH:float = 100.0
 
 var _vehicle:RailVehicle3D
+var _second_vehicle:RailVehicle3D
 var _far_vehicle:RailVehicle3D
 var _player:MaszynaPlayer
 var _track:RID
@@ -33,6 +37,8 @@ func after_each() -> void:
     PlayerCameraServer.camera_set_target(RID())
     if is_instance_valid(_vehicle):
         free_rail_vehicle(_vehicle)
+    if is_instance_valid(_second_vehicle):
+        free_rail_vehicle(_second_vehicle)
     if is_instance_valid(_far_vehicle):
         free_rail_vehicle(_far_vehicle)
     if is_instance_valid(_player):
@@ -84,24 +90,32 @@ func test_the_cab_interior_stands_while_the_vehicle_is_driven() -> void:
     await wait_idle_frames(1)
 
 
-## A vehicle to follow far off is not flown to for minutes: the view jumps beside it, where the
-## crosshair would put it, and follows from there; a near one is followed from where the view is
-func test_a_far_vehicle_is_followed_from_beside_it() -> void:
+## Following takes the view of the vehicle followed, applied in full - from the view's own place,
+## however far it was (a follow from where the camera stood kept that distance); another vehicle takes
+## that one's view; one farther than the jump distance is not flown to but jumped beside
+func test_the_vehicle_followed_is_looked_at_from_its_view() -> void:
     _track = build_track(TRACK_NAME, LONG_TRACK_LENGTH)
     _vehicle = build_rail_vehicle("PlayerFollowNear", TRACK_NAME, NEAR_OFFSET)
+    _second_vehicle = build_rail_vehicle("PlayerFollowSecond", TRACK_NAME, SECOND_OFFSET)
     _far_vehicle = build_rail_vehicle("PlayerFollowFar", TRACK_NAME, FAR_OFFSET)
     _player = PLAYER_SCENE.instantiate()
     _player.auto_start = false
     add_child(_player)
     await wait_idle_frames(SETTLE_FRAMES)
     _player.free_camera.global_position = _vehicle.global_position + Vector3.UP * VIEW_HEIGHT
-    var view:Vector3 = _player.free_camera.global_position
 
     PlayerCameraServer.camera_set_target(_vehicle.get_rid())
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FOLLOW)
-    assert_eq(_player.external_camera.global_position, view, "a near vehicle: followed from where the view is")
+    await wait_seconds(FLIGHT_TIME)
+    assert_true(_player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
+            "followed from its view, not from %.0f m up" % VIEW_HEIGHT)
+
+    PlayerCameraServer.camera_set_target(_second_vehicle.get_rid())
+    await wait_seconds(FLIGHT_TIME)
+    assert_true(_player.external_camera.global_position.distance_to(_second_vehicle.global_position) < VIEW_REACH,
+            "another vehicle: its view, not the first one's distance kept")
 
     PlayerCameraServer.camera_set_target(_far_vehicle.get_rid())
-    var beside:Transform3D = PlayerCameraServer.camera_get_show_transform(_far_vehicle.get_rid())
-    assert_true(view.distance_to(_far_vehicle.global_position) > FOLLOW_JUMP_DISTANCE)
-    assert_eq(_player.external_camera.global_transform, beside, "a far one: the view jumps beside it")
+    assert_eq(_player.external_camera.global_transform,
+            PlayerCameraServer.camera_get_show_transform(_far_vehicle.get_rid()),
+            "a far one: the view jumps beside it, then flies to its view")

@@ -91,7 +91,7 @@ func _ready() -> void:
         _free_spotlight_material.set_shader_parameter("point_size_multiplier", float(ProjectSettings.get_setting(
             RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)))
         _free_spotlight_material.next_pass = glare
-    E3DRenderingServer.set_material_resolver(get_submodel_material)
+    E3DRenderingServer.material_set_resolver(get_submodel_material)
     SimulationServer.cache_clear_requested.connect(clear_cache)
 
 

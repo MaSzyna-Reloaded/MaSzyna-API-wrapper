@@ -23,7 +23,7 @@ const LANGUAGE_NAMES:Dictionary[String, String] = {
 
 func _ready() -> void:
     var group:ButtonGroup = ButtonGroup.new()
-    for language:String in MaszynaTranslationServer.get_languages():
+    for language:String in MaszynaTranslationServer.translation_get_languages():
         var button:Button = Button.new()
         button.toggle_mode = true
         button.button_group = group

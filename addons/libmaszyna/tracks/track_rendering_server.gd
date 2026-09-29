@@ -125,7 +125,7 @@ func _ready() -> void:
     _track_material_options = MaterialManager.MaterialOptions.new()
     _track_material_options.cull_disabled = true
     TrackServer.topology_rebuilt.connect(_on_topology_rebuilt)
-    TrackServer.switch_offset_updated.connect(_on_switch_offset_updated)
+    TrackServer.switch_offset_changed.connect(_on_switch_offset_changed)
 
 
 func create_track(track_rid: RID) -> RID:
@@ -698,7 +698,7 @@ func _on_topology_rebuilt() -> void:
 
 ## The blades follow the manager's animation step for every switch, scenery RIDs included -
 ## a scenery has no TrackSwitch3D nodes to forward it.
-func _on_switch_offset_updated(track_rid: RID, _offset: float) -> void:
+func _on_switch_offset_changed(track_rid: RID, _offset: float) -> void:
     set_switch_blade_offsets(
         _get_track_render_rid_by_track_rid(track_rid),
         TrackServer.switch_get_f_offset1(track_rid),

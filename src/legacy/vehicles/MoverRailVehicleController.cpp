@@ -127,7 +127,7 @@ namespace godot {
 
     /* The base lets go of the components and the registration; the Mover goes last. A neighbour
      * still coupled to it is let go first: its coupler would point at a Mover that is gone. The
-     * original never deletes a vehicle - it takes the whole consist out of the simulation
+     * original never deletes a vehicle - it takes the whole trainset out of the simulation
      * (vehicle_table::erase_disabled(), DynObj.cpp:8837) - so it has no counterpart; the coupler is
      * cleared the way Dettach() clears a coupling at pressed buffers (Mover.cpp:634). */
     void MoverRailVehicleController::release() {
@@ -143,7 +143,7 @@ namespace godot {
             std::tie(other_coupler.Connected, other_coupler.ConnectedNr, other_coupler.CouplingFlag) =
                     std::make_tuple(nullptr, -1, coupling::faux);
             if (const auto it = controllers_by_mover.find(coupler.Connected); it != controllers_by_mover.end()) {
-                it->second->emit_signal(consist_changed_signal);
+                it->second->emit_signal(trainset_changed_signal);
             }
         }
         controllers_by_mover.erase(mover);
@@ -271,9 +271,9 @@ namespace godot {
             coupling_type |= coupling::permanent;
         }
         mover->Attach(p_end, p_other_end, other->mover, coupling_type, true, false);
-        // the original re-inspects the consist on a coupling change (CheckVehicles(), Driver.cpp:2622)
-        emit_signal(consist_changed_signal);
-        other->emit_signal(consist_changed_signal);
+        // the original re-inspects the trainset on a coupling change (CheckVehicles(), Driver.cpp:2622)
+        emit_signal(trainset_changed_signal);
+        other->emit_signal(trainset_changed_signal);
     }
 
     void MoverRailVehicleController::uncouple(const int p_end) {
@@ -304,8 +304,10 @@ namespace godot {
         }
         const Transform3D transform = get_world_transform();
         // vehicles face -Z; the front coupler (end 0) is half the length ahead of the center
-        const Vector3 front = transform.origin - transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
-        const Vector3 rear = transform.origin + transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
+        const Vector3 front =
+                transform.origin - transform.basis.get_column(2).normalized() * static_cast<real_t>(0.5 * mover->Dim.L);
+        const Vector3 rear =
+                transform.origin + transform.basis.get_column(2).normalized() * static_cast<real_t>(0.5 * mover->Dim.L);
         const Vector3 position = p_where;
         return position.distance_squared_to(front) <= position.distance_squared_to(rear) ? 0 : 1;
     }
@@ -400,24 +402,24 @@ namespace godot {
     // Consuming is a tick job, not a read job: this clears the mover's flags, so doing it while
     // filling the state dictionary made the events belong to whoever happened to read first.
     //
-    // The coupler itself joining or parting is a consist change, whichever way it came - a command,
+    // The coupler itself joining or parting is a trainset change, whichever way it came - a command,
     // an automatic coupler meeting another (Mover.cpp:4894), Dettach(). The flag is set on the
     // coupler that coupled only (Mover.cpp:593), so the vehicle it coupled to is told as well; a
-    // parted one is no longer known here, but it was in the same consist as this one.
+    // parted one is no longer known here, but it was in the same trainset as this one.
     void MoverRailVehicleController::_consume_coupler_events() {
         static const int flags[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
                                     sound::attachcontrol, sound::attachgangway,   sound::attachheating};
-        bool consist_changed = false;
+        bool trainset_changed = false;
         for (TCoupling &coupler: mover->Couplers) {
             if (coupler.sounds == sound::none) {
                 continue;
             }
             const bool detaching = (coupler.sounds & sound::detach) != 0;
             if ((coupler.sounds & sound::attachcoupler) != 0) {
-                consist_changed = true;
+                trainset_changed = true;
                 if (const auto it = controllers_by_mover.find(coupler.Connected);
                     !detaching && it != controllers_by_mover.end()) {
-                    it->second->emit_signal(consist_changed_signal);
+                    it->second->emit_signal(trainset_changed_signal);
                 }
             }
             for (int index = 0; index < 6; ++index) {
@@ -429,8 +431,8 @@ namespace godot {
             }
             coupler.sounds = sound::none;
         }
-        if (consist_changed) {
-            emit_signal(consist_changed_signal);
+        if (trainset_changed) {
+            emit_signal(trainset_changed_signal);
         }
     }
 

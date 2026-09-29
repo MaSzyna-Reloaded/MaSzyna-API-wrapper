@@ -14,17 +14,20 @@ namespace godot {
                 &SceneryStreamingServer::stream_register);
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
         ClassDB::bind_method(
-                D_METHOD("set_streaming_enabled", "enabled"), &SceneryStreamingServer::set_streaming_enabled);
-        ClassDB::bind_method(D_METHOD("is_streaming_enabled"), &SceneryStreamingServer::is_streaming_enabled);
-        ClassDB::bind_method(D_METHOD("set_camera", "camera"), &SceneryStreamingServer::set_camera);
-        ClassDB::bind_method(D_METHOD("drain"), &SceneryStreamingServer::drain);
-        ClassDB::bind_method(D_METHOD("get_draw_distance"), &SceneryStreamingServer::get_draw_distance);
-        ClassDB::bind_method(D_METHOD("get_camera_position"), &SceneryStreamingServer::get_camera_position);
-        ClassDB::bind_method(D_METHOD("has_camera"), &SceneryStreamingServer::has_camera);
+                D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
+        ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
+        ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
+        ClassDB::bind_method(D_METHOD("streaming_drain"), &SceneryStreamingServer::streaming_drain);
         ClassDB::bind_method(
-                D_METHOD("is_area_ready", "chunk_radius"), &SceneryStreamingServer::is_area_ready, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("get_streamed_count"), &SceneryStreamingServer::get_streamed_count);
-        ClassDB::bind_method(D_METHOD("get_statistics"), &SceneryStreamingServer::get_statistics);
+                D_METHOD("streaming_get_draw_distance"), &SceneryStreamingServer::streaming_get_draw_distance);
+        ClassDB::bind_method(
+                D_METHOD("streaming_get_camera_position"), &SceneryStreamingServer::streaming_get_camera_position);
+        ClassDB::bind_method(D_METHOD("streaming_has_camera"), &SceneryStreamingServer::streaming_has_camera);
+        ClassDB::bind_method(
+                D_METHOD("area_is_ready", "chunk_radius"), &SceneryStreamingServer::area_is_ready, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("streaming_get_streamed_count"), &SceneryStreamingServer::streaming_get_streamed_count);
+        ClassDB::bind_method(D_METHOD("streaming_get_statistics"), &SceneryStreamingServer::streaming_get_statistics);
     }
 
     SceneryStreamingServer::SceneryStreamingServer() {
@@ -35,11 +38,11 @@ namespace godot {
 
     /// The worker finishes the pass it is in before it is joined
     SceneryStreamingServer::~SceneryStreamingServer() {
-        set_camera(nullptr);
-        drain();
+        streaming_set_camera(nullptr);
+        streaming_drain();
     }
 
-    void SceneryStreamingServer::drain() {
+    void SceneryStreamingServer::streaming_drain() {
         if (worker.is_null()) {
             return;
         }
@@ -222,7 +225,7 @@ namespace godot {
     /// Camera the streaming follows; without one nothing is ever built. Setting the first camera
     /// starts the per-frame tick, clearing it (null) stops it - the main loop does not exist yet
     /// when the singleton is created.
-    void SceneryStreamingServer::set_camera(Camera3D *p_camera) {
+    void SceneryStreamingServer::streaming_set_camera(Camera3D *p_camera) {
         bool was_streaming;
         bool is_streaming;
         {
@@ -250,11 +253,11 @@ namespace godot {
         tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
     }
 
-    float SceneryStreamingServer::get_draw_distance() const {
+    float SceneryStreamingServer::streaming_get_draw_distance() const {
         return draw_distance;
     }
 
-    Vector3 SceneryStreamingServer::get_camera_position() const {
+    Vector3 SceneryStreamingServer::streaming_get_camera_position() const {
         ObjectID current_camera_id;
         {
             MutexLock lock(mutex);
@@ -264,7 +267,7 @@ namespace godot {
         return camera != nullptr && camera->is_inside_tree() ? camera->get_global_position() : last_camera_position;
     }
 
-    bool SceneryStreamingServer::has_camera() const {
+    bool SceneryStreamingServer::streaming_has_camera() const {
         MutexLock lock(mutex);
         return camera_id.is_valid();
     }
@@ -297,13 +300,13 @@ namespace godot {
         return pending;
     }
 
-    bool SceneryStreamingServer::is_area_ready(const int p_chunk_radius) const {
+    bool SceneryStreamingServer::area_is_ready(const int p_chunk_radius) const {
         MutexLock lock(mutex);
         return _is_area_ready_locked(MAX(0, p_chunk_radius));
     }
 
     /// Pieces currently built - what the streaming actually keeps alive
-    int SceneryStreamingServer::get_streamed_count() const {
+    int SceneryStreamingServer::streaming_get_streamed_count() const {
         MutexLock lock(mutex);
         int count = 0;
         for (const KeyValue<Vector2i, Chunk> &item: chunks) {
@@ -313,7 +316,7 @@ namespace godot {
     }
 
     /// What the streaming is doing right now, for the "Scenery Streaming" debug window
-    Dictionary SceneryStreamingServer::get_statistics() const {
+    Dictionary SceneryStreamingServer::streaming_get_statistics() const {
         Dictionary statistics;
         MutexLock lock(mutex);
         int streamed = 0;
@@ -373,11 +376,11 @@ namespace godot {
 
     /// Plans after a meaningful camera move or a content change and applies whatever the worker has
     /// published so far, a few milliseconds per frame.
-    void SceneryStreamingServer::set_streaming_enabled(const bool p_enabled) {
+    void SceneryStreamingServer::streaming_set_enabled(const bool p_enabled) {
         streaming_enabled = p_enabled;
     }
 
-    bool SceneryStreamingServer::is_streaming_enabled() const {
+    bool SceneryStreamingServer::streaming_is_enabled() const {
         return streaming_enabled;
     }
 

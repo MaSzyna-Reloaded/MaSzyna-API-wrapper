@@ -34,7 +34,7 @@ func after_each() -> void:
     PlayerServer.player_leave_vehicle()
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
     PlayerCameraServer.camera_set_target(RID())
-    PlayerCameraServer.camera_set_follow_view(PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_FRONT)
+    PlayerCameraServer.camera_set_follow_view(PlayerCameraServer.CAMERA_FOLLOW_VIEW_TRAINSET_FRONT)
     if is_instance_valid(_vehicle):
         free_rail_vehicle(_vehicle)
     TrackServer.track_free(_track)
@@ -89,13 +89,13 @@ func test_shift_f4_follows_the_vehicle_driven_then_cycles_the_views() -> void:
     PlayerCameraServer.camera_cycle_follow_view()
     assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_FOLLOW)
     assert_eq(PlayerCameraServer.camera_get_target(), _vehicle.get_rid())
-    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_FRONT)
+    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_TRAINSET_FRONT)
     PlayerCameraServer.camera_cycle_follow_view()
-    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_REAR)
+    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_TRAINSET_REAR)
     PlayerCameraServer.camera_cycle_follow_view()
     PlayerCameraServer.camera_cycle_follow_view()
     PlayerCameraServer.camera_cycle_follow_view()
-    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_FRONT,
+    assert_eq(PlayerCameraServer.camera_get_follow_view(), PlayerCameraServer.CAMERA_FOLLOW_VIEW_TRAINSET_FRONT,
             "after the last view, the first")
 
     PlayerCameraServer.camera_toggle_cabin()

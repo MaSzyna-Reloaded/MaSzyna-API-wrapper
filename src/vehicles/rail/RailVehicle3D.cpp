@@ -1255,12 +1255,12 @@ namespace godot {
     /// (see TODO.md), so a distant vehicle loses its lights.
     void RailVehicle3D::_update_model_detail() {
         const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-        if (streaming == nullptr || !streaming->has_camera() || model_node == nullptr) {
+        if (streaming == nullptr || !streaming->streaming_has_camera() || model_node == nullptr) {
             return;
         }
         const float detail_distance = ProjectSettings::get_singleton()->get_setting(
                 "maszyna/vehicles/detail_distance", DEFAULT_VEHICLE_DETAIL_DISTANCE_M);
-        const double distance = get_global_position().distance_to(streaming->get_camera_position());
+        const double distance = get_global_position().distance_to(streaming->streaming_get_camera_position());
         const float hysteresis = MAX(VEHICLE_DETAIL_HYSTERESIS_MIN_M, detail_distance * VEHICLE_DETAIL_HYSTERESIS);
         const bool detailed = model_detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
         if (detailed == model_detailed) {

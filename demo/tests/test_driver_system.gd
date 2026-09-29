@@ -23,12 +23,12 @@ func test_the_drivers_are_listed_and_their_vehicles_announced() -> void:
     watch_signals(DriverSystem)
     var driver:RID = DriverSystem.driver_create()
 
-    assert_has(DriverSystem.get_drivers(), driver)
+    assert_has(DriverSystem.driver_get_rids(), driver)
     DriverSystem.driver_attach_vehicle(driver, vehicle)
     assert_signal_emitted_with_parameters(DriverSystem, "driver_vehicle_attached", [driver, vehicle])
     DriverSystem.driver_free(driver)
     assert_signal_emitted_with_parameters(DriverSystem, "driver_freed", [driver])
-    assert_does_not_have(DriverSystem.get_drivers(), driver)
+    assert_does_not_have(DriverSystem.driver_get_rids(), driver)
 
 
 func test_a_vehicle_is_driven_by_its_driver_or_a_player() -> void:

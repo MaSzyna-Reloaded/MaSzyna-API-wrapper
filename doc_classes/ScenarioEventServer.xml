@@ -130,11 +130,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_launchers" qualifiers="const">
-			<return type="RID[]" />
-			<description>
-			</description>
-		</method>
 		<method name="isolated_add_event">
 			<return type="void" />
 			<param index="0" name="isolated" type="RID" />
@@ -212,6 +207,11 @@
 		<method name="launcher_get_rid_by_name" qualifiers="const">
 			<return type="RID" />
 			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="launcher_get_rids" qualifiers="const">
+			<return type="RID[]" />
 			<description>
 			</description>
 		</method>

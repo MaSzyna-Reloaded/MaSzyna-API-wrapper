@@ -15,8 +15,8 @@ namespace godot {
 
     const char *SimulationServer::cache_clear_requested_signal = "cache_clear_requested";
     const char *SimulationServer::language_changed_signal = "language_changed";
-    const char *SimulationServer::paused_signal = "paused";
-    const char *SimulationServer::unpaused_signal = "unpaused";
+    const char *SimulationServer::simulation_paused_signal = "simulation_paused";
+    const char *SimulationServer::simulation_unpaused_signal = "simulation_unpaused";
     const char *SimulationServer::simulation_speed_changed_signal = "simulation_speed_changed";
     const char *SimulationServer::simulation_current_speed_changed_signal = "simulation_current_speed_changed";
     const char *SimulationServer::time_of_day_changed_signal = "time_of_day_changed";
@@ -28,9 +28,9 @@ namespace godot {
     } // namespace
 
     void SimulationServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("clear_cache"), &SimulationServer::clear_cache);
-        ClassDB::bind_method(D_METHOD("get_build_number"), &SimulationServer::get_build_number);
-        ClassDB::bind_method(D_METHOD("check_build_version"), &SimulationServer::check_build_version);
+        ClassDB::bind_method(D_METHOD("cache_clear"), &SimulationServer::cache_clear);
+        ClassDB::bind_method(D_METHOD("build_get_number"), &SimulationServer::build_get_number);
+        ClassDB::bind_method(D_METHOD("build_check_version"), &SimulationServer::build_check_version);
 
         ClassDB::bind_method(D_METHOD("set_time_of_day", "hours"), &SimulationServer::set_time_of_day);
         ClassDB::bind_method(D_METHOD("get_time_of_day"), &SimulationServer::get_time_of_day);
@@ -47,10 +47,10 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(simulation_speed_changed_signal));
         ADD_SIGNAL(MethodInfo(simulation_current_speed_changed_signal));
         ADD_SIGNAL(MethodInfo(time_of_day_changed_signal));
-        ClassDB::bind_method(D_METHOD("get_simulation_time"), &SimulationServer::get_simulation_time);
+        ClassDB::bind_method(D_METHOD("simulation_get_time"), &SimulationServer::simulation_get_time);
         ClassDB::bind_method(D_METHOD("clock_hold"), &SimulationServer::clock_hold);
         ClassDB::bind_method(D_METHOD("clock_release"), &SimulationServer::clock_release);
-        ClassDB::bind_method(D_METHOD("advance", "frame_delta"), &SimulationServer::advance);
+        ClassDB::bind_method(D_METHOD("simulation_advance", "frame_delta"), &SimulationServer::simulation_advance);
         ADD_SIGNAL(MethodInfo(simulation_advanced_signal, PropertyInfo(Variant::FLOAT, "seconds")));
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "light_level"), "set_light_level", "get_light_level");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_temperature"), "set_air_temperature", "get_air_temperature");
@@ -61,11 +61,11 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(cache_clear_requested_signal));
 
-        ClassDB::bind_method(D_METHOD("pause"), &SimulationServer::pause);
-        ClassDB::bind_method(D_METHOD("unpause"), &SimulationServer::unpause);
-        ClassDB::bind_method(D_METHOD("is_paused"), &SimulationServer::is_paused);
-        ADD_SIGNAL(MethodInfo(paused_signal));
-        ADD_SIGNAL(MethodInfo(unpaused_signal));
+        ClassDB::bind_method(D_METHOD("simulation_pause"), &SimulationServer::simulation_pause);
+        ClassDB::bind_method(D_METHOD("simulation_unpause"), &SimulationServer::simulation_unpause);
+        ClassDB::bind_method(D_METHOD("simulation_is_paused"), &SimulationServer::simulation_is_paused);
+        ADD_SIGNAL(MethodInfo(simulation_paused_signal));
+        ADD_SIGNAL(MethodInfo(simulation_unpaused_signal));
     }
 
     void SimulationServer::set_time_of_day(const double p_hours) {
@@ -80,7 +80,7 @@ namespace godot {
         return time_of_day;
     }
 
-    double SimulationServer::get_simulation_time() const {
+    double SimulationServer::simulation_get_time() const {
         return simulation_time;
     }
 
@@ -120,7 +120,7 @@ namespace godot {
         tree->get_root()->add_child(node, false, Node::INTERNAL_MODE_FRONT);
     }
 
-    void SimulationServer::advance(const double p_frame_delta) {
+    void SimulationServer::simulation_advance(const double p_frame_delta) {
         const double frame_delta = MIN(p_frame_delta, MAX_FRAME_DELTA);
         if (!(current_simulation_speed == simulation_speed)) {
             // a tape's motor: the running speed closes on the one set, most of the way in
@@ -211,35 +211,35 @@ namespace godot {
         return user_settings->get_setting(LANGUAGE_SECTION, LANGUAGE_KEY, DEFAULT_LANGUAGE);
     }
 
-    void SimulationServer::pause() {
+    void SimulationServer::simulation_pause() {
         if (paused) {
             return;
         }
         paused = true;
         _refresh_clock();
-        emit_signal(paused_signal);
+        emit_signal(simulation_paused_signal);
     }
 
-    void SimulationServer::unpause() {
+    void SimulationServer::simulation_unpause() {
         if (!paused) {
             return;
         }
         paused = false;
         _refresh_clock();
-        emit_signal(unpaused_signal);
+        emit_signal(simulation_unpaused_signal);
     }
 
-    bool SimulationServer::is_paused() const {
+    bool SimulationServer::simulation_is_paused() const {
         return paused;
     }
 
-    void SimulationServer::clear_cache() {
+    void SimulationServer::cache_clear() {
         emit_signal(cache_clear_requested_signal);
     }
 
     /// Stamped by the build itself (cmake/write_build_number.cmake), empty in a checkout that was
     /// never built.
-    String SimulationServer::get_build_number() {
+    String SimulationServer::build_get_number() {
         if (build_number_read) {
             return build_number;
         }
@@ -251,14 +251,14 @@ namespace godot {
 
     /// Clears every cache once per run when the build behind them is not the one that wrote them.
     /// A cache on disk outlives the code that produced it, so a new build starts from clean data.
-    bool SimulationServer::check_build_version() {
+    bool SimulationServer::build_check_version() {
         if (build_version_checked) {
             return false;
         }
 
         build_version_checked = true;
 
-        const String current = get_build_number();
+        const String current = build_get_number();
         if (current.is_empty()) {
             return false;
         }
@@ -274,7 +274,7 @@ namespace godot {
         UtilityFunctions::print(
                 "[SimulationServer] Build changed (" + (stored.is_empty() ? String("none") : stored) + " -> " +
                 current + "), clearing cache...");
-        clear_cache();
+        cache_clear();
         settings->save_setting(BUILD_SECTION, BUILD_NUMBER_KEY, current);
         return true;
     }

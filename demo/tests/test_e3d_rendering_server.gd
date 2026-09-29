@@ -15,8 +15,8 @@ const MIDDAY: float = 12.0
 
 func after_each() -> void:
     # the time of day and the light level are singleton state shared by every test
-    E3DRenderingServer.set_current_time(MIDDAY)
-    E3DRenderingServer.set_light_level(DAY_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_time(MIDDAY)
+    E3DRenderingServer.environment_set_light_level(DAY_LIGHT_LEVEL)
 
 
 func test_optimized_instance_creates_no_nodes() -> void:
@@ -81,10 +81,10 @@ func test_dark_light_follows_the_light_level() -> void:
     E3DRenderingServer.instance_set_lights_modes(rid, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
     var light_on: Node3D = parent.get_node(NodePath("light_on00"))
 
-    E3DRenderingServer.set_light_level(DAY_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(DAY_LIGHT_LEVEL)
     assert_false(light_on.visible, "unlit in daylight")
 
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     assert_true(light_on.visible, "lit once it gets dark")
 
     E3DRenderingServer.instance_free(rid)
@@ -98,10 +98,10 @@ func test_dark_light_fraction_is_its_own_threshold() -> void:
     E3DRenderingServer.instance_set_lights_modes(rid, [3.4])
     var light_on: Node3D = parent.get_node(NodePath("light_on00"))
 
-    E3DRenderingServer.set_light_level(0.5)
+    E3DRenderingServer.environment_set_light_level(0.5)
     assert_false(light_on.visible, "still above its own threshold")
 
-    E3DRenderingServer.set_light_level(0.35)
+    E3DRenderingServer.environment_set_light_level(0.35)
     assert_true(light_on.visible, "below its own threshold, but above the default one")
 
     E3DRenderingServer.instance_free(rid)
@@ -114,14 +114,14 @@ func test_home_light_is_forced_off_late_at_night() -> void:
     E3DRenderingServer.instance_set_lights_modes(rid, [float(E3DRenderingServer.LIGHT_MODE_HOME)])
     var light_on: Node3D = parent.get_node(NodePath("light_on00"))
 
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
-    E3DRenderingServer.set_current_time(22.0)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_time(22.0)
     assert_true(light_on.visible, "a lit window in the evening")
 
-    E3DRenderingServer.set_current_time(3.0)
+    E3DRenderingServer.environment_set_time(3.0)
     assert_false(light_on.visible, "the same window is dark between 1:00 and 5:00")
 
-    E3DRenderingServer.set_current_time(6.0)
+    E3DRenderingServer.environment_set_time(6.0)
     assert_true(light_on.visible, "and lit again before dawn")
 
     E3DRenderingServer.instance_free(rid)
@@ -164,14 +164,14 @@ func test_instance_free_releases_its_lights() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)
     var rid: RID = _create_lit_instance(parent)
-    var before: int = E3DRenderingServer.get_light_statistics()["total"]
+    var before: int = E3DRenderingServer.light_get_statistics()["total"]
 
     E3DRenderingServer.emission_light_create(rid, "00")
-    assert_eq(E3DRenderingServer.get_light_statistics()["total"], before + 1)
+    assert_eq(E3DRenderingServer.light_get_statistics()["total"], before + 1)
 
     E3DRenderingServer.instance_free(rid)
     assert_eq(
-        E3DRenderingServer.get_light_statistics()["total"], before, "freeing the instance frees its lights"
+        E3DRenderingServer.light_get_statistics()["total"], before, "freeing the instance frees its lights"
     )
 
 

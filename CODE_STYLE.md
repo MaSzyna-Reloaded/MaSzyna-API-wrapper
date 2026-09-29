@@ -11,7 +11,8 @@ Unless a section says otherwise, every rule here applies to GDScript and C++ ali
 4. Parameter naming: `snake_case` with `p_` as an prefix
 5. A server's method (a `*Server`/`*System` singleton) is named `<subject>_<action>()` - what the
    handle or the state it acts on is, then what it does - and its signal
-   `<subject>_<what>_changed`, the way Godot's servers do
+   `<subject>_<what>_changed` for a change of state, or `<subject>_<past-tense verb>` for an event
+   (`vehicle_freed`, `instance_built`, `simulation_paused`), the way Godot's servers do
    (`RenderingServer.instance_set_transform()`, `PhysicsServer3D.body_get_state()`):
 
    ```cpp
@@ -26,9 +27,9 @@ Unless a section says otherwise, every rule here applies to GDScript and C++ ali
    ```
 
    The subject groups a server's API by what it acts on (`vehicle_*`, `camera_*`, `panel_*`), so
-   the next method has an obvious name and place. A server's older method named otherwise
-   (`SimulationServer.set_simulation_speed()`, `pause()`) is left as it is unless the operator asks,
-   and never copied into a new one.
+   the next method has an obvious name and place. The one exception is a Godot property of a server
+   (`SimulationServer.time_of_day`): its accessors keep `set_<property>`/`get_<property>`, as
+   "Godot properties" below requires.
 ### Indentation and braces
 1. Braces at the end of line (K & R style)
 2. As less nesting as possible

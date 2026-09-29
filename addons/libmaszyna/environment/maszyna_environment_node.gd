@@ -217,8 +217,8 @@ func _enter_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_hold()
     UserSettings.config_changed.connect(_on_user_settings_changed)
-    SimulationServer.paused.connect(_on_runtime_paused)
-    SimulationServer.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.simulation_paused.connect(_on_runtime_paused)
+    SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.connect(_publish_animation_speed)
     # the speed may have been set before (the scene's own simulation_speed)
     _publish_animation_speed()
@@ -228,8 +228,8 @@ func _exit_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_release()
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
-    SimulationServer.paused.disconnect(_on_runtime_paused)
-    SimulationServer.unpaused.disconnect(_on_runtime_unpaused)
+    SimulationServer.simulation_paused.disconnect(_on_runtime_paused)
+    SimulationServer.simulation_unpaused.disconnect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.disconnect(_publish_animation_speed)
 
 
@@ -423,7 +423,7 @@ func _on_runtime_unpaused() -> void:
 
 ## Scenery submodels animate in the simulation's time: at its speed, and not at all while paused
 func _publish_animation_speed() -> void:
-    E3DRenderingServer.set_animation_speed(0.0 if SimulationServer.is_paused() else SimulationServer.simulation_get_current_speed())
+    E3DRenderingServer.animation_set_speed(0.0 if SimulationServer.simulation_is_paused() else SimulationServer.simulation_get_current_speed())
 
 
 func _apply_time_configuration() -> void:
@@ -449,13 +449,13 @@ func _push_environment_state(delta: float) -> void:
         return
     _light_state_elapsed = 0.0
     var light_level:float = _sky_environment.get_light_level()
-    E3DRenderingServer.set_current_time(current_time)
-    E3DRenderingServer.set_light_level(light_level)
+    E3DRenderingServer.environment_set_time(current_time)
+    E3DRenderingServer.environment_set_light_level(light_level)
     # Global.fLuminance of the free spotlights' glare (types/free_spotlight_glare.gdshader)
     RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
     SimulationServer.light_level = light_level
     SimulationServer.air_temperature = temperature
-    E3DRenderingServer.set_wind(
+    E3DRenderingServer.environment_set_wind(
         _sky_environment.get_wind_strength(), _sky_environment.get_wind_direction()
     )
 

@@ -28,7 +28,7 @@ var _labels:Dictionary[String, bool] = {}
 
 
 ## Returns event name -> {"action": Action, "parameters": Dictionary, "source": definition}, only
-## for events that play or have to stop. `outer_noise_audible` is false for the consist the
+## for events that play or have to stop. `outer_noise_audible` is false for the trainset the
 ## listener drives from a cab (DynObj.cpp:4632-4640).
 func update(
         controller:VehicleController, state:Dictionary, delta:float,

@@ -4,13 +4,13 @@ class_name MaszynaSceneryInfo
 
 ## Scenario description from the header comments of a .scn file (read by the original starter):
 ## [code]//$n[/code] title, [code]//$d[/code] description lines, [code]//$i[/code] image in
-## scenery/images/, plus the consists of its [code]trainset[/code] blocks. Files are in cp1250.
+## scenery/images/, plus the trainsets of its [code]trainset[/code] blocks. Files are in cp1250.
 ##
 ## Read line by line: the tokens of a "trainset"/"node ... dynamic" are written on one line in
-## every scenery, and the mission description of a consist is in [code]//$o[/code] comments,
+## every scenery, and the mission description of a trainset is in [code]//$o[/code] comments,
 ## which a tokenizer would drop.
 
-## One vehicle of a consist ("node ... dynamic ... enddynamic")
+## One vehicle of a trainset ("node ... dynamic ... enddynamic")
 class Vehicle:
     ## Node name of the vehicle - MaszynaRailVehicle3D.train_id
     var train_id:String = ""
@@ -27,7 +27,7 @@ class Vehicle:
 class Trainset:
     var name:String = ""
     var track:String = ""
-    ## Mission description of the consist (//$o lines)
+    ## Mission description of the trainset (//$o lines)
     var description:String = ""
     var vehicles:Array[Vehicle] = []
 
@@ -51,7 +51,7 @@ class Trainset:
                 return vehicle.train_id
         return vehicles[0].train_id if vehicles else ""
 
-## Only the beginning of a scenery is read - the header and the consists are there
+## Only the beginning of a scenery is read - the header and the trainsets are there
 const MAX_BYTES:int = 262144
 ## The title alone is in the first lines of the file
 const MAX_HEADER_BYTES:int = 8192
@@ -131,7 +131,7 @@ static func _read_scenery_name(filename:String) -> String:
     return ""
 
 
-## Reads the header of scenery/<filename> and the consists declared in it
+## Reads the header of scenery/<filename> and the trainsets declared in it
 static func read(filename:String) -> MaszynaSceneryInfo:
     var info := MaszynaSceneryInfo.new()
     var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")

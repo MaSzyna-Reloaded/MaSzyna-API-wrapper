@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## Placement of .scn `dynamic` nodes, ported from deserialize_dynamic()
 ## (simulationstateserializer.cpp:960-988) and TDynamicObject::Init() (DynObj.cpp):
-## - offset == -1.0 means "reversed in the consist" (`Init(..., (offset == -1.0), ...)`,
+## - offset == -1.0 means "reversed in the trainset" (`Init(..., (offset == -1.0), ...)`,
 ##   DynObj.cpp:1807).
 ## - the resulting distance marks the vehicle's FRONT; the vehicle's center sits half its
 ##   Dimensions L= behind it (DynObj.cpp:2308, `fDist -= 0.5 * Dim.L`), and the next vehicle in
@@ -48,7 +48,7 @@ func _write_fiz(path:String, length:float) -> void:
 func _trainset_context(offset:float) -> MaszynaImporterContext:
     var context := MaszynaImporterContext.new()
     var parser := MaszynaParser.new()
-    parser.initialize(("consist start %s 0" % offset).to_utf8_buffer(), [])
+    parser.initialize(("trainset start %s 0" % offset).to_utf8_buffer(), [])
     var trainset_importer:RefCounted = load("res://addons/libmaszyna/legacy/scenery/maszyna_trainset_importer.gd").new()
     _trainsets.append_array(trainset_importer.import(parser, context))
     return context

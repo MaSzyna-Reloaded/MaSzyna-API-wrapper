@@ -59,7 +59,7 @@ namespace godot {
     }
 
     void CabinHUDMouseSystem::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_camera", "camera_id"), &CabinHUDMouseSystem::set_camera);
+        ClassDB::bind_method(D_METHOD("mouse_set_camera", "camera_id"), &CabinHUDMouseSystem::mouse_set_camera);
         ClassDB::bind_method(
                 D_METHOD(
                         "control_create", "mesh_instance_id", "caption", "hints", "pressed", "released", "increase",
@@ -70,8 +70,8 @@ namespace godot {
                 D_METHOD("control_set_state", "control", "state"), &CabinHUDMouseSystem::control_set_state);
         ClassDB::bind_method(D_METHOD("occluder_create", "mesh_instance_id"), &CabinHUDMouseSystem::occluder_create);
         ClassDB::bind_method(D_METHOD("occluder_free", "occluder"), &CabinHUDMouseSystem::occluder_free);
-        ClassDB::bind_method(D_METHOD("input", "event"), &CabinHUDMouseSystem::input);
-        ClassDB::bind_method(D_METHOD("get_hovered_control"), &CabinHUDMouseSystem::get_hovered_control);
+        ClassDB::bind_method(D_METHOD("mouse_input", "event"), &CabinHUDMouseSystem::mouse_input);
+        ClassDB::bind_method(D_METHOD("control_get_hovered"), &CabinHUDMouseSystem::control_get_hovered);
 
         BIND_CONSTANT(DRAG_STEP_PIXELS);
 
@@ -82,7 +82,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(control_state_changed_signal, PropertyInfo(Variant::STRING, "state")));
     }
 
-    void CabinHUDMouseSystem::set_camera(const uint64_t p_camera_id) {
+    void CabinHUDMouseSystem::mouse_set_camera(const uint64_t p_camera_id) {
         camera = ObjectID(p_camera_id);
     }
 
@@ -204,7 +204,7 @@ namespace godot {
         if (!mouse_picking::intersect_faces(p_part.faces, from, to, t)) {
             return false;
         }
-        const Vector3 point = transform.xform(from + (to - from) * t);
+        const Vector3 point = transform.xform(from + (to - from) * static_cast<real_t>(t));
         const double distance = p_from.distance_to(point);
         if (distance >= p_r_distance) {
             return false;
@@ -224,11 +224,11 @@ namespace godot {
         controls.erase(p_control);
     }
 
-    RID CabinHUDMouseSystem::get_hovered_control() const {
+    RID CabinHUDMouseSystem::control_get_hovered() const {
         return hovered;
     }
 
-    bool CabinHUDMouseSystem::input(const Ref<InputEvent> &p_event) {
+    bool CabinHUDMouseSystem::mouse_input(const Ref<InputEvent> &p_event) {
         const Ref<InputEventMouseMotion> motion = p_event;
         if (motion.is_valid()) {
             if (dragging) {
@@ -366,7 +366,7 @@ namespace godot {
         if (direction.is_zero_approx()) {
             return DEFAULT_DRAG_SIGNS;
         }
-        // which way the grip goes on each mouse axis; the drag takes one of them (see input())
+        // which way the grip goes on each mouse axis; the drag takes one of them (see mouse_input())
         return Vector2(SIGN(direction.x), SIGN(direction.y));
     }
 

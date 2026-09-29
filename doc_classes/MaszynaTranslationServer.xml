@@ -10,13 +10,13 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_languages" qualifiers="const">
+		<method name="translation_get_languages" qualifiers="const">
 			<return type="PackedStringArray" />
 			<description>
 				The languages there is a catalogue for in the game's [code]lang/[/code] ([code]template.po[/code] excepted), with [code]"en"[/code] - the untranslated strings - always first.
 			</description>
 		</method>
-		<method name="load_translation">
+		<method name="translation_load">
 			<return type="void" />
 			<param index="0" name="po_path" type="String" />
 			<description>

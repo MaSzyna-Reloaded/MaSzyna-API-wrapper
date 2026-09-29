@@ -6,7 +6,7 @@ extends Node
 ##
 ## Reading a vehicle's .mmd is several passes over the same file - the body/lowpoly/passengers
 ## model names, the cab and the sound bank each do their own - and a scenery routinely places
-## many vehicles sharing one data_path/file_name/skin (every wagon of one type in a consist,
+## many vehicles sharing one data_path/file_name/skin (every wagon of one type in a trainset,
 ## every signal of one type, ...). This turns an O(vehicle count) MMD parse into O(distinct
 ## data_path+file_name+skin combinations).
 ##

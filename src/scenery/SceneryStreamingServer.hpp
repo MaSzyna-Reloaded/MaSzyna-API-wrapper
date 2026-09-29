@@ -173,7 +173,7 @@ namespace godot {
              * calls the owner's preload Callable, which is GDScript, and that Callable is gone
              * once the scripts are - and it must not be creating rendering resources while the
              * scenery frees them (see FINDINGS.md, 2026-09-22). */
-            void drain();
+            void streaming_drain();
             int owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
             RID stream_register(int p_owner, const RID &p_user_rid, const Vector3 &p_position, float p_range_end);
             void stream_free(const RID &p_stream_rid);
@@ -181,16 +181,16 @@ namespace godot {
             /* Streaming builds and clears content on `process_frame`. Tearing a scenery down
              * frees the very RIDs it streams, and that teardown yields a frame for its budget -
              * so it has to be paused for the duration, the way RailVehicleServer's step is. */
-            void set_streaming_enabled(bool p_enabled);
-            bool is_streaming_enabled() const;
+            void streaming_set_enabled(bool p_enabled);
+            bool streaming_is_enabled() const;
 
-            void set_camera(Camera3D *p_camera);
-            float get_draw_distance() const;
+            void streaming_set_camera(Camera3D *p_camera);
+            float streaming_get_draw_distance() const;
             /// Where the streaming camera is, for anything else that has to know what is near
-            Vector3 get_camera_position() const;
-            bool has_camera() const;
-            bool is_area_ready(int p_chunk_radius = 1) const;
-            int get_streamed_count() const;
-            Dictionary get_statistics() const;
+            Vector3 streaming_get_camera_position() const;
+            bool streaming_has_camera() const;
+            bool area_is_ready(int p_chunk_radius = 1) const;
+            int streaming_get_streamed_count() const;
+            Dictionary streaming_get_statistics() const;
     };
 } // namespace godot

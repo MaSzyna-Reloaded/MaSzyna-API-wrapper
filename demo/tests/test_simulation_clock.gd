@@ -58,7 +58,7 @@ func before_each() -> void:
 
 func after_each() -> void:
     SimulationServer.simulation_speed = 1.0
-    SimulationServer.advance(SHORT_FRAME)
+    SimulationServer.simulation_advance(SHORT_FRAME)
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, _speed_change_time)
     if TrackServer.track_exists(_track):
         TrackServer.track_free(_track)
@@ -74,11 +74,11 @@ func _travelled() -> float:
 ## the speed, and the physics integrates all of it, not a budget of it.
 func test_a_long_frame_is_capped_and_integrated_whole() -> void:
     SimulationServer.simulation_speed = SECOND_A_FRAME_SPEED
-    var time_before:float = SimulationServer.get_simulation_time()
+    var time_before:float = SimulationServer.simulation_get_time()
     var before:float = _travelled()
-    SimulationServer.advance(5.0)
+    SimulationServer.simulation_advance(5.0)
     var seconds:float = MAX_FRAME_DELTA * SECOND_A_FRAME_SPEED
-    assert_almost_eq(SimulationServer.get_simulation_time() - time_before, seconds, 0.0001,
+    assert_almost_eq(SimulationServer.simulation_get_time() - time_before, seconds, 0.0001,
             "the clock takes a quarter of the five real seconds, sped up")
     assert_almost_eq(_travelled() - before, seconds * VELOCITY_MS, VELOCITY_MS * FRAME_TOLERANCE,
             "and the vehicle drove that whole time")
@@ -87,11 +87,11 @@ func test_a_long_frame_is_capped_and_integrated_whole() -> void:
 ## The simulation speed scales the frame, for the clock and the vehicles alike.
 func test_the_speed_scales_the_clock_and_the_physics() -> void:
     SimulationServer.simulation_speed = DOUBLE_SPEED
-    var time_before:float = SimulationServer.get_simulation_time()
+    var time_before:float = SimulationServer.simulation_get_time()
     var before:float = _travelled()
-    SimulationServer.advance(SHORT_FRAME)
+    SimulationServer.simulation_advance(SHORT_FRAME)
     var seconds:float = SHORT_FRAME * DOUBLE_SPEED
-    assert_almost_eq(SimulationServer.get_simulation_time() - time_before, seconds, 0.0001)
+    assert_almost_eq(SimulationServer.simulation_get_time() - time_before, seconds, 0.0001)
     assert_almost_eq(_travelled() - before, seconds * VELOCITY_MS, VELOCITY_MS * FRAME_TOLERANCE,
             "the vehicle drove the simulated seconds, not the real ones")
 
@@ -103,7 +103,7 @@ func test_a_long_frame_is_announced_in_short_slices() -> void:
     var slices:Array[float] = []
     var record:Callable = func(seconds:float) -> void: slices.append(seconds)
     SimulationServer.simulation_advanced.connect(record)
-    SimulationServer.advance(MAX_FRAME_DELTA)
+    SimulationServer.simulation_advance(MAX_FRAME_DELTA)
     SimulationServer.simulation_advanced.disconnect(record)
 
     assert_eq(slices.size(), roundi(MAX_FRAME_DELTA * SECOND_A_FRAME_SPEED / MAX_SLICE_TIME), "ten slices of a second")
@@ -114,7 +114,7 @@ func test_a_long_frame_is_announced_in_short_slices() -> void:
 ## The time of day runs with the same seconds.
 func test_the_time_of_day_runs_by_the_clock() -> void:
     var hours_before:float = SimulationServer.time_of_day
-    SimulationServer.advance(MAX_FRAME_DELTA)
+    SimulationServer.simulation_advance(MAX_FRAME_DELTA)
     assert_almost_eq(fposmod(SimulationServer.time_of_day - hours_before, 24.0), MAX_FRAME_DELTA / 3600.0,
             FRAME_TOLERANCE / 3600.0)
 
@@ -122,21 +122,21 @@ func test_the_time_of_day_runs_by_the_clock() -> void:
 ## x100 is x100: a 60 fps frame is well past the original's second a frame.
 func test_the_speed_is_honoured_past_a_second_a_frame() -> void:
     SimulationServer.simulation_speed = FAST_SPEED
-    var time_before:float = SimulationServer.get_simulation_time()
+    var time_before:float = SimulationServer.simulation_get_time()
     var frame:float = 1.0 / 60.0
-    SimulationServer.advance(frame)
-    assert_almost_eq(SimulationServer.get_simulation_time() - time_before, frame * FAST_SPEED, 0.0001)
+    SimulationServer.simulation_advance(frame)
+    assert_almost_eq(SimulationServer.simulation_get_time() - time_before, frame * FAST_SPEED, 0.0001)
 
 
 ## Paused, the clock stands, and so does everything that reads it.
 func test_the_clock_stands_while_paused() -> void:
-    SimulationServer.pause()
-    var time_before:float = SimulationServer.get_simulation_time()
+    SimulationServer.simulation_pause()
+    var time_before:float = SimulationServer.simulation_get_time()
     var before:float = _travelled()
     await wait_idle_frames(2)
-    assert_eq(SimulationServer.get_simulation_time(), time_before)
+    assert_eq(SimulationServer.simulation_get_time(), time_before)
     assert_eq(_travelled(), before)
-    SimulationServer.unpause()
+    SimulationServer.simulation_unpause()
 
 
 ## Like a tape's motor, the running speed gets to the one set over a while, not at once
@@ -144,11 +144,11 @@ func test_a_speed_set_is_reached_over_the_speed_change_time() -> void:
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME)
     SimulationServer.simulation_speed = DOUBLE_SPEED
 
-    SimulationServer.advance(SHORT_FRAME)
+    SimulationServer.simulation_advance(SHORT_FRAME)
     var running:float = SimulationServer.simulation_get_current_speed()
     assert_true(running > 1.0 and running < DOUBLE_SPEED, "on its way: %s" % running)
     for frame:int in SETTLE_FRAMES:
-        SimulationServer.advance(SHORT_FRAME)
+        SimulationServer.simulation_advance(SHORT_FRAME)
 
     assert_eq(SimulationServer.simulation_get_current_speed(), DOUBLE_SPEED)
     assert_eq(SimulationServer.simulation_speed, DOUBLE_SPEED, "the speed set is the one set")

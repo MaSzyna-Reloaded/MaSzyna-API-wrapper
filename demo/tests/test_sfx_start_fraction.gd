@@ -1,6 +1,6 @@
 extends GutTest
 
-## Every vehicle of a consist plays the same running noise, and it is an automation crossfaded
+## Every vehicle of a trainset plays the same running noise, and it is an automation crossfaded
 ## between speed chunks. Each vehicle's shift has to reach every chunk it swaps in, or the copies
 ## play in step and ring metallic (DynObj.cpp:6511, audiorenderer.cpp:99).
 

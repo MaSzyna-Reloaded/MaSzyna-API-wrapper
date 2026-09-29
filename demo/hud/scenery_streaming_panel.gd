@@ -30,7 +30,7 @@ func _process(delta:float) -> void:
 
 
 func _refresh() -> void:
-    var statistics:Dictionary = SceneryStreamingServer.get_statistics()
+    var statistics:Dictionary = SceneryStreamingServer.streaming_get_statistics()
     var camera_position:Vector3 = statistics["camera_position"]
     var camera_chunk:Vector2i = statistics["camera_chunk"]
     var registered:int = statistics["registered"]
@@ -61,7 +61,7 @@ func _refresh() -> void:
 
     # Real (spot/omni) lights of the streamed scenery models; "synth" are the ones the street lamp
     # quirk derived for models that light the scene without declaring a spotlight submodel
-    var lights:Dictionary = E3DRenderingServer.get_light_statistics()
+    var lights:Dictionary = E3DRenderingServer.light_get_statistics()
     _rows["Scenery lights"].text = tr("%d lit / %d (%d spot, %d omni, %d synth)") % [
         lights["lit"], lights["spot"] + lights["omni"], lights["spot"], lights["omni"],
         lights["synthesized"],

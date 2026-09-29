@@ -159,7 +159,7 @@ namespace godot {
             /// A context whose scripts load their files from p_base_dir
             RID context_create(const String &p_base_dir);
             void context_free(const RID &p_context);
-            TypedArray<RID> get_contexts() const;
+            TypedArray<RID> context_get_rids() const;
             /// Runs a file of the base directory as the unit named after it; false when it failed
             bool context_run_file(const RID &p_context, const String &p_path);
             /// Compiles the code of the unit without running it; returns the error, empty when there

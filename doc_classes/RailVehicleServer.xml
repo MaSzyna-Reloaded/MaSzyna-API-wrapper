@@ -7,55 +7,26 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="broadcast_command">
-			<return type="void" />
-			<param index="0" name="command" type="StringName" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Sends [param command] to every vehicle that has it. Reports an error when no vehicle does.
-			</description>
-		</method>
-		<method name="generic_vehicle_component_find" qualifiers="const">
-			<return type="VehicleComponent[]" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="tag" type="StringName" />
-			<description>
-			</description>
-		</method>
-		<method name="get_vehicles" qualifiers="const">
-			<return type="RID[]" />
-			<description>
-				Returns the handles of every vehicle the server holds.
-			</description>
-		</method>
-		<method name="get_vehicles_in_rect" qualifiers="const">
-			<return type="RID[]" />
-			<param index="0" name="rect" type="Rect2" />
-			<description>
-				Returns the handles of the vehicles whose position (x, z) lies in [param rect].
-			</description>
-		</method>
-		<method name="is_stepping_enabled" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="radio_stop">
+		<method name="emergency_signal_send">
 			<return type="void" />
 			<param index="0" name="position" type="Vector3" />
 			<description>
 			</description>
 		</method>
-		<method name="set_stepping_enabled">
+		<method name="stepping_advance">
 			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
+			<param index="0" name="delta" type="float" />
 			<description>
 			</description>
 		</method>
-		<method name="step">
+		<method name="stepping_is_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="stepping_set_enabled">
 			<return type="void" />
-			<param index="0" name="delta" type="float" />
+			<param index="0" name="enabled" type="bool" />
 			<description>
 			</description>
 		</method>
@@ -81,6 +52,15 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_broadcast_command">
+			<return type="void" />
+			<param index="0" name="command" type="StringName" />
+			<param index="1" name="p1" type="Variant" default="null" />
+			<param index="2" name="p2" type="Variant" default="null" />
+			<description>
+				Sends [param command] to every vehicle that has it. Reports an error when no vehicle does.
+			</description>
+		</method>
 		<method name="vehicle_component_get" qualifiers="const">
 			<return type="VehicleComponent" />
 			<param index="0" name="vehicle" type="RID" />
@@ -101,6 +81,12 @@
 		</method>
 		<method name="vehicle_dump_state">
 			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_emergency_signal_send">
+			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
@@ -136,6 +122,13 @@
 		<method name="vehicle_free">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_generic_component_find" qualifiers="const">
+			<return type="VehicleComponent[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="tag" type="StringName" />
 			<description>
 			</description>
 		</method>
@@ -191,6 +184,19 @@
 			<return type="RID" />
 			<param index="0" name="name" type="String" />
 			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_rids" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Returns the handles of every vehicle the server holds.
+			</description>
+		</method>
+		<method name="vehicle_get_rids_in_rect" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="rect" type="Rect2" />
+			<description>
+				Returns the handles of the vehicles whose position (x, z) lies in [param rect].
 			</description>
 		</method>
 		<method name="vehicle_get_speed" qualifiers="const">
@@ -252,12 +258,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_radio_stop">
-			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
 		<method name="vehicle_send_command">
 			<return type="Variant" />
 			<param index="0" name="vehicle" type="RID" />
@@ -303,6 +303,11 @@
 				A command ran against [param vehicle].
 			</description>
 		</signal>
+		<signal name="vehicle_emergency_signal_received">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
 		<signal name="vehicle_freed">
 			<param index="0" name="vehicle" type="RID" />
 			<description>
@@ -339,11 +344,6 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="call" type="int" />
 			<param index="2" name="position" type="Vector3" />
-			<description>
-			</description>
-		</signal>
-		<signal name="vehicle_radio_stop_received">
-			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</signal>

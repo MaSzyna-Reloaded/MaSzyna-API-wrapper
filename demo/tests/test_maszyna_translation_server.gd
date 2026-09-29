@@ -24,7 +24,7 @@ func before_all() -> void:
 
 
 func before_each() -> void:
-    MaszynaTranslationServer.load_translation(FIXTURE_PO)
+    MaszynaTranslationServer.translation_load(FIXTURE_PO)
 
 
 func after_all() -> void:
@@ -50,7 +50,7 @@ func test_unknown_msgid_stays_as_it_is() -> void:
 
 
 func test_missing_catalogue_leaves_only_the_wrappers_strings() -> void:
-    MaszynaTranslationServer.load_translation("res://tests/fixtures/lang/missing.po")
+    MaszynaTranslationServer.translation_load("res://tests/fixtures/lang/missing.po")
     assert_eq(TranslationServer.translate("master controller"), "master controller")
     assert_eq(TranslationServer.translate("forward"), "przód")
 
@@ -60,7 +60,7 @@ func test_rebuild_in_the_same_language_retranslates_the_tree() -> void:
     add_child_autofree(listener)
     await wait_process_frames(1)
     var changes:int = listener.changes
-    MaszynaTranslationServer.load_translation(FIXTURE_PO)
+    MaszynaTranslationServer.translation_load(FIXTURE_PO)
     assert_eq(listener.changes, changes + 1)
 
 

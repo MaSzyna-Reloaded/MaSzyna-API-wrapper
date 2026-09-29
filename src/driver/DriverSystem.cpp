@@ -13,7 +13,7 @@ namespace godot {
     void DriverSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("driver_create"), &DriverSystem::driver_create);
         ClassDB::bind_method(D_METHOD("driver_free", "driver"), &DriverSystem::driver_free);
-        ClassDB::bind_method(D_METHOD("get_drivers"), &DriverSystem::get_drivers);
+        ClassDB::bind_method(D_METHOD("driver_get_rids"), &DriverSystem::driver_get_rids);
         ClassDB::bind_method(
                 D_METHOD("driver_attach_delegate", "driver", "delegate"), &DriverSystem::driver_attach_delegate);
         ClassDB::bind_method(D_METHOD("driver_get_delegate", "driver"), &DriverSystem::driver_get_delegate);
@@ -87,7 +87,7 @@ namespace godot {
     void DriverSystem::_process_updates(double /* p_seconds */) {
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        const double time = runtime->get_simulation_time();
+        const double time = runtime->simulation_get_time();
         const uint64_t pass_end = next_sequence;
         while (!updates.empty() && updates.top().time <= time && updates.top().sequence < pass_end) {
             const UpdateEntry entry = updates.top();
@@ -152,7 +152,7 @@ namespace godot {
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         updates.push(
-                UpdateEntry{runtime->get_simulation_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
+                UpdateEntry{runtime->simulation_get_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
         _refresh_processing();
     }
 
@@ -176,7 +176,7 @@ namespace godot {
         return rid;
     }
 
-    TypedArray<RID> DriverSystem::get_drivers() const {
+    TypedArray<RID> DriverSystem::driver_get_rids() const {
         TypedArray<RID> result;
         for (const KeyValue<RID, DriverData> &entry: drivers) {
             result.append(entry.key);

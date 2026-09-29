@@ -1,18 +1,18 @@
 extends Node
 class_name MaszynaAutoRewidentNode
 
-## Automatic consist inspection of the vehicle's driver - the original TController::AutoRewident()
+## Automatic trainset inspection of the vehicle's driver - the original TController::AutoRewident()
 ## (Driver.cpp:2147-2250). The wrapper has no driver (TController) layer, so this node carries that one
 ## piece of it: a vehicle placed with a driver (headdriver/reardriver) prepares its train once its
-## engine is ready, and again after every consist change, setting the brake delay (G/P/R) of every
+## engine is ready, and again after every trainset change, setting the brake delay (G/P/R) of every
 ## vehicle for the kind of train and releasing their manual and spring brakes.
 ##
 ## In the original that happens also with a human driver: the scenery gives the driver the
 ## Prepare_engine order and then Shunt/Obey_train (OrdersInit), PrepareEngine() completes once the
 ## engine is ready, and CheckVehicles() calls AutoRewident() in those orders (Driver.cpp:2527-2530) -
-## consist changes call CheckVehicles() as well (Train.cpp:6224, 6246). Vehicles placed without a
+## trainset changes call CheckVehicles() as well (Train.cpp:6224, 6246). Vehicles placed without a
 ## speed start braked with a full manual brake (CheckLocomotiveParameters, Mover.cpp:8946), so
-## without this the wagons of such a consist never get released.
+## without this the wagons of such a trainset never get released.
 ##
 ## Added to every vehicle by MaszynaRailVehicle3DInstancer; inactive without a driver aboard.
 
@@ -24,8 +24,8 @@ const BDELAY_R:int = 4
 const PASSENGER_TRAIN:int = 16
 ## Main reservoir pipe pressure PrepareEngine() waits for (Driver.cpp, isready)
 const READY_FEED_PIPE_PRESSURE:float = 4.5
-## Safety limit of the consist walk
-const MAX_CONSIST_VEHICLES:int = 256
+## Safety limit of the trainset walk
+const MAX_TRAINSET_VEHICLES:int = 256
 
 var _controller:VehicleController
 
@@ -36,7 +36,7 @@ var _controller:VehicleController
 ## (Driver.cpp:2142), a direction change, a coupling change (Driver.cpp:2622).
 ##
 ## The wrapper has no driver (TController) layer with orders to hook into, so the only event it can
-## use is VehicleController's consist_changed. What is left to poll is the engine becoming ready,
+## use is VehicleController's trainset_changed. What is left to poll is the engine becoming ready,
 ## which is a threshold the original's AI watches in its own update too - and this timer stops for
 ## good as soon as that happens, so a prepared vehicle costs nothing until something couples to it.
 const CHECK_INTERVAL:float = 0.5
@@ -51,7 +51,7 @@ func _ready() -> void:
     _timer = Timer.new()
     _timer.wait_time = CHECK_INTERVAL
     _timer.autostart = true
-    _timer.timeout.connect(_check_consist)
+    _timer.timeout.connect(_check_trainset)
     add_child(_timer)
 
 
@@ -59,16 +59,16 @@ func _ready() -> void:
 ## (MoverRailVehicleController::release()) after this node is already out of it
 func _exit_tree() -> void:
     if _controller:
-        _controller.consist_changed.disconnect(_on_consist_changed)
+        _controller.trainset_changed.disconnect(_on_trainset_changed)
         _controller = null
 
 
-func _check_consist() -> void:
+func _check_trainset() -> void:
     var vehicle:RailVehicle3D = get_parent() as RailVehicle3D
     var controller:VehicleController = vehicle.get_controller() if vehicle else null
     if not controller or not controller.is_simulation_ready():
         return
-    # a vehicle without a cab has no driver to inspect its consist, and the driver_type comes from the
+    # a vehicle without a cab has no driver to inspect its trainset, and the driver_type comes from the
     # FIZ - it will not become one later, so there is nothing left for this node to watch
     if controller.driver_type == VehicleController.DRIVER_NOBODY:
         _timer.stop()
@@ -76,21 +76,21 @@ func _check_consist() -> void:
 
     if not _controller == controller:
         _controller = controller
-        controller.consist_changed.connect(_on_consist_changed)
+        controller.trainset_changed.connect(_on_trainset_changed)
 
     # PrepareEngine() completes once the engine reports ready, which is a threshold the original
     # AI watches in its own update - the only thing left worth polling for
     if not _is_engine_ready(controller):
         return
-    _rewident(controller, _get_consist(controller))
-    # from here the consist can only change by coupling, and that arrives as a signal
+    _rewident(controller, _get_trainset(controller))
+    # from here the trainset can only change by coupling, and that arrives as a signal
     _timer.stop()
 
 
-## A vehicle joined or left the consist (VehicleController::couple()/uncouple()), the case the
+## A vehicle joined or left the trainset (VehicleController::couple()/uncouple()), the case the
 ## original handles with CheckVehicles() (Driver.cpp:2622) - inspect it again once the engine of
-## the new consist reports ready.
-func _on_consist_changed() -> void:
+## the new trainset reports ready.
+func _on_trainset_changed() -> void:
     _timer.start()
 
 
@@ -112,39 +112,39 @@ func _is_engine_ready(controller:VehicleController) -> bool:
 
 
 ## Coupled vehicles from the head of the train (in the driving direction, CheckVehicles()) to its tail.
-func _get_consist(controller:VehicleController) -> Array[VehicleController]:
+func _get_trainset(controller:VehicleController) -> Array[VehicleController]:
     var driving_sign:int = controller.get_occupied_cab() * int(controller.state.get("direction", 1))
     var end:int = 0 if driving_sign >= 0 else 1
     var head:VehicleController = controller
-    for i:int in MAX_CONSIST_VEHICLES:
+    for i:int in MAX_TRAINSET_VEHICLES:
         var next:VehicleController = head.get_coupled_controller(end)
         if not next:
             break
         end = 1 - head.get_coupled_end(end)
         head = next
 
-    var consist:Array[VehicleController] = [head]
+    var trainset:Array[VehicleController] = [head]
     end = 1 - end
     var current:VehicleController = head
-    for i:int in MAX_CONSIST_VEHICLES:
+    for i:int in MAX_TRAINSET_VEHICLES:
         var next:VehicleController = current.get_coupled_controller(end)
         if not next:
             break
         end = 1 - current.get_coupled_end(end)
         current = next
-        consist.append(current)
-    return consist
+        trainset.append(current)
+    return trainset
 
 
 ## TController::AutoRewident() (Driver.cpp:2147-2246). The driver's own vehicle is left alone, as the
 ## original does with a human controlled vehicle.
-func _rewident(controller:VehicleController, consist:Array[VehicleController]) -> void:
+func _rewident(controller:VehicleController, trainset:Array[VehicleController]) -> void:
     var express:int = 0
     var freight:int = 0
     var passenger:int = 0
     var length:float = 0.0
     var mass:float = 0.0
-    for member:VehicleController in consist:
+    for member:VehicleController in trainset:
         length += float(member.config.get("length", 0.0))
         mass += float(member.state.get("mass_total", 0.0))
         if float(member.config.get("power", 0.0)) < 1.0:
@@ -169,7 +169,7 @@ func _rewident(controller:VehicleController, consist:Array[VehicleController]) -
         setting = BDELAY_G
 
     var near_locomotive:int = 0
-    for member:VehicleController in consist:
+    for member:VehicleController in trainset:
         var is_locomotive:bool = float(member.config.get("power", 0.0)) > 1.0
         var delays:int = int(member.config.get("brake_delays", 0))
         var brake_delay:int = BDELAY_P

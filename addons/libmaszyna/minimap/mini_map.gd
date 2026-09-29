@@ -148,7 +148,7 @@ func _draw() -> void:
 
 func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void:
     if not Engine.is_editor_hint():
-        var vehicles: Array[RID] = RailVehicleServer.get_vehicles_in_rect(visible_rect)
+        var vehicles: Array[RID] = RailVehicleServer.vehicle_get_rids_in_rect(visible_rect)
         for vehicle: RID in vehicles:
             var vehicle_position:Vector3 = RailVehicleServer.vehicle_get_transform(vehicle).origin
             var vehicle_name: String = RailVehicleServer.vehicle_get_name(vehicle)

@@ -15,7 +15,7 @@ func after_each():
 
 func test_clear_cache_emits_the_request():
     watch_signals(SimulationServer)
-    SimulationServer.clear_cache()
+    SimulationServer.cache_clear()
     assert_signal_emitted(SimulationServer, "cache_clear_requested")
 
 func test_a_created_cache_follows_the_request():
@@ -23,9 +23,9 @@ func test_a_created_cache_follows_the_request():
     _cache.set("entry.res", resource)
     assert_true(_cache.has("entry.res"), "the entry should be in the cache before it is cleared")
 
-    SimulationServer.clear_cache()
+    SimulationServer.cache_clear()
     assert_false(_cache.has("entry.res"), "clear_cache() should drop the entry of every cache")
 
 func test_build_number_is_the_stamp_of_the_build():
-    var stamp:String = SimulationServer.get_build_number()
+    var stamp:String = SimulationServer.build_get_number()
     assert_eq(stamp, FileAccess.get_file_as_string("res://build_number.txt").strip_edges())

@@ -192,7 +192,7 @@ interface.
   every coupler: at 60 fps nobody notices, at a slow frame or a faster simulation a long train
   locks up - the Stary Jawor eszelon, 21 vehicles, stood at 0.18 m/s with 391 kN at the wheels at
   0.17 s a frame, and ran to 14 m/s at 0.03 s. Wrapper: locations and neighbours refreshed before
-  every sub-step (`RailVehicleServer::step()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
+  every sub-step (`RailVehicleServer::stepping_advance()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
 * **The FIZ loader is not in the vendored copy.** Ours is 9598 lines against the original's 12813
   and holds no `LoadFIZ_*` at all, so every quirk of how a FIZ key reaches a Mover field has to be
   read in `~/src/maszyna`, not in `src/legacy/maszyna-mover`.
@@ -236,7 +236,7 @@ interface.
   first and the cargo's name only when the count is non-zero, and the original zeroes both on the
   spot - the comment is "idiotoodporność" (`simulation/simulationstateserializer.cpp:1032`).
   Reading the next token unconditionally eats `enddynamic` and desynchronises the rest of the node.
-* **`offset == -1.0` is a sentinel, not an offset.** It means "reversed in the consist"
+* **`offset == -1.0` is a sentinel, not an offset.** It means "reversed in the trainset"
   (`simulation/simulationstateserializer.cpp:1061`, `:1068`).
 * **A double slip is not a `cross`.** `track cross` is a *road* intersection in the original
   (`world/Track.cpp:420`, `:425`, `iCategoryFlag = 2`); a double slip is four `track switch` nodes
@@ -277,7 +277,7 @@ interface.
 ## Sound (`audio/audiorenderer.cpp`, `vehicle/DynObj.cpp`)
 
 * **The original knows its running noise combs and works around it in one line.** Every vehicle of
-  a consist plays the same recording, and identical loops a few metres apart comb against each
+  a trainset plays the same recording, and identical loops a few metres apart comb against each
   other. `audiorenderer.cpp` says so where it happens - "potentially adjust starting point of the
   last buffer (to reduce chance of reverb effect with multiple, looping copies playing)" - and
   `DynObj.cpp` starts each vehicle's `m_outernoise` at `Random(0.0, 80.0) * 0.01`. Two details

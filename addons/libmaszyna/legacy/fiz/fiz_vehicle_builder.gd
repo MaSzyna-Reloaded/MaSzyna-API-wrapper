@@ -191,7 +191,7 @@ static func _make_cache_hash(fiz_path: String) -> String:
 
 ## The vehicle a .fiz describes, parsed once and cached on disk - the shape
 ## E3DModelManager.load_model() has, and for the same reason: a scenery repeats the same file
-## across many consist entries, and parsing it is the expensive part.
+## across many trainset entries, and parsing it is the expensive part.
 static func build_model(data_path: String, fiz_filename: String) -> VehicleModel:
     return build_model_at(
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))

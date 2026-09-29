@@ -8,9 +8,9 @@
 
 namespace godot {
     const char *TrackServer::switch_active_track_changed_signal = "switch_active_track_changed";
-    const char *TrackServer::switch_offset_updated_signal = "switch_offset_updated";
-    const char *TrackServer::switching_started_signal = "switching_started";
-    const char *TrackServer::switching_finished_signal = "switching_finished";
+    const char *TrackServer::switch_offset_changed_signal = "switch_offset_changed";
+    const char *TrackServer::switch_movement_started_signal = "switch_movement_started";
+    const char *TrackServer::switch_movement_finished_signal = "switch_movement_finished";
     const char *TrackServer::tracks_changed_signal = "tracks_changed";
     const char *TrackServer::topology_rebuilt_signal = "topology_rebuilt";
     const char *TrackServer::topology_changed_signal = "topology_changed";
@@ -168,13 +168,13 @@ namespace godot {
                 switch_active_track_changed_signal, PropertyInfo(Variant::RID, "track_rid"),
                 PropertyInfo(Variant::INT, "active_track")));
         ADD_SIGNAL(MethodInfo(
-                switch_offset_updated_signal, PropertyInfo(Variant::RID, "track_rid"),
+                switch_offset_changed_signal, PropertyInfo(Variant::RID, "track_rid"),
                 PropertyInfo(Variant::FLOAT, "offset")));
         ADD_SIGNAL(MethodInfo(
-                switching_started_signal, PropertyInfo(Variant::RID, "track_rid"),
+                switch_movement_started_signal, PropertyInfo(Variant::RID, "track_rid"),
                 PropertyInfo(Variant::INT, "from_track"), PropertyInfo(Variant::INT, "to_track")));
         ADD_SIGNAL(MethodInfo(
-                switching_finished_signal, PropertyInfo(Variant::RID, "track_rid"),
+                switch_movement_finished_signal, PropertyInfo(Variant::RID, "track_rid"),
                 PropertyInfo(Variant::INT, "active_track")));
         ADD_SIGNAL(MethodInfo(tracks_changed_signal));
         ADD_SIGNAL(MethodInfo(topology_rebuilt_signal));
@@ -442,7 +442,7 @@ namespace godot {
         p_track.switch_f_offset = p_value;
         p_track.switch_f_offset1 = MIN(p_value, SWITCH_MAX_OFFSET);
         p_track.switch_f_offset2 = MAX(p_value, 0.0);
-        emit_signal(switch_offset_updated_signal, p_track.track_rid, p_value);
+        emit_signal(switch_offset_changed_signal, p_track.track_rid, p_value);
     }
 
     /// The blade animation runs only while a switch is actually moving - the same shape as
@@ -480,7 +480,7 @@ namespace godot {
             if (Math::abs(remaining) <= step || track->switch_offset_speed <= 0.0) {
                 _set_switch_f_offset(*track, track->switch_desired_offset);
                 moving_switches.remove_at(index);
-                emit_signal(switching_finished_signal, track_rid, track->active_track);
+                emit_signal(switch_movement_finished_signal, track_rid, track->active_track);
                 continue;
             }
             _set_switch_f_offset(*track, track->switch_f_offset + (remaining > 0.0 ? step : -step));
@@ -1196,7 +1196,7 @@ namespace godot {
                                                : -track->switch_f_offset_delay;
 
         emit_signal(switch_active_track_changed_signal, p_track, track->active_track);
-        emit_signal(switching_started_signal, p_track, from_track, p_active_track);
+        emit_signal(switch_movement_started_signal, p_track, from_track, p_active_track);
 
         moving_switches.erase(p_track);
 
@@ -1204,7 +1204,7 @@ namespace godot {
         const double full_distance = SWITCH_MAX_OFFSET + (track->switch_f_offset_delay * 2.0);
         if (remaining <= 0.0 || full_distance <= 0.0) {
             _set_switch_f_offset(*track, track->switch_desired_offset);
-            emit_signal(switching_finished_signal, p_track, p_active_track);
+            emit_signal(switch_movement_finished_signal, p_track, p_active_track);
             return;
         }
         // the whole range in SWITCH_FULL_DURATION, so a shorter move simply takes proportionally

@@ -2,7 +2,7 @@
 extends Node3D
 class_name TrainSet3D
 
-## Consist of a scenery "trainset:" block (simulationstateserializer.cpp:deserialize_trainset).
+## Trainset of a scenery "trainset:" block (simulationstateserializer.cpp:deserialize_trainset).
 ## Child MaszynaRailVehicle3D nodes are its vehicles in scenery order, coupled by couple() the same
 ## way the original couples them at "endtrainset" (TDynamicObject::AttachNext, DynObj.cpp:2590).
 

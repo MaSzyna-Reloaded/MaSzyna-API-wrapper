@@ -173,7 +173,7 @@ lighting a head.
 |---|---|
 | `mode()`, `set_mode(mode)` | `"cabin"` (only with a vehicle driven), `"free"` or `"follow"` (only with a target) |
 | `target()`, `set_target(v)` | the vehicle the following camera follows |
-| `follow_view()`, `set_follow_view(view)` | `"consist_front"`, `"consist_rear"`, `"bogie"` or `"driveby"` |
+| `follow_view()`, `set_follow_view(view)` | `"trainset_front"`, `"trainset_rear"`, `"bogie"` or `"driveby"` |
 | `cycle_follow_view()` | Shift+F4: following, the next view; else the player's vehicle followed |
 | `toggle_cabin()` | F4: from outside (following or walking) back into the cab of the vehicle driven - following with none, the free camera; in the cab, out of it |
 | `show_vehicle(v)` | the free camera beside the vehicle, looking at it |

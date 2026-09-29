@@ -83,7 +83,7 @@ func _notification(what:int) -> void:
     # Both halves come from the file the build writes (cmake/write_build_number.cmake, stamped
     # "%Y%m%d%H%M%S"), so the label names the library that is actually loaded. A date typed into
     # project.godot cannot do that - it kept showing 2026-09-19 through every build after it.
-    var stamp:String = SimulationServer.get_build_number()
+    var stamp:String = SimulationServer.build_get_number()
     %BuildLabel.text = (tr("Pre-Alpha Demo Release %s-%s-%s (build %s)") % [
         stamp.substr(0, 4), stamp.substr(4, 2), stamp.substr(6, 2), stamp
     ]) if stamp else tr("Pre-Alpha Demo Release (unbuilt)")

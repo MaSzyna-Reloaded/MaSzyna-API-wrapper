@@ -75,7 +75,7 @@ namespace godot {
 
             RID driver_create();
             /// Every driver there is
-            TypedArray<RID> get_drivers() const;
+            TypedArray<RID> driver_get_rids() const;
             void driver_free(const RID &p_driver);
             void driver_attach_delegate(const RID &p_driver, const Ref<DriverDelegate> &p_delegate);
             Ref<DriverDelegate> driver_get_delegate(const RID &p_driver) const;

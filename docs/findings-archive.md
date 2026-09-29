@@ -301,7 +301,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   within 150 m), a 0.2 s cap on the frame (still locked up), a driver fault (it drove the same in
   both runs).
 * **What proved it:** the eszelon loaded, settled for 60 frames, then the clock advanced by hand
-  (`SimulationServer.advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
+  (`SimulationServer.simulation_advance()` at a crawling speed, so only the hand advances counted) with 0.03 s
   and with 0.17 s frames - same scenery, same driver, only the frame length different: 14 m/s
   after 80 s against 0.18 m/s. Then the locations and neighbour distances refreshed before every
   sub-step instead of once a frame: 14.06 against 14.09 m/s.
@@ -309,7 +309,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   measures a coupler as the distance set by the last refresh plus ten times the relative
   `dMoveLen` since. The original refreshes once a frame (DynObj.cpp:8691-8699), so a coupler's
   load depends on the frame length; at the original's usual 60 fps it does not show.
-* **Fix:** `RailVehicleServer::step()` refreshes `update_location()` and `_update_neighbours()`
+* **Fix:** `RailVehicleServer::stepping_advance()` refreshes `update_location()` and `_update_neighbours()`
   before every sub-step (a location only for a vehicle that moved); the position is still
   announced once a frame. The Mover is untouched.
 * **Rule:** whatever the Mover measures from "since the last refresh" is refreshed every
@@ -330,7 +330,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   most 1 s, adds that to the simulation time and the time of day and emits
   `simulation_advanced(seconds)`. The physics integrates exactly those seconds in steps of at most
   0.01 s (drivermode.cpp:193-206) - no debt, no catch-up jump; a machine that cannot keep up runs
-  the simulation slower. The events and the drivers read `get_simulation_time()`; the sky reads
+  the simulation slower. The events and the drivers read `simulation_get_time()`; the sky reads
   the time of day, and the environment only sets it (a jump). Whoever needs time holds the clock
   (`clock_hold()`/`clock_release()`); paused, it stands.
 * **Rule:** anything that measures simulated time reads `SimulationServer` - never its own
@@ -416,7 +416,7 @@ and the rule. Headings keep their date and title, because comments in the code c
   (Godot 4.7). `set_locale()` to a new locale: one notification. `set_locale()` to the same
   locale, `add_translation()` and `remove_translation()`: none. A node entering the tree gets one
   of its own.
-* **Fix:** `MaszynaTranslationServer::load_translation()` sends
+* **Fix:** `MaszynaTranslationServer::translation_load()` sends
   `MainLoop::NOTIFICATION_TRANSLATION_CHANGED` itself when the locale did not change, and calls
   `set_locale()` only when it did, so the tree is told once either way.
 * **Rule:** whoever swaps a translation in an unchanged locale notifies the main loop; a composed
@@ -492,7 +492,7 @@ and the rule. Headings keep their date and title, because comments in the code c
 ## 2026-09-25 - SU46 would not release its train: the converter never started
 
 * **Symptom:** some trains, passenger and freight, could hardly be released. SU46-054 with four
-  coaches on `zwierzyniec_osob.scn` stayed braked. The consist refactor (#184) was the first
+  coaches on `zwierzyniec_osob.scn` stayed braked. The trainset refactor (#184) was the first
   suspect.
 * **What proved it:** one `get SU46-054` dump. The main reservoir was at 3.40 bar, the brake pipe
   at 3.35, and `compressor_allowed` was false. An FV4a cannot charge the pipe above the main
@@ -642,11 +642,11 @@ visible that way.
 
 * **Symptom:** throwing a switch changes the route, but the blades stay put. `TrackSwitch3D` in
   `demo_3d` still animates.
-* **Cause:** `TrackServer::_process_switches()` emits `switch_offset_updated`, and the only
+* **Cause:** `TrackServer::_process_switches()` emits `switch_offset_changed`, and the only
   listener was `TrackSwitch3D`. Since `923b293` a scenery builds tracks through
   `TrackRenderingServer`'s RID API with no nodes, so the blades were posed once in
   `_stream_build()` and never again.
-* **Fix:** `TrackRenderingServer` subscribes to `switch_offset_updated` itself. The node's copy is
+* **Fix:** `TrackRenderingServer` subscribes to `switch_offset_changed` itself. The node's copy is
   removed.
 * **Rule:** as with the scenery lights (2026-09-21), a feature parked on a node vanishes when an
   instancer without nodes appears. The server that owns the visuals subscribes to the manager.
@@ -674,9 +674,9 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 * **Rule:** before porting a field that looks like data, read what the backend does with its
   *name*.
 
-## 2026-09-24 - a consist ringing like metal, and the original naming the bug in a comment
+## 2026-09-24 - a trainset ringing like metal, and the original naming the bug in a comment
 
-* **Symptom:** from outside, a moving consist sounds metallic, like comb filtering ("podwójne
+* **Symptom:** from outside, a moving trainset sounds metallic, like comb filtering ("podwójne
   dźwięki").
 * **Ruled out:** a probe over the banks found no event registered or played twice (EP07 5/3/30,
   E186 7/4/9).
@@ -936,7 +936,7 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 * **Fixed on the way, not the cause:** a double free across an await in `_free_owned_rids()`, 14
   unguarded `get_instance()->` calls, and a HashMap iterator held across re-entry in
   `instance_free()`.
-* **Half fixed 2026-09-24:** `SceneryStreamingServer::drain()` is called from
+* **Half fixed 2026-09-24:** `SceneryStreamingServer::streaming_drain()` is called from
   `maszyna_include.gd::_exit_tree()` before `_free_owned_rids()`. The reload path has done this
   since `8d02b43`. The race while a stream is running remains open (TODO.md).
 * **Not reproducible headless:** a `--script` run has no autoloads (so no `model_loader`), and the
@@ -1100,7 +1100,7 @@ Found by reading every `_do_fetch_state_from_mover()` in #184 stage 1:
 
 ## 2026-09-21 - smoke emitters spawned at the origin of the world
 
-* **Symptom:** sm42, st44 and su45 do not smoke, although `get_smoke_statistics()` reports the
+* **Symptom:** sm42, st44 and su45 do not smoke, although `smoke_get_statistics()` reports the
   emitter as built.
 * **Cause:** the scene cull overwrites `particles_set_emission_transform()` from the instance
   transform, which was left at identity.
@@ -1135,7 +1135,7 @@ Found by reading every `_do_fetch_state_from_mover()` in #184 stage 1:
 ## 2026-09-20 - regressions after the frame-time optimisation night
 
 37 commits (`8bd5c9a`..`ed5ee09`) judged by frame time only. Nobody checked the cabin, the
-lighting or the consist.
+lighting or the trainset.
 
 ### The modelled cabin covered by the low-poly interior, its light always on
 

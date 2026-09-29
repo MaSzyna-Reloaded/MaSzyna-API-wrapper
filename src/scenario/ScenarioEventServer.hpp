@@ -174,7 +174,7 @@ namespace godot {
             void _on_isolated_freed(const RID &p_isolated, const RID &p_vehicle);
             void _on_isolated_vehicle_entered(const RID &p_isolated, const RID &p_vehicle);
             void _on_isolated_vehicle_left(const RID &p_isolated, const RID &p_vehicle);
-            void _on_submodel_animation_finished(const RID &p_instance, const String &p_submodel);
+            void _on_instance_submodel_animation_finished(const RID &p_instance, const String &p_submodel);
             void _on_instance_freed(const RID &p_instance);
             void _queue_isolated_events(const RID &p_isolated, IsolatedEvent p_slot, const RID &p_vehicle);
             /// The vehicle on the track, its flags cleared when the track is a new one
@@ -223,7 +223,7 @@ namespace godot {
             /// (event_manager::AddToQuery, Event.cpp:2380-2462). A passive event is refused.
             bool event_queue(const RID &p_event, const RID &p_activator = RID(), double p_extra_delay = 0.0);
             bool event_is_queued(const RID &p_event) const;
-            /// The simulation time (SimulationServer.get_simulation_time()) a queued event runs at,
+            /// The simulation time (SimulationServer.simulation_get_time()) a queued event runs at,
             /// negative when it is not queued
             double event_get_run_time(const RID &p_event) const;
 
@@ -280,7 +280,7 @@ namespace godot {
             /// Fires when a vehicle's radio sends the call within the radius
             /// (event_manager::queue_receivers(), Event.cpp:2255-2268)
             void launcher_set_radio_call(const RID &p_launcher, RailVehicleRadio::RadioCall p_call);
-            TypedArray<RID> get_launchers() const;
+            TypedArray<RID> launcher_get_rids() const;
             /// Queues the launcher's event if its condition passes
             void launcher_fire(const RID &p_launcher);
             /// Queues the launcher's Shift event if its condition passes

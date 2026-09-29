@@ -43,7 +43,7 @@ func test_a_change_is_not_visible_until_the_next_step() -> void:
         before,
         "still the dump this step was given"
     )
-    RailVehicleServer.step(0.016)
+    RailVehicleServer.stepping_advance(0.016)
     assert_eq(
         int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before + 1,

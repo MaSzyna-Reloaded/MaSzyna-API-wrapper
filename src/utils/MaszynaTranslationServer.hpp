@@ -43,9 +43,9 @@ namespace godot {
             /// Replaces the game's catalogue with the one in `p_po_path` and puts the merged catalogue
             /// in TranslationServer in place of the previous one; with no such file only the
             /// wrapper's own strings are translated, as in the original (translation.cpp:21)
-            void load_translation(const String &p_po_path);
+            void translation_load(const String &p_po_path);
             /// The languages there is a catalogue for in the game's `lang/`, English (the msgids
             /// themselves) always first
-            PackedStringArray get_languages() const;
+            PackedStringArray translation_get_languages() const;
     };
 } // namespace godot

@@ -71,7 +71,7 @@ class BankRuntime extends RefCounted:
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
     ## Where this vehicle's looping running noise starts inside its own sample, as a fraction of
-    ## it - drawn once, so every wagon of a consist runs its copy out of phase with the others.
+    ## it - drawn once, so every wagon of a trainset runs its copy out of phase with the others.
     var running_start_fraction:float = 0.0
     var culled:bool = false
     var last_batch:Dictionary = {}
@@ -159,8 +159,8 @@ var _coupler_sources:Dictionary[RID, VehicleController] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
 var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
-## Controllers of the listener's own consist, refreshed with the sweep and on a context change
-var _listener_consist_ids:Dictionary = {}
+## Controllers of the listener's own trainset, refreshed with the sweep and on a context change
+var _listener_trainset_ids:Dictionary = {}
 var _culling_distance:float = 1000.0
 var _sweep_timer:Timer
 var _listener:TrainSoundListener3D
@@ -175,8 +175,8 @@ func _ready() -> void:
     _sweep_timer.timeout.connect(_refresh_active_banks)
     add_child(_sweep_timer)
     _sweep_timer.start()
-    SimulationServer.paused.connect(_on_runtime_paused)
-    SimulationServer.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.simulation_paused.connect(_on_runtime_paused)
+    SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.connect(_on_simulation_current_speed_changed)
     SimulationServer.simulation_speed_changed.connect(_mute_world)
     _on_simulation_current_speed_changed()
@@ -247,7 +247,7 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
 
 ## Only the banks the sweep left in range, and of those only the ones whose own interval is up.
 ## Everything that does not change with the frame - the distance, the culling, the listener's
-## consist - belongs to _refresh_active_banks().
+## trainset - belongs to _refresh_active_banks().
 func _process(delta:float) -> void:
     var states:Dictionary = {}
     for runtime:BankRuntime in _active:
@@ -286,7 +286,7 @@ func _refresh_active_banks() -> void:
             float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0)),
             float(ProjectSettings.get_setting(
                     SfxPlayer3D.HARD_CUT_DISTANCE_SETTING, HARD_CUT_DISTANCE_DEFAULT)))
-    _refresh_listener_consist()
+    _refresh_listener_trainset()
     var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO
     for runtime:BankRuntime in _active:
         runtime.active = false
@@ -541,7 +541,7 @@ func _update_running_sounds(
         return
     var results:Dictionary = runtime.running.update(
             runtime.controller, state, elapsed,
-            not _listener_consist_ids.has(runtime.controller.get_instance_id()))
+            not _listener_trainset_ids.has(runtime.controller.get_instance_id()))
     for event_name:StringName in results:
         var result:Dictionary = results[event_name]
         var action:int = result["action"]
@@ -555,26 +555,26 @@ func _update_running_sounds(
             runtime.player.play(event_name, parameters)
             continue
         if not runtime.player.is_playing(event_name):
-            # every vehicle of a consist plays the same recording, and started together they
+            # every vehicle of a trainset plays the same recording, and started together they
             # comb-filter into a metallic ring heard from outside. Each one starts its own copy
             # further into the sample (DynObj.cpp:6511, audiorenderer.cpp:99).
             runtime.player.play(event_name, null, parameters, runtime.running_start_fraction)
         batch[event_name] = parameters
 
 
-## Controllers of the consist driven from the listener's cab - their outer noise is replaced by the
+## Controllers of the trainset driven from the listener's cab - their outer noise is replaced by the
 ## cab running noise (DynObj.cpp:4632-4640). It changes when the listener changes cab or the
-## consist is recoupled, so it is walked with the sweep and not per frame.
-func _refresh_listener_consist() -> void:
-    _listener_consist_ids.clear()
+## trainset is recoupled, so it is walked with the sweep and not per frame.
+func _refresh_listener_trainset() -> void:
+    _listener_trainset_ids.clear()
     if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
         return
     var pending:Array[VehicleController] = [_listener.listener_vehicle.get_controller()]
     while pending:
         var controller:VehicleController = pending.pop_back()
-        if not controller or _listener_consist_ids.has(controller.get_instance_id()):
+        if not controller or _listener_trainset_ids.has(controller.get_instance_id()):
             continue
-        _listener_consist_ids[controller.get_instance_id()] = true
+        _listener_trainset_ids[controller.get_instance_id()] = true
         pending.append(controller.get_coupled_controller(0))
         pending.append(controller.get_coupled_controller(1))
 
@@ -839,7 +839,7 @@ func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
     return false
 
 
-## The world is paused (SimulationServer.pause()): the system stops updating the banks
+## The world is paused (SimulationServer.simulation_pause()): the system stops updating the banks
 func _on_runtime_paused() -> void:
     process_mode = Node.PROCESS_MODE_DISABLED
     _mute_world()
@@ -860,7 +860,7 @@ func _on_runtime_unpaused() -> void:
 ## being loaded). The speed set, not the running one: coming down from above, the running speed
 ## approaches the limit from above for seconds.
 func _mute_world() -> void:
-    var silent:bool = SimulationServer.is_paused() or SimulationServer.simulation_speed > SILENT_ABOVE_SPEED
+    var silent:bool = SimulationServer.simulation_is_paused() or SimulationServer.simulation_speed > SILENT_ABOVE_SPEED
     AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), silent)
     AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), silent)
 

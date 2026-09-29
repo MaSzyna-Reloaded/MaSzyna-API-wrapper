@@ -51,7 +51,7 @@ func _on_player_vehicle_changed(_vehicle:RID, _previous:RID) -> void:
 
 ## A coupling changed in the trainset: its side views again, and the vehicle shown kept while it is
 ## still in it
-func _on_consist_changed() -> void:
+func _on_trainset_changed() -> void:
     _show_trainset()
     _show_trainset_vehicle(_shown if _trainset.has(_shown) else vehicle)
 
@@ -67,7 +67,7 @@ func _show_trainset() -> void:
         var controller:RailVehicleController = instance_from_id(
                 RailVehicleServer.vehicle_get_controller_instance_id(trainset_vehicle)) as RailVehicleController
         if controller:
-            controller.consist_changed.connect(_on_consist_changed)
+            controller.trainset_changed.connect(_on_trainset_changed)
             _controllers.append(controller)
         var trainset_node:MaszynaRailVehicle3D = legacy_vehicle(trainset_vehicle)
         if not trainset_node:
@@ -82,7 +82,7 @@ func _show_trainset() -> void:
 func _disconnect_controllers() -> void:
     for controller:RailVehicleController in _controllers:
         if is_instance_valid(controller):
-            controller.consist_changed.disconnect(_on_consist_changed)
+            controller.trainset_changed.disconnect(_on_trainset_changed)
     _controllers.clear()
 
 

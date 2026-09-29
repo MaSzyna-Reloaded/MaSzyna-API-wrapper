@@ -38,8 +38,8 @@ namespace godot {
     }
 
     void SceneryHUDMouseServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_camera", "camera_id"), &SceneryHUDMouseServer::set_camera);
-        ClassDB::bind_method(D_METHOD("set_active", "active"), &SceneryHUDMouseServer::set_active);
+        ClassDB::bind_method(D_METHOD("mouse_set_camera", "camera_id"), &SceneryHUDMouseServer::mouse_set_camera);
+        ClassDB::bind_method(D_METHOD("mouse_set_active", "active"), &SceneryHUDMouseServer::mouse_set_active);
         ClassDB::bind_method(
                 D_METHOD("pickable_create", "instance", "caption", "hints", "pressed", "shift_pressed"),
                 &SceneryHUDMouseServer::pickable_create);
@@ -47,8 +47,8 @@ namespace godot {
                 D_METHOD("vehicle_pickable_create", "instance", "caption", "vehicle"),
                 &SceneryHUDMouseServer::vehicle_pickable_create);
         ClassDB::bind_method(D_METHOD("pickable_free", "pickable"), &SceneryHUDMouseServer::pickable_free);
-        ClassDB::bind_method(D_METHOD("input", "event"), &SceneryHUDMouseServer::input);
-        ClassDB::bind_method(D_METHOD("get_hovered_pickable"), &SceneryHUDMouseServer::get_hovered_pickable);
+        ClassDB::bind_method(D_METHOD("mouse_input", "event"), &SceneryHUDMouseServer::mouse_input);
+        ClassDB::bind_method(D_METHOD("pickable_get_hovered"), &SceneryHUDMouseServer::pickable_get_hovered);
 
         ADD_SIGNAL(MethodInfo(
                 pickable_hovered_signal, PropertyInfo(Variant::STRING, "caption"),
@@ -57,11 +57,11 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(vehicle_pressed_signal, PropertyInfo(Variant::RID, "vehicle")));
     }
 
-    void SceneryHUDMouseServer::set_camera(const uint64_t p_camera_id) {
+    void SceneryHUDMouseServer::mouse_set_camera(const uint64_t p_camera_id) {
         camera = ObjectID(p_camera_id);
     }
 
-    void SceneryHUDMouseServer::set_active(const bool p_active) {
+    void SceneryHUDMouseServer::mouse_set_active(const bool p_active) {
         active = p_active;
         if (!active) {
             _set_hovered(RID());
@@ -107,11 +107,11 @@ namespace godot {
         pickables.erase(p_pickable);
     }
 
-    RID SceneryHUDMouseServer::get_hovered_pickable() const {
+    RID SceneryHUDMouseServer::pickable_get_hovered() const {
         return hovered;
     }
 
-    bool SceneryHUDMouseServer::input(const Ref<InputEvent> &p_event) {
+    bool SceneryHUDMouseServer::mouse_input(const Ref<InputEvent> &p_event) {
         if (!active) {
             return false;
         }

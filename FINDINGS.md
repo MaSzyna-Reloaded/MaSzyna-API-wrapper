@@ -28,9 +28,9 @@ anything. Open work belongs in `TODO.md`.
 * When a fix is being reinvented, `git log -S` the moved code and read the commit that made it
   first. *(09-24 simulation stepped after readers)*
 * Many copies of one sound: the defect is phase, not level. Look for a start offset first.
-  *(09-24 consist ringing)*
+  *(09-24 trainset ringing)*
 * Prove a fix to a value by printing it where it is used, not where it is set. A later line
-  can overwrite it. *(09-24 consist ringing, the fix that did not work)*
+  can overwrite it. *(09-24 trainset ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).
   *(09-21 +38 dB SfxTrack)*
 * A red test that survives many unrelated commits is no evidence of the commit that turned it red.
@@ -197,7 +197,7 @@ anything. Open work belongs in `TODO.md`.
   the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Whoever attaches something shared per vehicle takes away only what it attached - another owner
   may have replaced it meanwhile. *(09-27 the AI stood still in the cab the player left)*
-* Simulated time has one clock, `SimulationServer`'s: read `get_simulation_time()` or take
+* Simulated time has one clock, `SimulationServer`'s: read `simulation_get_time()` or take
   `simulation_advanced(seconds)`, never a `delta * simulation_speed` of your own. *(09-27 three
   clocks)*
 * A C++ class under an existing GDScript subclass keeps its lifecycle in `_notification()`, never

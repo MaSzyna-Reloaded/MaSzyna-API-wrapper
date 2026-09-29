@@ -6,7 +6,7 @@ class PendingInclude:
     var task_id:int = -1
     ## Sizes of the result lists when the include was reached
     var sizes:Dictionary[String, int] = {}
-    ## Task-local consist for vehicles of a trainset open across the include - its vehicles
+    ## Task-local trainset for vehicles of a trainset open across the include - its vehicles
     ## are moved into parent_trainset on merge (no node shared between threads)
     var trainset_proxy:TrainSet3D = null
     var parent_trainset:TrainSet3D = null
@@ -51,7 +51,7 @@ var trainset_name: String = ""
 var trainset_track: String = ""
 var trainset_offset: float = 0.0
 var trainset_velocity: float = 0.0
-## Consist node created by "trainset:" - vehicles of the open trainset become its children
+## Trainset node created by "trainset:" - vehicles of the open trainset become its children
 var trainset_node: TrainSet3D = null
 
 var _rotates = []

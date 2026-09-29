@@ -10,6 +10,17 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="animation_get_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="animation_set_speed">
+			<return type="void" />
+			<param index="0" name="speed" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="emission_light_create">
 			<return type="RID" />
 			<param index="0" name="instance" type="RID" />
@@ -17,20 +28,38 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_animation_speed" qualifiers="const">
-			<return type="float" />
+		<method name="environment_set_light_level">
+			<return type="void" />
+			<param index="0" name="level" type="float" />
 			<description>
 			</description>
 		</method>
-		<method name="get_light_statistics" qualifiers="const">
-			<return type="Dictionary" />
+		<method name="environment_set_time">
+			<return type="void" />
+			<param index="0" name="hours" type="float" />
 			<description>
 			</description>
 		</method>
-		<method name="get_smoke_statistics" qualifiers="const">
-			<return type="Dictionary" />
+		<method name="environment_set_wind">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<param index="1" name="direction" type="Vector3" />
 			<description>
-				Number of particle emitters the server owns ([code]total[/code]) and how many of them are currently built ([code]built[/code]). A scenery emitter is built only while it is streamed in.
+				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
+			</description>
+		</method>
+		<method name="environment_set_wind_direction">
+			<return type="void" />
+			<param index="0" name="direction" type="Vector3" />
+			<description>
+				Direction the wind blows along, without touching its strength. Normalized by the server; horizontal today, but a vertical component needs no API change.
+			</description>
+		</method>
+		<method name="environment_set_wind_strength">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<description>
+				Wind speed in metres per second, without touching its direction.
 			</description>
 		</method>
 		<method name="instance_attach_node">
@@ -45,7 +74,7 @@
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
 			<description>
-				Builds (or rebuilds) the content of the [param instance]. Materials are resolved with the callable set by [method set_material_resolver].
+				Builds (or rebuilds) the content of the [param instance]. Materials are resolved with the callable set by [method material_set_resolver].
 			</description>
 		</method>
 		<method name="instance_create">
@@ -80,7 +109,7 @@
 				Where the segment [param from]..[param to] (world space) first meets the meshes of the instance: [code]{position, distance}[/code], the distance measured from [param from]. Empty when it misses, or when the instance is hidden or not built (not streamed in).
 			</description>
 		</method>
-				<method name="instance_register">
+		<method name="instance_register">
 			<return type="RID" />
 			<param index="0" name="data_path" type="String" />
 			<param index="1" name="model_filename" type="String" />
@@ -90,7 +119,7 @@
 			<param index="5" name="range_end" type="float" />
 			<param index="6" name="scenario" type="RID" />
 			<description>
-				Registers a scenery model placement for streaming instead of building it right away. Nothing is loaded or built until [SceneryStreamingServer]'s camera comes within [param range_end] of the chunk the [param transform] falls into; the instance is cleared again when the camera leaves. [param range_end] of [code]0[/code] (a scenery node that declares no range) means the global draw distance. The model is loaded on the streaming worker thread with the callable set by [method set_model_loader].
+				Registers a scenery model placement for streaming instead of building it right away. Nothing is loaded or built until [SceneryStreamingServer]'s camera comes within [param range_end] of the chunk the [param transform] falls into; the instance is cleared again when the camera leaves. [param range_end] of [code]0[/code] (a scenery node that declares no range) means the global draw distance. The model is loaded on the streaming worker thread with the callable set by [method model_set_loader].
 				Without a streaming camera a registered instance is never built. Free it with [method instance_free] like any other instance.
 			</description>
 		</method>
@@ -127,6 +156,15 @@
 			<description>
 			</description>
 		</method>
+		<method name="instance_set_lights_dimmed">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="lights_dimmed" type="Dictionary" />
+			<param index="2" name="multiplier" type="float" />
+			<description>
+				Light name to dimmed: a dimmed light shows its "_xon" submodel instead of "_on" when it has one, and its spotlight ([constant INSTANCER_NODES]) shines at [param multiplier] of its energy.
+			</description>
+		</method>
 		<method name="instance_set_lights_modes">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -142,13 +180,12 @@
 				Light name to enabled state; shows the "on" or the "off" submodels of the model's lights (and the spotlights of [constant INSTANCER_NODES]).
 			</description>
 		</method>
-		<method name="instance_set_lights_dimmed">
+		<method name="instance_set_material_overlay">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
-			<param index="1" name="lights_dimmed" type="Dictionary" />
-			<param index="2" name="multiplier" type="float" />
+			<param index="1" name="material" type="Material" />
 			<description>
-				Light name to dimmed: a dimmed light shows its "_xon" submodel instead of "_on" when it has one, and its spotlight ([constant INSTANCER_NODES]) shines at [param multiplier] of its energy.
+				Draws [param material] over every submodel of the instance (an outline, a tint); [code]null[/code] for none. Kept while the instance is streamed out and in again.
 			</description>
 		</method>
 		<method name="instance_set_options">
@@ -206,15 +243,7 @@
 				Global transform of an [constant INSTANCER_OPTIMIZED] instance. A node tree follows its attached node instead.
 			</description>
 		</method>
-		<method name="instance_set_material_overlay">
-			<return type="void" />
-			<param index="0" name="instance" type="RID" />
-			<param index="1" name="material" type="Material" />
-			<description>
-				Draws [param material] over every submodel of the instance (an outline, a tint); [code]null[/code] for none. Kept while the instance is streamed out and in again.
-			</description>
-		</method>
-				<method name="instance_set_visibility_range">
+		<method name="instance_set_visibility_range">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="begin" type="float" />
@@ -249,6 +278,25 @@
 			<description>
 			</description>
 		</method>
+		<method name="light_get_statistics" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="material_set_resolver">
+			<return type="void" />
+			<param index="0" name="material_resolver" type="Callable" />
+			<description>
+				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, force_alpha: bool) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
+			</description>
+		</method>
+		<method name="model_set_loader">
+			<return type="void" />
+			<param index="0" name="model_loader" type="Callable" />
+			<description>
+				Called as [code]model_loader(data_path: String, filename: String) -&gt; E3DModel[/code] on the streaming worker thread, for instances registered with [method instance_register] that enter the camera's range. The result is memoized per path. Set by [code]E3DModelManager[/code].
+			</description>
+		</method>
 		<method name="omni_light_create">
 			<return type="RID" />
 			<param index="0" name="instance" type="RID" />
@@ -257,65 +305,17 @@
 			<description>
 			</description>
 		</method>
-		<method name="set_animation_speed">
-			<return type="void" />
-			<param index="0" name="speed" type="float" />
+		<method name="smoke_get_statistics" qualifiers="const">
+			<return type="Dictionary" />
 			<description>
+				Number of particle emitters the server owns ([code]total[/code]) and how many of them are currently built ([code]built[/code]). A scenery emitter is built only while it is streamed in.
 			</description>
 		</method>
-		<method name="set_current_time">
-			<return type="void" />
-			<param index="0" name="hours" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="set_light_level">
-			<return type="void" />
-			<param index="0" name="level" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="set_material_resolver">
-			<return type="void" />
-			<param index="0" name="material_resolver" type="Callable" />
-			<description>
-				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, force_alpha: bool) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
-			</description>
-		</method>
-		<method name="set_model_loader">
-			<return type="void" />
-			<param index="0" name="model_loader" type="Callable" />
-			<description>
-				Called as [code]model_loader(data_path: String, filename: String) -&gt; E3DModel[/code] on the streaming worker thread, for instances registered with [method instance_register] that enter the camera's range. The result is memoized per path. Set by [code]E3DModelManager[/code].
-			</description>
-		</method>
-		<method name="set_smoke_source_resolver">
+		<method name="smoke_set_source_resolver">
 			<return type="void" />
 			<param index="0" name="smoke_source_resolver" type="Callable" />
 			<description>
 				Called as [code]smoke_source_resolver(template_name: String, owner: InstanceKind) -&gt; Dictionary[/code] with the keys [code]process_material[/code], [code]mesh[/code], [code]amount[/code], [code]lifetime[/code] and [code]aabb[/code], when an emitter is built. An empty dictionary leaves the emitter unbuilt. Set by [code]SmokeSourceLibrary[/code], which reads the templates from the game's [code]data/[/code] directory.
-			</description>
-		</method>
-		<method name="set_wind">
-			<return type="void" />
-			<param index="0" name="strength" type="float" />
-			<param index="1" name="direction" type="Vector3" />
-			<description>
-				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
-			</description>
-		</method>
-		<method name="set_wind_direction">
-			<return type="void" />
-			<param index="0" name="direction" type="Vector3" />
-			<description>
-				Direction the wind blows along, without touching its strength. Normalized by the server; horizontal today, but a vertical component needs no API change.
-			</description>
-		</method>
-		<method name="set_wind_strength">
-			<return type="void" />
-			<param index="0" name="strength" type="float" />
-			<description>
-				Wind speed in metres per second, without touching its direction.
 			</description>
 		</method>
 		<method name="spot_light_create">
@@ -338,7 +338,7 @@
 			<description>
 			</description>
 		</signal>
-		<signal name="submodel_animation_finished">
+		<signal name="instance_submodel_animation_finished">
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="submodel" type="String" />
 			<description>

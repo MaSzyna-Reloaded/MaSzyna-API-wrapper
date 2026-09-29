@@ -67,8 +67,8 @@ namespace godot {
             static const char *simulation_advanced_signal;
             static const char *cache_clear_requested_signal;
             static const char *language_changed_signal;
-            static const char *paused_signal;
-            static const char *unpaused_signal;
+            static const char *simulation_paused_signal;
+            static const char *simulation_unpaused_signal;
             static const char *simulation_speed_changed_signal;
             static const char *simulation_current_speed_changed_signal;
             /// The Project Setting of how long the running speed takes to reach one set [s]
@@ -83,16 +83,16 @@ namespace godot {
                 return dynamic_cast<SimulationServer *>(Engine::get_singleton()->get_singleton("SimulationServer"));
             }
 
-            void clear_cache();
-            String get_build_number();
-            bool check_build_version();
+            void cache_clear();
+            String build_get_number();
+            bool build_check_version();
 
             /// Hours since midnight, fractional. Setting it jumps the clock (a scenario's start, the
             /// player's change, the system time); running, it advances with the simulation.
             void set_time_of_day(double p_hours);
             double get_time_of_day() const;
             /// Simulated seconds so far (fSimulationTime, Timer.cpp:87)
-            double get_simulation_time() const;
+            double simulation_get_time() const;
             /// The clock runs while somebody holds it and the runtime is not paused: whoever needs
             /// time to pass holds it while it does, and lets it go
             void clock_hold();
@@ -102,7 +102,7 @@ namespace godot {
             /// slices of at most MAX_SLICE_TIME - each added to the simulation time and the time
             /// of day, then `simulation_advanced(seconds)`. Called by the clock's node, processed
             /// before every other.
-            void advance(double p_frame_delta);
+            void simulation_advance(double p_frame_delta);
             /// How many simulated seconds pass in one real second (Global.fTimeSpeed, Timer.cpp:80) -
             /// the speed set; the clock gets to it like a tape's motor, over the Project Setting's
             /// SPEED_CHANGE_TIME_SETTING (simulation_get_current_speed())
@@ -124,11 +124,11 @@ namespace godot {
             void set_language(const String &p_language);
             String get_language() const;
             /// Stops the world while something covers it (a loading screen, the spinner of "Exit to
-            /// menu"): whoever runs a part of the simulation, or its sound, holds it on "paused"
-            /// and lets it go on "unpaused"
-            void pause();
-            void unpause();
-            bool is_paused() const;
+            /// menu"): whoever runs a part of the simulation, or its sound, holds it on "simulation_paused"
+            /// and lets it go on "simulation_unpaused"
+            void simulation_pause();
+            void simulation_unpause();
+            bool simulation_is_paused() const;
     };
 
 } // namespace godot

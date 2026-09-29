@@ -28,7 +28,7 @@ func _ready() -> void:
     DriverSystem.driver_vehicle_attached.connect(_on_driver_vehicle_attached)
     DriverSystem.driver_freed.connect(_on_driver_freed)
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
-    for driver:RID in DriverSystem.get_drivers():
+    for driver:RID in DriverSystem.driver_get_rids():
         _on_driver_vehicle_attached(driver, DriverSystem.driver_get_vehicle(driver))
 
 

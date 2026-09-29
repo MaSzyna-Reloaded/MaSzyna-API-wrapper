@@ -11,7 +11,7 @@ class_name MaszynaVehicleStructure
 ## where it stands - is not here; it is applied to the vehicle that is built from this.
 ##
 ## Reading an MMD is the expensive part and a scenery repeats the same file across a whole
-## consist, so this turns an O(vehicle count) parse into O(distinct types). The nodes themselves
+## trainset, so this turns an O(vehicle count) parse into O(distinct types). The nodes themselves
 ## are cheap and are built per vehicle, rather than packed into a PackedScene and instantiated:
 ## a vehicle is not a scene, it is a model plus a cab plus a physics handle.
 

@@ -153,7 +153,7 @@ relying on one.
   nothing takes its controller out of a vehicle it did not own. Removing either call without
   giving the detach an owner is a behaviour change, not a tidy-up.
 * There are no update phases: the step order is a hand-written sequence in
-  `RailVehicleServer::step()` (`:1060`), and `UpdatePhase` exists nowhere.
+  `RailVehicleServer::stepping_advance()` (`:1060`), and `UpdatePhase` exists nowhere.
 * The dump carries two key conventions - nine `prefix/key` namespaces against a majority of flat
   `component_key` names. 53 `state_property` values in the MMD catalog contain `/`, so this is a
   data contract, not a rename.

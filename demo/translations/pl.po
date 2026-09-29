@@ -1043,8 +1043,6 @@ msgstr "Czeka na rozkaz"
 msgid "Signal at stop"
 msgstr "Semafor: stój"
 
-msgid "Stop ahead"
-msgstr "Stój przed nami"
 
 msgid "converter overload"
 msgstr "przekaźnik nadmiarowy przetwornicy"

@@ -164,7 +164,9 @@ func _on_refresh_timer_timeout() -> void:
     # why it stands, on the left of the sign where the next limit is otherwise
     var stop_reason:MaszynaLegacyDriverSpeed.StopReason = driver_state.get(
             "stop_reason", MaszynaLegacyDriverSpeed.StopReason.NONE)
-    %StopReason.visible = stop and not stop_reason == MaszynaLegacyDriverSpeed.StopReason.NONE
+    # a stop ahead needs no words - the sign says it
+    %StopReason.visible = stop and not stop_reason in [
+            MaszynaLegacyDriverSpeed.StopReason.NONE, MaszynaLegacyDriverSpeed.StopReason.AHEAD]
     if stop:
         var detail:PackedStringArray = []
         match stop_reason:
@@ -180,8 +182,6 @@ func _on_refresh_timer_timeout() -> void:
                 %StopReasonValue.text = tr("Waiting for orders")
             MaszynaLegacyDriverSpeed.StopReason.SIGNAL:
                 %StopReasonValue.text = tr("Signal at stop")
-            _:
-                %StopReasonValue.text = tr("Stop ahead")
         %StopReasonDetail.text = ", ".join(detail)
         %StopReasonDetail.visible = detail.size() > 0
     # the next limit only when there is a change; the sign stays put, the tile narrows on its left

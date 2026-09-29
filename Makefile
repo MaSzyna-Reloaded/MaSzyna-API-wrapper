@@ -1,4 +1,4 @@
-.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols
+.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols release-clear-godot-cache
 .DEFAULT_GOAL = compile-debug
 
 # The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
@@ -105,7 +105,14 @@ compile-release-symbols: $(BUILD_NUMBER_FILE)
 	cmake --build build-release-symbols --parallel $(CMAKE_BUILD_JOBS)
 
 
-release-linux-symbols: compile-release-symbols
+# The export keeps each scene converted to binary and converts it again only when that scene's own
+# file changes - a scene instancing another, changed one keeps the old diff of it (FINDINGS.md), so
+# a release is exported from no cache at all
+release-clear-godot-cache:
+	rm -rf demo/.godot/exported
+
+
+release-linux-symbols: release-clear-godot-cache compile-release-symbols
 	mkdir -p bin/linux
 	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
 	mv bin/linux/reloaded.zip $(LINUX_ZIP)
@@ -237,21 +244,21 @@ $(LINUX_TEMPLATE_INSTALLED): $(LINUX_TEMPLATE)
 	install -D $< $@
 
 
-release-linux: compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
+release-linux: release-clear-godot-cache compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
 	mkdir -p bin/linux
 	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
 	mv bin/linux/reloaded.zip $(LINUX_ZIP)
 	@echo "Exported: $(LINUX_ZIP)"
 
 
-release-windows: compile-windows-release
+release-windows: release-clear-godot-cache compile-windows-release
 	mkdir -p bin/windows
 	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
 	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
 	@echo "Exported: $(WINDOWS_ZIP)"
 
 
-release-android: compile-android-release
+release-android: release-clear-godot-cache compile-android-release
 	mkdir -p bin/android
 	cd demo && $(GODOT) --headless --export-release "android_arm64" ../$(ANDROID_APK)
 	@echo "Exported: $(ANDROID_APK)"

@@ -21,6 +21,18 @@ properties = {
 "valve_type": 20
 }
 
+[sub_resource type="RailVehicleMotorParameter" id="MotorParameter_210ku"]
+voltage_constant_multiplier = 17.567
+saturation_current_multiplier = 64.0
+voltage_constant = 1500.0
+saturation_current = 15.0
+
+[sub_resource type="RailVehicleMotorParameter" id="MotorParameter_ewrnx"]
+voltage_constant_multiplier = 15.0
+saturation_current_multiplier = 183.3
+voltage_constant = 2000.0
+saturation_current = 49.0
+
 [sub_resource type="RailVehicleWWListItem" id="WWListItem_tqpff"]
 rpm = 496.0
 
@@ -118,18 +130,6 @@ max_current = 1900.0
 min_wakeup_voltage = 170.0
 max_wakeup_voltage = 450.0
 max_wakeup_power = 490.0
-
-[sub_resource type="RailVehicleMotorParameter" id="MotorParameter_210ku"]
-voltage_constant_multiplier = 17.567
-saturation_current_multiplier = 64.0
-voltage_constant = 1500.0
-saturation_current = 15.0
-
-[sub_resource type="RailVehicleMotorParameter" id="MotorParameter_ewrnx"]
-voltage_constant_multiplier = 15.0
-saturation_current_multiplier = 183.3
-voltage_constant = 2000.0
-saturation_current = 49.0
 
 [sub_resource type="VehicleComponentModel" id="VehicleComponentModel_1"]
 implementation = &"MoverRailVehicleDieselElectricEngine"

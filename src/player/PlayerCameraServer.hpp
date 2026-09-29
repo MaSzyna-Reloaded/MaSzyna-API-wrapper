@@ -2,6 +2,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/variant/rid.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
 
 namespace godot {
     /// The player's view - the one owner of where the player looks from: the cab of the vehicle the
@@ -74,6 +75,8 @@ namespace godot {
             void camera_toggle_cabin();
             /// The free camera beside the vehicle, looking at it
             void camera_show_vehicle(const RID &p_vehicle);
+            /// Where camera_show_vehicle() puts the camera: beside the vehicle, looking at it
+            Transform3D camera_get_show_transform(const RID &p_vehicle) const;
     };
 } // namespace godot
 

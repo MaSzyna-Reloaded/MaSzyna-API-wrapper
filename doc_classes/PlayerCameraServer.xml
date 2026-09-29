@@ -27,6 +27,13 @@
 				The view's mode.
 			</description>
 		</method>
+		<method name="camera_get_show_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				Where [method camera_show_vehicle] puts the free camera: beside the vehicle, looking at it. The player's node starts following a far vehicle from there rather than flying to it.
+			</description>
+		</method>
 		<method name="camera_get_target" qualifiers="const">
 			<return type="RID" />
 			<description>

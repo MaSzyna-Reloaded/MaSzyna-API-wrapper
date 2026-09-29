@@ -26,6 +26,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("camera_cycle_follow_view"), &PlayerCameraServer::camera_cycle_follow_view);
         ClassDB::bind_method(D_METHOD("camera_toggle_cabin"), &PlayerCameraServer::camera_toggle_cabin);
         ClassDB::bind_method(D_METHOD("camera_show_vehicle", "vehicle"), &PlayerCameraServer::camera_show_vehicle);
+        ClassDB::bind_method(
+                D_METHOD("camera_get_show_transform", "vehicle"), &PlayerCameraServer::camera_get_show_transform);
 
         BIND_ENUM_CONSTANT(CAMERA_MODE_CABIN);
         BIND_ENUM_CONSTANT(CAMERA_MODE_FREE);
@@ -147,10 +149,10 @@ namespace godot {
         }
     }
 
-    void PlayerCameraServer::camera_show_vehicle(const RID &p_vehicle) {
+    Transform3D PlayerCameraServer::camera_get_show_transform(const RID &p_vehicle) const {
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
-        ERR_FAIL_NULL(vehicles);
-        ERR_FAIL_COND(!vehicles->vehicle_exists(p_vehicle));
+        ERR_FAIL_NULL_V(vehicles, Transform3D());
+        ERR_FAIL_COND_V(!vehicles->vehicle_exists(p_vehicle), Transform3D());
         const Transform3D body = vehicles->vehicle_get_transform(p_vehicle);
         const double length = vehicles->vehicle_dump_config(p_vehicle).get("length", 0.0);
         const Vector3 eye(0.0, SHOW_EYE_HEIGHT, 0.0);
@@ -159,9 +161,16 @@ namespace godot {
                 body.basis.get_column(0).normalized() *
                         static_cast<real_t>(MAX(SHOW_MIN_DISTANCE, length * SHOW_DISTANCE_PER_LENGTH)) +
                 eye;
+        return Transform3D(Basis(), position).looking_at(body.origin + eye);
+    }
+
+    void PlayerCameraServer::camera_show_vehicle(const RID &p_vehicle) {
+        const RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicles);
+        ERR_FAIL_COND(!vehicles->vehicle_exists(p_vehicle));
         // placed first: the free camera is where it is to be before the view is announced as free
         mode = CAMERA_MODE_FREE;
-        emit_signal(camera_placed_signal, Transform3D(Basis(), position).looking_at(body.origin + eye));
+        emit_signal(camera_placed_signal, camera_get_show_transform(p_vehicle));
         emit_signal(camera_changed_signal);
     }
 } // namespace godot

@@ -32,6 +32,8 @@ namespace godot {
             /// count: one hitch (loading, a debugger) is not taken whole and multiplied, so the
             /// simulation cannot spiral into ever longer frames; under 4 fps it runs slower.
             static constexpr double MAX_FRAME_DELTA = 0.25;
+            /// The running speed this near the one set is at it
+            static constexpr double SPEED_SETTLED = 0.001;
             /// A frame is simulated in slices no longer than this [s], each announced on its own:
             /// what reacts on the clock between frames - a driver reacts every 0.1 s at the
             /// quickest (ReactionTime, Driver.cpp:7501), an event runs in its own pass - then does
@@ -45,6 +47,10 @@ namespace godot {
             double time_of_day = 0.0;
             double simulation_time = 0.0;
             double simulation_speed = 1.0;
+            /// The speed the clock runs at, going to simulation_speed over speed_change_time
+            double current_simulation_speed = 1.0;
+            /// [s], taken from the Project Setting when a speed is set
+            double speed_change_time = 0.0;
             /// Who needs the clock running, and the node that ticks it while they do
             int clock_holders = 0;
             ObjectID clock_id;
@@ -64,6 +70,11 @@ namespace godot {
             static const char *paused_signal;
             static const char *unpaused_signal;
             static const char *simulation_speed_changed_signal;
+            static const char *simulation_current_speed_changed_signal;
+            /// The Project Setting of how long the running speed takes to reach one set [s]
+            static constexpr const char *SPEED_CHANGE_TIME_SETTING = "maszyna/simulation/speed_change_time";
+            /// ... when the project does not set it (libmaszyna.gd registers the same) [s]
+            static constexpr double SPEED_CHANGE_TIME_DEFAULT = 0.4;
             static const char *time_of_day_changed_signal;
             /// The original's own strings, untranslated - no catalogue needed
             static constexpr const char *DEFAULT_LANGUAGE = "en";
@@ -92,9 +103,16 @@ namespace godot {
             /// of day, then `simulation_advanced(seconds)`. Called by the clock's node, processed
             /// before every other.
             void advance(double p_frame_delta);
-            /// How many simulated seconds pass in one real second (Global.fTimeSpeed, Timer.cpp:80)
+            /// How many simulated seconds pass in one real second (Global.fTimeSpeed, Timer.cpp:80) -
+            /// the speed set; the clock gets to it like a tape's motor, over the Project Setting's
+            /// SPEED_CHANGE_TIME_SETTING (simulation_get_current_speed())
             void set_simulation_speed(double p_speed);
             double get_simulation_speed() const;
+            /// The speed the clock runs at now, on its way to the one set
+            double simulation_get_current_speed() const;
+            /// The wall clock's speed, at once rather than over the speed change time - a scenery
+            /// starts at it, and the menu is heard at it
+            void simulation_reset_speed();
             /// How bright the scene is, 0-1 (Global.fLuminance, simulationenvironment.cpp:184)
             void set_light_level(double p_level);
             double get_light_level() const;

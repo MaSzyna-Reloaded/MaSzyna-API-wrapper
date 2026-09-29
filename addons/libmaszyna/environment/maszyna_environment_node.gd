@@ -77,10 +77,13 @@ signal configuration_changed
 ## The fastest the simulation runs, as many times the wall clock
 const MAX_SIMULATION_SPEED: float = 100.0
 
+## How many times the wall clock the simulation runs - SimulationServer's; the node only sets it,
+## from the scene and the inspector
 @export_range(0.0, MAX_SIMULATION_SPEED) var simulation_speed: float = 1.0:
     set(value):
-        simulation_speed = clampf(value, 0.0, MAX_SIMULATION_SPEED)
-        _dirty_time = true
+        SimulationServer.simulation_speed = clampf(value, 0.0, MAX_SIMULATION_SPEED)
+    get:
+        return SimulationServer.simulation_speed
 
 @export_category("Location")
 @export_range(-90.0, 90.0, 0.001, "suffix:°") var latitude: float = 50.271:
@@ -216,6 +219,9 @@ func _enter_tree() -> void:
     UserSettings.config_changed.connect(_on_user_settings_changed)
     SimulationServer.paused.connect(_on_runtime_paused)
     SimulationServer.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.simulation_current_speed_changed.connect(_publish_animation_speed)
+    # the speed may have been set before (the scene's own simulation_speed)
+    _publish_animation_speed()
 
 
 func _exit_tree() -> void:
@@ -224,6 +230,7 @@ func _exit_tree() -> void:
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
     SimulationServer.paused.disconnect(_on_runtime_paused)
     SimulationServer.unpaused.disconnect(_on_runtime_unpaused)
+    SimulationServer.simulation_current_speed_changed.disconnect(_publish_animation_speed)
 
 
 func _process(delta: float) -> void:
@@ -416,7 +423,7 @@ func _on_runtime_unpaused() -> void:
 
 ## Scenery submodels animate in the simulation's time: at its speed, and not at all while paused
 func _publish_animation_speed() -> void:
-    E3DRenderingServer.set_animation_speed(0.0 if SimulationServer.is_paused() else simulation_speed)
+    E3DRenderingServer.set_animation_speed(0.0 if SimulationServer.is_paused() else SimulationServer.simulation_get_current_speed())
 
 
 func _apply_time_configuration() -> void:
@@ -446,8 +453,6 @@ func _push_environment_state(delta: float) -> void:
     E3DRenderingServer.set_light_level(light_level)
     # Global.fLuminance of the free spotlights' glare (types/free_spotlight_glare.gdshader)
     RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
-    SimulationServer.simulation_speed = simulation_speed
-    _publish_animation_speed()
     SimulationServer.light_level = light_level
     SimulationServer.air_temperature = temperature
     E3DRenderingServer.set_wind(

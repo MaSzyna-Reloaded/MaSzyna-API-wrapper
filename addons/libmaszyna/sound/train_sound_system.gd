@@ -21,6 +21,11 @@ const HARD_CUT_DISTANCE_DEFAULT:float = 1000.0
 const EXTERIOR_BUS:StringName = &"Exterior"
 ## The cab's own sounds (MmdSoundBankInstancer puts a cabin-only bank on it)
 const CABIN_BUS:StringName = &"Cabin"
+## The sound runs at the simulation's speed, lower and slower or higher and faster like a tape, up
+## to this multiple, and stays at it above
+const TAPE_MAX_SPEED:float = 4.0
+## Set faster than this, the vehicles go silent (the weather window's speeds past the panel's x8)
+const SILENT_ABOVE_SPEED:float = 8.0
 ## Corner frequency and trim per listener context: outside, closed cab, cab with an open window.
 const WALL_OPEN_HZ:float = 20500.0
 const WALL_CABIN_HZ:float = 1600.0
@@ -172,6 +177,9 @@ func _ready() -> void:
     _sweep_timer.start()
     SimulationServer.paused.connect(_on_runtime_paused)
     SimulationServer.unpaused.connect(_on_runtime_unpaused)
+    SimulationServer.simulation_current_speed_changed.connect(_on_simulation_current_speed_changed)
+    SimulationServer.simulation_speed_changed.connect(_mute_world)
+    _on_simulation_current_speed_changed()
 
 
 func set_listener(listener:TrainSoundListener3D) -> void:
@@ -831,19 +839,30 @@ func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
     return false
 
 
-## The world is paused (SimulationServer.pause()): the system stops updating the banks, and the
-## buses the vehicles are heard on go silent - with every voice on them, including those that start
-## while the pause lasts (a scenery being loaded)
+## The world is paused (SimulationServer.pause()): the system stops updating the banks
 func _on_runtime_paused() -> void:
     process_mode = Node.PROCESS_MODE_DISABLED
-    AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), true)
-    AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), true)
+    _mute_world()
+
+
+## The whole audio's speed - the UI's sounds too (TODO.md)
+func _on_simulation_current_speed_changed() -> void:
+    AudioServer.playback_speed_scale = minf(SimulationServer.simulation_get_current_speed(), TAPE_MAX_SPEED)
 
 
 func _on_runtime_unpaused() -> void:
     process_mode = Node.PROCESS_MODE_INHERIT
-    AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), false)
-    AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), false)
+    _mute_world()
+
+
+## The buses the vehicles are heard on are silent while the world is paused or set to run faster than
+## SILENT_ABOVE_SPEED - with every voice on them, including those that start meanwhile (a scenery
+## being loaded). The speed set, not the running one: coming down from above, the running speed
+## approaches the limit from above for seconds.
+func _mute_world() -> void:
+    var silent:bool = SimulationServer.is_paused() or SimulationServer.simulation_speed > SILENT_ABOVE_SPEED
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), silent)
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), silent)
 
 
 func _unregister_bank(bank_id:int) -> void:

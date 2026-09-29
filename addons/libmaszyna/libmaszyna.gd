@@ -166,6 +166,12 @@ func _enter_tree():
     # its size on the screen while the mirror is in view within 30 m (PlanarMirror3D) - a scene
     # render per mirror
     add_custom_project_setting("maszyna/rendering/real_mirrors", true, TYPE_BOOL)
+    # How long the simulation's running speed takes to reach one set, like a tape's motor
+    # (SimulationServer.simulation_get_current_speed())
+    add_custom_project_setting(
+        "maszyna/simulation/speed_change_time", 0.4, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,5.0,0.05,suffix:s"
+    )
     # How close and how far the zoom takes the external view (Shift+F4) from what it looks at
     add_custom_project_setting(
         "maszyna/camera/external_view_min_distance", 1.0, TYPE_FLOAT,

@@ -4,6 +4,7 @@
 #include "utils/UserSettings.hpp"
 
 #include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/error_macros.hpp>
@@ -17,6 +18,7 @@ namespace godot {
     const char *SimulationServer::paused_signal = "paused";
     const char *SimulationServer::unpaused_signal = "unpaused";
     const char *SimulationServer::simulation_speed_changed_signal = "simulation_speed_changed";
+    const char *SimulationServer::simulation_current_speed_changed_signal = "simulation_current_speed_changed";
     const char *SimulationServer::time_of_day_changed_signal = "time_of_day_changed";
     const char *SimulationServer::simulation_advanced_signal = "simulation_advanced";
 
@@ -34,6 +36,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_time_of_day"), &SimulationServer::get_time_of_day);
         ClassDB::bind_method(D_METHOD("set_simulation_speed", "speed"), &SimulationServer::set_simulation_speed);
         ClassDB::bind_method(D_METHOD("get_simulation_speed"), &SimulationServer::get_simulation_speed);
+        ClassDB::bind_method(D_METHOD("simulation_get_current_speed"), &SimulationServer::simulation_get_current_speed);
+        ClassDB::bind_method(D_METHOD("simulation_reset_speed"), &SimulationServer::simulation_reset_speed);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &SimulationServer::set_light_level);
         ClassDB::bind_method(D_METHOD("get_light_level"), &SimulationServer::get_light_level);
         ClassDB::bind_method(D_METHOD("set_air_temperature", "temperature"), &SimulationServer::set_air_temperature);
@@ -41,6 +45,7 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "time_of_day"), "set_time_of_day", "get_time_of_day");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "simulation_speed"), "set_simulation_speed", "get_simulation_speed");
         ADD_SIGNAL(MethodInfo(simulation_speed_changed_signal));
+        ADD_SIGNAL(MethodInfo(simulation_current_speed_changed_signal));
         ADD_SIGNAL(MethodInfo(time_of_day_changed_signal));
         ClassDB::bind_method(D_METHOD("get_simulation_time"), &SimulationServer::get_simulation_time);
         ClassDB::bind_method(D_METHOD("clock_hold"), &SimulationServer::clock_hold);
@@ -116,7 +121,18 @@ namespace godot {
     }
 
     void SimulationServer::advance(const double p_frame_delta) {
-        const double seconds = MIN(p_frame_delta, MAX_FRAME_DELTA) * simulation_speed;
+        const double frame_delta = MIN(p_frame_delta, MAX_FRAME_DELTA);
+        if (!(current_simulation_speed == simulation_speed)) {
+            // a tape's motor: the running speed closes on the one set, most of the way in
+            // speed_change_time
+            const double closing = speed_change_time > 0.0 ? 1.0 - Math::exp(-frame_delta / speed_change_time) : 1.0;
+            current_simulation_speed += (simulation_speed - current_simulation_speed) * closing;
+            if (Math::abs(simulation_speed - current_simulation_speed) < SPEED_SETTLED) {
+                current_simulation_speed = simulation_speed;
+            }
+            emit_signal(simulation_current_speed_changed_signal);
+        }
+        const double seconds = frame_delta * current_simulation_speed;
         if (seconds <= 0.0) {
             return;
         }
@@ -141,11 +157,26 @@ namespace godot {
             return;
         }
         simulation_speed = p_speed;
+        speed_change_time =
+                ProjectSettings::get_singleton()->get_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME_DEFAULT);
         emit_signal(simulation_speed_changed_signal);
     }
 
     double SimulationServer::get_simulation_speed() const {
         return simulation_speed;
+    }
+
+    double SimulationServer::simulation_get_current_speed() const {
+        return current_simulation_speed;
+    }
+
+    void SimulationServer::simulation_reset_speed() {
+        set_simulation_speed(1.0);
+        if (current_simulation_speed == simulation_speed) {
+            return;
+        }
+        current_simulation_speed = simulation_speed;
+        emit_signal(simulation_current_speed_changed_signal);
     }
 
     void SimulationServer::set_light_level(const double p_level) {

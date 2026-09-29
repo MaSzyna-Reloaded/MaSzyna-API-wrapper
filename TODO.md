@@ -398,6 +398,14 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ## Sounds
 
+* **The UI's sounds follow the simulation's speed too.** `TrainSoundSystem` sets
+  `AudioServer.playback_speed_scale` to the running speed (up to x4, a tape's effect; set above x8,
+  the Cabin and Exterior buses are muted; 2026-09-29) -
+  the whole audio's, so the menus' clicks and the music slow down and speed up with the world.
+  To do: a speed for the world's sound only - a pitch multiplier on `SfxPlayer`/`SfxPlayer3D` (the
+  vendored `gnd-sfx` has none: pitch is per voice, `sfx_playback_runtime.gd:1191`) set on the
+  vehicles' and the weather's players, and the global scale left at 1.
+
 * MMD offsets of non-running sounds are used raw - the `SfxPlayer3D`s are not turned 180 degrees
   like the model (`maszyna_rail_vehicle_3d_instancer.gd:97`), so horns, compressor, brakes etc.
   with `offset:` sit mirrored (x, z). Running sounds convert

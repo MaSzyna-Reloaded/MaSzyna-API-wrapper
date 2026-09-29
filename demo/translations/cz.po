@@ -1022,6 +1022,15 @@ msgstr ""
 msgid "Driving aid"
 msgstr "Pomocník"
 
+msgid "Simulation speed"
+msgstr "Rychlost simulace"
+
+msgid "Simulation speed: x%s"
+msgstr "Rychlost simulace: x%s"
+
+msgid "Pause"
+msgstr "Pauza"
+
 msgid "Driving Aid Toggle"
 msgstr "Pomocník"
 

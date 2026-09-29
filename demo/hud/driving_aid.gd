@@ -51,12 +51,19 @@ func _ready() -> void:
     _dark_lamp.shader = LAMP_SHADER
     _light_lamp(%VigilanceLamp, false)
     _light_lamp(%CabSignalLamp, false)
-    if ProjectSettings.get_setting(STYLE_SETTING, Style.CARDS) == Style.TEXT:
-        var contrast:ShaderMaterial = ShaderMaterial.new()
-        contrast.shader = CONTRAST_SHADER
-        for tile:Control in _tiles():
-            tile.theme = TEXT_THEME
-            tile.material = contrast
+    for tile:Control in _tiles():
+        apply_style(tile)
+
+
+## A tile laid out in the Style the project chooses - Style.TEXT: the text theme, over a background
+## darker where the scene behind is bright. For every tile of the HUD alike (SimulationSpeedPanel).
+static func apply_style(tile:Control) -> void:
+    if not ProjectSettings.get_setting(STYLE_SETTING, Style.CARDS) == Style.TEXT:
+        return
+    var contrast:ShaderMaterial = ShaderMaterial.new()
+    contrast.shader = CONTRAST_SHADER
+    tile.theme = TEXT_THEME
+    tile.material = contrast
 
 
 ## The vehicle whose aid is shown; an invalid RID hides the tiles

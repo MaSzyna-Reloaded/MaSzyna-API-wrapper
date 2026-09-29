@@ -181,7 +181,7 @@ namespace godot {
 
     void MoverDriveUnit::process(const RailVehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();
-        const VehicleController *controller = p_engine->get_controller();
+        const Ref<VehicleController> controller = p_engine->get_controller();
         if (p_mover == nullptr || controller == nullptr ||
             controller->get_driver_type() == VehicleController::DRIVER_NOBODY) {
             return;

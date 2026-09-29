@@ -22,7 +22,7 @@ namespace godot {
              * rather than a static member: a StringName cannot be built before the engine is up. */
             static StringName &controller_implementation();
             RID vehicle_rid;
-            VehicleController *controller = nullptr;
+            Ref<VehicleController> controller;
             Ref<VehicleModel> model;
             void _build(const Ref<VehicleModel> &p_model);
             String train_id;
@@ -49,11 +49,11 @@ namespace godot {
             /* This vehicle's handle, for anything that talks to the servers */
             RID get_vehicle_rid() const;
             /* The vehicle in the simulation. Null until a model is set. */
-            VehicleController *get_controller() const;
+            Ref<VehicleController> get_controller() const;
 
             /* Adds a component to this vehicle - what a proxy node in the tree calls when it
              * joins, so a modder's component reaches the vehicle it sits under. */
-            void add_component(VehicleComponent *p_component);
+            void add_component(const Ref<VehicleComponent> &p_component);
 
             /* Set on the vehicle every time one is built. Not derived from whatever file the
              * model came from - a scenery names its vehicles, a .fiz does not. */

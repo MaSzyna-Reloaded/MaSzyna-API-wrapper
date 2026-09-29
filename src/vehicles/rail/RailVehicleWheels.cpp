@@ -9,7 +9,7 @@ namespace godot {
      * was confirmed live: getting it wrong flips the whole vehicle the moment it starts moving
      * (test_rail_vehicle_idle_orientation_regression.gd). */
     Transform3D RailVehicleWheels::get_bogie_transform(const Bogie p_bogie) const {
-        const VehicleController *controller = get_controller();
+        const VehicleController *controller = train_controller_node;
         RailVehicleServer *server = RailVehicleServer::get_instance();
         if (controller == nullptr || server == nullptr) {
             return Transform3D();

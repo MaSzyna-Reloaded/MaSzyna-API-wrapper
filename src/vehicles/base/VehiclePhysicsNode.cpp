@@ -60,7 +60,7 @@ namespace godot {
         }
         // on entering, not on ready: Godot readies children before their parent, and a
         // component proxy below this node has to find a vehicle already standing
-        if (p_what == NOTIFICATION_ENTER_TREE && controller == nullptr) {
+        if (p_what == NOTIFICATION_ENTER_TREE && controller.is_null()) {
             // with whatever model the node was given before it entered; without one the vehicle
             // still comes up, empty - components can be added to it, or a model applied later
             _build(model);
@@ -71,9 +71,11 @@ namespace godot {
                 server->vehicle_free(vehicle_rid);
             }
             vehicle_rid = RID();
-            if (controller != nullptr) {
-                memdelete(controller);
-                controller = nullptr;
+            // the vehicle lets go of its components and commands; whoever still holds it keeps
+            // an empty vehicle, never a freed one
+            if (controller.is_valid()) {
+                controller->release();
+                controller.unref();
             }
         }
     }
@@ -88,11 +90,13 @@ namespace godot {
     }
 
     void VehiclePhysicsNode::_build(const Ref<VehicleModel> &p_model) {
-        if (controller == nullptr) {
-            controller = Object::cast_to<VehicleController>(
-                    ClassDBSingleton::get_singleton()->instantiate(controller_implementation()));
-            ERR_FAIL_NULL_MSG(
-                    controller, vformat("Unknown vehicle controller implementation: %s", controller_implementation()));
+        if (controller.is_null()) {
+            // held as it is created: a reference counted object left in the Variant alone is freed
+            // with it
+            controller = ClassDBSingleton::get_singleton()->instantiate(controller_implementation());
+            ERR_FAIL_COND_MSG(
+                    controller.is_null(),
+                    vformat("Unknown vehicle controller implementation: %s", controller_implementation()));
         } else {
             /* Rebuilding replaces what the vehicle is made of, not the vehicle. Destroying the
              * controller here left every reference taken to it dangling - a sound bank registered
@@ -100,7 +104,7 @@ namespace godot {
             controller->release();
         }
         if (p_model.is_valid()) {
-            VehicleModel::apply(controller, p_model->get_properties());
+            VehicleModel::apply(controller.ptr(), p_model->get_properties());
         }
         controller->set_train_id(train_id);
         controller->set_type_name(type_name);
@@ -123,13 +127,13 @@ namespace godot {
             if (entry.is_null()) {
                 continue;
             }
-            Object *created = ClassDBSingleton::get_singleton()->instantiate(entry->get_implementation());
-            VehicleComponent *component = Object::cast_to<VehicleComponent>(created);
-            if (component == nullptr) {
+            const Ref<VehicleComponent> component =
+                    ClassDBSingleton::get_singleton()->instantiate(entry->get_implementation());
+            if (component.is_null()) {
                 ERR_PRINT(vformat("Unknown vehicle component implementation: %s", entry->get_implementation()));
                 continue;
             }
-            VehicleModel::apply(component, entry->get_properties());
+            VehicleModel::apply(component.ptr(), entry->get_properties());
             controller->add_component(component);
         }
 
@@ -145,19 +149,19 @@ namespace godot {
         return vehicle_rid;
     }
 
-    VehicleController *VehiclePhysicsNode::get_controller() const {
+    Ref<VehicleController> VehiclePhysicsNode::get_controller() const {
         return controller;
     }
 
-    void VehiclePhysicsNode::add_component(VehicleComponent *p_component) {
-        ERR_FAIL_NULL(p_component);
-        ERR_FAIL_NULL_MSG(controller, "VehiclePhysicsNode has no vehicle to add a component to yet.");
+    void VehiclePhysicsNode::add_component(const Ref<VehicleComponent> &p_component) {
+        ERR_FAIL_COND(p_component.is_null());
+        ERR_FAIL_COND_MSG(controller.is_null(), "VehiclePhysicsNode has no vehicle to add a component to yet.");
         controller->add_component(p_component);
     }
 
     void VehiclePhysicsNode::set_train_id(const String &p_train_id) {
         train_id = p_train_id;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_train_id(train_id);
         }
     }
@@ -168,7 +172,7 @@ namespace godot {
 
     void VehiclePhysicsNode::set_type_name(const String &p_type_name) {
         type_name = p_type_name;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_type_name(type_name);
         }
     }
@@ -179,7 +183,7 @@ namespace godot {
 
     void VehiclePhysicsNode::set_initial_velocity(const double p_velocity) {
         initial_velocity = p_velocity;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_initial_velocity(initial_velocity);
         }
     }
@@ -190,7 +194,7 @@ namespace godot {
 
     void VehiclePhysicsNode::set_driver_type(const VehicleController::DriverType p_driver_type) {
         driver_type = p_driver_type;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_driver_type(driver_type);
         }
     }
@@ -201,7 +205,7 @@ namespace godot {
 
     void VehiclePhysicsNode::set_load_name(const String &p_load_name) {
         load_name = p_load_name;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_load_name(load_name);
         }
     }
@@ -212,7 +216,7 @@ namespace godot {
 
     void VehiclePhysicsNode::set_load_amount(const double p_load_amount) {
         load_amount = p_load_amount;
-        if (controller != nullptr) {
+        if (controller.is_valid()) {
             controller->set_load_amount(load_amount);
         }
     }

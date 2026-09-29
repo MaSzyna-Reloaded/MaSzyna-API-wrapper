@@ -712,7 +712,9 @@ func _profile_value(profile:Array[PackedFloat32Array], placement:int, context:in
 ## them on every call, several times per frame
 func _vehicle_profile(vehicle:RailVehicle3D) -> Array[PackedFloat32Array]:
     var runtime:BankRuntime = _banks_by_vehicle.get(vehicle)
-    return runtime.soundproofing if runtime else []
+    # a typed empty one: a bare [] is refused by the typed parameter it is handed to
+    var none:Array[PackedFloat32Array] = []
+    return runtime.soundproofing if runtime else none
 
 
 func _placement_index(placement:StringName) -> int:

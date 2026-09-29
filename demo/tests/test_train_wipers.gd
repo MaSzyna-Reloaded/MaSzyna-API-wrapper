@@ -38,7 +38,6 @@ func test_defaults():
     assert_eq(defaults.angle, 0.0)
     assert_eq(defaults.default_position, 0)
     assert_eq(defaults.positions.size(), 0)
-    defaults.free()
 
 
 func test_round_trip_and_update_without_crashing():

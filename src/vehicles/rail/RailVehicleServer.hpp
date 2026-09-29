@@ -262,6 +262,9 @@ namespace godot {
             /* The node driving this vehicle, by instance id - a public API carries no pointers
              * (PhysicsServer3D::body_attach_object_instance_id is the shape this follows). */
             void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
+            /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
+             * somebody took it (DriverSystem) */
+            void vehicle_wake(const RID &p_vehicle);
             /* The instance id attached by vehicle_attach_controller(), 0 without one
              * (PhysicsServer3D::body_get_object_instance_id) */
             uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
@@ -377,7 +380,7 @@ namespace godot {
             /* The component of a kind, as a typed object - the shape
              * PhysicsServer3D::body_get_direct_state() has: a live view on the vehicle, valid
              * while the vehicle is. A per-frame reader takes it once and reads its properties. */
-            VehicleComponent *vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
+            Ref<VehicleComponent> vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
             /* Scripted components carrying a tag of the modder's own choosing */
             TypedArray<VehicleComponent>
             vehicle_generic_component_find(const RID &p_vehicle, const StringName &p_tag) const;

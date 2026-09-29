@@ -205,7 +205,7 @@ namespace godot {
         runtime->clock_release();
     }
 
-    /// One frame of the clock, before any node has been processed (SimulationClock)
+    /// One frame of the clock, before any node has been processed (SceneTree's `process_frame`)
     void RailVehicleServer::_on_simulation_advanced(const double p_seconds) {
         if (stepping && !Engine::get_singleton()->is_editor_hint()) {
             stepping_advance(p_seconds);
@@ -432,15 +432,17 @@ namespace godot {
     }
 
     void RailVehicleServer::emergency_signal_send(const Vector3 &p_position) {
+        const TrackServer *tracks = TrackServer::get_instance();
+        ERR_FAIL_NULL(tracks);
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             RailVehicleController *controller = _get_controller(entry.value);
-            if (controller == nullptr ||
+            // a vehicle not standing on a track is nowhere the signal reaches
+            if (controller == nullptr || !tracks->track_exists(entry.value.track) ||
                 _placement_transform(entry.value).origin.distance_to(p_position) > RADIO_STOP_RANGE) {
                 continue;
             }
-            if (RailVehicleRadio *radio = Object::cast_to<RailVehicleRadio>(
-                        controller->get_component(VehicleComponentType::COMPONENT_RADIO));
-                radio != nullptr && radio->radio_stop_receive()) {
+            if (const Ref<RailVehicleRadio> radio = controller->get_component(VehicleComponentType::COMPONENT_RADIO);
+                radio.is_valid() && radio->radio_stop_receive()) {
                 emit_signal(vehicle_emergency_signal_received_signal, entry.key);
             }
         }
@@ -470,7 +472,7 @@ namespace godot {
         int end = p_end;
         while (first->is_coupled_by(end, p_element)) {
             const int entered = first->get_coupled_end(end);
-            first = first->get_coupled_controller(end);
+            first = first->get_coupled_controller(end).ptr();
             end = 1 - entered;
         }
         // and back, from that end, through every vehicle joined the same way
@@ -482,7 +484,7 @@ namespace godot {
                 break;
             }
             const int entered = vehicle->get_coupled_end(end);
-            vehicle = vehicle->get_coupled_controller(end);
+            vehicle = vehicle->get_coupled_controller(end).ptr();
             end = 1 - entered;
         }
         return result;
@@ -502,7 +504,7 @@ namespace godot {
             int end = start;
             while (vehicle->is_coupled_by(end, p_element)) {
                 const int entered = vehicle->get_coupled_end(end);
-                vehicle = vehicle->get_coupled_controller(end);
+                vehicle = vehicle->get_coupled_controller(end).ptr();
                 end = 1 - entered;
                 if (p_predicate(vehicle)) {
                     return vehicle;
@@ -539,9 +541,9 @@ namespace godot {
             return RID();
         }
         const auto carries = [](const RailVehicleController *p_vehicle) {
-            const RailVehicleElectricEngine *engine = Object::cast_to<RailVehicleElectricEngine>(
-                    p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE));
-            return engine != nullptr &&
+            const Ref<RailVehicleElectricEngine> engine =
+                    p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE);
+            return engine.is_valid() &&
                    engine->get_power_source() == RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
                    engine->get_power_current_collector_number_of_collectors() > 0;
         };
@@ -557,6 +559,14 @@ namespace godot {
     uint64_t RailVehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         return placement != nullptr ? static_cast<uint64_t>(placement->controller_id) : 0;
+    }
+
+    void RailVehicleServer::vehicle_wake(const RID &p_vehicle) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        RailVehicleController *controller = _get_controller(*placement);
+        ERR_FAIL_NULL(controller);
+        controller->wake();
     }
 
     void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {
@@ -628,7 +638,13 @@ namespace godot {
 
     TypedArray<RID> RailVehicleServer::vehicle_get_rids_in_rect(const Rect2 &p_rect) const {
         TypedArray<RID> result;
+        const TrackServer *tracks = TrackServer::get_instance();
+        ERR_FAIL_NULL_V(tracks, result);
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
+            // a vehicle not standing on a track has no place on the map
+            if (!tracks->track_exists(entry.value.track)) {
+                continue;
+            }
             const Vector3 position = _placement_transform(entry.value).origin;
             if (p_rect.has_point(Vector2(position.x, position.z))) {
                 result.push_back(entry.key);
@@ -733,7 +749,7 @@ namespace godot {
             double sign = 1.0;
             while (vehicle->is_coupled_by(end, RailVehicleController::COUPLING_ELEMENT_COUPLER)) {
                 const int entered = vehicle->get_coupled_end(end);
-                vehicle = vehicle->get_coupled_controller(end);
+                vehicle = vehicle->get_coupled_controller(end).ptr();
                 // entered by the same end it was left by: that neighbour stands the other way round
                 if (entered == end) {
                     sign = -sign;
@@ -910,9 +926,8 @@ namespace godot {
     }
 
     Transform3D RailVehicleServer::_compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle) {
-        const RailVehicleWheels *wheels = Object::cast_to<RailVehicleWheels>(
-                vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS));
-        const double spacing = wheels != nullptr ? wheels->get_bogie_pivot_spacing() : 0.0;
+        const Ref<RailVehicleWheels> wheels = vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS);
+        const double spacing = wheels.is_valid() ? wheels->get_bogie_pivot_spacing() : 0.0;
         if (spacing <= 0.0) {
             // no bogies to be carried by: the track under the vehicle's own centre is all there is
             return _placement_transform(p_placement);
@@ -1134,9 +1149,8 @@ namespace godot {
      *
      * It runs on the rendered frame, not on Godot's fixed tick, exactly like the original - on the
      * fixed tick the same step ran several times per frame to catch up and the vehicles juddered.
-     * Because `process_frame` fires *after* every node's `_process`, the vehicles are handed their
-     * new placement at the end of this (apply_track_placement) rather than pulling it themselves,
-     * which would leave them a frame behind. */
+     * The vehicles are handed their new placement at the end of this (apply_track_placement)
+     * rather than pulling it themselves on their own beat. */
     double RailVehicleServer::vehicle_get_velocity(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
@@ -1159,14 +1173,14 @@ namespace godot {
      * what a console, a diagnostic dump or a cab full of widgets wants. Built once per physics
      * step and handed out unchanged until the next one, because nothing but a step can change it;
      * a reader after one value still takes the component that owns it and reads its property. */
-    VehicleComponent *
+    Ref<VehicleComponent>
     RailVehicleServer::vehicle_component_get(const RID &p_vehicle, const VehicleComponentType::Type p_type) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
-            return nullptr;
+            return Ref<VehicleComponent>();
         }
         const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_component(p_type) : nullptr;
+        return controller != nullptr ? controller->get_component(p_type) : Ref<VehicleComponent>();
     }
 
     TypedArray<VehicleComponent>
@@ -1332,9 +1346,9 @@ namespace godot {
             // the pantographs at the wire the vehicle now stands under, before its circuits run on
             // what they collect (DynObj.cpp:3714-3920)
             // only a vehicle standing on a track is under a wire, as every one of the original's is
-            if (RailVehicleElectricEngine *electric_engine = Object::cast_to<RailVehicleElectricEngine>(
-                        controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
-                electric_engine != nullptr && vehicles.getptr(stepped_vehicles[index])->track.is_valid()) {
+            if (const Ref<RailVehicleElectricEngine> electric_engine =
+                        controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
+                electric_engine.is_valid() && vehicles.getptr(stepped_vehicles[index])->track.is_valid()) {
                 const RID vehicle_rid = stepped_vehicles[index];
                 const Transform3D frame = vehicle_get_transform(vehicle_rid);
                 VehiclePlacement *powered = vehicles.getptr(vehicle_rid);

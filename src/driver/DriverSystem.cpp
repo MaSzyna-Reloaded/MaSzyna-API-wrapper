@@ -132,6 +132,11 @@ namespace godot {
     void DriverSystem::_report_driven(const RID &p_vehicle, const bool p_was_driven) {
         const bool driven = vehicle_is_driven(p_vehicle);
         if (!(driven == p_was_driven)) {
+            // a vehicle left standing has switched its simulation off; whoever takes it - the AI
+            // or the player - wakes it
+            if (RailVehicleServer *vehicles = RailVehicleServer::get_instance(); driven && vehicles != nullptr) {
+                vehicles->vehicle_wake(p_vehicle);
+            }
             emit_signal(vehicle_driven_changed_signal, p_vehicle, driven);
         }
     }

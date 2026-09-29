@@ -4,6 +4,52 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-30 - "Edit FIZ" aborted the editor
+
+* **Symptom:** toggling "Edit FIZ" on a vehicle aborted the editor (SIGABRT).
+* **What proved it:** core dump + `addr2line`: `Variant(const Object*)` in
+  `RailVehicle3D::apply_track_placement()` (`bogie_rest_global_bases.get(bogie_node)`).
+  `_apply_editable_in_editor()` re-adds the vehicle; `E3DModelInstance._exit_tree()` freed the
+  submodels without `e3d_loading`, so `RailVehicle3D` kept raw pointers to freed bogie nodes.
+* **Fix:** `E3DModelInstance` announces `e3d_loading`/`e3d_loaded` where its submodels are freed
+  and built (`_free_instance()`/`_create_instance()`); `RailVehicle3D` holds every scene node it
+  does not own as an `ObjectID` and reads the vehicle's components from `RailVehicleServer` by RID.
+  The toolbar no longer set `editable_in_editor` on `FizVehiclePhysicsNode`, which has none - the
+  script error had left the vehicle shown.
+* **Rule:** a node in the scene tree keeps no pointer to another object.
+
+## 2026-09-30 - a raw pointer returned to GDScript freed the vehicle
+
+* **Symptom:** after `VehicleController`/`VehicleComponent` became `RefCounted`, demo_3d crashed
+  within a hundred frames (`vehicle_send_command: controller is null`).
+* **What proved it:** a probe counting references: four through `VehiclePhysicsNode`, and after
+  three `RailVehicle3D.get_controller()` calls from GDScript the controller was freed. A bound
+  method returning a raw `T*` of a `RefCounted` takes a reference from it.
+* **Fix:** every bound method returning one returns `Ref<>` (`get_controller()` of
+  `RailVehicle3D`, `VehicleComponent`, `GenericVehicleComponentNode`, `get_coupled_controller()`,
+  `vehicle_component_get()`).
+* **Rule:** a `RefCounted` crosses a binding as `Ref<>`, never as a raw pointer.
+
+## 2026-09-30 - the simulation clock never ticked in demo_3d
+
+* **Symptom:** demo_3d run as the main scene: SU45's battery switched on with no effect -
+  `battery_voltage` stayed at 110 V, `power24_available` false, no CA/SHP, no pumps; horns only
+  from the debug panel. demo_scenery_loading worked. A headless probe loading demo_3d with
+  `change_scene_to_file()` worked too.
+* **What proved it:** the log's `Parent node is busy setting up children, add_child() failed` at
+  `maszyna_environment_node.gd:218` - `SimulationServer.clock_hold()`. The first hold created the
+  `SimulationClock` node and added it to the root while the root was adding the main scene; the
+  add failed, but `clock_id` was set, so `_refresh_clock()` took the clock for running and never
+  tried again. Nothing was ever stepped. A probe adding demo_3d to the root in `_initialize()`
+  reproduces it.
+* **The node's reason was wrong:** it existed because `process_frame` was taken to come after the
+  nodes (2026-09-24). Measured with a node of priority -100, a node of priority 0 and a
+  `process_frame` handler: the signal comes first, every frame.
+* **Fix:** no clock node. `SimulationServer` connects to `SceneTree.process_frame` while its clock
+  is held and not paused, and disconnects otherwise (as `TractionServer` does).
+* **Rules:** a C++ singleton ticks on `process_frame` - nothing to add to the tree; and a state
+  flag set before an operation that can fail says the operation happened when it did not.
+
 ## 2026-09-29 - the E186 screen's OP1/OP2 turned its page off
 
 * **Symptom:** on the E186 screen's pantograph page (universal1), OP1/OP2 did nothing but bring
@@ -1036,8 +1082,8 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 * **Test trap:** `test_process_movement_with_invalid_controller_reference_is_noop` relied on the
   old order. `controller = null` does not detach, so the test now detaches the controller.
 * **Rules:**
-  * `process_frame` is the end of a frame. What `_process` reads must be produced before it, and
-    `process_priority` is the only ordering inside that phase.
+  * ~~`process_frame` is the end of a frame.~~ Wrong, see 2026-09-30: measured on Godot 4.7.2,
+    `process_frame` is emitted before every node's `_process`.
   * When a fix is being reinvented, `git log -S` the moved code and read the original commit
     first.
 

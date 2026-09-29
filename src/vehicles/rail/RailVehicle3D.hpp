@@ -8,6 +8,9 @@
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/classes/tween.hpp>
+#include <godot_cpp/core/object.hpp>
+#include <godot_cpp/core/object_id.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/typed_dictionary.hpp>
@@ -66,7 +69,7 @@ namespace godot {
              * emptier the vehicle is, so where it sits is not known until the vehicle's
              * configuration has landed - see _apply_load_offset(). */
             NodePath load_model_path;
-            Node3D *load_model = nullptr;
+            ObjectID load_model_id;
             double low_poly_cabin_emission_energy = 0.2;
             double low_poly_cabin_emission_fade_time = 0.2;
             NodePath head_display_e3d_path;
@@ -75,22 +78,21 @@ namespace godot {
 
             bool dirty = true;
             bool needs_head_display_update = false;
-            Node *head_display_e3d = nullptr;
-            Cabin3D *cabin = nullptr;
-            int cabin_show_frames = 0;
-            RailVehicleController *controller = nullptr;
-            RailVehicleElectricEngine *electric_engine = nullptr;
-            /* The components this node draws from, taken when the vehicle's parts are adopted
-             * rather than looked for per frame. Each is null on a vehicle that has not got one. */
-            RailVehicleEngine *engine = nullptr;
-            RailVehicleDieselEngine *diesel_engine = nullptr;
-            RailVehicleLighting *lighting = nullptr;
-            RailVehicleWipers *wipers = nullptr;
-            RailVehicleDoors *doors = nullptr;
-            VehiclePhysicsNode *fiz_controller = nullptr;
-            Node3D *model_node = nullptr;
-            Area3D *detection_area = nullptr;
-            VisibleOnScreenNotifier3D *visibility_notifier = nullptr;
+            /* A node living in the scene tree keeps no pointer to another object. The vehicle is
+             * its `rid`, and what this node draws is read from RailVehicleServer by it where it is
+             * used (_component()): the components are the server's business, not this node's.
+             * Every node - the model, the nodes of its tree, the cab - is held by its ObjectID and
+             * resolved where it is used (_object()), since it may be freed under this one at any
+             * time (a model rebuilt, "Edit FIZ" re-adding the vehicle - FINDINGS.md 2026-09-30). */
+            ObjectID head_display_e3d_id;
+            ObjectID cabin_id;
+            /* The vehicle whose signals this node listens to (config_changed, roof_light_changed) -
+             * held only to connect and disconnect them */
+            ObjectID controller_id;
+            ObjectID fiz_controller_id;
+            ObjectID model_node_id;
+            ObjectID detection_area_id;
+            ObjectID visibility_notifier_id;
             bool is_visible = true;
             /// Fallback for maszyna/vehicles/detail_distance
             static constexpr float DEFAULT_VEHICLE_DETAIL_DISTANCE_M = 350.0;
@@ -107,7 +109,7 @@ namespace godot {
             RID pickable;
             bool force_detail_refresh = true;
             Transform3D last_body_transform;
-            Node3D *low_poly_cabin = nullptr;
+            ObjectID low_poly_cabin_id;
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;
             RID rid;
@@ -116,20 +118,20 @@ namespace godot {
             bool pending_start_track_retry = false;
             double update_time = 0.0;
             bool animation_bindings_dirty = true;
-            Node3D *front_bogie_node = nullptr;
-            Node3D *rear_bogie_node = nullptr;
-            TypedArray<Node3D> front_rolling_wheel_nodes;
-            TypedArray<Node3D> powered_wheel_nodes;
-            TypedArray<Node3D> rear_rolling_wheel_nodes;
-            Dictionary node_rest_bases;
-            Dictionary bogie_rest_global_bases;
+            ObjectID front_bogie_node_id;
+            ObjectID rear_bogie_node_id;
+            Vector<ObjectID> front_rolling_wheel_nodes;
+            Vector<ObjectID> powered_wheel_nodes;
+            Vector<ObjectID> rear_rolling_wheel_nodes;
+            HashMap<ObjectID, Basis> node_rest_bases;
+            HashMap<ObjectID, Basis> bogie_rest_global_bases;
             bool bogie_configuration_warned = false;
-            TypedArray<Node3D> pantograph_front_arm_nodes;
-            TypedArray<Node3D> pantograph_rear_arm_nodes;
-            TypedArray<Node3D> wiper_arm_nodes;
+            Vector<ObjectID> pantograph_front_arm_nodes;
+            Vector<ObjectID> pantograph_rear_arm_nodes;
+            Vector<ObjectID> wiper_arm_nodes;
             PackedFloat64Array wiper_applied_positions;
             struct MirrorNode {
-                    Node3D *node = nullptr;
+                    ObjectID node;
                     bool right = false;
                     // at the front end of the model: the original's offset().z > 0 (DynObj.cpp:5903)
                     bool front = false;
@@ -139,14 +141,23 @@ namespace godot {
             double mirror_applied_right = -1.0;
             int mirror_applied_cab = 0;
 
+            /// The object behind `p_id`, or null once it has been freed or is of another class
+            template<typename T>
+            static T *_object(const ObjectID &p_id) {
+                return Object::cast_to<T>(ObjectDB::get_instance(static_cast<uint64_t>(p_id)));
+            }
+            /* The vehicle's component of a kind, as RailVehicleServer hands it out by `rid` */
+            template<typename T>
+            Ref<T> _component(VehicleComponentType::Type p_type) const;
+            static ObjectID _id_of(const Object *p_object) {
+                return p_object != nullptr ? ObjectID(p_object->get_instance_id()) : ObjectID();
+            }
             RailVehicleController *_resolve_controller(const NodePath &p_node_path) const;
-            void _show_cabin_after_frames();
             void _on_controller_changed(RailVehicleController *p_controller);
             void _on_vehicle_changed();
             void _bind_vehicle_node();
-            const RailVehicleBuffCoupl *_coupler() const;
+            Ref<RailVehicleBuffCoupl> _coupler() const;
             void _on_vehicle_config_changed();
-            void _adopt_vehicle_parts();
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);
@@ -164,16 +175,15 @@ namespace godot {
             void _on_screen_exited();
             void _on_track_server_tracks_changed();
             void _apply_start_track();
-            TypedArray<Node3D> _resolve_animation_nodes(const TypedArray<NodePath> &p_paths) const;
+            Vector<ObjectID> _resolve_animation_nodes(const TypedArray<NodePath> &p_paths) const;
             void _capture_rest_basis(Node3D *p_node);
-            TypedArray<Node3D> _resolve_pantograph_arm_nodes(const TypedArray<NodePath> &p_paths) const;
+            Vector<ObjectID> _resolve_pantograph_arm_nodes(const TypedArray<NodePath> &p_paths) const;
             /* The pantograph as the model builds it, measured off its arm nodes and handed to
              * RailVehicleServer, which raises it - TAnimPant's lengths and angles (DynObj.cpp:5508-5549) */
             void _publish_pantograph_geometry(
-                    RailVehicleElectricEngine::PantographSelector p_pantograph,
-                    const TypedArray<Node3D> &p_nodes) const;
+                    RailVehicleElectricEngine::PantographSelector p_pantograph, const Vector<ObjectID> &p_nodes) const;
             void _cache_animation_bindings();
-            Dictionary coupler_submodel_nodes;
+            HashMap<String, ObjectID> coupler_submodel_nodes;
             int64_t coupler_visibility_state = -1;
             int _air_coupler_status(const String &p_name) const;
             int _pneumatic_variant(int p_end, bool p_brake_hose) const;
@@ -181,14 +191,15 @@ namespace godot {
             void _update_couplers();
             void _update_wipers();
             void _update_mirrors();
-            void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
+            void _apply_wheel_rotation(const Vector<ObjectID> &p_nodes, double p_angle_degrees);
+            void _apply_node_rotation(const ObjectID &p_node, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_model_detail();
             void _register_pickable(const RID &p_instance);
             void _update_smoke();
             /* The arms drawn as far as RailVehicleServer has raised them */
             void _update_pantograph_animation();
-            void _apply_pantograph_animation(const TypedArray<Node3D> &p_nodes, const Vector2 &p_raise);
+            void _apply_pantograph_animation(const Vector<ObjectID> &p_nodes, const Vector2 &p_raise);
 
         protected:
             static void _bind_methods();
@@ -205,7 +216,7 @@ namespace godot {
             void hide_cabin();
             /// The cab interior while it is shown, else null
             Cabin3D *get_cabin() const;
-            RailVehicleController *get_controller() const;
+            Ref<RailVehicleController> get_controller() const;
             /// This vehicle's handle in RailVehicleServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.
             RID get_rid() const;

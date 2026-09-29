@@ -144,7 +144,7 @@ namespace godot {
                         Chunk &chunk = chunks[static_cast<int64_t>(chunk_indices[chunk_key])];
                         // the piece is convex, so a fan from its first vertex keeps the winding
                         for (size_t corner = 1; corner + 1 < piece.size(); corner++) {
-                            const ClipVertex *fan[3] = {&piece[0], &piece[corner], &piece[corner + 1]};
+                            const ClipVertex *fan[3] = {piece.data(), &piece[corner], &piece[corner + 1]};
                             // a triangle touching the cell with an edge or a corner leaves no area in it
                             const Vector3 area =
                                     (fan[1]->position - fan[0]->position).cross(fan[2]->position - fan[0]->position);

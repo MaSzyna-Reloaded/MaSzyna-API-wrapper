@@ -1,6 +1,6 @@
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include "VehicleComponent.hpp"
 #include "VehicleController.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>

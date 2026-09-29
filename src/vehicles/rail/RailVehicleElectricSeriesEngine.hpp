@@ -9,7 +9,6 @@ namespace godot {
     class RailVehicleElectricSeriesEngine : public RailVehicleElectricEngine {
             GDCLASS(RailVehicleElectricSeriesEngine, RailVehicleElectricEngine)
         public:
-        public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
             /* Live state, read straight from the backend - nothing is stored. */

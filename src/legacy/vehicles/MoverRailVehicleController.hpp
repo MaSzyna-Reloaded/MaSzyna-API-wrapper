@@ -116,8 +116,8 @@ namespace godot {
             void apply_config() override;
             double process_movement(double p_delta) override;
             void update_location() override;
-            void
-            update_neighbour(int p_end, RailVehicleController *p_other, int p_other_end, double p_track_distance) override;
+            void update_neighbour(
+                    int p_end, RailVehicleController *p_other, int p_other_end, double p_track_distance) override;
             void compute_forces(double p_delta) override;
             void compute_movement(double p_delta) override;
             void compute_fast_movement(double p_delta) override;

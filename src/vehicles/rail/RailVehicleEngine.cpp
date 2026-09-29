@@ -70,7 +70,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("motor_overload_relay_threshold", "high"), &RailVehicleEngine::motor_overload_relay_threshold);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "RailVehicleMotorParameter");
+                RailVehicleEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING,
+                "RailVehicleMotorParameter");
         BIND_PROPERTY(RailVehicleEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
         BIND_PROPERTY(RailVehicleEngine, Variant::INT, transmission_gear_teeth_wheel, "transmission");
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, transmission_efficiency, "transmission");

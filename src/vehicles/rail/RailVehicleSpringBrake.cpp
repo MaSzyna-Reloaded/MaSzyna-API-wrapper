@@ -9,9 +9,12 @@ namespace godot {
         BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, spring_full_balance_pressure, "spring")
         BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, brake_signal_released_state_pressure, "brake_signal")
         BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, brake_signal_braked_state_pressure, "brake_signal")
-        BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_actuator_discharge, "valve_cross_section")
-        BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_actuator_charge, "valve_cross_section")
-        BIND_PROPERTY(RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_pneumatic_brake, "valve_cross_section")
+        BIND_PROPERTY(
+                RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_actuator_discharge, "valve_cross_section")
+        BIND_PROPERTY(
+                RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_actuator_charge, "valve_cross_section")
+        BIND_PROPERTY(
+                RailVehicleSpringBrake, Variant::FLOAT, valve_cross_section_pneumatic_brake, "valve_cross_section")
         BIND_PROPERTY(RailVehicleSpringBrake, Variant::INT, required_coupler_connection_method)
 
         ClassDB::bind_method(

@@ -7,7 +7,7 @@ namespace godot {
     /// What the mouse pickers (CabinHUDMouseSystem, SceneryHUDMouseServer) share: the outline of
     /// the thing under the cursor and the ray test against a mesh's triangles
     namespace mouse_picking {
-        const Color OUTLINE_COLOR = Color(1.0, 0.85, 0.3);
+        constexpr Color OUTLINE_COLOR = Color(1.0, 0.85, 0.3);
 
         /* Godot's stencil outline (BaseMaterial3D::STENCIL_MODE_OUTLINE) is meant for the mesh's
          * own material: it writes the stencil and a grown next pass draws only outside it. The
@@ -20,7 +20,7 @@ namespace godot {
 
         /// The nearest hit of the segment `p_from`..`p_to` on the triangles `p_faces`, all in one
         /// space: `r_t` is the hit's fraction of the segment, [0, 1]. False when it misses.
-        bool intersect_faces(
-                const PackedVector3Array &p_faces, const Vector3 &p_from, const Vector3 &p_to, double &r_t);
+        bool
+        intersect_faces(const PackedVector3Array &p_faces, const Vector3 &p_from, const Vector3 &p_to, double &p_r_t);
     } // namespace mouse_picking
 } // namespace godot

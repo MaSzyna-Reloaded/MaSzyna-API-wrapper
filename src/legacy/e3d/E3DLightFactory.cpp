@@ -20,38 +20,38 @@ namespace godot {
                 Color color = Color(1.0, 1.0, 1.0);
                 bool has_pool = false;
         };
-
-        bool has_material(const E3DSubModel *p_submodel, const char *p_name) {
-            return p_submodel->get_material_name().to_lower().ends_with(p_name);
-        }
-
-        /// Depth first walk accumulating the transform, collecting both anchors of a street lamp
-        void collect_street_lamp_anchors(
-                const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent_transform,
-                StreetLampAnchors &p_anchors) {
-            for (int i = 0; i < p_submodels.size(); i++) {
-                const Ref<E3DSubModel> submodel = p_submodels[i];
-                if (submodel.is_null()) {
-                    continue;
-                }
-                const Transform3D transform = p_parent_transform * submodel->get_transform();
-                if (has_material(submodel.ptr(), HALO_MATERIAL)) {
-                    // several halo billboards sit at each head; one light per distinct position
-                    if (!p_anchors.heads.has(transform.origin)) {
-                        p_anchors.heads.push_back(transform.origin);
-                    }
-                    p_anchors.color = submodel->get_diffuse_color();
-                }
-                if (!p_anchors.has_pool &&
-                    (has_material(submodel.ptr(), POOL_MATERIAL_1) || has_material(submodel.ptr(), POOL_MATERIAL_2)) &&
-                    submodel->get_mesh().is_valid()) {
-                    p_anchors.pool_extent = submodel->get_mesh()->get_aabb().size.x * 0.5f;
-                    p_anchors.has_pool = p_anchors.pool_extent > 0.0f;
-                }
-                collect_street_lamp_anchors(submodel->get_submodels(), transform, p_anchors);
-            }
-        }
     } // namespace
+
+    static bool has_material(const E3DSubModel *p_submodel, const char *p_name) {
+        return p_submodel->get_material_name().to_lower().ends_with(p_name);
+    }
+
+    /// Depth first walk accumulating the transform, collecting both anchors of a street lamp
+    static void collect_street_lamp_anchors(
+            const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent_transform,
+            StreetLampAnchors &p_anchors) {
+        for (int i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> submodel = p_submodels[i];
+            if (submodel.is_null()) {
+                continue;
+            }
+            const Transform3D transform = p_parent_transform * submodel->get_transform();
+            if (has_material(submodel.ptr(), HALO_MATERIAL)) {
+                // several halo billboards sit at each head; one light per distinct position
+                if (!p_anchors.heads.has(transform.origin)) {
+                    p_anchors.heads.push_back(transform.origin);
+                }
+                p_anchors.color = submodel->get_diffuse_color();
+            }
+            if (!p_anchors.has_pool &&
+                (has_material(submodel.ptr(), POOL_MATERIAL_1) || has_material(submodel.ptr(), POOL_MATERIAL_2)) &&
+                submodel->get_mesh().is_valid()) {
+                p_anchors.pool_extent = static_cast<float>(submodel->get_mesh()->get_aabb().size.x * 0.5f);
+                p_anchors.has_pool = p_anchors.pool_extent > 0.0f;
+            }
+            collect_street_lamp_anchors(submodel->get_submodels(), transform, p_anchors);
+        }
+    }
 
     const E3DModelLight *E3DModelLights::find(const String &p_name) const {
         for (const E3DModelLight &light: lights) {
@@ -62,116 +62,111 @@ namespace godot {
         return nullptr;
     }
 
-    namespace {
-        /// Collects the real lights of the model, carrying down the light of the nearest "on"
-        /// ancestor and the transform relative to the model root
-        void collect_placements(
-                const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent_transform,
-                const HashMap<E3DSubModel *, String> &p_light_owners, const String &p_parent_light_name,
-                Vector<E3DModelLightPlacement> &p_placements, HashMap<E3DSubModel *, Transform3D> &p_on_transforms) {
-            for (int i = 0; i < p_submodels.size(); i++) {
-                const Ref<E3DSubModel> submodel = p_submodels[i];
-                if (submodel.is_null()) {
-                    continue;
-                }
-                const Transform3D transform = p_parent_transform * submodel->get_transform();
-                String light_name = p_parent_light_name;
-                if (const HashMap<E3DSubModel *, String>::ConstIterator owner = p_light_owners.find(submodel.ptr());
-                    owner != p_light_owners.end()) {
-                    light_name = owner->value;
-                    p_on_transforms[submodel.ptr()] = transform;
-                }
-                if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
-                    E3DModelLightPlacement placement;
-                    placement.light_name = light_name;
-                    placement.params = E3DLightFactory::from_submodel(submodel.ptr(), light_name);
-                    placement.params.transform = transform;
-                    p_placements.push_back(placement);
-                }
-                collect_placements(
-                        submodel->get_submodels(), transform, p_light_owners, light_name, p_placements,
-                        p_on_transforms);
+    /// Collects the real lights of the model, carrying down the light of the nearest "on"
+    /// ancestor and the transform relative to the model root
+    static void collect_placements(
+            const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent_transform,
+            const HashMap<E3DSubModel *, String> &p_light_owners, const String &p_parent_light_name,
+            Vector<E3DModelLightPlacement> &p_placements, HashMap<E3DSubModel *, Transform3D> &p_on_transforms) {
+        for (int i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> submodel = p_submodels[i];
+            if (submodel.is_null()) {
+                continue;
             }
+            const Transform3D transform = p_parent_transform * submodel->get_transform();
+            String light_name = p_parent_light_name;
+            if (const HashMap<E3DSubModel *, String>::ConstIterator owner = p_light_owners.find(submodel.ptr());
+                owner != p_light_owners.end()) {
+                light_name = owner->value;
+                p_on_transforms[submodel.ptr()] = transform;
+            }
+            if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
+                E3DModelLightPlacement placement;
+                placement.light_name = light_name;
+                placement.params = E3DLightFactory::from_submodel(submodel.ptr(), light_name);
+                placement.params.transform = transform;
+                p_placements.push_back(placement);
+            }
+            collect_placements(
+                    submodel->get_submodels(), transform, p_light_owners, light_name, p_placements, p_on_transforms);
         }
-    } // namespace
+    }
 
-    namespace {
-        Vector3 light_axis(const Transform3D &p_transform) {
-            return -p_transform.basis.get_column(Vector3::AXIS_Z).normalized();
-        }
+    static Vector3 light_axis(const Transform3D &p_transform) {
+        return -p_transform.basis.get_column(Vector3::AXIS_Z).normalized();
+    }
 
-        /// Collapses every group of lights that belong to one E3DModelLight into a single one.
-        /// A five-armed lamp is otherwise five RenderingServer lights with five shadow maps.
-        void merge_placements(Vector<E3DModelLightPlacement> &p_placements) {
-            const ProjectSettings *settings = ProjectSettings::get_singleton();
-            const float height_offset = settings->get_setting(
-                    E3DLightFactory::ECONOMY_HEIGHT_OFFSET_SETTING, E3DLightFactory::DEFAULT_ECONOMY_HEIGHT_OFFSET);
-            const float cone_scale = MAX(
-                    0.01f,
+    /// Collapses every group of lights that belong to one E3DModelLight into a single one.
+    /// A five-armed lamp is otherwise five RenderingServer lights with five shadow maps.
+    static void merge_placements(Vector<E3DModelLightPlacement> &p_placements) {
+        const ProjectSettings *settings = ProjectSettings::get_singleton();
+        const float height_offset = settings->get_setting(
+                E3DLightFactory::ECONOMY_HEIGHT_OFFSET_SETTING, E3DLightFactory::DEFAULT_ECONOMY_HEIGHT_OFFSET);
+        const float cone_scale =
+                MAX(0.01f,
                     static_cast<float>(settings->get_setting(
                             E3DLightFactory::ECONOMY_CONE_SCALE_SETTING, E3DLightFactory::DEFAULT_ECONOMY_CONE_SCALE)));
 
-            Vector<E3DModelLightPlacement> merged;
-            HashMap<String, int> group_of; // light name -> index in merged
-            Vector<Vector<E3DModelLightPlacement>> groups;
-            for (const E3DModelLightPlacement &placement: p_placements) {
-                if (!group_of.has(placement.light_name)) {
-                    group_of[placement.light_name] = groups.size();
-                    groups.push_back(Vector<E3DModelLightPlacement>());
-                }
-                groups.write[group_of[placement.light_name]].push_back(placement);
+        Vector<E3DModelLightPlacement> merged;
+        HashMap<String, int> group_of; // light name -> index in merged
+        Vector<Vector<E3DModelLightPlacement>> groups;
+        for (const E3DModelLightPlacement &placement: p_placements) {
+            if (!group_of.has(placement.light_name)) {
+                group_of[placement.light_name] = static_cast<int>(groups.size());
+                groups.push_back(Vector<E3DModelLightPlacement>());
             }
-
-            for (const Vector<E3DModelLightPlacement> &group: groups) {
-                if (group.size() == 1) {
-                    merged.push_back(group[0]);
-                    continue;
-                }
-                Vector3 origin;
-                Vector3 axis;
-                for (const E3DModelLightPlacement &placement: group) {
-                    origin += placement.params.transform.origin;
-                    axis += light_axis(placement.params.transform);
-                }
-                origin /= static_cast<real_t>(group.size());
-                origin.y += height_offset;
-                axis = axis.normalized();
-                if (axis.is_zero_approx()) {
-                    axis = Vector3(0, -1, 0);
-                }
-
-                E3DModelLightPlacement result = group[0];
-                // wide enough to cover every cone it replaces: the angle to each original axis
-                // plus that cone's own half angle
-                float angle = 0.0;
-                float range = 0.0;
-                float energy = 0.0;
-                float size = 0.0;
-                bool omni = false;
-                for (const E3DModelLightPlacement &placement: group) {
-                    const float spread =
-                            static_cast<float>(Math::rad_to_deg(axis.angle_to(light_axis(placement.params.transform))));
-                    const float reach = static_cast<float>(origin.distance_to(placement.params.transform.origin));
-                    angle = MAX(angle, spread + placement.params.spot_angle);
-                    range = MAX(range, placement.params.range + reach);
-                    energy = MAX(energy, placement.params.energy);
-                    // the one light stands in for a ring of heads, so it is as wide as that ring
-                    size = MAX(size, MAX(reach, placement.params.size));
-                    omni = omni || placement.params.omni;
-                }
-                angle *= cone_scale;
-                const Vector3 up = Math::abs(axis.y) > 0.99 ? Vector3(0, 0, -1) : Vector3(0, 1, 0);
-                result.params.transform = Transform3D(Basis::looking_at(axis, up), origin);
-                result.params.spot_angle = MIN(angle, E3DLightFactory::MAX_SPOT_ANGLE);
-                result.params.omni = omni || angle > E3DLightFactory::MAX_SPOT_ANGLE;
-                result.params.range = range;
-                result.params.energy = energy;
-                result.params.size = size;
-                merged.push_back(result);
-            }
-            p_placements = merged;
+            groups.write[group_of[placement.light_name]].push_back(placement);
         }
-    } // namespace
+
+        for (const Vector<E3DModelLightPlacement> &group: groups) {
+            if (group.size() == 1) {
+                merged.push_back(group[0]);
+                continue;
+            }
+            Vector3 origin;
+            Vector3 axis;
+            for (const E3DModelLightPlacement &placement: group) {
+                origin += placement.params.transform.origin;
+                axis += light_axis(placement.params.transform);
+            }
+            origin /= static_cast<real_t>(group.size());
+            origin.y += height_offset;
+            axis = axis.normalized();
+            if (axis.is_zero_approx()) {
+                axis = Vector3(0, -1, 0);
+            }
+
+            E3DModelLightPlacement result = group[0];
+            // wide enough to cover every cone it replaces: the angle to each original axis
+            // plus that cone's own half angle
+            float angle = 0.0;
+            float range = 0.0;
+            float energy = 0.0;
+            float size = 0.0;
+            bool omni = false;
+            for (const E3DModelLightPlacement &placement: group) {
+                const float spread =
+                        static_cast<float>(Math::rad_to_deg(axis.angle_to(light_axis(placement.params.transform))));
+                const float reach = static_cast<float>(origin.distance_to(placement.params.transform.origin));
+                angle = MAX(angle, spread + placement.params.spot_angle);
+                range = MAX(range, placement.params.range + reach);
+                energy = MAX(energy, placement.params.energy);
+                // the one light stands in for a ring of heads, so it is as wide as that ring
+                size = MAX(size, MAX(reach, placement.params.size));
+                omni = omni || placement.params.omni;
+            }
+            angle *= cone_scale;
+            const Vector3 up = Math::abs(axis.y) > 0.99 ? Vector3(0, 0, -1) : Vector3(0, 1, 0);
+            result.params.transform = Transform3D(Basis::looking_at(axis, up), origin);
+            result.params.spot_angle = MIN(angle, E3DLightFactory::MAX_SPOT_ANGLE);
+            result.params.omni = omni || angle > E3DLightFactory::MAX_SPOT_ANGLE;
+            result.params.range = range;
+            result.params.energy = energy;
+            result.params.size = size;
+            merged.push_back(result);
+        }
+        p_placements = merged;
+    }
 
     E3DModelLights E3DLightFactory::discover(const Ref<E3DModel> &p_model, const String &p_model_filename) {
         E3DModelLights model_lights;

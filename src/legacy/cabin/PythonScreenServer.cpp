@@ -20,6 +20,8 @@ namespace godot {
         /// time. PyObject stays opaque: references are counted through Py_IncRef/Py_DecRef, which
         /// 2.7 exports as functions, so no Python header is needed to build the extension.
         struct PyObject;
+        // names mirror the Python C API symbols resolved below
+        // NOLINTBEGIN(readability-identifier-naming)
         using Py_ssize_t = intptr_t;
 
         struct PythonApi {
@@ -53,6 +55,7 @@ namespace godot {
                 void (*PyErr_Print)() = nullptr;
                 void (*Py_IncRef)(PyObject *) = nullptr;
                 void (*Py_DecRef)(PyObject *) = nullptr;
+                // NOLINTEND(readability-identifier-naming)
 
                 /// Loads the library and resolves every symbol; false with an error printed when
                 /// either fails. The library stays loaded for the life of the process - the
@@ -284,13 +287,13 @@ namespace godot {
             }
             // a grid of samples is enough for the colour a screen throws around it
             Color sum;
-            const uint8_t *pixels = p_pixels.ptr();
             for (int row = 0; row < AVERAGE_COLOR_SAMPLES; row++) {
                 for (int column = 0; column < AVERAGE_COLOR_SAMPLES; column++) {
-                    const int x = (column * 2 + 1) * p_width / (AVERAGE_COLOR_SAMPLES * 2);
-                    const int y = (row * 2 + 1) * p_height / (AVERAGE_COLOR_SAMPLES * 2);
-                    const uint8_t *pixel = pixels + (static_cast<int64_t>(y) * p_width + x) * BYTES_PER_PIXEL;
-                    sum += Color::from_rgba8(pixel[0], pixel[1], pixel[2], pixel[3]);
+                    const int x = ((column * 2) + 1) * p_width / (AVERAGE_COLOR_SAMPLES * 2);
+                    const int y = ((row * 2) + 1) * p_height / (AVERAGE_COLOR_SAMPLES * 2);
+                    const int64_t pixel = ((static_cast<int64_t>(y) * p_width) + x) * BYTES_PER_PIXEL;
+                    sum += Color::from_rgba8(
+                            p_pixels[pixel], p_pixels[pixel + 1], p_pixels[pixel + 2], p_pixels[pixel + 3]);
                 }
             }
             screen->average_color = sum / static_cast<float>(AVERAGE_COLOR_SAMPLES * AVERAGE_COLOR_SAMPLES);
@@ -351,7 +354,8 @@ namespace godot {
                     "        current = candidate\n"
                     "    return current\n"
                     "_maszyna_open = __builtin__.open\n"
-                    "__builtin__.open = lambda name, *args, **kwargs: _maszyna_open(_maszyna_find_path(name), *args, **kwargs)\n"
+                    "__builtin__.open = lambda name, *args, **kwargs: _maszyna_open(_maszyna_find_path(name), *args, "
+                    "**kwargs)\n"
                     "_maszyna_isfile = os.path.isfile\n"
                     "os.path.isfile = lambda path: _maszyna_isfile(_maszyna_find_path(path))\n",
                     nullptr);

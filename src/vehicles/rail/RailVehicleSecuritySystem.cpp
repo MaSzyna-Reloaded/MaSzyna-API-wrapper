@@ -19,7 +19,8 @@ namespace godot {
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, sound_signal_delay);
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, shp_magnet_distance);
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, ca_max_hold_time);
-        ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &RailVehicleSecuritySystem::security_acknowledge);
+        ClassDB::bind_method(
+                D_METHOD("security_acknowledge", "enabled"), &RailVehicleSecuritySystem::security_acknowledge);
         ClassDB::bind_method(
                 D_METHOD("security_cabsignal_acknowledge"), &RailVehicleSecuritySystem::security_cabsignal_acknowledge);
         ClassDB::bind_method(
@@ -80,7 +81,8 @@ namespace godot {
                         Variant::BOOL, "engine_blocked", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_engine_blocked");
-        ClassDB::bind_method(D_METHOD("get_separate_acknowledge"), &RailVehicleSecuritySystem::get_separate_acknowledge);
+        ClassDB::bind_method(
+                D_METHOD("get_separate_acknowledge"), &RailVehicleSecuritySystem::get_separate_acknowledge);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "separate_acknowledge", PROPERTY_HINT_NONE, "",

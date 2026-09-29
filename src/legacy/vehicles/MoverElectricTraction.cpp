@@ -1,5 +1,5 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverElectricTraction.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
 
 namespace godot {

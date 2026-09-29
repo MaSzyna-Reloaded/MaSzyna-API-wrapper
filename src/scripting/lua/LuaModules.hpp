@@ -32,14 +32,16 @@ namespace godot {
 
             /// on_<signal>(target, fn): fn(...) whenever the server reports the signal about the
             /// target (argument 1, a handle of p_target); returns the subscription
-            static int subscribe(
-                    lua_State *p_state, ScenarioScriptServer::ScriptSignal p_signal, ScriptHandleKind p_target);
+            static int
+            subscribe(lua_State *p_state, ScenarioScriptServer::ScriptSignal p_signal, ScriptHandleKind p_target);
 
             /// The server singleton; raises a script error when it is not there
-            template <typename T>
+            template<typename T>
             static T *server(lua_State *p_state) {
                 T *instance = T::get_instance();
                 if (instance == nullptr) {
+                    // luaL_error is the Lua C API's vararg error call
+                    // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
                     luaL_error(p_state, "%s is not available", String(T::get_class_static()).utf8().get_data());
                 }
                 return instance;

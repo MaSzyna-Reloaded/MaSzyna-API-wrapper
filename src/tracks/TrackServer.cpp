@@ -342,8 +342,8 @@ namespace godot {
         }
     }
 
-    double TrackServer::_switch_blade_boundary_offset(
-            const Ref<Curve3D> &p_branch_curve, const double p_frog_distance) const {
+    double
+    TrackServer::_switch_blade_boundary_offset(const Ref<Curve3D> &p_branch_curve, const double p_frog_distance) const {
         if (p_frog_distance <= 0.0) {
             return 0.0;
         }
@@ -390,8 +390,7 @@ namespace godot {
                 _switch_blade_boundary_offset(p_track.domain_curve2, frog_distance);
     }
 
-    void
-    TrackServer::_set_curves(TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
+    void TrackServer::_set_curves(TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
         p_track.curve1 = p_curve1;
         p_track.curve2 = p_curve2;
         _read_curve_points(p_curve1, p_track.points1);
@@ -541,8 +540,8 @@ namespace godot {
         return track != nullptr ? track->get_length(p_switch_track) : 0.0;
     }
 
-    void TrackServer::track_update_curves(
-            const RID &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
+    void
+    TrackServer::track_update_curves(const RID &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
         TrackSegment *track = tracks.getptr(p_track);
         if (track == nullptr) {
             return;
@@ -814,7 +813,7 @@ namespace godot {
         }
         track->isolated.push_back(p_isolated);
         section->tracks.push_back(p_track);
-        section->vehicle_count += track->vehicles.size();
+        section->vehicle_count += static_cast<int>(track->vehicles.size());
     }
 
     void TrackServer::isolated_set_parent(const RID &p_isolated, const RID &p_parent) {
@@ -988,13 +987,12 @@ namespace godot {
      * switch branch it forces when it enters a switch from a branch side (NO_FORCED_SWITCH_TRACK
      * otherwise); false when the node is open or ambiguous. Nothing is changed. */
     bool TrackServer::track_find_next(
-            const RID &p_track, const int p_endpoint_index, RID &r_track, int &r_endpoint,
-            int &r_forced_switch_track) {
+            const RID &p_track, const int p_endpoint_index, RID &p_r_track, int &p_r_endpoint,
+            int &p_r_forced_switch_track) {
         if (!track_exists(p_track)) {
             return false;
         }
-        const TypedArray<TrackEndpointRef> connections =
-                track_get_endpoint_connections(p_track, p_endpoint_index);
+        const TypedArray<TrackEndpointRef> connections = track_get_endpoint_connections(p_track, p_endpoint_index);
 
         bool has_unique = false;
         RID unique_track;
@@ -1016,10 +1014,9 @@ namespace godot {
                     // shared endpoint to the active branch endpoint at the same physical point.
                     const int active_track = switch_get_active_track(candidate_track);
                     const int branch_start = switch_get_branch_start_endpoint(candidate_track, active_track);
-                    candidate_endpoint =
-                            common_endpoints.has(branch_start)
-                                    ? branch_start
-                                    : switch_get_branch_end_endpoint(candidate_track, active_track);
+                    candidate_endpoint = common_endpoints.has(branch_start)
+                                                 ? branch_start
+                                                 : switch_get_branch_end_endpoint(candidate_track, active_track);
                 } else {
                     candidate_forced_switch_track =
                             switch_get_endpoint_branch(candidate_track, raw->get_endpoint_index());
@@ -1066,9 +1063,9 @@ namespace godot {
         if (!has_unique) {
             return false;
         }
-        r_track = unique_track;
-        r_endpoint = unique_endpoint;
-        r_forced_switch_track = has_unique_forced_switch_track ? unique_forced_switch_track : NO_FORCED_SWITCH_TRACK;
+        p_r_track = unique_track;
+        p_r_endpoint = unique_endpoint;
+        p_r_forced_switch_track = has_unique_forced_switch_track ? unique_forced_switch_track : NO_FORCED_SWITCH_TRACK;
         return true;
     }
 
@@ -1267,7 +1264,7 @@ namespace godot {
             }
         }
         if (node_id == INVALID_NODE_ID) {
-            node_id = nodes.size();
+            node_id = static_cast<int>(nodes.size());
             TrackNode new_node;
             new_node.id = node_id;
             new_node.world_position = p_world_position;

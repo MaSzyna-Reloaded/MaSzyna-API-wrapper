@@ -32,7 +32,8 @@ namespace godot {
                 RailVehicleElectricInductionEngine, Variant::ARRAY, max_power_table, PROPERTY_HINT_TYPE_STRING,
                 "VehicleCurvePointItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "RailVehicleWWListItem");
+                RailVehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING,
+                "RailVehicleWWListItem");
     }
 
     RailVehicleEngine::EngineType RailVehicleElectricInductionEngine::get_engine_type() const {

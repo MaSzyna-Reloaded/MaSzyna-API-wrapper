@@ -27,9 +27,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("ground_relay_reset"), &RailVehicleController::ground_relay_reset);
         ClassDB::bind_method(D_METHOD("antislip"), &RailVehicleController::antislip);
         ClassDB::bind_method(
-                D_METHOD("main_controller_increase", "step"), &RailVehicleController::main_controller_increase, DEFVAL(1));
+                D_METHOD("main_controller_increase", "step"), &RailVehicleController::main_controller_increase,
+                DEFVAL(1));
         ClassDB::bind_method(
-                D_METHOD("main_controller_decrease", "step"), &RailVehicleController::main_controller_decrease, DEFVAL(1));
+                D_METHOD("main_controller_decrease", "step"), &RailVehicleController::main_controller_decrease,
+                DEFVAL(1));
         ClassDB::bind_method(
                 D_METHOD("second_controller_increase", "step"), &RailVehicleController::second_controller_increase,
                 DEFVAL(1));
@@ -173,7 +175,8 @@ namespace godot {
                         Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tachometer_speed_jump");
-        ClassDB::bind_method(D_METHOD("get_tachometer_clock_speed"), &RailVehicleController::get_tachometer_clock_speed);
+        ClassDB::bind_method(
+                D_METHOD("get_tachometer_clock_speed"), &RailVehicleController::get_tachometer_clock_speed);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
@@ -227,7 +230,8 @@ namespace godot {
                         Variant::BOOL, "converter_allowed", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_converter_allowed");
-        ClassDB::bind_method(D_METHOD("get_converter_time_to_start"), &RailVehicleController::get_converter_time_to_start);
+        ClassDB::bind_method(
+                D_METHOD("get_converter_time_to_start"), &RailVehicleController::get_converter_time_to_start);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "converter_time_to_start", PROPERTY_HINT_NONE, "",
@@ -306,7 +310,8 @@ namespace godot {
                         Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_second_position");
-        ClassDB::bind_method(D_METHOD("get_controller_main_position"), &RailVehicleController::get_controller_main_position);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_position"), &RailVehicleController::get_controller_main_position);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
@@ -320,13 +325,15 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_joint_position");
         ClassDB::bind_method(
-                D_METHOD("get_controller_main_actual_position"), &RailVehicleController::get_controller_main_actual_position);
+                D_METHOD("get_controller_main_actual_position"),
+                &RailVehicleController::get_controller_main_actual_position);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_main_actual_position");
-        ClassDB::bind_method(D_METHOD("get_controller_main_delayed"), &RailVehicleController::get_controller_main_delayed);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_delayed"), &RailVehicleController::get_controller_main_delayed);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "controller_main_delayed", PROPERTY_HINT_NONE, "",
@@ -462,11 +469,11 @@ namespace godot {
         p_state["circuit_rlist_size"] = get_circuit_rlist_size();
     }
 
-    void
-    RailVehicleController::change_track(const String &p_track_name, const float p_track_offset, const int p_track_direction) {
+    void RailVehicleController::change_track(
+            const String &p_track_name, const float p_track_offset, const int p_track_direction) {
         UtilityFunctions::push_warning(
-                vformat("RailVehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d", p_track_name,
-                        p_track_offset, p_track_direction));
+                vformat("RailVehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d",
+                        p_track_name, p_track_offset, p_track_direction));
     }
 
 } // namespace godot

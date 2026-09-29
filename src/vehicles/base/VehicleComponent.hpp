@@ -1,7 +1,7 @@
 #pragma once
-#include "logging/GameLog.hpp"
 #include "VehicleComponentType.hpp"
 #include "VehicleController.hpp"
+#include "logging/GameLog.hpp"
 #include <functional>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/vector.hpp>

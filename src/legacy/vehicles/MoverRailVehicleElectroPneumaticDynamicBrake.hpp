@@ -4,8 +4,10 @@
 #include "vehicles/rail/RailVehicleElectroPneumaticDynamicBrake.hpp"
 
 namespace godot {
-    /* RailVehicleElectroPneumaticDynamicBrake on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverRailVehicleElectroPneumaticDynamicBrake : public RailVehicleElectroPneumaticDynamicBrake, public MoverComponent {
+    /* RailVehicleElectroPneumaticDynamicBrake on the vendored Mover - the only class here that knows TMoverParameters.
+     */
+    class MoverRailVehicleElectroPneumaticDynamicBrake : public RailVehicleElectroPneumaticDynamicBrake,
+                                                         public MoverComponent {
             GDCLASS(MoverRailVehicleElectroPneumaticDynamicBrake, RailVehicleElectroPneumaticDynamicBrake);
 
         private:

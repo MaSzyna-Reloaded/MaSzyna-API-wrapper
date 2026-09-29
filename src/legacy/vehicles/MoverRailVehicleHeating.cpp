@@ -1,8 +1,8 @@
-#include "vehicles/rail/RailVehicleController.hpp"
-#include "vehicles/base/VehicleController.hpp"
+#include "MoverRailVehicleHeating.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
-#include "MoverRailVehicleHeating.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
 
 namespace godot {
     void MoverRailVehicleHeating::_bind_methods() {}

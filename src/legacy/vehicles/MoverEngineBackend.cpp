@@ -1,7 +1,7 @@
-#include "vehicles/base/VehicleController.hpp"
+#include "MoverEngineBackend.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
-#include "MoverEngineBackend.hpp"
+#include "vehicles/base/VehicleController.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
 #include <algorithm>
 
@@ -35,7 +35,6 @@ namespace godot {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
-
 
 
     double MoverEngineBackend::get_power(const RailVehicleEngine *p_engine) const {
@@ -173,7 +172,8 @@ namespace godot {
         return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
     }
 
-    bool MoverEngineBackend::motor_overload_relay_threshold(const RailVehicleEngine *p_engine, const bool p_high) const {
+    bool
+    MoverEngineBackend::motor_overload_relay_threshold(const RailVehicleEngine *p_engine, const bool p_high) const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->CurrentSwitch(p_high) : false;
     }

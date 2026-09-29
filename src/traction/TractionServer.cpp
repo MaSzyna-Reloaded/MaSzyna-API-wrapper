@@ -34,8 +34,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("network_build"), &TractionServer::network_build);
 
         ClassDB::bind_method(
-                D_METHOD("wire_get_voltage", "wire", "assumed_voltage", "current"),
-                &TractionServer::wire_get_voltage);
+                D_METHOD("wire_get_voltage", "wire", "assumed_voltage", "current"), &TractionServer::wire_get_voltage);
         ClassDB::bind_method(
                 D_METHOD("wire_set_parallel", "wire", "parallel_name"), &TractionServer::wire_set_parallel);
         ClassDB::bind_method(
@@ -535,8 +534,7 @@ namespace godot {
         }
     }
 
-    double
-    TractionServer::wire_get_voltage(const RID &p_wire, const double p_assumed_voltage, const double p_current) {
+    double TractionServer::wire_get_voltage(const RID &p_wire, const double p_assumed_voltage, const double p_current) {
         const Wire *wire = wires.getptr(p_wire);
         if (wire == nullptr) {
             return 0.0;

@@ -78,7 +78,8 @@ namespace godot {
                             {RailVehicleBrakePressureTableItem::BRAKE_TYPE_PNEUMATIC, Maszyna::TBrakeSystem::Pneumatic},
                             {RailVehicleBrakePressureTableItem::BRAKE_TYPE_ELECTRO_PNEUMATIC,
                              Maszyna::TBrakeSystem::ElectroPneumatic},
-                            {RailVehicleBrakePressureTableItem::BRAKE_TYPE_INDIVIDUAL, Maszyna::TBrakeSystem::Individual},
+                            {RailVehicleBrakePressureTableItem::BRAKE_TYPE_INDIVIDUAL,
+                             Maszyna::TBrakeSystem::Individual},
                     };
             const std::unordered_map<BrakeHandleType, Maszyna::TBrakeHandle> brake_handle_type_map = {
                     {BRAKE_HANDLE_TYPE_NO_HANDLE, Maszyna::TBrakeHandle::NoHandle},

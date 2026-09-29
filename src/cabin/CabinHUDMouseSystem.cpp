@@ -29,25 +29,25 @@ namespace godot {
         /// panel leans less and keeps its handle.
         constexpr double LYING_AXIS_MIN_TILT = 0.87;
         /// Right and up, for a control whose movement cannot be seen on screen
-        const Vector2 DEFAULT_DRAG_SIGNS = Vector2(1.0, -1.0);
+        constexpr Vector2 DEFAULT_DRAG_SIGNS = Vector2(1.0, -1.0);
         /// How far the mouse has to move after the button went down before the drag takes the axis
         /// it moved along most
         constexpr double DRAG_AXIS_LOCK_PIXELS = 6.0;
-
-        MeshInstance3D *mesh_of(const ObjectID &p_mesh) {
-            return Object::cast_to<MeshInstance3D>(ObjectDB::get_instance(p_mesh));
-        }
-
-        void collect_meshes(Node *p_node, Vector<ObjectID> &r_meshes) {
-            for (int i = 0; i < p_node->get_child_count(true); i++) {
-                Node *child = p_node->get_child(i, true);
-                if (Object::cast_to<MeshInstance3D>(child) != nullptr) {
-                    r_meshes.push_back(ObjectID(child->get_instance_id()));
-                }
-                collect_meshes(child, r_meshes);
-            }
-        }
     } // namespace
+
+    static MeshInstance3D *mesh_of(const ObjectID &p_mesh) {
+        return Object::cast_to<MeshInstance3D>(ObjectDB::get_instance(p_mesh));
+    }
+
+    static void collect_meshes(Node *p_node, Vector<ObjectID> &p_r_meshes) {
+        for (int i = 0; i < p_node->get_child_count(true); i++) {
+            Node *child = p_node->get_child(i, true);
+            if (Object::cast_to<MeshInstance3D>(child) != nullptr) {
+                p_r_meshes.push_back(ObjectID(child->get_instance_id()));
+            }
+            collect_meshes(child, p_r_meshes);
+        }
+    }
 
     const char *CabinHUDMouseSystem::control_hovered_signal = "control_hovered";
     const char *CabinHUDMouseSystem::control_unhovered_signal = "control_unhovered";
@@ -173,18 +173,18 @@ namespace godot {
     }
 
     bool CabinHUDMouseSystem::_hit(
-            const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-            Vector3 &r_point) {
+            const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+            Vector3 &p_r_point) {
         bool hit = false;
         for (const Part &part: p_pickable.parts) {
-            hit = _hit_part(part, p_from, p_to, r_distance, r_point) || hit;
+            hit = _hit_part(part, p_from, p_to, p_r_distance, p_r_point) || hit;
         }
         return hit;
     }
 
     bool CabinHUDMouseSystem::_hit_part(
-            const Part &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &r_distance, Vector3 &r_point) {
-        const MeshInstance3D *mesh = mesh_of(p_pickable.mesh);
+            const Part &p_part, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance, Vector3 &p_r_point) {
+        const MeshInstance3D *mesh = mesh_of(p_part.mesh);
         if (mesh == nullptr || !mesh->is_visible_in_tree()) {
             return false;
         }
@@ -196,21 +196,21 @@ namespace godot {
         // hit so far cannot hold a nearer triangle
         Vector3 entry;
         if (!mesh->get_aabb().intersects_segment(from, to, &entry) ||
-            p_from.distance_to(transform.xform(entry)) >= r_distance) {
+            p_from.distance_to(transform.xform(entry)) >= p_r_distance) {
             return false;
         }
 
         double t = 0.0;
-        if (!mouse_picking::intersect_faces(p_pickable.faces, from, to, t)) {
+        if (!mouse_picking::intersect_faces(p_part.faces, from, to, t)) {
             return false;
         }
         const Vector3 point = transform.xform(from + (to - from) * t);
         const double distance = p_from.distance_to(point);
-        if (distance >= r_distance) {
+        if (distance >= p_r_distance) {
             return false;
         }
-        r_distance = distance;
-        r_point = point;
+        p_r_distance = distance;
+        p_r_point = point;
         return true;
     }
 
@@ -370,14 +370,14 @@ namespace godot {
         return Vector2(SIGN(direction.x), SIGN(direction.y));
     }
 
-    RID CabinHUDMouseSystem::_pick(const Vector2 &p_position, Vector3 &r_point) const {
+    RID CabinHUDMouseSystem::_pick(const Vector2 &p_position, Vector3 &p_r_point) const {
         const Camera3D *view = Object::cast_to<Camera3D>(ObjectDB::get_instance(camera));
         if (view == nullptr || !view->is_current() ||
             Input::get_singleton()->get_mouse_mode() != Input::MOUSE_MODE_VISIBLE ||
             view->get_viewport()->gui_get_hovered_control() != nullptr) {
             return RID();
         }
-        const RID exact = _pick_exact(view, p_position, r_point);
+        RID exact = _pick_exact(view, p_position, p_r_point);
         if (exact.is_valid()) {
             return exact;
         }
@@ -403,20 +403,20 @@ namespace godot {
                 nearest_middle = screen_middle;
             }
         }
-        if (!nearest.is_valid() || _pick_exact(view, nearest_middle, r_point) != nearest) {
+        if (!nearest.is_valid() || _pick_exact(view, nearest_middle, p_r_point) != nearest) {
             return RID();
         }
         return nearest;
     }
 
-    RID CabinHUDMouseSystem::_pick_exact(const Camera3D *p_view, const Vector2 &p_position, Vector3 &r_point) const {
+    RID CabinHUDMouseSystem::_pick_exact(const Camera3D *p_view, const Vector2 &p_position, Vector3 &p_r_point) const {
         const Vector3 from = p_view->project_ray_origin(p_position);
         const Vector3 to = from + p_view->project_ray_normal(p_position) * p_view->get_far();
 
         RID nearest;
         double nearest_distance = p_view->get_far();
         for (const KeyValue<RID, Control> &entry: controls) {
-            if (_hit(entry.value.pickable, from, to, nearest_distance, r_point)) {
+            if (_hit(entry.value.pickable, from, to, nearest_distance, p_r_point)) {
                 nearest = entry.key;
             }
         }

@@ -1,35 +1,33 @@
-#include "LuaVariant.hpp"
 #include "LuaHandle.hpp"
+#include "LuaVariant.hpp"
 #include "lauxlib.h"
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 
 namespace godot {
-    namespace {
-        /// A stack slot per nesting level: the table, a key and a value
-        constexpr int STACK_SLOTS_PER_LEVEL = 3;
-        /// x, y and z
-        constexpr int VECTOR_FIELDS = 3;
+    /// A stack slot per nesting level: the table, a key and a value
+    static constexpr int STACK_SLOTS_PER_LEVEL = 3;
+    /// x, y and z
+    static constexpr int VECTOR_FIELDS = 3;
 
-        void push_string(lua_State *p_state, const String &p_text) {
-            const CharString text = p_text.utf8();
-            lua_pushlstring(p_state, text.get_data(), text.length());
-        }
+    static void push_string(lua_State *p_state, const String &p_text) {
+        const CharString text = p_text.utf8();
+        lua_pushlstring(p_state, text.get_data(), text.length());
+    }
 
-        void push_vector(lua_State *p_state, const real_t p_x, const real_t p_y, const Variant &p_z) {
-            lua_createtable(p_state, 0, VECTOR_FIELDS);
-            lua_pushnumber(p_state, p_x);
-            lua_setfield(p_state, -2, "x");
-            lua_pushnumber(p_state, p_y);
-            lua_setfield(p_state, -2, "y");
-            if (p_z.get_type() == Variant::NIL) {
-                return;
-            }
-            lua_pushnumber(p_state, static_cast<double>(p_z));
-            lua_setfield(p_state, -2, "z");
+    static void push_vector(lua_State *p_state, const real_t p_x, const real_t p_y, const Variant &p_z) {
+        lua_createtable(p_state, 0, VECTOR_FIELDS);
+        lua_pushnumber(p_state, p_x);
+        lua_setfield(p_state, -2, "x");
+        lua_pushnumber(p_state, p_y);
+        lua_setfield(p_state, -2, "y");
+        if (p_z.get_type() == Variant::NIL) {
+            return;
         }
-    } // namespace
+        lua_pushnumber(p_state, static_cast<double>(p_z));
+        lua_setfield(p_state, -2, "z");
+    }
 
     void LuaVariant::push(lua_State *p_state, const Variant &p_value, const int p_depth) {
         if (p_depth > MAX_CONVERSION_DEPTH) {

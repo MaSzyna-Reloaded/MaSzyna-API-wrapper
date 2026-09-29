@@ -22,7 +22,7 @@ namespace godot {
 
     bool E3DInstanceBackend::_intersect_mesh(
             const Ref<Mesh> &p_mesh, const Transform3D &p_transform, const Vector3 &p_from, const Vector3 &p_to,
-            double &r_distance, Vector3 &r_point) {
+            double &p_r_distance, Vector3 &p_r_point) {
         const Transform3D inverse = p_transform.affine_inverse();
         const Vector3 from = inverse.xform(p_from);
         const Vector3 to = inverse.xform(p_to);
@@ -30,7 +30,7 @@ namespace godot {
         // hit so far cannot hold a nearer triangle - only then are the triangles taken out of it
         Vector3 entry;
         if (!p_mesh->get_aabb().intersects_segment(from, to, &entry) ||
-            p_from.distance_to(p_transform.xform(entry)) >= r_distance) {
+            p_from.distance_to(p_transform.xform(entry)) >= p_r_distance) {
             return false;
         }
         double t = 0.0;
@@ -39,11 +39,11 @@ namespace godot {
         }
         const Vector3 point = p_transform.xform(from + (to - from) * t);
         const double distance = p_from.distance_to(point);
-        if (distance >= r_distance) {
+        if (distance >= p_r_distance) {
             return false;
         }
-        r_distance = distance;
-        r_point = point;
+        p_r_distance = distance;
+        p_r_point = point;
         return true;
     }
 

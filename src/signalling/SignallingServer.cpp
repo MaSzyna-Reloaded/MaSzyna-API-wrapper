@@ -173,7 +173,7 @@ namespace godot {
 
     RID SignallingServer::signal_head_create(const RID &p_instance) {
         ERR_FAIL_COND_V_MSG(signal_heads_by_instance.has(p_instance), RID(), "The instance already has a signal head.");
-        const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
         E3DRenderingServer *rendering = E3DRenderingServer::get_instance();
         ERR_FAIL_NULL_V(rendering, RID());
         SignalHeadData data;

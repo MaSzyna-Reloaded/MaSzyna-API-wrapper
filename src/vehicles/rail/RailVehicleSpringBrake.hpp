@@ -1,6 +1,6 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 namespace godot {
     class VehicleController;
     class RailVehicleSpringBrake : public RailVehicleComponent {

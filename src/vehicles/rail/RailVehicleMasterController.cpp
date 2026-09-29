@@ -4,9 +4,11 @@ namespace godot {
     void RailVehicleMasterController::_bind_methods() {
         ClassDB::bind_method(
                 D_METHOD("set_main_position_count", "value"), &RailVehicleMasterController::set_main_position_count);
-        ClassDB::bind_method(D_METHOD("get_main_position_count"), &RailVehicleMasterController::get_main_position_count);
         ClassDB::bind_method(
-                D_METHOD("set_second_position_count", "value"), &RailVehicleMasterController::set_second_position_count);
+                D_METHOD("get_main_position_count"), &RailVehicleMasterController::get_main_position_count);
+        ClassDB::bind_method(
+                D_METHOD("set_second_position_count", "value"),
+                &RailVehicleMasterController::set_second_position_count);
         ClassDB::bind_method(
                 D_METHOD("get_second_position_count"), &RailVehicleMasterController::get_second_position_count);
         ClassDB::bind_method(
@@ -17,12 +19,14 @@ namespace godot {
                 &RailVehicleMasterController::get_direction_change_max_position);
         ClassDB::bind_method(
                 D_METHOD("set_coupled_controllers", "value"), &RailVehicleMasterController::set_coupled_controllers);
-        ClassDB::bind_method(D_METHOD("get_coupled_controllers"), &RailVehicleMasterController::get_coupled_controllers);
+        ClassDB::bind_method(
+                D_METHOD("get_coupled_controllers"), &RailVehicleMasterController::get_coupled_controllers);
         ClassDB::bind_method(D_METHOD("set_initial_delay", "value"), &RailVehicleMasterController::set_initial_delay);
         ClassDB::bind_method(D_METHOD("get_initial_delay"), &RailVehicleMasterController::get_initial_delay);
         ClassDB::bind_method(D_METHOD("set_step_delay", "value"), &RailVehicleMasterController::set_step_delay);
         ClassDB::bind_method(D_METHOD("get_step_delay"), &RailVehicleMasterController::get_step_delay);
-        ClassDB::bind_method(D_METHOD("set_step_down_delay", "value"), &RailVehicleMasterController::set_step_down_delay);
+        ClassDB::bind_method(
+                D_METHOD("set_step_down_delay", "value"), &RailVehicleMasterController::set_step_down_delay);
         ClassDB::bind_method(D_METHOD("get_step_down_delay"), &RailVehicleMasterController::get_step_down_delay);
 
         ADD_PROPERTY(

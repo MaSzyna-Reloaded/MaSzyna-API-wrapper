@@ -4,8 +4,8 @@
 namespace godot {
     class RailVehicleDieselEngine;
 
-    /* What RailVehicleDieselEngine needs a simulation to answer. A diesel and a Polish diesel-electric both run one, and
-     * their interfaces already form a chain, so neither can inherit this from the other. */
+    /* What RailVehicleDieselEngine needs a simulation to answer. A diesel and a Polish diesel-electric both run one,
+     * and their interfaces already form a chain, so neither can inherit this from the other. */
     class RailVehicleDieselEngineBackend {
         public:
             virtual ~RailVehicleDieselEngineBackend() = default;

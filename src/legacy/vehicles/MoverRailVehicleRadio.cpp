@@ -1,7 +1,7 @@
-#include "vehicles/base/VehicleController.hpp"
-#include "legacy/vehicles/MoverBackend.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include "MoverRailVehicleRadio.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
     void MoverRailVehicleRadio::_bind_methods() {}

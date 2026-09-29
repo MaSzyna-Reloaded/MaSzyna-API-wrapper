@@ -141,9 +141,10 @@ namespace godot {
             if (nearest.is_valid()) {
                 if (pickables[nearest].vehicle.is_valid()) {
                     vehicle_outline_material->set_stencil_effect_outline_thickness(
-                            nearest_distance * VEHICLE_OUTLINE_WIDTH_PER_METRE);
+                            static_cast<float>(nearest_distance * VEHICLE_OUTLINE_WIDTH_PER_METRE));
                 } else {
-                    outline_material->set_stencil_effect_outline_thickness(nearest_distance * OUTLINE_WIDTH_PER_METRE);
+                    outline_material->set_stencil_effect_outline_thickness(
+                            static_cast<float>(nearest_distance * OUTLINE_WIDTH_PER_METRE));
                 }
             }
             return false;

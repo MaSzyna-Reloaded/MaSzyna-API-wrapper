@@ -4,7 +4,8 @@ namespace godot {
     void RailVehicleElectroPneumaticDynamicBrake::_bind_methods() {
         ClassDB::bind_method(
                 D_METHOD("set_ep_brake_force", "value"), &RailVehicleElectroPneumaticDynamicBrake::set_ep_brake_force);
-        ClassDB::bind_method(D_METHOD("switch_ep_fuse", "value"), &RailVehicleElectroPneumaticDynamicBrake::switch_ep_fuse);
+        ClassDB::bind_method(
+                D_METHOD("switch_ep_fuse", "value"), &RailVehicleElectroPneumaticDynamicBrake::switch_ep_fuse);
 
         BIND_PROPERTY_W_HINT(
                 RailVehicleElectroPneumaticDynamicBrake, Variant::INT, coupler_check, PROPERTY_HINT_ENUM,
@@ -13,8 +14,8 @@ namespace godot {
                 RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_min_regenerative_braking,
                 "electro_pneumatic");
         BIND_PROPERTY(
-                RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_max_ep_brake_engagement_speed,
-                "electro_pneumatic");
+                RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT,
+                electro_pneumatic_max_ep_brake_engagement_speed, "electro_pneumatic");
         BIND_PROPERTY(
                 RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_brake_delay,
                 "electro_pneumatic");
@@ -25,7 +26,8 @@ namespace godot {
         BIND_PROPERTY(RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, blending_max_deceleration, "blending");
         BIND_PROPERTY(RailVehicleElectroPneumaticDynamicBrake, Variant::BOOL, blending_velocity_correction, "blending");
         BIND_PROPERTY(RailVehicleElectroPneumaticDynamicBrake, Variant::BOOL, blending_load_correction, "blending");
-        BIND_PROPERTY(RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, blending_min_ed_brake_request, "blending");
+        BIND_PROPERTY(
+                RailVehicleElectroPneumaticDynamicBrake, Variant::FLOAT, blending_min_ed_brake_request, "blending");
 
         BIND_ENUM_CONSTANT(NONE)
         BIND_ENUM_CONSTANT(FRONT)

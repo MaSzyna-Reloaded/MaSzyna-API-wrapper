@@ -6,8 +6,8 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
-#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/core/error_macros.hpp>
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -128,7 +128,7 @@ namespace godot {
             // the launchers look at whole minutes (EvLaunch.cpp:197-211): the clock says so when
             // one passes, not every slice
             const double previous = time_of_day;
-            time_of_day = Math::fposmod(time_of_day + slice / SECONDS_PER_HOUR, HOURS_PER_DAY);
+            time_of_day = Math::fposmod(time_of_day + (slice / SECONDS_PER_HOUR), HOURS_PER_DAY);
             if (!(Math::floor(previous * MINUTES_PER_HOUR) == Math::floor(time_of_day * MINUTES_PER_HOUR))) {
                 emit_signal(time_of_day_changed_signal);
             }
@@ -241,8 +241,8 @@ namespace godot {
         }
 
         UtilityFunctions::print(
-                "[SimulationServer] Build changed (" + (stored.is_empty() ? String("none") : stored) + " -> " + current +
-                "), clearing cache...");
+                "[SimulationServer] Build changed (" + (stored.is_empty() ? String("none") : stored) + " -> " +
+                current + "), clearing cache...");
         clear_cache();
         settings->save_setting(BUILD_SECTION, BUILD_NUMBER_KEY, current);
         return true;

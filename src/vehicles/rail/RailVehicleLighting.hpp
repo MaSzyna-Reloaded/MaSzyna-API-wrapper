@@ -1,8 +1,8 @@
 #pragma once
-#include "vehicles/rail/RailVehicleController.hpp"
-#include "vehicles/rail/RailVehicleComponent.hpp"
-#include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleLightListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
@@ -71,7 +71,8 @@ namespace godot {
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, light_source,
                     RailVehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
-            MAKE_MEMBER_GS_NR(RailVehicleEngine::EngineType, source_generator_engine, RailVehicleEngine::EngineType::MAIN);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleEngine::EngineType, source_generator_engine, RailVehicleEngine::EngineType::MAIN);
             MAKE_MEMBER_GS(double, source_accumulator_max_voltage, 0.0);
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, light_alternative_source,

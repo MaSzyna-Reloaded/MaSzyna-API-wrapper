@@ -1,5 +1,5 @@
-#include "tracks/TrackServer.hpp"
 #include "MaszynaLegacyTrackVelocityAction.hpp"
+#include "tracks/TrackServer.hpp"
 
 namespace godot {
     void MaszynaLegacyTrackVelocityAction::_bind_methods() {

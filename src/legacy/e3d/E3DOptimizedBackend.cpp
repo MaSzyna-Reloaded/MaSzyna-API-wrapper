@@ -77,8 +77,8 @@ namespace godot {
     }
 
     bool E3DOptimizedBackend::intersect_segment(
-            const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-            Vector3 &r_point) const {
+            const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+            Vector3 &p_r_point) const {
         bool hit = false;
         for (int i = 0; i < p_instance.rids.size(); i++) {
             // the chain ends with the submodel itself; a free spotlight's point quad is no geometry
@@ -88,7 +88,7 @@ namespace godot {
             }
             hit = _intersect_mesh(
                           submodel->get_mesh(), p_instance.transform * p_instance.local_transforms[i], p_from, p_to,
-                          r_distance, r_point) ||
+                          p_r_distance, p_r_point) ||
                   hit;
         }
         return hit;
@@ -133,8 +133,7 @@ namespace godot {
                 submodel->get_mesh().is_valid()) {
                 _add_submodel(
                         p_instance, submodel.ptr(), submodel->get_mesh()->get_rid(),
-                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha), local_transform,
-                        chain);
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha), local_transform, chain);
             }
             // A free spotlight's light is E3DRenderingServer's (streamed with a range of its own);
             // here it is only the point (and the glare) the original draws where the light is
@@ -142,8 +141,8 @@ namespace godot {
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
                 const Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), false);
                 if (material.is_valid()) {
-                    const RID rid =
-                            _add_submodel(p_instance, submodel.ptr(), point_mesh->get_rid(), material, local_transform, chain);
+                    const RID rid = _add_submodel(
+                            p_instance, submodel.ptr(), point_mesh->get_rid(), material, local_transform, chain);
                     RenderingServer *rs = RenderingServer::get_singleton();
                     // the quad is placed on the screen by its shaders - in a shadow map or in GI it
                     // would be a stray square
@@ -151,7 +150,8 @@ namespace godot {
                     rs->instance_geometry_set_flag(rid, RenderingServer::INSTANCE_FLAG_USE_BAKED_LIGHT, false);
                     // the light of the nearest "on" ancestor, as E3DLightFactory assigns it
                     String light_name;
-                    for (int ancestor = chain.size() - 1; ancestor >= 0 && light_name.is_empty(); ancestor--) {
+                    for (int ancestor = static_cast<int>(chain.size() - 1); ancestor >= 0 && light_name.is_empty();
+                         ancestor--) {
                         for (const E3DModelLight &light: p_instance.model_lights.lights) {
                             if (light.on == chain[ancestor]) {
                                 light_name = light.name;

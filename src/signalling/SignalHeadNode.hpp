@@ -42,9 +42,13 @@ namespace godot {
 
         protected:
             static void _bind_methods();
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             void _notification(int p_what);
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             bool _set(const StringName &p_name, const Variant &p_value);
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             bool _get(const StringName &p_name, Variant &p_value) const;
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             void _get_property_list(List<PropertyInfo> *p_list) const;
 
         public:

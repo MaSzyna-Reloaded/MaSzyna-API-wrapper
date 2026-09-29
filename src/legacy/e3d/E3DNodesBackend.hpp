@@ -33,8 +33,8 @@ namespace godot {
             void update(const E3DInstanceData &p_instance) override;
             void apply_poses(E3DInstanceData &p_instance) override;
             bool intersect_segment(
-                    const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-                    Vector3 &r_point) const override;
+                    const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+                    Vector3 &p_r_point) const override;
             /// The generated node tree hangs under the attached node and moves with it.
             void apply_transform(const E3DInstanceData &p_instance) override {}
     };

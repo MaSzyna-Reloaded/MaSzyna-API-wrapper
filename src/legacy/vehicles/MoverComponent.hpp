@@ -1,6 +1,6 @@
 #pragma once
-#include "legacy/vehicles/MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/McZapkie/MOVER.h"
+#include "legacy/vehicles/MoverRailVehicleController.hpp"
 
 namespace godot {
     /* What every Mover* component shares: the Mover implementation of the vehicle it belongs to,

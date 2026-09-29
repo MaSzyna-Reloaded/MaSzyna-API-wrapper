@@ -1,6 +1,6 @@
+#include "DriverSystem.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
-#include "DriverSystem.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -68,10 +68,12 @@ namespace godot {
         processing = p_processing;
         if (p_processing) {
             runtime->clock_hold();
-            runtime->connect(SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
+            runtime->connect(
+                    SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
             return;
         }
-        runtime->disconnect(SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
+        runtime->disconnect(
+                SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
         runtime->clock_release();
     }
 
@@ -129,7 +131,8 @@ namespace godot {
         data->update_sequence = next_sequence++;
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        updates.push(UpdateEntry{runtime->get_simulation_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
+        updates.push(
+                UpdateEntry{runtime->get_simulation_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
         _refresh_processing();
     }
 
@@ -155,7 +158,7 @@ namespace godot {
 
     TypedArray<RID> DriverSystem::get_drivers() const {
         TypedArray<RID> result;
-        for (const KeyValue<RID, DriverData> &entry : drivers) {
+        for (const KeyValue<RID, DriverData> &entry: drivers) {
             result.append(entry.key);
         }
         return result;

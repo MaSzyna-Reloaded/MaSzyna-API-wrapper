@@ -1,7 +1,7 @@
-#include "macros.hpp"
-#include "driver/DriverSystem.hpp"
-#include "tracks/TrackServer.hpp"
 #include "MaszynaLegacyMemoryAction.hpp"
+#include "driver/DriverSystem.hpp"
+#include "macros.hpp"
+#include "tracks/TrackServer.hpp"
 
 namespace godot {
     void MaszynaLegacyMemoryAction::_bind_methods() {
@@ -32,7 +32,8 @@ namespace godot {
                 "get_mask");
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::INT, "mode", PROPERTY_HINT_ENUM, enum_hint(
+                        Variant::INT, "mode", PROPERTY_HINT_ENUM,
+                        enum_hint(
                                 {{"Set", MODE_SET},
                                  {"Add", MODE_ADD},
                                  {"Isolated busy", MODE_ISOLATED_BUSY},

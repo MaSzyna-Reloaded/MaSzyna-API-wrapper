@@ -15,6 +15,7 @@
 namespace godot {
     class Cabin3D;
     class RailVehicleBuffCoupl;
+    class RailVehicleController;
     class VehiclePhysicsNode;
     class Area3D;
     class RailVehicleElectricEngine;

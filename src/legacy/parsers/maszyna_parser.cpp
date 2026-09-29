@@ -47,14 +47,14 @@ namespace godot {
     }
 
     /// Single ASCII stop characters; others never matched a single byte in the tokenizer anyway
-    void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&r_table)[128]) {
-        for (bool &entry: r_table) {
+    void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&p_r_table)[128]) {
+        for (bool &entry: p_r_table) {
             entry = false;
         }
         for (int i = 0; i < p_stops.size(); i++) {
             const String stop = p_stops[i];
             if (stop.length() == 1 && stop[0] < 128) {
-                r_table[stop[0]] = true;
+                p_r_table[stop[0]] = true;
             }
         }
     }
@@ -91,7 +91,8 @@ namespace godot {
 
     int MaszynaParser::get8() {
         if (cursor < length) {
-            return data[cursor++];
+            // the raw buffer pointer keeps the per-byte hot loop off the PackedByteArray accessor call
+            return data[cursor++]; // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         }
         return -1;
     }
@@ -230,7 +231,7 @@ namespace godot {
     }
 
     Array MaszynaParser::get_tokens(const int p_num, const Array &p_stops) {
-        bool stop_table[128];
+        bool stop_table[128] = {};
         if (!p_stops.is_empty()) {
             _make_stop_table(p_stops, stop_table);
         }
@@ -246,7 +247,7 @@ namespace godot {
     }
 
     String MaszynaParser::next_token(const Array &p_stops) {
-        bool stop_table[128];
+        bool stop_table[128] = {};
         if (!p_stops.is_empty()) {
             _make_stop_table(p_stops, stop_table);
         }

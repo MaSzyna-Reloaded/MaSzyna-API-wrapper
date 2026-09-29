@@ -5,10 +5,10 @@
 #include "E3DOptimizedBackend.hpp"
 #include "E3DSmokeSourceFactory.hpp"
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/particle_process_material.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 
 namespace godot {
     /// RID based server of E3D model instances, similar to RenderingServer.
@@ -331,9 +331,11 @@ namespace godot {
             void instance_set_layer_mask(const RID &p_instance, uint32_t p_mask);
             void instance_set_visibility_range(const RID &p_instance, float p_begin, float p_end);
             void instance_set_material_overlay(const RID &p_instance, const Ref<Material> &p_material);
-            Dictionary instance_intersect_segment(const RID &p_instance, const Vector3 &p_from, const Vector3 &p_to) const;
+            Dictionary
+            instance_intersect_segment(const RID &p_instance, const Vector3 &p_from, const Vector3 &p_to) const;
             void instance_set_lights_state(const RID &p_instance, const Dictionary &p_lights_state);
-            void instance_set_lights_dimmed(const RID &p_instance, const Dictionary &p_lights_dimmed, float p_multiplier);
+            void
+            instance_set_lights_dimmed(const RID &p_instance, const Dictionary &p_lights_dimmed, float p_multiplier);
             /// The scenery node's `lights` list, by light index (light 0 is "00", AnimModel.cpp:303)
             void instance_set_lights_modes(const RID &p_instance, const PackedFloat32Array &p_modes);
             /// The scenery node's `lightcolors` list, in the same order

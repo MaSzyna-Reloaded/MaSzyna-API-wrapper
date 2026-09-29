@@ -1,6 +1,6 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 
 namespace godot {
     class VehicleController;
@@ -17,7 +17,6 @@ namespace godot {
             static void _bind_methods();
 
         protected:
-
         public:
             enum CouplerType {
                 COUPLER_TYPE_AUTOMATIC,
@@ -72,7 +71,6 @@ namespace godot {
             virtual bool is_coupling_owner(End p_end) const = 0;
             /// The end of the neighbour this end is attached to.
             virtual End get_connected_end(End p_end) const = 0;
-
     };
 } // namespace godot
 

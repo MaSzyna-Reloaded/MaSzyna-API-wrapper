@@ -6,12 +6,15 @@ namespace godot {
         BIND_PROPERTY(RailVehicleLighting, Variant::COLOR, head_light_color, "head_light");
         BIND_PROPERTY(RailVehicleLighting, Variant::FLOAT, head_light_dimmed_multiplier, "head_light");
         BIND_PROPERTY(RailVehicleLighting, Variant::FLOAT, head_light_normal_multiplier, "head_light");
-        BIND_PROPERTY(RailVehicleLighting, Variant::FLOAT, head_light_high_beam_dimmed_multiplier, "head_light/high_beam");
-        BIND_PROPERTY(RailVehicleLighting, Variant::FLOAT, head_light_high_beam_normal_multiplier, "head_light/high_beam");
+        BIND_PROPERTY(
+                RailVehicleLighting, Variant::FLOAT, head_light_high_beam_dimmed_multiplier, "head_light/high_beam");
+        BIND_PROPERTY(
+                RailVehicleLighting, Variant::FLOAT, head_light_high_beam_normal_multiplier, "head_light/high_beam");
         BIND_PROPERTY(RailVehicleLighting, Variant::INT, lights_default_selector_position, "lights");
         BIND_PROPERTY(RailVehicleLighting, Variant::BOOL, lights_wrap_selector, "lights");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleLighting, Variant::ARRAY, lights_list, "lights", PROPERTY_HINT_TYPE_STRING, "RailVehicleLightListItem");
+                RailVehicleLighting, Variant::ARRAY, lights_list, "lights", PROPERTY_HINT_TYPE_STRING,
+                "RailVehicleLightListItem");
         BIND_PROPERTY_W_HINT(
                 RailVehicleLighting, Variant::INT, light_source, "light", PROPERTY_HINT_ENUM,
                 "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
@@ -143,7 +146,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_rear_redmarker_right_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_active_headlight_upper_enabled"), &RailVehicleLighting::get_active_headlight_upper_enabled);
+                D_METHOD("get_active_headlight_upper_enabled"),
+                &RailVehicleLighting::get_active_headlight_upper_enabled);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "active_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
@@ -157,7 +161,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active_headlight_left_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_active_headlight_right_enabled"), &RailVehicleLighting::get_active_headlight_right_enabled);
+                D_METHOD("get_active_headlight_right_enabled"),
+                &RailVehicleLighting::get_active_headlight_right_enabled);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "active_headlight_right_enabled", PROPERTY_HINT_NONE, "",
@@ -171,7 +176,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active_redmarker_left_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_active_redmarker_right_enabled"), &RailVehicleLighting::get_active_redmarker_right_enabled);
+                D_METHOD("get_active_redmarker_right_enabled"),
+                &RailVehicleLighting::get_active_redmarker_right_enabled);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "active_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
@@ -186,7 +192,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_opposite_headlight_upper_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_opposite_headlight_left_enabled"), &RailVehicleLighting::get_opposite_headlight_left_enabled);
+                D_METHOD("get_opposite_headlight_left_enabled"),
+                &RailVehicleLighting::get_opposite_headlight_left_enabled);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "opposite_headlight_left_enabled", PROPERTY_HINT_NONE, "",
@@ -201,7 +208,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_opposite_headlight_right_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_opposite_redmarker_left_enabled"), &RailVehicleLighting::get_opposite_redmarker_left_enabled);
+                D_METHOD("get_opposite_redmarker_left_enabled"),
+                &RailVehicleLighting::get_opposite_redmarker_left_enabled);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "opposite_redmarker_left_enabled", PROPERTY_HINT_NONE, "",

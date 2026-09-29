@@ -22,6 +22,5 @@ namespace godot {
             bool is_main_hose_connected(End p_end) const override;
             bool is_coupling_owner(End p_end) const override;
             End get_connected_end(End p_end) const override;
-
     };
 } // namespace godot

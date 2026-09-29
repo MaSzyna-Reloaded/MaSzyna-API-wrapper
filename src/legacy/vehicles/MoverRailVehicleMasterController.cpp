@@ -1,5 +1,5 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleMasterController.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 
 namespace godot {
     void MoverRailVehicleMasterController::_bind_methods() {}

@@ -1,5 +1,5 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleAIHints.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include "vehicles/rail/RailVehicleAIHints.hpp"
 
 namespace godot {

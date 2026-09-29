@@ -26,7 +26,6 @@ namespace godot {
             }
 
         private:
-
             struct DriverData {
                     Ref<DriverDelegate> delegate;
                     RID vehicle;

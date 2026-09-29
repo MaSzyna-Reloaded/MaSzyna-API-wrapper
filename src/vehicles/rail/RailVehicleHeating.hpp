@@ -1,8 +1,8 @@
 #pragma once
-#include "vehicles/rail/RailVehicleController.hpp"
-#include "vehicles/rail/RailVehicleComponent.hpp"
-#include "vehicles/rail/RailVehicleEngine.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleEngine.hpp"
 
 namespace godot {
     class VehicleController;
@@ -43,7 +43,8 @@ namespace godot {
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, heating_source,
                     RailVehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
-            MAKE_MEMBER_GS_NR(RailVehicleEngine::EngineType, heating_generator_engine, RailVehicleEngine::EngineType::MAIN);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleEngine::EngineType, heating_generator_engine, RailVehicleEngine::EngineType::MAIN);
             MAKE_MEMBER_GS(double, heating_generator_min_rpm, 0.0);
             MAKE_MEMBER_GS(double, heating_generator_min_voltage, 0.0);
             MAKE_MEMBER_GS(double, heating_generator_max_rpm, 0.0);

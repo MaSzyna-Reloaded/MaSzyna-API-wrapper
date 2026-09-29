@@ -1,22 +1,22 @@
-#include "vehicles/rail/RailVehicleBuffCoupl.hpp"
+#include "RailVehicle3D.hpp"
+#include "RailVehicleController.hpp"
 #include "cabin/Cabin3D.hpp"
-#include "vehicles/rail/RailVehicleLoad.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "traction/TractionServer.hpp"
-#include "vehicles/rail/RailVehicleWheels.hpp"
-#include "RailVehicle3D.hpp"
-#include "RailVehicleController.hpp"
 #include "vehicles/base/VehiclePhysicsNode.hpp"
+#include "vehicles/rail/RailVehicleBuffCoupl.hpp"
+#include "vehicles/rail/RailVehicleLoad.hpp"
+#include "vehicles/rail/RailVehicleWheels.hpp"
 
+#include "logging/GameLog.hpp"
+#include "tracks/TrackServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
+#include "vehicles/rail/RailVehicleDoors.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include "vehicles/rail/RailVehicleWipers.hpp"
-#include "vehicles/rail/RailVehicleDoors.hpp"
-#include "tracks/TrackServer.hpp"
-#include "logging/GameLog.hpp"
 
 #include <godot_cpp/classes/area3d.hpp>
 #include <godot_cpp/classes/box_shape3d.hpp>
@@ -277,7 +277,7 @@ namespace godot {
         camera->set_global_transform(cabin->get_camera_transform());
         // Original engine looks along VectorFront * CabOccupied (drivermode.cpp:1071), so cab 2
         // faces the opposite way.
-        const bool rear_cab = static_cast<int>(cabin->get_cab_number()) < 0;
+        const bool rear_cab = cabin->get_cab_number() < 0;
         if (cabin_rotate_180deg != rear_cab) {
             camera->set_global_basis(get_global_basis());
         } else {
@@ -348,9 +348,9 @@ namespace godot {
     /* The vehicle this node draws has been (re)built. Everything this node sets up needs a
      * vehicle, so this is where its own initialisation starts - and where processing begins. */
     void RailVehicle3D::_on_vehicle_changed() {
-        RailVehicleController *vehicle = fiz_controller != nullptr
-                                           ? Object::cast_to<RailVehicleController>(fiz_controller->get_controller())
-                                           : nullptr;
+        RailVehicleController *vehicle =
+                fiz_controller != nullptr ? Object::cast_to<RailVehicleController>(fiz_controller->get_controller())
+                                          : nullptr;
         _on_controller_changed(vehicle);
         // the vehicle was rebuilt in place, so its parts changed even though it did not
         _adopt_vehicle_parts();
@@ -406,8 +406,8 @@ namespace godot {
         electric_engine = Object::cast_to<RailVehicleElectricEngine>(engine_component);
         engine = Object::cast_to<RailVehicleEngine>(engine_component);
         diesel_engine = Object::cast_to<RailVehicleDieselEngine>(engine_component);
-        lighting =
-                Object::cast_to<RailVehicleLighting>(controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
+        lighting = Object::cast_to<RailVehicleLighting>(
+                controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
         wipers = Object::cast_to<RailVehicleWipers>(controller->get_component(VehicleComponentType::COMPONENT_WIPERS));
         doors = Object::cast_to<RailVehicleDoors>(controller->get_component(VehicleComponentType::COMPONENT_DOORS));
         /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
@@ -427,10 +427,8 @@ namespace godot {
         if (electric_engine == nullptr) {
             return;
         }
-        electric_engine->set_power_current_collector_first_position(
-                pantograph_front_geometry.get("offset", Vector3()));
-        electric_engine->set_power_current_collector_second_position(
-                pantograph_rear_geometry.get("offset", Vector3()));
+        electric_engine->set_power_current_collector_first_position(pantograph_front_geometry.get("offset", Vector3()));
+        electric_engine->set_power_current_collector_second_position(pantograph_rear_geometry.get("offset", Vector3()));
     }
 
     void RailVehicle3D::_on_controller_changed(RailVehicleController *p_controller) {
@@ -517,8 +515,7 @@ namespace godot {
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
-            model_node->disconnect(
-                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
+            model_node->disconnect("e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
             model_node = nullptr;
         }
         _register_pickable(RID());
@@ -641,15 +638,13 @@ namespace godot {
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
-            model_node->disconnect(
-                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
+            model_node->disconnect("e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
         }
         model_node = new_model_node;
         if (model_node != nullptr) {
             model_node->connect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->connect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
-            model_node->connect(
-                    "e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
+            model_node->connect("e3d_instance_created", callable_mp(this, &RailVehicle3D::_register_pickable));
             // the model node is a GDScript E3DModelInstance, unknown at build time
             _register_pickable(model_node->call("get_e3d_instance"));
         }
@@ -798,7 +793,7 @@ namespace godot {
         if (low_poly_cabin == nullptr) {
             return;
         }
-        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get_cab_number());
+        const int cab_number = cabin == nullptr ? 0 : cabin->get_cab_number();
         const int occupied_cab_index = cab_number < 0 ? 2 : cab_number;
         const bool hifi_cab = cabin != nullptr && cabin->get_has_cab_model();
         for (int cab_index = 0; cab_index < 3; ++cab_index) {
@@ -1060,8 +1055,8 @@ namespace godot {
             }
             // the original's offset() is the position in the model, through every parent (Model3d.cpp:1584)
             Transform3D model_transform = node->get_transform();
-            for (Node3D *parent = Object::cast_to<Node3D>(node->get_parent());
-                 parent != nullptr && parent != model; parent = Object::cast_to<Node3D>(parent->get_parent())) {
+            for (Node3D *parent = Object::cast_to<Node3D>(node->get_parent()); parent != nullptr && parent != model;
+                 parent = Object::cast_to<Node3D>(parent->get_parent())) {
                 model_transform = parent->get_transform() * model_transform;
             }
             _capture_rest_basis(node);
@@ -1101,7 +1096,10 @@ namespace godot {
         if (left > 0 && right > 0) {
             return 3;
         }
-        return left > 0 ? 1 : (right > 0 ? 2 : 0);
+        if (left > 0) {
+            return 1;
+        }
+        return right > 0 ? 2 : 0;
     }
 
     // Original engine: TDynamicObject::SetPneumatic() (DynObj.cpp:430) - picks the hose submodel
@@ -1139,7 +1137,10 @@ namespace godot {
         if (own == 3) {
             return other == 1 ? 4 : 1;
         }
-        return own == 2 ? 4 : (own == 1 ? 1 : 0);
+        if (own == 2) {
+            return 4;
+        }
+        return own == 1 ? 1 : 0;
     }
 
     // Original engine: AirCoupler::Update() (AirCoupler.cpp:83)
@@ -1172,12 +1173,17 @@ namespace godot {
         for (int end = 0; end < 2; ++end) {
             const RailVehicleBuffCoupl::End vehicle_end = static_cast<RailVehicleBuffCoupl::End>(end);
             // _on for the vehicle that draws the coupler, _xon (or _off without it) for the other
-            variants[end][0] =
-                    !coupler->is_coupled(vehicle_end) ? 0 : (coupler->is_coupling_owner(vehicle_end) ? 1 : 2);
+            if (!coupler->is_coupled(vehicle_end)) {
+                variants[end][0] = 0;
+            } else if (coupler->is_coupling_owner(vehicle_end)) {
+                variants[end][0] = 1;
+            } else {
+                variants[end][0] = 2;
+            }
             variants[end][1] = coupler->is_brake_hose_connected(vehicle_end) ? _pneumatic_variant(end, true) : 0;
             variants[end][2] = coupler->is_main_hose_connected(vehicle_end) ? _pneumatic_variant(end, false) : 0;
             for (const int variant: variants[end]) {
-                state = state * 5 + variant;
+                state = (state * 5) + variant;
             }
         }
         if (state == coupler_visibility_state) {
@@ -1213,14 +1219,15 @@ namespace godot {
         }
         wiper_applied_positions = positions;
         const double wiper_angle = Math::deg_to_rad(double(controller->get_config().get("wipers_angle", 0.0)));
-        for (int wiper = 0; wiper < positions.size() && (wiper + 1) * 3 <= wiper_arm_nodes.size(); ++wiper) {
+        for (int wiper = 0; wiper < positions.size() && (static_cast<int64_t>(wiper) + 1) * 3 <= wiper_arm_nodes.size();
+             ++wiper) {
             // the state tells the way out (0..1) from the way back (1..2)
             double sweep = positions[wiper] > 1.0 ? positions[wiper] - 1.0 : positions[wiper];
             // smoothInterpolate() (utilities.h:324)
-            sweep = sweep * sweep * (3.0 - 2.0 * sweep);
+            sweep = sweep * sweep * (3.0 - (2.0 * sweep));
             const double angle = (wiper % 2 == 1 ? -wiper_angle : wiper_angle) * sweep;
             for (int element = 0; element < 3; ++element) {
-                Node3D *node = Object::cast_to<Node3D>(wiper_arm_nodes[wiper * 3 + element]);
+                Node3D *node = Object::cast_to<Node3D>(wiper_arm_nodes[(wiper * 3) + element]);
                 if (node == nullptr) {
                     continue;
                 }
@@ -1248,7 +1255,7 @@ namespace godot {
         mirror_applied_right = right;
         mirror_applied_cab = occupied_cab;
         const double max_shift = Math::deg_to_rad(doors->get_mirror_max_shift());
-        for (const MirrorNode &mirror : mirror_nodes) {
+        for (const MirrorNode &mirror: mirror_nodes) {
             const bool active = mirror.front ? occupied_cab > 0 : occupied_cab < 0;
             const double angle = active ? max_shift * (mirror.right ? right : left) : 0.0;
             Transform3D transform = mirror.node->get_transform();
@@ -1272,9 +1279,10 @@ namespace godot {
     }
 
     void RailVehicle3D::_update_wheel_animation_state() {
-        const RailVehicleWheels *wheels = controller != nullptr ? Object::cast_to<RailVehicleWheels>(controller->get_component(
-                                                                      VehicleComponentType::COMPONENT_WHEELS))
-                                                            : nullptr;
+        const RailVehicleWheels *wheels =
+                controller != nullptr ? Object::cast_to<RailVehicleWheels>(
+                                                controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                                      : nullptr;
         if (wheels == nullptr) {
             return;
         }
@@ -1413,9 +1421,10 @@ namespace godot {
         bogie_configuration_warned = false;
         // the running gear is the wheels' business: they know the pivot spacing and where each
         // bogie sits. This node only puts the nodes there.
-        RailVehicleWheels *wheels = controller != nullptr ? Object::cast_to<RailVehicleWheels>(controller->get_component(
-                                                                VehicleComponentType::COMPONENT_WHEELS))
-                                                      : nullptr;
+        RailVehicleWheels *wheels = controller != nullptr
+                                            ? Object::cast_to<RailVehicleWheels>(
+                                                      controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                                            : nullptr;
         if (wheels == nullptr) {
             _update_wheel_animation_state();
             return;
@@ -1510,18 +1519,20 @@ namespace godot {
         const double current = active_count > 0 ? controller->get_current0() / active_count : 0.0;
         _report_contact_gap(2, first_active, pantograph_front_converged);
         _report_contact_gap(3, second_active, pantograph_rear_converged);
-        const double front_voltage =
-                front_active ? _pantograph_wire_voltage(
-                                       2, electric_engine->get_power_current_collector_first_position(), frame,
-                                       assumed_voltage, current)
-                             : 0.0;
-        electric_engine->set_pantograph_wire_voltage(RailVehicleElectricEngine::PANTOGRAPH_FIRST, front_voltage);
+        const double front_voltage = front_active
+                                             ? _pantograph_wire_voltage(
+                                                       2, electric_engine->get_power_current_collector_first_position(),
+                                                       frame, assumed_voltage, current)
+                                             : 0.0;
+        electric_engine->set_pantograph_wire_voltage(
+                RailVehicleElectricEngine::PANTOGRAPH_FIRST, static_cast<float>(front_voltage));
         electric_engine->set_pantograph_wire_voltage(
                 RailVehicleElectricEngine::PANTOGRAPH_SECOND,
-                rear_active ? _pantograph_wire_voltage(
-                                      3, electric_engine->get_power_current_collector_second_position(), frame,
-                                      assumed_voltage, current)
-                            : 0.0);
+                static_cast<float>(
+                        rear_active ? _pantograph_wire_voltage(
+                                              3, electric_engine->get_power_current_collector_second_position(), frame,
+                                              assumed_voltage, current)
+                                    : 0.0));
     }
 
     /// FIXME(#184): moves to RailVehicleServer with _update_pantograph_power().
@@ -1583,8 +1594,8 @@ namespace godot {
         }
         const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
         const bool power_available = controller->get_power24_available() || controller->get_power110_available();
-        const bool is_ezt =
-                (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) == RailVehicleController::TRAIN_TYPE_EZT;
+        const bool is_ezt = (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) ==
+                            RailVehicleController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;
         double speed_factor = 0.0;
         if (pressure > pressure_threshold && power_available) {

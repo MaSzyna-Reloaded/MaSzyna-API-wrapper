@@ -24,7 +24,7 @@ Read top to bottom: each layer may use the ones below it and must know nothing o
 | Backend | `src/legacy/maszyna-mover/` (vendored `TMoverParameters`) | physical quantities, the original's own model | be edited. It is vendored; a divergence is ported around it, never into it |
 | Backend adapters | `Mover*` classes (`MoverRailVehicleController`, `MoverRailVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
 | Vehicle model | `VehicleController` (an `Object`, any vehicle) and `RailVehicleController` (a railway one: cabs, couplers, controllers, relays), `VehicleComponent` / `RailVehicleComponent` + `RailVehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
-| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SignallingServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
+| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SignallingServer`, and the GDScript servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`, `ScenerySoundServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
 | Systems | `CabinSystem` (a cab per vehicle RID and cab), `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
 | Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets, `SignalHeadNode`/`SignallingSystemNode` (proxies holding a server RID) | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
 | Importers | `src/legacy/parsers/`, `src/legacy/e3d/`, `addons/libmaszyna/legacy/fiz/`, `.../legacy/mmd/`, `.../legacy/scenery/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
@@ -100,6 +100,12 @@ of two same-named vehicles lost its commands and its cab (TrainSystem, removed 2
 * **A handle, a placement, a composition** - the server that owns the thing. The body transform is
   composed by `RailVehicleServer` from the two bogie pivots, not by the node that draws it; two
   writers agreed on every straight track in the game and disagreed on curves.
+* **Anything a scenery places in the world** (a model, a track, a wire, a light, a smoke emitter,
+  a sound) - a server that registers it with `SceneryStreamingServer` (`owner_create` +
+  `stream_register`) and builds it only while the camera is in its range. Never a node per
+  placement built at load: a scenery has tens of thousands of them. Scenery sounds are event
+  pairs of `ScenerySoundServer`'s one `SfxPlayer3D` and one `SfxBank`, placed by
+  `SfxSpatialConfig.position`, not a player each (2026-09-29).
 * **Something an instancer must honour** - the server, not the node that happens to create the
   instance. The moment a second instancer appeared without nodes, every feature parked on a node
   silently stopped existing.

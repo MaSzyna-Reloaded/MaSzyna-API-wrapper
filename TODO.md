@@ -950,17 +950,13 @@ ported, into a delegate.
       uncoupling position (`bh_EPB`); a coupling a player left half done under another order; the
       margins of modern vehicles and of the weather, and a late train's (`moveLate`).
 
-### Reported, not reproduced (2026-09-29)
+### To confirm in game (2026-09-29)
 
-* Stary Jawor Osobowy 1: the AI's goods train n323m (SM42-2303) ran past a signal at stop into
-  Roztocze while the player was at the station in SM42-329, stood there, and the player's exit
-  signal was never cleared. Headless, with the player idle and `roz_tow1_ruszaj` fired at once,
-  it entered on M at 40, passed H2 at 40 and stopped 46 m short of C4 at stop - no overrun. The
-  dispatcher (`ros_tow1_*`, `roz_obsluga_stacji`) sets its signals by what the player occupies, so
-  the run needs the player's moves; the Tm fix of the same day ("a train held by a Tm at stop it
-  had passed") may or may not be it.
-* The driving aid "often shows stop": it reads the same table, so the Tm fix may cover it - not
-  checked on the player's path.
+* Stary Jawor Osobowy 1: the AI's n323m (SM42-2303) ran past a signal at stop into Roztocze while
+  the player shunted in SM42-329. Not reproduced headless with the player idle; the two causes
+  found the same day on krzyzowa2 fit it - a far stop read on one update and lost on the next
+  (lerpf(), "the driving aid flickered") and signals closing behind the train braking it hard
+  ("a signal closing behind the train braked it hard"). Both fixed; to be driven again in game.
 
 ### Cab targets (2026-09-27)
 

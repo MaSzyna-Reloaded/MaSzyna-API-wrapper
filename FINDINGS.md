@@ -282,6 +282,10 @@ anything. Open work belongs in `TODO.md`.
   `IncMainCtrl()` refuses every step while no cab is active. *(09-28 the EP07 trip test never
   moved)*
 
+* Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
+  every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less
+  submodel. *(09-29 submodels without meshes)*
+
 ## Sound
 * A method bound with different arguments is still one connection: when the key changes
   (a vehicle's RID), disconnect it first. *(09-28 coupler events under a handle nothing read)*

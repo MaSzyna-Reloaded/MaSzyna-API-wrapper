@@ -1999,6 +1999,17 @@ lighting or the trainset.
   N per-step processes. Before attaching per-vehicle logic, ask who drives the vehicle; read the
   profiler's call counts before its times.
 
+## 2026-09-29 - submodels without meshes
+
+* **Symptom:** in `test_t3d_parser.gd` every submodel taken as
+  `E3DModelManager.load_model(...).get_node(...)` had `mesh == null`, while a probe iterating
+  `model.submodels` of the same file saw its meshes.
+* **What proved it:** the only difference was the model held in a variable. `~E3DModel()` calls
+  `E3DModel::clear()`, which clears every submodel (`E3DSubModel::clear()` unrefs its mesh); the
+  temporary model is released at the end of the expression, the submodel survives it empty.
+* **Fix:** the test keeps the model in a variable while it reads the submodels.
+* **Rule:** hold an `E3DModel` for as long as its submodels are used.
+
 ## 2026-09-30 - Krzyżowa 2: the timetable panel never left Krzyżowa
 
 * **Symptom:** EX6435 left Krzyżowa on time and passed Markowo_Górne; the panel stayed on

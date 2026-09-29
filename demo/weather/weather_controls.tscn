@@ -466,15 +466,23 @@ mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
+[node name="PauseButton" type="Button" parent="Settings/TimeScaleGroup/Row"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+focus_mode = 0
+tooltip_text = "Pause"
+toggle_mode = true
+text = "II"
+
 [node name="TimeScaleSlider" type="HSlider" parent="Settings/TimeScaleGroup/Row"]
 unique_name_in_owner = true
 focus_mode = 0
 custom_minimum_size = Vector2(140, 24)
 layout_mode = 2
 size_flags_horizontal = 3
-max_value = 100.0
-value = 1.0
-exp_edit = true
+value = 3.0
+ticks_on_borders = true
 
 [node name="TimeScaleValueLabel" type="Label" parent="Settings/TimeScaleGroup/Row"]
 unique_name_in_owner = true
@@ -488,3 +496,4 @@ horizontal_alignment = 2
 autostart = true
 
 [connection signal="timeout" from="ClockTimer" to="." method="_on_clock_timer_timeout"]
+[connection signal="toggled" from="Settings/TimeScaleGroup/Row/PauseButton" to="." method="_on_pause_button_toggled"]

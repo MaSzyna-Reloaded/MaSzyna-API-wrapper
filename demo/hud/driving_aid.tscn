@@ -3,107 +3,117 @@
 [ext_resource type="Script" path="res://hud/driving_aid.gd" id="1_aid"]
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
 
-[node name="DrivingAid" type="HBoxContainer"]
+[node name="DrivingAid" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_aid")
+
+[node name="Tiles" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
 offset_left = 16.0
 offset_top = 40.0
 offset_right = 16.0
 mouse_filter = 2
-theme = ExtResource("2_theme")
 theme_override_constants/separation = 8
-script = ExtResource("1_aid")
 
-[node name="ControllerTile" type="PanelContainer" parent="."]
+[node name="ControllerTile" type="PanelContainer" parent="Tiles"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"FloatingChip"
 
-[node name="Layout" type="VBoxContainer" parent="ControllerTile"]
+[node name="Layout" type="VBoxContainer" parent="Tiles/ControllerTile"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="Caption" type="Label" parent="ControllerTile/Layout"]
+[node name="Caption" type="Label" parent="Tiles/ControllerTile/Layout"]
 layout_mode = 2
 theme_type_variation = &"DrivingAidCaption"
 text = "Controller"
 
-[node name="ControllerValue" type="Label" parent="ControllerTile/Layout"]
+[node name="ControllerValue" type="Label" parent="Tiles/ControllerTile/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 10
 theme_type_variation = &"DrivingAidValue"
 text = "0 + 0"
 
-[node name="BrakesTile" type="PanelContainer" parent="."]
+[node name="BrakesTile" type="PanelContainer" parent="Tiles"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"FloatingChip"
 
-[node name="Layout" type="VBoxContainer" parent="BrakesTile"]
+[node name="Layout" type="VBoxContainer" parent="Tiles/BrakesTile"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="Caption" type="Label" parent="BrakesTile/Layout"]
+[node name="Caption" type="Label" parent="Tiles/BrakesTile/Layout"]
 layout_mode = 2
 theme_type_variation = &"DrivingAidCaption"
 text = "Brakes"
 
-[node name="BrakesValue" type="Label" parent="BrakesTile/Layout"]
+[node name="BrakesValue" type="Label" parent="Tiles/BrakesTile/Layout"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 10
 theme_type_variation = &"DrivingAidValue"
 text = "0.0 + 0"
 
-[node name="BrakePipeTile" type="PanelContainer" parent="."]
+[node name="BrakePipeTile" type="PanelContainer" parent="Tiles"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"FloatingChip"
 
-[node name="Layout" type="VBoxContainer" parent="BrakePipeTile"]
+[node name="Layout" type="VBoxContainer" parent="Tiles/BrakePipeTile"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="Caption" type="Label" parent="BrakePipeTile/Layout"]
+[node name="Caption" type="Label" parent="Tiles/BrakePipeTile/Layout"]
 layout_mode = 2
 theme_type_variation = &"DrivingAidCaption"
 text = "Brake pipe"
 
-[node name="Reading" type="HBoxContainer" parent="BrakePipeTile/Layout"]
+[node name="Reading" type="HBoxContainer" parent="Tiles/BrakePipeTile/Layout"]
 layout_mode = 2
 size_flags_vertical = 10
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="BrakePipeValue" type="Label" parent="BrakePipeTile/Layout/Reading"]
+[node name="BrakePipeValue" type="Label" parent="Tiles/BrakePipeTile/Layout/Reading"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DrivingAidValue"
 text = "0.00"
 
-[node name="Unit" type="Label" parent="BrakePipeTile/Layout/Reading"]
+[node name="Unit" type="Label" parent="Tiles/BrakePipeTile/Layout/Reading"]
 layout_mode = 2
 size_flags_vertical = 8
 theme_type_variation = &"DrivingAidCaption"
 text = "bar"
 
-[node name="SpeedTile" type="PanelContainer" parent="."]
+[node name="SpeedTile" type="PanelContainer" parent="Tiles"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"FloatingChip"
 
-[node name="Reading" type="HBoxContainer" parent="SpeedTile"]
+[node name="Reading" type="HBoxContainer" parent="Tiles/SpeedTile"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 6
 
-[node name="SpeedValue" type="Label" parent="SpeedTile/Reading"]
+[node name="SpeedValue" type="Label" parent="Tiles/SpeedTile/Reading"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(72, 0)
 layout_mode = 2
@@ -112,46 +122,46 @@ theme_type_variation = &"DrivingAidSpeed"
 text = "0"
 horizontal_alignment = 2
 
-[node name="Unit" type="Label" parent="SpeedTile/Reading"]
+[node name="Unit" type="Label" parent="Tiles/SpeedTile/Reading"]
 layout_mode = 2
 size_flags_vertical = 4
 theme_type_variation = &"DrivingAidCaption"
 text = "km/h"
 
-[node name="SecurityTile" type="PanelContainer" parent="."]
+[node name="SecurityTile" type="PanelContainer" parent="Tiles"]
 visible = false
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"FloatingChip"
 
-[node name="Lamps" type="VBoxContainer" parent="SecurityTile"]
+[node name="Lamps" type="VBoxContainer" parent="Tiles/SecurityTile"]
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="VigilanceLamp" type="PanelContainer" parent="SecurityTile/Lamps"]
+[node name="VigilanceLamp" type="PanelContainer" parent="Tiles/SecurityTile/Lamps"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(56, 24)
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"DrivingAidLamp"
 
-[node name="Caption" type="Label" parent="SecurityTile/Lamps/VigilanceLamp"]
+[node name="Caption" type="Label" parent="Tiles/SecurityTile/Lamps/VigilanceLamp"]
 layout_mode = 2
 theme_type_variation = &"DrivingAidLampLabel"
 text = "CA"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CabSignalLamp" type="PanelContainer" parent="SecurityTile/Lamps"]
+[node name="CabSignalLamp" type="PanelContainer" parent="Tiles/SecurityTile/Lamps"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(56, 24)
 layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"DrivingAidLamp"
 
-[node name="Caption" type="Label" parent="SecurityTile/Lamps/CabSignalLamp"]
+[node name="Caption" type="Label" parent="Tiles/SecurityTile/Lamps/CabSignalLamp"]
 layout_mode = 2
 theme_type_variation = &"DrivingAidLampLabel"
 text = "SHP"
@@ -161,7 +171,6 @@ vertical_alignment = 1
 [node name="LimitTile" type="PanelContainer" parent="."]
 unique_name_in_owner = true
 visible = false
-top_level = true
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0

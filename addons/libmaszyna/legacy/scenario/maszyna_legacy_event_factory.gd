@@ -20,6 +20,8 @@ class_name MaszynaLegacyEventFactory
 ## AMBIENT_CUTOFF_RANGE [m] from its place (sound.cpp:364-371, 1021-1024,
 ## audiorenderer.cpp:184-199: the fade reaches 0 at range + 0.75 range, squared - 1.25 range)
 const UNLIMITED_RANGE:float = -1.0
+## Where a scenery sound's file and its transcript are (AudioStreamManager.get_stream())
+const SOUNDS_DIRECTORY:String = "sounds"
 const AMBIENT_GAIN:float = 0.4
 const AMBIENT_FADE_END:float = 1.25
 const AMBIENT_CUTOFF_RANGE:float = 2750.0
@@ -176,7 +178,8 @@ static func build(
         root._sound_rids.append(sound_rid)
         sounds_by_name[sound.name.to_lower()] = sound_rid
         reaches_by_name[sound.name.to_lower()] = sound.range_max
-        transcripts_by_name[sound.name.to_lower()] = MaszynaLegacySoundCaption.from_sound_file(sound.file)
+        transcripts_by_name[sound.name.to_lower()] = MaszynaLegacySoundCaption.from_sound_file(
+                UserSettings.get_maszyna_game_dir().path_join(SOUNDS_DIRECTORY).path_join(sound.file))
 
     # the isolated sections, named by a track's `isolated`, an `isolated` block or an `area`
     var sections:Dictionary[String, RID] = {}
@@ -306,9 +309,12 @@ static func build(
                 # <x> <y> <z> <command> <value1> <value2> (Event.cpp:700-767)
                 var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
                 action.command = event.parameters[3]
-                # a stop's name is unique past its `#`, the timetable knows it without (Event.cpp:719-722)
-                if action.command.begins_with(PASSENGER_STOP_POINT) and action.command.contains(STOP_POINT_UNIQUE):
-                    action.command = action.command.left(action.command.find(STOP_POINT_UNIQUE))
+                # a stop's name is unique past its `#`, the timetable knows it without, and in plain
+                # ASCII as the timetable's own (Event.cpp:715-719)
+                if action.command.begins_with(PASSENGER_STOP_POINT):
+                    if action.command.contains(STOP_POINT_UNIQUE):
+                        action.command = action.command.left(action.command.find(STOP_POINT_UNIQUE))
+                    action.command = Windows1250.to_ascii(action.command)
                 action.value1 = float(event.parameters[4])
                 action.value2 = float(event.parameters[5])
                 # the origin moves it, the rotation does not (Event.cpp:709-712)

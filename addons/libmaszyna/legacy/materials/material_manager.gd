@@ -35,7 +35,7 @@ const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT: float = 0.03
 ## The cache key cannot see changes to MaszynaMaterialFactory's own code - bump this whenever that code
 ## changes what a built material holds. v2: normal_scale 1.0 like the original. v4: shaders moved
 ## to legacy/materials/types. v5: the specgloss texture of the *_specgloss types.
-const CACHE_VERSION: int = 5
+const CACHE_VERSION: int = 6
 
 var _materials_cache = ResourceCache.create("materials")
 ## The point with its glare, built in _ready() when RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is on

@@ -117,6 +117,11 @@ static func create(type:RailVehicleEngine.EngineType) -> MaszynaLegacyDriverTrac
     return traction
 
 
+## The driver waits `seconds` before it adds power (fActionTime < 0)
+func hold(seconds:float) -> void:
+    action_time = -seconds
+
+
 ## What the driver reads of its engine on every update (UpdateSituation(), Driver.cpp:5984,
 ## 6232-6240): the time it waits runs on, and the line's voltage
 func read(situation:Situation, elapsed:float) -> void:

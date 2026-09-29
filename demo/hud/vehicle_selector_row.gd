@@ -54,7 +54,7 @@ func refresh() -> void:
     %Motion.text = motion_label(vehicle)
     %Delay.visible = not timetable == null
     if timetable:
-        var late_minutes:int = -roundi(timetable_state.get("latency", 0.0))
+        var late_minutes:int = TimetablePanel.delay_minutes(timetable_state, SimulationServer.time_of_day)
         %Delay.text = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
         %Delay.add_theme_color_override(&"font_color",
                 ON_TIME_COLOR if late_minutes == 0 else (LATE_COLOR if late_minutes > 0 else EARLY_COLOR))

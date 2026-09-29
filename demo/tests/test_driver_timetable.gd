@@ -56,6 +56,32 @@ func test_latency_is_early_positive_late_negative():
     assert_almost_eq(timetable.latency, -1.0, EPSILON, "a minute late")
 
 
+func test_the_station_left_stays_shown_until_the_train_is_clear_of_it():
+    # StationStart (driveruipanels.cpp:392) follows StationIndex only in UpdateNextStop()
+    timetable.arrive(DEPARTURE)
+    timetable.advance()
+    assert_eq(timetable.station_start, 0, "still at the station it has left")
+    timetable.show_next_station()
+    assert_eq(timetable.station_start, 1, "clear of it")
+    timetable.rewind("End")
+    assert_eq(timetable.station_start, 3, "shown from the station it rewound to (Driver.cpp:1092)")
+
+
+func test_the_delay_counts_on_while_the_train_stands_past_its_departure():
+    timetable.arrive(DEPARTURE - 3 * MINUTE)
+    var state:Dictionary = {
+        "timetable": timetable.timetable,
+        "station_index": timetable.station_index,
+        "station_start": timetable.station_start,
+        "latency": timetable.latency,
+        "at_passenger_stop": true,
+    }
+    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE - MINUTE), 0, "before the departure")
+    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE + 2.5 * MINUTE), 2, "two whole minutes past it")
+    state["at_passenger_stop"] = false
+    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE + 2.5 * MINUTE), -3, "on the way: as it arrived")
+
+
 func test_it_leaves_at_the_departure_time():
     assert_false(timetable.is_time_to_go(DEPARTURE - MINUTE))
     assert_true(timetable.is_time_to_go(DEPARTURE))

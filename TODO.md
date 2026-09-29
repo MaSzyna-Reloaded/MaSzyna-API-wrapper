@@ -898,14 +898,19 @@ ported, into a delegate.
       goes on to its next order, `Disconnect`); the last station ends the
       timetable. The timetable's speed per stretch (`TTVmax`).
       Left: the load exchange and its waiting (`simulation::Station.update_load()`,
-      `WaitingSet()`, `fStopTime`), the doors, the announcements and the departure signal
-      (`tsGuardSignal`), the radio channel a station gives, the delay flag (`UpdateDelayFlag()`),
+      `WaitingSet()`, `fStopTime`), the doors (and the guard's `moveGuardOpenDoor`), the
+      announcements; of the guard's departure message (`tsGuardSignal`) only the radio one is
+      played - the one heard beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870)
+      needs a place for a train's own world sounds, and a .flac one has no loader; the hint to
+      tune the radio to a station's channel (`cue_action(radiochannel)`, Driver.cpp:1113), the
+      delay flag (`UpdateDelayFlag()`),
       a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
       `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
       The player's timetable panel (`demo/hud/timetable_panel.gd`, F2 / View menu, fed by
       `DriverSystem.driver_get_timetable_state()` and `driver_timetable_changed`) left out:
-      `StationStart` with its `fLastStopExpDist` counter (Driver.cpp:6581-6587) - the panel
-      lists every station, passed ones faded; the original's red row while loading
+      the list starting at `StationStart` (driveruipanels.cpp:392) - the panel lists every
+      station, passed ones faded; the vehicle card's delay is worked out on a timetable change
+      only, so it does not count on while the train stands; the original's red row while loading
       (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
       trainset weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
       re-resolve which driver of the trainset the panel follows until the next timetable change

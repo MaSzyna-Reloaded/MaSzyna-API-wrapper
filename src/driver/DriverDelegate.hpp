@@ -43,9 +43,10 @@ namespace godot {
             /// (DriverSystem.vehicle_set_control_active()); the vehicle is as the player left it
             virtual void control_taken(const RID &p_driver);
             /// The driver's timetable and how far it got through it: "timetable" (Timetable or
-            /// null), "station_index" (the entry it drives to next), "latency" (late on leaving the
-            /// last station [min], early when negative), "at_passenger_stop"; empty for a delegate
-            /// that follows no timetable
+            /// null), "station_index" (the entry it drives to next), "station_start" (the entry
+            /// shown as the station it stands at or has just left), "latency" (early on arriving at
+            /// the last station [min], late when negative), "at_passenger_stop"; empty for a
+            /// delegate that follows no timetable
             virtual Dictionary get_timetable_state(const RID &p_driver) const;
             /// What the driver keeps - its orders and what they asked for; the keys are the
             /// delegate's own, empty for a delegate that shows nothing

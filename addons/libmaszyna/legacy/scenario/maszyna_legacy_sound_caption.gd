@@ -27,11 +27,10 @@ const UTF8_LEAD_THREE:int = 0xE0
 const UTF8_LEAD_FOUR:int = 0xF0
 
 
-## The transcript of the sound file (a path under `sounds/`, without its extension) in the
-## simulation's language, or null when it has none
-static func from_sound_file(sound_file:String) -> Transcript:
-    var path:String = UserSettings.get_maszyna_game_dir().path_join("sounds").path_join(
-            "%s-%s%s" % [sound_file, SimulationServer.language, EXTENSION])
+## The transcript of the sound file (its full path, without its extension) in the simulation's
+## language, beside it wherever it is - the sounds or a scenery - or null when it has none
+static func from_sound_file(sound_path:String) -> Transcript:
+    var path:String = "%s-%s%s" % [sound_path, SimulationServer.language, EXTENSION]
     if not FileAccess.file_exists(path):
         return null
     var bytes:PackedByteArray = FileAccess.get_file_as_bytes(path)

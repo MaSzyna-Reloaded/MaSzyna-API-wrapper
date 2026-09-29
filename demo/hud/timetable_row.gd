@@ -106,5 +106,5 @@ func _draw_line() -> void:
 
 ## Hours since midnight as HH:MM
 static func _format_time(hours:float) -> String:
-    var minutes:int = floori(hours * MINUTES_PER_HOUR)
+    var minutes:int = roundi(hours * MINUTES_PER_HOUR)
     return "%02d:%02d" % [(minutes / int(MINUTES_PER_HOUR)) % HOURS_PER_DAY, minutes % int(MINUTES_PER_HOUR)]

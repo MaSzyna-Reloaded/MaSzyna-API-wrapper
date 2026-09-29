@@ -302,7 +302,7 @@ func _on_driver_timetable_changed(driver:RID) -> void:
         if timetable.relation_from or timetable.relation_to:
             data[tr("Relation")] = "%s  →  %s" % [
                 timetable.relation_from.replace("_", " "), timetable.relation_to.replace("_", " ")]
-        var late_minutes:int = -roundi(state.get("latency", 0.0))
+        var late_minutes:int = TimetablePanel.delay_minutes(state, SimulationServer.time_of_day)
         data[tr("Delay")] = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
         var entries:Array = timetable.entries
         var index:int = state.get("station_index", 0)

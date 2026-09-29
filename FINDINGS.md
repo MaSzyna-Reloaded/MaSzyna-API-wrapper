@@ -305,3 +305,11 @@ anything. Open work belongs in `TODO.md`.
 * When the API godot-cpp is generated from changes (`extension_api.json`, precision), rebuild
   godot-cpp from clean objects in every build dir, and check the library for undefined `godot::`
   symbols (`nm -D -C --undefined-only`). *(09-29 debug library would not load)*
+* The scenery parser reads cp1250 (as the original's files are written); a byte past ASCII taken
+  as a signed char became U+FFFD and every W4 of a Polish-named station (`Krzyżowa#...`) matched
+  no timetable. A W4's station is cut at `#` and made plain ASCII (Event.cpp:715-719). Look for
+  W4 through every include level (`ip/pkp/w4n.inc <name>`). *(09-30 Krzyżowa 2 timetable never
+  moved)*
+* The Mover's `DistCounter` (`total_distance`) grows only in its own movement, not with
+  `vehicle_move()`/`trainset_move()`; a way driven that a test must see is measured along the
+  driver's route table. *(09-30 station shown never caught up in a test)*

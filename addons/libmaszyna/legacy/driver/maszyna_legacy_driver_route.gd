@@ -108,6 +108,12 @@ const PASSENGER_STOP_MAX_DISTANCE:float = 400.0
 const PASSING_SHARE:float = 0.5
 const REWIND_BRAKE_SHARE:float = 1.15
 const REWIND_DISTANCE:float = 300.0
+## The next station is shown as current this far [m] past a stop left, or past one passed at
+## speed, plus the trainset's length (fLastStopExpDist, Driver.cpp:1131, 1281)
+const NEXT_STATION_AFTER_DEPARTURE:float = 50.0
+const NEXT_STATION_AFTER_PASSING:float = 250.0
+## No next station waiting to be shown (fLastStopExpDist = -1, Driver.cpp:6487)
+const NEXT_STATION_SHOWN:float = -1.0
 ## No signal read yet (d_to_next_sem, Driver.cpp:877)
 const NO_SIGNAL_DISTANCE:float = 10000.0
 ## Standing still [km/h] (Driver.cpp:921, 1080)
@@ -123,8 +129,9 @@ enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION
 ## What a passenger stop asks of the driver's orders, in the order asked (TableUpdateStopPoint()):
 ## HOLD and GO set whether it waits for the way to be clear (moveStopHere); OBEY_TRAIN drives on as
 ## a train; TURN_THEN_TRAIN and TURN_THEN_SHUNT turn a push-pull train by its cab, then drive on;
-## NEXT_ORDER takes the next order
-enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER }
+## NEXT_ORDER takes the next order; GUARD_SIGNAL - it left a stop, the guard's message is due
+## (moveGuardSignal, Driver.cpp:1313-1316)
+enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER, GUARD_SIGNAL }
 ## What a passenger stop is on this reading: an entry to take as it is, one to skip, or one that let
 ## the train go (cm_Ready)
 enum StopResult { USE, SKIP, READY }
@@ -191,6 +198,9 @@ var _stops_done:Dictionary[RID, bool] = {}
 ## How far a passenger stop was brought forward for the train's length and the platform, by event
 ## (TSpeedPos::fMoved)
 var _stops_moved:Dictionary[RID, float] = {}
+## How far [m] the train still has to drive along the route before the next station is shown as
+## current (fLastStopExpDist, counted on the Mover's DistCounter there), NEXT_STATION_SHOWN for none
+var _next_station_distance:float = NEXT_STATION_SHOWN
 ## The next station's stop was read on this update (IsScheduledPassengerStopVisible)
 var _scheduled_stop_visible:bool = false
 ## The way the driver drove when the tracks were last read (iTableDirection), 0 to read them afresh
@@ -237,7 +247,16 @@ func update(
     _determine_distances(vehicle, order, speed, trainset, shunt_velocity, velocity_desired, coupling, cargo,
             braking.acceleration_threshold)
     reach = maxf(MIN_RANGE, MOVING_RANGE + brake_distance if absf(speed) > MOVEMENT_SPEED else STANDING_RANGE)
+    var front_along:float = _front_along
     _update_table(reach, trainset)
+    # the next station shown once the train has driven clear of the stop left (UpdateNextStop(),
+    # Driver.cpp:6481, run for a train only, Driver.cpp:7154); the way driven is the front's along
+    # the table - a table traced afresh starts from 0 and counts nothing
+    if _next_station_distance >= 0.0:
+        _next_station_distance = maxf(0.0, _next_station_distance - maxf(0.0, _front_along - front_along))
+        if order == MaszynaLegacyAIDriver.Order.OBEY_TRAIN and _next_station_distance == 0.0:
+            _next_station_distance = NEXT_STATION_SHOWN
+            timetable.show_next_station()
     # the passenger stops left behind are forgotten
     var read:Dictionary[RID, bool] = {}
     for entry:Entry in _table:
@@ -274,7 +293,8 @@ func update(
     var command_entry:Entry = null
     for entry:Entry in _table:
         if entry.kind == Kind.STOP_POINT:
-            var result:StopResult = _update_stop_point(entry, order, absf(speed), cargo, trainset, timetable, hours, signal_distance)
+            var result:StopResult = _update_stop_point(
+                    entry, order, absf(speed), cargo, trainset, timetable, hours, signal_distance)
             if result == StopResult.READY and go.is_empty():
                 go = "Ready"
             if not result == StopResult.USE:
@@ -620,6 +640,7 @@ func _update_stop_point(
         if entry.distance < PASSENGER_STOP_MAX_DISTANCE * PASSING_SHARE:
             timetable.arrive(hours)
             timetable.advance()
+            _next_station_distance = NEXT_STATION_AFTER_PASSING + trainset.length
             _stops_done[entry.event] = true
             return StopResult.SKIP
         return StopResult.USE
@@ -672,7 +693,9 @@ func _update_stop_point(
     if cargo or timetable.is_time_to_go(hours):
         at_passenger_stop = false
         timetable.advance()
+        _next_station_distance = NEXT_STATION_AFTER_DEPARTURE + trainset.length
         stop_orders.append(StopOrder.HOLD if floori(absf(entry.value1)) % HOLD_PARITY else StopOrder.GO)
+        stop_orders.append(StopOrder.GUARD_SIGNAL)
         timetable.draw_up_close()
         _stops_done[entry.event] = true
         return StopResult.READY

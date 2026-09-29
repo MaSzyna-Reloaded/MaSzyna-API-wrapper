@@ -1998,3 +1998,33 @@ lighting or the trainset.
 * **Rule:** the original keeps a TTrain only for a driven train - a cab at work on every vehicle is
   N per-step processes. Before attaching per-vehicle logic, ask who drives the vehicle; read the
   profiler's call counts before its times.
+
+## 2026-09-30 - Krzyżowa 2: the timetable panel never left Krzyżowa
+
+* **Symptom:** EX6435 left Krzyżowa on time and passed Markowo_Górne; the panel stayed on
+  Krzyżowa throughout. The original on the same scenery shows Krzyżowa as left (green) at 10:35.
+* **What proved it:** a headless run of krzyzowa2.scn, EP09-025 driven by its AI at x10: order
+  `OBEY_TRAIN`, 10 km driven, `station_index` 0 and `at_passenger_stop` false all the way. A grep
+  of the scenery's own files found no W4 - they are included two levels down
+  (`krzyzowa2/sc2.scm`: `include ip/pkp/w4n.inc Krzyżowa#tor6end ...`). The scenery parser
+  appended each byte past ASCII as a signed char (`MaszynaParser::_to_token()`), so the cp1250
+  `ż` (0xBF) became U+FFFD: the W4 read `PassengerStopPoint:Krzy\uFFFDowa`, the timetable
+  `Krzyzowa`. The original cuts a W4's name at `#` and makes it plain ASCII (Event.cpp:715-719),
+  as it does the timetable's (mtable.cpp:430). After the fix the same run stops at Krzyżowa
+  (3 min early), leaves at 10:32 and moves on to Markowo_Górne.
+* **Fix:** the parser decodes bytes past ASCII as cp1250 (the scenery, fiz and material caches'
+  versions bumped); the event factory makes a W4's station plain ASCII.
+  `demo/tests/test_driver_timetable_run.gd` runs EX6435 past W4 read in cp1250 by the parser.
+* **Rule:** a timetable that does not move - compare the W4's station with the timetable's, byte
+  for byte; and search a scenery through all its include levels.
+
+## 2026-09-30 - the station shown did not catch up in a test run
+
+* **Symptom:** the timetable's `station_start` (StationStart) stayed on the station left while the
+  test moved the train kilometres on.
+* **What proved it:** `total_distance` (Mover `DistCounter`) read 0.0 after every
+  `trainset_move()`; the Mover counts it only inside `ComputeMovement()` (Mover.cpp:1393, 1460).
+* **Fix:** the way driven since the stop (`fLastStopExpDist`, Driver.cpp:1131, 1281) is counted
+  along the driver's route table (`_front_along`) - the same thresholds, a source a moved train
+  shows too.
+* **Rule:** do not count on the Mover's odometer for anything a test moves by placement.

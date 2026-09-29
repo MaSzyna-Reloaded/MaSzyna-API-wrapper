@@ -22,6 +22,9 @@ const DAY_MINUTES:float = 1440.0
 var timetable:Timetable = null
 ## The entry it drives to next
 var station_index:int = 0
+## The entry shown as the station it stands at or has just left (StationStart): it catches up with
+## `station_index` once the train has driven clear of the stop (UpdateNextStop(), Driver.cpp:6481)
+var station_start:int = 0
 ## The station whose stop it looks for (asNextStop), empty past the last - it changes on leaving
 ## a station, not on arriving
 var next_stop:String = ""
@@ -43,6 +46,7 @@ var _next_station:String = ""
 func take(new_timetable:Timetable) -> void:
     timetable = new_timetable
     station_index = 0
+    station_start = 0
     latency = 0.0
     next_stop = ""
     _next_station = ""
@@ -99,6 +103,13 @@ func advance() -> void:
     changed.emit()
 
 
+## The train has driven clear of the station it left: the next one is shown as current
+## (UpdateNextStop(), Driver.cpp:6481-6487)
+func show_next_station() -> void:
+    station_start = station_index
+    changed.emit()
+
+
 ## Ended: no timetable any more (NewName("none"))
 func finish() -> void:
     take(null)
@@ -148,6 +159,8 @@ func rewind(station:String) -> bool:
         var entry:TimetableEntry = entries[index]
         if entry.station_name.to_lower() == station.to_lower():
             station_index = index
+            # shown from it at once (Driver.cpp:1092)
+            station_start = index
             next_stop = entry.station_name
             _next_station = next_stop
             velocity = entry.velocity

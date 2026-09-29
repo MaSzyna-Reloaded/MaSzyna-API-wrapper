@@ -1,3 +1,4 @@
+class_name TimetablePanel
 extends PanelContainer
 
 ## The timetable of the player's train: the train, its relation, the clock and the delay, and every
@@ -25,8 +26,11 @@ const EARLY_COLOR:Color = Color(0.45, 0.72, 1.0)
 var _vehicle:RID = RID()
 var _driver:RID = RID()
 var _timetable:Timetable = null
-var _station_index:int = 0
-var _at_passenger_stop:bool = false
+## How far the driver got through the timetable (DriverSystem.driver_get_timetable_state())
+var _state:Dictionary = {}
+## The row shown as the train's station: the one it has left until it has driven clear of it
+## (StationStart), else the one it drives to
+var _current:int = 0
 var _rows:Array[TimetableRow] = []
 
 
@@ -56,7 +60,7 @@ func _on_driver_timetable_changed(driver:RID) -> void:
 ## the train and its stations rebuilt for a new timetable, the progress and the delay shown
 func _follow_trainset() -> void:
     _driver = RID()
-    var state:Dictionary = {}
+    _state = {}
     var trainset:Array[RID] = []
     if _vehicle.is_valid():
         trainset = RailVehicleServer.vehicle_get_coupled(
@@ -66,11 +70,14 @@ func _follow_trainset() -> void:
         var driver_state:Dictionary = DriverSystem.driver_get_timetable_state(driver) if driver.is_valid() else {}
         if driver_state.get("timetable"):
             _driver = driver
-            state = driver_state
+            _state = driver_state
             break
-    var timetable:Timetable = state.get("timetable")
-    _station_index = state.get("station_index", 0)
-    _at_passenger_stop = state.get("at_passenger_stop", false)
+    var timetable:Timetable = _state.get("timetable")
+    var station_index:int = _state.get("station_index", 0)
+    var station_start:int = _state.get("station_start", 0)
+    # a stop left stays the train's station until it has driven clear of it (driveruipanels.cpp:392)
+    var leaving:bool = station_start < station_index and (timetable.entries[station_start] as TimetableEntry).is_stop()
+    _current = station_start if leaving else station_index
     if not timetable == _timetable:
         _timetable = timetable
         # the train and a row for each of its stations
@@ -115,17 +122,12 @@ func _follow_trainset() -> void:
             _rows.append(row)
         # a new timetable fits the card to what it shows; its size is the player's until the next
         reset_size()
-    # late or early on leaving the last station [min]
-    var late_minutes:int = -roundi(state.get("latency", 0.0))
-    %DelayText.text = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
-    %DelayText.add_theme_color_override(&"font_color",
-            ON_TIME_COLOR if late_minutes == 0 else (LATE_COLOR if late_minutes > 0 else EARLY_COLOR))
     for index:int in _rows.size():
         var progress:TimetableRow.Progress = TimetableRow.Progress.AHEAD
-        if index < _station_index:
-            progress = TimetableRow.Progress.PASSED
-        elif index == _station_index:
+        if index == _current:
             progress = TimetableRow.Progress.NEXT
+        elif index < station_index:
+            progress = TimetableRow.Progress.PASSED
         _rows[index].show_progress(progress)
     _scroll_to_next_station()
     _tick()
@@ -134,11 +136,37 @@ func _follow_trainset() -> void:
 ## The list scrolled to the station passed last with the next one below it - on every new progress,
 ## and once the rows are laid out (the list's sort_children, a [connection] in the scene)
 func _scroll_to_next_station() -> void:
-    var shown:int = clampi(_station_index - 1, 0, _rows.size() - 1)
+    var shown:int = clampi(_current - 1, 0, _rows.size() - 1)
     %StationsScroll.scroll_vertical = int(_rows[shown].position.y) if _rows else 0
 
 
-## The clock and the status of the next station, on the panel's timer (a [connection] in the scene)
+## The delay [min] of a train by its timetable state at `hours`, late when positive: standing at
+## a stop past its departure, the time since; standing there before it, none; on the way, what it
+## arrived at the last station with (the negative of LastStationLatency, mtable.cpp:122)
+static func delay_minutes(state:Dictionary, hours:float) -> int:
+    var timetable:Timetable = state.get("timetable")
+    var station_start:int = state.get("station_start", 0)
+    var standing:bool = station_start < int(state.get("station_index", 0)) or state.get("at_passenger_stop", false)
+    if standing and timetable and station_start < timetable.entries.size():
+        var entry:TimetableEntry = timetable.entries[station_start]
+        if entry.is_stop() and entry.departure >= 0.0:
+            return maxi(0, floori(-minutes_to(entry.departure, hours)))
+    return -roundi(state.get("latency", 0.0))
+
+
+## CompareTime() (utilities.cpp:50): the minutes from `hours` to `time`, the shorter way round the
+## clock
+static func minutes_to(time:float, hours:float) -> float:
+    var minutes:float = (time - hours) * MINUTES_PER_HOUR
+    if minutes < -HALF_DAY_MINUTES:
+        minutes += DAY_MINUTES
+    if minutes > HALF_DAY_MINUTES:
+        minutes -= DAY_MINUTES
+    return minutes
+
+
+## The clock, the delay and the status of the train's station, on the panel's timer (a [connection]
+## in the scene)
 func _tick() -> void:
     var hours:float = SimulationServer.time_of_day
     var seconds:int = floori(hours * MINUTES_PER_HOUR * SECONDS_PER_MINUTE)
@@ -147,21 +175,21 @@ func _tick() -> void:
         (seconds / seconds_per_hour) % HOURS_PER_DAY, (seconds / int(SECONDS_PER_MINUTE)) % int(MINUTES_PER_HOUR),
         seconds % int(SECONDS_PER_MINUTE)
     ]
-    if _station_index >= _rows.size():
+    var late_minutes:int = delay_minutes(_state, hours)
+    %DelayText.text = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
+    %DelayText.add_theme_color_override(&"font_color",
+            ON_TIME_COLOR if late_minutes == 0 else (LATE_COLOR if late_minutes > 0 else EARLY_COLOR))
+    if _current >= _rows.size():
         return
-    var entry:TimetableEntry = _timetable.entries[_station_index]
-    var row:TimetableRow = _rows[_station_index]
-    if not _at_passenger_stop or not entry.is_stop():
+    var entry:TimetableEntry = _timetable.entries[_current]
+    var row:TimetableRow = _rows[_current]
+    var standing:bool = _current < int(_state.get("station_index", 0)) or _state.get("at_passenger_stop", false)
+    if not standing or not entry.is_stop():
         row.show_status(tr("Next station"), TimetableRow.Tone.NEUTRAL)
-    elif _station_index == _rows.size() - 1:
+    elif _current == _rows.size() - 1:
         row.show_status(tr("Terminus"), TimetableRow.Tone.NEUTRAL)
     else:
-        # CompareTime() (utilities.cpp:50): the shorter way round the clock
-        var minutes:float = (entry.departure - hours) * MINUTES_PER_HOUR
-        if minutes < -HALF_DAY_MINUTES:
-            minutes += DAY_MINUTES
-        if minutes > HALF_DAY_MINUTES:
-            minutes -= DAY_MINUTES
+        var minutes:float = minutes_to(entry.departure, hours)
         if minutes > 0.0:
             var wait:int = ceili(minutes * SECONDS_PER_MINUTE)
             row.show_status(tr("Stop · departure in %d:%02d") % [

@@ -28,3 +28,20 @@ func test_a_line_without_times_is_shown_from_the_start_as_long_as_it_is_long() -
 func test_the_legacy_new_line_mark_is_a_space() -> void:
     var transcript:Transcript = MaszynaLegacySoundCaption.parse("[0][10]Tor|pierwszy")
     assert_eq(transcript.texts[0], "Tor pierwszy")
+
+
+func test_the_caption_is_read_beside_its_sound_wherever_it_is() -> void:
+    # a scenery's radio message has its caption beside it, not in the sounds (audio.cpp:84-94)
+    var directory:String = "user://sound_caption_test"
+    DirAccess.make_dir_recursive_absolute(directory)
+    var caption:String = "%s/ex6435radio-%s.txt" % [directory, SimulationServer.language]
+    var file:FileAccess = FileAccess.open(caption, FileAccess.WRITE)
+    file.store_string("[0][30]EX6435 odjazd.")
+    file.close()
+
+    var transcript:Transcript = MaszynaLegacySoundCaption.from_sound_file(directory.path_join("ex6435radio"))
+
+    DirAccess.remove_absolute(caption)
+    DirAccess.remove_absolute(directory)
+    assert_not_null(transcript)
+    assert_eq(transcript.texts, PackedStringArray(["EX6435 odjazd."]))

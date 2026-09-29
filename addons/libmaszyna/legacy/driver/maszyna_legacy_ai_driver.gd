@@ -44,6 +44,21 @@ const MAX_ORDERS:int = 64
 const TIMETABLE_PREFIX:String = "Timetable:"
 const NO_TIMETABLE:String = "none"
 const SCENERY_DIRECTORY:String = "scenery"
+## The guard's departure message (tsGuardSignal, Driver.cpp:4466-4483): <timetable>.<ext>, heard
+## beside the train, else <timetable>radio.<ext> on the train radio, looked up in the scenery, then
+## in the sounds, with its transcript beside it. Only the radio one is played, and not from a .flac
+## file (TODO.md)
+const SOUNDS_DIRECTORY:String = "sounds"
+const GUARD_RADIO_SUFFIX:String = "radio"
+const GUARD_SOUND_EXTENSIONS:PackedStringArray = ["ogg", "flac", "wav"]
+const OGG_EXTENSION:String = "ogg"
+const WAV_EXTENSION:String = "wav"
+## EU07_SOUND_HANDHELDRADIORANGE (sound.h:21): as far as the guard's radio reaches [m]
+const GUARD_RADIO_RANGE:float = 3500.0
+## fActionTime = -5.0 once the guard has spoken (Driver.cpp:6872, 6882)
+const GUARD_HOLD_TIME:float = 5.0
+## iRadioChannel before it is told one (Driver.h)
+const RADIO_CHANNEL_DEFAULT:int = 1
 ## The shunting speed until an order gives another [km/h] (fShuntVelocity, Driver.h:431)
 const DEFAULT_SHUNT_VELOCITY:float = 40.0
 ## A shunting speed is kept only when it is a speed (fabs(NewValue1) > 2.0, Driver.cpp:4667)
@@ -125,6 +140,13 @@ class DriverState:
     ## vCommandLocation - where the last order about speed came from
     var command_position:Vector3 = Vector3.ZERO
     var radio_channel:int = -1
+    ## tsGuardSignal and iGuardRadio - the guard's departure message, null for none, its
+    ## transcript and the radio channel it is sent on; guard_signal_due - it is due once the train
+    ## may go (moveGuardSignal)
+    var guard_signal:SfxEvent = null
+    var guard_transcript:Transcript = null
+    var guard_radio:int = 0
+    var guard_signal_due:bool = false
     ## m_lighthints - the light pattern asked for at the front and the rear, -1 for none
     var light_hints:Vector2i = Vector2i(-1, -1)
     ## fWarningDuration and the horn to sound
@@ -214,6 +236,7 @@ func _get_timetable_state(driver:RID) -> Dictionary:
     return {
         "timetable": state.timetable.timetable,
         "station_index": state.timetable.station_index,
+        "station_start": state.timetable.station_start,
         "latency": state.timetable.latency,
         "at_passenger_stop": state.route.at_passenger_stop,
     }
@@ -243,6 +266,7 @@ func _get_state(driver:RID) -> Dictionary:
         "warning_horn": state.warning_horn,
         "timetable": state.timetable.timetable,
         "station_index": state.timetable.station_index,
+        "station_start": state.timetable.station_start,
         "next_stop": state.timetable.next_stop,
         "at_passenger_stop": state.route.at_passenger_stop,
         "trainset_vehicles": state.trainset.vehicles,
@@ -351,6 +375,9 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
         "Radio_channel":
             if value1 >= 0.0:
                 state.radio_channel = int(value1)
+                # the guard's too (Driver.cpp:4797-4800)
+                if state.guard_radio:
+                    state.guard_radio = int(value1)
         "SetLights":
             # the scenery's pattern, lit at once on a train (Driver.cpp:4807-4816)
             state.light_hints = Vector2i(int(value1), int(value2))
@@ -406,8 +433,23 @@ func _update(driver:RID) -> void:
                             else Order.SHUNT)
             MaszynaLegacyDriverRoute.StopOrder.NEXT_ORDER:
                 _jump_to_next_order(state, vehicle)
+            MaszynaLegacyDriverRoute.StopOrder.GUARD_SIGNAL:
+                # on the radio channel of the station left (Driver.cpp:1103-1112), once the train
+                # may go (Driver.cpp:1313-1316)
+                var left:TimetableEntry = state.timetable.get_entries()[state.timetable.station_index - 1]
+                if state.guard_radio and left.radio_channel > 0:
+                    state.guard_radio = left.radio_channel
+                state.guard_signal_due = state.guard_signal != null
     for command:Array in state.route.commands:
         _handle_command(driver, command[0], command[1], command[2], command[3])
+    # the guard's message, once the way is clear and the stop waited out - to a player's train as
+    # much as to its own (UpdateObeyTrain(), Driver.cpp:6850-6884)
+    if state.guard_signal_due and state.orders[state.order_position] == Order.OBEY_TRAIN \
+            and state.speed.velocity_desired > 0.0:
+        state.guard_signal_due = false
+        CabinSystem.send_radio_message(state.guard_signal, state.guard_transcript, state.guard_radio,
+                RailVehicleServer.vehicle_get_transform(vehicle).origin, GUARD_RADIO_RANGE)
+        state.traction.hold(GUARD_HOLD_TIME)
     state.speed.pick(
             state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
             state.shunt_velocity, state.timetable.velocity,
@@ -718,6 +760,36 @@ func _take_timetable(
         var directory:String = UserSettings.get_maszyna_game_dir().path_join(SCENERY_DIRECTORY)
         timetable = MaszynaLegacyTimetableFactory.load_timetable(directory, name, roundf(minutes))
     state.timetable.take(timetable)
+    # the guard of the timetable, speaking on the radio (Driver.cpp:4424, 4474-4483)
+    state.guard_signal = null
+    state.guard_transcript = null
+    state.guard_radio = 0
+    state.guard_signal_due = false
+    if timetable:
+        var path:String = ""
+        var radio:bool = false
+        for suffix:String in ["", GUARD_RADIO_SUFFIX]:
+            for directory:String in [SCENERY_DIRECTORY, SOUNDS_DIRECTORY]:
+                for extension:String in GUARD_SOUND_EXTENSIONS:
+                    var candidate:String = UserSettings.get_maszyna_game_dir().path_join(directory).path_join(
+                            "%s%s.%s" % [name, suffix, extension])
+                    if not path and FileAccess.file_exists(candidate):
+                        path = candidate
+                        radio = suffix == GUARD_RADIO_SUFFIX
+        var stream:AudioStream = null
+        if radio and path.get_extension() == OGG_EXTENSION:
+            stream = AudioStreamOggVorbis.load_from_file(path)
+        elif radio and path.get_extension() == WAV_EXTENSION:
+            stream = AudioStreamWAV.load_from_file(path)
+        if stream:
+            var clip:SfxClip = SfxClip.new()
+            clip.stream = stream
+            var clips:Array[SfxClip] = [clip]
+            state.guard_signal = SfxEvent.new()
+            state.guard_signal.clips = clips
+            # its caption beside it (openal_buffer::fetch_caption(), audio.cpp:84-94)
+            state.guard_transcript = MaszynaLegacySoundCaption.from_sound_file(path.get_basename())
+            state.guard_radio = state.radio_channel if state.radio_channel > 0 else RADIO_CHANNEL_DEFAULT
     if not position == Vector3.ZERO:
         state.direction_order = _direction_towards(driver, position, velocity)
     _orders_init(state, DriverSystem.driver_get_vehicle(driver), absf(velocity))

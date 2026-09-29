@@ -1,8 +1,9 @@
 extends MaszynaGutTest
 
 ## MaszynaLegacyDriverRoute's table kept between updates, as the original's (TableCheck(),
-## TableTraceRoute()): what was traced stays until passed, and a switch thrown ahead is traced again
-## from - read from tracks built here.
+## TableTraceRoute()): what was traced stays until passed, a switch thrown ahead is traced again
+## from, and a train ignores a shunting signal at stop, passed or ahead - read from tracks built
+## here.
 
 const Order = MaszynaLegacyAIDriver.Order
 const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
@@ -22,8 +23,11 @@ const LINE_LENGTH:float = 4000.0
 const APPROACH_LENGTH:float = 200.0
 const SWITCH_LENGTH:float = 30.0
 const DIVERGING_OFFSET:float = 10.0
+## How far [m] from the vehicle's middle the Tm on either side stand: inside the moving reading
+const SHUNT_SIGNAL_DISTANCE:float = 200.0
 
 var _tracks:Array[RID] = []
+var _events:Array[RID] = []
 ## Freed before the nodes they are driven by (autofree), as test_rail_vehicle_track_movement.gd does
 var _vehicles:Array[RailVehicle3D] = []
 
@@ -33,6 +37,9 @@ func after_each() -> void:
         remove_child(vehicle)
         vehicle.queue_free()
     _vehicles.clear()
+    for event:RID in _events:
+        ScenarioEventServer.event_free(event)
+    _events.clear()
     for track:RID in _tracks:
         TrackServer.track_free(track)
     _tracks.clear()
@@ -82,6 +89,34 @@ func test_a_switch_thrown_ahead_is_traced_again_from() -> void:
     assert_eq(route.velocity_next, DIVERGING_VELOCITY, "thrown, the diverging track's limit is read")
 
 
+## FINDINGS.md 2026-09-29: a Tm at stop a train had passed still held it, and it braked to a stop a
+## braking distance past it
+func test_a_train_ignores_shunting_signals_at_stop_passed_or_ahead() -> void:
+    var line:RID = _track(Vector3.ZERO, Vector3(LINE_LENGTH, 0.0, 0.0), null, LINE_VELOCITY, "line")
+    TrackServer.topology_rebuild()
+    var vehicle:RID = await _place("line", LINE_LENGTH / 2.0)
+    var middle:Vector3 = RailVehicleServer.vehicle_get_transform(vehicle).origin
+    # one Tm at the vehicle's middle, behind its front whichever way it drives, one on either side
+    # further on: one of them ahead
+    for offset:float in [0.0, -SHUNT_SIGNAL_DISTANCE, SHUNT_SIGNAL_DISTANCE]:
+        var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+        action.command = "ShuntVelocity"
+        action.position = middle + Vector3(offset, 0.0, 0.0)
+        var event:RID = ScenarioEventServer.event_create()
+        _events.append(event)
+        ScenarioEventServer.event_attach_action(event, action)
+        ScenarioEventServer.event_set_passive(event, true)
+        ScenarioEventServer.track_add_event(line, ScenarioEventServer.TRACK_EVENT1, event)
+        ScenarioEventServer.track_add_event(line, ScenarioEventServer.TRACK_EVENT2, event)
+    var trainset:MaszynaLegacyDriverTrainset = _trainset(vehicle, 1)
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+
+    _update(route, vehicle, trainset, MOVING_SPEED, Order.OBEY_TRAIN)
+
+    assert_eq(route.velocity_next, MaszynaLegacyDriverRoute.NO_LIMIT, "no Tm at stop stops the train")
+    assert_eq(route.commands.size(), 0, "nor turns it to shunting")
+
+
 func _curve(from:Vector3, to:Vector3) -> TrackCurve:
     var curve:TrackCurve = TrackCurve.new()
     curve.p1 = from
@@ -118,8 +153,9 @@ func _trainset(vehicle:RID, direction:int) -> MaszynaLegacyDriverTrainset:
     return trainset
 
 
-## One update of the route, shunting and wanting LINE_VELOCITY, at `speed` [km/h]
-func _update(route:MaszynaLegacyDriverRoute, vehicle:RID, trainset:MaszynaLegacyDriverTrainset, speed:float) -> void:
-    route.update(vehicle, Order.SHUNT, false, SHUNT_SPEED, speed, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
+## One update of the route with `order` (shunting unless given), wanting LINE_VELOCITY, at `speed` [km/h]
+func _update(route:MaszynaLegacyDriverRoute, vehicle:RID, trainset:MaszynaLegacyDriverTrainset, speed:float,
+        order:Order = Order.SHUNT) -> void:
+    route.update(vehicle, order, false, SHUNT_SPEED, speed, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
             MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, MaszynaLegacyDriverTimetable.new(), 0.0, SHUNT_SPEED,
             LINE_VELOCITY, false, MaszynaLegacyDriverBraking.new())

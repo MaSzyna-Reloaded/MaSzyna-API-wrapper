@@ -195,6 +195,8 @@ anything. Open work belongs in `TODO.md`.
 * A point of the route is passed when the train has driven up to it (distance counter), never
   because it is no longer read - a thrown switch changes the route standing. *(09-29 a thrown
   switch held the train at a clear signal)*
+* A signal a train ignores (a Tm at stop) is ignored behind it as much as ahead; an `if ... else if`
+  of the original stays exclusive in the port. *(09-29 a train held by a Tm at stop it had passed)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
   the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Whoever attaches something shared per vehicle takes away only what it attached - another owner

@@ -291,6 +291,7 @@ func update(
     var signal_found:bool = false
     var go:String = ""
     var command_entry:Entry = null
+    var let_go:Array[Entry] = []
     for entry:Entry in _table:
         if entry.kind == Kind.STOP_POINT:
             var result:StopResult = _update_stop_point(
@@ -342,6 +343,11 @@ func update(
                     Kind.OTHER:
                         continue
             elif entry.kind == Kind.OTHER or entry.kind == Kind.COMMAND:
+                continue
+            elif entry.kind == Kind.SHUNT_SEMAPHORE and obey_train and velocity == 0.0:
+                # a train ignores a Tm at stop passed as much as one ahead, and lets go of it
+                # (TableUpdateEvent(), Driver.cpp:1618-1626)
+                let_go.append(entry)
                 continue
         # a point without a limit breaks the current one (Driver.cpp:1022-1029)
         if entry.velocity < 0.0 and breaks_limit:
@@ -402,6 +408,8 @@ func update(
             limit_continuous = false
         if velocity_next == 0.0:
             break
+    for entry:Entry in let_go:
+        _table.erase(entry)
     # no signal ahead any more: the last one's speed is forgotten on the line (Driver.cpp:1030-1034)
     if obey_train and not signal_found:
         signal_velocity_last = NO_LIMIT

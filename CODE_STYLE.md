@@ -9,6 +9,26 @@ Unless a section says otherwise, every rule here applies to GDScript and C++ ali
 2. Variable naming: `snake_case`
 3. Class naming: `PascalCase`
 4. Parameter naming: `snake_case` with `p_` as an prefix
+5. A server's method (a `*Server`/`*System` singleton) is named `<subject>_<action>()` - what the
+   handle or the state it acts on is, then what it does - and its signal
+   `<subject>_<what>_changed`, the way Godot's servers do
+   (`RenderingServer.instance_set_transform()`, `PhysicsServer3D.body_get_state()`):
+
+   ```cpp
+   // not this - the subject last, or missing
+   double get_current_simulation_speed() const;
+   void enter_vehicle(const RID &p_vehicle);
+
+   // this
+   double simulation_get_current_speed() const;
+   void player_enter_vehicle(const RID &p_vehicle);
+   // signals: camera_changed, player_vehicle_changed, simulation_current_speed_changed
+   ```
+
+   The subject groups a server's API by what it acts on (`vehicle_*`, `camera_*`, `panel_*`), so
+   the next method has an obvious name and place. A server's older method named otherwise
+   (`SimulationServer.set_simulation_speed()`, `pause()`) is left as it is unless the operator asks,
+   and never copied into a new one.
 ### Indentation and braces
 1. Braces at the end of line (K & R style)
 2. As less nesting as possible

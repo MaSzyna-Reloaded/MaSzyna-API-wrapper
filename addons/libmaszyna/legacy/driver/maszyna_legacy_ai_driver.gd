@@ -627,7 +627,7 @@ func _activation(state:DriverState, vehicle:RID) -> void:
     for _step:int in CAB_CHANGE_STEPS:
         if CabinSystem.occupied_cab(vehicle) == state.direction:
             break
-        RailVehicleServer.vehicle_send_command(vehicle, "cab_change", signi(state.direction - CabinSystem.occupied_cab(vehicle)))
+        MaszynaLegacyDriverHints.send(vehicle, "cab_change", signi(state.direction - CabinSystem.occupied_cab(vehicle)))
     cab = CabinSystem.occupied_cab(vehicle)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, 1)
@@ -647,7 +647,7 @@ func _update_connect(state:DriverState, vehicle:RID) -> void:
         var neighbour:RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
                 state.coupling_vehicle, state.coupling_end, MaszynaLegacyDriverRoute.OBSTACLE_RANGE)
         if neighbour and neighbour.distance < ATTACH_DISTANCE:
-            RailVehicleServer.vehicle_send_command(state.coupling_vehicle, "coupler_connect", state.coupling_end)
+            MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_connect", state.coupling_end)
     # the command joins at once: coupled now, it drives on
     if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
         state.coupler = 0
@@ -685,7 +685,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
                     count += 1
                 if not current == vehicle:
                     # released, to be pressed together
-                    RailVehicleServer.vehicle_send_command(current, "brake_releaser", true)
+                    MaszynaLegacyDriverHints.send(current, "brake_releaser", true)
                 if count == 0:
                     decoupled = current
                     break
@@ -696,7 +696,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
                 state.vehicle_count = -2
             else:
                 # refused until the buffers are pressed enough: it presses on
-                RailVehicleServer.vehicle_send_command(decoupled, "coupler_disconnect", end)
+                MaszynaLegacyDriverHints.send(decoupled, "coupler_disconnect", end)
                 if not _is_coupled_by(decoupled, end, RailVehicleController.COUPLING_ELEMENT_COUPLER):
                     state.vehicle_count = -2
         if not state.pressing:

@@ -91,7 +91,7 @@ static func set_end(vehicle:RID, end:int, pattern:int) -> void:
         var lamp:String = END_PREFIXES[end] + LAMPS[bit]
         var lit:bool = bool(pattern & bit)
         if not lighting.light_is_enabled(lamp) == lit:
-            RailVehicleServer.vehicle_send_command(vehicle, "light", lamp, lit)
+            MaszynaLegacyDriverHints.send(vehicle, "light", lamp, lit)
 
 
 ## Lights(head, rear) (Driver.cpp:2561-2565): `head` on the front vehicle's leading end, `rear` on

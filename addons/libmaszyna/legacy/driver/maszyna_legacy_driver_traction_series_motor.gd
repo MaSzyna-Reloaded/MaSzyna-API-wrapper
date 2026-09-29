@@ -118,9 +118,9 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                             and (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count > 1 \
                             and step_main(situation, -1):
                         pass
-                RailVehicleServer.vehicle_send_command(situation.controlling, "motor_overload_relay_threshold", true)
+                MaszynaLegacyDriverHints.send(situation.controlling, "motor_overload_relay_threshold", true)
         elif high_on and current < engine.circuit_imax_low:
-            RailVehicleServer.vehicle_send_command(situation.controlling, "motor_overload_relay_threshold", false)
+            MaszynaLegacyDriverHints.send(situation.controlling, "motor_overload_relay_threshold", false)
     main = controller_position(situation, "controller_main_position")
     second = controller_position(situation, "controller_second_position")
     var safe_velocity:float = ANY_VELOCITY

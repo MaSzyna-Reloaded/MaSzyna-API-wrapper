@@ -73,6 +73,8 @@ namespace godot {
                 &RailVehicleServer::vehicle_broadcast_command, DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("vehicle_get_commands", "vehicle"), &RailVehicleServer::vehicle_get_commands);
         ClassDB::bind_method(
+                D_METHOD("vehicle_has_command", "vehicle", "command"), &RailVehicleServer::vehicle_has_command);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_find_powered", "vehicle"), &RailVehicleServer::vehicle_find_powered);
         ClassDB::bind_method(
@@ -523,6 +525,13 @@ namespace godot {
         ERR_FAIL_NULL_V(placement, PackedStringArray());
         const RailVehicleController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_commands() : PackedStringArray();
+    }
+
+    bool RailVehicleServer::vehicle_has_command(const RID &p_vehicle, const StringName &p_command) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(placement, false);
+        const RailVehicleController *controller = _get_controller(*placement);
+        return controller != nullptr && controller->has_command(p_command);
     }
 
     void RailVehicleServer::vehicle_set_track(

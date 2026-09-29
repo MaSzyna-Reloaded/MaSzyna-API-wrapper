@@ -7,6 +7,8 @@ extends MaszynaGutTest
 ## the same path a physical keypress takes.
 
 const TEST_ACTION := "test_cabin_button_action"
+const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SHOWN_CONTROL:StringName = &"test_shown_control"
 
 func before_all():
     InputMap.add_action(TEST_ACTION)
@@ -62,3 +64,38 @@ func test_rotation_offset_is_the_released_pose():
     await wait_seconds(1.5)
 
     assert_true(pedal.transform.basis.is_equal_approx(Basis.IDENTITY), "pushed pedal should reach the modelled pose")
+
+## FINDINGS.md 2026-09-29: a cab built on a running vehicle showed each button's state by setting
+## `pushed`, which acted on the vehicle - it lowered 3E/1-42's pantograph and opened its line
+## breaker. Showing the vehicle's state acts on nothing; only the hand does.
+func test_showing_the_vehicle_state_does_not_act():
+    var physics_node:VehiclePhysicsNode = build_vehicle_node("CabinButtonTest", SM42)
+    # freed before the node it is driven by, as test_driver_route_table.gd does
+    var vehicle_node:RailVehicle3D = RailVehicle3D.new()
+    add_child(vehicle_node)
+    vehicle_node.controller_path = vehicle_node.get_path_to(physics_node)
+    await wait_idle_frames(2)
+    var vehicle:RID = vehicle_node.get_rid()
+    var acted:Array[StringName] = []
+    var handler:Callable = func(_state:CabinState, action:StringName, _value:Variant) -> Variant:
+        acted.append(action)
+        return null
+    var cab:int = CabinSystem.occupied_cab(vehicle)
+    CabinSystem.register_control(vehicle, cab, SHOWN_CONTROL, handler)
+    var widget:CabinButton = CabinButton.new()
+    widget.control_id = SHOWN_CONTROL
+    widget.state_property = "main_switch_enabled"
+    widget.pushed = true
+    add_child_autofree(widget)
+    await wait_idle_frames(1)
+
+    widget.set_vehicle_rid(vehicle)
+    await wait_idle_frames(2)
+
+    assert_false(widget.pushed, "the button shows the open line breaker")
+    assert_eq(acted.size(), 0, "and acts on nothing to show it")
+    widget.press()
+    assert_eq(acted.size(), 1, "the hand acts")
+    CabinSystem.unregister_control(vehicle, cab, SHOWN_CONTROL, handler)
+    remove_child(vehicle_node)
+    vehicle_node.queue_free()

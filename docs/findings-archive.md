@@ -4,6 +4,28 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - a cab built on a running train lowered its pantograph
+
+* **Symptom:** krzyzowa2, the player took the AI's 3E/1-42 at speed and handed it back: the
+  pantographs came down, the line breaker opened, and the AI could not raise them again; the brake
+  pipe stayed at 5 bar and the train rolled on without power. The AI's EN96 and ET22 filled the
+  debugger with "Unknown command: sand".
+* **What proved it:** a headless probe entering the running 3E (`PlayerServer.player_enter_vehicle`)
+  and a listener on `RailVehicleServer.vehicle_command_received` printing `get_stack()`: building
+  the cab sent `pantograph_valve_operate 1 0`, `sand`, the lights and `converter` -
+  `MmdCabinInstancer.build_into()` -> `set_vehicle_rid()` -> `CabinButton._update_state()` set
+  `pushed` from the vehicle's state, and the setter's `pushed_changed` handler acted
+  (`CabinSystem.act()`). The debug HUD's `DebugSwitch` did the same through `button_pressed`, whose
+  `toggled` signal sent the command back (`converter true`, then `false`). The EN96 has no
+  `RailVehicleSwitches`, so no `sand` command; the driver sent it on every update.
+* **Fix:** only the hand acts - `CabinButton.press()`/`release()`; showing the state sets `pushed`
+  and nothing else. `DebugSwitch` shows the state with `set_pressed_no_signal()`. The driver sends
+  every command through `MaszynaLegacyDriverHints.send()`, which skips one the vehicle does not
+  have (`RailVehicleServer.vehicle_has_command()`), as the original's Mover call does nothing
+  without the device (`Sandbox()`, Mover.cpp:3070).
+* **Rule:** a control showing the vehicle's state never acts on it - one road to an effect, the
+  hand's; and the driver never sends a command the vehicle does not have.
+
 ## 2026-09-29 - a train held by a Tm at stop it had passed
 
 * **Symptom:** on krzyzowa2 the goods train 3E/1-42 (TME9637) left Krzyżowa as a train at 90 km/h

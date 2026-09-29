@@ -92,6 +92,7 @@ namespace godot {
             Variant
             send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             PackedStringArray get_commands() const;
+            bool has_command(const StringName &p_command) const;
             /* A command has run against this vehicle. Its state has moved on in the middle of a
              * step, which is the one thing a dump cached for that step cannot see by itself -
              * hence the serial below (RailVehicleServer::vehicle_dump_state). */

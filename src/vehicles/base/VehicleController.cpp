@@ -127,6 +127,10 @@ namespace godot {
         return names;
     }
 
+    bool VehicleController::has_command(const StringName &p_command) const {
+        return commands.has(p_command);
+    }
+
     void VehicleController::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;

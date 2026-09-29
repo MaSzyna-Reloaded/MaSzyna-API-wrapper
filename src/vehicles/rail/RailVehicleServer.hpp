@@ -219,6 +219,7 @@ namespace godot {
             void vehicle_broadcast_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             PackedStringArray vehicle_get_commands(const RID &p_vehicle) const;
+            bool vehicle_has_command(const RID &p_vehicle, const StringName &p_command) const;
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */

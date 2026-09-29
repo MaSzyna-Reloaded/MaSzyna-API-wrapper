@@ -139,6 +139,14 @@
 				Returns the commands [param vehicle] answers to.
 			</description>
 		</method>
+		<method name="vehicle_has_command" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="command" type="StringName" />
+			<description>
+				Returns [code]true[/code] when [param vehicle] answers to [param command] - a component that registers it is present.
+			</description>
+		</method>
 		<method name="vehicle_get_controller_instance_id" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="vehicle" type="RID" />

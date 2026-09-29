@@ -146,7 +146,7 @@ func prepare(situation:Situation) -> bool:
             CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"release")
         if not state.get("relay_ground", true):
             zero(situation)
-            RailVehicleServer.vehicle_send_command(situation.vehicle, "ground_relay_reset")
+            MaszynaLegacyDriverHints.send(situation.vehicle, "ground_relay_reset")
     if retry:
         zero(situation)
         retry = false
@@ -163,14 +163,14 @@ func prepare(situation:Situation) -> bool:
             and absf(float(state.get("Im", 0.0))) > SANDING_CURRENT_SHARE * engine.circuit_imax_high
     if slipping or high_current:
         if not sanding:
-            RailVehicleServer.vehicle_send_command(situation.controlling, "sand", true)
+            MaszynaLegacyDriverHints.send(situation.controlling, "sand", true)
     elif sanding:
-        RailVehicleServer.vehicle_send_command(situation.controlling, "sand", false)
+        MaszynaLegacyDriverHints.send(situation.controlling, "sand", false)
     # slipping, the controls are left alone - the power off and the brakes eased first
     if slipping:
         decrease(situation)
         situation.braking.ease(situation)
-        RailVehicleServer.vehicle_send_command(situation.controlling, "antislip")
+        MaszynaLegacyDriverHints.send(situation.controlling, "antislip")
         return false
     return true
 
@@ -195,7 +195,7 @@ func control(situation:Situation) -> void:
                 or velocity + NEXT_VELOCITY_MARGIN < speed.velocity_next) \
                 and action_time >= 0.0 and not situation.trainset.coupler_stretched:
             if CabinSystem.vehicle_state_value(situation.vehicle, "spring_brake/active", false):
-                RailVehicleServer.vehicle_send_command(situation.vehicle, "set_spring_brake_active", false)
+                MaszynaLegacyDriverHints.send(situation.vehicle, "set_spring_brake_active", false)
             increase(situation)
     if not situation.pressing:
         var speed_margin:float = SPEED_CONTROL_MARGIN if speed_control and velocity_desired > SPEED_CONTROL_FROM else 0.0
@@ -268,16 +268,16 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
             velocity = 0.0
         elif second < 1:
             set_second_controller(situation, 1)
-        RailVehicleServer.vehicle_send_command(situation.vehicle, "speed_control_set", velocity)
+        MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_set", velocity)
     elif second_max == 1:
         set_second_controller(situation, 1)
-        RailVehicleServer.vehicle_send_command(situation.vehicle, "speed_control_set", velocity)
+        MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_set", velocity)
     elif second_max > 1 and not control.impulse_lever:
         var velocity_max:float = float(RailVehicleServer.vehicle_dump_config(situation.controlling).get("max_speed", 0.0))
         set_second_controller(situation, 1 + int(second_max * ((velocity - 1.0) / velocity_max)))
     if control.power_step > 0.0 and controller_position(situation, "controller_second_position") > 0:
         while float(CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/desired_power", 0.0)) < control.max_power:
-            RailVehicleServer.vehicle_send_command(situation.vehicle, "speed_control_power_increase")
+            MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_power_increase")
 
 
 ## The cruise control's speed on an increase (Driver.cpp:3601-3617): the speed wanted, or the next
@@ -382,7 +382,7 @@ func decrease_eim(situation:Situation) -> bool:
             var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
             if situation.speed.acceleration_desired > 0.0 and control and state.get("speed_control/active", false) \
                     and control.power_step > 0.0 and float(state.get("speed_control/desired_power", 0.0)) > control.min_power:
-                RailVehicleServer.vehicle_send_command(situation.vehicle, "speed_control_power_decrease")
+                MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_power_decrease")
             elif main > ELF_NEUTRAL_POSITION:
                 return set_main_controller(situation, ELF_NEUTRAL_POSITION)
     return false

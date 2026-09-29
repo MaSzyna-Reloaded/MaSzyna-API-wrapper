@@ -111,7 +111,6 @@ visible = null
 script = ExtResource("2_py6pt")
 current_time = 10.0
 timezone_offset = 2
-simulation_speed = 100.0
 tonemap_agx_contrast = 1.0
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]

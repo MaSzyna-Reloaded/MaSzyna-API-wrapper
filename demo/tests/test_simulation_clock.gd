@@ -19,7 +19,7 @@ const VELOCITY_MS:float = 10.0
 const TRACK_LENGTH_M:float = 2000.0
 const DOUBLE_SPEED:float = 2.0
 const SHORT_FRAME:float = 0.1
-## What the clock node adds between the calls of a test - a frame or two at most [s]
+## What the clock adds between the calls of a test - a frame or two at most [s]
 const FRAME_TOLERANCE:float = 0.05
 ## SimulationServer::SPEED_CHANGE_TIME_SETTING - how long the running speed takes to reach one set
 const SPEED_CHANGE_TIME_SETTING:String = "maszyna/simulation/speed_change_time"

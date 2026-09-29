@@ -51,14 +51,16 @@ namespace godot {
             double current_simulation_speed = 1.0;
             /// [s], taken from the Project Setting when a speed is set
             double speed_change_time = 0.0;
-            /// Who needs the clock running, and the node that ticks it while they do
+            /// Who needs the clock running, and whether it runs - on SceneTree's `process_frame`,
+            /// which comes before any node's `_process`, so every reader sees this frame's step
             int clock_holders = 0;
-            ObjectID clock_id;
+            bool clock_running = false;
             double light_level = 1.0;
             double air_temperature = 0.0;
             bool paused = false;
 
             void _refresh_clock();
+            void _on_process_frame();
 
         protected:
             static void _bind_methods();

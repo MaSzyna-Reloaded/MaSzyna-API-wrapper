@@ -432,6 +432,11 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   move the runtime to a C++ singleton beside `E3DRenderingServer`.
 * `SfxGeneratorPlayback.update()` runs on the sfx worker (single producer into the ring buffer);
   revisit if a generator clip ever needs the scene tree.
+* Scenery sounds (`ScenerySoundServer`, 2026-09-29): a sound played once while out of reach is not
+  heard when the camera arrives mid-clip (the original's source keeps playing); a loop restarts
+  from its beginning when it comes back into reach. The reach is capped at the draw distance by
+  `SceneryStreamingServer`. `sound_create()` sets the player's `max_tracks`, which rebuilds its
+  voices - fine at load, not while scenery sounds play.
 
 ## Vehicles
 
@@ -471,6 +476,10 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   scenery name taken when the model instance is registered, so a name set later is not shown.
 
 ## Rendering
+
+* **GPU 22 ms of a 33 ms frame** (2026-09-29, RX 580, Visual Profiler: Render 3D Scene 21.9 ms GPU,
+  2.4 ms CPU; 3849 objects, 1.0 M primitives, 3607 draw calls) - not investigated. Measure on
+  `make compile-profiling` and split by pass before any hypothesis.
 
 ### Mirror reflections (`PlanarMirror3D`) are smeared
 

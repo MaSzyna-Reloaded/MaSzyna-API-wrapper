@@ -146,8 +146,8 @@ static func build(
         memories[memcell.name.to_lower()] = memory
         memory_positions[memcell.name.to_lower()] = memcell.position
 
-    # a scenery sound is a player of its own with a bank of its one file, played once or looped
-    var players_by_name:Dictionary[String, SfxPlayer3D] = {}
+    # a scenery sound is an event pair of ScenerySoundServer's one bank, played once or looped
+    var sounds_by_name:Dictionary[String, RID] = {}
     var reaches_by_name:Dictionary[String, float] = {}
     var transcripts_by_name:Dictionary[String, Transcript] = {}
     for sound:MaszynaSoundData in sounds:
@@ -161,21 +161,20 @@ static func build(
         var ambient:bool = sound.range_max < UNLIMITED_RANGE
         if ambient:
             spatial_config.max_distance = minf(absf(sound.range_max) * AMBIENT_FADE_END, AMBIENT_CUTOFF_RANGE)
-        var bank:SfxBank = SfxBank.new()
+        # the voices of the one player at the origin stand at the sound's own place
+        spatial_config.position = sound.position
         var bank_events:Array[SfxEvent] = [
-            _build_sound_event(MaszynaLegacySoundAction.PLAY_EVENT, sound.file, false, spatial_config),
-            _build_sound_event(MaszynaLegacySoundAction.LOOP_EVENT, sound.file, true, spatial_config),
+            _build_sound_event(sound.file, false, spatial_config),
+            _build_sound_event(sound.file, true, spatial_config),
         ]
         if ambient:
             for sound_event:SfxEvent in bank_events:
                 sound_event.master_track.volume_db = linear_to_db(AMBIENT_GAIN)
-        bank.events = bank_events
-        var player:SfxPlayer3D = SfxPlayer3D.new()
-        player.name = sound.name if sound.name else "sound"
-        player.bank = bank
-        root.add_child(player)
-        player.global_position = sound.position
-        players_by_name[sound.name.to_lower()] = player
+        # streamed as far as it is heard; heard everywhere (-1), it is never out of reach
+        var sound_rid:RID = ScenerySoundServer.sound_create(
+                bank_events[0], bank_events[1], sound.position, spatial_config.max_distance)
+        root._sound_rids.append(sound_rid)
+        sounds_by_name[sound.name.to_lower()] = sound_rid
         reaches_by_name[sound.name.to_lower()] = sound.range_max
         transcripts_by_name[sound.name.to_lower()] = MaszynaLegacySoundCaption.from_sound_file(sound.file)
 
@@ -333,16 +332,16 @@ static func build(
                 ScenarioEventServer.event_set_passive(
                         rid, ScenarioEventServer.memory_get_text(action.source) in PASSIVE_GET_COMMANDS)
             "sound":
-                var players:Array[SfxPlayer3D] = []
+                var sound_rids:Array[RID] = []
                 var reaches:PackedFloat64Array = []
                 var transcripts:Array[Transcript] = []
                 for target:String in event.targets:
-                    if players_by_name.has(target):
-                        players.append(players_by_name[target])
+                    if sounds_by_name.has(target):
+                        sound_rids.append(sounds_by_name[target])
                         reaches.append(reaches_by_name[target])
                         transcripts.append(transcripts_by_name[target])
                 var action:MaszynaLegacySoundAction = MaszynaLegacySoundAction.new()
-                action.players = players
+                action.sounds = sound_rids
                 action.reaches = reaches
                 action.transcripts = transcripts
                 action.mode = SOUND_MODES.get(int(event.parameters[0]), MaszynaLegacySoundAction.Mode.STOP)
@@ -562,16 +561,13 @@ static func _set_memcompare(
     condition.value2 = float(fields[2])
 
 
-static func _build_sound_event(
-    event_name:StringName, file:String, loop:bool, spatial_config:SfxSpatialConfig
-) -> SfxEvent:
+static func _build_sound_event(file:String, loop:bool, spatial_config:SfxSpatialConfig) -> SfxEvent:
     var stream:MaszynaAudioStream = MaszynaAudioStream.new()
     stream.file_path = file
     stream.loop = loop
     var clip:SfxClip = SfxClip.new()
     clip.stream = stream
     var event:SfxEvent = SfxEvent.new()
-    event.name = event_name
     event.spatial_config = spatial_config
     var clips:Array[SfxClip] = [clip]
     event.clips = clips

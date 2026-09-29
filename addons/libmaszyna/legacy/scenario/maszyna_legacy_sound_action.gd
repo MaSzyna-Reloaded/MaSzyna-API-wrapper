@@ -15,14 +15,11 @@ enum Mode {
     LOOP,
 }
 
-## The events of a scenery sound's bank (MaszynaLegacyEventFactory)
-const PLAY_EVENT:StringName = &"play"
-const LOOP_EVENT:StringName = &"loop"
-
-var players:Array[SfxPlayer3D] = []
-## Each player's range [m] (the scenery node's rmax): a radio message reaches only as far
+## The scenery sounds it plays (ScenerySoundServer)
+var sounds:Array[RID] = []
+## Each sound's range [m] (the scenery node's rmax): a radio message reaches only as far
 var reaches:PackedFloat64Array = []
-## Each player's transcript, null for a sound with none, shown when the sound starts as heard
+## Each sound's transcript, null for a sound with none, shown when the sound starts as heard
 ## (sound_source::update_counter(), sound.cpp:950-960)
 var transcripts:Array[Transcript] = []
 @export var mode:Mode = Mode.PLAY
@@ -31,22 +28,21 @@ var transcripts:Array[Transcript] = []
 
 
 func _run(_event:RID, _activator:RID) -> void:
-    for index:int in players.size():
-        var player:SfxPlayer3D = players[index]
-        if not is_instance_valid(player):
-            continue
+    for index:int in sounds.size():
+        var sound:RID = sounds[index]
         if mode == Mode.PLAY and radio_channel > 0:
             CabinSystem.send_radio_message(
-                    player.bank.get_event(PLAY_EVENT), transcripts[index], radio_channel, player.global_position,
-                    reaches[index])
+                    ScenerySoundServer.sound_get_play_event(sound), transcripts[index], radio_channel,
+                    ScenerySoundServer.sound_get_position(sound), reaches[index])
             continue
         if mode == Mode.STOP:
-            player.stop()
+            ScenerySoundServer.sound_stop(sound)
             continue
         # exclusive, as the original plays it: a sound already playing is left as it is
         # (sound_flags::exclusive, sound_source::play_basic(), sound.cpp:403-421)
-        if player.is_playing(PLAY_EVENT) or player.is_playing(LOOP_EVENT):
+        if ScenerySoundServer.sound_is_playing(sound):
             continue
-        player.play(PLAY_EVENT if mode == Mode.PLAY else LOOP_EVENT)
+        ScenerySoundServer.sound_play(
+                sound, ScenerySoundServer.Playback.ONCE if mode == Mode.PLAY else ScenerySoundServer.Playback.LOOP)
         if transcripts[index]:
             TranscriptSystem.add(transcripts[index])

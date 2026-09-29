@@ -55,6 +55,7 @@ var _launcher_rids:Array[RID] = []
 var _pickable_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
 var _memory_rids:Array[RID] = []
+var _sound_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
@@ -92,6 +93,7 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_launcher_rids, ScenarioEventServer.launcher_free],
         [_event_rids, ScenarioEventServer.event_free],
         [_memory_rids, ScenarioEventServer.memory_free],
+        [_sound_rids, ScenerySoundServer.sound_free],
         [_event_track_rids, ScenarioEventServer.track_clear_events],
         [_event_isolated_rids, ScenarioEventServer.isolated_clear_events],
         [_isolated_rids, TrackServer.isolated_free],

@@ -4,6 +4,25 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - the driving aid flickered: lerpf() misses its end by a rounding
+
+* **Symptom:** approaching Markowo Górne the player's driving aid switched on nearly every update
+  between "0 km/h in 0.4 km" and no next limit; the AI read the same table, so it knew about the
+  red entry signal on one update and not on the next.
+* **What proved it:** the table was steady (the entry signal B12 at stop, and 88 m after it
+  `markowo_grn_tor2_wjazd_speedinfo`, SetVelocity 120). Printing the selection: B12's wanted
+  acceleration came out `0.85000000000000009` against the preferred `0.84999999999999998`, so
+  `wanted <= best` refused the stop and the 120 behind it was taken. The value is the easing into
+  braking, `lerp(wanted, AccPreferred, share)` at `share == 1`. The original's `std::lerp`
+  (Driver.cpp:919) returns its end exactly (C++20); Godot's `lerpf()` computes `a + (b - a) * t`
+  and misses it by one ulp for some inputs.
+* **Fix:** at the end of the easing the preferred acceleration is taken as it is. The aid shows the
+  stop steadily down to the signal. A route test sweeps the approach speed and fails 32 times in
+  3500 without it; the switch test that expected "no next speed" standing on a line of one speed
+  had relied on the same rounding - the original gives VelNext as the line's speed there.
+* **Rule:** a port of `std::lerp` whose result is compared exactly is taken at its end, not
+  computed - `lerpf()` does not return its end exactly.
+
 ## 2026-09-29 - a goods train left past its exit signal: a track's second event2 was dropped
 
 * **Symptom:** krzyzowa2, the goods train 3E/1-42 (TME9637) left Krzyżowa ~40 s into the scenario,
@@ -2102,6 +2121,23 @@ lighting or the trainset.
   temporary model is released at the end of the expression, the submodel survives it empty.
 * **Fix:** the test keeps the model in a variable while it reads the submodels.
 * **Rule:** hold an `E3DModel` for as long as its submodels are used.
+
+## 2026-09-29 - the vehicle card missing in the release build
+
+* **Symptom:** after the card moved to the bottom left corner (13b92be0) it opened in the editor
+  but not in the exported release; its row in the trainset list still lit up.
+* **What proved it:** the release has `print`/`push_warning` switched off
+  (`run/disable_stdout.release`, `run/disable_stderr.release`), so the probe wrote a file past the
+  logger: `VehicleCards` 0x0 with anchors `[0, 0, 0, 0]` and `layout_mode=0`, the card at
+  y = -566. The pack read with `godot-double --main-pack` held an override
+  `GameHud/VehicleCards: layout_mode=0` in `demo_scenery_loading.scn` - converted at 10:20 from
+  the old `game_hud` (`layout_mode=3`) and never again, since `demo_scenery_loading.tscn` itself
+  did not change (`.godot/exported/<id>/file_cache` is keyed by the scene's own md5).
+  `_set_layout_mode(POSITION)` resets the anchors to top-left.
+* **Fix:** every release target (`release-linux`, `-windows`, `-android`, `-linux-symbols`)
+  depends on `release-clear-godot-cache`, which deletes `demo/.godot/exported`.
+* **Rule:** a release is exported from an empty export cache; a layout that differs between the
+  editor and the release - dump the exported pack's `SceneState` before reading engine code.
 
 ## 2026-09-30 - Krzyżowa 2: the timetable panel never left Krzyżowa
 

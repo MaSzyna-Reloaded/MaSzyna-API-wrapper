@@ -373,7 +373,11 @@ func update(
                     var easing:float = EASING_BRAKING_SHARE * brake_distance \
                             * braking.distance_multiplier(velocity, absf(speed), trainset)
                     if easing > 0.0:
-                        wanted = lerpf(wanted, acceleration, clampf((distance - easing) / easing, 0.0, 1.0))
+                        # std::lerp gives its end exactly (Driver.cpp:919), lerpf() may miss it by a
+                        # rounding: a far stop then read above the preferred acceleration and lost to
+                        # the speed after it (FINDINGS.md 2026-09-29)
+                        var share:float = clampf((distance - easing) / easing, 0.0, 1.0)
+                        wanted = acceleration if share == 1.0 else lerpf(wanted, acceleration, share)
                 if distance < min_proximity:
                     velocity_limit = MaszynaLegacyDriverSpeed.min_speed(velocity_limit, velocity)
         elif entry.event.is_valid():

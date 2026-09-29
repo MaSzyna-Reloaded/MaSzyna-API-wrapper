@@ -25,6 +25,14 @@ const SWITCH_LENGTH:float = 30.0
 const DIVERGING_OFFSET:float = 10.0
 ## How far [m] from the vehicle's middle the Tm on either side stand: inside the moving reading
 const SHUNT_SIGNAL_DISTANCE:float = 200.0
+## Markowo Górne's approach: its entry signal at stop this far ahead [m], and the line's speed
+## given 88 m after it (markowo_grn_tor2_wjazd_speedinfo); the speeds the train comes at [km/h]
+const STOP_SIGNAL_DISTANCE:float = 400.0
+const LINE_SPEED_DISTANCE:float = 488.0
+const LINE_SPEED:float = 120.0
+const APPROACH_SPEED_MIN:float = 5.0
+const APPROACH_SPEED_MAX:float = 40.0
+const APPROACH_SPEED_STEP:float = 0.01
 
 var _tracks:Array[RID] = []
 var _events:Array[RID] = []
@@ -82,7 +90,7 @@ func test_a_switch_thrown_ahead_is_traced_again_from() -> void:
     var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
 
     _update(route, vehicle, trainset, 0.0)
-    assert_eq(route.velocity_next, MaszynaLegacyDriverRoute.NO_LIMIT, "set straight, nothing limits it")
+    assert_eq(route.velocity_next, LINE_VELOCITY, "set straight, the line's speed")
     TrackServer.switch_set_active_track(switch_track, TrackServer.TRACK_DIVERGING)
     _update(route, vehicle, trainset, 0.0)
 
@@ -143,6 +151,39 @@ func test_a_signal_passed_at_proceed_does_not_hold_the_train_when_it_closes() ->
     _update(route, vehicle, trainset, MOVING_SPEED, Order.OBEY_TRAIN)
 
     assert_eq(route.velocity_next, MaszynaLegacyDriverRoute.NO_LIMIT, "the signal closed behind it holds nothing")
+
+
+## FINDINGS.md 2026-09-29: a stop far ahead lost to the line speed given after it on some updates
+## and not on others - lerpf() at its end is not exactly its end, std::lerp is - and the driving aid
+## flickered between "0 in 0.4 km" and nothing
+func test_a_stop_ahead_is_not_lost_to_the_speed_given_after_it() -> void:
+    var line:RID = _track(Vector3(-LINE_LENGTH, 0.0, 0.0), Vector3(LINE_LENGTH, 0.0, 0.0), null, LINE_VELOCITY, "line")
+    TrackServer.topology_rebuild()
+    var vehicle:RID = await _place("line", LINE_LENGTH)
+    # the signal and the speed after it ahead, towards the line's end
+    for aspect:Array in [[STOP_SIGNAL_DISTANCE, 0.0], [LINE_SPEED_DISTANCE, LINE_SPEED]]:
+        var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+        action.command = "SetVelocity"
+        action.value1 = aspect[1]
+        action.position = Vector3(float(aspect[0]), 0.0, 0.0)
+        var event:RID = ScenarioEventServer.event_create()
+        _events.append(event)
+        ScenarioEventServer.event_attach_action(event, action)
+        ScenarioEventServer.event_set_passive(event, true)
+        ScenarioEventServer.track_add_event(line, ScenarioEventServer.TRACK_EVENT2, event)
+    var toward_end:bool = RailVehicleServer.vehicle_trace_route(vehicle, 1, STOP_SIGNAL_DISTANCE)[0].toward_end
+    var trainset:MaszynaLegacyDriverTrainset = _trainset(vehicle, 1 if toward_end else -1)
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+
+    var lost:Array[float] = []
+    var speed:float = APPROACH_SPEED_MIN
+    while speed <= APPROACH_SPEED_MAX:
+        _update(route, vehicle, trainset, speed, Order.OBEY_TRAIN)
+        if not route.velocity_next == 0.0:
+            lost.append(speed)
+        speed += APPROACH_SPEED_STEP
+
+    assert_eq(lost.size(), 0, "the stop ahead is the next speed at every speed, lost at %s" % [lost])
 
 
 func _curve(from:Vector3, to:Vector3) -> TrackCurve:

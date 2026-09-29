@@ -1,6 +1,6 @@
+#include "MaszynaLegacyAnimationAction.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "macros.hpp"
-#include "MaszynaLegacyAnimationAction.hpp"
 
 namespace godot {
     void MaszynaLegacyAnimationAction::_bind_methods() {

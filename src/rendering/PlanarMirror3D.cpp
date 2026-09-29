@@ -117,7 +117,7 @@ void fragment() {
                 viewport->set_update_mode(SubViewport::UPDATE_DISABLED);
                 viewport->set_use_hdr_2d(true);
                 viewport->set_positional_shadow_atlas_size(0);
-                viewport->set_mesh_lod_threshold(MESH_LOD_THRESHOLD);
+                viewport->set_mesh_lod_threshold(static_cast<float>(MESH_LOD_THRESHOLD));
                 viewport->set_msaa_3d(Viewport::MSAA_DISABLED);
                 viewport->set_screen_space_aa(Viewport::SCREEN_SPACE_AA_DISABLED);
                 viewport->set_use_taa(false);
@@ -182,7 +182,8 @@ void fragment() {
         const Vector3 mirrored_origin = eye_position - normal * (2.0 * normal.dot(eye_position - point));
         const Vector3 view = point - mirrored_origin;
         const real_t glass_distance = view.length();
-        const Vector3 up = Math::abs(view.normalized().y) > MAX_UP_ALIGNMENT ? Vector3(0.0, 0.0, 1.0) : Vector3(0.0, 1.0, 0.0);
+        const Vector3 up =
+                Math::abs(view.normalized().y) > MAX_UP_ALIGNMENT ? Vector3(0.0, 0.0, 1.0) : Vector3(0.0, 1.0, 0.0);
         camera->set_global_transform(Transform3D(Basis::looking_at(view, up), mirrored_origin));
         camera->set_keep_aspect_mode(Camera3D::KEEP_HEIGHT);
         camera->set_fov(Math::rad_to_deg(2.0 * Math::atan(radius / glass_distance)));
@@ -194,19 +195,20 @@ void fragment() {
         // as many pixels as the glass covers on the screen
         const real_t screen_height = seen_in->get_visible_rect().size.y;
         const real_t eye_distance = eye_position.distance_to(point);
-        const real_t glass_pixels = screen_height * radius /
-                                    (eye_distance * Math::tan(Math::deg_to_rad(eye->get_fov()) * 0.5));
+        const real_t glass_pixels =
+                screen_height * radius / (eye_distance * Math::tan(Math::deg_to_rad(eye->get_fov()) * 0.5));
         // in powers of two: a size that follows every move reallocates the texture every frame, and
         // the glass shows whatever the new one holds before it is rendered into
-        const int32_t side = CLAMP(
-                static_cast<int32_t>(Math::next_power_of_2(static_cast<uint32_t>(MAX(glass_pixels * resolution_scale, 1.0)))),
-                MIN_TEXTURE_SIZE, MAX_TEXTURE_SIZE);
+        const int32_t side =
+                CLAMP(static_cast<int32_t>(
+                              Math::next_power_of_2(static_cast<uint32_t>(MAX(glass_pixels * resolution_scale, 1.0)))),
+                      MIN_TEXTURE_SIZE, MAX_TEXTURE_SIZE);
         if (viewport->get_size() != Vector2i(side, side)) {
             viewport->set_size(Vector2i(side, side));
         }
         material->set_shader_parameter(
-                "mirror_view_projection",
-                Projection(camera->get_camera_projection()) * Projection(camera->get_global_transform().affine_inverse()));
+                "mirror_view_projection", Projection(camera->get_camera_projection()) *
+                                                  Projection(camera->get_global_transform().affine_inverse()));
         if (viewport->get_update_mode() == SubViewport::UPDATE_ALWAYS) {
             return;
         }

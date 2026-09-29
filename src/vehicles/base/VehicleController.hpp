@@ -67,7 +67,6 @@ namespace godot {
             virtual void _unregister_commands() {}
 
         public:
-        public:
             enum Category {
                 CATEGORY_TRAIN = 1,
                 CATEGORY_ROAD = 2,
@@ -88,6 +87,7 @@ namespace godot {
             Dictionary get_config() const;
             /* One of this vehicle's components (re)applied its configuration. */
             void emit_config_changed();
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             void _notification(int p_what);
             Variant
             send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());

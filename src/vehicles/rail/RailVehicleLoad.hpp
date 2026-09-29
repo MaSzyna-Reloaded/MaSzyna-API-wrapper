@@ -1,6 +1,6 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleLoadListItem.hpp"
 
 namespace godot {

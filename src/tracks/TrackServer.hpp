@@ -334,8 +334,8 @@ namespace godot {
             /* The track a movement leaving p_track at p_endpoint_index continues onto, and the
              * switch branch that entering it forces; false when the node is open or ambiguous */
             bool track_find_next(
-                    const RID &p_track, int p_endpoint_index, RID &r_track, int &r_endpoint,
-                    int &r_forced_switch_track);
+                    const RID &p_track, int p_endpoint_index, RID &p_r_track, int &p_r_endpoint,
+                    int &p_r_forced_switch_track);
             /* The endpoint of the track a movement continues onto, null when there is none */
             Ref<TrackEndpointRef> track_get_next(const RID &p_track, int p_endpoint_index);
             bool track_is_switch(const RID &p_track) const;

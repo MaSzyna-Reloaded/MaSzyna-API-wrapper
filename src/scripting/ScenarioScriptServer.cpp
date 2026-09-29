@@ -1,5 +1,5 @@
-#include "ScenarioScriptServer.hpp"
 #include "ScenarioScriptAction.hpp"
+#include "ScenarioScriptServer.hpp"
 #include "logging/GameLog.hpp"
 #include "scenario/ScenarioEventServer.hpp"
 #include "signalling/SignallingServer.hpp"
@@ -19,10 +19,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("context_create", "base_dir"), &ScenarioScriptServer::context_create);
         ClassDB::bind_method(D_METHOD("context_free", "context"), &ScenarioScriptServer::context_free);
         ClassDB::bind_method(D_METHOD("get_contexts"), &ScenarioScriptServer::get_contexts);
+        ClassDB::bind_method(D_METHOD("context_run_file", "context", "path"), &ScenarioScriptServer::context_run_file);
         ClassDB::bind_method(
-                D_METHOD("context_run_file", "context", "path"), &ScenarioScriptServer::context_run_file);
-        ClassDB::bind_method(
-                D_METHOD("context_check_source", "context", "unit", "source"), &ScenarioScriptServer::context_check_source);
+                D_METHOD("context_check_source", "context", "unit", "source"),
+                &ScenarioScriptServer::context_check_source);
         ClassDB::bind_method(
                 D_METHOD("context_apply_source", "context", "unit", "source"),
                 &ScenarioScriptServer::context_apply_source);
@@ -120,8 +120,8 @@ namespace godot {
         return _enter(p_context, p_path, [&p_path](ScriptRuntime *p_runtime) { return p_runtime->run_file(p_path); });
     }
 
-    String ScenarioScriptServer::context_check_source(
-            const RID &p_context, const StringName &p_unit, const String &p_source) {
+    String
+    ScenarioScriptServer::context_check_source(const RID &p_context, const StringName &p_unit, const String &p_source) {
         const Context *context = contexts.getptr(p_context);
         ERR_FAIL_NULL_V(context, String());
         if (context->runtime == nullptr) {
@@ -130,8 +130,8 @@ namespace godot {
         return context->runtime->check_source(p_source, p_unit);
     }
 
-    bool ScenarioScriptServer::context_apply_source(
-            const RID &p_context, const StringName &p_unit, const String &p_source) {
+    bool
+    ScenarioScriptServer::context_apply_source(const RID &p_context, const StringName &p_unit, const String &p_source) {
         Context *context = contexts.getptr(p_context);
         ERR_FAIL_NULL_V(context, false);
         const Vector<RID> owned = context->hooks;
@@ -193,8 +193,7 @@ namespace godot {
             const RID &p_context, const double p_seconds, const int64_t p_function, const Timer p_timer) {
         ScenarioEventServer *events = ScenarioEventServer::get_instance();
         ERR_FAIL_NULL_V(events, RID());
-        RID hook = _create_hook(
-                p_context, p_timer == TIMER_ONCE ? HOOK_TIMER_ONCE : HOOK_TIMER_REPEATING, p_function);
+        RID hook = _create_hook(p_context, p_timer == TIMER_ONCE ? HOOK_TIMER_ONCE : HOOK_TIMER_REPEATING, p_function);
         ERR_FAIL_COND_V(!hook.is_valid(), RID());
         const RID event = hooks[hook].event;
         if (p_timer == TIMER_ONCE) {
@@ -313,16 +312,14 @@ namespace godot {
             Vector<ScriptArgument> arguments;
             arguments.push_back({p_event, ScriptHandleKind::EVENT});
             arguments.push_back({p_activator, ScriptHandleKind::VEHICLE});
-            _enter(context, unit, [function, &arguments](ScriptRuntime *p_runtime) {
-                return p_runtime->call(function, arguments);
-            });
+            _enter(context, unit,
+                   [function, &arguments](ScriptRuntime *p_runtime) { return p_runtime->call(function, arguments); });
             return;
         }
         const HookKind kind = hook->kind;
         const int64_t function = hook->function;
-        _enter(context, unit, [function](ScriptRuntime *p_runtime) {
-            return p_runtime->call(function, Vector<ScriptArgument>());
-        });
+        _enter(context, unit,
+               [function](ScriptRuntime *p_runtime) { return p_runtime->call(function, Vector<ScriptArgument>()); });
         if (kind == HOOK_TIMER_ONCE && hooks.has(p_hook)) {
             _free_hook(p_hook);
         }

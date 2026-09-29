@@ -1,8 +1,8 @@
-#include "simulation/SimulationServer.hpp"
-#include "legacy/e3d/E3DRenderingServer.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include "../tracks/TrackServer.hpp"
 #include "ScenarioEventServer.hpp"
+#include "legacy/e3d/E3DRenderingServer.hpp"
+#include "simulation/SimulationServer.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -239,7 +239,8 @@ namespace godot {
         if (p_processing) {
             runtime->clock_hold();
             runtime->connect(
-                    SimulationServer::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
+                    SimulationServer::simulation_advanced_signal,
+                    callable_mp(this, &ScenarioEventServer::_process_queue));
             return;
         }
         runtime->disconnect(
@@ -557,7 +558,8 @@ namespace godot {
         }
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL_V(runtime, false);
-        const double run_time = runtime->get_simulation_time() + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
+        const double run_time = runtime->get_simulation_time() + event->delay + p_extra_delay +
+                                (event->random_delay * UtilityFunctions::randf());
         event->queued_sequence = _schedule(p_event, run_time, p_activator);
         event->run_time = run_time;
         emit_signal(event_queued_signal, p_event, p_activator);

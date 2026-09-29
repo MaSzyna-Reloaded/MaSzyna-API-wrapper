@@ -1,6 +1,6 @@
+#include "MaszynaLegacyEventCondition.hpp"
 #include "macros.hpp"
 #include "tracks/TrackServer.hpp"
-#include "MaszynaLegacyEventCondition.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -130,7 +130,7 @@ namespace godot {
         }
         const ScenarioEventServer *server = ScenarioEventServer::get_instance();
         ERR_FAIL_NULL_V(server, false);
-        const int wildcard = text.find(TEXT_WILDCARD);
+        const int wildcard = static_cast<int>(text.find(TEXT_WILDCARD));
         for (int i = 0; i < memories.size(); i++) {
             const RID memory = memories[i];
             bool passed = false;
@@ -154,7 +154,14 @@ namespace godot {
                 passed = passed || result;
                 failed = failed || !result;
             }
-            const bool memory_passed = pass == PASS_ALL ? !failed : pass == PASS_ANY ? passed : !passed;
+            bool memory_passed = false;
+            if (pass == PASS_ALL) {
+                memory_passed = !failed;
+            } else if (pass == PASS_ANY) {
+                memory_passed = passed;
+            } else {
+                memory_passed = !passed;
+            }
             if (!memory_passed) {
                 return false;
             }

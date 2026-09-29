@@ -26,8 +26,7 @@ namespace godot {
 
         public:
             static TractionServer *get_instance() {
-                return Object::cast_to<TractionServer>(
-                        Engine::get_singleton()->get_singleton("TractionServer"));
+                return Object::cast_to<TractionServer>(Engine::get_singleton()->get_singleton("TractionServer"));
             }
 
         private:

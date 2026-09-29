@@ -1,8 +1,8 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
-#include "vehicles/rail/RailVehicleBrake.hpp"
-#include "vehicles/base/VehicleController.hpp"
 #include "macros.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleBrake.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 
 namespace godot {

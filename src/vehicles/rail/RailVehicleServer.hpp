@@ -3,8 +3,8 @@
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 
-#include "tracks/TrackServer.hpp"
 #include "RailVehicleNeighbour.hpp"
+#include "tracks/TrackServer.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -222,8 +222,8 @@ namespace godot {
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
-            TypedArray<RID>
-            vehicle_get_coupled(const RID &p_vehicle, int p_end, RailVehicleController::CouplingElement p_element) const;
+            TypedArray<RID> vehicle_get_coupled(
+                    const RID &p_vehicle, int p_end, RailVehicleController::CouplingElement p_element) const;
             /* The vehicle a cab's controls drive (TDynamicObject::FindPowered(), DynObj.cpp:7772): this
              * one if it has power, else the nearest with power joined to it - within an EMU's or DMU's
              * unit, else by the control line; this one when there is none */
@@ -273,8 +273,7 @@ namespace godot {
             /* The tracks ahead of the vehicle the way p_direction leads - +1 towards its front, as
              * the mover's V > 0 moves it, -1 towards its rear - as far as p_distance [m], the one it
              * stands on first */
-            TypedArray<TrackRouteSegment>
-            vehicle_trace_route(const RID &p_vehicle, int p_direction, double p_distance);
+            TypedArray<TrackRouteSegment> vehicle_trace_route(const RID &p_vehicle, int p_direction, double p_distance);
             /* The nearest vehicle along the route from the vehicle's p_end (0 front, 1 rear), on the
              * tracks entered within p_distance [m] of its centre, null when there is none
              * (TDynamicObject::find_vehicle(), DynObj.cpp:7688) */

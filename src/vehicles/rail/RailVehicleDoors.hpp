@@ -1,6 +1,6 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 
 namespace godot {
     class VehicleController;
@@ -108,7 +108,7 @@ namespace godot {
             MAKE_MEMBER_GS(float, open_with_permit, -1.0f);
             MAKE_MEMBER_GS(bool, has_lock, false);
             MAKE_MEMBER_GS(float, max_shift_plug, 0.1f);
-            MAKE_MEMBER_GS(Array, permit_list, Array());
+            MAKE_MEMBER_GS_NO_DEF(Array, permit_list);
             MAKE_MEMBER_GS(int, permit_default, 1);
             MAKE_MEMBER_GS(bool, close_auto_close_remote, false);
             MAKE_MEMBER_GS(float, close_auto_close_velocity, -1.0f);

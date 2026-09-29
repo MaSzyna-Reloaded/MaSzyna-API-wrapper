@@ -1,7 +1,7 @@
 #pragma once
 
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 #include <godot_cpp/variant/transform3d.hpp>
 
 namespace godot {

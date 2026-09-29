@@ -1,6 +1,6 @@
-#include "scenery/SceneryStreamingServer.hpp"
 #include "E3DRenderingServer.hpp"
 #include "LegacyLightMode.hpp"
+#include "scenery/SceneryStreamingServer.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -129,8 +129,7 @@ namespace godot {
                 PropertyInfo(Variant::STRING, "submodel")));
     }
 
-    E3DRenderingServer::E3DRenderingServer() {
-    }
+    E3DRenderingServer::E3DRenderingServer() {}
 
     E3DRenderingServer::~E3DRenderingServer() {
         // Nodes built by the NODES backends belong to the scene tree, only RenderingServer RIDs are freed here
@@ -157,7 +156,8 @@ namespace godot {
     }
 
     E3DInstanceBackend &E3DRenderingServer::_get_backend(const E3DInstanceData &p_instance) {
-        return const_cast<E3DInstanceBackend &>(static_cast<const E3DRenderingServer *>(this)->_get_backend(p_instance));
+        return const_cast<E3DInstanceBackend &>(
+                static_cast<const E3DRenderingServer *>(this)->_get_backend(p_instance));
     }
 
     const E3DInstanceBackend &E3DRenderingServer::_get_backend(const E3DInstanceData &p_instance) const {
@@ -1014,7 +1014,7 @@ namespace godot {
     /// spawning, which cut a whole plume off in one frame. This is the original's own model
     /// (m_spawncount, particles.cpp:157-212).
     void E3DRenderingServer::_process_smoke() {
-        const int size = smoke_order.size();
+        const int size = static_cast<int>(smoke_order.size());
         if (size == 0) {
             return;
         }
@@ -1051,7 +1051,7 @@ namespace godot {
     /// Advances the blinking lights. A light is resolved again only when its cycle crossed an
     /// edge, so a frame between two edges does no more than the arithmetic.
     void E3DRenderingServer::_process_lights() {
-        const int size = blinking_instances.size();
+        const int size = static_cast<int>(blinking_instances.size());
         if (size == 0) {
             return;
         }
@@ -1183,7 +1183,7 @@ namespace godot {
         const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
         ERR_FAIL_NULL(tree);
         const double delta = tree->get_root()->get_process_delta_time() * animation_speed;
-        for (int index = animating_instances.size() - 1; index >= 0; index--) {
+        for (int index = static_cast<int>(animating_instances.size() - 1); index >= 0; index--) {
             const RID instance_rid = animating_instances[index];
             E3DInstanceData *instance = instances.getptr(instance_rid);
             bool moving = false;
@@ -1258,7 +1258,8 @@ namespace godot {
         }
         const double delta = static_cast<double>(p_now - p_smoke.last_spawn_usec) / 1000000.0;
         p_smoke.last_spawn_usec = p_now;
-        p_smoke.spawn_backlog += p_smoke.spawn_rate * p_smoke.intensity * delta;
+        p_smoke.spawn_backlog =
+                static_cast<float>(p_smoke.spawn_backlog + (p_smoke.spawn_rate * p_smoke.intensity * delta));
         const int count = MIN(static_cast<int>(p_smoke.spawn_backlog), p_smoke.amount);
         if (count < 1) {
             return;

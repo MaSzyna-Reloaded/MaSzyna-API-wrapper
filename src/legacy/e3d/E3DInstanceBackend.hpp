@@ -51,7 +51,7 @@ namespace godot {
                     ObjectID off;
                     ObjectID xon;
                     ObjectID spotlight;
-                    float spotlight_energy = 0.0; // undimmed, as _configure_spotlight() set it
+                    float spotlight_energy = 0.0;    // undimmed, as _configure_spotlight() set it
                     E3DSubModel *submodel = nullptr; // first matched on/off submodel, configures the spotlight
             };
 
@@ -142,17 +142,17 @@ namespace godot {
             /// The nearest hit of the segment (world space) on the built meshes nearer than
             /// `r_distance`: updates `r_distance` and `r_point` and returns true
             virtual bool intersect_segment(
-                    const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-                    Vector3 &r_point) const = 0;
+                    const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+                    Vector3 &p_r_point) const = 0;
 
         protected:
             /// intersect_segment() of one mesh placed by `p_transform`
             static bool _intersect_mesh(
                     const Ref<Mesh> &p_mesh, const Transform3D &p_transform, const Vector3 &p_from, const Vector3 &p_to,
-                    double &r_distance, Vector3 &r_point);
+                    double &p_r_distance, Vector3 &p_r_point);
             /// Whether a light's part is shown under its state and dimming
-            static bool _light_part_visible(const E3DInstanceData &p_instance, const String &p_light_name,
-                                            LightPart p_part, bool p_has_xon);
+            static bool _light_part_visible(
+                    const E3DInstanceData &p_instance, const String &p_light_name, LightPart p_part, bool p_has_xon);
             /// The unit quad a free spotlight's point and glare are drawn with - the material's shaders
             /// place it on the screen (types/free_spotlight.gdshader)
             Ref<ArrayMesh> point_mesh;

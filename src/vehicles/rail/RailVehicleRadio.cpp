@@ -76,11 +76,11 @@ namespace godot {
     // Original engine: TTrain::OnCommand_radiovolumeincrease/decrease -> radiovolumeset
     // (Train.cpp:8246-8289), clamped to 0..1
     void RailVehicleRadio::volume_increase(const int p_step) {
-        volume = Math::clamp(volume + VOLUME_STEP * (p_step > 0 ? p_step : 1), 0.0, 1.0);
+        volume = Math::clamp(volume + (VOLUME_STEP * (p_step > 0 ? p_step : 1)), 0.0, 1.0);
     }
 
     void RailVehicleRadio::volume_decrease(const int p_step) {
-        volume = Math::clamp(volume - VOLUME_STEP * (p_step > 0 ? p_step : 1), 0.0, 1.0);
+        volume = Math::clamp(volume - (VOLUME_STEP * (p_step > 0 ? p_step : 1)), 0.0, 1.0);
     }
 
     void RailVehicleRadio::_fill_state_dictionary(Dictionary &p_state) const {

@@ -398,7 +398,7 @@ namespace godot {
         }
         const Vector3 position = camera->get_global_position();
         const uint64_t now = Time::get_singleton()->get_ticks_msec();
-        const float movement = position.distance_to(last_camera_position);
+        const float movement = static_cast<float>(position.distance_to(last_camera_position));
         requested = requested || movement >= CAMERA_STEP_M || (movement > 0.0 && now - last_plan_msec >= INTERVAL_MSEC);
         if (requested) {
             last_plan_msec = now;

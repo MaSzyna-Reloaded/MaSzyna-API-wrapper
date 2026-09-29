@@ -1,14 +1,15 @@
-#include "legacy/vehicles/MoverComponent.hpp"
-#include "legacy/vehicles/MoverTypes.hpp"
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
+#include "legacy/vehicles/MoverComponent.hpp"
+#include "legacy/vehicles/MoverTypes.hpp"
 #include <cmath>
-#include <tuple>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <tuple>
 
 namespace godot {
-    std::unordered_map<const TMoverParameters *, MoverRailVehicleController *> MoverRailVehicleController::controllers_by_mover;
+    std::unordered_map<const TMoverParameters *, MoverRailVehicleController *>
+            MoverRailVehicleController::controllers_by_mover;
 
     void MoverRailVehicleController::_bind_methods() {}
 
@@ -200,8 +201,8 @@ namespace godot {
         const TCoupling &other_coupler = other_mover->Couplers[p_other_end];
         neighbour.vehicle = other_mover;
         neighbour.vehicle_end = p_other_end;
-        neighbour.distance = static_cast<float>(p_track_distance - 0.5 * (mover->Dim.L + other_mover->Dim.L));
-        if (neighbour.distance < (other_mover->CategoryFlag == 2 ? 50 : 100)) {
+        neighbour.distance = static_cast<float>(p_track_distance - (0.5 * (mover->Dim.L + other_mover->Dim.L)));
+        if (neighbour.distance < static_cast<float>(other_mover->CategoryFlag == 2 ? 50 : 100)) {
             // at short distances (re)calculate range between couplers directly
             neighbour.distance = static_cast<float>(
                     TMoverParameters::CouplerDist(mover, other_mover) - coupler.adapter_length -
@@ -289,9 +290,10 @@ namespace godot {
 
     bool MoverRailVehicleController::is_coupled_by(const int p_end, const CouplingElement p_element) const {
         // indexed by CouplingElement
-        static constexpr int flags[] = {coupling::coupler, coupling::brakehose, coupling::mainhose, coupling::control,
-                                        coupling::gangway, coupling::heating,   coupling::permanent};
-        return mover != nullptr && TestFlag(mover->Couplers[p_end].CouplingFlag, flags[p_element]);
+        static constexpr int COUPLING_FLAGS[] = {coupling::coupler,  coupling::brakehose, coupling::mainhose,
+                                                 coupling::control,  coupling::gangway,   coupling::heating,
+                                                 coupling::permanent};
+        return mover != nullptr && TestFlag(mover->Couplers[p_end].CouplingFlag, COUPLING_FLAGS[p_element]);
     }
 
     // p_where is a coupler end (0 front, 1 rear) or a world position - then the vehicle end nearest to
@@ -364,17 +366,17 @@ namespace godot {
         tachometer_time += p_delta;
         if (std::floor(tachometer_time) != previous_second) {
             tachometer_velocity_jump = tachometer_velocity > 1.0
-                                               ? tachometer_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                                        UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                               0.5
+                                               ? tachometer_velocity + ((2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
+                                                                         UtilityFunctions::randf_range(0.0, 3.0)) *
+                                                                        0.5)
                                                : 0.0;
         }
 
         // ticking starts ~1 s after moving off and fades out slowly after stopping
         if (tachometer_velocity > 1.0) {
-            tachometer_count = std::min(max_tachometer, tachometer_count + p_delta * 3.0);
+            tachometer_count = std::min(max_tachometer, tachometer_count + (p_delta * 3.0));
         } else if (tachometer_count > 0.0) {
-            tachometer_count = std::max(0.0, tachometer_count - p_delta * 0.66);
+            tachometer_count = std::max(0.0, tachometer_count - (p_delta * 0.66));
         }
         if (tachometer_count >= 3.0) {
             tachometer_clock_active = true;
@@ -502,7 +504,10 @@ namespace godot {
     }
 
     double MoverRailVehicleController::get_tachometer_clock_speed() const {
-        return mover != nullptr ? tachometer_clock_active ? tachometer_velocity : 0.0 : 0.0;
+        if (mover == nullptr || !tachometer_clock_active) {
+            return 0.0;
+        }
+        return tachometer_velocity;
     }
 
     int MoverRailVehicleController::get_direction_absolute() const {
@@ -590,11 +595,13 @@ namespace godot {
     }
 
     int MoverRailVehicleController::get_controller_joint_position() const {
-        return mover != nullptr
-                       ? mover->LocalBrakePosA > 0.0
-                                 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo))
-                                 : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos)
-                       : 0;
+        if (mover == nullptr) {
+            return 0;
+        }
+        if (mover->LocalBrakePosA > 0.0) {
+            return static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo));
+        }
+        return mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos;
     }
 
     int MoverRailVehicleController::get_controller_main_actual_position() const {
@@ -606,9 +613,8 @@ namespace godot {
     }
 
     bool MoverRailVehicleController::get_coupler_stretched() const {
-        return mover != nullptr
-               && (mover->Couplers[end::front].stretch_duration > 0.0f
-                   || mover->Couplers[end::rear].stretch_duration > 0.0f);
+        return mover != nullptr && (mover->Couplers[end::front].stretch_duration > 0.0f ||
+                                    mover->Couplers[end::rear].stretch_duration > 0.0f);
     }
 
     int MoverRailVehicleController::get_controller_main_no_power_position() const {

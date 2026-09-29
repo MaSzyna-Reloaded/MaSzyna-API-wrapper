@@ -34,7 +34,8 @@ namespace godot {
                 "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
                 "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY(RailVehicleBuffCoupl, Variant::STRING, control_type);
-        BIND_PROPERTY_W_HINT(RailVehicleBuffCoupl, Variant::INT, buffer_location, PROPERTY_HINT_ENUM, "Front,Back,Both");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleBuffCoupl, Variant::INT, buffer_location, PROPERTY_HINT_ENUM, "Front,Back,Both");
 
         BIND_ENUM_CONSTANT(COUPLER_TYPE_AUTOMATIC)
         BIND_ENUM_CONSTANT(COUPLER_TYPE_SCREW)

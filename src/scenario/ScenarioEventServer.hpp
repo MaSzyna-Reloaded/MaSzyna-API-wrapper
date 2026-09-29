@@ -1,7 +1,7 @@
 #pragma once
-#include "vehicles/rail/RailVehicleRadio.hpp"
 #include "ScenarioEventAction.hpp"
 #include "ScenarioEventCondition.hpp"
+#include "vehicles/rail/RailVehicleRadio.hpp"
 #include <functional>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/global_constants.hpp>
@@ -164,8 +164,8 @@ namespace godot {
             bool processing = false;
 
             void _on_time_of_day_changed();
-            void
-            _on_vehicle_radio_called(const RID &p_vehicle, RailVehicleRadio::RadioCall p_call, const Vector3 &p_position);
+            void _on_vehicle_radio_called(
+                    const RID &p_vehicle, RailVehicleRadio::RadioCall p_call, const Vector3 &p_position);
             void _on_vehicle_heading_to_track_start(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_heading_to_track_end(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_stopped_on_track(const RID &p_vehicle, const RID &p_track);

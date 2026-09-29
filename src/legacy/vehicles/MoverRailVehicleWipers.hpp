@@ -11,7 +11,6 @@ namespace godot {
         private:
             static void _bind_methods();
 
-        private:
             struct Wiper {
                     double position = 0.0;  // dWiperPos: 0 parked, 1 fully out
                     bool returning = false; // wiperDirection

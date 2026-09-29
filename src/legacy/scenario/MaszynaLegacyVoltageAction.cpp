@@ -1,5 +1,5 @@
-#include "traction/TractionServer.hpp"
 #include "MaszynaLegacyVoltageAction.hpp"
+#include "traction/TractionServer.hpp"
 
 namespace godot {
     void MaszynaLegacyVoltageAction::_bind_methods() {

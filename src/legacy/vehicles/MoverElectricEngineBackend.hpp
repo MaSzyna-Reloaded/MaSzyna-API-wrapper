@@ -24,7 +24,8 @@ namespace godot {
             double get_collector_min_pantograph_tank_pressure(const RailVehicleElectricEngine *p_engine) const override;
             double get_collector_max_pantograph_tank_pressure(const RailVehicleElectricEngine *p_engine) const override;
             double get_collector_pantograph_tank_pressure(const RailVehicleElectricEngine *p_engine) const override;
-            bool get_collector_pantograph_pressure_switch_armed(const RailVehicleElectricEngine *p_engine) const override;
+            bool
+            get_collector_pantograph_pressure_switch_armed(const RailVehicleElectricEngine *p_engine) const override;
             bool get_collector_pantograph_compressor_valve(const RailVehicleElectricEngine *p_engine) const override;
             bool get_collector_pantograph_compressor_enabled(const RailVehicleElectricEngine *p_engine) const override;
             bool get_collector_overvoltage_relay(const RailVehicleElectricEngine *p_engine) const override;

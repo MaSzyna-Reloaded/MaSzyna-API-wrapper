@@ -1,10 +1,10 @@
 #pragma once
 #include "ScenarioScriptCabinDelegate.hpp"
 #include "ScriptRuntime.hpp"
+#include <functional>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
-#include <functional>
 #include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {
@@ -125,7 +125,9 @@ namespace godot {
             /// Called by ScenarioScriptAction when the hook's event runs
             void _run_hook(const RID &p_hook, const RID &p_event, const RID &p_activator, Branch p_branch);
             /// Runs code of the context as the unit, reports its error; false when it failed
-            bool _enter(const RID &p_context, const StringName &p_unit, const std::function<String(ScriptRuntime *)> &p_code);
+            bool
+            _enter(const RID &p_context, const StringName &p_unit,
+                   const std::function<String(ScriptRuntime *)> &p_code);
             void _report(const RID &p_context, const String &p_error);
             /// Hands the arguments to the target's subscriptions and queues their events; only to
             /// the subscriptions of p_context when it is valid
@@ -181,4 +183,3 @@ namespace godot {
             bool script_cancel(const RID &p_context, const RID &p_subscription);
     };
 } // namespace godot
-

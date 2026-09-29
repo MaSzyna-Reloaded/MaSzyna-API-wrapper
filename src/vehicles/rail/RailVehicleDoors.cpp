@@ -27,7 +27,8 @@ namespace godot {
         BIND_PROPERTY(RailVehicleDoors, Variant::BOOL, close_auto_close_remote, "close");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, close_auto_close_velocity, "close");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, platform_max_speed, "platform");
-        BIND_PROPERTY_W_HINT(RailVehicleDoors, Variant::INT, platform_type, "platform", PROPERTY_HINT_ENUM, "Shift,Rotate");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleDoors, Variant::INT, platform_type, "platform", PROPERTY_HINT_ENUM, "Shift,Rotate");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, platform_max_shift, "platform");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, platform_speed, "platform");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, mirror_max_shift, "mirror");
@@ -191,7 +192,8 @@ namespace godot {
                         Variant::FLOAT, "right_position", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_position");
-        ClassDB::bind_method(D_METHOD("get_right_position_normalized"), &RailVehicleDoors::get_right_position_normalized);
+        ClassDB::bind_method(
+                D_METHOD("get_right_position_normalized"), &RailVehicleDoors::get_right_position_normalized);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "right_position_normalized", PROPERTY_HINT_NONE, "",

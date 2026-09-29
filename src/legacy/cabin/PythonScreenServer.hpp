@@ -1,12 +1,12 @@
 #pragma once
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
-#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/list.hpp>
+#include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>

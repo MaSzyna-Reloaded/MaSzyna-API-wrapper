@@ -119,17 +119,17 @@ namespace godot {
             /// The nearest hit of the segment on `p_part` closer than `r_distance`: updates
             /// `r_distance` and `r_point` (world space) and returns true
             static bool _hit_part(
-                    const Part &p_part, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-                    Vector3 &r_point);
+                    const Part &p_part, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+                    Vector3 &p_r_point);
             static bool
-            _hit(const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-                 Vector3 &r_point);
+            _hit(const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+                 Vector3 &p_r_point);
             void _set_outline(const RID &p_control, bool p_outlined);
             /// The control under the cursor, or failing that the one whose middle lies within
             /// PICK_TOLERANCE_PIXELS of it and is not hidden there
-            RID _pick(const Vector2 &p_position, Vector3 &r_point) const;
+            RID _pick(const Vector2 &p_position, Vector3 &p_r_point) const;
             /// The control the ray through `p_position` meets first, unless an occluder is nearer
-            RID _pick_exact(const Camera3D *p_view, const Vector2 &p_position, Vector3 &r_point) const;
+            RID _pick_exact(const Camera3D *p_view, const Vector2 &p_position, Vector3 &p_r_point) const;
             Vector2 _increase_signs(const Control &p_control) const;
             void _set_hovered(const RID &p_control);
             void _end_hold();

@@ -62,15 +62,16 @@ namespace godot {
     }
 
     bool E3DNodesBackend::intersect_segment(
-            const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &r_distance,
-            Vector3 &r_point) const {
+            const E3DInstanceData &p_instance, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
+            Vector3 &p_r_point) const {
         bool hit = false;
         for (const KeyValue<E3DSubModel *, ObjectID> &submodel_node: p_instance.submodel_nodes) {
             const MeshInstance3D *mesh = Object::cast_to<MeshInstance3D>(ObjectDB::get_instance(submodel_node.value));
             if (mesh == nullptr || mesh->get_mesh().is_null() || !mesh->is_visible_in_tree()) {
                 continue;
             }
-            hit = _intersect_mesh(mesh->get_mesh(), mesh->get_global_transform(), p_from, p_to, r_distance, r_point) ||
+            hit = _intersect_mesh(
+                          mesh->get_mesh(), mesh->get_global_transform(), p_from, p_to, p_r_distance, p_r_point) ||
                   hit;
         }
         return hit;
@@ -105,8 +106,8 @@ namespace godot {
             }
         }
         for (const KeyValue<E3DSubModel *, ObjectID> &submodel_node: p_instance.submodel_nodes) {
-            if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(
-                        ObjectDB::get_instance(submodel_node.value));
+            if (GeometryInstance3D *geometry =
+                        Object::cast_to<GeometryInstance3D>(ObjectDB::get_instance(submodel_node.value));
                 geometry != nullptr) {
                 geometry->set_layer_mask(p_instance.layer_mask);
                 geometry->set_material_overlay(p_instance.material_overlay);

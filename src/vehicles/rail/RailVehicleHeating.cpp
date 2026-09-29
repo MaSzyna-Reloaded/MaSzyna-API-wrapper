@@ -1,5 +1,5 @@
-#include "vehicles/base/VehicleController.hpp"
 #include "RailVehicleHeating.hpp"
+#include "vehicles/base/VehicleController.hpp"
 
 namespace godot {
     void RailVehicleHeating::_bind_methods() {

@@ -1,8 +1,8 @@
-#include "vehicles/rail/RailVehicleBrake.hpp"
-#include "vehicles/base/VehicleController.hpp"
-#include "utils/utils.hpp"
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleBrake.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
+#include "utils/utils.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleBrake.hpp"
 #include <algorithm>
 #include <cmath>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -219,8 +219,9 @@ namespace godot {
         p_config["brake_main_reservoir_volume"] = mover->VeselVolume;
         // the train's brake system and its brake's delays [s], per delay setting (BDelay1-4)
         p_config["brake_system"] = get_cntrl_brake_system();
-        p_config["brake_delay_times"] = PackedFloat64Array({get_cntrl_brake_delay_1(), get_cntrl_brake_delay_2(),
-                                                            get_cntrl_brake_delay_3(), get_cntrl_brake_delay_4()});
+        p_config["brake_delay_times"] = PackedFloat64Array(
+                {get_cntrl_brake_delay_1(), get_cntrl_brake_delay_2(), get_cntrl_brake_delay_3(),
+                 get_cntrl_brake_delay_4()});
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - get_cntrl_local_brake_handle_type() is the real signal.
@@ -270,7 +271,7 @@ namespace godot {
         }
         if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {
             const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / p_delta);
-            local_brake_pressure_change_rate = local_brake_pressure_change_rate * 0.9 + raw_rate * 0.1;
+            local_brake_pressure_change_rate = (local_brake_pressure_change_rate * 0.9) + (raw_rate * 0.1);
         }
         local_brake_pressure_previous = p_mover->LocBrakePress;
     }
@@ -379,7 +380,10 @@ namespace godot {
 
     double MoverRailVehicleBrake::get_main_valve_flow() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? std::isfinite(mover->dpMainValve) ? mover->dpMainValve : 0.0 : 0.0;
+        if (mover == nullptr || !std::isfinite(mover->dpMainValve)) {
+            return 0.0;
+        }
+        return mover->dpMainValve;
     }
 
     double MoverRailVehicleBrake::get_local_valve_flow() const {
@@ -399,12 +403,18 @@ namespace godot {
 
     double MoverRailVehicleBrake::get_control_pressure() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->LocHandle ? mover->LocHandle->GetCP() : 0.0 : 0.0;
+        if (mover == nullptr || !mover->LocHandle) {
+            return 0.0;
+        }
+        return mover->LocHandle->GetCP();
     }
 
     double MoverRailVehicleBrake::get_handle_control_pressure() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Handle ? mover->Handle->GetCP() : 0.0 : 0.0;
+        if (mover == nullptr || !mover->Handle) {
+            return 0.0;
+        }
+        return mover->Handle->GetCP();
     }
 
     double MoverRailVehicleBrake::get_local_aeim_position() const {
@@ -414,7 +424,10 @@ namespace godot {
 
     double MoverRailVehicleBrake::get_edb_cylinder_pressure() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Hamulec ? mover->Hamulec->GetEDBCP() : 0.0 : 0.0;
+        if (mover == nullptr || !mover->Hamulec) {
+            return 0.0;
+        }
+        return mover->Hamulec->GetEDBCP();
     }
 
     bool MoverRailVehicleBrake::get_releaser_active() const {
@@ -434,23 +447,23 @@ namespace godot {
 
     double MoverRailVehicleBrake::get_force_at(const double p_ratio, const double p_velocity) const {
         // BrakeForceR() computes and changes nothing, but is not declared const
-        TMoverParameters *mover = const_cast<TMoverParameters *>(get_mover());
+        TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->BrakeForceR(p_ratio, p_velocity) : 0.0;
     }
 
     bool MoverRailVehicleBrake::is_braking() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_on);
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_on) != 0;
     }
 
     bool MoverRailVehicleBrake::is_holding() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_hld);
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_hld) != 0;
     }
 
     bool MoverRailVehicleBrake::is_cut_off() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_dmg);
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_dmg) != 0;
     }
 
     void MoverRailVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {

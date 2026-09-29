@@ -1,7 +1,7 @@
-#include "vehicles/base/VehicleController.hpp"
+#include "MoverDieselEngineBackend.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
-#include "MoverDieselEngineBackend.hpp"
+#include "vehicles/base/VehicleController.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
 
 namespace godot {
@@ -195,7 +195,8 @@ namespace godot {
             const Ref<RailVehicleThrottlePositionItem> &row = p_engine->get_throttle_table_positions()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[RailVehicleDieselEngine]: p_engine->get_throttle_table_positions() property is null at index " +
+                        "[RailVehicleDieselEngine]: p_engine->get_throttle_table_positions() property is null at "
+                        "index " +
                         String::num(i));
                 continue;
             }
@@ -226,9 +227,8 @@ namespace godot {
         p_config["engine_shake_enabled"] = true;
         // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it:
         // the one the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
-        p_config["engine_idle_rpm_count"] = p_mover->EngineType == TEngineType::DieselEngine
-                                                    ? p_mover->dizel_nmin
-                                                    : p_mover->DElist[0].RPM / 60.0;
+        p_config["engine_idle_rpm_count"] =
+                p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
     }
 
     void MoverDieselEngineBackend::oil_pump(const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
@@ -250,8 +250,8 @@ namespace godot {
         p_mover->OilPumpSwitchOff(p_enabled);
     }
 
-    void
-    MoverDieselEngineBackend::fuel_pump_switch_off(const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
+    void MoverDieselEngineBackend::fuel_pump_switch_off(
+            const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitchOff(p_enabled);

@@ -1,8 +1,8 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleElectricSeriesEngine.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include <algorithm>
-#include <limits>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <limits>
 
 namespace godot {
     void MoverRailVehicleElectricSeriesEngine::_bind_methods() {
@@ -12,9 +12,13 @@ namespace godot {
                 D_METHOD("get_dynamic_brake_active"), &MoverRailVehicleElectricSeriesEngine::get_dynamic_brake_active);
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverRailVehicleElectricSeriesEngine::get_fuse_active);
         ClassDB::bind_method(
-                D_METHOD("get_motor_connectors_open"), &MoverRailVehicleElectricSeriesEngine::get_motor_connectors_open);
-        ClassDB::bind_method(D_METHOD("is_line_contactor_closed"), &MoverRailVehicleElectricSeriesEngine::is_line_contactor_closed);
-        ClassDB::bind_method(D_METHOD("is_pressure_switch_tripped"), &MoverRailVehicleElectricSeriesEngine::is_pressure_switch_tripped);
+                D_METHOD("get_motor_connectors_open"),
+                &MoverRailVehicleElectricSeriesEngine::get_motor_connectors_open);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"), &MoverRailVehicleElectricSeriesEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"),
+                &MoverRailVehicleElectricSeriesEngine::is_pressure_switch_tripped);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverRailVehicleElectricSeriesEngine::fuse_reset);
         ClassDB::bind_method(
                 D_METHOD("set_motor_connectors_open", "open"),
@@ -99,7 +103,8 @@ namespace godot {
             const Ref<RailVehicleRelayListItem> &row = get_relay_list()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[MoverRailVehicleElectricSeriesEngine]: relay_list property is null at index " + String::num(i));
+                        "[MoverRailVehicleElectricSeriesEngine]: relay_list property is null at index " +
+                        String::num(i));
                 continue;
             }
             p_mover->RList[i].Relay = row->get_relay_position();
@@ -163,21 +168,21 @@ namespace godot {
         double current = mover->Imax;
         for (int i = 0; i < CURRENT_ITERATIONS; i++) {
             const double momentum = mover->MomentumF(current, current, shunt_position);
-            const double force_max =
-                    momentum * step.Bn * step.Mn * 2 / mover->WheelDiameter * mover->Transmision.Ratio;
+            const double force_max = momentum * step.Bn * step.Mn * 2 / mover->WheelDiameter * mover->Transmision.Ratio;
             if (force_max == 0.0) {
                 current = std::numeric_limits<double>::max();
                 break;
             }
-            current = 0.5 * current * (1 + friction_max / force_max);
+            current = 0.5 * current * (1 + (friction_max / force_max));
         }
         current = std::min(current, mover->Imax * CURRENT_SHARE);
-        const double resistance = step.R + mover->CircuitRes + step.Mn * mover->WindingRes;
+        const double resistance = step.R + mover->CircuitRes + (step.Mn * mover->WindingRes);
         const TMotorParameters &motor = mover->MotorParam[shunt_position];
         const double flux =
-                motor.fi * std::max(std::abs(current) / (std::abs(current) + motor.Isat) - motor.fi0, 0.0);
-        const double voltage = std::abs(mover->EngineVoltage) - current * resistance;
+                motor.fi * std::max((std::abs(current) / (std::abs(current) + motor.Isat)) - motor.fi0, 0.0);
+        const double voltage = std::abs(mover->EngineVoltage) - (current * resistance);
         const double revolutions = std::max(0.0, voltage / (flux * step.Mn));
-        return revolutions * mover->WheelDiameter * Math::PI * SECONDS_PER_HOUR_PER_KILOMETRE / mover->Transmision.Ratio;
+        return revolutions * mover->WheelDiameter * Math::PI * SECONDS_PER_HOUR_PER_KILOMETRE /
+               mover->Transmision.Ratio;
     }
 } // namespace godot

@@ -1,7 +1,7 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
 #include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleCompressorListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
@@ -242,7 +242,7 @@ namespace godot {
 
         public:
             virtual bool get_main_pipe_emergency_cuts_off_handle() const = 0;
-            virtual void set_main_pipe_emergency_cuts_off_handle(const bool p_value) = 0;
+            virtual void set_main_pipe_emergency_cuts_off_handle(bool p_value) = 0;
             MAKE_MEMBER_GS(bool, releaser_enabled_only_at_no_power_pos, false)
             MAKE_MEMBER_GS(double, compressor_emergency_valve_area, 0.0);
             MAKE_MEMBER_GS(int, universal_brake_button_1, 0);

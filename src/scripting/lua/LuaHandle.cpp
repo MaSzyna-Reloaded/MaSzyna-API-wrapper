@@ -3,27 +3,25 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    namespace {
-        int64_t &handle_id(lua_State *p_state, const int p_index) {
-            return *static_cast<int64_t *>(lua_touserdata(p_state, p_index));
-        }
+    static int64_t &handle_id(lua_State *p_state, const int p_index) {
+        return *static_cast<int64_t *>(lua_touserdata(p_state, p_index));
+    }
 
-        /// Handles of one kind and one RID are equal (the metatables tell the kind)
-        int handle_equal(lua_State *p_state) {
-            lua_getmetatable(p_state, 1);
-            lua_getmetatable(p_state, 2);
-            const bool same_kind = !(lua_rawequal(p_state, -1, -2) == 0);
-            lua_pushboolean(p_state, static_cast<int>(same_kind && handle_id(p_state, 1) == handle_id(p_state, 2)));
-            return 1;
-        }
+    /// Handles of one kind and one RID are equal (the metatables tell the kind)
+    static int handle_equal(lua_State *p_state) {
+        lua_getmetatable(p_state, 1);
+        lua_getmetatable(p_state, 2);
+        const bool same_kind = !(lua_rawequal(p_state, -1, -2) == 0);
+        lua_pushboolean(p_state, static_cast<int>(same_kind && handle_id(p_state, 1) == handle_id(p_state, 2)));
+        return 1;
+    }
 
-        int handle_to_string(lua_State *p_state) {
-            luaL_getmetafield(p_state, 1, "__name");
-            const String text = String::utf8(lua_tostring(p_state, -1)) + ": " + String::num_int64(handle_id(p_state, 1));
-            lua_pushstring(p_state, text.utf8().get_data());
-            return 1;
-        }
-    } // namespace
+    static int handle_to_string(lua_State *p_state) {
+        luaL_getmetafield(p_state, 1, "__name");
+        const String text = String::utf8(lua_tostring(p_state, -1)) + ": " + String::num_int64(handle_id(p_state, 1));
+        lua_pushstring(p_state, text.utf8().get_data());
+        return 1;
+    }
 
     void LuaHandle::register_types(lua_State *p_state) {
         for (const char *name: TYPE_NAMES) {
@@ -49,7 +47,8 @@ namespace godot {
     }
 
     RID LuaHandle::check(lua_State *p_state, const int p_index, const ScriptHandleKind p_kind) {
-        const auto *id = static_cast<int64_t *>(luaL_checkudata(p_state, p_index, TYPE_NAMES[static_cast<int>(p_kind)]));
+        const auto *id =
+                static_cast<int64_t *>(luaL_checkudata(p_state, p_index, TYPE_NAMES[static_cast<int>(p_kind)]));
         return UtilityFunctions::rid_from_int64(*id);
     }
 

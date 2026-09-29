@@ -448,9 +448,9 @@ namespace godot {
                     const int64_t corner_count = indexed ? p_submodel.indices.size() : vertices_count;
                     PackedInt32Array cw_indices;
                     for (int32_t i = 0; i + 2 < corner_count; i += 3) {
-                        const int32_t i1 = indexed ? p_submodel.indices.get(i) : i;
-                        const int32_t i2 = indexed ? p_submodel.indices.get(i + 1) : i + 1;
-                        const int32_t i3 = indexed ? p_submodel.indices.get(i + 2) : i + 2;
+                        const int32_t i1 = static_cast<int32_t>(indexed ? p_submodel.indices.get(i) : i);
+                        const int32_t i2 = static_cast<int32_t>(indexed ? p_submodel.indices.get(i + 1) : i + 1);
+                        const int32_t i3 = static_cast<int32_t>(indexed ? p_submodel.indices.get(i + 2) : i + 2);
                         cw_indices.append_array(PackedInt32Array({i1, i3, i2}));
                     }
 

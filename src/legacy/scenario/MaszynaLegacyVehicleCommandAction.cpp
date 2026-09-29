@@ -1,7 +1,7 @@
-#include "driver/DriverSystem.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include "MaszynaLegacyVehicleCommandAction.hpp"
+#include "driver/DriverSystem.hpp"
 #include "scenario/ScenarioEventServer.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
     void MaszynaLegacyVehicleCommandAction::_bind_methods() {

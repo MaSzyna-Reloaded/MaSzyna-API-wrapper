@@ -1,6 +1,6 @@
-#include "vehicles/rail/RailVehicleBrake.hpp"
-#include "vehicles/base/VehicleController.hpp"
 #include "utils/utils.hpp"
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleBrake.hpp"
 #include <algorithm>
 #include <cmath>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -69,7 +69,8 @@ namespace godot {
                 RailVehicleBrake, Variant::ARRAY, brake_pressure_table, PROPERTY_HINT_TYPE_STRING,
                 "RailVehicleBrakePressureTableItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                RailVehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING, "RailVehicleCompressorListItem");
+                RailVehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING,
+                "RailVehicleCompressorListItem");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, compressor_emergency_valve_area, "compressor")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, universal_brake_button_1, "universal_brake_button", PROPERTY_HINT_FLAGS,
@@ -93,10 +94,11 @@ namespace godot {
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_4, "cntrl")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM,
-                enum_hint({{"None", BRAKE_OP_MODE_NONE},
-                           {"PN", BRAKE_OP_MODE_PN},
-                           {"PNEP", BRAKE_OP_MODE_PNEP},
-                           {"PNEPMED", BRAKE_OP_MODE_PNEPMED}}))
+                enum_hint(
+                        {{"None", BRAKE_OP_MODE_NONE},
+                         {"PN", BRAKE_OP_MODE_PN},
+                         {"PNEP", BRAKE_OP_MODE_PNEP},
+                         {"PNEPMED", BRAKE_OP_MODE_PNEPMED}}))
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_brake_handle_type, "cntrl", PROPERTY_HINT_ENUM,
                 "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
@@ -232,7 +234,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("consist_releaser", "active"), &RailVehicleBrake::consist_releaser);
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &RailVehicleBrake::compressor);
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &RailVehicleBrake::brake_level_set);
-        ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &RailVehicleBrake::brake_level_set_position);
+        ClassDB::bind_method(
+                D_METHOD("brake_level_set_position", "position"), &RailVehicleBrake::brake_level_set_position);
         ClassDB::bind_method(
                 D_METHOD("brake_level_set_position_str", "position"), &RailVehicleBrake::brake_level_set_position_str);
         ClassDB::bind_method(D_METHOD("brake_level_increase"), &RailVehicleBrake::brake_level_increase);
@@ -327,7 +330,8 @@ namespace godot {
                         Variant::FLOAT, "controller_position_normalized", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_position_normalized");
-        ClassDB::bind_method(D_METHOD("get_local_position_normalized"), &RailVehicleBrake::get_local_position_normalized);
+        ClassDB::bind_method(
+                D_METHOD("get_local_position_normalized"), &RailVehicleBrake::get_local_position_normalized);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "local_position_normalized", PROPERTY_HINT_NONE, "",

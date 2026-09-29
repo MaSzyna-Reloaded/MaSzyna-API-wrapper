@@ -25,9 +25,9 @@ namespace godot {
             static const char *control_changed_signal;
 
             /// Manipulates a control of the vehicle's cab; returns what the control answered
-            Variant act(
-                    const RID &p_vehicle, int p_cab, const StringName &p_control_id, const StringName &p_action,
-                    const Variant &p_value);
+            Variant
+            act(const RID &p_vehicle, int p_cab, const StringName &p_control_id, const StringName &p_action,
+                const Variant &p_value);
             Variant get_control(const RID &p_vehicle, int p_cab, const StringName &p_control_id) const;
             Array get_controls(const RID &p_vehicle, int p_cab) const;
             int get_occupied_cab(const RID &p_vehicle) const;

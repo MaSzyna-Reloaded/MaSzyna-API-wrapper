@@ -1,6 +1,6 @@
 #pragma once
-#include "vehicles/rail/RailVehicleComponent.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleComponent.hpp"
 
 namespace godot {
     /* The vehicle's train radio - the public contract, with no backend in it. The channel and

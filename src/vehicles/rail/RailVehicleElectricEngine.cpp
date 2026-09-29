@@ -1,7 +1,7 @@
-#include "vehicles/rail/RailVehicleController.hpp"
 #include "RailVehicleElectricEngine.hpp"
 #include "RailVehicleElectricEngineBackend.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
 
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -175,9 +175,11 @@ namespace godot {
                 RailVehicleElectricEngine, Variant::INT, power_current_collector_number_of_collectors,
                 "power/current_collector");
         BIND_PROPERTY(
-                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_voltage, "power/current_collector");
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_voltage,
+                "power/current_collector");
         BIND_PROPERTY(
-                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_current, "power/current_collector");
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_current,
+                "power/current_collector");
         BIND_PROPERTY(
                 RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_collector_lifting,
                 "power/current_collector");
@@ -223,8 +225,8 @@ namespace godot {
                          {"SteamPower", RailVehicleController::POWER_TYPE_STEAM}}));
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, power_cable_steam_pressure, "power/power_cable");
         BIND_PROPERTY_W_HINT(
-                RailVehicleElectricEngine, Variant::INT, power_current_collector_physical_layout, "power/current_collector",
-                PROPERTY_HINT_FLAGS, "Front,Rear");
+                RailVehicleElectricEngine, Variant::INT, power_current_collector_physical_layout,
+                "power/current_collector", PROPERTY_HINT_FLAGS, "Front,Rear");
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_resistance, "circuit");
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imax_low, "circuit");
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imax_high, "circuit");
@@ -248,8 +250,8 @@ namespace godot {
                 PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantograph_auto_valve, "cntrl");
         BIND_PROPERTY_W_HINT(
-                RailVehicleElectricEngine, Variant::INT, cntrl_pantographs_valve_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+                RailVehicleElectricEngine, Variant::INT, cntrl_pantographs_valve_start_mode, "cntrl",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantographs_valve_spring, "cntrl");
         BIND_PROPERTY_W_HINT(
                 RailVehicleElectricEngine, Variant::INT, cntrl_pantograph_valve_start_mode, "cntrl", PROPERTY_HINT_ENUM,
@@ -261,7 +263,8 @@ namespace godot {
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &RailVehicleElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &RailVehicleElectricEngine::pantographs_valve);
-        ClassDB::bind_method(D_METHOD("pantographs_drop_all", "enabled"), &RailVehicleElectricEngine::pantographs_drop_all);
+        ClassDB::bind_method(
+                D_METHOD("pantographs_drop_all", "enabled"), &RailVehicleElectricEngine::pantographs_drop_all);
         ClassDB::bind_method(
                 D_METHOD("pantograph_compressor", "enabled"), &RailVehicleElectricEngine::pantograph_compressor);
         ClassDB::bind_method(
@@ -304,27 +307,32 @@ namespace godot {
         BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_ON);
         BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_OFF);
         ClassDB::bind_method(
-                D_METHOD("pantographs_valve_operate", "operation"), &RailVehicleElectricEngine::pantographs_valve_operate);
+                D_METHOD("pantographs_valve_operate", "operation"),
+                &RailVehicleElectricEngine::pantographs_valve_operate);
 
-        ClassDB::bind_method(D_METHOD("get_collector_max_voltage"), &RailVehicleElectricEngine::get_collector_max_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_voltage"), &RailVehicleElectricEngine::get_collector_max_voltage);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "collector_max_voltage", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_max_voltage");
-        ClassDB::bind_method(D_METHOD("get_collector_max_current"), &RailVehicleElectricEngine::get_collector_max_current);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_current"), &RailVehicleElectricEngine::get_collector_max_current);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "collector_max_current", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_max_current");
-        ClassDB::bind_method(D_METHOD("get_collector_max_lifting"), &RailVehicleElectricEngine::get_collector_max_lifting);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_lifting"), &RailVehicleElectricEngine::get_collector_max_lifting);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "collector_max_lifting", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_max_lifting");
-        ClassDB::bind_method(D_METHOD("get_collector_min_lifting"), &RailVehicleElectricEngine::get_collector_min_lifting);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_min_lifting"), &RailVehicleElectricEngine::get_collector_min_lifting);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "collector_min_lifting", PROPERTY_HINT_NONE, "",
@@ -394,7 +402,8 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_pantograph_compressor_enabled");
         ClassDB::bind_method(
-                D_METHOD("get_collector_overvoltage_relay"), &RailVehicleElectricEngine::get_collector_overvoltage_relay);
+                D_METHOD("get_collector_overvoltage_relay"),
+                &RailVehicleElectricEngine::get_collector_overvoltage_relay);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "collector_overvoltage_relay", PROPERTY_HINT_NONE, "",
@@ -488,7 +497,8 @@ namespace godot {
                         Variant::BOOL, "resistors_active", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_resistors_active");
-        ClassDB::bind_method(D_METHOD("get_vent_overload_active"), &RailVehicleElectricEngine::get_vent_overload_active);
+        ClassDB::bind_method(
+                D_METHOD("get_vent_overload_active"), &RailVehicleElectricEngine::get_vent_overload_active);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "vent_overload_active", PROPERTY_HINT_NONE, "",
@@ -559,7 +569,8 @@ namespace godot {
                         Variant::FLOAT, "circuit_imax", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_circuit_imax");
-        ClassDB::bind_method(D_METHOD("get_dynamic_brake_active"), &RailVehicleElectricEngine::get_dynamic_brake_active);
+        ClassDB::bind_method(
+                D_METHOD("get_dynamic_brake_active"), &RailVehicleElectricEngine::get_dynamic_brake_active);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "dynamic_brake_active", PROPERTY_HINT_NONE, "",
@@ -571,7 +582,8 @@ namespace godot {
                         Variant::BOOL, "fuse_active", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_fuse_active");
-        ClassDB::bind_method(D_METHOD("get_motor_connectors_open"), &RailVehicleElectricEngine::get_motor_connectors_open);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_connectors_open"), &RailVehicleElectricEngine::get_motor_connectors_open);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::BOOL, "motor_connectors_open", PROPERTY_HINT_NONE, "",

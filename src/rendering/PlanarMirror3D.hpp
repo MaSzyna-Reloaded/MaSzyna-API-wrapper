@@ -39,6 +39,7 @@ namespace godot {
             void _set_rendering(bool p_rendering);
 
         protected:
+            // NOLINTNEXTLINE(bugprone-derived-method-shadowing-base-method): Godot's GDCLASS dispatches to this name
             void _notification(int p_what);
 
         public:

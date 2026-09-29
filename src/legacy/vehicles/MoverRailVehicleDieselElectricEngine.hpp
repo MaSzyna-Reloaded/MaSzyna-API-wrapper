@@ -1,9 +1,9 @@
 #pragma once
-#include "legacy/maszyna-mover/McZapkie/MOVER.h"
-#include "legacy/vehicles/MoverComponent.hpp"
 #include "MoverDieselEngineBackend.hpp"
 #include "MoverElectricTraction.hpp"
 #include "MoverEngineBackend.hpp"
+#include "legacy/maszyna-mover/McZapkie/MOVER.h"
+#include "legacy/vehicles/MoverComponent.hpp"
 #include "vehicles/rail/RailVehicleDieselElectricEngine.hpp"
 
 namespace godot {

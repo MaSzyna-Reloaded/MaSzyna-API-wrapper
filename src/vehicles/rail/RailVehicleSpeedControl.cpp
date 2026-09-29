@@ -55,7 +55,8 @@ namespace godot {
                 D_METHOD("speed_control_power_increase"), &RailVehicleSpeedControl::speed_control_power_increase);
         ClassDB::bind_method(
                 D_METHOD("speed_control_power_decrease"), &RailVehicleSpeedControl::speed_control_power_decrease);
-        ClassDB::bind_method(D_METHOD("speed_control_button", "button"), &RailVehicleSpeedControl::speed_control_button);
+        ClassDB::bind_method(
+                D_METHOD("speed_control_button", "button"), &RailVehicleSpeedControl::speed_control_button);
         ClassDB::bind_method(D_METHOD("speed_control_set", "velocity"), &RailVehicleSpeedControl::speed_control_set);
         ClassDB::bind_method(D_METHOD("get_set_velocity"), &RailVehicleSpeedControl::get_set_velocity);
         ClassDB::bind_method(D_METHOD("get_selected_velocity"), &RailVehicleSpeedControl::get_selected_velocity);

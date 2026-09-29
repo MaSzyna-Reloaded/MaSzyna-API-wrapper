@@ -15,8 +15,9 @@ namespace godot {
         if (!callable.is_valid()) {
             return {};
         }
-        const String key = String::num_uint64(p_submodel->get_instance_id()) + "|" + p_instance.data_path + "|" +
-                           String("|").join(p_instance.skins) + (p_force_alpha ? "|1" : "|0");
+        const String key = String::num_uint64(static_cast<int64_t>(p_submodel->get_instance_id())) + "|" +
+                           p_instance.data_path + "|" + String("|").join(p_instance.skins) +
+                           (p_force_alpha ? "|1" : "|0");
         const HashMap<String, ObjectID>::ConstIterator cached = materials.find(key);
         if (cached != materials.end()) {
             Material *material = Object::cast_to<Material>(ObjectDB::get_instance(cached->value));

@@ -1,19 +1,26 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleElectricInductionEngine.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void MoverRailVehicleElectricInductionEngine::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_motor_current"), &MoverRailVehicleElectricInductionEngine::get_motor_current);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_current"), &MoverRailVehicleElectricInductionEngine::get_motor_current);
         ClassDB::bind_method(D_METHOD("get_circuit_imax"), &MoverRailVehicleElectricInductionEngine::get_circuit_imax);
         ClassDB::bind_method(
-                D_METHOD("get_dynamic_brake_active"), &MoverRailVehicleElectricInductionEngine::get_dynamic_brake_active);
+                D_METHOD("get_dynamic_brake_active"),
+                &MoverRailVehicleElectricInductionEngine::get_dynamic_brake_active);
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverRailVehicleElectricInductionEngine::get_fuse_active);
         ClassDB::bind_method(
-                D_METHOD("get_motor_connectors_open"), &MoverRailVehicleElectricInductionEngine::get_motor_connectors_open);
-        ClassDB::bind_method(D_METHOD("is_line_contactor_closed"), &MoverRailVehicleElectricInductionEngine::is_line_contactor_closed);
-        ClassDB::bind_method(D_METHOD("is_pressure_switch_tripped"), &MoverRailVehicleElectricInductionEngine::is_pressure_switch_tripped);
+                D_METHOD("get_motor_connectors_open"),
+                &MoverRailVehicleElectricInductionEngine::get_motor_connectors_open);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"),
+                &MoverRailVehicleElectricInductionEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"),
+                &MoverRailVehicleElectricInductionEngine::is_pressure_switch_tripped);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverRailVehicleElectricInductionEngine::fuse_reset);
         ClassDB::bind_method(
                 D_METHOD("set_motor_connectors_open", "open"),
@@ -149,7 +156,8 @@ namespace godot {
             const Ref<RailVehicleWWListItem> &row = get_wwlist()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[MoverRailVehicleElectricInductionEngine]: wwlist property is null at index " + String::num(i));
+                        "[MoverRailVehicleElectricInductionEngine]: wwlist property is null at index " +
+                        String::num(i));
                 continue;
             }
             p_mover->DElist[i].RPM = row->get_rpm();

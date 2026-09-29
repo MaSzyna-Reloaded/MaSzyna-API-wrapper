@@ -1,5 +1,5 @@
-#include "macros.hpp"
 #include "MaszynaLegacySwitchAction.hpp"
+#include "macros.hpp"
 
 namespace godot {
     void MaszynaLegacySwitchAction::_bind_methods() {
@@ -15,8 +15,7 @@ namespace godot {
                 PropertyInfo(
                         Variant::INT, "active_track", PROPERTY_HINT_ENUM,
                         enum_hint(
-                                {{"Common", TrackServer::TRACK_COMMON},
-                                 {"Diverging", TrackServer::TRACK_DIVERGING}})),
+                                {{"Common", TrackServer::TRACK_COMMON}, {"Diverging", TrackServer::TRACK_DIVERGING}})),
                 "set_active_track", "get_active_track");
     }
 

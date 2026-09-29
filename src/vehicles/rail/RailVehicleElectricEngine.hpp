@@ -1,7 +1,7 @@
 #pragma once
-#include "vehicles/rail/RailVehicleController.hpp"
 #include "RailVehicleEngine.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
 
 namespace godot {
     class VehicleController;
@@ -96,7 +96,7 @@ namespace godot {
                 PANTOGRAPH_SECOND,
             };
             /* What an operation does to the pantographs' master valve - Maszyna's operation_t
-             * (MOVER.h:177): ENABLE/DISABLE set it for a two-state switch, the *_ON/*_OFF pairs
+             * (MOVER.h:177): ENABLE/DISABLE set it for a two-state switch, the ..._ON/..._OFF pairs
              * press and release one side of an impulse switch, NONE lets both sides go. */
             enum ValveOperation {
                 VALVE_OPERATION_NONE,
@@ -161,19 +161,23 @@ namespace godot {
                     RailVehicleEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_converter_overload_relay_off_when_main_is_off, false);
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantograph_compressor_start_mode, RailVehicleEngine::START_MODE_MANUAL);
+                    RailVehicleEngine::StartMode, cntrl_pantograph_compressor_start_mode,
+                    RailVehicleEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_auto_valve, false);
             /* The pantographs' valves (LoadFIZ_Cntrl, Mover.cpp:10927-10946): the master valve of
              * them all opens by itself unless the FIZ says otherwise - "there was no pantographs
              * valve" in older vehicles - while each pantograph's own valve is worked by hand */
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantographs_valve_start_mode, RailVehicleEngine::START_MODE_AUTOMATIC);
+                    RailVehicleEngine::StartMode, cntrl_pantographs_valve_start_mode,
+                    RailVehicleEngine::START_MODE_AUTOMATIC);
             MAKE_MEMBER_GS(bool, cntrl_pantographs_valve_spring, true);
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantograph_valve_start_mode, RailVehicleEngine::START_MODE_MANUAL);
+                    RailVehicleEngine::StartMode, cntrl_pantograph_valve_start_mode,
+                    RailVehicleEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_spring, true);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_solenoid, true);
-            MAKE_MEMBER_GS_NR(RailVehicleEngine::StartMode, cntrl_main_switch_start_mode, RailVehicleEngine::START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleEngine::StartMode, cntrl_main_switch_start_mode, RailVehicleEngine::START_MODE_MANUAL);
 
             /* Voltage of the overhead wire each pantograph is currently touching, fed in once
              * per frame from outside (RailVehicle3D's own geometric wire lookup against

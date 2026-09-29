@@ -1,5 +1,5 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleDieselElectricEngine.hpp"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include <algorithm>
 #include <cmath>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -12,9 +12,13 @@ namespace godot {
                 D_METHOD("get_dynamic_brake_active"), &MoverRailVehicleDieselElectricEngine::get_dynamic_brake_active);
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverRailVehicleDieselElectricEngine::get_fuse_active);
         ClassDB::bind_method(
-                D_METHOD("get_motor_connectors_open"), &MoverRailVehicleDieselElectricEngine::get_motor_connectors_open);
-        ClassDB::bind_method(D_METHOD("is_line_contactor_closed"), &MoverRailVehicleDieselElectricEngine::is_line_contactor_closed);
-        ClassDB::bind_method(D_METHOD("is_pressure_switch_tripped"), &MoverRailVehicleDieselElectricEngine::is_pressure_switch_tripped);
+                D_METHOD("get_motor_connectors_open"),
+                &MoverRailVehicleDieselElectricEngine::get_motor_connectors_open);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"), &MoverRailVehicleDieselElectricEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"),
+                &MoverRailVehicleDieselElectricEngine::is_pressure_switch_tripped);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverRailVehicleDieselElectricEngine::fuse_reset);
         ClassDB::bind_method(
                 D_METHOD("set_motor_connectors_open", "open"),

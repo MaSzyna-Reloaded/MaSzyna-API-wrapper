@@ -1,6 +1,6 @@
-#include "legacy/vehicles/MoverBackend.hpp"
 #include "MoverRailVehicleHorns.hpp"
 #include "legacy/maszyna-mover/utilities.h"
+#include "legacy/vehicles/MoverBackend.hpp"
 
 namespace godot {
     void MoverRailVehicleHorns::_bind_methods() {}
@@ -98,8 +98,13 @@ namespace godot {
 
     int MoverRailVehicleHorns::get_horn() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? TestFlag(mover->WarningSignal, 1) ? 1 : (TestFlag(mover->WarningSignal, 2) ? -1 : 0)
-                                : 0;
+        if (mover == nullptr) {
+            return 0;
+        }
+        if (TestFlag(mover->WarningSignal, 1)) {
+            return 1;
+        }
+        return TestFlag(mover->WarningSignal, 2) ? -1 : 0;
     }
 
     void MoverRailVehicleHorns::_fill_state_dictionary(Dictionary &p_state) const {

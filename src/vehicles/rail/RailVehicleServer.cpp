@@ -1,14 +1,14 @@
-#include "vehicles/rail/RailVehicleController.hpp"
+#include "RailVehicleServer.hpp"
 #include "vehicles/base/VehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleWheels.hpp"
-#include "RailVehicleServer.hpp"
 
 #include "logging/GameLog.hpp"
 #include "simulation/SimulationServer.hpp"
-#include "vehicles/rail/RailVehicle3D.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicle3D.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -18,7 +18,7 @@
 
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps) */
-    static const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
+    constexpr const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
     const char *RailVehicleServer::vehicle_moved_signal = "vehicle_moved";
     const char *RailVehicleServer::vehicle_command_received_signal = "vehicle_command_received";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
@@ -38,7 +38,8 @@ namespace godot {
         SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         runtime->connect(
-                SimulationServer::simulation_advanced_signal, callable_mp(this, &RailVehicleServer::_on_simulation_advanced));
+                SimulationServer::simulation_advanced_signal,
+                callable_mp(this, &RailVehicleServer::_on_simulation_advanced));
     }
 
     RailVehicleServer::~RailVehicleServer() {
@@ -57,8 +58,7 @@ namespace godot {
                 &RailVehicleServer::vehicle_get_controller_instance_id);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_type_name", "vehicle"), &RailVehicleServer::vehicle_get_type_name);
+        ClassDB::bind_method(D_METHOD("vehicle_get_type_name", "vehicle"), &RailVehicleServer::vehicle_get_type_name);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
@@ -73,8 +73,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_commands", "vehicle"), &RailVehicleServer::vehicle_get_commands);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_find_powered", "vehicle"), &RailVehicleServer::vehicle_find_powered);
+        ClassDB::bind_method(D_METHOD("vehicle_find_powered", "vehicle"), &RailVehicleServer::vehicle_find_powered);
         ClassDB::bind_method(
                 D_METHOD("vehicle_find_pantograph_carrier", "vehicle"),
                 &RailVehicleServer::vehicle_find_pantograph_carrier);
@@ -293,8 +292,8 @@ namespace godot {
                 _placement_transform(entry.value).origin.distance_to(p_position) > RADIO_STOP_RANGE) {
                 continue;
             }
-            if (RailVehicleRadio *radio =
-                        Object::cast_to<RailVehicleRadio>(controller->get_component(VehicleComponentType::COMPONENT_RADIO));
+            if (RailVehicleRadio *radio = Object::cast_to<RailVehicleRadio>(
+                        controller->get_component(VehicleComponentType::COMPONENT_RADIO));
                 radio != nullptr && radio->radio_stop_receive()) {
                 emit_signal(vehicle_radio_stop_received_signal, entry.key);
             }
@@ -345,13 +344,14 @@ namespace godot {
 
     /* TDynamicObject::find_vehicle() (DynObj.h:886-903): this vehicle, then those joined towards its
      * rear, then towards its front - the first that satisfies p_predicate */
-    template <typename Predicate>
-    static RailVehicleController *
-    find_joined(RailVehicleController *p_first, const RailVehicleController::CouplingElement p_element, Predicate p_predicate) {
+    template<typename Predicate>
+    static RailVehicleController *find_joined(
+            RailVehicleController *p_first, const RailVehicleController::CouplingElement p_element,
+            Predicate p_predicate) {
         if (p_predicate(p_first)) {
             return p_first;
         }
-        for (const int start : {1, 0}) {
+        for (const int start: {1, 0}) {
             RailVehicleController *vehicle = p_first;
             int end = start;
             while (vehicle->is_coupled_by(end, p_element)) {
@@ -376,11 +376,13 @@ namespace godot {
         }
         const RailVehicleController::TrainType train_type = first->get_train_type();
         const RailVehicleController::CouplingElement element =
-                train_type == RailVehicleController::TRAIN_TYPE_EZT || train_type == RailVehicleController::TRAIN_TYPE_DMU
+                train_type == RailVehicleController::TRAIN_TYPE_EZT ||
+                                train_type == RailVehicleController::TRAIN_TYPE_DMU
                         ? RailVehicleController::COUPLING_ELEMENT_PERMANENT
                         : RailVehicleController::COUPLING_ELEMENT_CONTROL;
-        const RailVehicleController *powered = find_joined(
-                first, element, [](const RailVehicleController *p_vehicle) { return p_vehicle->get_power() > POWERED; });
+        const RailVehicleController *powered = find_joined(first, element, [](const RailVehicleController *p_vehicle) {
+            return p_vehicle->get_power() > POWERED;
+        });
         return powered != nullptr ? powered->get_rid() : p_vehicle;
     }
 
@@ -393,10 +395,11 @@ namespace godot {
         const auto carries = [](const RailVehicleController *p_vehicle) {
             const RailVehicleElectricEngine *engine = Object::cast_to<RailVehicleElectricEngine>(
                     p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE));
-            return engine != nullptr && engine->get_power_source() == RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
+            return engine != nullptr &&
+                   engine->get_power_source() == RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
                    engine->get_power_current_collector_number_of_collectors() > 0;
         };
-        for (const RailVehicleController::CouplingElement element :
+        for (const RailVehicleController::CouplingElement element:
              {RailVehicleController::COUPLING_ELEMENT_PERMANENT, RailVehicleController::COUPLING_ELEMENT_CONTROL}) {
             if (const RailVehicleController *carrier = find_joined(first, element, carries); carrier != nullptr) {
                 return carrier->get_rid();
@@ -589,7 +592,7 @@ namespace godot {
         // the side the trainset moves towards leads, from its far end in; vehicle_move() measures
         // towards the rear, as vehicle_process_movement() does
         const int leading = p_distance > 0.0 ? 0 : 1;
-        for (int index = sides[leading].size() - 1; index >= 0; index--) {
+        for (int index = static_cast<int>(sides[leading].size() - 1); index >= 0; index--) {
             vehicle_move(sides[leading][index], -p_distance * signs[leading][index]);
         }
         vehicle_move(p_vehicle, -p_distance);
@@ -874,7 +877,7 @@ namespace godot {
         result["track_rid"] = placement->track;
         // moving forward decreases the offset on a track run in its normal direction
         result["along"] = placement->track_direction == TrackServer::DIRECTION_NORMAL ? -placement->track_offset
-                                                                                       : placement->track_offset;
+                                                                                      : placement->track_offset;
         return result;
     }
 
@@ -910,13 +913,17 @@ namespace godot {
             if (covered >= p_distance) {
                 break;
             }
-            const int endpoint = is_switch ? (movement_sign > 0.0 ? tracks->switch_get_branch_end_endpoint(track, branch)
-                                                                  : tracks->switch_get_branch_start_endpoint(track, branch))
-                                           : (movement_sign > 0.0 ? TrackServer::CURVE1_P2 : TrackServer::CURVE1_P1);
+            int endpoint_index = 0;
+            if (is_switch) {
+                endpoint_index = movement_sign > 0.0 ? tracks->switch_get_branch_end_endpoint(track, branch)
+                                                     : tracks->switch_get_branch_start_endpoint(track, branch);
+            } else {
+                endpoint_index = movement_sign > 0.0 ? TrackServer::CURVE1_P2 : TrackServer::CURVE1_P1;
+            }
             RID next_track;
             int next_endpoint = 0;
             int forced_switch_track = TrackServer::NO_FORCED_SWITCH_TRACK;
-            if (!tracks->track_find_next(track, endpoint, next_track, next_endpoint, forced_switch_track)) {
+            if (!tracks->track_find_next(track, endpoint_index, next_track, next_endpoint, forced_switch_track)) {
                 segment->set_line_end(true);
                 break;
             }
@@ -955,9 +962,8 @@ namespace godot {
         // the scan measures between the centres (MoverRailVehicleController::update_neighbour())
         const RailVehicleController *controller = _get_controller(*placement);
         const RailVehicleController *other = _get_controller(*vehicles.getptr(found));
-        const double half_lengths =
-                0.5 * ((controller != nullptr ? controller->get_dimensions_length() : 0.0) +
-                       (other != nullptr ? other->get_dimensions_length() : 0.0));
+        const double half_lengths = 0.5 * ((controller != nullptr ? controller->get_dimensions_length() : 0.0) +
+                                           (other != nullptr ? other->get_dimensions_length() : 0.0));
         Ref<RailVehicleNeighbour> neighbour;
         neighbour.instantiate();
         neighbour->set_vehicle_rid(found);
@@ -1219,9 +1225,12 @@ namespace godot {
 
             // reported on a change only: the track events hang on what it was, not on every step
             VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-            const TrackHeading heading = controller->get_speed() <= STANDING_SPEED ? HEADING_STANDING
-                                         : placement->travel_sign > 0.0            ? HEADING_TO_END
-                                                                                   : HEADING_TO_START;
+            TrackHeading heading = HEADING_TO_START;
+            if (controller->get_speed() <= STANDING_SPEED) {
+                heading = HEADING_STANDING;
+            } else if (placement->travel_sign > 0.0) {
+                heading = HEADING_TO_END;
+            }
             if (heading == placement->reported_heading && placement->track == placement->reported_track) {
                 continue;
             }

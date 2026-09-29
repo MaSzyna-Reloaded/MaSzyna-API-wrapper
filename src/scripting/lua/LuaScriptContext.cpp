@@ -1,49 +1,51 @@
-#include "LuaScriptContext.hpp"
 #include "LuaHandle.hpp"
 #include "LuaModules.hpp"
+#include "LuaScriptContext.hpp"
 #include "LuaVariant.hpp"
+#include "lauxlib.h"
 #include "legacy/scenario/MaszynaLegacyLuaEventsModule.hpp"
 #include "logging/GameLog.hpp"
-#include "lauxlib.h"
 #include "lualib.h"
 #include <cstdlib>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    namespace {
-        /// The libraries a script gets (linit.c's list, without io, os, debug and package)
-        const luaL_Reg LIBRARIES[] = {
-                {LUA_GNAME, luaopen_base},       {LUA_COLIBNAME, luaopen_coroutine}, {LUA_TABLIBNAME, luaopen_table},
-                {LUA_STRLIBNAME, luaopen_string}, {LUA_MATHLIBNAME, luaopen_math},    {LUA_UTF8LIBNAME, luaopen_utf8},
-        };
+    /// The libraries a script gets (linit.c's list, without io, os, debug and package)
+    static const luaL_Reg LIBRARIES[] = {
+            {LUA_GNAME, luaopen_base},        {LUA_COLIBNAME, luaopen_coroutine}, {LUA_TABLIBNAME, luaopen_table},
+            {LUA_STRLIBNAME, luaopen_string}, {LUA_MATHLIBNAME, luaopen_math},    {LUA_UTF8LIBNAME, luaopen_utf8},
+    };
 
-        /// Runs the function a call() pushed, with its arguments - inside the protected call, so
-        /// that running out of memory while pushing them is a script error too
-        int call_with_arguments(lua_State *p_state) {
-            const auto *arguments = static_cast<const Vector<ScriptArgument> *>(lua_touserdata(p_state, 1));
-            const lua_Integer function = lua_tointeger(p_state, 2);
-            lua_settop(p_state, 0);
-            luaL_checkstack(p_state, static_cast<int>(arguments->size()) + 1, nullptr);
-            lua_rawgeti(p_state, LUA_REGISTRYINDEX, function);
-            for (const ScriptArgument &argument: *arguments) {
-                if (argument.handle == ScriptHandleKind::NONE) {
-                    LuaVariant::push(p_state, argument.value);
-                } else {
-                    LuaHandle::push(p_state, argument.value, argument.handle);
-                }
+    /// Runs the function a call() pushed, with its arguments - inside the protected call, so
+    /// that running out of memory while pushing them is a script error too
+    static int call_with_arguments(lua_State *p_state) {
+        const auto *arguments = static_cast<const Vector<ScriptArgument> *>(lua_touserdata(p_state, 1));
+        const lua_Integer function = lua_tointeger(p_state, 2);
+        lua_settop(p_state, 0);
+        luaL_checkstack(p_state, static_cast<int>(arguments->size()) + 1, nullptr);
+        lua_rawgeti(p_state, LUA_REGISTRYINDEX, function);
+        for (const ScriptArgument &argument: *arguments) {
+            if (argument.handle == ScriptHandleKind::NONE) {
+                LuaVariant::push(p_state, argument.value);
+            } else {
+                LuaHandle::push(p_state, argument.value, argument.handle);
             }
-            lua_call(p_state, static_cast<int>(arguments->size()), 0);
-            return 0;
         }
-    } // namespace
+        lua_call(p_state, static_cast<int>(arguments->size()), 0);
+        return 0;
+    }
 
     LuaScriptContext::LuaScriptContext(const RID &p_context, const String &p_base_dir) :
-            context(p_context), base_dir(p_base_dir) {
+        context(p_context), base_dir(p_base_dir) {
         random_generator.instantiate();
         random_generator->randomize();
-        state = lua_newstate(_allocate, this);
+        // not in the initializer: the allocator counts into memory_used, which is declared (and so
+        // initialised) after state
+        state = lua_newstate(_allocate, this); // NOLINT(cppcoreguidelines-prefer-member-initializer)
         ERR_FAIL_NULL(state);
+        // lua_getextraspace is the Lua C API's macro: pointer arithmetic with a void pointer result
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic,bugprone-casting-through-void)
         *static_cast<LuaScriptContext **>(lua_getextraspace(state)) = this;
         lua_sethook(state, _count_instructions, LUA_MASKCOUNT, INSTRUCTION_CHECK_STEP);
         lua_pushcfunction(state, _open_libraries);
@@ -58,6 +60,8 @@ namespace godot {
     }
 
     LuaScriptContext *LuaScriptContext::from_state(lua_State *p_state) {
+        // lua_getextraspace is the Lua C API's macro: pointer arithmetic with a void pointer result
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic,bugprone-casting-through-void)
         return *static_cast<LuaScriptContext **>(lua_getextraspace(p_state));
     }
 
@@ -116,19 +120,21 @@ namespace godot {
 
     /// A block that would take the state past MAX_MEMORY_BYTES is refused; Lua raises that as a
     /// memory error of the script
-    void *LuaScriptContext::_allocate(void *p_context, void *p_block, const size_t p_old_size, const size_t p_new_size) {
+    void *
+    LuaScriptContext::_allocate(void *p_context, void *p_block, const size_t p_old_size, const size_t p_new_size) {
         auto *self = static_cast<LuaScriptContext *>(p_context);
         // without a block, the old size is the kind of object being made (lua_Alloc)
         const size_t old_size = p_block == nullptr ? 0 : p_old_size;
         if (p_new_size == 0) {
-            std::free(p_block);
+            std::free(p_block); // NOLINT(cppcoreguidelines-no-malloc) - lua_Alloc frees with free()
             self->memory_used -= old_size;
             return nullptr;
         }
         if (p_new_size > old_size && self->memory_used - old_size + p_new_size > MAX_MEMORY_BYTES) {
             return nullptr;
         }
-        void *block = std::realloc(p_block, p_new_size);
+        // lua_Alloc's contract is realloc()'s
+        void *block = std::realloc(p_block, p_new_size); // NOLINT(cppcoreguidelines-no-malloc)
         if (!(block == nullptr)) {
             self->memory_used = self->memory_used - old_size + p_new_size;
         }
@@ -139,6 +145,8 @@ namespace godot {
         LuaScriptContext *self = from_state(p_state);
         self->instructions += INSTRUCTION_CHECK_STEP;
         if (self->instructions > MAX_INSTRUCTIONS_PER_CALL) {
+            // luaL_error is the Lua C API's vararg error call
+            // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
             luaL_error(
                     p_state, "the script runs too long (over %I instructions)",
                     static_cast<lua_Integer>(MAX_INSTRUCTIONS_PER_CALL));
@@ -177,6 +185,8 @@ namespace godot {
         luaL_getsubtable(p_state, LUA_REGISTRYINDEX, LUA_LOADED_TABLE);
         lua_newtable(p_state);
         luaL_setfuncs(p_state, LuaModules::ROOT, 0);
+        // MODULES is a table of unknown bound ended by a null entry, as luaL_Reg lists are
+        // NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
         for (const LuaModules::Module *module = LuaModules::MODULES; !(module->name == nullptr); module++) {
             lua_newtable(p_state);
             luaL_setfuncs(p_state, module->functions, 0);
@@ -242,9 +252,10 @@ namespace godot {
         static constexpr double BYTES_PER_KILOBYTE = 1024.0;
         const String option = luaL_optstring(p_state, 1, COUNT_OPTION);
         luaL_argcheck(p_state, option == COUNT_OPTION, 1, "only \"count\" is available");
-        const int kilobytes = lua_gc(p_state, LUA_GCCOUNT);
-        const int bytes = lua_gc(p_state, LUA_GCCOUNTB);
-        lua_pushnumber(p_state, kilobytes + bytes / BYTES_PER_KILOBYTE);
+        // lua_gc is the Lua C API's vararg call
+        const int kilobytes = lua_gc(p_state, LUA_GCCOUNT); // NOLINT(cppcoreguidelines-pro-type-vararg)
+        const int bytes = lua_gc(p_state, LUA_GCCOUNTB);    // NOLINT(cppcoreguidelines-pro-type-vararg)
+        lua_pushnumber(p_state, kilobytes + (bytes / BYTES_PER_KILOBYTE));
         return 1;
     }
 
@@ -258,17 +269,20 @@ namespace godot {
             case 1: {
                 const lua_Integer upper = luaL_checkinteger(p_state, 1);
                 luaL_argcheck(p_state, upper >= 1, 1, "interval is empty");
-                lua_pushinteger(p_state, generator->randi_range(1, upper));
+                lua_pushinteger(p_state, generator->randi_range(1, static_cast<int32_t>(upper)));
                 return 1;
             }
             case 2: {
                 const lua_Integer lower = luaL_checkinteger(p_state, 1);
                 const lua_Integer upper = luaL_checkinteger(p_state, 2);
                 luaL_argcheck(p_state, lower <= upper, 2, "interval is empty");
-                lua_pushinteger(p_state, generator->randi_range(lower, upper));
+                lua_pushinteger(
+                        p_state, generator->randi_range(static_cast<int32_t>(lower), static_cast<int32_t>(upper)));
                 return 1;
             }
             default:
+                // luaL_error is the Lua C API's vararg error call
+                // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg)
                 return luaL_error(p_state, "wrong number of arguments");
         }
     }

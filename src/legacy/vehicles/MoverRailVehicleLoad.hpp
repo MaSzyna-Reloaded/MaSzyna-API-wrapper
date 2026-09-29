@@ -11,7 +11,6 @@ namespace godot {
         private:
             static void _bind_methods();
 
-        private:
             TypedArray<RailVehicleLoadListItem> load_list;
 
         protected:

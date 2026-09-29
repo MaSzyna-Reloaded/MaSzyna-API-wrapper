@@ -205,6 +205,8 @@ anything. Open work belongs in `TODO.md`.
 * An event the original clears once passed (a signal at proceed, `Point.Clear()`) is cleared in the
   port - kept, it holds on what it shows later. *(09-29 a signal closing behind the train braked
   it hard)*
+* `lerpf()` does not return its end exactly, `std::lerp` does: a port whose result is compared
+  exactly takes the end as it is. *(09-29 the driving aid flickered)*
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
   (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
   vehicle's voltage)*
@@ -282,6 +284,9 @@ anything. Open work belongs in `TODO.md`.
 * Never apply clang-tidy `--fix` per file: a rename lands in the declaration, not in its uses
   elsewhere. `style-fix` only formats, headers are self-contained, and style-check binds the same
   double API as the build. *(09-29 style-fix broke the build)*
+* The export reconverts a scene only when its own file changes; a scene instancing another,
+  changed one (`[editable]` above all) ships its old diff of it. A release is exported from an
+  empty `demo/.godot/exported`. *(09-29 vehicle card missing in release)*
 
 ## Tests
 * A test is checked against a build without the fix, and one that cannot fail is deleted.

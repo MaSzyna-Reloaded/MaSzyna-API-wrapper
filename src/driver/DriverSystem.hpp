@@ -56,6 +56,7 @@ namespace godot {
             bool processing = false;
 
             void _on_vehicle_freed(const RID &p_vehicle);
+            void _report_driven(const RID &p_vehicle, bool p_was_driven);
             void _refresh_processing();
             void _set_processing(bool p_processing);
             void _process_updates(double p_seconds);
@@ -67,6 +68,7 @@ namespace godot {
             static const char *driver_timetable_changed_signal;
             static const char *driver_vehicle_attached_signal;
             static const char *driver_freed_signal;
+            static const char *vehicle_driven_changed_signal;
 
             DriverSystem();
             ~DriverSystem() override;
@@ -95,6 +97,10 @@ namespace godot {
             /// driver.
             void vehicle_set_control_active(const RID &p_vehicle, bool p_active);
             bool vehicle_is_control_active(const RID &p_vehicle) const;
+            /// Whether somebody drives the vehicle - its driver or a player - announced as
+            /// vehicle_driven_changed when it changes. Only a driven vehicle has a cab at work, as
+            /// the original keeps a TTrain only for a driven train.
+            bool vehicle_is_driven(const RID &p_vehicle) const;
             /// The driver's timetable and its progress (DriverDelegate::get_timetable_state()); empty
             /// without a delegate
             Dictionary driver_get_timetable_state(const RID &p_driver) const;

@@ -169,6 +169,8 @@ func reload() -> void:
 
 
 func _ready() -> void:
+    # _process only reloads a model edited in the editor; in game it would run for every model
+    set_process(Engine.is_editor_hint())
     reload()
 
 
@@ -226,8 +228,8 @@ func _create_instance() -> void:
     e3d_instance_created.emit(_rid)
     # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
     # but a particle emitter of the model is owned by the server either way and spawns where the
-    # server last saw the instance
-    set_notify_transform(true)
+    # server last saw the instance. Anything else would pay a script call per moved model per frame.
+    set_notify_transform(server_instancer == Instancer.OPTIMIZED or _model.smoke_sources.size() > 0)
 
 
 func _free_instance() -> void:

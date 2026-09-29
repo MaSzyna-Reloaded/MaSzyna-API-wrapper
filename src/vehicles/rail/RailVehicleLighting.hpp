@@ -105,6 +105,8 @@ namespace godot {
             // class's own state keys (state key = "lights/" + p_light + "_enabled"): e.g.
             // "front_headlight_left", "rear_redmarker_right".
             virtual void light(const String &p_light, bool p_enabled) = 0;
+            // Whether the lamp light() names is lit, by the same name
+            virtual bool light_is_enabled(const String &p_light) const = 0;
             // Cab-relative toggle for the actual MMD cabin switches (upperlight_sw:/leftlight_sw:
             // /rightlight_sw:/leftend_sw:/rightend_sw:/rearupperlight_sw:/rearleftlight_sw:/
             // rearrightlight_sw:/rearleftend_sw:/rearrightend_sw:) - resolves which physical end

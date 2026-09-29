@@ -402,6 +402,19 @@ namespace godot {
         UtilityFunctions::push_warning("MoverRailVehicleLighting::light() unknown light name: " + p_light);
     }
 
+    bool MoverRailVehicleLighting::light_is_enabled(const String &p_light) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return false;
+        }
+        for (const LightBit &bit: LIGHT_BITS) {
+            if (p_light == bit.name) {
+                return _light_enabled(mover, bit.end, bit.type);
+            }
+        }
+        return false;
+    }
+
     namespace {
         struct LightSwitchMask {
                 const char *suffix;

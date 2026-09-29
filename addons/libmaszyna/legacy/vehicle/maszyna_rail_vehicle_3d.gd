@@ -125,6 +125,17 @@ func _ready() -> void:
     _dirty = true
 
 
+func _enter_tree() -> void:
+    # the editor drives no vehicle, and has no CabinSystem
+    if not Engine.is_editor_hint():
+        DriverSystem.vehicle_driven_changed.connect(_on_vehicle_driven_changed)
+
+
+func _exit_tree() -> void:
+    if not Engine.is_editor_hint():
+        DriverSystem.vehicle_driven_changed.disconnect(_on_vehicle_driven_changed)
+
+
 ## false while a rebuild (building the vehicle in _process) is pending - true once it ran, even when
 ## the vehicle failed to load
 func is_built() -> bool:
@@ -171,20 +182,19 @@ func _rebuild() -> void:
         return
 
     _vehicle = vehicle
-    # the editor drives no vehicle, and has no CabinSystem
-    if not Engine.is_editor_hint():
-        _vehicle.controller_changed.connect(_on_controller_changed)
     add_child(_vehicle, false, INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK)
     _set_owner_recursive(_vehicle, owner if editable_in_editor else self)
     _process_track_dirty()
 
 
-## The cab logic is the vehicle's, whoever drives it and whether a 3D cab is shown or not: the AI
-## and the player act on the same controls (CabinSystem). CabinSystem drops it with the vehicle.
-func _on_controller_changed() -> void:
+## The cab logic is the vehicle's while somebody drives it - its driver or the player - whether a
+## 3D cab is shown or not: the AI and the player act on the same controls (CabinSystem). The original
+## keeps a TTrain only for a driven train; a cab of every vehicle at work costs every frame.
+func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
     var controller:VehicleController = get_controller()
-    if controller:
-        CabinSystem.vehicle_attach_cab_logic(controller.get_rid(), LegacyCabinLogic.from_mmd(data_path, file_name))
+    if not controller or not controller.get_rid() == vehicle:
+        return
+    CabinSystem.vehicle_attach_cab_logic(vehicle, LegacyCabinLogic.from_mmd(data_path, file_name) if driven else null)
 
 
 ## Internal mode can only be chosen at add_child() time, so making _vehicle visible/hidden in

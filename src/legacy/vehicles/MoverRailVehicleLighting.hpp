@@ -87,6 +87,7 @@ namespace godot {
             void increase_light_selector_position() override;
             void decrease_light_selector_position() override;
             void light(const String &p_light, bool p_enabled) override;
+            bool light_is_enabled(const String &p_light) const override;
             void light_switch(const String &p_light, bool p_enabled) override;
             void roof_light(bool p_enabled) override;
             void devices_light(bool p_enabled) override;

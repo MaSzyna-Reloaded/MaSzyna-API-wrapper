@@ -175,6 +175,9 @@ anything. Open work belongs in `TODO.md`.
   server subscribes to the events itself. *(09-24 switch blades; 09-21 scenery unlit)*
 * Readiness describes built content for a specific camera revision, not an empty queue.
   *(09-20 streaming from menu camera)*
+* A cab (the original's TTrain) is at work only for a driven vehicle: its logic is attached on
+  `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
+  each step)*
 
 ## Godot / GDExtension
 * Memory that grows with a flat object count and no leak reported at exit is a referenced

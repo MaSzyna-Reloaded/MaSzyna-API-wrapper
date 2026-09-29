@@ -1,11 +1,11 @@
 class_name DrivingAid
-extends HBoxContainer
+extends Control
 
 ## The original's driving aid (drivingaid_panel, driveruipanels.cpp:42-205) as floating tiles: the
 ## controllers, the brakes, the brake pipe, the speed, the speed allowed with the next limit and
 ## how far it is, and the vigilance (CA) and cab signal (SHP) lamps. The speed limit stands on its
-## own in the top right corner (top_level, anchored to the screen), the rest in a row at the top
-## left. What changes is refreshed by one Timer while the tiles are shown and the player has a
+## own in the top right corner, the rest in a row at the top left - two children of a full-screen
+## root that lets the mouse through, each anchored to its corner. What changes is refreshed by one Timer while the tiles are shown and the player has a
 ## vehicle. The values are padded to a fixed width (the digits font is monospaced), as the
 ## original's "%3d" (driveruipanels.cpp:137, 170), so a tile does not change its width; the limit's
 ## sign is its tile's last item, so it stays put while the next limit comes and goes on its left.
@@ -52,21 +52,25 @@ func _ready() -> void:
     if ProjectSettings.get_setting(STYLE_SETTING, Style.CARDS) == Style.TEXT:
         var contrast:ShaderMaterial = ShaderMaterial.new()
         contrast.shader = CONTRAST_SHADER
-        for child:Node in get_children():
-            var tile:Control = child as Control
-            if tile:
-                tile.theme = TEXT_THEME
-                tile.material = contrast
+        for tile:Control in _tiles():
+            tile.theme = TEXT_THEME
+            tile.material = contrast
 
 
 ## The vehicle whose aid is shown; an invalid RID hides the tiles
 func show_vehicle(p_vehicle:RID) -> void:
     vehicle = p_vehicle
-    for child:Node in get_children():
-        var tile:Control = child as Control
-        if tile:
-            tile.visible = vehicle.is_valid()
+    for tile:Control in _tiles():
+        tile.visible = vehicle.is_valid()
     _on_visibility_changed()
+
+
+## The tiles: the row's and the speed limit's
+func _tiles() -> Array[Control]:
+    var tiles:Array[Control] = [%LimitTile]
+    for child:Node in %Tiles.get_children():
+        tiles.append(child as Control)
+    return tiles
 
 
 func _on_visibility_changed() -> void:

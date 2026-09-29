@@ -9,6 +9,9 @@ extends HFlowContainer
 ## this is the only thing left that has to be looked at repeatedly - and a label showing hours and
 ## minutes gains nothing from being rewritten 60 times a second.
 const CLOCK_REFRESH_INTERVAL: float = 0.1
+## The time speeds the slider steps through. 0 is not one of them - a slider nudged to its end must
+## not stop the world; stopping it is the pause button's
+const TIME_SCALE_STEPS: Array[float] = [0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0]
 
 var _environment_node: MaszynaEnvironmentNode
 var _time_slider_dragging: bool = false
@@ -37,6 +40,7 @@ var _refresh_timer: Timer
 @onready var _fog_distance_slider: HSlider = %FogDistanceSlider
 @onready var _time_slider: HSlider = %TimeSlider
 @onready var _time_scale_slider: HSlider = %TimeScaleSlider
+@onready var _pause_button: Button = %PauseButton
 @onready var _system_time_check_box: CheckBox = %SystemTimeCheckBox
 @onready var _simulation_time_label: Label = %SimulationTime
 
@@ -52,7 +56,12 @@ func _ready() -> void:
     _time_slider.value_changed.connect(_on_time_changed)
     _time_slider.drag_started.connect(_on_time_drag_started)
     _time_slider.drag_ended.connect(_on_time_drag_ended)
+    _time_scale_slider.max_value = TIME_SCALE_STEPS.size() - 1
+    _time_scale_slider.tick_count = TIME_SCALE_STEPS.size()
     _time_scale_slider.value_changed.connect(_on_time_scale_changed)
+    _pause_button.set_pressed_no_signal(SimulationServer.is_paused())
+    SimulationServer.paused.connect(_pause_button.set_pressed_no_signal.bind(true))
+    SimulationServer.unpaused.connect(_pause_button.set_pressed_no_signal.bind(false))
     _day_slider.value_changed.connect(_on_day_changed)
     _month_slider.value_changed.connect(_on_month_changed)
     _year_slider.value_changed.connect(_on_year_changed)
@@ -67,6 +76,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
+    SimulationServer.paused.disconnect(_pause_button.set_pressed_no_signal.bind(true))
+    SimulationServer.unpaused.disconnect(_pause_button.set_pressed_no_signal.bind(false))
 
 
 ## The environment applied a change, so everything the window shows is out of date.
@@ -115,8 +126,14 @@ func _process_dirty() -> void:
     _fog_density_value_label.text = _format_percent(_environment_node.fog_density)
     _fog_distance_slider.set_value_no_signal(_environment_node.fog_distance)
     _fog_distance_value_label.text = _format_meters(_environment_node.fog_distance)
-    _time_scale_slider.set_value_no_signal(_environment_node.simulation_speed)
-    _time_scale_value_label.text = "%dx" % _environment_node.simulation_speed
+    # the step nearest the speed - one set elsewhere need not be a step
+    var speed: float = _environment_node.simulation_speed
+    var step: int = 0
+    for index: int in TIME_SCALE_STEPS.size():
+        if absf(TIME_SCALE_STEPS[index] - speed) < absf(TIME_SCALE_STEPS[step] - speed):
+            step = index
+    _time_scale_slider.set_value_no_signal(step)
+    _time_scale_value_label.text = "%sx" % ("%.2f" % speed).rstrip("0").rstrip(".")
 
 
 ## The only part of the state that moves on its own, so the only part read on a timer.
@@ -199,8 +216,14 @@ func _on_system_time_toggled(pressed: bool) -> void:
 
 
 func _on_time_scale_changed(value: float) -> void:
-    _time_scale_value_label.text = "%dx" % value
-    _environment_node.simulation_speed = value
+    _environment_node.simulation_speed = TIME_SCALE_STEPS[int(value)]
+
+
+func _on_pause_button_toggled(toggled_on: bool) -> void:
+    if toggled_on:
+        SimulationServer.pause()
+    else:
+        SimulationServer.unpause()
 
 
 func _format_percent(value: float) -> String:

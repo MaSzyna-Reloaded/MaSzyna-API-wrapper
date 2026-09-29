@@ -8,18 +8,25 @@ extends Control
 ## The entries of the "View" menu
 enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
 
-## The panels' names in HUDServer; the View menu's entries are these, in ViewItem order
+## The HUD elements' names in HUDServer
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
 const PANEL_DRIVING_AID:StringName = &"driving_aid"
 const PANEL_TIMETABLE:StringName = &"timetable"
 const PANEL_SCENARIO:StringName = &"scenario"
-## Every control window at once
-const PANEL_CONTROLS:StringName = &"controls"
 const PANEL_SCRIPTS:StringName = &"scripts"
 const PANEL_TRAINSETS:StringName = &"trainsets"
 const PANEL_SIMULATION_SPEED:StringName = &"simulation_speed"
-const VIEW_PANELS:Array[StringName] = [PANEL_TRANSCRIPTS, PANEL_DRIVING_AID, PANEL_TIMETABLE,
-        PANEL_SCENARIO, PANEL_CONTROLS, PANEL_SCRIPTS, PANEL_TRAINSETS, PANEL_SIMULATION_SPEED]
+## The View menu's entries of HUD elements; CONTROLS is not one - the control windows are this
+## node's own
+const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
+    ViewItem.TRANSCRIPTS: PANEL_TRANSCRIPTS,
+    ViewItem.DRIVING_AID: PANEL_DRIVING_AID,
+    ViewItem.TIMETABLE: PANEL_TIMETABLE,
+    ViewItem.SCENARIO: PANEL_SCENARIO,
+    ViewItem.SCRIPTS: PANEL_SCRIPTS,
+    ViewItem.TRAINSETS: PANEL_TRAINSETS,
+    ViewItem.SIMULATION_SPEED: PANEL_SIMULATION_SPEED,
+}
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 const FRONT_END:int = 0
@@ -100,23 +107,30 @@ func _on_popup_menu_index_pressed(index: int) -> void:
     if index >= _windows.size():
         _menu_actions[index - _windows.size()].pressed.emit()
         return
-    HUDServer.panel_toggle(_windows[index].panel)
+    var win: HUDWindow = _windows[index]
+    win.visible = not win.visible
+    _bind_vehicle(win)
 
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the timetable, the
 ## scenario, all the control windows at once, the Lua editor, the trainset list and the simulation
 ## speed
 func _on_view_menu_index_pressed(index: int) -> void:
+    if index == ViewItem.CONTROLS:
+        %View.toggle_item_checked(index)
+        for win: HUDWindow in _windows:
+            win.visible = %View.is_item_checked(index)
+            _bind_vehicle(win)
+        return
     HUDServer.panel_toggle(VIEW_PANELS[index])
     if index == ViewItem.TRAINSETS:
         %View.hide()
 
 
-## A panel opened or closed in HUDServer: its View menu entry ticked, the panel shown; the control
-## windows are opened and closed all at once
+## A HUD element opened or closed in HUDServer: its View menu entry ticked, the element shown
 func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
-    var item: int = VIEW_PANELS.find(panel)
-    if item >= 0:
+    var item: Variant = VIEW_PANELS.find_key(panel)
+    if not item == null:
         %View.set_item_checked(item, shown)
     match panel:
         PANEL_TRANSCRIPTS:
@@ -133,14 +147,6 @@ func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
             %VehicleSelectorPanel.visible = shown
         PANEL_SIMULATION_SPEED:
             %SimulationSpeedPanel.visible = shown
-        PANEL_CONTROLS:
-            for win: HUDWindow in _windows:
-                HUDServer.panel_set_visible(win.panel, shown)
-        _:
-            for win: HUDWindow in _windows:
-                if win.panel == panel:
-                    win.visible = shown
-                    _bind_vehicle(win)
 
 
 func _on_hud_visibility_changed(shown: bool) -> void:

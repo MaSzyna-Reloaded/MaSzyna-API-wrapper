@@ -105,6 +105,25 @@ The short GDScript rules (singleton guards, `/root/...`, `is_connected()`, sette
    interpreter costs more than the calls. Whichever of the three it ends up being, it is still
    bound by "Per-frame work" below.
 
+### No identifying elements by name
+
+An element whose owner already holds it - in a list, by reference, by its position in a menu - is
+addressed through that. A name given to it only so that it can be found again is a second identity
+to keep in step with the first, and a lookup by name (`for win in _windows: if win.panel == name`)
+where the owner could simply index or hold the element:
+
+```gdscript
+# not this - every window named, the menu goes through a server by the name, the owner searches
+HUDServer.panel_toggle(_windows[index].panel)
+
+# this - the parent holds its windows and the menu entry is their index
+var win: HUDWindow = _windows[index]
+win.visible = not win.visible
+```
+
+A name is for what has no owner to hold it - a HUD element a Lua script asks for, a vehicle found by
+its scenery `train_id` - not for the owner's own children.
+
 ### A case that every receiver branches on is not a parameter
 
 **First ask what the receiver does with the value.** When every listener opens by branching on it,

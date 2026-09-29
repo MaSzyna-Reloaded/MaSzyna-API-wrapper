@@ -125,7 +125,6 @@ offset_top = 662.0
 offset_right = 236.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"general"
 title = "General"
 
 [node name="GeneralScroll" type="ScrollContainer" parent="ControlWindows/General"]
@@ -145,7 +144,6 @@ offset_top = 594.0
 offset_right = 474.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"engine"
 title = "Engine"
 
 [node name="EngineScroll" type="ScrollContainer" parent="ControlWindows/Engine"]
@@ -165,7 +163,6 @@ offset_top = 710.0
 offset_right = 670.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"brakes"
 title = "Brakes"
 
 [node name="BrakesScroll" type="ScrollContainer" parent="ControlWindows/Brakes"]
@@ -185,7 +182,6 @@ offset_top = 710.0
 offset_right = 870.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"spring_brake"
 title = "Spring brake"
 
 [node name="SpringBrakeScroll" type="ScrollContainer" parent="ControlWindows/SpringBrake"]
@@ -205,7 +201,6 @@ offset_top = 738.0
 offset_right = 1418.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"lights"
 title = "Lights"
 
 [node name="LightsScroll" type="ScrollContainer" parent="ControlWindows/Lights"]
@@ -225,7 +220,6 @@ offset_top = 710.0
 offset_right = 1070.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"doors"
 title = "Doors"
 
 [node name="DoorsScroll" type="ScrollContainer" parent="ControlWindows/Doors"]
@@ -245,7 +239,6 @@ offset_top = 594.0
 offset_right = 670.0
 offset_bottom = 702.0
 script = ExtResource("9_window")
-panel = &"security"
 title = "Security"
 
 [node name="SecurityScroll" type="ScrollContainer" parent="ControlWindows/Security"]
@@ -265,7 +258,6 @@ offset_top = 505.0
 offset_right = 236.0
 offset_bottom = 654.0
 script = ExtResource("9_window")
-panel = &"controller"
 vehicle_target = 1
 title = "Controller"
 
@@ -286,7 +278,6 @@ offset_top = 738.0
 offset_right = 1912.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"mini_map"
 title = "Mini Map"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
@@ -303,7 +294,6 @@ offset_top = 40.0
 offset_right = 1604.0
 offset_bottom = 441.0
 script = ExtResource("9_window")
-panel = &"scenery_streaming"
 title = "Scenery Streaming"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
@@ -321,7 +311,6 @@ offset_top = 449.0
 offset_right = 1604.0
 offset_bottom = 730.0
 script = ExtResource("9_window")
-panel = &"track_and_traction"
 title = "Track & Traction"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
@@ -339,7 +328,6 @@ offset_top = 738.0
 offset_right = 1604.0
 offset_bottom = 1072.0
 script = ExtResource("9_window")
-panel = &"scenario_and_events"
 title = "Scenario and Events"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
@@ -357,7 +345,6 @@ offset_top = 40.0
 offset_right = 1244.0
 offset_bottom = 310.0
 script = ExtResource("9_window")
-panel = &"weather_and_time"
 title = "Weather and Time"
 
 [node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
@@ -374,7 +361,6 @@ offset_top = 40.0
 offset_right = 1912.0
 offset_bottom = 730.0
 script = ExtResource("9_window")
-panel = &"help"
 title = "Help"
 
 [node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]

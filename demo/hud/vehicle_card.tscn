@@ -110,7 +110,7 @@ mouse_filter = 2
 theme_type_variation = &"TimetableSeparator"
 
 [node name="SectionsScroll" type="ScrollContainer" parent="Content"]
-custom_minimum_size = Vector2(0, 420)
+custom_minimum_size = Vector2(0, 210)
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0

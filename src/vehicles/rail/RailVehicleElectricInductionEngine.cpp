@@ -28,6 +28,10 @@ namespace godot {
         BIND_PROPERTY(RailVehicleElectricInductionEngine, Variant::BOOL, logarithmic_force_control);
         BIND_PROPERTY(RailVehicleElectricInductionEngine, Variant::INT, inverter_control_coupler_flag);
         BIND_PROPERTY(RailVehicleElectricInductionEngine, Variant::BOOL, flat_force_characteristic);
+        ClassDB::bind_method(D_METHOD("get_force_max"), &RailVehicleElectricInductionEngine::get_force_max);
+        ClassDB::bind_method(D_METHOD("get_force_full"), &RailVehicleElectricInductionEngine::get_force_full);
+        ClassDB::bind_method(D_METHOD("get_field_current"), &RailVehicleElectricInductionEngine::get_field_current);
+        ClassDB::bind_method(D_METHOD("get_motor_voltage"), &RailVehicleElectricInductionEngine::get_motor_voltage);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleElectricInductionEngine, Variant::ARRAY, max_power_table, PROPERTY_HINT_TYPE_STRING,
                 "VehicleCurvePointItem");
@@ -42,6 +46,10 @@ namespace godot {
 
     void RailVehicleElectricInductionEngine::_fill_state_dictionary(Dictionary &p_state) const {
         p_state["inverters"] = get_inverters();
+        p_state["force_max"] = get_force_max();
+        p_state["force_full"] = get_force_full();
+        p_state["field_current"] = get_field_current();
+        p_state["motor_voltage"] = get_motor_voltage();
         RailVehicleElectricEngine::_fill_state_dictionary(p_state);
     }
 

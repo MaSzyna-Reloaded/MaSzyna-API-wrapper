@@ -39,6 +39,9 @@ namespace godot {
             virtual bool get_pantograph_second_active() const = 0;
             virtual double get_pantograph_second_voltage() const = 0;
             virtual double get_voltage() const = 0;
+            /* The highest voltage on the trainset's high voltage and (allowed) heating lines
+             * (GetTrainsetHighVoltage) */
+            virtual double get_trainset_high_voltage() const = 0;
             /* Energy drawn from the wire and returned to it [kWh], the returned one negative */
             virtual double get_energy_drawn() const = 0;
             virtual double get_energy_returned() const = 0;

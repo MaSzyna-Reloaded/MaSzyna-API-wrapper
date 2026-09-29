@@ -195,6 +195,36 @@ func test_apply_power_uses_canonical_current_collector_properties():
     assert_eq(engine.power_current_collector_max_current, 800.0)
 
 
+func test_the_engine_publishes_its_voltage_and_the_line_current():
+    # EngineVoltage (Mover.cpp:4542) was published by the series motor only - the E186 screen's
+    # kV bar (eimp_c1_uhv, Train.cpp:8723) stayed at 0
+    var driven: VehicleController = await _powered_up_eim("TestEimVoltage")
+
+    assert_gt(float(driven.state["engine_voltage"]), 2000.0, "an EIM under 3000 V should see it on its motors")
+    assert_true(driven.state.has("total_current"), "the line current (Itot) should be in the state")
+    assert_true(driven.state.has("force_full"), "the full force (eimv[eimv_Fful]) should be in the state")
+
+
+func test_the_screen_state_shows_the_line_voltage_of_the_powered_car():
+    var driven: VehicleController = await _powered_up_eim("TestEimScreen")
+
+    var screen: Dictionary = PythonScreenState.compose(driven.get_rid(), {})
+
+    assert_gt(float(screen["eimp_c1_uhv"]), 2000.0, "the kV bar of traxx_renderer reads eimp_c1_uhv")
+    assert_gt(float(screen["voltage"]), 2000.0)
+    # Train.cpp:718 - under voltage and past its init time, the circuit is ready while the line
+    # breaker is open
+    assert_eq(screen["main_ready"], not driven.state["main_switch_enabled"])
+
+
+func test_main_init_time_reaches_the_config():
+    engine.main_init_time = 2.5
+    train.apply_configuration()
+    await wait_idle_frames(2)
+
+    assert_eq(float(train.config["main_init_time"]), 2.5)
+
+
 ## What RailVehicleServer's step does for a vehicle standing under a live wire, for one standing on
 ## no track: the wire's voltage on the first pantograph and the vehicle fed with it
 func _feed_wire(engine:RailVehicleElectricEngine) -> void:

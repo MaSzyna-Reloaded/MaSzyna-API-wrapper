@@ -114,8 +114,16 @@ func _on_console_toggled(visible:bool):
 func _update_state():
     if state_property and _vehicle_rid:
         pushed = _vehicle_state_value(state_property, pushed)
-    else:
+        return
+    # A control with no vehicle state behind it (universalN) shows what the cab holds for it: a cab
+    # rebuilt with it left on shows it on, and the next press turns it off
+    var held:Variant = null
+    if _vehicle_rid and control_id:
+        held = CabinSystem.get_control(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id)
+    if held == null:
         pushed = false
+        return
+    _apply_control_value(held)
 
 func _input(event):
     if _enabled and action:

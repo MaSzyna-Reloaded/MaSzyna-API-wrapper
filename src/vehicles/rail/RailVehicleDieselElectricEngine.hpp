@@ -11,6 +11,8 @@ namespace godot {
             void _fill_state_dictionary(Dictionary &p_state) const override;
             /* The traction motors (RailVehicleTractionMotorsUnit) */
             double get_motor_current() const;
+            /* The generator's voltage on the motors [V] (EngineVoltage) */
+            double get_engine_voltage() const;
             double get_circuit_imax() const;
             bool get_dynamic_brake_active() const;
             bool get_fuse_active() const;

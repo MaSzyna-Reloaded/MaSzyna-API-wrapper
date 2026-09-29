@@ -13,6 +13,10 @@ namespace godot {
 
             /* Motor current (Im) */
             virtual double get_motor_current() const = 0;
+            /* The voltage on the motors [V] (EngineVoltage) */
+            virtual double get_engine_voltage() const = 0;
+            /* The current the engine draws from the high voltage line [A] (Itot) */
+            virtual double get_total_current() const = 0;
             /* Current limit of the traction circuit (Imax) */
             virtual double get_circuit_imax() const = 0;
             /* Rheostatic / regenerative braking is engaged */

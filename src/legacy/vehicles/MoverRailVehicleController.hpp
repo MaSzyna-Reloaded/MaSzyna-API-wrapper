@@ -75,6 +75,8 @@ namespace godot {
             int get_controller_main_position() const override;
             int get_controller_joint_position() const override;
             int get_controller_main_actual_position() const override;
+            int get_controller_second_actual_position() const override;
+            double get_mass_reduced() const override;
             bool get_controller_main_delayed() const override;
             bool get_coupler_stretched() const override;
             int get_controller_main_no_power_position() const override;

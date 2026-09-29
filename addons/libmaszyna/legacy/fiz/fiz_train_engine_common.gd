@@ -92,6 +92,9 @@ static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Diction
         node.cntrl_eim_control_additional_zeros = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlAddZeros")
     if cntrl_kv.has("EIMCtrlEmergency"):
         node.cntrl_eim_control_emergency = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlEmergency")
+    # Mover.cpp:10910
+    if cntrl_kv.has("MainInitTime"):
+        node.main_init_time = FizLineUtil.get_float(cntrl_kv, "MainInitTime")
     if cntrl_kv.has("EIMCtrlType"):
         node.cntrl_eim_control_type = clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3)
     if cntrl_kv.has("MotorBlowersStart"):

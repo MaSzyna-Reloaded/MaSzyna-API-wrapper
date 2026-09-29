@@ -4,6 +4,7 @@ namespace godot {
     void RailVehicleDieselElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
         RailVehicleDieselEngine::_fill_state_dictionary(p_state);
         p_state["Im"] = get_motor_current();
+        p_state["engine_voltage"] = get_engine_voltage();
         p_state["circuit_imax"] = get_circuit_imax();
         p_state["dynamic_brake_active"] = get_dynamic_brake_active();
         p_state["fuse_active"] = get_fuse_active();
@@ -26,6 +27,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, heating_rpm);
 
         ClassDB::bind_method(D_METHOD("get_motor_current"), &RailVehicleDieselElectricEngine::get_motor_current);
+        ClassDB::bind_method(D_METHOD("get_engine_voltage"), &RailVehicleDieselElectricEngine::get_engine_voltage);
         ClassDB::bind_method(D_METHOD("get_circuit_imax"), &RailVehicleDieselElectricEngine::get_circuit_imax);
         ClassDB::bind_method(
                 D_METHOD("get_dynamic_brake_active"), &RailVehicleDieselElectricEngine::get_dynamic_brake_active);
@@ -44,6 +46,10 @@ namespace godot {
 
     double RailVehicleDieselElectricEngine::get_motor_current() const {
         return traction_motors_unit != nullptr ? traction_motors_unit->get_motor_current() : 0.0;
+    }
+
+    double RailVehicleDieselElectricEngine::get_engine_voltage() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_engine_voltage() : 0.0;
     }
 
     double RailVehicleDieselElectricEngine::get_circuit_imax() const {

@@ -52,6 +52,24 @@ namespace godot {
     double RailVehicleDieselEngine::get_fill() const {
         return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fill() : 0.0;
     }
+    double RailVehicleDieselEngine::get_fill_desired() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fill_desired() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_clutch_desired() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_clutch_desired() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_clutch_engagement() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_clutch_engagement() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_water_temperature() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_temperature() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_engine_temperature() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_engine_temperature() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_retarder_fill() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_retarder_fill() : 0.0;
+    }
     double RailVehicleDieselEngine::get_max_rpm() const {
         return diesel_engine_unit != nullptr ? diesel_engine_unit->get_max_rpm() : 0.0;
     }
@@ -249,6 +267,42 @@ namespace godot {
                         Variant::FLOAT, "fill", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_fill");
+        ClassDB::bind_method(D_METHOD("get_fill_desired"), &RailVehicleDieselEngine::get_fill_desired);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "fill_desired", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fill_desired");
+        ClassDB::bind_method(D_METHOD("get_clutch_desired"), &RailVehicleDieselEngine::get_clutch_desired);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "clutch_desired", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_clutch_desired");
+        ClassDB::bind_method(D_METHOD("get_clutch_engagement"), &RailVehicleDieselEngine::get_clutch_engagement);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "clutch_engagement", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_clutch_engagement");
+        ClassDB::bind_method(D_METHOD("get_water_temperature"), &RailVehicleDieselEngine::get_water_temperature);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "water_temperature", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_water_temperature");
+        ClassDB::bind_method(D_METHOD("get_engine_temperature"), &RailVehicleDieselEngine::get_engine_temperature);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "engine_temperature", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_engine_temperature");
+        ClassDB::bind_method(D_METHOD("get_retarder_fill"), &RailVehicleDieselEngine::get_retarder_fill);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "retarder_fill", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_retarder_fill");
         ClassDB::bind_method(D_METHOD("get_max_rpm"), &RailVehicleDieselEngine::get_max_rpm);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -282,6 +336,12 @@ namespace godot {
         p_state["diesel_power"] = get_output_power();
         p_state["diesel_torque"] = get_torque();
         p_state["diesel_fill"] = get_fill();
+        p_state["diesel_fill_desired"] = get_fill_desired();
+        p_state["diesel_clutch_desired"] = get_clutch_desired();
+        p_state["diesel_clutch_engagement"] = get_clutch_engagement();
+        p_state["diesel_water_temperature"] = get_water_temperature();
+        p_state["diesel_engine_temperature"] = get_engine_temperature();
+        p_state["diesel_retarder_fill"] = get_retarder_fill();
         p_state["diesel_max_rpm"] = get_max_rpm();
     }
 

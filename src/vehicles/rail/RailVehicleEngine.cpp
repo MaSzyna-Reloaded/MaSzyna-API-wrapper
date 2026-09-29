@@ -58,8 +58,16 @@ namespace godot {
             drive_unit->apply_configuration(this);
         }
     }
+    void RailVehicleEngine::set_main_init_time(const double p_value) {
+        main_init_time = p_value;
+    }
+    double RailVehicleEngine::get_main_init_time() const {
+        return main_init_time;
+    }
+
     void RailVehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleComponent::_fill_config_dictionary(p_config);
+        p_config["main_init_time"] = get_main_init_time();
         if (drive_unit != nullptr) {
             drive_unit->fill_config(p_config);
         }
@@ -80,6 +88,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, motor_blowers_sustain_time, "motor_blowers");
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, motor_blowers_start_velocity, "motor_blowers");
         BIND_PROPERTY(RailVehicleEngine, Variant::BOOL, pressure_switch_present);
+        BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, main_init_time);
         BIND_PROPERTY(RailVehicleEngine, Variant::INT, inverters_count);
         BIND_PROPERTY_W_HINT(
                 RailVehicleEngine, Variant::INT, motor_blowers_start_mode, "motor_blowers", PROPERTY_HINT_ENUM,

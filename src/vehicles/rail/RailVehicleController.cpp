@@ -322,6 +322,20 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_joint_position");
         ClassDB::bind_method(
+                D_METHOD("get_controller_second_actual_position"),
+                &RailVehicleController::get_controller_second_actual_position);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::INT, "controller_second_actual_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_second_actual_position");
+        ClassDB::bind_method(D_METHOD("get_mass_reduced"), &RailVehicleController::get_mass_reduced);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "mass_reduced", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_mass_reduced");
+        ClassDB::bind_method(
                 D_METHOD("get_controller_main_actual_position"),
                 &RailVehicleController::get_controller_main_actual_position);
         ADD_PROPERTY(
@@ -459,6 +473,8 @@ namespace godot {
         p_state["controller_main_position"] = get_controller_main_position();
         p_state["controller_joint_position"] = get_controller_joint_position();
         p_state["controller_main_actual_position"] = get_controller_main_actual_position();
+        p_state["controller_second_actual_position"] = get_controller_second_actual_position();
+        p_state["mass_reduced"] = get_mass_reduced();
         p_state["controller_main_delayed"] = get_controller_main_delayed();
         p_state["coupler_stretched"] = get_coupler_stretched();
         p_state["controller_main_no_power_position"] = get_controller_main_no_power_position();

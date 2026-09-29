@@ -99,3 +99,40 @@ func test_showing_the_vehicle_state_does_not_act():
     CabinSystem.unregister_control(vehicle, cab, SHOWN_CONTROL, handler)
     remove_child(vehicle_node)
     vehicle_node.queue_free()
+
+## A cab rebuilt on a vehicle (the player back in it, the other cab occupied) builds its buttons
+## anew. One with no vehicle state behind it - E186's universal1, the screen's pantograph page -
+## showed itself off while the cab still held it on, and the first press did nothing.
+func test_rebuilt_button_shows_what_the_cab_holds():
+    var physics_node:VehiclePhysicsNode = build_vehicle_node("CabinButtonRebuilt", SM42)
+    var vehicle_node:RailVehicle3D = RailVehicle3D.new()
+    add_child(vehicle_node)
+    vehicle_node.controller_path = vehicle_node.get_path_to(physics_node)
+    await wait_idle_frames(2)
+    var vehicle:RID = vehicle_node.get_rid()
+    var cab:int = CabinSystem.occupied_cab(vehicle)
+    # what LegacyCabinForwardCommands does for a cab-only control
+    var handler:Callable = func(state:CabinState, _action:StringName, value:Variant) -> Variant:
+        state.set_value(SHOWN_CONTROL, value)
+        return null
+    CabinSystem.register_control(vehicle, cab, SHOWN_CONTROL, handler)
+    var first:CabinButton = CabinButton.new()
+    first.control_id = SHOWN_CONTROL
+    add_child_autofree(first)
+    first.set_vehicle_rid(vehicle)
+    await wait_idle_frames(2)
+    first.press()
+    assert_true(CabinSystem.get_control(vehicle, cab, SHOWN_CONTROL), "the press is held by the cab")
+
+    var rebuilt:CabinButton = CabinButton.new()
+    rebuilt.control_id = SHOWN_CONTROL
+    add_child_autofree(rebuilt)
+    rebuilt.set_vehicle_rid(vehicle)
+    await wait_idle_frames(2)
+
+    assert_true(rebuilt.pushed, "the rebuilt button shows the control on")
+    rebuilt.press()
+    assert_false(CabinSystem.get_control(vehicle, cab, SHOWN_CONTROL), "and the first press turns it off")
+    CabinSystem.unregister_control(vehicle, cab, SHOWN_CONTROL, handler)
+    remove_child(vehicle_node)
+    vehicle_node.queue_free()

@@ -29,6 +29,12 @@ namespace godot {
             double get_output_power() const override;
             double get_torque() const override;
             double get_fill() const override;
+            double get_fill_desired() const override;
+            double get_clutch_desired() const override;
+            double get_clutch_engagement() const override;
+            double get_water_temperature() const override;
+            double get_engine_temperature() const override;
+            double get_retarder_fill() const override;
             double get_max_rpm() const override;
             void apply_configuration(const RailVehicleDieselEngine *p_engine) const override;
             void oil_pump(bool p_enabled) const override;

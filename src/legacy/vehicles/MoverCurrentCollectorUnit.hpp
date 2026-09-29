@@ -39,6 +39,7 @@ namespace godot {
             bool get_pantograph_second_active() const override;
             double get_pantograph_second_voltage() const override;
             double get_voltage() const override;
+            double get_trainset_high_voltage() const override;
             double get_energy_drawn() const override;
             double get_energy_returned() const override;
             void meter_energy(double p_delta) const override;

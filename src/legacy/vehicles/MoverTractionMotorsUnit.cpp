@@ -7,6 +7,16 @@ namespace godot {
         return p_mover != nullptr ? p_mover->Im : 0.0;
     }
 
+    double MoverTractionMotorsUnit::get_engine_voltage() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EngineVoltage : 0.0;
+    }
+
+    double MoverTractionMotorsUnit::get_total_current() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Itot : 0.0;
+    }
+
     double MoverTractionMotorsUnit::get_circuit_imax() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->Imax : 0.0;

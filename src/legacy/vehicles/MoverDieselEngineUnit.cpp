@@ -83,6 +83,36 @@ namespace godot {
         return p_mover != nullptr ? p_mover->dizel_fill : 0.0;
     }
 
+    double MoverDieselEngineUnit::get_fill_desired() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->RList[p_mover->MainCtrlPos].R : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_clutch_desired() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->RList[p_mover->MainCtrlPos].Mn : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_clutch_engagement() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_engage : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_water_temperature() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.Twy : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_engine_temperature() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.Ts : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_retarder_fill() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->hydro_R_Fill : 0.0;
+    }
+
     double MoverDieselEngineUnit::get_max_rpm() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineMaxRPM() : 0.0;

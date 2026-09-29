@@ -106,6 +106,14 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_fast_series_circuit, false);
 
         private:
+            /* Cntrl. MainInitTime: how long the main circuit takes to get ready once it has power
+             * [s] (MainsInitTime, Mover.cpp:10910) */
+            double main_init_time = 0.0;
+
+        public:
+            void set_main_init_time(double p_value);
+            double get_main_init_time() const;
+
         protected:
             /// Change detection for engine_start/engine_stop, compared in _do_process_component().
             /// Starts false so a vehicle coming up with the main switch already closed reports

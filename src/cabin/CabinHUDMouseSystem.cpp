@@ -39,13 +39,17 @@ namespace godot {
         return Object::cast_to<MeshInstance3D>(ObjectDB::get_instance(p_mesh));
     }
 
-    static void collect_meshes(Node *p_node, Vector<ObjectID> &p_r_meshes) {
+    /// The meshes under p_node, but for those under a mesh of p_other_controls - those are theirs
+    static void collect_meshes(Node *p_node, const HashSet<uint64_t> &p_other_controls, Vector<ObjectID> &p_r_meshes) {
         for (int i = 0; i < p_node->get_child_count(true); i++) {
             Node *child = p_node->get_child(i, true);
+            if (p_other_controls.has(child->get_instance_id())) {
+                continue;
+            }
             if (Object::cast_to<MeshInstance3D>(child) != nullptr) {
                 p_r_meshes.push_back(ObjectID(child->get_instance_id()));
             }
-            collect_meshes(child, p_r_meshes);
+            collect_meshes(child, p_other_controls, p_r_meshes);
         }
     }
 
@@ -92,9 +96,28 @@ namespace godot {
             const Callable &p_decrease, const Basis &p_step_rotation, const Vector3 &p_step_offset,
             const Callable &p_drag, const Vector2 &p_drag_signs) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        /* A mesh belongs to the nearest control above it: the new control leaves out what is
+         * already another's, and takes what it now owns out of the controls above it. */
+        HashSet<uint64_t> other_controls;
+        for (const KeyValue<RID, Control> &other: controls) {
+            other_controls.insert(static_cast<uint64_t>(other.value.pickable.parts[0].mesh));
+        }
+        const Pickable pickable = _pickable(p_mesh_instance_id, true, other_controls);
+        HashSet<uint64_t> taken;
+        for (const Part &part: pickable.parts) {
+            taken.insert(static_cast<uint64_t>(part.mesh));
+        }
+        for (KeyValue<RID, Control> &other: controls) {
+            Vector<Part> &parts = other.value.pickable.parts;
+            for (int64_t i = parts.size() - 1; i > 0; i--) {
+                if (taken.has(static_cast<uint64_t>(parts[i].mesh))) {
+                    parts.remove_at(i);
+                }
+            }
+        }
         controls.insert(
-                rid, Control{_pickable(p_mesh_instance_id, true), p_caption, p_hints, String(), p_pressed, p_released,
-                             p_increase, p_decrease, p_drag, p_step_rotation, p_step_offset});
+                rid, Control{pickable, p_caption, p_hints, String(), p_pressed, p_released, p_increase, p_decrease,
+                             p_drag, p_step_rotation, p_step_offset});
         const MeshInstance3D *mesh = mesh_of(ObjectID(p_mesh_instance_id));
         if (mesh != nullptr) {
             Control &control = controls[rid];
@@ -144,7 +167,7 @@ namespace godot {
 
     RID CabinHUDMouseSystem::occluder_create(const uint64_t p_mesh_instance_id) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
-        occluders.insert(rid, _pickable(p_mesh_instance_id, false));
+        occluders.insert(rid, _pickable(p_mesh_instance_id, false, HashSet<uint64_t>()));
         return rid;
     }
 
@@ -152,13 +175,13 @@ namespace godot {
         occluders.erase(p_occluder);
     }
 
-    CabinHUDMouseSystem::Pickable
-    CabinHUDMouseSystem::_pickable(const uint64_t p_mesh_instance_id, const bool p_with_children) {
+    CabinHUDMouseSystem::Pickable CabinHUDMouseSystem::_pickable(
+            const uint64_t p_mesh_instance_id, const bool p_with_children, const HashSet<uint64_t> &p_other_controls) {
         Vector<ObjectID> meshes;
         meshes.push_back(ObjectID(p_mesh_instance_id));
         MeshInstance3D *root = mesh_of(meshes[0]);
         if (p_with_children && root != nullptr) {
-            collect_meshes(root, meshes);
+            collect_meshes(root, p_other_controls, meshes);
         }
         Pickable pickable;
         for (const ObjectID &id: meshes) {

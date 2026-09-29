@@ -31,6 +31,10 @@ namespace godot {
             }
 
             TypedArray<RailVehicleInverter> get_inverters() const override;
+            double get_force_max() const override;
+            double get_force_full() const override;
+            double get_field_current() const override;
+            double get_motor_voltage() const override;
 
         protected:
             void _apply_configuration() override;

@@ -72,9 +72,7 @@ namespace godot {
             virtual bool get_radio_stop_active() const = 0;
             virtual int get_circuit_rlist_size() const = 0;
 
-            /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section);
-             * duplicated from RailVehicleEngine::StartMode to avoid a circular include (RailVehicleEngine.hpp includes
-             * VehicleComponent.hpp, which includes this file) */
+            /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section) */
             enum StartMode {
                 START_MODE_DISABLED,
                 START_MODE_MANUAL,
@@ -183,7 +181,6 @@ namespace godot {
              * throwaway one the FIZ builder captures a VehicleModel from - has no state to give
              * and answers an empty dictionary. */
             Dictionary get_state() override;
-            void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
             void update_state() override;
             void initialize() override;
 

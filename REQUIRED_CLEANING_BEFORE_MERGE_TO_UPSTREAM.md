@@ -127,7 +127,7 @@ Legend:
 - [ ] [RC-085](#rc-085) `MoverRailVehicleBrake`
 - [ ] [RC-086](#rc-086) `MoverRailVehicleController`
 - [ ] [RC-087](#rc-087) Warning signal bitmasks in horns and security system
-- [ ] [RC-088](#rc-088) `MoverElectricEngineBackend` thresholds
+- [ ] [RC-088](#rc-088) `MoverCircuitUnit` thresholds
 - [ ] [RC-089](#rc-089) `MoverRailVehicleWheels`
 - [ ] [RC-090](#rc-090) `/ 60.0` rpm conversion repeated in six files
 - [ ] [RC-091](#rc-091) Speed control preset count and doors remote control value
@@ -141,18 +141,18 @@ Legend:
 
 ### DRY / KISS
 
-- [ ] [RC-099](#rc-099) `_rename()` duplicated in three servers
-- [ ] [RC-100](#rc-100) Clock-hold processing code duplicated
-- [ ] [RC-101](#rc-101) Electric traction forwarders copied into three engines
-- [ ] [RC-102](#rc-102) Several public roads to one effect
-- [ ] [RC-103](#rc-103) Camera mode written past `camera_set_mode()`
-- [ ] [RC-104](#rc-104) `TrackServer::set_is_topology_changed()` second writer
-- [ ] [RC-105](#rc-105) Dead code
-- [ ] [RC-106](#rc-106) Private helpers with a single call site
-- [ ] [RC-107](#rc-107) Forwarding wrappers
-- [ ] [RC-108](#rc-108) Same work done twice
-- [ ] [RC-109](#rc-109) Duplicated declarations
-- [ ] [RC-110](#rc-110) Config keys nobody reads
+- [x] [RC-099](#rc-099) `_rename()` duplicated in three servers
+- [x] [RC-100](#rc-100) Clock-hold processing code duplicated
+- [x] [RC-101](#rc-101) Electric traction forwarders copied into three engines
+- [x] [RC-102](#rc-102) Several public roads to one effect
+- [x] [RC-103](#rc-103) Camera mode written past `camera_set_mode()`
+- [x] [RC-104](#rc-104) `TrackServer::set_is_topology_changed()` second writer
+- [x] [RC-105](#rc-105) Dead code
+- [x] [RC-106](#rc-106) Private helpers with a single call site
+- [x] [RC-107](#rc-107) Forwarding wrappers
+- [x] [RC-108](#rc-108) Same work done twice
+- [x] [RC-109](#rc-109) Duplicated declarations
+- [x] [RC-110](#rc-110) Config keys nobody reads
 
 ### Naming
 
@@ -216,7 +216,8 @@ Legend:
 
 **Diesel backend forces test power source** ✔
 
-* **Where:** `src/legacy/vehicles/MoverDieselEngineBackend.cpp:94-96`
+* **Where:** `src/legacy/vehicles/MoverDieselEngineUnit.cpp` (was
+  `MoverDieselEngineBackend.cpp:94-96`)
 * **Rule:** correctness, magic value
 * **Problem:** `// FIXME: test data` sets
   `p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator` for every diesel and
@@ -407,7 +408,8 @@ Legend:
     `// FIXME: THIS IS MODIFICATION OF OTHER SECTION`), also written by the controller at
     `MoverRailVehicleController.cpp:449`
   * `MoverRailVehicleDieselElectricEngine.cpp:84,87` (`dizel_RevolutionsDecreaseRate`,
-    `ShuntModeAllow`), already set by `MoverDieselEngineBackend.cpp:115,128`
+    `ShuntModeAllow`), already set by `MoverDieselEngineUnit.cpp`
+    (was `MoverDieselEngineBackend.cpp:115,128`)
   * `MoverRailVehicleUniversalController.cpp:43` (`MainCtrlPos`, a runtime field written during
     configuration), also written by `initialize_mover_state` at `MoverRailVehicleController.cpp:64`
 * **Rule:** one writer per field
@@ -1170,9 +1172,10 @@ ported value keeps the original's value and a source reference".
 
 ### RC-088
 
-**`MoverElectricEngineBackend` thresholds**
+**`MoverCircuitUnit` thresholds**
 
-* **Where:** `src/legacy/vehicles/MoverElectricEngineBackend.cpp:192, 200, 213`
+* **Where:** `src/legacy/vehicles/MoverCircuitUnit.cpp` (was
+  `MoverElectricEngineBackend.cpp:192, 200, 213`)
 * **Problem:** `BrakePress < 1.0` and `RventRot < 5.0`, with no reference.
 
 ### RC-089
@@ -1188,8 +1191,8 @@ ported value keeps the original's value and a source reference".
 **`/ 60.0` rpm conversion repeated in six files**
 
 * **Where:**
-  * `src/legacy/vehicles/MoverEngineBackend.cpp:57`
-  * `MoverDieselEngineBackend.cpp:166, 218, 231`
+  * `src/legacy/vehicles/MoverDriveUnit.cpp` (was `MoverEngineBackend.cpp:57`)
+  * `MoverDieselEngineUnit.cpp` (was `MoverDieselEngineBackend.cpp:166, 218, 231`)
   * `MoverRailVehicleElectricSeriesEngine.cpp:82`
   * `MoverRailVehicleHeating.cpp:25-26`
   * `src/cabin/Cabin3D.cpp:160`
@@ -1288,6 +1291,9 @@ ported value keeps the original's value and a source reference".
   `src/scenario/ScenarioEventServer.cpp:438` (identical); `src/tracks/TrackServer.cpp:787`
   (`isolated_set_name`, a third variant)
 * **Fix:** one shared helper in `utils`.
+* **Done:** `names_rename()` in `src/utils/Names.hpp` (not `utils.hpp`: the vendored `hamulce.h`
+  includes that one), used by both servers and by `TrackServer::isolated_set_name`/`isolated_free`,
+  which now warn on a duplicate too.
 
 ### RC-100
 
@@ -1297,6 +1303,10 @@ ported value keeps the original's value and a source reference".
 * **Problem:** identical `_refresh_processing`/`_set_processing`, and `_refresh_processing` is a
   one-line forwarding wrapper.
 * **Fix:** one implementation; drop the wrapper.
+* **Done:** `SimulationServer::clock_subscribe()`/`clock_unsubscribe()` hold the clock and connect
+  `simulation_advanced` in one operation; `DriverSystem` and `ScenarioEventServer` use it and lost
+  `_refresh_processing`. `RailVehicleServer::_refresh_stepping` stays: it computes a two-part
+  condition for two callers, it is not a forwarder.
 
 ### RC-101
 
@@ -1307,6 +1317,12 @@ ported value keeps the original's value and a source reference".
 * **Problem:** nine `traction.*` forwarders and identical `_register_commands`/
   `_unregister_commands` bodies, written three times.
 * **Fix:** move them into the shared traction part once.
+* **Done:** Engines are composed of units - plain C++ interfaces in `src/vehicles/rail/` with Mover
+  implementations: `RailVehicleDriveUnit`, `RailVehicleDieselEngineUnit`,
+  `RailVehicleTractionMotorsUnit`, `RailVehicleCurrentCollectorUnit`, `RailVehicleCircuitUnit`. The
+  `*Backend` layer and `VehicleElectricTraction` are gone. The traction motors' Godot face lives in
+  `RailVehicleElectricEngine` and `RailVehicleDieselElectricEngine` (two copies, forced by single
+  GDCLASS inheritance - down from three in the Mover classes).
 
 ### RC-102
 
@@ -1323,6 +1339,11 @@ ported value keeps the original's value and a source reference".
     `environment_set_wind_direction`
 * **Rule:** PROHIBITED - "a second road to the same effect is deleted"
 * **Fix:** keep one operation per effect; bind the commands to it with the argument bound.
+* **Done:** Doors: `permit_doors`/`operate_doors(state, side)`, the commands bind the side. Horns:
+  `set_horn` and the `horn` command removed; the `horn_bt` lever sends `horn_low`/`horn_high`
+  through the new `position_commands` switch wiring (`forward_commands.gd`). Brake: one
+  `brake_level_set_position(String)`, the unused enum overload and `BrakeHandlePosition` removed.
+  Wind: only `environment_set_wind`, its helper and the two stored halves removed.
 
 ### RC-103
 
@@ -1332,6 +1353,7 @@ ported value keeps the original's value and a source reference".
 * **Problem:** `camera_show_vehicle()` writes `mode = CAMERA_MODE_FREE` directly, skipping
   `camera_set_mode()` and its checks.
 * **Fix:** call `camera_set_mode()`.
+* **Done:** `camera_placed` is emitted first, then `camera_set_mode(FREE)`.
 
 ### RC-104
 
@@ -1341,6 +1363,7 @@ ported value keeps the original's value and a source reference".
 * **Problem:** a public writer of the flag next to `_mark_topology_changed()` and
   `topology_rebuild()`.
 * **Fix:** remove the public setter.
+* **Done:** Removed; `is_topology_changed` is read-only, the test calls `topology_rebuild()`.
 
 ### RC-105
 
@@ -1358,6 +1381,8 @@ ported value keeps the original's value and a source reference".
   * `VehicleComponent.cpp:127`: an unused `p_callback` parameter
   * `src/utils/utils.cpp:14`: a "Placeholder" template defined only in the `.cpp`
   * `e3d_parser.cpp:52-60`: the unreachable `else` in `_calculate_normals`
+* **Done:** Done, except `brake_method_map`: it is not dead but RC-002's unfixed bug, left to
+  RC-002. `p_callback` dropped from `unregister_command` everywhere.
 
 ### RC-106
 
@@ -1381,6 +1406,14 @@ ported value keeps the original's value and a source reference".
 * **Rule:** "a private function with one call site is not a helper"
 * **Fix:** inline, except where splitting really keeps a long algorithm readable - then the
   operator decides.
+* **Done:** Inlined: `_engine_revolutions`, `_grip`, `_hit_part`, `_start_workers`, `_run_next`,
+  `_update_length`, `_curve_common_endpoint_index`, `_update_switch_endpoint_metadata`,
+  `_add_track_topology`, `_setup_defaults`, `_read_matrix`, `_register_smoke_sources` (it is
+  `E3DParser`'s, not `E3DRenderingServer`'s), `_controller_position_normalized`, `_force_ratio`,
+  `ResourceCache::_initialize`. Kept by operator decision as steps of long algorithms:
+  `_increase_signs`, `_set_curves`, `_connect_all_tracks`, `_rebuild_graph_ids`,
+  `_merge_endpoint_nodes`, the `network_build()` steps, `_register_lights`, `_calculate_normals`.
+  Struck: `LuaVehicleModule` `check_vehicle` has nine call sites.
 
 ### RC-107
 
@@ -1396,6 +1429,11 @@ ported value keeps the original's value and a source reference".
   * `SceneryStreamingServer.cpp:277`: `_get_pending_builds_locked()`
   * `RailVehicle3D.cpp:145`: `_process` bound as `process_manually`
 * **Fix:** call the target directly.
+* **Done:** Done, except `GenericVehicleComponentNode`: by operator decision it keeps the shortcuts
+  its scripts use (`register_command`, `unregister_command`, `get_controller`, `log_debug`,
+  `log_warning`); the unused ones are gone. `get_engine_type` is now the public virtual
+  `get_type()`. The `cache_cleared` signal was never registered and nothing listened - removed with
+  its emitter.
 
 ### RC-108
 
@@ -1413,6 +1451,8 @@ ported value keeps the original's value and a source reference".
   * `MoverRailVehicleLighting.cpp:454-455`: re-derives `active_end`, duplicating
     `_active_end()`
 * **Rule:** "never do the same thing twice to be safe"
+* **Done:** Done. `UserSettings`: `ConfigFile::load()` does not clear, so only the call after a
+  successful load was redundant.
 
 ### RC-109
 
@@ -1424,6 +1464,10 @@ ported value keeps the original's value and a source reference".
     `wwlist` is duplicated with the induction engine
   * `SignalHeadNode.hpp:25` and `SignalHeadKind.hpp:18`: `DEFAULT_BLINK_TIME = 0.5` twice
   * `E3DNodesBackend.cpp` vs `E3DRenderingServer`: the reverse cull face setting name (RC-092)
+* **Done:** `RailVehicleEngine::StartMode` removed, `RailVehicleController::StartMode` used (the
+  include cycle the comment claimed did not exist). Traction interface: see RC-101. `wwlist` stays
+  declared in DieselElectric and Induction - unrelated Godot branches. Reverse cull face setting
+  name: `E3DLightFactory::LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING`.
 
 ### RC-110
 
@@ -1436,6 +1480,7 @@ ported value keeps the original's value and a source reference".
 * **Fix:** remove them.
 
 ## Naming
+* **Done:** Removed, with the two test asserts that checked `engine_shake_enabled`.
 
 ### RC-111
 

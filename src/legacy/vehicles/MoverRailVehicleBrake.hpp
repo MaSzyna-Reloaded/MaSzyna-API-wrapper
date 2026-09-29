@@ -54,13 +54,6 @@ namespace godot {
                     {BrakeMethod::BRAKE_METHOD_P10Y_BG, 14}, {BrakeMethod::BRAKE_METHOD_P10Y_BGU, 16},
                     {BrakeMethod::BRAKE_METHOD_FR510, 17},   {BrakeMethod::BRAKE_METHOD_D1MG, 137},
             };
-            const std::unordered_map<BrakeHandlePosition, int> brake_handle_position_map = {
-                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MIN, Maszyna::bh_MIN},
-                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MAX, Maszyna::bh_MAX},
-                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_DRIVE, Maszyna::bh_RP},
-                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_FULL, Maszyna::bh_FB},
-                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_EMERGENCY, Maszyna::bh_EB},
-            };
             const std::unordered_map<std::string, int> brake_handle_position_string_map = {
                     {"min", Maszyna::bh_MIN}, {"max", Maszyna::bh_MAX},      {"drive", Maszyna::bh_RP},
                     {"full", Maszyna::bh_FB}, {"emergency", Maszyna::bh_EB},
@@ -129,8 +122,6 @@ namespace godot {
             /* The releaser was switched on by consist_releaser() and is held until the brakes stop
              * braking */
             bool trainset_releasing = false;
-            static double _controller_position_normalized(const TMoverParameters *p_mover);
-            static double _force_ratio(const TMoverParameters *p_mover);
 
         protected:
             void _apply_configuration() override;
@@ -142,8 +133,7 @@ namespace godot {
             void consist_releaser(bool p_active) override;
             void compressor(bool p_enabled) override;
             void brake_level_set(double p_level) override;
-            void brake_level_set_position(BrakeHandlePosition p_position) override;
-            void brake_level_set_position_str(const String &p_position) override;
+            void brake_level_set_position(const String &p_position) override;
             void brake_level_increase() override;
             void brake_level_decrease() override;
             void local_brake_set(double p_level) override;

@@ -31,7 +31,6 @@ namespace godot {
             Array default_stop_chars;
             bool default_stop_table[128] = {};
             Dictionary parameters;
-            Array get_stops(const Array &p_stops) const;
             static void _make_stop_table(const Array &p_stops, bool (&p_r_table)[128]);
             static String _to_token(const std::string &p_raw);
             String _read_token(const bool (&p_stop_table)[128]);

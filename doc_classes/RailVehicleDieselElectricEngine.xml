@@ -11,6 +11,54 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="fuse_reset">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_circuit_imax" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_dynamic_brake_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuse_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_connectors_open" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_current" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="is_line_contactor_closed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_pressure_switch_tripped" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="set_motor_connectors_open">
+			<return type="void" />
+			<param index="0" name="open" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="additional_speed" type="float" setter="set_additional_speed" getter="get_additional_speed" default="1.0">
 			[code]Engine:Vadd[/code]
@@ -43,7 +91,7 @@
 			Field-shunting relay behavior flag: 0 - current dependent, 1 - velocity dependent, 2 - velocity and power
 			dependent, 41/45/46 - extended variants for specific locomotive types.
 		</member>
-		<member name="type" type="int" setter="" getter="get_type" overrides="RailVehicleEngine" default="7" />
+		<member name="type" type="int" setter="" getter="get_type" overrides="RailVehicleEngine" enum="RailVehicleEngine.EngineType" default="7" />
 		<member name="wwlist" type="RailVehicleWWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 			[code]WWList[/code]
 			Diesel-electric generator characteristics table. Each item describes a main controller position starting

@@ -254,14 +254,14 @@ namespace godot {
     }
 
     void RailVehicleLighting::_unregister_commands() {
-        unregister_command("increase_light_selector_position", Callable(this, "increase_light_selector_position"));
-        unregister_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
-        unregister_command("light", Callable(this, "light"));
-        unregister_command("light_switch", Callable(this, "light_switch"));
-        unregister_command("roof_light", Callable(this, "roof_light"));
-        unregister_command("devices_light", Callable(this, "devices_light"));
-        unregister_command("headlights_dim", Callable(this, "headlights_dim"));
-        unregister_command("roof_light_dim", Callable(this, "roof_light_dim"));
+        unregister_command("increase_light_selector_position");
+        unregister_command("decrease_light_selector_position");
+        unregister_command("light");
+        unregister_command("light_switch");
+        unregister_command("roof_light");
+        unregister_command("devices_light");
+        unregister_command("headlights_dim");
+        unregister_command("roof_light_dim");
         VehicleComponent::_unregister_commands();
     }
 } // namespace godot

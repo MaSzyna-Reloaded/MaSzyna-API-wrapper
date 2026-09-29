@@ -1,3 +1,4 @@
+#include "SignalHeadKind.hpp"
 #include "SignalHeadNode.hpp"
 #include <godot_cpp/core/object.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
@@ -195,7 +196,7 @@ namespace godot {
                 enable_light(light);
                 break;
             case SignallingServer::LIGHT_STATE_BLINKING:
-                blink_light(light, DEFAULT_BLINK_TIME, DEFAULT_BLINK_TIME, 0.0);
+                blink_light(light, SignalHeadKind::DEFAULT_BLINK_TIME, SignalHeadKind::DEFAULT_BLINK_TIME, 0.0);
                 break;
             default:
                 disable_light(light);

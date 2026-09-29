@@ -15,10 +15,6 @@ namespace godot {
         private:
             static void _bind_methods();
 
-        protected:
-            void _register_commands() override;
-            void _unregister_commands() override;
-
         public:
             enum LoadUnit { LOAD_UNIT_TONS, LOAD_UNIT_PIECES };
             MAKE_MEMBER_GS_NR(LoadUnit, load_unit, LoadUnit::LOAD_UNIT_TONS);

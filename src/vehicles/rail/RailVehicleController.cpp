@@ -59,9 +59,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &RailVehicleController::get_coupled_end);
         ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &RailVehicleController::coupler_connect);
         ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &RailVehicleController::coupler_disconnect);
-        ClassDB::bind_method(
-                D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
-                &RailVehicleController::change_track);
         /* FIXME: move to TrainPower section? */
         BIND_PROPERTY_W_HINT(RailVehicleController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
@@ -467,13 +464,6 @@ namespace godot {
         p_state["controller_main_no_power_position"] = get_controller_main_no_power_position();
         p_state["radio_stop_active"] = get_radio_stop_active();
         p_state["circuit_rlist_size"] = get_circuit_rlist_size();
-    }
-
-    void RailVehicleController::change_track(
-            const String &p_track_name, const float p_track_offset, const int p_track_direction) {
-        UtilityFunctions::push_warning(
-                vformat("RailVehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d",
-                        p_track_name, p_track_offset, p_track_direction));
     }
 
 } // namespace godot

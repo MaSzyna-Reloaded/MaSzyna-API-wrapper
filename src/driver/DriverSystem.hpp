@@ -57,7 +57,6 @@ namespace godot {
 
             void _on_vehicle_freed(const RID &p_vehicle);
             void _report_driven(const RID &p_vehicle, bool p_was_driven);
-            void _refresh_processing();
             void _set_processing(bool p_processing);
             void _process_updates(double p_seconds);
 

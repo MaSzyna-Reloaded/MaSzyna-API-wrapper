@@ -42,7 +42,7 @@ namespace godot {
 
     void RailVehicleSwitches::_unregister_commands() {
         VehicleComponent::_unregister_commands();
-        unregister_command("sand", Callable(this, "sand"));
+        unregister_command("sand");
     }
     // how the cab operates the pantographs (PantSwitchType, Train.cpp:3175, 3285)
     void RailVehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {

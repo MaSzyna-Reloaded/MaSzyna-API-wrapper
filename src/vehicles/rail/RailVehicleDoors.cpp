@@ -40,12 +40,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("next_permit_preset"), &RailVehicleDoors::next_permit_preset);
         ClassDB::bind_method(D_METHOD("previous_permit_preset"), &RailVehicleDoors::previous_permit_preset);
         ClassDB::bind_method(D_METHOD("permit_step", "state"), &RailVehicleDoors::permit_step);
-        ClassDB::bind_method(D_METHOD("permit_left_doors", "state"), &RailVehicleDoors::permit_left_doors);
-        ClassDB::bind_method(D_METHOD("permit_right_doors", "state"), &RailVehicleDoors::permit_right_doors);
-        ClassDB::bind_method(D_METHOD("permit_doors", "side", "state"), &RailVehicleDoors::permit_doors);
-        ClassDB::bind_method(D_METHOD("operate_left_doors", "state"), &RailVehicleDoors::operate_left_doors);
-        ClassDB::bind_method(D_METHOD("operate_right_doors", "state"), &RailVehicleDoors::operate_right_doors);
-        ClassDB::bind_method(D_METHOD("operate_doors", "side", "state"), &RailVehicleDoors::operate_doors);
+        ClassDB::bind_method(D_METHOD("permit_doors", "state", "side"), &RailVehicleDoors::permit_doors);
+        ClassDB::bind_method(D_METHOD("operate_doors", "state", "side"), &RailVehicleDoors::operate_doors);
         ClassDB::bind_method(D_METHOD("door_lock", "state"), &RailVehicleDoors::door_lock);
         ClassDB::bind_method(D_METHOD("door_remote_control", "state"), &RailVehicleDoors::door_remote_control);
         ClassDB::bind_method(D_METHOD("forbid_mirrors", "state"), &RailVehicleDoors::forbid_mirrors);
@@ -241,25 +237,25 @@ namespace godot {
         register_command("doors_next_permit_preset", Callable(this, "next_permit_preset"));
         register_command("doors_previous_permit_preset", Callable(this, "previous_permit_preset"));
         register_command("doors_permit_step", Callable(this, "permit_step"));
-        register_command("doors_left_permit", Callable(this, "permit_left_doors"));
-        register_command("doors_right_permit", Callable(this, "permit_right_doors"));
-        register_command("doors_left", Callable(this, "operate_left_doors"));
-        register_command("doors_right", Callable(this, "operate_right_doors"));
+        register_command("doors_left_permit", Callable(this, "permit_doors").bind(SIDE_LEFT));
+        register_command("doors_right_permit", Callable(this, "permit_doors").bind(SIDE_RIGHT));
+        register_command("doors_left", Callable(this, "operate_doors").bind(SIDE_LEFT));
+        register_command("doors_right", Callable(this, "operate_doors").bind(SIDE_RIGHT));
         register_command("doors_lock", Callable(this, "door_lock"));
         register_command("doors_remote_control", Callable(this, "door_remote_control"));
         register_command("mirrors_forbid", Callable(this, "forbid_mirrors"));
     }
 
     void RailVehicleDoors::_unregister_commands() {
-        unregister_command("doors_next_permit_preset", Callable(this, "next_permit_preset"));
-        unregister_command("doors_previous_permit_preset", Callable(this, "previous_permit_preset"));
-        unregister_command("doors_permit_step", Callable(this, "permit_step"));
-        unregister_command("doors_left_permit", Callable(this, "permit_left_doors"));
-        unregister_command("doors_right_permit", Callable(this, "permit_right_doors"));
-        unregister_command("doors_left", Callable(this, "operate_left_doors"));
-        unregister_command("doors_right", Callable(this, "operate_right_doors"));
-        unregister_command("doors_lock", Callable(this, "door_lock"));
-        unregister_command("doors_remote_control", Callable(this, "door_remote_control"));
-        unregister_command("mirrors_forbid", Callable(this, "forbid_mirrors"));
+        unregister_command("doors_next_permit_preset");
+        unregister_command("doors_previous_permit_preset");
+        unregister_command("doors_permit_step");
+        unregister_command("doors_left_permit");
+        unregister_command("doors_right_permit");
+        unregister_command("doors_left");
+        unregister_command("doors_right");
+        unregister_command("doors_lock");
+        unregister_command("doors_remote_control");
+        unregister_command("mirrors_forbid");
     }
 } // namespace godot

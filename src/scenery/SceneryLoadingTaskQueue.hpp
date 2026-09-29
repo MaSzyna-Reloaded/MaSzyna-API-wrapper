@@ -32,8 +32,6 @@ namespace godot {
             int completed = 0;
             bool exiting = false;
 
-            void _start_workers();
-            bool _run_next();
             bool _run_task(int p_task_id);
             Callable _take_callable(int p_task_id);
             void _run(int p_task_id, Callable &p_callable);

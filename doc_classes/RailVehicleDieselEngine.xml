@@ -55,7 +55,7 @@
 		</member>
 		<member name="fuel_pump_enabled" type="bool" setter="" getter="get_fuel_pump_enabled" default="false">
 		</member>
-		<member name="fuel_pump_start_mode" type="int" setter="set_fuel_pump_start_mode" getter="get_fuel_pump_start_mode" enum="RailVehicleEngine.StartMode" default="1">
+		<member name="fuel_pump_start_mode" type="int" setter="set_fuel_pump_start_mode" getter="get_fuel_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.FuelStart[/code]
 		</member>
 		<member name="heat_malfunction" type="bool" setter="" getter="get_heat_malfunction" default="false">
@@ -118,7 +118,7 @@
 			[code]Engine:OilMinPressure[/code]
 			Minimum oil pressure required for the engine to start
 		</member>
-		<member name="oil_pump_start_mode" type="int" setter="set_oil_pump_start_mode" getter="get_oil_pump_start_mode" enum="RailVehicleEngine.StartMode" default="1">
+		<member name="oil_pump_start_mode" type="int" setter="set_oil_pump_start_mode" getter="get_oil_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.OilStart[/code]
 		</member>
 		<member name="output_power" type="float" setter="" getter="get_output_power" default="0.0">
@@ -266,7 +266,7 @@
 		</member>
 		<member name="vel2nmax_table" type="VehicleCurvePointItem[]" setter="set_vel2nmax_table" getter="get_vel2nmax_table" default="[]">
 		</member>
-		<member name="water_pump_start_mode" type="int" setter="set_water_pump_start_mode" getter="get_water_pump_start_mode" enum="RailVehicleEngine.StartMode" default="1">
+		<member name="water_pump_start_mode" type="int" setter="set_water_pump_start_mode" getter="get_water_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.WaterStart[/code]
 		</member>
 	</members>

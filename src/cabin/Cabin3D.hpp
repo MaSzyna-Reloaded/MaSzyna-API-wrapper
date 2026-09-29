@@ -61,7 +61,6 @@ namespace godot {
             /* The cab's elements are GDScript nodes this class only hosts, so the name is handed
              * down by a named call - the one case `CODE_STYLE.md` allows. */
             void _propagate_vehicle_rid(Node *p_node) const;
-            double _engine_revolutions() const;
 
         public:
             /* Notifications, not the _ready()/_process() virtuals: a GDScript subclass that

@@ -1,7 +1,4 @@
 #pragma once
-#include <string>
-
-#define ENUM_WITH_COUNT(name, ...) enum class name { __VA_ARGS__, COUNT };
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -20,8 +17,6 @@
 #endif
 
 namespace libmaszyna::utils {
-    template<typename EnumType>
-    std::string enum_to_string();
     template<typename Type>
     Type interpolate(Type const &p_first, Type const &p_second, double const p_factor) {
 

@@ -62,8 +62,8 @@ namespace godot {
     }
 
     void RailVehicleSpringBrake::_unregister_commands() {
-        unregister_command("set_spring_brake_active", Callable(this, "set_spring_brake_active"));
-        unregister_command("set_spring_brake_enabled", Callable(this, "set_spring_brake_enabled"));
-        unregister_command("spring_brake_release", Callable(this, "spring_brake_release"));
+        unregister_command("set_spring_brake_active");
+        unregister_command("set_spring_brake_enabled");
+        unregister_command("spring_brake_release");
     }
 } // namespace godot

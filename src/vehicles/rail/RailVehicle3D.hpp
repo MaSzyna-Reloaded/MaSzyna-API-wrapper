@@ -243,7 +243,6 @@ namespace godot {
             void hide_cabin();
             /// The cab interior while it is shown, else null
             Cabin3D *get_cabin() const;
-            void process_manually(const Variant &p_delta);
             RailVehicleController *get_controller() const;
             /// This vehicle's handle in RailVehicleServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.

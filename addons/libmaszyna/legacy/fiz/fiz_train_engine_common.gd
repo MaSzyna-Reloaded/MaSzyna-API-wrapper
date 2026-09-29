@@ -62,17 +62,17 @@ static func apply_engine_common(node: RailVehicleEngine, kv: Dictionary, context
 static func apply_cntrl_electric_subset(node: RailVehicleElectricEngine, cntrl_kv: Dictionary) -> void:
     if cntrl_kv.has("PantCompressorStart"):
         node.cntrl_pantograph_compressor_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), RailVehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), RailVehicleController.START_MODE_MANUAL)
     if cntrl_kv.has("PantAutoValve"):
         node.cntrl_pantograph_auto_valve = FizLineUtil.get_bool(cntrl_kv, "PantAutoValve")
     if cntrl_kv.has("PantEPValveStart"):
         node.cntrl_pantographs_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), RailVehicleEngine.START_MODE_AUTOMATIC)
+                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), RailVehicleController.START_MODE_AUTOMATIC)
     if cntrl_kv.has("PantEPValveSpring"):
         node.cntrl_pantographs_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantEPValveSpring")
     if cntrl_kv.has("PantValveStart"):
         node.cntrl_pantograph_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), RailVehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), RailVehicleController.START_MODE_MANUAL)
     if cntrl_kv.has("PantValveSpring"):
         node.cntrl_pantograph_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantValveSpring")
     if cntrl_kv.has("PantValveSolenoid"):
@@ -96,17 +96,17 @@ static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Diction
         node.cntrl_eim_control_type = clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3)
     if cntrl_kv.has("MotorBlowersStart"):
         node.motor_blowers_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), RailVehicleEngine.START_MODE_MANUAL)
+                FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), RailVehicleController.START_MODE_MANUAL)
     # Mover.cpp:10948-10962 - each pump's start, manual when the key is missing
     if node is RailVehicleDieselEngine and cntrl_kv.has("FuelStart"):
         (node as RailVehicleDieselEngine).fuel_pump_start_mode = FizTrainControllerParser.parse_start_mode(
-                        FizLineUtil.get_string(cntrl_kv, "FuelStart"), RailVehicleEngine.START_MODE_MANUAL)
+                        FizLineUtil.get_string(cntrl_kv, "FuelStart"), RailVehicleController.START_MODE_MANUAL)
     if node is RailVehicleDieselEngine and cntrl_kv.has("OilStart"):
         (node as RailVehicleDieselEngine).oil_pump_start_mode = FizTrainControllerParser.parse_start_mode(
-                        FizLineUtil.get_string(cntrl_kv, "OilStart"), RailVehicleEngine.START_MODE_MANUAL)
+                        FizLineUtil.get_string(cntrl_kv, "OilStart"), RailVehicleController.START_MODE_MANUAL)
     if node is RailVehicleDieselEngine and cntrl_kv.has("WaterStart"):
         (node as RailVehicleDieselEngine).water_pump_start_mode = FizTrainControllerParser.parse_start_mode(
-                        FizLineUtil.get_string(cntrl_kv, "WaterStart"), RailVehicleEngine.START_MODE_MANUAL)
+                        FizLineUtil.get_string(cntrl_kv, "WaterStart"), RailVehicleController.START_MODE_MANUAL)
 
     match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
         "optional": node.cntrl_auto_relay_mode = RailVehicleEngine.AUTO_RELAY_OPTIONAL

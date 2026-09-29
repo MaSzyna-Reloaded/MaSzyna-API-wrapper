@@ -1,4 +1,4 @@
-#include "MoverDieselEngineBackend.hpp"
+#include "MoverDieselEngineUnit.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/base/VehicleController.hpp"
@@ -8,87 +8,87 @@ namespace godot {
     /* dizel_nreg_min = dizel_nmin * 0.98 (Mover.cpp:11173) */
     static constexpr double NREG_MIN_SHARE = 0.98;
 
-    double MoverDieselEngineBackend::get_rpm(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_rpm() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM() : 0.0;
     }
 
-    bool MoverDieselEngineBackend::get_oil_pump_active(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_oil_pump_active() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->OilPump.is_active : false;
     }
 
-    bool MoverDieselEngineBackend::get_oil_pump_disabled(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_oil_pump_disabled() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->OilPump.is_disabled : false;
     }
 
-    double MoverDieselEngineBackend::get_oil_pump_pressure(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_oil_pump_pressure() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->OilPump.pressure : 0.0;
     }
 
-    bool MoverDieselEngineBackend::get_fuel_pump_active(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_fuel_pump_active() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->FuelPump.is_active : false;
     }
 
-    bool MoverDieselEngineBackend::get_fuel_pump_enabled(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_fuel_pump_enabled() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->FuelPump.is_enabled : false;
     }
 
-    bool MoverDieselEngineBackend::get_oil_pump_enabled(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_oil_pump_enabled() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->OilPump.is_enabled : false;
     }
 
-    bool MoverDieselEngineBackend::get_heat_malfunction(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_heat_malfunction() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_heat.PA : false;
     }
 
-    bool MoverDieselEngineBackend::get_fuel_pump_disabled(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_fuel_pump_disabled() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->FuelPump.is_disabled : false;
     }
 
-    bool MoverDieselEngineBackend::get_startup(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_startup() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_startup : false;
     }
 
-    bool MoverDieselEngineBackend::get_ignition(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_ignition() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_ignition : false;
     }
 
-    bool MoverDieselEngineBackend::get_spinup(const RailVehicleDieselEngine *p_engine) const {
+    bool MoverDieselEngineUnit::get_spinup() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_spinup : false;
     }
 
-    double MoverDieselEngineBackend::get_output_power(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_output_power() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_Power : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_torque(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_torque() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_Torque : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_fill(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_fill() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->dizel_fill : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_max_rpm(const RailVehicleDieselEngine *p_engine) const {
+    double MoverDieselEngineUnit::get_max_rpm() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineMaxRPM() : 0.0;
     }
 
-    void MoverDieselEngineBackend::apply_configuration(const RailVehicleDieselEngine *p_engine) const {
+    void MoverDieselEngineUnit::apply_configuration(const RailVehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
 
         // FIXME: test data
@@ -219,39 +219,36 @@ namespace godot {
         }
     }
 
-    void MoverDieselEngineBackend::fill_config(const RailVehicleDieselEngine *p_engine, Dictionary &p_config) const {
+    void MoverDieselEngineUnit::fill_config(Dictionary &p_config) const {
         TMoverParameters *p_mover = owner.get_mover();
         if (p_mover == nullptr) {
             return;
         }
-        p_config["engine_shake_enabled"] = true;
         // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it:
         // the one the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
         p_config["engine_idle_rpm_count"] =
                 p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
     }
 
-    void MoverDieselEngineBackend::oil_pump(const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
+    void MoverDieselEngineUnit::oil_pump(const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->OilPumpSwitch(p_enabled);
     }
 
-    void MoverDieselEngineBackend::fuel_pump(const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
+    void MoverDieselEngineUnit::fuel_pump(const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitch(p_enabled);
     }
 
-    void
-    MoverDieselEngineBackend::oil_pump_switch_off(const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
+    void MoverDieselEngineUnit::oil_pump_switch_off(const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->OilPumpSwitchOff(p_enabled);
     }
 
-    void MoverDieselEngineBackend::fuel_pump_switch_off(
-            const RailVehicleDieselEngine *p_engine, const bool p_enabled) const {
+    void MoverDieselEngineUnit::fuel_pump_switch_off(const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitchOff(p_enabled);

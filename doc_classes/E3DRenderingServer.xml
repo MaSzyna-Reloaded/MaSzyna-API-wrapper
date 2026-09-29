@@ -48,20 +48,6 @@
 				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
 			</description>
 		</method>
-		<method name="environment_set_wind_direction">
-			<return type="void" />
-			<param index="0" name="direction" type="Vector3" />
-			<description>
-				Direction the wind blows along, without touching its strength. Normalized by the server; horizontal today, but a vertical component needs no API change.
-			</description>
-		</method>
-		<method name="environment_set_wind_strength">
-			<return type="void" />
-			<param index="0" name="strength" type="float" />
-			<description>
-				Wind speed in metres per second, without touching its direction.
-			</description>
-		</method>
 		<method name="instance_attach_node">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />

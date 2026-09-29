@@ -43,7 +43,7 @@ namespace godot {
                 "", "get_resistor_fan_rotation");
     }
 
-    RailVehicleEngine::EngineType RailVehicleElectricSeriesEngine::get_engine_type() const {
+    RailVehicleEngine::EngineType RailVehicleElectricSeriesEngine::get_type() const {
         return RailVehicleEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 

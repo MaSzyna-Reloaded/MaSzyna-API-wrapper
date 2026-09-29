@@ -78,10 +78,6 @@ namespace godot {
             void _on_instance_freed(const RID &p_instance);
             void _on_instance_built(const RID &p_instance);
             void _set_light_state(const RID &p_signal_head, SignalHeadData &p_data, int p_light, LightState p_state);
-            /// The original's name tables let the newest entry win a duplicate name (Names.h:29)
-            static void
-            _rename(HashMap<StringName, RID> &p_names, const StringName &p_from, const StringName &p_to,
-                    const RID &p_rid);
 
         protected:
             static void _bind_methods();

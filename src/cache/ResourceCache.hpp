@@ -18,7 +18,6 @@ namespace godot {
 
         private:
             String cache_dir;
-            void _initialize(const String &p_cache_dir);
             String _get_hash_path(const String &p_path) const;
 
         protected:
@@ -27,7 +26,6 @@ namespace godot {
             void _clear_cache_dir(String p_path) const;
 
         public:
-            static const char *cache_cleared_signal;
             static Ref<ResourceCache> create(const String &p_cache_dir);
 
             bool has(const String &p_path, const String &p_hash = "") const;
@@ -35,7 +33,6 @@ namespace godot {
             void set(const String &p_path, const Ref<Resource> &p_resource, const String &p_hash = "") const;
             void remove(const String &p_path) const;
             void clear();
-            void emit_cache_cleared_signal();
             String get_cache_dir() const;
     };
 } // namespace godot

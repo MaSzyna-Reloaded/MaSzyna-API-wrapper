@@ -246,7 +246,7 @@ namespace godot {
                         settings->get_setting("maszyna/vehicles/lights_volumetric_fog_energy", 4.0));
                 spotlight->set_shadow(true);
                 spotlight->set_shadow_reverse_cull_face(
-                        settings->get_setting("maszyna/lights/reverse_cull_face", false));
+                        settings->get_setting(E3DLightFactory::LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, false));
                 spotlight->set_enable_distance_fade(true);
                 spotlight->set_distance_fade_begin(150.0);
                 spotlight->set_distance_fade_shadow(100.0);

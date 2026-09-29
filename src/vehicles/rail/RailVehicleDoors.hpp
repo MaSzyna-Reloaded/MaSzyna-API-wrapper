@@ -75,12 +75,9 @@ namespace godot {
                 CONTROLS_MIXED,
             };
             virtual void permit_step(bool p_state) = 0;
-            virtual void permit_doors(Side p_side, bool p_state) = 0;
-            virtual void permit_left_doors(bool p_state) = 0;
-            virtual void permit_right_doors(bool p_state) = 0;
-            virtual void operate_doors(Side p_side, bool p_state) = 0;
-            virtual void operate_left_doors(bool p_state) = 0;
-            virtual void operate_right_doors(bool p_state) = 0;
+            /* The side comes last, so a command binds it and takes the state (doors_left_permit) */
+            virtual void permit_doors(bool p_state, Side p_side) = 0;
+            virtual void operate_doors(bool p_state, Side p_side) = 0;
             virtual void door_lock(bool p_state) = 0;
             virtual void door_remote_control(bool p_state) = 0;
             virtual void next_permit_preset() = 0;

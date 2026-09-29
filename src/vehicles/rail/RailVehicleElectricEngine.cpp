@@ -1,5 +1,6 @@
+#include "RailVehicleCircuitUnit.hpp"
+#include "RailVehicleCurrentCollectorUnit.hpp"
 #include "RailVehicleElectricEngine.hpp"
-#include "RailVehicleElectricEngineBackend.hpp"
 #include "macros.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 
@@ -32,138 +33,140 @@ namespace godot {
             previous_pantograph_live[selector] = live[selector];
             previous_pantograph_active[selector] = active[selector];
         }
-        if (electric_backend != nullptr) {
-            electric_backend->meter_energy(this, p_delta);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->meter_energy(p_delta);
         }
     }
 
     double RailVehicleElectricEngine::get_collector_max_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_voltage() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_max_current() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_current(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_current() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_max_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_lifting(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_lifting() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_min_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_lifting(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_lifting() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_sliding_width() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_sliding_width(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_sliding_width() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_min_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_main_switch_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_main_switch_voltage() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_min_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_pantograph_tank_pressure(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_pantograph_tank_pressure() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_max_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_pantograph_tank_pressure(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_pantograph_tank_pressure() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_tank_pressure(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_tank_pressure() : 0.0;
     }
     bool RailVehicleElectricEngine::get_collector_pantograph_pressure_switch_armed() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_pressure_switch_armed(this)
-                                           : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_pressure_switch_armed()
+                                                 : false;
     }
     bool RailVehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_compressor_valve() : false;
     }
     bool RailVehicleElectricEngine::get_collector_pantograph_compressor_enabled() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_enabled(this)
-                                           : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_compressor_enabled() : false;
     }
     bool RailVehicleElectricEngine::get_collector_overvoltage_relay() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_overvoltage_relay() : false;
     }
     double RailVehicleElectricEngine::get_collector_required_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_required_main_switch_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_required_main_switch_voltage() : 0.0;
     }
     bool RailVehicleElectricEngine::get_collector_valve_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_valve_active(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_valve_active() : false;
     }
 
     bool RailVehicleElectricEngine::get_collector_valve_enabled() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_valve_enabled(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_valve_enabled() : false;
     }
     bool RailVehicleElectricEngine::get_collector_pantographs_dropped() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantographs_dropped() : false;
     }
     bool RailVehicleElectricEngine::get_collector_pantograph_first_valve_enabled() const {
-        return electric_backend != nullptr
-                       ? electric_backend->get_collector_pantograph_valve_enabled(this, PANTOGRAPH_FIRST)
+        return current_collector_unit != nullptr
+                       ? current_collector_unit->get_pantograph_valve_enabled(PANTOGRAPH_FIRST)
                        : false;
     }
 
     bool RailVehicleElectricEngine::get_collector_pantograph_second_valve_enabled() const {
-        return electric_backend != nullptr
-                       ? electric_backend->get_collector_pantograph_valve_enabled(this, PANTOGRAPH_SECOND)
+        return current_collector_unit != nullptr
+                       ? current_collector_unit->get_pantograph_valve_enabled(PANTOGRAPH_SECOND)
                        : false;
     }
 
     bool RailVehicleElectricEngine::get_collector_pantograph_first_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_first_active() : false;
     }
     double RailVehicleElectricEngine::get_collector_pantograph_first_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_first_voltage() : 0.0;
     }
     bool RailVehicleElectricEngine::get_collector_pantograph_second_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_active(this) : false;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_second_active() : false;
     }
     double RailVehicleElectricEngine::get_collector_pantograph_second_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_second_voltage() : 0.0;
     }
     double RailVehicleElectricEngine::get_collector_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_voltage() : 0.0;
     }
     double RailVehicleElectricEngine::get_energy_drawn() const {
-        return electric_backend != nullptr ? electric_backend->get_energy_drawn(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_energy_drawn() : 0.0;
     }
     double RailVehicleElectricEngine::get_energy_returned() const {
-        return electric_backend != nullptr ? electric_backend->get_energy_returned(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_energy_returned() : 0.0;
     }
     bool RailVehicleElectricEngine::get_contactors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_contactors_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_contactors_active() : false;
     }
     bool RailVehicleElectricEngine::get_diff_relay_active() const {
-        return electric_backend != nullptr ? electric_backend->get_diff_relay_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_diff_relay_active() : false;
     }
     bool RailVehicleElectricEngine::get_resistors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_resistors_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_resistors_active() : false;
     }
     bool RailVehicleElectricEngine::get_vent_overload_active() const {
-        return electric_backend != nullptr ? electric_backend->get_vent_overload_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_vent_overload_active() : false;
     }
     bool RailVehicleElectricEngine::get_highcurrent_active() const {
-        return electric_backend != nullptr ? electric_backend->get_highcurrent_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_highcurrent_active() : false;
     }
     bool RailVehicleElectricEngine::get_mainbreaker_active() const {
-        return electric_backend != nullptr ? electric_backend->get_mainbreaker_active(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_mainbreaker_active() : false;
     }
     double RailVehicleElectricEngine::get_transducer_input_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_transducer_input_voltage(this) : 0.0;
+        return current_collector_unit != nullptr ? current_collector_unit->get_transducer_input_voltage() : 0.0;
     }
     bool RailVehicleElectricEngine::get_camshaft_available() const {
-        return electric_backend != nullptr ? electric_backend->get_camshaft_available(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_camshaft_available() : false;
     }
     bool RailVehicleElectricEngine::get_converter_overload() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_overload(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_converter_overload() : false;
     }
     double RailVehicleElectricEngine::get_line_breaker_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_delay(this) : 0.0;
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_delay() : 0.0;
     }
     double RailVehicleElectricEngine::get_line_breaker_initial_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_initial_delay(this) : 0.0;
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_initial_delay() : 0.0;
     }
     bool RailVehicleElectricEngine::get_line_breaker_closes_at_no_power() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_closes_at_no_power(this) : false;
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_closes_at_no_power() : false;
     }
     void RailVehicleElectricEngine::_apply_configuration() {
         RailVehicleEngine::_apply_configuration();
-        if (electric_backend != nullptr) {
-            electric_backend->apply_configuration(this);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->apply_configuration(this);
+        }
+        if (circuit_unit != nullptr) {
+            circuit_unit->apply_configuration(this);
         }
     }
 
@@ -262,6 +265,13 @@ namespace godot {
                 RailVehicleElectricEngine, Variant::INT, cntrl_main_switch_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &RailVehicleElectricEngine::converter_fuse_reset);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"), &RailVehicleElectricEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"), &RailVehicleElectricEngine::is_pressure_switch_tripped);
+        ClassDB::bind_method(D_METHOD("fuse_reset"), &RailVehicleElectricEngine::fuse_reset);
+        ClassDB::bind_method(
+                D_METHOD("set_motor_connectors_open", "open"), &RailVehicleElectricEngine::set_motor_connectors_open);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &RailVehicleElectricEngine::pantographs_valve);
         ClassDB::bind_method(
                 D_METHOD("pantographs_drop_all", "enabled"), &RailVehicleElectricEngine::pantographs_drop_all);
@@ -658,77 +668,112 @@ namespace godot {
         p_state["transducer/input_voltage"] = get_transducer_input_voltage();
         if (has_power_cable()) {
             p_state["power_cable/source"] = get_power_cable_source();
-        }
-        if (has_power_cable()) {
             p_state["power_cable/steam_pressure"] = get_power_cable_steam_pressure();
         }
     }
 
 
+    double RailVehicleElectricEngine::get_motor_current() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_motor_current() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_circuit_imax() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_circuit_imax() : 0.0;
+    }
+
+    bool RailVehicleElectricEngine::get_dynamic_brake_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_dynamic_brake_active();
+    }
+
+    bool RailVehicleElectricEngine::get_fuse_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_fuse_active();
+    }
+
+    bool RailVehicleElectricEngine::get_motor_connectors_open() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_motor_connectors_open();
+    }
+
+    bool RailVehicleElectricEngine::is_line_contactor_closed() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_line_contactor_closed();
+    }
+
+    bool RailVehicleElectricEngine::is_pressure_switch_tripped() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_pressure_switch_tripped();
+    }
+
+    void RailVehicleElectricEngine::fuse_reset() {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->fuse_reset();
+        }
+    }
+
+    void RailVehicleElectricEngine::set_motor_connectors_open(const bool p_open) {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->set_motor_connectors_open(p_open);
+        }
+    }
+
     void RailVehicleElectricEngine::converter_fuse_reset() {
-        if (electric_backend != nullptr) {
-            electric_backend->converter_fuse_reset(this);
+        if (circuit_unit != nullptr) {
+            circuit_unit->converter_fuse_reset();
         }
     }
 
     void RailVehicleElectricEngine::pantographs_valve(const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantographs_valve(this, p_enabled);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_valve(p_enabled);
         }
     }
 
     void RailVehicleElectricEngine::pantographs_valve_operate(const ValveOperation p_operation) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantographs_valve_operate(this, p_operation);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_valve_operate(p_operation);
         }
     }
 
     void RailVehicleElectricEngine::pantographs_drop_all(const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantographs_drop_all(this, p_enabled);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_drop_all(p_enabled);
         }
     }
 
     void RailVehicleElectricEngine::pantograph_compressor(const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantograph_compressor(this, p_enabled);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_compressor(p_enabled);
         }
     }
 
     void RailVehicleElectricEngine::pantograph_compressor_valve(const bool p_to_compressor) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantograph_compressor_valve(this, p_to_compressor);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_compressor_valve(p_to_compressor);
         }
     }
 
     void RailVehicleElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantograph(this, p_selector, p_enabled);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph(p_selector, p_enabled);
         }
     }
 
     void RailVehicleElectricEngine::pantograph_valve_operate(
             const PantographSelector p_selector, const ValveOperation p_operation) {
-        if (electric_backend != nullptr) {
-            electric_backend->pantograph_valve_operate(this, p_selector, p_operation);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_valve_operate(p_selector, p_operation);
         }
     }
 
     void
     RailVehicleElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
-        if (p_selector == PANTOGRAPH_FIRST) {
-            pantograph_first_wire_voltage = p_voltage;
-        } else {
-            pantograph_second_wire_voltage = p_voltage;
-        }
-        if (electric_backend != nullptr) {
-            electric_backend->set_pantograph_wire_voltage(this, p_selector, p_voltage);
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->set_pantograph_wire_voltage(p_selector, p_voltage);
         }
     }
 
     void RailVehicleElectricEngine::_register_commands() {
         RailVehicleEngine::_register_commands();
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
+        register_command("fuse_reset", Callable(this, "fuse_reset"));
+        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
         register_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
         register_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
@@ -740,14 +785,16 @@ namespace godot {
 
     void RailVehicleElectricEngine::_unregister_commands() {
         RailVehicleEngine::_unregister_commands();
-        unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
-        unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
-        unregister_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
-        unregister_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
-        unregister_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
-        unregister_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
-        unregister_command("pantograph", Callable(this, "pantograph"));
-        unregister_command("pantograph_valve_operate", Callable(this, "pantograph_valve_operate"));
+        unregister_command("converter_fuse_reset");
+        unregister_command("fuse_reset");
+        unregister_command("motor_connectors_open");
+        unregister_command("pantographs_valve");
+        unregister_command("pantographs_valve_operate");
+        unregister_command("pantographs_drop_all");
+        unregister_command("pantograph_compressor");
+        unregister_command("pantograph_compressor_valve");
+        unregister_command("pantograph");
+        unregister_command("pantograph_valve_operate");
     }
 
 

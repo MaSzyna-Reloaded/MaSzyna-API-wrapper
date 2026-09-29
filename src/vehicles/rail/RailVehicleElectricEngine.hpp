@@ -2,18 +2,22 @@
 #include "RailVehicleEngine.hpp"
 #include "macros.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleTractionMotorsUnit.hpp"
 
 namespace godot {
     class VehicleController;
-    class RailVehicleElectricEngineBackend;
+    class RailVehicleCurrentCollectorUnit;
+    class RailVehicleCircuitUnit;
 
     class RailVehicleElectricEngine : public RailVehicleEngine {
             GDCLASS(RailVehicleElectricEngine, RailVehicleEngine)
 
 
         protected:
-            /* The simulation answering these values, installed by the implementation that owns it */
-            const RailVehicleElectricEngineBackend *electric_backend = nullptr;
+            /* The units the engine is composed of, installed by the implementation that owns them */
+            const RailVehicleCurrentCollectorUnit *current_collector_unit = nullptr;
+            const RailVehicleCircuitUnit *circuit_unit = nullptr;
+            const RailVehicleTractionMotorsUnit *traction_motors_unit = nullptr;
 
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
@@ -32,24 +36,19 @@ namespace godot {
             double get_line_breaker_initial_delay() const;
             bool get_line_breaker_closes_at_no_power() const;
 
-            /* Electric traction motors; a diesel-electric declares the same five
-             * and forwards to the same delegate (VehicleElectricTraction.hpp) */
-            virtual double get_motor_current() const = 0;
-            virtual double get_circuit_imax() const = 0;
-            virtual bool get_dynamic_brake_active() const = 0;
-            virtual bool get_fuse_active() const = 0;
-            virtual bool get_motor_connectors_open() const = 0;
-            /* The line contactors are closed (StLinFlag); the control pressure switch tripped - the
-             * brake cylinder or pipe pressure is out of its working range (ControlPressureSwitch,
-             * Mover.cpp:7177) */
-            virtual bool is_line_contactor_closed() const = 0;
-            virtual bool is_pressure_switch_tripped() const = 0;
+            /* The traction motors (RailVehicleTractionMotorsUnit) */
+            double get_motor_current() const;
+            double get_circuit_imax() const;
+            bool get_dynamic_brake_active() const;
+            bool get_fuse_active() const;
+            bool get_motor_connectors_open() const;
+            bool is_line_contactor_closed() const;
+            bool is_pressure_switch_tripped() const;
+            /* "zbij nadmiarowy" and the line contactors */
+            void fuse_reset();
+            void set_motor_connectors_open(bool p_open);
 
-            /* Traction commands - "zbij nadmiarowy" and the line contactors */
-            virtual void fuse_reset() = 0;
-            virtual void set_motor_connectors_open(bool p_open) = 0;
-
-            /* Live state, read straight from the backend - nothing is stored. */
+            /* Live state, read straight from the engine's units - nothing is stored. */
             double get_collector_max_voltage() const;
             double get_collector_max_current() const;
             double get_collector_max_lifting() const;
@@ -157,34 +156,28 @@ namespace godot {
 
             /* Cntrl. (elektryczne) */
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_converter_overload_relay_start_mode,
-                    RailVehicleEngine::START_MODE_MANUAL);
+                    RailVehicleController::StartMode, cntrl_converter_overload_relay_start_mode,
+                    RailVehicleController::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_converter_overload_relay_off_when_main_is_off, false);
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantograph_compressor_start_mode,
-                    RailVehicleEngine::START_MODE_MANUAL);
+                    RailVehicleController::StartMode, cntrl_pantograph_compressor_start_mode,
+                    RailVehicleController::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_auto_valve, false);
             /* The pantographs' valves (LoadFIZ_Cntrl, Mover.cpp:10927-10946): the master valve of
              * them all opens by itself unless the FIZ says otherwise - "there was no pantographs
              * valve" in older vehicles - while each pantograph's own valve is worked by hand */
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantographs_valve_start_mode,
-                    RailVehicleEngine::START_MODE_AUTOMATIC);
+                    RailVehicleController::StartMode, cntrl_pantographs_valve_start_mode,
+                    RailVehicleController::START_MODE_AUTOMATIC);
             MAKE_MEMBER_GS(bool, cntrl_pantographs_valve_spring, true);
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_pantograph_valve_start_mode,
-                    RailVehicleEngine::START_MODE_MANUAL);
+                    RailVehicleController::StartMode, cntrl_pantograph_valve_start_mode,
+                    RailVehicleController::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_spring, true);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_solenoid, true);
             MAKE_MEMBER_GS_NR(
-                    RailVehicleEngine::StartMode, cntrl_main_switch_start_mode, RailVehicleEngine::START_MODE_MANUAL);
-
-            /* Voltage of the overhead wire each pantograph is currently touching, fed in once
-             * per frame from outside (RailVehicle3D's own geometric wire lookup against
-             * TractionServer - the simulation has no scenery/geometry access of its own).
-             * 0.0 (the default) means "not touching a wire", same as a lowered pantograph. */
-            float pantograph_first_wire_voltage = 0.0f;
-            float pantograph_second_wire_voltage = 0.0f;
+                    RailVehicleController::StartMode, cntrl_main_switch_start_mode,
+                    RailVehicleController::START_MODE_MANUAL);
 
             static const char *pantograph_up_signal;
             static const char *pantograph_down_signal;
@@ -201,6 +194,8 @@ namespace godot {
             /* One pantograph's own valve, as the cab operates it (OnCommand_pantographraisefront/
              * lowerfront, Train.cpp:3218-3300) - unlike pantograph(), it leaves the master valve alone */
             void pantograph_valve_operate(PantographSelector p_selector, ValveOperation p_operation);
+            /* Voltage of the overhead wire the pantograph is touching, fed in from outside
+             * (RailVehicle3D's wire lookup against TractionServer); 0.0 means "not touching a wire" */
             void set_pantograph_wire_voltage(PantographSelector p_selector, float p_voltage);
             void _register_commands() override;
             void _unregister_commands() override;

@@ -15,15 +15,6 @@
 				Writes this component's configuration into the simulation of its [VehicleController].
 			</description>
 		</method>
-		<method name="broadcast_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Broadcast command to all trains (including the train, which part belongs to)
-			</description>
-		</method>
 		<method name="emit_config_changed_signal">
 			<return type="void" />
 			<description>
@@ -112,7 +103,6 @@
 		<method name="unregister_command">
 			<return type="void" />
 			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
 			<description>
 				Removes a command from the vehicle this component belongs to. See [method VehicleController.unregister_command].
 			</description>

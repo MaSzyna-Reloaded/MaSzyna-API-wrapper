@@ -12,8 +12,6 @@
 
 namespace godot {
 
-    const char *ResourceCache::cache_cleared_signal = "cache_cleared";
-
     void ResourceCache::_bind_methods() {
         ClassDB::bind_static_method("ResourceCache", D_METHOD("create", "cache_dir"), &ResourceCache::create);
         ClassDB::bind_method(D_METHOD("has", "path", "hash"), &ResourceCache::has, DEFVAL(""));
@@ -30,8 +28,10 @@ namespace godot {
                 "", "get_cache_dir");
     }
 
-    void ResourceCache::_initialize(const String &p_cache_dir) {
-        cache_dir = p_cache_dir;
+    Ref<ResourceCache> ResourceCache::create(const String &p_cache_dir) {
+        Ref<ResourceCache> cache;
+        cache.instantiate();
+        cache->cache_dir = p_cache_dir;
 
         // Every cache follows the one "throw the caches away" request, so a new cache is covered
         // by "Clear cache" and by a build change without its owner having to remember it.
@@ -39,14 +39,9 @@ namespace godot {
         if (runtime != nullptr) {
             // No explicit disconnect: callable_mp reports this instance as the callable's object,
             // so the engine drops the connection when the instance dies.
-            runtime->connect(SimulationServer::cache_clear_requested_signal, callable_mp(this, &ResourceCache::clear));
+            runtime->connect(
+                    SimulationServer::cache_clear_requested_signal, callable_mp(cache.ptr(), &ResourceCache::clear));
         }
-    }
-
-    Ref<ResourceCache> ResourceCache::create(const String &p_cache_dir) {
-        Ref<ResourceCache> cache;
-        cache.instantiate();
-        cache->_initialize(p_cache_dir);
         return cache;
     }
 
@@ -158,11 +153,6 @@ namespace godot {
 
     void ResourceCache::clear() {
         _clear_cache_dir(String(RESOURCE_CACHE_DIR_PREFIX).path_join(cache_dir));
-        emit_cache_cleared_signal();
-    }
-
-    void ResourceCache::emit_cache_cleared_signal() {
-        emit_signal(cache_cleared_signal);
     }
 
     String ResourceCache::get_cache_dir() const {

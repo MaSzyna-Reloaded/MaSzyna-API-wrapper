@@ -81,13 +81,6 @@ namespace godot {
                 BRAKE_METHOD_FR510,
                 BRAKE_METHOD_D1MG,
             };
-            enum BrakeHandlePosition {
-                BRAKE_HANDLE_POSITION_MIN = 0,
-                BRAKE_HANDLE_POSITION_MAX = 1,
-                BRAKE_HANDLE_POSITION_DRIVE = 2,
-                BRAKE_HANDLE_POSITION_FULL = 3,
-                BRAKE_HANDLE_POSITION_EMERGENCY = 4,
-            };
             enum CompressorPower {
                 COMPRESSOR_POWER_MAIN = 0,
                 COMPRESSOR_POWER_UNUSED = 1,
@@ -287,8 +280,8 @@ namespace godot {
              * the control line to the vehicles that carry one */
             virtual void compressor(bool p_enabled) = 0;
             virtual void brake_level_set(double p_level) = 0;
-            virtual void brake_level_set_position(BrakeHandlePosition p_position) = 0;
-            virtual void brake_level_set_position_str(const String &p_position) = 0;
+            /* A named handle position - "min", "max", "drive", "full", "emergency" */
+            virtual void brake_level_set_position(const String &p_position) = 0;
             virtual void brake_level_increase() = 0;
             virtual void brake_level_decrease() = 0;
             virtual void local_brake_set(double p_level) = 0;
@@ -313,7 +306,6 @@ namespace godot {
 } // namespace godot
 VARIANT_ENUM_CAST(RailVehicleBrake::CompressorPower)
 VARIANT_ENUM_CAST(RailVehicleBrake::TrainBrakeValve)
-VARIANT_ENUM_CAST(RailVehicleBrake::BrakeHandlePosition)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeMethod)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeHandleType)
 VARIANT_ENUM_CAST(RailVehicleBrake::LocalBrakeType)

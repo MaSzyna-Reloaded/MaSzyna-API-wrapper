@@ -34,7 +34,6 @@ func test_defaults():
     assert_eq((engine.throttle_table_positions as Array).size(), 0)
     assert_eq(engine.torque_table.size(), 0)
     assert_eq((engine.torque_converter_table as Array).size(), 0)
-    assert_true(train.config.get("engine_shake_enabled", false))
 
 func test_mechanical_and_torque_converter_round_trip():
     engine.mechanical_min_rpm = 600.0

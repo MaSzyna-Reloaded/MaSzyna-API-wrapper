@@ -36,7 +36,7 @@ namespace godot {
                 "RailVehicleWWListItem");
     }
 
-    RailVehicleEngine::EngineType RailVehicleElectricInductionEngine::get_engine_type() const {
+    RailVehicleEngine::EngineType RailVehicleElectricInductionEngine::get_type() const {
         return RailVehicleEngine::EngineType::ELECTRIC_INDUCTION_MOTOR;
     }
 

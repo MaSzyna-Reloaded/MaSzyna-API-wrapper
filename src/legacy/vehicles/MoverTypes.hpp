@@ -9,19 +9,6 @@
  * include this; the interfaces name no Mover type. */
 
 namespace godot {
-    inline Maszyna::start_t mover_start_mode(const RailVehicleEngine::StartMode p_mode) {
-        static const std::map<RailVehicleEngine::StartMode, Maszyna::start_t> map = {
-                {RailVehicleEngine::START_MODE_DISABLED, Maszyna::start_t::disabled},
-                {RailVehicleEngine::START_MODE_MANUAL, Maszyna::start_t::manual},
-                {RailVehicleEngine::START_MODE_AUTOMATIC, Maszyna::start_t::automatic},
-                {RailVehicleEngine::START_MODE_MANUAL_WITH_AUTO_FALLBACK, Maszyna::start_t::manualwithautofallback},
-                {RailVehicleEngine::START_MODE_CONVERTER, Maszyna::start_t::converter},
-                {RailVehicleEngine::START_MODE_BATTERY, Maszyna::start_t::battery},
-                {RailVehicleEngine::START_MODE_DIRECTION, Maszyna::start_t::direction},
-        };
-        return map.at(p_mode);
-    }
-
     inline Maszyna::start_t mover_start_mode(const RailVehicleController::StartMode p_mode) {
         static const std::map<RailVehicleController::StartMode, Maszyna::start_t> map = {
                 {RailVehicleController::START_MODE_DISABLED, Maszyna::start_t::disabled},

@@ -1,6 +1,7 @@
 #include "../macros.hpp"
 #include "SignallingServer.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
+#include "utils/Names.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -155,20 +156,6 @@ namespace godot {
         signal_head_free(*signal_head);
     }
 
-    void SignallingServer::_rename(
-            HashMap<StringName, RID> &p_names, const StringName &p_from, const StringName &p_to, const RID &p_rid) {
-        if (const RID *named = p_names.getptr(p_from); named != nullptr && *named == p_rid) {
-            p_names.erase(p_from);
-        }
-        if (p_to.is_empty()) {
-            return;
-        }
-        if (p_names.has(p_to)) {
-            UtilityFunctions::push_warning("Duplicate name, the last one wins: " + String(p_to));
-        }
-        p_names.insert(p_to, p_rid);
-    }
-
     // --- signal head ---
 
     RID SignallingServer::signal_head_create(const RID &p_instance) {
@@ -194,7 +181,7 @@ namespace godot {
         signal_heads.erase(p_signal_head);
         signal_heads_by_instance.erase(freed.instance);
         if (!freed.name.is_empty()) {
-            _rename(signal_heads_by_name, freed.name, StringName(), p_signal_head);
+            names_rename(signal_heads_by_name, freed.name, StringName(), p_signal_head);
             emit_signal(signal_head_unregistered_signal, p_signal_head, freed.name);
         }
     }
@@ -209,7 +196,7 @@ namespace godot {
             return;
         }
         data->name = p_name;
-        _rename(signal_heads_by_name, previous, p_name, p_signal_head);
+        names_rename(signal_heads_by_name, previous, p_name, p_signal_head);
         if (!previous.is_empty()) {
             emit_signal(signal_head_unregistered_signal, p_signal_head, previous);
         }
@@ -379,7 +366,7 @@ namespace godot {
         system_attach_delegate(p_system, Ref<SignallingSystemDelegate>());
         const SystemData freed = *systems.getptr(p_system);
         systems.erase(p_system);
-        _rename(systems_by_name, freed.name, StringName(), p_system);
+        names_rename(systems_by_name, freed.name, StringName(), p_system);
         for (const RID &signal_head_rid: freed.signal_heads) {
             if (SignalHeadData *signal_head = signal_heads.getptr(signal_head_rid); signal_head != nullptr) {
                 signal_head->system = RID();
@@ -429,7 +416,7 @@ namespace godot {
         ERR_FAIL_NULL(system);
         const StringName previous = system->name;
         system->name = p_name;
-        _rename(systems_by_name, previous, p_name, p_system);
+        names_rename(systems_by_name, previous, p_name, p_system);
     }
 
     StringName SignallingServer::system_get_name(const RID &p_system) const {
@@ -551,7 +538,7 @@ namespace godot {
         }
         const StringName name = sources.getptr(p_source)->name;
         sources.erase(p_source);
-        _rename(sources_by_name, name, StringName(), p_source);
+        names_rename(sources_by_name, name, StringName(), p_source);
     }
 
     void SignallingServer::source_set_name(const RID &p_source, const StringName &p_name) {
@@ -559,7 +546,7 @@ namespace godot {
         ERR_FAIL_NULL(source);
         const StringName previous = source->name;
         source->name = p_name;
-        _rename(sources_by_name, previous, p_name, p_source);
+        names_rename(sources_by_name, previous, p_name, p_source);
     }
 
     StringName SignallingServer::source_get_name(const RID &p_source) const {

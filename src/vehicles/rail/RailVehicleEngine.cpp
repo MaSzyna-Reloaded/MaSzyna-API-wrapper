@@ -6,62 +6,62 @@
 namespace godot {
     class VehicleController;
     bool RailVehicleEngine::get_main_switch_enabled() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_enabled(this) : false;
+        return drive_unit != nullptr ? drive_unit->get_main_switch_enabled() : false;
     }
     bool RailVehicleEngine::get_main_switch_closable() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_closable(this) : false;
+        return drive_unit != nullptr ? drive_unit->get_main_switch_closable() : false;
     }
     double RailVehicleEngine::get_motor_torque() const {
-        return engine_backend != nullptr ? engine_backend->get_motor_torque(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_motor_torque() : 0.0;
     }
     double RailVehicleEngine::get_wheel_torque() const {
-        return engine_backend != nullptr ? engine_backend->get_wheel_torque(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_wheel_torque() : 0.0;
     }
     double RailVehicleEngine::get_wheel_force() const {
-        return engine_backend != nullptr ? engine_backend->get_wheel_force(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_wheel_force() : 0.0;
     }
     double RailVehicleEngine::get_tractive_force() const {
-        return engine_backend != nullptr ? engine_backend->get_tractive_force(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_tractive_force() : 0.0;
     }
     double RailVehicleEngine::get_power() const {
-        return engine_backend != nullptr ? engine_backend->get_power(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_power() : 0.0;
     }
     double RailVehicleEngine::get_rpm_count() const {
-        return engine_backend != nullptr ? engine_backend->get_rpm_count(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_rpm_count() : 0.0;
     }
     double RailVehicleEngine::get_rpm_ratio() const {
-        return engine_backend != nullptr ? engine_backend->get_rpm_ratio(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_rpm_ratio() : 0.0;
     }
     double RailVehicleEngine::get_circuit_nmax_rpm() const {
-        return engine_backend != nullptr ? engine_backend->get_circuit_nmax_rpm(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_circuit_nmax_rpm() : 0.0;
     }
     int RailVehicleEngine::get_damage() const {
-        return engine_backend != nullptr ? engine_backend->get_damage(this) : 0;
+        return drive_unit != nullptr ? drive_unit->get_damage() : 0;
     }
     double RailVehicleEngine::get_main_switch_time() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_time(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_main_switch_time() : 0.0;
     }
     bool RailVehicleEngine::get_main_no_power_pos() const {
-        return engine_backend != nullptr ? engine_backend->get_main_no_power_pos(this) : false;
+        return drive_unit != nullptr ? drive_unit->get_main_no_power_pos() : false;
     }
 
     double RailVehicleEngine::get_eimic_real() const {
-        return engine_backend != nullptr ? engine_backend->get_eimic_real(this) : 0.0;
+        return drive_unit != nullptr ? drive_unit->get_eimic_real() : 0.0;
     }
 
     bool RailVehicleEngine::get_motor_overload_relay_high_threshold() const {
-        return engine_backend != nullptr ? engine_backend->get_motor_overload_relay_high_threshold(this) : false;
+        return drive_unit != nullptr ? drive_unit->get_motor_overload_relay_high_threshold() : false;
     }
     void RailVehicleEngine::_apply_configuration() {
         VehicleComponent::_apply_configuration();
-        if (engine_backend != nullptr) {
-            engine_backend->apply_configuration(this);
+        if (drive_unit != nullptr) {
+            drive_unit->apply_configuration(this);
         }
     }
     void RailVehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleComponent::_fill_config_dictionary(p_config);
-        if (engine_backend != nullptr) {
-            engine_backend->fill_config(this, p_config);
+        if (drive_unit != nullptr) {
+            drive_unit->fill_config(p_config);
         }
     }
 
@@ -106,13 +106,6 @@ namespace godot {
         BIND_ENUM_CONSTANT(DIESEL_ELECTRIC);
         BIND_ENUM_CONSTANT(MAIN);
 
-        BIND_ENUM_CONSTANT(START_MODE_DISABLED);
-        BIND_ENUM_CONSTANT(START_MODE_MANUAL);
-        BIND_ENUM_CONSTANT(START_MODE_AUTOMATIC);
-        BIND_ENUM_CONSTANT(START_MODE_MANUAL_WITH_AUTO_FALLBACK);
-        BIND_ENUM_CONSTANT(START_MODE_CONVERTER);
-        BIND_ENUM_CONSTANT(START_MODE_BATTERY);
-        BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
 
         BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_0);
         BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_1);
@@ -227,8 +220,8 @@ namespace godot {
     // used to be compared against the state dictionary while that dictionary was being filled,
     // so the signal fired on a read rather than on a change.
     void RailVehicleEngine::_do_process_component(const double p_delta) {
-        if (engine_backend != nullptr) {
-            engine_backend->process(this, p_delta);
+        if (drive_unit != nullptr) {
+            drive_unit->process(this, p_delta);
         }
         const bool main_switch_enabled = get_main_switch_enabled();
         if (previous_main_switch == main_switch_enabled) {
@@ -238,10 +231,6 @@ namespace godot {
         emit_signal(previous_main_switch ? "engine_start" : "engine_stop");
     }
 
-
-    int RailVehicleEngine::get_type() const {
-        return get_engine_type();
-    }
 
     void RailVehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {
         if (!is_simulation_ready()) {
@@ -266,11 +255,11 @@ namespace godot {
     }
 
     bool RailVehicleEngine::main_switch(const bool p_enabled) {
-        return engine_backend != nullptr ? engine_backend->main_switch(this, p_enabled) : false;
+        return drive_unit != nullptr ? drive_unit->main_switch(p_enabled) : false;
     }
 
     bool RailVehicleEngine::motor_overload_relay_threshold(const bool p_high) {
-        return engine_backend != nullptr ? engine_backend->motor_overload_relay_threshold(this, p_high) : false;
+        return drive_unit != nullptr ? drive_unit->motor_overload_relay_threshold(p_high) : false;
     }
 
 
@@ -280,7 +269,7 @@ namespace godot {
     }
 
     void RailVehicleEngine::_unregister_commands() {
-        unregister_command("main_switch", Callable(this, "main_switch"));
-        unregister_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
+        unregister_command("main_switch");
+        unregister_command("motor_overload_relay_threshold");
     }
 } // namespace godot

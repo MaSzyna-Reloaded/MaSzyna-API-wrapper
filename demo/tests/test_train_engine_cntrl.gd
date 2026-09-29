@@ -13,10 +13,10 @@ func before_each():
 func test_defaults():
     assert_eq(engine.cntrl_auto_relay_mode, RailVehicleEngine.AUTO_RELAY_NO)
     assert_false(engine.cntrl_has_camshaft)
-    assert_eq(engine.motor_blowers_start_mode, RailVehicleEngine.START_MODE_MANUAL)
-    assert_eq(engine.fuel_pump_start_mode, RailVehicleEngine.START_MODE_MANUAL)
-    assert_eq(engine.oil_pump_start_mode, RailVehicleEngine.START_MODE_MANUAL)
-    assert_eq(engine.water_pump_start_mode, RailVehicleEngine.START_MODE_MANUAL)
+    assert_eq(engine.motor_blowers_start_mode, RailVehicleController.START_MODE_MANUAL)
+    assert_eq(engine.fuel_pump_start_mode, RailVehicleController.START_MODE_MANUAL)
+    assert_eq(engine.oil_pump_start_mode, RailVehicleController.START_MODE_MANUAL)
+    assert_eq(engine.water_pump_start_mode, RailVehicleController.START_MODE_MANUAL)
 
 func test_round_trip_and_update_without_crashing():
     engine.cntrl_eim_control_additional_zeros = true
@@ -26,14 +26,14 @@ func test_round_trip_and_update_without_crashing():
     engine.cntrl_has_camshaft = true
     engine.cntrl_series_shunt_on_series_position = true
     engine.cntrl_fast_series_circuit = true
-    engine.fuel_pump_start_mode = RailVehicleEngine.START_MODE_AUTOMATIC
-    engine.oil_pump_start_mode = RailVehicleEngine.START_MODE_AUTOMATIC
-    engine.water_pump_start_mode = RailVehicleEngine.START_MODE_BATTERY
+    engine.fuel_pump_start_mode = RailVehicleController.START_MODE_AUTOMATIC
+    engine.oil_pump_start_mode = RailVehicleController.START_MODE_AUTOMATIC
+    engine.water_pump_start_mode = RailVehicleController.START_MODE_BATTERY
     await wait_idle_frames(2)
 
     assert_eq(engine.cntrl_auto_relay_mode, RailVehicleEngine.AUTO_RELAY_YES)
     assert_true(engine.cntrl_has_camshaft)
-    assert_eq(engine.fuel_pump_start_mode, RailVehicleEngine.START_MODE_AUTOMATIC)
+    assert_eq(engine.fuel_pump_start_mode, RailVehicleController.START_MODE_AUTOMATIC)
     assert_true(train.state.has("main_switch_enabled"), "RailVehicleEngine should keep functioning after configuring the Cntrl. section")
 
 
@@ -56,4 +56,4 @@ func test_master_controller_positions_reach_the_vehicle_config():
 
 func test_cntrl_oil_start_is_applied_to_diesel_engine():
     FizTrainEngineCommon.apply_cntrl_engine_subset(engine, {"OilStart": "Automatic"})
-    assert_eq(engine.oil_pump_start_mode, RailVehicleEngine.START_MODE_AUTOMATIC)
+    assert_eq(engine.oil_pump_start_mode, RailVehicleController.START_MODE_AUTOMATIC)

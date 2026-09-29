@@ -97,6 +97,9 @@ namespace godot {
             /// time to pass holds it while it does, and lets it go
             void clock_hold();
             void clock_release();
+            /// Holds the clock and receives every `simulation_advanced` slice until unsubscribed
+            void clock_subscribe(const Callable &p_on_advanced);
+            void clock_unsubscribe(const Callable &p_on_advanced);
             /// One frame of the clock, `p_frame_delta` real seconds (Timer::UpdateTimers(),
             /// Timer.cpp:79-87): at most MAX_FRAME_DELTA of it, times the simulation speed, in
             /// slices of at most MAX_SLICE_TIME - each added to the simulation time and the time

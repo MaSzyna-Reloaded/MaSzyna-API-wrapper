@@ -37,10 +37,6 @@ namespace godot {
                 DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("get_commands"), &VehicleController::get_commands);
 
-        ClassDB::bind_method(
-                D_METHOD("broadcast_command", "command", "p1", "p2"), &VehicleController::broadcast_command,
-                DEFVAL(Variant()), DEFVAL(Variant()));
-
 
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleController::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleController::unregister_command);
@@ -360,12 +356,6 @@ namespace godot {
 
     uint64_t VehicleController::get_command_serial() const {
         return command_serial;
-    }
-
-    void VehicleController::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
-            server->vehicle_broadcast_command(p_command, p_p1, p_p2);
-        }
     }
 
     /* A handler takes as many of the two arguments as it declares; its return value says whether

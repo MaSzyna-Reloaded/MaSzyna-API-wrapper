@@ -17,24 +17,7 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_vehicle_state">
-			<return type="Dictionary" />
-			<description>
-			</description>
-		</method>
 		<method name="log_debug">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
-			<description>
-			</description>
-		</method>
-		<method name="log_error">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
-			<description>
-			</description>
-		</method>
-		<method name="log_info">
 			<return type="void" />
 			<param index="0" name="line" type="String" />
 			<description>
@@ -53,18 +36,9 @@
 			<description>
 			</description>
 		</method>
-		<method name="send_command">
-			<return type="Variant" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-			</description>
-		</method>
 		<method name="unregister_command">
 			<return type="void" />
 			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
 			<description>
 			</description>
 		</method>

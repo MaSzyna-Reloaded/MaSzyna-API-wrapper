@@ -1,6 +1,7 @@
 #pragma once
 #include "RailVehicleDieselEngine.hpp"
 #include "macros.hpp"
+#include "vehicles/rail/RailVehicleTractionMotorsUnit.hpp"
 #include "vehicles/rail/RailVehicleWWListItem.hpp"
 
 namespace godot {
@@ -8,18 +9,17 @@ namespace godot {
             GDCLASS(RailVehicleDieselElectricEngine, RailVehicleDieselEngine)
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
-            virtual double get_motor_current() const = 0;
-            virtual double get_circuit_imax() const = 0;
-            virtual bool get_dynamic_brake_active() const = 0;
-            virtual bool get_fuse_active() const = 0;
-            virtual bool get_motor_connectors_open() const = 0;
-            /* The line contactors are closed (StLinFlag); the control pressure switch tripped - the
-             * brake cylinder or pipe pressure is out of its working range (ControlPressureSwitch,
-             * Mover.cpp:7177) */
-            virtual bool is_line_contactor_closed() const = 0;
-            virtual bool is_pressure_switch_tripped() const = 0;
-            virtual void fuse_reset() = 0;
-            virtual void set_motor_connectors_open(bool p_open) = 0;
+            /* The traction motors (RailVehicleTractionMotorsUnit) */
+            double get_motor_current() const;
+            double get_circuit_imax() const;
+            bool get_dynamic_brake_active() const;
+            bool get_fuse_active() const;
+            bool get_motor_connectors_open() const;
+            bool is_line_contactor_closed() const;
+            bool is_pressure_switch_tripped() const;
+            /* "zbij nadmiarowy" and the line contactors */
+            void fuse_reset();
+            void set_motor_connectors_open(bool p_open);
 
         private:
             static void _bind_methods();
@@ -36,7 +36,12 @@ namespace godot {
             MAKE_MEMBER_GS(double, heating_rpm, 0.0);
 
         protected:
-            RailVehicleEngine::EngineType get_engine_type() const override;
+            /* The traction motors driven by the generator, installed by the implementation that owns them */
+            const RailVehicleTractionMotorsUnit *traction_motors_unit = nullptr;
+
+            RailVehicleEngine::EngineType get_type() const override;
+            void _register_commands() override;
+            void _unregister_commands() override;
 
         public:
             TypedArray<RailVehicleWWListItem> get_wwlist() {

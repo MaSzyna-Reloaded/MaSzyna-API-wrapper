@@ -14,12 +14,27 @@
 			<description>
 			</description>
 		</method>
+		<method name="fuse_reset">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="has_accumulator" qualifiers="const">
 			<return type="bool" />
 			<description>
 			</description>
 		</method>
 		<method name="has_power_cable" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_line_contactor_closed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_pressure_switch_tripped" qualifiers="const">
 			<return type="bool" />
 			<description>
 			</description>
@@ -65,6 +80,12 @@
 		<method name="pantographs_valve_operate">
 			<return type="void" />
 			<param index="0" name="operation" type="int" enum="RailVehicleElectricEngine.ValveOperation" />
+			<description>
+			</description>
+		</method>
+		<method name="set_motor_connectors_open">
+			<return type="void" />
+			<param index="0" name="open" type="bool" />
 			<description>
 			</description>
 		</method>
@@ -137,27 +158,27 @@
 		<member name="cntrl_converter_overload_relay_off_when_main_is_off" type="bool" setter="set_cntrl_converter_overload_relay_off_when_main_is_off" getter="get_cntrl_converter_overload_relay_off_when_main_is_off">
 			[code]Cntrl.ConverterOverloadWhenMainIsOff[/code]
 		</member>
-		<member name="cntrl_converter_overload_relay_start_mode" type="int" setter="set_cntrl_converter_overload_relay_start_mode" getter="get_cntrl_converter_overload_relay_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="cntrl_converter_overload_relay_start_mode" type="int" setter="set_cntrl_converter_overload_relay_start_mode" getter="get_cntrl_converter_overload_relay_start_mode" enum="RailVehicleController.StartMode">
 			[code]Cntrl.ConverterOverloadRelayStart[/code]
 		</member>
-		<member name="cntrl_main_switch_start_mode" type="int" setter="set_cntrl_main_switch_start_mode" getter="get_cntrl_main_switch_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="cntrl_main_switch_start_mode" type="int" setter="set_cntrl_main_switch_start_mode" getter="get_cntrl_main_switch_start_mode" enum="RailVehicleController.StartMode">
 			[code]Cntrl.MainStart[/code]
 		</member>
 		<member name="cntrl_pantograph_auto_valve" type="bool" setter="set_cntrl_pantograph_auto_valve" getter="get_cntrl_pantograph_auto_valve">
 			[code]Cntrl.PantAutoValve[/code]
 		</member>
-		<member name="cntrl_pantograph_compressor_start_mode" type="int" setter="set_cntrl_pantograph_compressor_start_mode" getter="get_cntrl_pantograph_compressor_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="cntrl_pantograph_compressor_start_mode" type="int" setter="set_cntrl_pantograph_compressor_start_mode" getter="get_cntrl_pantograph_compressor_start_mode" enum="RailVehicleController.StartMode">
 			[code]Cntrl.PantCompressorStart[/code]
 		</member>
 		<member name="cntrl_pantograph_valve_solenoid" type="bool" setter="set_cntrl_pantograph_valve_solenoid" getter="get_cntrl_pantograph_valve_solenoid">
 		</member>
 		<member name="cntrl_pantograph_valve_spring" type="bool" setter="set_cntrl_pantograph_valve_spring" getter="get_cntrl_pantograph_valve_spring">
 		</member>
-		<member name="cntrl_pantograph_valve_start_mode" type="int" setter="set_cntrl_pantograph_valve_start_mode" getter="get_cntrl_pantograph_valve_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="cntrl_pantograph_valve_start_mode" type="int" setter="set_cntrl_pantograph_valve_start_mode" getter="get_cntrl_pantograph_valve_start_mode" enum="RailVehicleController.StartMode">
 		</member>
 		<member name="cntrl_pantographs_valve_spring" type="bool" setter="set_cntrl_pantographs_valve_spring" getter="get_cntrl_pantographs_valve_spring">
 		</member>
-		<member name="cntrl_pantographs_valve_start_mode" type="int" setter="set_cntrl_pantographs_valve_start_mode" getter="get_cntrl_pantographs_valve_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="cntrl_pantographs_valve_start_mode" type="int" setter="set_cntrl_pantographs_valve_start_mode" getter="get_cntrl_pantographs_valve_start_mode" enum="RailVehicleController.StartMode">
 		</member>
 		<member name="collector_max_current" type="float" setter="" getter="get_collector_max_current">
 		</member>
@@ -240,6 +261,9 @@
 		<member name="power_cable_steam_pressure" type="float" setter="set_power_cable_steam_pressure" getter="get_power_cable_steam_pressure">
 			Steam pressure in the power cable. Applies only when the energy source for the power cable is steam
 		</member>
+		<member name="power_current_collector_first_position" type="Vector3" setter="set_power_current_collector_first_position" getter="get_power_current_collector_first_position" default="Vector3(0, 0, 0)">
+			Where the first pantograph sits on the vehicle, in the vehicle's own space. The overhead wire is sampled at this point, so the two pantographs of one vehicle read different wires where the data puts them apart. Taken from the model's pantograph submodel, as the original does ([code]TAnimPant::vPos[/code]).
+		</member>
 		<member name="power_current_collector_max_collector_lifting" type="float" setter="set_power_current_collector_max_collector_lifting" getter="get_power_current_collector_max_collector_lifting">
 			Maximum collector lifting, in meters.
 		</member>
@@ -276,14 +300,11 @@
 			Required voltage to switch the main switch on.
 			            By default, it is 0.6*max_voltage
 		</member>
-		<member name="power_current_collector_first_position" type="Vector3" setter="set_power_current_collector_first_position" getter="get_power_current_collector_first_position" default="Vector3(0, 0, 0)">
-			Where the first pantograph sits on the vehicle, in the vehicle's own space. The overhead wire is sampled at this point, so the two pantographs of one vehicle read different wires where the data puts them apart. Taken from the model's pantograph submodel, as the original does ([code]TAnimPant::vPos[/code]).
+		<member name="power_current_collector_second_position" type="Vector3" setter="set_power_current_collector_second_position" getter="get_power_current_collector_second_position" default="Vector3(0, 0, 0)">
+			Where the second pantograph sits on the vehicle, in the vehicle's own space. See [member power_current_collector_first_position].
 		</member>
 		<member name="power_current_collector_sliding_width" type="float" setter="set_power_current_collector_sliding_width" getter="get_power_current_collector_sliding_width">
 			Sliding width of the power collector (like pantograph)
-		</member>
-		<member name="power_current_collector_second_position" type="Vector3" setter="set_power_current_collector_second_position" getter="get_power_current_collector_second_position" default="Vector3(0, 0, 0)">
-			Where the second pantograph sits on the vehicle, in the vehicle's own space. See [member power_current_collector_first_position].
 		</member>
 		<member name="power_source" type="int" setter="set_power_source" getter="get_power_source" enum="RailVehicleController.TrainPowerSource">
 			Energy source for the engine

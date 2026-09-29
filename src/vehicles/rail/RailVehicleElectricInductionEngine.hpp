@@ -22,7 +22,7 @@ namespace godot {
             TypedArray<RailVehicleWWListItem> wwlist;
 
         protected:
-            EngineType get_engine_type() const override;
+            EngineType get_type() const override;
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
         public:

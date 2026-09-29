@@ -95,6 +95,16 @@ namespace godot {
         _refresh_clock();
     }
 
+    void SimulationServer::clock_subscribe(const Callable &p_on_advanced) {
+        clock_hold();
+        connect(simulation_advanced_signal, p_on_advanced);
+    }
+
+    void SimulationServer::clock_unsubscribe(const Callable &p_on_advanced) {
+        disconnect(simulation_advanced_signal, p_on_advanced);
+        clock_release();
+    }
+
     /// The node ticks while the clock is held and the runtime is not paused
     void SimulationServer::_refresh_clock() {
         const bool ticking = clock_holders > 0 && !paused;

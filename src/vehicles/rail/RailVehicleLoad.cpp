@@ -14,12 +14,4 @@ namespace godot {
         BIND_ENUM_CONSTANT(LOAD_UNIT_TONS);
         BIND_ENUM_CONSTANT(LOAD_UNIT_PIECES);
     }
-
-    void RailVehicleLoad::_register_commands() {
-        VehicleComponent::_register_commands();
-    }
-
-    void RailVehicleLoad::_unregister_commands() {
-        VehicleComponent::_unregister_commands();
-    }
 } // namespace godot

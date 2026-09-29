@@ -118,9 +118,8 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
         controller.cntrl_inactive_cab_flag = FizLineUtil.get_int(kv, "InactiveCabFlag")
 
 
-## Shared `...Start=` device activation mode decode (RailVehicleController.StartMode - the enum this
-## class owns; RailVehicleEngine.StartMode is a duplicate of the same values to avoid a circular
-## include, see VehicleController.hpp). Used by Cntrl., Engine:, and other sections.
+## Shared `...Start=` device activation mode decode (RailVehicleController.StartMode). Used by
+## Cntrl., Engine:, and other sections.
 static func parse_start_mode(value: String, default_value: int) -> int:
     if not value:
         return default_value

@@ -72,7 +72,7 @@
 			Motor cooling fan speed: a positive value is a multiplier of the main engine's RPM, a negative value is a
 			fixed RPM.
 		</member>
-		<member name="motor_blowers_start_mode" type="int" setter="set_motor_blowers_start_mode" getter="get_motor_blowers_start_mode" enum="RailVehicleEngine.StartMode">
+		<member name="motor_blowers_start_mode" type="int" setter="set_motor_blowers_start_mode" getter="get_motor_blowers_start_mode" enum="RailVehicleController.StartMode">
 			[code]Cntrl.MotorBlowersStart[/code]
 		</member>
 		<member name="motor_blowers_start_velocity" type="float" setter="set_motor_blowers_start_velocity" getter="get_motor_blowers_start_velocity">
@@ -117,7 +117,7 @@
 			Number of teeth on the wheel side of the gearbox (the [code]Y[/code] in the FIZ file's [code]X:Y[/code]
 			ratio format).
 		</member>
-		<member name="type" type="int" setter="" getter="get_type">
+		<member name="type" type="int" setter="" getter="get_type" enum="RailVehicleEngine.EngineType">
 		</member>
 		<member name="wheel_force" type="float" setter="" getter="get_wheel_force">
 		</member>
@@ -163,27 +163,6 @@
 		</constant>
 		<constant name="MAIN" value="8" enum="EngineType">
 			Main
-		</constant>
-		<constant name="START_MODE_DISABLED" value="0" enum="StartMode">
-			Device is disabled / not present.
-		</constant>
-		<constant name="START_MODE_MANUAL" value="1" enum="StartMode">
-			Device is started manually, with a switch.
-		</constant>
-		<constant name="START_MODE_AUTOMATIC" value="2" enum="StartMode">
-			Device starts automatically.
-		</constant>
-		<constant name="START_MODE_MANUAL_WITH_AUTO_FALLBACK" value="3" enum="StartMode">
-			Device is started manually, or automatically as a fallback.
-		</constant>
-		<constant name="START_MODE_CONVERTER" value="4" enum="StartMode">
-			Device starts together with the converter.
-		</constant>
-		<constant name="START_MODE_BATTERY" value="5" enum="StartMode">
-			Device starts together with the battery.
-		</constant>
-		<constant name="START_MODE_DIRECTION" value="6" enum="StartMode">
-			Device starts once a direction is selected.
 		</constant>
 		<constant name="EIM_CONTROL_TYPE_0" value="0" enum="EimControlType">
 			EIM traction lever variant 0.

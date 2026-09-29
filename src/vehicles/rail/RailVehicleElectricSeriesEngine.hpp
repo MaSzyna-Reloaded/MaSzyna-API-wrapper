@@ -11,7 +11,7 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
-            /* Live state, read straight from the backend - nothing is stored. */
+            /* Live state, read straight from the implementation - nothing is stored. */
             virtual double get_resistor_fan_rotation() const = 0;
             /* The current the automatic start steps on below (Imin: IminLo, or IminHi switched high) */
             virtual double get_circuit_imin() const = 0;
@@ -33,7 +33,7 @@ namespace godot {
 
         private:
         protected:
-            EngineType get_engine_type() const override;
+            EngineType get_type() const override;
 
         public:
             MAKE_MEMBER_GS(double, nominal_voltage, 0.0);

@@ -40,7 +40,6 @@ namespace godot {
     PackedVector3Array
     E3DParser::_calculate_normals(const PackedVector3Array &p_vertices, const PackedInt32Array &p_indices) const {
         PackedVector3Array normals;
-        const bool has_indices = p_indices.size() > 0;
         for (int i = 0; i < p_vertices.size(); i++) {
             normals.append(Vector3(0, 0, 0));
         }
@@ -49,15 +48,9 @@ namespace godot {
             Indices indices;
             Vertices vertices;
             Edges edges;
-            if (has_indices) {
-                indices.i1 = p_indices.get(i);
-                indices.i2 = p_indices.get(i + 1);
-                indices.i3 = p_indices.get(i + 2);
-            } else {
-                indices.i1 = i;
-                indices.i2 = i + 1;
-                indices.i3 = i + 2;
-            }
+            indices.i1 = p_indices.get(i);
+            indices.i2 = p_indices.get(i + 1);
+            indices.i3 = p_indices.get(i + 2);
 
             vertices.v1 = p_vertices.get(indices.i1);
             vertices.v2 = p_vertices.get(indices.i2);
@@ -141,8 +134,6 @@ namespace godot {
         result.first_index_idx = p_file->get_32(); // Offset 160
         result.light_energy = p_file->get_float(); // Offset 164
 
-        result.transparent = result.flags & 0b000001;
-
         p_file->get_buffer(p_chunk_size - 168); //  Offset 168: dev/unused data
 
 
@@ -182,7 +173,13 @@ namespace godot {
             } else if (chunk.id == "TRA0") {
                 const int matrix_count = static_cast<int>(chunk.data_len) / 64;
                 for (int i = 0; i < matrix_count; i++) {
-                    matrices.emplace_back(_read_matrix(p_file));
+                    float m[16];
+                    for (float &row: m) {
+                        row = p_file->get_float();
+                    }
+                    matrices.emplace_back(
+                            Basis(Vector3(m[0], m[1], m[2]), Vector3(m[4], m[5], m[6]), Vector3(m[8], m[9], m[10])),
+                            Vector3(m[12], m[13], m[14]));
                 }
             } else if (chunk.id == "IDX1") {
                 const uint64_t pos = p_file->get_position();
@@ -319,17 +316,6 @@ namespace godot {
         }
 
         return output;
-    }
-
-    Transform3D E3DParser::_read_matrix(const Ref<FileAccess> &p_file) const {
-        float m[16];
-        for (float &row: m) {
-            row = p_file->get_float();
-        }
-
-        return Transform3D(
-                Basis(Vector3(m[0], m[1], m[2]), Vector3(m[4], m[5], m[6]), Vector3(m[8], m[9], m[10])),
-                Vector3(m[12], m[13], m[14]));
     }
 
     Ref<E3DSubModel> E3DParser::_create_submodel(SubModelData &p_submodel) const {
@@ -525,17 +511,13 @@ namespace godot {
             const SubModelData &meta = submodels_meta.at(i);
             const Ref<E3DSubModel> &parent = submodels.at(i);
 
-            if (meta.first_child_idx > -1 && static_cast<size_t>(meta.first_child_idx) < submodels.size()) {
-                int child_idx = meta.first_child_idx;
-                while (child_idx > -1 && static_cast<size_t>(child_idx) < submodels.size()) {
-                    const Ref<E3DSubModel> &child = submodels.at(child_idx);
-                    child->set_parent(parent.ptr());
-                    parent_indices.at(child_idx) = static_cast<int>(i);
-                    if (child_idx >= 0 && static_cast<size_t>(child_idx) < has_parent.size()) {
-                        has_parent.at(child_idx) = true;
-                    }
-                    child_idx = submodels_meta.at(child_idx).next_idx;
-                }
+            int child_idx = meta.first_child_idx;
+            while (child_idx > -1 && static_cast<size_t>(child_idx) < submodels.size()) {
+                const Ref<E3DSubModel> &child = submodels.at(child_idx);
+                child->set_parent(parent.ptr());
+                parent_indices.at(child_idx) = static_cast<int>(i);
+                has_parent.at(child_idx) = true;
+                child_idx = submodels_meta.at(child_idx).next_idx;
             }
         }
 
@@ -549,7 +531,27 @@ namespace godot {
         }
 
         _register_lights(model, submodels, parent_indices);
-        _register_smoke_sources(model, submodels, parent_indices);
+        // Particle emitters: a transform submodel whose name starts with "smokesource_", the whole
+        // name being the parameter file the original reads from data/ (TSubModel::is_emitter(),
+        // Model3d.cpp:1417, TSubModel::find_smoke_sources(), Model3d.cpp:962). Matching is
+        // case-insensitive like is_emitter(); the original's own discovery compares the raw name and
+        // so misses a capitalised one.
+        for (size_t i = 0; i < submodels.size(); i++) {
+            const Ref<E3DSubModel> &sm = submodels[i];
+            if (sm->get_submodel_type() != E3DSubModel::SUBMODEL_TRANSFORM) {
+                continue;
+            }
+            const String sm_name = sm->get_name();
+            if (!sm_name.to_lower().begins_with(SMOKE_SOURCE_PREFIX)) {
+                continue;
+            }
+
+            Ref<E3DModelSmokeSourceDefinition> entry;
+            entry.instantiate();
+            entry->set_template_name(sm_name.to_lower());
+            entry->set_submodel_path(_build_submodel_path(submodels, parent_indices, static_cast<int>(i)));
+            model->register_smoke_source(entry);
+        }
 
         return model;
     }
@@ -674,33 +676,6 @@ namespace godot {
             if (!registered) {
                 p_model->register_light(light_name, entry);
             }
-        }
-    }
-
-    /// Particle emitters: a transform submodel whose name starts with "smokesource_", the whole
-    /// name being the parameter file the original reads from data/ (TSubModel::is_emitter(),
-    /// Model3d.cpp:1417, TSubModel::find_smoke_sources(), Model3d.cpp:962). Matching is
-    /// case-insensitive like is_emitter(); the original's own discovery compares the raw name and
-    /// so misses a capitalised one.
-    void E3DParser::_register_smoke_sources(
-            const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
-            const std::vector<int> &p_parent_indices) const {
-
-        for (size_t i = 0; i < p_submodels.size(); i++) {
-            const Ref<E3DSubModel> &sm = p_submodels[i];
-            if (sm->get_submodel_type() != E3DSubModel::SUBMODEL_TRANSFORM) {
-                continue;
-            }
-            const String sm_name = sm->get_name();
-            if (!sm_name.to_lower().begins_with(SMOKE_SOURCE_PREFIX)) {
-                continue;
-            }
-
-            Ref<E3DModelSmokeSourceDefinition> entry;
-            entry.instantiate();
-            entry->set_template_name(sm_name.to_lower());
-            entry->set_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i)));
-            p_model->register_smoke_source(entry);
         }
     }
 } // namespace godot

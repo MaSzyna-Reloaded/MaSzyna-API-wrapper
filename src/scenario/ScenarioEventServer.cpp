@@ -2,6 +2,7 @@
 #include "ScenarioEventServer.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "utils/Names.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -223,11 +224,6 @@ namespace godot {
         }
     }
 
-    /// Processes while something is queued
-    void ScenarioEventServer::_refresh_processing() {
-        _set_processing(!queue.empty());
-    }
-
     /// Queued, it holds the runtime's clock, so the time the queue waits for passes
     void ScenarioEventServer::_set_processing(const bool p_processing) {
         if (processing == p_processing) {
@@ -237,15 +233,10 @@ namespace godot {
         ERR_FAIL_NULL(runtime);
         processing = p_processing;
         if (p_processing) {
-            runtime->clock_hold();
-            runtime->connect(
-                    SimulationServer::simulation_advanced_signal,
-                    callable_mp(this, &ScenarioEventServer::_process_queue));
+            runtime->clock_subscribe(callable_mp(this, &ScenarioEventServer::_process_queue));
             return;
         }
-        runtime->disconnect(
-                SimulationServer::simulation_advanced_signal, callable_mp(this, &ScenarioEventServer::_process_queue));
-        runtime->clock_release();
+        runtime->clock_unsubscribe(callable_mp(this, &ScenarioEventServer::_process_queue));
     }
 
     /// event_manager::CheckQuery() (Event.cpp:2465-2490): the entries whose time has come run in
@@ -298,7 +289,7 @@ namespace godot {
                     launcher->interval > 0.0 ? _schedule(entry.owner, time + launcher->interval, RID()) : 0;
             _fire(launcher->condition, launcher->event);
         }
-        _refresh_processing();
+        _set_processing(!queue.empty());
     }
 
     void ScenarioEventServer::_on_vehicle_heading_to_track_start(const RID &p_vehicle, const RID &p_track) {
@@ -420,7 +411,7 @@ namespace godot {
         entry.owner = p_owner;
         entry.activator = p_activator;
         queue.push(entry);
-        _refresh_processing();
+        _set_processing(!queue.empty());
         return entry.sequence;
     }
 
@@ -434,20 +425,6 @@ namespace godot {
             return;
         }
         event_queue(p_event);
-    }
-
-    void ScenarioEventServer::_rename(
-            HashMap<StringName, RID> &p_names, const StringName &p_from, const StringName &p_to, const RID &p_rid) {
-        if (const RID *named = p_names.getptr(p_from); named != nullptr && *named == p_rid) {
-            p_names.erase(p_from);
-        }
-        if (p_to.is_empty()) {
-            return;
-        }
-        if (p_names.has(p_to)) {
-            UtilityFunctions::push_warning("Duplicate name, the last one wins: " + String(p_to));
-        }
-        p_names.insert(p_to, p_rid);
     }
 
     // --- event ---
@@ -464,7 +441,7 @@ namespace godot {
         const EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL(event);
         const bool queued = event->queued_sequence > 0;
-        _rename(events_by_name, event->name, StringName(), p_event);
+        names_rename(events_by_name, event->name, StringName(), p_event);
         events.erase(p_event);
         if (queued) {
             emit_signal(event_dequeued_signal, p_event);
@@ -476,7 +453,7 @@ namespace godot {
         ERR_FAIL_NULL(event);
         const StringName previous = event->name;
         event->name = p_name;
-        _rename(events_by_name, previous, p_name, p_event);
+        names_rename(events_by_name, previous, p_name, p_event);
     }
 
     StringName ScenarioEventServer::event_get_name(const RID &p_event) const {
@@ -590,7 +567,7 @@ namespace godot {
     void ScenarioEventServer::memory_free(const RID &p_memory) {
         const MemoryData *memory = memories.getptr(p_memory);
         ERR_FAIL_NULL(memory);
-        _rename(memories_by_name, memory->name, StringName(), p_memory);
+        names_rename(memories_by_name, memory->name, StringName(), p_memory);
         memories.erase(p_memory);
     }
 
@@ -599,7 +576,7 @@ namespace godot {
         ERR_FAIL_NULL(memory);
         const StringName previous = memory->name;
         memory->name = p_name;
-        _rename(memories_by_name, previous, p_name, p_memory);
+        names_rename(memories_by_name, previous, p_name, p_memory);
     }
 
     StringName ScenarioEventServer::memory_get_name(const RID &p_memory) const {
@@ -720,7 +697,7 @@ namespace godot {
     void ScenarioEventServer::launcher_free(const RID &p_launcher) {
         const LauncherData *launcher = launchers.getptr(p_launcher);
         ERR_FAIL_NULL(launcher);
-        _rename(launchers_by_name, launcher->name, StringName(), p_launcher);
+        names_rename(launchers_by_name, launcher->name, StringName(), p_launcher);
         launchers.erase(p_launcher);
         timed_launchers.erase(p_launcher);
         radio_launchers.erase(p_launcher);
@@ -731,7 +708,7 @@ namespace godot {
         ERR_FAIL_NULL(launcher);
         const StringName previous = launcher->name;
         launcher->name = p_name;
-        _rename(launchers_by_name, previous, p_name, p_launcher);
+        names_rename(launchers_by_name, previous, p_name, p_launcher);
     }
 
     StringName ScenarioEventServer::launcher_get_name(const RID &p_launcher) const {

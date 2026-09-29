@@ -1,42 +1,32 @@
 #pragma once
-#include "MoverDieselEngineBackend.hpp"
-#include "MoverElectricTraction.hpp"
-#include "MoverEngineBackend.hpp"
+#include "MoverDieselEngineUnit.hpp"
+#include "MoverDriveUnit.hpp"
+#include "MoverTractionMotorsUnit.hpp"
 #include "legacy/maszyna-mover/McZapkie/MOVER.h"
 #include "legacy/vehicles/MoverComponent.hpp"
 #include "vehicles/rail/RailVehicleDieselElectricEngine.hpp"
 
 namespace godot {
-    /* RailVehicleDieselElectricEngine on the vendored Mover. It installs the delegates that carry the
-     * implementation shared with other engine kinds, and writes the diesel-electric engine's own
-     * configuration into the Mover, which none of those delegates covers. */
+    /* RailVehicleDieselElectricEngine on the vendored Mover. It owns the units the engine is
+     * composed of, and writes the diesel-electric engine's own
+     * configuration into the Mover, which none of the units covers. */
     class MoverRailVehicleDieselElectricEngine : public RailVehicleDieselElectricEngine, public MoverComponent {
             GDCLASS(MoverRailVehicleDieselElectricEngine, RailVehicleDieselElectricEngine);
 
         private:
             static void _bind_methods();
-            MoverEngineBackend engine_backend_impl{*this};
-            MoverDieselEngineBackend diesel_backend_impl{*this};
-            MoverElectricTraction traction{*this};
+            MoverDriveUnit drive_unit_impl{*this};
+            MoverDieselEngineUnit diesel_engine_unit_impl{*this};
+            MoverTractionMotorsUnit traction_motors_unit_impl{*this};
 
 
         public:
             MoverRailVehicleDieselElectricEngine() {
-                engine_backend = &engine_backend_impl;
-                diesel_backend = &diesel_backend_impl;
+                traction_motors_unit = &traction_motors_unit_impl;
+                drive_unit = &drive_unit_impl;
+                diesel_engine_unit = &diesel_engine_unit_impl;
             }
 
-            double get_motor_current() const override;
-            double get_circuit_imax() const override;
-            bool get_dynamic_brake_active() const override;
-            bool get_fuse_active() const override;
-            bool get_motor_connectors_open() const override;
-            bool is_line_contactor_closed() const override;
-            bool is_pressure_switch_tripped() const override;
-            void fuse_reset() override;
-            void set_motor_connectors_open(bool p_open) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
 
         protected:
             /// Mover.cpp:8551-8552 (readWWList) - the shunting power bounds of a WWList row

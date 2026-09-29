@@ -9,7 +9,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_horn_low", "state"), &RailVehicleHorns::set_horn_low);
         ClassDB::bind_method(D_METHOD("set_horn_high", "state"), &RailVehicleHorns::set_horn_high);
         ClassDB::bind_method(D_METHOD("set_whistle", "state"), &RailVehicleHorns::set_whistle);
-        ClassDB::bind_method(D_METHOD("set_horn", "position"), &RailVehicleHorns::set_horn);
 
         ClassDB::bind_method(D_METHOD("get_low_pressed"), &RailVehicleHorns::get_low_pressed);
         ADD_PROPERTY(
@@ -59,13 +58,11 @@ namespace godot {
         register_command("horn_low", Callable(this, "set_horn_low"));
         register_command("horn_high", Callable(this, "set_horn_high"));
         register_command("whistle", Callable(this, "set_whistle"));
-        register_command("horn", Callable(this, "set_horn"));
     }
 
     void RailVehicleHorns::_unregister_commands() {
-        unregister_command("horn_low", Callable(this, "set_horn_low"));
-        unregister_command("horn_high", Callable(this, "set_horn_high"));
-        unregister_command("whistle", Callable(this, "set_whistle"));
-        unregister_command("horn", Callable(this, "set_horn"));
+        unregister_command("horn_low");
+        unregister_command("horn_high");
+        unregister_command("whistle");
     }
 } // namespace godot

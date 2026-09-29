@@ -1,4 +1,5 @@
 #include "TrackServer.hpp"
+#include "utils/Names.hpp"
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -132,11 +133,10 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "rail_height", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
                 "get_rail_height");
-        ClassDB::bind_method(D_METHOD("set_is_topology_changed", "changed"), &TrackServer::set_is_topology_changed);
         ClassDB::bind_method(D_METHOD("get_is_topology_changed"), &TrackServer::get_is_topology_changed);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "is_topology_changed"), "set_is_topology_changed",
-                "get_is_topology_changed");
+                PropertyInfo(Variant::BOOL, "is_topology_changed", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
+                "", "get_is_topology_changed");
 
         BIND_ENUM_CONSTANT(TRACK_COMMON);
         BIND_ENUM_CONSTANT(TRACK_DIVERGING);
@@ -268,25 +268,6 @@ namespace godot {
         return p_track.cached_endpoints;
     }
 
-    int TrackServer::_curve_common_endpoint_index(const TrackSegment &p_track) const {
-        if (p_track.curve1.is_null() || p_track.curve2.is_null()) {
-            return POINT_NONE;
-        }
-        if (_endpoints_equal(p_track.points1.p1, p_track.points2.p1)) {
-            return POINT_P1;
-        }
-        if (_endpoints_equal(p_track.points1.p1, p_track.points2.p2)) {
-            return POINT_P1;
-        }
-        if (_endpoints_equal(p_track.points1.p2, p_track.points2.p1)) {
-            return POINT_P2;
-        }
-        if (_endpoints_equal(p_track.points1.p2, p_track.points2.p2)) {
-            return POINT_P2;
-        }
-        return POINT_NONE;
-    }
-
     void TrackServer::_append_common_switch_endpoint(
             TrackSegment &p_track, const Vector3 &p_first, const Vector3 &p_second, const int p_first_endpoint,
             const int p_second_endpoint) const {
@@ -298,52 +279,6 @@ namespace godot {
         }
         if (!p_track.switch_common_endpoints.has(p_second_endpoint)) {
             p_track.switch_common_endpoints.push_back(p_second_endpoint);
-        }
-    }
-
-    void TrackServer::_update_switch_endpoint_metadata(TrackSegment &p_track) const {
-        p_track.switch_common_endpoints.clear();
-        p_track.switch_branch_start_endpoints[TRACK_COMMON] = -1;
-        p_track.switch_branch_start_endpoints[TRACK_DIVERGING] = -1;
-        p_track.switch_branch_end_endpoints[TRACK_COMMON] = -1;
-        p_track.switch_branch_end_endpoints[TRACK_DIVERGING] = -1;
-        for (int &branch: p_track.switch_endpoint_branches) {
-            branch = -1;
-        }
-
-        if (p_track.curve1.is_valid()) {
-            p_track.switch_branch_start_endpoints[TRACK_COMMON] = CURVE1_P1;
-            p_track.switch_branch_end_endpoints[TRACK_COMMON] = CURVE1_P2;
-            p_track.switch_endpoint_branches[CURVE1_P1] = TRACK_COMMON;
-            p_track.switch_endpoint_branches[CURVE1_P2] = TRACK_COMMON;
-        }
-        if (p_track.curve2.is_valid()) {
-            p_track.switch_branch_start_endpoints[TRACK_DIVERGING] = CURVE2_P1;
-            p_track.switch_branch_end_endpoints[TRACK_DIVERGING] = CURVE2_P2;
-            p_track.switch_endpoint_branches[CURVE2_P1] = TRACK_DIVERGING;
-            p_track.switch_endpoint_branches[CURVE2_P2] = TRACK_DIVERGING;
-        }
-
-        if (p_track.curve1.is_null() || p_track.curve2.is_null()) {
-            return;
-        }
-        _append_common_switch_endpoint(p_track, p_track.points1.p1, p_track.points2.p1, CURVE1_P1, CURVE2_P1);
-        _append_common_switch_endpoint(p_track, p_track.points1.p1, p_track.points2.p2, CURVE1_P1, CURVE2_P2);
-        _append_common_switch_endpoint(p_track, p_track.points1.p2, p_track.points2.p1, CURVE1_P2, CURVE2_P1);
-        _append_common_switch_endpoint(p_track, p_track.points1.p2, p_track.points2.p2, CURVE1_P2, CURVE2_P2);
-    }
-
-    void TrackServer::_update_length(TrackSegment &p_track) const {
-        p_track.length = 0.0;
-        p_track.length1 = 0.0;
-        p_track.length2 = 0.0;
-        if (p_track.domain_curve1.is_valid()) {
-            p_track.length1 = p_track.domain_curve1->get_baked_length();
-            p_track.length += p_track.length1;
-        }
-        if (p_track.domain_curve2.is_valid()) {
-            p_track.length2 = p_track.domain_curve2->get_baked_length();
-            p_track.length += p_track.length2;
         }
     }
 
@@ -404,9 +339,58 @@ namespace godot {
         p_track.domain_curve2 = p_curve2.is_valid() ? _build_domain_curve(p_track.points2) : Ref<Curve3D>();
         p_track.cached_endpoints.clear();
         p_track.switch_is_right = false;
-        _update_length(p_track);
-        p_track.switch_common_endpoint_index = _curve_common_endpoint_index(p_track);
-        _update_switch_endpoint_metadata(p_track);
+        p_track.length = 0.0;
+        p_track.length1 = 0.0;
+        p_track.length2 = 0.0;
+        if (p_track.domain_curve1.is_valid()) {
+            p_track.length1 = p_track.domain_curve1->get_baked_length();
+            p_track.length += p_track.length1;
+        }
+        if (p_track.domain_curve2.is_valid()) {
+            p_track.length2 = p_track.domain_curve2->get_baked_length();
+            p_track.length += p_track.length2;
+        }
+
+        // the endpoint of the common track the two curves share
+        p_track.switch_common_endpoint_index = POINT_NONE;
+        if (p_curve1.is_valid() && p_curve2.is_valid()) {
+            if (_endpoints_equal(p_track.points1.p1, p_track.points2.p1) ||
+                _endpoints_equal(p_track.points1.p1, p_track.points2.p2)) {
+                p_track.switch_common_endpoint_index = POINT_P1;
+            } else if (
+                    _endpoints_equal(p_track.points1.p2, p_track.points2.p1) ||
+                    _endpoints_equal(p_track.points1.p2, p_track.points2.p2)) {
+                p_track.switch_common_endpoint_index = POINT_P2;
+            }
+        }
+
+        // which branch each endpoint belongs to, and which endpoints the branches share
+        p_track.switch_common_endpoints.clear();
+        p_track.switch_branch_start_endpoints[TRACK_COMMON] = -1;
+        p_track.switch_branch_start_endpoints[TRACK_DIVERGING] = -1;
+        p_track.switch_branch_end_endpoints[TRACK_COMMON] = -1;
+        p_track.switch_branch_end_endpoints[TRACK_DIVERGING] = -1;
+        for (int &branch: p_track.switch_endpoint_branches) {
+            branch = -1;
+        }
+        if (p_curve1.is_valid()) {
+            p_track.switch_branch_start_endpoints[TRACK_COMMON] = CURVE1_P1;
+            p_track.switch_branch_end_endpoints[TRACK_COMMON] = CURVE1_P2;
+            p_track.switch_endpoint_branches[CURVE1_P1] = TRACK_COMMON;
+            p_track.switch_endpoint_branches[CURVE1_P2] = TRACK_COMMON;
+        }
+        if (p_curve2.is_valid()) {
+            p_track.switch_branch_start_endpoints[TRACK_DIVERGING] = CURVE2_P1;
+            p_track.switch_branch_end_endpoints[TRACK_DIVERGING] = CURVE2_P2;
+            p_track.switch_endpoint_branches[CURVE2_P1] = TRACK_DIVERGING;
+            p_track.switch_endpoint_branches[CURVE2_P2] = TRACK_DIVERGING;
+        }
+        if (p_curve1.is_valid() && p_curve2.is_valid()) {
+            _append_common_switch_endpoint(p_track, p_track.points1.p1, p_track.points2.p1, CURVE1_P1, CURVE2_P1);
+            _append_common_switch_endpoint(p_track, p_track.points1.p1, p_track.points2.p2, CURVE1_P1, CURVE2_P2);
+            _append_common_switch_endpoint(p_track, p_track.points1.p2, p_track.points2.p1, CURVE1_P2, CURVE2_P1);
+            _append_common_switch_endpoint(p_track, p_track.points1.p2, p_track.points2.p2, CURVE1_P2, CURVE2_P2);
+        }
         _update_switch_blade_boundary_offsets(p_track);
 
         if (p_curve1.is_null() || p_curve2.is_null() || p_track.switch_common_endpoint_index == POINT_NONE) {
@@ -778,22 +762,15 @@ namespace godot {
                 track->isolated.erase(p_isolated);
             }
         }
-        if (const RID *named = isolated_by_name.getptr(section->name); named != nullptr && *named == p_isolated) {
-            isolated_by_name.erase(section->name);
-        }
+        names_rename(isolated_by_name, section->name, StringName(), p_isolated);
         isolated_sections.erase(p_isolated);
     }
 
     void TrackServer::isolated_set_name(const RID &p_isolated, const StringName &p_name) {
         IsolatedData *section = isolated_sections.getptr(p_isolated);
         ERR_FAIL_NULL(section);
-        if (const RID *named = isolated_by_name.getptr(section->name); named != nullptr && *named == p_isolated) {
-            isolated_by_name.erase(section->name);
-        }
+        names_rename(isolated_by_name, section->name, p_name, p_isolated);
         section->name = p_name;
-        if (!p_name.is_empty()) {
-            isolated_by_name.insert(p_name, p_isolated);
-        }
     }
 
     StringName TrackServer::isolated_get_name(const RID &p_isolated) const {
@@ -1352,20 +1329,6 @@ namespace godot {
         return &nodes.write[p_node_id];
     }
 
-    void TrackServer::_add_track_topology(TrackSegment &p_track) {
-        for (int &node_id: p_track.node_ids) {
-            node_id = INVALID_NODE_ID;
-        }
-        if (p_track.curve1.is_valid()) {
-            p_track.node_ids[CURVE1_P1] = _get_or_create_node(p_track.points1.p1, p_track.track_rid, CURVE1_P1);
-            p_track.node_ids[CURVE1_P2] = _get_or_create_node(p_track.points1.p2, p_track.track_rid, CURVE1_P2);
-        }
-        if (p_track.curve2.is_valid()) {
-            p_track.node_ids[CURVE2_P1] = _get_or_create_node(p_track.points2.p1, p_track.track_rid, CURVE2_P1);
-            p_track.node_ids[CURVE2_P2] = _get_or_create_node(p_track.points2.p2, p_track.track_rid, CURVE2_P2);
-        }
-    }
-
     void TrackServer::_clear_topology() {
         nodes.clear();
         graph_members.clear();
@@ -1380,7 +1343,18 @@ namespace godot {
     void TrackServer::_connect_all_tracks() {
         // 1. a node per endpoint of every track
         for (KeyValue<RID, TrackSegment> &item: tracks) {
-            _add_track_topology(item.value);
+            TrackSegment &track = item.value;
+            for (int &node_id: track.node_ids) {
+                node_id = INVALID_NODE_ID;
+            }
+            if (track.curve1.is_valid()) {
+                track.node_ids[CURVE1_P1] = _get_or_create_node(track.points1.p1, track.track_rid, CURVE1_P1);
+                track.node_ids[CURVE1_P2] = _get_or_create_node(track.points1.p2, track.track_rid, CURVE1_P2);
+            }
+            if (track.curve2.is_valid()) {
+                track.node_ids[CURVE2_P1] = _get_or_create_node(track.points2.p1, track.track_rid, CURVE2_P1);
+                track.node_ids[CURVE2_P2] = _get_or_create_node(track.points2.p2, track.track_rid, CURVE2_P2);
+            }
         }
 
         // 2. collect the endpoints
@@ -1503,10 +1477,6 @@ namespace godot {
     void TrackServer::_mark_topology_changed() {
         topology_changed_flag = true;
         emit_signal(topology_changed_signal);
-    }
-
-    void TrackServer::set_is_topology_changed(const bool p_changed) {
-        topology_changed_flag = p_changed;
     }
 
     bool TrackServer::get_is_topology_changed() const {

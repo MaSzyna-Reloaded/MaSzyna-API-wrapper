@@ -4,56 +4,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    void MoverRailVehicleElectricInductionEngine::_bind_methods() {
-        ClassDB::bind_method(
-                D_METHOD("get_motor_current"), &MoverRailVehicleElectricInductionEngine::get_motor_current);
-        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &MoverRailVehicleElectricInductionEngine::get_circuit_imax);
-        ClassDB::bind_method(
-                D_METHOD("get_dynamic_brake_active"),
-                &MoverRailVehicleElectricInductionEngine::get_dynamic_brake_active);
-        ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverRailVehicleElectricInductionEngine::get_fuse_active);
-        ClassDB::bind_method(
-                D_METHOD("get_motor_connectors_open"),
-                &MoverRailVehicleElectricInductionEngine::get_motor_connectors_open);
-        ClassDB::bind_method(
-                D_METHOD("is_line_contactor_closed"),
-                &MoverRailVehicleElectricInductionEngine::is_line_contactor_closed);
-        ClassDB::bind_method(
-                D_METHOD("is_pressure_switch_tripped"),
-                &MoverRailVehicleElectricInductionEngine::is_pressure_switch_tripped);
-        ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverRailVehicleElectricInductionEngine::fuse_reset);
-        ClassDB::bind_method(
-                D_METHOD("set_motor_connectors_open", "open"),
-                &MoverRailVehicleElectricInductionEngine::set_motor_connectors_open);
-    }
-
-    double MoverRailVehicleElectricInductionEngine::get_motor_current() const {
-        return traction.get_motor_current(this);
-    }
-
-    double MoverRailVehicleElectricInductionEngine::get_circuit_imax() const {
-        return traction.get_circuit_imax(this);
-    }
-
-    bool MoverRailVehicleElectricInductionEngine::get_dynamic_brake_active() const {
-        return traction.get_dynamic_brake_active(this);
-    }
-
-    bool MoverRailVehicleElectricInductionEngine::get_fuse_active() const {
-        return traction.get_fuse_active(this);
-    }
-
-    bool MoverRailVehicleElectricInductionEngine::get_motor_connectors_open() const {
-        return traction.get_motor_connectors_open(this);
-    }
-
-    bool MoverRailVehicleElectricInductionEngine::is_line_contactor_closed() const {
-        return traction.is_line_contactor_closed(this);
-    }
-
-    bool MoverRailVehicleElectricInductionEngine::is_pressure_switch_tripped() const {
-        return traction.is_pressure_switch_tripped(this);
-    }
+    void MoverRailVehicleElectricInductionEngine::_bind_methods() {}
 
     TypedArray<RailVehicleInverter> MoverRailVehicleElectricInductionEngine::get_inverters() const {
         TypedArray<RailVehicleInverter> inverters;
@@ -70,26 +21,6 @@ namespace godot {
             inverters.append(state);
         }
         return inverters;
-    }
-
-    void MoverRailVehicleElectricInductionEngine::fuse_reset() {
-        traction.reset_fuse(this);
-    }
-
-    void MoverRailVehicleElectricInductionEngine::set_motor_connectors_open(const bool p_open) {
-        traction.open_motor_connectors(this, p_open);
-    }
-
-    void MoverRailVehicleElectricInductionEngine::_register_commands() {
-        RailVehicleElectricInductionEngine::_register_commands();
-        register_command("fuse_reset", Callable(this, "fuse_reset"));
-        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
-    }
-
-    void MoverRailVehicleElectricInductionEngine::_unregister_commands() {
-        RailVehicleElectricInductionEngine::_unregister_commands();
-        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
-        unregister_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
     }
 
     void MoverRailVehicleElectricInductionEngine::_apply_configuration() {

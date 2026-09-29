@@ -24,6 +24,5 @@ namespace godot {
             void set_horn_low(bool p_state) override;
             void set_horn_high(bool p_state) override;
             void set_whistle(bool p_state) override;
-            void set_horn(double p_position) override;
     };
 } // namespace godot

@@ -277,10 +277,6 @@ namespace godot {
                _get_pending_nearby_locked(p_chunk_radius) == 0;
     }
 
-    int SceneryStreamingServer::_get_pending_builds_locked() const {
-        return pending_build_count;
-    }
-
     int SceneryStreamingServer::_get_pending_nearby_locked(const int p_chunk_radius) const {
         int pending = 0;
         const Vector2i camera_key = _get_chunk_key(camera_position);
@@ -332,8 +328,7 @@ namespace godot {
         statistics["streamed"] = streamed;
         statistics["chunks"] = chunks.size();
         statistics["active_chunks"] = active_chunks;
-        const int pending_count = _get_pending_builds_locked();
-        statistics["pending_builds"] = pending_count;
+        statistics["pending_builds"] = pending_build_count;
         statistics["pending_clears"] = pending_clears.size() + planned_clears.size();
         statistics["plan_msec"] = plan_msec;
         statistics["build_rate"] = build_rate;
@@ -343,9 +338,10 @@ namespace godot {
         statistics["scanned_revision"] = scanned_revision;
         statistics["pending_nearby"] = _get_pending_nearby_locked(1);
         statistics["nearby_ready"] = _is_area_ready_locked(1);
-        statistics["budget_msec"] = !_is_area_ready_locked(1) && pending_count + pending_clears.size() > CATCHUP_BACKLOG
-                                            ? CATCHUP_BUDGET_MSEC
-                                            : BUDGET_MSEC;
+        statistics["budget_msec"] =
+                !_is_area_ready_locked(1) && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG
+                        ? CATCHUP_BUDGET_MSEC
+                        : BUDGET_MSEC;
         statistics["draw_distance"] = draw_distance;
         statistics["chunk_size"] = CHUNK_SIZE_M;
         statistics["camera_position"] = camera_position;
@@ -427,8 +423,7 @@ namespace godot {
             if (freed_pending) {
                 _drop_freed_work();
             }
-            catching_up =
-                    !_is_area_ready_locked(1) && _get_pending_builds_locked() + pending_clears.size() > CATCHUP_BACKLOG;
+            catching_up = !_is_area_ready_locked(1) && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG;
         }
 
         const uint64_t now = Time::get_singleton()->get_ticks_msec();

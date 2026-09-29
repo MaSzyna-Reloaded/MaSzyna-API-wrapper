@@ -451,9 +451,7 @@ namespace godot {
 
         const bool is_rear = p_light.begins_with("rear");
         const String suffix = is_rear ? p_light.substr(4) : p_light;
-        const LightEnd active_end = (mover->CabActive < 0) ? LIGHT_END_REAR : LIGHT_END_FRONT;
-        const LightEnd opposite_end = (active_end == LIGHT_END_FRONT) ? LIGHT_END_REAR : LIGHT_END_FRONT;
-        const LightEnd target_end = is_rear ? opposite_end : active_end;
+        const LightEnd target_end = is_rear ? _opposite_end(mover) : _active_end(mover);
 
         for (const LightSwitchMask &entry: LIGHT_SWITCH_MASKS) {
             if (suffix == entry.suffix) {

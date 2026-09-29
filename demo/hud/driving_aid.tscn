@@ -38,10 +38,20 @@ layout_mode = 2
 theme_type_variation = &"DrivingAidCaption"
 text = "Controller"
 
-[node name="ControllerValue" type="Label" parent="Tiles/ControllerTile/Layout"]
-unique_name_in_owner = true
+[node name="ControllerRow" type="HBoxContainer" parent="Tiles/ControllerTile/Layout"]
 layout_mode = 2
 size_flags_vertical = 10
+mouse_filter = 2
+
+[node name="DirectionValue" type="Label" parent="Tiles/ControllerTile/Layout/ControllerRow"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidValue"
+text = "—"
+
+[node name="ControllerValue" type="Label" parent="Tiles/ControllerTile/Layout/ControllerRow"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_type_variation = &"DrivingAidValue"
 text = "0 + 0"
 

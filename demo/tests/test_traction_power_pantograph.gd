@@ -1,7 +1,8 @@
 extends MaszynaGutTest
 
 ## Regression test for the pantograph -> Mover voltage layer (TractionServer /
-## RailVehicle3D._update_pantograph_power() / RailVehicleElectricEngine::set_pantograph_wire_voltage()).
+## RailVehicleServer's step / RailVehicleElectricEngine::set_pantograph_wire_voltage()). The voltage
+## fed here by hand is read back before the next step, which feeds the wire's - 0 V, no wire here.
 ## Bypasses scenery/geometry entirely (same style as test_train_electric_engine_power_source.gd)
 ## to isolate whether raising a pantograph with a wire voltage present actually reaches the
 ## mover's reported state - this is what a real EP07 on td.scn needs to work.
@@ -37,7 +38,6 @@ func test_raised_pantograph_with_wire_voltage_reaches_mover_state():
             "pantograph should report raised once battery is on and it's been raised")
 
     engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3600.0)
-    await wait_idle_frames(2)
 
     assert_almost_eq(
             float(engine.get_state().get("current_collector/pantograph_first_voltage", 0.0)),
@@ -56,7 +56,6 @@ func test_repeated_wire_voltage_updates_keep_reaching_the_mover():
 
     for i in range(5):
         engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0 + i * 100.0)
-        await wait_idle_frames(1)
 
     assert_almost_eq(
             float(engine.get_state().get("current_collector/pantograph_first_voltage", 0.0)),

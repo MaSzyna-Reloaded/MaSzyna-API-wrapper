@@ -200,6 +200,9 @@ anything. Open work belongs in `TODO.md`.
 * A control showing the vehicle's state never acts on it (a setter that acts, `button_pressed`
   that emits `toggled`); the driver never sends a command the vehicle does not have. *(09-29 a cab
   built on a running train lowered its pantograph)*
+* A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
+  (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
+  vehicle's voltage)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
   the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Whoever attaches something shared per vehicle takes away only what it attached - another owner

@@ -73,7 +73,6 @@
 #include "signalling/SignallingServer.hpp"
 #include "signalling/SignallingSystemDelegate.hpp"
 #include "signalling/SignallingSystemNode.hpp"
-#include "simulation/SimulationClock.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
@@ -184,7 +183,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(PlanarMirror3D);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
-        GDREGISTER_INTERNAL_CLASS(SimulationClock);
         GDREGISTER_CLASS(RailVehicleNeighbour);
         GDREGISTER_CLASS(TractionServer);
         GDREGISTER_CLASS(SpatialIndex);

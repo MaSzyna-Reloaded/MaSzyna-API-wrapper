@@ -1,6 +1,5 @@
 #include "SimulationServer.hpp"
 
-#include "SimulationClock.hpp"
 #include "utils/UserSettings.hpp"
 
 #include <godot_cpp/classes/file_access.hpp>
@@ -105,29 +104,26 @@ namespace godot {
         clock_release();
     }
 
-    /// The node ticks while the clock is held and the runtime is not paused
+    /// The clock runs while it is held and the runtime is not paused. No node of its own: one
+    /// created on the first hold was added to the root while the root was adding the main scene,
+    /// and never ticked (FINDINGS.md 2026-09-30)
     void SimulationServer::_refresh_clock() {
-        const bool ticking = clock_holders > 0 && !paused;
-        Node *clock = Object::cast_to<Node>(ObjectDB::get_instance(clock_id));
-        if (ticking == (clock != nullptr)) {
-            return;
-        }
-        if (!ticking) {
-            // at once, not at the end of the frame the node is freed in
-            clock->set_process(false);
-            clock->queue_free();
-            clock_id = ObjectID();
-            return;
-        }
+        const bool running = clock_holders > 0 && !paused;
         SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
+        if (running == clock_running || tree == nullptr) {
             return;
         }
-        SimulationClock *node = memnew(SimulationClock);
-        clock_id = node->get_instance_id();
-        // internal, so a node nobody declared does not turn up in the root's children and
-        // surprise whatever walks the tree
-        tree->get_root()->add_child(node, false, Node::INTERNAL_MODE_FRONT);
+        clock_running = running;
+        if (clock_running) {
+            tree->connect("process_frame", callable_mp(this, &SimulationServer::_on_process_frame));
+            return;
+        }
+        tree->disconnect("process_frame", callable_mp(this, &SimulationServer::_on_process_frame));
+    }
+
+    void SimulationServer::_on_process_frame() {
+        const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        simulation_advance(tree->get_root()->get_process_delta_time());
     }
 
     void SimulationServer::simulation_advance(const double p_frame_delta) {

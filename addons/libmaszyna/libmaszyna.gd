@@ -383,7 +383,12 @@ func _enter_tree():
     add_custom_project_setting("maszyna/physics/diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/import/dds_max_texture_size", 1024, TYPE_INT,
-        PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"
+        PROPERTY_HINT_ENUM, "512:512,1024:1024,2048:2048,4096:4096,8192:8192"
+    )
+    # the original's own limit for the cab, iMaxCabTextureSize (Globals.h:165)
+    add_custom_project_setting(
+        "maszyna/import/dds_max_cab_texture_size", 4096, TYPE_INT,
+        PROPERTY_HINT_ENUM, "512:512,1024:1024,2048:2048,4096:4096,8192:8192"
     )
     add_custom_project_setting(
         "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,

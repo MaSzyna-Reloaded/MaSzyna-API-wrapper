@@ -325,7 +325,7 @@ func _apply_default_material(
     # "kran_zasadniczy") stuck at the shader's default white regardless of the model's own color.
     material.set_shader_parameter("albedo", options.diffuse_color)
     if diffuse_texture:
-        var albedo_texture: Texture = MaterialManager.load_texture(model_path, diffuse_texture)
+        var albedo_texture: Texture = MaterialManager.load_texture(model_path, diffuse_texture, false, options.max_texture_size)
         if albedo_texture is Texture2D and _texture_has_alpha(albedo_texture):
             mmat.transparent = true
         material.set_shader_parameter("texture_albedo", albedo_texture)
@@ -341,7 +341,7 @@ func _apply_default_material(
         # normal_scale stays at the 1.0 of the material types: the original applies the normal map
         # as it is (mat_normalmap.frag:46-48), and a factor here also amplifies the DXT
         # quantisation bias of the lower mips into a fixed tilt of the whole distant surface
-        material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true))
+        material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true, options.max_texture_size))
 
     if variant.has_parameter("specular"):
         material.set_shader_parameter("specular", variant.get_parameter("specular"))
@@ -356,7 +356,7 @@ func _apply_default_material(
     var specgloss_texture: String = _texture_path(variant, texture_map, texture_map.specgloss)
     if specgloss_texture:
         material.set_shader_parameter(
-            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture, true))
+            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture, true, options.max_texture_size))
         material.set_shader_parameter("specular_strength", variant.get_parameter("specular", 0.5))
         material.set_shader_parameter("reflection_strength", variant.get_parameter("reflection", 0.0))
         material.set_shader_parameter("glossiness", variant.get_parameter("glossiness", 10.0))
@@ -393,7 +393,7 @@ func _apply_reflmap(
     var reflmap_texture: String = _texture_path(variant, texture_map, texture_map.reflmap)
     if reflmap_texture:
         material.set_shader_parameter(
-            "texture_metallic", MaterialManager.load_texture(model_path, reflmap_texture, true))
+            "texture_metallic", MaterialManager.load_texture(model_path, reflmap_texture, true, options.max_texture_size))
 
 
 ## mat_detail_normalmap.frag: the default material plus a tiled detail normal map
@@ -410,7 +410,7 @@ func _apply_detail_normalmap(
     var detail_normalmap_texture: String = _texture_path(variant, texture_map, texture_map.detail_normalmap)
     if detail_normalmap_texture:
         material.set_shader_parameter(
-            "texture_detail_normal", MaterialManager.load_texture(model_path, detail_normalmap_texture, true))
+            "texture_detail_normal", MaterialManager.load_texture(model_path, detail_normalmap_texture, true, options.max_texture_size))
     material.set_shader_parameter("detail_scale", variant.get_parameter("detail_scale", 1.0))
     material.set_shader_parameter("detail_height_scale", variant.get_parameter("detail_height_scale", 1.0))
 
@@ -429,18 +429,18 @@ func _apply_parallax(
 
     var albedo_texture:Texture = MaterialManager.UNKNOWN_TEXTURE
     if diffuse_texture_path:
-        albedo_texture = MaterialManager.load_texture(model_path, diffuse_texture_path)
+        albedo_texture = MaterialManager.load_texture(model_path, diffuse_texture_path, false, options.max_texture_size)
         if albedo_texture is Texture2D and _texture_has_alpha(albedo_texture):
             mmat.transparent = true
 
     var normal_texture:Texture = MaterialManager.UNKNOWN_TEXTURE
     if normalmap_texture_path:
-        normal_texture = MaterialManager.load_texture(model_path, normalmap_texture_path, true)
+        normal_texture = MaterialManager.load_texture(model_path, normalmap_texture_path, true, options.max_texture_size)
 
     var detail_normal_texture:Texture = MaterialManager.UNKNOWN_TEXTURE
     var use_detail_normal:bool = false
     if detail_normalmap_texture_path:
-        detail_normal_texture = MaterialManager.load_texture(model_path, detail_normalmap_texture_path, true)
+        detail_normal_texture = MaterialManager.load_texture(model_path, detail_normalmap_texture_path, true, options.max_texture_size)
         use_detail_normal = true
 
     var albedo_multiplier:Color = Color(1.0, 1.0, 1.0, 1.0)
@@ -481,7 +481,7 @@ func _apply_parallax(
     var specgloss_texture_path: String = _texture_path(variant, texture_map, texture_map.specgloss)
     if specgloss_texture_path:
         material.set_shader_parameter(
-            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture_path, true))
+            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture_path, true, options.max_texture_size))
 
 func _apply_water(
     mmat: MaszynaMaterial,
@@ -498,17 +498,17 @@ func _apply_water(
 
     var diffuse_texture: Texture = MaterialManager.UNKNOWN_TEXTURE
     if diffuse_texture_path:
-        diffuse_texture = MaterialManager.load_texture(model_path, diffuse_texture_path)
+        diffuse_texture = MaterialManager.load_texture(model_path, diffuse_texture_path, false, options.max_texture_size)
         if diffuse_texture is Texture2D and _texture_has_alpha(diffuse_texture):
             mmat.transparent = true
 
     var normal_texture: Texture = MaterialManager.UNKNOWN_TEXTURE
     if normalmap_texture_path:
-        normal_texture = MaterialManager.load_texture(model_path, normalmap_texture_path, true)
+        normal_texture = MaterialManager.load_texture(model_path, normalmap_texture_path, true, options.max_texture_size)
 
     var dudv_texture: Texture = MaterialManager.UNKNOWN_TEXTURE
     if dudvmap_texture_path:
-        dudv_texture = MaterialManager.load_texture(model_path, dudvmap_texture_path)
+        dudv_texture = MaterialManager.load_texture(model_path, dudvmap_texture_path, false, options.max_texture_size)
 
     var material_color := Vector4(1.0, 1.0, 1.0, 0.0)
     if variant.has_parameter_vec4("color"):
@@ -531,7 +531,7 @@ func _apply_water(
     if variant.shader == "water_specgloss":
         var specgloss_texture: Texture = MaterialManager.UNKNOWN_TEXTURE
         if specgloss_texture_path:
-            specgloss_texture = MaterialManager.load_texture(model_path, specgloss_texture_path, true)
+            specgloss_texture = MaterialManager.load_texture(model_path, specgloss_texture_path, true, options.max_texture_size)
         material.set_shader_parameter("specgloss_texture", specgloss_texture)
 
 
@@ -553,7 +553,7 @@ func _apply_rain_windscreen(
     for parameter: String in textures:
         var texture_path: String = _texture_path(variant, texture_map, textures[parameter])
         if texture_path:
-            material.set_shader_parameter(parameter, MaterialManager.load_texture(model_path, texture_path))
+            material.set_shader_parameter(parameter, MaterialManager.load_texture(model_path, texture_path, false, options.max_texture_size))
     material.set_shader_parameter("raindrop_grid_size", variant.get_parameter("raindrop_grid_size", 1.0))
     if variant.has_parameter("specular"):
         material.set_shader_parameter("specular", variant.get_parameter("specular"))

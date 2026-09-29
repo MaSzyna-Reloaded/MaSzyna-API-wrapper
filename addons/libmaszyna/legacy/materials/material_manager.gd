@@ -45,6 +45,9 @@ var _dds_cache: Dictionary = {}
 
 enum Transparency { Disabled, Alpha, AlphaScissor }
 
+## A max texture size that takes the project's maszyna/import/dds_max_texture_size
+const MAX_TEXTURE_SIZE_PROJECT_DEFAULT: int = 0
+
 
 class MaterialOptions:
     var diffuse_color: Color = Color.WHITE
@@ -58,6 +61,9 @@ class MaterialOptions:
     # platforms tend to miss parts of shadows" (opengl33renderer.cpp:3609), and an open rail profile
     # with its front faces culled casts almost nothing
     var cull_disabled: bool = false
+    # the largest texture size loaded, larger DDS drop their top mipmaps - the cab has its own
+    # limit in the original (Train.cpp:660)
+    var max_texture_size: int = MAX_TEXTURE_SIZE_PROJECT_DEFAULT
 
 
 @export var season := MaszynaEnvironment.Season.SEASON_SUMMER:
@@ -152,6 +158,7 @@ func get_submodel_material(
     data_path: String,
     skins: PackedStringArray,
     force_alpha: bool,
+    max_texture_size: int,
 ) -> Material:
     # E3DOptimizedBackend draws a free spotlight only when it gets a material for it
     if submodel.submodel_type == E3DSubModel.SUBMODEL_FREE_SPOTLIGHT:
@@ -162,6 +169,7 @@ func get_submodel_material(
 
     # TODO: handle more material options here (selfillum, etc)
     options.force_transparent = force_alpha
+    options.max_texture_size = max_texture_size
     options.diffuse_color = submodel.diffuse_color
     options.selfillum_color = (
         submodel.self_illumination
@@ -192,7 +200,12 @@ func get_submodel_material(
 func get_texture(texture_path:String) -> Texture:
     return load_texture("", texture_path)
 
-func load_texture(model_path:String, material_name:String, normal:bool = false) -> Texture:
+func load_texture(
+    model_path:String,
+    material_name:String,
+    normal:bool = false,
+    max_texture_size:int = MAX_TEXTURE_SIZE_PROJECT_DEFAULT,
+) -> Texture:
     var project_data_dir:String = UserSettings.get_maszyna_game_dir()
     if (project_data_dir.ends_with("\\")):
         project_data_dir = project_data_dir.trim_suffix("\\")
@@ -216,7 +229,9 @@ func load_texture(model_path:String, material_name:String, normal:bool = false) 
         return UNKNOWN_TEXTURE
 
     var full_path:String = project_data_dir.path_join(final_path)
-    var max_size:int = int(ProjectSettings.get_setting("maszyna/import/dds_max_texture_size", 1024))
+    var max_size:int = max_texture_size
+    if max_size == MAX_TEXTURE_SIZE_PROJECT_DEFAULT:
+        max_size = int(ProjectSettings.get_setting("maszyna/import/dds_max_texture_size", 1024))
     var texture:Texture2D = _load_dds_clamped(full_path, max_size)
     if not texture:
         texture = load(full_path) as Texture2D
@@ -254,6 +269,7 @@ func _compute_cache_hash(
         options.selfillum_color.to_html(true),
         options.selfillum_energy,
         options.cull_disabled,
+        options.max_texture_size,
     ].map(str)).md5_text()
     return model_path.path_join("%s_%s.res" % [material_path, options_hash])
 

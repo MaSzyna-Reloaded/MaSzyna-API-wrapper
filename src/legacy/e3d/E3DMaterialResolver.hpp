@@ -8,9 +8,9 @@ namespace godot {
     struct E3DInstanceData;
     class E3DSubModel;
 
-    /// Calls the material resolver callable once per submodel, data path, skins and force alpha;
-    /// later calls return the same material while it is alive (a scenery instances the same models
-    /// thousands of times).
+    /// Calls the material resolver callable once per submodel, data path, skins, force alpha and
+    /// max texture size; later calls return the same material while it is alive (a scenery
+    /// instances the same models thousands of times).
     class E3DMaterialResolver {
         private:
             Callable callable;

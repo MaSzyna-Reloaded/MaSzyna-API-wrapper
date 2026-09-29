@@ -129,6 +129,8 @@ anything. Open work belongs in `TODO.md`.
 * A RenderingServer light starts with the server's defaults, not a node's: diff the whole
   `Light3D` constructor against `_light_initialize()` - `shadow_blur` 0 zeroes a spot's depth
   bias. *(09-28 street lamps shadowed their own pool)*
+* A blurry texture: compare its DDS size with the limit it loaded under before blaming mipmaps -
+  the cab has its own limit, as in the original. *(09-29 blurry cab gauges)*
 
 * A scenery model does not hide its `*_on` submodels - only a vehicle does (Model3d.cpp:2221);
   dump the model's tree before calling a light missing. *(09-29 shunting signal dwarfs never lit)*

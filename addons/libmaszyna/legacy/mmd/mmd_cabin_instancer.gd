@@ -430,6 +430,8 @@ static func build_into(
     # the resource itself rather than its filename, so the indicator lights can read its submodels
     model.model = E3DModelManager.load_model(data_path, model_relpath)
     model.skins = resolve_skins(data_path, skin)
+    # the cab loads under its own texture size limit (Train.cpp:660)
+    model.max_texture_size = int(ProjectSettings.get_setting("maszyna/import/dds_max_cab_texture_size", 4096))
     # the cab's own sun lights this layer alone (maszyna/cabin/improve_shadows_quality)
     model.layers = MaszynaEnvironmentNode.CABIN_RENDER_LAYER
     # A cabin interior is self-contained (glass, instrument backlight glow, ...) and, unlike

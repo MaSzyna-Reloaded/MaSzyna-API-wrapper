@@ -67,7 +67,7 @@ func test_nodes_instance_rebuilds_on_options_change() -> void:
     E3DRenderingServer.instance_build(rid)
     assert_not_null(parent.get_node_or_null(NodePath("light_on00/mesh")))
 
-    E3DRenderingServer.instance_set_options(rid, "", [], ["mesh"], false, [])
+    E3DRenderingServer.instance_set_options(rid, "", [], ["mesh"], false, [], 0)
     assert_eq(parent.get_child_count(true), 1)
     assert_null(parent.get_node_or_null(NodePath("light_on00/mesh")))
     E3DRenderingServer.instance_free(rid)

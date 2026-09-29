@@ -183,6 +183,20 @@ channel repurposed for something else like a specular mask) can bleed through as
 or partial see-through - which is why it isn't applied to all `material_transparent` E3D content
 by default, only where explicitly opted in above.
 
+### Texture size and filtering
+
+DDS textures larger than a limit drop their top mipmap levels when loaded, as the original's
+`maxtexturesize`/`maxcabtexturesize` do (Globals.h:164-165):
+
+- `maszyna/import/dds_max_texture_size` (default 1024) - scenery and vehicles,
+- `maszyna/import/dds_max_cab_texture_size` (default 4096, the original's) - the cab, whose
+  instruments need the full resolution (Train.cpp:660).
+
+Anisotropic filtering (the original uses 8x, Texture.cpp:1191) is Godot's global
+`rendering/textures/default_filters/anisotropic_filtering_level`. It acts only on samplers
+declared `*_anisotropic`; most material shaders in `addons/libmaszyna/legacy/materials/types/`
+use `filter_linear_mipmap`, so the setting does not reach them.
+
 ### Code Quality
 
 #### Formatting and style

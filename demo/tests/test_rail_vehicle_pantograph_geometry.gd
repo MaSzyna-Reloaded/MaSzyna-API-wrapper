@@ -23,13 +23,40 @@ const TOLERANCE:float = 0.001
 ## paths change, so a test that waits for frames is asserting against whatever the frame count
 ## happened to be. RailVehicle3D binds its tick as a callable method for exactly this.
 const TICK:float = 1.0 / 60.0
+## The wire over the track the pantograph is raised to, at 1 m over its lower arm's pivot - in reach
+## of the arms above, and fed at the voltage a raised pantograph reads [m, V]
+const WIRE_HEIGHT:float = 5.0
+const WIRE_VOLTAGE:float = 3000.0
+## A step of the vehicles, and the most steps the small compressor gets to fill the pantographs'
+## tank and the arms to reach the wire [s]
+const STEP:float = 0.5
+const MAX_RAISE_STEPS:int = 2000
+## The pantographs' tank as a real one is kept [bar] - the arms rise from 3.45 bar up
+const PANTOGRAPH_TANK_PRESSURE:float = 5.0
+## An electric locomotive's power [kW]
+const ENGINE_POWER:float = 2000.0
+## Read by a pantograph at the wire [V]
+const POWERED_VOLTAGE:float = 100.0
 
 var vehicle:RailVehicle3D
 var physics_node:VehiclePhysicsNode
 var engine:RailVehicleElectricEngine
+var _tracks:Array[RID] = []
+var _wires:Array[RID] = []
+var _sources:Array[RID] = []
 
 
 func after_each() -> void:
+    for wire:RID in _wires:
+        TractionServer.wire_free(wire)
+    _wires.clear()
+    for source:RID in _sources:
+        TractionServer.power_source_free(source)
+    _sources.clear()
+    for track:RID in _tracks:
+        TrackServer.track_free(track)
+    _tracks.clear()
+    TrackServer.topology_rebuild()
     if is_instance_valid(vehicle):
         if vehicle.get_parent():
             vehicle.get_parent().remove_child(vehicle)
@@ -81,12 +108,12 @@ func test_each_pantograph_publishes_its_own_position_to_the_vehicle() -> void:
     _build_electric_vehicle()
 
     assert_almost_eq(
-            engine.power_current_collector_first_position,
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST),
             Vector3(0.0, LOWER_HEIGHT, FRONT_ALONG),
             Vector3(TOLERANCE, TOLERANCE, TOLERANCE),
             "the front pantograph's position is where its lower arm stands on the vehicle")
     assert_almost_eq(
-            engine.power_current_collector_second_position,
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_SECOND),
             Vector3(0.0, LOWER_HEIGHT, REAR_ALONG),
             Vector3(TOLERANCE, TOLERANCE, TOLERANCE),
             "the rear pantograph's position is where its lower arm stands on the vehicle")
@@ -95,8 +122,8 @@ func test_each_pantograph_publishes_its_own_position_to_the_vehicle() -> void:
 func test_the_two_pantographs_do_not_share_one_sampling_point() -> void:
     _build_electric_vehicle()
 
-    var front:Vector3 = engine.power_current_collector_first_position
-    var rear:Vector3 = engine.power_current_collector_second_position
+    var front:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST)
+    var rear:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_SECOND)
     assert_almost_eq(
             rear.z - front.z, REAR_ALONG - FRONT_ALONG, TOLERANCE,
             "the two pantographs are as far apart along the vehicle as the model puts them")
@@ -119,5 +146,73 @@ func test_a_vehicle_without_pantograph_arms_publishes_no_position() -> void:
     vehicle._process(TICK)
 
     assert_eq(
-            engine.power_current_collector_first_position, Vector3(),
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST), Vector3(),
             "a vehicle whose model carries no pantograph has nothing to publish")
+
+
+## FINDINGS.md 2026-09-29: entering the cab of a running 3E/1-42 rebuilt its model, and the arms
+## taken again from the model's rest pose came down - the vehicle lost its voltage and its line
+## breaker opened. How far a pantograph is raised is the vehicle's own state (RailVehicleServer),
+## and a model rebuilt to draw it keeps it.
+func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
+    var track:RID = TrackServer.track_create()
+    _tracks.append(track)
+    var curve:TrackCurve = TrackCurve.new()
+    curve.p1 = Vector3.ZERO
+    curve.p2 = Vector3(0.0, 0.0, 60.0)
+    TrackServer.track_update_curves(track, curve, null)
+    TrackServer.track_update(track, TrackServer.TRACK_NORMAL, "start", 1.435)
+    TrackServer.topology_rebuild()
+    var source:RID = TractionServer.power_source_create()
+    _sources.append(source)
+    TractionServer.power_source_set_params(source, "test_power", WIRE_VOLTAGE, 0.0, 0.2, 2000.0, 1.0, 3, 60.0, false)
+    var wire:RID = TractionServer.wire_create()
+    _wires.append(wire)
+    TractionServer.wire_set_params(
+            wire, Vector3(0.0, WIRE_HEIGHT, -50.0), Vector3(0.0, WIRE_HEIGHT, 100.0), "test_power", WIRE_VOLTAGE,
+            2000.0, 0.01)
+    TractionServer.network_build()
+
+    var model:VehicleModel = VehicleModel.new()
+    # a vehicle with no power has no pantographs' tank to fill (Mover.cpp:1530)
+    model.properties = {"type_name": "test", "battery_voltage": 110.0, "power": ENGINE_POWER}
+    physics_node = build_vehicle_node("test_pantograph_rebuilt", model)
+    engine = MoverRailVehicleElectricSeriesEngine.new()
+    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_current_collector_physical_layout = 1
+    engine.power_current_collector_max_voltage = 3600.0
+    engine.power_current_collector_number_of_collectors = 1
+    engine.power_current_collector_max_pantograph_tank_pressure = PANTOGRAPH_TANK_PRESSURE
+    var controller:VehicleController = physics_node.get_controller()
+    controller.add_component(engine)
+    vehicle = RailVehicle3D.new()
+    vehicle.start_track_name = "start"
+    vehicle.start_track_offset = 20.0
+    add_child(vehicle)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
+    vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
+    await wait_idle_frames(2)
+    # no main reservoir here: the tank filled by the small compressor, as PrepareEngine() does
+    controller.send_command("battery", true)
+    # only a vehicle with its cab switched on is simulated (FINDINGS.md, 09-23)
+    controller.send_command("cab_activation", true)
+    controller.send_command("pantograph_compressor_valve", true)
+    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    for step:int in MAX_RAISE_STEPS:
+        # held, as the driver holds it (Train.cpp:2912): it starts once the battery feeds 24 V
+        controller.send_command("pantograph_compressor", true)
+        RailVehicleServer.stepping_advance(STEP)
+        if _front_voltage(controller) > POWERED_VOLTAGE:
+            break
+    assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "the raised pantograph reaches the wire")
+
+    # the model rebuilt: new arm nodes, at rest, as a model loaded again puts them
+    vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
+    vehicle._process(TICK)
+    RailVehicleServer.stepping_advance(STEP)
+
+    assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "and stays at it when the model is rebuilt")
+
+
+func _front_voltage(controller:VehicleController) -> float:
+    return float(RailVehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/pantograph_first_voltage", 0.0))

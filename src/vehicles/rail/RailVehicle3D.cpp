@@ -3,7 +3,6 @@
 #include "cabin/Cabin3D.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
-#include "traction/TractionServer.hpp"
 #include "vehicles/base/VehiclePhysicsNode.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
@@ -70,10 +69,6 @@ namespace godot {
 
     RailVehicle3D::RailVehicle3D() {
         set_process(true);
-        pantograph_wire_cache.resize(4);
-        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
-            pantograph_wire_cache[index] = Dictionary();
-        }
     }
 
     void RailVehicle3D::_bind_methods() {
@@ -349,9 +344,6 @@ namespace godot {
         lighting = nullptr;
         wipers = nullptr;
         doors = nullptr;
-        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
-            pantograph_wire_cache[index] = Dictionary();
-        }
         if (controller == nullptr) {
             return;
         }
@@ -363,25 +355,6 @@ namespace godot {
                 controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
         wipers = Object::cast_to<RailVehicleWipers>(controller->get_component(VehicleComponentType::COMPONENT_WIPERS));
         doors = Object::cast_to<RailVehicleDoors>(controller->get_component(VehicleComponentType::COMPONENT_DOORS));
-        /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
-         * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
-         * exported width stands in for a vehicle with no electric engine to read it from. */
-        const double sliding_width =
-                electric_engine != nullptr ? electric_engine->get_power_current_collector_sliding_width() : 0.0;
-        pantograph_slider_half_width = sliding_width > 0.0 ? 0.5 * sliding_width : pantograph_collector_width;
-        _publish_collector_positions();
-    }
-
-    /* Where each pantograph sits on the vehicle, handed to the vehicle that owns the value. Its two
-     * inputs land in either order - the model's arm nodes when the paths change, the electric
-     * engine when the vehicle's parts are adopted - so both events publish, and the one that runs
-     * second is the one that completes it. */
-    void RailVehicle3D::_publish_collector_positions() const {
-        if (electric_engine == nullptr) {
-            return;
-        }
-        electric_engine->set_power_current_collector_first_position(pantograph_front_geometry.get("offset", Vector3()));
-        electric_engine->set_power_current_collector_second_position(pantograph_rear_geometry.get("offset", Vector3()));
     }
 
     void RailVehicle3D::_on_controller_changed(RailVehicleController *p_controller) {
@@ -412,6 +385,9 @@ namespace godot {
                 rid = vehicle_rid;
                 rid_owned = false;
                 server->vehicle_attach_rail_vehicle(rid, get_instance_id());
+                // the pantographs belong to the handle: the model's arms go with it to the new one
+                _publish_pantograph_geometry(RailVehicleElectricEngine::PANTOGRAPH_FIRST, pantograph_front_arm_nodes);
+                _publish_pantograph_geometry(RailVehicleElectricEngine::PANTOGRAPH_SECOND, pantograph_rear_arm_nodes);
                 if (model_node != nullptr) {
                     // the model node is a GDScript E3DModelInstance, unknown at build time
                     _register_pickable(model_node->call("get_e3d_instance"));
@@ -522,10 +498,10 @@ namespace godot {
 
         if (!Engine::get_singleton()->is_editor_hint()) {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
-                // the placement itself is applied by RailVehicleServer at the end of its step
-                if (electric_engine != nullptr) {
-                    _update_pantograph_raise_state(p_delta);
-                    _update_pantograph_power();
+                // the placement itself is applied by RailVehicleServer at the end of its step, and
+                // the pantographs raised there
+                if (is_visible) {
+                    _update_pantograph_animation();
                 }
             } else if (controller != nullptr && start_track_name.is_empty()) {
                 const double velocity = controller->get_velocity();
@@ -534,9 +510,8 @@ namespace godot {
                 if (is_visible && !Math::is_zero_approx(velocity)) {
                     _update_wheel_animation_state();
                 }
-                if (electric_engine != nullptr) {
-                    _update_pantograph_raise_state(p_delta);
-                    _update_pantograph_power();
+                if (is_visible) {
+                    _update_pantograph_animation();
                 }
             }
             if (controller != nullptr) {
@@ -907,47 +882,37 @@ namespace godot {
         return nodes;
     }
 
-    Dictionary RailVehicle3D::_cache_pantograph_geometry(const TypedArray<Node3D> &p_nodes) const {
-        if (p_nodes.size() != 5) {
-            return {};
+    void RailVehicle3D::_publish_pantograph_geometry(
+            const RailVehicleElectricEngine::PantographSelector p_pantograph, const TypedArray<Node3D> &p_nodes) const {
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr || !rid.is_valid() || p_nodes.size() != 5) {
+            return;
         }
         // the second arm of each pair is optional - a single-arm pantograph has none
-        Node3D *lower = Object::cast_to<Node3D>(p_nodes[0]);
-        Node3D *upper = Object::cast_to<Node3D>(p_nodes[2]);
-        Node3D *slider = Object::cast_to<Node3D>(p_nodes[4]);
+        const Node3D *lower = Object::cast_to<Node3D>(p_nodes[0]);
+        const Node3D *upper = Object::cast_to<Node3D>(p_nodes[2]);
+        const Node3D *slider = Object::cast_to<Node3D>(p_nodes[4]);
         if (lower == nullptr || upper == nullptr || slider == nullptr) {
-            return {};
+            return;
         }
         const Vector3 lower_to_upper =
                 lower->get_global_basis().inverse().xform(upper->get_global_position() - lower->get_global_position());
-        const double len_l1 = Vector2(lower_to_upper.y, lower_to_upper.z).length();
-        const double angle_l0 = Math::atan2(Math::abs(lower_to_upper.z), Math::abs(lower_to_upper.y));
-        double horizontal = -Math::abs(lower_to_upper.y);
         const Vector3 upper_to_slider =
                 upper->get_global_basis().inverse().xform(slider->get_global_position() - upper->get_global_position());
-        const double len_u1 = Vector2(upper_to_slider.y, upper_to_slider.z).length();
-        const double angle_u0 = Math::atan2(Math::abs(upper_to_slider.z), Math::abs(upper_to_slider.y));
-        horizontal += Math::abs(upper_to_slider.y);
-        if (len_l1 <= 0.0 || len_u1 <= 0.0) {
-            return {};
+        const double lower_length = Vector2(lower_to_upper.y, lower_to_upper.z).length();
+        const double upper_length = Vector2(upper_to_slider.y, upper_to_slider.z).length();
+        if (lower_length <= 0.0 || upper_length <= 0.0) {
+            return;
         }
-        constexpr double HEIGHT = 0.07;
-        Dictionary geometry;
         /* Where this pantograph sits on the vehicle, in the vehicle's own space - the original
          * reads the same thing off the submodel's matrix (TAnimPant::vPos, DynObj.cpp:5508-5549:
          * sideways, up, and along the length). Without it both pantographs of a vehicle sampled
          * the wire at the same point, the vehicle's origin. */
-        geometry["offset"] = get_global_transform().affine_inverse().xform(lower->get_global_position());
-        geometry["len_l1"] = len_l1;
-        geometry["len_u1"] = len_u1;
-        geometry["horiz"] = horizontal;
-        geometry["angle_l0"] = angle_l0;
-        geometry["angle_u0"] = angle_u0;
-        geometry["angle_l"] = angle_l0;
-        geometry["angle_u"] = angle_u0;
-        geometry["height"] = HEIGHT;
-        geometry["pant_wys"] = (len_l1 * Math::sin(angle_l0)) + (len_u1 * Math::sin(angle_u0)) + HEIGHT;
-        return geometry;
+        server->vehicle_set_pantograph_geometry(
+                rid, p_pantograph, get_global_transform().affine_inverse().xform(lower->get_global_position()),
+                lower_length, upper_length, Math::abs(upper_to_slider.y) - Math::abs(lower_to_upper.y),
+                Math::atan2(Math::abs(lower_to_upper.z), Math::abs(lower_to_upper.y)),
+                Math::atan2(Math::abs(upper_to_slider.z), Math::abs(upper_to_slider.y)), pantograph_collector_width);
     }
 
     void RailVehicle3D::_cache_animation_bindings() {
@@ -1013,11 +978,8 @@ namespace godot {
 
         pantograph_front_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_front_arm_paths);
         pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths);
-        pantograph_front_geometry = _cache_pantograph_geometry(pantograph_front_arm_nodes);
-        pantograph_rear_geometry = _cache_pantograph_geometry(pantograph_rear_arm_nodes);
-        pantograph_front_converged = pantograph_front_geometry.is_empty();
-        pantograph_rear_converged = pantograph_rear_geometry.is_empty();
-        _publish_collector_positions();
+        _publish_pantograph_geometry(RailVehicleElectricEngine::PANTOGRAPH_FIRST, pantograph_front_arm_nodes);
+        _publish_pantograph_geometry(RailVehicleElectricEngine::PANTOGRAPH_SECOND, pantograph_rear_arm_nodes);
         TypedArray<Node3D> arm_arrays[] = {pantograph_front_arm_nodes, pantograph_rear_arm_nodes};
         for (const TypedArray<Node3D> &arm_nodes: arm_arrays) {
             for (int index = 0; index < arm_nodes.size(); ++index) {
@@ -1402,244 +1364,26 @@ namespace godot {
         _update_wheel_animation_state();
     }
 
-    RailVehicle3D::PantographFrame RailVehicle3D::_pantograph_frame() const {
-        PantographFrame frame;
-        frame.transform = get_global_transform();
-        frame.forward = -frame.transform.basis.get_column(2);
-        frame.up = frame.transform.basis.get_column(1);
-        frame.left = -frame.transform.basis.get_column(0);
-        return frame;
-    }
-
-    /* Where the vehicle is, in the terms a scenery is written in: a warning that only carries
-     * world coordinates cannot be looked up in the .scn that produced the wiring. */
-    String RailVehicle3D::_track_position_text() const {
-        RailVehicleServer *server = RailVehicleServer::get_instance();
-        TrackServer *tracks = TrackServer::get_instance();
-        if (server == nullptr || tracks == nullptr) {
-            return String("unknown track");
-        }
-        const Dictionary placement = server->vehicle_get_track_position(rid);
-        const RID track = placement.get("track_rid", RID());
-        if (!track.is_valid()) {
-            return String("no track");
-        }
-        const String name = tracks->track_get_name(track);
-        return vformat(
-                "%s at %.2f m", name.is_empty() ? String("(unnamed track)") : name,
-                double(placement.get("along", 0.0)));
-    }
-
-    /* The third way a raised pantograph reads no voltage, and the only one that is not about the
-     * wire: the arm has not reached it (PantDiff >= 0.01, DynObj.cpp:3866), so the vehicle is fed
-     * 0 V while a perfectly good span is overhead. Reported on the transition, like the other two,
-     * because from the cab all three look the same. */
-    void RailVehicle3D::_report_contact_gap(const int p_index, const bool p_is_active, const bool p_converged) {
-        Dictionary cache = pantograph_wire_cache[p_index];
-        const bool was_touching = cache.get("touching", false);
-        if (p_is_active && was_touching && !p_converged) {
-            UtilityFunctions::push_warning(
-                    vformat("Lost contact: %s pantograph %d is not reaching the wire - %s", get_name(), p_index,
-                            _track_position_text()));
-        }
-        cache["touching"] = p_is_active && p_converged;
-        pantograph_wire_cache[p_index] = cache;
-    }
-
-    /* FIXME(#184): this belongs in RailVehicleServer's step, not in the node that draws the
-     * vehicle. Nothing here needs a node - the server already owns the placement and
-     * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
-     * thing a rendering layer must not do. Moving it needs the collector offsets below to reach
-     * the vehicle first; the original keeps them in TAnimPant::vPos. */
-    void RailVehicle3D::_update_pantograph_power() {
-        if (Engine::get_singleton()->is_editor_hint() || electric_engine == nullptr || controller == nullptr) {
+    void RailVehicle3D::_update_pantograph_animation() {
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr || !rid.is_valid()) {
             return;
         }
-        const PantographFrame frame = _pantograph_frame();
-        const bool first_active = electric_engine->get_collector_pantograph_first_active();
-        const bool second_active = electric_engine->get_collector_pantograph_second_active();
-        const double assumed_voltage =
-                MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
-                    Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
-        const bool front_active = first_active && pantograph_front_converged;
-        const bool rear_active = second_active && pantograph_rear_converged;
-        const int active_count = int(front_active) + int(rear_active);
-        const double current = active_count > 0 ? controller->get_current0() / active_count : 0.0;
-        _report_contact_gap(2, first_active, pantograph_front_converged);
-        _report_contact_gap(3, second_active, pantograph_rear_converged);
-        const double front_voltage = front_active
-                                             ? _pantograph_wire_voltage(
-                                                       2, electric_engine->get_power_current_collector_first_position(),
-                                                       frame, assumed_voltage, current)
-                                             : 0.0;
-        electric_engine->set_pantograph_wire_voltage(
-                RailVehicleElectricEngine::PANTOGRAPH_FIRST, static_cast<float>(front_voltage));
-        electric_engine->set_pantograph_wire_voltage(
-                RailVehicleElectricEngine::PANTOGRAPH_SECOND,
-                static_cast<float>(
-                        rear_active ? _pantograph_wire_voltage(
-                                              3, electric_engine->get_power_current_collector_second_position(), frame,
-                                              assumed_voltage, current)
-                                    : 0.0));
-    }
-
-    /// FIXME(#184): moves to RailVehicleServer with _update_pantograph_power().
-    double RailVehicle3D::_pantograph_wire_voltage(
-            const int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, const double p_assumed_voltage,
-            const double p_current) {
-        const Vector3 contact_point = p_frame.transform.xform(p_offset);
-        const Dictionary wire =
-                _find_pantograph_wire(p_index, contact_point, p_frame.up, p_frame.forward, p_frame.left);
-        const RID wire_rid = wire["rid"];
-        if (!wire_rid.is_valid()) {
-            return 0.0;
+        if (pantograph_front_arm_nodes.size() == 5) {
+            _apply_pantograph_animation(
+                    pantograph_front_arm_nodes,
+                    server->vehicle_get_pantograph_raise(rid, RailVehicleElectricEngine::PANTOGRAPH_FIRST));
         }
-        TractionServer *traction_server = TractionServer::get_instance();
-        if (traction_server == nullptr) {
-            return 0.0;
-        }
-        const double voltage = traction_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current);
-        /* A span that is overhead but carries nothing is a different defect from a hole in the
-         * wiring - it means the network behind it has no source, or the resistance never reached
-         * it - and the two are indistinguishable from the cab, where both read as a dead line. */
-        Dictionary cache = pantograph_wire_cache[p_index];
-        const bool had_voltage = cache.get("powered", false);
-        if (had_voltage && Math::is_zero_approx(voltage)) {
-            UtilityFunctions::push_warning(
-                    vformat("Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v", get_name(),
-                            p_index, _track_position_text(), contact_point));
-        }
-        cache["powered"] = !Math::is_zero_approx(voltage);
-        pantograph_wire_cache[p_index] = cache;
-        return voltage;
-    }
-
-    /* FIXME(#184): the arm geometry is the vehicle's own state (TAnimPant, DynObj.h:106) and
-     * belongs beside the Mover; only _apply_pantograph_animation() below is drawing. */
-    void RailVehicle3D::_update_pantograph_raise_state(const double p_delta) {
-        if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
-            return;
-        }
-        pantograph_front_converged = _update_pantograph_arm(
-                0, pantograph_front_geometry, pantograph_front_arm_nodes,
-                electric_engine->get_collector_pantograph_first_active(), p_delta);
-        if (is_visible && !pantograph_front_geometry.is_empty()) {
-            _apply_pantograph_animation(pantograph_front_arm_nodes, pantograph_front_geometry);
-        }
-        pantograph_rear_converged = _update_pantograph_arm(
-                1, pantograph_rear_geometry, pantograph_rear_arm_nodes,
-                electric_engine->get_collector_pantograph_second_active(), p_delta);
-        if (is_visible && !pantograph_rear_geometry.is_empty()) {
-            _apply_pantograph_animation(pantograph_rear_arm_nodes, pantograph_rear_geometry);
+        if (pantograph_rear_arm_nodes.size() == 5) {
+            _apply_pantograph_animation(
+                    pantograph_rear_arm_nodes,
+                    server->vehicle_get_pantograph_raise(rid, RailVehicleElectricEngine::PANTOGRAPH_SECOND));
         }
     }
 
-    bool RailVehicle3D::_update_pantograph_arm(
-            const int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, const bool p_is_active,
-            const double p_delta) {
-        if (p_geometry.is_empty()) {
-            return true;
-        }
-        const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
-        const bool power_available = controller->get_power24_available() || controller->get_power110_available();
-        const bool is_ezt = (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) ==
-                            RailVehicleController::TRAIN_TYPE_EZT;
-        const double pressure_threshold = is_ezt ? 2.45 : 3.45;
-        double speed_factor = 0.0;
-        if (pressure > pressure_threshold && power_available) {
-            speed_factor = MAX(0.0, 0.015 * pressure * p_delta);
-        }
-        double pant_diff = Math::INF;
-        if (p_is_active) {
-            // a lowered pantograph comes down regardless of the wire (DynObj.cpp:3775), no search needed
-            const PantographFrame frame = _pantograph_frame();
-            Node3D *lower_arm = Object::cast_to<Node3D>(p_arm_nodes[0]);
-            const Dictionary wire = _find_pantograph_wire(
-                    p_index, lower_arm->get_global_position(), frame.up, frame.forward, frame.left);
-            pant_diff = double(wire["height"]) - double(p_geometry["pant_wys"]);
-        }
-        double angle = p_geometry["angle_l"];
-        if (speed_factor > 0.0 && p_is_active) {
-            if (pant_diff > 0.001) {
-                angle += MIN(speed_factor, 0.55 * pant_diff);
-            } else if (pant_diff < -0.001) {
-                angle += 0.4 * pant_diff;
-            }
-        } else {
-            if (angle > double(p_geometry["angle_l0"])) {
-                angle -= 0.15 * p_delta;
-            }
-            if (angle < double(p_geometry["angle_l0"])) {
-                angle = p_geometry["angle_l0"];
-            }
-        }
-        if (!Math::is_equal_approx(angle, double(p_geometry["angle_l"]))) {
-            const double upper_angle = Math::acos(
-                    ((double(p_geometry["len_l1"]) * Math::cos(angle)) + double(p_geometry["horiz"])) /
-                    double(p_geometry["len_u1"]));
-            if (angle + upper_angle < Math::PI) {
-                p_geometry["angle_l"] = angle;
-                p_geometry["angle_u"] = upper_angle;
-                p_geometry["pant_wys"] = (double(p_geometry["len_l1"]) * Math::sin(angle)) +
-                                         (double(p_geometry["len_u1"]) * Math::sin(upper_angle)) +
-                                         double(p_geometry["height"]);
-            }
-        }
-        return p_is_active && pant_diff < 0.01;
-    }
-
-    /* FIXME(#184): moves to RailVehicleServer with _update_pantograph_power(), and
-     * pantograph_wire_cache - which span each pantograph is on - is the vehicle's state, not the
-     * node's. */
-    Dictionary RailVehicle3D::_find_pantograph_wire(
-            int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
-            const Vector3 &p_left) {
-        TractionServer *traction_server = TractionServer::get_instance();
-        if (traction_server == nullptr) {
-            /* "No wire in reach", the same answer the search gives when it finds none - the raise
-             * simulation reads this height and an absent key would read as 0.0, which is
-             * "the wire is right here" and folds the pantograph instead of extending it. */
-            Dictionary missing;
-            missing["rid"] = RID();
-            missing["height"] = INFINITY;
-            return missing;
-        }
-        Dictionary cache = pantograph_wire_cache[p_index];
-        /* The wire found last frame is kept and followed: running off the end of a span is not a
-         * loss of contact, the neighbouring span is reached along the chain in the same frame
-         * (DynObj.cpp:8742-8770). Its height is recomputed every frame - a cached height made the
-         * wire step up and down while driving and dropped the contact with it. */
-        const RID wire_rid = cache.get("rid", RID());
-        if (wire_rid.is_valid()) {
-            const Dictionary followed = traction_server->wire_follow_above(
-                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width,
-                    PANTOGRAPH_HORN_WIDTH);
-            if (RID(followed["rid"]).is_valid()) {
-                cache["rid"] = followed["rid"];
-                pantograph_wire_cache[p_index] = cache;
-                return followed;
-            }
-        }
-        // the chain ran out, so search the region like update_traction() does (DynObj.cpp:8799)
-        const Dictionary result = traction_server->wire_find_above_with_height(
-                p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width, PANTOGRAPH_HORN_WIDTH);
-        /* A pantograph that had a wire and now has none is what the vehicle reads as a loss of
-         * line voltage, and it trips the main switch. The original reports the same class of
-         * event with the place it happened (scene.cpp:112, "Bad traction"), which is the only way
-         * to tell a hole in the scenery's wiring from a defect in this search. */
-        if (wire_rid.is_valid() && !RID(result["rid"]).is_valid()) {
-            UtilityFunctions::push_warning(
-                    vformat("Bad traction: %s lost the wire under pantograph %d - %s, %v", get_name(), p_index,
-                            _track_position_text(), p_contact_point));
-        }
-        cache["rid"] = result["rid"];
-        pantograph_wire_cache[p_index] = cache;
-        return result;
-    }
-
-    void RailVehicle3D::_apply_pantograph_animation(const TypedArray<Node3D> &p_nodes, const Dictionary &p_geometry) {
-        const double a_deg = Math::rad_to_deg(double(p_geometry["angle_l"]) - double(p_geometry["angle_l0"]));
-        const double b_deg = Math::rad_to_deg(double(p_geometry["angle_u"]) - double(p_geometry["angle_u0"]));
+    void RailVehicle3D::_apply_pantograph_animation(const TypedArray<Node3D> &p_nodes, const Vector2 &p_raise) {
+        const double a_deg = Math::rad_to_deg(double(p_raise.x));
+        const double b_deg = Math::rad_to_deg(double(p_raise.y));
         const double c_deg = a_deg + b_deg;
         TypedArray<Node3D> one_node;
         one_node.append(p_nodes[0]);

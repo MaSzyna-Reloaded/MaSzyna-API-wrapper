@@ -106,11 +106,13 @@ func _refresh() -> void:
 
     var carrier_transform:Transform3D = RailVehicleServer.vehicle_get_transform(carrier)
     _report_pantograph(
-            carrier_transform, 1, _engine.power_current_collector_first_position, half_width,
+            carrier_transform, 1,
+            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleElectricEngine.PANTOGRAPH_FIRST), half_width,
             _engine.get_collector_pantograph_first_active(),
             _engine.get_collector_pantograph_first_voltage())
     _report_pantograph(
-            carrier_transform, 2, _engine.power_current_collector_second_position, half_width,
+            carrier_transform, 2,
+            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleElectricEngine.PANTOGRAPH_SECOND), half_width,
             _engine.get_collector_pantograph_second_active(),
             _engine.get_collector_pantograph_second_voltage())
 

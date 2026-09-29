@@ -139,6 +139,22 @@
 				Returns the commands [param vehicle] answers to.
 			</description>
 		</method>
+		<method name="vehicle_get_pantograph_position" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<description>
+				Returns where [param pantograph] stands on [param vehicle], in the vehicle's own space - where the overhead wire is sampled ([code]TAnimPant::vPos[/code]). Zero for a pantograph the model does not have.
+			</description>
+		</method>
+		<method name="vehicle_get_pantograph_raise" qualifiers="const">
+			<return type="Vector2" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<description>
+				Returns how far the lower ([code]x[/code]) and upper ([code]y[/code]) arm of [param pantograph] are raised over lowered, in radians - what is drawn.
+			</description>
+		</method>
 		<method name="vehicle_has_command" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="vehicle" type="RID" />
@@ -281,6 +297,21 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="name" type="String" />
 			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_pantograph_geometry">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<param index="2" name="position" type="Vector3" />
+			<param index="3" name="lower_length" type="float" />
+			<param index="4" name="upper_length" type="float" />
+			<param index="5" name="horizontal" type="float" />
+			<param index="6" name="lower_rest_angle" type="float" />
+			<param index="7" name="upper_rest_angle" type="float" />
+			<param index="8" name="collector_width" type="float" />
+			<description>
+				Sets [param pantograph] of [param vehicle] as its model builds it ([code]TAnimPant[/code]): where the lower arm stands in the vehicle's own space, the arms' lengths, the horizontal offset between their ends and their angles lowered, and the slider's width the model gives for a vehicle whose FIZ declares none. Measured by whoever draws the vehicle. The server raises the pantograph on its step; a model rebuilt sets it again and the raise is kept.
 			</description>
 		</method>
 		<method name="vehicle_set_track">

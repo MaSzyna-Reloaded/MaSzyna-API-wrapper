@@ -46,7 +46,7 @@ Legend:
 
 - [ ] [RC-020](#rc-020) `wire_get_voltage()` changes the power source's state ✔
 - [ ] [RC-021](#rc-021) Vehicle server calls the scene node
-- [ ] [RC-022](#rc-022) Drawing node runs pantograph physics and writes simulation inputs
+- [x] [RC-022](#rc-022) Drawing node runs pantograph physics and writes simulation inputs
 - [ ] [RC-023](#rc-023) Base vehicle layer knows rail and lighting
 - [ ] [RC-024](#rc-024) Controller and server call each other; `get_state()` builds a cache
 - [ ] [RC-025](#rc-025) `vehicle_get_transform()` writes a cache
@@ -85,7 +85,7 @@ Legend:
 - [ ] [RC-052](#rc-052) Whole config dictionary built per frame for the wiper angle
 - [ ] [RC-053](#rc-053) Coupler lookups and string building per frame
 - [ ] [RC-054](#rc-054) Bogie track samples computed twice per frame
-- [ ] [RC-055](#rc-055) Pantograph geometry through string-keyed dictionaries per frame
+- [x] [RC-055](#rc-055) Pantograph geometry through string-keyed dictionaries per frame
 - [ ] [RC-056](#rc-056) `ProjectSettings` read per vehicle every 0.25 s
 - [ ] [RC-057](#rc-057) Allocations and boxing in the vehicle server step
 - [ ] [RC-058](#rc-058) Track roll read by property name per moved vehicle
@@ -460,6 +460,13 @@ Legend:
   engine; the FIXME(#184) comments admit it.
 * **Decision:** move the pantograph model into the vehicle layer (component or server), and keep
   the node for drawing only.
+* **Done:** `RailVehicleServer` keeps each vehicle's pantographs (`Pantograph` in its placement):
+  where they stand, the arms, how far they are raised, the span each is on; its step raises them,
+  follows the wire and feeds the voltage. `RailVehicle3D` measures the model's arms, hands them
+  over (`vehicle_set_pantograph_geometry()`) and draws `vehicle_get_pantograph_raise()`. The
+  collector position lives there alone (`vehicle_get_pantograph_position()`); the electric
+  engine's copy is gone. A model rebuilt - the player's cab entered, a detail switch - no longer
+  lowered the pantograph (FINDINGS.md 2026-09-29).
 
 ### RC-023
 
@@ -828,6 +835,8 @@ Legend:
   `TractionServer::get_instance()` is looked up per pantograph, and `_pantograph_frame()` is
   rebuilt per arm.
 * **Fix:** a typed struct cached at configuration (and RC-022).
+* **Done:** with RC-022 - `RailVehicleServer::Pantograph`, one span per pantograph (the node
+  searched twice at the same point), the frame from the placement once a step.
 
 ### RC-056
 

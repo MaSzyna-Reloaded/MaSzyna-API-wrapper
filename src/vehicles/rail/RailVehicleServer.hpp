@@ -1,6 +1,7 @@
 #pragma once
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 
 #include "RailVehicleNeighbour.hpp"
@@ -69,6 +70,56 @@ namespace godot {
             /* Beyond this the track is straight as far as the running shape is concerned (m) */
             static constexpr double CURVE_RADIUS_LIMIT = 15000.0;
 
+            /* How far outside the slider the guide horn still catches a wire (DynObj.cpp:81,
+             * fWidthExtra). Without it a pantograph drops the wire wherever it swings sideways -
+             * at a span junction, over a switch, or on the zigzag - and the vehicle reads a real
+             * loss of voltage where the original keeps contact. */
+            static constexpr double PANTOGRAPH_HORN_WIDTH = 0.381;
+            /* The slider's height over the upper arm's end (TAnimPant::fHeight, DynObj.cpp:97) */
+            static constexpr double PANTOGRAPH_SLIDER_HEIGHT = 0.07;
+            /* Tank pressure the arm rises from [bar], an EMU's lower (DynObj.cpp:3863-3866) */
+            static constexpr double PANTOGRAPH_RAISING_PRESSURE = 3.45;
+            static constexpr double PANTOGRAPH_EMU_RAISING_PRESSURE = 2.45;
+            /* DynObj.cpp:3869-3905: the rise per bar and second, the share of the gap to the wire
+             * closed in one step up and down, how fast a lowered arm falls [rad/s]; and the gap
+             * under which the slider touches the wire (PantDiff < 0.01, DynObj.cpp:3784) [m] */
+            static constexpr double PANTOGRAPH_RAISE_RATE = 0.015;
+            static constexpr double PANTOGRAPH_RISE_SHARE = 0.55;
+            static constexpr double PANTOGRAPH_PRESS_SHARE = 0.4;
+            static constexpr double PANTOGRAPH_FALL_RATE = 0.15;
+            static constexpr double PANTOGRAPH_SETTLED_GAP = 0.001;
+            static constexpr double PANTOGRAPH_CONTACT_GAP = 0.01;
+
+            /* One pantograph of a vehicle (TAnimPant, DynObj.h:106): where it stands and how its
+             * arms are built - the model's, measured by whoever draws the vehicle
+             * (vehicle_set_pantograph_geometry()) - and how far it is raised, which is the
+             * vehicle's own state and outlives any model rebuilt to draw it. */
+            struct Pantograph {
+                    bool present = false;
+                    /* in the vehicle's own space (TAnimPant::vPos) */
+                    Vector3 position;
+                    double lower_length = 0.0;
+                    double upper_length = 0.0;
+                    double horizontal = 0.0;
+                    double lower_rest_angle = 0.0;
+                    double upper_rest_angle = 0.0;
+                    /* fAngleL, fAngleU, PantWys */
+                    double lower_angle = 0.0;
+                    double upper_angle = 0.0;
+                    double height = 0.0;
+                    /* the slider reaches the wire (PantDiff < 0.01) */
+                    bool reaches_wire = true;
+                    /* the span it is on, followed along the chain (DynObj.cpp:8742-8770), and what
+                     * was last reported of it */
+                    RID wire;
+                    bool touching = false;
+                    bool powered = false;
+
+                    /* One step of the arms, p_gap [m] below the wire: towards it at p_speed_factor
+                     * while raised, down while lowered (DynObj.cpp:3877-3920) */
+                    void raise(double p_gap, bool p_active, double p_speed_factor, double p_delta);
+            };
+
             /* Where one vehicle sits on the route. */
             struct VehiclePlacement {
                     RID track;
@@ -118,6 +169,10 @@ namespace godot {
                     /// ...and the vehicle's command count it was built after, because a command
                     /// changes the state inside a step (VehicleController::command_executed()).
                     uint64_t state_dump_command_serial = 0;
+                    /* PANTOGRAPH_FIRST, PANTOGRAPH_SECOND */
+                    Pantograph pantographs[2];
+                    /* The slider's width the model gives, for a vehicle whose FIZ declares none */
+                    double pantograph_collector_width = 0.0;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
@@ -164,6 +219,14 @@ namespace godot {
                     const RID &p_vehicle, const VehiclePlacement &p_placement, int p_end, double p_scan_range,
                     RID &p_found_out, int &p_found_end_out, double &p_found_distance_out);
             void _check_velocity_jumps(double p_delta);
+            /* Where the vehicle is, in the terms a scenery is written in - for the pantographs'
+             * warnings, which a world position alone does not tie to the .scn */
+            String _track_position_text(const RID &p_vehicle) const;
+            /* The span over the pantograph's slider: the one it was on followed along the chain,
+             * else searched for; {"rid", "height"} as TractionServer answers */
+            Dictionary _find_pantograph_wire(
+                    const RID &p_vehicle, Pantograph &p_pantograph, int p_index, const Transform3D &p_frame,
+                    double p_half_width);
 
         protected:
             static void _bind_methods();
@@ -268,6 +331,20 @@ namespace godot {
              * happens. */
             void stepping_advance(double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
+            /* A pantograph as the model builds it: where its lower arm stands in the vehicle's own
+             * space, the arms' lengths, the horizontal offset between their ends and their angles
+             * lowered; with the slider's width the model gives. Measured by whoever draws the
+             * vehicle; a model rebuilt hands it again and the raise is kept. */
+            void vehicle_set_pantograph_geometry(
+                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph,
+                    const Vector3 &p_position, double p_lower_length, double p_upper_length, double p_horizontal,
+                    double p_lower_rest_angle, double p_upper_rest_angle, double p_collector_width);
+            /* Where the pantograph stands in the vehicle's own space; zero for one the model lacks */
+            Vector3 vehicle_get_pantograph_position(
+                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph) const;
+            /* How far the lower (x) and upper (y) arm are raised over lowered [rad] - what is drawn */
+            Vector2 vehicle_get_pantograph_raise(
+                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph) const;
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;

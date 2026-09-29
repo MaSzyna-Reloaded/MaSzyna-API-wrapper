@@ -4,6 +4,23 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - a model rebuilt dropped the vehicle's voltage
+
+* **Symptom:** with the cab controls fixed, entering the cab of the running 3E/1-42 still cut its
+  voltage for ~3.5 s and opened its line breaker; a control run over the same spot without
+  entering kept 3490 V throughout.
+* **What proved it:** "Lost contact: ... pantograph 3 is not reaching the wire" on entering only.
+  Entering rebuilt the vehicle's model, and `RailVehicle3D::_cache_animation_bindings()` built the
+  pantograph geometry again from the model's rest pose - the arm "lowered", reached the wire again
+  3.5 s later. The raise was simulation state kept in the drawing node (RC-022); every detail
+  switch of any vehicle did the same.
+* **Fix:** `RailVehicleServer` keeps the pantographs - geometry, raise, span - and steps them; the
+  node hands over the model's arms (`vehicle_set_pantograph_geometry()`, which keeps the raise of
+  one already there) and draws `vehicle_get_pantograph_raise()`. The collector position has one
+  home, the server; the electric engine's copy is gone.
+* **Rule:** a model rebuilt is a view change - state the simulation reads never lives in the node
+  that draws it, and a rebuild of the drawing resets nothing the simulation holds.
+
 ## 2026-09-29 - a cab built on a running train lowered its pantograph
 
 * **Symptom:** krzyzowa2, the player took the AI's 3E/1-42 at speed and handed it back: the

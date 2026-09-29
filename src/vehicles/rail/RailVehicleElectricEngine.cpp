@@ -193,12 +193,6 @@ namespace godot {
                 RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_sliding_width,
                 "power/current_collector");
         BIND_PROPERTY(
-                RailVehicleElectricEngine, Variant::VECTOR3, power_current_collector_first_position,
-                "power/current_collector");
-        BIND_PROPERTY(
-                RailVehicleElectricEngine, Variant::VECTOR3, power_current_collector_second_position,
-                "power/current_collector");
-        BIND_PROPERTY(
                 RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_min_main_switch_voltage,
                 "power/current_collector");
         BIND_PROPERTY(

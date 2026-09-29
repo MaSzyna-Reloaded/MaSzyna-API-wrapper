@@ -1,6 +1,7 @@
 #pragma once
 
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleElectricEngine.hpp"
 
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -42,19 +43,9 @@ namespace godot {
             TypedArray<NodePath> front_rolling_wheel_paths;
             TypedArray<NodePath> powered_wheel_paths;
             TypedArray<NodePath> rear_rolling_wheel_paths;
-            /* FIXME(#184): where a collector sits is the vehicle's geometry, not the drawing
-             * node's - the original keeps it in TAnimPant::vPos. It is exported here only because
-             * the instancer reads it off the model, and the pantograph power path cannot move to
-             * RailVehicleServer until it does not have to come back here for these. */
+            /* The slider's width as the model gives it, handed to RailVehicleServer with the arms'
+             * geometry for a vehicle whose FIZ declares none (CSW) */
             double pantograph_collector_width = 0.5;
-            /* Half of the slider's width, taken from the vehicle's own CSW when its configuration
-             * lands - see _on_vehicle_config_changed(). */
-            double pantograph_slider_half_width = 0.5;
-            /* How far outside the slider the guide horn still catches a wire (DynObj.cpp:93,
-             * fWidthExtra). Without it a pantograph drops the wire wherever it swings sideways -
-             * at a span junction, over a switch, or on the zigzag - and the vehicle reads a real
-             * loss of voltage where the original keeps contact. */
-            static constexpr double PANTOGRAPH_HORN_WIDTH = 0.381;
             TypedArray<NodePath> pantograph_front_arm_paths;
             TypedArray<NodePath> pantograph_rear_arm_paths;
             // three per wiper (arm 1, arm 2, blade), an empty path for a missing one
@@ -147,11 +138,6 @@ namespace godot {
             double mirror_applied_left = -1.0;
             double mirror_applied_right = -1.0;
             int mirror_applied_cab = 0;
-            Dictionary pantograph_front_geometry;
-            Dictionary pantograph_rear_geometry;
-            bool pantograph_front_converged = true;
-            bool pantograph_rear_converged = true;
-            TypedArray<Dictionary> pantograph_wire_cache;
 
             RailVehicleController *_resolve_controller(const NodePath &p_node_path) const;
             void _show_cabin_after_frames();
@@ -171,8 +157,6 @@ namespace godot {
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
             void _apply_load_offset();
-            String _track_position_text() const;
-            void _report_contact_gap(int p_index, bool p_is_active, bool p_converged);
 
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();
@@ -183,7 +167,11 @@ namespace godot {
             TypedArray<Node3D> _resolve_animation_nodes(const TypedArray<NodePath> &p_paths) const;
             void _capture_rest_basis(Node3D *p_node);
             TypedArray<Node3D> _resolve_pantograph_arm_nodes(const TypedArray<NodePath> &p_paths) const;
-            Dictionary _cache_pantograph_geometry(const TypedArray<Node3D> &p_nodes) const;
+            /* The pantograph as the model builds it, measured off its arm nodes and handed to
+             * RailVehicleServer, which raises it - TAnimPant's lengths and angles (DynObj.cpp:5508-5549) */
+            void _publish_pantograph_geometry(
+                    RailVehicleElectricEngine::PantographSelector p_pantograph,
+                    const TypedArray<Node3D> &p_nodes) const;
             void _cache_animation_bindings();
             Dictionary coupler_submodel_nodes;
             int64_t coupler_visibility_state = -1;
@@ -198,35 +186,9 @@ namespace godot {
             void _update_model_detail();
             void _register_pickable(const RID &p_instance);
             void _update_smoke();
-            /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
-            /// to be a Dictionary of three Vector3s, allocated and boxed again for every call, with
-            /// get_global_transform() asked three times over.
-            struct PantographFrame {
-                    Transform3D transform;
-                    Vector3 forward;
-                    Vector3 up;
-                    Vector3 left;
-            };
-
-            PantographFrame _pantograph_frame() const;
-            /// Hands the vehicle where each of its pantographs stands, once both the model's arm
-            /// nodes and the electric engine are known
-            void _publish_collector_positions() const;
-            /// Both of these read the electric engine and the controller through their typed
-            /// accessors - neither needs the vehicle's whole state, and a scenery runs hundreds of
-            /// powered vehicles
-            void _update_pantograph_power();
-            double _pantograph_wire_voltage(
-                    int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, double p_assumed_voltage,
-                    double p_current);
-            void _update_pantograph_raise_state(double p_delta);
-            bool _update_pantograph_arm(
-                    int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, bool p_is_active,
-                    double p_delta);
-            Dictionary _find_pantograph_wire(
-                    int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
-                    const Vector3 &p_left);
-            void _apply_pantograph_animation(const TypedArray<Node3D> &p_nodes, const Dictionary &p_geometry);
+            /* The arms drawn as far as RailVehicleServer has raised them */
+            void _update_pantograph_animation();
+            void _apply_pantograph_animation(const TypedArray<Node3D> &p_nodes, const Vector2 &p_raise);
 
         protected:
             static void _bind_methods();

@@ -76,7 +76,7 @@ jobs:
         run: |
           # Parse clang-tidy log and create GitHub annotations
           grep -E ": (warning|error): .* \[[^]]+\]" style-check.log | \
-          grep -v -E "godot[-_]?cpp|src/maszyna|src/gen" | \
+          grep -v -E "godot[-_]?cpp|src/legacy/maszyna-mover|src/gen" | \
           awk '
             function esc(s) {
               gsub(/%/, "%25", s); gsub(/\r/, "%0D", s); gsub(/\n/, "%0A", s);

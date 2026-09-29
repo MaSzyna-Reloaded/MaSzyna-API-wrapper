@@ -9,11 +9,11 @@ func _ready() -> void:
     if player_path:
         _player = get_node(player_path)
         if _player:
-            _player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed)
+            _player.occupied_cabin_changed.connect(_on_occupied_cabin_changed)
 
 ## The panels are handed the vehicle itself - what they show is its state, and a path to a node
 ## inside it says nothing they need.
-func _on_controlled_vehicle_changed():
-    var vehicle:RailVehicle3D = _player.controlled_vehicle
+func _on_occupied_cabin_changed():
+    var vehicle:RailVehicle3D = _player.occupied_cabin
     var controller:VehicleController = vehicle.get_controller() if vehicle else null
     $MoverSwitches.vehicle = controller

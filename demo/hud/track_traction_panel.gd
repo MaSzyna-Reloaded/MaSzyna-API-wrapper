@@ -52,7 +52,7 @@ func _process(delta:float) -> void:
 
 func _refresh() -> void:
     var player:MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    var vehicle:RailVehicle3D = player.controlled_vehicle if player else null
+    var vehicle:RailVehicle3D = player.occupied_cabin if player else null
     if not vehicle:
         _rows["Vehicle"].text = "none"
         _engine = null

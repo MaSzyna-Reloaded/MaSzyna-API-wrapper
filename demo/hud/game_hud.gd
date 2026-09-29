@@ -37,10 +37,9 @@ func _enter_tree() -> void:
 func _ready() -> void:
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     if player:
-        player.controlled_vehicle_changed.connect(_bind_vehicle.bind(null))
-        player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed.bind(player))
-        player.external_view_changed.connect(_on_player_external_view_changed)
-        player.cabin_view_changed.connect(_on_player_cabin_view_changed.bind(player))
+        player.occupied_cabin_changed.connect(_bind_vehicle.bind(null))
+        player.occupied_cabin_changed.connect(_on_player_occupied_cabin_changed.bind(player))
+        player.external_view_changed.connect(_on_player_external_view_changed.bind(player))
     RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
     SceneryHUDMouseServer.vehicle_pressed.connect(_open_card)
     var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
@@ -155,11 +154,11 @@ func _open_card(vehicle: RID) -> void:
         _card.remove_trainset_requested.connect(_remove_trainset)
         var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
         if player:
-            _card.follow_requested.connect(player.follow_vehicle)
-            _card.follow_stopped.connect(player.leave_external_view)
+            _card.follow_requested.connect(_on_card_follow_requested.bind(player))
+            _card.follow_stopped.connect(_on_card_follow_stopped.bind(player))
             _card.show_requested.connect(player.show_vehicle)
-            _card.enter_requested.connect(player.enter_vehicle)
-            _card.show_followed_vehicle(player.get_external_view_vehicle())
+            _card.enter_requested.connect(player.enter_cabin)
+            _card.show_followed_vehicle(_followed_vehicle(player))
             _card.show_player_vehicle(_player_vehicle_rid(player))
         %VehicleCards.add_child(_card)
         if _card_rect.has_area():
@@ -171,11 +170,30 @@ func _open_card(vehicle: RID) -> void:
     %VehicleSelectorPanel.show_active_vehicle(vehicle)
 
 
-func _on_player_external_view_changed(vehicle: RID) -> void:
+## The player's view follows the vehicle, the player keeping the cab
+func _on_card_follow_requested(vehicle: RID, player: MaszynaPlayer) -> void:
+    player.follow_target_rid = vehicle
+    player.external_view_mode = MaszynaPlayer.ExternalViewMode.FOLLOW
+    player.external_view = true
+
+
+## The player's view stops following and stays outside
+func _on_card_follow_stopped(player: MaszynaPlayer) -> void:
+    player.external_view_mode = MaszynaPlayer.ExternalViewMode.FREE
+
+
+## The vehicle the player's view follows, or an invalid RID
+static func _followed_vehicle(player: MaszynaPlayer) -> RID:
+    return player.follow_target_rid if player.external_view and (
+            player.external_view_mode == MaszynaPlayer.ExternalViewMode.FOLLOW) else RID()
+
+
+func _on_player_external_view_changed(player: MaszynaPlayer) -> void:
     if _card:
-        _card.show_followed_vehicle(vehicle)
+        _card.show_followed_vehicle(_followed_vehicle(player))
     else:
-        %FollowedVehicleChip.show_vehicle(vehicle)
+        %FollowedVehicleChip.show_vehicle(_followed_vehicle(player))
+    _show_player_vehicle_chip(player)
 
 
 ## The card goes, remembered where it stood, and no row is lit; a vehicle still followed becomes a
@@ -187,7 +205,7 @@ func _close_card() -> void:
     %VehicleSelectorPanel.show_active_vehicle(RID())
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     if player:
-        %FollowedVehicleChip.show_vehicle(player.get_external_view_vehicle())
+        %FollowedVehicleChip.show_vehicle(_followed_vehicle(player))
 
 
 ## Every vehicle of the trainset freed; a player in its cab steps out first, as before a scenery
@@ -196,8 +214,8 @@ func _remove_trainset(vehicle: RID) -> void:
     var trainset: Array[RID] = RailVehicleServer.vehicle_get_coupled(
             vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player and player.controlled_vehicle and trainset.has(player.controlled_vehicle.get_rid()):
-        await player.clear_start_train()
+    if player and player.occupied_cabin and trainset.has(player.occupied_cabin.get_rid()):
+        player.clear_start_train()
     for trainset_vehicle: RID in trainset:
         # the wrapper goes with the RailVehicle3D it built; freed alone, the wrapper builds it again
         var wrapper: MaszynaRailVehicle3D = VehicleCard.legacy_vehicle(trainset_vehicle)
@@ -230,41 +248,35 @@ func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
 
 
 ## The timetable shown is the one of the trainset the player's vehicle belongs to
-func _on_controlled_vehicle_changed(player: MaszynaPlayer) -> void:
-    var vehicle: RailVehicle3D = player.controlled_vehicle
-    %TimetablePanel.follow_vehicle(vehicle.get_rid() if vehicle else RID())
-    %DrivingAid.show_vehicle(vehicle.get_rid() if vehicle else RID())
+func _on_player_occupied_cabin_changed(player: MaszynaPlayer) -> void:
+    %TimetablePanel.follow_vehicle(_player_vehicle_rid(player))
+    %DrivingAid.show_vehicle(_player_vehicle_rid(player))
     %VehicleSelectorPanel.follow_player_vehicle(_player_vehicle_rid(player))
     if _card:
         _card.show_player_vehicle(_player_vehicle_rid(player))
     _show_player_vehicle_chip(player)
 
 
-## The vehicle the player drives or last drove, or an invalid RID
+## The vehicle whose cab the player occupies, or an invalid RID
 static func _player_vehicle_rid(player: MaszynaPlayer) -> RID:
-    var vehicle: RailVehicle3D = player.last_controlled_vehicle
-    return vehicle.get_rid() if is_instance_valid(vehicle) else RID()
+    return player.occupied_cabin.get_rid() if player.occupied_cabin else RID()
 
 
-func _on_player_cabin_view_changed(_in_cabin: bool, player: MaszynaPlayer) -> void:
-    _show_player_vehicle_chip(player)
-
-
-## The vehicle the player drives, as a floating button while the player is out of its cab
+## The vehicle the player drives, as a floating button while the player looks from outside
 func _show_player_vehicle_chip(player: MaszynaPlayer) -> void:
-    %PlayerVehicleChip.show_vehicle(RID() if player.is_in_cabin_view() else _player_vehicle_rid(player))
+    %PlayerVehicleChip.show_vehicle(_player_vehicle_rid(player) if player.external_view else RID())
 
 
 func _on_player_vehicle_chip_pressed() -> void:
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     if player:
-        player.return_to_vehicle()
+        player.external_view = false
 
 
 func _on_player_vehicle_chip_action_pressed() -> void:
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     if player:
-        player.hand_over_vehicle()
+        player.leave_cabin()
 
 
 ## The vehicle the player is driving, handed to every widget that shows something about it. The
@@ -274,7 +286,7 @@ func _on_player_vehicle_chip_action_pressed() -> void:
 ## Each window gets the vehicle its target names (HUDWindow.vehicle_target), as a cab control does.
 func _bind_vehicle(node: Node = null) -> void:
     var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    var vehicle: RailVehicle3D = player.controlled_vehicle if player else null
+    var vehicle: RailVehicle3D = player.occupied_cabin if player else null
     var controller: VehicleController = vehicle.get_controller() if vehicle else null
     for window: HUDWindow in ([node] if node else _windows):
         var target: RID = CabinState.vehicle_of(controller.get_rid(), window.vehicle_target) if controller else RID()

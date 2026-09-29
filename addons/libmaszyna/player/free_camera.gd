@@ -124,12 +124,11 @@ func _process(delta: float) -> void:
 
 # Updates camera movement
 func _update_movement(delta: float) -> void:
-    var step_delta: float = minf(delta, 0.05)
-    var smoothing_weight: float = _get_smoothing_weight(MOVEMENT_SMOOTHING, step_delta)
+    var smoothing_weight: float = _get_smoothing_weight(MOVEMENT_SMOOTHING, delta)
 
     if not _glide_velocity.is_zero_approx():
-        _glide_velocity = _glide_velocity.move_toward(Vector3.ZERO, deceleration * step_delta)
-        global_position += _glide_velocity * step_delta
+        _glide_velocity = _glide_velocity.move_toward(Vector3.ZERO, deceleration * delta)
+        global_position += _glide_velocity * delta
 
     # Computes desired direction from key states
     _direction = Vector3(_d - _a, _e - _q, _s - _w)
@@ -154,7 +153,7 @@ func _update_movement(delta: float) -> void:
         
     var velocity: Vector3 = _smoothed_direction * accel * velocity_multiplier
 
-    var new_position: Vector3 = transform.translated_local(velocity * step_delta).origin
+    var new_position: Vector3 = transform.translated_local(velocity * delta).origin
     if bound_enabled:
         new_position.x = clamp(new_position.x, bound_min.x, bound_max.x)
         new_position.y = clamp(new_position.y, bound_min.y, bound_max.y)
@@ -163,8 +162,7 @@ func _update_movement(delta: float) -> void:
 
 # Updates mouse look
 func _update_mouselook(delta: float) -> void:
-    var step_delta: float = minf(delta, 0.05)
-    var smoothing_weight: float = _get_smoothing_weight(MOUSE_SMOOTHING, step_delta)
+    var smoothing_weight: float = _get_smoothing_weight(MOUSE_SMOOTHING, delta)
 
     _mouse_look_velocity += _pending_mouse_delta
     _pending_mouse_delta = Vector2.ZERO

@@ -58,11 +58,11 @@ func _on_scenery_selector_scenery_selected(
     await $ScenerySelectorScreen.hidden
     $MaszynaSceneryNode.filename = filename
     $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
-    await $Player.clear_start_train()
+    $Player.clear_start_train()
     _chosen_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
-    SceneryStreamingServer.set_camera($Player.get_camera())
+    SceneryStreamingServer.set_camera($Player.get_view_camera())
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
@@ -77,7 +77,7 @@ func _on_scenery_selector_scenery_selected(
 ## a few frames later still - without this the game pops in half-built behind the loading screen
 func _wait_for_cabin() -> void:
     var waited: int = 0
-    while not $Player.controlled_vehicle and waited < VEHICLE_WAIT_FRAMES:
+    while not $Player.occupied_cabin and waited < VEHICLE_WAIT_FRAMES:
         await get_tree().process_frame
         waited += 1
     for frame: int in CABIN_SETTLE_FRAMES:
@@ -120,7 +120,7 @@ func _exit_to_menu() -> void:
     SimulationServer.pause()
     $GameHud.visible = false
     SceneryStreamingServer.set_camera(null)
-    await $Player.clear_start_train()
+    $Player.clear_start_train()
     # the scenery's script context goes with it
     $GameHud.attach_script_context(RID())
     $MaszynaSceneryNode.filename = ""

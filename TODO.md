@@ -200,6 +200,17 @@ vendored, `vehicles`, `signalling`, `e3d`, `parsers`, `scenery`, `cabin`). In `a
 and `vehicle` so far; the rest of the MaSzyna-specific scripts outside it (e.g. `sound/maszyna_*`)
 is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` references follow).
 
+## Player and HUD - one owner of the player's vehicle and view
+
+* The HUD keeps copies of the player's state: `DrivingAid.vehicle`, `FollowedVehicleChip.vehicle`,
+  `PlayerVehicleChip.vehicle`, `VehicleCard._followed`/`_player_vehicle`, the Follow button state.
+* The cab interior stays shown while the player looks from outside; the original hides it
+  (`vehicle->bDisplayCab = false`, drivermode.cpp:1265) - RailVehicle3D has no call for it yet.
+* `RailVehicle3D.leave_cabin()` still puts the cab camera 5 m beside the vehicle
+  (RailVehicle3D.cpp:249) - the player's view owns placement now, the lines are dead.
+* The start vehicle is still looked for every frame until the scenery has it
+  (`MaszynaPlayer._find_start_vehicle()`), instead of an event saying the trainset is built.
+
 ## Cabins
 
 ### Controls whose original handler branches on the kind of switch

@@ -18,6 +18,18 @@ Code generation:
   `RailVehicleServer.vehicle_send_command(vehicle_rid, ...)`; its scenery name (`train_id`) may be
   empty or repeated and is only for finding it (`vehicle_get_rid_by_name`). Call a
   `VehicleController` directly only where the composition already holds it (e.g. `VehicleComponent`s)
+* PROHIBITED: **programming by chains of private `_underscore` methods and many paths to one
+  effect.** An effect has one public operation of its owner and happens only there; every caller -
+  a key, a button, a signal, another object - calls that operation, not a private helper chain
+  (`_request_*` -> `_dirty` -> `_process` -> ...) that ends up in the same place by another road.
+  A second road to the same effect is deleted, not added. Example: the player leaves a vehicle
+  only through `RailVehicle3D.leave_cabin()` (`enter_cabin()` leaves the current one itself), and a
+  camera or view operation (follow, unfollow, Shift+F4) never leads there
+* PROHIBITED: **treating a view change as leaving the cab.** The player occupies a cab
+  (`MaszynaPlayer.occupied_cabin`, the original's `simulation::Train`) until `leave_cabin()`;
+  `external_view`, `external_view_mode` (FREE/FOLLOW), `follow_target_rid` and
+  `external_view_follow_cam` only choose the camera. The cab, its controls and everything the HUD
+  shows of the player's train stay while the player looks from outside
 * for unclear/critical sections, or logic ported from the original engine instead of wrapped from Mover,
   leave a short comment pointing to the original source (e.g. `Train.cpp:8516`, `DynObj.cpp:1812`)
 * GDSCRIPT: avoid type interference, use explicit type declaration

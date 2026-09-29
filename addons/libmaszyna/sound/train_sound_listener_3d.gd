@@ -38,7 +38,7 @@ func is_inside_vehicle(vehicle:RailVehicle3D) -> bool:
 
 func _refresh_context() -> void:
     var cabin:Cabin3D = _camera_cabin()
-    var vehicle:RailVehicle3D = _player.controlled_vehicle if not cabin == null else null
+    var vehicle:RailVehicle3D = _player.occupied_cabin if not cabin == null else null
     var context:int = cabin.get_sound_listener_context() if not cabin == null else EXTERIOR_CONTEXT
     if listener_vehicle == vehicle and listener_cabin == cabin and listener_context == context:
         return

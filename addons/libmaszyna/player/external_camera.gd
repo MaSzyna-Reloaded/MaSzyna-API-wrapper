@@ -1,9 +1,9 @@
 extends Camera3D
 class_name ExternalCamera3D
 
-## External views of the driven train, cycled with Shift+F4 - driver_mode::ExternalView()
-## (drivermode.cpp:916-1037). The camera flies to the selected view like a drone and always
-## looks at the controlled vehicle. Dragging with the right mouse button orbits the view around
+## External views of a vehicle (MaszynaPlayer.external_view_follow_cam, cycled with Shift+F4) -
+## driver_mode::ExternalView() (drivermode.cpp:916-1037). The camera flies to the selected view like
+## a drone and always looks at the vehicle. Dragging with the right mouse button orbits the view around
 ## the vehicle, the left/right arrows and PageUp/PageDown pan the view in the screen plane, the
 ## up/down arrows and the mouse wheel bring it closer or farther. It is active while it is the
 ## current camera.
@@ -21,6 +21,9 @@ const MIN_DISTANCE_DEFAULT:float = 1.0
 const MAX_DISTANCE_SETTING:StringName = &"maszyna/camera/external_view_max_distance"
 const MAX_DISTANCE_DEFAULT:float = 200.0
 
+## Where the view looks at first, ahead of the camera it takes over from [m]
+const LOOK_AHEAD:float = 10.0
+
 ## How fast the drone follows its target (1/s)
 @export var response:float = 2.0
 ## Mouse orbit sensitivity (degrees per pixel)
@@ -31,7 +34,11 @@ const MAX_DISTANCE_DEFAULT:float = 200.0
 @export var move_speed_fast:float = 20.0
 
 var vehicle:RailVehicle3D
-var view:View = View.CONSIST_FRONT
+var view:View = View.CONSIST_FRONT:
+    set(x):
+        if not view == x:
+            view = x
+            _dirty = true
 ## How fast the drone flies [m/s], for a camera taking over from it
 var velocity:Vector3 = Vector3.ZERO
 
@@ -62,14 +69,28 @@ func activate(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
         _view_configs.clear()
     vehicle = p_vehicle
     global_transform = p_from
-    _look_target = p_from.origin - p_from.basis.z * 10.0
+    _look_target = p_from.origin - p_from.basis.z * LOOK_AHEAD
     _dirty = true
     make_current()
 
 
-func next_view() -> void:
-    view = ((view + 1) % View.size()) as View
-    _dirty = true
+## Follows the vehicle from where p_from is, looking at it, without flying to the selected view -
+## the view is taken only once it is selected again (view)
+func attach(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
+    if not vehicle == p_vehicle:
+        _view_configs.clear()
+    vehicle = p_vehicle
+    global_transform = p_from
+    _look_target = p_from.origin - p_from.basis.z * LOOK_AHEAD
+    _view_vehicle = p_vehicle
+    _view_offset = p_vehicle.global_transform.affine_inverse() * p_from.origin
+    # the vehicle's center, also for the look of the bogie view
+    _bogie_look_offset = p_vehicle.global_transform.affine_inverse() * _get_vehicle_center(p_vehicle)
+    _orbit = Vector2.ZERO
+    _pan = Vector2.ZERO
+    _zoom = 1.0
+    _dirty = false
+    make_current()
 
 
 func _input(event:InputEvent) -> void:

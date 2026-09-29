@@ -86,7 +86,8 @@ func _build_vehicle() -> void:
     var player:MaszynaPlayer = PLAYER_SCENE.instantiate()
     player.auto_start = false
     add_child_autoqfree(player)
-    _camera = player.get_camera()
+    # on foot the player looks through the free camera
+    _camera = player.free_camera
 
 
 func _attach_controller() -> void:

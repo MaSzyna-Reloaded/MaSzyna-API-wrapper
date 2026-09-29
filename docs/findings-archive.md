@@ -4,6 +4,37 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - a goods train left past its exit signal: a track's second event2 was dropped
+
+* **Symptom:** krzyzowa2, the goods train 3E/1-42 (TME9637) left Krzyżowa ~40 s into the scenario,
+  ahead of the player's EX6435; the dispatcher expected it after the player (its exit P2 is given
+  once the EP09 has passed Markowo), so the player caught it up on the line and ran into it.
+* **What proved it:** the driver's table at the start held the W4 of Krzyżowa and no signal; the
+  event server showed `krzyzowa_p2_sem_info` defined and passive, yet `krzyzowa_tor8end` carried
+  only `Krzyżowa#p_stopinfo` on its event2 slot. The `.scn` names both on two `event2` lines; the
+  track importer kept its parameters in one Dictionary and the second line overwrote the first.
+  The original gathers them (`m_events2.emplace_back`, Track.cpp:818-822).
+* **Fix:** a track's event names are gathered per slot (`MaszynaTrackData.events`), and every one
+  is attached; the scenery cache format bumped to 28. The 3E waits at P2.
+* **Rule:** a `.scn` key may repeat - check the original's loader for a list before keeping a key
+  in a Dictionary.
+
+## 2026-09-29 - a signal closing behind the train braked it hard
+
+* **Symptom:** the 3E ran past Drawowo's entry signal B12 at stop by 184 m: at full service its
+  brakes gave 0.07-0.10 m/s2 where the same train stopped from 80 km/h at 0.15-0.25 on its own.
+* **What proved it:** logging the driver's braking on the way: twice before B12 the wanted
+  acceleration jumped to -0.85 with the proximity negative (-245 m, -256 m) - a stop behind the
+  train - then the brakes were released. Each block signal passed at proceed stayed in the table;
+  when it closed behind the train, "an event behind holds only a stop" (Driver.cpp:957-963) braked
+  hard. Each apply and release ran the G wagons' air down, and at B12 they had little to give.
+  The original sends a signal passed at proceed as SetVelocity and lets go of it
+  (`Point.Clear()`, TableUpdateEvent(), Driver.cpp:1662-1679).
+* **Fix:** a signal (and, as a train, a W5) passed at proceed gives its speed and leaves the table.
+  The same run stops 15.8 m short of Markowo's entry signal, no jolt on the way.
+* **Rule:** an event the original clears once passed is cleared in the port - one kept holds on
+  what it shows later.
+
 ## 2026-09-29 - a model rebuilt dropped the vehicle's voltage
 
 * **Symptom:** with the cab controls fixed, entering the cab of the running 3E/1-42 still cut its

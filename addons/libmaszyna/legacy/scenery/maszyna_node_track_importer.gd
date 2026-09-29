@@ -58,6 +58,11 @@ func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
 
             if key == "railprofile":
                 data.railprofile = value
+            elif MaszynaLegacyEventFactory.TRACK_EVENTS.has(key):
+                # a slot's names are gathered: a second `event2` is another event, not a replacement
+                var names:PackedStringArray = data.events.get(key, PackedStringArray())
+                names.append(value)
+                data.events[key] = names
             else:
                 params[key] = value
 

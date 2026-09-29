@@ -200,6 +200,11 @@ anything. Open work belongs in `TODO.md`.
 * A control showing the vehicle's state never acts on it (a setter that acts, `button_pressed`
   that emits `toggled`); the driver never sends a command the vehicle does not have. *(09-29 a cab
   built on a running train lowered its pantograph)*
+* A `.scn` key may repeat (`event2` twice): check the original's loader for a list before keeping
+  a key in a Dictionary. *(09-29 a goods train left past its exit signal)*
+* An event the original clears once passed (a signal at proceed, `Point.Clear()`) is cleared in the
+  port - kept, it holds on what it shows later. *(09-29 a signal closing behind the train braked
+  it hard)*
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
   (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
   vehicle's voltage)*

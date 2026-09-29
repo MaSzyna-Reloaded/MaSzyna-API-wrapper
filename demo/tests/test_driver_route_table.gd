@@ -117,6 +117,34 @@ func test_a_train_ignores_shunting_signals_at_stop_passed_or_ahead() -> void:
     assert_eq(route.commands.size(), 0, "nor turns it to shunting")
 
 
+## FINDINGS.md 2026-09-29: a signal passed at proceed stayed in the table, and when it closed behind
+## the train the train braked hard - krzyzowa2's 3E/1-42 did it at every block, ran its wagons'
+## air down and could not stop at Drawowo's entry signal
+func test_a_signal_passed_at_proceed_does_not_hold_the_train_when_it_closes() -> void:
+    var line:RID = _track(Vector3.ZERO, Vector3(LINE_LENGTH, 0.0, 0.0), null, LINE_VELOCITY, "line")
+    TrackServer.topology_rebuild()
+    var vehicle:RID = await _place("line", LINE_LENGTH / 2.0)
+    # the signal at the vehicle's middle: behind its front, whichever way it drives
+    var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+    action.command = "SetVelocity"
+    action.value1 = RESTRICTED_VELOCITY
+    action.position = RailVehicleServer.vehicle_get_transform(vehicle).origin
+    var event:RID = ScenarioEventServer.event_create()
+    _events.append(event)
+    ScenarioEventServer.event_attach_action(event, action)
+    ScenarioEventServer.event_set_passive(event, true)
+    ScenarioEventServer.track_add_event(line, ScenarioEventServer.TRACK_EVENT1, event)
+    ScenarioEventServer.track_add_event(line, ScenarioEventServer.TRACK_EVENT2, event)
+    var trainset:MaszynaLegacyDriverTrainset = _trainset(vehicle, 1)
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+    _update(route, vehicle, trainset, MOVING_SPEED, Order.OBEY_TRAIN)
+
+    action.value1 = 0.0
+    _update(route, vehicle, trainset, MOVING_SPEED, Order.OBEY_TRAIN)
+
+    assert_eq(route.velocity_next, MaszynaLegacyDriverRoute.NO_LIMIT, "the signal closed behind it holds nothing")
+
+
 func _curve(from:Vector3, to:Vector3) -> TrackCurve:
     var curve:TrackCurve = TrackCurve.new()
     curve.p1 = from

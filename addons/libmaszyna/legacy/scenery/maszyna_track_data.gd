@@ -24,3 +24,6 @@ class_name MaszynaTrackData
 @export var tex_slope:float = 0.0
 @export var railprofile:String = "default"
 @export var parameters:Dictionary = {}
+## The events the track names for each of its slots, by the slot's key: a slot may name several,
+## every `event2 <name>` line one more (Track.cpp:815-858, m_events2.emplace_back)
+@export var events:Dictionary[String, PackedStringArray] = {}

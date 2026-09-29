@@ -12,6 +12,7 @@
 #include "legacy/e3d/E3DResourceFormatLoader.hpp"
 #include "legacy/e3d/E3DSubModel.hpp"
 #include "legacy/e3d/e3d_parser.hpp"
+#include "legacy/e3d/t3d_parser.hpp"
 #include "legacy/parsers/maszyna_parser.hpp"
 #include "legacy/scenario/MaszynaLegacyAnimationAction.hpp"
 #include "legacy/scenario/MaszynaLegacyEventCondition.hpp"
@@ -176,6 +177,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);
+        GDREGISTER_CLASS(T3DParser);
         GDREGISTER_CLASS(E3DModelLightDefinition);
         GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);

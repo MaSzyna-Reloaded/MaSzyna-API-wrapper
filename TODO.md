@@ -555,6 +555,12 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   read - no file in the game data uses them today (`Model3d.cpp:1977`, `:2135`). 57 scenery and
   31 vehicle submodels are wound CW or mixed in the data itself (e.g. cabs of ET21, ET22, EU05,
   ST44) and render inside out exactly as in the original.
+* T3D (`T3DParser`): not ported - `priorityLoadText3D` (a .t3d before an .e3d,
+  `Model3d.cpp:1634`), the "banana" root added for a dynamic model under `iConvertModels & 4`
+  (`Model3d.cpp:2447`), and a material's own `selfillum` overriding the submodel's
+  (`Model3d.cpp:483`). `type: text` is read as a transform, `stars` and `point` are read past
+  and not drawn (as from an .e3d). `hotspotpower:` is read into `light_energy`, which
+  `E3DModelBuilder` does not pass to the submodel - for an .e3d either.
 * `maszyna/lights/reverse_cull_face` is off by default now; street lamps got their own biases
   for it. Vehicle headlamps and cab lights (SpotLight3D nodes with a node's 0.03 / 1.0) were not
   measured - check them for acne at night.

@@ -54,5 +54,7 @@ namespace godot {
             virtual void pantograph(RailVehicleElectricEngine::PantographSelector p_selector, bool p_enabled) const = 0;
             virtual void set_pantograph_wire_voltage(
                     RailVehicleElectricEngine::PantographSelector p_selector, float p_voltage) const = 0;
+            /* The voltage the vehicle is fed with from its pantographs (PantographVoltage) */
+            virtual void set_voltage(float p_voltage) const = 0;
     };
 } // namespace godot

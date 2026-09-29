@@ -89,6 +89,10 @@ namespace godot {
             static constexpr double PANTOGRAPH_FALL_RATE = 0.15;
             static constexpr double PANTOGRAPH_SETTLED_GAP = 0.001;
             static constexpr double PANTOGRAPH_CONTACT_GAP = 0.01;
+            /* A loss of the wire's voltage no longer than this [s] keeps the last one - the arm
+             * catching up with the wire, an insulator at speed - so the line breaker does not trip
+             * on it (DynObj.cpp:3132-3140, NoVoltTime) */
+            static constexpr double NO_VOLTAGE_HOLD = 0.2;
 
             /* One pantograph of a vehicle (TAnimPant, DynObj.h:106): where it stands and how its
              * arms are built - the model's, measured by whoever draws the vehicle
@@ -173,6 +177,8 @@ namespace godot {
                     Pantograph pantographs[2];
                     /* The slider's width the model gives, for a vehicle whose FIZ declares none */
                     double pantograph_collector_width = 0.0;
+                    /* How long the pantographs have fed no voltage [s] (NoVoltTime) */
+                    double no_voltage_time = 0.0;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;

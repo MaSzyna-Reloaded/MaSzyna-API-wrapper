@@ -205,6 +205,9 @@ anything. Open work belongs in `TODO.md`.
 * An event the original clears once passed (a signal at proceed, `Point.Clear()`) is cleared in the
   port - kept, it holds on what it shows later. *(09-29 a signal closing behind the train braked
   it hard)*
+* The vehicle's supply voltage is held through a loss of up to 0.2 s (NoVoltTime), and the driver's
+  readiness is tested against the consist on every update (a line breaker tripped while driving).
+  *(09-29 EP07 rolled out of Markowo without power)*
 * `lerpf()` does not return its end exactly, `std::lerp` does: a port whose result is compared
   exactly takes the end as it is. *(09-29 the driving aid flickered)*
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it

@@ -118,6 +118,11 @@ namespace godot {
     double RailVehicleElectricEngine::get_collector_voltage() const {
         return current_collector_unit != nullptr ? current_collector_unit->get_voltage() : 0.0;
     }
+    void RailVehicleElectricEngine::set_collector_voltage(const float p_voltage) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->set_voltage(p_voltage);
+        }
+    }
     double RailVehicleElectricEngine::get_energy_drawn() const {
         return current_collector_unit != nullptr ? current_collector_unit->get_energy_drawn() : 0.0;
     }
@@ -478,6 +483,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("has_accumulator"), &RailVehicleElectricEngine::has_accumulator);
         ClassDB::bind_method(D_METHOD("has_power_cable"), &RailVehicleElectricEngine::has_power_cable);
         ClassDB::bind_method(D_METHOD("get_collector_voltage"), &RailVehicleElectricEngine::get_collector_voltage);
+        ClassDB::bind_method(
+                D_METHOD("set_collector_voltage", "voltage"), &RailVehicleElectricEngine::set_collector_voltage);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::FLOAT, "collector_voltage", PROPERTY_HINT_NONE, "",

@@ -35,6 +35,9 @@ const MAX_RAISE_STEPS:int = 2000
 const PANTOGRAPH_TANK_PRESSURE:float = 5.0
 ## An electric locomotive's power [kW]
 const ENGINE_POWER:float = 2000.0
+## A loss of the wire shorter and longer than the 0.2 s the original holds through [s]
+const SHORT_LOSS:float = 0.1
+const LONG_LOSS:float = 0.3
 ## Read by a pantograph at the wire [V]
 const POWERED_VOLTAGE:float = 100.0
 
@@ -212,6 +215,20 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     RailVehicleServer.stepping_advance(STEP)
 
     assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "and stays at it when the model is rebuilt")
+
+    # FINDINGS.md 2026-09-29: the wire gone for less than the original's 0.2 s - the arm catching up
+    # at a switch - is held and does not trip the line breaker; for longer it is not
+    TractionServer.wire_free(wire)
+    _wires.clear()
+    TractionServer.network_build()
+    RailVehicleServer.stepping_advance(SHORT_LOSS)
+    assert_gt(_vehicle_voltage(controller), POWERED_VOLTAGE, "a short loss keeps the vehicle's voltage")
+    RailVehicleServer.stepping_advance(LONG_LOSS)
+    assert_eq(_vehicle_voltage(controller), 0.0, "a longer one does not")
+
+
+func _vehicle_voltage(controller:VehicleController) -> float:
+    return float(RailVehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/voltage", 0.0))
 
 
 func _front_voltage(controller:VehicleController) -> float:

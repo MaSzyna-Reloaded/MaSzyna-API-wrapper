@@ -4,6 +4,31 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - EP07 rolled out of Markowo without power: a moment without voltage tripped it for good
+
+* **Symptom:** krzyzowa2, the dispatcher gave the player's EX6435 no entry into Markowo Górne; the
+  goods train waited at Krzyżowa as it should. The entry is given when EP07-329 (PE3435), leaving
+  Markowo at 10:32, passes the third block towards Drawowo - and the EP07 stood on the line.
+* **What proved it:** following EP07-329 after its departure: 28 km/h, then its line breaker open
+  (`main=false`) with 3500 V back on the pantograph a moment later, the controller at 1, 0 A, and
+  the driver still taking the engine for ready (`engine_missing` 0) - it rolled to a stand in six
+  minutes. The breaker tripped at `markowo_grn_zwr11`, where the rear pantograph's arm lost the wire
+  for one step ("Lost contact").
+* **Causes:** two parts of the original not ported. A loss of the wire's voltage no longer than
+  0.2 s keeps the last voltage (`NoVoltTime`, DynObj.cpp:3132-3140) - the port fed the Mover every
+  step's voltage straight, so one step without contact tripped the breaker. And every update the
+  driver takes the engine's readiness away when a line breaker of the consist is open or a
+  converter relay tripped (`iEngineActive &= ...`, determine_consist_state(), Driver.cpp:6100-6104)
+  - so `handle_engine()` gets it ready again, closing the breaker; the port kept the readiness.
+* **Fix:** RailVehicleServer's step holds the vehicle's voltage through a loss of up to 0.2 s and
+  feeds it apart from the pantographs' own (`set_collector_voltage()`, one writer of
+  PantographVoltage); only a vehicle on a track is under a wire. The trainset reads the line
+  breakers and converter relays under control, and the driver drops its readiness on them. The
+  same run: no trip at zwr11, a longer loss before Drawowo closed again at once, Markowo's
+  dispatcher at 2 (the player's entry) at 10:35.
+* **Rule:** the vehicle's supply voltage is held through a short loss (0.2 s) as the original does,
+  and a driver's readiness is tested against the consist on every update, not only while preparing.
+
 ## 2026-09-29 - the driving aid flickered: lerpf() misses its end by a rounding
 
 * **Symptom:** approaching Markowo Górne the player's driving aid switched on nearly every update

@@ -1331,9 +1331,10 @@ namespace godot {
 
             // the pantographs at the wire the vehicle now stands under, before its circuits run on
             // what they collect (DynObj.cpp:3714-3920)
+            // only a vehicle standing on a track is under a wire, as every one of the original's is
             if (RailVehicleElectricEngine *electric_engine = Object::cast_to<RailVehicleElectricEngine>(
                         controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
-                electric_engine != nullptr) {
+                electric_engine != nullptr && vehicles.getptr(stepped_vehicles[index])->track.is_valid()) {
                 const RID vehicle_rid = stepped_vehicles[index];
                 const Transform3D frame = vehicle_get_transform(vehicle_rid);
                 VehiclePlacement *powered = vehicles.getptr(vehicle_rid);
@@ -1373,6 +1374,7 @@ namespace godot {
                 const int collecting = int(active[0] && powered->pantographs[0].reaches_wire) +
                                        int(active[1] && powered->pantographs[1].reaches_wire);
                 const double current = collecting > 0 ? controller->get_current0() / collecting : 0.0;
+                double fed = 0.0;
                 for (int pantograph = 0; pantograph < 2; ++pantograph) {
                     Pantograph &collector = powered->pantographs[pantograph];
                     /* The third way a raised pantograph reads no voltage, and the only one that is
@@ -1407,7 +1409,18 @@ namespace godot {
                     electric_engine->set_pantograph_wire_voltage(
                             static_cast<RailVehicleElectricEngine::PantographSelector>(pantograph),
                             static_cast<float>(voltage));
+                    fed = MAX(fed, Math::abs(voltage));
                 }
+                // a short loss keeps the last voltage (DynObj.cpp:3132-3140)
+                if (fed > 0.0) {
+                    powered->no_voltage_time = 0.0;
+                } else {
+                    powered->no_voltage_time += p_delta;
+                    if (powered->no_voltage_time <= NO_VOLTAGE_HOLD) {
+                        fed = electric_engine->get_collector_voltage();
+                    }
+                }
+                electric_engine->set_collector_voltage(static_cast<float>(fed));
             }
             controller->process_components(p_delta);
 

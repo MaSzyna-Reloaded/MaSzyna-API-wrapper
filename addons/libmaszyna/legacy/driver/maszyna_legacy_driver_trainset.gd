@@ -36,6 +36,8 @@ const MOVEMENT_SPEED:float = 1.0
 const NO_MOVEMENT_SPEED:float = 0.05
 ## A vehicle with more power than this [kW] is an engine (Power > 1.0, Driver.cpp:2470-2489)
 const POWERED:float = 1.0
+## ... and one whose line breaker counts in the consist's state (Power > 0.01, Driver.cpp:6055)
+const LINE_BREAKER_POWER:float = 0.01
 ## The vehicle's couplers (end::front, end::rear)
 const FRONT_END:int = 0
 const REAR_END:int = 1
@@ -73,6 +75,11 @@ var controlled_engines:int = 0
 ## IsAnyMotorOverloadRelayOpen (Driver.cpp:6135): the motor overload relay of a vehicle under the
 ## driver's control tripped
 var motor_overload_relay_open:bool = false
+## IsAnyLineBreakerOpen, IsAnyConverterOverloadRelayOpen (Driver.cpp:6045-6056): a line breaker of
+## a powered vehicle under the driver's control open - tripped by a loss of voltage, or opened by a
+## player - and a converter's overload relay tripped
+var line_breaker_open:bool = false
+var converter_overload_relay_open:bool = false
 ## IsAnyCouplerStretched (Driver.cpp:6087-6090): a coupler pulled past its strength
 var coupler_stretched:bool = false
 ## FmaxC of the driver's vehicle's coupler behind it, the way it drives [N] (Driver.cpp:7784)
@@ -99,10 +106,17 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     controlled_engines = 0
     motor_overload_relay_open = false
+    line_breaker_open = false
+    converter_overload_relay_open = false
     for other:RID in controlled:
-        if float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED:
+        var power:float = float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0))
+        if power > POWERED:
             controlled_engines += 1
-        motor_overload_relay_open = motor_overload_relay_open or RailVehicleServer.vehicle_dump_state(other).get("fuse_active", false)
+        var other_state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
+        motor_overload_relay_open = motor_overload_relay_open or other_state.get("fuse_active", false)
+        converter_overload_relay_open = converter_overload_relay_open or other_state.get("converter_overload", false)
+        if power > LINE_BREAKER_POWER:
+            line_breaker_open = line_breaker_open or not other_state.get("main_switch_enabled", false)
     var strengths:PackedFloat64Array = RailVehicleServer.vehicle_dump_config(vehicle).get("coupler_max_force", PackedFloat64Array())
     var behind:int = REAR_END if direction >= 0 else FRONT_END
     coupler_strength = strengths[behind] if strengths.size() > behind else 0.0

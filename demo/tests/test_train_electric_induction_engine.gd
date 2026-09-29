@@ -1,5 +1,8 @@
 extends MaszynaGutTest
 
+## The overhead wire's voltage the tests stand under [V]
+const WIRE_VOLTAGE:float = 3000.0
+
 var train: VehicleController
 var engine: RailVehicleElectricInductionEngine
 
@@ -81,15 +84,15 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     await wait_idle_frames(2)
     driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in 10:
-        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        _feed_wire(eim)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
-    eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+    _feed_wire(eim)
     assert_true(driven.state["main_switch_closable"], "the line breaker should be closable at 3000 V")
 
     driven.send_command("main_switch", true)
     for i in 5:
-        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        _feed_wire(eim)
         await wait_idle_frames(1)
 
     assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
@@ -134,13 +137,13 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.send_command("cab_activation", true)
     driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in 10:
-        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        _feed_wire(eim)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
     driven.send_command("main_switch", true)
     driven.send_command("direction_increase")
     for i in 5:
-        eim.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        _feed_wire(eim)
         await wait_idle_frames(1)
     return driven
 
@@ -175,7 +178,7 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
     var engine: RailVehicleElectricEngine = driven.get_component(VehicleComponentType.COMPONENT_ENGINE)
     driven.send_command("main_controller_increase")
     for i in 30:
-        engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        _feed_wire(engine)
         await wait_idle_frames(1)
 
     assert_gt(float(driven.state["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
@@ -190,3 +193,10 @@ func test_apply_power_uses_canonical_current_collector_properties():
     assert_eq(engine.power_current_collector_number_of_collectors, 2)
     assert_eq(engine.power_current_collector_max_voltage, 3000.0)
     assert_eq(engine.power_current_collector_max_current, 800.0)
+
+
+## What RailVehicleServer's step does for a vehicle standing under a live wire, for one standing on
+## no track: the wire's voltage on the first pantograph and the vehicle fed with it
+func _feed_wire(engine:RailVehicleElectricEngine) -> void:
+    engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, WIRE_VOLTAGE)
+    engine.set_collector_voltage(WIRE_VOLTAGE)

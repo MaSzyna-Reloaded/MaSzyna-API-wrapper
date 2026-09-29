@@ -61,6 +61,16 @@ const SECURITY_RESET:StringName = &"security_reset_bt"
 const CABSIGNAL_RESET:StringName = &"shp_reset_bt"
 
 
+## A vehicle command the driver gives, sent only when the vehicle has it; null when it has not.
+## The original's driver calls the Mover, where a device the vehicle lacks does nothing
+## (Sandbox() switches nothing on without sand, Mover.cpp:3070); here the component that registers
+## the command is missing (an EN96 has no RailVehicleSwitches, so no "sand").
+static func send(vehicle:RID, command:StringName, p1:Variant = null, p2:Variant = null) -> Variant:
+    if not RailVehicleServer.vehicle_has_command(vehicle, command):
+        return null
+    return RailVehicleServer.vehicle_send_command(vehicle, command, p1, p2)
+
+
 ## Operates the switch unless the vehicle shows the step done; true when it is. A vehicle without
 ## the device does not report its state, and has nothing to do. `shown_by`: the vehicle whose
 ## device the switch works, when it is another one of the unit - an EMU's pantographs are its

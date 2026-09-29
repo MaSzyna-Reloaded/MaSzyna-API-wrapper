@@ -405,7 +405,7 @@ func _set_brake_delays(vehicle:RID, trainset:MaszynaLegacyDriverTrainset, in_con
             else:
                 behind_engine += 1
                 own = RailVehicleBrake.BRAKE_DELAY_G if behind_engine <= GP_WAGONS_ON_G else RailVehicleBrake.BRAKE_DELAY_P
-        RailVehicleServer.vehicle_send_command(other, "auto_rewident", own)
+        MaszynaLegacyDriverHints.send(other, "auto_rewident", own)
     return passenger
 
 
@@ -451,7 +451,7 @@ func control(situation:MaszynaLegacyDriverTraction.Situation, elapsed:float) -> 
                     return
                 var hold:float = float(config.get("brakes_controller_position_ep_hold", 0.0))
                 if float(config.get("brakes_controller_position_ep_release", 0.0)) - hold < EP_SWITCHED:
-                    RailVehicleServer.vehicle_send_command(situation.vehicle, "ep_brake", false)
+                    MaszynaLegacyDriverHints.send(situation.vehicle, "ep_brake", false)
                 else:
                     _set_handle(situation.vehicle, situation.cab, hold)
     else:
@@ -546,7 +546,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
     var pressed:int = UNIVERSAL_HIGH_PRESSURE | UNIVERSAL_OVERLOAD if charging else 0
     var buttons:Array[int] = [brake.universal_brake_button_1, brake.universal_brake_button_2, brake.universal_brake_button_3]
     for index:int in buttons.size():
-        RailVehicleServer.vehicle_send_command(vehicle, "universal_brake_button", index, bool(pressed & buttons[index]))
+        MaszynaLegacyDriverHints.send(vehicle, "universal_brake_button", index, bool(pressed & buttons[index]))
 
 
 ## trainbrakeapply (driverhints.cpp:810-825): the train brake applied to uncouple; the handle takes
@@ -645,7 +645,7 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
                             _add_position(BRAKING_LEVEL_INCREASE)
             # braking, the releaser is let go (Driver.cpp:3154-3158)
             if position > POSITION_RUNNING and CabinSystem.vehicle_state_value(vehicle, "brake_releaser_active", false):
-                RailVehicleServer.vehicle_send_command(vehicle, "brake_releaser", false)
+                MaszynaLegacyDriverHints.send(vehicle, "brake_releaser", false)
             return moved
         RailVehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC:
             # its highest operation mode; an induction motor's by its EIM controller or its EN57
@@ -653,7 +653,7 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
             # deceleration wanted, or, applied by time, held at EP braking (Driver.cpp:3161-3198)
             var mode:int = int(CabinSystem.vehicle_state_value(vehicle, "brake_operation_mode", 0))
             while mode << 1 <= brake.cntrl_brake_op_modes:
-                RailVehicleServer.vehicle_send_command(vehicle, "brake_operation_mode_increase")
+                MaszynaLegacyDriverHints.send(vehicle, "brake_operation_mode_increase")
                 var raised:int = int(CabinSystem.vehicle_state_value(vehicle, "brake_operation_mode", 0))
                 if raised == mode:
                     break
@@ -673,7 +673,7 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
             if not _set_handle(vehicle, situation.cab, braking):
                 return false
             if release - float(config.get("brakes_controller_position_ep_hold", 0.0)) < EP_SWITCHED:
-                RailVehicleServer.vehicle_send_command(vehicle, "ep_brake", true)
+                MaszynaLegacyDriverHints.send(vehicle, "ep_brake", true)
             return true
     return false
 
@@ -728,7 +728,7 @@ func _decrease(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
                 moved = _set_handle(vehicle, cab, release)
                 # the original switches the EP brake on here too (Driver.cpp:3326-3328)
                 if release - float(config.get("brakes_controller_position_ep_hold", 0.0)) < EP_SWITCHED:
-                    moved = bool(RailVehicleServer.vehicle_send_command(vehicle, "ep_brake", true)) or moved
+                    moved = bool(MaszynaLegacyDriverHints.send(vehicle, "ep_brake", true)) or moved
             if not moved:
                 moved = _step_local_brake(vehicle, cab, -LOCAL_RELEASE_STEPS)
             return moved
@@ -917,7 +917,7 @@ func _set_local_brake(vehicle:RID, cab:int, value:float) -> bool:
 func _step_manual_brake(vehicle:RID, steps:int) -> bool:
     var before:int = int(CabinSystem.vehicle_state_value(vehicle, "brake_manual_position", 0))
     for _step:int in absi(steps):
-        RailVehicleServer.vehicle_send_command(vehicle, "manual_brake_increase" if steps > 0 else "manual_brake_decrease")
+        MaszynaLegacyDriverHints.send(vehicle, "manual_brake_increase" if steps > 0 else "manual_brake_decrease")
     return not int(CabinSystem.vehicle_state_value(vehicle, "brake_manual_position", 0)) == before
 
 

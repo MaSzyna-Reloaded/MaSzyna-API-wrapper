@@ -71,7 +71,8 @@ func _process(delta):
                 if state_property:
                     var value = _controller.state.get(state_property)
                     if not value == null:
-                        $Switch.button_pressed = true if value else false
+                        # shown, not switched: a state shown must not send it back to the vehicle
+                        $Switch.set_pressed_no_signal(true if value else false)
                         $Switch.modulate = Color.GREEN if value else Color.WHITE
                 else:
                     $Switch.disabled = false

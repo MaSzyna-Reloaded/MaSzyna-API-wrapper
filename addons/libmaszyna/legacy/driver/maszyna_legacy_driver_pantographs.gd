@@ -39,15 +39,15 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
     if tank < (EMU_RAISING_PRESSURE if emu else RAISING_PRESSURE) + RAISING_MARGIN:
         # the main reservoir cannot fill it: the three-way valve to the small compressor
         if not engine.cntrl_pantograph_auto_valve and not feeding_from_compressor:
-            RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor_valve", true)
+            MaszynaLegacyDriverHints.send(unit, "pantograph_compressor_valve", true)
         if not state.get("current_collector/pantograph_compressor_enabled", false):
-            RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor", true)
+            MaszynaLegacyDriverHints.send(unit, "pantograph_compressor", true)
     elif not feeding_from_compressor or tank <= float(state.get("compressor_pressure", 0.0)):
         if state.get("current_collector/pantograph_compressor_enabled", false):
-            RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor", false)
+            MaszynaLegacyDriverHints.send(unit, "pantograph_compressor", false)
     # pantographsvalveon: the pantographs' master valve (OperatePantographsValve(), no cab control)
     if not state.get("current_collector/valve_active", true):
-        RailVehicleServer.vehicle_send_command(unit, "pantographs_valve", true)
+        MaszynaLegacyDriverHints.send(unit, "pantographs_valve", true)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
 
@@ -67,7 +67,7 @@ static func control(
     if not engine.cntrl_pantograph_auto_valve \
             and float(CabinSystem.vehicle_state_value(vehicle, "compressor_pressure", 0.0)) > MAIN_FEEDING_PRESSURE \
             and state.get("current_collector/pantograph_compressor_valve", false):
-        RailVehicleServer.vehicle_send_command(unit, "pantograph_compressor_valve", false)
+        MaszynaLegacyDriverHints.send(unit, "pantograph_compressor_valve", false)
     var speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0))
     if speed <= MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED or waiting:
         return

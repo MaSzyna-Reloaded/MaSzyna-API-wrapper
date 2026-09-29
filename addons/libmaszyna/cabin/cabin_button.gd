@@ -125,15 +125,21 @@ func _input(event):
             release()
 
 ## The driver's hand on the button (key or mouse): a monostable one is held, any other toggles.
+## Only the hand acts on the vehicle; `pushed` set to show the vehicle's state - the cab built, the
+## cabin logic's own pose - moves nothing (a cab built on a running vehicle lowered its pantograph
+## and opened its line breaker, FINDINGS.md 2026-09-29)
 func press() -> void:
     if monostable:
         pushed = true
+        _act(&"hold")
     else:
         pushed = not pushed
+        _act(&"toggle", pushed)
 
 func release() -> void:
     if monostable:
         pushed = false
+        _act(&"release")
 
 func _update_mesh_target() -> void:
     _target_mesh_position = mesh_position_offset + mesh_position * value
@@ -197,10 +203,4 @@ func _on_pushed_changed():
     _set_mouse_state(_mouse_state())
     if pushed:
         button_pushed.emit()
-
-    if monostable:
-        _act(&"hold" if pushed else &"release")
-    else:
-        _act(&"toggle", pushed)
-
     _play_sound()

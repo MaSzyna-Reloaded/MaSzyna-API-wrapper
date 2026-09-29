@@ -49,6 +49,9 @@ void fragment() {
         const real_t MESH_LOD_THRESHOLD = 2.0;
         // past this the view is too steep for world up to orient the camera
         const real_t MAX_UP_ALIGNMENT = 0.99;
+        // the field of view Camera3D accepts [deg] (Camera3D::set_fov(), camera_3d.cpp:738)
+        const double MIN_CAMERA_FOV = 1.0;
+        const double MAX_CAMERA_FOV = 179.0;
         // the reflection's size in pixels, whatever the glass's size on the screen
         const int32_t MIN_TEXTURE_SIZE = 256;
         const int32_t MAX_TEXTURE_SIZE = 1024;
@@ -184,9 +187,16 @@ void fragment() {
         const real_t glass_distance = view.length();
         const Vector3 up =
                 Math::abs(view.normalized().y) > MAX_UP_ALIGNMENT ? Vector3(0.0, 0.0, 1.0) : Vector3(0.0, 1.0, 0.0);
+        // the angle the glass fills seen from the mirrored eye: a glass a speck in the distance or
+        // one the eye is at has no view a camera can take
+        const double fov = Math::rad_to_deg(2.0 * Math::atan(radius / glass_distance));
+        if (fov < MIN_CAMERA_FOV || fov > MAX_CAMERA_FOV) {
+            _set_rendering(false);
+            return;
+        }
         camera->set_global_transform(Transform3D(Basis::looking_at(view, up), mirrored_origin));
         camera->set_keep_aspect_mode(Camera3D::KEEP_HEIGHT);
-        camera->set_fov(Math::rad_to_deg(2.0 * Math::atan(radius / glass_distance)));
+        camera->set_fov(fov);
         // whatever is nearer than the glass stands behind it
         camera->set_near(MAX(eye->get_near(), glass_distance - radius));
         camera->set_far(eye->get_far());

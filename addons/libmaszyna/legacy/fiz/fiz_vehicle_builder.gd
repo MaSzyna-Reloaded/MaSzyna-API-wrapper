@@ -219,7 +219,6 @@ static func build_model_at(fiz_path: String) -> VehicleModel:
             entry.properties = VehicleModel.capture(component)
             components.append(entry)
     model.components = components
-    root.free()
 
     _cache.set(cache_path, model, cache_hash)
     return model

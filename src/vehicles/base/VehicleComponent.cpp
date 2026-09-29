@@ -54,8 +54,8 @@ namespace godot {
         return component_tag;
     }
 
-    VehicleController *VehicleComponent::get_controller() const {
-        return train_controller_node;
+    Ref<VehicleController> VehicleComponent::get_controller() const {
+        return Ref<VehicleController>(train_controller_node);
     }
 
     void VehicleComponent::attach(VehicleController *p_controller) {

@@ -189,8 +189,14 @@ anything. Open work belongs in `TODO.md`.
 * Memory that grows with a flat object count and no leak reported at exit is a referenced
   container: diff two jemalloc heap dumps before reading code, and suspect the binding's value
   types too. *(09-27 every rebuilt state dump stayed in memory)*
-* `process_frame` is the end of a frame. What `_process` reads is produced before it, ordered by
-  `process_priority`. *(09-24 simulation stepped after readers)*
+* A node in the scene tree keeps no pointer to another object: nodes as `ObjectID`, the vehicle by
+  RID. *(09-30 "Edit FIZ" aborted the editor)*
+* A `RefCounted` crosses a binding as `Ref<>`: a raw `T*` returned to GDScript takes a reference
+  away and frees it. *(09-30 a raw pointer returned to GDScript freed the vehicle)*
+* `SceneTree.process_frame` is emitted **before** every node's `_process` (measured, Godot 4.7.2):
+  a C++ singleton on it steps ahead of every reader, no node needed. A node added to the root from
+  an `_enter_tree()` of the main scene fails (`add_child()`, root busy). *(09-30 the simulation
+  clock never ticked; corrects 09-24)*
 * The Mover measures couplers from "the last refresh plus ten times the movement since": refresh
   locations and neighbours every physics sub-step, never once a frame, or the result depends on
   the frame rate. *(09-27 couplers stiffened by a long frame)*

@@ -50,12 +50,12 @@ namespace godot {
         return mover->Couplers[p_end].ConnectedNr;
     }
 
-    RailVehicleController *MoverRailVehicleController::get_coupled_controller(const int p_end) const {
+    Ref<RailVehicleController> MoverRailVehicleController::get_coupled_controller(const int p_end) const {
         if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
-            return nullptr;
+            return Ref<RailVehicleController>();
         }
         const auto it = controllers_by_mover.find(mover->Couplers[p_end].Connected);
-        return it == controllers_by_mover.end() ? nullptr : it->second;
+        return Ref<RailVehicleController>(it == controllers_by_mover.end() ? nullptr : it->second);
     }
 
     void MoverRailVehicleController::initialize_mover_state() {
@@ -157,6 +157,11 @@ namespace godot {
 
     /* Whether the vehicle still has anything to integrate. A braked standing vehicle stays active
      * in the original too (Mover.cpp:4603). */
+    void MoverRailVehicleController::wake() {
+        ERR_FAIL_NULL(mover);
+        mover->switch_physics(true);
+    }
+
     bool MoverRailVehicleController::is_physics_active() const {
         return mover != nullptr && mover->PhysicActivation;
     }

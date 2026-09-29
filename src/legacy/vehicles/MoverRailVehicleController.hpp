@@ -124,13 +124,14 @@ namespace godot {
             void compute_movement(double p_delta) override;
             void compute_fast_movement(double p_delta) override;
             bool is_physics_active() const override;
+            void wake() override;
             void couple(RailVehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) override;
             void uncouple(int p_end) override;
             bool is_coupled(int p_end) const override;
             bool is_coupled_by(int p_end, CouplingElement p_element) const override;
             void coupler_connect(const Variant &p_where) override;
             void coupler_disconnect(const Variant &p_where) override;
-            RailVehicleController *get_coupled_controller(int p_end) const override;
+            Ref<RailVehicleController> get_coupled_controller(int p_end) const override;
             int get_coupled_end(int p_end) const override;
     };
 } // namespace godot

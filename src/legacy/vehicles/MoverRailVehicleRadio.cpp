@@ -32,7 +32,7 @@ namespace godot {
     // Original engine: TTrain::OnCommand_radiostopsend (Train.cpp:8149) - on the press, and only a
     // powered radio sends
     void MoverRailVehicleRadio::radio_stop(const bool p_pressed) {
-        const VehicleController *controller = get_controller();
+        const VehicleController *controller = train_controller_node;
         RailVehicleServer *server = RailVehicleServer::get_instance();
         if (!p_pressed || !get_powered() || controller == nullptr || server == nullptr) {
             return;
@@ -43,7 +43,7 @@ namespace godot {
     // Original engine: TTrain::OnCommand_radiocall1send/3send (Train.cpp:8209-8236) - on the press,
     // from a powered radio on any channel but the one without calls
     void MoverRailVehicleRadio::radio_call(const bool p_pressed, const RadioCall p_call) {
-        const VehicleController *controller = get_controller();
+        const VehicleController *controller = train_controller_node;
         RailVehicleServer *server = RailVehicleServer::get_instance();
         if (!p_pressed || !get_powered() || get_channel() == CHANNEL_NO_CALLS || controller == nullptr ||
             server == nullptr) {
@@ -57,7 +57,7 @@ namespace godot {
     // "Emergency_brake" command lands in RadiostopSwitch (Driver.cpp:4487, Mover.cpp:9462)
     bool MoverRailVehicleRadio::radio_stop_receive() {
         TMoverParameters *mover = get_mover();
-        const VehicleController *controller = get_controller();
+        const VehicleController *controller = train_controller_node;
         if (mover == nullptr || controller == nullptr ||
             controller->get_driver_type() == VehicleController::DRIVER_NOBODY ||
             !mover->SecuritySystem.radiostop_available() || !mover->Radio) {

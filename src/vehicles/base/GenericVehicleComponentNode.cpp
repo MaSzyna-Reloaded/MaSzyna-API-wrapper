@@ -31,47 +31,46 @@ namespace godot {
                     ERR_PRINT("GenericVehicleComponentNode has no VehiclePhysicsNode above it.");
                     return;
                 }
-                component = memnew(GenericVehicleComponent);
+                component.instantiate();
                 component->set_script_owner(this);
                 vehicle->add_component(component);
             } break;
             case NOTIFICATION_EXIT_TREE:
             case NOTIFICATION_PREDELETE: {
-                if (component != nullptr) {
+                if (component.is_valid()) {
                     component->detach();
-                    memdelete(component);
-                    component = nullptr;
+                    component.unref();
                 }
             } break;
             default:;
         }
     }
 
-    GenericVehicleComponent *GenericVehicleComponentNode::get_component() const {
+    Ref<GenericVehicleComponent> GenericVehicleComponentNode::get_component() const {
         return component;
     }
 
     void GenericVehicleComponentNode::register_command(const String &p_command, const Callable &p_callback) {
-        ERR_FAIL_NULL(component);
+        ERR_FAIL_COND(component.is_null());
         component->register_command(p_command, p_callback);
     }
 
     void GenericVehicleComponentNode::unregister_command(const String &p_command) {
-        ERR_FAIL_NULL(component);
+        ERR_FAIL_COND(component.is_null());
         component->unregister_command(p_command);
     }
 
-    VehicleController *GenericVehicleComponentNode::get_controller() const {
-        return component != nullptr ? component->get_controller() : nullptr;
+    Ref<VehicleController> GenericVehicleComponentNode::get_controller() const {
+        return component.is_valid() ? component->get_controller() : Ref<VehicleController>();
     }
 
     void GenericVehicleComponentNode::log_debug(const String &p_line) {
-        ERR_FAIL_NULL(component);
+        ERR_FAIL_COND(component.is_null());
         component->log_debug(p_line);
     }
 
     void GenericVehicleComponentNode::log_warning(const String &p_line) {
-        ERR_FAIL_NULL(component);
+        ERR_FAIL_COND(component.is_null());
         component->log_warning(p_line);
     }
 } // namespace godot

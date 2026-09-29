@@ -160,8 +160,6 @@ func _process_dirty(_delta: float) -> void:
 func reload() -> void:
     if is_inside_tree() and (model or model_filename):
         _dirty = false
-        _e3d_loaded = false
-        e3d_loading.emit()
         _free_instance()
 
         if model:
@@ -172,8 +170,6 @@ func reload() -> void:
             lights_state = _merge_lights_state(lights_state)
             submodels_aabb = E3DModelTool.get_aabb(_model)
             _create_instance()
-            _e3d_loaded = true
-            e3d_loaded.emit()
 
 
 func _ready() -> void:
@@ -235,14 +231,21 @@ func _create_instance() -> void:
     E3DRenderingServer.instance_set_lights_dimmed(_rid, lights_dimmed, lights_dimmed_multiplier)
     E3DRenderingServer.instance_build(_rid)
     e3d_instance_created.emit(_rid)
+    # the one place the submodels come into being: every rebuild, and every return to the tree
+    _e3d_loaded = true
+    e3d_loaded.emit()
     # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
     # but a particle emitter of the model is owned by the server either way and spawns where the
     # server last saw the instance. Anything else would pay a script call per moved model per frame.
     set_notify_transform(server_instancer == Instancer.OPTIMIZED or _model.smoke_sources.size() > 0)
 
 
+## The one place the submodels are freed - a reload, and every exit from the tree ("Edit FIZ"
+## re-adding a vehicle): whoever keeps nodes of the model hears it first (FINDINGS.md 2026-09-30)
 func _free_instance() -> void:
     if _rid.is_valid():
+        _e3d_loaded = false
+        e3d_loading.emit()
         E3DRenderingServer.instance_free(_rid)
         _rid = RID()
 

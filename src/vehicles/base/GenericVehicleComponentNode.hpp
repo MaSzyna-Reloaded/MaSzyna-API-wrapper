@@ -16,7 +16,7 @@ namespace godot {
             GDCLASS(GenericVehicleComponentNode, Node)
 
         private:
-            GenericVehicleComponent *component = nullptr;
+            Ref<GenericVehicleComponent> component;
 
         protected:
             static void _bind_methods();
@@ -24,13 +24,13 @@ namespace godot {
 
         public:
             /* The component this node put into the vehicle, for anything that wants it directly */
-            GenericVehicleComponent *get_component() const;
+            Ref<GenericVehicleComponent> get_component() const;
 
             /* Shortcuts for a script written on this node, so it does not go through
              * get_component() for what it calls most. They belong to the component. */
             void register_command(const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_command);
-            VehicleController *get_controller() const;
+            Ref<VehicleController> get_controller() const;
             void log_debug(const String &p_line);
             void log_warning(const String &p_line);
     };

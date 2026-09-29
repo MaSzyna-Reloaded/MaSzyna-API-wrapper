@@ -67,7 +67,7 @@ Legend:
 
 ### Missing events and wiring
 
-- [ ] [RC-040](#rc-040) Cabin shown after counting frames
+- [x] [RC-040](#rc-040) Cabin shown after counting frames
 - [ ] [RC-041](#rc-041) `pending_start_track_retry` retry flag
 - [ ] [RC-042](#rc-042) `force_detail_refresh` "try again next tick" flag
 - [ ] [RC-043](#rc-043) `RailVehicle3D` wires nodes inside `_process`
@@ -105,11 +105,12 @@ Legend:
 
 - [ ] [RC-070](#rc-070) `E3DRenderingServer::instance_attach_node(Node3D *)`
 - [ ] [RC-071](#rc-071) `SceneryStreamingServer::streaming_set_camera(Camera3D *)`
-- [ ] [RC-072](#rc-072) `RailVehicleServer::vehicle_component_get()` returns a pointer
+- [x] [RC-072](#rc-072) `RailVehicleServer::vehicle_component_get()` returns a pointer
 - [ ] [RC-073](#rc-073) `SignalHeadNode::set_model(Node *)` / `get_model()`
 - [ ] [RC-074](#rc-074) `MaszynaTrianglesImporter::import_triangles(MaszynaParser *)`
 - [ ] [RC-075](#rc-075) Vehicle layer bound methods taking and returning pointers
 - [ ] [RC-076](#rc-076) `E3DSubModel::set_parent(E3DSubModel *)`
+- [ ] [RC-123](#rc-123) Scene-tree nodes holding pointers to objects they do not own
 
 ### Calls by name
 
@@ -672,6 +673,8 @@ Legend:
   `Callable(this, "_show_cabin_after_frames")`, re-subscribed every frame until the count runs
   out.
 * **Fix:** find what the cabin waits for and show it on that event.
+* **Done 2026-09-30:** the cabin waited for nothing - it is built within `add_child()` and the
+  camera is moved into it in the same frame; `show_cabin()` shows it at once, the counter is gone.
 
 ### RC-041
 
@@ -966,8 +969,8 @@ Legend:
 
 **`SimulationServer::get_instance()` looked up per frame**
 
-* **Where:** `src/simulation/SimulationClock.cpp:13`; `src/driver/DriverSystem.cpp:88`;
-  `src/scenario/ScenarioEventServer.cpp:256`
+* **Where:** `src/driver/DriverSystem.cpp:88`; `src/scenario/ScenarioEventServer.cpp:256`
+  (`SimulationClock.cpp` removed 2026-09-30 - the clock ticks inside `SimulationServer`)
 * **Problem:** the lookup is a name lookup on `Engine`, done every frame or every slice.
 * **Fix:** cache the pointer at initialisation.
 
@@ -1007,6 +1010,7 @@ Legend:
 * **Where:** `src/vehicles/rail/RailVehicleServer.hpp:296`
 * **Fix:** return an `ObjectID`/`Object` Variant publicly, and keep a pointer accessor private
   for native callers.
+* **Done 2026-09-30:** returns `Ref<VehicleComponent>` - components are `RefCounted` now.
 
 ### RC-073
 
@@ -1028,16 +1032,18 @@ Legend:
 
 **Vehicle layer bound methods taking and returning pointers**
 
-* **Where:**
-  * `src/vehicles/base/VehicleController.cpp:60-61`: `add_component`, `get_component`
-  * `src/vehicles/rail/RailVehicleController.hpp:167, 171, 178`: `update_neighbour`, `couple`,
-    `get_coupled_controller`
-  * `src/vehicles/base/VehiclePhysicsNode.cpp:51-52`
-  * `src/vehicles/base/VehicleComponent.cpp:20`
-  * `src/vehicles/base/GenericVehicleComponentNode.cpp:7, 17`
-  * `src/vehicles/rail/RailVehicle3D.cpp:141-142`: `get_cabin`, `get_controller`
+* **Where (left):**
+  * `src/vehicles/rail/RailVehicleController.hpp`: `update_neighbour`, `couple` take a
+    `RailVehicleController *`
+  * `src/vehicles/rail/RailVehicle3D.cpp`: `get_cabin`
   * `src/vehicles/base/VehicleModel.cpp:17-18`: `capture`, `apply` (`Object *`)
-* **Fix:** RIDs (the vehicle), `ObjectID`s, or `Variant`.
+* **Done 2026-09-30:** `VehicleController` and `VehicleComponent` are `RefCounted`; `add_component`,
+  `get_component`, `get_controller` (`RailVehicle3D`, `VehicleComponent`,
+  `GenericVehicleComponentNode`, `VehiclePhysicsNode`), `get_coupled_controller` and
+  `GenericVehicleComponentNode::get_component` take and return `Ref<>`. A raw `T*` of a
+  `RefCounted` returned to GDScript took a reference away and freed the vehicle (FINDINGS.md
+  2026-09-30).
+* **Fix:** RIDs (the vehicle), `ObjectID`s, `Ref<>`, or `Variant`.
 
 ### RC-076
 
@@ -1046,6 +1052,19 @@ Legend:
 * **Where:** `src/legacy/e3d/E3DSubModel.hpp:100`
 * **Problem:** a public C++ method with a raw pointer. It is not bound, so this is low priority.
 * **Fix:** make it private or a friend of the parser, or take an index.
+
+### RC-123
+
+**Scene-tree nodes holding pointers to objects they do not own**
+
+* **Rule:** a node living in the scene tree keeps no pointer to another object - a node as an
+  `ObjectID`, the vehicle by its RID (FINDINGS.md 2026-09-30, "Edit FIZ" aborted the editor)
+* **Where (left):** `src/rendering/PlanarMirror3D.cpp`: `glass` (`MeshInstance3D *`, its parent);
+  the rest of the codebase not yet swept
+* **Done 2026-09-30:** `RailVehicle3D` (model, bogies, wheels, pantographs, wipers, mirrors,
+  cabin, load, head display; no components at all - read from `RailVehicleServer` by RID),
+  `GenericVehicleComponentNode` (`Ref<GenericVehicleComponent>`), `VehiclePhysicsNode`
+  (`Ref<VehicleController>`).
 
 ## Calls by name
 
@@ -1449,11 +1468,8 @@ ported value keeps the original's value and a source reference".
 **Same work done twice**
 
 * **Where:**
-  * `src/vehicles/base/VehiclePhysicsNode.cpp:75-76`: `shutdown()`, then `memdelete`, whose
-    predelete calls `release()` → `shutdown()` again
   * `VehiclePhysicsNode.cpp:117`: `set_vehicle_rid` repeats what `vehicle_attach_controller`
     already did (`RailVehicleServer.cpp:425`)
-  * `RailVehicle3D.cpp:306-308`: `_adopt_vehicle_parts()` twice on a controller change
   * `RailVehicleElectricEngine.cpp:659-664`: `if (has_power_cable())` twice in a row
   * `src/utils/UserSettings.cpp:77, 87`: `_apply_defaults()` twice on a successful load
   * `e3d_parser.cpp:528, 534`: bound checks the `while` at `:530` already does
@@ -1638,8 +1654,6 @@ ported value keeps the original's value and a source reference".
     `RailVehicleHeating.hpp:40`, `RailVehicleSwitches.hpp:48`, `RailVehicleElectricEngine.hpp:205`
   * `VehicleController.hpp:54`: `apply_configuration` is protected but bound publicly
     (`.cpp:58`)
-  * `src/simulation/SimulationClock.hpp:17`: `CLOCK_PRIORITY` is implicitly private, with no
-    access specifier
 * **Rule:** `CODE_STYLE.md` "Explicit privacy declarations"
 
 ### RC-121

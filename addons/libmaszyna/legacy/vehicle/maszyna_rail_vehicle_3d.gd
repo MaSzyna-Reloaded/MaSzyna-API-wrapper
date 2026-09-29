@@ -105,11 +105,10 @@ class_name MaszynaRailVehicle3D
             _track_dirty = true
 
 ## Toggle via the "Edit FIZ" 3D-viewport toolbar button (see
-## addons/libmaszyna/editor/fiz_toolbar/) when the wrapped vehicle's FizVehiclePhysicsNode needs to
-## be visible/selectable in the Scene dock for inspection - by default _vehicle is added as an
-## INTERNAL child (see class doc above), and the Scene dock skips internal nodes and their whole
-## subtree outright regardless of node ownership, so nothing under it can otherwise be reached.
-## Mirrors FizVehiclePhysicsNode.editable_in_editor exactly.
+## addons/libmaszyna/editor/fiz_toolbar/) when the wrapped vehicle needs to be visible/selectable
+## in the Scene dock for inspection - by default _vehicle is added as an INTERNAL child (see class
+## doc above), and the Scene dock skips internal nodes and their whole subtree outright regardless
+## of node ownership, so nothing under it can otherwise be reached.
 var editable_in_editor:bool = false:
     set(x):
         if not editable_in_editor == x:
@@ -119,6 +118,8 @@ var editable_in_editor:bool = false:
 var _dirty:bool = true
 var _track_dirty:bool = false
 var _vehicle:RailVehicle3D
+## The vehicle's internal parts "Edit FIZ" shows, by instance id - hidden again as they were
+var _shown_parts:Array[int] = []
 
 
 func _ready() -> void:
@@ -203,9 +204,24 @@ func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
 func _apply_editable_in_editor() -> void:
     if not _vehicle:
         return
+    var mode:InternalMode = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     var idx:int = _vehicle.get_index()
     remove_child(_vehicle)
-    add_child(_vehicle, false, INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK)
+    # the vehicle's parts are internal children too (MaszynaRailVehicle3DInstancer) - switched while
+    # it is out of the tree, so they do not leave and enter it a second time; the ones shown are
+    # the ones hidden again
+    if editable_in_editor:
+        _shown_parts.clear()
+        var visible_parts:Array[Node] = _vehicle.get_children(false)
+        for part:Node in _vehicle.get_children(true):
+            if not part in visible_parts:
+                _shown_parts.append(part.get_instance_id())
+    for part_id:int in _shown_parts:
+        var part:Node = instance_from_id(part_id) as Node
+        if part:
+            _vehicle.remove_child(part)
+            _vehicle.add_child(part, false, mode)
+    add_child(_vehicle, false, mode)
     move_child(_vehicle, idx)
     _set_owner_recursive(_vehicle, owner if editable_in_editor else self)
 

@@ -144,12 +144,11 @@ namespace godot {
          * the original only a diesel does, so the engine's own kind answers the question - no
          * configuration is looked up for it. */
         const RailVehicleServer *server = RailVehicleServer::get_instance();
-        const RailVehicleDieselEngine *engine =
+        const Ref<RailVehicleDieselEngine> engine =
                 server != nullptr && vehicle_rid.is_valid()
-                        ? Object::cast_to<RailVehicleDieselEngine>(
-                                  server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE))
-                        : nullptr;
-        const double engine_revolutions = engine != nullptr ? Math::abs(engine->get_rpm_count()) : 0.0;
+                        ? server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE)
+                        : Ref<VehicleComponent>();
+        const double engine_revolutions = engine.is_valid() ? Math::abs(engine->get_rpm_count()) : 0.0;
         if (engine_revolutions > 0.0) {
             engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math::TAU);
             const double fade_in = CLAMP(

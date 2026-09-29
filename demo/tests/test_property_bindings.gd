@@ -83,9 +83,6 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     assert_false(lights.cabin_a_left_white_signal)
     assert_true(lights.cabin_a_right_white_signal)
 
-    brake.free()
-    electric_engine.free()
-
 
 func test_group_paths_do_not_change_public_property_names() -> void:
     var current_group: String = ""

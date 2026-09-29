@@ -147,10 +147,8 @@ namespace godot {
      * connected. */
     void VehicleController::apply_configuration() {
         apply_config();
-        for (VehicleComponent *component: components) {
-            if (component != nullptr) {
-                component->apply_config();
-            }
+        for (const Ref<VehicleComponent> &component: components) {
+            component->apply_config();
         }
         emit_signal(simulation_configured_signal);
     }
@@ -183,7 +181,7 @@ namespace godot {
     }
 
     void VehicleController::process_components(const double p_delta) {
-        for (VehicleComponent *component: components) {
+        for (const Ref<VehicleComponent> &component: components) {
             component->process(p_delta);
         }
     }
@@ -230,7 +228,7 @@ namespace godot {
     Dictionary VehicleController::get_config() const {
         Dictionary result;
         _fill_config_dictionary(result);
-        for (const VehicleComponent *component: components) {
+        for (const Ref<VehicleComponent> &component: components) {
             component->_fill_config_dictionary(result);
         }
         return result;
@@ -245,18 +243,18 @@ namespace godot {
     /// still want one - a console, a test, a diagnostic dump. Nothing on the frame path builds it.
     /* The whole vehicle's dump: its own share plus every component's. Expensive on purpose -
      * a console, a test or a diagnostic asks for it, never a per-frame reader. */
-    VehicleComponent *VehicleController::get_component(const VehicleComponentType::Type p_type) const {
-        for (VehicleComponent *component: components) {
+    Ref<VehicleComponent> VehicleController::get_component(const VehicleComponentType::Type p_type) const {
+        for (const Ref<VehicleComponent> &component: components) {
             if (component->get_component_type() == p_type) {
                 return component;
             }
         }
-        return nullptr;
+        return Ref<VehicleComponent>();
     }
 
     TypedArray<VehicleComponent> VehicleController::find_components(const VehicleComponentType::Type p_type) const {
         TypedArray<VehicleComponent> found;
-        for (VehicleComponent *component: components) {
+        for (const Ref<VehicleComponent> &component: components) {
             if (component->get_component_type() == p_type) {
                 found.push_back(component);
             }
@@ -266,7 +264,7 @@ namespace godot {
 
     TypedArray<VehicleComponent> VehicleController::find_generic_components(const StringName &p_tag) const {
         TypedArray<VehicleComponent> found;
-        for (VehicleComponent *component: components) {
+        for (const Ref<VehicleComponent> &component: components) {
             if (component->get_component_type() == VehicleComponentType::COMPONENT_GENERIC &&
                 component->get_component_tag() == p_tag) {
                 found.push_back(component);
@@ -279,8 +277,8 @@ namespace godot {
      * is already running, its configuration is written to the backend and announced there and
      * then. A component added to a built vehicle - a modder's, or one a test adds - must not
      * leave the vehicle describing geometry it does not have. */
-    void VehicleController::add_component(VehicleComponent *p_component) {
-        ERR_FAIL_NULL(p_component);
+    void VehicleController::add_component(const Ref<VehicleComponent> &p_component) {
+        ERR_FAIL_COND(p_component.is_null());
         p_component->attach(this);
         if (is_simulation_ready()) {
             p_component->apply_config();
@@ -295,17 +293,15 @@ namespace godot {
     }
 
     void VehicleController::free_components() {
-        const Vector<VehicleComponent *> owned = components;
-        components.clear();
-        lighting = nullptr;
-        for (VehicleComponent *component: owned) {
+        // the copy keeps every component alive while it lets go of the vehicle
+        const Vector<Ref<VehicleComponent>> owned = components;
+        for (const Ref<VehicleComponent> &component: owned) {
             component->detach();
-            memdelete(component);
         }
     }
 
     void VehicleController::register_component(VehicleComponent *p_component) {
-        components.push_back(p_component);
+        components.push_back(Ref<VehicleComponent>(p_component));
         _component_attached(p_component);
         if (RailVehicleLighting *component_lighting = Object::cast_to<RailVehicleLighting>(p_component);
             component_lighting != nullptr) {
@@ -315,7 +311,7 @@ namespace godot {
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
         _component_detached(p_component);
-        components.erase(p_component);
+        components.erase(Ref<VehicleComponent>(p_component));
         if (static_cast<VehicleComponent *>(lighting) == p_component) {
             lighting = nullptr;
         }
@@ -324,7 +320,7 @@ namespace godot {
     Dictionary VehicleController::compose_state() {
         Dictionary result;
         _fill_state_dictionary(result);
-        for (VehicleComponent *component: components) {
+        for (const Ref<VehicleComponent> &component: components) {
             if (component->get_enabled()) {
                 component->_fill_state_dictionary(result);
             }

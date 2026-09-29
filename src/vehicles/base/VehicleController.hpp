@@ -1,7 +1,8 @@
 #pragma once
 #include "VehicleComponentType.hpp"
 #include "macros.hpp"
-#include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/ref.hpp>
+#include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -22,8 +23,8 @@ namespace godot {
     /// with no statement about what simulates it - that is the implementation's business. It is
     /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
     /// these. Reached from outside by RID, through RailVehicleServer.
-    class VehicleController : public Object {
-            GDCLASS(VehicleController, Object)
+    class VehicleController : public RefCounted {
+            GDCLASS(VehicleController, RefCounted)
         public:
             /* Who drives the vehicle, in the words the `.scn` uses for it - a `dynamic` names
              * `headdriver`, `reardriver` or `nobody` as its drivertype (DynObj.cpp:1812-1825). It
@@ -186,7 +187,7 @@ namespace godot {
              * for in the subtree. */
             /* The component of a kind, or null when this vehicle has none. One per kind: a
              * vehicle has one brake system and one engine, whatever kind it is. */
-            VehicleComponent *get_component(VehicleComponentType::Type p_type) const;
+            Ref<VehicleComponent> get_component(VehicleComponentType::Type p_type) const;
             /// Every component of a type - a vehicle has two couplers, one per end
             TypedArray<VehicleComponent> find_components(VehicleComponentType::Type p_type) const;
             /* Every scripted component carrying this tag - modders add as many as they like */
@@ -195,13 +196,13 @@ namespace godot {
             /* Takes a component into the vehicle and owns it from then on - it is ticked with
              * the vehicle and freed with it. The shape Node::add_child() has, for the same
              * reason: the thing being handed over has no life of its own outside its owner. */
-            void add_component(VehicleComponent *p_component);
+            void add_component(const Ref<VehicleComponent> &p_component);
 
             void register_component(VehicleComponent *p_component);
             void unregister_component(VehicleComponent *p_component);
 
         private:
-            Vector<VehicleComponent *> components;
+            Vector<Ref<VehicleComponent>> components;
             void free_components();
             /* The lighting component, kept because the vehicle raises roof_light_changed for it.
              * Resolved when the component joins, not searched for per frame. */

@@ -178,7 +178,10 @@ namespace godot {
             virtual bool is_coupled_by(int p_end, CouplingElement p_element) const = 0;
             virtual void coupler_connect(const Variant &p_where) = 0;
             virtual void coupler_disconnect(const Variant &p_where) = 0;
-            virtual RailVehicleController *get_coupled_controller(int p_end) const = 0;
+            virtual Ref<RailVehicleController> get_coupled_controller(int p_end) const = 0;
+            /* Wakes the simulation the vehicle switched off while it stood with nothing to do -
+             * somebody took it (RailVehicleServer::vehicle_wake()) */
+            virtual void wake() = 0;
             virtual int get_coupled_end(int p_end) const = 0;
             /* Answered from RailVehicleServer's per-vehicle cache, which is keyed on the
              * physics step and on the command serial, so a reader per frame costs a lookup rather

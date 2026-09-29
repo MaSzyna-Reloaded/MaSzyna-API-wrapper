@@ -14,7 +14,7 @@ namespace godot {
         public:
             /* The railway vehicle this component belongs to */
             RailVehicleController *get_rail_vehicle_controller() const {
-                return Object::cast_to<RailVehicleController>(get_controller());
+                return Object::cast_to<RailVehicleController>(train_controller_node);
             }
     };
 } // namespace godot

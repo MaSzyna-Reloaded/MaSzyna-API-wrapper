@@ -24,9 +24,77 @@ namespace godot {
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::INT, shunt_relay_type);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::BOOL, shunt_mode_allowed);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, heating_rpm);
+
+        ClassDB::bind_method(D_METHOD("get_motor_current"), &RailVehicleDieselElectricEngine::get_motor_current);
+        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &RailVehicleDieselElectricEngine::get_circuit_imax);
+        ClassDB::bind_method(
+                D_METHOD("get_dynamic_brake_active"), &RailVehicleDieselElectricEngine::get_dynamic_brake_active);
+        ClassDB::bind_method(D_METHOD("get_fuse_active"), &RailVehicleDieselElectricEngine::get_fuse_active);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_connectors_open"), &RailVehicleDieselElectricEngine::get_motor_connectors_open);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"), &RailVehicleDieselElectricEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"), &RailVehicleDieselElectricEngine::is_pressure_switch_tripped);
+        ClassDB::bind_method(D_METHOD("fuse_reset"), &RailVehicleDieselElectricEngine::fuse_reset);
+        ClassDB::bind_method(
+                D_METHOD("set_motor_connectors_open", "open"),
+                &RailVehicleDieselElectricEngine::set_motor_connectors_open);
     }
 
-    RailVehicleEngine::EngineType RailVehicleDieselElectricEngine::get_engine_type() const {
+    double RailVehicleDieselElectricEngine::get_motor_current() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_motor_current() : 0.0;
+    }
+
+    double RailVehicleDieselElectricEngine::get_circuit_imax() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_circuit_imax() : 0.0;
+    }
+
+    bool RailVehicleDieselElectricEngine::get_dynamic_brake_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_dynamic_brake_active();
+    }
+
+    bool RailVehicleDieselElectricEngine::get_fuse_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_fuse_active();
+    }
+
+    bool RailVehicleDieselElectricEngine::get_motor_connectors_open() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_motor_connectors_open();
+    }
+
+    bool RailVehicleDieselElectricEngine::is_line_contactor_closed() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_line_contactor_closed();
+    }
+
+    bool RailVehicleDieselElectricEngine::is_pressure_switch_tripped() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_pressure_switch_tripped();
+    }
+
+    void RailVehicleDieselElectricEngine::fuse_reset() {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->fuse_reset();
+        }
+    }
+
+    void RailVehicleDieselElectricEngine::set_motor_connectors_open(const bool p_open) {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->set_motor_connectors_open(p_open);
+        }
+    }
+
+    void RailVehicleDieselElectricEngine::_register_commands() {
+        RailVehicleDieselEngine::_register_commands();
+        register_command("fuse_reset", Callable(this, "fuse_reset"));
+        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
+    }
+
+    void RailVehicleDieselElectricEngine::_unregister_commands() {
+        RailVehicleDieselEngine::_unregister_commands();
+        unregister_command("fuse_reset");
+        unregister_command("motor_connectors_open");
+    }
+
+    RailVehicleEngine::EngineType RailVehicleDieselElectricEngine::get_type() const {
         return RailVehicleEngine::EngineType::DIESEL_ELECTRIC;
     }
 } // namespace godot

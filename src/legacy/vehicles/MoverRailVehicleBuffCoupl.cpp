@@ -144,21 +144,6 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        // Provide config dictionary entries
-        p_config.set("get_buffer_stiffness_k()", get_buffer_stiffness_k());
-        p_config.set("get_buffer_max_compression_tolerance()", get_buffer_max_compression_tolerance());
-        p_config.set("get_buffer_max_tension_tolerance()", get_buffer_max_tension_tolerance());
-        p_config.set("get_coupler_stiffness_k()", get_coupler_stiffness_k());
-        p_config.set("get_coupler_max_compression_tolerance()", get_coupler_max_compression_tolerance());
-        p_config.set("get_coupler_max_tension_tolerance()", get_coupler_max_tension_tolerance());
-        p_config.set("get_damping_beta()", get_damping_beta());
-
-        // New flags and control properties
-        p_config.set("get_allowed_flag()", get_allowed_flag());
-        p_config.set("get_automatic_flag()", get_automatic_flag());
-        p_config.set("get_power_flag()", get_power_flag());
-        p_config.set("get_power_coupling()", get_power_coupling());
-        p_config.set("get_control_type()", get_control_type());
         // what the Mover made of it: each coupler's strength [N], front and rear (FmaxC)
         p_config["coupler_max_force"] =
                 PackedFloat64Array({mover->Couplers[end::front].FmaxC, mover->Couplers[end::rear].FmaxC});

@@ -97,9 +97,34 @@ namespace godot {
                              p_increase, p_decrease, p_drag, p_step_rotation, p_step_offset});
         const MeshInstance3D *mesh = mesh_of(ObjectID(p_mesh_instance_id));
         if (mesh != nullptr) {
-            controls[rid].grip = _grip(controls[rid], mesh);
-            controls[rid].drag_signs = p_drag_signs;
-            controls[rid].small =
+            Control &control = controls[rid];
+            // the grip: the point of the control farthest from its step's rotation axis, in the
+            // control's own space - none for a control that does not rotate
+            const Quaternion step = Quaternion(p_step_rotation.orthonormalized());
+            if (!Math::is_zero_approx(step.get_angle())) {
+                const Vector3 axis = step.get_axis().normalized();
+                const Transform3D to_control = mesh->get_global_transform().affine_inverse();
+                Vector3 grip;
+                double grip_distance = -1.0;
+                for (const Part &part: control.pickable.parts) {
+                    const MeshInstance3D *part_mesh = mesh_of(part.mesh);
+                    if (part_mesh == nullptr) {
+                        continue;
+                    }
+                    const Transform3D transform = to_control * part_mesh->get_global_transform();
+                    for (const Vector3 &vertex: part.faces) {
+                        const Vector3 point = transform.xform(vertex);
+                        const double distance = (point - axis * axis.dot(point)).length();
+                        if (distance > grip_distance) {
+                            grip_distance = distance;
+                            grip = point;
+                        }
+                    }
+                }
+                control.grip = grip;
+            }
+            control.drag_signs = p_drag_signs;
+            control.small =
                     mesh->get_global_transform().xform(mesh->get_aabb()).get_longest_axis_size() < SMALL_CONTROL_SIZE;
         }
         return rid;
@@ -127,33 +152,6 @@ namespace godot {
         occluders.erase(p_occluder);
     }
 
-    Vector3 CabinHUDMouseSystem::_grip(const Control &p_control, const MeshInstance3D *p_mesh) {
-        const Quaternion step = Quaternion(p_control.step_rotation.orthonormalized());
-        if (Math::is_zero_approx(step.get_angle())) {
-            return Vector3();
-        }
-        const Vector3 axis = step.get_axis().normalized();
-        const Transform3D to_control = p_mesh->get_global_transform().affine_inverse();
-        Vector3 grip;
-        double grip_distance = -1.0;
-        for (const Part &part: p_control.pickable.parts) {
-            const MeshInstance3D *part_mesh = mesh_of(part.mesh);
-            if (part_mesh == nullptr) {
-                continue;
-            }
-            const Transform3D transform = to_control * part_mesh->get_global_transform();
-            for (const Vector3 &vertex: part.faces) {
-                const Vector3 point = transform.xform(vertex);
-                const double distance = (point - axis * axis.dot(point)).length();
-                if (distance > grip_distance) {
-                    grip_distance = distance;
-                    grip = point;
-                }
-            }
-        }
-        return grip;
-    }
-
     CabinHUDMouseSystem::Pickable
     CabinHUDMouseSystem::_pickable(const uint64_t p_mesh_instance_id, const bool p_with_children) {
         Vector<ObjectID> meshes;
@@ -177,41 +175,36 @@ namespace godot {
             Vector3 &p_r_point) {
         bool hit = false;
         for (const Part &part: p_pickable.parts) {
-            hit = _hit_part(part, p_from, p_to, p_r_distance, p_r_point) || hit;
+            const MeshInstance3D *mesh = mesh_of(part.mesh);
+            if (mesh == nullptr || !mesh->is_visible_in_tree()) {
+                continue;
+            }
+            const Transform3D transform = mesh->get_global_transform();
+            const Transform3D inverse = transform.affine_inverse();
+            const Vector3 from = inverse.xform(p_from);
+            const Vector3 to = inverse.xform(p_to);
+            // the box first: it rejects nearly every mesh, and one entered farther than the nearest
+            // hit so far cannot hold a nearer triangle
+            Vector3 entry;
+            if (!mesh->get_aabb().intersects_segment(from, to, &entry) ||
+                p_from.distance_to(transform.xform(entry)) >= p_r_distance) {
+                continue;
+            }
+
+            double t = 0.0;
+            if (!mouse_picking::intersect_faces(part.faces, from, to, t)) {
+                continue;
+            }
+            const Vector3 point = transform.xform(from + (to - from) * static_cast<real_t>(t));
+            const double distance = p_from.distance_to(point);
+            if (distance >= p_r_distance) {
+                continue;
+            }
+            p_r_distance = distance;
+            p_r_point = point;
+            hit = true;
         }
         return hit;
-    }
-
-    bool CabinHUDMouseSystem::_hit_part(
-            const Part &p_part, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance, Vector3 &p_r_point) {
-        const MeshInstance3D *mesh = mesh_of(p_part.mesh);
-        if (mesh == nullptr || !mesh->is_visible_in_tree()) {
-            return false;
-        }
-        const Transform3D transform = mesh->get_global_transform();
-        const Transform3D inverse = transform.affine_inverse();
-        const Vector3 from = inverse.xform(p_from);
-        const Vector3 to = inverse.xform(p_to);
-        // the box first: it rejects nearly every mesh, and one entered farther than the nearest
-        // hit so far cannot hold a nearer triangle
-        Vector3 entry;
-        if (!mesh->get_aabb().intersects_segment(from, to, &entry) ||
-            p_from.distance_to(transform.xform(entry)) >= p_r_distance) {
-            return false;
-        }
-
-        double t = 0.0;
-        if (!mouse_picking::intersect_faces(p_part.faces, from, to, t)) {
-            return false;
-        }
-        const Vector3 point = transform.xform(from + (to - from) * static_cast<real_t>(t));
-        const double distance = p_from.distance_to(point);
-        if (distance >= p_r_distance) {
-            return false;
-        }
-        p_r_distance = distance;
-        p_r_point = point;
-        return true;
     }
 
     void CabinHUDMouseSystem::control_free(const RID &p_control) {

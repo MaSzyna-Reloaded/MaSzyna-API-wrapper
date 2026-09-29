@@ -232,14 +232,11 @@ namespace godot {
             void _read_curve_points(const Ref<Resource> &p_curve, CurvePoints &p_points) const;
             Ref<Curve3D> _build_domain_curve(const CurvePoints &p_points) const;
             void _set_curves(TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2);
-            void _update_length(TrackSegment &p_track) const;
             void _update_switch_blade_boundary_offsets(TrackSegment &p_track) const;
             double _switch_blade_boundary_offset(const Ref<Curve3D> &p_branch_curve, double p_frog_distance) const;
-            void _update_switch_endpoint_metadata(TrackSegment &p_track) const;
             void _append_common_switch_endpoint(
                     TrackSegment &p_track, const Vector3 &p_first, const Vector3 &p_second, int p_first_endpoint,
                     int p_second_endpoint) const;
-            int _curve_common_endpoint_index(const TrackSegment &p_track) const;
             const PackedVector3Array &_endpoints(TrackSegment &p_track) const;
 
             void _set_switch_f_offset(TrackSegment &p_track, double p_value);
@@ -248,7 +245,6 @@ namespace godot {
 
             int _get_or_create_node(const Vector3 &p_world_position, const RID &p_track_rid, int p_endpoint_index);
             TrackNode *_get_node(int p_node_id);
-            void _add_track_topology(TrackSegment &p_track);
             void _clear_topology();
             void _connect_all_tracks();
             void _merge_endpoint_nodes(
@@ -352,7 +348,6 @@ namespace godot {
             Dictionary topology_get_summary();
             void topology_rebuild();
 
-            void set_is_topology_changed(bool p_changed);
             bool get_is_topology_changed() const;
     };
 } // namespace godot

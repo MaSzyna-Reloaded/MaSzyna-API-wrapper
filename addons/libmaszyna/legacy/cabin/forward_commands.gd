@@ -53,7 +53,8 @@ static func wiring(
     if widget_class == CabinSwitch:
         return {"kind": &"switch", "command_increase": fields.get("command_increase", ""),
                 "command_decrease": fields.get("command_decrease", ""),
-                "command_set": fields.get("command_set", ""), "target": target}
+                "command_set": fields.get("command_set", ""),
+                "position_commands": fields.get("position_commands", {}), "target": target}
     if widget_class == CabinKnob:
         return {"kind": &"knob", "command": fields.get("command", ""), "target": target}
     if widget_class == CabinCommand:
@@ -105,6 +106,7 @@ static func _handle_button(state:CabinState, action:StringName, value:Variant, w
 
 static func _handle_switch(state:CabinState, action:StringName, value:Variant, wiring:Dictionary) -> Variant:
     var result:Variant = null
+    var previous:int = int(state.get_value(wiring["control_id"], 0))
     if not value == null:
         state.set_value(wiring["control_id"], int(value))
     var step_command:String = (
@@ -114,4 +116,12 @@ static func _handle_switch(state:CabinState, action:StringName, value:Variant, w
         result = state.send_vehicle_command(step_command, null, null, wiring["target"])
     if wiring["command_set"] and not value == null:
         result = state.send_vehicle_command(wiring["command_set"], int(value), null, wiring["target"])
+    # a position that holds a command of its own (horn_bt: +1 horn_low, -1 horn_high): leaving it
+    # releases that command, reaching it presses its own
+    var position_commands:Dictionary = wiring["position_commands"]
+    if position_commands and not value == null and not int(value) == previous:
+        if position_commands.has(previous):
+            result = state.send_vehicle_command(position_commands[previous], false, null, wiring["target"])
+        if position_commands.has(int(value)):
+            result = state.send_vehicle_command(position_commands[int(value)], true, null, wiring["target"])
     return result

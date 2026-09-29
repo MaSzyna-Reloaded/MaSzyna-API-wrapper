@@ -8,17 +8,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("register_command", "command", "callable"), &GenericVehicleComponentNode::register_command);
         ClassDB::bind_method(
-                D_METHOD("unregister_command", "command", "callable"),
-                &GenericVehicleComponentNode::unregister_command);
-        ClassDB::bind_method(
-                D_METHOD("send_command", "command", "p1", "p2"), &GenericVehicleComponentNode::send_command,
-                DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("get_vehicle_state"), &GenericVehicleComponentNode::get_vehicle_state);
+                D_METHOD("unregister_command", "command"), &GenericVehicleComponentNode::unregister_command);
         ClassDB::bind_method(D_METHOD("get_controller"), &GenericVehicleComponentNode::get_controller);
         ClassDB::bind_method(D_METHOD("log_debug", "line"), &GenericVehicleComponentNode::log_debug);
-        ClassDB::bind_method(D_METHOD("log_info", "line"), &GenericVehicleComponentNode::log_info);
         ClassDB::bind_method(D_METHOD("log_warning", "line"), &GenericVehicleComponentNode::log_warning);
-        ClassDB::bind_method(D_METHOD("log_error", "line"), &GenericVehicleComponentNode::log_error);
     }
 
     void GenericVehicleComponentNode::_notification(const int p_what) {
@@ -63,25 +56,12 @@ namespace godot {
         component->register_command(p_command, p_callback);
     }
 
-    void GenericVehicleComponentNode::unregister_command(const String &p_command, const Callable &p_callback) {
+    void GenericVehicleComponentNode::unregister_command(const String &p_command) {
         ERR_FAIL_NULL(component);
-        component->unregister_command(p_command, p_callback);
-    }
-
-    Variant
-    GenericVehicleComponentNode::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        ERR_FAIL_NULL_V(component, Variant());
-        component->send_command(p_command, p_p1, p_p2);
-        return Variant();
-    }
-
-    Dictionary GenericVehicleComponentNode::get_vehicle_state() {
-        ERR_FAIL_NULL_V(component, Dictionary());
-        return component->get_vehicle_state();
+        component->unregister_command(p_command);
     }
 
     VehicleController *GenericVehicleComponentNode::get_controller() const {
-        GenericVehicleComponent *component = get_component();
         return component != nullptr ? component->get_controller() : nullptr;
     }
 
@@ -90,18 +70,8 @@ namespace godot {
         component->log_debug(p_line);
     }
 
-    void GenericVehicleComponentNode::log_info(const String &p_line) {
-        ERR_FAIL_NULL(component);
-        component->log_info(p_line);
-    }
-
     void GenericVehicleComponentNode::log_warning(const String &p_line) {
         ERR_FAIL_NULL(component);
         component->log_warning(p_line);
-    }
-
-    void GenericVehicleComponentNode::log_error(const String &p_line) {
-        ERR_FAIL_NULL(component);
-        component->log_error(p_line);
     }
 } // namespace godot

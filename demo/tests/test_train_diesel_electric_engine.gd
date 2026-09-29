@@ -27,7 +27,6 @@ func test_defaults():
     assert_false(engine.shunt_mode_allowed)
     assert_eq(engine.heating_rpm, 0.0)
     assert_eq(engine.wwlist.size(), 0)
-    assert_true(train.config.get("engine_shake_enabled", false))
 
 func test_round_trip_and_wwlist_update():
     engine.generator_voltage_flat = true

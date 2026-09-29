@@ -96,8 +96,11 @@ classDiagram
 ```
 
 The components - every interface with its Mover implementation. `RailVehicleEngine` and
-`RailVehicleElectricEngine` are abstract; engines reach the Mover through backend delegates, electric traction
-through `VehicleElectricTraction`:
+`RailVehicleElectricEngine` are abstract. An engine is composed of units - plain C++ interfaces in
+`src/vehicles/rail/`, each implemented on the Mover in `src/legacy/vehicles/` and installed by the
+Mover engine that owns it: the drive in every engine, the diesel engine in the diesel and
+diesel-electric ones, the traction motors in the electric and diesel-electric ones, the current
+collector and the traction circuit in the electric ones. Godot sees only the engine components:
 
 ```mermaid
 classDiagram
@@ -151,11 +154,17 @@ classDiagram
     RailVehicleElectricSeriesEngine <|-- MoverRailVehicleElectricSeriesEngine
     RailVehicleElectricInductionEngine <|-- MoverRailVehicleElectricInductionEngine
 
-    RailVehicleEngine --> RailVehicleEngineBackend
-    RailVehicleEngineBackend <|-- MoverEngineBackend
-    RailVehicleDieselEngineBackend <|-- MoverDieselEngineBackend
-    RailVehicleElectricEngineBackend <|-- MoverElectricEngineBackend
-    VehicleElectricTraction <|-- MoverElectricTraction
+    RailVehicleEngine --> RailVehicleDriveUnit
+    RailVehicleDieselEngine --> RailVehicleDieselEngineUnit
+    RailVehicleDieselElectricEngine --> RailVehicleTractionMotorsUnit
+    RailVehicleElectricEngine --> RailVehicleTractionMotorsUnit
+    RailVehicleElectricEngine --> RailVehicleCurrentCollectorUnit
+    RailVehicleElectricEngine --> RailVehicleCircuitUnit
+    RailVehicleDriveUnit <|-- MoverDriveUnit
+    RailVehicleDieselEngineUnit <|-- MoverDieselEngineUnit
+    RailVehicleTractionMotorsUnit <|-- MoverTractionMotorsUnit
+    RailVehicleCurrentCollectorUnit <|-- MoverCurrentCollectorUnit
+    RailVehicleCircuitUnit <|-- MoverCircuitUnit
 ```
 
 Every `MoverRailVehicle<X>` also inherits `MoverComponent` (see the overview), left out here for readability.

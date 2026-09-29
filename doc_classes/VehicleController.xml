@@ -29,15 +29,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="broadcast_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Broadcasts command to all trains (including self)
-			</description>
-		</method>
 		<method name="emit_config_changed">
 			<return type="void" />
 			<description>

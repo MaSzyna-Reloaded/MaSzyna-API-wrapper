@@ -15,16 +15,6 @@ namespace godot {
         semaphore.instantiate();
     }
 
-    /// Started with the first task, not in the constructor (the object is fully set up then)
-    void SceneryLoadingTaskQueue::_start_workers() {
-        for (int i = 0; i < get_worker_count(); i++) {
-            Ref<Thread> worker;
-            worker.instantiate();
-            worker->start(callable_mp(this, &SceneryLoadingTaskQueue::_worker_loop));
-            workers.push_back(worker);
-        }
-    }
-
     /// Queued tasks are dropped, running ones are finished before the workers are joined.
     SceneryLoadingTaskQueue::~SceneryLoadingTaskQueue() {
         drain();
@@ -47,8 +37,14 @@ namespace godot {
     }
 
     int SceneryLoadingTaskQueue::submit(const Callable &p_task) {
+        // the workers start with the first task, not in the constructor (the object is fully set up then)
         if (workers.is_empty()) {
-            _start_workers();
+            for (int i = 0; i < get_worker_count(); i++) {
+                Ref<Thread> worker;
+                worker.instantiate();
+                worker->start(callable_mp(this, &SceneryLoadingTaskQueue::_worker_loop));
+                workers.push_back(worker);
+            }
         }
         int task_id = 0;
         {
@@ -108,24 +104,6 @@ namespace godot {
         return MAX(OS::get_singleton()->get_processor_count() - 2, 1);
     }
 
-    /// Runs the oldest queued task, false when there is none.
-    bool SceneryLoadingTaskQueue::_run_next() {
-        Callable callable;
-        int task_id = 0;
-        {
-            MutexLock lock(mutex);
-            if (pending.is_empty()) {
-                return false;
-            }
-            task_id = pending.front()->get();
-            pending.pop_front();
-            callable = _take_callable(task_id);
-        }
-
-        _run(task_id, callable);
-        return true;
-    }
-
     /// Runs one queued task, false when it is not queued any more (it runs on another thread).
     bool SceneryLoadingTaskQueue::_run_task(const int p_task_id) {
         Callable callable;
@@ -165,14 +143,22 @@ namespace godot {
     void SceneryLoadingTaskQueue::_worker_loop() {
         while (true) {
             semaphore->wait();
+            Callable callable;
+            int task_id = 0;
             {
                 MutexLock lock(mutex);
                 if (exiting) {
                     return;
                 }
+                // a waiting thread may have taken the task already
+                if (pending.is_empty()) {
+                    continue;
+                }
+                task_id = pending.front()->get();
+                pending.pop_front();
+                callable = _take_callable(task_id);
             }
-            // a waiting thread may have taken the task already
-            _run_next();
+            _run(task_id, callable);
         }
     }
 } // namespace godot

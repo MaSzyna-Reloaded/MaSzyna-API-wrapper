@@ -138,22 +138,18 @@ namespace godot {
         }
     }
 
-    /* The revolutions the cab shakes with, or 0 for a vehicle whose engine does not shake it. In
-     * the original only a diesel does (its backend is the only one publishing the shake at all),
-     * so the engine's own kind answers the question - no configuration is looked up for it. */
-    double Cabin3D::_engine_revolutions() const {
-        const RailVehicleServer *server = RailVehicleServer::get_instance();
-        if (server == nullptr || !vehicle_rid.is_valid()) {
-            return 0.0;
-        }
-        const RailVehicleDieselEngine *engine = Object::cast_to<RailVehicleDieselEngine>(
-                server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE));
-        return engine != nullptr ? Math::abs(engine->get_rpm_count()) : 0.0;
-    }
-
     void Cabin3D::_process_engine_shake(const double p_delta) {
         Vector3 shake_vector;
-        const double engine_revolutions = _engine_revolutions();
+        /* The revolutions the cab shakes with, or 0 for a vehicle whose engine does not shake it. In
+         * the original only a diesel does, so the engine's own kind answers the question - no
+         * configuration is looked up for it. */
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const RailVehicleDieselEngine *engine =
+                server != nullptr && vehicle_rid.is_valid()
+                        ? Object::cast_to<RailVehicleDieselEngine>(
+                                  server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE))
+                        : nullptr;
+        const double engine_revolutions = engine != nullptr ? Math::abs(engine->get_rpm_count()) : 0.0;
         if (engine_revolutions > 0.0) {
             engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math::TAU);
             const double fade_in = CLAMP(

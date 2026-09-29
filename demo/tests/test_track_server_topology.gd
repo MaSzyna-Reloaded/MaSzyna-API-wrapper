@@ -206,7 +206,7 @@ func test_rebuild_topology_preserves_connections() -> void:
 
 
 func test_register_track_marks_topology_changed() -> void:
-    TrackServer.is_topology_changed = false
+    TrackServer.topology_rebuild()
     topology_change_count = 0
     TrackServer.topology_changed.connect(_on_topology_changed)
 

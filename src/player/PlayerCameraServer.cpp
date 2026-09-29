@@ -169,8 +169,7 @@ namespace godot {
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_COND(!vehicles->vehicle_exists(p_vehicle));
         // placed first: the free camera is where it is to be before the view is announced as free
-        mode = CAMERA_MODE_FREE;
         emit_signal(camera_placed_signal, camera_get_show_transform(p_vehicle));
-        emit_signal(camera_changed_signal);
+        camera_set_mode(CAMERA_MODE_FREE);
     }
 } // namespace godot

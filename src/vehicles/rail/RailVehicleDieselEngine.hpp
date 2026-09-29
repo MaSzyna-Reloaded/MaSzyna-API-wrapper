@@ -1,5 +1,5 @@
 #pragma once
-#include "RailVehicleDieselEngineBackend.hpp"
+#include "RailVehicleDieselEngineUnit.hpp"
 #include "RailVehicleEngine.hpp"
 #include "macros.hpp"
 #include "vehicles/base/VehicleCurvePointItem.hpp"
@@ -12,13 +12,13 @@ namespace godot {
             GDCLASS(RailVehicleDieselEngine, RailVehicleEngine)
 
         protected:
-            /* The simulation answering these values, installed by the implementation that owns it */
-            const RailVehicleDieselEngineBackend *diesel_backend = nullptr;
+            /* The diesel engine unit, installed by the implementation that owns it */
+            const RailVehicleDieselEngineUnit *diesel_engine_unit = nullptr;
 
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
-            /* Live state, read straight from the backend - nothing is stored. */
+            /* Live state, read straight from the engine's units - nothing is stored. */
             double get_rpm() const;
             bool get_oil_pump_active() const;
             bool get_oil_pump_disabled() const;
@@ -50,9 +50,12 @@ namespace godot {
             static void _bind_methods();
             MAKE_MEMBER_GS(float, oil_pump_pressure_minimum, 0.0);
             MAKE_MEMBER_GS(float, oil_pump_pressure_maximum, 0.65);
-            MAKE_MEMBER_GS_NR(StartMode, fuel_pump_start_mode, START_MODE_MANUAL);
-            MAKE_MEMBER_GS_NR(StartMode, oil_pump_start_mode, START_MODE_MANUAL);
-            MAKE_MEMBER_GS_NR(StartMode, water_pump_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleController::StartMode, fuel_pump_start_mode, RailVehicleController::START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleController::StartMode, oil_pump_start_mode, RailVehicleController::START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleController::StartMode, water_pump_start_mode, RailVehicleController::START_MODE_MANUAL);
 
             /* Engine: (Kont.), przekladnia mechaniczna */
             MAKE_MEMBER_GS(double, mechanical_min_rpm, 0.0);
@@ -132,7 +135,7 @@ namespace godot {
 
         private:
         protected:
-            EngineType get_engine_type() const override;
+            EngineType get_type() const override;
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;

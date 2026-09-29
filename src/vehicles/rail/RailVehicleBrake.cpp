@@ -183,11 +183,6 @@ namespace godot {
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER1);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER2);
 
-        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_MIN);
-        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_MAX);
-        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_DRIVE);
-        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_FULL);
-        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_EMERGENCY);
 
         BIND_ENUM_CONSTANT(BRAKE_VALVE_NO_VALVE);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_W);
@@ -236,8 +231,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &RailVehicleBrake::brake_level_set);
         ClassDB::bind_method(
                 D_METHOD("brake_level_set_position", "position"), &RailVehicleBrake::brake_level_set_position);
-        ClassDB::bind_method(
-                D_METHOD("brake_level_set_position_str", "position"), &RailVehicleBrake::brake_level_set_position_str);
         ClassDB::bind_method(D_METHOD("brake_level_increase"), &RailVehicleBrake::brake_level_increase);
         ClassDB::bind_method(D_METHOD("brake_level_decrease"), &RailVehicleBrake::brake_level_decrease);
         ClassDB::bind_method(D_METHOD("local_brake_set", "level"), &RailVehicleBrake::local_brake_set);
@@ -438,7 +431,7 @@ namespace godot {
         register_command("consist_releaser", Callable(this, "consist_releaser"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("brake_level_set", Callable(this, "brake_level_set"));
-        register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
+        register_command("brake_level_set_position", Callable(this, "brake_level_set_position"));
         register_command("brake_level_increase", Callable(this, "brake_level_increase"));
         register_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
         register_command("local_brake_set", Callable(this, "local_brake_set"));
@@ -456,24 +449,24 @@ namespace godot {
     }
 
     void RailVehicleBrake::_unregister_commands() {
-        unregister_command("brake_releaser", Callable(this, "brake_releaser"));
-        unregister_command("consist_releaser", Callable(this, "consist_releaser"));
-        unregister_command("compressor", Callable(this, "compressor"));
-        unregister_command("brake_level_set", Callable(this, "brake_level_set"));
-        unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
-        unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
-        unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
-        unregister_command("local_brake_set", Callable(this, "local_brake_set"));
-        unregister_command("local_brake_increase", Callable(this, "local_brake_increase"));
-        unregister_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
-        unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
-        unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
-        unregister_command("auto_rewident", Callable(this, "auto_rewident"));
-        unregister_command("brake_operation_mode_increase", Callable(this, "brake_operation_mode_increase"));
-        unregister_command("brake_operation_mode_decrease", Callable(this, "brake_operation_mode_decrease"));
-        unregister_command("ep_brake", Callable(this, "ep_brake"));
-        unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
-        unregister_command("alarm_chain", Callable(this, "alarm_chain"));
-        unregister_command("universal_brake_button", Callable(this, "universal_brake_button"));
+        unregister_command("brake_releaser");
+        unregister_command("consist_releaser");
+        unregister_command("compressor");
+        unregister_command("brake_level_set");
+        unregister_command("brake_level_set_position");
+        unregister_command("brake_level_increase");
+        unregister_command("brake_level_decrease");
+        unregister_command("local_brake_set");
+        unregister_command("local_brake_increase");
+        unregister_command("local_brake_decrease");
+        unregister_command("manual_brake_increase");
+        unregister_command("manual_brake_decrease");
+        unregister_command("auto_rewident");
+        unregister_command("brake_operation_mode_increase");
+        unregister_command("brake_operation_mode_decrease");
+        unregister_command("ep_brake");
+        unregister_command("brake_level_charging");
+        unregister_command("alarm_chain");
+        unregister_command("universal_brake_button");
     }
 } // namespace godot

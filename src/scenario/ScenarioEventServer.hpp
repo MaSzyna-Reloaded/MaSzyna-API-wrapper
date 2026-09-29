@@ -182,16 +182,11 @@ namespace godot {
             /// Queues the track's events of the slot - the crew slot only for a vehicle with a driver
             void _queue_track_events(
                     const RID &p_track, TrackEvent p_crew_slot, TrackEvent p_all_slot, const RID &p_vehicle);
-            void _refresh_processing();
             void _set_processing(bool p_processing);
             void _process_queue(double p_seconds);
             /// Puts the owner (an event or a launcher) in the queue, returns the entry's sequence
             uint64_t _schedule(const RID &p_owner, double p_time, const RID &p_activator);
             void _fire(Ref<ScenarioEventCondition> p_condition, RID p_event);
-            /// The original's name tables let the newest entry win a duplicate name (Names.h:29)
-            static void
-            _rename(HashMap<StringName, RID> &p_names, const StringName &p_from, const StringName &p_to,
-                    const RID &p_rid);
 
         protected:
             static void _bind_methods();

@@ -160,7 +160,7 @@ submodel, which is how TGauge shows a lit control (`Gauge.cpp:204-210`). A submo
 not wired to any mesh.
 
 Keep the original's operation enums out of the interface. For example, the pantograph valves take
-our `RailVehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
+our `RailVehicleElectricEngine.ValveOperation`, and only `MoverCurrentCollectorUnit` maps it to
 `operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
 `LoadFIZ_Cntrl`.
 

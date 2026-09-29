@@ -21,9 +21,6 @@ namespace godot {
             static const char *signal_head_registered_signal;
             static const char *signal_head_unregistered_signal;
 
-            /// The original's default blinking (fOnTime/fOffTime, AnimModel.h:208-209)
-            static constexpr float DEFAULT_BLINK_TIME = 0.5;
-
         private:
             StringName signal_head_name;
             ObjectID model_id; // the model may be freed before this node

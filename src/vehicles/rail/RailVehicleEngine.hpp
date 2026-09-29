@@ -1,5 +1,5 @@
 #pragma once
-#include "RailVehicleEngineBackend.hpp"
+#include "RailVehicleDriveUnit.hpp"
 #include "macros.hpp"
 #include "vehicles/rail/RailVehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleMotorParameter.hpp"
@@ -17,17 +17,15 @@ namespace godot {
             }
 
         protected:
-            /* The simulation answering this engine's live values, installed by the implementation
-             * that owns it. The interface never names one. */
-            const RailVehicleEngineBackend *engine_backend = nullptr;
+            /* The drive unit, installed by the implementation that owns it */
+            const RailVehicleDriveUnit *drive_unit = nullptr;
 
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
-            /* Live state, read straight from the backend - nothing is stored. */
+            /* Live state, read straight from the engine's units - nothing is stored. */
             bool get_main_switch_enabled() const;
             bool get_main_switch_closable() const;
-            int get_type() const;
             double get_motor_torque() const;
             double get_wheel_torque() const;
             double get_wheel_force() const;
@@ -52,17 +50,6 @@ namespace godot {
                 STEAM,
                 DIESEL_ELECTRIC,
                 MAIN
-            };
-
-            /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section) */
-            enum StartMode {
-                START_MODE_DISABLED,
-                START_MODE_MANUAL,
-                START_MODE_AUTOMATIC,
-                START_MODE_MANUAL_WITH_AUTO_FALLBACK,
-                START_MODE_CONVERTER,
-                START_MODE_BATTERY,
-                START_MODE_DIRECTION,
             };
 
             /* EIMCtrlType= : traction lever variant, for vehicles with an EIM-style controller */
@@ -105,7 +92,9 @@ namespace godot {
             MAKE_MEMBER_GS(double, motor_blowers_start_velocity, -1.0);
             MAKE_MEMBER_GS(bool, pressure_switch_present, false);
             MAKE_MEMBER_GS(int, inverters_count, 0);
-            MAKE_MEMBER_GS_NR(StartMode, motor_blowers_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    RailVehicleController::StartMode, motor_blowers_start_mode,
+                    RailVehicleController::START_MODE_MANUAL);
 
             /* Cntrl. (wspolne pola sterowania nastawnikiem i rozrusznikiem) */
             MAKE_MEMBER_GS(bool, cntrl_eim_control_additional_zeros, false);
@@ -128,7 +117,7 @@ namespace godot {
         public:
             /* Which kind of engine this is - part of the contract, and what the simulation keys
              * its own configuration off */
-            virtual EngineType get_engine_type() const = 0;
+            virtual EngineType get_type() const = 0;
 
         protected:
             void _apply_configuration() override;
@@ -142,6 +131,5 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(RailVehicleEngine::EngineType);
-VARIANT_ENUM_CAST(RailVehicleEngine::StartMode);
 VARIANT_ENUM_CAST(RailVehicleEngine::EimControlType);
 VARIANT_ENUM_CAST(RailVehicleEngine::AutoRelayMode);

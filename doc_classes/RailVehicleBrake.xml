@@ -54,17 +54,9 @@
 		</method>
 		<method name="brake_level_set_position">
 			<return type="void" />
-			<param index="0" name="position" type="int" enum="RailVehicleBrake.BrakeHandlePosition" />
-			<description>
-				Places the brake handle at a predefined position: MIN, MAX, DRIVE, FULL, or EMERGENCY.
-			</description>
-		</method>
-		<method name="brake_level_set_position_str">
-			<return type="void" />
 			<param index="0" name="position" type="String" />
 			<description>
-				Set the brake handle by name. Accepted values (case-insensitive): "min", "max", "drive", "full", "emergency".
-				This is a convenience wrapper around [method brake_level_set_position].
+				Places the brake handle at a predefined position: MIN, MAX, DRIVE, FULL, or EMERGENCY.
 			</description>
 		</method>
 		<method name="brake_operation_mode_decrease">
@@ -592,21 +584,6 @@
 		</constant>
 		<constant name="COMPRESSOR_POWER_COUPLER2" value="5" enum="CompressorPower">
 			Powered via the train's low-voltage train line supplied by another vehicle through coupler side 2 (rear). Requires the remote vehicle's converter to be on.
-		</constant>
-		<constant name="BRAKE_HANDLE_POSITION_MIN" value="0" enum="BrakeHandlePosition">
-			Minimal brake position
-		</constant>
-		<constant name="BRAKE_HANDLE_POSITION_MAX" value="1" enum="BrakeHandlePosition">
-			Maximal brake position
-		</constant>
-		<constant name="BRAKE_HANDLE_POSITION_DRIVE" value="2" enum="BrakeHandlePosition">
-			Drive brake position
-		</constant>
-		<constant name="BRAKE_HANDLE_POSITION_FULL" value="3" enum="BrakeHandlePosition">
-			Full brake position
-		</constant>
-		<constant name="BRAKE_HANDLE_POSITION_EMERGENCY" value="4" enum="BrakeHandlePosition">
-			Emergency brake position
 		</constant>
 		<constant name="BRAKE_VALVE_NO_VALVE" value="0" enum="TrainBrakeValve">
 			No brake valve

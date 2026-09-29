@@ -1,6 +1,5 @@
 #include "VehicleComponent.hpp"
 #include "VehicleController.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -10,8 +9,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &VehicleComponent::emit_config_changed_signal);
         ClassDB::bind_method(D_METHOD("mark_dirty"), &VehicleComponent::mark_dirty);
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleComponent::register_command);
-        ClassDB::bind_method(
-                D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
+        ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleComponent::unregister_command);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
         ClassDB::bind_method(D_METHOD("get_component_type"), &VehicleComponent::get_component_type);
         ClassDB::bind_method(D_METHOD("set_component_tag", "tag"), &VehicleComponent::set_component_tag);
@@ -23,9 +21,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &VehicleComponent::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
-        ClassDB::bind_method(
-                D_METHOD("broadcast_command", "command", "p1", "p2"), &VehicleComponent::broadcast_command,
-                DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("log", "loglevel", "line"), &VehicleComponent::log);
         ClassDB::bind_method(D_METHOD("log_debug", "line"), &VehicleComponent::log_debug);
         ClassDB::bind_method(D_METHOD("log_info", "line"), &VehicleComponent::log_info);
@@ -122,9 +117,7 @@ namespace godot {
         train_controller_node->register_command(p_command, p_callback);
     }
 
-    /* The callback is not needed to find the registration - a vehicle holds one handler per
-     * command - but the pair keeps registering and unregistering symmetric at every call site. */
-    void VehicleComponent::unregister_command(const String &p_command, const Callable &p_callback) {
+    void VehicleComponent::unregister_command(const String &p_command) {
         ERR_FAIL_NULL(train_controller_node);
         train_controller_node->unregister_command(p_command);
     }
@@ -211,12 +204,6 @@ namespace godot {
     void VehicleComponent::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (train_controller_node != nullptr) {
             train_controller_node->send_command(p_command, p_p1, p_p2);
-        }
-    }
-
-    void VehicleComponent::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
-            server->vehicle_broadcast_command(p_command, p_p1, p_p2);
         }
     }
 

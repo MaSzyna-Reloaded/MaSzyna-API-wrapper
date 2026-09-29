@@ -98,9 +98,9 @@ namespace godot {
     }
 
     void RailVehicleSecuritySystem::_unregister_commands() {
-        unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
-        unregister_command("security_cabsignal_acknowledge", Callable(this, "security_cabsignal_acknowledge"));
-        unregister_command("security_cabsignal_trigger", Callable(this, "security_cabsignal_trigger"));
-        unregister_command("security_radiostop", Callable(this, "security_radiostop"));
+        unregister_command("security_acknowledge");
+        unregister_command("security_cabsignal_acknowledge");
+        unregister_command("security_cabsignal_trigger");
+        unregister_command("security_radiostop");
     }
 } // namespace godot

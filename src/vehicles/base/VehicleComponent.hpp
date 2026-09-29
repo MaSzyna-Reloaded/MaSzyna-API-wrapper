@@ -56,11 +56,9 @@ namespace godot {
             void process(double p_delta);
 
             void register_command(const String &p_command, const Callable &p_callback);
-            void unregister_command(const String &p_command, const Callable &p_callback);
+            void unregister_command(const String &p_command);
             void
             send_command(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
-            void broadcast_command(
-                    const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             void log(GameLog::LogLevel p_level, const String &p_line);
             void log_debug(const String &p_line);
             void log_info(const String &p_line);

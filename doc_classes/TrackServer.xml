@@ -330,7 +330,7 @@
 		</method>
 	</methods>
 	<members>
-		<member name="is_topology_changed" type="bool" setter="set_is_topology_changed" getter="get_is_topology_changed" default="false">
+		<member name="is_topology_changed" type="bool" setter="" getter="get_is_topology_changed">
 		</member>
 		<member name="rail_height" type="float" setter="" getter="get_rail_height">
 		</member>

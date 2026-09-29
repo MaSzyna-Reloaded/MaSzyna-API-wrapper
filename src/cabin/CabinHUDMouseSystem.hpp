@@ -113,14 +113,10 @@ namespace godot {
             /// nothing) - the drag follows the control as the hand would
             Vector2 drag_signs;
 
-            static Vector3 _grip(const Control &p_control, const MeshInstance3D *p_mesh);
             /// With `p_with_children` the meshes under the mesh belong to it as well
             static Pickable _pickable(uint64_t p_mesh_instance_id, bool p_with_children);
-            /// The nearest hit of the segment on `p_part` closer than `r_distance`: updates
+            /// The nearest hit of the segment on the pickable closer than `r_distance`: updates
             /// `r_distance` and `r_point` (world space) and returns true
-            static bool _hit_part(
-                    const Part &p_part, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
-                    Vector3 &p_r_point);
             static bool
             _hit(const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
                  Vector3 &p_r_point);

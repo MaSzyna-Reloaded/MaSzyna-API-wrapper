@@ -104,12 +104,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("environment_set_wind", "strength", "direction"), &E3DRenderingServer::environment_set_wind);
         ClassDB::bind_method(
-                D_METHOD("environment_set_wind_strength", "strength"),
-                &E3DRenderingServer::environment_set_wind_strength);
-        ClassDB::bind_method(
-                D_METHOD("environment_set_wind_direction", "direction"),
-                &E3DRenderingServer::environment_set_wind_direction);
-        ClassDB::bind_method(
                 D_METHOD("material_set_resolver", "material_resolver"), &E3DRenderingServer::material_set_resolver);
         ClassDB::bind_method(D_METHOD("model_set_loader", "model_loader"), &E3DRenderingServer::model_set_loader);
         ClassDB::bind_method(
@@ -691,7 +685,8 @@ namespace godot {
             // shadow acne. The setting can bring back the original's front-face culling in shadow
             // maps (opengl33renderer.cpp:1758); off by default, like a Light3D.
             rs->light_set_reverse_cull_face_mode(
-                    light->light, settings->get_setting(LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, false));
+                    light->light,
+                    settings->get_setting(E3DLightFactory::LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, false));
             // The light keeps reaching as far as it is streamed; only its shadow map stops early,
             // because a scenery puts 152 of these within 300 m
             const float distance =
@@ -1483,23 +1478,7 @@ namespace godot {
     /// (m/s) and direction are separate so that the direction can grow a vertical component
     /// without the signature changing.
     void E3DRenderingServer::environment_set_wind(const float p_strength, const Vector3 &p_direction) {
-        wind_strength = p_strength;
-        wind_direction = p_direction;
-        _update_wind();
-    }
-
-    void E3DRenderingServer::environment_set_wind_strength(const float p_strength) {
-        wind_strength = p_strength;
-        _update_wind();
-    }
-
-    void E3DRenderingServer::environment_set_wind_direction(const Vector3 &p_direction) {
-        wind_direction = p_direction;
-        _update_wind();
-    }
-
-    void E3DRenderingServer::_update_wind() {
-        const Vector3 new_wind = wind_direction.normalized() * wind_strength;
+        const Vector3 new_wind = p_direction.normalized() * p_strength;
         if (wind.is_equal_approx(new_wind)) {
             return;
         }

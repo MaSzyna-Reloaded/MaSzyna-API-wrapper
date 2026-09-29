@@ -105,12 +105,12 @@ namespace godot {
 
     void RailVehicleRadio::_unregister_commands() {
         VehicleComponent::_unregister_commands();
-        unregister_command("radio", Callable(this, "radio"));
-        unregister_command("radio_channel_set", Callable(this, "channel_set"));
-        unregister_command("radio_channel_increase", Callable(this, "channel_increase"));
-        unregister_command("radio_channel_decrease", Callable(this, "channel_decrease"));
-        unregister_command("radio_volume_increase", Callable(this, "volume_increase"));
-        unregister_command("radio_volume_decrease", Callable(this, "volume_decrease"));
-        unregister_command("radio_stop", Callable(this, "radio_stop"));
+        unregister_command("radio");
+        unregister_command("radio_channel_set");
+        unregister_command("radio_channel_increase");
+        unregister_command("radio_channel_decrease");
+        unregister_command("radio_volume_increase");
+        unregister_command("radio_volume_decrease");
+        unregister_command("radio_stop");
     }
 } // namespace godot

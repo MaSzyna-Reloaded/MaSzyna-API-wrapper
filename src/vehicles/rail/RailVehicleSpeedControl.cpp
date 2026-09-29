@@ -77,11 +77,11 @@ namespace godot {
     }
 
     void RailVehicleSpeedControl::_unregister_commands() {
-        unregister_command("speed_control_increase", Callable(this, "speed_control_increase"));
-        unregister_command("speed_control_decrease", Callable(this, "speed_control_decrease"));
-        unregister_command("speed_control_power_increase", Callable(this, "speed_control_power_increase"));
-        unregister_command("speed_control_power_decrease", Callable(this, "speed_control_power_decrease"));
-        unregister_command("speed_control_button", Callable(this, "speed_control_button"));
-        unregister_command("speed_control_set", Callable(this, "speed_control_set"));
+        unregister_command("speed_control_increase");
+        unregister_command("speed_control_decrease");
+        unregister_command("speed_control_power_increase");
+        unregister_command("speed_control_power_decrease");
+        unregister_command("speed_control_button");
+        unregister_command("speed_control_set");
     }
 } // namespace godot

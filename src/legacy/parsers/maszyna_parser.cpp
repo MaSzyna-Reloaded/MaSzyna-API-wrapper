@@ -39,13 +39,6 @@ namespace godot {
         meta.push_back(Dictionary());
     }
 
-    Array MaszynaParser::get_stops(const Array &p_stops) const {
-        if (!p_stops.is_empty()) {
-            return p_stops;
-        }
-        return default_stop_chars;
-    }
-
     /// Single ASCII stop characters; others never matched a single byte in the tokenizer anyway
     void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&p_r_table)[128]) {
         for (bool &entry: p_r_table) {

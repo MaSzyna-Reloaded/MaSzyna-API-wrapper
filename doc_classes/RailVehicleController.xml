@@ -39,14 +39,6 @@
 				Moves the crew to the next cab in [param direction] ([code]1[/code] forward, [code]-1[/code] backward), like the original [code]TTrain::CabChange()[/code]: cab 1, machine room (cab 0), cab 2.
 			</description>
 		</method>
-		<method name="change_track">
-			<return type="void" />
-			<param index="0" name="track_name" type="String" />
-			<param index="1" name="track_offset" type="float" />
-			<param index="2" name="track_direction" type="int" />
-			<description>
-			</description>
-		</method>
 		<method name="compute_fast_movement">
 			<return type="void" />
 			<param index="0" name="delta" type="float" />

@@ -326,16 +326,16 @@ static func _ensure_built() -> void:
         # responds to BOTH low and high (swinging the same gauge to -1.0/+1.0 depending on which
         # was pressed), not low-only. Modeled as a CabinSwitch exactly like SM42's own
         # hand-authored "Horn" node (demo/vehicles/sm42/sm_42_cabin.tscn) - a single bidirectional
-        # lever using RailVehicleHorns' "horn" compatibility command (signed: >0 activates low, <0
-        # activates high) - rather than CabinButton, which can only carry one command and would
-        # leave one of the two keys permanently dead whenever only horn_bt: exists.
+        # lever whose two positions hold horn_low and horn_high, the original's two commands -
+        # rather than CabinButton, which can only carry one command and would leave one of the
+        # two keys permanently dead whenever only horn_bt: exists.
         "horn_bt": {
             "widget_class": CabinSwitch,
             "fixed_fields": {
                 "switch_min_position": -1,
                 "switch_max_position": 1,
                 "automatic_reset": true,
-                "command_set": "horn",
+                "position_commands": {1: "horn_low", -1: "horn_high"},
                 "state_property": "horn",
                 "action_increase": "horn_low",
                 "action_decrease": "horn_high",

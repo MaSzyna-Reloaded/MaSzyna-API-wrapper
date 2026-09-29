@@ -234,7 +234,7 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 
 * `pantselect_sw` / `PantsPreset` (choosing which pantographs the master valve raises,
   Train.cpp:3529 change_pantograph_selection, update_pantograph_valves) is not ported.
-* `MoverElectricEngineBackend::pantograph()` still opens the master valve itself when a pantograph
+* `MoverCurrentCollectorUnit::pantograph()` still opens the master valve itself when a pantograph
   is raised (added in 1c0c044 when no cab could reach the valve). The original opens it only from
   pantselected_sw / pantvalves_sw, so with it a pantograph rises from its own key alone. Remove it
   once every cab has a way to the master valve (pantvalves_sw is not in the catalog either).
@@ -337,6 +337,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ### Other
 
+* The `horn_bt` lever (`mmd_semantic_catalog.gd`) holds `horn_low` at +1 and `horn_high` at -1;
+  the original animates `ggHornButton` the other way round - -1 for the low tone
+  (`Train.cpp:7958`). Check against a cab model before flipping it.
 * `VirtualCabin` for cabs without a hi-fi model (`cabNmodel: none` or missing, e.g. su46
   `cab0definition:`) - input and command translation only. The original keeps such a cab
   enterable with the low-poly interior (`Train.cpp:8692`, `DynObj.cpp:1214`). Hook:
@@ -462,7 +465,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `TNESt3::SetSize()` builds every ESt distributor as an ESt4: `TRapid` instead of `TRura` and no
   `Podskok` for ESt3, and `AL2`, `PZZ`, `HBG300`, `3d`/`4d` and `-ED` are dropped. That covers
   about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
-* The energy meter (`MoverElectricEngineBackend::meter_energy()`, DynObj.cpp:3798-3832) ports the
+* The energy meter (`MoverCurrentCollectorUnit::meter_energy()`, DynObj.cpp:3798-3832) ports the
   original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
   `ShowCurrent(0) / active` (`RailVehicle3D.cpp:1480`) - whether it should take the ported one is
   open. The meter has no test: it needs an electric fixture drawing current under a live wire.

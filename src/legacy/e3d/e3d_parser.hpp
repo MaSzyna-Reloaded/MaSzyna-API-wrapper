@@ -1,6 +1,5 @@
 #pragma once
 #include "legacy/e3d/E3DModel.hpp"
-#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -14,10 +13,6 @@ namespace godot {
             GDCLASS(E3DParser, Object)
 
         public:
-            static E3DParser *get_instance() {
-                return dynamic_cast<E3DParser *>(Engine::get_singleton()->get_singleton("E3DParser"));
-            }
-
             Ref<E3DModel> parse(const Ref<FileAccess> &p_file) const;
 
         protected:
@@ -91,7 +86,6 @@ namespace godot {
                     float cos_view_angle;
                     uint32_t index_count;
                     uint32_t first_index_idx;
-                    uint32_t transparent;
                     PackedVector3Array vertices;
                     PackedVector3Array normals;
                     PackedVector2Array uvs;
@@ -108,12 +102,8 @@ namespace godot {
             SubModelData _read_submodel(const Ref<FileAccess> &p_file, int p_chunk_size) const;
             std::vector<SubModelData> _parse_file(const Ref<FileAccess> &p_file) const;
             std::vector<String> _buffer_to_strings(const PackedByteArray &p_buffer) const;
-            Transform3D _read_matrix(const Ref<FileAccess> &p_file) const;
             Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel) const;
             void _register_lights(
-                    const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
-                    const std::vector<int> &p_parent_indices) const;
-            void _register_smoke_sources(
                     const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
                     const std::vector<int> &p_parent_indices) const;
             NodePath _build_submodel_path(

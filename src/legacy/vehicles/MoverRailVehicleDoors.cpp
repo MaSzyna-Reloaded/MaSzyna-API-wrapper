@@ -234,32 +234,16 @@ namespace godot {
         mover->PermitDoorStep(p_state);
     }
 
-    void MoverRailVehicleDoors::permit_doors(const Side p_side, const bool p_state) {
+    void MoverRailVehicleDoors::permit_doors(const bool p_state, const Side p_side) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
     }
 
-    void MoverRailVehicleDoors::permit_left_doors(const bool p_state) {
-        this->permit_doors(Side::SIDE_LEFT, p_state);
-    }
-
-    void MoverRailVehicleDoors::permit_right_doors(const bool p_state) {
-        this->permit_doors(Side::SIDE_RIGHT, p_state);
-    }
-
-    void MoverRailVehicleDoors::operate_doors(const Side p_side, const bool p_state) {
+    void MoverRailVehicleDoors::operate_doors(const bool p_state, const Side p_side) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->OperateDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
-    }
-
-    void MoverRailVehicleDoors::operate_left_doors(const bool p_state) {
-        this->operate_doors(Side::SIDE_LEFT, p_state);
-    }
-
-    void MoverRailVehicleDoors::operate_right_doors(const bool p_state) {
-        this->operate_doors(Side::SIDE_RIGHT, p_state);
     }
 
     void MoverRailVehicleDoors::door_lock(const bool p_state) {

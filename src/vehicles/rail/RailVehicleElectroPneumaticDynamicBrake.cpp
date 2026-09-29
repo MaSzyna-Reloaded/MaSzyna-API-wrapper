@@ -77,8 +77,8 @@ namespace godot {
     }
 
     void RailVehicleElectroPneumaticDynamicBrake::_unregister_commands() {
-        unregister_command("set_ep_brake_force", Callable(this, "set_ep_brake_force"));
-        unregister_command("switch_ep_fuse", Callable(this, "switch_ep_fuse"));
+        unregister_command("set_ep_brake_force");
+        unregister_command("switch_ep_fuse");
         VehicleComponent::_unregister_commands();
     }
 } // namespace godot

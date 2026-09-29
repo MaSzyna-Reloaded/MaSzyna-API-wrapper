@@ -58,11 +58,6 @@ namespace godot {
         _set_processing(false);
     }
 
-    /// Processes while an update is scheduled
-    void DriverSystem::_refresh_processing() {
-        _set_processing(!updates.empty());
-    }
-
     /// Scheduled, it holds the runtime's clock, so the time it waits for passes
     void DriverSystem::_set_processing(const bool p_processing) {
         if (processing == p_processing) {
@@ -72,14 +67,10 @@ namespace godot {
         ERR_FAIL_NULL(runtime);
         processing = p_processing;
         if (p_processing) {
-            runtime->clock_hold();
-            runtime->connect(
-                    SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
+            runtime->clock_subscribe(callable_mp(this, &DriverSystem::_process_updates));
             return;
         }
-        runtime->disconnect(
-                SimulationServer::simulation_advanced_signal, callable_mp(this, &DriverSystem::_process_updates));
-        runtime->clock_release();
+        runtime->clock_unsubscribe(callable_mp(this, &DriverSystem::_process_updates));
     }
 
     /// Only the updates whose time has come are taken, and only those scheduled before the pass:
@@ -103,7 +94,7 @@ namespace godot {
                 delegate->update(entry.driver);
             }
         }
-        _refresh_processing();
+        _set_processing(!updates.empty());
     }
 
     void DriverSystem::vehicle_set_control_active(const RID &p_vehicle, const bool p_active) {
@@ -153,7 +144,7 @@ namespace godot {
         ERR_FAIL_NULL(runtime);
         updates.push(
                 UpdateEntry{runtime->simulation_get_time() + MAX(p_seconds, 0.0), data->update_sequence, p_driver});
-        _refresh_processing();
+        _set_processing(!updates.empty());
     }
 
     void DriverSystem::_on_vehicle_freed(const RID &p_vehicle) {

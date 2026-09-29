@@ -61,19 +61,7 @@ namespace godot {
         mover->BrakeLevelSet(brake_controller_pos);
     }
 
-    void MoverRailVehicleBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
-        TMoverParameters *mover = get_mover();
-        ASSERT_MOVER_BRAKE(mover);
-        if (const std::unordered_map<BrakeHandlePosition, int>::const_iterator it =
-                    brake_handle_position_map.find(p_position);
-            it != brake_handle_position_map.end()) {
-            mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
-        } else {
-            log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
-        }
-    }
-
-    void MoverRailVehicleBrake::brake_level_set_position_str(const String &p_position) {
+    void MoverRailVehicleBrake::brake_level_set_position(const String &p_position) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         const std::unordered_map<std::string, int>::const_iterator it =
@@ -276,23 +264,6 @@ namespace godot {
         local_brake_pressure_previous = p_mover->LocBrakePress;
     }
 
-    double MoverRailVehicleBrake::_controller_position_normalized(const TMoverParameters *p_mover) {
-        const double minimum = p_mover->Handle->GetPos(bh_MIN);
-        const double maximum = p_mover->Handle->GetPos(bh_MAX);
-        if (maximum == minimum) {
-            return 0.0;
-        }
-        return (p_mover->fBrakeCtrlPos - minimum) / (maximum - minimum);
-    }
-
-    double MoverRailVehicleBrake::_force_ratio(const TMoverParameters *p_mover) {
-        TMoverParameters *mover = const_cast<TMoverParameters *>(p_mover);
-        const double max_per_block =
-                mover->BrakeForceR(1.0, mover->Vel) / (std::max(1, mover->NAxles) * std::max(1, mover->NBpA));
-        return std::clamp(mover->UnitBrakeForce / std::max(1.0, max_per_block), 0.0, 1.0);
-    }
-
-
     bool MoverRailVehicleBrake::get_alarm_chain_pulled() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->AlarmChainFlag : false;
@@ -350,7 +321,15 @@ namespace godot {
 
     double MoverRailVehicleBrake::get_controller_position_normalized() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? _controller_position_normalized(mover) : 0.0;
+        if (mover == nullptr) {
+            return 0.0;
+        }
+        const double minimum = mover->Handle->GetPos(bh_MIN);
+        const double maximum = mover->Handle->GetPos(bh_MAX);
+        if (maximum == minimum) {
+            return 0.0;
+        }
+        return (mover->fBrakeCtrlPos - minimum) / (maximum - minimum);
     }
 
     double MoverRailVehicleBrake::get_local_position_normalized() const {
@@ -369,8 +348,13 @@ namespace godot {
     }
 
     double MoverRailVehicleBrake::get_force_ratio() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? _force_ratio(mover) : 0.0;
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return 0.0;
+        }
+        const double max_per_block =
+                mover->BrakeForceR(1.0, mover->Vel) / (std::max(1, mover->NAxles) * std::max(1, mover->NBpA));
+        return std::clamp(mover->UnitBrakeForce / std::max(1.0, max_per_block), 0.0, 1.0);
     }
 
     double MoverRailVehicleBrake::get_emergency_valve_flow() const {

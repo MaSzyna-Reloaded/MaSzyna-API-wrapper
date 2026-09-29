@@ -72,7 +72,6 @@ namespace godot {
             }
             vehicle_rid = RID();
             if (controller != nullptr) {
-                controller->shutdown();
                 memdelete(controller);
                 controller = nullptr;
             }
@@ -114,7 +113,6 @@ namespace godot {
                 vehicle_rid = server->vehicle_create();
             }
             server->vehicle_attach_controller(vehicle_rid, controller->get_instance_id());
-            controller->set_vehicle_rid(vehicle_rid);
         }
         controller->attach_to_system();
 

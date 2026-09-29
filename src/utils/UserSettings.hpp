@@ -21,7 +21,6 @@ namespace godot {
             static constexpr const char *MASZYNA_GAMEDIR_SECTION = "maszyna";
             static constexpr const char *MASZYNA_GAMEDIR_KEY = "game_dir";
 
-            void _setup_defaults();
             void _apply_defaults();
 
         protected:

@@ -8,63 +8,63 @@
 
 namespace godot {
     double RailVehicleDieselEngine::get_rpm() const {
-        return diesel_backend != nullptr ? diesel_backend->get_rpm(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_rpm() : 0.0;
     }
     bool RailVehicleDieselEngine::get_oil_pump_active() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_active(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_oil_pump_active() : false;
     }
     bool RailVehicleDieselEngine::get_oil_pump_disabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_disabled(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_oil_pump_disabled() : false;
     }
     double RailVehicleDieselEngine::get_oil_pump_pressure() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_pressure(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_oil_pump_pressure() : 0.0;
     }
     bool RailVehicleDieselEngine::get_fuel_pump_active() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_active(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fuel_pump_active() : false;
     }
     bool RailVehicleDieselEngine::get_fuel_pump_disabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_disabled(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fuel_pump_disabled() : false;
     }
     bool RailVehicleDieselEngine::get_fuel_pump_enabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_enabled(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fuel_pump_enabled() : false;
     }
     bool RailVehicleDieselEngine::get_oil_pump_enabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_enabled(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_oil_pump_enabled() : false;
     }
     bool RailVehicleDieselEngine::get_heat_malfunction() const {
-        return diesel_backend != nullptr ? diesel_backend->get_heat_malfunction(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_heat_malfunction() : false;
     }
     bool RailVehicleDieselEngine::get_startup() const {
-        return diesel_backend != nullptr ? diesel_backend->get_startup(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_startup() : false;
     }
     bool RailVehicleDieselEngine::get_ignition() const {
-        return diesel_backend != nullptr ? diesel_backend->get_ignition(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_ignition() : false;
     }
     bool RailVehicleDieselEngine::get_spinup() const {
-        return diesel_backend != nullptr ? diesel_backend->get_spinup(this) : false;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_spinup() : false;
     }
     double RailVehicleDieselEngine::get_output_power() const {
-        return diesel_backend != nullptr ? diesel_backend->get_output_power(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_output_power() : 0.0;
     }
     double RailVehicleDieselEngine::get_torque() const {
-        return diesel_backend != nullptr ? diesel_backend->get_torque(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_torque() : 0.0;
     }
     double RailVehicleDieselEngine::get_fill() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fill(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_fill() : 0.0;
     }
     double RailVehicleDieselEngine::get_max_rpm() const {
-        return diesel_backend != nullptr ? diesel_backend->get_max_rpm(this) : 0.0;
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_max_rpm() : 0.0;
     }
     void RailVehicleDieselEngine::_apply_configuration() {
         RailVehicleEngine::_apply_configuration();
-        if (diesel_backend != nullptr) {
-            diesel_backend->apply_configuration(this);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->apply_configuration(this);
         }
     }
     void RailVehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {
         RailVehicleEngine::_fill_config_dictionary(p_config);
-        if (diesel_backend != nullptr) {
-            diesel_backend->fill_config(this, p_config);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->fill_config(p_config);
         }
     }
 
@@ -257,7 +257,7 @@ namespace godot {
                 "", "get_max_rpm");
     }
 
-    RailVehicleEngine::EngineType RailVehicleDieselEngine::get_engine_type() const {
+    RailVehicleEngine::EngineType RailVehicleDieselEngine::get_type() const {
         return RailVehicleEngine::EngineType::DIESEL;
     }
 
@@ -286,26 +286,26 @@ namespace godot {
     }
 
     void RailVehicleDieselEngine::oil_pump(const bool p_enabled) {
-        if (diesel_backend != nullptr) {
-            diesel_backend->oil_pump(this, p_enabled);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->oil_pump(p_enabled);
         }
     }
 
     void RailVehicleDieselEngine::fuel_pump(const bool p_enabled) {
-        if (diesel_backend != nullptr) {
-            diesel_backend->fuel_pump(this, p_enabled);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->fuel_pump(p_enabled);
         }
     }
 
     void RailVehicleDieselEngine::oil_pump_switch_off(const bool p_enabled) {
-        if (diesel_backend != nullptr) {
-            diesel_backend->oil_pump_switch_off(this, p_enabled);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->oil_pump_switch_off(p_enabled);
         }
     }
 
     void RailVehicleDieselEngine::fuel_pump_switch_off(const bool p_enabled) {
-        if (diesel_backend != nullptr) {
-            diesel_backend->fuel_pump_switch_off(this, p_enabled);
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->fuel_pump_switch_off(p_enabled);
         }
     }
 
@@ -319,9 +319,9 @@ namespace godot {
 
     void RailVehicleDieselEngine::_unregister_commands() {
         RailVehicleEngine::_unregister_commands();
-        unregister_command("oil_pump", Callable(this, "oil_pump"));
-        unregister_command("fuel_pump", Callable(this, "fuel_pump"));
-        unregister_command("oil_pump_switch_off", Callable(this, "oil_pump_switch_off"));
-        unregister_command("fuel_pump_switch_off", Callable(this, "fuel_pump_switch_off"));
+        unregister_command("oil_pump");
+        unregister_command("fuel_pump");
+        unregister_command("oil_pump_switch_off");
+        unregister_command("fuel_pump_switch_off");
     }
 } // namespace godot

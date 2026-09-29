@@ -12,12 +12,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="set_horn">
-			<return type="void" />
-			<param index="0" name="position" type="float" />
-			<description>
-			</description>
-		</method>
 		<method name="set_horn_high">
 			<return type="void" />
 			<param index="0" name="state" type="bool" />

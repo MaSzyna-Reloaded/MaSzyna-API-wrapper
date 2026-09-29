@@ -5,73 +5,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    void MoverRailVehicleDieselElectricEngine::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_motor_current"), &MoverRailVehicleDieselElectricEngine::get_motor_current);
-        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &MoverRailVehicleDieselElectricEngine::get_circuit_imax);
-        ClassDB::bind_method(
-                D_METHOD("get_dynamic_brake_active"), &MoverRailVehicleDieselElectricEngine::get_dynamic_brake_active);
-        ClassDB::bind_method(D_METHOD("get_fuse_active"), &MoverRailVehicleDieselElectricEngine::get_fuse_active);
-        ClassDB::bind_method(
-                D_METHOD("get_motor_connectors_open"),
-                &MoverRailVehicleDieselElectricEngine::get_motor_connectors_open);
-        ClassDB::bind_method(
-                D_METHOD("is_line_contactor_closed"), &MoverRailVehicleDieselElectricEngine::is_line_contactor_closed);
-        ClassDB::bind_method(
-                D_METHOD("is_pressure_switch_tripped"),
-                &MoverRailVehicleDieselElectricEngine::is_pressure_switch_tripped);
-        ClassDB::bind_method(D_METHOD("fuse_reset"), &MoverRailVehicleDieselElectricEngine::fuse_reset);
-        ClassDB::bind_method(
-                D_METHOD("set_motor_connectors_open", "open"),
-                &MoverRailVehicleDieselElectricEngine::set_motor_connectors_open);
-    }
-
-    double MoverRailVehicleDieselElectricEngine::get_motor_current() const {
-        return traction.get_motor_current(this);
-    }
-
-    double MoverRailVehicleDieselElectricEngine::get_circuit_imax() const {
-        return traction.get_circuit_imax(this);
-    }
-
-    bool MoverRailVehicleDieselElectricEngine::get_dynamic_brake_active() const {
-        return traction.get_dynamic_brake_active(this);
-    }
-
-    bool MoverRailVehicleDieselElectricEngine::get_fuse_active() const {
-        return traction.get_fuse_active(this);
-    }
-
-    bool MoverRailVehicleDieselElectricEngine::get_motor_connectors_open() const {
-        return traction.get_motor_connectors_open(this);
-    }
-
-    bool MoverRailVehicleDieselElectricEngine::is_line_contactor_closed() const {
-        return traction.is_line_contactor_closed(this);
-    }
-
-    bool MoverRailVehicleDieselElectricEngine::is_pressure_switch_tripped() const {
-        return traction.is_pressure_switch_tripped(this);
-    }
-
-    void MoverRailVehicleDieselElectricEngine::fuse_reset() {
-        traction.reset_fuse(this);
-    }
-
-    void MoverRailVehicleDieselElectricEngine::set_motor_connectors_open(const bool p_open) {
-        traction.open_motor_connectors(this, p_open);
-    }
-
-    void MoverRailVehicleDieselElectricEngine::_register_commands() {
-        RailVehicleDieselElectricEngine::_register_commands();
-        register_command("fuse_reset", Callable(this, "fuse_reset"));
-        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
-    }
-
-    void MoverRailVehicleDieselElectricEngine::_unregister_commands() {
-        RailVehicleDieselElectricEngine::_unregister_commands();
-        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
-        unregister_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
-    }
+    void MoverRailVehicleDieselElectricEngine::_bind_methods() {}
 
     void MoverRailVehicleDieselElectricEngine::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();

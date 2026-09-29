@@ -52,12 +52,6 @@ namespace godot {
             virtual void set_horn_low(bool p_state) = 0;
             virtual void set_horn_high(bool p_state) = 0;
             virtual void set_whistle(bool p_state) = 0;
-            // Compatibility entry point for a single bidirectional cabin widget (one physical
-            // lever animating -1/0/+1) driving both low and high horn from one signed value,
-            // e.g. CabinSwitch's command_set - positive activates the low horn, negative the
-            // high horn, zero releases both. Internally routes to the same WarningSignal bits
-            // as set_horn_low()/set_horn_high().
-            virtual void set_horn(double p_position) = 0;
             MAKE_MEMBER_GS_NR(bool, low_horn_enabled, true);
             MAKE_MEMBER_GS_NR(bool, high_horn_enabled, true);
             MAKE_MEMBER_GS_NR(bool, whistle_enabled, true);

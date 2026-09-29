@@ -48,11 +48,6 @@ namespace godot {
         }
     }
 
-    void MoverRailVehicleHorns::set_horn(const double p_position) {
-        set_horn_low(p_position > 0.0);
-        set_horn_high(p_position < 0.0);
-    }
-
 
     bool MoverRailVehicleHorns::get_low_pressed() const {
         const TMoverParameters *mover = get_mover();

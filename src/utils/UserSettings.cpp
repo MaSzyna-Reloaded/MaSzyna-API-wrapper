@@ -11,7 +11,24 @@ namespace godot {
 
     UserSettings::UserSettings() {
         config.instantiate();
-        _setup_defaults();
+
+        Dictionary e3d;
+        e3d["auto_generate_normal"] = false;
+        e3d["auto_generate_metallic"] = false;
+        e3d["auto_generate_height"] = false;
+
+        Dictionary maszyna;
+        maszyna["game_dir"] = ".";
+
+        Dictionary render;
+        render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_DISABLED;
+        render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_DISABLED;
+        render["use_taa"] = true;
+
+        defaults["e3d"] = e3d;
+        defaults["maszyna"] = maszyna;
+        defaults["render"] = render;
+
         load_config();
     }
 
@@ -32,25 +49,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 "setting_changed", PropertyInfo(Variant::STRING, "section"), PropertyInfo(Variant::STRING, "key")));
         ADD_SIGNAL(MethodInfo("game_dir_changed"));
-    }
-
-    void UserSettings::_setup_defaults() {
-        Dictionary e3d;
-        e3d["auto_generate_normal"] = false;
-        e3d["auto_generate_metallic"] = false;
-        e3d["auto_generate_height"] = false;
-
-        Dictionary maszyna;
-        maszyna["game_dir"] = ".";
-
-        Dictionary render;
-        render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_DISABLED;
-        render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_DISABLED;
-        render["use_taa"] = true;
-
-        defaults["e3d"] = e3d;
-        defaults["maszyna"] = maszyna;
-        defaults["render"] = render;
     }
 
     void UserSettings::_apply_defaults() {
@@ -74,6 +72,7 @@ namespace godot {
     void UserSettings::load_config() {
         ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
 
+        // ConfigFile::load() does not clear: the file overrides the defaults, keys it lacks keep them
         _apply_defaults();
 
         Error err = config->load(config_file_path);
@@ -81,10 +80,6 @@ namespace godot {
         if (err != OK) {
             Error save_err = config->save(config_file_path);
             ERR_FAIL_COND_MSG(save_err != OK, "Cannot save default user settings.");
-        } else {
-            // Po load() plik nadpisuje wartości w ConfigFile.
-            // Defaults trzeba dołożyć drugi raz, ale tylko brakujące klucze.
-            _apply_defaults();
         }
 
         emit_signal("config_changed");

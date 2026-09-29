@@ -33,7 +33,6 @@ namespace godot {
             /// is larger), so a camera moving around a range boundary does not rebuild them over
             /// and over - rebuilding is far more expensive than keeping them a little longer
             static constexpr float HYSTERESIS_M = 250.0;
-            static constexpr float HYSTERESIS_FACTOR = 0.25;
             /// A pass is planned at most this often...
             static constexpr uint64_t INTERVAL_MSEC = 250;
             /// ...or as soon as the camera has moved this far
@@ -154,7 +153,6 @@ namespace godot {
             void _drop_freed_work();
             void _drop_stale_work();
             bool _is_area_ready_locked(int p_chunk_radius) const;
-            int _get_pending_builds_locked() const;
             int _get_pending_nearby_locked(int p_chunk_radius) const;
             void _request_plan(const Vector3 &p_position);
             void _worker_loop();

@@ -38,46 +38,18 @@
 		</method>
 		<method name="operate_doors">
 			<return type="void" />
-			<param index="0" name="side" type="int" enum="RailVehicleDoors.Side" />
-			<param index="1" name="state" type="bool" />
+			<param index="0" name="state" type="bool" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
 			<description>
 				Open or close doors on the specified side
 			</description>
 		</method>
-		<method name="operate_left_doors">
-			<return type="void" />
-			<param index="0" name="state" type="bool" />
-			<description>
-				Open or close left doors
-			</description>
-		</method>
-		<method name="operate_right_doors">
-			<return type="void" />
-			<param index="0" name="state" type="bool" />
-			<description>
-				Open or close right doors
-			</description>
-		</method>
 		<method name="permit_doors">
 			<return type="void" />
-			<param index="0" name="side" type="int" enum="RailVehicleDoors.Side" />
-			<param index="1" name="state" type="bool" />
+			<param index="0" name="state" type="bool" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
 			<description>
 				Permission to operate doors specified as an argument
-			</description>
-		</method>
-		<method name="permit_left_doors">
-			<return type="void" />
-			<param index="0" name="state" type="bool" />
-			<description>
-				Permission to operate left doors
-			</description>
-		</method>
-		<method name="permit_right_doors">
-			<return type="void" />
-			<param index="0" name="state" type="bool" />
-			<description>
-				Permission to operate right doors
 			</description>
 		</method>
 		<method name="permit_step">

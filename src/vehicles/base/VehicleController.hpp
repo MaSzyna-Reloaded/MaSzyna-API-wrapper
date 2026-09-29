@@ -98,8 +98,6 @@ namespace godot {
             void
             command_executed(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             uint64_t get_command_serial() const;
-            void broadcast_command(
-                    const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             void register_command(const StringName &p_command, const Callable &p_callable);
             void unregister_command(const StringName &p_command);
             /* One tick of everything the vehicle is made of, after its physics has moved. The

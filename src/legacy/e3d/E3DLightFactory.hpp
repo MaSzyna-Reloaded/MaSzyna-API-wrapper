@@ -54,6 +54,9 @@ namespace godot {
     /// Builds E3DLightParams out of the data an E3D model carries.
     class E3DLightFactory {
         public:
+            /// The original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
+            static constexpr const char *LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING = "maszyna/lights/reverse_cull_face";
+
             /// Walks the model once: pairs every light_onNN with its light_offNN, collects the
             /// SUBMODEL_FREE_SPOTLIGHTs with the light of their nearest "on" ancestor and their
             /// transform relative to the model root, and adds the street lamp quirk for models

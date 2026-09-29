@@ -61,8 +61,6 @@ namespace godot {
             static constexpr float DEFAULT_SCENERY_LIGHT_DISTANCE = 400.0;
             static constexpr const char *SCENERY_LIGHT_SHADOWS_SETTING = "maszyna/scenery/lights/cast_shadows";
             static constexpr bool DEFAULT_SCENERY_LIGHT_SHADOWS = true;
-            /// The original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
-            static constexpr const char *LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING = "maszyna/lights/reverse_cull_face";
             /// Shadows are dropped well before the light itself is, the way E3DNodesBackend fades
             /// a vehicle spotlight out
             static constexpr float SCENERY_LIGHT_SHADOW_FADE_DISTANCE = 80.0;
@@ -216,10 +214,7 @@ namespace godot {
             int light_stream_owner = -1;
             /// ...and the particle emitters under this one, with a range of their own again
             int smoke_stream_owner = -1;
-            // Pushed by MaszynaEnvironmentNode, kept apart so either can be set on its own;
-            // wind is the composed vector the emitters actually drift with, in m/s
-            float wind_strength = 0.0;
-            Vector3 wind_direction = Vector3(1.0, 0.0, 0.0);
+            // Pushed by MaszynaEnvironmentNode: the vector the emitters drift with, in m/s
             Vector3 wind;
             bool smoke_processing = false;
             /// Instances with a LIGHT_MODE_BLINK light, walked round-robin by _process_lights()
@@ -272,7 +267,6 @@ namespace godot {
             static Transform3D _smoke_transform(const E3DInstanceData &p_instance_data, const SmokeObject &p_smoke);
             static void _apply_smoke_placement(const E3DInstanceData &p_instance_data, SmokeObject &p_smoke);
             void _apply_smoke_wind(const SmokeObject &p_smoke) const;
-            void _update_wind();
             /// Connected to SceneTree's process_frame while any emitter exists, the way
             /// SceneryStreamingServer drives its own streaming - no script runs per frame
             void _process_smoke();
@@ -377,8 +371,6 @@ namespace godot {
             double animation_get_speed() const;
             void environment_set_light_level(double p_level);
             void environment_set_wind(float p_strength, const Vector3 &p_direction);
-            void environment_set_wind_strength(float p_strength);
-            void environment_set_wind_direction(const Vector3 &p_direction);
 
             void material_set_resolver(const Callable &p_material_resolver);
             void model_set_loader(const Callable &p_model_loader);

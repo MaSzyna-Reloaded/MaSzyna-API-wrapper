@@ -142,7 +142,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_controller"), &RailVehicle3D::get_controller);
         ClassDB::bind_method(D_METHOD("get_rid"), &RailVehicle3D::get_rid);
         ClassDB::bind_method(D_METHOD("move_on_track", "distance"), &RailVehicle3D::move_on_track);
-        ClassDB::bind_method(D_METHOD("_process", "delta"), &RailVehicle3D::process_manually);
+        ClassDB::bind_method(D_METHOD("_process", "delta"), &RailVehicle3D::_process_impl);
         ClassDB::bind_method(D_METHOD("_process_dirty"), &RailVehicle3D::_process_dirty);
         ClassDB::bind_method(D_METHOD("_show_cabin_after_frames"), &RailVehicle3D::_show_cabin_after_frames);
         ClassDB::bind_method(D_METHOD("_on_controller_changed", "controller"), &RailVehicle3D::_on_controller_changed);
@@ -304,7 +304,7 @@ namespace godot {
                 fiz_controller != nullptr ? Object::cast_to<RailVehicleController>(fiz_controller->get_controller())
                                           : nullptr;
         _on_controller_changed(vehicle);
-        // the vehicle was rebuilt in place, so its parts changed even though it did not
+        // taken, or rebuilt in place - either way its parts are new
         _adopt_vehicle_parts();
         dirty = true;
         set_process(true);
@@ -335,6 +335,7 @@ namespace godot {
             }
         }
         _on_controller_changed(get_controller());
+        _adopt_vehicle_parts();
     }
 
     /* What the vehicle is made of, re-read from it. Kept apart from taking a *different*
@@ -397,7 +398,6 @@ namespace godot {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
             controller->connect(
                     VehicleController::config_changed, callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
-            _adopt_vehicle_parts();
         }
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
             /* A vehicle has one handle. When the controller already carries one - it does
@@ -495,10 +495,6 @@ namespace godot {
         if (p_what == NOTIFICATION_PROCESS) {
             _process_impl(get_process_delta_time());
         }
-    }
-
-    void RailVehicle3D::process_manually(const Variant &p_delta) {
-        _process_impl(double(p_delta));
     }
 
     void RailVehicle3D::_process_impl(double p_delta) {

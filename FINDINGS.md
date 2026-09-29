@@ -261,6 +261,9 @@ anything. Open work belongs in `TODO.md`.
 * Never delete a code span with a regex whose optional prefix can match across lines, and verify
   scripted edits structurally. `undefined symbol` means a deleted definition. *(09-22 regex that
   deleted 588 lines)*
+* Never apply clang-tidy `--fix` per file: a rename lands in the declaration, not in its uses
+  elsewhere. `style-fix` only formats, headers are self-contained, and style-check binds the same
+  double API as the build. *(09-29 style-fix broke the build)*
 
 ## Tests
 * A test is checked against a build without the fix, and one that cannot fail is deleted.

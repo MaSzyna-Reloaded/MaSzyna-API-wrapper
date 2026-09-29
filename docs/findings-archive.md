@@ -1918,3 +1918,24 @@ lighting or the consist.
   copy of a light's name nested under the bound one stays visible. Checked on `mini_tm.scn`.
 * **Rule:** what a model hides by default depends on who loads it: a vehicle hides its `_on`
   controls, a scenery model does not. Read the model's tree before assuming a light is missing.
+
+## 2026-09-29 - style-fix broke the build
+
+* **Symptom:** PR #286 `style-check` red with 397 clang-format violations in 127 files. After
+  `make style-fix` the build failed: `RailVehicle3D.hpp:91 'RailVehicleController' does not name
+  a type`, followed by `incomplete type GetTypeInfo<int*>` in `binder_common.hpp`.
+* **What proved it:** `scripts/style-fix` ran `clang-tidy --fix --fix-errors` file by file with
+  `-line-filter` limited to that file, so `readability-identifier-naming` renamed declarations
+  (`PythonApi::PyErr_Occurred` -> `py_err_occurred`, `r_point` -> `p_r_point`) without their uses
+  in other files. The style-check database is configured `LIBMASZYNA_STYLE_CHECK` (single
+  precision godot-cpp: `float Light3D::get_param()`), while the build is double
+  (`double get_param()`), so `readability-redundant-casting` removed `static_cast<float>` casts
+  the build needs. clang-format's include sorting put `RailVehicle3D.hpp` first in its `.cpp`,
+  and the header compiled only thanks to an earlier include.
+* **Fix:** `style-fix` runs clang-format only; `extension_api.json` (double) is versioned and
+  style-check binds it like the build (`LIBMASZYNA_STYLE_CHECK` removed); the removed casts are
+  restored; `RailVehicle3D.hpp` forward-declares `RailVehicleController`; the Python C API names
+  are fenced with `NOLINTBEGIN/END(readability-identifier-naming)`.
+* **Rule:** clang-tidy findings are fixed by hand, across the tree; every header includes or
+  forward-declares what it names; every touched C++ file is formatted before commit; the style
+  check sees the same precision as the build.

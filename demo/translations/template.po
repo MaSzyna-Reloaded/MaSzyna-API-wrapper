@@ -1022,6 +1022,15 @@ msgstr ""
 msgid "Driving aid"
 msgstr ""
 
+msgid "Simulation speed"
+msgstr ""
+
+msgid "Simulation speed: x%s"
+msgstr ""
+
+msgid "Pause"
+msgstr ""
+
 msgid "Driving Aid Toggle"
 msgstr ""
 

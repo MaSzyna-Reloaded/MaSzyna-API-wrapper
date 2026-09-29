@@ -6,7 +6,7 @@ extends Control
 ## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
 
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
 
 ## The panels' names in HUDServer; the View menu's entries are these, in ViewItem order
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
@@ -17,8 +17,9 @@ const PANEL_SCENARIO:StringName = &"scenario"
 const PANEL_CONTROLS:StringName = &"controls"
 const PANEL_SCRIPTS:StringName = &"scripts"
 const PANEL_TRAINSETS:StringName = &"trainsets"
+const PANEL_SIMULATION_SPEED:StringName = &"simulation_speed"
 const VIEW_PANELS:Array[StringName] = [PANEL_TRANSCRIPTS, PANEL_DRIVING_AID, PANEL_TIMETABLE,
-        PANEL_SCENARIO, PANEL_CONTROLS, PANEL_SCRIPTS, PANEL_TRAINSETS]
+        PANEL_SCENARIO, PANEL_CONTROLS, PANEL_SCRIPTS, PANEL_TRAINSETS, PANEL_SIMULATION_SPEED]
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 const FRONT_END:int = 0
@@ -103,7 +104,8 @@ func _on_popup_menu_index_pressed(index: int) -> void:
 
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the timetable, the
-## scenario, all the control windows at once, the Lua editor and the trainset list
+## scenario, all the control windows at once, the Lua editor, the trainset list and the simulation
+## speed
 func _on_view_menu_index_pressed(index: int) -> void:
     HUDServer.panel_toggle(VIEW_PANELS[index])
     if index == ViewItem.TRAINSETS:
@@ -129,6 +131,8 @@ func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
             %ScriptEditorPanel.visible = shown
         PANEL_TRAINSETS:
             %VehicleSelectorPanel.visible = shown
+        PANEL_SIMULATION_SPEED:
+            %SimulationSpeedPanel.visible = shown
         PANEL_CONTROLS:
             for win: HUDWindow in _windows:
                 HUDServer.panel_set_visible(win.panel, shown)

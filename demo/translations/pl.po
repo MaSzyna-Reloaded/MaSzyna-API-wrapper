@@ -1022,6 +1022,15 @@ msgstr "Lista składów"
 msgid "Driving aid"
 msgstr "Pomocnik"
 
+msgid "Simulation speed"
+msgstr "Prędkość symulacji"
+
+msgid "Simulation speed: x%s"
+msgstr "Prędkość symulacji: x%s"
+
+msgid "Pause"
+msgstr "Pauza"
+
 msgid "Driving Aid Toggle"
 msgstr "Pomocnik"
 

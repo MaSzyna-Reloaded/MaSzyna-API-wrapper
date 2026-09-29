@@ -1022,6 +1022,15 @@ msgstr ""
 msgid "Driving aid"
 msgstr "Vezető információ"
 
+msgid "Simulation speed"
+msgstr "Szimuláció sebessége"
+
+msgid "Simulation speed: x%s"
+msgstr "Szimuláció sebessége: x%s"
+
+msgid "Pause"
+msgstr "Szünet"
+
 msgid "Driving Aid Toggle"
 msgstr "Vezető információ"
 

@@ -1022,6 +1022,15 @@ msgstr ""
 msgid "Driving aid"
 msgstr "驾驶辅助"
 
+msgid "Simulation speed"
+msgstr "模拟速度"
+
+msgid "Simulation speed: x%s"
+msgstr "模拟速度：x%s"
+
+msgid "Pause"
+msgstr "暂停"
+
 msgid "Driving Aid Toggle"
 msgstr "驾驶辅助"
 

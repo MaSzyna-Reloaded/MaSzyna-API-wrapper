@@ -23,6 +23,26 @@ namespace godot {
         return inverters;
     }
 
+    double MoverRailVehicleElectricInductionEngine::get_force_max() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->eimv[Maszyna::eimv_Fmax] : 0.0;
+    }
+
+    double MoverRailVehicleElectricInductionEngine::get_force_full() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->eimv[Maszyna::eimv_Fful] : 0.0;
+    }
+
+    double MoverRailVehicleElectricInductionEngine::get_field_current() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->eimv[Maszyna::eimv_If] : 0.0;
+    }
+
+    double MoverRailVehicleElectricInductionEngine::get_motor_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->eimv[Maszyna::eimv_U] : 0.0;
+    }
+
     void MoverRailVehicleElectricInductionEngine::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);

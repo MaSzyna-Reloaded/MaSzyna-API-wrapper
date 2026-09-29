@@ -610,6 +610,14 @@ namespace godot {
         return mover != nullptr ? mover->MainCtrlActualPos : 0;
     }
 
+    int MoverRailVehicleController::get_controller_second_actual_position() const {
+        return mover != nullptr ? mover->ScndCtrlActualPos : 0;
+    }
+
+    double MoverRailVehicleController::get_mass_reduced() const {
+        return mover != nullptr ? mover->Mred : 0.0;
+    }
+
     bool MoverRailVehicleController::get_controller_main_delayed() const {
         return mover != nullptr ? mover->DelayCtrlFlag : false;
     }

@@ -34,6 +34,10 @@ const STATE_KEYS:Dictionary[String, String] = {
     "speedctrl": "speed_control/selected_velocity", # SpeedCtrlValue
     "speedctrlpower": "speed_control/desired_power", # SpeedCtrlUnit.DesiredPower
     "speedctrlactive": "speed_control/active",      # SpeedCtrlUnit.IsActive
+    "speedctrlstandby": "speed_control/standby",    # SpeedCtrlUnit.Standby
+    "new_speed": "speed_control/set_velocity",      # NewSpeed
+    "brake_delay_flag": "brake_delay_setting",      # BrakeDelayFlag
+    "brake_op_mode_flag": "brake_operation_mode",   # BrakeOpModeFlag
     "emergency_brake": "alarm_chain_pulled",        # AlarmChainFlag
     "ca": "vigilance_blinking",                     # SecuritySystem.is_vigilance_blinking()
     "shp": "cabsignal_blinking",                    # SecuritySystem.is_cabsignal_blinking()
@@ -60,6 +64,7 @@ const CONTROLLED_STATE_KEYS:Dictionary[String, String] = {
     "mainctrl_pos": "controller_main_position",     # MainCtrlPos
     "main_ctrl_actual_pos": "controller_main_actual_position", # MainCtrlActualPos
     "scndctrl_pos": "controller_second_position",   # ScndCtrlPos
+    "scnd_ctrl_actual_pos": "controller_second_actual_position", # ScndCtrlActualPos
     "brakectrl_pos": "brake_controller_position",   # fBrakeCtrlPos
     "localbrake_pos": "brake_local_position_normalized", # LocalBrakePosA
     "fuse": "fuse_active",                          # FuseFlag
@@ -74,8 +79,13 @@ const LIGHT_BITS:Dictionary[String, int] = {
 }
 ## Train.cpp:765 dir_brake / :772 indir_brake - a control pressure that counts as braking
 const BRAKE_PRESSURE_THRESHOLD:float = 0.2
-## TDynamicObject::FindPowered() - a vehicle with more power than this drives
-const POWERED_THRESHOLD:float = 1.0
+## Train.cpp:762 dir_brake - the share of electrodynamic braking (fEIMParams[0][5]) that counts
+const ED_BRAKE_SHARE_THRESHOLD:float = 0.01
+## Train.cpp:8679 - eimp_pnN_mass is in tonnes
+const TONNES_PER_KILOGRAM:float = 0.001
+## Train.cpp:8617 - the engines whose own voltage is the high voltage fHVoltage shows
+const ENGINE_VOLTAGE_TYPES:Array[RailVehicleEngine.EngineType] = [
+    RailVehicleEngine.DIESEL_ELECTRIC, RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR]
 ## Train.cpp:8699 - a compressor that turns
 const COMPRESSOR_SPEED_THRESHOLD:float = 0.00001
 const SECONDS_PER_HOUR:int = 3600
@@ -95,22 +105,13 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     var state:Dictionary = CabinSystem.vehicle_state(vehicle)
     var config:Dictionary = CabinSystem.vehicle_config(vehicle)
 
-    # the vehicles of this unit and of everything under its control, in the order find_vehicle()
-    # searches them: this one, then towards the rear, then towards the front (DynObj.h:889)
-    var unit:Array[Dictionary] = _search_order(vehicle, RailVehicleController.COUPLING_ELEMENT_PERMANENT)
-    var controlled_by:Array[Dictionary] = _search_order(vehicle, RailVehicleController.COUPLING_ELEMENT_CONTROL)
-    var controlled:Dictionary = state
-    # FindPowered() searches only the unit of an EZT/DMU; the train type is not in the config dump
-    # (TODO.md), so every vehicle searches everything under its control
-    for candidate:Dictionary in controlled_by:
-        if candidate["config"].get("power", 0.0) > POWERED_THRESHOLD:
-            controlled = candidate["state"]
-            break
-    var pantograph_unit:Dictionary = controlled
-    for candidate:Dictionary in unit + controlled_by:
-        if COLLECTOR_KEY in candidate["state"]:
-            pantograph_unit = candidate["state"]
-            break
+    # mvControlled (FindPowered(), DynObj.cpp:7772) and mvPantographUnit (FindPantographCarrier(),
+    # DynObj.cpp:7798) - the controlled vehicle's own collector when nothing carries one
+    var controlled_vehicle:RID = RailVehicleServer.vehicle_find_powered(vehicle)
+    var controlled:Dictionary = RailVehicleServer.vehicle_dump_state(controlled_vehicle)
+    var controlled_config:Dictionary = RailVehicleServer.vehicle_dump_config(controlled_vehicle)
+    var carrier:RID = RailVehicleServer.vehicle_find_pantograph_carrier(vehicle)
+    var pantograph_unit:Dictionary = RailVehicleServer.vehicle_dump_state(carrier) if carrier.is_valid() else controlled
 
     result["name"] = RailVehicleServer.vehicle_get_name(vehicle)   # DynamicObject->asName
     for key:String in STATE_KEYS:
@@ -128,26 +129,46 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     result["mainctrl_pos_count"] = config.get("main_controller_position_max", 0)   # MainCtrlPosNo
     result["velocity"] = absf(state.get("speed", 0.0))   # abs(Vel), km/h
     result["manual_brake"] = state.get("brake_manual_position", 0) > 0
-    # the second half of the original's condition, the ED brake share (fEIMParams[0][5]), is not
-    # in the state yet
-    result["dir_brake"] = controlled.get("brake_control_pressure", 0.0) > BRAKE_PRESSURE_THRESHOLD
+    result["tractionforce"] = absf(state.get("Ft", 0.0))   # abs(mvOccupied->Ft)
+    result["voltage"] = absf(controlled.get("engine_voltage", 0.0))   # abs(EngineVoltage)
+    result["im"] = absf(controlled.get("Im", 0.0))   # abs(Im)
+    # Train.cpp:717-718 and fHVoltage (Train.cpp:8617-8626)
+    var main_countdown:float = controlled.get("main_switch_time", 0.0)   # MainsInitTimeCountdown
+    result["main_init"] = main_countdown < controlled_config.get("main_init_time", 0.0) and main_countdown > 0.0
+    var high_voltage:float = controlled.get("engine_voltage", 0.0)
+    if not controlled.get("engine_type", RailVehicleEngine.NONE) in ENGINE_VOLTAGE_TYPES:
+        high_voltage = maxf(controlled.get("current_collector/voltage", 0.0),
+                controlled.get("current_collector/trainset_high_voltage", 0.0))
+    result["main_ready"] = not controlled.get("main_switch_enabled", false) and high_voltage > 0.0 \
+            and main_countdown <= 0.0
+    # the train row (Train.cpp:8778-8787): the occupied vehicle's power, the controlled one's force
+    var power_share:float = state.get("eimic_real", 0.0)
+    result["eimp_t_pd"] = power_share
+    result["eimp_t_pdt"] = maxf(power_share, 0.0)
+    result["eimp_t_pdb"] = -minf(power_share, 0.0)
+    result["eimp_t_fdt"] = result["eimp_t_pdt"] * controlled.get("force_full", 0.0)
+    result["eimp_t_fdb"] = result["eimp_t_pdb"] * controlled.get("force_full", 0.0)
+    result["eimp_t_fd"] = result["eimp_t_fdt"] - result["eimp_t_fdb"]
+    result["dir_brake"] = controlled.get("brake_control_pressure", 0.0) > BRAKE_PRESSURE_THRESHOLD \
+            or result["eimp_t_pdb"] > ED_BRAKE_SHARE_THRESHOLD
     # GetEDBCP() is 0 for every brake but TLSt and TEStED, which is the original's typeid test
     result["indir_brake"] = state.get("brake_edb_cylinder_pressure", 0.0) > BRAKE_PRESSURE_THRESHOLD
     result["pantpress"] = absf(pantograph_unit.get("current_collector/pantograph_tank_pressure", 0.0))
+    result["pant_compressor"] = pantograph_unit.get("current_collector/pantograph_compressor_enabled", false)
     result["traction_voltage"] = absf(pantograph_unit.get("current_collector/voltage", 0.0))
     # mvOccupied->EnergyMeter (Train.cpp:810-811)
     result["power_drawn"] = state.get("power_drawn", 0.0)
     result["power_returned"] = state.get("power_returned", 0.0)
-    for end:String in ["front", "rear"]:
-        var bits:int = 0
-        for lamp:String in LIGHT_BITS:
-            if state.get("lights/%s_%s" % [end, lamp], false):
-                bits |= LIGHT_BITS[lamp]
-        result["lights_" + end] = bits
+    result["lights_front"] = _light_bits(state, "front")
+    result["lights_rear"] = _light_bits(state, "rear")
 
     # TTrain::Update(), Train.cpp:8644-8768 - the cars under control, from the end the occupied
     # cab faces (GetFirstDynamic(CabOccupied < 0 ? rear : front, control))
     var cab_end:int = 1 if state.get("cabin_occupied", 1) < 0 else 0
+    # Train.cpp:727-745 - the lamps at the outer ends of the train, its front the way the cab faces
+    var trainset:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    result["lights_train_front"] = _outer_light_bits(trainset.front())
+    result["lights_train_rear"] = _outer_light_bits(trainset.back())
     var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_CONTROL)
     var powered:int = 0
     var induction_cars:int = 0
@@ -161,6 +182,10 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
         result["eimp_pn%d_bp" % car_number] = car_state.get("pipe_pressure", 0.0)   # PipePress
         result["eimp_pn%d_sp" % car_number] = car_state.get("feed_pipe_pressure", 0.0)   # ScndPipePress
         result["eimp_pn%d_spring" % car_number] = car_state.get("spring_brake/cylinder_pressure", 0.0)   # SpringBrake.SBP
+        result["eimp_pn%d_cp" % car_number] = car_state.get("brake_control_pipe_pressure", 0.0)   # CntrlPipePress
+        result["eimp_pn%d_rp" % car_number] = car_state.get("brake_reservoir_pressure", 0.0)   # GetBRP()
+        # (TotalMass - Mred) * 0.001
+        result["eimp_pn%d_mass" % car_number] = (car_state.get("mass_total", 0.0) - car_state.get("mass_reduced", 0.0)) * TONNES_PER_KILOGRAM
         result["brakes_%d_spring_active" % car_number] = car_state.get("spring_brake/braking", false)   # IsActive
         result["brakes_%d_spring_shutoff" % car_number] = car_state.get("spring_brake/shut_off", false)   # ShuttOff
         var doors_left:bool = car_state.get("doors_left_position", 0.0) > 0.0
@@ -197,6 +222,28 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
                 result["diesel_param_%d_nrot" % powered_number] = car_state.get("wheel_rotation_speed_rps", 0.0)   # nrot
                 result["diesel_param_%d_fill_real" % powered_number] = car_state.get("diesel_fill", 0.0)   # dizel_fill
                 result["diesel_param_%d_oil_press" % powered_number] = car_state.get("oil_pump_pressure", 0.0)   # OilPump.pressure
+                result["diesel_param_%d_fill_des" % powered_number] = car_state.get("diesel_fill_desired", 0.0)   # RList[MainCtrlPos].R
+                result["diesel_param_%d_clutch_des" % powered_number] = car_state.get("diesel_clutch_desired", 0.0)   # RList[MainCtrlPos].Mn
+                result["diesel_param_%d_clutch_real" % powered_number] = car_state.get("diesel_clutch_engagement", 0.0)   # dizel_engage
+                result["diesel_param_%d_water_temp" % powered_number] = car_state.get("diesel_water_temperature", 0.0)   # dizel_heat.Twy
+                result["diesel_param_%d_engine_temp" % powered_number] = car_state.get("diesel_engine_temperature", 0.0)   # dizel_heat.Ts
+                result["diesel_param_%d_retarder_fill" % powered_number] = car_state.get("diesel_retarder_fill", 0.0)   # hydro_R_Fill
+            else:
+                # Train.cpp:8712-8723 - an induction motor car's forces, currents and voltages
+                var force:float = car_state.get("force_max", 0.0)   # eimv[eimv_Fmax]
+                var force_share:float = force / maxf(car_state.get("force_full", 0.0), 1.0)
+                var total_current:float = car_state.get("total_current", 0.0)   # Itot
+                result["eimp_c%d_fr" % powered_number] = force
+                result["eimp_c%d_frt" % powered_number] = maxf(force, 0.0)
+                result["eimp_c%d_frb" % powered_number] = -minf(force, 0.0)
+                result["eimp_c%d_pr" % powered_number] = force_share
+                result["eimp_c%d_prt" % powered_number] = maxf(force_share, 0.0)
+                result["eimp_c%d_prb" % powered_number] = -minf(force_share, 0.0)
+                result["eimp_c%d_im" % powered_number] = car_state.get("field_current", 0.0)   # eimv[eimv_If]
+                result["eimp_c%d_vm" % powered_number] = car_state.get("motor_voltage", 0.0)   # eimv[eimv_U]
+                result["eimp_c%d_ihv" % powered_number] = total_current
+                result["eimp_c%d_uhv" % powered_number] = car_state.get("engine_voltage", 0.0)   # EngineVoltage
+                result["eimp_t_itothv"] += total_current
             result["eimp_c%d_ms" % powered_number] = car_state.get("main_switch_enabled", false)   # Mains
             result["eimp_c%d_cv" % powered_number] = car_state.get("battery_voltage", 0.0)   # BatteryVoltage
             result["eimp_c%d_fuse" % powered_number] = car_state.get("fuse_active", false)   # FuseFlag
@@ -234,22 +281,21 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     return result
 
 
-## The state and config of every vehicle joined to this one by `element`, in the order
-## TDynamicObject::find_vehicle() searches them: the vehicle itself, then towards its rear, then
-## towards its front (DynObj.h:889)
-static func _search_order(vehicle:RID, element:RailVehicleController.CouplingElement) -> Array[Dictionary]:
-    var joined:Array = RailVehicleServer.vehicle_get_coupled(vehicle, 0, element)
-    var own:int = joined.find(vehicle)
-    var order:Array = [vehicle] + joined.slice(own + 1)
-    for index:int in range(own - 1, -1, -1):
-        order.append(joined[index])
-    var result:Array[Dictionary] = []
-    for joined_vehicle:RID in order:
-        result.append({
-            "state": RailVehicleServer.vehicle_dump_state(joined_vehicle),
-            "config": RailVehicleServer.vehicle_dump_config(joined_vehicle),
-        })
-    return result
+## The TMoverParameters::light bits of the lamps lit at one end ("front"/"rear") of a vehicle
+static func _light_bits(state:Dictionary, end:String) -> int:
+    var bits:int = 0
+    for lamp:String in LIGHT_BITS:
+        if state.get("lights/%s_%s" % [end, lamp], false):
+            bits |= LIGHT_BITS[lamp]
+    return bits
+
+
+## The lamps at the end of an outermost vehicle of the train that has nothing coupled to it
+## (iLights[] of the train's end vehicle, by its own direction, Train.cpp:735-740)
+static func _outer_light_bits(end_vehicle:RID) -> int:
+    var beyond_front:Array = RailVehicleServer.vehicle_get_coupled(end_vehicle, 0, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    var outer:String = "front" if beyond_front.front() == end_vehicle else "rear"
+    return _light_bits(RailVehicleServer.vehicle_dump_state(end_vehicle), outer)
 
 
 static func _static_init() -> void:

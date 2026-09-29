@@ -232,6 +232,9 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 
 ### E186 controls - what is still simplified
 
+* The E186 screen's pantograph page (`traxx_renderer.py`, the game's own script) toggles its
+  "odbiornik prądu" 1 / 2 / 1+2 without OP1/OP2 being pressed (seen 2026-09-29, left as it is -
+  the script's own selector, not checked against the original).
 * `pantselect_sw` / `PantsPreset` (choosing which pantographs the master valve raises,
   Train.cpp:3529 change_pantograph_selection, update_pantograph_valves) is not ported.
 * `MoverCurrentCollectorUnit::pantograph()` still opens the master valve itself when a pantograph
@@ -301,35 +304,28 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 * **Windows runtime untested** - should use the game dir's `python27.dll` and `python64/`
   (PyInt.cpp:233); `make python-runtime` builds only the Linux one.
-* **Keys with no source yet** - each needs its Mover field published by its component, then one
-  line in `PythonScreenState`:
-  * controlled vehicle: `pant_compressor` (PantCompFlag), `new_speed` (NewSpeed),
-    `speedctrlstandby` (SpeedCtrlUnit.Standby), `scnd_ctrl_actual_pos`, `brake_delay_flag`,
-    `brake_op_mode_flag`, `pipelock` (LockPipe), `tractionforce` (Ft), `voltage` (EngineVoltage),
-    `im` (Im), `power_drawn`/`power_returned` (EnergyMeter), `lights_compartments`
-    (CompartmentLights), `off_from_dimmer` (dimPositions), `main_init` (MainsInitTime), lamps
-    beyond the five carried (rearendsignals, auxiliary_*) in `lights_front`/`lights_rear`;
-  * train row `eimp_t_*` and the ED share of `dir_brake` (eimic_real, eimv[eimv_Fful], Itot);
-  * per car: `eimp_pnN_cp` (CntrlPipePress), `eimp_pnN_rp` (Hamulec->GetBRP()), `eimp_pnN_mass`
-    (TotalMass - Mred), `code_N` (last letter of TypeName; `type_name` is not in the config dump),
-    `doors_no_N` (iAnimType[ANIM_DOORS]);
-  * per powered car: `eimp_cN_fr`..`uhv` (eimv[], Itot, EngineVoltage), `eimp_cN_invno`,
-    `eimp_cN_invM_act/error/allow` (InvertersNo, Inverters[] - 38 scripts),
-    `diesel_param_N_fill_des`/`clutch_des` (RList[MainCtrlPos]), `clutch_real` (dizel_engage),
-    `water_temp`/`engine_temp` (dizel_heat), `retarder_fill` (hydro_R_Fill); powered is told by
-    engine type, the original tests eimc[eimc_p_Pmax] > 1;
-  * `TDynamicObject::FindPowered()` searches only an EZT/DMU unit - the train type is not in the
-    config dump, so the wrapper searches the whole control coupling.
-* **Cab keys** (TTrain members): `universal0`..`29` (ggUniversals), `universal3`
-  (InstrumentLightActive), `radio_volume`, `distance_counter`, `main_ready` (fHVoltage),
-  `lights_train_front`/`rear`.
+* **Keys with no source yet**:
+  * `off_from_dimmer` (dimPositions[modernDimmerPosition].isOff) - the vendored Mover has no
+    dimmer positions; RailVehicleSwitches keeps DimmerList/ModernDimmer only as data;
+  * `lights_compartments` (CompartmentLights) - the wrapper never drives the Mover's
+    CompartmentLights (`compartmentlights_sw` is not ported, see Cabins); `roof_light_enabled` is
+    the cab light, not the compartments;
+  * `doors_no_N` (iAnimType[ANIM_DOORS]) - the MMD `animations:` count, held by the model layer,
+    not the vehicle's state;
+  * lamps beyond the five carried (rearendsignals, auxiliary_*) in `lights_front`/`lights_rear`/
+    `lights_train_*`;
+  * the powered cars are told by engine type (induction motor, diesels); the original tests
+    eimc[eimc_p_Pmax] > 1, and fills `eimp_cN_*` of induction cars and `diesel_param_N_*` in one
+    shared count.
+* **Cab keys**: `universal10`..`29` are read, but only `universal0`..`9` have a catalog entry and
+  a key (`generic_toggle_N`), so the higher ones cannot be operated.
 * **No AI driver / timetable** - `velocity_desired`, `velroad`, `vellimitlast`, `velsignallast`,
   `velsignalnext`, `velnext`, `actualproximitydist`, `train_atpassengerstop`, `train_length`,
   `trainnumber`, every `train_*` key (TTrainParameters::serialize(), mtable.cpp:641), and
   `$timetable=` (dictionary.cpp:36).
 * **No test** for `RailVehicleServer.vehicle_get_coupled()` (order from the far end, stop at a
-  coupling without the element, a turned vehicle) or `PythonScreenState.compose()`; only checked
-  with the E186 in `td_e186.scn`.
+  coupling without the element, a turned vehicle); `PythonScreenState.compose()` is tested only for
+  the EIM row (test_train_electric_induction_engine.gd).
 * **Commands a script returns are not executed** (two scripts send `lightsset`); map
   `simulation::commandMap` names onto vehicle commands (PyInt.cpp:138-194).
 * **Touch input** (`touches`, `screen_touch_list`, Train.cpp:10713) is always empty.
@@ -987,6 +983,10 @@ ported, into a delegate.
 
 ## Tests
 
+* `test_train_electric_induction_engine.gd` fails 3 tests on a clean `46a51cd2` (checked
+  2026-09-29 in a separate worktree): `_powered_up_eim()` never closes the line breaker, so
+  `..._does_not_turn_forces_into_nan`, `test_the_state_carries_each_inverter` and
+  `test_driven_induction_motor_pulls_once_the_controller_moves` fail. Not looked into.
 * `test_e3d_rendering_server.gd` passes 9/9 but the process does not exit (timeout at 60 s),
   seen after godot-cpp was raised to `507ed9d` (2026-09-27); not checked whether it hung before.
 * Stary Jawor's eszelon at x10 (headless, 2026-09-27) runs at about 20 km/h wanting 70: the master

@@ -21,6 +21,7 @@ namespace godot {
             double get_desired_power() const override;
             double get_selected_velocity() const override;
             double get_set_velocity() const override;
+            bool get_standby() const override;
             void speed_control_increase() override;
             void speed_control_decrease() override;
             void speed_control_power_increase() override;

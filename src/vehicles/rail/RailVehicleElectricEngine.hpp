@@ -38,6 +38,10 @@ namespace godot {
 
             /* The traction motors (RailVehicleTractionMotorsUnit) */
             double get_motor_current() const;
+            /* The voltage on the motors [V] (EngineVoltage) */
+            double get_engine_voltage() const;
+            /* The current drawn from the high voltage line [A] (Itot) */
+            double get_total_current() const;
             double get_circuit_imax() const;
             bool get_dynamic_brake_active() const;
             bool get_fuse_active() const;
@@ -76,6 +80,8 @@ namespace godot {
             bool get_collector_pantograph_second_active() const;
             double get_collector_pantograph_second_voltage() const;
             double get_collector_voltage() const;
+            /* The highest voltage on the trainset's high voltage and heating lines [V] */
+            double get_collector_trainset_high_voltage() const;
             /* Energy drawn from the wire and returned to it [kWh], the returned one negative */
             double get_energy_drawn() const;
             double get_energy_returned() const;

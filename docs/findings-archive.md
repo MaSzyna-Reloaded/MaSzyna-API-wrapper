@@ -4,6 +4,64 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - the E186 screen's OP1/OP2 turned its page off
+
+* **Symptom:** on the E186 screen's pantograph page (universal1), OP1/OP2 did nothing but bring
+  the main page back; hovering any button of the panel lit them all, captioned "element ruchomy".
+* **What proved it:** a probe on the real cab: `op1`/`op2` (pantfront_sw/pantrear_sw) are
+  submodels under `opcje_panto` (universal1) - pushing universal1 turned the panel and moved them
+  into view. `CabinHUDMouseSystem::_pickable()` gave a control its mesh and every mesh under it,
+  so universal1 held op1's triangles too and took the cursor and the click for it.
+* **Fix:** a mesh belongs to the nearest control above it - a control leaves out another
+  control's mesh with everything under it, whichever is created first. Test:
+  `test_a_control_under_another_control_is_its_own`.
+* **Rule:** a control's pickable ends at the next control's submodel below it.
+
+## 2026-09-29 - a rebuilt cab showed the E186 screen's page button off
+
+* **Symptom:** the E186 screen (`traxx_renderer.py`) switched to its pantograph page from the
+  rightmost button under it (`universal1`), and then the button "did not work": the page stayed,
+  or came back.
+* **What proved it:** a headless probe on the real E186 cab
+  (`MaszynaRailVehicle3D` + `show_cabin()`), printing per frame the widget's `pushed`,
+  `CabinState.get_value(&"universal1")` and `PythonScreenState.compose()["universal1"]`. A click
+  set all three; after `hide_cabin()`/`show_cabin()` the new widget read `pushed=false` while the
+  cab and the screen still held `true`, and the next press sent `true` again - no change.
+  `CabinButton._update_state()` read a control with no `state_property` as `false`, not as what
+  the cab holds. Before the fix of the same day (a cab built on a running train) that `false` was
+  also sent, and turned the page off at every rebuild.
+* **Fix:** a button with no vehicle state behind it shows `CabinSystem.get_control()` of the
+  occupied cab (`_apply_control_value()`). Test: `test_rebuilt_button_shows_what_the_cab_holds`.
+* **Rule:** a control whose value lives only in the cab (`CabinState`) shows that value when it is
+  built - a view rebuilt does not reset the cab.
+
+## 2026-09-29 - the E186 screen showed no line voltage
+
+* **Symptom:** the kV bar of the E186 diagnostic screen stayed at 0 under the wire.
+* **What proved it:** the bar is `state['eimp_c1_uhv']` = `EngineVoltage` (Train.cpp:8723).
+  `PythonScreenState` never filled the EIM row, and `engine_voltage` was published by
+  `RailVehicleElectricSeriesEngine` alone - the Mover computes `EngineVoltage` for every engine
+  (Mover.cpp:4542), and an induction motor had no key for it. `Itot` and `eimv[]` were published
+  nowhere.
+* **Fix:** `engine_voltage` and `total_current` on the traction motors unit (every electric
+  engine and the diesel-electric), `force_max`/`force_full`/`field_current`/`motor_voltage` on
+  the induction engine, and the EIM rows composed as Train.cpp:8712-8787 does.
+* **Rule:** a Mover field every engine type computes is published by the part every engine type
+  has, not by the first subclass that needed it.
+
+## 2026-09-29 - MainInitTime was never loaded
+
+* **Symptom:** found while porting `main_init`/`main_ready` for the screens: the wrapper had no
+  property for FIZ `Cntrl.` `MainInitTime`.
+* **What proved it:** `MainsInitTime` is set only by `LoadFIZ_Cntrl` (Mover.cpp:10910); nothing
+  in the wrapper wrote it, so it kept the struct default 0 - a vehicle whose main circuit needs
+  time after power returns (MainsCheck(), Mover.cpp:1591-1603; MainSwitch() waits for it,
+  Mover.cpp:3360) closed its line breaker at once.
+* **Fix:** `RailVehicleEngine.main_init_time`, read from `MainInitTime` and applied in
+  `MoverDriveUnit::apply_configuration()`; `FIZ_PARSER_FORMAT_VERSION` 28.
+* **Rule:** as the other Cntrl. entries - grep every `extract_value(..., "Key")` of LoadFIZ_Cntrl
+  against the parser before calling a section ported.
+
 ## 2026-09-29 - EP07 rolled out of Markowo without power: a moment without voltage tripped it for good
 
 * **Symptom:** krzyzowa2, the dispatcher gave the player's EX6435 no entry into Markowo Górne; the

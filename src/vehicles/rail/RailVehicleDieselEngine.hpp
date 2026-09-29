@@ -37,6 +37,12 @@ namespace godot {
             double get_output_power() const;
             double get_torque() const;
             double get_fill() const;
+            double get_fill_desired() const;
+            double get_clutch_desired() const;
+            double get_clutch_engagement() const;
+            double get_water_temperature() const;
+            double get_engine_temperature() const;
+            double get_retarder_fill() const;
             double get_max_rpm() const;
 
             /* R_Place= : retarder location within the mechanical transmission */

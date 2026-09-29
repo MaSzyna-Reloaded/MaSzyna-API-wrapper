@@ -14,6 +14,8 @@ namespace godot {
             explicit MoverTractionMotorsUnit(const MoverComponent &p_owner) : owner(p_owner) {}
 
             double get_motor_current() const override;
+            double get_engine_voltage() const override;
+            double get_total_current() const override;
             double get_circuit_imax() const override;
             bool get_dynamic_brake_active() const override;
             bool get_fuse_active() const override;

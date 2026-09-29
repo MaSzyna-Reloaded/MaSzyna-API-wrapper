@@ -494,6 +494,10 @@ namespace godot {
         p_state["brake_delay_setting"] = mover->BrakeDelayFlag;
         // the distributor's control reservoir (GetCRP())
         p_state["brake_control_reservoir_pressure"] = mover->Hamulec ? mover->Hamulec->GetCRP() : 0.0;
+        // the control pipe (CntrlPipePress) and the distributor's brake reservoir (GetBRP()),
+        // Train.cpp:8677-8678
+        p_state["brake_control_pipe_pressure"] = mover->CntrlPipePress;
+        p_state["brake_reservoir_pressure"] = mover->Hamulec ? mover->Hamulec->GetBRP() : 0.0;
     }
 
     void MoverRailVehicleBrake::_apply_configuration() {

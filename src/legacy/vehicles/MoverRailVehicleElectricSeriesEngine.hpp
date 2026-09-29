@@ -32,7 +32,6 @@ namespace godot {
 
             double get_resistor_fan_rotation() const override;
             double get_circuit_imin() const override;
-            double get_engine_voltage() const override;
             double get_next_position_velocity(bool p_main_controller) const override;
 
         protected:

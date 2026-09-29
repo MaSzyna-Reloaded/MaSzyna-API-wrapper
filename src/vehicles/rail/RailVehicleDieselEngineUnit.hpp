@@ -29,6 +29,18 @@ namespace godot {
             virtual double get_output_power() const = 0;
             virtual double get_torque() const = 0;
             virtual double get_fill() const = 0;
+            /* The fill the master controller's position asks for (RList[MainCtrlPos].R) */
+            virtual double get_fill_desired() const = 0;
+            /* The clutch engagement the master controller's position asks for (RList[MainCtrlPos].Mn) */
+            virtual double get_clutch_desired() const = 0;
+            /* The clutch engagement reached (dizel_engage) */
+            virtual double get_clutch_engagement() const = 0;
+            /* The cooling water's temperature at the engine outlet [C] (dizel_heat.Twy) */
+            virtual double get_water_temperature() const = 0;
+            /* The engine's temperature [C] (dizel_heat.Ts) */
+            virtual double get_engine_temperature() const = 0;
+            /* The hydraulic retarder's fill (hydro_R_Fill) */
+            virtual double get_retarder_fill() const = 0;
             virtual double get_max_rpm() const = 0;
             virtual void apply_configuration(const RailVehicleDieselEngine *p_engine) const = 0;
             virtual void oil_pump(bool p_enabled) const = 0;

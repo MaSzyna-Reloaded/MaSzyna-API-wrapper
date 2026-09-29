@@ -74,6 +74,10 @@ anything. Open work belongs in `TODO.md`.
   section header close the open table. *(09-25 E186 cab half built)*
 * A workaround in a `Mover*` call is a sign that a FIZ key is not ported yet. Before keeping one,
   read the key's default in `LoadFIZ_*`. *(09-25 pantographs raised only with the master valve forced)*
+* A Mover field every engine type computes (EngineVoltage) is published by the part they all
+  have, not by the first subclass that needed it. *(09-29 the E186 screen showed no line voltage)*
+* Grep every `extract_value(..., "Key")` of LoadFIZ_Cntrl against the parser before calling the
+  section ported. *(09-29 MainInitTime was never loaded)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
   for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
 * Every `OnCommand_*` works without its gauge. A control only in `MmdSemanticCatalog` is dead in a
@@ -213,6 +217,10 @@ anything. Open work belongs in `TODO.md`.
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
   (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
   vehicle's voltage)*
+* A control's pickable ends at the next control's submodel below it - one mesh, one control.
+  *(09-29 the E186 screen's OP1/OP2 turned its page off)*
+* A control whose value lives only in the cab (`CabinState`) shows that value when it is built; a
+  cab rebuilt resets nothing. *(09-29 a rebuilt cab showed the E186 screen's page button off)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before
   the driver exists. *(09-27 the AI drove the cab the player started in)*
 * Whoever attaches something shared per vehicle takes away only what it attached - another owner

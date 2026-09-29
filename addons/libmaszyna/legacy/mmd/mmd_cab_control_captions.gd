@@ -150,39 +150,19 @@ const CAPTIONS:Dictionary[StringName, String] = {
     &"universalbrake1_bt": "train brake",
     &"universalbrake2_bt": "train brake",
     &"universalbrake3_bt": "train brake",
-    &"universal0": "interactive part",
-    &"universal1": "interactive part",
-    &"universal2": "interactive part",
-    &"universal3": "interactive part",
-    &"universal4": "interactive part",
-    &"universal5": "interactive part",
-    &"universal6": "interactive part",
-    &"universal7": "interactive part",
-    &"universal8": "interactive part",
-    &"universal9": "interactive part",
-    &"universal10": "interactive part",
-    &"universal11": "interactive part",
-    &"universal12": "interactive part",
-    &"universal13": "interactive part",
-    &"universal14": "interactive part",
-    &"universal15": "interactive part",
-    &"universal16": "interactive part",
-    &"universal17": "interactive part",
-    &"universal18": "interactive part",
-    &"universal19": "interactive part",
-    &"universal20": "interactive part",
-    &"universal21": "interactive part",
-    &"universal22": "interactive part",
-    &"universal23": "interactive part",
-    &"universal24": "interactive part",
-    &"universal25": "interactive part",
-    &"universal26": "interactive part",
-    &"universal27": "interactive part",
-    &"universal28": "interactive part",
-    &"universal29": "interactive part",
     &"wipers_sw": "wipers mode selector",
 }
 
 
+## universal0..29 (translation.cpp:316-345) - the original captions them all alike; here each
+## carries its number, so the parts of one cab can be told apart
+const UNIVERSAL_PREFIX:String = "universal"
+const UNIVERSAL_CAPTION:String = "interactive part"
+
+
 static func caption(label:StringName) -> String:
+    var number:String = String(label).trim_prefix(UNIVERSAL_PREFIX)
+    if String(label).begins_with(UNIVERSAL_PREFIX) and number.is_valid_int():
+        # translated here: the tooltip's Label would not find the msgid with the number after it
+        return "%s %s" % [TranslationServer.translate(UNIVERSAL_CAPTION), number]
     return CAPTIONS.get(label, "")

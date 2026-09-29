@@ -135,6 +135,11 @@ namespace godot {
         return p_mover != nullptr ? p_mover->PantographVoltage : 0.0;
     }
 
+    double MoverCurrentCollectorUnit::get_trainset_high_voltage() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->GetTrainsetHighVoltage() : 0.0;
+    }
+
     double MoverCurrentCollectorUnit::get_energy_drawn() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EnergyMeter.first : 0.0;

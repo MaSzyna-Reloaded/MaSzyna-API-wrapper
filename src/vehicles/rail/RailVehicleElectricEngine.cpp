@@ -123,6 +123,9 @@ namespace godot {
             current_collector_unit->set_voltage(p_voltage);
         }
     }
+    double RailVehicleElectricEngine::get_collector_trainset_high_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_trainset_high_voltage() : 0.0;
+    }
     double RailVehicleElectricEngine::get_energy_drawn() const {
         return current_collector_unit != nullptr ? current_collector_unit->get_energy_drawn() : 0.0;
     }
@@ -490,6 +493,14 @@ namespace godot {
                         Variant::FLOAT, "collector_voltage", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_voltage");
+        ClassDB::bind_method(
+                D_METHOD("get_collector_trainset_high_voltage"),
+                &RailVehicleElectricEngine::get_collector_trainset_high_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "collector_trainset_high_voltage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_trainset_high_voltage");
         ClassDB::bind_method(D_METHOD("get_contactors_active"), &RailVehicleElectricEngine::get_contactors_active);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -574,6 +585,18 @@ namespace godot {
                         Variant::FLOAT, "motor_current", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_motor_current");
+        ClassDB::bind_method(D_METHOD("get_engine_voltage"), &RailVehicleElectricEngine::get_engine_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "engine_voltage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_engine_voltage");
+        ClassDB::bind_method(D_METHOD("get_total_current"), &RailVehicleElectricEngine::get_total_current);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "total_current", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_total_current");
         ClassDB::bind_method(D_METHOD("get_circuit_imax"), &RailVehicleElectricEngine::get_circuit_imax);
         ADD_PROPERTY(
                 PropertyInfo(
@@ -618,6 +641,8 @@ namespace godot {
         p_state["line_breaker_initial_delay"] = get_line_breaker_initial_delay();
         p_state["line_breaker_closes_at_no_power"] = get_line_breaker_closes_at_no_power();
         p_state["Im"] = get_motor_current();
+        p_state["engine_voltage"] = get_engine_voltage();
+        p_state["total_current"] = get_total_current();
         p_state["circuit_imax"] = get_circuit_imax();
         p_state["dynamic_brake_active"] = get_dynamic_brake_active();
         p_state["fuse_active"] = get_fuse_active();
@@ -657,6 +682,7 @@ namespace godot {
         p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
         p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();
         p_state["current_collector/voltage"] = get_collector_voltage();
+        p_state["current_collector/trainset_high_voltage"] = get_collector_trainset_high_voltage();
         // Train.cpp:810
         p_state["power_drawn"] = get_energy_drawn();
         p_state["power_returned"] = get_energy_returned();
@@ -676,6 +702,14 @@ namespace godot {
 
     double RailVehicleElectricEngine::get_motor_current() const {
         return traction_motors_unit != nullptr ? traction_motors_unit->get_motor_current() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_engine_voltage() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_engine_voltage() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_total_current() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_total_current() : 0.0;
     }
 
     double RailVehicleElectricEngine::get_circuit_imax() const {

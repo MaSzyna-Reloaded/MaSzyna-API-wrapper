@@ -25,6 +25,8 @@ namespace godot {
             virtual double get_selected_velocity() const = 0;
             /* The speed set by an impulse lever, in tens (NewSpeed) */
             virtual double get_set_velocity() const = 0;
+            /* The speed control is on but waiting, holding no power (SpeedCtrlUnit.Standby) */
+            virtual bool get_standby() const = 0;
             /* The player's buttons (OnCommand_speedcontrol*, Train.cpp:6887-6974) */
             virtual void speed_control_increase() = 0;
             virtual void speed_control_decrease() = 0;

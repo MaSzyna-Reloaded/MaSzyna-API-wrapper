@@ -276,3 +276,24 @@ func test_freeing_the_hovered_control_clears_its_outline() -> void:
     CabinHUDMouseSystem.control_free(_control)
     assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
     assert_null(_mesh.material_overlay)
+
+
+## E186's op1 (pantfront_sw) is a submodel under opcje_panto (universal1), whose panel turns it into
+## view: a control under another's mesh is its own - the one above hovered and clicked it for it,
+## and every button of the panel lit up together.
+func test_a_control_under_another_control_is_its_own() -> void:
+    var child:MeshInstance3D = MeshInstance3D.new()
+    child.mesh = BoxMesh.new()
+    child.position = Vector3(2.0, 0.0, 0.0)
+    _mesh.add_child(child)
+    var child_control:RID = CabinHUDMouseSystem.control_create(child.get_instance_id(), "pantograph", "",
+            func() -> void: _calls.append("child pressed"), Callable(), Callable(), Callable(),
+            Basis.IDENTITY, Vector3.ZERO, Callable(), Vector2.ZERO)
+
+    _move_to(_camera.unproject_position(child.global_position))
+    assert_eq(CabinHUDMouseSystem.control_get_hovered(), child_control, "the child takes the cursor")
+    assert_null(_mesh.material_overlay, "and the control above it is not lit")
+    _left_button(true)
+    _left_button(false)
+    assert_eq(_calls, ["child pressed"] as Array[String])
+    CabinHUDMouseSystem.control_free(child_control)

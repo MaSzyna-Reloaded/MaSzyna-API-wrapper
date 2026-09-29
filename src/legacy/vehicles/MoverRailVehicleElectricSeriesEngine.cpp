@@ -60,11 +60,6 @@ namespace godot {
         return mover != nullptr ? mover->Imin : 0.0;
     }
 
-    double MoverRailVehicleElectricSeriesEngine::get_engine_voltage() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->EngineVoltage : 0.0;
-    }
-
     void MoverRailVehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
         RailVehicleElectricSeriesEngine::_fill_config_dictionary(p_config);
         TMoverParameters *mover = get_mover();

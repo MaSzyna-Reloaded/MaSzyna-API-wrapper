@@ -100,6 +100,7 @@ namespace godot {
         p_mover->Transmision.Efficiency = p_engine->get_transmission_efficiency();
         p_mover->Ftmax = p_engine->get_maximum_traction_force();
         p_mover->HasControlPressureSwitch = p_engine->get_pressure_switch_present();
+        p_mover->MainsInitTime = p_engine->get_main_init_time();
         p_mover->InvertersNo = p_engine->get_inverters_count();
         for (auto &fan: p_mover->MotorBlowers) {
             fan.speed = static_cast<float>(p_engine->get_motor_blowers_speed());

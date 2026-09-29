@@ -71,3 +71,9 @@ func test_cab_control_caption_is_a_msgid() -> void:
 
 func test_label_without_caption_has_none() -> void:
     assert_eq(MmdCabControlCaptions.caption(&"no_such_control"), "")
+
+
+func test_universal_part_caption_carries_its_number() -> void:
+    assert_eq(MmdCabControlCaptions.caption(&"universal1"),
+            "%s 1" % TranslationServer.translate("interactive part"))
+    assert_eq(MmdCabControlCaptions.caption(&"universalbrake1_bt"), "train brake")

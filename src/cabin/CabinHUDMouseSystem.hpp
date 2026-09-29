@@ -4,6 +4,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/hash_set.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -53,7 +54,10 @@ namespace godot {
             };
 
             /// What the cursor ray can hit of one control or occluder. A control is its mesh and
-            /// every mesh under it - they move with it, like a brake valve's handle with its core
+            /// every mesh under it - they move with it, like a brake valve's handle with its core -
+            /// but for a mesh that is another control's, with everything under that one (E186's
+            /// op1/op2 buttons, pantfront_sw/pantrear_sw, on the universal1 panel that turns them
+            /// into view)
             struct Pickable {
                     Vector<Part> parts;
             };
@@ -113,8 +117,10 @@ namespace godot {
             /// nothing) - the drag follows the control as the hand would
             Vector2 drag_signs;
 
-            /// With `p_with_children` the meshes under the mesh belong to it as well
-            static Pickable _pickable(uint64_t p_mesh_instance_id, bool p_with_children);
+            /// With `p_with_children` the meshes under the mesh belong to it as well, but for
+            /// those under a mesh of `p_other_controls`
+            static Pickable
+            _pickable(uint64_t p_mesh_instance_id, bool p_with_children, const HashSet<uint64_t> &p_other_controls);
             /// The nearest hit of the segment on the pickable closer than `r_distance`: updates
             /// `r_distance` and `r_point` (world space) and returns true
             static bool

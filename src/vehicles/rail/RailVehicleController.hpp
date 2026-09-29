@@ -60,6 +60,11 @@ namespace godot {
             virtual int get_controller_main_position() const = 0;
             virtual int get_controller_joint_position() const = 0;
             virtual int get_controller_main_actual_position() const = 0;
+            /* The position the secondary controller has actually reached (ScndCtrlActualPos) */
+            virtual int get_controller_second_actual_position() const = 0;
+            /* The rotating masses' share of the vehicle's mass [kg] (Mred) - as the simulation
+             * holds it, which the wheels may have derived from their own inertia */
+            virtual double get_mass_reduced() const = 0;
             /* DelayCtrlFlag: the master controller waits on its first position for the line
              * contactors (Mover.cpp) */
             virtual bool get_controller_main_delayed() const = 0;

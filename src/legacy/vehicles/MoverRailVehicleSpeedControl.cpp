@@ -76,6 +76,11 @@ namespace godot {
         return mover != nullptr ? mover->NewSpeed : 0.0;
     }
 
+    bool MoverRailVehicleSpeedControl::get_standby() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->SpeedCtrlUnit.Standby;
+    }
+
     void MoverRailVehicleSpeedControl::speed_control_increase() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
@@ -122,5 +127,6 @@ namespace godot {
         p_state["speed_control/desired_power"] = get_desired_power();
         p_state["speed_control/selected_velocity"] = get_selected_velocity();
         p_state["speed_control/set_velocity"] = get_set_velocity();
+        p_state["speed_control/standby"] = get_standby();
     }
 } // namespace godot

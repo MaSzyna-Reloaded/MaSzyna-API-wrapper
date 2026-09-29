@@ -4,6 +4,29 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-29 - a train held by a Tm at stop it had passed
+
+* **Symptom:** on krzyzowa2 the goods train 3E/1-42 (TME9637) left Krzyżowa as a train at 90 km/h
+  and, about 30 s later, braked to a stand in open country for good - `stop_reason` 4, `velocity_next`
+  0 at `proximity_distance` -314 m. The player's driving aid, which reads the same table
+  (`DriverSystem.driver_get_state()`), was reported showing "stop" often.
+* **What proved it:** a headless probe of the real scenery, the driver's table read each second: at
+  the stop the only entry behind the front with a speed of 0 was `krzyzowa_tm6_sem_info`
+  (`ShuntVelocity 0 0`), passed 314 m earlier; nothing ahead limited the train.
+* **Cause:** the original ignores a Tm at stop for a train whether it is ahead or passed
+  (`Velocity = -1`, and a passed one is let go of - `Point.Clear()`, TableUpdateEvent(),
+  Driver.cpp:1618-1626). The port did it only for one ahead (`distance > 0`); a passed one fell
+  through to "an event behind holds only a stop" (Driver.cpp:957-963), asked for -2 m/s2 and held the
+  train there.
+* **Fix:** a passed Tm at stop is skipped by a train and taken out of the table. The first attempt
+  moved the "ignore" before the branch that sends `ShuntVelocity`, which in the original is its
+  `else`: a Tm at stop ahead then turned the train into a shunting movement (`ShuntVelocity -1 -1`
+  at order 128), and it stood before Tm6 for good - found by logging the driver's commands
+  (`GameLog.log_updated`) in the probe.
+* **Rule:** a signal a train ignores is ignored behind it as much as ahead; and an `if ... else if`
+  of the original stays exclusive in the port - hoisting its first branch changes what the second
+  sees.
+
 ## 2026-09-29 - td.scn's second track dead: a chain that touches no powered span is fed across the overlap
 
 * **Symptom:** on td.scn, past switch `zwr01`, the diverging track has catenary but a raised

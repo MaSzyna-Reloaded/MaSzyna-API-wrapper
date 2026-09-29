@@ -21,6 +21,13 @@ const DOUBLE_SPEED:float = 2.0
 const SHORT_FRAME:float = 0.1
 ## What the clock node adds between the calls of a test - a frame or two at most [s]
 const FRAME_TOLERANCE:float = 0.05
+## SimulationServer::SPEED_CHANGE_TIME_SETTING - how long the running speed takes to reach one set
+const SPEED_CHANGE_TIME_SETTING:String = "maszyna/simulation/speed_change_time"
+const SPEED_CHANGE_TIME:float = 0.4
+## Enough frames for the running speed to have reached the one set, many times over
+const SETTLE_FRAMES:int = 100
+
+var _speed_change_time:Variant
 
 var _track:RID = RID()
 var _controller:VehicleController = null
@@ -28,6 +35,9 @@ var _vehicle:RID = RID()
 
 
 func before_each() -> void:
+    # the clock is measured at the speed set, not on its way to it
+    _speed_change_time = ProjectSettings.get_setting(SPEED_CHANGE_TIME_SETTING)
+    ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, 0.0)
     var curve:TrackCurve = TrackCurve.new()
     curve.p1 = Vector3.ZERO
     curve.p2 = Vector3(TRACK_LENGTH_M, 0.0, 0.0)
@@ -48,6 +58,8 @@ func before_each() -> void:
 
 func after_each() -> void:
     SimulationServer.simulation_speed = 1.0
+    SimulationServer.advance(SHORT_FRAME)
+    ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, _speed_change_time)
     if TrackServer.track_exists(_track):
         TrackServer.track_free(_track)
     TrackServer.topology_rebuild()
@@ -125,3 +137,18 @@ func test_the_clock_stands_while_paused() -> void:
     assert_eq(SimulationServer.get_simulation_time(), time_before)
     assert_eq(_travelled(), before)
     SimulationServer.unpause()
+
+
+## Like a tape's motor, the running speed gets to the one set over a while, not at once
+func test_a_speed_set_is_reached_over_the_speed_change_time() -> void:
+    ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME)
+    SimulationServer.simulation_speed = DOUBLE_SPEED
+
+    SimulationServer.advance(SHORT_FRAME)
+    var running:float = SimulationServer.simulation_get_current_speed()
+    assert_true(running > 1.0 and running < DOUBLE_SPEED, "on its way: %s" % running)
+    for frame:int in SETTLE_FRAMES:
+        SimulationServer.advance(SHORT_FRAME)
+
+    assert_eq(SimulationServer.simulation_get_current_speed(), DOUBLE_SPEED)
+    assert_eq(SimulationServer.simulation_speed, DOUBLE_SPEED, "the speed set is the one set")

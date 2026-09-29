@@ -62,6 +62,8 @@ func _ready() -> void:
     _pause_button.set_pressed_no_signal(SimulationServer.is_paused())
     SimulationServer.paused.connect(_pause_button.set_pressed_no_signal.bind(true))
     SimulationServer.unpaused.connect(_pause_button.set_pressed_no_signal.bind(false))
+    SimulationServer.simulation_speed_changed.connect(_on_simulation_speed_changed)
+    _on_simulation_speed_changed()
     _day_slider.value_changed.connect(_on_day_changed)
     _month_slider.value_changed.connect(_on_month_changed)
     _year_slider.value_changed.connect(_on_year_changed)
@@ -78,6 +80,7 @@ func _exit_tree() -> void:
     _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
     SimulationServer.paused.disconnect(_pause_button.set_pressed_no_signal.bind(true))
     SimulationServer.unpaused.disconnect(_pause_button.set_pressed_no_signal.bind(false))
+    SimulationServer.simulation_speed_changed.disconnect(_on_simulation_speed_changed)
 
 
 ## The environment applied a change, so everything the window shows is out of date.
@@ -126,8 +129,11 @@ func _process_dirty() -> void:
     _fog_density_value_label.text = _format_percent(_environment_node.fog_density)
     _fog_distance_slider.set_value_no_signal(_environment_node.fog_distance)
     _fog_distance_value_label.text = _format_meters(_environment_node.fog_distance)
-    # the step nearest the speed - one set elsewhere need not be a step
-    var speed: float = _environment_node.simulation_speed
+
+
+## The step nearest the speed - one set elsewhere (the speed panel, a script) need not be a step
+func _on_simulation_speed_changed() -> void:
+    var speed: float = SimulationServer.simulation_speed
     var step: int = 0
     for index: int in TIME_SCALE_STEPS.size():
         if absf(TIME_SCALE_STEPS[index] - speed) < absf(TIME_SCALE_STEPS[step] - speed):
@@ -216,7 +222,7 @@ func _on_system_time_toggled(pressed: bool) -> void:
 
 
 func _on_time_scale_changed(value: float) -> void:
-    _environment_node.simulation_speed = TIME_SCALE_STEPS[int(value)]
+    SimulationServer.simulation_speed = TIME_SCALE_STEPS[int(value)]
 
 
 func _on_pause_button_toggled(toggled_on: bool) -> void:

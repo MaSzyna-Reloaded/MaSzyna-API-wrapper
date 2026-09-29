@@ -43,8 +43,10 @@ func _on_scenery_selector_scenery_selected(
     filename: String, train_id: String, skin_overrides: Dictionary
 ) -> void:
     _play_music(MUSIC_LOADING_VOLUME_DB)
-    # the world starts while the loading screen fades out, not when it is built
+    # the world starts while the loading screen fades out, not when it is built, and at the wall
+    # clock's speed whatever the last one ran at
     SimulationServer.pause()
+    SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
@@ -116,8 +118,10 @@ func _on_exit_to_menu_pressed() -> void:
 func _exit_to_menu() -> void:
     _play_music(MUSIC_MENU_VOLUME_DB)
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
-    # the world stops once the spinner covers it, and stays stopped until the next scenery shows
+    # the world stops once the spinner covers it, and stays stopped until the next scenery shows;
+    # the menu is heard at the wall clock's speed (TrainSoundSystem)
     SimulationServer.pause()
+    SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     SceneryStreamingServer.set_camera(null)
     $Player.clear_start_train()

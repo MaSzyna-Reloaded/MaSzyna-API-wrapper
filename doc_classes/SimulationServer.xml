@@ -10,6 +10,18 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="simulation_reset_speed">
+			<return type="void" />
+			<description>
+				The wall clock's speed, at once rather than over the speed change time - a scenery starts at it, and the menu is heard at it.
+			</description>
+		</method>
+		<method name="simulation_get_current_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+				The speed the clock runs at now, on its way to [member simulation_speed]: like a tape's motor, it gets most of the way there in the Project Setting [code]maszyna/simulation/speed_change_time[/code].
+			</description>
+		</method>
 		<method name="advance">
 			<return type="void" />
 			<param index="0" name="frame_delta" type="float" />
@@ -101,6 +113,11 @@
 		<signal name="simulation_advanced">
 			<param index="0" name="seconds" type="float" />
 			<description>
+			</description>
+		</signal>
+		<signal name="simulation_current_speed_changed">
+			<description>
+				The speed the clock runs at changed - every frame while it goes to the one set.
 			</description>
 		</signal>
 		<signal name="simulation_speed_changed">

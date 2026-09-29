@@ -23,6 +23,8 @@ const LAMP_SHADER:Shader = preload("driving_aid_lamp.gdshader")
 const METRES_PER_KILOMETRE:float = 1000.0
 ## The positions of a local brake (LocalBrakePosNo, hamulce.h:45)
 const LOCAL_BRAKE_POSITIONS:float = 10.0
+## The reverser of the vehicle that pulls (DirActive, "direction"): forward, neutral, backward
+const DIRECTION_SYMBOLS:Dictionary[int, String] = {1: "▲", 0: "—", -1: "▼"}
 ## A train keeps under its timetable's speed; any other order under the shunting speed
 ## (driveruipanels.cpp:78-81)
 const TRAIN_ORDERS:int = MaszynaLegacyAIDriver.Order.OBEY_TRAIN | MaszynaLegacyAIDriver.Order.BANK
@@ -89,6 +91,7 @@ func _on_refresh_timer_timeout() -> void:
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
     # the controllers of the vehicle that pulls (Controlling(), driveruipanels.cpp:139-140)
     var powered:Dictionary = RailVehicleServer.vehicle_dump_state(RailVehicleServer.vehicle_find_powered(vehicle))
+    %DirectionValue.text = DIRECTION_SYMBOLS[signi(int(powered.get("direction", 0)))]
     %ControllerValue.text = "%2d + %-2d" % [
             powered.get("controller_main_position", 0), powered.get("controller_second_position", 0)]
     %BrakesValue.text = "%4.1f + %-2d" % [

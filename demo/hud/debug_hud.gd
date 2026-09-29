@@ -1,19 +1,11 @@
 extends HBoxContainer
 
-@export_node_path("MaszynaPlayer") var player_path:NodePath = NodePath("")
-
-var _player:MaszynaPlayer
-
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-    if player_path:
-        _player = get_node(player_path)
-        if _player:
-            _player.occupied_cabin_changed.connect(_on_occupied_cabin_changed)
+    PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
 
 ## The panels are handed the vehicle itself - what they show is its state, and a path to a node
 ## inside it says nothing they need.
-func _on_occupied_cabin_changed():
-    var vehicle:RailVehicle3D = _player.occupied_cabin
-    var controller:VehicleController = vehicle.get_controller() if vehicle else null
-    $MoverSwitches.vehicle = controller
+func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
+    var node:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as RailVehicle3D
+    $MoverSwitches.vehicle = node.get_controller() if node else null

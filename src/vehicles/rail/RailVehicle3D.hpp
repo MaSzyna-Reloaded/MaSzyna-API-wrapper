@@ -86,8 +86,6 @@ namespace godot {
             bool needs_head_display_update = false;
             Node *head_display_e3d = nullptr;
             Cabin3D *cabin = nullptr;
-            Node3D *camera = nullptr;
-            Node *cabin_player = nullptr;
             int cabin_show_frames = 0;
             RailVehicleController *controller = nullptr;
             RailVehicleElectricEngine *electric_engine = nullptr;
@@ -156,9 +154,7 @@ namespace godot {
             TypedArray<Dictionary> pantograph_wire_cache;
 
             RailVehicleController *_resolve_controller(const NodePath &p_node_path) const;
-            void _jump_into_cabin(Node3D *p_cabin, Node *p_player);
             void _show_cabin_after_frames();
-            void _apply_cabin_camera_configuration();
             void _on_controller_changed(RailVehicleController *p_controller);
             void _on_vehicle_changed();
             void _bind_vehicle_node();
@@ -243,8 +239,10 @@ namespace godot {
             void _exit_tree() override;
             void _notification(int p_what); // NOLINT(bugprone-derived-method-shadowing-base-method)
 
-            void enter_cabin(Node *p_player);
-            void leave_cabin(Node *p_player);
+            void show_cabin();
+            void hide_cabin();
+            /// The cab interior while it is shown, else null
+            Cabin3D *get_cabin() const;
             void process_manually(const Variant &p_delta);
             RailVehicleController *get_controller() const;
             /// This vehicle's handle in RailVehicleServer - the key anything

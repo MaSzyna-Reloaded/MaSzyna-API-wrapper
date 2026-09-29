@@ -100,7 +100,6 @@ script = ExtResource("1_ut343")
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
 [node name="GameHud" parent="." unique_id=194798435 instance=ExtResource("game_hud_scene")]
-player_path = NodePath("../Player")
 environment_node_path = NodePath("../MaszynaEnvironmentNode")
 
 [node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]

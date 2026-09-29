@@ -6,18 +6,13 @@ extends MaszynaGutTest
 ## CabOccupied (drivermode.cpp:1071), i.e. backward from cab 2. The fixtures carry no models, so
 ## the low-poly interior's cab visibility (DynObj.cpp:1211-1219) is not checked here.
 
-class PlayerStub extends Node3D:
-    var camera:FreeCamera3D
-
-    func get_camera() -> FreeCamera3D:
-        return camera
-
+const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
-var player:PlayerStub
+var player:MaszynaPlayer
 
 
 func before_each() -> void:
@@ -26,6 +21,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+    # out of the cab before the vehicle goes: the player's cab camera is in it
+    PlayerServer.player_leave_vehicle()
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):
@@ -46,14 +43,13 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     if not controller:
         return
 
-    player = PlayerStub.new()
-    player.camera = FreeCamera3D.new()
-    player.add_child(player.camera)
+    player = PLAYER_SCENE.instantiate()
+    player.auto_start = false
     add_child(player)
-    vehicle.enter_cabin(player)
+    PlayerServer.player_enter_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
 
-    var camera:FreeCamera3D = player.camera
+    var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D
     var vehicle_forward:Vector3 = -vehicle.global_basis.z
     var cab1_z:float = vehicle.to_local(camera.global_position).z
     assert_true((-camera.global_basis.z).dot(vehicle_forward) > 0.99, "cab 1 camera should look forward")
@@ -90,4 +86,3 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     )
     assert_true((-camera.global_basis.z).dot(vehicle_forward) < -0.99, "cab 2 camera should look backward")
 
-    vehicle.leave_cabin(player)

@@ -26,6 +26,9 @@ namespace godot {
             static const luaL_Reg TRACK[];
             static const luaL_Reg SIGNAL[];
             static const luaL_Reg LOG[];
+            static const luaL_Reg PLAYER[];
+            static const luaL_Reg CAMERA[];
+            static const luaL_Reg HUD[];
 
             static constexpr const char *ROOT_NAME = "maszyna";
             static const Module MODULES[];

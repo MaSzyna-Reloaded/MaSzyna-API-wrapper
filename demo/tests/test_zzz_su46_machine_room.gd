@@ -4,18 +4,13 @@ extends MaszynaGutTest
 ## original then has no hi-fi cab (Train.cpp:8692, mdKabina stays nullptr) and keeps every low-poly
 ## "cabN" submodel visible (DynObj.cpp:1214), so the machine room is the low-poly interior's cab0.
 
-class PlayerStub extends Node3D:
-    var camera:FreeCamera3D
-
-    func get_camera() -> FreeCamera3D:
-        return camera
-
+const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
-var player:PlayerStub
+var player:MaszynaPlayer
 
 
 func before_each() -> void:
@@ -23,6 +18,8 @@ func before_each() -> void:
 
 
 func after_each() -> void:
+    # out of the cab before the vehicle goes: the player's cab camera is in it
+    PlayerServer.player_leave_vehicle()
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):
@@ -54,18 +51,17 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
     if not controller:
         return
 
-    player = PlayerStub.new()
-    player.camera = FreeCamera3D.new()
-    player.add_child(player.camera)
+    player = PLAYER_SCENE.instantiate()
+    player.auto_start = false
     add_child(player)
-    vehicle.enter_cabin(player)
+    PlayerServer.player_enter_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
     assert_false(_low_poly_cab_visible(1), "hi-fi cab 1 hides its low-poly counterpart")
 
     controller.send_command("cab_change", -1)
     await wait_idle_frames(3)
 
-    var cabin:Cabin3D = player.camera.get_parent() as Cabin3D
+    var cabin:Cabin3D = get_viewport().get_camera_3d().get_parent() as Cabin3D
     assert_not_null(cabin, "camera should stay in the cabin in the machine room")
     if not cabin:
         return

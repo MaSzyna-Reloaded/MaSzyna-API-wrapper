@@ -9,14 +9,6 @@ extends PanelContainer
 
 ## The close button asks the owner to free the card
 signal close_requested
-## The external camera is to follow the vehicle, without taking it over
-signal follow_requested(vehicle:RID)
-## The external camera is to stop following, leaving the free camera where it is
-signal follow_stopped
-## The camera is to be put beside the vehicle
-signal show_requested(vehicle:RID)
-## The player is to enter the vehicle's cab and take it over
-signal enter_requested(vehicle:RID)
 ## The player confirmed that the vehicle's trainset is to be removed
 signal remove_trainset_requested(vehicle:RID)
 
@@ -31,10 +23,6 @@ var vehicle:RID = RID()
 ## The vehicle of the trainset whose data the card shows - the one it was opened for, or the one
 ## clicked in the trainset's side views
 var _shown:RID = RID()
-## The vehicle the external camera follows; the follow button is on while it is _shown
-var _followed:RID = RID()
-## The vehicle the player drives or last drove
-var _player_vehicle:RID = RID()
 ## The trainset's vehicles, in the order of their side views
 var _trainset:Array[RID] = []
 ## The controllers of the trainset, listened to for a coupling change
@@ -51,15 +39,13 @@ func show_vehicle(p_vehicle:RID) -> void:
     _show_trainset_vehicle(vehicle)
 
 
-## The vehicle the external camera follows now, or an invalid RID while it is off
-func show_followed_vehicle(p_vehicle:RID) -> void:
-    _followed = p_vehicle
-    %FollowButton.set_pressed_no_signal(_followed == _shown)
+## The follow button is on while the camera follows the vehicle shown
+func _on_camera_changed() -> void:
+    %FollowButton.set_pressed_no_signal(PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_FOLLOW
+            and PlayerCameraServer.camera_get_target() == _shown)
 
 
-## The vehicle the player drives or last drove, or an invalid RID
-func show_player_vehicle(p_vehicle:RID) -> void:
-    _player_vehicle = p_vehicle
+func _on_player_vehicle_changed(_vehicle:RID, _previous:RID) -> void:
     _on_refresh_timer_timeout()
 
 
@@ -110,7 +96,7 @@ func _show_trainset_vehicle(p_vehicle:RID) -> void:
         %Trainset.select(index)
     %Trainset.set_marked(index)
     %ActionsButton.vehicle = _shown
-    %FollowButton.set_pressed_no_signal(_followed == _shown)
+    _on_camera_changed()
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(_shown)
     var config:Dictionary = RailVehicleServer.vehicle_dump_config(_shown)
     %Title.text = RailVehicleServer.vehicle_get_name(_shown)
@@ -144,10 +130,14 @@ func _on_trainset_activated() -> void:
 
 func _ready() -> void:
     DriverSystem.driver_timetable_changed.connect(_on_driver_timetable_changed)
+    PlayerCameraServer.camera_changed.connect(_on_camera_changed)
+    PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
 
 
 func _exit_tree() -> void:
     DriverSystem.driver_timetable_changed.disconnect(_on_driver_timetable_changed)
+    PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
+    PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     _disconnect_controllers()
 
 
@@ -266,7 +256,7 @@ func _on_refresh_timer_timeout() -> void:
 
     var driver:RID = DriverSystem.vehicle_get_driver(_shown)
     var driving:bool = DriverSystem.vehicle_is_control_active(_shown)
-    var driver_kind:VehicleSelectorRow.Driver = VehicleSelectorRow.driver_of(_shown, _shown == _player_vehicle)
+    var driver_kind:VehicleSelectorRow.Driver = VehicleSelectorRow.driver_of(_shown, _shown == PlayerServer.player_get_vehicle())
     %Driver.text = VehicleSelectorRow.driver_label(driver_kind)
     %TakeOverButton.visible = not driver_kind == VehicleSelectorRow.Driver.PLAYER
     %AIButton.visible = driver.is_valid()
@@ -329,7 +319,7 @@ func _on_driver_timetable_changed(driver:RID) -> void:
 
 ## The player enters the cab, as when picking the vehicle in the world
 func _on_take_over_button_pressed() -> void:
-    enter_requested.emit(_shown)
+    PlayerServer.player_enter_vehicle(_shown)
 
 
 ## Q / Shift+Q for this _shown (Train.cpp:1088-1118): its driver stops driving it, or drives it again
@@ -342,15 +332,19 @@ func _on_actions_button_remove_confirmed(p_vehicle:RID) -> void:
     remove_trainset_requested.emit(p_vehicle)
 
 
+## The camera follows the vehicle shown, the player keeping the cab; switched off, the free camera
+## goes on from where the following one was
 func _on_follow_button_toggled(toggled_on:bool) -> void:
     if toggled_on:
-        follow_requested.emit(_shown)
+        PlayerCameraServer.camera_set_target(_shown)
+        PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FOLLOW)
     else:
-        follow_stopped.emit()
+        PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
 
 
+## The free camera beside the vehicle shown, looking at it
 func _on_show_button_pressed() -> void:
-    show_requested.emit(_shown)
+    PlayerCameraServer.camera_show_vehicle(_shown)
 
 
 func _on_close_button_pressed() -> void:

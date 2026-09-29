@@ -126,7 +126,7 @@ func test_cabin_controls_are_registered_and_forwarded() -> void:
     assert_eq(CabinSystem.get_control(vehicle_rid, cab, &"battery_sw"), true)
     assert_null(CabinSystem.act(vehicle_rid, cab, &"no_such_control", &"hold"), "unknown control returns null")
 
-    player.leave_cabin()
+    PlayerServer.player_leave_vehicle()
     await wait_idle_frames(5)
     # the cab logic is the vehicle's: a crewed vehicle keeps it for its driver (SceneryInstancer._build_drivers())
     var crewed:bool = DriverSystem.vehicle_get_driver(vehicle_rid).is_valid()

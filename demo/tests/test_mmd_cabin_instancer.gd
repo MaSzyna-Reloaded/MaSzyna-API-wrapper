@@ -539,25 +539,25 @@ func test_localbrake_rotation_is_scaled_by_local_brake_position_count():
     assert_almost_eq(widget.mesh_rotation.y, -0.0125 * 10.0 * 360.0, 0.0001)
 
 
-## The player enters the start vehicle before the scenery gives it a driver: the cab attaches its
-## logic, the driver's replaces it, and the cab leaving takes away only its own (FINDINGS.md,
-## 2026-09-27 the AI stood still in the cab the player left)
-func test_a_cab_leaving_keeps_the_logic_that_replaced_its_own():
+## The cab logic is the vehicle's (MaszynaRailVehicle3D attaches it): a 3D cab shown and freed
+## neither brings logic of its own nor takes the vehicle's away (FINDINGS.md, 2026-09-27 the AI
+## stood still in the cab the player left)
+func test_a_cab_leaves_the_vehicles_logic_alone():
     var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURE_PATH.get_base_dir())
     var vehicle:RID = build_vehicle("CabLogicOwnerTest").get_rid()
+    var vehicle_logic:LegacyCabinLogic = LegacyCabinLogic.from_mmd("", FIXTURE_PATH.get_file().get_basename())
+    CabinSystem.vehicle_attach_cab_logic(vehicle, vehicle_logic)
     var cabin:MaszynaDynamicTrainCabin = MaszynaDynamicTrainCabin.new()
     cabin.mmd_filename = FIXTURE_PATH.get_file().get_basename()
     add_child(cabin)
     cabin.set_vehicle_rid(vehicle)
     # the fixture has no cab model to build (a warning): only the cab's logic matters here
-    assert_not_null(CabinSystem.vehicle_get_cab_logic(vehicle), "the cab attaches its logic")
-    var driver_logic:LegacyCabinLogic = LegacyCabinLogic.from_mmd("", cabin.mmd_filename)
-    CabinSystem.vehicle_attach_cab_logic(vehicle, driver_logic)
+    assert_eq(CabinSystem.vehicle_get_cab_logic(vehicle), vehicle_logic, "shown, the cab brings no logic")
 
     remove_child(cabin)
     cabin.free()
     UserSettings.save_maszyna_game_dir(previous_game_dir)
 
-    assert_eq(CabinSystem.vehicle_get_cab_logic(vehicle), driver_logic, "the driver's logic stays")
+    assert_eq(CabinSystem.vehicle_get_cab_logic(vehicle), vehicle_logic, "freed, the cab takes nothing away")
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)

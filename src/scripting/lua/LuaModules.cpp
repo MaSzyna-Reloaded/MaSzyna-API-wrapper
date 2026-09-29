@@ -35,6 +35,7 @@ namespace godot {
     // NOLINTNEXTLINE(cppcoreguidelines-interfaces-global-init)
     const LuaModules::Module LuaModules::MODULES[] = {
             {"sim", SIM},       {"vehicle", VEHICLE}, {"cabin", CABIN},   {"driver", DRIVER}, {"event", EVENT},
-            {"memory", MEMORY}, {"track", TRACK},     {"signal", SIGNAL}, {"log", LOG},       {nullptr, nullptr},
+            {"memory", MEMORY}, {"track", TRACK},     {"signal", SIGNAL}, {"log", LOG},       {"player", PLAYER},
+            {"camera", CAMERA}, {"hud", HUD},         {nullptr, nullptr},
     };
 } // namespace godot

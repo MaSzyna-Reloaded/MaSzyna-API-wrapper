@@ -8,18 +8,27 @@ extends Control
 ## The entries of the "View" menu
 enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS }
 
+## The panels' names in HUDServer; the View menu's entries are these, in ViewItem order
+const PANEL_TRANSCRIPTS:StringName = &"transcripts"
+const PANEL_DRIVING_AID:StringName = &"driving_aid"
+const PANEL_TIMETABLE:StringName = &"timetable"
+const PANEL_SCENARIO:StringName = &"scenario"
+## Every control window at once
+const PANEL_CONTROLS:StringName = &"controls"
+const PANEL_SCRIPTS:StringName = &"scripts"
+const PANEL_TRAINSETS:StringName = &"trainsets"
+const VIEW_PANELS:Array[StringName] = [PANEL_TRANSCRIPTS, PANEL_DRIVING_AID, PANEL_TIMETABLE,
+        PANEL_SCENARIO, PANEL_CONTROLS, PANEL_SCRIPTS, PANEL_TRAINSETS]
+
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 const FRONT_END:int = 0
 
-## The player whose vehicle the control windows drive
-@export var player_path: NodePath
 @export var environment_node_path: NodePath
 
 ## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
 var _windows: Array[HUDWindow] = []
 var _menu_actions: Array[Button] = []
-## The vehicle card of the selector's active row; a click on another row shows that row's vehicle
-## in it; null while no row is active
+## The vehicle card, while HUDServer has one open
 var _card: VehicleCard = null
 ## Where the card was when it was last closed; it opens there again (no area until then)
 var _card_rect: Rect2 = Rect2()
@@ -30,18 +39,16 @@ func _enter_tree() -> void:
     # levels below this node, so the path given relative to this node is rebased by that much
     $ControlWindows/WeatherAndTime/WeatherControls.environment_node_path = NodePath(
         "../../../%s" % environment_node_path)
-    $ControlWindows/TrackAndTraction/TrackTractionPanel.player_path = NodePath(
-        "../../../%s" % player_path)
 
 
+## The HUD draws what HUDServer, PlayerCameraServer and PlayerServer hold, and asks them for every change
 func _ready() -> void:
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player:
-        player.occupied_cabin_changed.connect(_bind_vehicle.bind(null))
-        player.occupied_cabin_changed.connect(_on_player_occupied_cabin_changed.bind(player))
-        player.external_view_changed.connect(_on_player_external_view_changed.bind(player))
-    RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
-    SceneryHUDMouseServer.vehicle_pressed.connect(_open_card)
+    HUDServer.panel_visibility_changed.connect(_on_panel_visibility_changed)
+    HUDServer.hud_visibility_changed.connect(_on_hud_visibility_changed)
+    HUDServer.card_changed.connect(_on_card_changed)
+    PlayerCameraServer.camera_changed.connect(_show_chips)
+    PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
+    SceneryHUDMouseServer.vehicle_pressed.connect(HUDServer.card_open)
     var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child: Node in $ControlWindows.get_children():
         var win: HUDWindow = child as HUDWindow
@@ -64,11 +71,18 @@ func _ready() -> void:
     %View.set_item_shortcut(ViewItem.CONTROLS, _action_shortcut(&"hud_toggle"))
     # F1, as the original's driving aid (driveruilayer.cpp:76)
     %View.set_item_shortcut(ViewItem.DRIVING_AID, _action_shortcut(&"driving_aid_toggle"))
+    # the transcripts and the driving aid are open from the start
+    HUDServer.panel_set_visible(PANEL_TRANSCRIPTS, true)
+    HUDServer.panel_set_visible(PANEL_DRIVING_AID, true)
 
 
 func _exit_tree() -> void:
-    RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
-    SceneryHUDMouseServer.vehicle_pressed.disconnect(_open_card)
+    HUDServer.panel_visibility_changed.disconnect(_on_panel_visibility_changed)
+    HUDServer.hud_visibility_changed.disconnect(_on_hud_visibility_changed)
+    HUDServer.card_changed.disconnect(_on_card_changed)
+    PlayerCameraServer.camera_changed.disconnect(_show_chips)
+    PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
+    SceneryHUDMouseServer.vehicle_pressed.disconnect(HUDServer.card_open)
 
 
 ## A menu shortcut of an input action - the menu shows its key, and matches it exactly (F2 is not
@@ -85,127 +99,116 @@ func _on_popup_menu_index_pressed(index: int) -> void:
     if index >= _windows.size():
         _menu_actions[index - _windows.size()].pressed.emit()
         return
-    var win: HUDWindow = _windows[index]
-    win.visible = not win.visible
-    _bind_vehicle(win)
+    HUDServer.panel_toggle(_windows[index].panel)
 
 
-## The "View" menu: its entries show or hide the transcripts, the timetable, the scenario, all the
-## control windows at once, the Lua editor, the trainset list and the driving aid
+## The "View" menu: its entries show or hide the transcripts, the driving aid, the timetable, the
+## scenario, all the control windows at once, the Lua editor and the trainset list
 func _on_view_menu_index_pressed(index: int) -> void:
-    %View.toggle_item_checked(index)
-    match index:
-        ViewItem.TRANSCRIPTS:
-            %TranscriptsPanel.set_shown(%View.is_item_checked(index))
-        ViewItem.TIMETABLE:
-            %TimetablePanel.visible = %View.is_item_checked(index)
-        ViewItem.SCENARIO:
-            %ScenarioPanel.visible = %View.is_item_checked(index)
-        ViewItem.CONTROLS:
+    HUDServer.panel_toggle(VIEW_PANELS[index])
+    if index == ViewItem.TRAINSETS:
+        %View.hide()
+
+
+## A panel opened or closed in HUDServer: its View menu entry ticked, the panel shown; the control
+## windows are opened and closed all at once
+func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
+    var item: int = VIEW_PANELS.find(panel)
+    if item >= 0:
+        %View.set_item_checked(item, shown)
+    match panel:
+        PANEL_TRANSCRIPTS:
+            %TranscriptsPanel.set_shown(shown)
+        PANEL_DRIVING_AID:
+            %DrivingAid.visible = shown
+        PANEL_TIMETABLE:
+            %TimetablePanel.visible = shown
+        PANEL_SCENARIO:
+            %ScenarioPanel.visible = shown
+        PANEL_SCRIPTS:
+            %ScriptEditorPanel.visible = shown
+        PANEL_TRAINSETS:
+            %VehicleSelectorPanel.visible = shown
+        PANEL_CONTROLS:
             for win: HUDWindow in _windows:
-                win.visible = %View.is_item_checked(index)
-                _bind_vehicle(win)
-        ViewItem.SCRIPTS:
-            %ScriptEditorPanel.visible = %View.is_item_checked(index)
-        ViewItem.TRAINSETS:
-            %VehicleSelectorPanel.visible = %View.is_item_checked(index)
-            %View.hide()
-        ViewItem.DRIVING_AID:
-            %DrivingAid.visible = %View.is_item_checked(index)
+                HUDServer.panel_set_visible(win.panel, shown)
+        _:
+            for win: HUDWindow in _windows:
+                if win.panel == panel:
+                    win.visible = shown
+                    _bind_vehicle(win)
+
+
+func _on_hud_visibility_changed(shown: bool) -> void:
+    visible = shown
 
 
 func _on_timetable_panel_close_requested() -> void:
-    _on_view_menu_index_pressed(ViewItem.TIMETABLE)
+    HUDServer.panel_set_visible(PANEL_TIMETABLE, false)
 
 
 func _on_scenario_panel_close_requested() -> void:
-    _on_view_menu_index_pressed(ViewItem.SCENARIO)
+    HUDServer.panel_set_visible(PANEL_SCENARIO, false)
 
 
 func _on_script_editor_panel_close_requested() -> void:
-    _on_view_menu_index_pressed(ViewItem.SCRIPTS)
+    HUDServer.panel_set_visible(PANEL_SCRIPTS, false)
 
 
 func _on_vehicle_selector_panel_close_requested() -> void:
-    _on_view_menu_index_pressed(ViewItem.TRAINSETS)
+    HUDServer.panel_set_visible(PANEL_TRAINSETS, false)
 
 
-## A click on a selector row: the card shows the row's vehicle, on top, and the row is lit; the
-## active row clicked again closes the card
+## A click on a selector row: the card shows the row's vehicle; the vehicle of the open card clicked
+## again closes it
 func _on_vehicle_selector_panel_vehicle_activated(vehicle: RID) -> void:
-    if _card and _card.vehicle == vehicle:
-        _close_card()
+    if HUDServer.card_get_vehicle() == vehicle:
+        HUDServer.card_close()
         return
-    _open_card(vehicle)
+    HUDServer.card_open(vehicle)
 
 
-## The followed vehicle's floating button gives way to its card, where the card was last
+## The followed vehicle's floating button gives way to its card
 func _on_followed_vehicle_chip_pressed() -> void:
-    _open_card(%FollowedVehicleChip.vehicle)
+    HUDServer.card_open(%FollowedVehicleChip.vehicle)
 
 
-## The card shows the vehicle, on top, and its row is lit; a card opened anew stands where the last
-## one was closed, and takes the place of the followed vehicle's floating button. A click on a
-## vehicle's model in free camera opens it too (SceneryHUDMouseServer.vehicle_pressed)
-func _open_card(vehicle: RID) -> void:
+func _on_followed_vehicle_chip_action_pressed() -> void:
+    PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
+
+
+## The card shows HUDServer's vehicle, on top, and its row is lit; a card opened anew stands where
+## the last one was closed, and takes the place of the followed vehicle's floating button. Closed,
+## it is remembered where it stood and no row is lit.
+func _on_card_changed(vehicle: RID) -> void:
+    %VehicleSelectorPanel.show_active_vehicle(vehicle)
+    if not vehicle.is_valid():
+        _card_rect = _card.get_rect()
+        _card.queue_free()
+        _card = null
+        _show_chips()
+        return
     if not _card:
         _card = VEHICLE_CARD.instantiate()
-        _card.close_requested.connect(_close_card)
+        _card.close_requested.connect(HUDServer.card_close)
         _card.remove_trainset_requested.connect(_remove_trainset)
-        var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-        if player:
-            _card.follow_requested.connect(_on_card_follow_requested.bind(player))
-            _card.follow_stopped.connect(_on_card_follow_stopped.bind(player))
-            _card.show_requested.connect(player.show_vehicle)
-            _card.enter_requested.connect(player.enter_cabin)
-            _card.show_followed_vehicle(_followed_vehicle(player))
-            _card.show_player_vehicle(_player_vehicle_rid(player))
         %VehicleCards.add_child(_card)
         if _card_rect.has_area():
             _card.position = _card_rect.position
             _card.size = _card_rect.size
-        %FollowedVehicleChip.show_vehicle(RID())
+        _show_chips()
     %VehicleCards.move_child(_card, -1)
     _card.show_vehicle(vehicle)
-    %VehicleSelectorPanel.show_active_vehicle(vehicle)
 
 
-## The player's view follows the vehicle, the player keeping the cab
-func _on_card_follow_requested(vehicle: RID, player: MaszynaPlayer) -> void:
-    player.follow_target_rid = vehicle
-    player.external_view_mode = MaszynaPlayer.ExternalViewMode.FOLLOW
-    player.external_view = true
-
-
-## The player's view stops following and stays outside
-func _on_card_follow_stopped(player: MaszynaPlayer) -> void:
-    player.external_view_mode = MaszynaPlayer.ExternalViewMode.FREE
-
-
-## The vehicle the player's view follows, or an invalid RID
-static func _followed_vehicle(player: MaszynaPlayer) -> RID:
-    return player.follow_target_rid if player.external_view and (
-            player.external_view_mode == MaszynaPlayer.ExternalViewMode.FOLLOW) else RID()
-
-
-func _on_player_external_view_changed(player: MaszynaPlayer) -> void:
-    if _card:
-        _card.show_followed_vehicle(_followed_vehicle(player))
-    else:
-        %FollowedVehicleChip.show_vehicle(_followed_vehicle(player))
-    _show_player_vehicle_chip(player)
-
-
-## The card goes, remembered where it stood, and no row is lit; a vehicle still followed becomes a
-## floating button
-func _close_card() -> void:
-    _card_rect = _card.get_rect()
-    _card.queue_free()
-    _card = null
-    %VehicleSelectorPanel.show_active_vehicle(RID())
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player:
-        %FollowedVehicleChip.show_vehicle(_followed_vehicle(player))
+## The floating buttons: the followed vehicle's while no card is open, the player's vehicle's while
+## the player looks from outside its cab
+func _show_chips() -> void:
+    var mode: PlayerCameraServer.CameraMode = PlayerCameraServer.camera_get_mode()
+    %FollowedVehicleChip.show_vehicle(PlayerCameraServer.camera_get_target()
+            if mode == PlayerCameraServer.CAMERA_MODE_FOLLOW and not _card else RID())
+    %PlayerVehicleChip.show_vehicle(PlayerServer.player_get_vehicle()
+            if not mode == PlayerCameraServer.CAMERA_MODE_CABIN else RID())
 
 
 ## Every vehicle of the trainset freed; a player in its cab steps out first, as before a scenery
@@ -213,9 +216,8 @@ func _close_card() -> void:
 func _remove_trainset(vehicle: RID) -> void:
     var trainset: Array[RID] = RailVehicleServer.vehicle_get_coupled(
             vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player and player.occupied_cabin and trainset.has(player.occupied_cabin.get_rid()):
-        player.clear_start_train()
+    if trainset.has(PlayerServer.player_get_vehicle()):
+        PlayerServer.player_leave_vehicle()
     for trainset_vehicle: RID in trainset:
         # the wrapper goes with the RailVehicle3D it built; freed alone, the wrapper builds it again
         var wrapper: MaszynaRailVehicle3D = VehicleCard.legacy_vehicle(trainset_vehicle)
@@ -223,17 +225,6 @@ func _remove_trainset(vehicle: RID) -> void:
                 RailVehicleServer.vehicle_get_rail_vehicle(trainset_vehicle)) as Node
         if node:
             node.queue_free()
-
-
-func _on_vehicle_freed(vehicle: RID) -> void:
-    if _card and _card.vehicle == vehicle:
-        _close_card()
-    if %FollowedVehicleChip.vehicle == vehicle:
-        %FollowedVehicleChip.show_vehicle(RID())
-    if %PlayerVehicleChip.vehicle == vehicle:
-        %PlayerVehicleChip.show_vehicle(RID())
-    if %DrivingAid.vehicle == vehicle:
-        %DrivingAid.show_vehicle(RID())
 
 
 ## The script context of the scenario being played, for the Lua editor; an invalid RID while none is
@@ -247,46 +238,32 @@ func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
     %ScenarioPanel.show_scenario(info, train_id)
 
 
-## The timetable shown is the one of the trainset the player's vehicle belongs to
-func _on_player_occupied_cabin_changed(player: MaszynaPlayer) -> void:
-    %TimetablePanel.follow_vehicle(_player_vehicle_rid(player))
-    %DrivingAid.show_vehicle(_player_vehicle_rid(player))
-    %VehicleSelectorPanel.follow_player_vehicle(_player_vehicle_rid(player))
-    if _card:
-        _card.show_player_vehicle(_player_vehicle_rid(player))
-    _show_player_vehicle_chip(player)
-
-
-## The vehicle whose cab the player occupies, or an invalid RID
-static func _player_vehicle_rid(player: MaszynaPlayer) -> RID:
-    return player.occupied_cabin.get_rid() if player.occupied_cabin else RID()
-
-
-## The vehicle the player drives, as a floating button while the player looks from outside
-func _show_player_vehicle_chip(player: MaszynaPlayer) -> void:
-    %PlayerVehicleChip.show_vehicle(_player_vehicle_rid(player) if player.external_view else RID())
+## What shows the player's train follows the vehicle the player drives: the timetable of its
+## trainset, the driving aid, its row in the selector, the control windows
+func _on_player_vehicle_changed(vehicle: RID, _previous: RID) -> void:
+    %TimetablePanel.follow_vehicle(vehicle)
+    %DrivingAid.show_vehicle(vehicle)
+    %VehicleSelectorPanel.follow_player_vehicle(vehicle)
+    _bind_vehicle()
+    _show_chips()
 
 
 func _on_player_vehicle_chip_pressed() -> void:
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player:
-        player.external_view = false
+    PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_CABIN)
 
 
 func _on_player_vehicle_chip_action_pressed() -> void:
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    if player:
-        player.leave_cabin()
+    PlayerServer.player_leave_vehicle()
 
 
 ## The vehicle the player is driving, handed to every widget that shows something about it. The
 ## widgets used to be given a NodePath into the vehicle's own subtree and resolve it themselves,
 ## which reached across two scenes and could resolve before the vehicle had been built. They are
-## given the vehicle itself now, and the player says when it changes.
+## given the vehicle itself now, and PlayerServer says when it changes.
 ## Each window gets the vehicle its target names (HUDWindow.vehicle_target), as a cab control does.
 func _bind_vehicle(node: Node = null) -> void:
-    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
-    var vehicle: RailVehicle3D = player.occupied_cabin if player else null
+    var vehicle: RailVehicle3D = instance_from_id(
+            RailVehicleServer.vehicle_get_rail_vehicle(PlayerServer.player_get_vehicle())) as RailVehicle3D
     var controller: VehicleController = vehicle.get_controller() if vehicle else null
     for window: HUDWindow in ([node] if node else _windows):
         var target: RID = CabinState.vehicle_of(controller.get_rid(), window.vehicle_target) if controller else RID()

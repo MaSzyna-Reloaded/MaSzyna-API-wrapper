@@ -7,10 +7,10 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="enter_cabin">
-			<return type="void" />
-			<param index="0" name="player" type="Node" />
+		<method name="get_cabin" qualifiers="const">
+			<return type="Cabin3D" />
 			<description>
+				The cab interior while it is shown, else [code]null[/code].
 			</description>
 		</method>
 		<method name="get_controller" qualifiers="const">
@@ -23,16 +23,22 @@
 			<description>
 			</description>
 		</method>
-		<method name="leave_cabin">
+		<method name="hide_cabin">
 			<return type="void" />
-			<param index="0" name="player" type="Node" />
 			<description>
+				The cab interior freed; a camera put into it is to be taken out first.
 			</description>
 		</method>
 		<method name="move_on_track">
 			<return type="void" />
 			<param index="0" name="distance" type="float" />
 			<description>
+			</description>
+		</method>
+		<method name="show_cabin">
+			<return type="void" />
+			<description>
+				The cab interior built from [member cabin_scene] into the vehicle - only a view: the cab logic is the vehicle's ([code]CabinSystem[/code]). It is built within this call, so [method get_cabin] returns it once this returns.
 			</description>
 		</method>
 	</methods>

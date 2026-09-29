@@ -1959,3 +1959,18 @@ lighting or the consist.
 * **Rule:** when the API godot-cpp is generated from changes (`extension_api.json`, precision,
   `GODOT_VERSION`), rebuild godot-cpp from clean objects in every build dir; check the library with
   `nm -D -C --undefined-only ... | grep godot::` before trusting a green build.
+
+## 2026-09-29 - an extension class named like an engine class never registered
+
+* **Symptom:** the new `CameraServer` singleton built and linked without a warning, but none of its
+  methods or constants existed in GDScript; `player.gd` failed to parse on every
+  `CameraServer.camera_*` call.
+* **What proved it:** `godot-double --headless --import` printed "Attempt to register extension
+  class 'CameraServer', which appears to be already registered" and then "Attempt to register
+  extension method ... for unexisting class" for every binding - Godot has its own `CameraServer`
+  (camera feeds), and `GDREGISTER_CLASS` of the same name is refused at run time, not at build time.
+* **Fix:** the class renamed `PlayerCameraServer` (singleton of the same name); Lua keeps
+  `maszyna.camera`.
+* **Rule:** before naming a new extension class or singleton, check that Godot has no class of that
+  name (`ClassDB.class_exists()` in the editor, or the class reference); after adding one, read
+  the `--import` log for "already registered".

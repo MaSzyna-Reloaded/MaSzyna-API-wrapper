@@ -3,6 +3,7 @@
 #include "cache/ResourceCache.hpp"
 #include "driver/DriverDelegate.hpp"
 #include "driver/DriverSystem.hpp"
+#include "hud/HUDServer.hpp"
 #include "legacy/cabin/PythonScreenServer.hpp"
 #include "legacy/e3d/E3DModel.hpp"
 #include "legacy/e3d/E3DModelLightDefinition.hpp"
@@ -49,6 +50,8 @@
 #include "legacy/vehicles/MoverRailVehicleWipers.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "logging/GameLog.hpp"
+#include "player/PlayerCameraServer.hpp"
+#include "player/PlayerServer.hpp"
 #include "register_types.h"
 #include "rendering/PlanarMirror3D.hpp"
 #include "scenario/ScenarioEventAction.hpp"
@@ -152,6 +155,9 @@ ScenarioEventServer *scenario_event_server_singleton = nullptr;
 SceneryHUDMouseServer *scenery_hud_mouse_server_singleton = nullptr;
 ScenarioScriptServer *scenario_script_server_singleton = nullptr;
 DriverSystem *driver_system_singleton = nullptr;
+PlayerServer *player_server_singleton = nullptr;
+PlayerCameraServer *player_camera_server_singleton = nullptr;
+HUDServer *hud_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -200,6 +206,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventCondition);
         GDREGISTER_CLASS(ScenarioScriptServer);
         GDREGISTER_VIRTUAL_CLASS(ScenarioScriptCabinDelegate);
+        GDREGISTER_CLASS(PlayerServer);
+        GDREGISTER_CLASS(PlayerCameraServer);
+        GDREGISTER_CLASS(HUDServer);
         GDREGISTER_INTERNAL_CLASS(ScenarioScriptAction);
         GDREGISTER_CLASS(MaszynaLegacyMemoryAction);
         GDREGISTER_CLASS(MaszynaLegacyMultipleAction);
@@ -336,9 +345,18 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after E3DRenderingServer is registered: it outlines and picks its instances
         scenery_hud_mouse_server_singleton = memnew(SceneryHUDMouseServer);
         Engine::get_singleton()->register_singleton("SceneryHUDMouseServer", scenery_hud_mouse_server_singleton); // 18
+        // after RailVehicleServer and DriverSystem: it follows freed vehicles and hands trainsets
+        // over to their drivers
+        player_server_singleton = memnew(PlayerServer);
+        Engine::get_singleton()->register_singleton("PlayerServer", player_server_singleton); // 19
+        // after PlayerServer: the view follows what the player drives
+        player_camera_server_singleton = memnew(PlayerCameraServer);
+        Engine::get_singleton()->register_singleton("PlayerCameraServer", player_camera_server_singleton); // 20
+        hud_server_singleton = memnew(HUDServer);
+        Engine::get_singleton()->register_singleton("HUDServer", hud_server_singleton); // 21
         // last: the constructor follows what the servers above report to the scripts
         scenario_script_server_singleton = memnew(ScenarioScriptServer);
-        Engine::get_singleton()->register_singleton("ScenarioScriptServer", scenario_script_server_singleton); // 19
+        Engine::get_singleton()->register_singleton("ScenarioScriptServer", scenario_script_server_singleton); // 22
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -365,11 +383,35 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (Engine::get_singleton()->has_singleton("ScenarioScriptServer")) {
-        Engine::get_singleton()->unregister_singleton("ScenarioScriptServer"); // 19
+        Engine::get_singleton()->unregister_singleton("ScenarioScriptServer"); // 22
     }
     if (scenario_script_server_singleton != nullptr) {
         memdelete(scenario_script_server_singleton);
         scenario_script_server_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("HUDServer")) {
+        Engine::get_singleton()->unregister_singleton("HUDServer"); // 21
+    }
+    if (hud_server_singleton != nullptr) {
+        memdelete(hud_server_singleton);
+        hud_server_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("PlayerCameraServer")) {
+        Engine::get_singleton()->unregister_singleton("PlayerCameraServer"); // 20
+    }
+    if (player_camera_server_singleton != nullptr) {
+        memdelete(player_camera_server_singleton);
+        player_camera_server_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("PlayerServer")) {
+        Engine::get_singleton()->unregister_singleton("PlayerServer"); // 19
+    }
+    if (player_server_singleton != nullptr) {
+        memdelete(player_server_singleton);
+        player_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("SceneryHUDMouseServer")) {

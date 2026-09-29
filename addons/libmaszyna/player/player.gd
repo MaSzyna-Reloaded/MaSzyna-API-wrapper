@@ -1,19 +1,10 @@
 extends Node3D
 class_name MaszynaPlayer
 
-## The player sits in a vehicle's cab (occupied_cabin) and looks either from it or from outside
-## (external_view) - a view only: the cab stays the player's and its controls keep working, as the
-## original's simulation::Train does in its free fly mode (command.cpp:884-889). Outside, the view is
-## the free camera or follows a vehicle (follow_target_rid) through one of ExternalCamera3D.View.
-
-## The player took another vehicle's cab, or none
-signal occupied_cabin_changed
-## The view has changed to what external_view, external_view_mode, follow_target_rid and
-## external_view_follow_cam say
-signal external_view_changed
-
-## The external view flies freely, or follows a vehicle
-enum ExternalViewMode {FREE, FOLLOW}
+## The player: what it drives is PlayerServer's, where it looks from PlayerCameraServer's - the
+## player follows both with its nodes: its cab camera into the cab of the vehicle driven, the camera
+## of the view made current. The cab stays the player's while it looks from outside and its controls
+## keep working, as the original's simulation::Train does in its free fly mode (command.cpp:884-889).
 
 @export var start_train_id:String = "":
     set(x):
@@ -31,36 +22,8 @@ enum ExternalViewMode {FREE, FOLLOW}
 ## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
 @export var sfx_bank:SfxBank
 
-## The vehicle whose cab the player sits in - the player's train; null while none
-var occupied_cabin:RailVehicle3D
-## The player looks from outside the cab, else from occupied_cabin
-var external_view:bool = true:
-    set(x):
-        if not external_view == x:
-            external_view = x
-            _view_dirty = true
-## Outside: the free camera, or the external camera following follow_target_rid. The free camera
-## taking over from the external camera goes on from where it is (drivermode.cpp:1093); put it
-## somewhere else first to have it there (show_vehicle()).
-var external_view_mode:ExternalViewMode = ExternalViewMode.FREE:
-    set(x):
-        if not external_view_mode == x:
-            external_view_mode = x
-            _view_dirty = true
-## The vehicle the FOLLOW mode follows
-var follow_target_rid:RID = RID():
-    set(x):
-        if not follow_target_rid == x:
-            follow_target_rid = x
-            _view_dirty = true
-## Which of the views of the FOLLOW mode (Shift+F4)
-var external_view_follow_cam:ExternalCamera3D.View = ExternalCamera3D.View.CONSIST_FRONT:
-    set(x):
-        if not external_view_follow_cam == x:
-            external_view_follow_cam = x
-            _view_dirty = true
-
-var _camera:FreeCamera3D
+## The cab camera - it sits in the cab interior of the vehicle driven (_show_cabin())
+@onready var _cabin_camera:FreeCamera3D = $Camera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
 @onready var free_camera:FreeCamera3D = $FreeCamera3D
 @onready var external_camera:ExternalCamera3D = $ExternalCamera3D
@@ -73,19 +36,23 @@ var _camera:FreeCamera3D
 ## start_train_id changed - its vehicle is looked for until the scenery has it
 var _dirty: bool = true
 var _auto_start_pending:bool = false
-var _view_dirty:bool = true
 var _released_vehicle:RID
-## The end vehicle_get_coupled() starts listing a trainset from
-const FRONT_END:int = 0
-## show_vehicle(): the camera stands this far to the side per metre of the vehicle's length, never
-## nearer than the minimum [m], at eye height above the vehicle's origin [m]
-const SHOW_DISTANCE_PER_LENGTH:float = 1.2
-const SHOW_MIN_DISTANCE:float = 12.0
-const SHOW_EYE_HEIGHT:float = 1.75
+## The vehicle whose cab interior is shown with the cab camera in it - the one the player drives;
+## the cab's widgets take the keys (CabinButton, CabinSwitch), so it stands while the player looks
+## from outside too
+var _cabin_vehicle:RailVehicle3D
 ## Stepping out of the cab, driver_mode::DistantView(true) (drivermode.cpp:1060): beside the vehicle
 ## on the side of the occupied cab, this far beyond its width and this high above it [m]
 const DISTANT_VIEW_SIDE_MARGIN:float = 1.25
 const DISTANT_VIEW_HEIGHT:float = 1.6
+## The cab camera moves within the cab's bounds raised this much from the floor and to the ceiling
+## the MMD gives [m] (mmd_cabin_definition.gd - the raw bounds)
+const CABIN_BOUND_FLOOR_RAISE:float = 0.5
+const CABIN_BOUND_CEILING_RAISE:float = 1.8
+## What the driver reads when a Radio-Stop brakes the vehicle driven, and for how long [s]
+## (TDynamicObject::RadioStop(), DynObj.cpp:7242 - for a vehicle a human drives)
+const RADIO_STOP_TRANSCRIPT:String = "!! RADIO-STOP !!"
+const RADIO_STOP_TRANSCRIPT_SECONDS:float = 10.0
 
 func _ready() -> void:
     _auto_start_pending = auto_start and not start_train_id
@@ -96,11 +63,19 @@ func _ready() -> void:
     glow_material.set_shader_parameter(&"light_position", headlamp.position)
     glow_material.set_shader_parameter(&"light_direction", -headlamp.transform.basis.z)
     glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
-    CabinHUDMouseSystem.set_camera(get_camera().get_instance_id())
-    SceneryHUDMouseServer.set_camera(free_camera.get_instance_id())
+    CabinHUDMouseSystem.set_camera(_cabin_camera.get_instance_id())
+    PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
+    PlayerCameraServer.camera_changed.connect(_on_camera_changed)
+    PlayerCameraServer.camera_placed.connect(_on_camera_placed)
+    RailVehicleServer.vehicle_radio_stop_received.connect(_on_vehicle_radio_stop_received)
+    _show_camera(_mode_camera())
 
 
 func _exit_tree() -> void:
+    PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
+    PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
+    PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
+    RailVehicleServer.vehicle_radio_stop_received.disconnect(_on_vehicle_radio_stop_received)
     SceneryStreamingServer.set_camera(null)
 
 func _process(_delta:float) -> void:
@@ -108,28 +83,24 @@ func _process(_delta:float) -> void:
         _dirty = false
         var vehicle:RailVehicle3D = _find_start_vehicle()
         if vehicle:
-            enter_cabin(vehicle.get_rid())
+            PlayerServer.player_enter_vehicle(vehicle.get_rid())
         elif start_train_id or _auto_start_pending:
             _dirty = true
-    if _view_dirty:
-        _view_dirty = false
-        _process_view_dirty()
 
-    var camera:FreeCamera3D = get_camera()
-    var cabin:Cabin3D = camera.get_parent() as Cabin3D
+    var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
     if cabin:
-        camera.h_offset = cabin.get_camera_shake_offset().x * 1.5
-        camera.rotation.z = cabin.get_camera_shake_roll()
+        _cabin_camera.h_offset = cabin.get_camera_shake_offset().x * 1.5
+        _cabin_camera.rotation.z = cabin.get_camera_shake_roll()
     else:
-        camera.h_offset = 0.0
-        camera.rotation.z = 0.0
+        _cabin_camera.h_offset = 0.0
+        _cabin_camera.rotation.z = 0.0
 
 ## Before the scenery holding the vehicles is freed: the player leaves the cab (the cab camera lives
 ## in it) and the view stops following, as the followed vehicle goes with the scenery as well
 func clear_start_train() -> void:
     start_train_id = ""
-    leave_cabin()
-    external_view_mode = ExternalViewMode.FREE
+    PlayerServer.player_leave_vehicle()
+    PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
 
 func _input(event):
     if CabinHUDMouseSystem.input(event) or SceneryHUDMouseServer.input(event):
@@ -142,52 +113,38 @@ func _input(event):
         # "toggle" automation: 0 - switching on click, 1 - switching off click
         sfx_player.play_automation(&"flashlight", &"toggle", float(enabled))
 
-    var walking:bool = external_view and external_view_mode == ExternalViewMode.FREE
+    var walking:bool = PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_FREE
+    var driven:RID = PlayerServer.player_get_vehicle()
     # on foot, F4 or change_vehicle takes the vehicle in front of the player; F4 only while the
     # player has no cab to go back to
     var picked:RailVehicle3D = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle")
-            or (event.is_action_pressed("cabin_mode_toggle", false, true) and not occupied_cabin)) else null
+            or (event.is_action_pressed("cabin_mode_toggle", false, true) and not driven.is_valid())) else null
     if picked:
-        enter_cabin(picked.get_rid())
-    # drivermode.cpp:1244-1277 InOutKey() - F4: a followed view stops following, as the vehicle
-    # card's Follow switched off does; the free camera goes back into the occupied cab; the cab
-    # goes out to the free camera
+        PlayerServer.player_enter_vehicle(picked.get_rid())
     elif event.is_action_pressed("cabin_mode_toggle", false, true):
-        if external_view and external_view_mode == ExternalViewMode.FOLLOW:
-            external_view_mode = ExternalViewMode.FREE
-        elif external_view and occupied_cabin:
-            external_view = false
-        elif occupied_cabin:
-            free_camera.global_transform = _distant_view()
-            external_view_mode = ExternalViewMode.FREE
-            external_view = true
+        PlayerCameraServer.camera_toggle_cabin()
 
     # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
-    if occupied_cabin and event.is_action_pressed("cabin_previous"):
-        RailVehicleServer.vehicle_send_command(occupied_cabin.get_rid(), "cab_change", 1)
-    if occupied_cabin and event.is_action_pressed("cabin_next"):
-        RailVehicleServer.vehicle_send_command(occupied_cabin.get_rid(), "cab_change", -1)
+    if driven.is_valid() and event.is_action_pressed("cabin_previous"):
+        RailVehicleServer.vehicle_send_command(driven, "cab_change", 1)
+    if driven.is_valid() and event.is_action_pressed("cabin_next"):
+        RailVehicleServer.vehicle_send_command(driven, "cab_change", -1)
 
     if walking:
         _walk_mode_input(event)
 
     # Train.cpp:1088-1118 - Shift+Q hands the player's train to its driver, Q takes it back
-    if occupied_cabin:
+    if driven.is_valid():
         if event.is_action_pressed("ai_driver_enable", false, true):
             # switched off first, as the original does, so that a driver already driving starts over
-            DriverSystem.vehicle_set_control_active(occupied_cabin.get_rid(), false)
-            DriverSystem.vehicle_set_control_active(occupied_cabin.get_rid(), true)
+            DriverSystem.vehicle_set_control_active(driven, false)
+            DriverSystem.vehicle_set_control_active(driven, true)
         elif event.is_action_pressed("ai_driver_disable", false, true):
-            DriverSystem.vehicle_set_control_active(occupied_cabin.get_rid(), false)
+            DriverSystem.vehicle_set_control_active(driven, false)
 
     # drivermode.cpp:803-804 - Shift+F4 follows the player's train and cycles its views
     if event.is_action_pressed("external_view_cycle", false, true):
-        if external_view and external_view_mode == ExternalViewMode.FOLLOW:
-            external_view_follow_cam = ((external_view_follow_cam + 1) % ExternalCamera3D.View.size()) as ExternalCamera3D.View
-        elif occupied_cabin:
-            follow_target_rid = occupied_cabin.get_rid()
-            external_view_mode = ExternalViewMode.FOLLOW
-            external_view = true
+        PlayerCameraServer.camera_cycle_follow_view()
 
 ## Walk mode: the brake releaser, the manual brake and coupling act on the vehicle nearest to the
 ## player - TTrain::OnCommand_independentbrakebailoff (Train.cpp:1580-1595),
@@ -264,111 +221,131 @@ func _find_start_vehicle() -> RailVehicle3D:
                 return vehicle
     return null
 
-## The player takes the vehicle over and sits in its cab, leaving the one occupied before; its
-## driver, if it has one, only takes orders (drivermode.cpp:266), and the trainset driven before goes
-## back to its driver when the vehicle is of another one (simulation.cpp:257-270). The cab occupied
-## already is only looked from again.
-func enter_cabin(vehicle:RID) -> void:
-    var node:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as RailVehicle3D
-    if not node:
-        return
-    if not node == occupied_cabin:
-        if occupied_cabin:
-            var trainset:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-                    occupied_cabin.get_rid(), FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
-            if not trainset.has(vehicle):
-                for trainset_vehicle:RID in trainset:
-                    DriverSystem.vehicle_set_control_active(trainset_vehicle, true)
-            occupied_cabin.leave_cabin(self)
-        DriverSystem.vehicle_set_control_active(vehicle, false)
-        occupied_cabin = node
-        node.enter_cabin(self)
-        occupied_cabin_changed.emit()
-    external_view = false
-
-## The player lets the trainset go: its driver drives it again (simulation.cpp:257-270). A player
-## looking from the cab steps out beside it (drivermode.cpp:1260); one outside keeps the view
-func leave_cabin() -> void:
-    if not occupied_cabin:
-        return
-    for vehicle:RID in RailVehicleServer.vehicle_get_coupled(
-            occupied_cabin.get_rid(), FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER):
-        DriverSystem.vehicle_set_control_active(vehicle, true)
-    if not external_view:
-        free_camera.global_transform = _distant_view()
-        external_view_mode = ExternalViewMode.FREE
-        external_view = true
-    var vehicle:RailVehicle3D = occupied_cabin
-    occupied_cabin = null
-    vehicle.leave_cabin(self)
-    occupied_cabin_changed.emit()
-
-## The free camera beside the vehicle, looking at it
-func show_vehicle(vehicle:RID) -> void:
-    var body:Transform3D = RailVehicleServer.vehicle_get_transform(vehicle)
-    var length:float = RailVehicleServer.vehicle_dump_config(vehicle).get("length", 0.0)
-    var camera_position:Vector3 = body.origin + body.basis.x.normalized() * maxf(
-            SHOW_MIN_DISTANCE, length * SHOW_DISTANCE_PER_LENGTH) + Vector3.UP * SHOW_EYE_HEIGHT
-    free_camera.global_transform = Transform3D(Basis(), camera_position).looking_at(
-            body.origin + Vector3.UP * SHOW_EYE_HEIGHT)
-    free_camera.glide(Vector3.ZERO)
-    external_view_mode = ExternalViewMode.FREE
-    external_view = true
-
-## The camera the player looks through: the cab camera, the free camera or the external camera
-func get_view_camera() -> Camera3D:
-    if not external_view:
-        return get_camera()
-    return external_camera if external_view_mode == ExternalViewMode.FOLLOW else free_camera
-
-## driver_mode::DistantView(true) (drivermode.cpp:1054-1069): beside the occupied vehicle, on the
-## side of its occupied cab, where the cab camera is along it, looking at the vehicle
-func _distant_view() -> Transform3D:
-    var body:Transform3D = occupied_cabin.global_transform
-    var cabin_occupied:int = RailVehicleServer.vehicle_dump_state(occupied_cabin.get_rid()).get("cabin_occupied", 0)
-    # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
-    var left:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
-    var width:float = occupied_cabin.get_controller().dimensions_width
-    var head:Vector3 = get_camera().global_position
-    var position:Vector3 = Vector3(head.x, body.origin.y, head.z) + left * (width + DISTANT_VIEW_SIDE_MARGIN) \
-            + Vector3.UP * DISTANT_VIEW_HEIGHT
-    return Transform3D(Basis(), position).looking_at(body.origin)
-
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
     var controller:VehicleController = vehicle.get_controller()
     return controller.train_id if controller else ""
 
-## The view as the properties say: the camera looked through is current and the only one moved by
-## the keys, the scenery streams around it, and the player's head torch goes with the player's head
-func _process_view_dirty() -> void:
+## The keys of the cab's controls act on the vehicle driven, whether the player looks from its cab
+## or from outside - the cab logic is the vehicle's (CabinSystem), not the 3D cab's
+func _unhandled_input(event:InputEvent) -> void:
+    var logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(PlayerServer.player_get_vehicle())
+    if logic:
+        logic.input(event)
+
+
+func _on_vehicle_radio_stop_received(vehicle:RID) -> void:
+    if vehicle == PlayerServer.player_get_vehicle():
+        TranscriptSystem.add_line(RADIO_STOP_TRANSCRIPT, 0.0, RADIO_STOP_TRANSCRIPT_SECONDS)
+
+
+## The player sits in the cab of the vehicle taken over and leaves the one let go. Let go while
+## looked from its cab, the view steps out first, while the cab camera is still in the cab.
+func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
+    if not vehicle.is_valid() and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN:
+        PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
+    if _cabin_vehicle:
+        _hide_cabin()
+    if vehicle.is_valid():
+        _show_cabin(vehicle)
+
+
+## The vehicle's cab interior shown, the cab camera in it, where the cab puts the driver
+func _show_cabin(vehicle:RID) -> void:
+    var node:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as RailVehicle3D
+    node.show_cabin()
+    var cabin:Cabin3D = node.get_cabin()
+    if not cabin:
+        return
+    _cabin_vehicle = node
+    _cabin_camera.reparent(cabin, false)
+    cabin.camera_configuration_changed.connect(_on_cabin_camera_configuration_changed)
+    _on_cabin_camera_configuration_changed()
+
+
+## The cab camera taken out of the cab, and its interior freed
+func _hide_cabin() -> void:
+    var cabin:Cabin3D = _cabin_vehicle.get_cabin()
+    cabin.camera_configuration_changed.disconnect(_on_cabin_camera_configuration_changed)
+    _cabin_camera.reparent(self)
+    _cabin_vehicle.hide_cabin()
+    _cabin_vehicle = null
+
+
+## The cab camera at the driver's place of the cab, within its bounds, looking the way the occupied
+## cab faces (drivermode.cpp:1071 VectorFront * CabOccupied - the cab carries the vehicle's turn
+## already, so cab 1 turns back from it)
+func _on_cabin_camera_configuration_changed() -> void:
+    var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
+    _cabin_camera.bound_enabled = cabin.get_camera_bound_enabled()
+    _cabin_camera.bound_min = cabin.get_camera_bound_min() + Vector3.UP * CABIN_BOUND_FLOOR_RAISE
+    _cabin_camera.bound_max = cabin.get_camera_bound_max() + Vector3.UP * CABIN_BOUND_CEILING_RAISE
+    _cabin_camera.global_transform = cabin.get_camera_transform()
+    var basis:Basis = cabin.global_basis
+    _cabin_camera.global_basis = basis if cabin.get_cab_number() < 0 else basis.rotated(Vector3.UP, PI)
+
+
+## The camera of the view: from the cab camera the free camera steps out beside the vehicle
+## (driver_mode::DistantView(true), drivermode.cpp:1054-1069), from the following camera it goes on
+## from where that one was and as fast (drivermode.cpp:1093); the following camera follows from where
+## the free camera or its own previous target's view is, until Shift+F4 selects a view
+func _on_camera_changed() -> void:
     var previous:Camera3D = get_viewport().get_camera_3d()
-    var camera:Camera3D = get_view_camera()
-    if camera == external_camera:
-        external_camera.view = external_view_follow_cam
-        var target:RailVehicle3D = instance_from_id(
-                RailVehicleServer.vehicle_get_rail_vehicle(follow_target_rid)) as RailVehicle3D
-        # from the free camera the view follows from where it is, until Shift+F4 selects a view
-        if previous == free_camera:
-            external_camera.attach(target, previous.global_transform)
-        elif not previous == external_camera or not external_camera.vehicle == target:
-            external_camera.activate(target, previous.global_transform)
+    var camera:Camera3D = _mode_camera()
+    if camera == free_camera and previous == _cabin_camera and _cabin_vehicle:
+        var body:Transform3D = _cabin_vehicle.global_transform
+        var cabin_occupied:int = RailVehicleServer.vehicle_dump_state(_cabin_vehicle.get_rid()).get("cabin_occupied", 0)
+        # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
+        var side:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
+        var width:float = _cabin_vehicle.get_controller().dimensions_width
+        var head:Vector3 = _cabin_camera.global_position
+        var position:Vector3 = Vector3(head.x, body.origin.y, head.z) \
+                + side * (width + DISTANT_VIEW_SIDE_MARGIN) + Vector3.UP * DISTANT_VIEW_HEIGHT
+        free_camera.global_transform = Transform3D(Basis(), position).looking_at(body.origin)
+        free_camera.glide(Vector3.ZERO)
     elif camera == free_camera and previous == external_camera:
         free_camera.global_transform = external_camera.global_transform
         free_camera.glide(external_camera.velocity)
-    for head:FreeCamera3D in [get_camera(), free_camera]:
+    elif camera == external_camera:
+        var target:RailVehicle3D = instance_from_id(
+                RailVehicleServer.vehicle_get_rail_vehicle(PlayerCameraServer.camera_get_target())) as RailVehicle3D
+        external_camera.view = PlayerCameraServer.camera_get_follow_view() as ExternalCamera3D.View
+        # another target while following: only the vehicle looked at changes, the camera stays
+        if previous == free_camera or (previous == external_camera and not external_camera.vehicle == target):
+            external_camera.attach(target, previous.global_transform)
+        elif not previous == external_camera:
+            external_camera.activate(target, previous.global_transform)
+    if not camera == previous:
+        _show_camera(camera)
+
+
+## The free camera where PlayerCameraServer placed it (the vehicle card's crosshair)
+func _on_camera_placed(transform:Transform3D) -> void:
+    free_camera.global_transform = transform
+    free_camera.glide(Vector3.ZERO)
+    _show_camera(free_camera)
+
+
+func _mode_camera() -> Camera3D:
+    match PlayerCameraServer.camera_get_mode():
+        PlayerCameraServer.CAMERA_MODE_CABIN:
+            return _cabin_camera
+        PlayerCameraServer.CAMERA_MODE_FOLLOW:
+            return external_camera
+    return free_camera
+
+
+## The camera looked through is current and the only one moved by the keys, the scenery streams and
+## is picked around it (not from the cab, drivermouseinput.cpp:336), and the player's head torch
+## goes with the player's head
+func _show_camera(camera:Camera3D) -> void:
+    for head:FreeCamera3D in [_cabin_camera, free_camera]:
         head.process_mode = Node.PROCESS_MODE_INHERIT if head == camera else Node.PROCESS_MODE_DISABLED
     camera.make_current()
     if camera is FreeCamera3D and not headlamp.get_parent() == camera:
         headlamp.reparent(camera, false)
         headlamp_glow.reparent(camera, false)
     SceneryStreamingServer.set_camera(camera)
-    get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", not external_view)
-    # scenery models are clicked only while walking (drivermouseinput.cpp:336)
-    SceneryHUDMouseServer.set_active(external_view)
-    external_view_changed.emit()
-
-## The cab camera - it is put into the occupied cab (RailVehicle3D.enter_cabin())
-func get_camera() -> FreeCamera3D:
-    if not _camera:
-        _camera = get_node("Camera3D") as FreeCamera3D
-    return _camera
+    var cabin_view:bool = camera == _cabin_camera
+    get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", cabin_view)
+    SceneryHUDMouseServer.set_camera(camera.get_instance_id())
+    SceneryHUDMouseServer.set_active(not cabin_view)

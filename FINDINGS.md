@@ -296,6 +296,9 @@ anything. Open work belongs in `TODO.md`.
   with the viewing angle)*
 * `LastStationLatency` (driver `latency`) is the departure less the arrival: positive is early,
   the delay shown is its negative. *(09-29 an early freight train shown 7 min late)*
+* An extension class named like an engine class (`CameraServer`) builds fine and is refused at
+  run time: check the name against Godot's classes, and the `--import` log for "already
+  registered". *(09-29 an extension class named like an engine class never registered)*
 * When the API godot-cpp is generated from changes (`extension_api.json`, precision), rebuild
   godot-cpp from clean objects in every build dir, and check the library for undefined `godot::`
   symbols (`nm -D -C --undefined-only`). *(09-29 debug library would not load)*

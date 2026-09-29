@@ -5,7 +5,7 @@ class_name MaszynaRailVehicle3D
 ## Spawns a complete, driveable MaSzyna vehicle from nothing but a data_path/file_name/skin
 ## triple: exterior E3D model, FIZ physics controller, and an interactive MMD-driven cabin,
 ## placed on a named track at a given offset. Deliberately does NOT extend RailVehicle3D -
-## it builds one internally and delegates all vehicle behavior (motion, enter_cabin/leave_cabin,
+## it builds one internally and delegates all vehicle behavior (motion, show_cabin/hide_cabin,
 ## player-detection Area3D, light sync) to it unmodified, exactly like FizVehiclePhysicsNode wraps
 ## a generated VehicleController instead of extending it.
 ##
@@ -171,9 +171,20 @@ func _rebuild() -> void:
         return
 
     _vehicle = vehicle
+    # the editor drives no vehicle, and has no CabinSystem
+    if not Engine.is_editor_hint():
+        _vehicle.controller_changed.connect(_on_controller_changed)
     add_child(_vehicle, false, INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK)
     _set_owner_recursive(_vehicle, owner if editable_in_editor else self)
     _process_track_dirty()
+
+
+## The cab logic is the vehicle's, whoever drives it and whether a 3D cab is shown or not: the AI
+## and the player act on the same controls (CabinSystem). CabinSystem drops it with the vehicle.
+func _on_controller_changed() -> void:
+    var controller:VehicleController = get_controller()
+    if controller:
+        CabinSystem.vehicle_attach_cab_logic(controller.get_rid(), LegacyCabinLogic.from_mmd(data_path, file_name))
 
 
 ## Internal mode can only be chosen at add_child() time, so making _vehicle visible/hidden in

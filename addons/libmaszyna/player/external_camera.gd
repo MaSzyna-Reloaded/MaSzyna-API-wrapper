@@ -1,7 +1,7 @@
 extends Camera3D
 class_name ExternalCamera3D
 
-## External views of a vehicle (MaszynaPlayer.external_view_follow_cam, cycled with Shift+F4) -
+## External views of a vehicle (PlayerCameraServer.camera_set_follow_view(), cycled with Shift+F4) -
 ## driver_mode::ExternalView() (drivermode.cpp:916-1037). The camera flies to the selected view like
 ## a drone and always looks at the vehicle. Dragging with the right mouse button orbits the view around
 ## the vehicle, the left/right arrows and PageUp/PageDown pan the view in the screen plane, the

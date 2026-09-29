@@ -52,6 +52,7 @@ namespace godot {
             void pantograph(RailVehicleElectricEngine::PantographSelector p_selector, bool p_enabled) const override;
             void set_pantograph_wire_voltage(
                     RailVehicleElectricEngine::PantographSelector p_selector, float p_voltage) const override;
+            void set_voltage(float p_voltage) const override;
             /// Train.cpp:3695 (df5a8a8) - the pantograph compressor starts only below this pressure
             static constexpr double PANTOGRAPH_COMPRESSOR_START_PRESSURE = 4.8;
     };

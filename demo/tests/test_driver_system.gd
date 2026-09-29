@@ -176,6 +176,18 @@ func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
+## FINDINGS.md 2026-09-29: EP07-329's line breaker tripped at a switch and the driver, taking the
+## engine for ready still, rolled on without power - the consist's state is what takes it away
+func test_the_trainset_shows_a_powered_vehicles_line_breaker_open() -> void:
+    var train:VehicleController = build_vehicle("AIDriverBreakerTest", SM42)
+    var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
+
+    trainset.update(train.get_rid(), 1, true)
+
+    assert_false(train.state["main_switch_enabled"], "a cold engine's line breaker is open")
+    assert_true(trainset.line_breaker_open, "and the trainset's state shows it")
+
+
 func test_a_driver_not_in_control_touches_nothing() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverControlTest", SM42)

@@ -259,7 +259,12 @@ namespace godot {
             mover->Pantographs[1].voltage = p_voltage;
             mover->PantRearVolt = mover->Pantographs[1].is_active ? p_voltage : 0.0;
         }
-        mover->PantographVoltage = std::max(std::fabs(mover->PantFrontVolt), std::fabs(mover->PantRearVolt));
+    }
+
+    void MoverCurrentCollectorUnit::set_voltage(const float p_voltage) const {
+        TMoverParameters *mover = owner.get_mover();
+        ASSERT_MOVER(mover);
+        mover->PantographVoltage = p_voltage;
     }
 
     void MoverCurrentCollectorUnit::apply_configuration(const RailVehicleElectricEngine *p_engine) const {

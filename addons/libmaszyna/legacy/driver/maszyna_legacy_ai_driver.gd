@@ -395,6 +395,13 @@ func _update(driver:RID) -> void:
     # the time since the last update is the reaction time it was scheduled with
     var elapsed:float = state.reaction_time
     state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
+    # what happened to the trainset from outside - a line breaker tripped by a loss of voltage, a
+    # relay a player opened - takes the engine's readiness away, and handle_engine() gets it ready
+    # again (determine_consist_state(), Driver.cpp:6100-6104)
+    var converter:Variant = CabinSystem.vehicle_state_value(state.trainset.controlling, "converter_enabled")
+    if state.trainset.line_breaker_open or state.trainset.converter_overload_relay_open \
+            or not (converter == null or bool(converter)):
+        state.engine_active = false
     # what its brakes can do - the table again when the trainset or the kind of order changed
     state.braking.read_trainset(
             vehicle, state.orders[state.order_position], state.trainset, DriverSystem.vehicle_is_control_active(vehicle))

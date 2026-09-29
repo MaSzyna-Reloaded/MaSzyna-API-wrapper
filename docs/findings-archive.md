@@ -1974,3 +1974,27 @@ lighting or the consist.
 * **Rule:** before naming a new extension class or singleton, check that Godot has no class of that
   name (`ClassDB.class_exists()` in the editor, or the class reference); after adding one, read
   the `--import` log for "already registered".
+
+## 2026-09-29 - every vehicle's cab ran each step
+
+* **Symptom:** a clear fps drop in game (38 fps, `Process` 33 ms). The editor profiler's Script
+  Functions put `CabinSystem._on_simulation_advanced` -> `LegacyCabinMainSwitch._process` at
+  165-259 calls a frame, with `CabinState.vehicle_of` (39k of 63k self time) and `vehicle_state`
+  (15k) under it.
+* **What proved it:** the call count of `LegacyCabinMainSwitch._process` matched the number of
+  vehicles with an MMD, not the few driven ones. `git log -S"LegacyCabinLogic.from_mmd(data_path"`
+  led to 495c3538, where `MaszynaRailVehicle3D._on_controller_changed()` attached a cab logic to
+  every vehicle; before, only the AI's vehicles (`SceneryInstancer._build_drivers()`) and the
+  player's 3D cab had one. Each cab's `_process` behaviours walk the trainset
+  (`vehicle_find_powered`) and rebuild the vehicle's state dump every step.
+* **Fix:** `DriverSystem` announces `vehicle_driven_changed(vehicle, driven)` (a driver or a
+  player) and answers `vehicle_is_driven()`; `MaszynaRailVehicle3D` attaches the cab logic when its
+  vehicle becomes driven and detaches it when it stops. Same session: `set_end()` of the AI's lights
+  skips a vehicle without `RailVehicleLighting` (the original masks lamps by `iInventory`,
+  DynObj.cpp:7293) instead of flooding the log with "Unknown command: light", and reads the lamps
+  with `RailVehicleLighting.light_is_enabled()` instead of the state dump; `E3DModelInstance`
+  processes only in the editor and follows its transform only where the server needs it; scenery
+  sounds became one streamed `SfxPlayer3D` (`ScenerySoundServer`).
+* **Rule:** the original keeps a TTrain only for a driven train - a cab at work on every vehicle is
+  N per-step processes. Before attaching per-vehicle logic, ask who drives the vehicle; read the
+  profiler's call counts before its times.

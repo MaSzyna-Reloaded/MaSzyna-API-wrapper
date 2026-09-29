@@ -196,7 +196,7 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         var driver:RID = DriverSystem.driver_create()
         root._driver_rids.append(driver)
         # the driver drives through the vehicle's cab logic, like the player, without the 3D cab
-        # (MaszynaRailVehicle3D attaches it)
+        # (MaszynaRailVehicle3D attaches it once the vehicle is driven)
         DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
         DriverSystem.driver_attach_delegate(driver, _ai_driver)
     # endtrainset (simulationstateserializer.cpp:818-848): the trainset's driver gets its timetable

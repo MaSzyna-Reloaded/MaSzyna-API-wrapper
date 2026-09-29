@@ -8,6 +8,7 @@ namespace godot {
     const char *DriverSystem::driver_timetable_changed_signal = "driver_timetable_changed";
     const char *DriverSystem::driver_vehicle_attached_signal = "driver_vehicle_attached";
     const char *DriverSystem::driver_freed_signal = "driver_freed";
+    const char *DriverSystem::vehicle_driven_changed_signal = "vehicle_driven_changed";
 
     void DriverSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("driver_create"), &DriverSystem::driver_create);
@@ -29,6 +30,7 @@ namespace godot {
                 D_METHOD("vehicle_set_control_active", "vehicle", "active"), &DriverSystem::vehicle_set_control_active);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_control_active", "vehicle"), &DriverSystem::vehicle_is_control_active);
+        ClassDB::bind_method(D_METHOD("vehicle_is_driven", "vehicle"), &DriverSystem::vehicle_is_driven);
         ClassDB::bind_method(
                 D_METHOD("driver_get_timetable_state", "driver"), &DriverSystem::driver_get_timetable_state);
         ClassDB::bind_method(
@@ -39,6 +41,9 @@ namespace godot {
                 driver_vehicle_attached_signal, PropertyInfo(Variant::RID, "driver"),
                 PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(driver_freed_signal, PropertyInfo(Variant::RID, "driver")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_driven_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::BOOL, "driven")));
     }
 
     /// A freed vehicle leaves its driver without one. No explicit disconnect: callable_mp reports
@@ -105,11 +110,14 @@ namespace godot {
         if (!(player_controlled_vehicles.has(p_vehicle) == p_active)) {
             return;
         }
+        const bool was_driven = vehicle_is_driven(p_vehicle);
         if (!p_active) {
             player_controlled_vehicles.insert(p_vehicle);
+            _report_driven(p_vehicle, was_driven);
             return;
         }
         player_controlled_vehicles.erase(p_vehicle);
+        _report_driven(p_vehicle, was_driven);
         // taken back: the delegate learns it drives a vehicle a player left as it is now
         // (TController::TakeControl(), Driver.cpp:5700-5712)
         const RID driver_rid = vehicle_get_driver(p_vehicle);
@@ -123,6 +131,18 @@ namespace godot {
 
     bool DriverSystem::vehicle_is_control_active(const RID &p_vehicle) const {
         return drivers_by_vehicle.has(p_vehicle) && !player_controlled_vehicles.has(p_vehicle);
+    }
+
+    bool DriverSystem::vehicle_is_driven(const RID &p_vehicle) const {
+        return drivers_by_vehicle.has(p_vehicle) || player_controlled_vehicles.has(p_vehicle);
+    }
+
+    /// Announces the vehicle's change of being driven, after the operation that changed it
+    void DriverSystem::_report_driven(const RID &p_vehicle, const bool p_was_driven) {
+        const bool driven = vehicle_is_driven(p_vehicle);
+        if (!(driven == p_was_driven)) {
+            emit_signal(vehicle_driven_changed_signal, p_vehicle, driven);
+        }
     }
 
     void DriverSystem::driver_schedule_update(const RID &p_driver, const double p_seconds) {
@@ -170,7 +190,9 @@ namespace godot {
         const DriverData freed = *data;
         drivers.erase(p_driver);
         if (freed.vehicle.is_valid()) {
+            const bool was_driven = vehicle_is_driven(freed.vehicle);
             drivers_by_vehicle.erase(freed.vehicle);
+            _report_driven(freed.vehicle, was_driven);
         }
         if (freed.delegate.is_valid()) {
             freed.delegate->driver_detached(p_driver);
@@ -203,14 +225,23 @@ namespace godot {
         ERR_FAIL_COND_MSG(
                 drivers_by_vehicle.has(p_vehicle) && !(drivers_by_vehicle[p_vehicle] == p_driver),
                 "The vehicle has a driver already.");
-        if (data->vehicle.is_valid()) {
-            drivers_by_vehicle.erase(data->vehicle);
+        const RID previous = data->vehicle;
+        const bool previous_was_driven = vehicle_is_driven(previous);
+        const bool was_driven = vehicle_is_driven(p_vehicle);
+        if (previous.is_valid()) {
+            drivers_by_vehicle.erase(previous);
         }
         data->vehicle = p_vehicle;
         if (p_vehicle.is_valid()) {
             drivers_by_vehicle.insert(p_vehicle, p_driver);
         }
         emit_signal(driver_vehicle_attached_signal, p_driver, p_vehicle);
+        if (previous.is_valid() && !(previous == p_vehicle)) {
+            _report_driven(previous, previous_was_driven);
+        }
+        if (p_vehicle.is_valid()) {
+            _report_driven(p_vehicle, was_driven);
+        }
     }
 
     RID DriverSystem::driver_get_vehicle(const RID &p_driver) const {

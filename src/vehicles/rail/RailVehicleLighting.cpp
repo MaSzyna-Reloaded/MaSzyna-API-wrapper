@@ -38,6 +38,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("decrease_light_selector_position"), &RailVehicleLighting::decrease_light_selector_position);
         ClassDB::bind_method(D_METHOD("light", "light", "enabled"), &RailVehicleLighting::light);
+        ClassDB::bind_method(D_METHOD("light_is_enabled", "light"), &RailVehicleLighting::light_is_enabled);
         ClassDB::bind_method(D_METHOD("light_switch", "light", "enabled"), &RailVehicleLighting::light_switch);
         ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &RailVehicleLighting::roof_light);
         ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &RailVehicleLighting::devices_light);

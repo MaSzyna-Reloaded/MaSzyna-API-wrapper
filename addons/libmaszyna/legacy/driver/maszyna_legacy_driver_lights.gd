@@ -10,6 +10,7 @@ class_name MaszynaLegacyDriverLights
 ##
 ## Not ported: the model's lamp inventory (iInventory) is not known, so a rear end shows its red
 ## markers where the original would pick plates for a model without them - see TODO.md, "Drivers".
+## A vehicle without RailVehicleLighting stands for an empty inventory.
 
 ## The original's lamp bits (light::, MOVER.h:299-323) and the lamps of the `light` command they
 ## name; the other bits have no lamp here
@@ -80,13 +81,16 @@ static func off(vehicle:RID, direction:int) -> void:
 
 
 ## One end of a vehicle showing `pattern` (the original's bits): only the lamps that differ are
-## switched
+## switched. A vehicle without lamps lights none (head & iInventory[end], DynObj.cpp:7293).
 static func set_end(vehicle:RID, end:int, pattern:int) -> void:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
+    var lighting:RailVehicleLighting = RailVehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_LIGHTING) as RailVehicleLighting
+    if not lighting:
+        return
     for bit:int in LAMPS:
         var lamp:String = END_PREFIXES[end] + LAMPS[bit]
         var lit:bool = bool(pattern & bit)
-        if not bool(state.get("lights/%s_enabled" % lamp, false)) == lit:
+        if not lighting.light_is_enabled(lamp) == lit:
             RailVehicleServer.vehicle_send_command(vehicle, "light", lamp, lit)
 
 

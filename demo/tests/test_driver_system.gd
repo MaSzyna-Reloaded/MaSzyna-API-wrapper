@@ -31,6 +31,24 @@ func test_the_drivers_are_listed_and_their_vehicles_announced() -> void:
     assert_does_not_have(DriverSystem.get_drivers(), driver)
 
 
+func test_a_vehicle_is_driven_by_its_driver_or_a_player() -> void:
+    var vehicle:RID = build_vehicle("DrivenTest").get_rid()
+    watch_signals(DriverSystem)
+    var driver:RID = DriverSystem.driver_create()
+
+    assert_false(DriverSystem.vehicle_is_driven(vehicle), "nobody drives it yet")
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    assert_true(DriverSystem.vehicle_is_driven(vehicle))
+    assert_signal_emitted_with_parameters(DriverSystem, "vehicle_driven_changed", [vehicle, true])
+    DriverSystem.vehicle_set_control_active(vehicle, false)
+    assert_signal_emit_count(DriverSystem, "vehicle_driven_changed", 1, "a player taking over changes nothing")
+    DriverSystem.driver_free(driver)
+    assert_signal_emit_count(DriverSystem, "vehicle_driven_changed", 1, "the player still drives it")
+    DriverSystem.vehicle_set_control_active(vehicle, true)
+    assert_false(DriverSystem.vehicle_is_driven(vehicle), "the player left, and it has no driver")
+    assert_signal_emitted_with_parameters(DriverSystem, "vehicle_driven_changed", [vehicle, false])
+
+
 func test_a_driver_state_comes_from_its_delegate() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var driver:RID = _create_driver(ai)

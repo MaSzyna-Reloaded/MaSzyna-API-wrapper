@@ -20,7 +20,7 @@ func before_each() -> void:
     _mesh.mesh = BoxMesh.new()
     _mesh.position = Vector3(0.0, 0.0, -3.0)
     add_child_autofree(_mesh)
-    CabinHUDMouseSystem.set_camera(_camera.get_instance_id())
+    CabinHUDMouseSystem.mouse_set_camera(_camera.get_instance_id())
     CabinHUDMouseSystem.control_hovered.connect(_on_control_hovered)
     _control = _create_control(Vector3.UP)
 
@@ -47,20 +47,20 @@ func _on_control_hovered(caption:String, hints:String, state:String) -> void:
 func _move_to(position:Vector2) -> bool:
     var event:InputEventMouseMotion = InputEventMouseMotion.new()
     event.position = position
-    return CabinHUDMouseSystem.input(event)
+    return CabinHUDMouseSystem.mouse_input(event)
 
 
 func _drag_by(relative:Vector2) -> bool:
     var event:InputEventMouseMotion = InputEventMouseMotion.new()
     event.relative = relative
-    return CabinHUDMouseSystem.input(event)
+    return CabinHUDMouseSystem.mouse_input(event)
 
 
 func _left_button(pressed:bool) -> bool:
     var event:InputEventMouseButton = InputEventMouseButton.new()
     event.button_index = MOUSE_BUTTON_LEFT
     event.pressed = pressed
-    return CabinHUDMouseSystem.input(event)
+    return CabinHUDMouseSystem.mouse_input(event)
 
 
 func _over_control() -> Vector2:
@@ -69,12 +69,12 @@ func _over_control() -> Vector2:
 
 func test_hover_outlines_and_captions_the_control() -> void:
     _move_to(_over_control())
-    assert_eq(CabinHUDMouseSystem.get_hovered_control(), _control)
+    assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
     assert_not_null(_mesh.material_overlay)
     assert_eq(_captions, ["battery|B|"] as Array[String])
 
     _move_to(Vector2.ONE)
-    assert_false(CabinHUDMouseSystem.get_hovered_control().is_valid())
+    assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
     assert_null(_mesh.material_overlay)
 
 
@@ -149,7 +149,7 @@ func test_occluder_in_front_hides_the_control() -> void:
     add_child_autofree(desk)
     var occluder:RID = CabinHUDMouseSystem.occluder_create(desk.get_instance_id())
     _move_to(_over_control())
-    assert_false(CabinHUDMouseSystem.get_hovered_control().is_valid())
+    assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
     CabinHUDMouseSystem.occluder_free(occluder)
 
 
@@ -163,7 +163,7 @@ func test_occluder_behind_or_the_control_itself_does_not_hide_it() -> void:
         CabinHUDMouseSystem.occluder_create(_mesh.get_instance_id()),
     ]
     _move_to(_over_control())
-    assert_eq(CabinHUDMouseSystem.get_hovered_control(), _control)
+    assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
     for occluder:RID in occluders:
         CabinHUDMouseSystem.occluder_free(occluder)
 
@@ -177,7 +177,7 @@ func test_child_mesh_is_part_of_the_control() -> void:
     CabinHUDMouseSystem.control_free(_control)
     _control = _create_control(Vector3.UP)
     _move_to(_camera.unproject_position(handle.global_position))
-    assert_eq(CabinHUDMouseSystem.get_hovered_control(), _control)
+    assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
     assert_not_null(handle.material_overlay)
     assert_not_null(_mesh.material_overlay)
 
@@ -185,7 +185,7 @@ func test_child_mesh_is_part_of_the_control() -> void:
 func test_cursor_just_beside_a_small_control_takes_it() -> void:
     _mesh.scale = Vector3.ONE * 0.01
     _move_to(_over_control() + Vector2(6.0, 0.0))
-    assert_eq(CabinHUDMouseSystem.get_hovered_control(), _control)
+    assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
 
 
 ## A wheel on a lying axis is turned by its top: grabbed below the hub, dragging the way its top
@@ -274,5 +274,5 @@ func test_quick_pull_stops_in_the_next_notch() -> void:
 func test_freeing_the_hovered_control_clears_its_outline() -> void:
     _move_to(_over_control())
     CabinHUDMouseSystem.control_free(_control)
-    assert_false(CabinHUDMouseSystem.get_hovered_control().is_valid())
+    assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
     assert_null(_mesh.material_overlay)

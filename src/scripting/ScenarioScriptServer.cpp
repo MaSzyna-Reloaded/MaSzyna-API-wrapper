@@ -18,7 +18,7 @@ namespace godot {
     void ScenarioScriptServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("context_create", "base_dir"), &ScenarioScriptServer::context_create);
         ClassDB::bind_method(D_METHOD("context_free", "context"), &ScenarioScriptServer::context_free);
-        ClassDB::bind_method(D_METHOD("get_contexts"), &ScenarioScriptServer::get_contexts);
+        ClassDB::bind_method(D_METHOD("context_get_rids"), &ScenarioScriptServer::context_get_rids);
         ClassDB::bind_method(D_METHOD("context_run_file", "context", "path"), &ScenarioScriptServer::context_run_file);
         ClassDB::bind_method(
                 D_METHOD("context_check_source", "context", "unit", "source"),
@@ -108,7 +108,7 @@ namespace godot {
         contexts.erase(p_context);
     }
 
-    TypedArray<RID> ScenarioScriptServer::get_contexts() const {
+    TypedArray<RID> ScenarioScriptServer::context_get_rids() const {
         TypedArray<RID> result;
         for (const KeyValue<RID, Context> &context: contexts) {
             result.push_back(context.key);

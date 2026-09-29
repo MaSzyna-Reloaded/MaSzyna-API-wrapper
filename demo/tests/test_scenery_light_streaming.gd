@@ -24,22 +24,22 @@ func before_each() -> void:
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
     _camera.global_position = Vector3.ZERO
-    SceneryStreamingServer.set_camera(_camera)
-    E3DRenderingServer.set_model_loader(_load_model)
+    SceneryStreamingServer.streaming_set_camera(_camera)
+    E3DRenderingServer.model_set_loader(_load_model)
 
 
 func after_each() -> void:
     if _instance.is_valid():
         E3DRenderingServer.instance_free(_instance)
         _instance = RID()
-    SceneryStreamingServer.set_camera(null)
-    E3DRenderingServer.set_model_loader(Callable())
-    E3DRenderingServer.set_current_time(MIDDAY)
-    E3DRenderingServer.set_light_level(DAY_LIGHT_LEVEL)
+    SceneryStreamingServer.streaming_set_camera(null)
+    E3DRenderingServer.model_set_loader(Callable())
+    E3DRenderingServer.environment_set_time(MIDDAY)
+    E3DRenderingServer.environment_set_light_level(DAY_LIGHT_LEVEL)
 
 
 func test_declared_spotlight_is_streamed_in_and_follows_the_light_level() -> void:
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     _instance = _register_lamp()
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
 
@@ -48,12 +48,12 @@ func test_declared_spotlight_is_streamed_in_and_follows_the_light_level() -> voi
     assert_eq(statistics["omni"], 0)
     assert_eq(statistics["lit"], 1, "and it is lit, because it is dark")
 
-    E3DRenderingServer.set_light_level(DAY_LIGHT_LEVEL)
-    assert_eq(E3DRenderingServer.get_light_statistics()["lit"], 0, "unlit again in daylight")
+    E3DRenderingServer.environment_set_light_level(DAY_LIGHT_LEVEL)
+    assert_eq(E3DRenderingServer.light_get_statistics()["lit"], 0, "unlit again in daylight")
 
 
 func test_wide_cone_becomes_an_omni_light() -> void:
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     # elektryczne/lampa_parkowa01 declares 117 degrees, past Godot's spot limit
     _instance = _register_lamp(117.2)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
@@ -64,7 +64,7 @@ func test_wide_cone_becomes_an_omni_light() -> void:
 
 
 func test_economy_mode_merges_a_multi_armed_lamp_into_one_light() -> void:
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     ProjectSettings.set_setting("maszyna/scenery/lights/mode", ECONOMY)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
@@ -75,18 +75,18 @@ func test_economy_mode_merges_a_multi_armed_lamp_into_one_light() -> void:
 
 
 func test_lights_off_creates_no_real_lights() -> void:
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     ProjectSettings.set_setting("maszyna/scenery/lights/mode", LIGHTS_OFF)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
 
     await wait_seconds(1.0)
-    var statistics: Dictionary = E3DRenderingServer.get_light_statistics()
+    var statistics: Dictionary = E3DRenderingServer.light_get_statistics()
     assert_eq(statistics["spot"] + statistics["omni"], 0, "only the lit submodels, no real lights")
 
 
 func test_high_quality_keeps_every_arm() -> void:
-    E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
+    E3DRenderingServer.environment_set_light_level(NIGHT_LIGHT_LEVEL)
     ProjectSettings.set_setting("maszyna/scenery/lights/mode", HIGH_QUALITY)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
@@ -106,12 +106,12 @@ func _register_lamp(light_angle: float = 40.0, arms: int = 1) -> RID:
 func _await_lights() -> Dictionary:
     var waited: float = 0.0
     while waited < STREAM_TIMEOUT:
-        var statistics: Dictionary = E3DRenderingServer.get_light_statistics()
+        var statistics: Dictionary = E3DRenderingServer.light_get_statistics()
         if statistics["total"] > 0:
             return statistics
         await wait_seconds(0.1)
         waited += 0.1
-    return E3DRenderingServer.get_light_statistics()
+    return E3DRenderingServer.light_get_statistics()
 
 
 ## Stands in for E3DModelManager: a lamp with one light_on00 holding a FREE_SPOTLIGHT

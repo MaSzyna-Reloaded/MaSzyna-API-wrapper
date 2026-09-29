@@ -16,7 +16,7 @@ func _input(event):
 
 func _on_gamedir_changed():
     _auto_user_settings_visibility()
-    SimulationServer.clear_cache()
+    SimulationServer.cache_clear()
     _reload_all_models()
 
 

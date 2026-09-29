@@ -16,8 +16,8 @@ var _build_order:Array[RID] = []
 func before_each() -> void:
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
-    E3DRenderingServer.set_model_loader(_load_test_model)
-    SceneryStreamingServer.set_camera(_camera)
+    E3DRenderingServer.model_set_loader(_load_test_model)
+    SceneryStreamingServer.streaming_set_camera(_camera)
 
 
 func after_each() -> void:
@@ -28,32 +28,32 @@ func after_each() -> void:
         SceneryStreamingServer.stream_free(rid)
     _stream_rids.clear()
     _build_order.clear()
-    SceneryStreamingServer.set_camera(null)
-    E3DRenderingServer.set_model_loader(E3DModelManager.load_model)
+    SceneryStreamingServer.streaming_set_camera(null)
+    E3DRenderingServer.model_set_loader(E3DModelManager.load_model)
 
 
 func test_registered_instance_is_built_only_within_range() -> void:
     _register(Vector3.ZERO, 200.0)
 
     await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "built while out of range")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "built while out of range")
 
     await _move_camera(Vector3.ZERO)
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 1, "not built inside the range")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "not built inside the range")
 
     await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "not cleared after leaving")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "not cleared after leaving")
 
 
 func test_range_of_a_node_without_one_is_capped_by_the_draw_distance() -> void:
-    var draw_distance:float = SceneryStreamingServer.get_draw_distance()
+    var draw_distance:float = SceneryStreamingServer.streaming_get_draw_distance()
     _register(Vector3.ZERO, 0.0)
 
     await _move_camera(Vector3(draw_distance + 2 * CHUNK_SIZE_M, 0, 0))
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "built beyond the draw distance")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "built beyond the draw distance")
 
     await _move_camera(Vector3(draw_distance * 0.5, 0, 0))
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 1, "not built within the draw distance")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "not built within the draw distance")
 
 
 func test_registered_instance_is_freed_before_it_is_ever_built() -> void:
@@ -64,7 +64,7 @@ func test_registered_instance_is_freed_before_it_is_ever_built() -> void:
     _rids.erase(rid)
 
     await _move_camera(Vector3.ZERO)
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "a freed registration was built")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "a freed registration was built")
 
 
 ## Building a chunk needs a real renderer (a headless material has no shader), so this covers the
@@ -77,15 +77,15 @@ func test_triangle_chunk_out_of_range_is_not_built() -> void:
     var rid:RID = MaszynaSceneryChunkRenderingServer.create_chunk(chunk, get_tree().root.world_3d.scenario)
 
     await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "chunk built while out of range")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "chunk built while out of range")
 
     MaszynaSceneryChunkRenderingServer.free_chunk(rid)
     await _move_camera(Vector3.ZERO)
-    assert_eq(SceneryStreamingServer.get_streamed_count(), 0, "a freed chunk was built")
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "a freed chunk was built")
 
 
 func test_camera_can_pause_registration_until_the_final_start_position() -> void:
-    SceneryStreamingServer.set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(null)
     var owner:int = SceneryStreamingServer.owner_create(Callable(), _record_build, _record_clear)
     var menu_rid:RID = _stream_register(owner, Vector3.ZERO)
     var cabin_rid:RID = _stream_register(owner, Vector3(4 * CHUNK_SIZE_M, 0, 0))
@@ -94,30 +94,30 @@ func test_camera_can_pause_registration_until_the_final_start_position() -> void
     assert_eq(_build_order.size(), 0, "built scenery while streaming was paused")
 
     _camera.global_position = Vector3(4 * CHUNK_SIZE_M, 0, 0)
-    SceneryStreamingServer.set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera)
     await wait_idle_frames(STREAMING_FRAMES)
     assert_has(_build_order, cabin_rid, "did not build around the final camera")
     assert_does_not_have(_build_order, menu_rid, "built around the stale menu camera")
 
 
 func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void:
-    SceneryStreamingServer.set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(null)
     var owner:int = SceneryStreamingServer.owner_create(Callable(), _record_build, _record_clear)
     var far_rid:RID = _stream_register(owner, Vector3(CHUNK_SIZE_M, 0, 0))
     var near_rid:RID = _stream_register(owner, Vector3.ZERO)
-    assert_false(SceneryStreamingServer.is_area_ready(1), "paused streaming reported ready")
+    assert_false(SceneryStreamingServer.area_is_ready(1), "paused streaming reported ready")
 
-    SceneryStreamingServer.set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera)
     await wait_idle_frames(STREAMING_FRAMES)
     assert_eq(_build_order[0], near_rid, "farther chunk was built before the camera chunk")
     assert_has(_build_order, far_rid, "neighbour chunk was not built")
-    assert_true(SceneryStreamingServer.is_area_ready(1), "camera neighbourhood did not become ready")
+    assert_true(SceneryStreamingServer.area_is_ready(1), "camera neighbourhood did not become ready")
 
 
 func test_detached_camera_uses_the_last_valid_position() -> void:
     await _move_camera(Vector3(12.0, 3.0, 4.0))
     remove_child(_camera)
-    assert_eq(SceneryStreamingServer.get_camera_position(), Vector3(12.0, 3.0, 4.0))
+    assert_eq(SceneryStreamingServer.streaming_get_camera_position(), Vector3(12.0, 3.0, 4.0))
     add_child(_camera)
 
 

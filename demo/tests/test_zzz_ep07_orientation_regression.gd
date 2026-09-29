@@ -138,9 +138,9 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("main_controller_increase")
     var tripped:bool = false
     # simulated seconds, not frames: a headless run draws frames as fast as it can
-    var drive_until:float = SimulationServer.get_simulation_time() + DRIVE_SECONDS
+    var drive_until:float = SimulationServer.simulation_get_time() + DRIVE_SECONDS
     var i:int = 0
-    while SimulationServer.get_simulation_time() < drive_until:
+    while SimulationServer.simulation_get_time() < drive_until:
         await wait_idle_frames(1)
         i += 1
         if i % DUMP_EVERY_FRAMES == 0:

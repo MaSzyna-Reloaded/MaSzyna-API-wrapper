@@ -41,7 +41,7 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->Hamulec->Releaser(p_active ? 1 : 0);
-        consist_releasing = p_active;
+        trainset_releasing = p_active;
     }
 
     void MoverRailVehicleBrake::compressor(const bool p_enabled) {
@@ -266,7 +266,7 @@ namespace godot {
     void MoverRailVehicleBrake::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
-        if (consist_releasing && !is_braking()) {
+        if (trainset_releasing && !is_braking()) {
             consist_releaser(false);
         }
         if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {

@@ -34,6 +34,12 @@
 				Forgets the control, ending a hover or a drag it is part of.
 			</description>
 		</method>
+		<method name="control_get_hovered" qualifiers="const">
+			<return type="RID" />
+			<description>
+				The control under the cursor, or an empty [RID].
+			</description>
+		</method>
 		<method name="control_set_state">
 			<return type="void" />
 			<param index="0" name="control" type="RID" />
@@ -42,17 +48,18 @@
 				What the control shows now - a position, a level - as its owner words it. Shown under the caption, and announced with [signal control_state_changed] while the control is hovered.
 			</description>
 		</method>
-		<method name="get_hovered_control" qualifiers="const">
-			<return type="RID" />
-			<description>
-				The control under the cursor, or an empty [RID].
-			</description>
-		</method>
-		<method name="input">
+		<method name="mouse_input">
 			<return type="bool" />
 			<param index="0" name="event" type="InputEvent" />
 			<description>
 				Feeds one input event. Returns [code]true[/code] when the event operated a control and should be consumed.
+			</description>
+		</method>
+		<method name="mouse_set_camera">
+			<return type="void" />
+			<param index="0" name="camera_id" type="int" />
+			<description>
+				The [Camera3D], by instance id, whose view the cursor points into. Picking is off while it is not current.
 			</description>
 		</method>
 		<method name="occluder_create">
@@ -67,13 +74,6 @@
 			<param index="0" name="occluder" type="RID" />
 			<description>
 				Forgets the occluder.
-			</description>
-		</method>
-		<method name="set_camera">
-			<return type="void" />
-			<param index="0" name="camera_id" type="int" />
-			<description>
-				The [Camera3D], by instance id, whose view the cursor points into. Picking is off while it is not current.
 			</description>
 		</method>
 	</methods>

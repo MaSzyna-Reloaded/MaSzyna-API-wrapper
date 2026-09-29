@@ -14,7 +14,8 @@
 namespace godot {
     const char *E3DRenderingServer::instance_freed_signal = "instance_freed";
     const char *E3DRenderingServer::instance_built_signal = "instance_built";
-    const char *E3DRenderingServer::submodel_animation_finished_signal = "submodel_animation_finished";
+    const char *E3DRenderingServer::instance_submodel_animation_finished_signal =
+            "instance_submodel_animation_finished";
 
     void E3DRenderingServer::_bind_methods() {
         ClassDB::bind_method(
@@ -90,24 +91,30 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light_free", "light"), &E3DRenderingServer::light_free);
         ClassDB::bind_method(D_METHOD("light_enable", "light"), &E3DRenderingServer::light_enable);
         ClassDB::bind_method(D_METHOD("light_disable", "light"), &E3DRenderingServer::light_disable);
-        ClassDB::bind_method(D_METHOD("get_light_statistics"), &E3DRenderingServer::get_light_statistics);
+        ClassDB::bind_method(D_METHOD("light_get_statistics"), &E3DRenderingServer::light_get_statistics);
         ClassDB::bind_method(
                 D_METHOD("instance_set_smoke_intensity", "instance", "intensity"),
                 &E3DRenderingServer::instance_set_smoke_intensity);
-        ClassDB::bind_method(D_METHOD("get_smoke_statistics"), &E3DRenderingServer::get_smoke_statistics);
-        ClassDB::bind_method(D_METHOD("set_current_time", "hours"), &E3DRenderingServer::set_current_time);
-        ClassDB::bind_method(D_METHOD("set_animation_speed", "speed"), &E3DRenderingServer::set_animation_speed);
-        ClassDB::bind_method(D_METHOD("get_animation_speed"), &E3DRenderingServer::get_animation_speed);
-        ClassDB::bind_method(D_METHOD("set_light_level", "level"), &E3DRenderingServer::set_light_level);
-        ClassDB::bind_method(D_METHOD("set_wind", "strength", "direction"), &E3DRenderingServer::set_wind);
-        ClassDB::bind_method(D_METHOD("set_wind_strength", "strength"), &E3DRenderingServer::set_wind_strength);
-        ClassDB::bind_method(D_METHOD("set_wind_direction", "direction"), &E3DRenderingServer::set_wind_direction);
+        ClassDB::bind_method(D_METHOD("smoke_get_statistics"), &E3DRenderingServer::smoke_get_statistics);
+        ClassDB::bind_method(D_METHOD("environment_set_time", "hours"), &E3DRenderingServer::environment_set_time);
+        ClassDB::bind_method(D_METHOD("animation_set_speed", "speed"), &E3DRenderingServer::animation_set_speed);
+        ClassDB::bind_method(D_METHOD("animation_get_speed"), &E3DRenderingServer::animation_get_speed);
         ClassDB::bind_method(
-                D_METHOD("set_material_resolver", "material_resolver"), &E3DRenderingServer::set_material_resolver);
-        ClassDB::bind_method(D_METHOD("set_model_loader", "model_loader"), &E3DRenderingServer::set_model_loader);
+                D_METHOD("environment_set_light_level", "level"), &E3DRenderingServer::environment_set_light_level);
         ClassDB::bind_method(
-                D_METHOD("set_smoke_source_resolver", "smoke_source_resolver"),
-                &E3DRenderingServer::set_smoke_source_resolver);
+                D_METHOD("environment_set_wind", "strength", "direction"), &E3DRenderingServer::environment_set_wind);
+        ClassDB::bind_method(
+                D_METHOD("environment_set_wind_strength", "strength"),
+                &E3DRenderingServer::environment_set_wind_strength);
+        ClassDB::bind_method(
+                D_METHOD("environment_set_wind_direction", "direction"),
+                &E3DRenderingServer::environment_set_wind_direction);
+        ClassDB::bind_method(
+                D_METHOD("material_set_resolver", "material_resolver"), &E3DRenderingServer::material_set_resolver);
+        ClassDB::bind_method(D_METHOD("model_set_loader", "model_loader"), &E3DRenderingServer::model_set_loader);
+        ClassDB::bind_method(
+                D_METHOD("smoke_set_source_resolver", "smoke_source_resolver"),
+                &E3DRenderingServer::smoke_set_source_resolver);
 
         BIND_ENUM_CONSTANT(INSTANCER_OPTIMIZED);
         BIND_ENUM_CONSTANT(INSTANCER_NODES);
@@ -125,7 +132,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(instance_freed_signal, PropertyInfo(Variant::RID, "instance")));
         ADD_SIGNAL(MethodInfo(instance_built_signal, PropertyInfo(Variant::RID, "instance")));
         ADD_SIGNAL(MethodInfo(
-                submodel_animation_finished_signal, PropertyInfo(Variant::RID, "instance"),
+                instance_submodel_animation_finished_signal, PropertyInfo(Variant::RID, "instance"),
                 PropertyInfo(Variant::STRING, "submodel")));
     }
 
@@ -477,7 +484,7 @@ namespace godot {
 
     /// `material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray,
     /// force_alpha: bool) -> Material`, used by instance_build()
-    void E3DRenderingServer::set_material_resolver(const Callable &p_material_resolver) {
+    void E3DRenderingServer::material_set_resolver(const Callable &p_material_resolver) {
         material_resolver.set_callable(p_material_resolver);
     }
 
@@ -520,7 +527,7 @@ namespace godot {
 
     /// `model_loader(data_path: String, filename: String) -> E3DModel`, called on the streaming
     /// worker thread for registered instances entering the camera's range
-    void E3DRenderingServer::set_model_loader(const Callable &p_model_loader) {
+    void E3DRenderingServer::model_set_loader(const Callable &p_model_loader) {
         MutexLock lock(models_mutex);
         model_loader = p_model_loader;
     }
@@ -528,7 +535,7 @@ namespace godot {
     /// `smoke_source_resolver(template_name: String, kind: InstanceKind) -> Dictionary` with the keys
     /// process_material/mesh/amount/lifetime/aabb, used by _smoke_build(). The template files live
     /// under the game's data/ directory, which is GDScript's business, not this server's.
-    void E3DRenderingServer::set_smoke_source_resolver(const Callable &p_smoke_source_resolver) {
+    void E3DRenderingServer::smoke_set_source_resolver(const Callable &p_smoke_source_resolver) {
         smoke_source_resolver = p_smoke_source_resolver;
     }
 
@@ -1195,9 +1202,10 @@ namespace godot {
                         const double step = Math::abs(animation.rotate_speed) * delta;
                         for (int axis = Vector3::AXIS_X; axis <= Vector3::AXIS_Z; axis++) {
                             const double difference = animation.target_angles[axis] - animation.angles[axis];
-                            animation.angles[axis] = Math::abs(difference) <= step
-                                                             ? animation.target_angles[axis]
-                                                             : animation.angles[axis] + (SIGN(difference) * step);
+                            animation.angles[axis] =
+                                    Math::abs(difference) <= step
+                                            ? animation.target_angles[axis]
+                                            : animation.angles[axis] + static_cast<real_t>(SIGN(difference) * step);
                         }
                         if (animation.angles == animation.target_angles) {
                             animation.rotate_speed = 0.0;
@@ -1214,7 +1222,7 @@ namespace godot {
                             animation.translate_speed = 0.0;
                             finished.push_back(item.key);
                         } else {
-                            animation.offset += difference.normalized() * step;
+                            animation.offset += difference.normalized() * static_cast<real_t>(step);
                             moving = true;
                         }
                     }
@@ -1228,7 +1236,7 @@ namespace godot {
             }
             // after the list is settled: a listener may start another animation
             for (const String &submodel: finished) {
-                emit_signal(submodel_animation_finished_signal, instance_rid, submodel);
+                emit_signal(instance_submodel_animation_finished_signal, instance_rid, submodel);
             }
         }
         _set_animation_processing(!animating_instances.is_empty());
@@ -1416,15 +1424,15 @@ namespace godot {
         }
     }
 
-    void E3DRenderingServer::set_animation_speed(const double p_speed) {
+    void E3DRenderingServer::animation_set_speed(const double p_speed) {
         animation_speed = p_speed;
     }
 
-    double E3DRenderingServer::get_animation_speed() const {
+    double E3DRenderingServer::animation_get_speed() const {
         return animation_speed;
     }
 
-    void E3DRenderingServer::set_current_time(const double p_hours) {
+    void E3DRenderingServer::environment_set_time(const double p_hours) {
         if (Math::is_equal_approx(current_time, p_hours)) {
             return;
         }
@@ -1432,7 +1440,7 @@ namespace godot {
         _resolve_all_lights();
     }
 
-    void E3DRenderingServer::set_light_level(const double p_level) {
+    void E3DRenderingServer::environment_set_light_level(const double p_level) {
         if (Math::is_equal_approx(light_level, p_level)) {
             return;
         }
@@ -1440,7 +1448,7 @@ namespace godot {
         _resolve_all_lights();
     }
 
-    Dictionary E3DRenderingServer::get_light_statistics() const {
+    Dictionary E3DRenderingServer::light_get_statistics() const {
         int lit = 0;
         int spot = 0;
         int omni = 0;
@@ -1474,18 +1482,18 @@ namespace godot {
     /// emitter - including the template materials the streamed scenery emitters share. Strength
     /// (m/s) and direction are separate so that the direction can grow a vertical component
     /// without the signature changing.
-    void E3DRenderingServer::set_wind(const float p_strength, const Vector3 &p_direction) {
+    void E3DRenderingServer::environment_set_wind(const float p_strength, const Vector3 &p_direction) {
         wind_strength = p_strength;
         wind_direction = p_direction;
         _update_wind();
     }
 
-    void E3DRenderingServer::set_wind_strength(const float p_strength) {
+    void E3DRenderingServer::environment_set_wind_strength(const float p_strength) {
         wind_strength = p_strength;
         _update_wind();
     }
 
-    void E3DRenderingServer::set_wind_direction(const Vector3 &p_direction) {
+    void E3DRenderingServer::environment_set_wind_direction(const Vector3 &p_direction) {
         wind_direction = p_direction;
         _update_wind();
     }
@@ -1501,7 +1509,7 @@ namespace godot {
         }
     }
 
-    Dictionary E3DRenderingServer::get_smoke_statistics() const {
+    Dictionary E3DRenderingServer::smoke_get_statistics() const {
         int built = 0;
         for (const KeyValue<RID, SmokeObject> &item: smoke_objects) {
             if (item.value.streamed_in) {

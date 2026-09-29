@@ -89,7 +89,7 @@ var _render_data:Dictionary[int, Dictionary] = {
 
 ## E3DRenderingServer builds the emitters of an instance through this
 func _ready() -> void:
-    E3DRenderingServer.set_smoke_source_resolver(build_render_data)
+    E3DRenderingServer.smoke_set_source_resolver(build_render_data)
 
 
 ## Everything E3DRenderingServer needs for one emitter: process_material, mesh, amount, lifetime,
@@ -257,7 +257,7 @@ func _build_process_material(
     material.anim_speed_min = 1.0
     material.anim_speed_max = 1.0
     # Neither engine applies gravity. E3DRenderingServer overwrites this with the wind drift
-    # (set_wind()); the vertical decay of particles.cpp:365-380 is still not ported (see TODO.md).
+    # (environment_set_wind()); the vertical decay of particles.cpp:365-380 is still not ported (see TODO.md).
     material.gravity = Vector3.ZERO
     return material
 

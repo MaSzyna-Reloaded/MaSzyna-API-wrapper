@@ -1,10 +1,10 @@
 extends MaszynaGutTest
 
-## A consist is the vehicles' Movers joined by their couplers (TMoverParameters::Attach). The
+## A trainset is the vehicles' Movers joined by their couplers (TMoverParameters::Attach). The
 ## brake pipe of every vehicle is fed through the brake hose from the one the driver operates, so
 ## what the handle does has to reach the last vehicle. Only the pipe is asserted: the fixture's
 ## W_Lu_L valve has no distributor of its own in the Mover (Mover.cpp:8715 builds a plain TBrake),
-## so its cylinder says nothing about the consist.
+## so its cylinder says nothing about the trainset.
 
 const FIXTURE_PATH:String = "res://tests/fixtures/test_vehicle.fiz"
 const VEHICLE_COUNT:int = 3
@@ -40,7 +40,7 @@ func before_each() -> void:
     var model:VehicleModel = FizVehicleBuilder.build_model_at(FIXTURE_PATH)
     for index:int in range(VEHICLE_COUNT):
         var node:VehiclePhysicsNode = VehiclePhysicsNode.new()
-        node.train_id = "ConsistVehicle%d" % index
+        node.train_id = "TrainsetVehicle%d" % index
         # the first vehicle is driven - an unmanned one is not simulated (FINDINGS, 09-23)
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
         node.initial_velocity = READY_TO_DEPART_VELOCITY
@@ -91,10 +91,10 @@ func test_uncouple_parts_the_vehicles() -> void:
     assert_false(controllers[1].is_coupled(FRONT_END))
 
 
-func test_uncoupling_announces_the_consist_change_once() -> void:
+func test_uncoupling_announces_the_trainset_change_once() -> void:
     watch_signals(controllers[0])
     controllers[0].uncouple(REAR_END)
-    assert_signal_emit_count(controllers[0], "consist_changed", 1)
+    assert_signal_emit_count(controllers[0], "trainset_changed", 1)
     # the coupler and the brake hose part; the coupler comes first
     var first_detached:Array = get_signal_parameters(controllers[0], "coupler_detached", 0)
     assert_eq(first_detached, [RailVehicleController.COUPLING_ELEMENT_COUPLER])
@@ -116,4 +116,4 @@ func test_a_freed_vehicle_leaves_its_neighbours_uncoupled() -> void:
     assert_false(controllers[2].is_coupled(FRONT_END), "the rear neighbour lets go of the freed vehicle")
     assert_eq(RailVehicleServer.vehicle_get_coupled(
             first, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER).size(), 1)
-    assert_signal_emitted(controllers[0], "consist_changed")
+    assert_signal_emitted(controllers[0], "trainset_changed")

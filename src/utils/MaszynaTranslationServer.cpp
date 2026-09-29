@@ -30,8 +30,9 @@ namespace godot {
     }
 
     void MaszynaTranslationServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("load_translation", "po_path"), &MaszynaTranslationServer::load_translation);
-        ClassDB::bind_method(D_METHOD("get_languages"), &MaszynaTranslationServer::get_languages);
+        ClassDB::bind_method(D_METHOD("translation_load", "po_path"), &MaszynaTranslationServer::translation_load);
+        ClassDB::bind_method(
+                D_METHOD("translation_get_languages"), &MaszynaTranslationServer::translation_get_languages);
     }
 
     void MaszynaTranslationServer::_on_game_dir_changed() {
@@ -53,16 +54,16 @@ namespace godot {
     void MaszynaTranslationServer::_on_language_changed() {
         const String language = SimulationServer::get_instance()->get_language();
         // locale::init(), translation.cpp:18 - "lang/" + Global.asLang + ".po"
-        load_translation(
+        translation_load(
                 UserSettings::get_instance()->get_maszyna_game_dir().path_join("lang").path_join(
                         language + String(".po")));
     }
 
-    PackedStringArray MaszynaTranslationServer::get_languages() const {
+    PackedStringArray MaszynaTranslationServer::translation_get_languages() const {
         return languages;
     }
 
-    void MaszynaTranslationServer::load_translation(const String &p_po_path) {
+    void MaszynaTranslationServer::translation_load(const String &p_po_path) {
         Ref<Translation> game_translation;
         if (FileAccess::file_exists(p_po_path)) {
             game_translation = ResourceLoader::get_singleton()->load(p_po_path);

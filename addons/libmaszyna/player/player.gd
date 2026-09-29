@@ -68,11 +68,11 @@ func _ready() -> void:
     glow_material.set_shader_parameter(&"light_position", headlamp.position)
     glow_material.set_shader_parameter(&"light_direction", -headlamp.transform.basis.z)
     glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
-    CabinHUDMouseSystem.set_camera(_cabin_camera.get_instance_id())
+    CabinHUDMouseSystem.mouse_set_camera(_cabin_camera.get_instance_id())
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
-    RailVehicleServer.vehicle_radio_stop_received.connect(_on_vehicle_radio_stop_received)
+    RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
     _show_camera(_mode_camera())
 
 
@@ -80,8 +80,8 @@ func _exit_tree() -> void:
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
-    RailVehicleServer.vehicle_radio_stop_received.disconnect(_on_vehicle_radio_stop_received)
-    SceneryStreamingServer.set_camera(null)
+    RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
+    SceneryStreamingServer.streaming_set_camera(null)
 
 func _process(_delta:float) -> void:
     if _dirty:
@@ -108,7 +108,7 @@ func clear_start_train() -> void:
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
 
 func _input(event):
-    if CabinHUDMouseSystem.input(event) or SceneryHUDMouseServer.input(event):
+    if CabinHUDMouseSystem.mouse_input(event) or SceneryHUDMouseServer.mouse_input(event):
         get_viewport().set_input_as_handled()
         return
     if event.is_action_pressed("flashlight_toggle", false, true):
@@ -189,7 +189,7 @@ func _find_nearest_vehicle() -> RID:
     var position:Vector3 = free_camera.global_position
     var nearest:RID = RID()
     var nearest_distance:float = 1500.0
-    for vehicle:RID in RailVehicleServer.get_vehicles():
+    for vehicle:RID in RailVehicleServer.vehicle_get_rids():
         var distance:float = position.distance_to(RailVehicleServer.vehicle_get_transform(vehicle).origin)
         if distance < nearest_distance:
             nearest_distance = distance
@@ -238,7 +238,7 @@ func _unhandled_input(event:InputEvent) -> void:
         logic.input(event)
 
 
-func _on_vehicle_radio_stop_received(vehicle:RID) -> void:
+func _on_vehicle_emergency_signal_received(vehicle:RID) -> void:
     if vehicle == PlayerServer.player_get_vehicle():
         TranscriptSystem.add_line(RADIO_STOP_TRANSCRIPT, 0.0, RADIO_STOP_TRANSCRIPT_SECONDS)
 
@@ -354,8 +354,8 @@ func _show_camera(camera:Camera3D) -> void:
     if camera is FreeCamera3D and not headlamp.get_parent() == camera:
         headlamp.reparent(camera, false)
         headlamp_glow.reparent(camera, false)
-    SceneryStreamingServer.set_camera(camera)
+    SceneryStreamingServer.streaming_set_camera(camera)
     var cabin_view:bool = camera == _cabin_camera
     get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", cabin_view)
-    SceneryHUDMouseServer.set_camera(camera.get_instance_id())
-    SceneryHUDMouseServer.set_active(not cabin_view)
+    SceneryHUDMouseServer.mouse_set_camera(camera.get_instance_id())
+    SceneryHUDMouseServer.mouse_set_active(not cabin_view)

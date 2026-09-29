@@ -77,7 +77,7 @@ func _process(delta: float) -> void:
 
 
 func _on_brake_level_value_changed(value):
-    RailVehicleServer.broadcast_command("brake_level_set", value, null)
+    RailVehicleServer.vehicle_broadcast_command("brake_level_set", value, null)
 
 func _on_main_decrease_button_up():
     train.send_command("main_controller_decrease")

@@ -266,7 +266,7 @@ func test_process_follows_the_clock_past_midnight() -> void:
 
     # an hour of simulation, a quarter of a second of real time a frame at a time
     for _frame: int in roundi(SECONDS_PER_HOUR / (CLOCK_FRAME * CLOCK_SPEED)):
-        SimulationServer.advance(CLOCK_FRAME)
+        SimulationServer.simulation_advance(CLOCK_FRAME)
     skydome_environment.process(1.0)
     SimulationServer.simulation_speed = speed
 
@@ -283,7 +283,7 @@ func test_changing_simulation_speed_keeps_running_time() -> void:
     SimulationServer.simulation_speed = CLOCK_SPEED
 
     for _frame: int in roundi(SECONDS_PER_HOUR / (CLOCK_FRAME * CLOCK_SPEED)):
-        SimulationServer.advance(CLOCK_FRAME)
+        SimulationServer.simulation_advance(CLOCK_FRAME)
     environment_node._process(1.0)
     environment_node.simulation_speed = 1.0
     environment_node._process(0.0)

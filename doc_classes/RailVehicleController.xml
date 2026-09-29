@@ -4,7 +4,7 @@
 		A railway vehicle.
 	</brief_description>
 	<description>
-		What [VehicleController] says of every vehicle, plus the railway's own: its cabs, couplers and consist, the master controller and reverser, the relays, the low voltage, the battery and the converter, and the stepping [RailVehicleServer] runs it by. Railway components ([RailVehicleComponent]) belong to one of these.
+		What [VehicleController] says of every vehicle, plus the railway's own: its cabs, couplers and trainset, the master controller and reverser, the relays, the low voltage, the battery and the converter, and the stepping [RailVehicleServer] runs it by. Railway components ([RailVehicleComponent]) belong to one of these.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -314,10 +314,6 @@
 				Emitted when the occupied cab changes ([code]1[/code] cab 1, [code]0[/code] machine room, [code]-1[/code] cab 2).
 			</description>
 		</signal>
-		<signal name="consist_changed">
-			<description>
-			</description>
-		</signal>
 		<signal name="coupler_attached">
 			<param index="0" name="element" type="int" />
 			<description>
@@ -332,6 +328,10 @@
 			<param index="0" name="is_powered" type="bool" />
 			<description>
 				Train power state changed
+			</description>
+		</signal>
+		<signal name="trainset_changed">
+			<description>
 			</description>
 		</signal>
 	</signals>

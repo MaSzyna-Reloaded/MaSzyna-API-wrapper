@@ -34,7 +34,7 @@ namespace godot {
     static int vehicle_find_all(lua_State *p_state) {
         const String name = String::utf8(luaL_checkstring(p_state, 1));
         const RailVehicleServer *vehicles = LuaModules::server<RailVehicleServer>(p_state);
-        const TypedArray<RID> all = vehicles->get_vehicles();
+        const TypedArray<RID> all = vehicles->vehicle_get_rids();
         TypedArray<RID> named;
         for (int64_t i = 0; i < all.size(); i++) {
             if (vehicles->vehicle_get_name(all[i]) == name) {
@@ -46,7 +46,7 @@ namespace godot {
     }
 
     static int vehicle_all(lua_State *p_state) {
-        push_vehicles(p_state, LuaModules::server<RailVehicleServer>(p_state)->get_vehicles());
+        push_vehicles(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_rids());
         return 1;
     }
 

@@ -370,22 +370,22 @@
 			<description>
 			</description>
 		</signal>
-		<signal name="switch_offset_updated">
-			<param index="0" name="track_rid" type="RID" />
-			<param index="1" name="offset" type="float" />
-			<description>
-			</description>
-		</signal>
-		<signal name="switching_finished">
+		<signal name="switch_movement_finished">
 			<param index="0" name="track_rid" type="RID" />
 			<param index="1" name="active_track" type="int" />
 			<description>
 			</description>
 		</signal>
-		<signal name="switching_started">
+		<signal name="switch_movement_started">
 			<param index="0" name="track_rid" type="RID" />
 			<param index="1" name="from_track" type="int" />
 			<param index="2" name="to_track" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="switch_offset_changed">
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="offset" type="float" />
 			<description>
 			</description>
 		</signal>

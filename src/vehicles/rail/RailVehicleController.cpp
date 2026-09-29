@@ -4,7 +4,7 @@
 namespace godot {
     const char *RailVehicleController::power_changed_signal = "power_changed";
     const char *RailVehicleController::cabin_occupied_changed = "cabin_occupied_changed";
-    const char *RailVehicleController::consist_changed_signal = "consist_changed";
+    const char *RailVehicleController::trainset_changed_signal = "trainset_changed";
     const char *RailVehicleController::coupler_attached_signal = "coupler_attached";
     const char *RailVehicleController::coupler_detached_signal = "coupler_detached";
 
@@ -103,7 +103,7 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
-        ADD_SIGNAL(MethodInfo(consist_changed_signal));
+        ADD_SIGNAL(MethodInfo(trainset_changed_signal));
         const String coupling_element_hint = enum_hint(
                 {{"Coupler", COUPLING_ELEMENT_COUPLER},
                  {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},

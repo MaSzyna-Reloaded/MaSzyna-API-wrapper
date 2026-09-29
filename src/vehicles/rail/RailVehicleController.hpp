@@ -3,7 +3,7 @@
 
 namespace godot {
     /// A railway vehicle: what VehicleController says of every vehicle, plus the railway's own -
-    /// its cabs, couplers and consist, the master controller and reverser, the relays, the low
+    /// its cabs, couplers and trainset, the master controller and reverser, the relays, the low
     /// voltage, the battery and the converter, and the stepping RailVehicleServer runs it by along
     /// its track. Railway components (RailVehicleComponent) belong to one of these.
     class RailVehicleController : public VehicleController {
@@ -135,8 +135,8 @@ namespace godot {
 
             static const char *power_changed_signal;
             static const char *cabin_occupied_changed;
-            /// The consist this vehicle belongs to gained or lost a vehicle
-            static const char *consist_changed_signal;
+            /// The trainset this vehicle belongs to gained or lost a vehicle
+            static const char *trainset_changed_signal;
             /// One coupling element attached / detached, once per event. Two signals rather than
             /// one carrying a direction: every listener would have opened by branching on it.
             static const char *coupler_attached_signal;

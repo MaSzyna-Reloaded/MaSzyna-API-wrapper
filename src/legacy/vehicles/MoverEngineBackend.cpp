@@ -188,7 +188,7 @@ namespace godot {
         }
         // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its
         // integrated controller into the power setpoint every step and passes it along the
-        // consist; without it eimic_real stays 0 and an induction motor never pulls. The
+        // trainset; without it eimic_real stays 0 and an induction motor never pulls. The
         // train-wide ED/PN brake force split that follows it there is not ported (TODO.md).
         const bool diesel = p_mover->EngineType == Maszyna::TEngineType::DieselEngine ||
                             p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
@@ -199,7 +199,7 @@ namespace godot {
                 p_mover->CheckSpeedCtrl(p_delta);
             }
             p_mover->eimic_real = std::min(p_mover->eimic, p_mover->eimicSpeedCtrl);
-            // the consist gets traction only; braking is the ED/PN split's business
+            // the trainset gets traction only; braking is the ED/PN split's business
             p_mover->SendCtrlToNext("EIMIC", std::max(0.0, p_mover->eimic_real), p_mover->CabActive);
         }
     }

@@ -47,7 +47,7 @@ func console_get_config_properties(train):
     Console.print_line("%s" % "\n".join(lines))
 
 func console_broadcast(command, p1=null, p2=null):
-    RailVehicleServer.broadcast_command(command, p1, p2)
+    RailVehicleServer.vehicle_broadcast_command(command, p1, p2)
 
 func console_send(train, command, p1=null, p2=null):
     var vehicle:RID = _vehicle(train)
@@ -56,13 +56,13 @@ func console_send(train, command, p1=null, p2=null):
 
 func console_list_trains():
     var names:PackedStringArray = []
-    for vehicle:RID in RailVehicleServer.get_vehicles():
+    for vehicle:RID in RailVehicleServer.vehicle_get_rids():
         names.append(RailVehicleServer.vehicle_get_name(vehicle))
     Console.print_line("%s" % "\n".join(names))
 
 func console_list_train_commands():
     var commands:Dictionary[String, bool] = {}
-    for vehicle:RID in RailVehicleServer.get_vehicles():
+    for vehicle:RID in RailVehicleServer.vehicle_get_rids():
         for command:String in RailVehicleServer.vehicle_get_commands(vehicle):
             commands[command] = true
     var names:Array[String] = []

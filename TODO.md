@@ -32,7 +32,7 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   name, none of which names the Mover), and **`vehicle_component_get(rid, type)` now exists and is
   bound** (`RailVehicleServer.hpp:222`). Missing: `vehicle_component_create` (zero occurrences) -
   components still come from `ClassDBSingleton::instantiate()`/`memnew`;
-  `generic_vehicle_component_find` has zero callers; `GenericVehicleComponentNode` finds its
+  `vehicle_generic_component_find` has zero callers; `GenericVehicleComponentNode` finds its
   vehicle via `get_parent()` - deliberate today ("the vehicle is whatever this node sits under"),
   so turning it round changes how a modder authors a component and wants deciding first;
   `PROPERTY_USAGE_SCRIPT_VARIABLE` appears nowhere, so the script still says what it publishes
@@ -257,7 +257,7 @@ them on it (Gauge.cpp:379).
 
 The door permit lamps (`doorleftpermit_sw`/`doorrightpermit_sw` `_on`, `i-doorpermit_left:`/
 `_right:`, Train.cpp:11754, 12033) show `m_doorspermitleft/right`: the permit of the cab's side,
-blinking by `DoorsPermitLightBlinking` unless a door of that side in the consist is open or only
+blinking by `DoorsPermitLightBlinking` unless a door of that side in the trainset is open or only
 open (`IsAnyDoorOpen`/`IsAnyDoorOnlyOpen` of the driver, Train.cpp:8511-8516). The switches
 themselves are `LegacyCabinDoorPermits`.
 
@@ -356,7 +356,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   (`MMD_ANIMATION_UNSUPPORTED`, e.g. SM42 `dirkey: kier rot -0.09 0.01`); the original renders
   `value * scale + offset` (`Gauge.cpp:456`), `CabinButton` already does.
 * Rest of TDynamicObject::Update's driver block (DynObj.cpp:3240-3400) not ported: the train-wide
-  ED/PN brake force split of an induction motor consist, `EqvtPipePress = GetEPP()`, and the
+  ED/PN brake force split of an induction motor trainset, `EqvtPipePress = GetEPP()`, and the
   unpowered-car copy of MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
 * `RailVehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
   `set_pantograph_wire_voltage()` and read by nothing.
@@ -417,7 +417,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   direction (`RailVehicle3D::_update_wipers()`, as `TDynamicObject::UpdateWiper()`) not checked in
   game.
 * Wheel clatter bump (`AccVert`, `DynObj.cpp:3533`, cab shake only) not ported.
-* Open cab window (`Global.CabWindowOpen`): the original plays the consist's outer noise and stops
+* Open cab window (`Global.CabWindowOpen`): the original plays the trainset's outer noise and stops
   the cab running noise (`DynObj.cpp:4638`, `Train.cpp:8274`); no cab window state yet.
 * `pitchvariation:` (default 0.975-1.025, `sound.cpp:375`) is parsed, never applied.
 * `pantographup:`/`pantographdown:` play at the bank's position for both pantographs; the original
@@ -524,9 +524,9 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 
 * Vertical decay not ported (`particles.cpp:365-380`): the rise slows with air temperature,
   overcast and vehicle speed; `Global.AirTemperature` is a `#define` in the vendored Mover (see
-  Scenery loading). Wind drift is ported (`E3DRenderingServer::set_wind()`, `0.1 * wind`).
+  Scenery loading). Wind drift is ported (`E3DRenderingServer::environment_set_wind()`, `0.1 * wind`).
 * `MaszynaEnvironmentNode.wind_direction` is a compass bearing, so wind is always horizontal;
-  `MaszynaSkyEnvironment.get_wind_direction()` already returns a `Vector3` and `set_wind()` takes
+  `MaszynaSkyEnvironment.get_wind_direction()` already returns a `Vector3` and `environment_set_wind()` takes
   strength and direction separately - only a property that can express a vertical part is missing.
 * The culling box follows the emitter, not the plume (`_apply_smoke_placement()`); a fast
   vehicle's trail vanishes when the emitter leaves the screen. The original grows the box over its
@@ -627,9 +627,9 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * An `include` with no filename appears in the real data (`maszyna_include_importer.gd` reports it
   with the offset and skips it); source unknown - truncated file or tokenizer misread.
 * Unloading a scenery leaves its weather in `MaszynaEnvironmentNode` (the `atmo` precipitation,
-  fog, temperature): the menu keeps it (held silent by `SimulationServer.pause()`) and a next scenery
+  fog, temperature): the menu keeps it (held silent by `SimulationServer.simulation_pause()`) and a next scenery
   without an `atmo` section inherits it.
-* `SimulationServer.pause()` holds the vehicle step, the weather and the world's sounds only - the
+* `SimulationServer.simulation_pause()` holds the vehicle step, the weather and the world's sounds only - the
   environment clock, `TractionServer`, `TrackServer` switches and the smoke keep running.
 
 ## Signalling (#296)
@@ -667,11 +667,11 @@ keys (`ScenarioKeyboard`), HH:MM and radio call launchers (`radiocall1_sw`/`radi
 Backspace); the "Scenario and Events" HUD window. Checked on `td.scn` with a headless probe (Shift+8
 closes both level crossings). Left:
 
-* **Track events, as the original fires them**: the direction filter by the consist's intended
+* **Track events, as the original fires them**: the direction filter by the trainset's intended
   direction (`eventfilter`, `TrkFoll.cpp:117-121`) - here the actual direction of travel decides;
   the vehicle's one placement point stands for the primary axle; events with a delay <= -1 queued
   on every move along the same track (`TrkFoll.cpp:249-260`); a crewed vehicle is one with a
-  `driver_type`, the original's `Mechanik->primary()` is one per consist.
+  `driver_type`, the original's `Mechanik->primary()` is one per trainset.
 * **Occupancy counts vehicles, not axles**: a vehicle is on the one track its placement point is
   on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
   occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
@@ -751,7 +751,7 @@ ported, into a delegate.
 1. **Done: `Emergency_brake` as a Radio-Stop broadcast** - a scenery `putvalues`/`getvalues`
    `Emergency_brake` is sent from the event's position (`putvalues x y z` plus the include's origin,
    `Event.cpp:709-712`; the memcell's position for `getvalues`) to every vehicle within
-   `RADIO_STOP_RANGE`, as `RailVehicleServer.vehicle_radio_stop` does from a vehicle. `CabSignal`
+   `RADIO_STOP_RANGE`, as `RailVehicleServer.vehicle_emergency_signal_send` does from a vehicle. `CabSignal`
    stays the magnet acting on the activator. Both stay in the event system, not in a driver.
    No test covers the broadcast: receiving it needs a vehicle with a driver, Radio-Stop fitted
    and the radio on.
@@ -885,7 +885,7 @@ ported, into a delegate.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
    runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
    The eszelon's lock-up at simulation speed 5 was the couplers stiffened by a long frame
-   (`docs/findings-archive.md`, 2026-09-27) - fixed in `RailVehicleServer::step()`.
+   (`docs/findings-archive.md`, 2026-09-27) - fixed in `RailVehicleServer::stepping_advance()`.
    6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
       stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
       parser does) - passed at speed where the train does not stop, else brought forward for the
@@ -904,7 +904,7 @@ ported, into a delegate.
       `StationStart` with its `fLastStopExpDist` counter (Driver.cpp:6581-6587) - the panel
       lists every station, passed ones faded; the original's red row while loading
       (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
-      consist weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
+      trainset weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
       re-resolve which driver of the trainset the panel follows until the next timetable change
       or a change of the player's vehicle.
       The driver's hints to a player (`cue_action()` shown as the original's hint list,
@@ -976,7 +976,7 @@ ported, into a delegate.
 
 * **No regression test for the couplers stiffened by a long frame** (2026-09-27). A snatch of
   `test_vehicle.fiz` wagons does not tell the fixed build from the broken one - the fixture
-  wagons stop within 3 s whatever the frame. It needs a free-rolling consist fixture (or a
+  wagons stop within 3 s whatever the frame. It needs a free-rolling trainset fixture (or a
   powered one pulling a long train), stepped at 0.017 s and at 0.17 s a frame. Checked so far
   by hand on Stary Jawor only (the eszelon at 0.03 s and 0.17 s: 14.09 and 14.06 m/s at 80 s).
 
@@ -1008,7 +1008,7 @@ ported, into a delegate.
 
 ## Physics performance
 
-* The frame drop with a consist in a scenery is **the scenery's dynamic lights** (operator report),
+* The frame drop with a trainset in a scenery is **the scenery's dynamic lights** (operator report),
   not the vehicle step; nothing bounds how many are lit (`FINDINGS.md`, 2026-09-21). Measure the
   count first.
 * Compare against the original only on an optimized build (`make compile-profiling`):
@@ -1017,7 +1017,7 @@ ported, into a delegate.
   everything; ours was ~36 ms, with the cost in reaching the same `Mover.cpp` (GDScript crossings,
   per-frame state dictionaries) - the evidence behind #184.
 * Multi-core physics: keep the phases of `vehicle_table::update()` (`DynObj.cpp:8181`: locations +
-  neighbours, then per iteration forces of all, movement of all), run per island (a coupled consist
+  neighbours, then per iteration forces of all, movement of all), run per island (a coupled trainset
   plus vehicles in collision range - `CouplerForce()`/`CollisionDetect()` write the neighbour's
   `V`/`AccS`) on `WorkerThreadPool::add_group_task` with a barrier per phase; no Godot calls on
   workers.

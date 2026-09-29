@@ -26,8 +26,8 @@ namespace godot {
             /// The views of the following camera (ExternalCamera3D.View), in the order Shift+F4
             /// steps through them
             enum CameraFollowView {
-                CAMERA_FOLLOW_VIEW_CONSIST_FRONT,
-                CAMERA_FOLLOW_VIEW_CONSIST_REAR,
+                CAMERA_FOLLOW_VIEW_TRAINSET_FRONT,
+                CAMERA_FOLLOW_VIEW_TRAINSET_REAR,
                 CAMERA_FOLLOW_VIEW_BOGIE,
                 CAMERA_FOLLOW_VIEW_DRIVEBY,
                 CAMERA_FOLLOW_VIEW_MAX,
@@ -46,7 +46,7 @@ namespace godot {
         private:
             CameraMode mode = CAMERA_MODE_FREE;
             RID target;
-            CameraFollowView follow_view = CAMERA_FOLLOW_VIEW_CONSIST_FRONT;
+            CameraFollowView follow_view = CAMERA_FOLLOW_VIEW_TRAINSET_FRONT;
 
             void _on_vehicle_freed(const RID &p_vehicle);
             /// Taken over, the view is from its cab; let go while looked from its cab, the free

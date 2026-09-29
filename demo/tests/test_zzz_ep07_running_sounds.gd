@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## Running sounds of the real EP07-424 from td.scn (dynamic/pkp/303e_v1/303e-ep-tv.mmd): traction
 ## motors, wheel clatter, running noise, ventilator and curve squeal must be built from the MMD and
-## the motors, clatter and outer noise must actually play once the consist moves.
+## the motors, clatter and outer noise must actually play once the trainset moves.
 
 const EP07_MMD:String = "dynamic/pkp/303e_v1/303e-ep-tv.mmd"
 

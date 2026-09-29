@@ -62,7 +62,7 @@ Legend:
 - [ ] [RC-035](#rc-035) `Cabin3D` keeps a controller path it says it has not got
 - [ ] [RC-036](#rc-036) `SimulationServer` holds cache, build and language
 - [ ] [RC-037](#rc-037) `track_get_endpoints()` fills a cache
-- [ ] [RC-038](#rc-038) `get_build_number()` reads a file and sets a flag
+- [ ] [RC-038](#rc-038) `build_get_number()` reads a file and sets a flag
 - [ ] [RC-039](#rc-039) `MaszynaParser::get*()` advance the cursor
 
 ### Missing events and wiring
@@ -74,9 +74,9 @@ Legend:
 - [ ] [RC-044](#rc-044) Animation bindings resolved twice after reload
 - [ ] [RC-045](#rc-045) Component enable and power source land a tick late through flags
 - [ ] [RC-046](#rc-046) Lazy `owner_create` inside the streaming build
-- [ ] [RC-047](#rc-047) `check_build_version()` once-guard called "to be sure"
+- [ ] [RC-047](#rc-047) `build_check_version()` once-guard called "to be sure"
 - [ ] [RC-048](#rc-048) Loading queue waits by sleeping and is polled
-- [ ] [RC-049](#rc-049) `is_area_ready()` has no event and is polled per frame
+- [ ] [RC-049](#rc-049) `area_is_ready()` has no event and is polled per frame
 - [ ] [RC-050](#rc-050) Lazy initialisation re-checked on every call
 
 ### Per-frame work
@@ -104,7 +104,7 @@ Legend:
 ### Raw pointers in public API
 
 - [ ] [RC-070](#rc-070) `E3DRenderingServer::instance_attach_node(Node3D *)`
-- [ ] [RC-071](#rc-071) `SceneryStreamingServer::set_camera(Camera3D *)`
+- [ ] [RC-071](#rc-071) `SceneryStreamingServer::streaming_set_camera(Camera3D *)`
 - [ ] [RC-072](#rc-072) `RailVehicleServer::vehicle_component_get()` returns a pointer
 - [ ] [RC-073](#rc-073) `SignalHeadNode::set_model(Node *)` / `get_model()`
 - [ ] [RC-074](#rc-074) `MaszynaTrianglesImporter::import_triangles(MaszynaParser *)`
@@ -156,9 +156,9 @@ Legend:
 
 ### Naming
 
-- [ ] [RC-111](#rc-111) New radio signals not `<subject>_<what>_changed`
-- [ ] [RC-112](#rc-112) Older server methods and signals named otherwise
-- [ ] [RC-113](#rc-113) `consist` instead of `trainset`
+- [x] [RC-111](#rc-111) New radio signals not `<subject>_<what>_changed`
+- [x] [RC-112](#rc-112) Older server methods and signals named otherwise
+- [x] [RC-113](#rc-113) `consist` instead of `trainset`
 
 ### Cosmetic
 
@@ -480,7 +480,7 @@ Legend:
   * `src/vehicles/rail/RailVehicleController.cpp:230` (`get_state()` →
     `server->vehicle_dump_state()`), cache written at `RailVehicleServer.cpp:1042-1046`
   * `src/vehicles/base/VehicleController.cpp:172, 344, 367` (`vehicle_set_name`,
-    `vehicle_get_transform`, `broadcast_command`)
+    `vehicle_get_transform`, `vehicle_broadcast_command`)
   * `VehicleComponent.cpp:219`, `RailVehicleWheels.cpp:18`
 * **Rule:** layers do not call each other both ways; a getter never changes state
 * **Problem:** the server steps controllers and components, and they call back into it. The
@@ -577,7 +577,7 @@ Legend:
 **Radio component calls up into the vehicle server** ALARM
 
 * **Where:** `src/legacy/vehicles/MoverRailVehicleRadio.cpp:36-40`
-* **Problem:** `RailVehicleServer::get_instance()->vehicle_radio_stop(controller->get_rid())` - a
+* **Problem:** `RailVehicleServer::get_instance()->vehicle_emergency_signal_send(controller->get_rid())` - a
   component (lower layer) calls the server that owns vehicles.
 * **Decision:** the component emits an event, and the server, or whoever cares, reacts.
 
@@ -616,7 +616,7 @@ Legend:
 **`SimulationServer` holds cache, build and language** ALARM
 
 * **Where:** `src/simulation/SimulationServer.hpp:87-88, 129, 167-168`; `.cpp:198, 236`
-* **Problem:** `clear_cache()`, `get_build_number()`, `check_build_version()` and
+* **Problem:** `cache_clear()`, `build_get_number()`, `build_check_version()` and
   `set_language()`/`get_language()` sit on the simulation clock server. Cache invalidation,
   build stamps and UI language are not simulation state; the language belongs with
   `MaszynaTranslationServer`, which only relays it.
@@ -633,7 +633,7 @@ Legend:
 
 ### RC-038
 
-**`get_build_number()` reads a file and sets a flag**
+**`build_get_number()` reads a file and sets a flag**
 
 * **Where:** `src/simulation/SimulationServer.cpp:242-247`
 * **Rule:** a getter never changes state
@@ -731,7 +731,7 @@ Legend:
 
 ### RC-047
 
-**`check_build_version()` once-guard called "to be sure"**
+**`build_check_version()` once-guard called "to be sure"**
 
 * **Where:** `src/simulation/SimulationServer.cpp:254-259`; callers `demo_3d.gd:6`,
   `demo_scenery_loading.gd:34`, `startup.gd:15`
@@ -753,7 +753,7 @@ Legend:
 
 ### RC-049
 
-**`is_area_ready()` has no event and is polled per frame**
+**`area_is_ready()` has no event and is polled per frame**
 
 * **Where:** `src/scenery/SceneryStreamingServer.cpp:300`; poller
   `demo_scenery_loading.gd:94`
@@ -875,7 +875,7 @@ Legend:
 
 * **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1406-1441`; caller
   `maszyna_environment_node.gd:452-453`
-* **Problem:** `set_current_time()` and `set_light_level()` each call `_resolve_all_lights()`,
+* **Problem:** `environment_set_time()` and `environment_set_light_level()` each call `_resolve_all_lights()`,
   which walks every instance and allocates a `Dictionary` per instance. The environment calls
   both back to back, so every push costs two full passes.
 * **Fix:** one operation that sets both and resolves once, with no per-instance dictionary.
@@ -982,7 +982,7 @@ Legend:
 
 ### RC-071
 
-**`SceneryStreamingServer::set_camera(Camera3D *)`**
+**`SceneryStreamingServer::streaming_set_camera(Camera3D *)`**
 
 * **Where:** `src/scenery/SceneryStreamingServer.hpp:187`, `.cpp:19`
 * **Problem:** a bound server method with a raw pointer; the two HUD mouse servers take an
@@ -1319,8 +1319,8 @@ ported value keeps the original's value and a source reference".
   * `RailVehicleHorns.hpp:52-60`: `set_horn_low/high` next to `set_horn`
   * `RailVehicleBrake.hpp:290-291`: `brake_level_set_position` and
     `brake_level_set_position_str`
-  * `src/legacy/e3d/E3DRenderingServer.cpp:1477-1491`: `set_wind`, `set_wind_strength`,
-    `set_wind_direction`
+  * `src/legacy/e3d/E3DRenderingServer.cpp:1477-1491`: `environment_set_wind`, `environment_set_wind_strength`,
+    `environment_set_wind_direction`
 * **Rule:** PROHIBITED - "a second road to the same effect is deleted"
 * **Fix:** keep one operation per effect; bind the commands to it with the argument bound.
 
@@ -1446,6 +1446,10 @@ ported value keeps the original's value and a source reference".
 * **Rule:** server signal naming - these are newer than the rule (2026-09-28)
 * **Decision:** these are events, not changes of state. Either the rule gets an event form, or
   the signals are renamed.
+* **Done:** the rule gained an event form, `<subject>_<past-tense verb>`, so
+  `vehicle_radio_called` stays. Radio-Stop is the emergency alarm (the original's
+  `radiostopsend`, `scene.h:273`), so its API no longer says `radio_stop`:
+  `vehicle_emergency_signal_received`, `vehicle_emergency_signal_send()`, `emergency_signal_send()`.
 
 ### RC-112
 
@@ -1477,6 +1481,16 @@ ported value keeps the original's value and a source reference".
     `instance_built`, `submodel_animation_finished`, `screen_rendered`
 * **Rule:** `CODE_STYLE.md` says an older method "is left as it is unless the operator asks"
 * **Decision:** whether the upstream merge is the moment to rename them.
+* **Done:** all of them are renamed to `<subject>_<action>` - e.g. `vehicle_get_rids`,
+  `stepping_advance`, `streaming_set_camera`, `area_is_ready`, `environment_set_time`,
+  `mouse_input`, `control_get_hovered`, `cache_clear`, `build_check_version`,
+  `simulation_pause`, `simulation_get_time`, `driver_get_rids`, `translation_load` - and so are
+  the signals without a subject (`simulation_paused`, `switch_movement_started`,
+  `switch_offset_changed`, `instance_submodel_animation_finished`). Kept:
+  * the signals that already read `<subject>_<event>` under the new event form
+  * the accessors of the servers' Godot properties (`time_of_day`, `simulation_speed`,
+    `light_level`, `air_temperature`, `language`, `switch_max_offset`, `switch_offset_delay`,
+    `rail_height`, `is_topology_changed`), which the property rule names `set_`/`get_`
 
 ### RC-113
 
@@ -1486,6 +1500,15 @@ ported value keeps the original's value and a source reference".
   `src/scripting/lua/LuaCameraModule.cpp:10` (`"consist_front"`)
 * **Rule:** names come from the vocabulary of the data - `.scn` says `trainset`
 * **Fix:** `CAMERA_FOLLOW_VIEW_TRAINSET_FRONT/REAR` and `"trainset_front"`.
+* **Done:** every own `consist` is now `trainset`:
+  * the camera enum and the Lua view names
+  * the `trainset_changed` signal
+  * `ExternalCamera3D.View`, `MAX_TRAINSET_VEHICLES` and the sound system's listener trainset
+  * the test `test_trainset_coupling_brakes.gd`
+  * the comments and the docs
+
+  The original's names stay: the command `consist_releaser` (`consistreleaser`,
+  `input/command.cpp:393`), `IsConsistBraked` and `find_nearest_consist_vehicle`.
 
 ## Cosmetic
 

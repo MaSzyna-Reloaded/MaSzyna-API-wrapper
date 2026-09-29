@@ -216,7 +216,7 @@ namespace godot {
 
     void VehicleComponent::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
-            server->broadcast_command(p_command, p_p1, p_p2);
+            server->vehicle_broadcast_command(p_command, p_p1, p_p2);
         }
     }
 

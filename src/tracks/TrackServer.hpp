@@ -264,9 +264,9 @@ namespace godot {
             ~TrackServer() override;
 
             static const char *switch_active_track_changed_signal;
-            static const char *switch_offset_updated_signal;
-            static const char *switching_started_signal;
-            static const char *switching_finished_signal;
+            static const char *switch_offset_changed_signal;
+            static const char *switch_movement_started_signal;
+            static const char *switch_movement_finished_signal;
             static const char *tracks_changed_signal;
             static const char *topology_rebuilt_signal;
             static const char *topology_changed_signal;

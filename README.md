@@ -126,7 +126,7 @@ Two rules decide when the vehicle simulation runs, and both matter enough to be 
 scenario's events are driven by time, and multiplayer will be.
 
 **The simulation is stepped before anything that reads it.** `RailVehicleStepper` is a node with
-the lowest `process_priority`, so `RailVehicleServer::step()` has run before any other node is
+the lowest `process_priority`, so `RailVehicleServer::stepping_advance()` has run before any other node is
 processed. Drawing, the cabin, the HUD and the cameras therefore see the position of *this* frame.
 `SceneTree`'s `process_frame` is not a substitute: it is emitted *after* every `_process`, so a
 node that reads a vehicle's transform there draws against the previous frame - which is what made
@@ -137,7 +137,7 @@ delta to `step_frame()`, which integrates as much of it as it honestly can and *
 the frames that follow:
 
 * the sub-step stays at or below `PHYSICS_STEP` (10 ms), because that is what the coupler springs
-  were tuned for - a stiff spring integrated with a much larger step kicks the consist;
+  were tuned for - a stiff spring integrated with a much larger step kicks the trainset;
 * one frame can therefore take at most `MAX_PHYSICS_ITERATIONS * PHYSICS_STEP` (0.2 s);
 * every frame still integrates at least its own delta, so nothing is quantised and the motion is
   as smooth as the frame rate.
@@ -148,7 +148,7 @@ A stall of, say, half a second is not taken in one go: 0.2 s is integrated now a
 **Past `maszyna/physics/catch_up_limit` (1 s by default) the debt is taken in one step instead.**
 At that point the machine is not stalling, it is too slow to simulate in real time, and spreading
 the debt would only add work to frames that are already late. The step is then larger than the
-couplers can stand and the consist visibly jumps - deliberately, because a jump that can be seen
+couplers can stand and the trainset visibly jumps - deliberately, because a jump that can be seen
 beats a clock that silently lies to the scenario. It is written to `GameLog`, so it is not
 mistaken for a physics bug.
 

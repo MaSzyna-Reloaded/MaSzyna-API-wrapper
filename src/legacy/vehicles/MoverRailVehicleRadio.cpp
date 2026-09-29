@@ -37,7 +37,7 @@ namespace godot {
         if (!p_pressed || !get_powered() || controller == nullptr || server == nullptr) {
             return;
         }
-        server->vehicle_radio_stop(controller->get_rid());
+        server->vehicle_emergency_signal_send(controller->get_rid());
     }
 
     // Original engine: TTrain::OnCommand_radiocall1send/3send (Train.cpp:8209-8236) - on the press,

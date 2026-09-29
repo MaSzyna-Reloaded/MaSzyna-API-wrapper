@@ -140,7 +140,7 @@ namespace godot {
         public:
             CabinHUDMouseSystem();
 
-            void set_camera(uint64_t p_camera_id);
+            void mouse_set_camera(uint64_t p_camera_id);
 
             /// A valid `p_increase` makes the control draggable in steps, a valid `p_drag`
             /// continuously; `p_step_rotation` (the mesh's own space) and `p_step_offset` (its
@@ -161,8 +161,8 @@ namespace godot {
             void occluder_free(const RID &p_occluder);
 
             /// Feeds one input event; true when the event operated a control and is consumed
-            bool input(const Ref<InputEvent> &p_event);
+            bool mouse_input(const Ref<InputEvent> &p_event);
 
-            RID get_hovered_control() const;
+            RID control_get_hovered() const;
     };
 } // namespace godot

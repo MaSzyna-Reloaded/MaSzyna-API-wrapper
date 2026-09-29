@@ -133,7 +133,7 @@ namespace godot {
             static const char *instance_built_signal;
             /// A submodel reached what instance_set_submodel_rotation()/_translation() sent it to
             /// (TAnimContainer's evDone, AnimModel.cpp:112-120, 175-180)
-            static const char *submodel_animation_finished_signal;
+            static const char *instance_submodel_animation_finished_signal;
 
             static E3DRenderingServer *get_instance() {
                 return Object::cast_to<E3DRenderingServer>(
@@ -353,7 +353,7 @@ namespace godot {
             void light_enable(const RID &p_light);
             void light_disable(const RID &p_light);
             /// total/lit/spot/omni/synthesized, for the scenery streaming debug panel
-            Dictionary get_light_statistics() const;
+            Dictionary light_get_statistics() const;
 
             /// Spawn rate multiplier of every emitter of the instance, as the engine state drives
             /// it. 1.0 is the template's own rate - what a scenery chimney keeps.
@@ -367,22 +367,22 @@ namespace godot {
             /// into the rate by the caller.
             void instance_set_smoke_intensity(const RID &p_instance, float p_intensity);
             /// total/built, for the scenery streaming debug panel
-            Dictionary get_smoke_statistics() const;
+            Dictionary smoke_get_statistics() const;
 
             /// Pushed by MaszynaEnvironmentNode; the first two drive the automatic light modes,
             /// the wind drifts the particles of every emitter
-            void set_current_time(double p_hours);
+            void environment_set_time(double p_hours);
             /// Pushed by MaszynaEnvironmentNode: the simulation speed, 0 while paused
-            void set_animation_speed(double p_speed);
-            double get_animation_speed() const;
-            void set_light_level(double p_level);
-            void set_wind(float p_strength, const Vector3 &p_direction);
-            void set_wind_strength(float p_strength);
-            void set_wind_direction(const Vector3 &p_direction);
+            void animation_set_speed(double p_speed);
+            double animation_get_speed() const;
+            void environment_set_light_level(double p_level);
+            void environment_set_wind(float p_strength, const Vector3 &p_direction);
+            void environment_set_wind_strength(float p_strength);
+            void environment_set_wind_direction(const Vector3 &p_direction);
 
-            void set_material_resolver(const Callable &p_material_resolver);
-            void set_model_loader(const Callable &p_model_loader);
-            void set_smoke_source_resolver(const Callable &p_smoke_source_resolver);
+            void material_set_resolver(const Callable &p_material_resolver);
+            void model_set_loader(const Callable &p_model_loader);
+            void smoke_set_source_resolver(const Callable &p_smoke_source_resolver);
     };
 } // namespace godot
 

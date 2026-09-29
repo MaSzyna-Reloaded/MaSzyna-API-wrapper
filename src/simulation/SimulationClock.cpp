@@ -11,7 +11,7 @@ namespace godot {
 
     void SimulationClock::_process(const double p_delta) {
         if (SimulationServer *runtime = SimulationServer::get_instance(); runtime != nullptr) {
-            runtime->advance(p_delta);
+            runtime->simulation_advance(p_delta);
         }
     }
 } // namespace godot

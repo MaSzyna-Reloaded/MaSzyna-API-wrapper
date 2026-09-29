@@ -7,7 +7,7 @@ namespace godot {
     namespace {
         /// The modes and the follow views by their names in scripts, in the order of the enums
         constexpr std::array MODE_NAMES{"cabin", "free", "follow"};
-        constexpr std::array FOLLOW_VIEW_NAMES{"consist_front", "consist_rear", "bogie", "driveby"};
+        constexpr std::array FOLLOW_VIEW_NAMES{"trainset_front", "trainset_rear", "bogie", "driveby"};
         static_assert(FOLLOW_VIEW_NAMES.size() == PlayerCameraServer::CAMERA_FOLLOW_VIEW_MAX);
     } // namespace
 
@@ -48,7 +48,7 @@ namespace godot {
         return 1;
     }
 
-    /// set_follow_view("consist_front" | "consist_rear" | "bogie" | "driveby")
+    /// set_follow_view("trainset_front" | "trainset_rear" | "bogie" | "driveby")
     static int camera_set_follow_view(lua_State *p_state) {
         const int view = check_name(p_state, 1, FOLLOW_VIEW_NAMES);
         LuaModules::server<PlayerCameraServer>(p_state)->camera_set_follow_view(

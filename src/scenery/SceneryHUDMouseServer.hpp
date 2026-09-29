@@ -62,10 +62,10 @@ namespace godot {
         public:
             SceneryHUDMouseServer();
 
-            void set_camera(uint64_t p_camera_id);
+            void mouse_set_camera(uint64_t p_camera_id);
             /// Inactive, nothing is picked and the outline is taken off - the original picks
             /// scenery only in free-fly mode, never from the cab
-            void set_active(bool p_active);
+            void mouse_set_active(bool p_active);
 
             /// A click on the instance's model calls `p_pressed`, with Shift `p_shift_pressed`.
             /// Several pickables of one instance are all operated by a click on it. `p_caption` and
@@ -80,8 +80,8 @@ namespace godot {
             void pickable_free(const RID &p_pickable);
 
             /// Feeds one input event; true when the event operated a pickable and is consumed
-            bool input(const Ref<InputEvent> &p_event);
+            bool mouse_input(const Ref<InputEvent> &p_event);
 
-            RID get_hovered_pickable() const;
+            RID pickable_get_hovered() const;
     };
 } // namespace godot

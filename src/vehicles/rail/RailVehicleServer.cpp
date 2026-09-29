@@ -27,7 +27,7 @@ namespace godot {
     const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
     const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
     const char *RailVehicleServer::vehicle_radio_called_signal = "vehicle_radio_called";
-    const char *RailVehicleServer::vehicle_radio_stop_received_signal = "vehicle_radio_stop_received";
+    const char *RailVehicleServer::vehicle_emergency_signal_received_signal = "vehicle_emergency_signal_received";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -62,14 +62,15 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
-        ClassDB::bind_method(D_METHOD("get_vehicles"), &RailVehicleServer::get_vehicles);
-        ClassDB::bind_method(D_METHOD("get_vehicles_in_rect", "rect"), &RailVehicleServer::get_vehicles_in_rect);
+        ClassDB::bind_method(D_METHOD("vehicle_get_rids"), &RailVehicleServer::vehicle_get_rids);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_rids_in_rect", "rect"), &RailVehicleServer::vehicle_get_rids_in_rect);
         ClassDB::bind_method(
                 D_METHOD("vehicle_send_command", "vehicle", "command", "p1", "p2"),
                 &RailVehicleServer::vehicle_send_command, DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(
-                D_METHOD("broadcast_command", "command", "p1", "p2"), &RailVehicleServer::broadcast_command,
-                DEFVAL(Variant()), DEFVAL(Variant()));
+                D_METHOD("vehicle_broadcast_command", "command", "p1", "p2"),
+                &RailVehicleServer::vehicle_broadcast_command, DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("vehicle_get_commands", "vehicle"), &RailVehicleServer::vehicle_get_commands);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
@@ -77,8 +78,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_find_pantograph_carrier", "vehicle"),
                 &RailVehicleServer::vehicle_find_pantograph_carrier);
-        ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
-        ClassDB::bind_method(D_METHOD("radio_stop", "position"), &RailVehicleServer::radio_stop);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_emergency_signal_send", "vehicle"),
+                &RailVehicleServer::vehicle_emergency_signal_send);
+        ClassDB::bind_method(D_METHOD("emergency_signal_send", "position"), &RailVehicleServer::emergency_signal_send);
         ClassDB::bind_method(D_METHOD("vehicle_radio_call", "vehicle", "call"), &RailVehicleServer::vehicle_radio_call);
         ADD_SIGNAL(MethodInfo(
                 vehicle_radio_called_signal, PropertyInfo(Variant::RID, "vehicle"), PropertyInfo(Variant::INT, "call"),
@@ -91,14 +94,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("trainset_move", "vehicle", "distance"), &RailVehicleServer::trainset_move);
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
-        ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
+        ClassDB::bind_method(D_METHOD("stepping_advance", "delta"), &RailVehicleServer::stepping_advance);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
                 D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
         ClassDB::bind_method(
-                D_METHOD("generic_vehicle_component_find", "vehicle", "tag"),
-                &RailVehicleServer::generic_vehicle_component_find);
+                D_METHOD("vehicle_generic_component_find", "vehicle", "tag"),
+                &RailVehicleServer::vehicle_generic_component_find);
         ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
         ClassDB::bind_method(D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
         ClassDB::bind_method(D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
@@ -120,13 +123,13 @@ namespace godot {
                 &RailVehicleServer::vehicle_attach_rail_vehicle);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_rail_vehicle", "vehicle"), &RailVehicleServer::vehicle_get_rail_vehicle);
-        ClassDB::bind_method(D_METHOD("set_stepping_enabled", "enabled"), &RailVehicleServer::set_stepping_enabled);
-        ClassDB::bind_method(D_METHOD("is_stepping_enabled"), &RailVehicleServer::is_stepping_enabled);
+        ClassDB::bind_method(D_METHOD("stepping_set_enabled", "enabled"), &RailVehicleServer::stepping_set_enabled);
+        ClassDB::bind_method(D_METHOD("stepping_is_enabled"), &RailVehicleServer::stepping_is_enabled);
 
         ADD_SIGNAL(MethodInfo(
                 vehicle_moved_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::VECTOR3, "position")));
-        ADD_SIGNAL(MethodInfo(vehicle_radio_stop_received_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(vehicle_emergency_signal_received_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(
                 vehicle_command_received_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
@@ -159,12 +162,12 @@ namespace godot {
         return placement == nullptr ? 0 : placement->rail_vehicle_id;
     }
 
-    void RailVehicleServer::set_stepping_enabled(const bool p_enabled) {
+    void RailVehicleServer::stepping_set_enabled(const bool p_enabled) {
         stepping_enabled = p_enabled;
         _refresh_stepping();
     }
 
-    bool RailVehicleServer::is_stepping_enabled() const {
+    bool RailVehicleServer::stepping_is_enabled() const {
         return stepping_enabled;
     }
 
@@ -191,7 +194,7 @@ namespace godot {
     /// One frame of the clock, before any node has been processed (SimulationClock)
     void RailVehicleServer::_on_simulation_advanced(const double p_seconds) {
         if (stepping && !Engine::get_singleton()->is_editor_hint()) {
-            step(p_seconds);
+            stepping_advance(p_seconds);
         }
     }
 
@@ -279,13 +282,13 @@ namespace godot {
         return controller != nullptr ? controller->get_type_name() : String();
     }
 
-    void RailVehicleServer::vehicle_radio_stop(const RID &p_vehicle) {
+    void RailVehicleServer::vehicle_emergency_signal_send(const RID &p_vehicle) {
         const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(sender);
-        radio_stop(_placement_transform(*sender).origin);
+        emergency_signal_send(_placement_transform(*sender).origin);
     }
 
-    void RailVehicleServer::radio_stop(const Vector3 &p_position) {
+    void RailVehicleServer::emergency_signal_send(const Vector3 &p_position) {
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             RailVehicleController *controller = _get_controller(entry.value);
             if (controller == nullptr ||
@@ -295,7 +298,7 @@ namespace godot {
             if (RailVehicleRadio *radio = Object::cast_to<RailVehicleRadio>(
                         controller->get_component(VehicleComponentType::COMPONENT_RADIO));
                 radio != nullptr && radio->radio_stop_receive()) {
-                emit_signal(vehicle_radio_stop_received_signal, entry.key);
+                emit_signal(vehicle_emergency_signal_received_signal, entry.key);
             }
         }
     }
@@ -472,7 +475,7 @@ namespace godot {
         emit_signal(vehicle_occupied_cab_changed_signal, p_vehicle, p_cab);
     }
 
-    TypedArray<RID> RailVehicleServer::get_vehicles() const {
+    TypedArray<RID> RailVehicleServer::vehicle_get_rids() const {
         TypedArray<RID> result;
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             result.push_back(entry.key);
@@ -480,7 +483,7 @@ namespace godot {
         return result;
     }
 
-    TypedArray<RID> RailVehicleServer::get_vehicles_in_rect(const Rect2 &p_rect) const {
+    TypedArray<RID> RailVehicleServer::vehicle_get_rids_in_rect(const Rect2 &p_rect) const {
         TypedArray<RID> result;
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             const Vector3 position = _placement_transform(entry.value).origin;
@@ -500,7 +503,8 @@ namespace godot {
         return controller->send_command(p_command, p_p1, p_p2);
     }
 
-    void RailVehicleServer::broadcast_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
+    void RailVehicleServer::vehicle_broadcast_command(
+            const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
         bool known = false;
         for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
             RailVehicleController *controller = _get_controller(entry.value);
@@ -809,7 +813,7 @@ namespace godot {
         const double safe_offset = CLAMP(p_placement.track_offset, 0.0, length);
         // linear on purpose: the cubic interpolation has no neighbour point at the curve ends, so
         // the position advanced there only about 60% of the offset - every vehicle lost
-        // centimetres at each track joint, which kicked the consist through its couplers
+        // centimetres at each track joint, which kicked the trainset through its couplers
         const Vector3 origin = curve->sample_baked(static_cast<real_t>(safe_offset), false);
         const double sample_distance = MIN(HEADING_SAMPLE_DISTANCE, length);
         double previous_offset = CLAMP(safe_offset - sample_distance, 0.0, length);
@@ -1016,7 +1020,7 @@ namespace godot {
     }
 
     TypedArray<VehicleComponent>
-    RailVehicleServer::generic_vehicle_component_find(const RID &p_vehicle, const StringName &p_tag) const {
+    RailVehicleServer::vehicle_generic_component_find(const RID &p_vehicle, const StringName &p_tag) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return TypedArray<VehicleComponent>();
@@ -1080,7 +1084,7 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    void RailVehicleServer::step(const double p_delta) {
+    void RailVehicleServer::stepping_advance(const double p_delta) {
         if (p_delta <= 0.0) {
             return;
         }

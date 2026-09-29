@@ -20,11 +20,11 @@ func before_each() -> void:
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
     _camera.make_current()
-    SceneryHUDMouseServer.set_camera(_camera.get_instance_id())
+    SceneryHUDMouseServer.mouse_set_camera(_camera.get_instance_id())
 
 
 func after_each() -> void:
-    SceneryHUDMouseServer.set_active(true)
+    SceneryHUDMouseServer.mouse_set_active(true)
 
 
 func test_the_segment_hits_a_built_instance_and_misses_beside_it() -> void:
@@ -51,10 +51,10 @@ func test_a_click_calls_pressed_and_a_shift_click_shift_pressed() -> void:
     var instance:RID = _create_instance()
     var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, "lever", "", _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
 
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
-    assert_eq(SceneryHUDMouseServer.get_hovered_pickable(), pickable)
-    assert_true(SceneryHUDMouseServer.input(_click(false)))
-    assert_true(SceneryHUDMouseServer.input(_click(true)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    assert_eq(SceneryHUDMouseServer.pickable_get_hovered(), pickable)
+    assert_true(SceneryHUDMouseServer.mouse_input(_click(false)))
+    assert_true(SceneryHUDMouseServer.mouse_input(_click(true)))
 
     var expected:Array[StringName] = [&"pressed", &"shift_pressed"]
     assert_eq(_presses, expected)
@@ -66,14 +66,14 @@ func test_nothing_is_hovered_off_the_model_or_while_inactive() -> void:
     var instance:RID = _create_instance()
     var pickable:RID = SceneryHUDMouseServer.pickable_create(instance, "lever", "", _press.bind(&"pressed"), _press.bind(&"shift_pressed"))
 
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION + Vector3(5.0, 0.0, 0.0))))
-    assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid(), "beside the model")
-    assert_false(SceneryHUDMouseServer.input(_click(false)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION + Vector3(5.0, 0.0, 0.0))))
+    assert_false(SceneryHUDMouseServer.pickable_get_hovered().is_valid(), "beside the model")
+    assert_false(SceneryHUDMouseServer.mouse_input(_click(false)))
 
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
-    SceneryHUDMouseServer.set_active(false)
-    assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid(), "made inactive")
-    assert_false(SceneryHUDMouseServer.input(_click(false)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    SceneryHUDMouseServer.mouse_set_active(false)
+    assert_false(SceneryHUDMouseServer.pickable_get_hovered().is_valid(), "made inactive")
+    assert_false(SceneryHUDMouseServer.mouse_input(_click(false)))
 
     assert_true(_presses.is_empty())
     SceneryHUDMouseServer.pickable_free(pickable)
@@ -86,9 +86,9 @@ func test_a_click_on_a_vehicle_model_announces_the_vehicle() -> void:
     var pickable:RID = SceneryHUDMouseServer.vehicle_pickable_create(instance, "EU07-424", vehicle)
     watch_signals(SceneryHUDMouseServer)
 
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
     assert_signal_emitted_with_parameters(SceneryHUDMouseServer, "pickable_hovered", ["EU07-424", ""])
-    assert_true(SceneryHUDMouseServer.input(_click(false)))
+    assert_true(SceneryHUDMouseServer.mouse_input(_click(false)))
     assert_signal_emitted_with_parameters(SceneryHUDMouseServer, "vehicle_pressed", [vehicle])
 
     SceneryHUDMouseServer.pickable_free(pickable)
@@ -100,14 +100,14 @@ func test_a_pickable_goes_with_its_instance() -> void:
     var instance:RID = _create_instance()
     var vehicle:RID = RailVehicleServer.vehicle_create()
     SceneryHUDMouseServer.vehicle_pickable_create(instance, "EU07-424", vehicle)
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
     watch_signals(SceneryHUDMouseServer)
 
     E3DRenderingServer.instance_free(instance)
 
-    assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid())
+    assert_false(SceneryHUDMouseServer.pickable_get_hovered().is_valid())
     assert_signal_emitted(SceneryHUDMouseServer, "pickable_unhovered")
-    assert_false(SceneryHUDMouseServer.input(_click(false)))
+    assert_false(SceneryHUDMouseServer.mouse_input(_click(false)))
     RailVehicleServer.vehicle_free(vehicle)
 
 
@@ -140,12 +140,12 @@ func test_a_scenery_model_fires_the_launcher_of_its_name_that_has_it_in_range() 
     )
 
     watch_signals(SceneryHUDMouseServer)
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(MODEL_POSITION)))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
     # the tooltip: the model's name and the launcher's key, with Shift for the second event
     assert_signal_emitted_with_parameters(SceneryHUDMouseServer, "pickable_hovered", ["zwr1", "K / Shift+K"])
-    SceneryHUDMouseServer.input(_click(true))
-    SceneryHUDMouseServer.input(_motion(_camera.unproject_position(beside)))
-    assert_false(SceneryHUDMouseServer.get_hovered_pickable().is_valid(), "zwr2 is out of its launcher's range")
+    SceneryHUDMouseServer.mouse_input(_click(true))
+    SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(beside)))
+    assert_false(SceneryHUDMouseServer.pickable_get_hovered().is_valid(), "zwr2 is out of its launcher's range")
     assert_signal_emitted(SceneryHUDMouseServer, "pickable_unhovered")
 
     assert_true(ScenarioEventServer.event_is_queued(ScenarioEventServer.event_get_rid_by_name(&"zwr1-")), "Shift fires event2")

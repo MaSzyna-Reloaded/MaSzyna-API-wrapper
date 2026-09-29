@@ -128,7 +128,7 @@ namespace godot {
             double local_brake_pressure_change_rate = 0.0;
             /* The releaser was switched on by consist_releaser() and is held until the brakes stop
              * braking */
-            bool consist_releasing = false;
+            bool trainset_releasing = false;
             static double _controller_position_normalized(const TMoverParameters *p_mover);
             static double _force_ratio(const TMoverParameters *p_mover);
 

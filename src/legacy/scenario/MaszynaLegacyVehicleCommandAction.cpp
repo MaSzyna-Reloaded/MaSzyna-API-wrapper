@@ -40,7 +40,7 @@ namespace godot {
         const double command_value1 = read ? events->memory_get_value1(source) : value1;
         if (text == EMERGENCY_BRAKE) {
             if (Math::floor(command_value1) == 1.0) {
-                vehicles->radio_stop(position);
+                vehicles->emergency_signal_send(position);
             }
             return;
         }

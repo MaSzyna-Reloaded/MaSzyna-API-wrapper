@@ -59,9 +59,9 @@ func _ready() -> void:
     _time_scale_slider.max_value = TIME_SCALE_STEPS.size() - 1
     _time_scale_slider.tick_count = TIME_SCALE_STEPS.size()
     _time_scale_slider.value_changed.connect(_on_time_scale_changed)
-    _pause_button.set_pressed_no_signal(SimulationServer.is_paused())
-    SimulationServer.paused.connect(_pause_button.set_pressed_no_signal.bind(true))
-    SimulationServer.unpaused.connect(_pause_button.set_pressed_no_signal.bind(false))
+    _pause_button.set_pressed_no_signal(SimulationServer.simulation_is_paused())
+    SimulationServer.simulation_paused.connect(_pause_button.set_pressed_no_signal.bind(true))
+    SimulationServer.simulation_unpaused.connect(_pause_button.set_pressed_no_signal.bind(false))
     SimulationServer.simulation_speed_changed.connect(_on_simulation_speed_changed)
     _on_simulation_speed_changed()
     _day_slider.value_changed.connect(_on_day_changed)
@@ -78,8 +78,8 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
-    SimulationServer.paused.disconnect(_pause_button.set_pressed_no_signal.bind(true))
-    SimulationServer.unpaused.disconnect(_pause_button.set_pressed_no_signal.bind(false))
+    SimulationServer.simulation_paused.disconnect(_pause_button.set_pressed_no_signal.bind(true))
+    SimulationServer.simulation_unpaused.disconnect(_pause_button.set_pressed_no_signal.bind(false))
     SimulationServer.simulation_speed_changed.disconnect(_on_simulation_speed_changed)
 
 
@@ -227,9 +227,9 @@ func _on_time_scale_changed(value: float) -> void:
 
 func _on_pause_button_toggled(toggled_on: bool) -> void:
     if toggled_on:
-        SimulationServer.pause()
+        SimulationServer.simulation_pause()
     else:
-        SimulationServer.unpause()
+        SimulationServer.simulation_unpause()
 
 
 func _format_percent(value: float) -> String:

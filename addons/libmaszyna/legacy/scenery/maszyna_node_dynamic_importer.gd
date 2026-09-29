@@ -14,12 +14,12 @@ const COUPLING_PERMANENT:int = 128
 ## Placement offset is NOT simply trainset_offset: the original computes
 ## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements
 ## trainset.offset by the vehicle's own physical length (from its .fiz Dimensions: L=) for the
-## NEXT vehicle in the consist - read directly and synchronously here (not via
+## NEXT vehicle in the trainset - read directly and synchronously here (not via
 ## FizVehiclePhysicsNode's own async pipeline, which only finishes loading after scene
 ## construction, too late to affect this vehicle's own placement).
 ##
 ## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle
-## reversed in the consist" - confirmed against simulationstateserializer.cpp:983
+## reversed in the trainset" - confirmed against simulationstateserializer.cpp:983
 ## (`vehicle->Init(..., ( offset == -1.0 ), params)`) and DynObj.cpp:1807
 ## (`iDirection = (Reversed ? 0 : 1)`). Previously only used here for the offset-math branch,
 ## never for direction - a real vehicle placed with offset: -1.0 (e.g. a reversed EZT member)

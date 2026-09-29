@@ -31,32 +31,32 @@ func _ready() -> void:
         _speed_buttons.append(button)
     %Buttons.move_child(%PauseButton, PAUSE_INDEX)
     SimulationServer.simulation_speed_changed.connect(_show_speed)
-    SimulationServer.paused.connect(_show_speed)
-    SimulationServer.unpaused.connect(_show_speed)
+    SimulationServer.simulation_paused.connect(_show_speed)
+    SimulationServer.simulation_unpaused.connect(_show_speed)
     _show_speed()
 
 
 func _exit_tree() -> void:
     SimulationServer.simulation_speed_changed.disconnect(_show_speed)
-    SimulationServer.paused.disconnect(_show_speed)
-    SimulationServer.unpaused.disconnect(_show_speed)
+    SimulationServer.simulation_paused.disconnect(_show_speed)
+    SimulationServer.simulation_unpaused.disconnect(_show_speed)
 
 
 ## The speed goes on running: a paused simulation starts at it
 func _on_speed_button_pressed(speed:float) -> void:
     SimulationServer.simulation_speed = speed
-    SimulationServer.unpause()
+    SimulationServer.simulation_unpause()
 
 
 func _on_pause_button_pressed() -> void:
-    SimulationServer.pause()
+    SimulationServer.simulation_pause()
 
 
 ## The pause's button while paused, else the speed's; none for a speed no button offers (the
 ## weather window's slider has more)
 func _show_speed() -> void:
     var index:int = SPEEDS.find(SimulationServer.simulation_speed)
-    var lit:Button = %PauseButton if SimulationServer.is_paused() else (_speed_buttons[index] if index >= 0 else null)
+    var lit:Button = %PauseButton if SimulationServer.simulation_is_paused() else (_speed_buttons[index] if index >= 0 else null)
     %PauseButton.set_pressed_no_signal(lit == %PauseButton)
     for button:Button in _speed_buttons:
         button.set_pressed_no_signal(button == lit)

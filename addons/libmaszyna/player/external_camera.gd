@@ -8,7 +8,7 @@ class_name ExternalCamera3D
 ## up/down arrows and the mouse wheel bring it closer or farther. It is active while it is the
 ## current camera.
 
-enum View {CONSIST_FRONT, CONSIST_REAR, BOGIE, DRIVEBY}
+enum View {TRAINSET_FRONT, TRAINSET_REAR, BOGIE, DRIVEBY}
 
 ## Distance scale per mouse wheel step towards the vehicle
 const ZOOM_STEP:float = 0.9
@@ -34,7 +34,7 @@ const LOOK_AHEAD:float = 10.0
 @export var move_speed_fast:float = 20.0
 
 var vehicle:RailVehicle3D
-var view:View = View.CONSIST_FRONT:
+var view:View = View.TRAINSET_FRONT:
     set(x):
         if not view == x:
             view = x
@@ -59,7 +59,7 @@ var _min_distance:float = ProjectSettings.get_setting(MIN_DISTANCE_SETTING, MIN_
 var _max_distance:float = ProjectSettings.get_setting(MAX_DISTANCE_SETTING, MAX_DISTANCE_DEFAULT)
 # the vehicle and the view the orbit, pan and zoom were set for
 var _offset_vehicle:RailVehicle3D
-var _offset_view:View = View.CONSIST_FRONT
+var _offset_view:View = View.TRAINSET_FRONT
 
 
 ## Starts the flight from p_from to the selected view of the vehicle, the view applied in full. The
@@ -154,11 +154,11 @@ func _process_dirty() -> void:
 
     # drivermode.cpp:951-1019 - offsetflip from the occupied cab and the active direction
     var flip:float = cab * (1 if direction == 0 else direction)
-    if view == View.CONSIST_REAR:
+    if view == View.TRAINSET_REAR:
         flip = -flip
 
-    # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the consist on that side
-    _view_vehicle = _find_vehicle(_get_consist_end(controller, 0 if flip > 0.0 else 1))
+    # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the trainset on that side
+    _view_vehicle = _find_vehicle(_get_trainset_end(controller, 0 if flip > 0.0 else 1))
     var owner_controller:VehicleController = _view_vehicle.get_controller()
     var width:float = owner_controller.dimensions_width
     var height:float = owner_controller.dimensions_height
@@ -166,9 +166,9 @@ func _process_dirty() -> void:
 
     var offset:Vector3
     match view:
-        View.CONSIST_FRONT:
+        View.TRAINSET_FRONT:
             offset = Vector3(1.5 * width * flip, maxf(5.0, 1.25 * height), -0.4 * length * flip)
-        View.CONSIST_REAR:
+        View.TRAINSET_REAR:
             offset = Vector3(1.5 * width * flip, maxf(5.0, 1.25 * height), 0.2 * length * flip)
         View.BOGIE:
             offset = Vector3(-0.65 * width * flip, 0.9, 0.15 * length * flip)
@@ -203,7 +203,7 @@ func _get_vehicle_center(p_vehicle:RailVehicle3D) -> Vector3:
     return p_vehicle.global_position + p_vehicle.global_basis.y.normalized() * 0.5 * p_vehicle.get_controller().dimensions_height
 
 
-func _get_consist_end(controller:VehicleController, end:int) -> VehicleController:
+func _get_trainset_end(controller:VehicleController, end:int) -> VehicleController:
     var last:VehicleController = controller
     var next:VehicleController = last.get_coupled_controller(end)
     while next:

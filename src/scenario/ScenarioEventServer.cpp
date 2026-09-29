@@ -97,7 +97,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("launcher_set_time_of_day", "launcher", "hour", "minute"),
                 &ScenarioEventServer::launcher_set_time_of_day);
-        ClassDB::bind_method(D_METHOD("get_launchers"), &ScenarioEventServer::get_launchers);
+        ClassDB::bind_method(D_METHOD("launcher_get_rids"), &ScenarioEventServer::launcher_get_rids);
         ClassDB::bind_method(
                 D_METHOD("launcher_set_radio_call", "launcher", "call"), &ScenarioEventServer::launcher_set_radio_call);
         ClassDB::bind_method(D_METHOD("launcher_fire", "launcher"), &ScenarioEventServer::launcher_fire);
@@ -168,8 +168,8 @@ namespace godot {
         E3DRenderingServer *rendering = E3DRenderingServer::get_instance();
         ERR_FAIL_NULL(rendering);
         rendering->connect(
-                E3DRenderingServer::submodel_animation_finished_signal,
-                callable_mp(this, &ScenarioEventServer::_on_submodel_animation_finished));
+                E3DRenderingServer::instance_submodel_animation_finished_signal,
+                callable_mp(this, &ScenarioEventServer::_on_instance_submodel_animation_finished));
         rendering->connect(
                 E3DRenderingServer::instance_freed_signal, callable_mp(this, &ScenarioEventServer::_on_instance_freed));
     }
@@ -255,7 +255,7 @@ namespace godot {
     void ScenarioEventServer::_process_queue(double /* p_seconds */) {
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        const double time = runtime->get_simulation_time();
+        const double time = runtime->simulation_get_time();
         const uint64_t pass_end = next_sequence;
         while (!queue.empty() && queue.top().time <= time && queue.top().sequence < pass_end) {
             const QueueEntry entry = queue.top();
@@ -346,7 +346,8 @@ namespace godot {
         _queue_isolated_events(p_isolated, ISOLATED_DEC, p_vehicle);
     }
 
-    void ScenarioEventServer::_on_submodel_animation_finished(const RID &p_instance, const String &p_submodel) {
+    void
+    ScenarioEventServer::_on_instance_submodel_animation_finished(const RID &p_instance, const String &p_submodel) {
         const HashMap<String, RID> *done_events = animation_done_events.getptr(p_instance);
         if (done_events == nullptr) {
             return;
@@ -558,7 +559,7 @@ namespace godot {
         }
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL_V(runtime, false);
-        const double run_time = runtime->get_simulation_time() + event->delay + p_extra_delay +
+        const double run_time = runtime->simulation_get_time() + event->delay + p_extra_delay +
                                 (event->random_delay * UtilityFunctions::randf());
         event->queued_sequence = _schedule(p_event, run_time, p_activator);
         event->run_time = run_time;
@@ -817,7 +818,7 @@ namespace godot {
         }
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        launcher->scheduled_sequence = _schedule(p_launcher, runtime->get_simulation_time() + p_seconds, RID());
+        launcher->scheduled_sequence = _schedule(p_launcher, runtime->simulation_get_time() + p_seconds, RID());
     }
 
     /// TEventLauncher's HHMM DeltaTime (EvLaunch.cpp:138-157)
@@ -843,7 +844,7 @@ namespace godot {
         }
     }
 
-    TypedArray<RID> ScenarioEventServer::get_launchers() const {
+    TypedArray<RID> ScenarioEventServer::launcher_get_rids() const {
         TypedArray<RID> result;
         for (const KeyValue<RID, LauncherData> &launcher: launchers) {
             result.push_back(launcher.key);

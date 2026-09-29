@@ -25,13 +25,13 @@ const EXIT_SPINNER_HOLD_TIME: float = 0.5
 const QUIT_FADE_TIME: float = 0.5
 
 var _music_tween: Tween
-## The consist chosen in the selector, handed to the player once the scenery is loaded
+## The trainset chosen in the selector, handed to the player once the scenery is loaded
 var _chosen_train_id: String = ""
 
 
 ## Before _ready(): the children must not read a cache left by another build
 func _enter_tree() -> void:
-    SimulationServer.check_build_version()
+    SimulationServer.build_check_version()
 
 
 func _ready() -> void:
@@ -45,12 +45,12 @@ func _on_scenery_selector_scenery_selected(
     _play_music(MUSIC_LOADING_VOLUME_DB)
     # the world starts while the loading screen fades out, not when it is built, and at the wall
     # clock's speed whatever the last one ran at
-    SimulationServer.pause()
+    SimulationServer.simulation_pause()
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
-    SceneryStreamingServer.set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(null)
     # the title from the .scn header ("//$n"), not the file name
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
     $GameHud.show_scenario(info, train_id)
@@ -64,11 +64,11 @@ func _on_scenery_selector_scenery_selected(
     _chosen_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
-    SceneryStreamingServer.set_camera(get_viewport().get_camera_3d())
+    SceneryStreamingServer.streaming_set_camera(get_viewport().get_camera_3d())
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
-    tween.parallel().tween_callback(SimulationServer.unpause).set_delay(SIMULATION_START_DELAY)
+    tween.parallel().tween_callback(SimulationServer.simulation_unpause).set_delay(SIMULATION_START_DELAY)
     await tween.finished
     $LoadingScreen.visible = false
     $LoadingScreen.modulate.a = 1.0
@@ -90,8 +90,8 @@ func _wait_for_cabin() -> void:
 ## distance keep streaming after the game appears.
 func _wait_for_streaming() -> void:
     var deadline: float = Time.get_ticks_msec() + STREAMING_WAIT_TIME * 1000.0
-    while SceneryStreamingServer.has_camera() and Time.get_ticks_msec() < deadline:
-        if SceneryStreamingServer.is_area_ready(0):
+    while SceneryStreamingServer.streaming_has_camera() and Time.get_ticks_msec() < deadline:
+        if SceneryStreamingServer.area_is_ready(0):
             break
         await get_tree().process_frame
 
@@ -120,10 +120,10 @@ func _exit_to_menu() -> void:
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     # the world stops once the spinner covers it, and stays stopped until the next scenery shows;
     # the menu is heard at the wall clock's speed (TrainSoundSystem)
-    SimulationServer.pause()
+    SimulationServer.simulation_pause()
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
-    SceneryStreamingServer.set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(null)
     $Player.clear_start_train()
     # the scenery's script context goes with it
     $GameHud.attach_script_context(RID())
@@ -144,9 +144,9 @@ func _play_music(volume_db: float) -> void:
         $Music.play()
 
 
-## The player takes the consist only now: the trainsets are coupled, so the cab it activates on
+## The player takes the trainset only now: the trainsets are coupled, so the cab it activates on
 ## entering reaches every car of its unit (CabActivisation() sends to the coupled ones, Mover.cpp:2905).
-## The consist chosen in the selector; none chosen, the scenery's own driver.
+## The trainset chosen in the selector; none chosen, the scenery's own driver.
 func _on_scenery_loaded(first_train_id: String) -> void:
     $Player.start_train_id = _chosen_train_id if _chosen_train_id else first_train_id
     $GameHud.attach_script_context($MaszynaSceneryNode.get_script_context())

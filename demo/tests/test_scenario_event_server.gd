@@ -122,17 +122,17 @@ func test_pause_stops_the_time_and_the_speed_scales_it() -> void:
     var event:RID = _create_event(RecordingAction.new(), NEVER)
     ScenarioEventServer.event_queue(event)
 
-    SimulationServer.pause()
-    var paused_at:float = SimulationServer.get_simulation_time()
+    SimulationServer.simulation_pause()
+    var paused_at:float = SimulationServer.simulation_get_time()
     await get_tree().process_frame
     await get_tree().process_frame
-    assert_eq(SimulationServer.get_simulation_time(), paused_at, "the time should stand while paused")
-    SimulationServer.unpause()
+    assert_eq(SimulationServer.simulation_get_time(), paused_at, "the time should stand while paused")
+    SimulationServer.simulation_unpause()
 
     SimulationServer.simulation_speed = FAST_SPEED
-    var fast_from:float = SimulationServer.get_simulation_time()
+    var fast_from:float = SimulationServer.simulation_get_time()
     await get_tree().process_frame
-    var advanced:float = SimulationServer.get_simulation_time() - fast_from
+    var advanced:float = SimulationServer.simulation_get_time() - fast_from
     assert_gt(advanced, 0.0, "the time should run at the speed")
     assert_lte(advanced, MAX_FRAME_DELTA * FAST_SPEED, "a frame counts at most MAX_FRAME_DELTA, sped up")
     SimulationServer.simulation_speed = 1.0
@@ -374,11 +374,11 @@ func test_scenery_animation_turns_the_submodel() -> void:
     var arm_node:Node3D = instance.find_child("Ramie01", true, false)
     var cell:RID = ScenarioEventServer.memory_get_rid_by_name(&"c1")
 
-    E3DRenderingServer.set_animation_speed(0.0)
+    E3DRenderingServer.animation_set_speed(0.0)
     await _run_event(&"rog1on")
     await get_tree().process_frame
     assert_true(arm_node.basis.is_equal_approx(Basis()), "no motion while paused")
-    E3DRenderingServer.set_animation_speed(1.0)
+    E3DRenderingServer.animation_set_speed(1.0)
     await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "done", MAX_WAIT)
 
     assert_true(arm_node.basis.is_equal_approx(Basis(Vector3(0, 0, 1), deg_to_rad(90.0))), "turned by 90 degrees about z")

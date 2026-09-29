@@ -38,6 +38,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="driver_get_rids" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Every driver there is.
+			</description>
+		</method>
 		<method name="driver_get_state" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="driver" type="RID" />
@@ -80,12 +86,6 @@
 			<param index="3" name="value2" type="float" />
 			<param index="4" name="position" type="Vector3" default="Vector3(0, 0, 0)" />
 			<description>
-			</description>
-		</method>
-		<method name="get_drivers" qualifiers="const">
-			<return type="RID[]" />
-			<description>
-				Every driver there is.
 			</description>
 		</method>
 		<method name="vehicle_get_driver" qualifiers="const">

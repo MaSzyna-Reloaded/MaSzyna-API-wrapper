@@ -70,9 +70,10 @@ Code generation:
   `bool` - see `CODE_STYLE.md`
 * names come from the vocabulary of the data and of the original engine (`trainset`, not a synonym)
 * a server's (a `*Server`/`*System` singleton's) method is `<subject>_<action>()` and its signal
-  `<subject>_<what>_changed`, as Godot's own servers (`camera_set_mode`, `player_get_vehicle`,
-  `simulation_current_speed_changed`); an older method named otherwise is not a pattern to copy -
-  see `CODE_STYLE.md`
+  `<subject>_<what>_changed` for a change of state or `<subject>_<past-tense verb>` for an event,
+  as Godot's own servers (`camera_set_mode`, `player_get_vehicle`,
+  `simulation_current_speed_changed`, `vehicle_freed`); a server's Godot property keeps its
+  `set_<property>`/`get_<property>` accessors - see `CODE_STYLE.md`
 * PROHIBITED: **never create an `ensure_*` API**, under any name - state is initialised where it
   is created and set where it changes - see `CODE_STYLE.md`
 * PROHIBITED: **no magic numbers.** A non-self-evident literal gets a named constant; a ported

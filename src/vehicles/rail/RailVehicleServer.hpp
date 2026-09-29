@@ -182,7 +182,7 @@ namespace godot {
             static const char *vehicle_radio_called_signal;
             /* A Radio-Stop reached the vehicle and braked it (TDynamicObject::RadioStop,
              * DynObj.cpp:7229) */
-            static const char *vehicle_radio_stop_received_signal;
+            static const char *vehicle_emergency_signal_received_signal;
 
             RailVehicleServer();
             ~RailVehicleServer() override;
@@ -208,15 +208,15 @@ namespace godot {
             VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
             /* Every vehicle the server holds, and those whose position falls in p_rect (x, z) */
-            TypedArray<RID> get_vehicles() const;
-            TypedArray<RID> get_vehicles_in_rect(const Rect2 &p_rect) const;
+            TypedArray<RID> vehicle_get_rids() const;
+            TypedArray<RID> vehicle_get_rids_in_rect(const Rect2 &p_rect) const;
             /* A command to one vehicle, by handle; returns what its handler answered (#43), or
              * Variant() when the vehicle has no such command */
             Variant vehicle_send_command(
                     const RID &p_vehicle, const StringName &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant());
             /* The same command to every vehicle that has it */
-            void broadcast_command(
+            void vehicle_broadcast_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             PackedStringArray vehicle_get_commands(const RID &p_vehicle) const;
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
@@ -234,10 +234,10 @@ namespace godot {
             RID vehicle_find_pantograph_carrier(const RID &p_vehicle) const;
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
-            void vehicle_radio_stop(const RID &p_vehicle);
+            void vehicle_emergency_signal_send(const RID &p_vehicle);
             /* A Radio-Stop sent from a place rather than a vehicle - a scenery's `Emergency_brake` -
              * heard by every vehicle within RADIO_STOP_RANGE */
-            void radio_stop(const Vector3 &p_position);
+            void emergency_signal_send(const Vector3 &p_position);
             /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
             void vehicle_radio_call(const RID &p_vehicle, RailVehicleRadio::RadioCall p_call);
             /* The RailVehicle3D this handle belongs to, by instance id. */
@@ -247,8 +247,8 @@ namespace godot {
             /* Freezing the step while a scenery is torn down: the vehicles are freed one by one and
              * stepping a registry that is being emptied is work for nothing. Replaces toggling the
              * old autoload's process_mode. */
-            void set_stepping_enabled(bool p_enabled);
-            bool is_stepping_enabled() const;
+            void stepping_set_enabled(bool p_enabled);
+            bool stepping_is_enabled() const;
 
             void vehicle_set_track(
                     const RID &p_vehicle, const RID &p_track, double p_track_offset,
@@ -265,7 +265,7 @@ namespace godot {
             /* One whole step of every registered vehicle. Driven by SimulationServer's clock, and
              * callable directly with an explicit delta where the caller wants to decide when it
              * happens. */
-            void step(double p_delta);
+            void stepping_advance(double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
@@ -296,7 +296,7 @@ namespace godot {
             VehicleComponent *vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
             /* Scripted components carrying a tag of the modder's own choosing */
             TypedArray<VehicleComponent>
-            generic_vehicle_component_find(const RID &p_vehicle, const StringName &p_tag) const;
+            vehicle_generic_component_find(const RID &p_vehicle, const StringName &p_tag) const;
 
             Dictionary vehicle_dump_state(const RID &p_vehicle);
             Dictionary vehicle_dump_config(const RID &p_vehicle) const;

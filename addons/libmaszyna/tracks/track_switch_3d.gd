@@ -50,15 +50,15 @@ func _enter_tree():
     if diverging_curve:
         diverging_curve.changed.connect(_mark_dirty)
     TrackServer.switch_active_track_changed.connect(_on_track_server_switch_active_track_changed)
-    TrackServer.switching_started.connect(_on_track_server_switching_started)
-    TrackServer.switching_finished.connect(_on_track_server_switching_finished)
+    TrackServer.switch_movement_started.connect(_on_track_server_switching_started)
+    TrackServer.switch_movement_finished.connect(_on_track_server_switching_finished)
 
 func _exit_tree() -> void:
     if diverging_curve:
         diverging_curve.changed.disconnect(_mark_dirty)
     TrackServer.switch_active_track_changed.disconnect(_on_track_server_switch_active_track_changed)
-    TrackServer.switching_started.disconnect(_on_track_server_switching_started)
-    TrackServer.switching_finished.disconnect(_on_track_server_switching_finished)
+    TrackServer.switch_movement_started.disconnect(_on_track_server_switching_started)
+    TrackServer.switch_movement_finished.disconnect(_on_track_server_switching_finished)
     super._exit_tree()
 
 func _get_aabb_points() -> Array[Vector3]:

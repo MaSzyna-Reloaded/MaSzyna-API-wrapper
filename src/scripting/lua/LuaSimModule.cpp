@@ -8,7 +8,7 @@
 namespace godot {
     /// Seconds of simulation time since the scenario started
     static int sim_time(lua_State *p_state) {
-        lua_pushnumber(p_state, LuaModules::server<SimulationServer>(p_state)->get_simulation_time());
+        lua_pushnumber(p_state, LuaModules::server<SimulationServer>(p_state)->simulation_get_time());
         return 1;
     }
 
@@ -19,7 +19,8 @@ namespace godot {
     }
 
     static int sim_is_paused(lua_State *p_state) {
-        lua_pushboolean(p_state, static_cast<int>(LuaModules::server<SimulationServer>(p_state)->is_paused()));
+        lua_pushboolean(
+                p_state, static_cast<int>(LuaModules::server<SimulationServer>(p_state)->simulation_is_paused()));
         return 1;
     }
 

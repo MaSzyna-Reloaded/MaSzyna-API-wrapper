@@ -263,7 +263,7 @@ func test_the_player_its_view_and_the_hud_are_reached_by_vehicle_handles() -> vo
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"player", source))
 
     PlayerCameraServer.camera_set_target(RID())
-    PlayerCameraServer.camera_set_follow_view(PlayerCameraServer.CAMERA_FOLLOW_VIEW_CONSIST_FRONT)
+    PlayerCameraServer.camera_set_follow_view(PlayerCameraServer.CAMERA_FOLLOW_VIEW_TRAINSET_FRONT)
     free_rail_vehicle(node)
     TrackServer.track_free(track)
     TrackServer.topology_rebuild()

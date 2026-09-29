@@ -98,10 +98,10 @@
 		<constant name="CAMERA_MODE_FOLLOW" value="2" enum="CameraMode">
 			The following camera, following the target.
 		</constant>
-		<constant name="CAMERA_FOLLOW_VIEW_CONSIST_FRONT" value="0" enum="CameraFollowView">
+		<constant name="CAMERA_FOLLOW_VIEW_TRAINSET_FRONT" value="0" enum="CameraFollowView">
 			From ahead of the trainset.
 		</constant>
-		<constant name="CAMERA_FOLLOW_VIEW_CONSIST_REAR" value="1" enum="CameraFollowView">
+		<constant name="CAMERA_FOLLOW_VIEW_TRAINSET_REAR" value="1" enum="CameraFollowView">
 			From behind the trainset.
 		</constant>
 		<constant name="CAMERA_FOLLOW_VIEW_BOGIE" value="2" enum="CameraFollowView">

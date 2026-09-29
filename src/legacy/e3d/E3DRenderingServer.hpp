@@ -317,7 +317,7 @@ namespace godot {
             void instance_set_options(
                     const RID &p_instance, const String &p_data_path, const PackedStringArray &p_skins,
                     const Array &p_exclude_node_names, bool p_force_alpha,
-                    const TypedArray<NodePath> &p_force_alpha_submodel_paths);
+                    const TypedArray<NodePath> &p_force_alpha_submodel_paths, int p_max_texture_size);
             void instance_attach_node(const RID &p_instance, Node3D *p_node);
             void instance_set_scenario(const RID &p_instance, const RID &p_scenario);
             void instance_set_transform(const RID &p_instance, const Transform3D &p_transform);

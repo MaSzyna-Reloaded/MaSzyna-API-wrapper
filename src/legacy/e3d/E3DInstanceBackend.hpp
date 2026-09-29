@@ -68,6 +68,7 @@ namespace godot {
             Array exclude_node_names;
             bool force_alpha = false;
             TypedArray<NodePath> force_alpha_submodel_paths;
+            int max_texture_size = 0; // 0 - the project's DDS size limit, see MaterialManager
             ObjectID node_id;
             RID scenario;
             Transform3D transform;

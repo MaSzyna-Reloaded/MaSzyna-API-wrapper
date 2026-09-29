@@ -108,7 +108,9 @@ func test_get_material_override_uses_real_submodel_diffuse_color() -> void:
     submodel.material_name = "nontransparent_manager"
     submodel.diffuse_color = Color(0.0, 0.749, 0.0, 1.0)
 
-    var material: ShaderMaterial = MaterialManager.get_submodel_material(submodel, "test", [], false) as ShaderMaterial
+    var material: ShaderMaterial = MaterialManager.get_submodel_material(
+        submodel, "test", [], false, MaterialManager.MAX_TEXTURE_SIZE_PROJECT_DEFAULT
+    ) as ShaderMaterial
 
     assert_not_null(material, "a submodel with material_name should get a material override")
     if material:

@@ -118,6 +118,14 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             force_alpha = x
             _dirty = true
 
+## Largest texture size (in pixels) the model's materials load - larger DDS textures drop their top
+## mipmap levels. [code]0[/code] takes the project's [code]maszyna/import/dds_max_texture_size[/code].
+@export var max_texture_size:int = 0:
+    set(x):
+        if not x == max_texture_size:
+            max_texture_size = x
+            _dirty = true
+
 # Probably instancer should be set project-wide
 @export var instancer = Instancer.NODES:
     set(x):
@@ -215,7 +223,8 @@ func _create_instance() -> void:
     )
     _rid = E3DRenderingServer.instance_create(_model, server_instancer, instance_kind)
     E3DRenderingServer.instance_set_options(
-        _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths
+        _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths,
+        max_texture_size
     )
     E3DRenderingServer.instance_attach_node(_rid, self)
     E3DRenderingServer.instance_set_scenario(_rid, get_world_3d().scenario)

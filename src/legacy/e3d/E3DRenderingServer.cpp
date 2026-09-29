@@ -31,7 +31,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD(
                         "instance_set_options", "instance", "data_path", "skins", "exclude_node_names", "force_alpha",
-                        "force_alpha_submodel_paths"),
+                        "force_alpha_submodel_paths", "max_texture_size"),
                 &E3DRenderingServer::instance_set_options);
         ClassDB::bind_method(
                 D_METHOD("instance_attach_node", "instance", "node"), &E3DRenderingServer::instance_attach_node);
@@ -276,7 +276,7 @@ namespace godot {
     void E3DRenderingServer::instance_set_options(
             const RID &p_instance, const String &p_data_path, const PackedStringArray &p_skins,
             const Array &p_exclude_node_names, const bool p_force_alpha,
-            const TypedArray<NodePath> &p_force_alpha_submodel_paths) {
+            const TypedArray<NodePath> &p_force_alpha_submodel_paths, const int p_max_texture_size) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         instance->data_path = p_data_path;
@@ -284,6 +284,7 @@ namespace godot {
         instance->exclude_node_names = p_exclude_node_names;
         instance->force_alpha = p_force_alpha;
         instance->force_alpha_submodel_paths = p_force_alpha_submodel_paths;
+        instance->max_texture_size = p_max_texture_size;
         _rebuild_if_built(*instance);
     }
 

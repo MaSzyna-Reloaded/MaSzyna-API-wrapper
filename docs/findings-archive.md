@@ -2039,3 +2039,20 @@ lighting or the trainset.
   along the driver's route table (`_front_along`) - the same thresholds, a source a moved train
   shows too.
 * **Rule:** do not count on the Mover's odometer for anything a test moves by placement.
+
+## 2026-09-29 - blurry cab gauges
+
+* **Symptom:** the E186 cab (td_e186.scn) showed its gauges blurred - digits and scale marks
+  smeared - where the original draws them sharp.
+* **What proved it:** the cab textures (`dynamic/pkp/e186_v2/kabina_a/b/c.dds`, `fst.dds`) are
+  2048x2048 DXT, and `MaterialManager.load_texture()` loaded every DDS under
+  `maszyna/import/dds_max_texture_size`, default 1024 - `dds_texture_loader.gd` dropped the top
+  mip, so the cab ran at half resolution. The original has two limits, `iMaxTextureSize` and
+  `iMaxCabTextureSize`, both 4096 (Globals.h:164-165), and loads the cab under the second
+  (Train.cpp:660-666).
+* **Fix:** `maszyna/import/dds_max_cab_texture_size` (default 4096); the cab's `E3DModelInstance`
+  carries it as `max_texture_size` through `E3DRenderingServer.instance_set_options()` and the
+  material resolver to `MaterialOptions`. Both settings' enum hints now store the size, not the
+  index of the entry.
+* **Rule:** a blurry texture - compare its DDS size with the limit it loaded under before blaming
+  mipmaps or filtering.

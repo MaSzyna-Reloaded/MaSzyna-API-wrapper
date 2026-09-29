@@ -1043,8 +1043,6 @@ msgstr ""
 msgid "Signal at stop"
 msgstr ""
 
-msgid "Stop ahead"
-msgstr ""
 
 msgid "converter overload"
 msgstr ""

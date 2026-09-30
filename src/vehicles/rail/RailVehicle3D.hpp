@@ -112,9 +112,8 @@ namespace godot {
             ObjectID low_poly_cabin_id;
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;
+            /* The vehicle this node draws - the VehiclePhysicsNode's handle, taken when it built it */
             RID rid;
-            /* Whether `rid` is this node's own handle or the vehicle's, adopted from the controller. */
-            bool rid_owned = false;
             bool pending_start_track_retry = false;
             double update_time = 0.0;
             bool animation_bindings_dirty = true;

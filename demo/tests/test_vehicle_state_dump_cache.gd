@@ -13,8 +13,7 @@ func before_each() -> void:
     _controller.type_name = "test"
     _radio = MoverRailVehicleRadio.new()
     _controller.add_component(_radio)
-    _rid = VehicleServer.vehicle_create()
-    VehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
+    _rid = _controller.get_rid()
     await wait_idle_frames(2)
 
 

@@ -42,12 +42,21 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_create"), &VehicleServer::vehicle_create);
         ClassDB::bind_method(D_METHOD("vehicle_free", "vehicle"), &VehicleServer::vehicle_free);
         ClassDB::bind_method(D_METHOD("vehicle_exists", "vehicle"), &VehicleServer::vehicle_exists);
+        ClassDB::bind_method(D_METHOD("controller_create"), &VehicleServer::controller_create);
         ClassDB::bind_method(
-                D_METHOD("vehicle_attach_controller", "vehicle", "controller_id"),
-                &VehicleServer::vehicle_attach_controller);
+                D_METHOD("controller_configure", "controller", "description"), &VehicleServer::controller_configure);
+        ClassDB::bind_method(D_METHOD("controller_free", "controller"), &VehicleServer::controller_free);
         ClassDB::bind_method(
-                D_METHOD("vehicle_get_controller_instance_id", "vehicle"),
-                &VehicleServer::vehicle_get_controller_instance_id);
+                D_METHOD("vehicle_bind_controller", "vehicle", "controller"), &VehicleServer::vehicle_bind_controller);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_type_name", "vehicle", "type_name"), &VehicleServer::vehicle_set_type_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_initial_velocity", "vehicle", "velocity"),
+                &VehicleServer::vehicle_set_initial_velocity);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_driver_type", "vehicle", "driver_type"), &VehicleServer::vehicle_set_driver_type);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_load", "vehicle", "load_name", "load_amount"), &VehicleServer::vehicle_set_load);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &VehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &VehicleServer::vehicle_get_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &VehicleServer::vehicle_get_rid_by_name);
@@ -167,10 +176,8 @@ namespace godot {
 
     VehicleController *VehicleServer::_get_controller(const RID &p_vehicle) const {
         const Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        if (vehicle == nullptr || vehicle->controller_id.is_null()) {
-            return nullptr;
-        }
-        return Object::cast_to<VehicleController>(ObjectDB::get_instance(vehicle->controller_id));
+        const Controller *slot = vehicle != nullptr ? controllers.getptr(vehicle->controller) : nullptr;
+        return slot != nullptr ? slot->controller.ptr() : nullptr;
     }
 
     RID VehicleServer::vehicle_create() {
@@ -182,11 +189,11 @@ namespace godot {
     }
 
     void VehicleServer::vehicle_free(const RID &p_vehicle) {
-        const Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        if (vehicle == nullptr) {
+        if (!vehicles.has(p_vehicle)) {
             return;
         }
-        _disconnect_relays(p_vehicle);
+        vehicle_bind_controller(p_vehicle, RID());
+        const Vehicle *vehicle = vehicles.getptr(p_vehicle);
         // the name may have passed to a later vehicle of the same name - that one keeps it
         if (const RID *named = vehicles_by_name.getptr(vehicle->name); named != nullptr && *named == p_vehicle) {
             vehicles_by_name.erase(vehicle->name);
@@ -200,26 +207,120 @@ namespace godot {
         return vehicles.has(p_vehicle);
     }
 
-    void VehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {
-        Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        if (vehicle == nullptr) {
+    RID VehicleServer::controller_create() {
+        ++next_controller_id;
+        const RID controller_rid = UtilityFunctions::rid_from_int64(next_controller_id);
+        controllers.insert(controller_rid, Controller());
+        return controller_rid;
+    }
+
+    /* The server's own copy: the description is shared by every vehicle built from it (a cached
+     * FIZ). A vehicle this controller drives is stopped on the old configuration and started on
+     * the new one. */
+    void VehicleServer::controller_configure(const RID &p_controller, const Ref<VehicleController> &p_description) {
+        Controller *slot = controllers.getptr(p_controller);
+        ERR_FAIL_NULL(slot);
+        ERR_FAIL_COND(p_description.is_null());
+        const RID vehicle = slot->vehicle;
+        if (vehicle.is_valid()) {
+            vehicle_bind_controller(vehicle, RID());
+        }
+        slot = controllers.getptr(p_controller);
+        slot->controller = p_description->duplicate_deep(Resource::DEEP_DUPLICATE_INTERNAL);
+        if (vehicle.is_valid()) {
+            vehicle_bind_controller(vehicle, p_controller);
+        }
+    }
+
+    void VehicleServer::controller_free(const RID &p_controller) {
+        const Controller *slot = controllers.getptr(p_controller);
+        if (slot == nullptr) {
             return;
         }
-        _disconnect_relays(p_vehicle);
-        vehicle->controller_id = ObjectID(p_controller_id);
-        vehicle->state_dump_valid = false;
-        _connect_relays(p_vehicle);
-        VehicleController *controller = _get_controller(p_vehicle);
-        vehicle->implementation = controller != nullptr ? controller->get_implementation() : StringName();
-        if (controller != nullptr) {
-            controller->set_vehicle_rid(p_vehicle);
+        if (slot->vehicle.is_valid()) {
+            vehicle_bind_controller(slot->vehicle, RID());
         }
+        controllers.erase(p_controller);
+    }
+
+    void VehicleServer::vehicle_bind_controller(const RID &p_vehicle, const RID &p_controller) {
+        Vehicle *vehicle = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(vehicle);
+        // what the vehicle ran on lets go of its components, commands and simulation
+        if (VehicleController *previous = _get_controller(p_vehicle); previous != nullptr) {
+            _disconnect_relays(p_vehicle);
+            previous->release();
+            controllers.getptr(vehicle->controller)->vehicle = RID();
+        }
+        vehicle->controller = RID();
+        vehicle->implementation = StringName();
+        vehicle->state_dump_valid = false;
+        Controller *slot = controllers.getptr(p_controller);
+        if (slot == nullptr) {
+            emit_signal(vehicle_controller_changed_signal, p_vehicle);
+            return;
+        }
+        ERR_FAIL_COND_MSG(slot->controller.is_null(), "The controller is not configured");
+        ERR_FAIL_COND_MSG(slot->vehicle.is_valid(), "The controller drives another vehicle");
+        slot->vehicle = p_vehicle;
+        vehicle->controller = p_controller;
+        VehicleController *controller = slot->controller.ptr();
+        controller->set_vehicle_rid(p_vehicle);
+        controller->set_train_id(vehicle->name);
+        controller->set_type_name(vehicle->type_name);
+        controller->set_initial_velocity(vehicle->initial_velocity);
+        controller->set_driver_type(vehicle->driver_type);
+        controller->set_load_name(vehicle->load_name);
+        controller->set_load_amount(vehicle->load_amount);
+        vehicle->implementation = controller->get_implementation();
+        _connect_relays(p_vehicle);
         emit_signal(vehicle_controller_changed_signal, p_vehicle);
+        controller->attach_to_system();
+        controller->initialize();
     }
 
     uint64_t VehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {
-        const Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        return vehicle != nullptr ? static_cast<uint64_t>(vehicle->controller_id) : 0;
+        const VehicleController *controller = _get_controller(p_vehicle);
+        return controller != nullptr ? controller->get_instance_id() : 0;
+    }
+
+    void VehicleServer::vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name) {
+        Vehicle *vehicle = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(vehicle);
+        vehicle->type_name = p_type_name;
+        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
+            controller->set_type_name(p_type_name);
+        }
+    }
+
+    void VehicleServer::vehicle_set_initial_velocity(const RID &p_vehicle, const double p_velocity) {
+        Vehicle *vehicle = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(vehicle);
+        vehicle->initial_velocity = p_velocity;
+        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
+            controller->set_initial_velocity(p_velocity);
+        }
+    }
+
+    void
+    VehicleServer::vehicle_set_driver_type(const RID &p_vehicle, const VehicleController::DriverType p_driver_type) {
+        Vehicle *vehicle = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(vehicle);
+        vehicle->driver_type = p_driver_type;
+        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
+            controller->set_driver_type(p_driver_type);
+        }
+    }
+
+    void VehicleServer::vehicle_set_load(const RID &p_vehicle, const String &p_load_name, const double p_load_amount) {
+        Vehicle *vehicle = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(vehicle);
+        vehicle->load_name = p_load_name;
+        vehicle->load_amount = p_load_amount;
+        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
+            controller->set_load_name(p_load_name);
+            controller->set_load_amount(p_load_amount);
+        }
     }
 
     void VehicleServer::_connect_relays(const RID &p_vehicle) {
@@ -296,6 +397,9 @@ namespace godot {
             vehicles_by_name.erase(vehicle->name);
         }
         vehicle->name = p_name;
+        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
+            controller->set_train_id(p_name);
+        }
         // Names.h:29 basic_table::insert - a vehicle named "" or "none" is not looked up by name
         if (p_name.is_empty() || p_name == "none") {
             return;

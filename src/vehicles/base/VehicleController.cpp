@@ -172,12 +172,6 @@ namespace godot {
     /* From here the vehicle is a live one: its components join it (commands, the configuration
      * signal, the implementation), which a description - the same class, only stored - never does. */
     void VehicleController::attach_to_system() {
-        /* The name the scenery gave this vehicle goes to the server that owns its handle, so that
-         * whoever knows the vehicle only by name - an event, the console, a `.scn` command - can
-         * find the handle. Everything that already holds the vehicle uses the handle. */
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
-            server->vehicle_set_name(rid, train_id);
-        }
         in_system = true;
         for (const Ref<VehicleComponent> &component: components) {
             component->attach(this);

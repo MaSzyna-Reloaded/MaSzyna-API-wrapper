@@ -26,11 +26,23 @@ namespace godot {
             }
 
         private:
+            /* A controller this server holds (controller_create()): the copy of a description it
+             * was configured with, and the vehicle it drives while bound */
+            struct Controller {
+                    Ref<VehicleController> controller;
+                    RID vehicle;
+            };
+
             struct Vehicle {
-                    /* The object driving this vehicle, held as an id rather than a pointer: an id
-                     * says nothing about a lifetime this server does not own
-                     * (PhysicsServer3D::body_attach_object_instance_id is the same shape) */
-                    ObjectID controller_id;
+                    /* The controller driving this vehicle (vehicle_bind_controller()), RID() for none */
+                    RID controller;
+                    /* What the scenery placed the vehicle with, handed to every controller bound
+                     * to it before its simulation starts (the `.scn` `dynamic` entry) */
+                    String type_name;
+                    double initial_velocity = 0.0;
+                    VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
+                    String load_name;
+                    double load_amount = 0.0;
                     /* The implementation that steps it, as its controller names it */
                     StringName implementation;
                     /* What a scenery calls this vehicle. Only the things that know a vehicle by
@@ -48,6 +60,8 @@ namespace godot {
             HashMap<RID, Vehicle> vehicles;
             HashMap<String, RID> vehicles_by_name;
             int64_t next_vehicle_id = 0;
+            HashMap<RID, Controller> controllers;
+            int64_t next_controller_id = 0;
             /* What simulates vehicles, by the name a controller gives (implementation_register()) */
             HashMap<StringName, ObjectID> implementations;
             /// Stepping holds SimulationServer's clock and steps as it advances
@@ -109,12 +123,26 @@ namespace godot {
             RID vehicle_create();
             void vehicle_free(const RID &p_vehicle);
             bool vehicle_exists(const RID &p_vehicle) const;
-            /* The object driving this vehicle, by instance id - a public API carries no pointers
-             * (PhysicsServer3D::body_attach_object_instance_id is the shape this follows). */
-            void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
-            /* The instance id attached by vehicle_attach_controller(), 0 without one
-             * (PhysicsServer3D::body_get_object_instance_id) */
+            /* A controller of this server, empty until configured */
+            RID controller_create();
+            /* The controller becomes a copy of p_description (a VehicleController with its
+             * components - its stored configuration); a vehicle it drives is restarted on it */
+            void controller_configure(const RID &p_controller, const Ref<VehicleController> &p_description);
+            void controller_free(const RID &p_controller);
+            /* The vehicle is driven by p_controller from now on: the controller it had lets go of
+             * its simulation, this one takes the scenery's values and starts its own. RID()
+             * unbinds; binding the same pair again restarts the vehicle's simulation. */
+            void vehicle_bind_controller(const RID &p_vehicle, const RID &p_controller);
+            /* The controller object bound to the vehicle, 0 without one - C++ only and unbound,
+             * for the servers that step and couple the vehicles */
             uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
+            /* What the scenery placed the vehicle with - its type (the CHK/MMD name, DynObj.cpp:2019),
+             * the velocity it starts with, who drives it and what it carries (`loadcount`,
+             * `loadtype`). Handed to its controller when it is bound. */
+            void vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name);
+            void vehicle_set_initial_velocity(const RID &p_vehicle, double p_velocity);
+            void vehicle_set_driver_type(const RID &p_vehicle, VehicleController::DriverType p_driver_type);
+            void vehicle_set_load(const RID &p_vehicle, const String &p_load_name, double p_load_amount);
             /* The scenery's name for this vehicle, and the way back from one. A name is what a
              * `.scn`, an event or the console has; everything that holds the vehicle uses its
              * handle and never comes through here (TrackServer::track_get_rid_by_name() is the

@@ -76,14 +76,16 @@ RailVehicleServer.vehicle_send_command(vehicle, "battery", true)
 ```
 
 A command runs on the vehicle immediately, but its effect may take time (i.e. some systems must spin up). To see
-where the vehicle is, read the component that owns the value - a typed property, read straight from the simulation:
+where the vehicle is, read the component that owns the value - a typed getter, read straight from the simulation
+(a component's properties are its stored configuration, never its live state):
 
 ```gdscript
 var switches: RailVehicleSwitches = RailVehicleServer.vehicle_component_get(
-        vehicle, VehicleComponentType.COMPONENT_SWITCHES)
+        vehicle, RailVehicleComponentType.COMPONENT_SWITCHES)
+var sanding: bool = switches.get_sand_active()
 ```
 
-`RailVehicleServer.vehicle_dump_state(vehicle)` returns everything the vehicle publishes in one `Dictionary`. It is
+`VehicleServer.vehicle_dump_state(vehicle)` returns everything the vehicle publishes in one `Dictionary`. It is
 built at most once per step and is meant for a console, a test or a diagnostic - not for a reader that wants one
 value every frame.
 

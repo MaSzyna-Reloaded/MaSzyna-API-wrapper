@@ -68,6 +68,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_config" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			Returns a dictionary with all config properties of the train.
+			The same as [method VehicleServer.vehicle_dump_config].
+			</description>
+		</method>
 		<method name="get_direction" qualifiers="const">
 			<return type="int" />
 			<description>
@@ -91,6 +98,12 @@
 		<method name="get_speed" qualifiers="const">
 			<return type="float" />
 			<description>
+			</description>
+		</method>
+		<method name="get_state">
+			<return type="Dictionary" />
+			<description>
+			Everything this vehicle reports about itself, by name: its own values and those of every enabled component, in one flat dictionary. Answered from the per-vehicle cache in [VehicleServer], which is rebuilt when the simulation steps or a command runs against the vehicle, so reading it every frame costs a lookup rather than composing it again. A reader after a single value is better served by that value's component, see [method VehicleServer.vehicle_component_get].
 			</description>
 		</method>
 		<method name="get_state_serial" qualifiers="const">
@@ -181,10 +194,6 @@
 			[code]Param.Category[/code]
 			The vehicle's category (train, road, ship, airplane).
 		</member>
-		<member name="config" type="Dictionary" setter="" getter="get_config">
-			Returns a dictionary with all config properties of the train.
-			The same as [method RailVehicleServer.vehicle_dump_config].
-		</member>
 		<member name="dimensions_drag_coefficient" type="float" setter="set_dimensions_drag_coefficient" getter="get_dimensions_drag_coefficient">
 			[code]Dimensions:Cx[/code]
 			Aerodynamic drag coefficient.
@@ -223,9 +232,6 @@
 		</member>
 		<member name="power" type="float" setter="set_power" getter="get_power">
 			[code]Param.PWR[/code]
-		</member>
-		<member name="state" type="Dictionary" setter="" getter="get_state">
-			Everything this vehicle reports about itself, by name: its own values and those of every enabled component, in one flat dictionary. Answered from the per-vehicle cache in [RailVehicleServer], which is rebuilt when the simulation steps or a command runs against the vehicle, so reading it every frame costs a lookup rather than composing it again. A reader after a single value is better served by that value's component, see [method RailVehicleServer.vehicle_component_get].
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id">
 			The vehicle's scenery name. It may be empty or shared with another vehicle; it is only used to find the vehicle by name, see [method RailVehicleServer.vehicle_get_rid_by_name].

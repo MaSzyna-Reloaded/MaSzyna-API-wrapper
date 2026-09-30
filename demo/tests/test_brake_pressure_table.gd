@@ -46,4 +46,4 @@ func test_brake_pressure_table_accepts_negative_handle_positions():
     await wait_idle_frames(2)
 
     assert_eq(brake.brake_pressure_table.size(), 3, "brake_pressure_table should hold the assigned rows")
-    assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after assigning brake_pressure_table")
+    assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after assigning brake_pressure_table")

@@ -43,7 +43,7 @@ func test_round_trip_and_wwlist_update():
     assert_true(engine.generator_voltage_flat)
     assert_eq(engine.rpm_change_rate, 1.25)
     assert_eq(engine.wwlist.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
 
 func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
     # RailVehicleDieselElectricEngine inherits RailVehicleDieselEngine's mechanical-transmission

@@ -9,6 +9,31 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_ed_braking_ep_delay" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ep_force" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ep_fuse" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ep_max_brake_engagement_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ep_min_regenerative_braking" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="set_ep_brake_force">
 			<return type="void" />
 			<param index="0" name="value" type="int" />
@@ -56,8 +81,6 @@
 		<member name="coupler_check" type="int" setter="set_coupler_check" getter="get_coupler_check" enum="RailVehicleElectroPneumaticDynamicBrake.CouplerCheck" default="0">
 			Determines in which couplings should the Electro Dynamic unit braking status be checked
 		</member>
-		<member name="ed_braking_ep_delay" type="float" setter="" getter="get_ed_braking_ep_delay" default="0.0">
-		</member>
 		<member name="electro_pneumatic_brake_delay" type="float" setter="set_electro_pneumatic_brake_delay" getter="get_electro_pneumatic_brake_delay" default="0.0">
 			The delay time of the Electro Pneumatic brake's possible actuation during Electro Dynamic braking, in seconds
 		</member>
@@ -69,14 +92,6 @@
 		</member>
 		<member name="ep_brake_fuse" type="bool" setter="set_ep_brake_fuse" getter="get_ep_brake_fuse" default="false">
 			State of Electro Pneumatic brake fuse
-		</member>
-		<member name="ep_force" type="float" setter="" getter="get_ep_force" default="0.0">
-		</member>
-		<member name="ep_fuse" type="bool" setter="" getter="get_ep_fuse" default="false">
-		</member>
-		<member name="ep_max_brake_engagement_speed" type="float" setter="" getter="get_ep_max_brake_engagement_speed" default="0.0">
-		</member>
-		<member name="ep_min_regenerative_braking" type="float" setter="" getter="get_ep_min_regenerative_braking" default="0.0">
 		</member>
 	</members>
 	<constants>

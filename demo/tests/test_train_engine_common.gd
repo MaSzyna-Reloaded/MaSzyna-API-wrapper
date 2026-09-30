@@ -36,4 +36,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.maximum_traction_force, 180.0)
     assert_true(engine.pressure_switch_present)
     assert_eq(engine.inverters_count, 2)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleEngine should keep functioning after configuring the common Engine: fields")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleEngine should keep functioning after configuring the common Engine: fields")

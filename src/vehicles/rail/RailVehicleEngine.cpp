@@ -126,102 +126,23 @@ namespace godot {
         BIND_ENUM_CONSTANT(AUTO_RELAY_OPTIONAL);
 
         ClassDB::bind_method(D_METHOD("get_main_switch_enabled"), &RailVehicleEngine::get_main_switch_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "main_switch_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_switch_enabled");
         ClassDB::bind_method(D_METHOD("get_main_switch_closable"), &RailVehicleEngine::get_main_switch_closable);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "main_switch_closable", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_switch_closable");
         ClassDB::bind_method(D_METHOD("get_type"), &RailVehicleEngine::get_type);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "type", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_type");
         ClassDB::bind_method(D_METHOD("get_motor_torque"), &RailVehicleEngine::get_motor_torque);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "motor_torque", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_torque");
         ClassDB::bind_method(D_METHOD("get_wheel_torque"), &RailVehicleEngine::get_wheel_torque);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "wheel_torque", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_wheel_torque");
         ClassDB::bind_method(D_METHOD("get_wheel_force"), &RailVehicleEngine::get_wheel_force);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "wheel_force", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_wheel_force");
         ClassDB::bind_method(D_METHOD("get_tractive_force"), &RailVehicleEngine::get_tractive_force);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tractive_force");
         ClassDB::bind_method(D_METHOD("get_power"), &RailVehicleEngine::get_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power");
         ClassDB::bind_method(D_METHOD("get_rpm_count"), &RailVehicleEngine::get_rpm_count);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "rpm_count", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rpm_count");
         ClassDB::bind_method(D_METHOD("get_rpm_ratio"), &RailVehicleEngine::get_rpm_ratio);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "rpm_ratio", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rpm_ratio");
         ClassDB::bind_method(D_METHOD("get_circuit_nmax_rpm"), &RailVehicleEngine::get_circuit_nmax_rpm);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "circuit_nmax_rpm", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_circuit_nmax_rpm");
         ClassDB::bind_method(D_METHOD("get_damage"), &RailVehicleEngine::get_damage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "damage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_damage");
         ClassDB::bind_method(D_METHOD("get_main_switch_time"), &RailVehicleEngine::get_main_switch_time);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "main_switch_time", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_switch_time");
         ClassDB::bind_method(D_METHOD("get_main_no_power_pos"), &RailVehicleEngine::get_main_no_power_pos);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_no_power_pos");
         ClassDB::bind_method(
                 D_METHOD("get_motor_overload_relay_high_threshold"),
                 &RailVehicleEngine::get_motor_overload_relay_high_threshold);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "motor_overload_relay_high_threshold", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_overload_relay_high_threshold");
         ClassDB::bind_method(D_METHOD("get_eimic_real"), &RailVehicleEngine::get_eimic_real);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "eimic_real", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_eimic_real");
     }
 
     // Original engine: the main switch closing and opening is what "the engine started/stopped"

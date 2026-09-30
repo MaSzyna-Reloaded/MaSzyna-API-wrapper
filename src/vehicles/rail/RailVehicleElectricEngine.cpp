@@ -289,19 +289,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_first_valve_enabled"),
                 &RailVehicleElectricEngine::get_collector_pantograph_first_valve_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_first_valve_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_first_valve_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_second_valve_enabled"),
                 &RailVehicleElectricEngine::get_collector_pantograph_second_valve_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_second_valve_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_second_valve_enabled");
         ClassDB::bind_method(
                 D_METHOD("set_pantograph_wire_voltage", "selector", "voltage"),
                 &RailVehicleElectricEngine::set_pantograph_wire_voltage);
@@ -324,305 +314,95 @@ namespace godot {
 
         ClassDB::bind_method(
                 D_METHOD("get_collector_max_voltage"), &RailVehicleElectricEngine::get_collector_max_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_max_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_max_voltage");
         ClassDB::bind_method(
                 D_METHOD("get_collector_max_current"), &RailVehicleElectricEngine::get_collector_max_current);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_max_current", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_max_current");
         ClassDB::bind_method(
                 D_METHOD("get_collector_max_lifting"), &RailVehicleElectricEngine::get_collector_max_lifting);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_max_lifting", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_max_lifting");
         ClassDB::bind_method(
                 D_METHOD("get_collector_min_lifting"), &RailVehicleElectricEngine::get_collector_min_lifting);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_min_lifting", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_min_lifting");
         ClassDB::bind_method(
                 D_METHOD("get_collector_sliding_width"), &RailVehicleElectricEngine::get_collector_sliding_width);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_sliding_width", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_sliding_width");
         ClassDB::bind_method(
                 D_METHOD("get_collector_min_main_switch_voltage"),
                 &RailVehicleElectricEngine::get_collector_min_main_switch_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_min_main_switch_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_min_main_switch_voltage");
         ClassDB::bind_method(
                 D_METHOD("get_collector_min_pantograph_tank_pressure"),
                 &RailVehicleElectricEngine::get_collector_min_pantograph_tank_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_min_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_min_pantograph_tank_pressure");
         ClassDB::bind_method(
                 D_METHOD("get_collector_max_pantograph_tank_pressure"),
                 &RailVehicleElectricEngine::get_collector_max_pantograph_tank_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_max_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_max_pantograph_tank_pressure");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_tank_pressure"),
                 &RailVehicleElectricEngine::get_collector_pantograph_tank_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_tank_pressure");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_pressure_switch_armed"),
                 &RailVehicleElectricEngine::get_collector_pantograph_pressure_switch_armed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_pressure_switch_armed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_pressure_switch_armed");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_compressor_valve"),
                 &RailVehicleElectricEngine::get_collector_pantograph_compressor_valve);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_compressor_valve", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_compressor_valve");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_compressor_enabled"),
                 &RailVehicleElectricEngine::get_collector_pantograph_compressor_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_compressor_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_compressor_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_collector_overvoltage_relay"),
                 &RailVehicleElectricEngine::get_collector_overvoltage_relay);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_overvoltage_relay", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_overvoltage_relay");
         ClassDB::bind_method(
                 D_METHOD("get_collector_required_main_switch_voltage"),
                 &RailVehicleElectricEngine::get_collector_required_main_switch_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_required_main_switch_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_required_main_switch_voltage");
         ClassDB::bind_method(
                 D_METHOD("get_collector_valve_active"), &RailVehicleElectricEngine::get_collector_valve_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_valve_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_valve_active");
         ClassDB::bind_method(
                 D_METHOD("get_collector_valve_enabled"), &RailVehicleElectricEngine::get_collector_valve_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_valve_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_valve_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantographs_dropped"),
                 &RailVehicleElectricEngine::get_collector_pantographs_dropped);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantographs_dropped", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantographs_dropped");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_first_active"),
                 &RailVehicleElectricEngine::get_collector_pantograph_first_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_first_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_first_active");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_first_voltage"),
                 &RailVehicleElectricEngine::get_collector_pantograph_first_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_pantograph_first_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_first_voltage");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_second_active"),
                 &RailVehicleElectricEngine::get_collector_pantograph_second_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "collector_pantograph_second_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_second_active");
         ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_second_voltage"),
                 &RailVehicleElectricEngine::get_collector_pantograph_second_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_pantograph_second_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_pantograph_second_voltage");
         ClassDB::bind_method(D_METHOD("has_accumulator"), &RailVehicleElectricEngine::has_accumulator);
         ClassDB::bind_method(D_METHOD("has_power_cable"), &RailVehicleElectricEngine::has_power_cable);
         ClassDB::bind_method(D_METHOD("get_collector_voltage"), &RailVehicleElectricEngine::get_collector_voltage);
         ClassDB::bind_method(
                 D_METHOD("set_collector_voltage", "voltage"), &RailVehicleElectricEngine::set_collector_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_voltage");
         ClassDB::bind_method(
                 D_METHOD("get_collector_trainset_high_voltage"),
                 &RailVehicleElectricEngine::get_collector_trainset_high_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "collector_trainset_high_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_collector_trainset_high_voltage");
         ClassDB::bind_method(D_METHOD("get_contactors_active"), &RailVehicleElectricEngine::get_contactors_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "contactors_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_contactors_active");
         ClassDB::bind_method(D_METHOD("get_diff_relay_active"), &RailVehicleElectricEngine::get_diff_relay_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "diff_relay_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_diff_relay_active");
         ClassDB::bind_method(D_METHOD("get_resistors_active"), &RailVehicleElectricEngine::get_resistors_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "resistors_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_resistors_active");
         ClassDB::bind_method(
                 D_METHOD("get_vent_overload_active"), &RailVehicleElectricEngine::get_vent_overload_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "vent_overload_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_vent_overload_active");
         ClassDB::bind_method(D_METHOD("get_highcurrent_active"), &RailVehicleElectricEngine::get_highcurrent_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "highcurrent_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_highcurrent_active");
         ClassDB::bind_method(D_METHOD("get_mainbreaker_active"), &RailVehicleElectricEngine::get_mainbreaker_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "mainbreaker_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_mainbreaker_active");
         ClassDB::bind_method(
                 D_METHOD("get_transducer_input_voltage"), &RailVehicleElectricEngine::get_transducer_input_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "transducer_input_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_transducer_input_voltage");
 
         ClassDB::bind_method(D_METHOD("get_camshaft_available"), &RailVehicleElectricEngine::get_camshaft_available);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "camshaft_available", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_camshaft_available");
         ClassDB::bind_method(D_METHOD("get_converter_overload"), &RailVehicleElectricEngine::get_converter_overload);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "converter_overload", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_overload");
         ClassDB::bind_method(D_METHOD("get_line_breaker_delay"), &RailVehicleElectricEngine::get_line_breaker_delay);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "line_breaker_delay", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_delay");
         ClassDB::bind_method(
                 D_METHOD("get_line_breaker_initial_delay"), &RailVehicleElectricEngine::get_line_breaker_initial_delay);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "line_breaker_initial_delay", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_initial_delay");
         ClassDB::bind_method(
                 D_METHOD("get_line_breaker_closes_at_no_power"),
                 &RailVehicleElectricEngine::get_line_breaker_closes_at_no_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "line_breaker_closes_at_no_power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_closes_at_no_power");
         ClassDB::bind_method(D_METHOD("get_motor_current"), &RailVehicleElectricEngine::get_motor_current);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "motor_current", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_current");
         ClassDB::bind_method(D_METHOD("get_engine_voltage"), &RailVehicleElectricEngine::get_engine_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "engine_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_engine_voltage");
         ClassDB::bind_method(D_METHOD("get_total_current"), &RailVehicleElectricEngine::get_total_current);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "total_current", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_total_current");
         ClassDB::bind_method(D_METHOD("get_circuit_imax"), &RailVehicleElectricEngine::get_circuit_imax);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "circuit_imax", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_circuit_imax");
         ClassDB::bind_method(
                 D_METHOD("get_dynamic_brake_active"), &RailVehicleElectricEngine::get_dynamic_brake_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "dynamic_brake_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_dynamic_brake_active");
         ClassDB::bind_method(D_METHOD("get_fuse_active"), &RailVehicleElectricEngine::get_fuse_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "fuse_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fuse_active");
         ClassDB::bind_method(
                 D_METHOD("get_motor_connectors_open"), &RailVehicleElectricEngine::get_motor_connectors_open);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "motor_connectors_open", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_connectors_open");
     }
 
 

@@ -44,4 +44,4 @@ func test_param_and_dimensions_round_trip_and_update():
     assert_eq(train.dimensions_width, 2.9)
     assert_eq(train.dimensions_drag_coefficient, 1.2)
     assert_almost_eq(train.dimensions_floor_height, 1.1, 0.001)
-    assert_true(train.state.has("mass_total"), "VehicleController should keep functioning after configuring Param/Dimensions")
+    assert_true(train.get_state().has("mass_total"), "VehicleController should keep functioning after configuring Param/Dimensions")

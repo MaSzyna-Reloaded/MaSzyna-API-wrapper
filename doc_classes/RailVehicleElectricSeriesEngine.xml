@@ -14,14 +14,14 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_engine_voltage" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
 		<method name="get_next_position_velocity" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="main_controller" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_resistor_fan_rotation" qualifiers="const">
+			<return type="float" />
 			<description>
 			</description>
 		</method>
@@ -63,8 +63,6 @@
 		<member name="resistor_fan_min_current" type="float" setter="set_resistor_fan_min_current" getter="get_resistor_fan_min_current" default="50.0">
 			[code]RList:RVentMinI[/code]
 			Minimum current, in amperes, at which the cooling fans switch on.
-		</member>
-		<member name="resistor_fan_rotation" type="float" setter="" getter="get_resistor_fan_rotation" default="0.0">
 		</member>
 		<member name="resistor_fan_speed" type="float" setter="set_resistor_fan_speed" getter="get_resistor_fan_speed" default="0.5">
 			[code]RList:RVentSpeed[/code]

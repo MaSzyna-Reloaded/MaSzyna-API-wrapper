@@ -568,6 +568,10 @@ the logic into a separate class) instead of reaching into internals.
 
 ### Godot properties
 
+* A property is stored configuration - saved, settable, part of what describes the object. Live
+  state is never a property: it is a typed getter (bound with `ClassDB::bind_method`) and a key of
+  the dump (`_fill_state_dictionary`, `VehicleServer.vehicle_dump_state()`), so a saved object
+  carries no live values (`test_property_bindings.gd`).
 * Property names exposed to Godot must use canonical `snake_case` without slashes.
 * A property's setter and getter must be named `set_<property_name>` and `get_<property_name>`; custom accessor names
   are not allowed.

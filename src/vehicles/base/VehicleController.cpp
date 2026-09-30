@@ -22,16 +22,6 @@ namespace godot {
     void VehicleController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &VehicleController::get_state);
         ClassDB::bind_method(D_METHOD("get_config"), &VehicleController::get_config);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::DICTIONARY, "state", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_DEFAULT),
-                "", "get_state");
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::DICTIONARY, "config", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_DEFAULT),
-                "", "get_config");
 
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &VehicleController::send_command, DEFVAL(Variant()),

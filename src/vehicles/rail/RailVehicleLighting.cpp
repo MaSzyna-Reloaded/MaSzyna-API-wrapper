@@ -45,197 +45,62 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("headlights_dim", "enabled"), &RailVehicleLighting::headlights_dim);
         ClassDB::bind_method(D_METHOD("roof_light_dim", "enabled"), &RailVehicleLighting::roof_light_dim);
         ClassDB::bind_method(D_METHOD("get_roof_light_dimmed"), &RailVehicleLighting::get_roof_light_dimmed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "roof_light_dimmed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_roof_light_dimmed");
         ClassDB::bind_method(D_METHOD("get_headlights_dimmed"), &RailVehicleLighting::get_headlights_dimmed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "headlights_dimmed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_headlights_dimmed");
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
 
         ClassDB::bind_method(D_METHOD("get_position"), &RailVehicleLighting::get_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_position");
         ClassDB::bind_method(D_METHOD("get_power"), &RailVehicleLighting::get_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power");
         ClassDB::bind_method(D_METHOD("get_power_source"), &RailVehicleLighting::get_power_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "power_source", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power_source");
         ClassDB::bind_method(
                 D_METHOD("get_front_headlight_upper_enabled"), &RailVehicleLighting::get_front_headlight_upper_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "front_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_front_headlight_upper_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_front_headlight_left_enabled"), &RailVehicleLighting::get_front_headlight_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "front_headlight_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_front_headlight_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_front_headlight_right_enabled"), &RailVehicleLighting::get_front_headlight_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "front_headlight_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_front_headlight_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_front_redmarker_left_enabled"), &RailVehicleLighting::get_front_redmarker_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "front_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_front_redmarker_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_front_redmarker_right_enabled"), &RailVehicleLighting::get_front_redmarker_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "front_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_front_redmarker_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_rear_headlight_upper_enabled"), &RailVehicleLighting::get_rear_headlight_upper_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "rear_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rear_headlight_upper_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_rear_headlight_left_enabled"), &RailVehicleLighting::get_rear_headlight_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "rear_headlight_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rear_headlight_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_rear_headlight_right_enabled"), &RailVehicleLighting::get_rear_headlight_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "rear_headlight_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rear_headlight_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_rear_redmarker_left_enabled"), &RailVehicleLighting::get_rear_redmarker_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "rear_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rear_redmarker_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_rear_redmarker_right_enabled"), &RailVehicleLighting::get_rear_redmarker_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "rear_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rear_redmarker_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_active_headlight_upper_enabled"),
                 &RailVehicleLighting::get_active_headlight_upper_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active_headlight_upper_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_active_headlight_left_enabled"), &RailVehicleLighting::get_active_headlight_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active_headlight_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active_headlight_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_active_headlight_right_enabled"),
                 &RailVehicleLighting::get_active_headlight_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active_headlight_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active_headlight_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_active_redmarker_left_enabled"), &RailVehicleLighting::get_active_redmarker_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active_redmarker_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_active_redmarker_right_enabled"),
                 &RailVehicleLighting::get_active_redmarker_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active_redmarker_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_opposite_headlight_upper_enabled"),
                 &RailVehicleLighting::get_opposite_headlight_upper_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "opposite_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_opposite_headlight_upper_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_opposite_headlight_left_enabled"),
                 &RailVehicleLighting::get_opposite_headlight_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "opposite_headlight_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_opposite_headlight_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_opposite_headlight_right_enabled"),
                 &RailVehicleLighting::get_opposite_headlight_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "opposite_headlight_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_opposite_headlight_right_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_opposite_redmarker_left_enabled"),
                 &RailVehicleLighting::get_opposite_redmarker_left_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "opposite_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_opposite_redmarker_left_enabled");
         ClassDB::bind_method(
                 D_METHOD("get_opposite_redmarker_right_enabled"),
                 &RailVehicleLighting::get_opposite_redmarker_right_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "opposite_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_opposite_redmarker_right_enabled");
         ClassDB::bind_method(D_METHOD("get_devices_light_enabled"), &RailVehicleLighting::get_devices_light_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "devices_light_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_devices_light_enabled");
         ClassDB::bind_method(D_METHOD("get_roof_light_level"), &RailVehicleLighting::get_roof_light_level);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "roof_light_level", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_roof_light_level");
     }
 
     const char *RailVehicleLighting::selector_position_changed_signal = "selector_position_changed";

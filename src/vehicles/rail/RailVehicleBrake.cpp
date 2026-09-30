@@ -251,176 +251,36 @@ namespace godot {
                 D_METHOD("universal_brake_button", "button", "pressed"), &RailVehicleBrake::universal_brake_button);
 
         ClassDB::bind_method(D_METHOD("get_alarm_chain_pulled"), &RailVehicleBrake::get_alarm_chain_pulled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "alarm_chain_pulled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_alarm_chain_pulled");
         ClassDB::bind_method(D_METHOD("get_air_pressure"), &RailVehicleBrake::get_air_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "air_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_air_pressure");
         ClassDB::bind_method(D_METHOD("get_loco_pressure"), &RailVehicleBrake::get_loco_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "loco_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_loco_pressure");
         ClassDB::bind_method(D_METHOD("get_pipe_brake_pressure"), &RailVehicleBrake::get_pipe_brake_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "pipe_brake_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_pipe_brake_pressure");
         ClassDB::bind_method(D_METHOD("get_pipe_pressure"), &RailVehicleBrake::get_pipe_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "pipe_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_pipe_pressure");
         ClassDB::bind_method(D_METHOD("get_feed_pipe_pressure"), &RailVehicleBrake::get_feed_pipe_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "feed_pipe_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_feed_pipe_pressure");
         ClassDB::bind_method(D_METHOD("get_tank_volume"), &RailVehicleBrake::get_tank_volume);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tank_volume", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tank_volume");
         ClassDB::bind_method(D_METHOD("get_compressor_pressure"), &RailVehicleBrake::get_compressor_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_compressor_pressure");
         ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &RailVehicleBrake::get_compressor_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_compressor_enabled");
         ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &RailVehicleBrake::get_compressor_allowed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_compressor_allowed");
         ClassDB::bind_method(D_METHOD("get_controller_position"), &RailVehicleBrake::get_controller_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "controller_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_position");
         ClassDB::bind_method(
                 D_METHOD("get_controller_position_normalized"), &RailVehicleBrake::get_controller_position_normalized);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "controller_position_normalized", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_position_normalized");
         ClassDB::bind_method(
                 D_METHOD("get_local_position_normalized"), &RailVehicleBrake::get_local_position_normalized);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "local_position_normalized", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_local_position_normalized");
         ClassDB::bind_method(D_METHOD("get_manual_position"), &RailVehicleBrake::get_manual_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "manual_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_manual_position");
         ClassDB::bind_method(D_METHOD("get_unit_force"), &RailVehicleBrake::get_unit_force);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "unit_force", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_unit_force");
         ClassDB::bind_method(D_METHOD("get_force_ratio"), &RailVehicleBrake::get_force_ratio);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "force_ratio", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_force_ratio");
         ClassDB::bind_method(D_METHOD("get_emergency_valve_flow"), &RailVehicleBrake::get_emergency_valve_flow);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "emergency_valve_flow", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_emergency_valve_flow");
         ClassDB::bind_method(D_METHOD("get_main_valve_flow"), &RailVehicleBrake::get_main_valve_flow);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "main_valve_flow", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_valve_flow");
         ClassDB::bind_method(D_METHOD("get_local_valve_flow"), &RailVehicleBrake::get_local_valve_flow);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "local_valve_flow", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_local_valve_flow");
         ClassDB::bind_method(D_METHOD("get_loco_pressure_fall_rate"), &RailVehicleBrake::get_loco_pressure_fall_rate);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "loco_pressure_fall_rate", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_loco_pressure_fall_rate");
         ClassDB::bind_method(D_METHOD("get_loco_pressure_rise_rate"), &RailVehicleBrake::get_loco_pressure_rise_rate);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "loco_pressure_rise_rate", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_loco_pressure_rise_rate");
         ClassDB::bind_method(D_METHOD("get_control_pressure"), &RailVehicleBrake::get_control_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "control_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_control_pressure");
         ClassDB::bind_method(D_METHOD("get_handle_control_pressure"), &RailVehicleBrake::get_handle_control_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "handle_control_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_handle_control_pressure");
         ClassDB::bind_method(D_METHOD("get_local_aeim_position"), &RailVehicleBrake::get_local_aeim_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "local_aeim_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_local_aeim_position");
         ClassDB::bind_method(D_METHOD("get_edb_cylinder_pressure"), &RailVehicleBrake::get_edb_cylinder_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "edb_cylinder_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_edb_cylinder_pressure");
         ClassDB::bind_method(D_METHOD("get_releaser_active"), &RailVehicleBrake::get_releaser_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "releaser_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_releaser_active");
         ClassDB::bind_method(D_METHOD("get_main_pipe_locked"), &RailVehicleBrake::get_main_pipe_locked);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_main_pipe_locked");
         ClassDB::bind_method(D_METHOD("get_force"), &RailVehicleBrake::get_force);
         ClassDB::bind_method(D_METHOD("get_force_at", "ratio", "velocity"), &RailVehicleBrake::get_force_at);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "force", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_force");
         ClassDB::bind_method(D_METHOD("is_braking"), &RailVehicleBrake::is_braking);
         ClassDB::bind_method(D_METHOD("is_holding"), &RailVehicleBrake::is_holding);
         ClassDB::bind_method(D_METHOD("is_cut_off"), &RailVehicleBrake::is_cut_off);

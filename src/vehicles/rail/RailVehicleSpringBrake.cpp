@@ -24,35 +24,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("spring_brake_release"), &RailVehicleSpringBrake::spring_brake_release);
 
         ClassDB::bind_method(D_METHOD("get_ready"), &RailVehicleSpringBrake::get_ready);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "ready", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ready");
         ClassDB::bind_method(D_METHOD("get_shut_off"), &RailVehicleSpringBrake::get_shut_off);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "shut_off", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_shut_off");
         ClassDB::bind_method(D_METHOD("get_active"), &RailVehicleSpringBrake::get_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active");
         ClassDB::bind_method(D_METHOD("get_braking"), &RailVehicleSpringBrake::get_braking);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "braking", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_braking");
         ClassDB::bind_method(D_METHOD("get_cylinder_pressure"), &RailVehicleSpringBrake::get_cylinder_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "cylinder_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cylinder_pressure");
     }
 
     void RailVehicleSpringBrake::_register_commands() {

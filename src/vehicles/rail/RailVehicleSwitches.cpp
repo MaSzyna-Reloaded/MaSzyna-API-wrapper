@@ -28,11 +28,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("sand", "active"), &RailVehicleSwitches::sand);
 
         ClassDB::bind_method(D_METHOD("get_sand_active"), &RailVehicleSwitches::get_sand_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "sand_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_sand_active");
     }
 
     void RailVehicleSwitches::_register_commands() {

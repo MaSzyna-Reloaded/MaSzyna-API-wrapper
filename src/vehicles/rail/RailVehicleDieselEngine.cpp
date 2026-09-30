@@ -173,142 +173,32 @@ namespace godot {
                 D_METHOD("fuel_pump_switch_off", "enabled"), &RailVehicleDieselEngine::fuel_pump_switch_off);
         ClassDB::bind_method(D_METHOD("oil_pump_switch_off", "enabled"), &RailVehicleDieselEngine::oil_pump_switch_off);
         ClassDB::bind_method(D_METHOD("get_fuel_pump_enabled"), &RailVehicleDieselEngine::get_fuel_pump_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "fuel_pump_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fuel_pump_enabled");
         ClassDB::bind_method(D_METHOD("get_oil_pump_enabled"), &RailVehicleDieselEngine::get_oil_pump_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "oil_pump_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_oil_pump_enabled");
         ClassDB::bind_method(D_METHOD("get_heat_malfunction"), &RailVehicleDieselEngine::get_heat_malfunction);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "heat_malfunction", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_heat_malfunction");
 
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_AFTER_GEARBOX);
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC);
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_TC_AND_ENGINE);
 
         ClassDB::bind_method(D_METHOD("get_rpm"), &RailVehicleDieselEngine::get_rpm);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "rpm", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rpm");
         ClassDB::bind_method(D_METHOD("get_oil_pump_active"), &RailVehicleDieselEngine::get_oil_pump_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "oil_pump_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_oil_pump_active");
         ClassDB::bind_method(D_METHOD("get_oil_pump_disabled"), &RailVehicleDieselEngine::get_oil_pump_disabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "oil_pump_disabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_oil_pump_disabled");
         ClassDB::bind_method(D_METHOD("get_oil_pump_pressure"), &RailVehicleDieselEngine::get_oil_pump_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "oil_pump_pressure", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_oil_pump_pressure");
         ClassDB::bind_method(D_METHOD("get_fuel_pump_active"), &RailVehicleDieselEngine::get_fuel_pump_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "fuel_pump_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fuel_pump_active");
         ClassDB::bind_method(D_METHOD("get_fuel_pump_disabled"), &RailVehicleDieselEngine::get_fuel_pump_disabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "fuel_pump_disabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fuel_pump_disabled");
         ClassDB::bind_method(D_METHOD("get_startup"), &RailVehicleDieselEngine::get_startup);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "startup", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_startup");
         ClassDB::bind_method(D_METHOD("get_ignition"), &RailVehicleDieselEngine::get_ignition);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "ignition", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ignition");
         ClassDB::bind_method(D_METHOD("get_spinup"), &RailVehicleDieselEngine::get_spinup);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "spinup", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_spinup");
         ClassDB::bind_method(D_METHOD("get_output_power"), &RailVehicleDieselEngine::get_output_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "output_power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_output_power");
         ClassDB::bind_method(D_METHOD("get_torque"), &RailVehicleDieselEngine::get_torque);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "torque", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_torque");
         ClassDB::bind_method(D_METHOD("get_fill"), &RailVehicleDieselEngine::get_fill);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "fill", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fill");
         ClassDB::bind_method(D_METHOD("get_fill_desired"), &RailVehicleDieselEngine::get_fill_desired);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "fill_desired", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fill_desired");
         ClassDB::bind_method(D_METHOD("get_clutch_desired"), &RailVehicleDieselEngine::get_clutch_desired);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "clutch_desired", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_clutch_desired");
         ClassDB::bind_method(D_METHOD("get_clutch_engagement"), &RailVehicleDieselEngine::get_clutch_engagement);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "clutch_engagement", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_clutch_engagement");
         ClassDB::bind_method(D_METHOD("get_water_temperature"), &RailVehicleDieselEngine::get_water_temperature);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "water_temperature", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_water_temperature");
         ClassDB::bind_method(D_METHOD("get_engine_temperature"), &RailVehicleDieselEngine::get_engine_temperature);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "engine_temperature", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_engine_temperature");
         ClassDB::bind_method(D_METHOD("get_retarder_fill"), &RailVehicleDieselEngine::get_retarder_fill);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "retarder_fill", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_retarder_fill");
         ClassDB::bind_method(D_METHOD("get_max_rpm"), &RailVehicleDieselEngine::get_max_rpm);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "max_rpm", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_max_rpm");
     }
 
     RailVehicleEngine::EngineType RailVehicleDieselEngine::get_type() const {

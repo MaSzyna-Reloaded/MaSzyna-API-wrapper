@@ -32,23 +32,8 @@ namespace godot {
         BIND_PROPERTY(RailVehicleSpeedControl, Variant::FLOAT, power_down_speed);
 
         ClassDB::bind_method(D_METHOD("get_active"), &RailVehicleSpeedControl::get_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active");
         ClassDB::bind_method(D_METHOD("get_desired_velocity"), &RailVehicleSpeedControl::get_desired_velocity);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "desired_velocity", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_desired_velocity");
         ClassDB::bind_method(D_METHOD("get_desired_power"), &RailVehicleSpeedControl::get_desired_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "desired_power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_desired_power");
         ClassDB::bind_method(D_METHOD("speed_control_increase"), &RailVehicleSpeedControl::speed_control_increase);
         ClassDB::bind_method(D_METHOD("speed_control_decrease"), &RailVehicleSpeedControl::speed_control_decrease);
         ClassDB::bind_method(
@@ -61,11 +46,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_set_velocity"), &RailVehicleSpeedControl::get_set_velocity);
         ClassDB::bind_method(D_METHOD("get_standby"), &RailVehicleSpeedControl::get_standby);
         ClassDB::bind_method(D_METHOD("get_selected_velocity"), &RailVehicleSpeedControl::get_selected_velocity);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "selected_velocity", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_selected_velocity");
     }
 
     void RailVehicleSpeedControl::_register_commands() {

@@ -10,8 +10,8 @@ runnable. Stages 1-3 are done (`RailVehicleServer` owns placement, movement and 
 
 Design that replaced the withdrawn stage 4 (a global name registry, now deleted):
 
-* **State is a typed property whose getter reads the backend field** (`RailVehicleBrake::get_pipe_pressure()`
-  returns `mover->PipePress`). A component keeps only what the Mover has not got: the brake
+* **State is a typed getter that reads the backend field** (`RailVehicleBrake::get_pipe_pressure()`
+  returns `mover->PipePress`), bound but not a property - a property is stored configuration. A component keeps only what the Mover has not got: the brake
   pressure filter, the door interpolation, the wiper positions, a `_prev` for change detection.
 * **Config stays the wrapper's**, deliberately - written at (re)configuration, read rarely. It is
   the one intentional duplicate.

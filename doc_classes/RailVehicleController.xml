@@ -109,6 +109,81 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_battery_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_cabin" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_cabin_controleable" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_cabin_occupied" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_circuit_rlist_size" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_joint_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_main_actual_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_main_delayed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_main_no_power_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_main_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_second_actual_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller_second_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_converter_allowed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_converter_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_converter_time_to_start" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_coupled_controller" qualifiers="const">
 			<return type="RailVehicleController" />
 			<param index="0" name="end" type="int" />
@@ -121,9 +196,104 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_coupler_stretched" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_current0" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_current1" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_current2" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_direction_absolute" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_distance_counter" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_live_battery_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mass_reduced" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_power24_available" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_power24_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_power110_available" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_radio_stop_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="get_rail_component" qualifiers="const">
 			<return type="VehicleComponent" />
 			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
+		<method name="get_relay_ground" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_relay_novolt" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_relay_overvoltage" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_tachometer_clock_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_tachometer_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_tachometer_speed_jump" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_train_damage" qualifiers="const">
+			<return type="int" />
 			<description>
 			</description>
 		</method>
@@ -199,18 +369,8 @@
 		</method>
 	</methods>
 	<members>
-		<member name="battery_enabled" type="bool" setter="" getter="get_battery_enabled" default="false">
-		</member>
 		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
 			[code]Light:LMaxVoltage[/code]
-		</member>
-		<member name="cabin" type="int" setter="" getter="get_cabin" default="0">
-		</member>
-		<member name="cabin_controleable" type="bool" setter="" getter="get_cabin_controleable" default="false">
-		</member>
-		<member name="cabin_occupied" type="int" setter="" getter="get_cabin_occupied" default="0">
-		</member>
-		<member name="circuit_rlist_size" type="int" setter="" getter="get_circuit_rlist_size" default="0">
 		</member>
 		<member name="cntrl_automatic_cab_activation" type="bool" setter="set_cntrl_automatic_cab_activation" getter="get_cntrl_automatic_cab_activation" default="true">
 			[code]Cntrl.AutomaticCabActivation[/code]
@@ -234,38 +394,6 @@
 			[code]Cntrl.InactiveCabFlag[/code]
 			Bitmask of automatic actions performed on cab deactivation/activation.
 		</member>
-		<member name="controller_joint_position" type="int" setter="" getter="get_controller_joint_position" default="0">
-		</member>
-		<member name="controller_main_actual_position" type="int" setter="" getter="get_controller_main_actual_position" default="0">
-		</member>
-		<member name="controller_main_delayed" type="bool" setter="" getter="get_controller_main_delayed" default="false">
-		</member>
-		<member name="controller_main_no_power_position" type="int" setter="" getter="get_controller_main_no_power_position" default="0">
-		</member>
-		<member name="controller_main_position" type="int" setter="" getter="get_controller_main_position" default="0">
-		</member>
-		<member name="controller_second_actual_position" type="int" setter="" getter="get_controller_second_actual_position" default="0">
-		</member>
-		<member name="controller_second_position" type="int" setter="" getter="get_controller_second_position" default="0">
-		</member>
-		<member name="converter_allowed" type="bool" setter="" getter="get_converter_allowed" default="false">
-		</member>
-		<member name="converter_enabled" type="bool" setter="" getter="get_converter_enabled" default="false">
-		</member>
-		<member name="converter_time_to_start" type="float" setter="" getter="get_converter_time_to_start" default="0.0">
-		</member>
-		<member name="coupler_stretched" type="bool" setter="" getter="get_coupler_stretched" default="false">
-		</member>
-		<member name="current0" type="float" setter="" getter="get_current0" default="0.0">
-		</member>
-		<member name="current1" type="float" setter="" getter="get_current1" default="0.0">
-		</member>
-		<member name="current2" type="float" setter="" getter="get_current2" default="0.0">
-		</member>
-		<member name="direction_absolute" type="int" setter="" getter="get_direction_absolute" default="0">
-		</member>
-		<member name="distance_counter" type="float" setter="" getter="get_distance_counter" default="-1.0">
-		</member>
 		<member name="heating_power" type="float" setter="set_heating_power" getter="get_heating_power" default="0.0">
 			[code]Param.HeatingP[/code]
 			Power drawn for heating, in kW.
@@ -274,39 +402,13 @@
 			[code]Param.LightP[/code]
 			Power drawn for lighting, in kW.
 		</member>
-		<member name="live_battery_voltage" type="float" setter="" getter="get_live_battery_voltage" default="0.0">
-		</member>
-		<member name="mass_reduced" type="float" setter="" getter="get_mass_reduced" default="0.0">
-		</member>
-		<member name="power24_available" type="bool" setter="" getter="get_power24_available" default="false">
-		</member>
-		<member name="power24_voltage" type="float" setter="" getter="get_power24_voltage" default="0.0">
-		</member>
-		<member name="power110_available" type="bool" setter="" getter="get_power110_available" default="false">
-		</member>
-		<member name="radio_stop_active" type="bool" setter="" getter="get_radio_stop_active" default="false">
-		</member>
 		<member name="reduced_mass" type="float" setter="set_reduced_mass" getter="get_reduced_mass" default="0.0">
 			[code]Param.Mred[/code]
 			Reduced (rotating) mass, added to [member mass] for braking calculations.
 		</member>
-		<member name="relay_ground" type="bool" setter="" getter="get_relay_ground" default="false">
-		</member>
-		<member name="relay_novolt" type="bool" setter="" getter="get_relay_novolt" default="false">
-		</member>
-		<member name="relay_overvoltage" type="bool" setter="" getter="get_relay_overvoltage" default="false">
-		</member>
 		<member name="sand_capacity" type="float" setter="set_sand_capacity" getter="get_sand_capacity" default="0.0">
 			[code]Param.SandCap[/code]
 			Sand box capacity, in kg.
-		</member>
-		<member name="tachometer_clock_speed" type="float" setter="" getter="get_tachometer_clock_speed" default="0.0">
-		</member>
-		<member name="tachometer_speed" type="float" setter="" getter="get_tachometer_speed" default="0.0">
-		</member>
-		<member name="tachometer_speed_jump" type="float" setter="" getter="get_tachometer_speed_jump" default="0.0">
-		</member>
-		<member name="train_damage" type="int" setter="" getter="get_train_damage" default="0">
 		</member>
 		<member name="train_type" type="int" setter="set_train_type" getter="get_train_type" enum="RailVehicleController.TrainType" default="0">
 			[code]Param.Type[/code]

@@ -58,7 +58,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     await wait_idle_frames(3)
 
     var machine_room:MaszynaDynamicTrainCabin = camera.get_parent() as MaszynaDynamicTrainCabin
-    assert_eq(controller.state.get("cabin_occupied", 1), 0)
+    assert_eq(controller.get_state().get("cabin_occupied", 1), 0)
     assert_not_null(machine_room, "camera should stay in the cabin in the machine room")
     if not machine_room:
         return
@@ -74,7 +74,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     await wait_idle_frames(3)
 
     var cabin:Cabin3D = camera.get_parent() as Cabin3D
-    assert_eq(controller.state.get("cabin_occupied", 0), -1)
+    assert_eq(controller.get_state().get("cabin_occupied", 0), -1)
     assert_not_null(cabin, "camera should stay in the cabin after cab change")
     if not cabin:
         return

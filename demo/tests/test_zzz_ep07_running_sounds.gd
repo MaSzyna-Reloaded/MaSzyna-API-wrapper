@@ -113,8 +113,8 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
                 clatter_count += 1
             clatter_playing[event.name] = playing
     print("EP07 speed %.1f km/h, motor=%s outer_noise=%s clatter hits=%d" % [
-            float(controller.state.get("speed", 0.0)), motor_heard, outer_noise_heard, clatter_count])
-    assert_gt(float(controller.state.get("speed", 0.0)), 5.0, "EP07 should be rolling")
+            float(controller.get_state().get("speed", 0.0)), motor_heard, outer_noise_heard, clatter_count])
+    assert_gt(float(controller.get_state().get("speed", 0.0)), 5.0, "EP07 should be rolling")
     assert_true(motor_heard, "traction motors turn with the wheels, so they should play")
     assert_true(outer_noise_heard, "outer noise should play while rolling")
     # ~110 m at 40 km/h over 25 m rails - every axle clicks at each joint

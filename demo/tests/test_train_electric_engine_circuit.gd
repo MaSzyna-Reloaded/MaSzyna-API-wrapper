@@ -40,7 +40,7 @@ func test_circuit_round_trip_and_update():
     assert_eq(engine.circuit_imax_low, 600)
     assert_eq(engine.circuit_imax_high, 900)
     assert_eq(engine.circuit_tuhex_stages, 3)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleElectricEngine should keep functioning after configuring the Circuit section")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleElectricEngine should keep functioning after configuring the Circuit section")
 
 func test_physical_layout_updates_without_crashing():
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR

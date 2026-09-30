@@ -10,8 +10,33 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_desired_power" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_desired_velocity" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_selected_velocity" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_set_velocity" qualifiers="const">
 			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_standby" qualifiers="const">
+			<return type="bool" />
 			<description>
 			</description>
 		</method>
@@ -49,8 +74,6 @@
 		</method>
 	</methods>
 	<members>
-		<member name="active" type="bool" setter="" getter="get_active" default="false">
-		</member>
 		<member name="brake_intervention" type="bool" setter="set_brake_intervention" getter="get_brake_intervention" default="false">
 			[code]SpeedControl:BrakeIntervention[/code]
 			Whether the cruise control may assist with the automatic pneumatic brake when other means of slowing down
@@ -63,10 +86,6 @@
 		<member name="delay" type="float" setter="set_delay" getter="get_delay" default="0.0">
 			[code]SpeedControl:SpeedCtrlDelay[/code]
 			Delay before a newly set target velocity is applied.
-		</member>
-		<member name="desired_power" type="float" setter="" getter="get_desired_power" default="0.0">
-		</member>
-		<member name="desired_velocity" type="float" setter="" getter="get_desired_velocity" default="0.0">
 		</member>
 		<member name="disables_on" type="int" setter="set_disables_on" getter="get_disables_on" default="0">
 			[code]SpeedControl:SpeedCtrlATOF[/code]
@@ -141,8 +160,6 @@
 		<member name="proportional_gain_positive" type="float" setter="set_proportional_gain_positive" getter="get_proportional_gain_positive" default="0.5">
 			[code]SpeedControl:kPpos[/code]
 			Drive power proportional gain for a 1 km/h deficit in velocity.
-		</member>
-		<member name="selected_velocity" type="float" setter="" getter="get_selected_velocity" default="0.0">
 		</member>
 		<member name="speed_control_enabled" type="bool" setter="set_speed_control_enabled" getter="get_speed_control_enabled" default="false">
 			[code]SpeedControl:SpeedCtrl[/code]

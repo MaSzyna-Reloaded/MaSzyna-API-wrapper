@@ -20,17 +20,146 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_active_headlight_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_active_headlight_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_active_headlight_upper_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_active_redmarker_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_active_redmarker_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_devices_light_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_headlight_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_headlight_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_headlight_upper_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_redmarker_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_redmarker_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_headlights_dimmed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_opposite_headlight_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_opposite_headlight_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_opposite_headlight_upper_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_opposite_redmarker_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_opposite_redmarker_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_position" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_power" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_power_source" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rear_headlight_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rear_headlight_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rear_headlight_upper_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rear_redmarker_left_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rear_redmarker_right_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_roof_light_dimmed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			Whether the compartment (cab) light is dimmed.
+			</description>
+		</method>
+		<method name="get_roof_light_level" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="headlights_dim">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
-			</description>
-		</method>
-		<method name="roof_light_dim">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Dims the compartment (cab) light to 0.4 of its level ([code]cablightdim_sw[/code], original [code]Train.cpp:9745[/code]).
 			</description>
 		</method>
 		<method name="increase_light_selector_position">
@@ -43,6 +172,12 @@
 			<return type="void" />
 			<param index="0" name="light" type="String" />
 			<param index="1" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="light_is_enabled" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="light" type="String" />
 			<description>
 			</description>
 		</method>
@@ -59,30 +194,15 @@
 			<description>
 			</description>
 		</method>
+		<method name="roof_light_dim">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Dims the compartment (cab) light to 0.4 of its level ([code]cablightdim_sw[/code], original [code]Train.cpp:9745[/code]).
+			</description>
+		</method>
 	</methods>
 	<members>
-		<member name="active_headlight_left_enabled" type="bool" setter="" getter="get_active_headlight_left_enabled" default="false">
-		</member>
-		<member name="active_headlight_right_enabled" type="bool" setter="" getter="get_active_headlight_right_enabled" default="false">
-		</member>
-		<member name="active_headlight_upper_enabled" type="bool" setter="" getter="get_active_headlight_upper_enabled" default="false">
-		</member>
-		<member name="active_redmarker_left_enabled" type="bool" setter="" getter="get_active_redmarker_left_enabled" default="false">
-		</member>
-		<member name="active_redmarker_right_enabled" type="bool" setter="" getter="get_active_redmarker_right_enabled" default="false">
-		</member>
-		<member name="devices_light_enabled" type="bool" setter="" getter="get_devices_light_enabled" default="false">
-		</member>
-		<member name="front_headlight_left_enabled" type="bool" setter="" getter="get_front_headlight_left_enabled" default="false">
-		</member>
-		<member name="front_headlight_right_enabled" type="bool" setter="" getter="get_front_headlight_right_enabled" default="false">
-		</member>
-		<member name="front_headlight_upper_enabled" type="bool" setter="" getter="get_front_headlight_upper_enabled" default="false">
-		</member>
-		<member name="front_redmarker_left_enabled" type="bool" setter="" getter="get_front_redmarker_left_enabled" default="false">
-		</member>
-		<member name="front_redmarker_right_enabled" type="bool" setter="" getter="get_front_redmarker_right_enabled" default="false">
-		</member>
 		<member name="head_light_color" type="Color" setter="set_head_light_color" getter="get_head_light_color" default="Color(255, 255, 255, 1)">
 			Color of the headlights
 		</member>
@@ -97,11 +217,6 @@
 		</member>
 		<member name="head_light_normal_multiplier" type="float" setter="set_head_light_normal_multiplier" getter="get_head_light_normal_multiplier" default="1.0">
 			Multiplier of headlights intensity
-		</member>
-		<member name="headlights_dimmed" type="bool" setter="" getter="get_headlights_dimmed" default="false">
-		</member>
-		<member name="roof_light_dimmed" type="bool" setter="" getter="get_roof_light_dimmed" default="false">
-			Whether the compartment (cab) light is dimmed.
 		</member>
 		<member name="instrument_type" type="int" setter="set_instrument_type" getter="get_instrument_type" default="0">
 		</member>
@@ -125,34 +240,6 @@
 		</member>
 		<member name="lights_wrap_selector" type="bool" setter="set_lights_wrap_selector" getter="get_lights_wrap_selector" default="false">
 			If true, rotating the selector past the last position will return to the first position. If false, it will stop at the last position.
-		</member>
-		<member name="opposite_headlight_left_enabled" type="bool" setter="" getter="get_opposite_headlight_left_enabled" default="false">
-		</member>
-		<member name="opposite_headlight_right_enabled" type="bool" setter="" getter="get_opposite_headlight_right_enabled" default="false">
-		</member>
-		<member name="opposite_headlight_upper_enabled" type="bool" setter="" getter="get_opposite_headlight_upper_enabled" default="false">
-		</member>
-		<member name="opposite_redmarker_left_enabled" type="bool" setter="" getter="get_opposite_redmarker_left_enabled" default="false">
-		</member>
-		<member name="opposite_redmarker_right_enabled" type="bool" setter="" getter="get_opposite_redmarker_right_enabled" default="false">
-		</member>
-		<member name="position" type="int" setter="" getter="get_position" default="0">
-		</member>
-		<member name="power" type="float" setter="" getter="get_power" default="0.0">
-		</member>
-		<member name="power_source" type="int" setter="" getter="get_power_source" default="0">
-		</member>
-		<member name="rear_headlight_left_enabled" type="bool" setter="" getter="get_rear_headlight_left_enabled" default="false">
-		</member>
-		<member name="rear_headlight_right_enabled" type="bool" setter="" getter="get_rear_headlight_right_enabled" default="false">
-		</member>
-		<member name="rear_headlight_upper_enabled" type="bool" setter="" getter="get_rear_headlight_upper_enabled" default="false">
-		</member>
-		<member name="rear_redmarker_left_enabled" type="bool" setter="" getter="get_rear_redmarker_left_enabled" default="false">
-		</member>
-		<member name="rear_redmarker_right_enabled" type="bool" setter="" getter="get_rear_redmarker_right_enabled" default="false">
-		</member>
-		<member name="roof_light_level" type="float" setter="" getter="get_roof_light_level" default="0.0">
 		</member>
 		<member name="source_accumulator_max_voltage" type="float" setter="set_source_accumulator_max_voltage" getter="get_source_accumulator_max_voltage" default="0.0">
 			Represents the highest voltage the accumulator can reach when fully charged.

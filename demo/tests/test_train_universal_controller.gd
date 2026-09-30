@@ -65,7 +65,7 @@ func test_selector_position_is_forwarded_to_mover():
     universal_controller.selector_position = 3
     await wait_idle_frames(2)
 
-    assert_eq(train.state["selector_position"], 3, "Mover's MainCtrlPos should follow selector_position")
+    assert_eq(train.get_state()["selector_position"], 3, "Mover's MainCtrlPos should follow selector_position")
 
 func test_oversized_positions_array_is_truncated_without_crashing():
     var positions: Array[RailVehicleUniversalControllerListItem] = []
@@ -77,4 +77,4 @@ func test_oversized_positions_array_is_truncated_without_crashing():
 
     # The mover only has room for 32 universal controller positions; assigning more than
     # that must not corrupt memory or crash the train, it should simply be truncated.
-    assert_true(train.state.has("selector_position"), "Mover should keep functioning after an oversized positions array")
+    assert_true(train.get_state().has("selector_position"), "Mover should keep functioning after an oversized positions array")

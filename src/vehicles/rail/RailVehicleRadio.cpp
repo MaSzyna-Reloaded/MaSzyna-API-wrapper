@@ -20,29 +20,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(RADIO_CALL3);
 
         ClassDB::bind_method(D_METHOD("get_enabled"), &RailVehicleRadio::get_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_enabled");
         ClassDB::bind_method(D_METHOD("get_powered"), &RailVehicleRadio::get_powered);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "powered", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_powered");
         ClassDB::bind_method(D_METHOD("get_channel"), &RailVehicleRadio::get_channel);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "channel", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_channel");
         ClassDB::bind_method(D_METHOD("get_volume"), &RailVehicleRadio::get_volume);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "volume", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_volume");
 
         ADD_SIGNAL(MethodInfo(radio_toggled_signal, PropertyInfo(Variant::BOOL, "enabled")));
         ADD_SIGNAL(MethodInfo(channel_changed_signal, PropertyInfo(Variant::INT, "channel")));

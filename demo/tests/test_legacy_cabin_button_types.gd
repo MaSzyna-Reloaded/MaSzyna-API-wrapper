@@ -35,9 +35,9 @@ func test_push_fuel_pump_runs_only_while_held():
         &"fuelpump_sw": CabinButton.ButtonType.PUSH}
     await _build_cab(controls)
     CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
-    assert_true(train.state["fuel_pump_enabled"], "held")
+    assert_true(train.get_state()["fuel_pump_enabled"], "held")
     CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"release")
-    assert_false(train.state["fuel_pump_enabled"], "released")
+    assert_false(train.get_state()["fuel_pump_enabled"], "released")
 
 
 # Train.cpp:3889-3900 - a two-state one flips on a press and ignores the release
@@ -47,9 +47,9 @@ func test_two_state_fuel_pump_flips_on_a_press():
     await _build_cab(controls)
     CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"release")
-    assert_true(train.state["fuel_pump_enabled"], "stays on after the release")
+    assert_true(train.get_state()["fuel_pump_enabled"], "stays on after the release")
     CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
-    assert_false(train.state["fuel_pump_enabled"], "the next press turns it off")
+    assert_false(train.get_state()["fuel_pump_enabled"], "the next press turns it off")
 
 
 # Train.cpp:2891, 2929 - an impulse battery switch flips the battery on a press, and its release
@@ -61,11 +61,11 @@ func test_push_battery_switch_flips_on_each_press():
     CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"release")
     await wait_idle_frames(2)
-    assert_true(train.state["battery_enabled"], "the first press switches it on")
+    assert_true(train.get_state()["battery_enabled"], "the first press switches it on")
     CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"release")
     await wait_idle_frames(2)
-    assert_false(train.state["battery_enabled"], "the second one off")
+    assert_false(train.get_state()["battery_enabled"], "the second one off")
 
 
 # Train.cpp:6662 - the train heating switch does nothing in a cab that does not model it
@@ -116,11 +116,11 @@ func test_impulse_pantograph_switch_raises_and_lowers_through_its_valve():
         &"pantfront_sw": CabinButton.ButtonType.TOGGLE, &"pantfrontoff_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls, null, _electric_components(true))
     CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"hold")
-    assert_true(train.state["current_collector/pantograph_first_valve_enabled"], "held up")
+    assert_true(train.get_state()["current_collector/pantograph_first_valve_enabled"], "held up")
     CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"release")
-    assert_false(train.state["current_collector/pantograph_first_valve_enabled"], "let go")
+    assert_false(train.get_state()["current_collector/pantograph_first_valve_enabled"], "let go")
     CabinSystem.act(train.get_rid(), 1, &"pantfrontoff_sw", &"hold")
-    assert_false(train.state["current_collector/pantograph_first_valve_enabled"])
+    assert_false(train.get_state()["current_collector/pantograph_first_valve_enabled"])
 
 
 # Train.cpp:3285 - an impulse type without the lowering button cannot lower from the cab
@@ -137,9 +137,9 @@ func test_two_state_pantograph_switch_keeps_its_valve():
         &"pantfront_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls, null, _electric_components(false))
     CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"toggle", true)
-    assert_true(train.state["current_collector/pantograph_first_valve_enabled"])
+    assert_true(train.get_state()["current_collector/pantograph_first_valve_enabled"])
     CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"toggle", false)
-    assert_false(train.state["current_collector/pantograph_first_valve_enabled"])
+    assert_false(train.get_state()["current_collector/pantograph_first_valve_enabled"])
 
 
 # Train.cpp:2939-3070 - batteryon_sw/batteryoff_sw switch the battery on their press
@@ -150,11 +150,11 @@ func test_battery_on_and_off_buttons_switch_the_battery():
     CabinSystem.act(train.get_rid(), 1, &"batteryon_sw", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"batteryon_sw", &"release")
     await wait_idle_frames(2)
-    assert_true(train.state["battery_enabled"], "on")
+    assert_true(train.get_state()["battery_enabled"], "on")
     CabinSystem.act(train.get_rid(), 1, &"batteryoff_sw", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"batteryoff_sw", &"release")
     await wait_idle_frames(2)
-    assert_false(train.state["battery_enabled"], "off")
+    assert_false(train.get_state()["battery_enabled"], "off")
 
 
 var _sent:Array = []

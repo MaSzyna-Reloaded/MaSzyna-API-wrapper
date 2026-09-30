@@ -34,7 +34,7 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.cntrl_auto_relay_mode, RailVehicleEngine.AUTO_RELAY_YES)
     assert_true(engine.cntrl_has_camshaft)
     assert_eq(engine.fuel_pump_start_mode, RailVehicleController.START_MODE_AUTOMATIC)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleEngine should keep functioning after configuring the Cntrl. section")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleEngine should keep functioning after configuring the Cntrl. section")
 
 
 func test_master_controller_positions_reach_the_vehicle_config():

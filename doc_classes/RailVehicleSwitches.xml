@@ -13,6 +13,11 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_sand_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="sand">
 			<return type="void" />
 			<param index="0" name="active" type="bool" />
@@ -71,8 +76,6 @@
 		<member name="relay_reset_button_3" type="int" setter="set_relay_reset_button_3" getter="get_relay_reset_button_3" default="0">
 			[code]Switches:RelayResetButton3[/code]
 			Bitmask of relays reset by button 3.
-		</member>
-		<member name="sand_active" type="bool" setter="" getter="get_sand_active" default="false">
 		</member>
 	</members>
 </class>

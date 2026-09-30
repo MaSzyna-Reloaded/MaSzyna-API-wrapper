@@ -58,22 +58,22 @@ func test_round_trip_and_update_without_crashing():
 
 
 func test_switch_is_limited_to_the_wiper_list():
-    assert_eq(train.state["wipers_switch_position"], 0)
-    assert_eq(train.config["wipers_switch_position_max"], 2)
+    assert_eq(train.get_state()["wipers_switch_position"], 0)
+    assert_eq(train.get_config()["wipers_switch_position_max"], 2)
 
     for i in 5:
         train.send_command("wipers_switch_increase")
     await wait_idle_frames(2)
-    assert_eq(train.state["wipers_switch_position"], 2)
+    assert_eq(train.get_state()["wipers_switch_position"], 2)
 
     for i in 5:
         train.send_command("wipers_switch_decrease")
     await wait_idle_frames(2)
-    assert_eq(train.state["wipers_switch_position"], 0)
+    assert_eq(train.get_state()["wipers_switch_position"], 0)
 
 
 func test_wiper_count_comes_from_the_masks():
-    assert_eq(train.state["wiper_positions"].size(), 2)
+    assert_eq(train.get_state()["wiper_positions"].size(), 2)
 
 
 func test_wipers_sweep_out_and_back_with_active_cab_and_battery():
@@ -87,7 +87,7 @@ func test_wipers_sweep_out_and_back_with_active_cab_and_battery():
     # sweep 0.2 s + 0.1 s at the far end; polled by time, a headless frame takes no time at all
     for i in 40:
         await wait_seconds(0.05)
-        var position: float = train.state["wiper_positions"][0]
+        var position: float = train.get_state()["wiper_positions"][0]
         reached_out = reached_out or (position > 0.0 and position <= 1.0)
         reached_return = reached_return or position > 1.0
         if reached_out and reached_return:
@@ -103,7 +103,7 @@ func test_wipers_stay_parked_without_battery():
     train.send_command("wipers_switch_increase")
     await wait_idle_frames(10)
 
-    assert_eq(train.state["wiper_positions"][0], 0.0)
+    assert_eq(train.get_state()["wiper_positions"][0], 0.0)
 
 
 ## e186_v2 has four wipers, two per end, and a list that switches wipers 1 and 2: from cab 1 these
@@ -117,7 +117,7 @@ func test_wiper_count_of_the_model_limits_the_sweep_to_the_active_end():
     train.send_command("wipers_switch_increase")
     await wait_seconds(0.15)
 
-    var positions: PackedFloat64Array = train.state["wiper_positions"]
+    var positions: PackedFloat64Array = train.get_state()["wiper_positions"]
     assert_eq(positions.size(), 4)
     assert_gt(positions[0], 0.0)
     assert_gt(positions[1], 0.0)

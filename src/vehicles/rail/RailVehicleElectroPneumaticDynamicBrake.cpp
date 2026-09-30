@@ -35,39 +35,14 @@ namespace godot {
 
         ClassDB::bind_method(
                 D_METHOD("get_ed_braking_ep_delay"), &RailVehicleElectroPneumaticDynamicBrake::get_ed_braking_ep_delay);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "ed_braking_ep_delay", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ed_braking_ep_delay");
         ClassDB::bind_method(
                 D_METHOD("get_ep_max_brake_engagement_speed"),
                 &RailVehicleElectroPneumaticDynamicBrake::get_ep_max_brake_engagement_speed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "ep_max_brake_engagement_speed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ep_max_brake_engagement_speed");
         ClassDB::bind_method(
                 D_METHOD("get_ep_min_regenerative_braking"),
                 &RailVehicleElectroPneumaticDynamicBrake::get_ep_min_regenerative_braking);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "ep_min_regenerative_braking", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ep_min_regenerative_braking");
         ClassDB::bind_method(D_METHOD("get_ep_force"), &RailVehicleElectroPneumaticDynamicBrake::get_ep_force);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "ep_force", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ep_force");
         ClassDB::bind_method(D_METHOD("get_ep_fuse"), &RailVehicleElectroPneumaticDynamicBrake::get_ep_fuse);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "ep_fuse", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_ep_fuse");
     }
 
     void RailVehicleElectroPneumaticDynamicBrake::_register_commands() {

@@ -173,221 +173,51 @@ namespace godot {
         BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
 
         ClassDB::bind_method(D_METHOD("get_tachometer_speed"), &RailVehicleController::get_tachometer_speed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_speed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_speed");
         ClassDB::bind_method(D_METHOD("get_tachometer_speed_jump"), &RailVehicleController::get_tachometer_speed_jump);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_speed_jump");
         ClassDB::bind_method(
                 D_METHOD("get_tachometer_clock_speed"), &RailVehicleController::get_tachometer_clock_speed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_tachometer_clock_speed");
         ClassDB::bind_method(D_METHOD("get_direction_absolute"), &RailVehicleController::get_direction_absolute);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "direction_absolute", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_direction_absolute");
         ClassDB::bind_method(D_METHOD("get_cabin"), &RailVehicleController::get_cabin);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "cabin", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin");
         ClassDB::bind_method(D_METHOD("get_cabin_controleable"), &RailVehicleController::get_cabin_controleable);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "cabin_controleable", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin_controleable");
         ClassDB::bind_method(D_METHOD("get_cabin_occupied"), &RailVehicleController::get_cabin_occupied);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "cabin_occupied", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_cabin_occupied");
         ClassDB::bind_method(D_METHOD("get_live_battery_voltage"), &RailVehicleController::get_live_battery_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "live_battery_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_live_battery_voltage");
         ClassDB::bind_method(D_METHOD("get_battery_enabled"), &RailVehicleController::get_battery_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_battery_enabled");
         ClassDB::bind_method(D_METHOD("get_converter_enabled"), &RailVehicleController::get_converter_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "converter_enabled", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_enabled");
         ClassDB::bind_method(D_METHOD("get_converter_allowed"), &RailVehicleController::get_converter_allowed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "converter_allowed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_allowed");
         ClassDB::bind_method(
                 D_METHOD("get_converter_time_to_start"), &RailVehicleController::get_converter_time_to_start);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "converter_time_to_start", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_time_to_start");
         ClassDB::bind_method(D_METHOD("get_distance_counter"), &RailVehicleController::get_distance_counter);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "distance_counter", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_distance_counter");
         ClassDB::bind_method(D_METHOD("get_power24_voltage"), &RailVehicleController::get_power24_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power24_voltage");
         ClassDB::bind_method(D_METHOD("get_power24_available"), &RailVehicleController::get_power24_available);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "power24_available", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power24_available");
         ClassDB::bind_method(D_METHOD("get_power110_available"), &RailVehicleController::get_power110_available);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "power110_available", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power110_available");
         ClassDB::bind_method(D_METHOD("get_current0"), &RailVehicleController::get_current0);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current0", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current0");
         ClassDB::bind_method(D_METHOD("get_current1"), &RailVehicleController::get_current1);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current1", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current1");
         ClassDB::bind_method(D_METHOD("get_current2"), &RailVehicleController::get_current2);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "current2", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current2");
         ClassDB::bind_method(D_METHOD("get_relay_novolt"), &RailVehicleController::get_relay_novolt);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_novolt", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_novolt");
         ClassDB::bind_method(D_METHOD("get_relay_overvoltage"), &RailVehicleController::get_relay_overvoltage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_overvoltage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_overvoltage");
         ClassDB::bind_method(D_METHOD("get_relay_ground"), &RailVehicleController::get_relay_ground);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "relay_ground", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_relay_ground");
         ClassDB::bind_method(D_METHOD("get_train_damage"), &RailVehicleController::get_train_damage);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "train_damage", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_train_damage");
         ClassDB::bind_method(
                 D_METHOD("get_controller_second_position"), &RailVehicleController::get_controller_second_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_second_position");
         ClassDB::bind_method(
                 D_METHOD("get_controller_main_position"), &RailVehicleController::get_controller_main_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_position");
         ClassDB::bind_method(
                 D_METHOD("get_controller_joint_position"), &RailVehicleController::get_controller_joint_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_joint_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_joint_position");
         ClassDB::bind_method(
                 D_METHOD("get_controller_second_actual_position"),
                 &RailVehicleController::get_controller_second_actual_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_second_actual_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_second_actual_position");
         ClassDB::bind_method(D_METHOD("get_mass_reduced"), &RailVehicleController::get_mass_reduced);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "mass_reduced", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_mass_reduced");
         ClassDB::bind_method(
                 D_METHOD("get_controller_main_actual_position"),
                 &RailVehicleController::get_controller_main_actual_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_actual_position");
         ClassDB::bind_method(
                 D_METHOD("get_controller_main_delayed"), &RailVehicleController::get_controller_main_delayed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "controller_main_delayed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_delayed");
         ClassDB::bind_method(D_METHOD("get_coupler_stretched"), &RailVehicleController::get_coupler_stretched);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "coupler_stretched", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_coupler_stretched");
         ClassDB::bind_method(
                 D_METHOD("get_controller_main_no_power_position"),
                 &RailVehicleController::get_controller_main_no_power_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "controller_main_no_power_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_controller_main_no_power_position");
         ClassDB::bind_method(D_METHOD("get_radio_stop_active"), &RailVehicleController::get_radio_stop_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "radio_stop_active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_stop_active");
         ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &RailVehicleController::get_circuit_rlist_size);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "circuit_rlist_size", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_circuit_rlist_size");
     }
 
     void RailVehicleController::_register_commands() {

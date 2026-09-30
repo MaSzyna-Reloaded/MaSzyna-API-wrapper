@@ -38,47 +38,12 @@ namespace godot {
         BIND_ENUM_CONSTANT(BEARING_TYPE_ROLL);
 
         ClassDB::bind_method(D_METHOD("get_angle_front_deg"), &RailVehicleWheels::get_angle_front_deg);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "angle_front_deg", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_angle_front_deg");
         ClassDB::bind_method(D_METHOD("get_angle_powered_deg"), &RailVehicleWheels::get_angle_powered_deg);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "angle_powered_deg", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_angle_powered_deg");
         ClassDB::bind_method(D_METHOD("get_angle_rear_deg"), &RailVehicleWheels::get_angle_rear_deg);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "angle_rear_deg", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_angle_rear_deg");
         ClassDB::bind_method(D_METHOD("get_rotation_speed_rps"), &RailVehicleWheels::get_rotation_speed_rps);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "rotation_speed_rps", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rotation_speed_rps");
         ClassDB::bind_method(
                 D_METHOD("get_rotation_acceleration_rps2"), &RailVehicleWheels::get_rotation_acceleration_rps2);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "rotation_acceleration_rps2", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_rotation_acceleration_rps2");
         ClassDB::bind_method(D_METHOD("get_slipping"), &RailVehicleWheels::get_slipping);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "slipping", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_slipping");
         ClassDB::bind_method(D_METHOD("get_flat"), &RailVehicleWheels::get_flat);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "flat", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_flat");
     }
 } // namespace godot

@@ -25,6 +25,26 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_channel" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_powered" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_volume" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="radio">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -58,17 +78,9 @@
 		</method>
 	</methods>
 	<members>
-		<member name="channel" type="int" setter="" getter="get_channel" default="1">
-		</member>
 		<member name="channel_max" type="int" setter="set_channel_max" getter="get_channel_max" default="10">
 		</member>
 		<member name="channel_min" type="int" setter="set_channel_min" getter="get_channel_min" default="1">
-		</member>
-		<member name="enabled" type="bool" setter="" getter="get_enabled" default="false">
-		</member>
-		<member name="powered" type="bool" setter="" getter="get_powered" default="false">
-		</member>
-		<member name="volume" type="float" setter="" getter="get_volume" default="0.75">
 		</member>
 	</members>
 	<signals>

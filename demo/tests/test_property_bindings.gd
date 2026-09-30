@@ -68,6 +68,21 @@ func test_bound_properties_use_canonical_names_and_accessors() -> void:
             )
 
 
+## A property is configuration - stored and settable. The live state is read through the typed
+## getters and the vehicle's dump (VehicleServer.vehicle_dump_state()), never through a property,
+## so a saved vehicle carries no live values.
+func test_properties_are_stored_configuration() -> void:
+    for bound_class in BOUND_CLASSES:
+        for property in ClassDB.class_get_property_list(bound_class, true):
+            var usage: int = int(property["usage"])
+            if bool(usage & (PROPERTY_USAGE_GROUP | PROPERTY_USAGE_SUBGROUP | PROPERTY_USAGE_CATEGORY)):
+                continue
+            var property_name: StringName = StringName(property["name"])
+            assert_true(bool(usage & PROPERTY_USAGE_STORAGE), "%s.%s is not stored" % [bound_class, property_name])
+            assert_ne(ClassDB.class_get_property_setter(bound_class, property_name), &"",
+                    "%s.%s has no setter" % [bound_class, property_name])
+
+
 func test_properties_are_available_through_direct_gdscript_access() -> void:
     var brake: RailVehicleBrake = MoverRailVehicleBrake.new()
     brake.brake_force_max = 85.0

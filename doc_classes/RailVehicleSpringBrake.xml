@@ -11,6 +11,31 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_braking" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_cylinder_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ready" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_shut_off" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="set_spring_brake_active">
 			<return type="void" />
 			<param index="0" name="active" type="bool" />
@@ -33,27 +58,17 @@
 		</method>
 	</methods>
 	<members>
-		<member name="active" type="bool" setter="" getter="get_active" default="false">
-		</member>
 		<member name="brake_signal_braked_state_pressure" type="float" setter="set_brake_signal_braked_state_pressure" getter="get_brake_signal_braked_state_pressure" default="0.0">
 			Brake signal switching pressure to braking state, bar
 		</member>
 		<member name="brake_signal_released_state_pressure" type="float" setter="set_brake_signal_released_state_pressure" getter="get_brake_signal_released_state_pressure" default="0.0">
 			Brake signal switching pressure to the released state, bar
 		</member>
-		<member name="braking" type="bool" setter="" getter="get_braking" default="false">
-		</member>
-		<member name="cylinder_pressure" type="float" setter="" getter="get_cylinder_pressure" default="0.0">
-		</member>
 		<member name="pressure_force_coefficient" type="float" setter="set_pressure_force_coefficient" getter="get_pressure_force_coefficient" default="0.0">
 			Pressure force coefficient, kN/bar
 		</member>
-		<member name="ready" type="bool" setter="" getter="get_ready" default="false">
-		</member>
 		<member name="required_coupler_connection_method" type="int" setter="set_required_coupler_connection_method" getter="get_required_coupler_connection_method" default="127">
 			The bit flag specifying the required coupling method to transmit brake control signals in multiple unit operation, e.g. 132 for the necessity of connection with a Jacobs bogie – this allows command transmission e.g. within a permanently coupled unit, but not to subsequent multiple units.
-		</member>
-		<member name="shut_off" type="bool" setter="" getter="get_shut_off" default="false">
 		</member>
 		<member name="spring_actuator_chamber_volume" type="float" setter="set_spring_actuator_chamber_volume" getter="get_spring_actuator_chamber_volume" default="1.0">
 			Volume of the spring actuator chambers, l

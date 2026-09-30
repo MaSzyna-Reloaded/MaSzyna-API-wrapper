@@ -54,7 +54,7 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.slip_current_ratio, 0.1)
     assert_eq(engine.max_power, 1200.0)
     assert_eq(engine.max_power_table.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
 
 func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # Regression: CollectorParameters.MaxV (FIZ MaxVoltage, Mover.cpp:11622) was never set, so an
@@ -89,14 +89,14 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
         await wait_idle_frames(1)
     await wait_seconds(1.0)
     _feed_wire(eim)
-    assert_true(driven.state["main_switch_closable"], "the line breaker should be closable at 3000 V")
+    assert_true(driven.get_state()["main_switch_closable"], "the line breaker should be closable at 3000 V")
 
     driven.send_command("main_switch", true)
     for i in 5:
         _feed_wire(eim)
         await wait_idle_frames(1)
 
-    assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
+    assert_true(driven.get_state()["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
 
 
 ## A driven E186-like vehicle (the Engine: line of dynamic/pkp/e186_v2/p160dc.fiz, without InvNo)
@@ -156,16 +156,16 @@ func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan()
     # of the vehicle became NaN as soon as a direction was set
     var driven: VehicleController = await _powered_up_eim("TestEimInverters")
 
-    assert_true(driven.state["main_switch_enabled"], "the line breaker should be closed")
-    assert_false(is_nan(float(driven.state["velocity"])), "velocity should not be NaN")
-    assert_false(is_nan(float(driven.state["Ft"])), "traction force should not be NaN")
+    assert_true(driven.get_state()["main_switch_enabled"], "the line breaker should be closed")
+    assert_false(is_nan(float(driven.get_state()["velocity"])), "velocity should not be NaN")
+    assert_false(is_nan(float(driven.get_state()["Ft"])), "traction force should not be NaN")
 
 
 func test_the_state_carries_each_inverter():
     # a powered EIM without InvNo has one inverter (Mover.cpp:11302), active and allowed
     var driven: VehicleController = await _powered_up_eim("TestEimInverterState")
 
-    var inverters: Array = driven.state["inverters"]
+    var inverters: Array = driven.get_state()["inverters"]
     assert_eq(inverters.size(), 1)
     var inverter: RailVehicleInverter = inverters[0]
     assert_true(inverter.active)
@@ -183,7 +183,7 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
         _feed_wire(engine)
         await wait_idle_frames(1)
 
-    assert_gt(float(driven.state["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
+    assert_gt(float(driven.get_state()["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
 
 
 func test_apply_power_uses_canonical_current_collector_properties():
@@ -202,9 +202,9 @@ func test_the_engine_publishes_its_voltage_and_the_line_current():
     # kV bar (eimp_c1_uhv, Train.cpp:8723) stayed at 0
     var driven: VehicleController = await _powered_up_eim("TestEimVoltage")
 
-    assert_gt(float(driven.state["engine_voltage"]), 2000.0, "an EIM under 3000 V should see it on its motors")
-    assert_true(driven.state.has("total_current"), "the line current (Itot) should be in the state")
-    assert_true(driven.state.has("force_full"), "the full force (eimv[eimv_Fful]) should be in the state")
+    assert_gt(float(driven.get_state()["engine_voltage"]), 2000.0, "an EIM under 3000 V should see it on its motors")
+    assert_true(driven.get_state().has("total_current"), "the line current (Itot) should be in the state")
+    assert_true(driven.get_state().has("force_full"), "the full force (eimv[eimv_Fful]) should be in the state")
 
 
 func test_the_screen_state_shows_the_line_voltage_of_the_powered_car():
@@ -216,7 +216,7 @@ func test_the_screen_state_shows_the_line_voltage_of_the_powered_car():
     assert_gt(float(screen["voltage"]), 2000.0)
     # Train.cpp:718 - under voltage and past its init time, the circuit is ready while the line
     # breaker is open
-    assert_eq(screen["main_ready"], not driven.state["main_switch_enabled"])
+    assert_eq(screen["main_ready"], not driven.get_state()["main_switch_enabled"])
 
 
 func test_main_init_time_reaches_the_config():
@@ -224,7 +224,7 @@ func test_main_init_time_reaches_the_config():
     train.apply_configuration()
     await wait_idle_frames(2)
 
-    assert_eq(float(train.config["main_init_time"]), 2.5)
+    assert_eq(float(train.get_config()["main_init_time"]), 2.5)
 
 
 ## What the vehicles' step does for a vehicle standing under a live wire, for one standing on

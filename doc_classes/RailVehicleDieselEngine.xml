@@ -24,6 +24,116 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_clutch_desired" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_clutch_engagement" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_engine_temperature" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fill" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fill_desired" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuel_pump_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuel_pump_disabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuel_pump_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_heat_malfunction" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ignition" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_max_rpm" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_oil_pump_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_oil_pump_disabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_oil_pump_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_oil_pump_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_output_power" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_retarder_fill" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rpm" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_spinup" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_startup" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_torque" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_temperature" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="oil_pump">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -47,22 +157,8 @@
 		</member>
 		<member name="clutch_min_velocity_full_engage" type="float" setter="set_clutch_min_velocity_full_engage" getter="get_clutch_min_velocity_full_engage" default="0.0">
 		</member>
-		<member name="fill" type="float" setter="" getter="get_fill" default="0.0">
-		</member>
-		<member name="fuel_pump_active" type="bool" setter="" getter="get_fuel_pump_active" default="false">
-		</member>
-		<member name="fuel_pump_disabled" type="bool" setter="" getter="get_fuel_pump_disabled" default="false">
-		</member>
-		<member name="fuel_pump_enabled" type="bool" setter="" getter="get_fuel_pump_enabled" default="false">
-		</member>
 		<member name="fuel_pump_start_mode" type="int" setter="set_fuel_pump_start_mode" getter="get_fuel_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.FuelStart[/code]
-		</member>
-		<member name="heat_malfunction" type="bool" setter="" getter="get_heat_malfunction" default="false">
-		</member>
-		<member name="ignition" type="bool" setter="" getter="get_ignition" default="false">
-		</member>
-		<member name="max_rpm" type="float" setter="" getter="get_max_rpm" default="0.0">
 		</member>
 		<member name="mechanical_clutch_disengage_speed" type="float" setter="set_mechanical_clutch_disengage_speed" getter="get_mechanical_clutch_disengage_speed" default="0.9">
 			[code]Engine:EDS[/code]
@@ -102,14 +198,6 @@
 		</member>
 		<member name="mechanical_shunt_mode_ratio" type="float" setter="set_mechanical_shunt_mode_ratio" getter="get_mechanical_shunt_mode_ratio" default="0.0">
 		</member>
-		<member name="oil_pump_active" type="bool" setter="" getter="get_oil_pump_active" default="false">
-		</member>
-		<member name="oil_pump_disabled" type="bool" setter="" getter="get_oil_pump_disabled" default="false">
-		</member>
-		<member name="oil_pump_enabled" type="bool" setter="" getter="get_oil_pump_enabled" default="false">
-		</member>
-		<member name="oil_pump_pressure" type="float" setter="" getter="get_oil_pump_pressure" default="0.0">
-		</member>
 		<member name="oil_pump_pressure_maximum" type="float" setter="set_oil_pump_pressure_maximum" getter="get_oil_pump_pressure_maximum" default="0.65">
 			[code]Engine:OilMaxPressure[/code]
 			Minimum oil pressure required for the engine to start
@@ -120,8 +208,6 @@
 		</member>
 		<member name="oil_pump_start_mode" type="int" setter="set_oil_pump_start_mode" getter="get_oil_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.OilStart[/code]
-		</member>
-		<member name="output_power" type="float" setter="" getter="get_output_power" default="0.0">
 		</member>
 		<member name="retarder_clutch" type="bool" setter="set_retarder_clutch" getter="get_retarder_clutch" default="false">
 		</member>
@@ -163,12 +249,6 @@
 		</member>
 		<member name="retarder_with_individual" type="bool" setter="set_retarder_with_individual" getter="get_retarder_with_individual" default="false">
 		</member>
-		<member name="rpm" type="float" setter="" getter="get_rpm" default="0.0">
-		</member>
-		<member name="spinup" type="bool" setter="" getter="get_spinup" default="false">
-		</member>
-		<member name="startup" type="bool" setter="" getter="get_startup" default="false">
-		</member>
 		<member name="throttle_table_max_rpm_torque" type="float" setter="set_throttle_table_max_rpm_torque" getter="get_throttle_table_max_rpm_torque" default="2.0">
 			[code]DList:Mnmax[/code]
 			Torque at maximum RPM, in Nm.
@@ -196,8 +276,6 @@
 		<member name="throttle_table_resistance_torque" type="float" setter="set_throttle_table_resistance_torque" getter="get_throttle_table_resistance_torque" default="0.0">
 			[code]DList:Mstand[/code]
 			Engine's own resistance torque at zero RPM, in Nm.
-		</member>
-		<member name="torque" type="float" setter="" getter="get_torque" default="0.0">
 		</member>
 		<member name="torque_converter_coupling_point" type="float" setter="set_torque_converter_coupling_point" getter="get_torque_converter_coupling_point" default="0.85">
 			[code]Engine:TC_CP[/code]

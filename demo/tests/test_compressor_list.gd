@@ -41,7 +41,7 @@ func test_compressor_list_property_accepts_items():
     await wait_idle_frames(2)
 
     assert_eq(brake.compressor_list.size(), 2, "compressor_list should hold the assigned rows")
-    assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after assigning compressor_list")
+    assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after assigning compressor_list")
 
 func test_oversized_compressor_list_is_truncated_without_crashing():
     var rows: Array[RailVehicleCompressorListItem] = []
@@ -52,4 +52,4 @@ func test_oversized_compressor_list_is_truncated_without_crashing():
 
     # The mover only has room for 8 compressor programmer positions; assigning more than
     # that must not corrupt memory or crash the train, it should simply be truncated.
-    assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after an oversized compressor_list")
+    assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after an oversized compressor_list")

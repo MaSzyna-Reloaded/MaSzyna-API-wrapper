@@ -90,7 +90,7 @@ func _show_trainset_vehicle(p_vehicle:RID) -> void:
     var state:Dictionary = VehicleServer.vehicle_dump_state(_shown)
     var config:Dictionary = VehicleServer.vehicle_dump_config(_shown)
     %Title.text = VehicleServer.vehicle_get_name(_shown)
-    %TypeName.text = VehicleServer.vehicle_get_type_name(_shown)
+    %TypeName.text = RailVehicleServer.vehicle_get_type_name(_shown)
     var node:MaszynaRailVehicle3D = legacy_vehicle(_shown)
     var brake:Object = RailVehicleServer.vehicle_component_get(_shown, RailVehicleComponentType.COMPONENT_BRAKES)
     var data:Dictionary[String, String] = {}

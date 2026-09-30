@@ -74,7 +74,6 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
 
     var physics_node: VehiclePhysicsNode = build_vehicle_node(train_id)
     var controller: VehicleController = physics_node.get_controller()
-    controller.type_name = "test"
     _created_vehicle_nodes.append(physics_node)
 
     var vehicle: RailVehicle3D = RailVehicle3D.new()

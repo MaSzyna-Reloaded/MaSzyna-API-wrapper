@@ -11,7 +11,6 @@ var _vehicle:RID
 
 func before_each() -> void:
     _controller = build_vehicle("cabin_state_test")
-    _controller.type_name = "test"
     _controller.add_component(MoverRailVehicleRadio.new())
     _vehicle = _controller.get_rid()
     await wait_idle_frames(2)

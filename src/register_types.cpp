@@ -117,6 +117,7 @@
 #include "vehicles/rail/RailVehicleMasterController.hpp"
 #include "vehicles/rail/RailVehicleMotorParameter.hpp"
 #include "vehicles/rail/RailVehicleNeighbour.hpp"
+#include "vehicles/rail/RailVehiclePhysicsNode.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleRelayListItem.hpp"
 #include "vehicles/rail/RailVehicleSecuritySystem.hpp"
@@ -238,6 +239,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);
         GDREGISTER_CLASS(VehiclePhysicsNode);
+        GDREGISTER_CLASS(RailVehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);

@@ -6,7 +6,7 @@ class_name MaszynaRailVehicle3D
 ## triple: exterior E3D model, FIZ physics controller, and an interactive MMD-driven cabin,
 ## placed on a named track at a given offset. Deliberately does NOT extend RailVehicle3D -
 ## it builds one internally and delegates all vehicle behavior (motion, show_cabin/hide_cabin,
-## player-detection Area3D, light sync) to it unmodified, exactly like FizVehiclePhysicsNode wraps
+## player-detection Area3D, light sync) to it unmodified, exactly like MaszynaRailVehiclePhysicsNode wraps
 ## a generated VehicleController instead of extending it.
 ##
 ## MaszynaPlayer needs no changes to detect the generated RailVehicle3D: its detection Area3D
@@ -42,7 +42,7 @@ class_name MaszynaRailVehicle3D
             head_display_material = x
             _dirty = true
 
-## The scenery's name for this vehicle, forwarded to the generated FizVehiclePhysicsNode.train_id
+## The scenery's name for this vehicle, forwarded to the generated MaszynaRailVehiclePhysicsNode.train_id
 ## and registered with VehicleServer.vehicle_set_name(), which is how an event, a scenario or
 ## the console find a vehicle by name. It may be empty or repeated - everything that holds the
 ## vehicle uses its RID, so only a lookup by that name is affected.
@@ -52,7 +52,7 @@ class_name MaszynaRailVehicle3D
             train_id = x
             _dirty = true
 
-## Forwarded to the generated FizVehiclePhysicsNode.initial_velocity. 0.0 (default) means the
+## Forwarded to the generated MaszynaRailVehiclePhysicsNode.initial_velocity. 0.0 (default) means the
 ## vehicle starts not-ready-to-depart (battery off, matching the original engine's scenery
 ## velocity token); a non-zero value marks it ready (battery on per battery_start_mode).
 @export var initial_velocity:float = 0.0:

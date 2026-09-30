@@ -556,7 +556,6 @@ func _create_controller(velocity: float = 0.0) -> VehicleController:
     # the initial velocity is read while the Mover is initialised, so it goes in before the build
     var controller: VehicleController = build_vehicle(
             "mock_train_%d" % created_controllers.size(), null, velocity * 3.6)
-    controller.type_name = "test"
     created_controllers.append(controller)
     return controller
 

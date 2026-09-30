@@ -671,7 +671,6 @@ func _create_vehicle(
 func _create_vehicle_node() -> VehiclePhysicsNode:
     var physics_node: VehiclePhysicsNode = build_vehicle_node(
             "test_train_%d" % created_vehicle_nodes.size())
-    physics_node.get_controller().type_name = "test"
     created_vehicle_nodes.append(physics_node)
     return physics_node
 

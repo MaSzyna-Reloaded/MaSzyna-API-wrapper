@@ -197,6 +197,15 @@ namespace godot {
             void update_state() override;
             void initialize() override;
 
+            /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
+             * as TypeName (DynObj.cpp:2019) */
+            MAKE_MEMBER_GS(String, type_name, "");
+            /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
+             * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The
+             * simulation takes both at once, and it reads more than cargo out of them: `pantstate`
+             * is how a scenery starts a locomotive with its pantographs already up. */
+            MAKE_MEMBER_GS(String, load_name, "");
+            MAKE_MEMBER_GS(double, load_amount, 0.0);
             MAKE_MEMBER_GS(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
             MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
             MAKE_MEMBER_GS(double, reduced_mass, 0.0);

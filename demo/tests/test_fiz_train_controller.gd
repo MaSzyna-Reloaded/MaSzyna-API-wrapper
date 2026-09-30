@@ -5,7 +5,7 @@ const FIXTURE_SOURCE_PATH := "res://tests/fixtures/test_vehicle.fiz"
 const FIXTURE_DATA_PATH := "fixtures"
 const FIXTURE_FILENAME := "test_vehicle"
 
-var node: FizVehiclePhysicsNode
+var node: MaszynaRailVehiclePhysicsNode
 var _previous_game_dir: String = ""
 var _temp_fiz_dir: String
 var _temp_fiz_path: String
@@ -24,7 +24,7 @@ func before_each():
     src.close()
     dst.close()
 
-    node = FizVehiclePhysicsNode.new()
+    node = MaszynaRailVehiclePhysicsNode.new()
     add_child(node)
     await wait_idle_frames(2)
 

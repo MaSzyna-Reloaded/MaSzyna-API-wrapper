@@ -25,13 +25,12 @@ func build_vehicle(train_id:String = "TestTrain", description:VehicleController 
 ## The node itself, for a test that needs a NodePath to the vehicle (RailVehicle3D.controller_path).
 func build_vehicle_node(train_id:String = "TestTrain", description:VehicleController = null,
         initial_velocity:float = 0.0) -> VehiclePhysicsNode:
-    var physics_node:VehiclePhysicsNode = VehiclePhysicsNode.new()
+    var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.set_description(description)
     physics_node.train_id = train_id
     physics_node.initial_velocity = initial_velocity
-    add_child_autofree(physics_node)
     # a rail vehicle, stepped by RailVehicleServer whether or not a RailVehicle3D places it
-    RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
+    add_child_autofree(physics_node)
     return physics_node
 
 
@@ -51,7 +50,7 @@ func build_track(track_name:String, length:float) -> RID:
 ## to NaN (test_rail_vehicle_at_rest.gd). It takes its controller within a few frames; the test frees
 ## it, before its physics node goes with autofree.
 func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> RailVehicle3D:
-    var model:VehicleController = MoverRailVehicleController.new()
+    var model:RailVehicleController = MoverRailVehicleController.new()
     model.train_id = train_id
     model.mass = RAIL_VEHICLE_MASS
     model.type_name = "test"

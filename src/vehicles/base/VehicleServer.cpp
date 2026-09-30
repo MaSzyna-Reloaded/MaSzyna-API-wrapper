@@ -49,19 +49,14 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_bind_controller", "vehicle", "controller"), &VehicleServer::vehicle_bind_controller);
         ClassDB::bind_method(
-                D_METHOD("vehicle_set_type_name", "vehicle", "type_name"), &VehicleServer::vehicle_set_type_name);
-        ClassDB::bind_method(
                 D_METHOD("vehicle_set_initial_velocity", "vehicle", "velocity"),
                 &VehicleServer::vehicle_set_initial_velocity);
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_driver_type", "vehicle", "driver_type"), &VehicleServer::vehicle_set_driver_type);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_set_load", "vehicle", "load_name", "load_amount"), &VehicleServer::vehicle_set_load);
         ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &VehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &VehicleServer::vehicle_get_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &VehicleServer::vehicle_get_rid_by_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_rids"), &VehicleServer::vehicle_get_rids);
-        ClassDB::bind_method(D_METHOD("vehicle_get_type_name", "vehicle"), &VehicleServer::vehicle_get_type_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_driver_type", "vehicle"), &VehicleServer::vehicle_get_driver_type);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_simulation_ready", "vehicle"), &VehicleServer::vehicle_is_simulation_ready);
@@ -267,11 +262,8 @@ namespace godot {
         VehicleController *controller = slot->controller.ptr();
         controller->set_vehicle_rid(p_vehicle);
         controller->set_train_id(vehicle->name);
-        controller->set_type_name(vehicle->type_name);
         controller->set_initial_velocity(vehicle->initial_velocity);
         controller->set_driver_type(vehicle->driver_type);
-        controller->set_load_name(vehicle->load_name);
-        controller->set_load_amount(vehicle->load_amount);
         vehicle->implementation = controller->get_implementation();
         _connect_relays(p_vehicle);
         emit_signal(vehicle_controller_changed_signal, p_vehicle);
@@ -282,15 +274,6 @@ namespace godot {
     uint64_t VehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {
         const VehicleController *controller = _get_controller(p_vehicle);
         return controller != nullptr ? controller->get_instance_id() : 0;
-    }
-
-    void VehicleServer::vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name) {
-        Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL(vehicle);
-        vehicle->type_name = p_type_name;
-        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
-            controller->set_type_name(p_type_name);
-        }
     }
 
     void VehicleServer::vehicle_set_initial_velocity(const RID &p_vehicle, const double p_velocity) {
@@ -309,17 +292,6 @@ namespace godot {
         vehicle->driver_type = p_driver_type;
         if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
             controller->set_driver_type(p_driver_type);
-        }
-    }
-
-    void VehicleServer::vehicle_set_load(const RID &p_vehicle, const String &p_load_name, const double p_load_amount) {
-        Vehicle *vehicle = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL(vehicle);
-        vehicle->load_name = p_load_name;
-        vehicle->load_amount = p_load_amount;
-        if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
-            controller->set_load_name(p_load_name);
-            controller->set_load_amount(p_load_amount);
         }
     }
 
@@ -430,12 +402,6 @@ namespace godot {
             result.push_back(entry.key);
         }
         return result;
-    }
-
-    String VehicleServer::vehicle_get_type_name(const RID &p_vehicle) const {
-        ERR_FAIL_COND_V(!vehicles.has(p_vehicle), String());
-        const VehicleController *controller = _get_controller(p_vehicle);
-        return controller != nullptr ? controller->get_type_name() : String();
     }
 
     VehicleController::DriverType VehicleServer::vehicle_get_driver_type(const RID &p_vehicle) const {

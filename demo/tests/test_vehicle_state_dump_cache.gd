@@ -10,7 +10,6 @@ var _radio: RailVehicleRadio = null
 
 func before_each() -> void:
     _controller = build_vehicle("dump_cache_test")
-    _controller.type_name = "test"
     _radio = MoverRailVehicleRadio.new()
     _controller.add_component(_radio)
     _rid = _controller.get_rid()

@@ -48,7 +48,6 @@ func before_each() -> void:
     # a real vehicle, because the dynamics need a mass - an empty Mover integrates to NaN
     var model:VehicleController = load("res://tests/fixtures/sm42_vehicle.tres") as VehicleController
     _controller = build_vehicle("clock_test", model, VELOCITY_MS * 3.6)
-    _controller.type_name = "test"
     # an unmanned vehicle is not simulated at all (Mover.cpp:4485) - see FINDINGS.md, 2026-09-23
     _controller.driver_type = VehicleController.DRIVER_HEAD
     _vehicle = _controller.get_rid()

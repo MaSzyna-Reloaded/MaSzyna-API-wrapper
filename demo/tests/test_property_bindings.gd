@@ -132,15 +132,14 @@ func test_authored_configuration_reaches_the_built_vehicle() -> void:
     security.aware_system_active = true
     security.emergency_brake_delay = 2.5
 
-    var description: VehicleController = MoverRailVehicleController.new()
+    var description:RailVehicleController = MoverRailVehicleController.new()
     description.train_id = "PropertyBindingsTest"
     description.mass = 74000.0
     var components: Array[VehicleComponent] = [brake, engine, security]
     description.components = components
 
-    var vehicle := VehiclePhysicsNode.new()
+    var vehicle := RailVehiclePhysicsNode.new()
     add_child_autofree(vehicle)
-    RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
     vehicle.set_description(description)
 
     var train: VehicleController = vehicle.get_controller()

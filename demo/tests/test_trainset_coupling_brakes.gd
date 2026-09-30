@@ -39,14 +39,13 @@ func before_each() -> void:
     brakes.clear()
     var model:VehicleController = FizVehicleBuilder.build_description_at(FIXTURE_PATH)
     for index:int in range(VEHICLE_COUNT):
-        var node:VehiclePhysicsNode = VehiclePhysicsNode.new()
+        var node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
         node.train_id = "TrainsetVehicle%d" % index
         # the first vehicle is driven - an unmanned one is not simulated (FINDINGS, 09-23)
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
         node.initial_velocity = READY_TO_DEPART_VELOCITY
         node.set_description(model)
         add_child_autofree(node)
-        RailVehicleServer.vehicle_attach(node.get_vehicle_rid())
         nodes.append(node)
         var controller:VehicleController = node.get_controller()
         controllers.append(controller)

@@ -19,7 +19,7 @@ A vehicle is three layers, and only the last one knows the Mover:
 
 1. **The proxy in the scene tree.** `VehiclePhysicsNode` is the vehicle's presence in the tree: it builds the vehicle
    from a copy of its description (a `VehicleController` with its components), owns its `VehicleServer` handle (RID)
-   and frees both with itself. It holds no state and no simulation. `FizVehiclePhysicsNode` (GDScript) only supplies
+   and frees both with itself. It holds no state and no simulation. `MaszynaRailVehiclePhysicsNode` (GDScript) only supplies
    the description, parsed from a `.fiz`.
    `GenericVehicleComponentNode` is a second proxy, through which a script adds its own component to the vehicle it
    sits under.
@@ -54,7 +54,7 @@ classDiagram
     namespace SceneTree {
         class RailVehicle3D
         class VehiclePhysicsNode
-        class FizVehiclePhysicsNode
+        class MaszynaRailVehiclePhysicsNode
         class GenericVehicleComponentNode
     }
     namespace Model {
@@ -75,8 +75,8 @@ classDiagram
         class MoverRailVehicleDoors
         class TMoverParameters
     }
-    VehiclePhysicsNode <|-- FizVehiclePhysicsNode
-    FizVehiclePhysicsNode ..> VehicleController : parses .fiz into a description
+    VehiclePhysicsNode <|-- MaszynaRailVehiclePhysicsNode
+    MaszynaRailVehiclePhysicsNode ..> VehicleController : parses .fiz into a description
     VehiclePhysicsNode ..> VehicleController : builds a copy of the description
     VehiclePhysicsNode *-- VehicleController : owns
     VehiclePhysicsNode --> RailVehicleServer : RID

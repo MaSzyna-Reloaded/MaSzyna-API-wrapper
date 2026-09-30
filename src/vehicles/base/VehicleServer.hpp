@@ -38,11 +38,8 @@ namespace godot {
                     RID controller;
                     /* What the scenery placed the vehicle with, handed to every controller bound
                      * to it before its simulation starts (the `.scn` `dynamic` entry) */
-                    String type_name;
                     double initial_velocity = 0.0;
                     VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
-                    String load_name;
-                    double load_amount = 0.0;
                     /* The implementation that steps it, as its controller names it */
                     StringName implementation;
                     /* What a scenery calls this vehicle. Only the things that know a vehicle by
@@ -136,13 +133,10 @@ namespace godot {
             /* The controller object bound to the vehicle, 0 without one - C++ only and unbound,
              * for the servers that step and couple the vehicles */
             uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
-            /* What the scenery placed the vehicle with - its type (the CHK/MMD name, DynObj.cpp:2019),
-             * the velocity it starts with, who drives it and what it carries (`loadcount`,
-             * `loadtype`). Handed to its controller when it is bound. */
-            void vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name);
+            /* What the scenery placed the vehicle with - the velocity it starts with and who drives
+             * it. Handed to its controller when it is bound. */
             void vehicle_set_initial_velocity(const RID &p_vehicle, double p_velocity);
             void vehicle_set_driver_type(const RID &p_vehicle, VehicleController::DriverType p_driver_type);
-            void vehicle_set_load(const RID &p_vehicle, const String &p_load_name, double p_load_amount);
             /* The scenery's name for this vehicle, and the way back from one. A name is what a
              * `.scn`, an event or the console has; everything that holds the vehicle uses its
              * handle and never comes through here (TrackServer::track_get_rid_by_name() is the
@@ -151,8 +145,6 @@ namespace godot {
             String vehicle_get_name(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
             TypedArray<RID> vehicle_get_rids() const;
-            /* The name of the vehicle's type (TMoverParameters::TypeName) */
-            String vehicle_get_type_name(const RID &p_vehicle) const;
             /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
             VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             /* Whether the simulation behind the vehicle exists yet - nothing can be read off a

@@ -402,6 +402,10 @@
 			[code]Param.LightP[/code]
 			Power drawn for lighting, in kW.
 		</member>
+		<member name="load_amount" type="float" setter="set_load_amount" getter="get_load_amount" default="0.0">
+		</member>
+		<member name="load_name" type="String" setter="set_load_name" getter="get_load_name" default="&quot;&quot;">
+		</member>
 		<member name="reduced_mass" type="float" setter="set_reduced_mass" getter="get_reduced_mass" default="0.0">
 			[code]Param.Mred[/code]
 			Reduced (rotating) mass, added to [member mass] for braking calculations.
@@ -415,6 +419,8 @@
 			Bitmask identifying a vehicle's special-cased behavior family (e.g. EZT, ET22, ET40, ET42, EP05, DMU).
 			Not every value listed on the FIZ wiki is implemented by the simulation - only the ones it knows are exposed
 			here (notably, [code]182[/code] is missing).
+		</member>
+		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
 		</member>
 	</members>
 	<signals>

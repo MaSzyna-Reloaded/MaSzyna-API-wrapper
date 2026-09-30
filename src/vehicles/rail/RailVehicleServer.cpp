@@ -49,6 +49,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_detach", "vehicle"), &RailVehicleServer::vehicle_detach);
         ClassDB::bind_method(D_METHOD("vehicle_is_attached", "vehicle"), &RailVehicleServer::vehicle_is_attached);
         ClassDB::bind_method(
+                D_METHOD("vehicle_set_type_name", "vehicle", "type_name"), &RailVehicleServer::vehicle_set_type_name);
+        ClassDB::bind_method(D_METHOD("vehicle_get_type_name", "vehicle"), &RailVehicleServer::vehicle_get_type_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_load", "vehicle", "load_name", "load_amount"),
+                &RailVehicleServer::vehicle_set_load);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_rids_in_rect", "rect"), &RailVehicleServer::vehicle_get_rids_in_rect);
         ClassDB::bind_method(
                 D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
@@ -297,6 +303,32 @@ namespace godot {
         return vehicles.has(p_vehicle);
     }
 
+    void RailVehicleServer::vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        placement->type_name = p_type_name;
+        if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
+            controller->set_type_name(p_type_name);
+        }
+    }
+
+    String RailVehicleServer::vehicle_get_type_name(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? placement->type_name : String();
+    }
+
+    void
+    RailVehicleServer::vehicle_set_load(const RID &p_vehicle, const String &p_load_name, const double p_load_amount) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        placement->load_name = p_load_name;
+        placement->load_amount = p_load_amount;
+        if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
+            controller->set_load_name(p_load_name);
+            controller->set_load_amount(p_load_amount);
+        }
+    }
+
     void RailVehicleServer::vehicle_detach(const RID &p_vehicle) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
@@ -472,7 +504,12 @@ namespace godot {
         _disconnect_relays(p_vehicle, *placement);
         placement->controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
         _connect_relays(p_vehicle, *placement);
+        // a newly bound controller takes the rail values before its simulation starts
+        // (VehicleServer::vehicle_bind_controller() tells this before starting it)
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
+            controller->set_type_name(placement->type_name);
+            controller->set_load_name(placement->load_name);
+            controller->set_load_amount(placement->load_amount);
             controller->emit_position_changed_if_needed();
         }
     }

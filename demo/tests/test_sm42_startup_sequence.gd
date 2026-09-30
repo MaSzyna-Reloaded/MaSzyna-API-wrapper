@@ -7,12 +7,11 @@ func before_each():
     # Without it CabActive stays 0 and TMoverParameters::ComputeTotalForce() switches the physics
     # off once LastSwitchingTime passes 5 s (Mover.cpp:4485) - the engine runs and the vehicle
     # never moves.
-    var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+    var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.train_id = "TestTrain"
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     physics_node.set_description(load("res://tests/fixtures/sm42_vehicle.tres"))
     add_child_autofree(physics_node)
-    RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
     train = physics_node.get_controller()
     await wait_idle_frames(2)
     train.send_command("battery", true)

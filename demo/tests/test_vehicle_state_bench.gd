@@ -78,11 +78,10 @@ func before_all() -> void:
     # afterwards leaves the backend running on the zeros it started with (mass 0 -> NaN velocity)
     var model: VehicleController = FizVehicleBuilder.build_description_at(FIXTURE_FIZ)
     for index: int in VEHICLE_COUNT:
-        var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+        var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
         physics_node.train_id = "bench_vehicle_%d" % index
         physics_node.set_description(model)
         add_child(physics_node)
-        RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
         _vehicle_nodes.append(physics_node)
         var controller: VehicleController = physics_node.get_controller()
 

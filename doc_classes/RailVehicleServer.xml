@@ -149,6 +149,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_type_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_is_attached" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="vehicle" type="RID" />
@@ -176,6 +182,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_set_load">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="load_name" type="String" />
+			<param index="2" name="load_amount" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_set_pantograph_geometry">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -197,6 +211,13 @@
 			<param index="1" name="track" type="RID" />
 			<param index="2" name="track_offset" type="float" />
 			<param index="3" name="track_direction" type="int" enum="TrackServer.Direction" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_type_name">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="type_name" type="String" />
 			<description>
 			</description>
 		</method>

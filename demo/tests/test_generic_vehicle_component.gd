@@ -10,13 +10,12 @@ var _probe: GenericVehicleComponentNode = null
 
 
 func before_each() -> void:
-    _vehicle = VehiclePhysicsNode.new()
+    _vehicle = RailVehiclePhysicsNode.new()
     _vehicle.train_id = "GenericComponentTest"
     _probe = ProbeComponent.new()
     _probe.name = "ProbeComponent"
     _vehicle.add_child(_probe)
     add_child(_vehicle)
-    RailVehicleServer.vehicle_attach(_vehicle.get_vehicle_rid())
     await wait_idle_frames(2)
 
 

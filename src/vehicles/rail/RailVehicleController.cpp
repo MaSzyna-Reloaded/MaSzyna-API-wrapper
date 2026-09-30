@@ -87,6 +87,9 @@ namespace godot {
                          {"ET40", TRAIN_TYPE_ET40},
                          {"T181", TRAIN_TYPE_181},
                          {"DMU", TRAIN_TYPE_DMU}}));
+        BIND_PROPERTY(RailVehicleController, Variant::STRING, type_name);
+        BIND_PROPERTY(RailVehicleController, Variant::STRING, load_name);
+        BIND_PROPERTY(RailVehicleController, Variant::FLOAT, load_amount);
         BIND_PROPERTY(RailVehicleController, Variant::FLOAT, reduced_mass);
         BIND_PROPERTY(RailVehicleController, Variant::FLOAT, sand_capacity);
         BIND_PROPERTY(RailVehicleController, Variant::FLOAT, heating_power);

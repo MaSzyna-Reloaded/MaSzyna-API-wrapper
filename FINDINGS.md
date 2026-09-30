@@ -245,6 +245,12 @@ anything. Open work belongs in `TODO.md`.
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
   (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
   vehicle's voltage)*
+* `instance_set_submodel_visible(true)` overrides a dynamic model's `dynamic_hidden` default;
+  pose and material settings do not imply visibility. *(09-30 coupled vehicles lost their
+  couplers)*
+* A bilateral detach that clears both backend links retains the former neighbour until both
+  owners have announced their state change; do not invalidate a rendering cache to compensate
+  for the missing event. *(09-30 recoupled wagon kept stale coupler state)*
 * A cab control is its own submodel only - a mesh under it is another control's or nobody's, as
   the original's `control_mapper::find` (`Train.cpp:64`). *(09-29 the E186 screen's OP1/OP2
   turned its page off; 09-30 its op12 still did)*

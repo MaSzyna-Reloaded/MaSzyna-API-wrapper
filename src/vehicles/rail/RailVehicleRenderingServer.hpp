@@ -104,6 +104,29 @@ namespace godot {
                     int mirror_cab = 0;
             };
 
+            enum PneumaticLine {
+                PNEUMATIC_LINE_BRAKE,
+                PNEUMATIC_LINE_MAIN,
+            };
+
+            enum PneumaticLayout {
+                PNEUMATIC_LAYOUT_NONE,
+                PNEUMATIC_LAYOUT_LEFT,
+                PNEUMATIC_LAYOUT_RIGHT,
+                PNEUMATIC_LAYOUT_BOTH,
+            };
+
+            /* A mechanical coupler uses OFF, ON and XON. An air hose additionally selects the right
+             * submodel, slanted or straight (TDynamicObject::SetPneumatic(), DynObj.cpp:497). */
+            enum CouplerVariant {
+                COUPLER_VARIANT_OFF,
+                COUPLER_VARIANT_ON,
+                COUPLER_VARIANT_XON,
+                COUPLER_VARIANT_RIGHT_XON,
+                COUPLER_VARIANT_RIGHT_ON,
+                COUPLER_VARIANT_COUNT,
+            };
+
             HashMap<RID, Visual> vehicles;
             /* The vehicle each exterior model draws */
             HashMap<RID, RID> model_vehicles;
@@ -136,11 +159,11 @@ namespace godot {
             void _pose_mirrors(const RID &p_vehicle, Visual &p_visual);
             void _send_poses(Visual &p_visual);
             void _update_couplers(const RID &p_vehicle, Visual &p_visual);
-            int
-            _pneumatic_layout(const Visual &p_visual, RailVehicleController::CouplerEnd p_end, bool p_brake_hose) const;
-            int _pneumatic_variant(
+            PneumaticLayout _pneumatic_layout(
+                    const Visual &p_visual, RailVehicleController::CouplerEnd p_end, PneumaticLine p_line) const;
+            CouplerVariant _pneumatic_variant(
                     const RID &p_vehicle, const Visual &p_visual, RailVehicleController::CouplerEnd p_end,
-                    bool p_brake_hose) const;
+                    PneumaticLine p_line) const;
             void _show_air_coupler(const Visual &p_visual, const String &p_name, bool p_on, bool p_xon);
             void _update_lights(const RID &p_vehicle, Visual &p_visual);
             void _update_smoke(const RID &p_vehicle, const Visual &p_visual) const;

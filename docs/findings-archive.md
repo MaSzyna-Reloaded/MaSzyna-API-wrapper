@@ -2519,3 +2519,45 @@ lighting or the trainset.
   `CabinSystem`.
 * **Rule:** code that runs in the editor calls no autoload that is not `@tool` - the call is a
   script error that returns null into the caller's data, not a warning.
+
+## 2026-09-30 - coupled vehicles lost their couplers
+
+* **Symptom:** coupling SM42-329 with b16mnopux_50512608041-3 on Stary Jawor hid the hanging
+  coupler on the locomotive without showing its connected E3D submodel; the wagon appeared not
+  to change.
+* **What proved it:** both real models contain `coupler1/2_off` and `coupler1/2_on`. The parser
+  marks every `*_on` and `*_xon` as `dynamic_hidden`, as the original does for a vehicle. After
+  `RailVehicleRenderingServer` hid `_off` and called
+  `instance_set_submodel_visible(..., true)` for `_on`, `E3DInstanceBackend::_is_submodel_shown()`
+  still rejected `_on` solely because it was `dynamic_hidden`. The original's
+  `AirCoupler::TurnOn()` shows it (`AirCoupler.h:32`, `DynObj.cpp:819-850`). The pneumatic
+  fallback also returned a straight variant when `GetPneumatic()` found no connected hose,
+  unlike `TDynamicObject::SetPneumatic()` (`DynObj.cpp:497-545`).
+* **Fix:** an explicit per-instance visible setting overrides `dynamic_hidden`, while a model's
+  own `visible=false`, an invisible parent and an explicit hide still win. Coupler and pneumatic
+  layouts use named enums, and a vehicle with no connected hose geometry keeps its hanging hose.
+* **Rule:** `instance_set_submodel_visible(true)` overrides a dynamic model's default-hidden
+  state; merely posing or changing the material of that submodel does not.
+
+## 2026-09-30 - a recoupled wagon kept stale coupler rendering state
+
+* **Symptom:** the consist in `td.scn` began with correct couplers. After uncoupling and coupling
+  EP07-424 to the first wagon again, the locomotive's connected submodels returned but the
+  wagon's did not.
+* **What proved it:** the fixture passed for the first coupling, then failed as soon as the same
+  vehicles were uncoupled: the initiating controller emitted `trainset_changed`, but
+  `TMoverParameters::Dettach()` had already cleared both `Connected` pointers, so
+  `_consume_coupler_events()` could no longer announce the former neighbour. Its renderer kept
+  the old coupled `coupler_state`; the next coupling computed the same value and correctly
+  skipped what appeared to be an unchanged state. The rendering callback's own comment promised
+  to redraw the neighbours whose hoses depend on this vehicle, but its implementation redrew only
+  the RID carried by the signal.
+* **Fix:** `MoverRailVehicleController::uncouple()` retains the neighbouring controller before
+  `Dettach()`, consumes the initiating end's events, then announces the trainset change to the
+  former neighbour. The interactive disconnect operation goes through that same public
+  operation. A coupling or trainset event redraws the directly connected neighbours too, so
+  attaching an individual hose from one end updates both models. The regression now covers
+  couple, uncouple and recouple.
+* **Rule:** a bilateral operation whose backend severs the relationship retains both owners long
+  enough to announce the resulting state change to both; a state cache is not invalidated as a
+  substitute for the missing event.

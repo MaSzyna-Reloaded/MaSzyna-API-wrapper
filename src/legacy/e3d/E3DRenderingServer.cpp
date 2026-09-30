@@ -1278,6 +1278,7 @@ namespace godot {
     }
 
     void E3DRenderingServer::_resolve_submodel_settings(E3DInstanceData &p_instance) {
+        p_instance.shown_submodels.clear();
         p_instance.hidden_submodels.clear();
         p_instance.submodel_materials.clear();
         for (KeyValue<String, E3DInstanceData::SubmodelSettings> &settings: p_instance.submodel_settings) {
@@ -1285,8 +1286,12 @@ namespace godot {
             if (settings.value.submodel == nullptr) {
                 continue;
             }
-            if (settings.value.hidden) {
-                p_instance.hidden_submodels.insert(settings.value.submodel);
+            if (settings.value.visibility_set) {
+                if (settings.value.hidden) {
+                    p_instance.hidden_submodels.insert(settings.value.submodel);
+                } else {
+                    p_instance.shown_submodels.insert(settings.value.submodel);
+                }
             }
             if (settings.value.material_override.is_valid()) {
                 p_instance.submodel_materials[settings.value.submodel] = settings.value.material_override;
@@ -1319,7 +1324,9 @@ namespace godot {
             const RID &p_instance, const String &p_submodel, const bool p_visible) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
-        instance->submodel_settings[p_submodel.to_lower()].hidden = !p_visible;
+        E3DInstanceData::SubmodelSettings &settings = instance->submodel_settings[p_submodel.to_lower()];
+        settings.visibility_set = true;
+        settings.hidden = !p_visible;
         if (instance->built) {
             _resolve_submodel_settings(*instance);
             _get_backend(*instance).update(*instance);

@@ -264,7 +264,7 @@ unique_name_in_owner = true
 
 [node name="RefreshTimer" type="Timer" parent="."]
 unique_name_in_owner = true
-wait_time = 0.2
+wait_time = 0.1
 
 [connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

@@ -83,10 +83,6 @@
 			[code]Engine:Cr[/code]
 			Power correction ratio (characteristic correction coefficient).
 		</member>
-		<member name="rpm_change_rate" type="float" setter="set_rpm_change_rate" getter="get_rpm_change_rate" default="2.0">
-			[code]Engine:AIM[/code]
-			Rate at which the diesel engine's RPM changes.
-		</member>
 		<member name="shunt_mode_allowed" type="bool" setter="set_shunt_mode_allowed" getter="get_shunt_mode_allowed" default="false">
 			[code]Engine:ShuntMode[/code]
 			Whether manual generator field-shunting control is available.

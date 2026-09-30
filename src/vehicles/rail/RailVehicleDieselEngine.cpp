@@ -170,6 +170,28 @@ namespace godot {
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 RailVehicleDieselEngine, Variant::ARRAY, torque_table, PROPERTY_HINT_TYPE_STRING,
                 "VehicleCurvePointItem");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kw, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kv, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kfe, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kfs, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kfo, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heat_kfo2, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_min_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_max_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_flow_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_cooling_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::BOOL, cooling_water_shutters, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::BOOL, cooling_water_aux_circuit, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_aux_min_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_aux_max_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_water_aux_cooling_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::BOOL, cooling_water_aux_shutters, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_oil_min_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_oil_max_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_fan_speed, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heater_min_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_heater_max_temperature, "cooling");
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, cooling_nominal_power, "cooling");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &RailVehicleDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &RailVehicleDieselEngine::oil_pump);
         ClassDB::bind_method(

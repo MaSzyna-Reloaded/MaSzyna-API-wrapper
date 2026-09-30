@@ -142,6 +142,9 @@ anything. Open work belongs in `TODO.md`.
 * "The AI can drive it, the player cannot": log the AI's vehicle commands and replay them on the
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
 
+* A FIZ key given twice counts with its first value (`extract_value`'s `find()`); a dictionary
+  that keeps the last one made BR285's `Vadd` 0 and its traction force 0/0. *(09-30 BR285 NaN)*
+
 ## State, ownership, events
 * A hot path takes a vehicle's component once and calls its getters; the state dump is rebuilt
   after every step or command and the config dump on every call, so one value read from either

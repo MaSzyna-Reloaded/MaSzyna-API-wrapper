@@ -28,12 +28,13 @@ class_name FizTrainDieselElectricEngineParser
 ## fix applied and every startup step (fuel/oil pump, main switch, direction, controller
 ## position) done correctly.
 ##
-## Engine:'s diesel-electric-specific subset (Flat/Vhyp/Vadd/Cr/RelayType/ShuntMode/HeatingRPM):
-## exact original LoadFIZ_Engine semantics aren't recoverable from this repo's vendored source
-## (the FIZ loader itself isn't part of the vendored physics-only copy), so unit conversions
-## below (Vhyp/Vadd km/h->m/s, matching every other velocity-like FIZ field in this codebase)
-## and the Flat/ShuntMode literal-"1" comparison (documented server-side quirk, replicated from
-## the original research pass over upstream eu07/maszyna) are best-effort.
+## Engine:'s diesel-electric-specific subset (LoadFIZ_Engine, Mover.cpp:11261-11285 of the
+## original): Flat/ShuntMode compare to the literal "1", Vhyp/Vadd are read in km/h and kept
+## in m/s, and AIM/RPMDecRate go to the diesel's own mechanical_inertia/
+## mechanical_rpm_decrease_rate - AIM with a default of its own.
+
+## Original engine: Mover.cpp:11282 extract_value(dizel_AIM, "AIM", Input, "1.25")
+const DEFAULT_INERTIA: float = 1.25
 
 var _wwlist_rows: Array[RailVehicleWWListItem] = []
 var _motor_param_rows: Array[RailVehicleMotorParameter] = []
@@ -65,6 +66,9 @@ func apply_engine_fields(kv: Dictionary, node: RailVehicleDieselElectricEngine) 
         node.shunt_mode_allowed = FizLineUtil.get_string(kv, "ShuntMode") == "1"
     if kv.has("HeatingRPM"):
         node.heating_rpm = FizLineUtil.get_float(kv, "HeatingRPM")
+    node.mechanical_inertia = FizLineUtil.get_float(kv, "AIM", DEFAULT_INERTIA)
+    if kv.has("RPMDecRate"):
+        node.mechanical_rpm_decrease_rate = FizLineUtil.get_float(kv, "RPMDecRate")
 
 
 ## Standard section-parser interface, used for "WWList:" and "MotorParamTable:" (registered

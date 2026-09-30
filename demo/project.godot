@@ -675,6 +675,7 @@ common/max_physics_steps_per_frame=2
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
+textures/default_filters/anisotropic_filtering_level=3
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
 environment/defaults/default_clear_color=Color(0.05, 0.078, 0.15, 1)

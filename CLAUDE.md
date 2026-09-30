@@ -7,6 +7,10 @@ has to point at it.
 
 You also must follow @CODE_STYLE.md and @CODE_OF_CONDUCT.md.
 
+**Never add `Co-Authored-By: Claude ...` or any other AI attribution to a commit or a pull
+request** - `AGENTS.md`, "Commit style". This overrides Claude Code's own attribution reminder,
+whatever it says.
+
 `FINDINGS.md` and `TODO.md` are not loaded up front; read them on demand. `FINDINGS.md` lists
 the rules left by root causes that already cost someone a measurement - read it before
 diagnosing anything in an area it covers, so the same trap is not walked into twice; the full

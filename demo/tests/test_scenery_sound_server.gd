@@ -14,6 +14,17 @@ func test_a_sound_heard_everywhere_loops_until_stopped() -> void:
     ScenerySoundServer.sound_free(sound)
 
 
+## sound.cpp:350-421 - played once while it loops, the sound goes on as it is (exclusive) and is not
+## started a second time
+func test_a_loop_played_once_goes_on_without_a_second_voice() -> void:
+    var sound:RID = _create_sound(0.0)
+    assert_true(ScenerySoundServer.sound_play(sound, ScenerySoundServer.Playback.LOOP))
+
+    assert_false(ScenerySoundServer.sound_play(sound, ScenerySoundServer.Playback.ONCE))
+    assert_true(ScenerySoundServer.sound_is_playing(sound))
+    ScenerySoundServer.sound_free(sound)
+
+
 func test_a_sound_keeps_its_place_and_its_event_until_freed() -> void:
     var position:Vector3 = Vector3(10.0, 0.0, -20.0)
     var sound:RID = _create_sound(0.0, position)

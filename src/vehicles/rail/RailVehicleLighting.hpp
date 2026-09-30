@@ -46,11 +46,6 @@ namespace godot {
             virtual bool get_opposite_headlight_right_enabled() const = 0;
             virtual bool get_opposite_redmarker_left_enabled() const = 0;
             virtual bool get_opposite_redmarker_right_enabled() const = 0;
-            virtual bool get_devices_light_enabled() const = 0;
-            virtual double get_roof_light_level() const = 0;
-            /* Compartment (roof) light, as the vehicle's own signal reports it: lit only while the
-             * lighting circuit is fed. Read straight from the backend - nothing is stored. */
-            virtual bool get_roof_light_enabled() const = 0;
             enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
             enum LightType {
                 LIGHT_TYPE_HEADLIGHT_UPPER,
@@ -95,9 +90,6 @@ namespace godot {
             /* The headlights dimmer (dimheadlights_sw:, Train.cpp:6125) */
             virtual void headlights_dim(bool p_enabled) = 0;
             virtual bool get_headlights_dimmed() const = 0;
-            /* Compartment (roof) light dimmed (cablightdim_sw) - it then shines at part of its level */
-            virtual void roof_light_dim(bool p_enabled) = 0;
-            virtual bool get_roof_light_dimmed() const = 0;
             // Direct per-light override, independent of the selector/"light programator"
             // (LightsPos + light_position_list) system above - sets/clears a single bit of
             // iLights directly, for debugging/testing individual bulbs regardless of what the
@@ -114,11 +106,5 @@ namespace godot {
             // override for debugging). p_light is the MMD label's own suffix, e.g. "upper",
             // "left", "leftend", "rearupper", "rearleftend".
             virtual void light_switch(const String &p_light, bool p_enabled) = 0;
-            // Cab interior lamp ("cablight_sw:") and instrument/dashboard backlighting
-            // ("instrumentlight_sw:") - both plain manual toggles with no counterpart in the
-            // simulation itself, gated only by 24V/110V power availability (mirrors the
-            // original engine's own "cablightlevel"/"lightpower" power gating, vehicle/Train.cpp).
-            virtual void roof_light(bool p_enabled) = 0;
-            virtual void devices_light(bool p_enabled) = 0;
     };
 } // namespace godot

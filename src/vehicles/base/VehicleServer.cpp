@@ -12,7 +12,6 @@ namespace godot {
     const char *VehicleServer::vehicle_controller_changed_signal = "vehicle_controller_changed";
     const char *VehicleServer::vehicle_configured_signal = "vehicle_configured";
     const char *VehicleServer::vehicle_config_changed_signal = "vehicle_config_changed";
-    const char *VehicleServer::vehicle_roof_light_changed_signal = "vehicle_roof_light_changed";
 
     VehicleServer::VehicleServer() {
         // The vehicles step by the runtime's clock, which stands still while paused. No explicit
@@ -93,9 +92,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(vehicle_controller_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(vehicle_configured_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(vehicle_config_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
-        ADD_SIGNAL(MethodInfo(
-                vehicle_roof_light_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
-                PropertyInfo(Variant::BOOL, "enabled")));
     }
 
     void VehicleServer::implementation_register(const StringName &p_name, const uint64_t p_implementation_id) {
@@ -317,9 +313,6 @@ namespace godot {
         controller->connect(
                 VehicleController::config_changed,
                 callable_mp(this, &VehicleServer::_on_vehicle_config_changed).bind(p_vehicle));
-        controller->connect(
-                VehicleController::roof_light_changed,
-                callable_mp(this, &VehicleServer::_on_vehicle_roof_light_changed).bind(p_vehicle));
     }
 
     void VehicleServer::_disconnect_relays(const RID &p_vehicle) {
@@ -339,9 +332,6 @@ namespace godot {
         controller->disconnect(
                 VehicleController::config_changed,
                 callable_mp(this, &VehicleServer::_on_vehicle_config_changed).bind(p_vehicle));
-        controller->disconnect(
-                VehicleController::roof_light_changed,
-                callable_mp(this, &VehicleServer::_on_vehicle_roof_light_changed).bind(p_vehicle));
     }
 
     void VehicleServer::_on_vehicle_moved(const Vector3 &p_position, const RID &p_vehicle) {
@@ -359,10 +349,6 @@ namespace godot {
 
     void VehicleServer::_on_vehicle_config_changed(const RID &p_vehicle) {
         emit_signal(vehicle_config_changed_signal, p_vehicle);
-    }
-
-    void VehicleServer::_on_vehicle_roof_light_changed(const bool p_enabled, const RID &p_vehicle) {
-        emit_signal(vehicle_roof_light_changed_signal, p_vehicle, p_enabled);
     }
 
     void VehicleServer::vehicle_set_name(const RID &p_vehicle, const String &p_name) {

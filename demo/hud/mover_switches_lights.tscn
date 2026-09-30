@@ -26,18 +26,6 @@ label = "Dim headlights"
 state_property = "headlights_dimmed"
 command = "headlights_dim"
 
-[node name="RoofLight" parent="." instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Roof light"
-state_property = "roof_light_enabled"
-command = "roof_light"
-
-[node name="DevicesLight" parent="." instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Devices light"
-state_property = "devices_light_enabled"
-command = "devices_light"
-
 [node name="EndLights" type="HFlowContainer" parent="."]
 layout_mode = 2
 

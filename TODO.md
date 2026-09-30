@@ -286,8 +286,8 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   * `off_from_dimmer` (dimPositions[modernDimmerPosition].isOff) - the vendored Mover has no
     dimmer positions; RailVehicleSwitches keeps DimmerList/ModernDimmer only as data;
   * `lights_compartments` (CompartmentLights) - the wrapper never drives the Mover's
-    CompartmentLights (`compartmentlights_sw` is not ported, see Cabins); `roof_light_enabled` is
-    the cab light, not the compartments;
+    CompartmentLights (`compartmentlights_sw` is not ported, see Cabins); the cab light
+    (`CabinSystem.cab_get_light_level()`) is not the compartments;
   * `doors_no_N` (iAnimType[ANIM_DOORS]) - the MMD `animations:` count, held by the model layer,
     not the vehicle's state;
   * lamps beyond the five carried (rearendsignals, auxiliary_*) in `lights_front`/`lights_rear`/
@@ -425,9 +425,16 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `_process`), so vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`
   awaits `vehicle_built`). Building belongs in a `MaszynaRailVehicle3DFactory`.
 * A distant vehicle's low-poly interior (`OPTIMIZED`,
-  `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of
-  `roof_light_enabled` until back within `maszyna/vehicles/detail_distance`:
-  `E3DRenderingServer.instance_set_emission_energy()` reaches only the NODES backend.
+  `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of its cab
+  lights until back within `maszyna/vehicles/detail_distance`:
+  `E3DRenderingServer.instance_set_emission_energy()` and `instance_set_submodel_emission_energy()`
+  reach only the NODES backend.
+* The low-poly interior lights only its `cabN` sections (`vehicle_set_cab_light_level()`); its
+  compartment and corridor sections (`corridor`/`korytarz`/`compartment`/`przedzial`,
+  `DynObj.cpp:2425-2433`) stay unlit - the original lights them from CompartmentLights at its own
+  intensity (`DynObj.cpp:1334-1352`), which is not ported.
+* `RailVehicleRenderingServer`'s low-poly cab lights have no test: the test models are transform
+  submodels without meshes or emissive materials.
 * The vehicle's lamps drawn from its lighting (`RailVehicleRenderingServer::_update_lights()`) have no
   test since `test_rail_vehicle_lights.gd` went with `RailVehicle3D.lights`.
 * `MaszynaVehicleStructure` and `RailVehicleAppearance` - candidates for a better name.

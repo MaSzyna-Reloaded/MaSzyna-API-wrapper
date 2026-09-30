@@ -122,10 +122,11 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
             result[key] = controlled[CONTROLLED_STATE_KEYS[key]]
     result["master"] = state.get("cabin_controleable", false)
     # Train.cpp:783-790 - the cab's generic toggles, with universal3 standing for the instrument light
-    var cab_state:CabinState = CabinSystem.get_cabin_state(vehicle, CabinSystem.occupied_cab(vehicle))
+    var cab:int = CabinSystem.occupied_cab(vehicle)
+    var cab_state:CabinState = CabinSystem.get_cabin_state(vehicle, cab)
     for index:int in UNIVERSAL_COUNT:
         result["universal%d" % index] = bool(cab_state.get_value(StringName("universal%d" % index), false))
-    result["universal3"] = state.get("devices_light_enabled", false)   # InstrumentLightActive
+    result["universal3"] = CabinSystem.cab_get_instrument_light_enabled(vehicle, cab)   # InstrumentLightActive
     result["mainctrl_pos_count"] = config.get("main_controller_position_max", 0)   # MainCtrlPosNo
     result["velocity"] = absf(state.get("speed", 0.0))   # abs(Vel), km/h
     result["manual_brake"] = state.get("brake_manual_position", 0) > 0

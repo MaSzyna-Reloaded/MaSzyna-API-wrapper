@@ -12,6 +12,8 @@
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/typed_dictionary.hpp>
 
+#include <array>
+
 namespace godot {
     /* What a rail vehicle looks like, drawn: its models, the submodels that move and how they
      * move, its lights, smoke, couplers, head display, low-poly interior, the detail it is drawn in
@@ -48,6 +50,9 @@ namespace godot {
 
         private:
             static RailVehicleRenderingServer *singleton;
+
+            /* The low-poly interior's cabs, cab0 for a vehicle's single one (DynObj.cpp:2383-2391) */
+            static constexpr std::array<const char *, 3> LOW_POLY_CABS = {"cab0", "cab1", "cab2"};
 
             /* A submodel of the exterior model that moves, and where it rests in the vehicle's own
              * frame - what its pose turns it from */
@@ -96,8 +101,10 @@ namespace godot {
                     /* The cab the player sees from, 0 for none, and whether it is a modelled one */
                     int cab = 0;
                     bool has_cab_model = false;
-                    double emission_energy = 0.0;
-                    double emission_target = 0.0;
+                    /* The level of each low-poly cab's light (vehicle_set_cab_light_level()), and the
+                     * self-illumination the cab is drawn with, following it */
+                    double cab_light_levels[LOW_POLY_CABS.size()] = {};
+                    double cab_light_energies[LOW_POLY_CABS.size()] = {};
                     PackedFloat64Array wiper_positions;
                     double mirror_left = -1.0;
                     double mirror_right = -1.0;
@@ -135,7 +142,7 @@ namespace godot {
             int slow_cursor = 0;
             int detailed_cursor = 0;
             double slow_elapsed = 0.0;
-            /* The vehicles whose low-poly interior is still following the roof light */
+            /* The vehicles whose low-poly cabs are still following their cab lights */
             Vector<RID> fading;
             bool processing = false;
 
@@ -176,7 +183,6 @@ namespace godot {
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_changed(const RID &p_vehicle, int64_t p_flag);
             void _on_vehicle_config_changed(const RID &p_vehicle);
-            void _on_vehicle_roof_light_changed(const RID &p_vehicle, bool p_enabled);
             void _on_vehicle_freed(const RID &p_vehicle);
             void _on_instance_built(const RID &p_instance);
 
@@ -213,6 +219,10 @@ namespace godot {
             /* The cab the player looks from (0 for none) and whether it is modelled: the low-poly
              * interior hides that cab, or all of them with jointcabs: (DynObj.cpp:1335-1340) */
             void vehicle_set_cab(const RID &p_vehicle, int p_cab, bool p_has_cab_model);
+            /* The level (0..1) of the light of a cab - 1, 0 or -1, as the cab layer counts them -
+             * that its low-poly cab is lit at (TDynamicObject::set_cab_lights(), DynObj.cpp:841-853);
+             * with jointcabs: every cab at the brightest */
+            void vehicle_set_cab_light_level(const RID &p_vehicle, int p_cab, double p_level);
             /* Whether the vehicle is drawn in detail - as nodes, animated */
             bool vehicle_is_detailed(const RID &p_vehicle) const;
     };

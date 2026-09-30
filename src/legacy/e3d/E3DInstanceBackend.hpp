@@ -56,6 +56,9 @@ namespace godot {
                     bool visibility_set = false;
                     bool hidden = false;
                     Ref<Material> material_override;
+                    /// The self-illumination energy of the submodel and everything under it, below 0
+                    /// for the instance's own (instance_set_submodel_emission_energy())
+                    float emission_energy = -1.0;
                     /// The named submodel of the built model, found once per build
                     E3DSubModel *submodel = nullptr;
             };
@@ -118,9 +121,15 @@ namespace godot {
             HashSet<const E3DSubModel *> shown_submodels;
             HashSet<const E3DSubModel *> hidden_submodels;
             HashMap<E3DSubModel *, Ref<Material>> submodel_materials;
+            /// The self-illumination energy a client set on a submodel, given to it and to every
+            /// submodel under it, resolved out of submodel_settings; what the backends read
+            HashMap<const E3DSubModel *, float> submodel_emission_energies;
             /// instance_set_emission_energy(): the self-illumination energy of every emissive
             /// material of the instance, or below 0 to leave the materials' own
             float emission_energy = -1.0;
+            /// instance_set_submodel_emission_energy() was called: the instance drives the
+            /// self-illumination of its submodels, so it draws with its own emissive materials
+            bool submodel_emission = false;
             /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
             Vector<RID> smoke_objects;
             /// Spawn rate multiplier of those emitters (instance_set_smoke_intensity()), kept here so
@@ -141,8 +150,14 @@ namespace godot {
             Vector<Ref<Material>> materials;
 
             // NODES backend
-            /// The instance's own copies of its emissive materials, while emission_energy is set
-            Vector<Ref<ShaderMaterial>> emissive_materials;
+            /// An emissive material the instance drew its submodel with, a copy of its own
+            struct EmissiveMaterial {
+                    Ref<ShaderMaterial> material;
+                    const E3DSubModel *submodel = nullptr;
+            };
+            /// The instance's own copies of its emissive materials, while it drives their energy
+            /// (emission_energy or submodel_emission)
+            Vector<EmissiveMaterial> emissive_materials;
             Vector<ObjectID> root_nodes;
             HashMap<String, LightNodes> light_nodes;
             HashMap<E3DSubModel *, ObjectID> submodel_nodes;

@@ -265,11 +265,5 @@
 				[param vehicle] moved to [param position].
 			</description>
 		</signal>
-		<signal name="vehicle_roof_light_changed">
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="enabled" type="bool" />
-			<description>
-			</description>
-		</signal>
 	</signals>
 </class>

@@ -118,6 +118,9 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("security_acknowledge", true)
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
+    # its driver may have held it by the independent brake while it stood parked, before the
+    # player took it over (Driver.cpp:8166-8180) - released, as the player does
+    controller.send_command("local_brake_set", 0.0)
     controller.send_command("brake_releaser", true)
     controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):

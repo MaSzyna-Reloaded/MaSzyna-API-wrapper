@@ -18,21 +18,23 @@ knows the Mover is there. The vendored Mover lives in `src/legacy/maszyna-mover`
 A vehicle is three layers, and only the last one knows the Mover:
 
 1. **The proxy in the scene tree.** `VehiclePhysicsNode` is the vehicle's presence in the tree: it builds the vehicle
-   from a `VehicleModel`, owns its `RailVehicleServer` handle (RID) and frees both with itself. It holds no state and
-   no simulation. `FizVehiclePhysicsNode` (GDScript) only supplies the model, parsed from a `.fiz`.
+   from a copy of its description (a `VehicleController` with its components), owns its `VehicleServer` handle (RID)
+   and frees both with itself. It holds no state and no simulation. `FizVehiclePhysicsNode` (GDScript) only supplies
+   the description, parsed from a `.fiz`.
    `GenericVehicleComponentNode` is a second proxy, through which a script adds its own component to the vehicle it
    sits under.
-2. **The vehicle, behind a RID.** `VehicleController` and the `VehicleComponent`s it is made of are plain `Object`s,
-   held by `RailVehicleServer`, stepped by it once per rendered frame and commanded through it. Each kind of
+2. **The vehicle, behind a RID.** `VehicleController` and the `VehicleComponent`s it is made of are `Resource`s -
+   their properties are the stored configuration, so a parsed vehicle is saved as it is - held through
+   `VehicleServer`, stepped by their implementation once per rendered frame and commanded through the server. Each kind of
    component is an **interface**: `RailVehicleDoors`, `RailVehicleBrake`, ... - authored configuration as properties,
    live state as typed getters, operations as methods and commands. An interface names no backend.
 3. **The implementation on the Mover.** `MoverRailVehicleController` creates and ticks the `TMoverParameters`;
    every `MoverRailVehicle<X>` implements the `RailVehicle<X>` interface on it (`src/legacy/vehicles`). These are
    the only classes that include `MOVER.h`.
 
-Which implementation a vehicle is built with is chosen once: the controller class in `register_types.cpp`
-(`VehiclePhysicsNode::set_controller_implementation`), each component's class in its `VehicleComponentModel`
-(`implementation`), written there by the FIZ parser that created it.
+Which implementation a vehicle is built with is chosen once, by the classes of its description: the FIZ parser
+creates `MoverRailVehicleController` and the `MoverRailVehicle<X>` components, and a vehicle with no description
+gets the controller class `register_types.cpp` names (`VehiclePhysicsNode::set_controller_implementation`).
 
 Responsibility of each layer:
 - proxy node: integration with Godot's engine through the Scene Tree; the handle; building and rebuilding the
@@ -56,8 +58,6 @@ classDiagram
         class GenericVehicleComponentNode
     }
     namespace Model {
-        class VehicleModel
-        class VehicleComponentModel
     }
     namespace Vehicle {
         class RailVehicleServer
@@ -76,9 +76,8 @@ classDiagram
         class TMoverParameters
     }
     VehiclePhysicsNode <|-- FizVehiclePhysicsNode
-    FizVehiclePhysicsNode ..> VehicleModel : parses .fiz into
-    VehicleModel *-- VehicleComponentModel
-    VehiclePhysicsNode ..> VehicleModel : builds from
+    FizVehiclePhysicsNode ..> VehicleController : parses .fiz into a description
+    VehiclePhysicsNode ..> VehicleController : builds a copy of the description
     VehiclePhysicsNode *-- VehicleController : owns
     VehiclePhysicsNode --> RailVehicleServer : RID
     RailVehicleServer o-- VehicleController : steps, commands
@@ -175,7 +174,7 @@ Every `MoverRailVehicle<X>` also inherits `MoverComponent` (see the overview), l
 
 | Element                       |MaSzyna EU07                         | MaSzyna: Reloaded
 |-------------------------------|-------------------------------------|------------------------------------------
-| Vehicle data container        | FIZ files                           | `VehicleModel` resource, parsed from the `.fiz` (`FizVehicleBuilder`, `addons/libmaszyna/legacy/fiz`)
+| Vehicle data container        | FIZ files                           | the vehicle's description - a `MoverRailVehicleController` resource with its components - parsed from the `.fiz` (`FizVehicleBuilder`, `addons/libmaszyna/legacy/fiz`)
 | Vehicle data loading + init   | cParser + Mover's `LoadFIZ_*()`     | Component properties + `_apply_configuration()` of the `Mover*` implementation
 | Reading vehicle state         | Direct access to Mover's properties | Typed getters of the component; `vehicle_dump_state()` for diagnostics
 | Modyfing vehicle state        | Direct calls to Mover's methods     | Typed calls on the component or `RailVehicleServer.vehicle_send_command()`

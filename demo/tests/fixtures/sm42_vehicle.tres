@@ -1,25 +1,22 @@
-[gd_resource type="VehicleModel" format=3 uid="uid://bgo2aii4u3lg2"]
+[gd_resource type="MoverRailVehicleController" format=3 uid="uid://bgo2aii4u3lg2"]
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_0"]
-implementation = &"MoverRailVehicleBrake"
-properties = {
-"brake_force_max": 85.0,
-"compressor_cab_a_max_pressure": 8.0,
-"compressor_cab_a_min_pressure": 7.0,
-"compressor_power": 3,
-"compressor_speed": 0.057,
-"cylinder_count": 4,
-"cylinder_distance": 0.05,
-"cylinder_gear_ratio": 6.68,
-"cylinder_radius": 0.114,
-"friction_elements_per_axle": 4,
-"max_antislip_pressure": 1.8,
-"max_cylinder_pressure": 4.0,
-"rig_effectiveness": 0.85,
-"tank_volume_aux": 200.0,
-"tank_volume_main": 0.8,
-"valve_type": 20
-}
+[sub_resource type="MoverRailVehicleBrake" id="MoverRailVehicleBrake_22ebc"]
+valve_type = 20
+friction_elements_per_axle = 4
+brake_force_max = 85.0
+max_cylinder_pressure = 4.0
+max_antislip_pressure = 1.8
+cylinder_count = 4
+cylinder_radius = 0.114
+cylinder_distance = 0.05
+cylinder_gear_ratio = 6.68
+tank_volume_main = 0.8
+tank_volume_aux = 200.0
+compressor_cab_a_min_pressure = 7.0
+compressor_cab_a_max_pressure = 8.0
+compressor_speed = 0.057
+compressor_power = 3
+rig_effectiveness = 0.85
 
 [sub_resource type="RailVehicleMotorParameter" id="MotorParameter_210ku"]
 voltage_constant_multiplier = 17.567
@@ -131,45 +128,31 @@ min_wakeup_voltage = 170.0
 max_wakeup_voltage = 450.0
 max_wakeup_power = 490.0
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_1"]
-implementation = &"MoverRailVehicleDieselElectricEngine"
-properties = {
-"maximum_traction_force": 228000.0,
-"motor_param_table": Array[RailVehicleMotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")]),
-"oil_pump_pressure_minimum": 0.15,
-"wwlist": Array[RailVehicleWWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
-}
+[sub_resource type="MoverRailVehicleDieselElectricEngine" id="MoverRailVehicleDieselElectricEngine_wuw0x"]
+wwlist = Array[RailVehicleWWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
+oil_pump_pressure_minimum = 0.15
+motor_param_table = Array[RailVehicleMotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
+maximum_traction_force = 228000.0
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_2"]
-implementation = &"MoverRailVehicleSecuritySystem"
-properties = {
-"aware_delay": 60.0,
-"aware_system_active": true,
-"ca_max_hold_time": 1.0,
-"emergency_brake_delay": 2.5,
-"shp_magnet_distance": 3.0,
-"sound_signal_delay": 2.5
-}
+[sub_resource type="MoverRailVehicleSecuritySystem" id="MoverRailVehicleSecuritySystem_ehgw0"]
+aware_system_active = true
+aware_delay = 60.0
+emergency_brake_delay = 2.5
+sound_signal_delay = 2.5
+shp_magnet_distance = 3.0
+ca_max_hold_time = 1.0
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_3"]
-implementation = &"MoverRailVehicleElectroPneumaticDynamicBrake"
+[sub_resource type="MoverRailVehicleElectroPneumaticDynamicBrake" id="MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"]
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_4"]
-implementation = &"MoverRailVehicleSpringBrake"
+[sub_resource type="MoverRailVehicleSpringBrake" id="MoverRailVehicleSpringBrake_ny5ic"]
 
-[sub_resource type="VehicleComponentModel" id="VehicleComponentModel_5"]
-implementation = &"MoverRailVehicleMasterController"
-properties = {
-"main_position_count": 11
-}
+[sub_resource type="MoverRailVehicleMasterController" id="MoverRailVehicleMasterController_l2wri"]
+main_position_count = 11
 
 [resource]
-properties = {
-"axle_arrangement": "Bo'Bo'",
-"battery_voltage": 110.0,
-"mass": 74000.0,
-"max_velocity": 90.0,
-"power": 590.0,
-"type_name": "6d"
-}
-components = Array[VehicleComponentModel]([SubResource("VehicleComponentModel_0"), SubResource("VehicleComponentModel_1"), SubResource("VehicleComponentModel_2"), SubResource("VehicleComponentModel_3"), SubResource("VehicleComponentModel_4"), SubResource("VehicleComponentModel_5")])
+battery_voltage = 110.0
+components = Array[VehicleComponent]([SubResource("MoverRailVehicleBrake_22ebc"), SubResource("MoverRailVehicleDieselElectricEngine_wuw0x"), SubResource("MoverRailVehicleSecuritySystem_ehgw0"), SubResource("MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"), SubResource("MoverRailVehicleSpringBrake_ny5ic"), SubResource("MoverRailVehicleMasterController_l2wri")])
+type_name = "6d"
+mass = 74000.0
+power = 590.0
+max_velocity = 90.0

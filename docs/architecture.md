@@ -48,10 +48,12 @@ A High-Level Component is not implemented by its nodes. The node standing in the
 (an `RID`) to an object held by a server and builds that object, and the object is what simulates, configures and
 answers commands. A vehicle is the reference case:
 
-* `VehiclePhysicsNode` is the vehicle's presence in the tree. It builds the vehicle from a `VehicleModel` (the parsed
-  `.fiz`, supplied by `FizVehiclePhysicsNode`), owns its `RailVehicleServer` handle and frees both with itself.
-* The vehicle - a `VehicleController` and the `VehicleComponent`s it is made of - is a plain `Object`, not a node. It
-  is held by `RailVehicleServer`, stepped by it once per rendered frame, and reached by its RID.
+* `VehiclePhysicsNode` is the vehicle's presence in the tree. It builds the vehicle from a copy of its description (the
+  parsed `.fiz`, a `VehicleController` with its components, supplied by `FizVehiclePhysicsNode`), owns its
+  `VehicleServer` handle and frees both with itself.
+* The vehicle - a `VehicleController` and the `VehicleComponent`s it is made of - is a `Resource`, not a node: its
+  properties are its stored configuration. It is held through `VehicleServer`, stepped by its implementation once per
+  rendered frame, and reached by its RID.
 * What draws the vehicle (`RailVehicle3D`), its cabin and its sounds read the vehicle's components; they do not own
   them.
 

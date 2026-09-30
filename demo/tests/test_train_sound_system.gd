@@ -45,7 +45,7 @@ func test_internal_sound_is_silent_without_an_occupied_listener_vehicle() -> voi
     assert_almost_eq(TrainSoundSystem._soundproofing(runtime, source), 0.0, 0.001)
 
 
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 ## Where the camera stands to hear the vehicle at the origin, and where it cannot
 const NEAR:Vector3 = Vector3(0.0, 0.0, 10.0)

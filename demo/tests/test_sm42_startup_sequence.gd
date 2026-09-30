@@ -10,7 +10,7 @@ func before_each():
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
     physics_node.train_id = "TestTrain"
     physics_node.driver_type = VehicleController.DRIVER_HEAD
-    physics_node.set_model(load("res://tests/fixtures/sm42_vehicle.tres"))
+    physics_node.set_description(load("res://tests/fixtures/sm42_vehicle.tres"))
     add_child_autofree(physics_node)
     RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
     train = physics_node.get_controller()

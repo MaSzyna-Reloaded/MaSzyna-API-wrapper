@@ -1036,13 +1036,15 @@ Legend:
   * `src/vehicles/rail/RailVehicleController.hpp`: `update_neighbour`, `couple` take a
     `RailVehicleController *`
   * `src/vehicles/rail/RailVehicle3D.cpp`: `get_cabin`
-  * `src/vehicles/base/VehicleModel.cpp:17-18`: `capture`, `apply` (`Object *`)
 * **Done 2026-09-30:** `VehicleController` and `VehicleComponent` are `RefCounted`; `add_component`,
   `get_component`, `get_controller` (`RailVehicle3D`, `VehicleComponent`,
   `GenericVehicleComponentNode`, `VehiclePhysicsNode`), `get_coupled_controller` and
   `GenericVehicleComponentNode::get_component` take and return `Ref<>`. A raw `T*` of a
   `RefCounted` returned to GDScript took a reference away and freed the vehicle (FINDINGS.md
   2026-09-30).
+* **Done 2026-09-30:** `VehicleModel`, `VehicleComponentModel` and their `capture`/`apply`
+  (`Object *`) are gone - the controller and its components are `Resource`s and the description
+  of a vehicle themselves.
 * **Fix:** RIDs (the vehicle), `ObjectID`s, `Ref<>`, or `Variant`.
 
 ### RC-076

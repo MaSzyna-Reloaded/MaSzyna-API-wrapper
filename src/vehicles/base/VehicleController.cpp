@@ -45,6 +45,13 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("apply_configuration"), &VehicleController::apply_configuration);
         ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
+        ClassDB::bind_method(D_METHOD("set_components", "components"), &VehicleController::set_components);
+        ClassDB::bind_method(D_METHOD("get_components"), &VehicleController::get_components);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::ARRAY, "components", PROPERTY_HINT_ARRAY_TYPE,
+                        vformat("%s/%s:%s", Variant::OBJECT, PROPERTY_HINT_RESOURCE_TYPE, "VehicleComponent")),
+                "set_components", "get_components");
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
         ClassDB::bind_method(D_METHOD("find_components", "type"), &VehicleController::find_components);
         /* Read by whoever caches this vehicle's dump: a step or a command moves the state on. */
@@ -53,7 +60,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_physics_active"), &VehicleController::is_physics_active);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &VehicleController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &VehicleController::get_world_position);
-        ClassDB::bind_method(D_METHOD("get_rid"), &VehicleController::get_rid);
         ClassDB::bind_method(
                 D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
         ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
@@ -152,7 +158,7 @@ namespace godot {
      * so what it holds is handed back by name rather than by destroying the vehicle. */
     void VehicleController::release() {
         shutdown();
-        free_components();
+        _detach_components();
         implementation_server = ObjectID();
     }
 
@@ -163,12 +169,18 @@ namespace godot {
         }
     }
 
+    /* From here the vehicle is a live one: its components join it (commands, the configuration
+     * signal, the implementation), which a description - the same class, only stored - never does. */
     void VehicleController::attach_to_system() {
         /* The name the scenery gave this vehicle goes to the server that owns its handle, so that
          * whoever knows the vehicle only by name - an event, the console, a `.scn` command - can
          * find the handle. Everything that already holds the vehicle uses the handle. */
         if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
             server->vehicle_set_name(rid, train_id);
+        }
+        in_system = true;
+        for (const Ref<VehicleComponent> &component: components) {
+            component->attach(this);
         }
         _register_commands();
     }
@@ -289,29 +301,49 @@ namespace godot {
      * leave the vehicle describing geometry it does not have. */
     void VehicleController::add_component(const Ref<VehicleComponent> &p_component) {
         ERR_FAIL_COND(p_component.is_null());
+        components.push_back(p_component);
+        if (!in_system) {
+            return;
+        }
         p_component->attach(this);
         if (is_simulation_ready()) {
             p_component->apply_config();
         }
     }
 
+    void VehicleController::set_components(const TypedArray<VehicleComponent> &p_components) {
+        _detach_components();
+        components.clear();
+        for (int index = 0; index < p_components.size(); ++index) {
+            add_component(p_components[index]);
+        }
+    }
+
+    TypedArray<VehicleComponent> VehicleController::get_components() const {
+        TypedArray<VehicleComponent> result;
+        for (const Ref<VehicleComponent> &component: components) {
+            result.push_back(component);
+        }
+        return result;
+    }
+
     /* Every component goes with the vehicle; nothing outside it holds one. */
     void VehicleController::shutdown() {
+        in_system = false;
         _unregister_commands();
         // the handle belongs to RailVehicle3D, which frees it with itself
         rid = RID();
     }
 
-    void VehicleController::free_components() {
-        // the copy keeps every component alive while it lets go of the vehicle
-        const Vector<Ref<VehicleComponent>> owned = components;
-        for (const Ref<VehicleComponent> &component: owned) {
+    /* The components let go of the vehicle; they stay its components - the list is its
+     * configuration - and join it again only in a vehicle brought into the system again. */
+    void VehicleController::_detach_components() {
+        for (const Ref<VehicleComponent> &component: components) {
             component->detach();
         }
     }
 
     void VehicleController::register_component(VehicleComponent *p_component) {
-        components.push_back(Ref<VehicleComponent>(p_component));
         p_component->attach_implementation(implementation_server);
         if (RailVehicleLighting *component_lighting = Object::cast_to<RailVehicleLighting>(p_component);
             component_lighting != nullptr) {
@@ -321,7 +353,6 @@ namespace godot {
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
         p_component->attach_implementation(ObjectID());
-        components.erase(Ref<VehicleComponent>(p_component));
         if (static_cast<VehicleComponent *>(lighting) == p_component) {
             lighting = nullptr;
         }
@@ -362,7 +393,7 @@ namespace godot {
         rid = p_vehicle_rid;
     }
 
-    RID VehicleController::get_rid() const {
+    RID VehicleController::_get_rid() const {
         return rid;
     }
 

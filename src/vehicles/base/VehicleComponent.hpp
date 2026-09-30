@@ -3,18 +3,18 @@
 #include "VehicleController.hpp"
 #include "logging/GameLog.hpp"
 #include <functional>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/templates/vector.hpp>
 
 namespace godot {
     /* One thing a vehicle is made of.
      *
      * Not a Node: a component belongs to a vehicle, not to a scene, and the vehicle creates it,
-     * owns it and ticks it. What stands in the scene for the editor is a thin proxy. Reference
-     * counted: whoever holds one - the vehicle, a scene node drawing it - keeps it alive, so
-     * nothing is left holding a freed component. */
-    class VehicleComponent : public RefCounted {
-            GDCLASS(VehicleComponent, RefCounted)
+     * owns it and ticks it. A Resource: its properties are its stored configuration, saved with
+     * the vehicle's (VehicleController.components), and reference counted - whoever holds one
+     * keeps it alive, so nothing is left holding a freed component. */
+    class VehicleComponent : public Resource {
+            GDCLASS(VehicleComponent, Resource)
         public:
             static void _bind_methods();
 

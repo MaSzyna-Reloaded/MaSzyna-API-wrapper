@@ -4,7 +4,7 @@ extends MaszynaGutTest
 ## (control_braking_force(), Driver.cpp:8065-8190).
 
 const Order = MaszynaLegacyAIDriver.Order
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const REACTION:float = MaszynaLegacyAIDriver.EASY_REACTION_TIME
 const STEP:float = 0.5
 

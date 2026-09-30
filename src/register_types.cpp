@@ -84,12 +84,10 @@
 #include "vehicles/base/GenericVehicleComponent.hpp"
 #include "vehicles/base/GenericVehicleComponentNode.hpp"
 #include "vehicles/base/VehicleComponent.hpp"
-#include "vehicles/base/VehicleComponentModel.hpp"
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleCurvePointItem.hpp"
 #include "vehicles/base/VehicleImplementationServer.hpp"
-#include "vehicles/base/VehicleModel.hpp"
 #include "vehicles/base/VehiclePhysicsNode.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicle3D.hpp"
@@ -239,8 +237,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);
-        GDREGISTER_CLASS(VehicleComponentModel);
-        GDREGISTER_CLASS(VehicleModel);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponent);

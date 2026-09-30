@@ -1,18 +1,19 @@
 #pragma once
 #include "VehicleController.hpp"
-#include "VehicleModel.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     /* A vehicle's presence in the scene tree.
      *
      * The vehicle itself is an object of the server, addressed by a RID; this node owns that
-     * handle, builds the vehicle from a VehicleModel and frees it. It is the anchor everything in
+     * handle, builds the vehicle from a copy of its description - a VehicleController with its
+     * components, the vehicle's stored configuration - and frees it. It is the anchor everything in
      * the tree hangs off - a scripted component a modder adds, a cabin, a sound bank - so that
      * "which vehicle am I part of" is answered by where a node sits, not by a path it carries.
      *
-     * It knows nothing about where the model came from. A subclass brings one: FizVehiclePhysicsNode
-     * asks the .fiz builder for it, and another format would be another subclass. */
+     * It knows nothing about where the description came from. A subclass brings one:
+     * FizVehiclePhysicsNode asks the .fiz builder for it, and another format would be another
+     * subclass. */
     class VehiclePhysicsNode : public Node {
             GDCLASS(VehiclePhysicsNode, Node)
 
@@ -23,8 +24,8 @@ namespace godot {
             static StringName &controller_implementation();
             RID vehicle_rid;
             Ref<VehicleController> controller;
-            Ref<VehicleModel> model;
-            void _build(const Ref<VehicleModel> &p_model);
+            Ref<VehicleController> description;
+            void _build();
             String train_id;
             String type_name;
             double initial_velocity = 0.0;
@@ -42,13 +43,13 @@ namespace godot {
             /* C++ only: register_types says which simulation the vehicles run on. */
             static void set_controller_implementation(const StringName &p_class);
 
-            /* Builds the vehicle this model describes, replacing whatever this node held. */
-            void set_model(const Ref<VehicleModel> &p_model);
-            Ref<VehicleModel> get_model() const;
+            /* Builds the vehicle this describes, replacing whatever this node held. */
+            void set_description(const Ref<VehicleController> &p_description);
+            Ref<VehicleController> get_description() const;
 
             /* This vehicle's handle, for anything that talks to the servers */
             RID get_vehicle_rid() const;
-            /* The vehicle in the simulation. Null until a model is set. */
+            /* The vehicle in the simulation, built from a copy of the description; null before it entered the tree. */
             Ref<VehicleController> get_controller() const;
 
             /* Adds a component to this vehicle - what a proxy node in the tree calls when it

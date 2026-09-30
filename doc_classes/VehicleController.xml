@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleController" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleController" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Base train controller controlling all train systems
 	</brief_description>
@@ -21,7 +21,7 @@
 		<method name="apply_config" experimental="true">
 			<return type="void" />
 			<description>
-				Writes the vehicle's configuration into its simulation (should not be called directly)
+			Writes the vehicle's configuration into its simulation (should not be called directly)
 			</description>
 		</method>
 		<method name="apply_configuration">
@@ -59,7 +59,7 @@
 		<method name="get_commands" qualifiers="const">
 			<return type="PackedStringArray" />
 			<description>
-				Returns the commands this vehicle answers to.
+			Returns the commands this vehicle answers to.
 			</description>
 		</method>
 		<method name="get_component" qualifiers="const">
@@ -87,11 +87,6 @@
 		</method>
 		<method name="get_occupied_cab" qualifiers="const">
 			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_rid" qualifiers="const">
-			<return type="RID" />
 			<description>
 			</description>
 		</method>
@@ -157,7 +152,7 @@
 			<param index="0" name="command" type="StringName" />
 			<param index="1" name="callable" type="Callable" />
 			<description>
-				Registers a command this vehicle answers to. A command registered twice is an error.
+			Registers a command this vehicle answers to. A command registered twice is an error.
 			</description>
 		</method>
 		<method name="send_command">
@@ -166,7 +161,7 @@
 			<param index="1" name="p1" type="Variant" default="null" />
 			<param index="2" name="p2" type="Variant" default="null" />
 			<description>
-				Runs a command of this vehicle and returns what its handler answered, or [code]null[/code] when the vehicle has no such command. See [method RailVehicleServer.vehicle_send_command].
+			Runs a command of this vehicle and returns what its handler answered, or [code]null[/code] when the vehicle has no such command. See [method RailVehicleServer.vehicle_send_command].
 			</description>
 		</method>
 		<method name="set_vehicle_rid">
@@ -179,13 +174,13 @@
 			<return type="void" />
 			<param index="0" name="command" type="StringName" />
 			<description>
-				Removes a command of this vehicle.
+			Removes a command of this vehicle.
 			</description>
 		</method>
 		<method name="update_state" experimental="true">
 			<return type="void" />
 			<description>
-				Forces update of the state (should not be called directly)
+			Forces update of the state (should not be called directly)
 			</description>
 		</method>
 	</methods>
@@ -193,6 +188,8 @@
 		<member name="category" type="int" setter="set_category" getter="get_category" enum="VehicleController.Category">
 			[code]Param.Category[/code]
 			The vehicle's category (train, road, ship, airplane).
+		</member>
+		<member name="components" type="VehicleComponent[]" setter="set_components" getter="get_components">
 		</member>
 		<member name="dimensions_drag_coefficient" type="float" setter="set_dimensions_drag_coefficient" getter="get_dimensions_drag_coefficient">
 			[code]Dimensions:Cx[/code]
@@ -246,12 +243,12 @@
 			<param index="1" name="p1" type="Variant" />
 			<param index="2" name="p2" type="Variant" />
 			<description>
-				Emitted when train receives a command
+			Emitted when train receives a command
 			</description>
 		</signal>
 		<signal name="config_changed">
 			<description>
-				Train configuration changed
+			Train configuration changed
 			</description>
 		</signal>
 		<signal name="position_changed">
@@ -266,12 +263,12 @@
 		</signal>
 		<signal name="simulation_configured">
 			<description>
-				The simulation now carries the vehicle's configuration - its own and every component's.
+			The simulation now carries the vehicle's configuration - its own and every component's.
 			</description>
 		</signal>
 		<signal name="simulation_initialized">
 			<description>
-				The simulation behind the vehicle exists and carries its configuration.
+			The simulation behind the vehicle exists and carries its configuration.
 			</description>
 		</signal>
 	</signals>

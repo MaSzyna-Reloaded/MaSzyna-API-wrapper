@@ -15,18 +15,18 @@ func wait_idle_frames(frames, message = ""):
 ## A vehicle is an object owned by RailVehicleServer and stepped by the server's own tick - it is
 ## not a node, so a test cannot put one in the tree. VehiclePhysicsNode is what brings a vehicle
 ## into being; autofree owns the node, so the vehicle goes away with the test.
-## `model` is an authored vehicle (demo/tests/fixtures/*.tres); without one the vehicle comes up
-## empty and the test adds the components it cares about.
-func build_vehicle(train_id:String = "TestTrain", model:VehicleModel = null,
+## `description` is an authored vehicle (demo/tests/fixtures/*.tres); without one the vehicle comes
+## up empty and the test adds the components it cares about.
+func build_vehicle(train_id:String = "TestTrain", description:VehicleController = null,
         initial_velocity:float = 0.0) -> VehicleController:
-    return build_vehicle_node(train_id, model, initial_velocity).get_controller()
+    return build_vehicle_node(train_id, description, initial_velocity).get_controller()
 
 
 ## The node itself, for a test that needs a NodePath to the vehicle (RailVehicle3D.controller_path).
-func build_vehicle_node(train_id:String = "TestTrain", model:VehicleModel = null,
+func build_vehicle_node(train_id:String = "TestTrain", description:VehicleController = null,
         initial_velocity:float = 0.0) -> VehiclePhysicsNode:
     var physics_node:VehiclePhysicsNode = VehiclePhysicsNode.new()
-    physics_node.set_model(model)
+    physics_node.set_description(description)
     physics_node.train_id = train_id
     physics_node.initial_velocity = initial_velocity
     add_child_autofree(physics_node)
@@ -51,8 +51,10 @@ func build_track(track_name:String, length:float) -> RID:
 ## to NaN (test_rail_vehicle_at_rest.gd). It takes its controller within a few frames; the test frees
 ## it, before its physics node goes with autofree.
 func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> RailVehicle3D:
-    var model:VehicleModel = VehicleModel.new()
-    model.properties = {"train_id": train_id, "mass": RAIL_VEHICLE_MASS, "type_name": "test"}
+    var model:VehicleController = MoverRailVehicleController.new()
+    model.train_id = train_id
+    model.mass = RAIL_VEHICLE_MASS
+    model.type_name = "test"
     var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model)
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name

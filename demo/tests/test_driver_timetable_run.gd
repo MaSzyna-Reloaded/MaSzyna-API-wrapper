@@ -8,7 +8,7 @@ extends MaszynaGutTest
 
 const Order = MaszynaLegacyAIDriver.Order
 const EventImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd")
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const FIXTURES:String = "res://tests/fixtures/timetables"
 const LINE_VELOCITY:float = 100.0
 const LINE_LENGTH:float = 9000.0

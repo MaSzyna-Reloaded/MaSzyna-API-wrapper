@@ -7,7 +7,7 @@ extends MaszynaGutTest
 ## the same path a physical keypress takes.
 
 const TEST_ACTION := "test_cabin_button_action"
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const SHOWN_CONTROL:StringName = &"test_shown_control"
 
 func before_all():

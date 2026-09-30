@@ -72,8 +72,9 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
 
     # the vehicle's own configuration is authored, not written afterwards - a property set after
     # the vehicle is built does not reach the backend until apply_configuration()
-    var model: VehicleModel = VehicleModel.new()
-    model.properties = {"type_name": "test", "battery_voltage": 110.0}
+    var model:VehicleController = MoverRailVehicleController.new()
+    model.type_name = "test"
+    model.battery_voltage = 110.0
     physics_node = build_vehicle_node("test_idle_pantograph_train", model)
     controller = physics_node.get_controller()
 

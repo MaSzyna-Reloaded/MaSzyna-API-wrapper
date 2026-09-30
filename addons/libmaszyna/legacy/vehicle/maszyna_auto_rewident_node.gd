@@ -49,13 +49,19 @@ func _ready() -> void:
     _timer.autostart = true
     _timer.timeout.connect(_check_trainset)
     add_child(_timer)
-    RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
+
+
+## Subscribed while in the tree - "Edit FIZ" takes a vehicle out and puts it back, and _ready()
+## runs only the first time
+func _enter_tree() -> void:
+    if not Engine.is_editor_hint():
+        RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
 
 
 ## Leaving the tree ends the subscription: a neighbour freed with the scenery uncouples
 ## (MoverRailVehicleController::release()) after this node is already out of it
 func _exit_tree() -> void:
-    if _timer:
+    if not Engine.is_editor_hint():
         RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
 
 

@@ -17,7 +17,7 @@ var vehicle:RID = RID()
 
 ## The moves are offered only to a standing trainset (vehicleparams.cpp:295)
 func _on_pressed() -> void:
-    var standing:bool = absf(RailVehicleServer.vehicle_get_velocity(vehicle)) < VehicleSelectorRow.STANDING_VELOCITY
+    var standing:bool = absf(VehicleServer.vehicle_get_velocity(vehicle)) < VehicleSelectorRow.STANDING_VELOCITY
     for button:Button in %Moves.get_children():
         button.disabled = not standing
     var anchor:Rect2 = get_global_rect()
@@ -30,12 +30,12 @@ func _on_release_brakes_pressed() -> void:
     %ActionsPopup.hide()
     for trainset_vehicle:RID in RailVehicleServer.vehicle_get_coupled(
             vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER):
-        RailVehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", true)
+        VehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", true)
 
 
 func _on_emergency_stop_pressed() -> void:
     %ActionsPopup.hide()
-    RailVehicleServer.vehicle_send_command(vehicle, "brake_level_set_position", "emergency")
+    VehicleServer.vehicle_send_command(vehicle, "brake_level_set_position", "emergency")
 
 
 ## The trainset moved [m], towards the vehicle's front when positive
@@ -46,7 +46,7 @@ func _on_move_pressed(distance:float) -> void:
 
 func _on_remove_pressed() -> void:
     %ActionsPopup.hide()
-    %RemoveDialog.dialog_text = tr("Remove the trainset of %s?") % RailVehicleServer.vehicle_get_name(vehicle)
+    %RemoveDialog.dialog_text = tr("Remove the trainset of %s?") % VehicleServer.vehicle_get_name(vehicle)
     %RemoveDialog.popup_centered()
 
 

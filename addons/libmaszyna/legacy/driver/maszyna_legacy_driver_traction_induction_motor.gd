@@ -78,6 +78,6 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 ## A cruise control with an impulse lever of four positions (SpeedCtrlTypeTime)
 func _impulse_lever(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-            situation.vehicle, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-    var second_max:int = int(RailVehicleServer.vehicle_dump_config(situation.vehicle).get("second_controller_position_max", 0))
+            situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+    var second_max:int = int(VehicleServer.vehicle_dump_config(situation.vehicle).get("second_controller_position_max", 0))
     return control != null and control.impulse_lever and second_max == IMPULSE_LEVER_POSITIONS

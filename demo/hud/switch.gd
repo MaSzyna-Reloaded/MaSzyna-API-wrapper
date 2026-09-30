@@ -4,15 +4,13 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _controller:VehicleController
 
 ## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
 ## somebody else's scene.
-var vehicle:VehicleController:
+var vehicle:RID = RID():
     set(x):
         if not vehicle == x:
             vehicle = x
-            _controller = x
             _dirty = true
 
 
@@ -29,7 +27,6 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 @export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
-        _controller = null
         controller = x
 
 @export var state_property:String:
@@ -58,7 +55,7 @@ func _process(delta):
 
 
         $Label.text = label
-        if _controller:
+        if vehicle.is_valid():
             $Switch.disabled = false
         else:
             $Switch.disabled = true
@@ -67,9 +64,9 @@ func _process(delta):
         _t += delta
         if _t > 0.1:
             _t = 0.0
-            if _controller:
+            if vehicle.is_valid():
                 if state_property:
-                    var value = _controller.state.get(state_property)
+                    var value = VehicleServer.vehicle_dump_state(vehicle).get(state_property)
                     if not value == null:
                         # shown, not switched: a state shown must not send it back to the vehicle
                         $Switch.set_pressed_no_signal(true if value else false)
@@ -81,11 +78,11 @@ func _process(delta):
 
 
 func _on_switch_toggled(toggled_on):
-    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _controller and command:
+    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and vehicle.is_valid() and command:
         _send(toggled_on)
 
 func _on_switch_pressed():
-    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _controller and command:
+    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and vehicle.is_valid() and command:
         _send($Switch.button_pressed)
 
 func _on_switch_button_up():
@@ -95,6 +92,6 @@ func _on_switch_button_up():
 
 func _send(enabled:bool) -> void:
     if command_argument == null:
-        _controller.send_command(command, enabled)
+        VehicleServer.vehicle_send_command(vehicle, command, enabled)
         return
-    _controller.send_command(command, command_argument, enabled)
+    VehicleServer.vehicle_send_command(vehicle, command, command_argument, enabled)

@@ -36,6 +36,7 @@ func before_each() -> void:
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
         node.set_model(wagon if index == WAGON else engine)
         add_child_autofree(node)
+        RailVehicleServer.vehicle_attach(node.get_vehicle_rid())
         controllers.append(node.get_controller())
         vehicles.append(node.get_controller().get_rid())
     await wait_idle_frames(2)
@@ -50,7 +51,7 @@ func after_each() -> void:
 
 func _lit(index:int, end:String) -> PackedStringArray:
     var lit:PackedStringArray = []
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicles[index])
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicles[index])
     for lamp:String in LAMPS:
         if state.get("lights/%s_%s_enabled" % [end, lamp], false):
             lit.append(lamp)
@@ -66,7 +67,7 @@ func test_a_train_shows_pc1_at_its_head_and_red_markers_at_its_tail():
 
 
 func test_the_vehicles_inside_the_trainset_are_put_out():
-    RailVehicleServer.vehicle_send_command(vehicles[1], "light", "front_headlight_left", true)
+    VehicleServer.vehicle_send_command(vehicles[1], "light", "front_headlight_left", true)
     MaszynaLegacyDriverLights.check_vehicles(vehicles[0], 1, MaszynaLegacyAIDriver.Order.OBEY_TRAIN, NO_HINTS)
     assert_eq(_lit(1, "front"), PackedStringArray())
     assert_eq(_lit(1, "rear"), PackedStringArray())

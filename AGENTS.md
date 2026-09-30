@@ -20,8 +20,9 @@ Code generation:
 * Keep code clean and do minimal code changes
 * Follow DRY and KISS principles
 * use english comments (if needed)
-* a vehicle is held by its `RailVehicleServer` RID and commanded with
-  `RailVehicleServer.vehicle_send_command(vehicle_rid, ...)`; its scenery name (`train_id`) may be
+* a vehicle is held by its `VehicleServer` RID and commanded with
+  `VehicleServer.vehicle_send_command(vehicle_rid, ...)`; `RailVehicleServer` knows the same RID
+  for what is rail (track, couplers, rail component kinds). Its scenery name (`train_id`) may be
   empty or repeated and is only for finding it (`vehicle_get_rid_by_name`). Call a
   `VehicleController` directly only where the composition already holds it (e.g. `VehicleComponent`s)
 * PROHIBITED: **programming by chains of private `_underscore` methods and many paths to one

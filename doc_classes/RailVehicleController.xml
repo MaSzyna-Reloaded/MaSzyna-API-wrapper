@@ -103,6 +103,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="find_rail_components" qualifiers="const">
+			<return type="VehicleComponent[]" />
+			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
 		<method name="get_coupled_controller" qualifiers="const">
 			<return type="RailVehicleController" />
 			<param index="0" name="end" type="int" />
@@ -112,6 +118,12 @@
 		<method name="get_coupled_end" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="end" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rail_component" qualifiers="const">
+			<return type="VehicleComponent" />
+			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
 			<description>
 			</description>
 		</method>
@@ -232,6 +244,8 @@
 		</member>
 		<member name="controller_main_position" type="int" setter="" getter="get_controller_main_position" default="0">
 		</member>
+		<member name="controller_second_actual_position" type="int" setter="" getter="get_controller_second_actual_position" default="0">
+		</member>
 		<member name="controller_second_position" type="int" setter="" getter="get_controller_second_position" default="0">
 		</member>
 		<member name="converter_allowed" type="bool" setter="" getter="get_converter_allowed" default="false">
@@ -261,6 +275,8 @@
 			Power drawn for lighting, in kW.
 		</member>
 		<member name="live_battery_voltage" type="float" setter="" getter="get_live_battery_voltage" default="0.0">
+		</member>
+		<member name="mass_reduced" type="float" setter="" getter="get_mass_reduced" default="0.0">
 		</member>
 		<member name="power24_available" type="bool" setter="" getter="get_power24_available" default="false">
 		</member>

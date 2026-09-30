@@ -55,9 +55,8 @@ var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
 class BankRuntime extends RefCounted:
     var player:SfxPlayer3D
     var vehicle:RailVehicle3D
-    ## The vehicle's handle in RailVehicleServer - the key of its entry in _vehicle_events
+    ## The vehicle's handle, valid once its simulation is - the key of its entry in _vehicle_events
     var vehicle_rid:RID = RID()
-    var controller:VehicleController
     var cabin_only:bool = false
     var enabled:bool = true
     var brake_sources:Dictionary = {}
@@ -153,14 +152,11 @@ var _active:Array[BankRuntime] = []
 ## attach, detach, pantograph up and down once, and the running counts the CHANGE triggers
 ## compare against live here, one entry per vehicle RID, shared by that vehicle's banks.
 var _vehicle_events:Dictionary[RID, PackedInt32Array] = {}
-## The controller each counted vehicle is connected to, so the connection is made once per
-## vehicle rather than once per bank, and is remade when the vehicle's controller is replaced.
-var _coupler_sources:Dictionary[RID, VehicleController] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
 var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
-## Controllers of the listener's own trainset, refreshed with the sweep and on a context change
-var _listener_trainset_ids:Dictionary = {}
+## Vehicles of the listener's own trainset, refreshed with the sweep and on a context change
+var _listener_trainset:Array[RID] = []
 var _culling_distance:float = 1000.0
 var _sweep_timer:Timer
 var _listener:TrainSoundListener3D
@@ -179,6 +175,8 @@ func _ready() -> void:
     SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.connect(_on_simulation_current_speed_changed)
     SimulationServer.simulation_speed_changed.connect(_mute_world)
+    RailVehicleServer.vehicle_coupler_attached.connect(_on_coupler_attached)
+    RailVehicleServer.vehicle_coupler_detached.connect(_on_coupler_detached)
     _on_simulation_current_speed_changed()
 
 
@@ -215,7 +213,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
-    _resolve_controller(runtime)
+    _resolve_vehicle(runtime)
     _refresh_bank_context(runtime)
     _mark_active(runtime)
 
@@ -227,7 +225,7 @@ func register_trigger(player:SfxPlayer3D, descriptor:Dictionary) -> int:
         runtime = BankRuntime.new()
         runtime.player = player
         _set_bank_vehicle(runtime, descriptor.get("vehicle") as RailVehicle3D)
-        runtime.controller = descriptor.get("controller") as VehicleController
+        runtime.vehicle_rid = descriptor.get("vehicle_rid", RID())
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     var trigger_id:int = _add_trigger(runtime, descriptor)
@@ -258,10 +256,9 @@ func _process(delta:float) -> void:
         runtime.sound_update_elapsed = fmod(
                 runtime.sound_update_elapsed, maxf(runtime.update_interval, 0.001))
 
-        var controller_id:int = runtime.controller.get_instance_id()
-        if not states.has(controller_id):
-            states[controller_id] = runtime.controller.state
-        var state:Dictionary = states[controller_id]
+        if not states.has(runtime.vehicle_rid):
+            states[runtime.vehicle_rid] = VehicleServer.vehicle_dump_state(runtime.vehicle_rid)
+        var state:Dictionary = states[runtime.vehicle_rid]
         var batch:Dictionary = {}
         _update_brake_sounds(runtime, state, batch)
         _update_running_sounds(runtime, state, elapsed, batch)
@@ -292,7 +289,7 @@ func _refresh_active_banks() -> void:
         runtime.active = false
     _active.clear()
     for runtime:BankRuntime in _banks.values():
-        if not runtime.controller or not runtime.enabled:
+        if not runtime.vehicle_rid.is_valid() or not runtime.enabled:
             continue
         if not runtime.events_built and runtime.brake_sources:
             _build_brake_events(runtime)
@@ -324,7 +321,7 @@ func _refresh_active_banks() -> void:
 
 ## Takes a bank into the set the frame visits, before the next sweep has looked at it.
 func _mark_active(runtime:BankRuntime) -> void:
-    if runtime.active or not runtime.enabled or not runtime.controller:
+    if runtime.active or not runtime.enabled or not runtime.vehicle_rid.is_valid():
         return
     runtime.active = true
     _active.append(runtime)
@@ -354,62 +351,56 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     return trigger.id
 
 
-## Resolves the bank's controller and, for the first bank of a vehicle, starts counting that
+## Resolves the bank's vehicle and, for the first bank of a vehicle, starts counting that
 ## vehicle's coupling and pantograph events. The counts belong here rather than in the vehicle state: a coupling
 ## is an event the physics side reports once, and what a CHANGE trigger needs is a number that
 ## only ever goes up.
-func _resolve_controller(runtime:BankRuntime) -> void:
+func _resolve_vehicle(runtime:BankRuntime) -> void:
     if not runtime.vehicle:
         return
-    runtime.controller = runtime.vehicle.get_controller()
-    if not runtime.controller:
-        return
     var vehicle_rid:RID = runtime.vehicle.get_rid()
+    if not VehicleServer.vehicle_is_simulation_ready(vehicle_rid):
+        vehicle_rid = RID()
     if not runtime.vehicle_rid == vehicle_rid:
         # the vehicle took its controller's handle in place of its own
-        # (RailVehicle3D::_on_controller_changed) - the counting moves to the new one
+        # (RailVehicle3D::set_controller) - the counting moves to the new one
         _stop_counting_events(runtime.vehicle_rid)
         _vehicle_events.erase(runtime.vehicle_rid)
     runtime.vehicle_rid = vehicle_rid
-    var counted:VehicleController = _coupler_sources.get(runtime.vehicle_rid)
-    if counted == runtime.controller:
+    if not vehicle_rid.is_valid():
         return
-    _stop_counting_events(runtime.vehicle_rid)
-    if not _vehicle_events.has(runtime.vehicle_rid):
+    # the vehicle was built again: its engine is another component now
+    _stop_counting_events(vehicle_rid)
+    if not _vehicle_events.has(vehicle_rid):
         var counts:PackedInt32Array = PackedInt32Array()
         counts.resize(VEHICLE_EVENT_COUNT)
-        _vehicle_events[runtime.vehicle_rid] = counts
-    _coupler_sources[runtime.vehicle_rid] = runtime.controller
-    runtime.controller.coupler_attached.connect(_on_coupler_attached.bind(runtime.vehicle_rid))
-    runtime.controller.coupler_detached.connect(_on_coupler_detached.bind(runtime.vehicle_rid))
-    var engine:RailVehicleElectricEngine = runtime.controller.get_component(
-            VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+        _vehicle_events[vehicle_rid] = counts
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
+            vehicle_rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if engine:
-        _pantograph_sources[runtime.vehicle_rid] = engine
-        engine.pantograph_up.connect(_on_pantograph_up.bind(runtime.vehicle_rid))
-        engine.pantograph_down.connect(_on_pantograph_down.bind(runtime.vehicle_rid))
+        _pantograph_sources[vehicle_rid] = engine
+        engine.pantograph_up.connect(_on_pantograph_up.bind(vehicle_rid))
+        engine.pantograph_down.connect(_on_pantograph_down.bind(vehicle_rid))
 
 
-## Disconnects a vehicle's event sources; its counts stay, the caller decides about them.
+## Disconnects a vehicle's pantograph events; its counts stay, the caller decides about them.
 func _stop_counting_events(vehicle_rid:RID) -> void:
-    var counted:VehicleController = _coupler_sources.get(vehicle_rid)
-    if is_instance_valid(counted):
-        counted.coupler_attached.disconnect(_on_coupler_attached.bind(vehicle_rid))
-        counted.coupler_detached.disconnect(_on_coupler_detached.bind(vehicle_rid))
     var engine:RailVehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
     if is_instance_valid(engine):
         engine.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
-    _coupler_sources.erase(vehicle_rid)
     _pantograph_sources.erase(vehicle_rid)
 
 
-func _on_coupler_attached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
-    _vehicle_events[vehicle_rid][element] += 1
+## Every rail vehicle reports its couplings; only the counted ones are kept
+func _on_coupler_attached(vehicle_rid:RID, element:RailVehicleController.CouplingElement) -> void:
+    if _vehicle_events.has(vehicle_rid):
+        _vehicle_events[vehicle_rid][element] += 1
 
 
-func _on_coupler_detached(element:RailVehicleController.CouplingElement, vehicle_rid:RID) -> void:
-    _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
+func _on_coupler_detached(vehicle_rid:RID, element:RailVehicleController.CouplingElement) -> void:
+    if _vehicle_events.has(vehicle_rid):
+        _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 
 ## Both pantographs count as one event: the vehicle has one sound for them (sPantUp,
@@ -427,7 +418,7 @@ func _on_pantograph_down(_selector:int, vehicle_rid:RID) -> void:
 ## the config it needs does not exist before that.
 func _build_brake_events(runtime:BankRuntime) -> void:
     var built:Array[SfxEvent] = MaszynaBrakeSfxEventFactory.build_events(
-            runtime.brake_sources, runtime.controller.config)
+            runtime.brake_sources, VehicleServer.vehicle_dump_config(runtime.vehicle_rid))
     if not built:
         return
     var events:Array[SfxEvent] = runtime.player.bank.events.duplicate()
@@ -540,8 +531,7 @@ func _update_running_sounds(
     if not runtime.running:
         return
     var results:Dictionary = runtime.running.update(
-            runtime.controller, state, elapsed,
-            not _listener_trainset_ids.has(runtime.controller.get_instance_id()))
+            runtime.vehicle_rid, state, elapsed, not _listener_trainset.has(runtime.vehicle_rid))
     for event_name:StringName in results:
         var result:Dictionary = results[event_name]
         var action:int = result["action"]
@@ -562,27 +552,21 @@ func _update_running_sounds(
         batch[event_name] = parameters
 
 
-## Controllers of the trainset driven from the listener's cab - their outer noise is replaced by the
-## cab running noise (DynObj.cpp:4632-4640). It changes when the listener changes cab or the
-## trainset is recoupled, so it is walked with the sweep and not per frame.
+## The trainset driven from the listener's cab - its outer noise is replaced by the cab running
+## noise (DynObj.cpp:4632-4640). It changes when the listener changes cab or the trainset is
+## recoupled, so it is walked with the sweep and not per frame.
 func _refresh_listener_trainset() -> void:
-    _listener_trainset_ids.clear()
+    _listener_trainset.clear()
     if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
         return
-    var pending:Array[VehicleController] = [_listener.listener_vehicle.get_controller()]
-    while pending:
-        var controller:VehicleController = pending.pop_back()
-        if not controller or _listener_trainset_ids.has(controller.get_instance_id()):
-            continue
-        _listener_trainset_ids[controller.get_instance_id()] = true
-        pending.append(controller.get_coupled_controller(0))
-        pending.append(controller.get_coupled_controller(1))
+    _listener_trainset.assign(RailVehicleServer.vehicle_get_coupled(
+            _listener.listener_vehicle.get_rid(), 0, RailVehicleController.COUPLING_ELEMENT_COUPLER))
 
 
 func _engine_gain(
         runtime:BankRuntime, state:Dictionary, source:MmdSoundSourceDefinition) -> float:
     var rpm_ratio:float = clampf(float(state.get("engine_rpm_ratio", 0.0)), 0.0, 1.0)
-    var nominal_power:float = runtime.controller.get_power()
+    var nominal_power:float = float(VehicleServer.vehicle_dump_config(runtime.vehicle_rid).get("power", 0.0))
     var load_ratio:float = 0.0
     if nominal_power > 0.0:
         load_ratio = maxf(float(state.get("engine_power", 0.0)) / nominal_power, 0.0)
@@ -829,7 +813,7 @@ func _set_bank_vehicle(runtime:BankRuntime, vehicle:RailVehicle3D) -> void:
 func _on_vehicle_controller_changed(vehicle:RailVehicle3D) -> void:
     for runtime:BankRuntime in _banks.values():
         if runtime.vehicle == vehicle:
-            _resolve_controller(runtime)
+            _resolve_vehicle(runtime)
             _refresh_bank_context(runtime)
 
 

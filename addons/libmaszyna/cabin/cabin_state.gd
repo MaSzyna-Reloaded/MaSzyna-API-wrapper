@@ -5,7 +5,7 @@ class_name CabinState
 ## or -1 (cab 2), matching VehicleController.state["cabin_occupied"]. Owned by CabinSystem and
 ## handed to every registered cabin control handler, which may read and modify it.
 ##
-## The vehicle is reached only by its RailVehicleServer handle (commands and state), never through
+## The vehicle is reached only by its VehicleServer handle (commands and state), never through
 ## the Mover directly.
 ##
 ## A cab works three vehicles, as the original's TTrain does: the one it is in (mvOccupied), the one
@@ -54,7 +54,7 @@ func is_pressed(control_id:StringName, action:StringName, value:Variant) -> bool
     return action == &"hold"
 
 
-## The vehicle's state, through the cab's own system. RailVehicleServer builds the dump once per
+## The vehicle's state, through the cab's own system. VehicleServer builds the dump once per
 ## step for every element of every cab, and a read right after a command is not stale either - the
 ## dump is keyed on the vehicle's command counter as well as on the step (see `FINDINGS.md`,
 ## 2026-09-23).
@@ -83,4 +83,4 @@ func vehicle_state_value(key:String, default_value:Variant = null, target:Target
 func send_vehicle_command(
     command:String, p1:Variant = null, p2:Variant = null, target:Target = Target.OCCUPIED
 ) -> Variant:
-    return RailVehicleServer.vehicle_send_command(vehicle_of(vehicle_rid, target), command, p1, p2)
+    return VehicleServer.vehicle_send_command(vehicle_of(vehicle_rid, target), command, p1, p2)

@@ -1,5 +1,6 @@
 #include "RailVehicleController.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
+#include "vehicles/base/VehicleComponent.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 
 namespace godot {
     const char *RailVehicleController::power_changed_signal = "power_changed";
@@ -9,16 +10,27 @@ namespace godot {
     const char *RailVehicleController::coupler_detached_signal = "coupler_detached";
 
     Dictionary RailVehicleController::get_state() {
-        RailVehicleServer *server = RailVehicleServer::get_instance();
+        VehicleServer *server = VehicleServer::get_instance();
         if (server == nullptr) {
             return Dictionary();
         }
-        // An unknown or invalid handle has no placement, so the server answers an empty dictionary
+        // An unknown or invalid handle has no vehicle, so the server answers an empty dictionary
         // on its own - there is no second way of producing the state here.
         return server->vehicle_dump_state(get_rid());
     }
 
+    Ref<VehicleComponent> RailVehicleController::get_rail_component(const RailVehicleComponentType::Type p_type) const {
+        return _get_component_of_type(p_type);
+    }
+
+    TypedArray<VehicleComponent>
+    RailVehicleController::find_rail_components(const RailVehicleComponentType::Type p_type) const {
+        return _find_components_of_type(p_type);
+    }
+
     void RailVehicleController::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("get_rail_component", "type"), &RailVehicleController::get_rail_component);
+        ClassDB::bind_method(D_METHOD("find_rail_components", "type"), &RailVehicleController::find_rail_components);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &RailVehicleController::battery);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &RailVehicleController::converter);
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &RailVehicleController::cab_activation);

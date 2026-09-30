@@ -108,12 +108,12 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     # mvControlled (FindPowered(), DynObj.cpp:7772) and mvPantographUnit (FindPantographCarrier(),
     # DynObj.cpp:7798) - the controlled vehicle's own collector when nothing carries one
     var controlled_vehicle:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    var controlled:Dictionary = RailVehicleServer.vehicle_dump_state(controlled_vehicle)
-    var controlled_config:Dictionary = RailVehicleServer.vehicle_dump_config(controlled_vehicle)
+    var controlled:Dictionary = VehicleServer.vehicle_dump_state(controlled_vehicle)
+    var controlled_config:Dictionary = VehicleServer.vehicle_dump_config(controlled_vehicle)
     var carrier:RID = RailVehicleServer.vehicle_find_pantograph_carrier(vehicle)
-    var pantograph_unit:Dictionary = RailVehicleServer.vehicle_dump_state(carrier) if carrier.is_valid() else controlled
+    var pantograph_unit:Dictionary = VehicleServer.vehicle_dump_state(carrier) if carrier.is_valid() else controlled
 
-    result["name"] = RailVehicleServer.vehicle_get_name(vehicle)   # DynamicObject->asName
+    result["name"] = VehicleServer.vehicle_get_name(vehicle)   # DynamicObject->asName
     for key:String in STATE_KEYS:
         if STATE_KEYS[key] in state:
             result[key] = state[STATE_KEYS[key]]
@@ -176,7 +176,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     var compressors:int = 0
     for index:int in mini(cars.size(), CAR_COUNT):
         var car:RID = cars[index]
-        var car_state:Dictionary = RailVehicleServer.vehicle_dump_state(car)
+        var car_state:Dictionary = VehicleServer.vehicle_dump_state(car)
         var car_number:int = index + 1
         result["eimp_pn%d_bc" % car_number] = car_state.get("brake_air_pressure", 0.0)   # BrakePress
         result["eimp_pn%d_bp" % car_number] = car_state.get("pipe_pressure", 0.0)   # PipePress
@@ -195,9 +195,9 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
         result["doors_r_%d" % car_number] = doors_right
         result["doorstep_l_%d" % car_number] = car_state.get("doors_left_step_position", 0.0) > 0.0
         result["doorstep_r_%d" % car_number] = car_state.get("doors_right_step_position", 0.0) > 0.0
-        result["car_name%d" % car_number] = RailVehicleServer.vehicle_get_name(car)
+        result["car_name%d" % car_number] = VehicleServer.vehicle_get_name(car)
         # the unit and the last letter of the vehicle's type (Train.cpp:895, 8687-8688)
-        result["code_%d" % car_number] = "%d%s" % [unit_number, RailVehicleServer.vehicle_get_type_name(car).right(1)]
+        result["code_%d" % car_number] = "%d%s" % [unit_number, VehicleServer.vehicle_get_type_name(car).right(1)]
         result["slip_%d" % car_number] = car_state.get("slipping_wheels", false)
         if unit_number <= EIM_CAR_COUNT:
             if COLLECTOR_KEY in car_state:
@@ -205,7 +205,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
                 result["eimp_u%d_pr" % unit_number] = result["eimp_u%d_pr" % unit_number] or car_state.get("current_collector/pantograph_second_active", false)
             # CompressorStart is never automatic here - the wrapper does not set it
             result["eimp_u%d_comp_a" % unit_number] = result["eimp_u%d_comp_a" % unit_number] or car_state.get("compressor_allowed", false)
-        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(car, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
         if brake and brake.compressor_speed > COMPRESSOR_SPEED_THRESHOLD:
             if unit_number <= EIM_CAR_COUNT:
                 result["eimp_u%d_comp_w" % unit_number] = result["eimp_u%d_comp_w" % unit_number] or car_state.get("compressor_enabled", false)
@@ -295,7 +295,7 @@ static func _light_bits(state:Dictionary, end:String) -> int:
 static func _outer_light_bits(end_vehicle:RID) -> int:
     var beyond_front:Array = RailVehicleServer.vehicle_get_coupled(end_vehicle, 0, RailVehicleController.COUPLING_ELEMENT_COUPLER)
     var outer:String = "front" if beyond_front.front() == end_vehicle else "rear"
-    return _light_bits(RailVehicleServer.vehicle_dump_state(end_vehicle), outer)
+    return _light_bits(VehicleServer.vehicle_dump_state(end_vehicle), outer)
 
 
 static func _static_init() -> void:

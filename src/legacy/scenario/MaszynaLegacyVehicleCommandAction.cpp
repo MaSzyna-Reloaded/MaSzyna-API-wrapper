@@ -1,6 +1,7 @@
 #include "MaszynaLegacyVehicleCommandAction.hpp"
 #include "driver/DriverSystem.hpp"
 #include "scenario/ScenarioEventServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
@@ -26,13 +27,15 @@ namespace godot {
     /// getvalues_event::run_() / putvalues_event::run_() (Event.cpp:615-635, 771-844)
     void MaszynaLegacyVehicleCommandAction::run(const RID &p_event, const RID &p_activator) {
         const ScenarioEventServer *events = ScenarioEventServer::get_instance();
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL(events);
+        ERR_FAIL_NULL(vehicle_server);
         ERR_FAIL_NULL(vehicles);
         const bool read = source.is_valid();
         const String text = read ? events->memory_get_text(source) : command;
         if (text == CAB_SIGNAL && p_activator.is_valid()) {
-            vehicles->vehicle_send_command(p_activator, "security_cabsignal_trigger");
+            vehicle_server->vehicle_send_command(p_activator, "security_cabsignal_trigger");
             return;
         }
         // the original switches Radio-Stop on for 1 (Mover.cpp:12624-12630); sent, it can only

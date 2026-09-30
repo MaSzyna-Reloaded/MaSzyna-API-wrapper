@@ -82,6 +82,7 @@ func before_all() -> void:
         physics_node.train_id = "bench_vehicle_%d" % index
         physics_node.set_model(model)
         add_child(physics_node)
+        RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
         _vehicle_nodes.append(physics_node)
         var controller: VehicleController = physics_node.get_controller()
 
@@ -149,7 +150,7 @@ func test_bench_fixture_is_sound() -> void:
 func test_bench_physics_server_tick() -> void:
     var started: int = Time.get_ticks_usec()
     for frame: int in SAMPLE_FRAMES:
-        RailVehicleServer.stepping_advance(FRAME_DELTA)
+        VehicleServer.stepping_advance(FRAME_DELTA)
     var elapsed: int = Time.get_ticks_usec() - started
     print("[bench] server tick: %.3f ms/frame for %d vehicles" % [
         float(elapsed) / SAMPLE_FRAMES / MICROSECONDS_PER_MILLISECOND, VEHICLE_COUNT])

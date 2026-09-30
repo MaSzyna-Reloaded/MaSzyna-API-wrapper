@@ -126,7 +126,7 @@ func hold(seconds:float) -> void:
 ## 6232-6240): the time it waits runs on, and the line's voltage
 func read(situation:Situation, elapsed:float) -> void:
     action_time += elapsed
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     voltage = VOLTAGE_SMOOTHING * (voltage + float(state.get("current_collector/voltage", 0.0)))
     if voltage < float(state.get("current_collector/min_main_switch_voltage", 0.0)) \
             and action_time >= MaszynaLegacyAIDriver.PREPARE_TIME:
@@ -137,7 +137,7 @@ func read(situation:Situation, elapsed:float) -> void:
 ## control_relays(), control_motor_connectors(), control_wheelslip(), Driver.cpp:7925-7952,
 ## 7967-7993, 6200-6217); false when the power and the brakes are to be left alone
 func prepare(situation:Situation) -> bool:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     if action_time >= 0.0:
         if situation.trainset.motor_overload_relay_open:
             zero(situation)
@@ -157,7 +157,7 @@ func prepare(situation:Situation) -> bool:
         return false
     var slipping:bool = state.get("slipping_wheels", false)
     var sanding:bool = state.get("sand_active", false)
-    var engine:RailVehicleElectricEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     var high_current:bool = engine != null \
             and absf(float(state.get("Im", 0.0))) > SANDING_CURRENT_SHARE * engine.circuit_imax_high
@@ -183,7 +183,7 @@ func control(situation:Situation) -> void:
     var acceleration_desired:float = speed.acceleration_desired
     var speed_control:bool = CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/active", false)
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-            situation.vehicle, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+            situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
     var full_power:bool = speed_control and control != null and velocity < control.full_power_velocity
     if acceleration_desired > MaszynaLegacyDriverSpeed.NO_ACCELERATION \
             and (situation.trainset.acceleration < acceleration_desired or full_power) and not situation.pressing:
@@ -211,7 +211,7 @@ func control(situation:Situation) -> void:
 
 ## bufferscompress (driverhints.cpp:582-594): power against its own brakes, to press the buffers
 func press(situation:Situation) -> void:
-    if absf(float(RailVehicleServer.vehicle_dump_state(situation.controlling).get("Ft", 0.0))) < PRESSING_FORCE:
+    if absf(float(VehicleServer.vehicle_dump_state(situation.controlling).get("Ft", 0.0))) < PRESSING_FORCE:
         increase(situation)
 
 
@@ -257,11 +257,11 @@ func set_time_controllers(_situation:Situation) -> void:
 ## SpeedCntrl() (Driver.cpp:4011-4045): the cruise control set to `velocity` [km/h]; 0 turns it off
 func set_cruise_control(situation:Situation, velocity:float) -> void:
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+            situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
     if control == null or not control.speed_control_enabled:
         return
     var second:int = controller_position(situation, "controller_second_position")
-    var second_max:int = int(RailVehicleServer.vehicle_dump_config(situation.controlling).get("second_controller_position_max", 0))
+    var second_max:int = int(VehicleServer.vehicle_dump_config(situation.controlling).get("second_controller_position_max", 0))
     if engine_type == RailVehicleEngine.DIESEL:
         if velocity < SPEED_CONTROL_TARGET_FROM:
             set_second_controller(situation, 0)
@@ -273,7 +273,7 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
         set_second_controller(situation, 1)
         MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_set", velocity)
     elif second_max > 1 and not control.impulse_lever:
-        var velocity_max:float = float(RailVehicleServer.vehicle_dump_config(situation.controlling).get("max_speed", 0.0))
+        var velocity_max:float = float(VehicleServer.vehicle_dump_config(situation.controlling).get("max_speed", 0.0))
         set_second_controller(situation, 1 + int(second_max * ((velocity - 1.0) / velocity_max)))
     if control.power_step > 0.0 and controller_position(situation, "controller_second_position") > 0:
         while float(CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/desired_power", 0.0)) < control.max_power:
@@ -284,9 +284,9 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
 ## one close to it, set when the unit takes it, else the unit off
 func cruise(situation:Situation) -> void:
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+            situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
     if control == null or not control.speed_control_enabled \
-            or not RailVehicleServer.vehicle_dump_state(situation.controlling).get("main_switch_enabled", false):
+            or not VehicleServer.vehicle_dump_state(situation.controlling).get("main_switch_enabled", false):
         return
     var speed:MaszynaLegacyDriverSpeed = situation.speed
     var velocity:float = speed.velocity_desired \
@@ -345,7 +345,7 @@ static func set_second_controller(situation:Situation, position:int) -> bool:
 
 ## EIMCtrlType of the engine the controls drive (Cntrl. EIMCtrlType)
 static func eim_control_type(situation:Situation) -> RailVehicleEngine.EimControlType:
-    var engine:RailVehicleEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     return engine.cntrl_eim_control_type if engine else RailVehicleEngine.EIM_CONTROL_TYPE_0
 
@@ -378,8 +378,8 @@ func decrease_eim(situation:Situation) -> bool:
                 return set_main_controller(situation, TRAXX_NEUTRAL_POSITION)
         RailVehicleEngine.EIM_CONTROL_TYPE_2:
             var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
-                    situation.controlling, VehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-            var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+                    situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+            var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
             if situation.speed.acceleration_desired > 0.0 and control and state.get("speed_control/active", false) \
                     and control.power_step > 0.0 and float(state.get("speed_control/desired_power", 0.0)) > control.min_power:
                 MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_power_decrease")
@@ -390,7 +390,7 @@ func decrease_eim(situation:Situation) -> bool:
 
 ## The voltage under which a series motor's controls keep to series mode (Driver.cpp:3456-3461)
 func series_voltage(situation:Situation) -> float:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     return lerpf(float(state.get("current_collector/min_main_switch_voltage", 0.0)),
             float(state.get("current_collector/max_voltage", 0.0)),
             HEAVY_SERIES_VOLTAGE_SHARE if situation.braking.heavy_cargo else SERIES_VOLTAGE_SHARE)
@@ -399,7 +399,7 @@ func series_voltage(situation:Situation) -> float:
 ## control_handles() of a series motor (Driver.cpp:6441-6464) - of the driver's own, or of the one
 ## an EMU's control car drives
 func control_series_motor_handles(situation:Situation) -> void:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     # the line contactors dropped out: back to zero
     if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
             and main_powercontroller_position(situation) > 1:
@@ -413,7 +413,7 @@ func control_series_motor_handles(situation:Situation) -> void:
 
 ## mastercontrollersetseriesmode (driverhints.cpp:503-521): off the parallel positions
 func set_series_mode(situation:Situation) -> void:
-    var engine:RailVehicleElectricSeriesEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     if engine == null:
         return

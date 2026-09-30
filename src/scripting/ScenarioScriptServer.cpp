@@ -4,6 +4,7 @@
 #include "scenario/ScenarioEventServer.hpp"
 #include "signalling/SignallingServer.hpp"
 #include "tracks/TrackServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -39,11 +40,13 @@ namespace godot {
     /// No explicit disconnect: callable_mp reports this instance as the callable's object, so the
     /// engine drops the connections when the instance dies.
     ScenarioScriptServer::ScenarioScriptServer() {
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        vehicle_server->connect(
+                VehicleServer::vehicle_command_received_signal,
+                callable_mp(this, &ScenarioScriptServer::_on_vehicle_command_received));
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
-        vehicles->connect(
-                RailVehicleServer::vehicle_command_received_signal,
-                callable_mp(this, &ScenarioScriptServer::_on_vehicle_command_received));
         vehicles->connect(
                 RailVehicleServer::vehicle_heading_to_track_start_signal,
                 callable_mp(this, &ScenarioScriptServer::_on_vehicle_heading_to_track_start));

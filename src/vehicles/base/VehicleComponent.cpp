@@ -11,7 +11,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleComponent::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleComponent::unregister_command);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
-        ClassDB::bind_method(D_METHOD("get_component_type"), &VehicleComponent::get_component_type);
         ClassDB::bind_method(D_METHOD("set_component_tag", "tag"), &VehicleComponent::set_component_tag);
         ClassDB::bind_method(D_METHOD("get_component_tag"), &VehicleComponent::get_component_tag);
         ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "component_tag"), "set_component_tag", "get_component_tag");
@@ -37,7 +36,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("component_disabled"));
     }
 
-    VehicleComponentType::Type VehicleComponent::get_component_type() const {
+    int VehicleComponent::get_component_type() const {
         return VehicleComponentType::COMPONENT_NONE;
     }
 

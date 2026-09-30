@@ -5,7 +5,7 @@ var _security:RailVehicleSecuritySystem
 
 func _do_update():
     super._do_update()
-    _security = _component(VehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
+    _security = _rail_component(RailVehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
 
 
 func _on_refresh_timer_timeout() -> void:

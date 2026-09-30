@@ -70,7 +70,7 @@ hides the new ones.
 
 ### GDScript
 The short GDScript rules (singleton guards, `/root/...`, `is_connected()`, setters and `_dirty`,
-`not ... == ...`, `RailVehicleServer.vehicle_send_command`) are listed in `AGENTS.md`.
+`not ... == ...`, `VehicleServer.vehicle_send_command`) are listed in `AGENTS.md`.
 
 1. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
    signal goes into the scene's `[connection]` list - not into `_ready()`. The wiring then sits

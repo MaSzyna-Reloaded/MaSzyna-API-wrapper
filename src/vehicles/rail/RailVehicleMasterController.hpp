@@ -9,8 +9,8 @@ namespace godot {
             GDCLASS(RailVehicleMasterController, RailVehicleComponent);
 
         public:
-            VehicleComponentType::Type get_component_type() const override {
-                return VehicleComponentType::COMPONENT_MASTER_CONTROLLER;
+            int get_component_type() const override {
+                return RailVehicleComponentType::COMPONENT_MASTER_CONTROLLER;
             }
 
         private:

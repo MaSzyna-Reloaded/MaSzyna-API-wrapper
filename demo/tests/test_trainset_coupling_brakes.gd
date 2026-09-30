@@ -46,10 +46,11 @@ func before_each() -> void:
         node.initial_velocity = READY_TO_DEPART_VELOCITY
         node.set_model(model)
         add_child_autofree(node)
+        RailVehicleServer.vehicle_attach(node.get_vehicle_rid())
         nodes.append(node)
         var controller:VehicleController = node.get_controller()
         controllers.append(controller)
-        brakes.append(controller.get_component(VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
+        brakes.append(controller.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
     await wait_idle_frames(2)
     for index:int in range(1, VEHICLE_COUNT):
         controllers[index - 1].couple(controllers[index], REAR_END, FRONT_END, COUPLING_WITH_BRAKE_HOSE)

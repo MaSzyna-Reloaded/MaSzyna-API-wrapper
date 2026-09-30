@@ -1,11 +1,11 @@
 extends Node
 
 ## Cabin layer (#94) - the counterpart of the original engine's TTrain (Train.cpp), kept separate
-## from vehicle commands (RailVehicleServer.vehicle_send_command), which execute on the vehicle
+## from vehicle commands (VehicleServer.vehicle_send_command), which execute on the vehicle
 ## immediately.
 ##
 ## Holds a CabinState per (vehicle, cab) and a registry of cabin control handlers. A vehicle is
-## its RailVehicleServer handle - never its scenery name, which two vehicles may share and one may
+## its VehicleServer handle - never its scenery name, which two vehicles may share and one may
 ## lack. Cabin controls only report manipulations through act(); the handlers are registered by
 ## the CabinLogic attached to the vehicle (e.g. LegacyCabinLogic) and translate them into vehicle
 ## commands. CabinSystem itself has no cabin logic and forwards nothing by default.
@@ -32,16 +32,16 @@ var _cab_logics:Dictionary[RID, CabinLogic] = {}
 
 func _ready() -> void:
     SimulationServer.simulation_advanced.connect(_on_simulation_advanced)
-    RailVehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
+    VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.connect(_on_vehicle_occupied_cab_changed)
-    RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
+    VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
 
 
 func _exit_tree() -> void:
     SimulationServer.simulation_advanced.disconnect(_on_simulation_advanced)
-    RailVehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
+    VehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     RailVehicleServer.vehicle_occupied_cab_changed.disconnect(_on_vehicle_occupied_cab_changed)
-    RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
+    VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
 
 
 ## A freed vehicle takes its cabins along - a handle is never reused for another vehicle.
@@ -69,12 +69,12 @@ func _on_vehicle_occupied_cab_changed(vehicle_rid:RID, cabin_occupied:int) -> vo
     vehicle_cabin_occupied_changed.emit(vehicle_rid, cabin_occupied)
 
 
-## The whole vehicle's state, by name. RailVehicleServer builds it once per step and keeps it until
+## The whole vehicle's state, by name. VehicleServer builds it once per step and keeps it until
 ## the step or a command moves it on, so the dozens of elements of a cab asking in one frame share
 ## one dump. An element that reads one value often enough to care takes its component instead
 ## (vehicle_component() below).
 func vehicle_state(vehicle_rid:RID) -> Dictionary:
-    return RailVehicleServer.vehicle_dump_state(vehicle_rid) if vehicle_rid.is_valid() else {}
+    return VehicleServer.vehicle_dump_state(vehicle_rid) if vehicle_rid.is_valid() else {}
 
 
 ## One named value of the vehicle's state. This is what a cabin element wants: it is driven by a
@@ -85,13 +85,13 @@ func vehicle_state_value(vehicle_rid:RID, key:String, default_value:Variant = nu
 
 
 func vehicle_config(vehicle_rid:RID) -> Dictionary:
-    return RailVehicleServer.vehicle_dump_config(vehicle_rid) if vehicle_rid.is_valid() else {}
+    return VehicleServer.vehicle_dump_config(vehicle_rid) if vehicle_rid.is_valid() else {}
 
 
 ## One component of the vehicle, by kind - for an element that reads a value often enough to want
 ## the typed property rather than the dump.
-func vehicle_component(vehicle_rid:RID, type:int) -> VehicleComponent:
-    return RailVehicleServer.vehicle_component_get(vehicle_rid, type) if vehicle_rid.is_valid() else null
+func vehicle_component(vehicle_rid:RID, type:VehicleComponentType.Type) -> VehicleComponent:
+    return VehicleServer.vehicle_component_get(vehicle_rid, type) if vehicle_rid.is_valid() else null
 
 
 ## Which cab of this vehicle is occupied - 1, 0 (machine room) or -1, as CabinState keys on.
@@ -171,12 +171,12 @@ func unregister_process(vehicle_rid:RID, cab:int, callable:Callable) -> void:
 ## no handler is registered for the control.
 func act(vehicle_rid:RID, cab:int, control_id:StringName, action:StringName, value:Variant = null) -> Variant:
     if not action in ACTIONS:
-        GameLog.error("%s: Unknown cabin action: %s" % [RailVehicleServer.vehicle_get_name(vehicle_rid), action])
+        GameLog.error("%s: Unknown cabin action: %s" % [VehicleServer.vehicle_get_name(vehicle_rid), action])
         return null
     var handler:Callable = _controls.get(_key(vehicle_rid, cab), {}).get(control_id, Callable())
     if not handler.is_valid():
         GameLog.error("%s: Unknown cabin control: %s (cab %d)" % [
-            RailVehicleServer.vehicle_get_name(vehicle_rid), control_id, cab])
+            VehicleServer.vehicle_get_name(vehicle_rid), control_id, cab])
         return null
     return handler.call(get_cabin_state(vehicle_rid, cab), action, value)
 

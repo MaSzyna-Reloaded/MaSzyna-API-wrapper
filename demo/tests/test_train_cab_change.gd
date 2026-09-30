@@ -62,6 +62,7 @@ func test_starts_in_cab_two_for_rear_driver():
     physics_node.train_id = "TestCabChangeRearTrain"
     physics_node.driver_type = VehicleController.DRIVER_REAR
     add_child_autofree(physics_node)
+    RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
     var rear_train: VehicleController = physics_node.get_controller()
 
     assert_eq(rear_train.state["cabin_occupied"], -1)

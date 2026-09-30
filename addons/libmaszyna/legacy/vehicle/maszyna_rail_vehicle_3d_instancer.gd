@@ -254,14 +254,12 @@ static func initialize_instance(
 
 
 static func _fit_rain_volume(physics_node:VehiclePhysicsNode, rain_volume:RainVolume) -> void:
-    var controller:VehicleController = physics_node.get_controller()
-    if not controller:
+    var vehicle:RID = physics_node.get_vehicle_rid()
+    if not VehicleServer.vehicle_is_simulation_ready(vehicle):
         return
-    rain_volume.size = Vector3(
-        controller.dimensions_width, controller.dimensions_height, controller.dimensions_length
-    )
+    rain_volume.size = VehicleServer.vehicle_get_dimensions(vehicle)
     # Vehicle origin lies on the rail level, so the box is lifted by half of its height.
-    rain_volume.position.y = controller.dimensions_height * 0.5
+    rain_volume.position.y = rain_volume.size.y * 0.5
 
 
 ## Public: also called by MaszynaRailVehicle3DManager to (re-)apply the per-instance
@@ -389,10 +387,8 @@ static func _find_pantograph_arm_paths(
 ## RailVehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
 static func _apply_wiper_count(physics_node:VehiclePhysicsNode, vehicle:RailVehicle3D) -> void:
-    var controller:VehicleController = physics_node.get_controller()
-    if not controller:
-        return
-    var wipers:RailVehicleWipers = controller.get_component(VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
+    var wipers:RailVehicleWipers = VehicleServer.vehicle_component_get(
+            physics_node.get_vehicle_rid(), VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
     if wipers:
         wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
         wipers.apply_config()

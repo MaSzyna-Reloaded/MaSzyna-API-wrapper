@@ -4,15 +4,13 @@ extends Control
 class_name DebugKnob
 
 var _dirty = false
-var _controller:VehicleController
 
 ## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
 ## somebody else's scene.
-var vehicle:VehicleController:
+var vehicle:RID = RID():
     set(x):
         if not vehicle == x:
             vehicle = x
-            _controller = x
             _dirty = true
 
 
@@ -40,7 +38,6 @@ var vehicle:VehicleController:
 @export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
-        _controller = null
         controller = x
 
 @export var state_property:String:
@@ -68,9 +65,9 @@ func _process(delta):
         _t += delta
         if _t > 0.1:
             _t = 0.0
-            if _controller:
+            if vehicle.is_valid():
                 if state_property:
-                    var value = _controller.state.get(state_property)
+                    var value = VehicleServer.vehicle_dump_state(vehicle).get(state_property)
                     if not value == null:
                         $SpinBox.value = value
                 else:
@@ -82,5 +79,5 @@ func _process(delta):
 
 
 func _on_spin_box_value_changed(value):
-    if _controller and command:
-        _controller.send_command(command, value)
+    if vehicle.is_valid() and command:
+        VehicleServer.vehicle_send_command(vehicle, command, value)

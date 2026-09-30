@@ -167,7 +167,7 @@ static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, 
 
 ## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached, and the vehicle
 ## is placed on its track in its own _process after that - the trainsets are coupled only then, as a
-## coupler measures from the positions. A vehicle that failed to load has no controller.
+## coupler measures from the positions. A vehicle that failed to load has no simulation.
 static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
     var vehicles:Array[Node] = root.find_children("", "MaszynaRailVehicle3D", true, false)
     for node:Node in vehicles:
@@ -175,7 +175,8 @@ static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
         # every track is built by now: one missing is never built - a road car's (roads are not
         # built yet, maszyna_node_track_importer.gd) - and its vehicle never placed
         var on_track:bool = TrackServer.track_get_rid_by_name(vehicle.start_track_name).is_valid()
-        while not vehicle.is_built() or (on_track and vehicle.get_controller() and not vehicle.is_placed()):
+        while not vehicle.is_built() or (
+                on_track and VehicleServer.vehicle_is_simulation_ready(vehicle.get_rid()) and not vehicle.is_placed()):
             await _report_progress(root, 0.9, "Instancing vehicles")
     root.load_progress.emit(1.0, "")
 
@@ -190,14 +191,14 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         (node as TrainSet3D).couple()
     for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
         var vehicle_node:MaszynaRailVehicle3D = node
-        var controller:VehicleController = vehicle_node.get_controller()
-        if not controller or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
+        var vehicle:RID = vehicle_node.get_rid()
+        if not VehicleServer.vehicle_is_simulation_ready(vehicle) or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
             continue
         var driver:RID = DriverSystem.driver_create()
         root._driver_rids.append(driver)
         # the driver drives through the vehicle's cab logic, like the player, without the 3D cab
         # (MaszynaRailVehicle3D attaches it once the vehicle is driven)
-        DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
+        DriverSystem.driver_attach_vehicle(driver, vehicle)
         DriverSystem.driver_attach_delegate(driver, _ai_driver)
     # endtrainset (simulationstateserializer.cpp:818-848): the trainset's driver gets its timetable
     # and the velocity it starts with; of several drivers, the one furthest along the trainset
@@ -206,8 +207,7 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         var trainset_driver:RID = RID()
         for child:Node in trainset.get_children():
             var vehicle_node:MaszynaRailVehicle3D = child as MaszynaRailVehicle3D
-            var controller:VehicleController = vehicle_node.get_controller() if vehicle_node else null
-            var driver:RID = DriverSystem.vehicle_get_driver(controller.get_rid()) if controller else RID()
+            var driver:RID = DriverSystem.vehicle_get_driver(vehicle_node.get_rid()) if vehicle_node else RID()
             if driver.is_valid():
                 trainset_driver = driver
         if trainset_driver.is_valid():

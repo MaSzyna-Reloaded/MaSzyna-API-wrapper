@@ -465,7 +465,7 @@ func update(
                 MaszynaLegacyDriverTrainset.FRONT_END if trainset.front_direction > 0 else MaszynaLegacyDriverTrainset.REAR_END,
                 maxf(OBSTACLE_RANGE, reach))
     if obstacle:
-        obstacle_speed = RailVehicleServer.vehicle_get_speed(obstacle.vehicle_rid)
+        obstacle_speed = VehicleServer.vehicle_get_speed(obstacle.vehicle_rid)
 
 
 ## The table brought up to date (TableCheck(), TableTraceRoute(), Driver.cpp:430-779): where the
@@ -482,7 +482,7 @@ func _update_table(reach:float, trainset:MaszynaLegacyDriverTrainset) -> void:
         return
     var front:RID = trainset.vehicles[0]
     # the placement is the vehicle's middle; the distances count from the trainset's front
-    var front_offset:float = float(RailVehicleServer.vehicle_dump_config(front).get("length", 0.0)) / 2.0
+    var front_offset:float = float(VehicleServer.vehicle_dump_config(front).get("length", 0.0)) / 2.0
     var found:bool = false
     var along:float = 0.0
     if front == _front:
@@ -764,7 +764,7 @@ func _determine_distances(
     if -acceleration_threshold > THRESHOLD_BRAKING:
         brake_distance = velocity_ceiling * velocity_ceiling / DECELERATION_FACTOR / -acceleration_threshold
     # the G setting brakes later: its reaction on top
-    if int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) == MaszynaLegacyDriverBraking.DELAY_SETTING_G:
+    if int(VehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) == MaszynaLegacyDriverBraking.DELAY_SETTING_G:
         brake_distance += G_REACTION_FACTOR * velocity_ceiling
     var vehicles:float = trainset.vehicles.size()
     match order:

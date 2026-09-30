@@ -31,7 +31,7 @@ var _labels:Dictionary[String, bool] = {}
 ## for events that play or have to stop. `outer_noise_audible` is false for the trainset the
 ## listener drives from a cab (DynObj.cpp:4632-4640).
 func update(
-        controller:VehicleController, state:Dictionary, delta:float,
+        vehicle_rid:RID, state:Dictionary, delta:float,
         outer_noise_audible:bool) -> Dictionary:
     if not _labels:
         for entry:Dictionary in sources:
@@ -42,15 +42,15 @@ func update(
             and float(state.get("resistor_fan_rotation", 0.0)) <= 0.1):
         _motor_volume = 0.0
         return {}
-    var config:Dictionary = controller.config
+    var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle_rid)
     # the track is only read by sounds of a moving vehicle, the curve radius only above 5 km/h
     var shape:Dictionary = {}
     if speed > 0.0 and (_labels.has("wheel_clatter") or _labels.has("curve")
             or _labels.has("outernoise") or _labels.has("runningnoise")):
-        shape = RailVehicleServer.vehicle_get_track_position(controller.get_rid())
+        shape = RailVehicleServer.vehicle_get_track_position(vehicle_rid)
     if speed > 5.0 and _labels.has("curve"):
         shape.merge(RailVehicleServer.vehicle_get_curve(
-                controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
+                vehicle_rid, float(config.get("bogie_pivot_spacing", 0.0))))
     var track_rid:RID = shape.get("track_rid", RID())
     var quality_volume:float = lerpf(
             0.8, 1.2, clampf(TrackServer.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))

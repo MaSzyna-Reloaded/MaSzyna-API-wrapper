@@ -241,12 +241,12 @@ func _init() -> void:
 ## only when the trainset or the kind of order changed; then the table at the current speed
 ## (UpdateSituation(), Driver.cpp:6023-6031). `in_control`: it may set the brakes of its own vehicle.
 func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset, in_control:bool) -> void:
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
     var train_type:int = int(config.get("train_type", RailVehicleController.TRAIN_TYPE_DEFAULT))
     var emu:bool = train_type == RailVehicleController.TRAIN_TYPE_EZT
     var dmu:bool = train_type == RailVehicleController.TRAIN_TYPE_DMU
     _dmu = dmu
-    var engine_type:RailVehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(vehicle).get(
+    var engine_type:RailVehicleEngine.EngineType = int(VehicleServer.vehicle_dump_state(vehicle).get(
             "engine_type", RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
     var induction:bool = engine_type == RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR
     var velocity_max:float = float(config.get("max_speed", 0.0))
@@ -265,10 +265,10 @@ func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset,
             acceleration_threshold = _nominal_threshold
         if train and trainset.mass > 0.0 and velocity_max > 0.0:
             _build_table(trainset, velocity_max)
-            cargo = int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) == DELAY_SETTING_G
+            cargo = int(VehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) == DELAY_SETTING_G
             var engines:int = 0
             for other:RID in trainset.vehicles:
-                if float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED:
+                if float(VehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED:
                     engines += 1
             heavy_cargo = cargo and _a0[1] > HEAVY_CARGO_A0 and trainset.vehicles.size() - engines > 0 \
                     and trainset.mass / trainset.vehicles.size() > HEAVY_CARGO_MASS
@@ -291,7 +291,7 @@ func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset,
                 _reaction = BRAKE_REACTION + trainset.length * GOODS_REACTION_PER_METRE
             acceleration_threshold = _nominal_threshold
     # the table at the current speed
-    var speed:float = float(RailVehicleServer.vehicle_dump_state(vehicle).get("speed", 0.0))
+    var speed:float = float(VehicleServer.vehicle_dump_state(vehicle).get("speed", 0.0))
     var index:int = clampi(int(TABLE_SIZE * speed / velocity_max) if velocity_max > 0.0 else 1, 1, TABLE_SIZE)
     table_a0 = _a0[index]
     table_a1 = _a1[index]
@@ -337,7 +337,7 @@ func distance_multiplier(target:float, vehicle_speed:float, trainset:MaszynaLega
 func _build_table(trainset:MaszynaLegacyDriverTrainset, velocity_max:float) -> void:
     var step:float = velocity_max * TABLE_SPEED_SHARE / TABLE_SIZE
     for other:RID in trainset.vehicles:
-        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(other, VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(other, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
         if not brake:
             continue
         for index:int in TABLE_SIZE:
@@ -360,9 +360,9 @@ func _set_brake_delays(vehicle:RID, trainset:MaszynaLegacyDriverTrainset, in_con
     var goods:int = 0
     var passengers:int = 0
     for other:RID in trainset.vehicles:
-        if float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) >= 1.0:
+        if float(VehicleServer.vehicle_dump_config(other).get("power", 0.0)) >= 1.0:
             continue
-        var delays:int = int(RailVehicleServer.vehicle_dump_config(other).get("brake_delays", 0))
+        var delays:int = int(VehicleServer.vehicle_dump_config(other).get("brake_delays", 0))
         if delays & RailVehicleBrake.BRAKE_DELAY_R:
             fast += 1
         elif delays & RailVehicleBrake.BRAKE_DELAY_G:
@@ -386,10 +386,10 @@ func _set_brake_delays(vehicle:RID, trainset:MaszynaLegacyDriverTrainset, in_con
     for other:RID in trainset.vehicles:
         # the driver's own vehicle only while it drives it, and only a vehicle with a brake to set
         if other == vehicle and not in_control \
-                or not RailVehicleServer.vehicle_component_get(other, VehicleComponentType.COMPONENT_BRAKES):
+                or not RailVehicleServer.vehicle_component_get(other, RailVehicleComponentType.COMPONENT_BRAKES):
             continue
-        var powered:bool = float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED
-        var delays:int = int(RailVehicleServer.vehicle_dump_config(other).get("brake_delays", 0))
+        var powered:bool = float(VehicleServer.vehicle_dump_config(other).get("power", 0.0)) > POWERED
+        var delays:int = int(VehicleServer.vehicle_dump_config(other).get("brake_delays", 0))
         var own:int
         if passenger:
             own = RailVehicleBrake.BRAKE_DELAY_R if setting == RailVehicleBrake.BRAKE_DELAY_R and delays & RailVehicleBrake.BRAKE_DELAY_R \
@@ -446,7 +446,7 @@ func control(situation:MaszynaLegacyDriverTraction.Situation, elapsed:float) -> 
             else:
                 # brakingforcelap: LapBrake() (Driver.cpp:3344-3353) - an EP brake applied by time
                 # held where it is
-                var config:Dictionary = RailVehicleServer.vehicle_dump_config(situation.vehicle)
+                var config:Dictionary = VehicleServer.vehicle_dump_config(situation.vehicle)
                 if not config.get("brake_handle_ep_time_controlled", false):
                     return
                 var hold:float = float(config.get("brakes_controller_position_ep_hold", 0.0))
@@ -492,7 +492,7 @@ func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> 
     var brake:RailVehicleBrake = _brake(situation.vehicle)
     if brake == null:
         return
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(situation.vehicle)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(situation.vehicle)
     if brake.cntrl_brake_system == RailVehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC and config.get("brake_handle_ep_time_controlled", false):
         _set_handle(situation.vehicle, situation.cab, float(config.get("brakes_controller_position_ep_hold", 0.0)))
     elif brake.cntrl_brake_system == RailVehicleBrake.BRAKE_SYSTEM_PNEUMATIC and config.get("brake_handle_time_controlled", false):
@@ -511,7 +511,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
     var brake:RailVehicleBrake = _brake(vehicle)
     if brake == null:
         return
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
     if brake.cntrl_brake_system == RailVehicleBrake.BRAKE_SYSTEM_PNEUMATIC:
         if config.get("brake_handle_time_controlled", false):
             # a handle held by time (Driver.cpp:4054-4067): braking, to full braking while the pipe
@@ -535,7 +535,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
                 _set_handle(vehicle, situation.cab, float(config.get(key, 0.0)))
         _apply_handle(vehicle, situation.cab, brake, config)
     var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
-            vehicle, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
+            vehicle, RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
     if controller and controller.integrated_local_brake \
             and float(CabinSystem.vehicle_state_value(vehicle, "brake_local_position_normalized", 0.0)) > INTEGRATED_BRAKE_FULL:
         while _increase_eim(situation):
@@ -565,13 +565,13 @@ func release_local_brake(vehicle:RID, cab:int) -> void:
 ## fuller than the pipe keeps braking otherwise
 func _control_releaser(vehicle:RID, cab:int, acceleration:float) -> void:
     var brake:RailVehicleBrake = _brake(vehicle)
-    var train_type:RailVehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
+    var train_type:RailVehicleController.TrainType = int(VehicleServer.vehicle_dump_config(vehicle).get(
             "train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) as RailVehicleController.TrainType
     if brake == null or not brake.cntrl_brake_system == RailVehicleBrake.BRAKE_SYSTEM_PNEUMATIC \
             or train_type == RailVehicleController.TRAIN_TYPE_EZT or train_type == RailVehicleController.TRAIN_TYPE_DMU \
             or not brake.cntrl_brake_handle_type in RELEASER_HANDLES:
         return
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
     var pipe:float = float(state.get("pipe_pressure", 0.0))
     var actuate:bool = acceleration > MaszynaLegacyDriverSpeed.NO_ACCELERATION and (pipe < EMPTY_PIPE_PRESSURE
             or (float(state.get("brake_air_pressure", 0.0)) > RELEASED_BRAKE_PRESSURE
@@ -623,7 +623,7 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
                 # the wagons whose control reservoir is overcharged need the pipe lower (Driver.cpp:3107-3124)
                 var correction:float = 0.0
                 for other:RID in trainset.vehicles:
-                    var state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
+                    var state:Dictionary = VehicleServer.vehicle_dump_state(other)
                     if not state.get("brake_is_cut_off", false):
                         correction -= (minf(FULL_CONTROL_RESERVOIR, float(state.get("brake_control_reservoir_pressure", 0.0)))
                                 - FULL_CONTROL_RESERVOIR) * float(state.get("mass_total", 0.0))
@@ -658,7 +658,7 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
                 if raised == mode:
                     break
                 mode = raised
-            var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
+            var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
             var handle:float = float(CabinSystem.vehicle_state_value(vehicle, "brake_controller_position", 0.0))
             if _induction(vehicle):
                 if brake.cntrl_brake_handle_type == RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_EN57:
@@ -711,7 +711,7 @@ func _decrease(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
         RailVehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC:
             # an induction motor's by its EN57 handle or its EIM controller, else the handle between
             # EP releasing and braking, or, applied by time, back to EP releasing (Driver.cpp:3301-3335)
-            var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
+            var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
             var handle:float = float(CabinSystem.vehicle_state_value(vehicle, "brake_controller_position", 0.0))
             var release:float = float(config.get("brakes_controller_position_ep_release", 0.0))
             var moved:bool = false
@@ -749,7 +749,7 @@ func _ep_share(situation:MaszynaLegacyDriverTraction.Situation) -> float:
 ## step; true when a control moved
 func _increase_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var vehicle:RID = situation.vehicle
-    var engine:RailVehicleEngine = RailVehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     var main:int = MaszynaLegacyDriverTraction.controller_position(situation, "controller_main_position")
     match MaszynaLegacyDriverTraction.eim_control_type(situation):
         RailVehicleEngine.EIM_CONTROL_TYPE_0:
@@ -768,7 +768,7 @@ func _increase_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 return MaszynaLegacyDriverTraction.set_main_controller(situation, 1)
         RailVehicleEngine.EIM_CONTROL_TYPE_3:
             var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
-                    vehicle, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
+                    vehicle, RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
             if controller and controller.integrated_local_brake:
                 return main > 0 and MaszynaLegacyDriverTraction.set_main_controller(situation, 0)
             return _step_local_brake(vehicle, situation.cab, 1)
@@ -796,7 +796,7 @@ func _decrease_eim(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 return MaszynaLegacyDriverTraction.set_main_controller(situation, EIM_ELF_BRAKE_OFF)
         RailVehicleEngine.EIM_CONTROL_TYPE_3:
             var master_controller:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
-                    situation.controlling, VehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+                    situation.controlling, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
             var neutral:int = master_controller.direction_change_max_position if master_controller else 0
             if main < neutral:
                 return MaszynaLegacyDriverTraction.set_main_controller(situation, neutral)
@@ -833,10 +833,10 @@ func _hold_universal_controller(situation:MaszynaLegacyDriverTraction.Situation)
     if position >= BRAKING_FROM or not situation.controlling.is_valid() \
             or not MaszynaLegacyDriverTraction.eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3:
         return
-    var engine_type:RailVehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(situation.controlling).get(
+    var engine_type:RailVehicleEngine.EngineType = int(VehicleServer.vehicle_dump_state(situation.controlling).get(
             "engine_type", RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
     var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
+            situation.controlling, RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
     if not engine_type == RailVehicleEngine.DIESEL or controller == null:
         return
     var positions:Array = controller.positions
@@ -856,7 +856,7 @@ func _add_position(change:float) -> bool:
 ## only engines coupled to be driven together
 func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var vehicle:RID = situation.vehicle
-    var train_type:RailVehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(vehicle).get(
+    var train_type:RailVehicleController.TrainType = int(VehicleServer.vehicle_dump_config(vehicle).get(
             "train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) as RailVehicleController.TrainType
     var trainset:MaszynaLegacyDriverTrainset = situation.trainset
     if train_type == RailVehicleController.TRAIN_TYPE_ET41 or train_type == RailVehicleController.TRAIN_TYPE_ET42:
@@ -875,7 +875,7 @@ func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if not controlled.size() == trainset.vehicles.size():
         return false
     for other:RID in trainset.vehicles:
-        if float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0)) <= POWERED:
+        if float(VehicleServer.vehicle_dump_config(other).get("power", 0.0)) <= POWERED:
             return false
     return true
 
@@ -886,10 +886,10 @@ func _apply_independent_brake_only(vehicle:RID, cab:int) -> void:
     var brake:RailVehicleBrake = _brake(vehicle)
     if brake == null or brake.cntrl_local_brake_type == RailVehicleBrake.LOCAL_BRAKE_TYPE_MANUAL:
         return
-    var running:float = float(RailVehicleServer.vehicle_dump_config(vehicle).get("brakes_controller_position_drive", 0.0))
+    var running:float = float(VehicleServer.vehicle_dump_config(vehicle).get("brakes_controller_position_drive", 0.0))
     if absf(float(CabinSystem.vehicle_state_value(vehicle, "brake_controller_position", 0.0)) - running) <= HANDLE_TOLERANCE:
         # independentbrakeapply (driverhints.cpp:888-899): an emergency EIM controller one short
-        var engine:RailVehicleEngine = RailVehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+        var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
         var most:float = (LOCAL_BRAKE_POSITIONS - 1.0) / LOCAL_BRAKE_POSITIONS \
                 if engine and engine.cntrl_eim_control_emergency else LOCAL_BRAKE_APPLIED
         if float(CabinSystem.vehicle_state_value(vehicle, "brake_local_position_normalized", 0.0)) < most:
@@ -925,7 +925,7 @@ func _step_manual_brake(vehicle:RID, steps:int) -> bool:
 func _set_handle(vehicle:RID, cab:int, handle_position:float) -> bool:
     if float(CabinSystem.vehicle_state_value(vehicle, "brake_controller_position", 0.0)) == handle_position:
         return false
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
     var low:float = float(config.get("brakes_controller_position_min", 0.0))
     var high:float = float(config.get("brakes_controller_position_max", 0.0))
     if high <= low:
@@ -936,7 +936,7 @@ func _set_handle(vehicle:RID, cab:int, handle_position:float) -> bool:
 
 ## The brake's delay [s] at the setting in use: the one read past G, or at G (Driver.cpp:8124, 8146)
 func _brake_delay(vehicle:RID, past_g:int, at_g:int) -> float:
-    var delays:PackedFloat64Array = RailVehicleServer.vehicle_dump_config(vehicle).get("brake_delay_times", PackedFloat64Array())
+    var delays:PackedFloat64Array = VehicleServer.vehicle_dump_config(vehicle).get("brake_delay_times", PackedFloat64Array())
     if delays.size() <= maxi(past_g, at_g):
         return 0.0
     var setting:int = int(CabinSystem.vehicle_state_value(vehicle, "brake_delay_setting", DELAY_SETTING_G))
@@ -944,17 +944,17 @@ func _brake_delay(vehicle:RID, past_g:int, at_g:int) -> float:
 
 
 static func _brake(vehicle:RID) -> RailVehicleBrake:
-    return RailVehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    return RailVehicleServer.vehicle_component_get(vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
 
 
 ## is_emu() (Driver.h:259)
 static func is_emu(vehicle:RID) -> bool:
-    return int(RailVehicleServer.vehicle_dump_config(vehicle).get("train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) \
+    return int(VehicleServer.vehicle_dump_config(vehicle).get("train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) \
             == RailVehicleController.TRAIN_TYPE_EZT
 
 
 static func _induction(vehicle:RID) -> bool:
-    var engine_type:RailVehicleEngine.EngineType = int(RailVehicleServer.vehicle_dump_state(vehicle).get(
+    var engine_type:RailVehicleEngine.EngineType = int(VehicleServer.vehicle_dump_state(vehicle).get(
             "engine_type", RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
     return engine_type == RailVehicleEngine.ELECTRIC_INDUCTION_MOTOR
 
@@ -962,12 +962,12 @@ static func _induction(vehicle:RID) -> bool:
 ## MED_amax: the service deceleration of the blended EP and ED brake [m/s2]
 static func _med_max_deceleration(vehicle:RID) -> float:
     var brake:RailVehicleElectroPneumaticDynamicBrake = RailVehicleServer.vehicle_component_get(
-            vehicle, VehicleComponentType.COMPONENT_EP_ED_BRAKE) as RailVehicleElectroPneumaticDynamicBrake
+            vehicle, RailVehicleComponentType.COMPONENT_EP_ED_BRAKE) as RailVehicleElectroPneumaticDynamicBrake
     return brake.blending_max_deceleration if brake else NO_MED_DECELERATION
 
 
 ## AIHintLocalBrakeAccFactor
 static func _local_brake_factor(vehicle:RID) -> float:
     var hints:RailVehicleAIHints = RailVehicleServer.vehicle_component_get(
-            vehicle, VehicleComponentType.COMPONENT_AI_HINTS) as RailVehicleAIHints
+            vehicle, RailVehicleComponentType.COMPONENT_AI_HINTS) as RailVehicleAIHints
     return hints.local_brake_acceleration_factor if hints else DEFAULT_LOCAL_BRAKE_FACTOR

@@ -20,7 +20,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     # not a real name - treating it as one makes every "none"-named track/vehicle after the
     # first collide (TrackServer.track_update() rejects the duplicate and returns early,
     # silently skipping that track's width/type/AABB setup entirely; a vehicle named "none" is
-    # left out of RailVehicleServer's name lookup the same way, Names.h:29).
+    # left out of VehicleServer's name lookup the same way, Names.h:29).
     if name.to_lower() == "none":
         name = ""
 

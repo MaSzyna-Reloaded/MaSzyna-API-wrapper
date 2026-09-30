@@ -40,13 +40,13 @@ func refresh() -> void:
     var driver:RID = DriverSystem.vehicle_get_driver(vehicle)
     var timetable_state:Dictionary = DriverSystem.driver_get_timetable_state(driver) if driver.is_valid() else {}
     var timetable:Timetable = timetable_state.get("timetable")
-    %Name.text = RailVehicleServer.vehicle_get_name(vehicle)
+    %Name.text = VehicleServer.vehicle_get_name(vehicle)
     %Train.text = "%s %s" % [timetable.train_category, timetable.train_name] if timetable else tr("No timetable")
     %Relation.text = "%s  →  %s" % [
         timetable.relation_from.replace("_", " "), timetable.relation_to.replace("_", " ")
     ] if timetable and (timetable.relation_from or timetable.relation_to) else ""
     %Relation.visible = not %Relation.text == ""
-    %Speed.text = "%d km/h" % roundi(absf(RailVehicleServer.vehicle_get_speed(vehicle)))
+    %Speed.text = "%d km/h" % roundi(absf(VehicleServer.vehicle_get_speed(vehicle)))
     var driver_kind:Driver = driver_of(vehicle, _player_vehicle)
     %DriverBadge.text = driver_label(driver_kind)
     %DriverPill.theme_type_variation = DRIVER_PILLS[driver_kind]
@@ -82,9 +82,9 @@ static func driver_label(p_driver:Driver) -> String:
 ## How the vehicle is going now, as the selector and the floating buttons show it
 static func motion_label(p_vehicle:RID) -> String:
     var motion:Motion = Motion.RUNNING
-    if absf(RailVehicleServer.vehicle_get_velocity(p_vehicle)) < STANDING_VELOCITY:
+    if absf(VehicleServer.vehicle_get_velocity(p_vehicle)) < STANDING_VELOCITY:
         motion = Motion.STANDING
-    elif RailVehicleServer.vehicle_dump_state(p_vehicle).get("brake_is_braking", false):
+    elif VehicleServer.vehicle_dump_state(p_vehicle).get("brake_is_braking", false):
         motion = Motion.BRAKING
     return [TranslationServer.translate("Standing"), TranslationServer.translate("Running"),
             TranslationServer.translate("Braking")][motion]

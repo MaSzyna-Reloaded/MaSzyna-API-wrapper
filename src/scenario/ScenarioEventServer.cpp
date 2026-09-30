@@ -3,6 +3,7 @@
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "utils/Names.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -148,10 +149,12 @@ namespace godot {
                 RailVehicleServer::vehicle_stopped_on_track_signal,
                 callable_mp(this, &ScenarioEventServer::_on_vehicle_stopped_on_track));
         vehicles->connect(
-                RailVehicleServer::vehicle_freed_signal, callable_mp(this, &ScenarioEventServer::_on_vehicle_freed));
-        vehicles->connect(
                 RailVehicleServer::vehicle_radio_called_signal,
                 callable_mp(this, &ScenarioEventServer::_on_vehicle_radio_called));
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        vehicle_server->connect(
+                VehicleServer::vehicle_freed_signal, callable_mp(this, &ScenarioEventServer::_on_vehicle_freed));
         // ...and the isolated sections' events on what the sections report
         TrackServer *track_server = TrackServer::get_instance();
         ERR_FAIL_NULL(track_server);
@@ -385,7 +388,7 @@ namespace godot {
         if (bound == nullptr) {
             return;
         }
-        const RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        const VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         // copied: queueing emits event_queued, and a listener may bind events to a track
         const Vector<RID> all_events = bound->events[p_all_slot];

@@ -1,5 +1,6 @@
 #pragma once
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleComponentType.hpp"
 
 namespace godot {
     /// A railway vehicle: what VehicleController says of every vehicle, plus the railway's own -
@@ -183,8 +184,12 @@ namespace godot {
              * somebody took it (RailVehicleServer::vehicle_wake()) */
             virtual void wake() = 0;
             virtual int get_coupled_end(int p_end) const = 0;
-            /* Answered from RailVehicleServer's per-vehicle cache, which is keyed on the
-             * physics step and on the command serial, so a reader per frame costs a lookup rather
+            /* The railway component of a kind, or null when this vehicle has none; every one of a
+             * kind - a vehicle has two couplers, one per end */
+            Ref<VehicleComponent> get_rail_component(RailVehicleComponentType::Type p_type) const;
+            TypedArray<VehicleComponent> find_rail_components(RailVehicleComponentType::Type p_type) const;
+            /* Answered from VehicleServer's per-vehicle cache, which is keyed on the state
+             * serial (a step or a command), so a reader per frame costs a lookup rather
              * than a rebuild of the whole dictionary. A controller the server does not hold - the
              * throwaway one the FIZ builder captures a VehicleModel from - has no state to give
              * and answers an empty dictionary. */

@@ -13,7 +13,7 @@ const UNIVERSAL_HYSTERESIS:float = 0.05
 
 
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     # not with the overload relay or the pressure switch tripped; past the first position only
     # once the line contactors closed
     if situation.trainset.motor_overload_relay_open or state.get("pressure_switch_tripped", false):
@@ -37,7 +37,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 
 
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
             and main_powercontroller_position(situation) > 1:
         zero(situation)
@@ -52,15 +52,15 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
     if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3:
         return
     var acceleration:float = situation.speed.acceleration_desired
-    if acceleration < 0.0 or not RailVehicleServer.vehicle_dump_state(situation.controlling).get("line_contactor_closed", false):
+    if acceleration < 0.0 or not VehicleServer.vehicle_dump_state(situation.controlling).get("line_contactor_closed", false):
         return
     var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
+            situation.controlling, RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
     if controller == null:
         return
     var positions:Array = controller.positions
     var increase_position:int = mini(positions.size() - 1,
-            int(RailVehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)))
+            int(VehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)))
     var keep_position:int = 0
     var decrease_position:int = 0
     for index:int in range(increase_position, -1, -1):

@@ -9,8 +9,8 @@ namespace godot {
 
 
         public:
-            VehicleComponentType::Type get_component_type() const override {
-                return VehicleComponentType::COMPONENT_BUFFERS;
+            int get_component_type() const override {
+                return RailVehicleComponentType::COMPONENT_BUFFERS;
             }
 
         private:

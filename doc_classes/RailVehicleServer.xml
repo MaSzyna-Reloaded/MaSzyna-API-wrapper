@@ -13,23 +13,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="stepping_advance">
-			<return type="void" />
-			<param index="0" name="delta" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="stepping_is_enabled" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="stepping_set_enabled">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="trainset_move">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -38,10 +21,9 @@
 				Moves the whole trainset coupled to [param vehicle] by [param distance] meters towards the vehicle's front, every vehicle whichever way round it stands ([code]TDynamicObject::move_set()[/code], [code]DynObj.cpp:4302[/code]).
 			</description>
 		</method>
-		<method name="vehicle_attach_controller">
+		<method name="vehicle_attach">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="controller_id" type="int" />
 			<description>
 			</description>
 		</method>
@@ -52,47 +34,31 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_broadcast_command">
-			<return type="void" />
-			<param index="0" name="command" type="StringName" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Sends [param command] to every vehicle that has it. Reports an error when no vehicle does.
-			</description>
-		</method>
 		<method name="vehicle_component_get" qualifiers="const">
 			<return type="VehicleComponent" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="type" type="int" enum="VehicleComponentType.Type" />
+			<param index="1" name="type" type="int" enum="RailVehicleComponentType.Type" />
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_create">
-			<return type="RID" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_dump_config" qualifiers="const">
-			<return type="Dictionary" />
+		<method name="vehicle_couple">
+			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<param index="2" name="other" type="RID" />
+			<param index="3" name="other_end" type="int" />
+			<param index="4" name="coupling_type" type="int" />
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_dump_state">
-			<return type="Dictionary" />
+		<method name="vehicle_detach">
+			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</method>
 		<method name="vehicle_emergency_signal_send">
 			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_exists" qualifiers="const">
-			<return type="bool" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
@@ -119,24 +85,19 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_free">
-			<return type="void" />
+		<method name="vehicle_get_coupled" qualifiers="const">
+			<return type="RID[]" />
 			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<param index="2" name="element" type="int" enum="RailVehicleController.CouplingElement" />
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_generic_component_find" qualifiers="const">
-			<return type="VehicleComponent[]" />
+		<method name="vehicle_get_curve">
+			<return type="Dictionary" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="tag" type="StringName" />
+			<param index="1" name="bogie_pivot_spacing" type="float" />
 			<description>
-			</description>
-		</method>
-		<method name="vehicle_get_commands" qualifiers="const">
-			<return type="PackedStringArray" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				Returns the commands [param vehicle] answers to.
 			</description>
 		</method>
 		<method name="vehicle_get_pantograph_position" qualifiers="const">
@@ -155,48 +116,6 @@
 				Returns how far the lower ([code]x[/code]) and upper ([code]y[/code]) arm of [param pantograph] are raised over lowered, in radians - what is drawn.
 			</description>
 		</method>
-		<method name="vehicle_has_command" qualifiers="const">
-			<return type="bool" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="command" type="StringName" />
-			<description>
-				Returns [code]true[/code] when [param vehicle] answers to [param command] - a component that registers it is present.
-			</description>
-		</method>
-		<method name="vehicle_get_controller_instance_id" qualifiers="const">
-			<return type="int" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				The instance id attached by [method vehicle_attach_controller], 0 without one.
-			</description>
-		</method>
-		<method name="vehicle_get_coupled" qualifiers="const">
-			<return type="RID[]" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="end" type="int" />
-			<param index="2" name="element" type="int" enum="RailVehicleController.CouplingElement" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_get_curve">
-			<return type="Dictionary" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="bogie_pivot_spacing" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_get_driver_type" qualifiers="const">
-			<return type="int" enum="VehicleController.DriverType" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_get_name" qualifiers="const">
-			<return type="String" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
 		<method name="vehicle_get_rail_vehicle" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="vehicle" type="RID" />
@@ -204,29 +123,11 @@
 				The instance id of the [RailVehicle3D] attached by [method vehicle_attach_rail_vehicle], 0 without one.
 			</description>
 		</method>
-		<method name="vehicle_get_rid_by_name" qualifiers="const">
-			<return type="RID" />
-			<param index="0" name="name" type="String" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_get_rids" qualifiers="const">
-			<return type="RID[]" />
-			<description>
-				Returns the handles of every vehicle the server holds.
-			</description>
-		</method>
 		<method name="vehicle_get_rids_in_rect" qualifiers="const">
 			<return type="RID[]" />
 			<param index="0" name="rect" type="Rect2" />
 			<description>
 				Returns the handles of the vehicles whose position (x, z) lies in [param rect].
-			</description>
-		</method>
-		<method name="vehicle_get_speed" qualifiers="const">
-			<return type="float" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
 			</description>
 		</method>
 		<method name="vehicle_get_track_position" qualifiers="const">
@@ -248,19 +149,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_get_type_name" qualifiers="const">
-			<return type="String" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				The name of the vehicle's type - the original's CHK/MMD name ([code]TMoverParameters::TypeName[/code]).
-			</description>
-		</method>
-		<method name="vehicle_get_velocity" qualifiers="const">
-			<return type="float" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
 		<method name="vehicle_move">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -279,23 +167,6 @@
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="call" type="int" enum="RailVehicleRadio.RadioCall" />
-			<description>
-			</description>
-		</method>
-		<method name="vehicle_send_command">
-			<return type="Variant" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="command" type="StringName" />
-			<param index="2" name="p1" type="Variant" default="null" />
-			<param index="3" name="p2" type="Variant" default="null" />
-			<description>
-				Sends [param command] to [param vehicle] by its handle and returns what its handler answered (whether the command was accepted), or [code]null[/code] when the vehicle has no such command. A vehicle is reached by its handle whatever its scenery name - use [method vehicle_get_rid_by_name] to find one by name.
-			</description>
-		</method>
-		<method name="vehicle_set_name">
-			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="name" type="String" />
 			<description>
 			</description>
 		</method>
@@ -333,24 +204,21 @@
 		</method>
 	</methods>
 	<signals>
-		<signal name="vehicle_command_received">
+		<signal name="vehicle_coupler_attached">
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="command" type="String" />
-			<param index="2" name="p1" type="Variant" />
-			<param index="3" name="p2" type="Variant" />
+			<param index="1" name="element" type="int" />
 			<description>
-				A command ran against [param vehicle].
+			</description>
+		</signal>
+		<signal name="vehicle_coupler_detached">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="element" type="int" />
+			<description>
 			</description>
 		</signal>
 		<signal name="vehicle_emergency_signal_received">
 			<param index="0" name="vehicle" type="RID" />
 			<description>
-			</description>
-		</signal>
-		<signal name="vehicle_freed">
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				[param vehicle] was freed; its handle is not reused.
 			</description>
 		</signal>
 		<signal name="vehicle_heading_to_track_end">
@@ -363,13 +231,6 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="track" type="RID" />
 			<description>
-			</description>
-		</signal>
-		<signal name="vehicle_moved">
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="position" type="Vector3" />
-			<description>
-				[param vehicle] moved to [param position].
 			</description>
 		</signal>
 		<signal name="vehicle_occupied_cab_changed">
@@ -389,6 +250,11 @@
 		<signal name="vehicle_stopped_on_track">
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_trainset_changed">
+			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</signal>

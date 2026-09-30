@@ -171,9 +171,9 @@ func test_speed_button_sends_its_number_on_the_press():
         &"speedbutton3": MmdSemanticCatalog.get_entry("speedbutton3")["fixed_fields"]}
     var components:Array[VehicleComponent] = [MoverRailVehicleSpeedControl.new()]
     await _build_cab(controls, SM42, components, fields)
-    RailVehicleServer.vehicle_command_received.connect(_on_command)
+    VehicleServer.vehicle_command_received.connect(_on_command)
     CabinSystem.act(train.get_rid(), 1, &"speedbutton3", &"hold")
     CabinSystem.act(train.get_rid(), 1, &"speedbutton3", &"release")
-    RailVehicleServer.vehicle_command_received.disconnect(_on_command)
+    VehicleServer.vehicle_command_received.disconnect(_on_command)
     assert_eq(_sent.filter(func(sent:Array) -> bool: return sent[0] == "speed_control_button"), [["speed_control_button", 3]])
 

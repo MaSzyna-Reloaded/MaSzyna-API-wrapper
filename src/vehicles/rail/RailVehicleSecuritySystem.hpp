@@ -8,8 +8,8 @@ namespace godot {
             GDCLASS(RailVehicleSecuritySystem, RailVehicleComponent)
 
         public:
-            VehicleComponentType::Type get_component_type() const override {
-                return VehicleComponentType::COMPONENT_SECURITY;
+            int get_component_type() const override {
+                return RailVehicleComponentType::COMPONENT_SECURITY;
             }
 
         private:

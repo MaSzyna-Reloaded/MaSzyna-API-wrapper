@@ -16,6 +16,7 @@ func before_each() -> void:
     _probe.name = "ProbeComponent"
     _vehicle.add_child(_probe)
     add_child(_vehicle)
+    RailVehicleServer.vehicle_attach(_vehicle.get_vehicle_rid())
     await wait_idle_frames(2)
 
 
@@ -51,7 +52,7 @@ func test_the_component_reaches_its_vehicle() -> void:
 
 
 func test_a_command_registered_from_the_script_is_received() -> void:
-    RailVehicleServer.vehicle_send_command(_vehicle.get_controller().get_rid(), "probe_command", null, null)
+    VehicleServer.vehicle_send_command(_vehicle.get_controller().get_rid(), "probe_command", null, null)
     assert_eq(_probe.commands_received, 1, "register_command wired the script's handler")
 
 

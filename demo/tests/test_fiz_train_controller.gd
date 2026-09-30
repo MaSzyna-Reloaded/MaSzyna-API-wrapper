@@ -53,9 +53,9 @@ func test_builds_child_controller_from_data_path_and_filename():
     assert_eq(node.get_child_count(), 0, "the vehicle is the node's own, not a child of it")
     assert_eq(controller.mass, 74000.0)
     assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_WHEELS))
-    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_BRAKES))
+    assert_not_null(controller.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES))
     assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_DOORS))
-    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_BUFFERS))
+    assert_not_null(controller.get_rail_component(RailVehicleComponentType.COMPONENT_BUFFERS))
 
 
 func test_native_mover_still_updates():
@@ -72,12 +72,12 @@ func test_native_mover_still_updates():
 func test_clearing_the_fiz_filename_empties_the_vehicle():
     _set_fixture_path()
     await wait_idle_frames(2)
-    assert_not_null(node.get_controller().get_component(VehicleComponentType.COMPONENT_BRAKES))
+    assert_not_null(node.get_controller().get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES))
 
     node.fiz_filename = ""
     await wait_idle_frames(2)
     assert_not_null(node.get_controller(), "the vehicle is still there")
     assert_null(
-        node.get_controller().get_component(VehicleComponentType.COMPONENT_BRAKES),
+        node.get_controller().get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES),
         "with nothing in it"
     )

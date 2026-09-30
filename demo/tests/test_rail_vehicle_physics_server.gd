@@ -13,7 +13,7 @@ var created_controllers: Array[VehicleController] = []
 
 func after_each() -> void:
     for vehicle_rid: RID in created_vehicle_rids:
-        RailVehicleServer.vehicle_free(vehicle_rid)
+        VehicleServer.vehicle_free(vehicle_rid)
     created_vehicle_rids.clear()
 
     created_controllers.clear()
@@ -366,7 +366,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
 
     # what makes the reference invalid is the server losing it, not a local variable being
     # dropped - the vehicle then has nothing to ask for a velocity and stays where it is
-    RailVehicleServer.vehicle_attach_controller(vehicle_rid, 0)
+    VehicleServer.vehicle_attach_controller(vehicle_rid, 0)
     await wait_idle_frames(1)
 
     RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
@@ -545,7 +545,8 @@ func test_vehicle_move_from_common_point_uses_active_switch_branch() -> void:
 
 
 func _create_vehicle() -> RID:
-    var vehicle_rid: RID = RailVehicleServer.vehicle_create()
+    var vehicle_rid: RID = VehicleServer.vehicle_create()
+    RailVehicleServer.vehicle_attach(vehicle_rid)
     created_vehicle_rids.append(vehicle_rid)
     return vehicle_rid
 
@@ -587,7 +588,8 @@ func _curve(
 
 
 func _track_position(track_rid: RID, offset: float) -> Vector3:
-    var vehicle_rid: RID = RailVehicleServer.vehicle_create()
+    var vehicle_rid: RID = VehicleServer.vehicle_create()
+    RailVehicleServer.vehicle_attach(vehicle_rid)
     RailVehicleServer.vehicle_set_track(
         vehicle_rid,
         track_rid,
@@ -595,7 +597,7 @@ func _track_position(track_rid: RID, offset: float) -> Vector3:
         TrackServer.DIRECTION_NORMAL
     )
     var transform: Transform3D = RailVehicleServer.vehicle_get_transform(vehicle_rid)
-    RailVehicleServer.vehicle_free(vehicle_rid)
+    VehicleServer.vehicle_free(vehicle_rid)
     return transform.origin
 
 

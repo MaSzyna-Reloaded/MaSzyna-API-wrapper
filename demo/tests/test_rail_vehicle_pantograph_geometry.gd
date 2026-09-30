@@ -204,7 +204,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     for step:int in MAX_RAISE_STEPS:
         # held, as the driver holds it (Train.cpp:2912): it starts once the battery feeds 24 V
         controller.send_command("pantograph_compressor", true)
-        RailVehicleServer.stepping_advance(STEP)
+        VehicleServer.stepping_advance(STEP)
         if _front_voltage(controller) > POWERED_VOLTAGE:
             break
     assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "the raised pantograph reaches the wire")
@@ -212,7 +212,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     # the model rebuilt: new arm nodes, at rest, as a model loaded again puts them
     vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
     vehicle._process(TICK)
-    RailVehicleServer.stepping_advance(STEP)
+    VehicleServer.stepping_advance(STEP)
 
     assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "and stays at it when the model is rebuilt")
 
@@ -221,15 +221,15 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     TractionServer.wire_free(wire)
     _wires.clear()
     TractionServer.network_build()
-    RailVehicleServer.stepping_advance(SHORT_LOSS)
+    VehicleServer.stepping_advance(SHORT_LOSS)
     assert_gt(_vehicle_voltage(controller), POWERED_VOLTAGE, "a short loss keeps the vehicle's voltage")
-    RailVehicleServer.stepping_advance(LONG_LOSS)
+    VehicleServer.stepping_advance(LONG_LOSS)
     assert_eq(_vehicle_voltage(controller), 0.0, "a longer one does not")
 
 
 func _vehicle_voltage(controller:VehicleController) -> float:
-    return float(RailVehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/voltage", 0.0))
+    return float(VehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/voltage", 0.0))
 
 
 func _front_voltage(controller:VehicleController) -> float:
-    return float(RailVehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/pantograph_first_voltage", 0.0))
+    return float(VehicleServer.vehicle_dump_state(controller.get_rid()).get("current_collector/pantograph_first_voltage", 0.0))

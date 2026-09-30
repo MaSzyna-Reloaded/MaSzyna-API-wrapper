@@ -26,8 +26,10 @@ namespace godot {
      * blades and the resulting world transform all live here.
      *
      * What the vehicle *does* - forces, integration, couplers - belongs to its VehicleController
-     * and the simulation behind it. This server moves the vehicle and ties it to the tracks, the
-     * traction wires and the other servers; it holds the vehicle's RID and steps its controller.
+     * and the simulation behind it. The vehicle itself - its handle, name, commands and
+     * components - is VehicleServer's; this server takes a vehicle created there
+     * (vehicle_attach()), moves it and ties it to the tracks, the traction wires and the other
+     * servers, and steps its controller.
      *
      * Ported from addons/libmaszyna/servers/rail_vehicle_physics_server.gd. */
     class RailVehicleServer : public Object {
@@ -126,6 +128,9 @@ namespace godot {
 
             /* Where one vehicle sits on the route. */
             struct VehiclePlacement {
+                    /* The controller this server steps and relays the rail events of - the one
+                     * VehicleServer drives the vehicle with, taken again when that changes */
+                    ObjectID controller_id;
                     RID track;
                     double track_offset = 0.0;
                     TrackServer::Direction track_direction = TrackServer::DIRECTION_NORMAL;
@@ -152,27 +157,9 @@ namespace godot {
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
-                    /* The object driving this vehicle, held as an id rather than a pointer: an
-                     * id says nothing about a lifetime this server does not own (AGENTS.md, and
-                     * PhysicsServer3D::body_attach_object_instance_id is the same shape). The
-                     * public method still takes the plain integer get_instance_id() returns,
-                     * because that is what crosses into GDScript. */
-                    ObjectID controller_id;
-                    /* What a scenery calls this vehicle. Only the things that know a vehicle by
-                     * name alone need it - an event, the console, the radio, a `.scn` command -
-                     * and they reach the vehicle through vehicle_get_rid_by_name(). */
-                    String name;
                     /* The RailVehicle3D that owns this handle, so the tick can hand it its new
                      * placement instead of letting it pull one a frame late */
                     uint64_t rail_vehicle_id = 0;
-                    /* The last dump handed out, and the step it was built for. A cab is dozens of
-                     * widgets asking the same vehicle in one frame, and a step is what normally
-                     * moves the values between them. */
-                    Dictionary state_dump;
-                    uint64_t state_dump_step = 0;
-                    /// ...and the vehicle's command count it was built after, because a command
-                    /// changes the state inside a step (VehicleController::command_executed()).
-                    uint64_t state_dump_command_serial = 0;
                     /* PANTOGRAPH_FIRST, PANTOGRAPH_SECOND */
                     Pantograph pantographs[2];
                     /* The slider's width the model gives, for a vehicle whose FIZ declares none */
@@ -182,31 +169,24 @@ namespace godot {
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
-            HashMap<String, RID> vehicles_by_name;
-            int64_t next_vehicle_id = 0;
             bool diagnostics = false;
             HashMap<uint64_t, double> diagnostics_velocity;
-            /// Stepping holds SimulationServer's clock and steps as it advances
-            bool stepping = false;
-            bool stepping_enabled = true;
-            /* Bumped once per step; a dump older than this is stale. Comparing a
-             * serial beats clearing every vehicle's dump each frame. */
-            uint64_t step_serial = 1;
             /* Rebuilt every tick, kept as members so the step allocates nothing per frame */
             Vector<RID> stepped_vehicles;
             TypedArray<VehicleController> stepped_controllers;
             HashMap<RID, Vector<RID>> track_vehicles;
 
             RailVehicleController *_get_controller(const VehiclePlacement &p_placement) const;
-            /* The controller's own events, relayed under the handle, so whoever follows a vehicle
-             * never holds its controller - connected when a controller is attached, disconnected
-             * when it is replaced or the vehicle is freed */
+            /* The controller's rail events, relayed under the handle, so whoever follows a vehicle
+             * never holds its controller - connected when the vehicle is attached or VehicleServer
+             * gives it another controller, disconnected when it is replaced or detached */
             void _connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
             void _disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
-            void _on_vehicle_moved(const Vector3 &p_position, const RID &p_vehicle);
-            void _on_vehicle_command_received(
-                    const String &p_command, const Variant &p_p1, const Variant &p_p2, const RID &p_vehicle);
+            void _on_vehicle_controller_changed(const RID &p_vehicle);
             void _on_vehicle_cabin_occupied_changed(int p_cab, const RID &p_vehicle);
+            void _on_vehicle_trainset_changed(const RID &p_vehicle);
+            void _on_vehicle_coupler_attached(int p_element, const RID &p_vehicle);
+            void _on_vehicle_coupler_detached(int p_element, const RID &p_vehicle);
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
             Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
@@ -216,9 +196,6 @@ namespace godot {
                     const RID &p_track, int p_endpoint_index, bool p_force_switch_state, RID &p_track_out,
                     int &p_endpoint_out);
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
-            void _refresh_stepping();
-            void _set_stepping(bool p_stepping);
-            void _on_simulation_advanced(double p_seconds);
             void _clear_neighbour(RailVehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
@@ -238,10 +215,11 @@ namespace godot {
             static void _bind_methods();
 
         public:
-            static const char *vehicle_moved_signal;
-            static const char *vehicle_command_received_signal;
             static const char *vehicle_occupied_cab_changed_signal;
-            static const char *vehicle_freed_signal;
+            /* The vehicles coupled to this one are others now (RailVehicleController::trainset_changed) */
+            static const char *vehicle_trainset_changed_signal;
+            static const char *vehicle_coupler_attached_signal;
+            static const char *vehicle_coupler_detached_signal;
             /* The vehicle has started moving along the track towards its start, its end, or has
              * stopped on it - once per change, what a scenery's track events are fired by
              * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
@@ -254,44 +232,25 @@ namespace godot {
             static const char *vehicle_emergency_signal_received_signal;
 
             RailVehicleServer();
-            ~RailVehicleServer() override;
 
-            RID vehicle_create();
-            void vehicle_free(const RID &p_vehicle);
-            bool vehicle_exists(const RID &p_vehicle) const;
-            /* The node driving this vehicle, by instance id - a public API carries no pointers
-             * (PhysicsServer3D::body_attach_object_instance_id is the shape this follows). */
-            void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
+            /* A VehicleServer vehicle becomes a rail vehicle: it gets a place on the route and is
+             * stepped - called by whatever makes it one (RailVehicle3D, a FIZ vehicle). A vehicle
+             * freed by VehicleServer is detached on its own. */
+            void vehicle_attach(const RID &p_vehicle);
+            void vehicle_detach(const RID &p_vehicle);
             /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
              * somebody took it (DriverSystem) */
             void vehicle_wake(const RID &p_vehicle);
-            /* The instance id attached by vehicle_attach_controller(), 0 without one
-             * (PhysicsServer3D::body_get_object_instance_id) */
-            uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
-            /* The scenery's name for this vehicle, and the way back from one. A name is what a
-             * `.scn`, an event or the console has; everything that holds the vehicle uses its
-             * handle and never comes through here (TrackServer::track_get_rid_by_name() is the
-             * same shape, for the same reason). */
-            void vehicle_set_name(const RID &p_vehicle, const String &p_name);
-            String vehicle_get_name(const RID &p_vehicle) const;
-            /* The name of the vehicle's type (TMoverParameters::TypeName) */
-            String vehicle_get_type_name(const RID &p_vehicle) const;
-            /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
-            VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
-            RID vehicle_get_rid_by_name(const String &p_name) const;
-            /* Every vehicle the server holds, and those whose position falls in p_rect (x, z) */
-            TypedArray<RID> vehicle_get_rids() const;
+            /* The rail vehicles whose position falls in p_rect (x, z) */
             TypedArray<RID> vehicle_get_rids_in_rect(const Rect2 &p_rect) const;
-            /* A command to one vehicle, by handle; returns what its handler answered (#43), or
-             * Variant() when the vehicle has no such command */
-            Variant vehicle_send_command(
-                    const RID &p_vehicle, const StringName &p_command, const Variant &p_p1 = Variant(),
-                    const Variant &p_p2 = Variant());
-            /* The same command to every vehicle that has it */
-            void vehicle_broadcast_command(
-                    const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
-            PackedStringArray vehicle_get_commands(const RID &p_vehicle) const;
-            bool vehicle_has_command(const RID &p_vehicle, const StringName &p_command) const;
+            /* The railway component of a kind, as VehicleServer::vehicle_component_get() answers
+             * the kinds every vehicle has */
+            Ref<VehicleComponent>
+            vehicle_component_get(const RID &p_vehicle, RailVehicleComponentType::Type p_type) const;
+            /* Couples p_end of the vehicle to p_other_end of p_other with p_coupling_type, a mask
+             * of CouplingElement (TMoverParameters::Attach(), Mover.cpp:548) */
+            void
+            vehicle_couple(const RID &p_vehicle, int p_end, const RID &p_other, int p_other_end, int p_coupling_type);
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
@@ -317,11 +276,6 @@ namespace godot {
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;
 
-            /* Freezing the step while a scenery is torn down: the vehicles are freed one by one and
-             * stepping a registry that is being emptied is work for nothing. Replaces toggling the
-             * old autoload's process_mode. */
-            void stepping_set_enabled(bool p_enabled);
-            bool stepping_is_enabled() const;
 
             void vehicle_set_track(
                     const RID &p_vehicle, const RID &p_track, double p_track_offset,
@@ -335,10 +289,10 @@ namespace godot {
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);
 
-            /* One whole step of every registered vehicle. Driven by SimulationServer's clock, and
-             * callable directly with an explicit delta where the caller wants to decide when it
-             * happens. */
-            void stepping_advance(double p_delta);
+            /* One whole step of p_vehicles, those of them attached here, together - handed over by
+             * the implementation that simulates them (MaszynaMoverVehicleServer), once a frame of
+             * VehicleServer's step */
+            void stepping_advance(const Vector<RID> &p_vehicles, double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             /* A pantograph as the model builds it: where its lower arm stands in the vehicle's own
              * space, the arms' lengths, the horizontal offset between their ends and their angles
@@ -369,23 +323,5 @@ namespace godot {
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */
             Dictionary vehicle_get_curve(const RID &p_vehicle, double p_bogie_pivot_spacing);
-
-            /* The hot values, typed and by handle - which backend answers is not the caller's
-             * business. Everything else is read from the component that owns it. */
-            double vehicle_get_velocity(const RID &p_vehicle) const;
-            double vehicle_get_speed(const RID &p_vehicle) const;
-            /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on
-             * purpose: a console, a test or a diagnostic dump asks for it, never a per-frame
-             * reader - those take the component that owns the value and read its property. */
-            /* The component of a kind, as a typed object - the shape
-             * PhysicsServer3D::body_get_direct_state() has: a live view on the vehicle, valid
-             * while the vehicle is. A per-frame reader takes it once and reads its properties. */
-            Ref<VehicleComponent> vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
-            /* Scripted components carrying a tag of the modder's own choosing */
-            TypedArray<VehicleComponent>
-            vehicle_generic_component_find(const RID &p_vehicle, const StringName &p_tag) const;
-
-            Dictionary vehicle_dump_state(const RID &p_vehicle);
-            Dictionary vehicle_dump_config(const RID &p_vehicle) const;
     };
 } // namespace godot

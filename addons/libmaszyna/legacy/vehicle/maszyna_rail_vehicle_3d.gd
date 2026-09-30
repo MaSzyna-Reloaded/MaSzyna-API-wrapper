@@ -43,7 +43,7 @@ class_name MaszynaRailVehicle3D
             _dirty = true
 
 ## The scenery's name for this vehicle, forwarded to the generated FizVehiclePhysicsNode.train_id
-## and registered with RailVehicleServer.vehicle_set_name(), which is how an event, a scenario or
+## and registered with VehicleServer.vehicle_set_name(), which is how an event, a scenario or
 ## the console find a vehicle by name. It may be empty or repeated - everything that holds the
 ## vehicle uses its RID, so only a lookup by that name is affected.
 @export var train_id:String = "":
@@ -145,12 +145,13 @@ func is_built() -> bool:
 
 ## whether the vehicle stands on its start track - false until its simulation placed it there
 func is_placed() -> bool:
-    var controller:VehicleController = get_controller()
-    return controller and RailVehicleServer.vehicle_get_track_position(controller.get_rid()).get("track_rid", RID()).is_valid()
+    return RailVehicleServer.vehicle_get_track_position(get_rid()).get("track_rid", RID()).is_valid()
 
 
-func get_controller() -> VehicleController:
-    return _vehicle.get_controller() if _vehicle else null
+## The vehicle's handle; nothing can be read off it before its simulation is
+## (VehicleServer.vehicle_is_simulation_ready())
+func get_rid() -> RID:
+    return _vehicle.get_rid() if _vehicle else RID()
 
 
 func _process(_delta:float) -> void:
@@ -192,8 +193,7 @@ func _rebuild() -> void:
 ## 3D cab is shown or not: the AI and the player act on the same controls (CabinSystem). The original
 ## keeps a TTrain only for a driven train; a cab of every vehicle at work costs every frame.
 func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
-    var controller:VehicleController = get_controller()
-    if not controller or not controller.get_rid() == vehicle:
+    if not get_rid() == vehicle:
         return
     CabinSystem.vehicle_attach_cab_logic(vehicle, LegacyCabinLogic.from_mmd(data_path, file_name) if driven else null)
 

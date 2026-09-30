@@ -42,11 +42,11 @@ func _on_visibility_changed() -> void:
 
 
 func _on_refresh_timer_timeout() -> void:
-    if not RailVehicleServer.vehicle_exists(vehicle):
+    if not VehicleServer.vehicle_exists(vehicle):
         return
-    %Name.text = RailVehicleServer.vehicle_get_name(vehicle)
+    %Name.text = VehicleServer.vehicle_get_name(vehicle)
     %Status.text = "%s · %d km/h" % [VehicleSelectorRow.motion_label(vehicle),
-            roundi(absf(RailVehicleServer.vehicle_get_speed(vehicle)))]
+            roundi(absf(VehicleServer.vehicle_get_speed(vehicle)))]
 
 
 func _on_gui_input(event:InputEvent) -> void:

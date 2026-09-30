@@ -1,6 +1,6 @@
 #include "VehicleComponent.hpp"
 #include "VehiclePhysicsNode.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include <godot_cpp/classes/class_db_singleton.hpp>
 #include <godot_cpp/classes/engine.hpp>
 
@@ -66,8 +66,7 @@ namespace godot {
             _build(model);
         }
         if (p_what == NOTIFICATION_PREDELETE) {
-            if (RailVehicleServer *server = RailVehicleServer::get_instance();
-                server != nullptr && vehicle_rid.is_valid()) {
+            if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
                 server->vehicle_free(vehicle_rid);
             }
             vehicle_rid = RID();
@@ -112,7 +111,7 @@ namespace godot {
         controller->set_driver_type(driver_type);
         controller->set_load_name(load_name);
         controller->set_load_amount(load_amount);
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
             if (!vehicle_rid.is_valid()) {
                 vehicle_rid = server->vehicle_create();
             }

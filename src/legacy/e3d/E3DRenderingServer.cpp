@@ -71,6 +71,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("instance_get_light_count", "instance"), &E3DRenderingServer::instance_get_light_count);
         ClassDB::bind_method(
+                D_METHOD("instance_get_opaque_meshes", "instance"), &E3DRenderingServer::instance_get_opaque_meshes);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_submodel_rotation", "instance", "submodel", "degrees", "speed"),
                 &E3DRenderingServer::instance_set_submodel_rotation);
         ClassDB::bind_method(
@@ -427,6 +429,21 @@ namespace godot {
         _update_blinking(p_instance, *instance);
         _resolve_lights(*instance);
         _update_if_built(*instance);
+    }
+
+    /// The pick pass draws only opaque submodels (opengl33renderer.cpp:1208 Render_cab(..., Alpha =
+    /// false), 3674 iAlpha & iFlags & 0x1F): a translucent one (flag 0x20) hides nothing
+    PackedInt64Array E3DRenderingServer::instance_get_opaque_meshes(const RID &p_instance) const {
+        PackedInt64Array meshes;
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, meshes);
+        for (const KeyValue<E3DSubModel *, ObjectID> &submodel_node: instance->submodel_nodes) {
+            if (submodel_node.key->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
+                !submodel_node.key->get_material_transparent()) {
+                meshes.push_back(static_cast<int64_t>(static_cast<uint64_t>(submodel_node.value)));
+            }
+        }
+        return meshes;
     }
 
     /// TAnimModel::iNumLights (AnimModel.cpp:327-329): the highest index a light_onNN or

@@ -288,9 +288,7 @@ themselves are `LegacyCabinDoorPermits`.
   force once it is found.
 * Captions are taken when a control is built - a language changed while sitting in a cab shows
   after the cab is entered again.
-* Occluders are every mesh of a generated cab model, transparent ones included - the original's
-  pick pass draws only opaque submodels (`Render_cab(..., Alpha = false)`,
-  opengl33renderer.cpp:1208). Hand-authored cabin scenes register no occluders at all.
+* Hand-authored cabin scenes register no occluders at all.
 
 ### DebugWindow
 

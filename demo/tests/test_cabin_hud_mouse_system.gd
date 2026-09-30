@@ -169,17 +169,18 @@ func test_occluder_behind_or_the_control_itself_does_not_hide_it() -> void:
 
 
 ## A mesh under the control moves with it - a brake valve's handle - and is the control too.
-func test_child_mesh_is_part_of_the_control() -> void:
-    var handle:MeshInstance3D = MeshInstance3D.new()
-    handle.mesh = BoxMesh.new()
-    handle.position = Vector3(2.0, 0.0, 0.0)
-    _mesh.add_child(handle)
+## Train.cpp:64 - the original picks a control's own submodel only (E186's op12 under universal1)
+func test_child_mesh_is_not_part_of_the_control() -> void:
+    var child:MeshInstance3D = MeshInstance3D.new()
+    child.mesh = BoxMesh.new()
+    child.position = Vector3(2.0, 0.0, 0.0)
+    _mesh.add_child(child)
     CabinHUDMouseSystem.control_free(_control)
     _control = _create_control(Vector3.UP)
-    _move_to(_camera.unproject_position(handle.global_position))
-    assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
-    assert_not_null(handle.material_overlay)
-    assert_not_null(_mesh.material_overlay)
+    _move_to(_camera.unproject_position(child.global_position))
+    assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
+    assert_null(child.material_overlay)
+    assert_null(_mesh.material_overlay)
 
 
 func test_cursor_just_beside_a_small_control_takes_it() -> void:

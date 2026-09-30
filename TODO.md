@@ -704,7 +704,9 @@ closes both level crossings). Left:
   2750 m (`audiorenderer.cpp:184-199`, `sound.cpp:364-371`). Not checked by ear.
 * **Memory and the AI**: pushing a memory to the vehicles on its track when it changes
   (`Event.cpp:538-548`), `bCommand`/`CommandCheck` and `:sent` (`MemCell.cpp:52-99`, `196-205`).
-* **`departuredelay`** is read and dropped - needs the activator's timetable (`Event.cpp:2412-2425`).
+* **`departuredelay`** takes the activator's own driver's timetable, else the first driver of its
+  trainset with one - the original asks for the vehicle's driver only when it is `primary()`
+  (`Event.cpp:2431-2435`).
 * **Duplicate event names**: the later wins (with a warning); the original joins them as siblings
   and ignores the first (`Event.cpp:2296-2349`).
 * **Launchers**: numeric key codes,
@@ -907,12 +909,14 @@ ported, into a delegate.
       tune the radio to a station's channel (`cue_action(radiochannel)`, Driver.cpp:1113), the
       delay flag (`UpdateDelayFlag()`),
       a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
-      `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
+      `VelSignalLast` reset by a stop held at (`eSignNext`). A player who pulls away from a stop
+      before its departure time leaves the timetable at that station (it has `arrived` there), so
+      the panel counts the delay from the departure while the train drives on, until the next
+      station's stop rewinds the timetable.
       The player's timetable panel (`demo/hud/timetable_panel.gd`, F2 / View menu, fed by
       `DriverSystem.driver_get_timetable_state()` and `driver_timetable_changed`) left out:
       the list starting at `StationStart` (driveruipanels.cpp:392) - the panel lists every
-      station, passed ones faded; the vehicle card's delay is worked out on a timetable change
-      only, so it does not count on while the train stands; the original's red row while loading
+      station, passed ones faded; the original's red row while loading
       (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
       trainset weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
       re-resolve which driver of the trainset the panel follows until the next timetable change

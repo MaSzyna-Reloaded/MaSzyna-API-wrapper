@@ -25,6 +25,14 @@ class RecordingAction extends ScenarioEventAction:
         else_runs.append(event)
 
 
+## A driver whose train departs this many seconds from any time
+class DepartingDriver extends DriverDelegate:
+    var seconds:float = 0.0
+
+    func _get_seconds_until_departure(_driver:RID, _hours:float) -> float:
+        return seconds
+
+
 class RequeueingAction extends ScenarioEventAction:
     var count:int = 0
 
@@ -203,6 +211,38 @@ func test_putvalues_cab_signal_reaches_the_security_system() -> void:
     _free_events([event])
 
 
+## Event.cpp:2431-2444 - `departuredelay`: queued by a train, the event runs that long from its
+## departure by its timetable; queued by nothing, after its delay alone
+func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
+    var vehicle:RID = build_vehicle("DepartureDelayTest").get_rid()
+    var departing:DepartingDriver = DepartingDriver.new()
+    departing.seconds = 600.0
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    DriverSystem.driver_attach_delegate(driver, departing)
+    var event:RID = _create_event(RecordingAction.new(), 5.0)
+    ScenarioEventServer.event_set_departure_delay(event, -30.0)
+    var now:float = SimulationServer.simulation_get_time()
+
+    ScenarioEventServer.event_queue(event, vehicle)
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + 5.0 + 600.0 - 30.0, 0.01)
+    ScenarioEventServer.event_free(event)
+
+    event = _create_event(RecordingAction.new(), 5.0)
+    ScenarioEventServer.event_set_departure_delay(event, -30.0)
+    ScenarioEventServer.event_queue(event)
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + 5.0, 0.01, "no train, no departure")
+    ScenarioEventServer.event_free(event)
+
+    event = _create_event(RecordingAction.new(), 5.0)
+    ScenarioEventServer.event_set_departure_delay(event, -30.0)
+    departing.seconds = -600.0
+    ScenarioEventServer.event_queue(event, vehicle)
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now, 0.01, "departed long ago: at once")
+    ScenarioEventServer.event_free(event)
+    DriverSystem.driver_free(driver)
+
+
 func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
     var clock:float = SimulationServer.time_of_day
     var event:RID = _create_event(RecordingAction.new(), NEVER)
@@ -229,6 +269,18 @@ func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
     assert_eq(action.command, "PassengerStopPoint:Jawor", "unique only past its #")
     assert_true(ScenarioEventServer.event_is_passive(event), "read by the drivers ahead, never queued")
     _free_events([event])
+
+
+func test_a_departure_delay_is_read_from_the_scenery() -> void:
+    var models:Array[MaszynaModelData] = []
+    var root:MaszynaIncludeNode = _build_scenery("event odjazd multiple 2 none endevent "
+            + "event odjazd_signal multiple 0 none departuredelay -15 endevent", models)
+
+    assert_eq(ScenarioEventServer.event_get_departure_delay(ScenarioEventServer.event_get_rid_by_name(&"odjazd_signal")),
+            -15.0)
+    assert_true(is_nan(ScenarioEventServer.event_get_departure_delay(ScenarioEventServer.event_get_rid_by_name(&"odjazd"))),
+            "none without the keyword")
+    root.free()
 
 
 func test_scenery_memcells_and_value_events() -> void:

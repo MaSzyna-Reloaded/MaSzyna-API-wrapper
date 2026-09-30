@@ -139,18 +139,24 @@ func _scroll_to_next_station() -> void:
     %StationsScroll.scroll_vertical = int(_rows[shown].position.y) if _rows else 0
 
 
-## The delay [min] of a train by its timetable state at `hours`, late when positive: standing at
-## a stop past its departure, the time since; standing there before it, none; on the way, what it
-## arrived at the last station with (the negative of LastStationLatency, mtable.cpp:122)
+## Whether the train of a timetable state stands at its station (the row `_current` shows): it has
+## arrived there, or left it and not driven clear of it yet
+static func is_standing(state:Dictionary) -> bool:
+    return int(state.get("station_start", 0)) < int(state.get("station_index", 0)) or state.get("arrived", false)
+
+
+## The delay [min] of a train by its timetable state at `hours`, late when positive: at a stop,
+## what it arrived with and, past the departure, the time since - an early arrival waits for the
+## departure and is none; on the way, what it left the last station with
 static func delay_minutes(state:Dictionary, hours:float) -> int:
     var timetable:Timetable = state.get("timetable")
     var station_start:int = state.get("station_start", 0)
-    var standing:bool = station_start < int(state.get("station_index", 0)) or state.get("at_passenger_stop", false)
-    if standing and timetable and station_start < timetable.entries.size():
+    var delay:int = roundi(state.get("delay", 0.0))
+    if is_standing(state) and timetable and station_start < timetable.entries.size():
         var entry:TimetableEntry = timetable.entries[station_start]
         if entry.is_stop() and entry.departure >= 0.0:
-            return maxi(0, floori(-minutes_to(entry.departure, hours)))
-    return -roundi(state.get("latency", 0.0))
+            return maxi(0, maxi(delay, floori(-minutes_to(entry.departure, hours))))
+    return delay
 
 
 ## CompareTime() (utilities.cpp:50): the minutes from `hours` to `time`, the shorter way round the
@@ -182,8 +188,7 @@ func _tick() -> void:
         return
     var entry:TimetableEntry = _timetable.entries[_current]
     var row:TimetableRow = _rows[_current]
-    var standing:bool = _current < int(_state.get("station_index", 0)) or _state.get("at_passenger_stop", false)
-    if not standing or not entry.is_stop():
+    if not is_standing(_state) or not entry.is_stop():
         row.show_status(tr("Next station"), TimetableRow.Tone.NEUTRAL)
     elif _current == _rows.size() - 1:
         row.show_status(tr("Terminus"), TimetableRow.Tone.NEUTRAL)

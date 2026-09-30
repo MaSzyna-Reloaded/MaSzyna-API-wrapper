@@ -15,6 +15,7 @@ class_name MaszynaLegacyDriverTimetable
 signal changed
 
 const MINUTES_PER_HOUR:float = 60.0
+const SECONDS_PER_MINUTE:float = 60.0
 ## CompareTime() (utilities.cpp:50): a difference over half a day is the other way round the clock
 const HALF_DAY_MINUTES:float = 720.0
 const DAY_MINUTES:float = 1440.0
@@ -33,6 +34,12 @@ var velocity:float = MaszynaLegacyDriverSpeed.NO_LIMIT
 ## Early on leaving the last station [min], late when negative (LastStationLatency: the departure
 ## less the arrival, mtable.cpp:122; late is below 0, UpdateDelayFlag(), Driver.cpp:5605)
 var latency:float = 0.0
+## Late at the station reached last [min], early when negative: its arrival as it arrives (its
+## departure where it passes), its departure once the train has driven clear of it. The original
+## keeps no such value - its timetable panel shows none (driveruipanels.cpp:298-466).
+var delay:float = 0.0
+## It has reached the next station (`station_index`) and not gone on from it yet
+var arrived:bool = false
 ## It stops at passenger stops (moveStopPoint) - not while it couples up or turns there
 var stop_point:bool = true
 ## It draws up close to the next passenger stop (moveStopCloser) - not at the start, nor on the far
@@ -48,6 +55,8 @@ func take(new_timetable:Timetable) -> void:
     station_index = 0
     station_start = 0
     latency = 0.0
+    delay = 0.0
+    arrived = false
     next_stop = ""
     _next_station = ""
     velocity = MaszynaLegacyDriverSpeed.NO_LIMIT
@@ -86,6 +95,8 @@ func arrive(hours:float) -> bool:
         return false
     var entry:TimetableEntry = entries[station_index]
     latency = _compare_time(hours, entry.departure)
+    delay = -_compare_time(hours, entry.arrival if entry.is_stop() else entry.departure)
+    arrived = true
     if station_index < entries.size() - 1:
         var following:TimetableEntry = entries[station_index + 1]
         _next_station = following.station_name
@@ -99,13 +110,19 @@ func arrive(hours:float) -> bool:
 ## On to the next station (StationIndexInc(), NextStop())
 func advance() -> void:
     station_index += 1
+    arrived = false
     next_stop = _next_station
     changed.emit()
 
 
-## The train has driven clear of the station it left: the next one is shown as current
-## (UpdateNextStop(), Driver.cpp:6481-6487)
-func show_next_station() -> void:
+## The train has driven clear of the station it left at `hours`: its delay is the departure's, and
+## the next station is shown as current (UpdateNextStop(), Driver.cpp:6481-6487)
+func show_next_station(hours:float) -> void:
+    var entries:Array = get_entries()
+    if station_start < station_index and station_start < entries.size():
+        var left:TimetableEntry = entries[station_start]
+        if left.departure >= 0.0:
+            delay = -_compare_time(hours, left.departure)
     station_start = station_index
     changed.emit()
 
@@ -146,6 +163,16 @@ func is_time_to_go(hours:float) -> bool:
     return _compare_time(hours, entry.departure) <= 0.0
 
 
+## The seconds from `hours` to the departure from the station it stands at or has just left
+## (StationStart), 0 where it only passes or follows no timetable (seconds_until_departure(),
+## mtable.cpp:184-190)
+func seconds_until_departure(hours:float) -> float:
+    var entries:Array = get_entries()
+    if station_start >= entries.size() or not (entries[station_start] as TimetableEntry).is_stop():
+        return 0.0
+    return SECONDS_PER_MINUTE * _compare_time(hours, (entries[station_start] as TimetableEntry).departure)
+
+
 ## Whether the train turns at the station it stands at (DirectionChange(), `@`) - not at the last
 func turns_here() -> bool:
     return not is_last_station() and get_entries()[station_index].facilities.contains("@")
@@ -159,6 +186,7 @@ func rewind(station:String) -> bool:
         var entry:TimetableEntry = entries[index]
         if entry.station_name.to_lower() == station.to_lower():
             station_index = index
+            arrived = false
             # shown from it at once (Driver.cpp:1092)
             station_start = index
             next_stop = entry.station_name

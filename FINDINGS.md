@@ -329,6 +329,10 @@ anything. Open work belongs in `TODO.md`.
 * A test that drives a scenery vehicle by commands takes it from its driver and activates a cab:
   `IncMainCtrl()` refuses every step while no cab is active. *(09-28 the EP07 trip test never
   moved)*
+* A test that passes alone and fails in the suite inherits a singleton's state from an earlier
+  script: a test that changes a server's state (`SimulationServer.simulation_speed`, a Project
+  Setting) restores it in `after_each`. Reproduce with `-gpre_run_script` setting that state.
+  *(09-30 EP07 tests driven at x20)*
 
 * Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
   every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less

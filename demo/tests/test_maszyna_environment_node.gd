@@ -4,19 +4,26 @@ extends MaszynaGutTest
 const CLOCK_SPEED: float = 100.0
 const CLOCK_FRAME: float = 0.25
 const SECONDS_PER_HOUR: float = 3600.0
+## SimulationServer::SPEED_CHANGE_TIME_SETTING - how long the running speed takes to reach one set
+const SPEED_CHANGE_TIME_SETTING: String = "maszyna/simulation/speed_change_time"
 
 var _previous_season: MaszynaEnvironment.Season
 var _previous_weather: MaszynaEnvironment.Weather
+var _speed_change_time: Variant
 
 
 func before_each() -> void:
     _previous_season = MaterialManager.season
     _previous_weather = MaterialManager.weather
+    # the clock runs at the speed set, not on its way to it
+    _speed_change_time = ProjectSettings.get_setting(SPEED_CHANGE_TIME_SETTING)
+    ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, 0.0)
 
 
 func after_each() -> void:
     MaterialManager.season = _previous_season
     MaterialManager.weather = _previous_weather
+    ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, _speed_change_time)
 
 
 func test_creates_internal_environment_hierarchy() -> void:

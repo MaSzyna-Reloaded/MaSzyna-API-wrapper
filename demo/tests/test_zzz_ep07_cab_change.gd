@@ -9,6 +9,8 @@ extends MaszynaGutTest
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+## Seconds the FIZ description gets to reach the vehicle
+const CONTROLLER_WAIT:float = 2.0
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -34,19 +36,18 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     vehicle = MaszynaRailVehicle3DManager.load(
             "dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change", 0.0, null)
     add_child(vehicle)
-    for i in range(20):
-        if vehicle.get_controller():
-            break
-        await wait_idle_frames(1)
-    var controller:VehicleController = vehicle.get_controller()
-    assert_not_null(controller, "EP07's FIZ controller should be built")
-    if not controller:
+    # the FIZ description lands after _ready() and binds a new controller to the vehicle, so the
+    # vehicle is held by its RID - a controller taken before that is released
+    var bound:bool = await wait_for_signal(VehicleServer.vehicle_controller_changed, CONTROLLER_WAIT)
+    assert_true(bound, "EP07's FIZ controller should be built")
+    if not bound:
         return
+    var vehicle_rid:RID = vehicle.get_rid()
 
     player = PLAYER_SCENE.instantiate()
     player.auto_start = false
     add_child(player)
-    PlayerServer.player_enter_vehicle(vehicle.get_rid())
+    PlayerServer.player_enter_vehicle(vehicle_rid)
     await wait_idle_frames(3)
 
     var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D
@@ -54,11 +55,11 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     var cab1_z:float = vehicle.to_local(camera.global_position).z
     assert_true((-camera.global_basis.z).dot(vehicle_forward) > 0.99, "cab 1 camera should look forward")
 
-    controller.send_command("cab_change", -1)
+    VehicleServer.vehicle_send_command(vehicle_rid, "cab_change", -1)
     await wait_idle_frames(3)
 
     var machine_room:MaszynaDynamicTrainCabin = camera.get_parent() as MaszynaDynamicTrainCabin
-    assert_eq(controller.get_state().get("cabin_occupied", 1), 0)
+    assert_eq(VehicleServer.vehicle_dump_state(vehicle_rid).get("cabin_occupied", 1), 0)
     assert_not_null(machine_room, "camera should stay in the cabin in the machine room")
     if not machine_room:
         return
@@ -70,11 +71,11 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     for diagnostic:Dictionary in machine_room.get_diagnostics():
         assert_false(diagnostic["code"] == "MMD_INVALID_CAB_DEFINITION", "EP07 declares cab0definition:")
 
-    controller.send_command("cab_change", -1)
+    VehicleServer.vehicle_send_command(vehicle_rid, "cab_change", -1)
     await wait_idle_frames(3)
 
     var cabin:Cabin3D = camera.get_parent() as Cabin3D
-    assert_eq(controller.get_state().get("cabin_occupied", 0), -1)
+    assert_eq(VehicleServer.vehicle_dump_state(vehicle_rid).get("cabin_occupied", 0), -1)
     assert_not_null(cabin, "camera should stay in the cabin after cab change")
     if not cabin:
         return

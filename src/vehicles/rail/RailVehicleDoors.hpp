@@ -9,6 +9,11 @@ namespace godot {
 
 
         public:
+            /// A side's doors came fully open (side: Side)
+            static const char *doors_opened_signal;
+            /// A side's doors came fully closed (side: Side)
+            static const char *doors_closed_signal;
+
             int get_component_type() const override {
                 return VehicleComponentType::COMPONENT_DOORS;
             }
@@ -29,6 +34,7 @@ namespace godot {
             virtual bool get_step_enabled() const = 0;
             virtual int get_open_control() const = 0;
             virtual bool get_left_open() const = 0;
+            virtual bool get_left_closed() const = 0;
             virtual bool get_left_open_permit() const = 0;
             virtual bool get_left_local_open() const = 0;
             virtual bool get_left_remote_open() const = 0;
@@ -38,6 +44,7 @@ namespace godot {
             virtual double get_left_step_position() const = 0;
             virtual bool get_left_step_operating() const = 0;
             virtual bool get_right_open() const = 0;
+            virtual bool get_right_closed() const = 0;
             virtual bool get_right_open_permit() const = 0;
             virtual bool get_right_local_open() const = 0;
             virtual bool get_right_remote_open() const = 0;
@@ -78,6 +85,9 @@ namespace godot {
             /* The side comes last, so a command binds it and takes the state (doors_left_permit) */
             virtual void permit_doors(bool p_state, Side p_side) = 0;
             virtual void operate_doors(bool p_state, Side p_side) = 0;
+            /* The door handle of the vehicle itself, as a passenger or the guard works it - nothing
+             * is sent along the trainset (OperateDoors(range_t::local), Driver.cpp:4340-4341) */
+            virtual void operate_doors_locally(bool p_state, Side p_side) = 0;
             virtual void door_lock(bool p_state) = 0;
             virtual void door_remote_control(bool p_state) = 0;
             virtual void next_permit_preset() = 0;

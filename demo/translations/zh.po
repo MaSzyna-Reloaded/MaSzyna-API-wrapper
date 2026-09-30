@@ -1067,3 +1067,48 @@ msgstr ""
 
 msgid "main reservoir below %.1f bar"
 msgstr ""
+
+msgid "Station dispatch"
+msgstr "车站发车作业"
+
+msgid "Passenger exchange · %d s"
+msgstr "乘客上下车 · %d 秒"
+
+msgid "Passenger exchange"
+msgstr "乘客上下车"
+
+msgid "Closing doors"
+msgstr "正在关门"
+
+msgid "Waiting for departure"
+msgstr "等待发车"
+
+msgid "Dispatch"
+msgstr "发车作业"
+
+msgid "Vehicle load"
+msgstr "车辆载荷"
+
+msgid "Cargo"
+msgstr "载荷"
+
+msgid "Empty"
+msgstr "空"
+
+msgid "Amount"
+msgstr "数量"
+
+msgid "Getting off"
+msgstr "下车"
+
+msgid "Getting on"
+msgstr "上车"
+
+msgid "Exchange time"
+msgstr "上下车时间"
+
+msgid "Unload %d"
+msgstr "卸下 %d"
+
+msgid "Load %d"
+msgstr "装载 %d"

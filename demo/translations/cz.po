@@ -1067,3 +1067,48 @@ msgstr ""
 
 msgid "main reservoir below %.1f bar"
 msgstr ""
+
+msgid "Station dispatch"
+msgstr "Odbavení ve stanici"
+
+msgid "Passenger exchange · %d s"
+msgstr "Výměna cestujících · %d s"
+
+msgid "Passenger exchange"
+msgstr "Výměna cestujících"
+
+msgid "Closing doors"
+msgstr "Zavírání dveří"
+
+msgid "Waiting for departure"
+msgstr "Čekání na odjezd"
+
+msgid "Dispatch"
+msgstr "Odbavení"
+
+msgid "Vehicle load"
+msgstr "Náklad vozidla"
+
+msgid "Cargo"
+msgstr "Náklad"
+
+msgid "Empty"
+msgstr "Prázdný"
+
+msgid "Amount"
+msgstr "Množství"
+
+msgid "Getting off"
+msgstr "Vystupuje"
+
+msgid "Getting on"
+msgstr "Nastupuje"
+
+msgid "Exchange time"
+msgstr "Doba výměny"
+
+msgid "Unload %d"
+msgstr "Vyložit %d"
+
+msgid "Load %d"
+msgstr "Naložit %d"

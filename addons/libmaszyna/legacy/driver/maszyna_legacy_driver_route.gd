@@ -16,7 +16,7 @@ class_name MaszynaLegacyDriverRoute
 ## the front reaches take effect once (TableCheck(), TableTraceRoute()). The passenger stops
 ## (`PassengerStopPoint:`) are driven by the timetable (TableUpdateStopPoint()). Not ported yet: the section and road speeds, stopping at an
 ## automatic block signal (spStopOnSBL), the crossings, the turn back at the end of shunting
-## (BackwardTraceRoute), the load exchange and the doors at a stop - see TODO.md, "Drivers".
+## (BackwardTraceRoute) - see TODO.md, "Drivers".
 
 ## How far ahead it reads [m]: at least MIN_RANGE; moving, MOVING_RANGE past the braking distance;
 ## standing, STANDING_DRIVER_DISTANCES of its distance to keep (Driver.cpp:4984-4990, fDriverDist 50)
@@ -130,8 +130,18 @@ enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION
 ## HOLD and GO set whether it waits for the way to be clear (moveStopHere); OBEY_TRAIN drives on as
 ## a train; TURN_THEN_TRAIN and TURN_THEN_SHUNT turn a push-pull train by its cab, then drive on;
 ## NEXT_ORDER takes the next order; GUARD_SIGNAL - it left a stop, the guard's message is due
-## (moveGuardSignal, Driver.cpp:1313-1316)
-enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER, GUARD_SIGNAL }
+## (moveGuardSignal, Driver.cpp:1313-1316); LOAD_EXCHANGE - it arrived at a platform, on the side of
+## `exchange_platform`, and its passengers get off and on (Driver.cpp:1233-1241)
+enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER, GUARD_SIGNAL, LOAD_EXCHANGE }
+## The platform's digit of a passenger stop's second number - its last one (`% 10`,
+## Driver.cpp:1236): 1 on the left of the way the train drives, 2 on the right, 3 both; any other
+## is no platform, and nothing is exchanged (TDynamicObject::LoadExchange(), DynObj.cpp:2828)
+const PLATFORM_DIGITS:int = 10
+const PLATFORM_SIDES:Dictionary[int, RailVehicleLoad.PlatformSide] = {
+    1: RailVehicleLoad.PLATFORM_SIDE_LEFT,
+    2: RailVehicleLoad.PLATFORM_SIDE_RIGHT,
+    3: RailVehicleLoad.PLATFORM_SIDE_BOTH,
+}
 ## What a passenger stop is on this reading: an entry to take as it is, one to skip, or one that let
 ## the train go (cm_Ready)
 enum StopResult { USE, SKIP, READY }
@@ -193,6 +203,8 @@ var obstacle_speed:float = 0.0
 var at_passenger_stop:bool = false
 ## What its passenger stop asked of the orders on this update
 var stop_orders:Array[StopOrder] = []
+## The side of the platform LOAD_EXCHANGE asks about
+var exchange_platform:RailVehicleLoad.PlatformSide = RailVehicleLoad.PLATFORM_SIDE_BOTH
 ## The passenger stops done with, by event, until it has left them (TSpeedPos::iFlags = 0)
 var _stops_done:Dictionary[RID, bool] = {}
 ## How far a passenger stop was brought forward for the train's length and the platform, by event
@@ -687,7 +699,12 @@ func _update_stop_point(
         # standing short of it: let it draw up closer
         entry.velocity = NO_LIMIT
         return StopResult.USE
-    if timetable.arrive(hours) and timetable.turns_here():
+    var arrived:bool = timetable.arrive(hours)
+    var platform:int = floori(absf(entry.value2)) % PLATFORM_DIGITS
+    if arrived and PLATFORM_SIDES.has(platform):
+        exchange_platform = PLATFORM_SIDES[platform]
+        stop_orders.append(StopOrder.LOAD_EXCHANGE)
+    if arrived and timetable.turns_here():
         # `@`: a push-pull train turns by its cab and stays, a locomotive goes on to its next order
         if trainset.push_pull:
             stop_orders.append(StopOrder.HOLD)

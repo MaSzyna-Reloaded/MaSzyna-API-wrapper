@@ -69,6 +69,11 @@ namespace godot {
                 D_METHOD("vehicle_set_load", "vehicle", "load_name", "load_amount"),
                 &RailVehicleServer::vehicle_set_load);
         ClassDB::bind_method(
+                D_METHOD("load_add", "vehicle", "amount", "side", "load_name"), &RailVehicleServer::load_add,
+                DEFVAL(String()));
+        ClassDB::bind_method(D_METHOD("load_remove", "vehicle", "amount", "side"), &RailVehicleServer::load_remove);
+        ClassDB::bind_method(D_METHOD("load_get_exchange_time", "vehicle"), &RailVehicleServer::load_get_exchange_time);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_rids_in_rect", "rect"), &RailVehicleServer::vehicle_get_rids_in_rect);
         ClassDB::bind_method(
                 D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
@@ -325,6 +330,42 @@ namespace godot {
             controller->set_load_name(p_load_name);
             controller->set_load_amount(p_load_amount);
         }
+    }
+
+    RailVehicleLoad *RailVehicleServer::_get_load(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        return controller != nullptr ? Object::cast_to<RailVehicleLoad>(
+                                               controller->get_component(VehicleComponentType::COMPONENT_LOAD).ptr())
+                                     : nullptr;
+    }
+
+    void RailVehicleServer::load_add(
+            const RID &p_vehicle, const double p_amount, const RailVehicleLoad::PlatformSide p_side,
+            const String &p_load_name) {
+        RailVehicleLoad *load = _get_load(p_vehicle);
+        ERR_FAIL_NULL_MSG(load, "The vehicle carries no load");
+        load->load_add(p_amount, p_side, p_load_name);
+    }
+
+    void RailVehicleServer::load_remove(
+            const RID &p_vehicle, const double p_amount, const RailVehicleLoad::PlatformSide p_side) {
+        RailVehicleLoad *load = _get_load(p_vehicle);
+        ERR_FAIL_NULL_MSG(load, "The vehicle carries no load");
+        load->load_remove(p_amount, p_side);
+    }
+
+    double RailVehicleServer::load_get_exchange_time(const RID &p_vehicle) const {
+        const RailVehicleLoad *load = _get_load(p_vehicle);
+        return load != nullptr ? load->get_load_exchange_time() : 0.0;
+    }
+
+    void RailVehicleServer::_on_load_add_command(const double p_amount, const int p_side, const RID &p_vehicle) {
+        load_add(p_vehicle, p_amount, static_cast<RailVehicleLoad::PlatformSide>(p_side));
+    }
+
+    void RailVehicleServer::_on_load_remove_command(const double p_amount, const int p_side, const RID &p_vehicle) {
+        load_remove(p_vehicle, p_amount, static_cast<RailVehicleLoad::PlatformSide>(p_side));
     }
 
     void RailVehicleServer::vehicle_detach(const RID &p_vehicle) {
@@ -655,6 +696,11 @@ namespace godot {
         controller->connect(
                 RailVehicleController::coupler_detached_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_detached).bind(p_vehicle));
+        // the vehicle's load commands are the server's operations under its handle
+        controller->register_command(
+                "load_add", callable_mp(this, &RailVehicleServer::_on_load_add_command).bind(p_vehicle));
+        controller->register_command(
+                "load_remove", callable_mp(this, &RailVehicleServer::_on_load_remove_command).bind(p_vehicle));
     }
 
     void RailVehicleServer::_disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
@@ -674,6 +720,8 @@ namespace godot {
         controller->disconnect(
                 RailVehicleController::coupler_detached_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_detached).bind(p_vehicle));
+        controller->unregister_command("load_add");
+        controller->unregister_command("load_remove");
     }
 
     void RailVehicleServer::_on_vehicle_cabin_occupied_changed(const int p_cab, const RID &p_vehicle) {

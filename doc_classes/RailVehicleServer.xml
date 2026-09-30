@@ -13,6 +13,32 @@
 			<description>
 			</description>
 		</method>
+		<method name="load_add">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="amount" type="float" />
+			<param index="2" name="side" type="int" enum="RailVehicleLoad.PlatformSide" />
+			<param index="3" name="load_name" type="String" default="&quot;&quot;" />
+			<description>
+				So much more to get on [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_add]); an empty vehicle takes [param load_name], or the first load it accepts. The vehicle's [code]load_add[/code] command (amount, side) comes here.
+			</description>
+		</method>
+		<method name="load_get_exchange_time" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The seconds the exchange of [param vehicle] still takes ([method RailVehicleLoad.get_load_exchange_time]); 0 for none, or for a vehicle that carries no load.
+			</description>
+		</method>
+		<method name="load_remove">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="amount" type="float" />
+			<param index="2" name="side" type="int" enum="RailVehicleLoad.PlatformSide" />
+			<description>
+				So much more to get off [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_remove]). The vehicle's [code]load_remove[/code] command (amount, side) comes here.
+			</description>
+		</method>
 		<method name="trainset_add_vehicle">
 			<return type="void" />
 			<param index="0" name="trainset" type="RID" />

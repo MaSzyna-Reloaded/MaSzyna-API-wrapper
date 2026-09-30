@@ -824,7 +824,7 @@ ported, into a delegate.
       (`MaszynaLegacyDriverSpeed`, `pick_optimal_speed()`, `Driver.cpp:7297-7400`) - the
       trainset's top speed, the timetable's, the shunting speed, the speed allowed, the track's,
       waiting told to stop here. Left: the next speed and its distance (with the speed table),
-      obstacles ahead, the load exchange, waiting (`fStopTime`), an aggressive driver, EMU/DMU
+      obstacles ahead, an aggressive driver, EMU/DMU
       thresholds, the cargo trains' and couplers' acceleration limits, the braking test.
    3. Tractive force through the cab for every engine type (`MaszynaLegacyDriverTraction` and one
       subclass per engine, chosen by the driver's vehicle's engine: series motor, diesel-electric,
@@ -901,10 +901,18 @@ ported, into a delegate.
       ahead rewinds the timetable to it; `@` turns a push-pull train by its cab (a locomotive
       goes on to its next order, `Disconnect`); the last station ends the
       timetable. The timetable's speed per stretch (`TTVmax`).
-      Left: the load exchange and its waiting (`simulation::Station.update_load()`,
-      `WaitingSet()`, `fStopTime`), the doors (and the guard's `moveGuardOpenDoor`), the
-      announcements; of the guard's departure message (`tsGuardSignal`) only the radio one is
-      played - the one heard beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870)
+      The stop's passengers (`MaszynaLegacyStation.update_load()`, station.cpp:25-88) and the
+      train's dispatch (`StationServer`: exchange, wait for the departure, doors closed - in
+      place of the original's negative `fStopTime`); the AI's doors at the platform
+      (`Doors()`, Driver.cpp:4266-4356) through the vehicle's door commands.
+      Left: the departure signal before the doors close (`DepartureSignal`,
+      `departuresignalon/off`, Driver.cpp:4305-4320 - not published) and the wait after closing
+      (`fActionTime = Random(-3.5, -1.0)`, Driver.cpp:4351); the guard's `moveGuardOpenDoor`; the
+      car load weights (`load_weights.txt`) and the visible load of a car
+      (`update_load_visibility()`, `update_load_sections()`); the passenger announcements; the
+      load unit sent to the Mover as `"tons"` where the original parses `"tonns"`
+      (Mover.cpp:4464, `MoverRailVehicleLoad`); of the guard's departure message
+      (`tsGuardSignal`) only the radio one is played - the one heard beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870)
       needs a place for a train's own world sounds, and a .flac one has no loader; the hint to
       tune the radio to a station's channel (`cue_action(radiochannel)`, Driver.cpp:1113), the
       delay flag (`UpdateDelayFlag()`),
@@ -916,8 +924,7 @@ ported, into a delegate.
       The player's timetable panel (`demo/hud/timetable_panel.gd`, F2 / View menu, fed by
       `DriverSystem.driver_get_timetable_state()` and `driver_timetable_changed`) left out:
       the list starting at `StationStart` (driveruipanels.cpp:392) - the panel lists every
-      station, passed ones faded; the original's red row while loading
-      (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
+      station, passed ones faded; the expanded mode's
       trainset weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
       re-resolve which driver of the trainset the panel follows until the next timetable change
       or a change of the player's vehicle.

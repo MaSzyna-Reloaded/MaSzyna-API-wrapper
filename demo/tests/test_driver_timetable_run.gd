@@ -149,6 +149,8 @@ func test_early_at_the_first_station_it_waits_for_the_departure() -> void:
     _update(KRZYZOWA_DEPARTURE - 5.0 * MINUTE, STANDING_SPEED)
 
     assert_true(_route.at_passenger_stop, "standing at the W4")
+    assert_has(_route.stop_orders, MaszynaLegacyDriverRoute.StopOrder.LOAD_EXCHANGE, "its passengers get off and on")
+    assert_eq(_route.exchange_platform, RailVehicleLoad.PLATFORM_SIDE_RIGHT, "at the platform its W4 names (352)")
     assert_eq(_timetable.station_index, 0, "Krzyżowa, until the departure")
     assert_eq(_timetable.station_start, 0)
     assert_almost_eq(_timetable.latency, 5.0, EPSILON, "5 min early")

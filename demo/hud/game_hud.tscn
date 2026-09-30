@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://hud/mover_switches_lights.tscn" id="13_lights"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_load.tscn" id="36_load"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
 [ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
@@ -226,6 +227,25 @@ title = "Doors"
 layout_mode = 2
 
 [node name="Doors" parent="ControlWindows/Doors/DoorsScroll" unique_id=1694193 instance=ExtResource("7_t705k")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Load" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 678.0
+offset_top = 810.0
+offset_right = 870.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Vehicle load"
+
+[node name="LoadScroll" type="ScrollContainer" parent="ControlWindows/Load"]
+layout_mode = 2
+
+[node name="Load" parent="ControlWindows/Load/LoadScroll" instance=ExtResource("36_load")]
 layout_mode = 2
 size_flags_horizontal = 3
 

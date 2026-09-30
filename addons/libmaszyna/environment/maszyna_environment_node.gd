@@ -120,7 +120,7 @@ const MAX_SIMULATION_SPEED: float = 100.0
         wind_direction = wrapf(value, 0.0, 360.0)
         _dirty_visuals = true
 
-@export_range(0.0, 1.0, 0.01) var wind_strength: float = 0.3:
+@export_range(0.0, 10.0, 0.01) var wind_strength: float = 0.3:
     set(value):
         wind_strength = value
         _dirty_visuals = true

@@ -112,7 +112,7 @@ release-clear-godot-cache:
 	rm -rf demo/.godot/exported
 
 
-release-linux-symbols: release-clear-godot-cache compile-release-symbols
+release-linux-symbols: release-clear-godot-cache compile-debug compile-release-symbols
 	mkdir -p bin/linux
 	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
 	mv bin/linux/reloaded.zip $(LINUX_ZIP)
@@ -245,21 +245,24 @@ $(LINUX_TEMPLATE_INSTALLED): $(LINUX_TEMPLATE)
 	install -D $< $@
 
 
-release-linux: release-clear-godot-cache compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
+# The export is run by the editor, which loads the debug library (libmaszyna.gdextension, the
+# editor's own feature tag), so that one is built as well - a stale one fails the scripts that use
+# a newer API
+release-linux: release-clear-godot-cache compile-debug compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
 	mkdir -p bin/linux
 	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
 	mv bin/linux/reloaded.zip $(LINUX_ZIP)
 	@echo "Exported: $(LINUX_ZIP)"
 
 
-release-windows: release-clear-godot-cache compile-windows-release
+release-windows: release-clear-godot-cache compile-debug compile-windows-release
 	mkdir -p bin/windows
 	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
 	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
 	@echo "Exported: $(WINDOWS_ZIP)"
 
 
-release-android: release-clear-godot-cache compile-android-release
+release-android: release-clear-godot-cache compile-debug compile-android-release
 	mkdir -p bin/android
 	cd demo && $(GODOT) --headless --export-release "android_arm64" ../$(ANDROID_APK)
 	@echo "Exported: $(ANDROID_APK)"

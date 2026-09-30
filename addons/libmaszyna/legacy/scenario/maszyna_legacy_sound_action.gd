@@ -38,11 +38,8 @@ func _run(_event:RID, _activator:RID) -> void:
         if mode == Mode.STOP:
             ScenerySoundServer.sound_stop(sound)
             continue
-        # exclusive, as the original plays it: a sound already playing is left as it is
-        # (sound_flags::exclusive, sound_source::play_basic(), sound.cpp:403-421)
-        if ScenerySoundServer.sound_is_playing(sound):
-            continue
-        ScenerySoundServer.sound_play(
+        # a sound already playing goes on as it is, and shows no transcript again
+        var started:bool = ScenerySoundServer.sound_play(
                 sound, ScenerySoundServer.Playback.ONCE if mode == Mode.PLAY else ScenerySoundServer.Playback.LOOP)
-        if transcripts[index]:
+        if started and transcripts[index]:
             TranscriptSystem.add(transcripts[index])

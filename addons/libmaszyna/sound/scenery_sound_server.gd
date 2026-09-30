@@ -81,17 +81,21 @@ func sound_free(sound_rid:RID) -> void:
     _bank.events = events
 
 
-## Plays the sound once or loops it. Out of reach, a sound played once is not heard, and a loop
+## Plays the sound once or loops it; false when it is playing already, which it goes on doing
+## (exclusive, sound_source::play_basic(), sound.cpp:403-421) - but asked to play once, a loop is
+## not started again when the camera comes back, as the original's play() replaces the flags
+## before it looks (sound.cpp:350-356). Out of reach, a sound played once is not heard, and a loop
 ## waits for the camera.
-func sound_play(sound_rid:RID, playback:Playback) -> void:
+func sound_play(sound_rid:RID, playback:Playback) -> bool:
     var state:SoundState = _sounds.get(sound_rid)
     if not state:
-        return
-    if playback == Playback.LOOP:
-        state.looping = true
-    if not state.streamed:
-        return
-    _player.play(state.loop_event.name if playback == Playback.LOOP else state.play_event.name)
+        return false
+    state.looping = playback == Playback.LOOP
+    if _player.is_playing(state.play_event.name) or _player.is_playing(state.loop_event.name):
+        return false
+    if state.streamed:
+        _player.play(state.loop_event.name if playback == Playback.LOOP else state.play_event.name)
+    return true
 
 
 func sound_stop(sound_rid:RID) -> void:

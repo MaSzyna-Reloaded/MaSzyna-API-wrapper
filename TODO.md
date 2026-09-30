@@ -403,7 +403,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   heard when the camera arrives mid-clip (the original's source keeps playing); a loop restarts
   from its beginning when it comes back into reach. The reach is capped at the draw distance by
   `SceneryStreamingServer`. `sound_create()` sets the player's `max_tracks`, which rebuilds its
-  voices - fine at load, not while scenery sounds play.
+  voices - fine at load, not while scenery sounds play. A loop asked for while the sound plays
+  once starts only when the camera comes back into reach, where the original's `play_event()`
+  starts it as soon as the play ends (`scene.cpp:148-152`).
 
 ## Vehicles
 

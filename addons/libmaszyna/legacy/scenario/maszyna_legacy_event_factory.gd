@@ -338,6 +338,11 @@ static func build(
                 ScenarioEventServer.event_set_passive(
                         rid, ScenarioEventServer.memory_get_text(action.source) in PASSIVE_GET_COMMANDS)
             "sound":
+                # any other mode does nothing (Event.cpp:1434)
+                var sound_mode:int = int(event.parameters[0])
+                if not SOUND_MODES.has(sound_mode):
+                    push_warning("Sound event %s: mode %d does nothing" % [event.name, sound_mode])
+                    continue
                 var sound_rids:Array[RID] = []
                 var reaches:PackedFloat64Array = []
                 var transcripts:Array[Transcript] = []
@@ -350,7 +355,7 @@ static func build(
                 action.sounds = sound_rids
                 action.reaches = reaches
                 action.transcripts = transcripts
-                action.mode = SOUND_MODES.get(int(event.parameters[0]), MaszynaLegacySoundAction.Mode.STOP)
+                action.mode = SOUND_MODES[sound_mode]
                 # the optional radio channel it is a message on (Event.cpp:1382-1386)
                 if event.parameters.size() > 1 and event.parameters[1].is_valid_int():
                     action.radio_channel = int(event.parameters[1])

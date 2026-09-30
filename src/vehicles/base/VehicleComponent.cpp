@@ -45,6 +45,18 @@ namespace godot {
     void VehicleComponent::_register_commands() {};
     void VehicleComponent::_unregister_commands() {};
 
+    void VehicleComponent::attach_implementation(const ObjectID &p_implementation) {
+        if (implementation == p_implementation) {
+            return;
+        }
+        implementation = p_implementation;
+        _implementation_changed();
+    }
+
+    ObjectID VehicleComponent::get_implementation() const {
+        return implementation;
+    }
+
     void VehicleComponent::set_component_tag(const StringName &p_tag) {
         component_tag = p_tag;
     }

@@ -8,6 +8,14 @@ namespace godot {
     class MoverRailVehicleMasterController : public RailVehicleMasterController, public MoverComponent {
             GDCLASS(MoverRailVehicleMasterController, RailVehicleMasterController);
 
+        protected:
+            /* The vehicle's Mover, taken when its simulation starts and dropped before it is freed */
+            void _implementation_changed() override {
+                take_mover(
+                        get_implementation(),
+                        train_controller_node != nullptr ? train_controller_node->get_rid() : RID());
+            }
+
         private:
             static void _bind_methods();
 

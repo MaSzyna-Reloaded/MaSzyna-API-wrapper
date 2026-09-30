@@ -5,7 +5,8 @@
 The vehicle becomes an object owned by a server, addressed by RID, with thin `*Node` proxies for
 the editor. Each stage is one PR, titled `(#184) <area> - <what>`, and each leaves the game
 runnable. Stages 1-3 are done (`RailVehicleServer` owns placement, movement and the step;
-`MoverRailVehicleController` owns the `TMoverParameters`, components reach it through `MoverComponent`).
+`MaszynaMoverVehicleServer` owns the `TMoverParameters`, the controller and components take it through
+`attach_implementation()`).
 
 Design that replaced the withdrawn stage 4 (a global name registry, now deleted):
 

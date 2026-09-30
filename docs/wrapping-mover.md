@@ -69,6 +69,7 @@ classDiagram
         class RailVehicleDoors
     }
     namespace Mover {
+        class MaszynaMoverVehicleServer
         class MoverRailVehicleController
         class MoverComponent
         class MoverRailVehicleDoors
@@ -91,8 +92,9 @@ classDiagram
     RailVehicleComponent <|-- RailVehicleDoors
     RailVehicleDoors <|-- MoverRailVehicleDoors
     MoverComponent <|-- MoverRailVehicleDoors
-    MoverComponent --> MoverRailVehicleController
-    MoverRailVehicleController *-- TMoverParameters
+    MoverComponent --> MaszynaMoverVehicleServer : takes the Mover from
+    MoverRailVehicleController --> MaszynaMoverVehicleServer : takes the Mover from
+    MaszynaMoverVehicleServer *-- TMoverParameters
 ```
 
 The components - every interface with its Mover implementation. `RailVehicleEngine` and
@@ -193,6 +195,8 @@ A logical subset of Mover's functionality is wrapped as a pair of classes plus a
   * signals, if necessary; for internal communication
   * **no Mover** - not in a method name, a parameter, a type or an include
 * **the implementation** `MoverRailVehicle<X> : RailVehicle<X>, MoverComponent` in `src/legacy/vehicles`:
+  * `_implementation_changed()` taking the vehicle's Mover (`take_mover()`) - handed over when its
+    simulation starts, taken back before the Mover is freed
   * `_apply_configuration()`, `_do_process_component()`, the live getters and the operations over `get_mover()`
   * `_fill_state_dictionary()` and `_fill_config_dictionary()`, if necessary
 * **the parser** `Fiz<...>Parser` in `addons/libmaszyna/legacy/fiz`: reads the FIZ section and sets the properties

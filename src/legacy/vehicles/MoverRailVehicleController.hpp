@@ -1,7 +1,6 @@
 #pragma once
 #include "legacy/maszyna-mover/McZapkie/MOVER.h"
 #include "vehicles/rail/RailVehicleController.hpp"
-#include <unordered_map>
 
 namespace godot {
     /* VehicleController on the vendored Mover: the one class that owns a vehicle's
@@ -13,8 +12,19 @@ namespace godot {
             GDCLASS(MoverRailVehicleController, RailVehicleController)
 
         private:
-            /* Created by _initialize_simulation(), deleted by release(). */
+            /* This vehicle's Mover, which MaszynaMoverVehicleServer owns: taken in
+             * _initialize_simulation(), handed back in release(). mover_vehicle is the handle it
+             * was created for - the controller's own may change meanwhile. */
             TMoverParameters *mover = nullptr;
+            RID mover_vehicle;
+            /* The MaszynaMoverVehicleServer the Mover came from, by id: at shutdown it is freed -
+             * and with it every Mover - before the controllers it served */
+            ObjectID mover_implementation;
+            /* That server, or null once it is gone - and the Mover with it */
+            class MaszynaMoverVehicleServer *_mover_implementation() const;
+            /* The controller a coupled Mover belongs to - coupled Movers only know each other
+             * (TCoupling::Connected) */
+            Ref<RailVehicleController> _controller_of(const TMoverParameters *p_mover) const;
 
             /* Which movement integration one sub-iteration performs. The original runs the cheap
              * one for every sub-iteration but the last (DynObj.cpp:4086). */
@@ -30,9 +40,6 @@ namespace godot {
             double tachometer_time = 0.0;
             bool tachometer_clock_active = false;
 
-            // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
-            static std::unordered_map<const TMoverParameters *, MoverRailVehicleController *> controllers_by_mover;
-
             void initialize_mover_state();
             void _integrate(double p_delta, Integration p_integration);
             void _update_tachometer(double p_delta);
@@ -45,8 +52,6 @@ namespace godot {
         protected:
             static void _bind_methods();
             void _initialize_simulation() override;
-            void _component_attached(VehicleComponent *p_component) override;
-            void _component_detached(VehicleComponent *p_component) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
             double get_live_battery_voltage() const override;
@@ -87,8 +92,7 @@ namespace godot {
             MoverRailVehicleController();
             ~MoverRailVehicleController() override;
 
-            /* C++ only and unbound: the Mover is this implementation's own business. The Mover*
-             * components of this vehicle reach it through here. */
+            /* C++ only and unbound: the Mover is this implementation's own business. */
             TMoverParameters *get_mover() const;
 
             void battery(bool p_enabled) const override;

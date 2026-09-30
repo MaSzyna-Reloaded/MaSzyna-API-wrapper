@@ -21,6 +21,8 @@ namespace godot {
         private:
             bool _commands_registered = false;
             StringName component_tag;
+            /* What simulates the vehicle this component belongs to, while it does */
+            ObjectID implementation;
 
         protected:
             bool enabled = true;
@@ -41,6 +43,10 @@ namespace godot {
             virtual void _register_commands();
             virtual void _unregister_commands();
 
+            /* The implementation changed (get_implementation()): an implementation's component
+             * takes what it needs from it, or lets go of it when it is gone */
+            virtual void _implementation_changed() {}
+
             /* Whether the vehicle this component belongs to is simulated yet - a dump of a
              * component whose vehicle is not publishes nothing, rather than zeroes. */
             bool is_simulation_ready() const;
@@ -57,6 +63,11 @@ namespace godot {
             void detach();
             /* One tick of this component, driven by the vehicle that owns it. */
             void process(double p_delta);
+            /* The VehicleImplementationServer the vehicle's simulation runs on, by instance id;
+             * ObjectID() before it exists and once it is gone. C++ only: the vehicle hands it
+             * over (VehicleController::_attach_implementation()). */
+            void attach_implementation(const ObjectID &p_implementation);
+            ObjectID get_implementation() const;
 
             void register_command(const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_command);

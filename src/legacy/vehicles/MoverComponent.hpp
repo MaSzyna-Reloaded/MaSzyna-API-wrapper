@@ -1,49 +1,36 @@
 #pragma once
 #include "legacy/maszyna-mover/McZapkie/MOVER.h"
-#include "legacy/vehicles/MoverRailVehicleController.hpp"
+
+#include <godot_cpp/core/object_id.hpp>
+#include <godot_cpp/variant/rid.hpp>
 
 namespace godot {
-    /* What every Mover* component shares: the Mover implementation of the vehicle it belongs to,
-     * the way TrainPart held its RailVehicleController. Not a Godot class - a Mover* component inherits
-     * it next to its Vehicle* interface, and MoverRailVehicleController fills it in when the component
-     * joins the vehicle and clears it when the component leaves.
+    /* What every Mover* component shares: the Mover of the vehicle it belongs to. Not a Godot
+     * class - a Mover* component inherits it next to its RailVehicle* interface, and takes the
+     * Mover in its own _implementation_changed() (VehicleComponent::attach_implementation()):
      *
-     * Two things follow from it not being an Object, and both are easy to undo by accident:
+     *     void _implementation_changed() override {
+     *         take_mover(get_implementation(), ...the vehicle's RID...);
+     *     }
      *
-     * `Object::cast_to<MoverComponent>` cannot reach it - that helper only walks Godot's own class
-     * hierarchy - so the one place that asks whether a component has a Mover behind it uses
-     * `dynamic_cast` (MoverRailVehicleController::_component_attached). That is the correct tool here,
-     * not an oversight of `CODE_STYLE.md`'s "call a method, do not name it", and replacing it with
-     * `cast_to` does not compile.
-     *
-     * And a Mover* component now has two bases - its Vehicle* interface, which is the Object, and
-     * this one, which is not - so the two do not share an address. A `dynamic_cast` (or an
-     * ordinary implicit conversion) adjusts the pointer; a `reinterpret_cast`, a C-style cast, or
-     * storing one of these as `Object *` and taking it back as a `MoverComponent *` by any other
-     * route hands out an address that is off by the size of the Object half. It will mostly seem
-     * to work, which is what makes it worth writing down. */
+     * The pointer has one lifetime: the implementation hands the implementation over once the
+     * vehicle's Mover exists (MoverRailVehicleController::_initialize_simulation()) and takes it
+     * back before the Mover is freed (release()), and take_mover() follows both. Between the two
+     * the Mover is read straight, with no lookup. */
     class MoverComponent {
         private:
-            MoverRailVehicleController *mover_controller = nullptr;
+            TMoverParameters *mover = nullptr;
 
         public:
             virtual ~MoverComponent() = default;
 
-            /* The component joined (a controller) or left (null) a vehicle simulated on the Mover.
-             * Called by MoverRailVehicleController only - the vehicle hands itself over, the component
-             * never takes it. */
-            void set_mover_controller(MoverRailVehicleController *p_controller) {
-                mover_controller = p_controller;
-            }
+            /* The Mover of p_vehicle from the MaszynaMoverVehicleServer p_implementation, or none
+             * when there is no implementation any more */
+            void take_mover(const ObjectID &p_implementation, const RID &p_vehicle);
 
-            /* The vehicle's Mover implementation, or null while the component belongs to none. */
-            MoverRailVehicleController *get_mover_controller() const {
-                return mover_controller;
-            }
-
-            /* The vehicle's Mover, or null while there is none yet. */
+            /* The vehicle's Mover, or null while there is none. */
             TMoverParameters *get_mover() const {
-                return mover_controller != nullptr ? mover_controller->get_mover() : nullptr;
+                return mover;
             }
     };
 } // namespace godot

@@ -1,17 +1,14 @@
 #include "MaszynaMoverVehicleServer.hpp"
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
-#include "legacy/vehicles/MoverComponent.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <tuple>
 
 namespace godot {
-    std::unordered_map<const TMoverParameters *, MoverRailVehicleController *>
-            MoverRailVehicleController::controllers_by_mover;
-
     void MoverRailVehicleController::_bind_methods() {}
 
     /* release() runs from VehicleController's NOTIFICATION_PREDELETE, which the editor skips; the
@@ -21,26 +18,23 @@ namespace godot {
     }
 
     MoverRailVehicleController::~MoverRailVehicleController() {
-        if (mover != nullptr) {
-            controllers_by_mover.erase(mover);
-            delete mover;
-            mover = nullptr;
+        if (MaszynaMoverVehicleServer *implementation = _mover_implementation(); implementation != nullptr) {
+            implementation->mover_free(mover_vehicle);
         }
     }
 
-    /* A Mover* component reaches this vehicle's Mover through here from now on. `dynamic_cast`
-     * rather than `Object::cast_to`, because MoverComponent is not an Object - see its own
-     * header for why that is the right tool and what it costs to get wrong. */
-    void MoverRailVehicleController::_component_attached(VehicleComponent *p_component) {
-        if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
-            mover_component->set_mover_controller(this);
-        }
+    MaszynaMoverVehicleServer *MoverRailVehicleController::_mover_implementation() const {
+        return Object::cast_to<MaszynaMoverVehicleServer>(ObjectDB::get_instance(mover_implementation));
     }
 
-    void MoverRailVehicleController::_component_detached(VehicleComponent *p_component) {
-        if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
-            mover_component->set_mover_controller(nullptr);
+    Ref<RailVehicleController> MoverRailVehicleController::_controller_of(const TMoverParameters *p_mover) const {
+        const MaszynaMoverVehicleServer *implementation = _mover_implementation();
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        if (implementation == nullptr || vehicles == nullptr || p_mover == nullptr) {
+            return Ref<RailVehicleController>();
         }
+        return Object::cast_to<RailVehicleController>(ObjectDB::get_instance(
+                ObjectID(vehicles->vehicle_get_controller_instance_id(implementation->mover_get_vehicle(p_mover)))));
     }
 
     TMoverParameters *MoverRailVehicleController::get_mover() const {
@@ -56,11 +50,10 @@ namespace godot {
     }
 
     Ref<RailVehicleController> MoverRailVehicleController::get_coupled_controller(const int p_end) const {
-        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
+        if (mover == nullptr) {
             return Ref<RailVehicleController>();
         }
-        const auto it = controllers_by_mover.find(mover->Couplers[p_end].Connected);
-        return Ref<RailVehicleController>(it == controllers_by_mover.end() ? nullptr : it->second);
+        return _controller_of(mover->Couplers[p_end].Connected);
     }
 
     void MoverRailVehicleController::initialize_mover_state() {
@@ -77,12 +70,17 @@ namespace godot {
     }
 
     void MoverRailVehicleController::_initialize_simulation() {
+        MaszynaMoverVehicleServer *implementation = MaszynaMoverVehicleServer::get_instance();
+        ERR_FAIL_NULL(implementation);
         // the vehicle used to be named by its node; what identifies one now is its train id
-        mover = new TMoverParameters(
-                get_initial_velocity(), std::string(get_type_name().utf8().get_data()),
-                std::string(get_train_id().utf8().get_data()),
+        mover_vehicle = get_rid();
+        mover_implementation = ObjectID(implementation->get_instance_id());
+        mover = implementation->mover_create(
+                mover_vehicle, get_initial_velocity(), get_type_name(), get_train_id(),
                 get_occupied_cab()); // the cab as TMoverParameters::CabActivisation counts it
-        controllers_by_mover[mover] = this;
+        ERR_FAIL_NULL(mover);
+        // every component takes the Mover before the configuration is written into it
+        _attach_implementation(mover_implementation);
 
         apply_configuration();
 
@@ -137,6 +135,13 @@ namespace godot {
      * cleared the way Dettach() clears a coupling at pressed buffers (Mover.cpp:634). */
     void MoverRailVehicleController::release() {
         VehicleController::release();
+        MaszynaMoverVehicleServer *implementation = _mover_implementation();
+        // freed at shutdown before this controller, the server took every Mover with it
+        if (implementation == nullptr) {
+            mover = nullptr;
+            mover_implementation = ObjectID();
+            return;
+        }
         if (mover == nullptr) {
             return;
         }
@@ -147,13 +152,14 @@ namespace godot {
             TCoupling &other_coupler = coupler.Connected->Couplers[coupler.ConnectedNr];
             std::tie(other_coupler.Connected, other_coupler.ConnectedNr, other_coupler.CouplingFlag) =
                     std::make_tuple(nullptr, -1, coupling::faux);
-            if (const auto it = controllers_by_mover.find(coupler.Connected); it != controllers_by_mover.end()) {
-                it->second->emit_signal(trainset_changed_signal);
+            if (const Ref<RailVehicleController> neighbour = _controller_of(coupler.Connected); neighbour.is_valid()) {
+                neighbour->emit_signal(trainset_changed_signal);
             }
         }
-        controllers_by_mover.erase(mover);
-        delete mover;
+        implementation->mover_free(mover_vehicle);
         mover = nullptr;
+        mover_vehicle = RID();
+        mover_implementation = ObjectID();
     }
 
     bool MoverRailVehicleController::is_simulation_ready() const {
@@ -427,9 +433,9 @@ namespace godot {
             const bool detaching = (coupler.sounds & sound::detach) != 0;
             if ((coupler.sounds & sound::attachcoupler) != 0) {
                 trainset_changed = true;
-                if (const auto it = controllers_by_mover.find(coupler.Connected);
-                    !detaching && it != controllers_by_mover.end()) {
-                    it->second->emit_signal(trainset_changed_signal);
+                if (const Ref<RailVehicleController> neighbour = _controller_of(coupler.Connected);
+                    !detaching && neighbour.is_valid()) {
+                    neighbour->emit_signal(trainset_changed_signal);
                 }
             }
             for (int index = 0; index < 6; ++index) {

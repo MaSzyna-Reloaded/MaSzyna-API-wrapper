@@ -2366,3 +2366,24 @@ lighting or the trainset.
   index of the entry.
 * **Rule:** a blurry texture - compare its DDS size with the limit it loaded under before blaming
   mipmaps or filtering.
+
+## 2026-09-30 - EP07 tests driven at x20
+
+* **Symptom:** on CI `test_zzz_ep07_cabin_main_switch`, `test_zzz_ep07_main_switch_trip_diagnostic`
+  and `test_zzz_ep07_orientation_regression` failed (the vehicle never moved:
+  `controller_main_actual_position` 0, brake cylinders full), and
+  `test_maszyna_environment_node` ran the clock 28.5 s short of an hour; every one passed run
+  alone.
+* **What proved it:** the Mover's step differed between CI and a local run
+  (`main_switch_time` -0.00985 against -0.00667). `test_weather_controls.gd` moves the time scale
+  slider to its end, `MaszynaEnvironmentNode.simulation_speed` writes it to
+  `SimulationServer.simulation_speed` (x20, x60 before) and nothing set it back, so every later
+  script ran at it; `-gpre_run_script` setting x20 reproduced all four EP07 failures run alone.
+  The clock test's 28.5 s is the speed ramp (`speed_change_time` 0.4 s, from `c476726a`) from
+  1 to 100 at 0.25 s frames: 99 * 0.535 * 0.25 / 0.465; its neighbour passed only because the
+  ramp had already been run up by it.
+* **Fix:** `test_weather_controls.gd` restores the speed in `after_each`;
+  `test_maszyna_environment_node.gd` sets `maszyna/simulation/speed_change_time` to 0 for its
+  tests, as `test_simulation_clock.gd` does.
+* **Rule:** a test that changes a server's state restores it; a failure only in the suite is
+  reproduced by setting that state before the script alone.

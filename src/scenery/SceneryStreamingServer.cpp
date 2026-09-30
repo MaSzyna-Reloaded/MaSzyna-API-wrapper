@@ -13,6 +13,7 @@ namespace godot {
                 D_METHOD("stream_register", "owner", "rid", "position", "range_end"),
                 &SceneryStreamingServer::stream_register);
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
+        ClassDB::bind_method(D_METHOD("owner_rebuild", "owner"), &SceneryStreamingServer::owner_rebuild);
         ClassDB::bind_method(
                 D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
@@ -106,6 +107,36 @@ namespace godot {
         owner.clear = p_clear;
         owners.push_back(owner);
         return static_cast<int>(owners.size() - 1);
+    }
+
+    /// Clears every piece of the owner built so far, and the next plan builds again - preload
+    /// included - those it still wants: what they were built of has changed (the game's data was
+    /// read again). A piece out of range is built from the new data whenever it comes into range.
+    void SceneryStreamingServer::owner_rebuild(const int p_owner) {
+        Vector<RID> cleared;
+        Callable clear;
+        {
+            MutexLock lock(mutex);
+            ERR_FAIL_INDEX(p_owner, owners.size());
+            clear = owners[p_owner].clear;
+            for (KeyValue<Vector2i, Chunk> &item: chunks) {
+                for (Entry &entry: item.value.entries) {
+                    // a freed piece stays in its chunk until the chunk is sorted again
+                    if (entry.owner == p_owner && entry.built && entry_chunks.has(entry.stream_rid)) {
+                        entry.built = false;
+                        entry.queued_revision = 0;
+                        item.value.built_count--;
+                        cleared.push_back(entry.user_rid);
+                    }
+                }
+            }
+            content_dirty = true;
+        }
+        if (clear.is_valid()) {
+            for (const RID &user_rid: cleared) {
+                clear.call(user_rid);
+            }
+        }
     }
 
     /// Registers one piece of an owner. [param range_end] of 0 or less means the piece declares no

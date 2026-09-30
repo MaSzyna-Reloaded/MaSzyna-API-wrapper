@@ -2480,3 +2480,42 @@ lighting or the trainset.
   tests, as `test_simulation_clock.gd` does.
 * **Rule:** a test that changes a server's state restores it; a failure only in the suite is
   reproduced by setting that state before the script alone.
+
+## 2026-09-30 - track textures stayed after a game directory change
+
+* **Symptom:** a game directory changed in the editor, then "Reload models": the models came from
+  the new directory, the track textures stayed the old ones until the whole scene was reloaded.
+* **What proved it:** reading who holds what was read from the game directory. "Reload models"
+  called `reload()` on the `E3DModelInstance` nodes and nothing else; every other owner kept its
+  memo in memory with nothing telling it the data had changed - `TrackRenderingServer` its
+  tracks' materials, `MaterialManager` its handed-out materials (a lookup by the same key hands
+  the same object back), `E3DRenderingServer` its loaded models (keyed by path without the game
+  directory) and resolved materials, `SmokeSourceLibrary` its templates (its `clear_cache()` was
+  connected to nothing), `MaszynaAudioStream` its loaded file. Two disk caches (`materials`,
+  `vehicle_profiles`) had no game directory in their key, and `ResourceCache::set()` saved a new
+  resource to the path of one still held, so `get()` - `ResourceLoader` in REUSE mode - handed out
+  the old object again.
+* **Fix:** `GameDataServer` (the caches moved there from `SimulationServer`): `data_reload()`,
+  called on every game directory change and by "Reload game data", emits
+  `data_unload_requested` then `data_reload_requested`, and every owner follows them itself -
+  drops its memo in the first round, builds again in the second (`SceneryStreamingServer.
+  owner_rebuild()` for streamed pieces). The game directory is part of both keys;
+  `ResourceCache::set()` makes the saved resource take the path over.
+* **Rule:** whatever reads the game directory and keeps the result follows `GameDataServer`'s
+  unload and reload; a disk cache key names the game directory.
+
+## 2026-09-30 - the editor crashed on a game directory change
+
+* **Symptom:** in the editor, any change of the game directory (Browse, "Reload game data")
+  crashed it with SIGSEGV, no frame of the library on the stack.
+* **What proved it:** a headless editor with `demo_3d.tscn` open crashed on `data_reload()`; the
+  log before it had `remove_child: Required object "rp_child" is null` from
+  `MaszynaRailVehicle3D._free_parts()`, once per vehicle. In the editor `TrainSoundSystem` is a
+  placeholder (not `@tool`): `MmdSoundBankInstancer._build_player()` stopped at its
+  `register_bank()` with a script error and returned null, so every vehicle kept a null part.
+  The first `_free_parts()` in the editor - now on every data unload - stopped at it, leaving
+  parts removed or freed in `_parts`, and the rebuild after freed them again.
+* **Fix:** the instancer builds no sound banks and no cab in the editor, as it already skipped
+  `CabinSystem`.
+* **Rule:** code that runs in the editor calls no autoload that is not `@tool` - the call is a
+  script error that returns null into the caller's data, not a warning.

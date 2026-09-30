@@ -10,6 +10,10 @@ namespace godot {
         materials.clear();
     }
 
+    void E3DMaterialResolver::clear() {
+        materials.clear();
+    }
+
     Ref<Material>
     E3DMaterialResolver::resolve(const E3DInstanceData &p_instance, E3DSubModel *p_submodel, const bool p_force_alpha) {
         if (!callable.is_valid()) {

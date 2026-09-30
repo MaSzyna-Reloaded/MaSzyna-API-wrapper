@@ -98,11 +98,28 @@ func _ready() -> void:
             RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)))
         _free_spotlight_material.next_pass = glare
     E3DRenderingServer.material_set_resolver(get_submodel_material)
-    SimulationServer.cache_clear_requested.connect(clear_cache)
+    GameDataServer.cache_clear_requested.connect(clear_cache)
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
+    GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
 
 
 func _exit_tree() -> void:
-    SimulationServer.cache_clear_requested.disconnect(clear_cache)
+    GameDataServer.cache_clear_requested.disconnect(clear_cache)
+    GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
+    GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
+
+
+## Whatever was built of the game's data is built again by its owner and asks for its materials
+## anew - none of them is handed out again
+func _on_data_unload_requested() -> void:
+    _managed_materials.clear()
+    _dds_cache.clear()
+
+
+func _on_data_reload_requested() -> void:
+    if _free_spotlight_material:
+        _free_spotlight_material.next_pass.set_shader_parameter(
+            "glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
 
 
 func clear_cache() -> void:
@@ -260,8 +277,10 @@ func _compute_cache_hash(
     material_path: String,
     options: MaterialOptions,
 ) -> String:
+    # the same material path is another material in another game directory
     var options_hash = ":".join([
         CACHE_VERSION,
+        UserSettings.get_maszyna_game_dir(),
         options.force_transparent,
         options.diffuse_color.to_html(true),
         options.alpha_scissor_threshold,

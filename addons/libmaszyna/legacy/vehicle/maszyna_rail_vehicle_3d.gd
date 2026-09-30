@@ -102,6 +102,7 @@ var _parts:Array[Node] = []
 
 func _enter_tree() -> void:
     RailVehicleRenderingServer.vehicle_model_built.connect(_on_vehicle_model_built)
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
     # the editor drives no vehicle, and has no CabinSystem
     if not Engine.is_editor_hint():
         DriverSystem.vehicle_driven_changed.connect(_on_vehicle_driven_changed)
@@ -109,6 +110,7 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
     RailVehicleRenderingServer.vehicle_model_built.disconnect(_on_vehicle_model_built)
+    GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
     if not Engine.is_editor_hint():
         DriverSystem.vehicle_driven_changed.disconnect(_on_vehicle_driven_changed)
 
@@ -123,16 +125,29 @@ func _process(_delta:float) -> void:
     if not _dirty:
         return
     _dirty = false
-    # the old vehicle goes with its parts - its physics frees its handle
-    for part:Node in _parts:
-        remove_child(part)
-        part.free()
+    _free_parts()
     _parts = MaszynaRailVehicle3DManager.build_into(
             self, data_path, file_name, skin, vehicle_id, initial_velocity, driver_type, load_name, load_amount)
     # built as internal children; shown in the Scene dock only while "Edit FIZ" is on
     if editable_in_editor:
         _apply_editable_in_editor()
     vehicle_built.emit()
+
+
+## The vehicle goes at once with the data it was built of - nothing of it is built again from the new
+## data before it is itself - and is built anew in the next frame
+func _on_data_unload_requested() -> void:
+    _free_parts()
+    _dirty = true
+    set_process(true)
+
+
+## The old vehicle goes with its parts - its physics frees its handle
+func _free_parts() -> void:
+    for part:Node in _parts:
+        remove_child(part)
+        part.free()
+    _parts.clear()
 
 
 ## The cab logic is the vehicle's while somebody drives it - its driver or the player - whether a

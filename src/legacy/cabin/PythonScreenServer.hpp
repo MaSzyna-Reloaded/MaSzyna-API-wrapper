@@ -63,8 +63,11 @@ namespace godot {
             Ref<Semaphore> semaphore;
             Ref<Thread> worker;
             List<Request> requests;
+            /// The game directory the worker moves the interpreter into, empty when it stays
+            String entering_game_dir;
             bool exiting = false;
 
+            void _on_data_reload_requested();
             void _worker_loop(const String &p_library, const String &p_home, const String &p_game_dir);
             void _publish(
                     const RID &p_screen, int p_width, int p_height, const PackedByteArray &p_pixels,

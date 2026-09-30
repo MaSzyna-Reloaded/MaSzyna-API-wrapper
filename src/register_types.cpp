@@ -3,6 +3,7 @@
 #include "cache/ResourceCache.hpp"
 #include "driver/DriverDelegate.hpp"
 #include "driver/DriverSystem.hpp"
+#include "game_data/GameDataServer.hpp"
 #include "hud/HUDServer.hpp"
 #include "legacy/cabin/PythonScreenServer.hpp"
 #include "legacy/e3d/E3DModel.hpp"
@@ -147,6 +148,7 @@ GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
 SimulationServer *simulation_server_singleton = nullptr;
+GameDataServer *game_data_server_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackServer *track_server_singleton = nullptr;
 VehicleServer *vehicle_server_singleton = nullptr;
@@ -179,6 +181,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
         GDREGISTER_CLASS(SimulationServer);
+        GDREGISTER_CLASS(GameDataServer);
         GDREGISTER_CLASS(MaszynaTranslationServer);
         GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
@@ -319,6 +322,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(RailVehicleThrottlePositionItem);
 
         user_settings_singleton = memnew(UserSettings);
+        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton); // 1
+        // after UserSettings is registered: the constructor follows the game directory; before
+        // every server whose constructor creates a ResourceCache, which follows its cache clearing
+        game_data_server_singleton = memnew(GameDataServer);
+        Engine::get_singleton()->register_singleton("GameDataServer", game_data_server_singleton); // 1a
         simulation_server_singleton = memnew(SimulationServer);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
@@ -329,7 +337,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         python_screen_server_singleton = memnew(PythonScreenServer);
         cabin_hud_mouse_system_singleton = memnew(CabinHUDMouseSystem);
 
-        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                                // 3
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
@@ -548,6 +555,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("E3DParser"); // 2
     }
 
+    if (Engine::get_singleton()->has_singleton("GameDataServer")) {
+        Engine::get_singleton()->unregister_singleton("GameDataServer"); // 1a
+    }
+
     if (Engine::get_singleton()->has_singleton("UserSettings")) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
     }
@@ -599,6 +610,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_parser_singleton != nullptr) { // 2
         memdelete(e3d_parser_singleton);
         e3d_parser_singleton = nullptr;
+    }
+
+    if (game_data_server_singleton != nullptr) { // 1a
+        memdelete(game_data_server_singleton);
+        game_data_server_singleton = nullptr;
     }
 
     if (user_settings_singleton != nullptr) { // 1

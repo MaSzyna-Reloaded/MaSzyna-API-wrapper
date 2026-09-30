@@ -7,23 +7,15 @@
 
 namespace godot {
 
-    /// Runtime-wide services shared by every cache: the single "throw the caches away" entry point
-    /// and the build stamp those caches are keyed against. It also carries the state of the world
-    /// the whole simulation shares - the light level and the air temperature as the environment
-    /// publishes them (Global.fLuminance, Global.AirTemperature) - and runs the one clock of the
-    /// simulation (Timer::UpdateTimers(), Timer.cpp:70-92): the physics, the events, the drivers
-    /// and the time of day all advance by the same seconds, read here.
+    /// The state of the world the whole simulation shares - the light level and the air
+    /// temperature as the environment publishes them (Global.fLuminance, Global.AirTemperature) -
+    /// and runs the one clock of the simulation (Timer::UpdateTimers(), Timer.cpp:70-92): the
+    /// physics, the events, the drivers and the time of day all advance by the same seconds, read
+    /// here.
     class SimulationServer : public Object {
             GDCLASS(SimulationServer, Object)
 
         private:
-            static constexpr const char *BUILD_NUMBER_PATH = "res://build_number.txt";
-            static constexpr const char *BUILD_SECTION = "app";
-            static constexpr const char *BUILD_NUMBER_KEY = "build_number";
-
-            String build_number;
-            bool build_number_read = false;
-            bool build_version_checked = false;
             /// A frame counts at most this much real time [s], then times the simulation speed. The
             /// original caps the simulated time instead, at 1 s (Timer.cpp:84), because its Mover
             /// went wrong on long frames; here the couplers are refreshed every physics step and
@@ -67,7 +59,6 @@ namespace godot {
 
         public:
             static const char *simulation_advanced_signal;
-            static const char *cache_clear_requested_signal;
             static const char *language_changed_signal;
             static const char *simulation_paused_signal;
             static const char *simulation_unpaused_signal;
@@ -84,10 +75,6 @@ namespace godot {
             static SimulationServer *get_instance() {
                 return dynamic_cast<SimulationServer *>(Engine::get_singleton()->get_singleton("SimulationServer"));
             }
-
-            void cache_clear();
-            String build_get_number();
-            bool build_check_version();
 
             /// Hours since midnight, fractional. Setting it jumps the clock (a scenario's start, the
             /// player's change, the system time); running, it advances with the simulation.

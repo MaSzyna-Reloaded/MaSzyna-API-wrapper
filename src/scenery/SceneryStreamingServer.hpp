@@ -175,6 +175,8 @@ namespace godot {
             int owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
             RID stream_register(int p_owner, const RID &p_user_rid, const Vector3 &p_position, float p_range_end);
             void stream_free(const RID &p_stream_rid);
+            /* Every piece of the owner is built again from what it is built of now */
+            void owner_rebuild(int p_owner);
 
             /* Streaming builds and clears content on `process_frame`. Tearing a scenery down
              * frees the very RIDs it streams, and that teardown yields a frame for its budget -

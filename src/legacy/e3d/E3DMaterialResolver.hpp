@@ -18,6 +18,8 @@ namespace godot {
 
         public:
             void set_callable(const Callable &p_callable);
+            /* Every material is resolved again */
+            void clear();
             Ref<Material> resolve(const E3DInstanceData &p_instance, E3DSubModel *p_submodel, bool p_force_alpha);
     };
 } // namespace godot

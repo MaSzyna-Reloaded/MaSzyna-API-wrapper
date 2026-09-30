@@ -56,6 +56,8 @@ func _ready() -> void:
     _radio_player.name = "RadioSfxPlayer"
     add_child(_radio_player)
     CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
+    # the MMD and the models are the game directory's
+    GameDataServer.data_reload_requested.connect(reload)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
     # placed in a scene rather than built by CabinSystem.vehicle_show_cabin(), which names it itself.
     if controller_path:
@@ -77,6 +79,7 @@ func _exit_tree() -> void:
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
+    GameDataServer.data_reload_requested.disconnect(reload)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_vehicle_rid(RID())
     _free_occluders()

@@ -31,7 +31,7 @@ var _chosen_train_id: String = ""
 
 ## Before _ready(): the children must not read a cache left by another build
 func _enter_tree() -> void:
-    SimulationServer.build_check_version()
+    GameDataServer.build_check_version()
 
 
 func _ready() -> void:

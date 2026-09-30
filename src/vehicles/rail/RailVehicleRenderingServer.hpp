@@ -65,6 +65,9 @@ namespace godot {
                     RID low_poly;
                     RID passengers;
                     RID load;
+                    /* The cargo's model file, read again with the game's data */
+                    String load_data_path;
+                    String load_model_filename;
                     bool own_models = false;
                     Transform3D model_transform;
                     /* How far the cargo sinks into an empty vehicle [m] (DynObj.cpp:3070-3080) */
@@ -116,6 +119,7 @@ namespace godot {
             static Node3D *_node(const Visual &p_visual);
             void _set_processing(bool p_processing);
             void _process_frame();
+            void _on_data_reload_requested();
             void _free_models(Visual &p_visual);
             void _create_models(const RID &p_vehicle, Visual &p_visual);
             void _bind_parts(const RID &p_vehicle, Visual &p_visual);

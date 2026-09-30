@@ -2688,3 +2688,17 @@ lighting or the trainset.
   `NominalCoolingPower`) were not imported at all.
 * **Rule:** a FIZ key given twice counts once, with its first value - read how `extract_value`
   looks a key up before reading a line into a dictionary.
+
+## 2026-09-30 - release export without CabinSystem
+
+* **Symptom:** `make release-linux` printed `Failed to create an autoload, script
+  'uid://lx8tmya3o3dj' is not compiling`, `Identifier not found: CabinSystem` (`player.gd:209`) and
+  `!info->node` from `debug_menu/plugin.gd:27` while saving the pack.
+* **What proved it:** the export is `godot-double --headless --export-release`, the editor, and an
+  editor build carries the `debug` feature tag: it loads `linux.debug.x86_64` from
+  `libmaszyna.gdextension` even for a release export. `release-linux` built only
+  `libmaszyna.64.so`; the debug library predated `vehicle_set_cab_light_level()`, so
+  `cabin_system.gd:197` failed to parse and the `CabinSystem` autoload was never created.
+* **Fix:** `release-linux`, `release-linux-symbols`, `release-windows` and `release-android`
+  depend on `compile-debug`.
+* **Rule:** the library the exporting editor loads is the debug one - build it with every export.

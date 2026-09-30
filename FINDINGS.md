@@ -348,6 +348,8 @@ anything. Open work belongs in `TODO.md`.
 * The export reconverts a scene only when its own file changes; a scene instancing another,
   changed one (`[editable]` above all) ships its old diff of it. A release is exported from an
   empty `demo/.godot/exported`. *(09-29 vehicle card missing in release)*
+* The export is run by the editor, and the editor loads the debug library whatever the export:
+  every `release-*` export builds `compile-debug` too. *(09-30 release export without CabinSystem)*
 
 ## Tests
 * A test is checked against a build without the fix, and one that cannot fail is deleted.

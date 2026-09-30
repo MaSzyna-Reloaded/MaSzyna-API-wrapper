@@ -4,13 +4,17 @@ extends MaszynaGutTest
 ## draws the exterior, low-poly interior, passengers and cab all under one vehicle-local frame
 ## with +Z = direction of travel (TDynamicObject::mMatrix, DynObj.cpp:2506-2508); RailVehicle3D
 ## uses Godot's -Z forward. MaszynaRailVehicle3DInstancer converts all of them with the same 180
-## degree yaw (MASZYNA_VEHICLE_FRAME) - these tests spawn the REAL SM42 and check every part ends
-## up in the same frame, facing the vehicle's own forward. The models are drawn as nodes under the
-## vehicle (RailVehicleRenderingServer), found there by their submodels' names.
+## degree yaw (MASZYNA_VEHICLE_FRAME) - these tests spawn a fabricated vehicle whose front parts
+## sit at the MaSzyna front (+Z, demo/tests/fixtures/dynamic/test/synthetic_v1) and check every
+## part ends up in the same frame, facing the vehicle's own forward. The models are drawn as nodes
+## under the vehicle (RailVehicleRenderingServer), found there by their submodels' names.
 
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
-const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+## The driver sits in the exterior's cab shell, not just on its side of the vehicle [m]
+const DRIVER_TO_CAB_SHELL_MAX_DISTANCE:float = 2.0
+const FORWARD_MIN_DOT:float = 0.99
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -19,11 +23,14 @@ var player:MaszynaPlayer
 
 func before_each() -> void:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
 
 
 func after_each() -> void:
     # out of the cab before the vehicle goes: the player's cab camera is in it
     PlayerServer.player_leave_vehicle()
+    # the cab interior is freed at the end of the frame
+    await wait_idle_frames(1)
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):
@@ -31,28 +38,24 @@ func after_each() -> void:
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _spawn_sm42() -> bool:
-    if not DirAccess.dir_exists_absolute(REAL_GAME_DIR.path_join("dynamic/pkp/sm42_v1")):
-        pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
-        return false
-    UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rotation")
+func _spawn_vehicle() -> bool:
+    vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_frame")
     var loaded:bool = RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid()).is_valid()
-    assert_true(loaded, "SM42's real exterior model should be built")
+    assert_true(loaded, "the vehicle's exterior model should be built")
     return loaded
 
 
 func _exterior_cab_z() -> float:
     var cab:Node3D = vehicle.find_child("budka_maszynisty", true, false) as Node3D
-    assert_not_null(cab, "SM42's exterior model should contain its cab shell (budka_maszynisty)")
+    assert_not_null(cab, "the exterior model should contain its cab shell (budka_maszynisty)")
     return vehicle.to_local(cab.global_position).z if cab else 0.0
 
 
 func test_exterior_nose_faces_vehicle_forward() -> void:
-    if not await _spawn_sm42():
+    if not await _spawn_vehicle():
         return
     var nose:Node3D = vehicle.find_child("nos01", true, false) as Node3D
-    assert_not_null(nose, "SM42's real model should contain a nos01 submodel")
+    assert_not_null(nose, "the exterior model should contain a nos01 submodel")
     if not nose:
         return
     var nose_local:Vector3 = vehicle.to_local(nose.global_position)
@@ -60,10 +63,10 @@ func test_exterior_nose_faces_vehicle_forward() -> void:
 
 
 func test_low_poly_interior_shares_exterior_frame() -> void:
-    if not await _spawn_sm42():
+    if not await _spawn_vehicle():
         return
     var cab_mesh:MeshInstance3D = vehicle.find_child("cab1", true, false) as MeshInstance3D
-    assert_not_null(cab_mesh, "SM42's low-poly interior should contain cab1")
+    assert_not_null(cab_mesh, "the low-poly interior should contain cab1")
     if not cab_mesh or not cab_mesh.mesh:
         return
     var cab_center:Vector3 = vehicle.to_local(cab_mesh.global_transform * cab_mesh.mesh.get_aabb().get_center())
@@ -75,13 +78,9 @@ func test_low_poly_interior_shares_exterior_frame() -> void:
 
 
 func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
-    if not await _spawn_sm42():
+    if not await _spawn_vehicle():
         return
-    for i in range(20):
-        if vehicle.get_controller():
-            break
-        await wait_idle_frames(1)
-    assert_not_null(vehicle.get_controller(), "SM42's FIZ controller should be built")
+    assert_not_null(vehicle.get_controller(), "the vehicle's FIZ controller should be built")
     if not vehicle.get_controller():
         return
 
@@ -96,12 +95,13 @@ func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
     var camera_local:Vector3 = vehicle.to_local(camera.global_position)
     var exterior_cab_z:float = _exterior_cab_z()
     assert_true(
-        signf(camera_local.z) == signf(exterior_cab_z) and absf(camera_local.z - exterior_cab_z) < 2.0,
+        signf(camera_local.z) == signf(exterior_cab_z)
+                and absf(camera_local.z - exterior_cab_z) < DRIVER_TO_CAB_SHELL_MAX_DISTANCE,
         "driver camera (z=%s) should sit inside the exterior's cab shell (z=%s)" % [camera_local.z, exterior_cab_z],
     )
     var camera_forward:Vector3 = -camera.global_basis.z
     var vehicle_forward:Vector3 = -vehicle.global_basis.z
     assert_true(
-        camera_forward.dot(vehicle_forward) > 0.99,
+        camera_forward.dot(vehicle_forward) > FORWARD_MIN_DOT,
         "driver camera should look along the vehicle's forward, got %s vs %s" % [camera_forward, vehicle_forward],
     )

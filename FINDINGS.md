@@ -210,6 +210,8 @@ anything. Open work belongs in `TODO.md`.
 * A native node a script may subclass does its lifecycle work in `_notification()`: a script's
   `_enter_tree()`/`_ready()` replace the extension's. *(09-30 a script subclass shadows the native
   lifecycle)*
+* Code resumed by `await` of a signal runs inside the emission: it cannot free the emitter ("Object
+  is locked"). *(09-30 a test ran on the stack of the signal it awaited)*
 * A node taken out of the tree and put back ("Edit FIZ") runs `_enter_tree()`/`_exit_tree()` again
   but `_ready()` once: subscribe where you unsubscribe. *(09-30 "Edit FIZ" disconnected what was
   never connected)*

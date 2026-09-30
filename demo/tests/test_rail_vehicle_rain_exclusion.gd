@@ -1,12 +1,13 @@
 extends MaszynaGutTest
 
-const REAL_GAME_DIR: String = "/home/marcin/Games/MaSzyna"
+const FIXTURES_GAME_DIR: String = "res://tests/fixtures"
 
 var _previous_game_dir: String
 
 
 func before_each() -> void:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
 
 
 func after_each() -> void:
@@ -30,13 +31,9 @@ func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
 
 
 func test_real_vehicle_excludes_rain_over_its_body() -> void:
-    if not DirAccess.dir_exists_absolute(REAL_GAME_DIR.path_join("dynamic/pkp/sm42_v1")):
-        pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
-        return
-    UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     add_child_autofree(vehicle)
-    MaszynaRailVehicle3DManager.build_into(vehicle, "dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rain", 0.0)
+    MaszynaRailVehicle3DManager.build_into(vehicle, "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain", 0.0)
     await wait_idle_frames(2)
 
     var controller: VehicleController = vehicle.get_controller()

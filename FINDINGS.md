@@ -257,10 +257,10 @@ anything. Open work belongs in `TODO.md`.
 * A bilateral detach that clears both backend links retains the former neighbour until both
   owners have announced their state change; do not invalidate a rendering cache to compensate
   for the missing event. *(09-30 recoupled wagon kept stale coupler state)*
-* A cab button is its own submodel only - a mesh under it is another control's or nobody's, as
-  the original's `control_mapper::find` (`Train.cpp:64`); a lever is held by its handle too, the
-  meshes under it. *(09-29 the E186 screen's OP1/OP2 turned its page off; 09-30 its op12 still
-  did; 09-30 EP07's brake valve handles could not be grabbed)*
+* A cab control is its mesh and every mesh under it (a handle), unless another control lies under
+  it - then it is a panel and its own mesh only. Decided by the model's tree, never by the widget
+  class or the cab. *(09-29 the E186 screen's OP1/OP2 turned its page off; 09-30 its op12 still
+  did; 09-30 EP07's brake valve and reverser handles could not be grabbed)*
 * Only an opaque submodel hides a cab control from the mouse - a translucent one is not in the
   original's pick pass (`opengl33renderer.cpp:1208`). *(09-30 E186's spring brake release could
   not be clicked through its glass cap)*

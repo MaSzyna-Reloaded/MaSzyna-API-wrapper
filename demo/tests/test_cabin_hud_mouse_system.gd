@@ -27,7 +27,7 @@ func before_each() -> void:
 
 ## A control whose one increase shifts it by `step_offset`
 func _create_control(step_offset:Vector3) -> RID:
-    return CabinHUDMouseSystem.control_create(PackedInt64Array([_mesh.get_instance_id()]), "battery", "B",
+    return CabinHUDMouseSystem.control_create(_mesh.get_instance_id(), "battery", "B",
             func() -> void: _calls.append("pressed"),
             func() -> void: _calls.append("released"),
             func() -> void: _calls.append("increase"),
@@ -125,7 +125,7 @@ func test_drag_keeps_the_axis_its_first_movement_took() -> void:
 ## Signs fixed by the control win over its grip: here down and left increase.
 func test_fixed_signs_override_the_grip() -> void:
     CabinHUDMouseSystem.control_free(_control)
-    _control = CabinHUDMouseSystem.control_create(PackedInt64Array([_mesh.get_instance_id()]), "valve", "",
+    _control = CabinHUDMouseSystem.control_create(_mesh.get_instance_id(), "valve", "",
             func() -> void: _calls.append("pressed"),
             func() -> void: _calls.append("released"),
             func() -> void: _calls.append("increase"),
@@ -168,34 +168,54 @@ func test_occluder_behind_or_the_control_itself_does_not_hide_it() -> void:
         CabinHUDMouseSystem.occluder_free(occluder)
 
 
-## Train.cpp:64 - the original picks a control's own submodel only (E186's op12 under universal1)
-func test_child_mesh_is_not_part_of_the_control() -> void:
-    var child:MeshInstance3D = MeshInstance3D.new()
-    child.mesh = BoxMesh.new()
-    child.position = Vector3(2.0, 0.0, 0.0)
-    _mesh.add_child(child)
-    CabinHUDMouseSystem.control_free(_control)
-    _control = _create_control(Vector3.UP)
-    _move_to(_camera.unproject_position(child.global_position))
-    assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid())
-    assert_null(child.material_overlay)
-    assert_null(_mesh.material_overlay)
-
-
-## A lever is held by its handle as well: EP07's brake valve handle (raczkaKranu) under zasadniczy.
-func test_handle_given_with_the_control_is_part_of_it() -> void:
+## A mesh under a control with no other control under it moves with it and is the control too:
+## EP07's brake valve handle, a reverser's handle.
+func test_child_mesh_is_part_of_the_control() -> void:
     var handle:MeshInstance3D = MeshInstance3D.new()
     handle.mesh = BoxMesh.new()
     handle.position = Vector3(2.0, 0.0, 0.0)
     _mesh.add_child(handle)
     CabinHUDMouseSystem.control_free(_control)
-    _control = CabinHUDMouseSystem.control_create(
-            PackedInt64Array([_mesh.get_instance_id(), handle.get_instance_id()]), "valve", "",
-            Callable(), Callable(), Callable(), Callable(), Basis.IDENTITY, Vector3.UP, Callable(), Vector2.ZERO)
+    _control = _create_control(Vector3.UP)
     _move_to(_camera.unproject_position(handle.global_position))
     assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control)
     assert_not_null(handle.material_overlay)
     assert_not_null(_mesh.material_overlay)
+
+
+## A control with another control under it is a panel, its own mesh only: E186's universal1 holds
+## op1 (a control) and op12 (nobody's) - whichever registers first.
+func test_control_holding_another_control_is_its_own_mesh_only() -> void:
+    for panel_first:bool in [true, false]:
+        var control_child:MeshInstance3D = MeshInstance3D.new()
+        control_child.mesh = BoxMesh.new()
+        control_child.position = Vector3(2.0, 0.0, 0.0)
+        _mesh.add_child(control_child)
+        var other_child:MeshInstance3D = MeshInstance3D.new()
+        other_child.mesh = BoxMesh.new()
+        other_child.position = Vector3(-2.0, 0.0, 0.0)
+        _mesh.add_child(other_child)
+        CabinHUDMouseSystem.control_free(_control)
+        var child_control:RID = RID()
+        if not panel_first:
+            child_control = CabinHUDMouseSystem.control_create(control_child.get_instance_id(), "pantograph", "",
+                    Callable(), Callable(), Callable(), Callable(), Basis.IDENTITY, Vector3.ZERO, Callable(),
+                    Vector2.ZERO)
+        _control = _create_control(Vector3.UP)
+        if panel_first:
+            child_control = CabinHUDMouseSystem.control_create(control_child.get_instance_id(), "pantograph", "",
+                    Callable(), Callable(), Callable(), Callable(), Basis.IDENTITY, Vector3.ZERO, Callable(),
+                    Vector2.ZERO)
+
+        _move_to(_camera.unproject_position(other_child.global_position))
+        assert_false(CabinHUDMouseSystem.control_get_hovered().is_valid(), "op12 is nobody's")
+        _move_to(_camera.unproject_position(control_child.global_position))
+        assert_eq(CabinHUDMouseSystem.control_get_hovered(), child_control, "op1 is its own")
+        _move_to(_over_control())
+        assert_eq(CabinHUDMouseSystem.control_get_hovered(), _control, "the panel keeps its own mesh")
+        CabinHUDMouseSystem.control_free(child_control)
+        control_child.free()
+        other_child.free()
 
 
 func test_cursor_just_beside_a_small_control_takes_it() -> void:
@@ -210,7 +230,7 @@ func test_wheel_is_turned_by_its_top_wherever_grabbed() -> void:
     CabinHUDMouseSystem.control_free(_control)
     # turning about X, the camera's right: an increase takes the top of the wheel away and down on
     # screen, while the point grabbed below the hub, on the near face, goes up
-    _control = CabinHUDMouseSystem.control_create(PackedInt64Array([_mesh.get_instance_id()]), "wheel", "",
+    _control = CabinHUDMouseSystem.control_create(_mesh.get_instance_id(), "wheel", "",
             func() -> void: _calls.append("pressed"),
             func() -> void: _calls.append("released"),
             func() -> void: _calls.append("increase"),
@@ -228,7 +248,7 @@ func test_wheel_is_turned_by_its_top_wherever_grabbed() -> void:
 func test_continuous_control_takes_the_travel() -> void:
     CabinHUDMouseSystem.control_free(_control)
     var travels:Array[float] = []
-    _control = CabinHUDMouseSystem.control_create(PackedInt64Array([_mesh.get_instance_id()]), "valve", "",
+    _control = CabinHUDMouseSystem.control_create(_mesh.get_instance_id(), "valve", "",
             Callable(), Callable(), Callable(), Callable(), Basis.IDENTITY, Vector3.UP,
             func(travel:float) -> void: travels.append(travel), Vector2.ZERO)
     _move_to(_over_control())
@@ -251,7 +271,7 @@ func test_turning_control_is_dragged_by_its_grip() -> void:
     CabinHUDMouseSystem.control_free(_control)
     # turning about the standing Y axis: the handle, toward the viewer, goes right on an increase
     _control = CabinHUDMouseSystem.control_create(
-            PackedInt64Array([_mesh.get_instance_id(), handle.get_instance_id()]), "valve", "",
+            _mesh.get_instance_id(), "valve", "",
             func() -> void: _calls.append("pressed"),
             func() -> void: _calls.append("released"),
             func() -> void: _calls.append("increase"),
@@ -304,7 +324,7 @@ func test_a_control_under_another_control_is_its_own() -> void:
     child.position = Vector3(2.0, 0.0, 0.0)
     _mesh.add_child(child)
     var child_control:RID = CabinHUDMouseSystem.control_create(
-            PackedInt64Array([child.get_instance_id()]), "pantograph", "",
+            child.get_instance_id(), "pantograph", "",
             func() -> void: _calls.append("child pressed"), Callable(), Callable(), Callable(),
             Basis.IDENTITY, Vector3.ZERO, Callable(), Vector2.ZERO)
 

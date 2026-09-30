@@ -201,9 +201,8 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-            _set_mouse_control(PackedInt64Array([_mesh.get_instance_id()]),
-                    [action_increase, action_decrease, action_toggle], press, release, increase, decrease,
-                    mesh_rotation, mesh_position)
+            _set_mouse_control(_mesh, [action_increase, action_decrease, action_toggle], press, release,
+                    increase, decrease, mesh_rotation, mesh_position)
             _set_mouse_state(_mouse_state())
 
 func _process_tool(delta):

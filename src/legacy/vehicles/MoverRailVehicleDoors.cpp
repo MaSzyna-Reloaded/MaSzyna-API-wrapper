@@ -46,6 +46,11 @@ namespace godot {
         return mover != nullptr ? mover->Doors.instances[side::left].is_open : false;
     }
 
+    bool MoverRailVehicleDoors::get_left_closed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].is_closed : true;
+    }
+
     bool MoverRailVehicleDoors::get_left_open_permit() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].open_permit : false;
@@ -93,6 +98,11 @@ namespace godot {
     bool MoverRailVehicleDoors::get_right_open() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].is_open : false;
+    }
+
+    bool MoverRailVehicleDoors::get_right_closed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].is_closed : true;
     }
 
     bool MoverRailVehicleDoors::get_right_open_permit() const {
@@ -179,6 +189,24 @@ namespace godot {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->update_doors(p_delta);
+        const auto &left_door = p_mover->Doors.instances[side::left];
+        const auto &right_door = p_mover->Doors.instances[side::right];
+        if (left_door.is_open && !left_open) {
+            emit_signal(doors_opened_signal, SIDE_LEFT);
+        }
+        if (left_door.is_closed && !left_closed) {
+            emit_signal(doors_closed_signal, SIDE_LEFT);
+        }
+        if (right_door.is_open && !right_open) {
+            emit_signal(doors_opened_signal, SIDE_RIGHT);
+        }
+        if (right_door.is_closed && !right_closed) {
+            emit_signal(doors_closed_signal, SIDE_RIGHT);
+        }
+        left_open = left_door.is_open;
+        left_closed = left_door.is_closed;
+        right_open = right_door.is_open;
+        right_closed = right_door.is_closed;
 
         // DynObj.cpp:4207-4236: the mirrors fold above MirrorVelClose, with no cab active or when
         // forbidden, and unfold on the side whose doors are permitted to open - a full travel per
@@ -232,6 +260,12 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoorStep(p_state);
+    }
+
+    void MoverRailVehicleDoors::operate_doors_locally(const bool p_state, const Side p_side) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->OperateDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state, range_t::local);
     }
 
     void MoverRailVehicleDoors::permit_doors(const bool p_state, const Side p_side) {

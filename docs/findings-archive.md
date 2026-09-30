@@ -2609,3 +2609,18 @@ lighting or the trainset.
   does; four runs with the AI's brake applied each time all passed.
 * **Rule:** a test that takes a scenery vehicle over sets every control it drives by, not only
   the ones a fresh vehicle has wrong.
+
+## 2026-09-30 - the load exchange that never ran
+
+* **Symptom:** the first `test_rail_vehicle_load_exchange` test called `load_add()` on the car's
+  load component and waited for the doors and the exchange - nothing happened, the exchange time
+  never moved; a later assertion read the old load straight after `load_add()`.
+* **What proved it:** `MaszynaMoverVehicleServer::stepping_advance()` steps only the vehicles
+  `RailVehicleServer` has on a track, and the car was built without one; the component the test
+  held was the `MoverRailVehicleLoad` it had added to the controller description, while the
+  running vehicle's component came from `VehicleServer.vehicle_component_get()`. The state dump
+  (`vehicle_dump_state()`) is built once per step, so it still showed the load before the call.
+* **Fix:** `MaszynaGutTest.build_passenger_car()` stands the car on a test track; the tests take
+  the component by `vehicle_component_get()` and read its getters after an operation.
+* **Rule:** a test of a component's tick needs a vehicle standing on a track and the vehicle's
+  own component; after an operation read the getters, not the cached dump.

@@ -91,6 +91,15 @@ interface.
   the vehicle's (`Driver.h:377`). Kept as is (`NO_MED_DECELERATION`, `EIM_MAX_DECELERATION`).
 * **IncBrake() divides by `ActualProximityDist` unguarded** in the DMU's stronger braking
   (`fBrakeDist / ActualProximityDist`, `Driver.cpp:3140`). Kept as is.
+* **The wait at a stop is a negative timer.** The station's passenger exchange sets
+  `fStopTime` to minus the longest exchange (`WaitingSet()`, `Driver.cpp:2652`), the timer counts
+  up (`Driver.cpp:5910`), `check_load_exchange()` pushes it back down while any car still
+  exchanges (`Driver.cpp:6767-6781`), a speed above 2 km/h resets it (the "force timer reset" HACK,
+  `Driver.cpp:7449-7452`) and `VelDesired` is 0 while it is negative (`Driver.cpp:7454-7457`); the
+  same field is the wait of `Wait_for_orders` and `Shunt`. The doors are closed in `Doors(false)`,
+  called from the tractive force code before adding power (`Driver.cpp:7949`). Wrapper: not
+  ported as such - `StationServer` keeps the dispatch as steps (exchange, wait for the departure,
+  doors closed), each over on the cars' own events, and the driver stands while there is one.
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 

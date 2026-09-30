@@ -19,6 +19,12 @@ namespace godot {
         private:
             static void _bind_methods();
 
+            /// What each side's doors were on the last step, to report the change once
+            bool left_open = false;
+            bool left_closed = true;
+            bool right_open = false;
+            bool right_closed = true;
+
         protected:
             void _apply_configuration() override;
             void _do_process_component(double p_delta) override;
@@ -32,6 +38,7 @@ namespace godot {
             bool get_step_enabled() const override;
             int get_open_control() const override;
             bool get_left_open() const override;
+            bool get_left_closed() const override;
             bool get_left_open_permit() const override;
             bool get_left_local_open() const override;
             bool get_left_remote_open() const override;
@@ -41,6 +48,7 @@ namespace godot {
             double get_left_step_position() const override;
             bool get_left_step_operating() const override;
             bool get_right_open() const override;
+            bool get_right_closed() const override;
             bool get_right_open_permit() const override;
             bool get_right_local_open() const override;
             bool get_right_remote_open() const override;
@@ -52,6 +60,7 @@ namespace godot {
             void permit_step(bool p_state) override;
             void permit_doors(bool p_state, Side p_side) override;
             void operate_doors(bool p_state, Side p_side) override;
+            void operate_doors_locally(bool p_state, Side p_side) override;
             void door_lock(bool p_state) override;
             void door_remote_control(bool p_state) override;
             void next_permit_preset() override;

@@ -87,6 +87,23 @@ const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
 const CAB_CHANGE_STEPS:int = 2
 ## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334)
 const PRESSING_VELOCITY:float = 2.0
+## Faster than this [km/h] the trainset is taken as gone from the stop, and its dispatch is over
+## (the "force timer reset" HACK, Driver.cpp:7450-7452)
+const DISPATCH_MAX_SPEED:float = 2.0
+## Doors that close by themselves only on a speed have none set (Doors.auto_velocity == -1.f,
+## Driver.cpp:4332)
+const NO_AUTO_CLOSE_VELOCITY:float = -1.0
+## The doors the driver works for the whole trainset, and the doors passengers close by hand
+## (control_t, Driver.cpp:4282-4284, 4316-4318, 4333-4334)
+const REMOTE_OPEN_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_CONDUCTOR, RailVehicleDoors.CONTROLS_DRIVER,
+]
+const REMOTE_CLOSE_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_CONDUCTOR, RailVehicleDoors.CONTROLS_DRIVER, RailVehicleDoors.CONTROLS_MIXED,
+]
+const MANUAL_CLOSE_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_PASSENGER, RailVehicleDoors.CONTROLS_MIXED,
+]
 ## Coupling up: it starts within this of the vehicle ahead, and couples within ATTACH_DISTANCE [m]
 ## (UpdateConnect(), Driver.cpp:7005-7040)
 const CONNECT_DISTANCE:float = 20.0
@@ -167,6 +184,10 @@ class DriverState:
 var _drivers:Dictionary[RID, DriverState] = {}
 
 
+func _init() -> void:
+    StationServer.dispatch_step_changed.connect(_on_dispatch_step_changed)
+
+
 func _driver_attached(driver:RID) -> void:
     var state:DriverState = DriverState.new()
     var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
@@ -219,6 +240,55 @@ func _prepare_direction(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
     var cab_active:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab))
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction * cab_active)
+
+
+## Doors() (Driver.cpp:4266-4356): a driver the computer is (AIControllFlag) permits and opens the
+## doors it works at the platform as the dispatch lets the passengers off and on, and closes them
+## once the train is let go - the doors passengers close by hand too, in the cars done exchanging.
+## Each car's doors are closed by the way they close, so a train is not held by a vehicle driven
+## from that has no doors of its own. A player works them. The departure signal before closing is
+## not published (TODO.md).
+func _on_dispatch_step_changed(vehicle:RID, step:StationServer.DispatchStep) -> void:
+    var state:DriverState = _drivers.get(DriverSystem.vehicle_get_driver(vehicle))
+    if not state or not DriverSystem.vehicle_is_control_active(vehicle):
+        return
+    var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)
+    match step:
+        StationServer.DISPATCH_STEP_EXCHANGE:
+            if not doors:
+                return
+            # the platform's side of the train, on the vehicle driven from as it stands
+            var platform:RailVehicleLoad.PlatformSide = state.route.exchange_platform
+            if state.trainset.directions[state.trainset.vehicles.find(vehicle)] < 0:
+                platform = MaszynaLegacyStation.opposite_side(platform)
+            var left:bool = not platform == RailVehicleLoad.PLATFORM_SIDE_RIGHT
+            var right:bool = not platform == RailVehicleLoad.PLATFORM_SIDE_LEFT
+            if doors.permit_required:
+                if left:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_left_permit", true)
+                if right:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_right_permit", true)
+            if doors.open_method in REMOTE_OPEN_CONTROLS:
+                if left:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_left", true)
+                if right:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_right", true)
+        StationServer.DISPATCH_STEP_CLOSE_DOORS:
+            if doors and doors.permit_required:
+                MaszynaLegacyDriverHints.send(vehicle, &"doors_left_permit", false)
+                MaszynaLegacyDriverHints.send(vehicle, &"doors_right_permit", false)
+            for car:RID in state.trainset.vehicles:
+                var car_doors:RailVehicleDoors = VehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_DOORS)
+                if not car_doors:
+                    continue
+                if car_doors.close_method in REMOTE_CLOSE_CONTROLS:
+                    MaszynaLegacyDriverHints.send(car, &"doors_left", false)
+                    MaszynaLegacyDriverHints.send(car, &"doors_right", false)
+                if car_doors.close_auto_close_velocity == NO_AUTO_CLOSE_VELOCITY \
+                        and car_doors.close_method in MANUAL_CLOSE_CONTROLS \
+                        and RailVehicleServer.load_get_exchange_time(car) == 0.0:
+                    MaszynaLegacyDriverHints.send(car, &"doors_left_local", false)
+                    MaszynaLegacyDriverHints.send(car, &"doors_right_local", false)
 
 
 ## The timetable and how far the driver got through it (DriverDelegate.get_timetable_state())
@@ -443,7 +513,13 @@ func _update(driver:RID) -> void:
                             else Order.SHUNT)
             MaszynaLegacyDriverRoute.StopOrder.NEXT_ORDER:
                 _jump_to_next_order(state, vehicle)
+            MaszynaLegacyDriverRoute.StopOrder.LOAD_EXCHANGE:
+                # the station's passengers, and the train's dispatch waits for them (Driver.cpp:1233-1241)
+                MaszynaLegacyStation.update_load(state.trainset, state.timetable, state.route.exchange_platform)
+                StationServer.dispatch_start(vehicle, state.trainset.vehicles)
             MaszynaLegacyDriverRoute.StopOrder.GUARD_SIGNAL:
+                # the timetable lets it go: its doors close once the passengers are done
+                StationServer.dispatch_depart(vehicle)
                 # on the radio channel of the station left (Driver.cpp:1103-1112), once the train
                 # may go (Driver.cpp:1313-1316)
                 var left:TimetableEntry = state.timetable.get_entries()[state.timetable.station_index - 1]
@@ -460,8 +536,12 @@ func _update(driver:RID) -> void:
         CabinSystem.send_radio_message(state.guard_signal, state.guard_transcript, state.guard_radio,
                 RailVehicleServer.vehicle_get_transform(vehicle).origin, GUARD_RADIO_RANGE)
         state.traction.hold(GUARD_HOLD_TIME)
+    # gone from the stop, its dispatch is over (Driver.cpp:7449-7452)
+    if absf(directional_speed) > DISPATCH_MAX_SPEED:
+        StationServer.dispatch_cancel(vehicle)
     state.speed.pick(
-            state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
+            state.orders[state.order_position], state.engine_active, state.stop_here,
+            StationServer.dispatch_get_step(vehicle), state.velocity,
             state.shunt_velocity, state.timetable.velocity,
             directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking)
     state.reaction_time = state.speed.reaction_time

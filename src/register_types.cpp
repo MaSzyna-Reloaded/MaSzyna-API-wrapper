@@ -76,6 +76,7 @@
 #include "signalling/SignallingSystemDelegate.hpp"
 #include "signalling/SignallingSystemNode.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "station/StationServer.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackServer.hpp"
@@ -166,6 +167,7 @@ SceneryHUDMouseServer *scenery_hud_mouse_server_singleton = nullptr;
 ScenarioScriptServer *scenario_script_server_singleton = nullptr;
 DriverSystem *driver_system_singleton = nullptr;
 PlayerServer *player_server_singleton = nullptr;
+StationServer *station_server_singleton = nullptr;
 PlayerCameraServer *player_camera_server_singleton = nullptr;
 HUDServer *hud_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
@@ -223,6 +225,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(ScenarioScriptServer);
         GDREGISTER_VIRTUAL_CLASS(ScenarioScriptCabinDelegate);
         GDREGISTER_CLASS(PlayerServer);
+        GDREGISTER_CLASS(StationServer);
         GDREGISTER_CLASS(PlayerCameraServer);
         GDREGISTER_CLASS(HUDServer);
         GDREGISTER_INTERNAL_CLASS(ScenarioScriptAction);
@@ -379,6 +382,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         rail_vehicle_rendering_server_singleton = memnew(RailVehicleRenderingServer);
         Engine::get_singleton()->register_singleton(
                 "RailVehicleRenderingServer", rail_vehicle_rendering_server_singleton); // 18a
+        // after VehicleServer: the constructor follows its freed vehicles
+        station_server_singleton = memnew(StationServer);
+        Engine::get_singleton()->register_singleton("StationServer", station_server_singleton); // 18b
         // after RailVehicleServer and DriverSystem: it follows freed vehicles and hands trainsets
         // over to their drivers
         player_server_singleton = memnew(PlayerServer);
@@ -446,6 +452,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (player_server_singleton != nullptr) {
         memdelete(player_server_singleton);
         player_server_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("StationServer")) {
+        Engine::get_singleton()->unregister_singleton("StationServer"); // 18b
+    }
+    if (station_server_singleton != nullptr) {
+        memdelete(station_server_singleton);
+        station_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("RailVehicleRenderingServer")) {

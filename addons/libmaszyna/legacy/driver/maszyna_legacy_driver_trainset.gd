@@ -48,6 +48,8 @@ var mass:float = 0.0
 var length:float = 0.0
 ## The way the front vehicle is driven along itself (+1 or -1)
 var front_direction:int = 1
+## The way each of `vehicles` is driven along itself (+1 or -1, TDynamicObject::DirectionGet())
+var directions:Array[int] = []
 ## fVelMax - the lowest top speed of the trainset [km/h], -1 for none
 var velocity_max:float = -1.0
 ## Ready - no brake of the trainset holds it back
@@ -131,6 +133,7 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     var momentum_change:float = 0.0
     var moving:bool = float(driven.get("speed", 0.0)) > NO_MOVEMENT_SPEED
     coupler_stretched = false
+    directions.clear()
     for other:RID in vehicles:
         var state:Dictionary = VehicleServer.vehicle_dump_state(other)
         coupler_stretched = coupler_stretched or state.get("coupler_stretched", false)
@@ -149,8 +152,9 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
         # with that sign
         var front:Vector3 = -RailVehicleServer.vehicle_get_transform(other).basis.z
         var along:float = signf(front.dot(driving))
+        directions.append(-1 if along < 0.0 else 1)
         if other == vehicles[0]:
-            front_direction = -1 if along < 0.0 else 1
+            front_direction = directions[-1]
         gravity_force -= vehicle_mass * GRAVITY * front.y * along
         momentum_change += vehicle_mass * float(state.get("acceleration", 0.0)) * along
     gravity_acceleration = gravity_force / mass if mass > 0.0 else 0.0

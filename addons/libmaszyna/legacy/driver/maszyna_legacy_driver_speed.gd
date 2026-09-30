@@ -8,8 +8,8 @@ class_name MaszynaLegacyDriverSpeed
 ## towards it (adjust_desired_speed_for_target_speed(), adjust_desired_speed_for_current_speed()).
 ##
 ## The tracks and the vehicles ahead come from the speed table (MaszynaLegacyDriverRoute), the
-## braking characteristic from MaszynaLegacyDriverBraking. Not ported yet: the load exchange and
-## waiting (fStopTime) - see TODO.md, "Drivers".
+## braking characteristic from MaszynaLegacyDriverBraking; it stands while its train is dispatched
+## at a stop (StationServer, the original's fStopTime).
 
 ## AccPreferred of a calm driver [m/s2] (EasyAcceleration, Driver.cpp:152)
 const EASY_ACCELERATION:float = 0.85
@@ -98,9 +98,10 @@ const DISTANCE_MULTIPLIER_SHARE:float = 1.2
 const HURRIED_REACTION_TIME:float = 0.1
 
 ## Why the driver wants to stand (velocity_desired 0), for whoever shows it: the vehicle is not
-## ready (iEngineActive), it has no order to drive, a signal ahead holds it (moveStopHere), or the
-## tracks and vehicles ahead do (a stop point, the end of the line, a vehicle, a speed of 0)
-enum StopReason { NONE, NOT_READY, WAITING_FOR_ORDERS, SIGNAL, AHEAD }
+## ready (iEngineActive), it has no order to drive, a signal ahead holds it (moveStopHere), the
+## tracks and vehicles ahead do (a stop point, the end of the line, a vehicle, a speed of 0), or the
+## train is dispatched at a stop (fStopTime < 0)
+enum StopReason { NONE, NOT_READY, WAITING_FOR_ORDERS, SIGNAL, AHEAD, DISPATCH }
 
 ## VelDesired [km/h]
 var velocity_desired:float = 0.0
@@ -118,14 +119,14 @@ var reaction_time:float = 0.0
 var _acceleration_average:float = 0.0
 
 
-## `order` the current one; `velocity` the speed allowed (VelSignal), `timetable_velocity` the
-## timetable's limit (TTVmax), `speed` the vehicle's along the way it drives (DirectionalVel())
-## [km/h]; `route` what it read of the tracks and the vehicles ahead; `reaction` the driver's own
-## reaction time [s]
+## `order` the current one; `dispatch_step` its train's dispatch at a stop; `velocity` the speed
+## allowed (VelSignal), `timetable_velocity` the timetable's limit (TTVmax), `speed` the vehicle's
+## along the way it drives (DirectionalVel()) [km/h]; `route` what it read of the tracks and the
+## vehicles ahead; `reaction` the driver's own reaction time [s]
 func pick(
-    order:int, active:bool, stop_here:bool, velocity:float, shunt_velocity:float,
-    timetable_velocity:float, speed:float, trainset:MaszynaLegacyDriverTrainset, route:MaszynaLegacyDriverRoute,
-    reaction:float, braking:MaszynaLegacyDriverBraking
+    order:int, active:bool, stop_here:bool, dispatch_step:StationServer.DispatchStep, velocity:float,
+    shunt_velocity:float, timetable_velocity:float, speed:float, trainset:MaszynaLegacyDriverTrainset,
+    route:MaszynaLegacyDriverRoute, reaction:float, braking:MaszynaLegacyDriverBraking
 ) -> void:
     reaction_time = reaction
     velocity_desired = trainset.velocity_max
@@ -157,7 +158,11 @@ func pick(
         velocity_desired = min_speed(velocity_desired, velocity)
     var driving:int = (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT
             | MaszynaLegacyAIDriver.Order.OBEY_TRAIN | MaszynaLegacyAIDriver.Order.BANK)
-    if (order & driving and stop_here and absf(speed) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED
+    # while its train is dispatched it does not drive (Driver.cpp:7454-7457)
+    if not dispatch_step == StationServer.DISPATCH_STEP_NONE:
+        velocity_desired = 0.0
+        stop_reason = StopReason.DISPATCH
+    elif (order & driving and stop_here and absf(speed) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED
             and route.signal_velocity_next == 0.0) or order == MaszynaLegacyAIDriver.Order.WAIT_FOR_ORDERS:
         velocity_desired = 0.0
         stop_reason = StopReason.WAITING_FOR_ORDERS if order == MaszynaLegacyAIDriver.Order.WAIT_FOR_ORDERS \

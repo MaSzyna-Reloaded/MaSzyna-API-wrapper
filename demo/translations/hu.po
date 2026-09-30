@@ -1067,3 +1067,48 @@ msgstr ""
 
 msgid "main reservoir below %.1f bar"
 msgstr ""
+
+msgid "Station dispatch"
+msgstr "Állomási indítás"
+
+msgid "Passenger exchange · %d s"
+msgstr "Utascsere · %d s"
+
+msgid "Passenger exchange"
+msgstr "Utascsere"
+
+msgid "Closing doors"
+msgstr "Ajtózárás"
+
+msgid "Waiting for departure"
+msgstr "Indulásra vár"
+
+msgid "Dispatch"
+msgstr "Indítás"
+
+msgid "Vehicle load"
+msgstr "Jármű rakománya"
+
+msgid "Cargo"
+msgstr "Rakomány"
+
+msgid "Empty"
+msgstr "Üres"
+
+msgid "Amount"
+msgstr "Mennyiség"
+
+msgid "Getting off"
+msgstr "Leszáll"
+
+msgid "Getting on"
+msgstr "Felszáll"
+
+msgid "Exchange time"
+msgstr "Csere ideje"
+
+msgid "Unload %d"
+msgstr "Kirakodás %d"
+
+msgid "Load %d"
+msgstr "Berakodás %d"

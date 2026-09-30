@@ -1067,3 +1067,48 @@ msgstr "przetwornica"
 
 msgid "main reservoir below %.1f bar"
 msgstr "zbiornik główny poniżej %.1f bar"
+
+msgid "Station dispatch"
+msgstr "Odprawa na stacji"
+
+msgid "Passenger exchange · %d s"
+msgstr "Wymiana podróżnych · %d s"
+
+msgid "Passenger exchange"
+msgstr "Wymiana podróżnych"
+
+msgid "Closing doors"
+msgstr "Zamykanie drzwi"
+
+msgid "Waiting for departure"
+msgstr "Oczekiwanie na odjazd"
+
+msgid "Dispatch"
+msgstr "Odprawa"
+
+msgid "Vehicle load"
+msgstr "Ładunek pojazdu"
+
+msgid "Cargo"
+msgstr "Ładunek"
+
+msgid "Empty"
+msgstr "Pusty"
+
+msgid "Amount"
+msgstr "Ilość"
+
+msgid "Getting off"
+msgstr "Wysiada"
+
+msgid "Getting on"
+msgstr "Wsiada"
+
+msgid "Exchange time"
+msgstr "Czas wymiany"
+
+msgid "Unload %d"
+msgstr "Wyładuj %d"
+
+msgid "Load %d"
+msgstr "Załaduj %d"

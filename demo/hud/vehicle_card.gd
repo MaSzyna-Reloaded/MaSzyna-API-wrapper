@@ -15,6 +15,12 @@ signal remove_trainset_requested(vehicle:RID)
 const KILOGRAMS_PER_TONNE:float = 1000.0
 ## A driver's speed below zero is no limit (VelNext = -1, Driver.h)
 const NO_VELOCITY:float = 0.0
+## What the train's dispatch at a stop is doing (StationServer)
+const DISPATCH_STEP_NAMES:Dictionary[StationServer.DispatchStep, String] = {
+    StationServer.DISPATCH_STEP_EXCHANGE: "Passenger exchange",
+    StationServer.DISPATCH_STEP_WAIT_DEPARTURE: "Waiting for departure",
+    StationServer.DISPATCH_STEP_CLOSE_DOORS: "Closing doors",
+}
 
 ## The vehicle the card was opened for
 var vehicle:RID = RID()
@@ -265,6 +271,9 @@ func _on_refresh_timer_timeout() -> void:
             driver_data[tr("At the platform")] = tr("Yes")
         if driver_state.get("stop_time", 0.0) > 0.0:
             driver_data[tr("Stop time")] = "%d s" % driver_state["stop_time"]
+        var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(DriverSystem.driver_get_vehicle(driver))
+        if DISPATCH_STEP_NAMES.has(dispatch_step):
+            driver_data[tr("Dispatch")] = tr(DISPATCH_STEP_NAMES[dispatch_step])
     _show_values(%DriverData, driver_data)
 
     # the timetable of the driver: the train, its relation, the delay and the station passed last,

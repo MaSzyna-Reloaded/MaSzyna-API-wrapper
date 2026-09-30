@@ -11,7 +11,7 @@ var _probe: GenericVehicleComponentNode = null
 
 func before_each() -> void:
     _vehicle = RailVehiclePhysicsNode.new()
-    _vehicle.train_id = "GenericComponentTest"
+    _vehicle.vehicle_id = "GenericComponentTest"
     _probe = ProbeComponent.new()
     _probe.name = "ProbeComponent"
     _vehicle.add_child(_probe)

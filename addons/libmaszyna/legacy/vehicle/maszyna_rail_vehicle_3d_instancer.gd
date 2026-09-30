@@ -145,7 +145,7 @@ static func build_from_structure(
     fiz_controller.name = "MaszynaRailVehiclePhysicsNode"
     fiz_controller.data_path = structure.data_path
     fiz_controller.fiz_filename = structure.file_name
-    fiz_controller.train_id = train_id
+    fiz_controller.vehicle_id = train_id
     # the original's TypeName is the CHK/MMD name (DynObj.cpp:2019)
     fiz_controller.type_name = structure.file_name
     fiz_controller.initial_velocity = initial_velocity

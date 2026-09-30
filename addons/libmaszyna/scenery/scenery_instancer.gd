@@ -366,8 +366,8 @@ static func _apply_skin_overrides(root:MaszynaIncludeNode, node:Node) -> void:
     vehicles.append_array(node.find_children("", "MaszynaRailVehicle3D", true, false))
     for candidate:Node in vehicles:
         var vehicle:MaszynaRailVehicle3D = candidate as MaszynaRailVehicle3D
-        if vehicle and root.skin_overrides.has(vehicle.train_id):
-            vehicle.skin = root.skin_overrides[vehicle.train_id]
+        if vehicle and root.skin_overrides.has(vehicle.vehicle_id):
+            vehicle.skin = root.skin_overrides[vehicle.vehicle_id]
 
 
 static func _compile_scenery(

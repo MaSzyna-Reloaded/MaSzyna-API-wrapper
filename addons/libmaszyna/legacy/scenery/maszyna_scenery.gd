@@ -151,9 +151,9 @@ func _find_driver_train_id(vehicles:Array[Node]) -> String:
     for node:Node in vehicles:
         var vehicle:MaszynaRailVehicle3D = node as MaszynaRailVehicle3D
         if vehicle.driver_type == VehicleController.DRIVER_HEAD:
-            return vehicle.train_id
+            return vehicle.vehicle_id
         if vehicle.driver_type == VehicleController.DRIVER_REAR and not reverse_driver_train_id:
-            reverse_driver_train_id = vehicle.train_id
+            reverse_driver_train_id = vehicle.vehicle_id
     if reverse_driver_train_id:
         return reverse_driver_train_id
-    return (vehicles[0] as MaszynaRailVehicle3D).train_id if vehicles else ""
+    return (vehicles[0] as MaszynaRailVehicle3D).vehicle_id if vehicles else ""

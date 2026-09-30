@@ -36,10 +36,10 @@ func before_each():
         if controller:
             break
         await wait_seconds(0.5)
-    train_id = controller.train_id if controller else ""
+    train_id = controller.vehicle_id if controller else ""
     vehicle_rid = controller.get_rid() if controller else RID()
     player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
-    player.start_train_id = train_id
+    player.start_vehicle_id = train_id
     add_child(player)
     await wait_idle_frames(10)
 

@@ -6,7 +6,7 @@ var brake: RailVehicleBrake
 
 func before_each():
     vehicle = RailVehiclePhysicsNode.new()
-    vehicle.train_id = "TestTrain"
+    vehicle.vehicle_id = "TestTrain"
     add_child(vehicle)
     train = vehicle.get_controller()
 

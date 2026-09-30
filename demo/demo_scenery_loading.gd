@@ -148,7 +148,7 @@ func _play_music(volume_db: float) -> void:
 ## entering reaches every car of its unit (CabActivisation() sends to the coupled ones, Mover.cpp:2905).
 ## The trainset chosen in the selector; none chosen, the scenery's own driver.
 func _on_scenery_loaded(first_train_id: String) -> void:
-    $Player.start_train_id = _chosen_train_id if _chosen_train_id else first_train_id
+    $Player.start_vehicle_id = _chosen_train_id if _chosen_train_id else first_train_id
     $GameHud.attach_script_context($MaszynaSceneryNode.get_script_context())
     _music_tween = create_tween()
     _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)

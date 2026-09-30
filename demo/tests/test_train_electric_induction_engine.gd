@@ -61,7 +61,7 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # induction motor opened the line breaker above 0 + 200 V right after it closed. The cab is
     # occupied - an unmanned vehicle is not simulated and would never open it.
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-    physics_node.train_id = "TestEimTrain"
+    physics_node.vehicle_id = "TestEimTrain"
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = physics_node.get_controller()
@@ -102,7 +102,7 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
 ## under 3000 V, with the line breaker closed and a direction set.
 func _powered_up_eim(train_id: String) -> VehicleController:
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-    physics_node.train_id = train_id
+    physics_node.vehicle_id = train_id
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = physics_node.get_controller()

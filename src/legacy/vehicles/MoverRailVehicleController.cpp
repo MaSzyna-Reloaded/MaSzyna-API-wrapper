@@ -76,7 +76,7 @@ namespace godot {
         mover_vehicle = get_rid();
         mover_implementation = ObjectID(implementation->get_instance_id());
         mover = implementation->mover_create(
-                mover_vehicle, get_initial_velocity(), get_type_name(), get_train_id(),
+                mover_vehicle, get_initial_velocity(), get_type_name(), get_vehicle_id(),
                 get_occupied_cab()); // the cab as TMoverParameters::CabActivisation counts it
         ERR_FAIL_NULL(mover);
         // every component takes the Mover before the configuration is written into it

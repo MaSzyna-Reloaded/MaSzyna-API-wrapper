@@ -72,7 +72,7 @@
 			<return type="Dictionary" />
 			<description>
 				Returns a dictionary with all config properties of the train.
-			The same as [method VehicleServer.vehicle_dump_config].
+				The same as [method VehicleServer.vehicle_dump_config].
 			</description>
 		</method>
 		<method name="get_direction" qualifiers="const">
@@ -226,8 +226,7 @@
 		<member name="power" type="float" setter="set_power" getter="get_power">
 			[code]Param.PWR[/code]
 		</member>
-		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id">
-			The vehicle's scenery name. It may be empty or shared with another vehicle; it is only used to find the vehicle by name, see [method RailVehicleServer.vehicle_get_rid_by_name].
+		<member name="vehicle_id" type="String" setter="set_vehicle_id" getter="get_vehicle_id">
 		</member>
 	</members>
 	<signals>

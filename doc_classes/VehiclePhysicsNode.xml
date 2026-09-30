@@ -31,7 +31,7 @@
 		</member>
 		<member name="initial_velocity" type="float" setter="set_initial_velocity" getter="get_initial_velocity" default="0.0">
 		</member>
-		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
+		<member name="vehicle_id" type="String" setter="set_vehicle_id" getter="get_vehicle_id" default="&quot;&quot;">
 		</member>
 	</members>
 	<signals>

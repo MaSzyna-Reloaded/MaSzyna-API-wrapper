@@ -79,7 +79,7 @@ func before_all() -> void:
     var model: VehicleController = FizVehicleBuilder.build_description_at(FIXTURE_FIZ)
     for index: int in VEHICLE_COUNT:
         var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-        physics_node.train_id = "bench_vehicle_%d" % index
+        physics_node.vehicle_id = "bench_vehicle_%d" % index
         physics_node.set_description(model)
         add_child(physics_node)
         _vehicle_nodes.append(physics_node)

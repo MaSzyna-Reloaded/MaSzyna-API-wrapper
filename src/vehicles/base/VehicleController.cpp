@@ -68,7 +68,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_implementation", "implementation"), &VehicleController::set_implementation);
         ClassDB::bind_method(D_METHOD("get_implementation"), &VehicleController::get_implementation);
         ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "implementation"), "set_implementation", "get_implementation");
-        BIND_PROPERTY(VehicleController, Variant::STRING, train_id);
+        BIND_PROPERTY(VehicleController, Variant::STRING, vehicle_id);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, max_velocity);
@@ -413,7 +413,7 @@ namespace godot {
             }
             result = handler->callv(args);
         } else {
-            UtilityFunctions::push_error(vformat("%s: Unknown command: %s", train_id, p_command));
+            UtilityFunctions::push_error(vformat("%s: Unknown command: %s", vehicle_id, p_command));
         }
         command_executed(p_command, p_p1, p_p2);
         return result;

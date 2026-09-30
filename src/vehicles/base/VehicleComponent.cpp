@@ -104,7 +104,7 @@ namespace godot {
             return;
         }
         if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
-            game_log->log(p_level, vformat(String("%s: %s"), train_controller_node->get_train_id(), p_line));
+            game_log->log(p_level, vformat(String("%s: %s"), train_controller_node->get_vehicle_id(), p_line));
         }
     }
     void VehicleComponent::log_debug(const String &p_line) {

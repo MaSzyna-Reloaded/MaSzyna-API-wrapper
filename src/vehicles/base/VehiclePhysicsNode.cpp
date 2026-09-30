@@ -27,9 +27,9 @@ namespace godot {
                         PROPERTY_USAGE_EDITOR),
                 "set_description", "get_description");
 
-        ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &VehiclePhysicsNode::set_train_id);
-        ClassDB::bind_method(D_METHOD("get_train_id"), &VehiclePhysicsNode::get_train_id);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
+        ClassDB::bind_method(D_METHOD("set_vehicle_id", "vehicle_id"), &VehiclePhysicsNode::set_vehicle_id);
+        ClassDB::bind_method(D_METHOD("get_vehicle_id"), &VehiclePhysicsNode::get_vehicle_id);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "vehicle_id"), "set_vehicle_id", "get_vehicle_id");
         ClassDB::bind_method(D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
@@ -95,7 +95,7 @@ namespace godot {
             controller_rid = server->controller_create();
         }
         // the scenery's values first: the controller takes them when its simulation starts
-        server->vehicle_set_name(vehicle_rid, train_id);
+        server->vehicle_set_name(vehicle_rid, vehicle_id);
         server->vehicle_set_initial_velocity(vehicle_rid, initial_velocity);
         server->vehicle_set_driver_type(vehicle_rid, driver_type);
         _prepare_vehicle(vehicle_rid);
@@ -131,15 +131,15 @@ namespace godot {
         controller->add_component(p_component);
     }
 
-    void VehiclePhysicsNode::set_train_id(const String &p_train_id) {
-        train_id = p_train_id;
+    void VehiclePhysicsNode::set_vehicle_id(const String &p_vehicle_id) {
+        vehicle_id = p_vehicle_id;
         if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
-            server->vehicle_set_name(vehicle_rid, train_id);
+            server->vehicle_set_name(vehicle_rid, vehicle_id);
         }
     }
 
-    String VehiclePhysicsNode::get_train_id() const {
-        return train_id;
+    String VehiclePhysicsNode::get_vehicle_id() const {
+        return vehicle_id;
     }
 
 

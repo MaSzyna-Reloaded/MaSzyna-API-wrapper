@@ -26,7 +26,7 @@ namespace godot {
             RID controller_rid;
             Ref<VehicleController> description;
             void _build();
-            String train_id;
+            String vehicle_id;
             double initial_velocity = 0.0;
             VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
 
@@ -56,10 +56,11 @@ namespace godot {
              * joins, so a modder's component reaches the vehicle it sits under. */
             void add_component(const Ref<VehicleComponent> &p_component);
 
-            /* Set on the vehicle every time one is built. Not derived from whatever file the
-             * model came from - a scenery names its vehicles, a .fiz does not. */
-            void set_train_id(const String &p_train_id);
-            String get_train_id() const;
+            /* The vehicle's name (VehicleServer.vehicle_set_name()), set every time it is built. Not
+             * derived from whatever file the description came from - a scenery names its vehicles,
+             * a .fiz does not. */
+            void set_vehicle_id(const String &p_vehicle_id);
+            String get_vehicle_id() const;
             void set_initial_velocity(double p_velocity);
             double get_initial_velocity() const;
             void set_driver_type(VehicleController::DriverType p_driver_type);

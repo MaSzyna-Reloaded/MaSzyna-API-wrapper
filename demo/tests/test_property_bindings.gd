@@ -133,7 +133,7 @@ func test_authored_configuration_reaches_the_built_vehicle() -> void:
     security.emergency_brake_delay = 2.5
 
     var description:RailVehicleController = MoverRailVehicleController.new()
-    description.train_id = "PropertyBindingsTest"
+    description.vehicle_id = "PropertyBindingsTest"
     description.mass = 74000.0
     var components: Array[VehicleComponent] = [brake, engine, security]
     description.components = components

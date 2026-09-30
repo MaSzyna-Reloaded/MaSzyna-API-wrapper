@@ -24,6 +24,14 @@ const DRAWOWO_ARRIVAL:float = 10.0 + 46.0 / 60.0
 const DRAWOWO_DEPARTURE:float = 10.0 + 47.0 / 60.0
 const CHELMINOW_ARRIVAL:float = 10.0 + 54.0 / 60.0
 const MINUTE:float = 1.0 / 60.0
+## Arriving at Krzyżowa at 10:35 (the test below), late against its arrival at 10:31 [min]; driven
+## clear of it at 10:36, late against its departure at 10:32; and some time later on the way
+const KRZYZOWA_ARRIVAL_LATE_MINUTES:int = 4
+const KRZYZOWA_DEPARTURE_LATE_MINUTES:int = 4
+const LATER_ON_MINUTES:float = 10.0
+## Beyond a stop, farther than the train needs to be clear of it (NEXT_STATION_AFTER_DEPARTURE plus
+## the train's length) [m]
+const CLEAR_OF_THE_STOP:float = 200.0
 ## Float rounding of the hours-to-minutes conversion [min]
 const EPSILON:float = 0.01
 ## Driving and standing [km/h]
@@ -164,11 +172,11 @@ func test_late_it_leaves_at_once_and_the_delay_counts() -> void:
 
     assert_eq(_timetable.station_index, 1, "late: it goes at once")
     assert_almost_eq(_timetable.latency, -3.0, EPSILON, "3 min late")
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), 4,
-            "still standing: 4 min late at its arrival (10:31)")
-    _run_to(STOPS[0] + 200.0, KRZYZOWA_DEPARTURE + 4.0 * MINUTE)
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 10.0 * MINUTE), 4,
-            "on the way: as it drove clear of Krzyżowa")
+    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), KRZYZOWA_ARRIVAL_LATE_MINUTES,
+            "still standing: late against its arrival (10:31)")
+    _run_to(STOPS[0] + CLEAR_OF_THE_STOP, KRZYZOWA_DEPARTURE + KRZYZOWA_DEPARTURE_LATE_MINUTES * MINUTE)
+    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + LATER_ON_MINUTES * MINUTE),
+            KRZYZOWA_DEPARTURE_LATE_MINUTES, "on the way: as it drove clear of Krzyżowa")
 
 
 func test_a_station_without_a_stop_is_passed_at_speed() -> void:

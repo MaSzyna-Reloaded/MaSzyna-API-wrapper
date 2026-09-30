@@ -164,7 +164,7 @@ namespace godot {
              * (VehicleServer::implementation_register()) - the server hands that one the step */
             void set_implementation(const StringName &p_implementation);
             StringName get_implementation() const;
-            MAKE_MEMBER_GS(String, train_id, "");
+            MAKE_MEMBER_GS(String, vehicle_id, "");
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);

@@ -12,7 +12,7 @@ class_name MaszynaSceneryInfo
 
 ## One vehicle of a trainset ("node ... dynamic ... enddynamic")
 class Vehicle:
-    ## Node name of the vehicle - MaszynaRailVehicle3D.train_id
+    ## Node name of the vehicle - MaszynaRailVehicle3D.vehicle_id
     var train_id:String = ""
     ## e.g. "dynamic/pkp/su42_v1"
     var data_path:String = ""

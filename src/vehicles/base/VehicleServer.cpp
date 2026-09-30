@@ -261,7 +261,7 @@ namespace godot {
         vehicle->controller = p_controller;
         VehicleController *controller = slot->controller.ptr();
         controller->set_vehicle_rid(p_vehicle);
-        controller->set_train_id(vehicle->name);
+        controller->set_vehicle_id(vehicle->name);
         controller->set_initial_velocity(vehicle->initial_velocity);
         controller->set_driver_type(vehicle->driver_type);
         vehicle->implementation = controller->get_implementation();
@@ -370,7 +370,7 @@ namespace godot {
         }
         vehicle->name = p_name;
         if (VehicleController *controller = _get_controller(p_vehicle); controller != nullptr) {
-            controller->set_train_id(p_name);
+            controller->set_vehicle_id(p_name);
         }
         // Names.h:29 basic_table::insert - a vehicle named "" or "none" is not looked up by name
         if (p_name.is_empty() || p_name == "none") {

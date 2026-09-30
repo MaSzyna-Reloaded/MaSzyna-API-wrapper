@@ -77,7 +77,7 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     vehicle.data_path = template.data_path
     vehicle.file_name = template.file_name
     vehicle.skin = template.skin
-    vehicle.train_id = "running_sounds_ep07"
+    vehicle.vehicle_id = "running_sounds_ep07"
     vehicle.initial_velocity = 40.0
     vehicle.start_track_name = "tdo_n25"
     vehicle.start_track_offset = 50.0

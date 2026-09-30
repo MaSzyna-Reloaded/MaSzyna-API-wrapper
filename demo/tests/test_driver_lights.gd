@@ -31,7 +31,7 @@ func before_each() -> void:
     var wagon:VehicleController = FizVehicleBuilder.build_description_at(WAGON_PATH)
     for index:int in range(VEHICLE_COUNT):
         var node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-        node.train_id = "LightsVehicle%d" % index
+        node.vehicle_id = "LightsVehicle%d" % index
         # the first vehicle is driven - an unmanned one is not simulated (FINDINGS, 09-23)
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
         node.set_description(wagon if index == WAGON else engine)

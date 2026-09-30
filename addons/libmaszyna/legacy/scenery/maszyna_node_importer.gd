@@ -79,7 +79,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
         "dynamic":
             obj = dynamic_importer.import(p, context)
             if obj:
-                (obj as MaszynaRailVehicle3D).train_id = name
+                (obj as MaszynaRailVehicle3D).vehicle_id = name
 
         "memcell":
             var memcell:MaszynaMemcellData = memcell_importer.import(p, context)

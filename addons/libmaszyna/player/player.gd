@@ -6,15 +6,15 @@ class_name MaszynaPlayer
 ## of the view made current. The cab stays the player's while it looks from outside and its controls
 ## keep working, as the original's simulation::Train does in its free fly mode (command.cpp:884-889).
 
-@export var start_train_id:String = "":
+@export var start_vehicle_id:String = "":
     set(x):
-        if not start_train_id == x:
-            start_train_id = x
+        if not start_vehicle_id == x:
+            start_vehicle_id = x
             if x:
                 _auto_start_pending = false
             _dirty = true
 
-## Without a start_train_id the player takes the first vehicle that has a controller. Off where the
+## Without a start_vehicle_id the player takes the first vehicle whose simulation is ready. Off where the
 ## scene names the train itself once its scenery is loaded - a vehicle taken while the scenery still
 ## loads is not coupled yet, and the cab it activates reaches no other car of its unit.
 @export var auto_start:bool = true
@@ -33,7 +33,7 @@ class_name MaszynaPlayer
 @onready var headlamp_glow:MeshInstance3D = $Camera3D/HeadlampGlow
 ## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
 @onready var sfx_player:SfxPlayer = $PlayerSfx
-## start_train_id changed - its vehicle is looked for until the scenery has it
+## start_vehicle_id changed - its vehicle is looked for until the scenery has it
 var _dirty: bool = true
 var _auto_start_pending:bool = false
 var _released_vehicle:RID
@@ -60,7 +60,7 @@ const FOLLOW_JUMP_DISTANCE_SETTING:StringName = &"maszyna/camera/follow_jump_dis
 const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 10000.0
 
 func _ready() -> void:
-    _auto_start_pending = auto_start and not start_train_id
+    _auto_start_pending = auto_start and not start_vehicle_id
     sfx_player.bank = sfx_bank
     headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     # the glow follows the spot: both are children of the camera, so their transform is view space
@@ -89,7 +89,7 @@ func _process(_delta:float) -> void:
         var vehicle:RailVehicle3D = _find_start_vehicle()
         if vehicle:
             PlayerServer.player_enter_vehicle(vehicle.get_rid())
-        elif start_train_id or _auto_start_pending:
+        elif start_vehicle_id or _auto_start_pending:
             _dirty = true
 
     var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
@@ -103,7 +103,7 @@ func _process(_delta:float) -> void:
 ## Before the scenery holding the vehicles is freed: the player leaves the cab (the cab camera lives
 ## in it) and the view stops following, as the followed vehicle goes with the scenery as well
 func clear_start_train() -> void:
-    start_train_id = ""
+    start_vehicle_id = ""
     PlayerServer.player_leave_vehicle()
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
 
@@ -211,10 +211,10 @@ func _picked_vehicle() -> RailVehicle3D:
 
 func _find_start_vehicle() -> RailVehicle3D:
     var vehicles:Array[Node] = get_tree().get_root().find_children("", "RailVehicle3D", true, false)
-    if start_train_id:
+    if start_vehicle_id:
         for node:Node in vehicles:
             var vehicle:RailVehicle3D = node as RailVehicle3D
-            if vehicle and _get_vehicle_train_id(vehicle) == start_train_id:
+            if vehicle and _get_vehicle_id(vehicle) == start_vehicle_id:
                 return vehicle
         return null
 
@@ -226,7 +226,7 @@ func _find_start_vehicle() -> RailVehicle3D:
                 return vehicle
     return null
 
-func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
+func _get_vehicle_id(vehicle:RailVehicle3D) -> String:
     return VehicleServer.vehicle_get_name(vehicle.get_rid())
 
 ## The keys of the cab's controls act on the vehicle driven, whether the player looks from its cab

@@ -42,14 +42,14 @@ class_name MaszynaRailVehicle3D
             head_display_material = x
             _dirty = true
 
-## The scenery's name for this vehicle, forwarded to the generated MaszynaRailVehiclePhysicsNode.train_id
+## The scenery's name for this vehicle, forwarded to the generated MaszynaRailVehiclePhysicsNode.vehicle_id
 ## and registered with VehicleServer.vehicle_set_name(), which is how an event, a scenario or
 ## the console find a vehicle by name. It may be empty or repeated - everything that holds the
 ## vehicle uses its RID, so only a lookup by that name is affected.
-@export var train_id:String = "":
+@export var vehicle_id:String = "":
     set(x):
-        if not x == train_id:
-            train_id = x
+        if not x == vehicle_id:
+            vehicle_id = x
             _dirty = true
 
 ## Forwarded to the generated MaszynaRailVehiclePhysicsNode.initial_velocity. 0.0 (default) means the
@@ -178,7 +178,7 @@ func _rebuild() -> void:
         _vehicle = null
 
     var vehicle:RailVehicle3D = MaszynaRailVehicle3DManager.load(
-            data_path, file_name, skin, train_id, initial_velocity, head_display_material,
+            data_path, file_name, skin, vehicle_id, initial_velocity, head_display_material,
             driver_type, load_name, load_amount)
     if not vehicle:
         return

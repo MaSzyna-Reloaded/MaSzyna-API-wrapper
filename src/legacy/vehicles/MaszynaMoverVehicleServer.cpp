@@ -180,7 +180,7 @@ namespace godot {
             if (Math::abs(acceleration) > DIAGNOSTICS_MAX_ACCELERATION) {
                 UtilityFunctions::push_error(
                         vformat("MaszynaMoverVehicleServer: %s kicked, dV/dt=%.2f m/s^2 at V=%.2f m/s",
-                                controller->get_train_id(), acceleration, velocity));
+                                controller->get_vehicle_id(), acceleration, velocity));
             }
         }
     }

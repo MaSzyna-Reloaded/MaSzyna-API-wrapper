@@ -27,7 +27,7 @@ func build_vehicle_node(train_id:String = "TestTrain", description:VehicleContro
         initial_velocity:float = 0.0) -> VehiclePhysicsNode:
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.set_description(description)
-    physics_node.train_id = train_id
+    physics_node.vehicle_id = train_id
     physics_node.initial_velocity = initial_velocity
     # a rail vehicle, stepped by RailVehicleServer whether or not a RailVehicle3D places it
     add_child_autofree(physics_node)
@@ -51,7 +51,7 @@ func build_track(track_name:String, length:float) -> RID:
 ## it, before its physics node goes with autofree.
 func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> RailVehicle3D:
     var model:RailVehicleController = MoverRailVehicleController.new()
-    model.train_id = train_id
+    model.vehicle_id = train_id
     model.mass = RAIL_VEHICLE_MASS
     model.type_name = "test"
     var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model)

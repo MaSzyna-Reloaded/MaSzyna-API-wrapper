@@ -178,7 +178,7 @@ namespace godot {
 
             /* Streaming builds and clears content on `process_frame`. Tearing a scenery down
              * frees the very RIDs it streams, and that teardown yields a frame for its budget -
-             * so it has to be paused for the duration, the way RailVehicleServer's step is. */
+             * so it has to be paused for the duration, the way the vehicles' step is. */
             void streaming_set_enabled(bool p_enabled);
             bool streaming_is_enabled() const;
 

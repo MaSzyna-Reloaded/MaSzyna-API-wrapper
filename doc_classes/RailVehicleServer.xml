@@ -149,6 +149,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_is_attached" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_move">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />

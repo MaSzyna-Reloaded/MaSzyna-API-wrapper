@@ -220,7 +220,7 @@ namespace godot {
             /// This vehicle's handle in RailVehicleServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.
             RID get_rid() const;
-            /* Applies the placement RailVehicleServer's step just produced - the bogie
+            /* Applies the placement vehicle's step just produced - the bogie
              * pivots, the body basis derived from them and the wheel animation. The server
              * calls it at the end of its tick, so nothing here renders a frame behind its
              * own physics. */

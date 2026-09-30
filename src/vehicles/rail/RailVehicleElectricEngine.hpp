@@ -198,7 +198,7 @@ namespace godot {
              * (RailVehicle3D's wire lookup against TractionServer); 0.0 means "not touching a wire" */
             void set_pantograph_wire_voltage(PantographSelector p_selector, float p_voltage);
             /* The voltage the vehicle is fed with from its pantographs - the wire's, held through a
-             * short loss (RailVehicleServer's step, DynObj.cpp:3128-3141) */
+             * short loss (RailVehicleServer::vehicle_collect_current(), DynObj.cpp:3128-3141) */
             void set_collector_voltage(float p_voltage);
             void _register_commands() override;
             void _unregister_commands() override;

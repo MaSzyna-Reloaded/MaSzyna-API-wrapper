@@ -125,12 +125,11 @@ If you have found any bug, have a suggestion or want to join us - feel free to o
 Two rules decide when the vehicle simulation runs, and both matter enough to be stated here: the
 scenario's events are driven by time, and multiplayer will be.
 
-**The simulation is stepped before anything that reads it.** `RailVehicleStepper` is a node with
-the lowest `process_priority`, so `RailVehicleServer::stepping_advance()` has run before any other node is
-processed. Drawing, the cabin, the HUD and the cameras therefore see the position of *this* frame.
-`SceneTree`'s `process_frame` is not a substitute: it is emitted *after* every `_process`, so a
-node that reads a vehicle's transform there draws against the previous frame - which is what made
-vehicles judder from the external view (see `FINDINGS.md`, 2026-09-24).
+**The simulation is stepped before anything that reads it.** `SimulationServer` advances its
+clock on `SceneTree`'s `process_frame`, which is emitted *before* every node's `_process`
+(measured on Godot 4.7.2, `FINDINGS.md`), and `VehicleServer::stepping_advance()` hands the frame
+to each vehicle implementation (`MaszynaMoverVehicleServer`). Drawing, the cabin, the HUD and the
+cameras therefore see the position of *this* frame.
 
 **No simulation time is ever dropped, and no sub-step is ever oversized.** A frame hands its whole
 delta to `step_frame()`, which integrates as much of it as it honestly can and *owes* the rest to

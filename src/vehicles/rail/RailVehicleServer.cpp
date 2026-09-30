@@ -18,7 +18,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    /* Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps) */
+    /* Reports physics inconsistencies with push_error (see _check_movement) */
     constexpr const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
     const char *RailVehicleServer::vehicle_trainset_changed_signal = "vehicle_trainset_changed";
@@ -47,6 +47,7 @@ namespace godot {
     void RailVehicleServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("vehicle_attach", "vehicle"), &RailVehicleServer::vehicle_attach);
         ClassDB::bind_method(D_METHOD("vehicle_detach", "vehicle"), &RailVehicleServer::vehicle_detach);
+        ClassDB::bind_method(D_METHOD("vehicle_is_attached", "vehicle"), &RailVehicleServer::vehicle_is_attached);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_rids_in_rect", "rect"), &RailVehicleServer::vehicle_get_rids_in_rect);
         ClassDB::bind_method(
@@ -292,12 +293,15 @@ namespace godot {
         _connect_relays(p_vehicle, placement);
     }
 
+    bool RailVehicleServer::vehicle_is_attached(const RID &p_vehicle) const {
+        return vehicles.has(p_vehicle);
+    }
+
     void RailVehicleServer::vehicle_detach(const RID &p_vehicle) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return;
         }
-        diagnostics_velocity.erase(placement->controller_id);
         _disconnect_relays(p_vehicle, *placement);
         const RID reported_track = placement->reported_track;
         vehicles.erase(p_vehicle);
@@ -466,7 +470,6 @@ namespace godot {
             return;
         }
         _disconnect_relays(p_vehicle, *placement);
-        diagnostics_velocity.erase(placement->controller_id);
         placement->controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
         _connect_relays(p_vehicle, *placement);
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
@@ -1030,251 +1033,191 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    void RailVehicleServer::stepping_advance(const Vector<RID> &p_vehicles, const double p_delta) {
-        if (p_delta <= 0.0) {
-            return;
-        }
-        stepped_vehicles.clear();
-        stepped_controllers.clear();
+    void RailVehicleServer::neighbour_index_rebuild() {
         track_vehicles.clear();
-        for (const RID &vehicle_rid: p_vehicles) {
-            const VehiclePlacement *placement = vehicles.getptr(vehicle_rid);
-            RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
-            if (controller == nullptr) {
-                continue;
-            }
-            stepped_vehicles.push_back(vehicle_rid);
-            stepped_controllers.push_back(controller);
-        }
-        if (stepped_vehicles.is_empty()) {
-            return;
-        }
-
-        for (int index = 0; index < stepped_vehicles.size(); ++index) {
-            VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-            if (placement->moved) {
-                Object::cast_to<RailVehicleController>(stepped_controllers[index])->emit_position_changed_if_needed();
-            }
-            placement->moved = false;
-        }
         // every rail vehicle is a neighbour to be found, whatever implementation steps it
         for (const KeyValue<RID, VehiclePlacement> &item: vehicles) {
             track_vehicles[item.value.track].push_back(item.key);
         }
+    }
 
-        // the whole frame, in steps no longer than PHYSICS_STEP; the clock caps the frame
-        // (drivermode.cpp:193-206)
-        const int iterations = MAX(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1);
-        const double sub_step = p_delta / iterations;
-        for (int iteration = 0; iteration < iterations; ++iteration) {
-            // DELIBERATE DEPARTURE FROM THE ORIGINAL - do not move this back out of the loop.
-            //
-            // The original refreshes the vehicles' locations and neighbour distances once a frame
-            // (vehicle_table::update(), DynObj.cpp:8691-8699), before all its sub-steps. The Mover
-            // does not measure a coupler from the positions, though: CouplerForce()
-            // (Mover.cpp:4779-4784) takes the distance set by that refresh and adds TEN TIMES what
-            // the two vehicles moved relative to each other since (dMoveLen, reset with the
-            // location). The error of that term grows with the time since the refresh, so the
-            // longer the frame, the stiffer and more wrongly loaded every coupler is. At 60 fps
-            // (1-2 sub-steps) it does not show; at 0.17 s a frame (17 sub-steps - a slow machine,
-            // or any simulation speed above 1) the eszelon's 21 vehicles locked up: 391 kN at
-            // the wheels, 0.18 m/s, for minutes. Measured with the same start stepped at 0.03 s
-            // and at 0.17 s a frame (FINDINGS.md, 2026-09-27 "couplers stiffened by a long
-            // frame").
-            //
-            // Refreshed here, before every sub-step, the ten-fold term only ever spans one
-            // PHYSICS_STEP whatever the frame length, which is what the original does at 100 fps;
-            // the two frame lengths then give the same run to within 0.1 m/s. The Mover itself
-            // (vendored) is left as it is. The cost: the locations and the neighbour scan run per
-            // sub-step, not per frame - at 60 fps the same as before, on a slow frame up to
-            // MAX_FRAME_TIME / PHYSICS_STEP times. A vehicle that has not moved keeps its
-            // location, sampling the track is not needed.
-            for (int index = 0; index < stepped_vehicles.size(); ++index) {
-                VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-                if (placement->location_stale) {
-                    Object::cast_to<RailVehicleController>(stepped_controllers[index])->update_location();
-                }
-                placement->location_stale = false;
+    void RailVehicleServer::vehicle_report_position(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        if (placement->moved) {
+            if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
+                controller->emit_position_changed_if_needed();
             }
-            for (const RID &vehicle_rid: stepped_vehicles) {
-                _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
+        }
+        placement->moved = false;
+    }
+
+    /* A vehicle that has not moved keeps its location, sampling the track is not needed. */
+    void RailVehicleServer::vehicle_update_location(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        if (placement->location_stale) {
+            if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
+                controller->update_location();
             }
-            // the original computes the forces of every vehicle before moving any of them, so
-            // coupled vehicles see a consistent state (DynObj.cpp:8199-8205)
-            for (int index = 0; index < stepped_vehicles.size(); ++index) {
-                Object::cast_to<RailVehicleController>(stepped_controllers[index])->compute_forces(sub_step);
+        }
+        placement->location_stale = false;
+    }
+
+    void RailVehicleServer::vehicle_update_neighbours(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        _update_neighbours(p_vehicle, *placement);
+    }
+
+    void RailVehicleServer::vehicle_collect_current(const RID &p_vehicle, const double p_delta) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        RailVehicleController *controller = _get_controller(*placement);
+        ERR_FAIL_NULL(controller);
+        // the pantographs at the wire the vehicle now stands under, before its circuits run on
+        // what they collect (DynObj.cpp:3714-3920)
+        // only a vehicle standing on a track is under a wire, as every one of the original's is
+        if (const Ref<RailVehicleElectricEngine> electric_engine =
+                    controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
+            electric_engine.is_valid() && placement->track.is_valid()) {
+            const VehicleServer *vehicle_server = VehicleServer::get_instance();
+            ERR_FAIL_NULL(vehicle_server);
+            const Transform3D frame = vehicle_get_transform(p_vehicle);
+            VehiclePlacement *powered = vehicles.getptr(p_vehicle);
+            // the FIZ's slider, halved as the original does (DynObj.cpp:5718); else the model's
+            const double sliding_width = electric_engine->get_power_current_collector_sliding_width();
+            const double half_width = sliding_width > 0.0 ? 0.5 * sliding_width : powered->pantograph_collector_width;
+            const bool emu = (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) ==
+                             RailVehicleController::TRAIN_TYPE_EZT;
+            const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
+            double speed_factor = 0.0;
+            if (pressure > (emu ? PANTOGRAPH_EMU_RAISING_PRESSURE : PANTOGRAPH_RAISING_PRESSURE) &&
+                (controller->get_power24_available() || controller->get_power110_available())) {
+                speed_factor = MAX(0.0, PANTOGRAPH_RAISE_RATE * pressure * p_delta);
             }
-            const bool full_movement = iteration == iterations - 1;
-            for (int index = 0; index < stepped_vehicles.size(); ++index) {
-                RailVehicleController *controller = Object::cast_to<RailVehicleController>(stepped_controllers[index]);
-                if (!controller->is_physics_active()) {
+            const bool active[2] = {
+                    electric_engine->get_collector_pantograph_first_active(),
+                    electric_engine->get_collector_pantograph_second_active()};
+            for (int pantograph = 0; pantograph < 2; ++pantograph) {
+                Pantograph &collector = powered->pantographs[pantograph];
+                // a model without the arms samples the wire where it stands, reaching it
+                if (!collector.present) {
                     continue;
                 }
-                // the cheap integration in every sub-iteration but the last (DynObj.cpp:4086)
-                if (full_movement) {
-                    controller->compute_movement(sub_step);
-                } else {
-                    controller->compute_fast_movement(sub_step);
-                }
-                vehicle_process_movement(stepped_vehicles[index], sub_step);
+                // a lowered pantograph comes down whatever the wire (DynObj.cpp:3775), nothing searched
+                const double gap = active[pantograph]
+                                           ? double(_find_pantograph_wire(
+                                                     p_vehicle, collector, pantograph, frame, half_width)["height"]) -
+                                                     collector.height
+                                           : Math::INF;
+                collector.raise(gap, active[pantograph], speed_factor, p_delta);
             }
-        }
-
-        for (int index = 0; index < stepped_vehicles.size(); ++index) {
-            RailVehicleController *controller = Object::cast_to<RailVehicleController>(stepped_controllers[index]);
-            if (controller->is_physics_active()) {
-                controller->update_state();
-            }
-
-            // the pantographs at the wire the vehicle now stands under, before its circuits run on
-            // what they collect (DynObj.cpp:3714-3920)
-            // only a vehicle standing on a track is under a wire, as every one of the original's is
-            if (const Ref<RailVehicleElectricEngine> electric_engine =
-                        controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
-                electric_engine.is_valid() && vehicles.getptr(stepped_vehicles[index])->track.is_valid()) {
-                const RID vehicle_rid = stepped_vehicles[index];
-                const VehicleServer *vehicle_server = VehicleServer::get_instance();
-                ERR_CONTINUE(vehicle_server == nullptr);
-                const Transform3D frame = vehicle_get_transform(vehicle_rid);
-                VehiclePlacement *powered = vehicles.getptr(vehicle_rid);
-                // the FIZ's slider, halved as the original does (DynObj.cpp:5718); else the model's
-                const double sliding_width = electric_engine->get_power_current_collector_sliding_width();
-                const double half_width =
-                        sliding_width > 0.0 ? 0.5 * sliding_width : powered->pantograph_collector_width;
-                const bool emu = (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) ==
-                                 RailVehicleController::TRAIN_TYPE_EZT;
-                const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
-                double speed_factor = 0.0;
-                if (pressure > (emu ? PANTOGRAPH_EMU_RAISING_PRESSURE : PANTOGRAPH_RAISING_PRESSURE) &&
-                    (controller->get_power24_available() || controller->get_power110_available())) {
-                    speed_factor = MAX(0.0, PANTOGRAPH_RAISE_RATE * pressure * p_delta);
+            const double assumed_voltage =
+                    MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
+                        Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
+            const int collecting = int(active[0] && powered->pantographs[0].reaches_wire) +
+                                   int(active[1] && powered->pantographs[1].reaches_wire);
+            const double current = collecting > 0 ? controller->get_current0() / collecting : 0.0;
+            double fed = 0.0;
+            for (int pantograph = 0; pantograph < 2; ++pantograph) {
+                Pantograph &collector = powered->pantographs[pantograph];
+                /* The third way a raised pantograph reads no voltage, and the only one that is
+                 * not about the wire: the arm has not reached it (DynObj.cpp:3784). Reported on
+                 * the transition, like the other two - from the cab all three look the same. */
+                if (active[pantograph] && collector.touching && !collector.reaches_wire) {
+                    UtilityFunctions::push_warning(vformat(
+                            "Lost contact: %s pantograph %d is not reaching the wire - %s",
+                            vehicle_server->vehicle_get_name(p_vehicle), pantograph, _track_position_text(p_vehicle)));
                 }
-                const bool active[2] = {
-                        electric_engine->get_collector_pantograph_first_active(),
-                        electric_engine->get_collector_pantograph_second_active()};
-                for (int pantograph = 0; pantograph < 2; ++pantograph) {
-                    Pantograph &collector = powered->pantographs[pantograph];
-                    // a model without the arms samples the wire where it stands, reaching it
-                    if (!collector.present) {
-                        continue;
-                    }
-                    // a lowered pantograph comes down whatever the wire (DynObj.cpp:3775), nothing searched
-                    const double gap =
-                            active[pantograph]
-                                    ? double(_find_pantograph_wire(
-                                              vehicle_rid, collector, pantograph, frame, half_width)["height"]) -
-                                              collector.height
-                                    : Math::INF;
-                    collector.raise(gap, active[pantograph], speed_factor, p_delta);
+                collector.touching = active[pantograph] && collector.reaches_wire;
+                double voltage = 0.0;
+                // the arms found the span this step; a model without them searches it here
+                RID wire = collector.wire;
+                if (collector.touching && !collector.present) {
+                    wire = _find_pantograph_wire(p_vehicle, collector, pantograph, frame, half_width)["rid"];
                 }
-                const double assumed_voltage =
-                        MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
-                            Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
-                const int collecting = int(active[0] && powered->pantographs[0].reaches_wire) +
-                                       int(active[1] && powered->pantographs[1].reaches_wire);
-                const double current = collecting > 0 ? controller->get_current0() / collecting : 0.0;
-                double fed = 0.0;
-                for (int pantograph = 0; pantograph < 2; ++pantograph) {
-                    Pantograph &collector = powered->pantographs[pantograph];
-                    /* The third way a raised pantograph reads no voltage, and the only one that is
-                     * not about the wire: the arm has not reached it (DynObj.cpp:3784). Reported on
-                     * the transition, like the other two - from the cab all three look the same. */
-                    if (active[pantograph] && collector.touching && !collector.reaches_wire) {
+                if (TractionServer *traction = TractionServer::get_instance();
+                    collector.touching && wire.is_valid() && traction != nullptr) {
+                    voltage = traction->wire_get_voltage(wire, assumed_voltage, current);
+                    /* A span overhead that carries nothing is another defect than a hole in the
+                     * wiring - the network behind it has no source, or the resistance never
+                     * reached it - and the two look the same from the cab, as a dead line. */
+                    if (collector.powered && Math::is_zero_approx(voltage)) {
                         UtilityFunctions::push_warning(
-                                vformat("Lost contact: %s pantograph %d is not reaching the wire - %s",
-                                        vehicle_server->vehicle_get_name(vehicle_rid), pantograph,
-                                        _track_position_text(vehicle_rid)));
+                                vformat("Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
+                                        vehicle_server->vehicle_get_name(p_vehicle), pantograph,
+                                        _track_position_text(p_vehicle), frame.xform(collector.position)));
                     }
-                    collector.touching = active[pantograph] && collector.reaches_wire;
-                    double voltage = 0.0;
-                    // the arms found the span this step; a model without them searches it here
-                    RID wire = collector.wire;
-                    if (collector.touching && !collector.present) {
-                        wire = _find_pantograph_wire(vehicle_rid, collector, pantograph, frame, half_width)["rid"];
-                    }
-                    if (TractionServer *traction = TractionServer::get_instance();
-                        collector.touching && wire.is_valid() && traction != nullptr) {
-                        voltage = traction->wire_get_voltage(wire, assumed_voltage, current);
-                        /* A span overhead that carries nothing is another defect than a hole in the
-                         * wiring - the network behind it has no source, or the resistance never
-                         * reached it - and the two look the same from the cab, as a dead line. */
-                        if (collector.powered && Math::is_zero_approx(voltage)) {
-                            UtilityFunctions::push_warning(vformat(
-                                    "Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
-                                    vehicle_server->vehicle_get_name(vehicle_rid), pantograph,
-                                    _track_position_text(vehicle_rid), frame.xform(collector.position)));
-                        }
-                        collector.powered = !Math::is_zero_approx(voltage);
-                    }
-                    electric_engine->set_pantograph_wire_voltage(
-                            static_cast<RailVehicleElectricEngine::PantographSelector>(pantograph),
-                            static_cast<float>(voltage));
-                    fed = MAX(fed, Math::abs(voltage));
+                    collector.powered = !Math::is_zero_approx(voltage);
                 }
-                // a short loss keeps the last voltage (DynObj.cpp:3132-3140)
-                if (fed > 0.0) {
-                    powered->no_voltage_time = 0.0;
-                } else {
-                    powered->no_voltage_time += p_delta;
-                    if (powered->no_voltage_time <= NO_VOLTAGE_HOLD) {
-                        fed = electric_engine->get_collector_voltage();
-                    }
+                electric_engine->set_pantograph_wire_voltage(
+                        static_cast<RailVehicleElectricEngine::PantographSelector>(pantograph),
+                        static_cast<float>(voltage));
+                fed = MAX(fed, Math::abs(voltage));
+            }
+            // a short loss keeps the last voltage (DynObj.cpp:3132-3140)
+            if (fed > 0.0) {
+                powered->no_voltage_time = 0.0;
+            } else {
+                powered->no_voltage_time += p_delta;
+                if (powered->no_voltage_time <= NO_VOLTAGE_HOLD) {
+                    fed = electric_engine->get_collector_voltage();
                 }
-                electric_engine->set_collector_voltage(static_cast<float>(fed));
             }
-            controller->process_components(p_delta);
-
-            // reported on a change only: the track events hang on what it was, not on every step
-            VehiclePlacement *placement = vehicles.getptr(stepped_vehicles[index]);
-            TrackHeading heading = HEADING_TO_START;
-            if (controller->get_speed() <= STANDING_SPEED) {
-                heading = HEADING_STANDING;
-            } else if (placement->travel_sign > 0.0) {
-                heading = HEADING_TO_END;
-            }
-            if (heading == placement->reported_heading && placement->track == placement->reported_track) {
-                continue;
-            }
-            if (!(placement->track == placement->reported_track)) {
-                // the new track first, so a section both belong to never reads empty (TrkFoll.cpp:88-91)
-                TrackServer *tracks = TrackServer::get_instance();
-                ERR_CONTINUE(tracks == nullptr);
-                tracks->track_vehicle_entered(placement->track, stepped_vehicles[index]);
-                if (placement->reported_track.is_valid()) {
-                    tracks->track_vehicle_left(placement->reported_track, stepped_vehicles[index]);
-                }
-                placement = vehicles.getptr(stepped_vehicles[index]); // the section signals may have rehashed
-            }
-            placement->reported_heading = heading;
-            placement->reported_track = placement->track;
-            const RID track = placement->track;
-            switch (heading) {
-                case HEADING_STANDING:
-                    emit_signal(vehicle_stopped_on_track_signal, stepped_vehicles[index], track);
-                    break;
-                case HEADING_TO_START:
-                    emit_signal(vehicle_heading_to_track_start_signal, stepped_vehicles[index], track);
-                    break;
-                case HEADING_TO_END:
-                    emit_signal(vehicle_heading_to_track_end_signal, stepped_vehicles[index], track);
-                    break;
-            }
+            electric_engine->set_collector_voltage(static_cast<float>(fed));
         }
-        if (diagnostics) {
-            _check_velocity_jumps(p_delta);
-        }
+    }
 
-        // the vehicles are given the placement this step produced, so nothing renders a frame late
-        for (const RID &vehicle_rid: stepped_vehicles) {
-            const VehiclePlacement *placement = vehicles.getptr(vehicle_rid);
-            if (placement->rail_vehicle_id == 0) {
-                continue;
+    /* Reported on a change only: the track events hang on what it was, not on every step */
+    void RailVehicleServer::vehicle_report_track_heading(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        const RailVehicleController *controller = _get_controller(*placement);
+        ERR_FAIL_NULL(controller);
+        TrackHeading heading = HEADING_TO_START;
+        if (controller->get_speed() <= STANDING_SPEED) {
+            heading = HEADING_STANDING;
+        } else if (placement->travel_sign > 0.0) {
+            heading = HEADING_TO_END;
+        }
+        if (heading == placement->reported_heading && placement->track == placement->reported_track) {
+            return;
+        }
+        if (!(placement->track == placement->reported_track)) {
+            // the new track first, so a section both belong to never reads empty (TrkFoll.cpp:88-91)
+            TrackServer *tracks = TrackServer::get_instance();
+            ERR_FAIL_NULL(tracks);
+            tracks->track_vehicle_entered(placement->track, p_vehicle);
+            if (placement->reported_track.is_valid()) {
+                tracks->track_vehicle_left(placement->reported_track, p_vehicle);
             }
-            if (RailVehicle3D *rail_vehicle =
-                        Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(ObjectID(placement->rail_vehicle_id)));
-                rail_vehicle != nullptr) {
-                rail_vehicle->apply_track_placement();
-            }
+            placement = vehicles.getptr(p_vehicle); // the section signals may have rehashed
+        }
+        placement->reported_heading = heading;
+        placement->reported_track = placement->track;
+        const RID track = placement->track;
+        switch (heading) {
+            case HEADING_STANDING:
+                emit_signal(vehicle_stopped_on_track_signal, p_vehicle, track);
+                break;
+            case HEADING_TO_START:
+                emit_signal(vehicle_heading_to_track_start_signal, p_vehicle, track);
+                break;
+            case HEADING_TO_END:
+                emit_signal(vehicle_heading_to_track_end_signal, p_vehicle, track);
+                break;
+        }
+    }
+
+    /* The vehicle is given the placement this step produced, so nothing renders a frame late */
+    void RailVehicleServer::vehicle_apply_placement(const RID &p_vehicle) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(placement);
+        if (RailVehicle3D *rail_vehicle =
+                    Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(ObjectID(placement->rail_vehicle_id)));
+            rail_vehicle != nullptr) {
+            rail_vehicle->apply_track_placement();
         }
     }
 
@@ -1383,23 +1326,5 @@ namespace godot {
             min_along = -SCAN_ENDPOINT_EPSILON;
         }
         return false;
-    }
-
-    /* Diagnostics: a velocity jump within one frame is a kick - with consistent track movement it
-     * comes from the forces, typically a coupler reacting to an inconsistent vehicle position. */
-    void RailVehicleServer::_check_velocity_jumps(const double p_delta) {
-        for (int index = 0; index < stepped_vehicles.size(); ++index) {
-            RailVehicleController *controller = Object::cast_to<RailVehicleController>(stepped_controllers[index]);
-            const uint64_t id = controller->get_instance_id();
-            const double velocity = controller->get_velocity();
-            const double *previous = diagnostics_velocity.getptr(id);
-            const double acceleration = (velocity - (previous != nullptr ? *previous : velocity)) / p_delta;
-            diagnostics_velocity[id] = velocity;
-            if (Math::abs(acceleration) > DIAGNOSTICS_MAX_ACCELERATION) {
-                UtilityFunctions::push_error(
-                        vformat("RailVehicleServer: %s kicked, dV/dt=%.2f m/s^2 at V=%.2f m/s",
-                                controller->get_train_id(), acceleration, velocity));
-            }
-        }
     }
 } // namespace godot

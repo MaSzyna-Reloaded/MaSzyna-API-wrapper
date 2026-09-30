@@ -465,6 +465,10 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
   `ShowCurrent(0) / active` (`RailVehicle3D.cpp:1480`) - whether it should take the ported one is
   open. The meter has no test: it needs an electric fixture drawing current under a live wire.
+* `README.md`, "No simulation time is ever dropped": describes `step_frame()`, owed time and
+  `MAX_PHYSICS_ITERATIONS`, none of which exists any more - the step is
+  `MaszynaMoverVehicleServer::stepping_advance()` over the frame `SimulationServer` hands on,
+  whose cap is `SimulationServer`'s. Rewrite from the code.
 * The vehicle selector's "Stop and repair", "Reset position", "Refill main tank" and "Rupture main
   pipe" (vehicleparams.cpp:268-287) are not offered; its cog has the brake release, the emergency
   brake and the trainset moves only.

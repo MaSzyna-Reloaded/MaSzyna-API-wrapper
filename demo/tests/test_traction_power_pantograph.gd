@@ -1,7 +1,7 @@
 extends MaszynaGutTest
 
 ## Regression test for the pantograph -> Mover voltage layer (TractionServer /
-## RailVehicleServer's step / RailVehicleElectricEngine::set_pantograph_wire_voltage()). The voltage
+## RailVehicleServer::vehicle_collect_current() / RailVehicleElectricEngine::set_pantograph_wire_voltage()). The voltage
 ## fed here by hand is read back before the next step, which feeds the wire's - 0 V, no wire here.
 ## Bypasses scenery/geometry entirely (same style as test_train_electric_engine_power_source.gd)
 ## to isolate whether raising a pantograph with a wire voltage present actually reaches the

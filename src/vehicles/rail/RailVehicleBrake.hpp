@@ -65,6 +65,10 @@ namespace godot {
             virtual bool is_braking() const = 0;
             virtual bool is_holding() const = 0;
             virtual bool is_cut_off() const = 0;
+            /* The delay setting in use, a BrakeDelaySetting (BrakeDelayFlag) */
+            virtual int get_delay_setting() const = 0;
+            /* The distributor's control reservoir [MPa] (GetCRP()) */
+            virtual double get_control_reservoir_pressure() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -144,6 +148,27 @@ namespace godot {
                 BRAKE_DELAY_PR_MG = 14,
                 BRAKE_DELAY_GPR_MG = 15,
             };
+            /* The train brake handle's named positions (bh_MIN..bh_EPB, hamulce.h:111-121) - where
+             * each one stands depends on the handle's type (TDriverHandle::GetPos()) */
+            enum HandlePosition {
+                HANDLE_POSITION_MIN = 0,
+                HANDLE_POSITION_MAX = 1,
+                HANDLE_POSITION_FILLING = 2,
+                HANDLE_POSITION_DRIVE = 3,
+                HANDLE_POSITION_CUTOFF = 4,
+                HANDLE_POSITION_FIRST_STEP = 5,
+                HANDLE_POSITION_FULL = 6,
+                HANDLE_POSITION_EMERGENCY = 7,
+                HANDLE_POSITION_EP_RELEASE = 8,
+                HANDLE_POSITION_EP_HOLD = 9,
+                HANDLE_POSITION_EP_BRAKE = 10,
+            };
+            virtual double get_handle_position(HandlePosition p_position) const = 0;
+            /* A handle that sets the pipe pressure by how long it is held, not by where it stands
+             * (TDriverHandle::Time) */
+            virtual bool get_handle_time_controlled() const = 0;
+            /* The EP brake is applied by how long the handle is held (TDriverHandle::TimeEP) */
+            virtual bool get_handle_ep_time_controlled() const = 0;
             /* BrakeOpModes= */
             /* BrakeOpModes= - the operating modes a brake can be set to (bom_PS/PN/EP/MED, MOVER.h:325-328);
              * none when the FIZ does not say, as the original loads it (Mover.cpp:10743-10746) */
@@ -312,5 +337,6 @@ VARIANT_ENUM_CAST(RailVehicleBrake::LocalBrakeType)
 VARIANT_ENUM_CAST(RailVehicleBrake::AntiSkidBrakeType)
 VARIANT_ENUM_CAST(RailVehicleBrake::DynamicBrakeType)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeDelaySetting)
+VARIANT_ENUM_CAST(RailVehicleBrake::HandlePosition)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeOperationMode)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeSystemType)

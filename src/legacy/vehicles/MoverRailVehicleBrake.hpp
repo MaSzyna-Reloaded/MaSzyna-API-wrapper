@@ -53,6 +53,11 @@ namespace godot {
             bool is_braking() const override;
             bool is_holding() const override;
             bool is_cut_off() const override;
+            int get_delay_setting() const override;
+            double get_control_reservoir_pressure() const override;
+            double get_handle_position(HandlePosition p_position) const override;
+            bool get_handle_time_controlled() const override;
+            bool get_handle_ep_time_controlled() const override;
 
         private:
             const std::unordered_map<BrakeMethod, int> brake_method_map = {

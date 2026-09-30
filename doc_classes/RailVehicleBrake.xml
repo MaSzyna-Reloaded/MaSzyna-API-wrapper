@@ -127,6 +127,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_control_reservoir_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_controller_position" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -134,6 +139,11 @@
 		</method>
 		<method name="get_controller_position_normalized" qualifiers="const">
 			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_delay_setting" qualifiers="const">
+			<return type="int" />
 			<description>
 			</description>
 		</method>
@@ -171,6 +181,22 @@
 		</method>
 		<method name="get_handle_control_pressure" qualifiers="const">
 			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_ep_time_controlled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_position" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="position" type="int" enum="RailVehicleBrake.HandlePosition" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_time_controlled" qualifiers="const">
+			<return type="bool" />
 			<description>
 			</description>
 		</method>
@@ -631,6 +657,28 @@
 		</constant>
 		<constant name="BRAKE_DELAY_GPR_MG" value="15" enum="BrakeDelaySetting">
 			"G", "P", "R" and "Mg" delay settings.
+		</constant>
+		<constant name="HANDLE_POSITION_MIN" value="0" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_MAX" value="1" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_FILLING" value="2" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_DRIVE" value="3" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_CUTOFF" value="4" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_FIRST_STEP" value="5" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_FULL" value="6" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_EMERGENCY" value="7" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_EP_RELEASE" value="8" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_EP_HOLD" value="9" enum="HandlePosition">
+		</constant>
+		<constant name="HANDLE_POSITION_EP_BRAKE" value="10" enum="HandlePosition">
 		</constant>
 		<constant name="BRAKE_OP_MODE_NONE" value="0" enum="BrakeOperationMode">
 		</constant>

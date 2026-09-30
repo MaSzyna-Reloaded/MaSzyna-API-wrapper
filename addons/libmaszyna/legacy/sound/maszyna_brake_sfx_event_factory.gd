@@ -17,8 +17,9 @@ class_name MaszynaBrakeSfxEventFactory
 ##
 ## Runtime control (TrainSoundSystem) is correspondingly trivial: play() each event once,
 ## lazily, the first time it's fed (never stop() - an inactive automation costs nothing, and the
-## curves themselves fade gain to ~0 at rest), then just copy VehicleServer.vehicle_dump_state() values into
-## modulate()/set_parameters() every frame. It never decides gain/pitch/which-sample-plays itself.
+## curves themselves fade gain to ~0 at rest), then just copy the vehicle's values (state_reader())
+## into modulate()/set_parameters() every frame. It never decides gain/pitch/which-sample-plays
+## itself.
 
 ## event_name -> ordered MMD labels composing it (first one present in a vehicle's `sources` wins
 ## as the "primary" label for purposes like soundproofing/placement lookups that need exactly one -
@@ -73,6 +74,38 @@ const LABEL_GAIN:Dictionary = {
     "emergencybrake": 2.0,
 }
 
+
+
+## What reads a state key of EVENT_PARAMETERS / EVENT_GATES every frame: the typed getter of the
+## component owning the value - the key only names the same value in the state dump. Resolved
+## once per vehicle controller; an invalid Callable when the vehicle has no such component.
+static func state_reader(state_key:String, vehicle_rid:RID) -> Callable:
+    match state_key:
+        "speed":
+            return VehicleServer.vehicle_get_speed.bind(vehicle_rid)
+        "slipping_wheels":
+            var wheels:RailVehicleWheels = VehicleServer.vehicle_component_get(
+                    vehicle_rid, VehicleComponentType.COMPONENT_WHEELS) as RailVehicleWheels
+            return wheels.get_slipping if wheels else Callable()
+        "spring_brake/active":
+            var spring_brake:RailVehicleSpringBrake = RailVehicleServer.vehicle_component_get(
+                    vehicle_rid, RailVehicleComponentType.COMPONENT_SPRING_BRAKE) as RailVehicleSpringBrake
+            return spring_brake.get_active if spring_brake else Callable()
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    if not brake:
+        return Callable()
+    match state_key:
+        "brake_force_ratio": return brake.get_force_ratio
+        "brake_emergency_valve_flow": return brake.get_emergency_valve_flow
+        "brake_releaser_active": return brake.get_releaser_active
+        "brake_air_pressure": return brake.get_air_pressure
+        "brake_local_valve_flow": return brake.get_local_valve_flow
+        "brake_main_valve_flow": return brake.get_main_valve_flow
+        "brake_controller_position": return brake.get_controller_position
+        "brake_control_pressure": return brake.get_control_pressure
+    push_error("MaszynaBrakeSfxEventFactory: no reader for state key %s" % state_key)
+    return Callable()
 
 static func build_events(sources:Dictionary, config:Dictionary) -> Array[SfxEvent]:
     var events:Array[SfxEvent] = []

@@ -86,6 +86,10 @@ Code generation:
   as themselves and literal positional indices - see `CODE_STYLE.md`
 * PROHIBITED: **a getter never changes state** - no filter ticks, flag consumption, signals,
   writes elsewhere or lazy building in any `get_*`/property getter/`_get()` - see `CODE_STYLE.md`
+* PROHIBITED: **a hot path never reads the state or config dump** - per frame, per step or per
+  tick a vehicle's value comes from its component (taken once, typed getter) and configuration
+  from the component's properties; `vehicle_dump_state()`/`vehicle_dump_config()` only for
+  readers driven by a name out of the data (cab/MMD, console, tests) - see `CODE_STYLE.md`
 * PROHIBITED: **never reach a known class through `Object::call("method_name")`**, nor a singleton
   by name or `get_tree()->get_root()->get_node_or_null(name)`; a string call only where the class
   cannot be known at build time, with a comment saying so - see `CODE_STYLE.md`

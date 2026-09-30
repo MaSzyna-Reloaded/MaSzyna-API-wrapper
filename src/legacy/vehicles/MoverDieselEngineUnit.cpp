@@ -249,15 +249,21 @@ namespace godot {
         }
     }
 
-    void MoverDieselEngineUnit::fill_config(Dictionary &p_config) const {
+    // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it: the one
+    // the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
+    double MoverDieselEngineUnit::get_idle_rpm_count() const {
         TMoverParameters *p_mover = owner.get_mover();
         if (p_mover == nullptr) {
+            return 0.0;
+        }
+        return p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
+    }
+
+    void MoverDieselEngineUnit::fill_config(Dictionary &p_config) const {
+        if (owner.get_mover() == nullptr) {
             return;
         }
-        // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it:
-        // the one the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
-        p_config["engine_idle_rpm_count"] =
-                p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
+        p_config["engine_idle_rpm_count"] = get_idle_rpm_count();
     }
 
     void MoverDieselEngineUnit::oil_pump(const bool p_enabled) const {

@@ -46,5 +46,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_FRONT)
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_BACK)
         BIND_ENUM_CONSTANT(BUFFER_LOCATION_BOTH)
+
+        ClassDB::bind_method(D_METHOD("get_coupler_max_force", "end"), &RailVehicleBuffCoupl::get_coupler_max_force);
     }
 } // namespace godot

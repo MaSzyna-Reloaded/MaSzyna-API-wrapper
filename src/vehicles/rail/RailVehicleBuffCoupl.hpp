@@ -55,6 +55,9 @@ namespace godot {
             /// The end of the neighbour this end is attached to.
             virtual RailVehicleController::CouplerEnd
             get_connected_end(RailVehicleController::CouplerEnd p_end) const = 0;
+            /* The coupler's strength at an end [N], as the simulation made it of the configuration
+             * (FmaxC) */
+            virtual double get_coupler_max_force(RailVehicleController::CouplerEnd p_end) const = 0;
     };
 } // namespace godot
 

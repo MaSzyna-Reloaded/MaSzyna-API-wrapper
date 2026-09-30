@@ -143,6 +143,9 @@ anything. Open work belongs in `TODO.md`.
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
 
 ## State, ownership, events
+* A hot path takes a vehicle's component once and calls its getters; the state dump is rebuilt
+  after every step or command and the config dump on every call, so one value read from either
+  costs the whole dictionary. *(09-30 the sound system's dump per frame)*
 * An action that needs two things is spent only when both exist: a call with an invalid handle is
   ignored silently, and the flag that said "still to do" is gone. *(09-30 the vehicles stood off
   their tracks in the editor)*

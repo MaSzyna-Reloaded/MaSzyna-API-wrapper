@@ -42,6 +42,8 @@ namespace godot {
             /* The hydraulic retarder's fill (hydro_R_Fill) */
             virtual double get_retarder_fill() const = 0;
             virtual double get_max_rpm() const = 0;
+            /* The revolutions the running engine idles at [1/s], as get_rpm_count() counts them */
+            virtual double get_idle_rpm_count() const = 0;
             virtual void apply_configuration(const RailVehicleDieselEngine *p_engine) const = 0;
             virtual void oil_pump(bool p_enabled) const = 0;
             virtual void fuel_pump(bool p_enabled) const = 0;

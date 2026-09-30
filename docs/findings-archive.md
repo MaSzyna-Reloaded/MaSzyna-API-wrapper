@@ -2624,3 +2624,23 @@ lighting or the trainset.
   the component by `vehicle_component_get()` and read its getters after an operation.
 * **Rule:** a test of a component's tick needs a vehicle standing on a track and the vehicle's
   own component; after an operation read the getters, not the cached dump.
+
+## 2026-09-30 - the sound system's dump per frame
+
+* **Symptom:** in the editor profiler at x8 simulation speed `TrainSoundSystem._process` was the
+  heaviest untyped `_process` (~836 against ~95 for the next one) while the train was moving.
+* **What proved it:** a GDScript profile counts a native call in its caller's self time, and the
+  sound's per-frame path had two: `VehicleServer.vehicle_dump_state()` per vehicle in earshot per
+  frame, whose cache is keyed on the controller's state serial - moved by every step
+  (`VehicleController::process_components()`) and every command, so on the frame path it is always
+  a full `compose_state()` of every component (~28 per call in the cab's own `vehicle_state` row) -
+  and `VehicleServer.vehicle_dump_config()`, not cached at all (`VehicleController::get_config()`),
+  called by `RunningSoundModel.update()` per moving bank per update and by the engine gain per
+  trigger tick - only when moving, hence the x8 drive.
+* **Fix:** the sound takes its vehicle's components once, in `_resolve_vehicle()`, and reads their
+  typed getters and properties (`RunningSoundModel.attach_vehicle()`,
+  `MaszynaBrakeSfxEventFactory.state_reader()`); MMD triggers, which name their value in the data,
+  read the dump on the trigger tick only. The AI driver, the player and the external camera moved
+  off the dump the same way; `RailVehicleEngine.get_transmission_ratio()` was bound for it.
+* **Rule:** a hot path reads a component, never a dump (`CODE_STYLE.md`); the dump is for readers
+  driven by a name out of the data.

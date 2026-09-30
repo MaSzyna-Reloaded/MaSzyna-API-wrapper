@@ -295,7 +295,8 @@ func _on_camera_changed() -> void:
     var camera:Camera3D = _mode_camera()
     if camera == free_camera and previous == _cabin_camera and _cabin_vehicle.is_valid():
         var body:Transform3D = RailVehicleServer.vehicle_get_transform(_cabin_vehicle)
-        var cabin_occupied:int = VehicleServer.vehicle_dump_state(_cabin_vehicle).get("cabin_occupied", 0)
+        var cabin_occupied:int = (
+                VehicleServer.vehicle_get_controller(_cabin_vehicle) as RailVehicleController).get_cabin_occupied()
         # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
         var side:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
         var width:float = VehicleServer.vehicle_get_dimensions(_cabin_vehicle).x

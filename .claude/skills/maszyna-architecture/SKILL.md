@@ -70,11 +70,16 @@ handle instead - the controller's moves and commands are relayed by `VehicleServ
 (`vehicle_moved`, `vehicle_command_received`), its rail events by `RailVehicleServer`
 (`vehicle_occupied_cab_changed`, `vehicle_trainset_changed`, `vehicle_coupler_*`).
 
-**3. State has one owner and one writer, and a getter only reads.** Values reach other layers
-through `_fill_state_dictionary` / `_fill_config_dictionary` on the component that owns them
-(`VehicleComponent.hpp:90,104`), composed by the server into one cached dump, keyed on the step and
-the vehicle's command count. There is no second cache in front of it - CabinSystem reads the
-server's. Change detection,
+**3. State has one owner and one writer, and a getter only reads.** A value reaches other layers
+as a typed getter of the component that owns it, and configuration as that component's (or the
+controller's) properties - a reader takes the component once (`vehicle_component_get()`) and calls
+it. The same values are also published by name through `_fill_state_dictionary` /
+`_fill_config_dictionary` (`VehicleComponent.hpp:90,104`), composed by the server into a dump that
+is rebuilt after every step or command (the config dump on every call). The dump is for readers
+driven by a name out of the data - the cab (CabinSystem, no second cache in front of the server's),
+MMD sound triggers, the console, tests - and **never for a hot path**: a sound, a driver, a camera
+reading it per frame composes hundreds of keys for one value (2026-09-30, sound system at x8).
+Change detection,
 filters and flag consumption belong in the tick, never in a fetch or a getter - the four
 violations of this cost a day each (`FINDINGS.md`, 2026-09-22).
 
@@ -161,6 +166,7 @@ relying on one.
 2. `grep -n '\*' <server>.hpp` - no pointer crossed a public boundary.
 3. Read every `get_*` the diff adds: it returns and does nothing else.
 4. Read every `_process` the diff touches: no loop, no lookup, no wiring, nothing while idle.
+   `grep -n 'vehicle_dump_' <changed files>` - no dump on a per-frame, per-step or per-tick path.
 5. Ask the placement question of each new field, out loud, and write the answer in the commit.
 6. `grep -rn 'train_id' addons src` - a scenery name is never a key a vehicle is held, cached or
    commanded by; only `vehicle_get_rid_by_name` turns a name into a vehicle.

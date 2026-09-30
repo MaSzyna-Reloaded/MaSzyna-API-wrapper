@@ -63,6 +63,13 @@ class BankRuntime extends RefCounted:
     ## brake events this bank really has, resolved once they are built
     var brake_events:Array[BrakeEvent] = []
     var running:RunningSoundModel
+    ## The vehicle's own, taken once per controller in _resolve_vehicle() - an engine trigger's
+    ## gain is read off them on the trigger tick
+    var controller:VehicleController
+    var engine:RailVehicleEngine
+    ## A trigger of this bank reads a vehicle state value by its MMD name - only then is the
+    ## state dump taken, and only on the trigger tick
+    var reads_state:bool = false
     var soundproofing:Array[PackedFloat32Array] = []
     var triggers:Array[Trigger] = []
     var trigger_elapsed:float = 0.0
@@ -113,7 +120,11 @@ class BrakeEvent extends RefCounted:
     var name:StringName = &""
     var parameter_names:Array[StringName] = []
     var state_keys:Array[String] = []
+    ## The component getters answering state_keys, one each, and gate_key - the frame reads these
+    ## (MaszynaBrakeSfxEventFactory.state_reader())
+    var readers:Array[Callable] = []
     var gate_key:String = ""
+    var gate_reader:Callable = Callable()
     var gate_on:float = 0.0
     var gate_off:float = 0.0
     var source:MmdSoundSourceDefinition
@@ -250,13 +261,14 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
         if runtime.triggers[index].id == trigger_id:
             runtime.triggers.remove_at(index)
             break
+    runtime.reads_state = runtime.triggers.any(
+            func(trigger:Trigger) -> bool: return trigger.event_index < 0)
 
 
 ## Only the banks the sweep left in range, and of those only the ones whose own interval is up.
 ## Everything that does not change with the frame - the distance, the culling, the listener's
 ## trainset - belongs to _refresh_active_banks().
 func _process(delta:float) -> void:
-    var states:Dictionary = {}
     for runtime:BankRuntime in _active:
         runtime.sound_update_elapsed += delta
         if runtime.sound_update_elapsed < runtime.update_interval:
@@ -265,16 +277,13 @@ func _process(delta:float) -> void:
         runtime.sound_update_elapsed = fmod(
                 runtime.sound_update_elapsed, maxf(runtime.update_interval, 0.001))
 
-        if not states.has(runtime.vehicle_rid):
-            states[runtime.vehicle_rid] = VehicleServer.vehicle_dump_state(runtime.vehicle_rid)
-        var state:Dictionary = states[runtime.vehicle_rid]
         var batch:Dictionary = {}
-        _update_brake_sounds(runtime, state, batch)
-        _update_running_sounds(runtime, state, elapsed, batch)
+        _update_brake_sounds(runtime, batch)
+        _update_running_sounds(runtime, elapsed, batch)
         runtime.trigger_elapsed += delta
         if runtime.trigger_elapsed >= TRIGGER_INTERVAL:
             runtime.trigger_elapsed = fmod(runtime.trigger_elapsed, TRIGGER_INTERVAL)
-            _update_triggers(runtime, state, batch)
+            _update_triggers(runtime, batch)
         # Skip the modulate()/_apply_voice_state chain entirely when nothing actually changed
         # since last update - an idle in-range vehicle (engine off, no brake activity) would
         # otherwise still rebuild and re-apply the same voice state every update tick.
@@ -347,6 +356,7 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
         _next_trigger_id += 1
     trigger.state_property = String(descriptor.get("state_property", ""))
     trigger.event_index = VEHICLE_EVENT_INDICES.get(trigger.state_property, -1)
+    runtime.reads_state = runtime.reads_state or trigger.event_index < 0
     trigger.trigger_mode = int(descriptor.get("trigger_mode", TRIGGER_MODE_TOGGLE))
     trigger.event_name = StringName(descriptor.get("sound_event", &""))
     trigger.parameter_name = StringName(descriptor.get("sound_parameter", &""))
@@ -378,6 +388,14 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
     runtime.vehicle_rid = vehicle_rid
     if not vehicle_rid.is_valid():
         return
+    # the components of this controller - another controller brings other objects
+    runtime.controller = VehicleServer.vehicle_get_controller(vehicle_rid)
+    runtime.engine = VehicleServer.vehicle_component_get(
+            vehicle_rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    if runtime.running:
+        runtime.running.attach_vehicle(vehicle_rid)
+    for brake_event:BrakeEvent in runtime.brake_events:
+        _resolve_brake_readers(brake_event, vehicle_rid)
     # the vehicle was built again: its engine is another component now
     _stop_counting_events(vehicle_rid)
     if not _vehicle_events.has(vehicle_rid):
@@ -449,22 +467,34 @@ func _build_brake_events(runtime:BankRuntime) -> void:
             brake_event.gate_on = float(gate[1])
             brake_event.gate_off = float(gate[2])
         brake_event.source = _primary_source(runtime, event_name)
+        _resolve_brake_readers(brake_event, runtime.vehicle_rid)
         runtime.brake_events.append(brake_event)
     runtime.anchored_cabin_instance_id = 0
     _update_spatial_anchors(runtime)
 
 
-func _update_brake_sounds(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -> void:
+## The readers of a brake event for the vehicle's current components
+func _resolve_brake_readers(brake_event:BrakeEvent, vehicle_rid:RID) -> void:
+    brake_event.readers.clear()
+    for state_key:String in brake_event.state_keys:
+        brake_event.readers.append(MaszynaBrakeSfxEventFactory.state_reader(state_key, vehicle_rid))
+    brake_event.gate_reader = (
+            MaszynaBrakeSfxEventFactory.state_reader(brake_event.gate_key, vehicle_rid)
+            if brake_event.gate_key else Callable())
+
+
+func _update_brake_sounds(runtime:BankRuntime, batch:Dictionary) -> void:
     for brake_event:BrakeEvent in runtime.brake_events:
         var event_parameters:Dictionary = {}
         var has_active_parameter:bool = false
         for index:int in range(brake_event.parameter_names.size()):
-            var value:float = _parameter_value(state.get(brake_event.state_keys[index], 0.0))
+            var reader:Callable = brake_event.readers[index]
+            var value:float = _parameter_value(reader.call()) if reader.is_valid() else 0.0
             event_parameters[brake_event.parameter_names[index]] = value
             has_active_parameter = has_active_parameter or not is_zero_approx(value)
         var playing:bool = runtime.player.is_playing(brake_event.name)
-        if brake_event.gate_key:
-            has_active_parameter = _parameter_value(state.get(brake_event.gate_key, 0.0)) > (
+        if brake_event.gate_reader.is_valid():
+            has_active_parameter = _parameter_value(brake_event.gate_reader.call()) > (
                     brake_event.gate_off if playing else brake_event.gate_on)
             if playing and not has_active_parameter:
                 runtime.player.stop(brake_event.name, false)
@@ -480,7 +510,11 @@ func _update_brake_sounds(runtime:BankRuntime, state:Dictionary, batch:Dictionar
         batch[brake_event.name] = event_parameters
 
 
-func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -> void:
+## A trigger is driven by a state value named in the MMD, the same contract as a cab element: it
+## reads the state dump by that name, on this tick only (TRIGGER_INTERVAL), never per frame.
+func _update_triggers(runtime:BankRuntime, batch:Dictionary) -> void:
+    var state:Dictionary = (
+            VehicleServer.vehicle_dump_state(runtime.vehicle_rid) if runtime.reads_state else {})
     var vehicle_events:PackedInt32Array = _vehicle_events.get(runtime.vehicle_rid, PackedInt32Array())
     for trigger:Trigger in runtime.triggers:
         var value:float = 0.0
@@ -493,7 +527,7 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             trigger.last_value = value
             if is_inf(previous_value) or is_equal_approx(previous_value, value):
                 continue
-            runtime.player.play(trigger.event_name, _trigger_parameters(runtime, trigger, state, value))
+            runtime.player.play(trigger.event_name, _trigger_parameters(runtime, trigger, value))
             continue
 
         var should_play:bool = value <= trigger.threshold_max and value >= trigger.threshold_min
@@ -505,7 +539,7 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
         if not should_play and not trigger.activated:
             continue
 
-        var parameters:Dictionary = _trigger_parameters(runtime, trigger, state, value)
+        var parameters:Dictionary = _trigger_parameters(runtime, trigger, value)
         if should_play and not trigger.activated:
             runtime.player.play(
                     trigger.event_name,
@@ -520,14 +554,15 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             batch[trigger.event_name] = parameters
 
 
-func _trigger_parameters(
-        runtime:BankRuntime, trigger:Trigger, state:Dictionary, value:float) -> Dictionary:
+func _trigger_parameters(runtime:BankRuntime, trigger:Trigger, value:float) -> Dictionary:
     var parameters:Dictionary = {}
     if trigger.trigger_mode == TRIGGER_MODE_CONTINUOUS and trigger.parameter_name:
         parameters[trigger.parameter_name] = value
     if trigger.source:
-        if trigger.source.label == "engine":
-            parameters[&"engine_gain"] = _engine_gain(runtime, state, trigger.source)
+        if trigger.source.label == "engine" and runtime.engine:
+            parameters[&"engine_gain"] = _engine_gain(
+                    trigger.source, runtime.engine.get_rpm_ratio(), runtime.engine.get_power(),
+                    runtime.controller.power)
         parameters[&"soundproofing"] = _soundproofing(runtime, trigger.source)
         return parameters
     if not trigger.placement == &"general":
@@ -535,12 +570,11 @@ func _trigger_parameters(
     return parameters
 
 
-func _update_running_sounds(
-        runtime:BankRuntime, state:Dictionary, elapsed:float, batch:Dictionary) -> void:
+func _update_running_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary) -> void:
     if not runtime.running:
         return
     var results:Dictionary = runtime.running.update(
-            runtime.vehicle_rid, state, elapsed, not _listener_trainset.has(runtime.vehicle_rid))
+            elapsed, not _listener_trainset.has(runtime.vehicle_rid))
     for event_name:StringName in results:
         var result:Dictionary = results[event_name]
         var action:int = result["action"]
@@ -574,13 +608,12 @@ func _refresh_listener_trainset() -> void:
 
 
 func _engine_gain(
-        runtime:BankRuntime, state:Dictionary, source:MmdSoundSourceDefinition) -> float:
-    var rpm_ratio:float = clampf(float(state.get("engine_rpm_ratio", 0.0)), 0.0, 1.0)
-    var nominal_power:float = float(VehicleServer.vehicle_dump_config(runtime.vehicle_rid).get("power", 0.0))
+        source:MmdSoundSourceDefinition, rpm_ratio:float, engine_power:float,
+        nominal_power:float) -> float:
     var load_ratio:float = 0.0
     if nominal_power > 0.0:
-        load_ratio = maxf(float(state.get("engine_power", 0.0)) / nominal_power, 0.0)
-    var level:float = 0.25 * load_ratio + 0.75 * rpm_ratio
+        load_ratio = maxf(engine_power / nominal_power, 0.0)
+    var level:float = 0.25 * load_ratio + 0.75 * clampf(rpm_ratio, 0.0, 1.0)
     return clampf(source.amplitude_offset + source.amplitude_factor * level, 0.0, 2.0)
 
 

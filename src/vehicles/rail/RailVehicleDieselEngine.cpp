@@ -73,6 +73,9 @@ namespace godot {
     double RailVehicleDieselEngine::get_max_rpm() const {
         return diesel_engine_unit != nullptr ? diesel_engine_unit->get_max_rpm() : 0.0;
     }
+    double RailVehicleDieselEngine::get_idle_rpm_count() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_idle_rpm_count() : 0.0;
+    }
     void RailVehicleDieselEngine::_apply_configuration() {
         RailVehicleEngine::_apply_configuration();
         if (diesel_engine_unit != nullptr) {
@@ -199,6 +202,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_engine_temperature"), &RailVehicleDieselEngine::get_engine_temperature);
         ClassDB::bind_method(D_METHOD("get_retarder_fill"), &RailVehicleDieselEngine::get_retarder_fill);
         ClassDB::bind_method(D_METHOD("get_max_rpm"), &RailVehicleDieselEngine::get_max_rpm);
+        ClassDB::bind_method(D_METHOD("get_idle_rpm_count"), &RailVehicleDieselEngine::get_idle_rpm_count);
     }
 
     RailVehicleEngine::EngineType RailVehicleDieselEngine::get_type() const {

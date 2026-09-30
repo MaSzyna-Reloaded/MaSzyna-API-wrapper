@@ -86,6 +86,13 @@
 			<description>
 			</description>
 		</method>
+		<method name="instance_get_opaque_meshes" qualifiers="const">
+			<return type="PackedInt64Array" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The instance ids of the [MeshInstance3D] nodes of the instance's opaque submodels - what the original draws into its pick buffer; a translucent submodel is left out. Empty for an instance not built as nodes.
+			</description>
+		</method>
 		<method name="instance_intersect_segment" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="instance" type="RID" />

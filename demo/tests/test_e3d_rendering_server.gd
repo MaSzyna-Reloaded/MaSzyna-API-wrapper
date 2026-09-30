@@ -73,6 +73,31 @@ func test_nodes_instance_rebuilds_on_options_change() -> void:
     E3DRenderingServer.instance_free(rid)
 
 
+## opengl33renderer.cpp:1208 - the pick pass draws no translucent submodel (E186's glass caps over
+## the spring brake buttons)
+func test_opaque_meshes_leave_out_translucent_submodels() -> void:
+    var parent: Node3D = Node3D.new()
+    add_child_autoqfree(parent)
+    var model: E3DModel = _create_model()
+    var mesh_submodel: E3DSubModel = model.submodels[0].submodels[0]
+    var cap: E3DSubModel = E3DSubModel.new()
+    cap.resource_name = "cap"
+    cap.submodel_type = E3DSubModel.SUBMODEL_GL_TRIANGLES
+    cap.mesh = mesh_submodel.mesh
+    cap.material_transparent = true
+    var mesh_children: Array[E3DSubModel] = [cap]
+    mesh_submodel.submodels = mesh_children
+
+    var rid: RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
+    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_build(rid)
+
+    var mesh: MeshInstance3D = parent.get_node(NodePath("light_on00/mesh"))
+    var expected: PackedInt64Array = [mesh.get_instance_id()]
+    assert_eq(E3DRenderingServer.instance_get_opaque_meshes(rid), expected)
+    E3DRenderingServer.instance_free(rid)
+
+
 func test_dark_light_follows_the_light_level() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)

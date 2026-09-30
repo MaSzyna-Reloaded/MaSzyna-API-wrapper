@@ -114,6 +114,28 @@ and the rule. Headings keep their date and title, because comments in the code c
   control's mesh with everything under it, whichever is created first. Test:
   `test_a_control_under_another_control_is_its_own`.
 * **Rule:** a control's pickable ends at the next control's submodel below it.
+* **Superseded 2026-09-30:** the third button of the panel, `op12` (pantographs 1+2), has no
+  control in `base.mmd.inc`, so it stayed one of universal1's meshes: hovering it lit universal1,
+  a click pushed it. The original never gives a control its children: the pick pass colours every
+  submodel on its own (`opengl33renderer.cpp:3756-3759`) and `control_mapper::find()`
+  (`Train.cpp:64-76`) matches only the control's exact submodel - `op12` is nobody's control there
+  and only hides what is behind it. Fix: `CabinHUDMouseSystem` takes a control's own mesh only;
+  every cab mesh is an occluder already. Test: `test_child_mesh_is_not_part_of_the_control`.
+  Rule: a cab control is its own submodel only.
+
+## 2026-09-30 - E186's spring brake release could not be clicked
+
+* **Symptom:** right after the fix above, the spring brake release (`springbrakeoff_bt`,
+  `sw_ham_post_wyl`) no longer reacted to the mouse.
+* **What proved it:** a probe on `kabina_1_160.e3d`: `sw_ham_post_wyl` has a child
+  `przycisk4444444`, `sw_ham_post_wl` the lamps `sprezynowy_on/off` - same size, 1.6 mm in front,
+  flagged translucent (0x20). Until then they were the control's own meshes; now only occluders,
+  nearer than the button. Every cab mesh was an occluder, translucent ones included, while the
+  original's pick pass draws only opaque submodels (`Render_cab(..., Alpha = false)`,
+  `opengl33renderer.cpp:1208`, `iAlpha & iFlags & 0x1F` at 3674).
+* **Fix:** `E3DRenderingServer.instance_get_opaque_meshes()`; the cab takes its occluders from it.
+  Test: `test_opaque_meshes_leave_out_translucent_submodels`.
+* **Rule:** only an opaque submodel hides a cab control from the mouse.
 
 ## 2026-09-29 - a rebuilt cab showed the E186 screen's page button off
 

@@ -39,20 +39,6 @@ namespace godot {
         return Object::cast_to<MeshInstance3D>(ObjectDB::get_instance(p_mesh));
     }
 
-    /// The meshes under p_node, but for those under a mesh of p_other_controls - those are theirs
-    static void collect_meshes(Node *p_node, const HashSet<uint64_t> &p_other_controls, Vector<ObjectID> &p_r_meshes) {
-        for (int i = 0; i < p_node->get_child_count(true); i++) {
-            Node *child = p_node->get_child(i, true);
-            if (p_other_controls.has(child->get_instance_id())) {
-                continue;
-            }
-            if (Object::cast_to<MeshInstance3D>(child) != nullptr) {
-                p_r_meshes.push_back(ObjectID(child->get_instance_id()));
-            }
-            collect_meshes(child, p_other_controls, p_r_meshes);
-        }
-    }
-
     const char *CabinHUDMouseSystem::control_hovered_signal = "control_hovered";
     const char *CabinHUDMouseSystem::control_unhovered_signal = "control_unhovered";
     const char *CabinHUDMouseSystem::control_state_changed_signal = "control_state_changed";
@@ -96,28 +82,9 @@ namespace godot {
             const Callable &p_decrease, const Basis &p_step_rotation, const Vector3 &p_step_offset,
             const Callable &p_drag, const Vector2 &p_drag_signs) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
-        /* A mesh belongs to the nearest control above it: the new control leaves out what is
-         * already another's, and takes what it now owns out of the controls above it. */
-        HashSet<uint64_t> other_controls;
-        for (const KeyValue<RID, Control> &other: controls) {
-            other_controls.insert(static_cast<uint64_t>(other.value.pickable.parts[0].mesh));
-        }
-        const Pickable pickable = _pickable(p_mesh_instance_id, true, other_controls);
-        HashSet<uint64_t> taken;
-        for (const Part &part: pickable.parts) {
-            taken.insert(static_cast<uint64_t>(part.mesh));
-        }
-        for (KeyValue<RID, Control> &other: controls) {
-            Vector<Part> &parts = other.value.pickable.parts;
-            for (int64_t i = parts.size() - 1; i > 0; i--) {
-                if (taken.has(static_cast<uint64_t>(parts[i].mesh))) {
-                    parts.remove_at(i);
-                }
-            }
-        }
         controls.insert(
-                rid, Control{pickable, p_caption, p_hints, String(), p_pressed, p_released, p_increase, p_decrease,
-                             p_drag, p_step_rotation, p_step_offset});
+                rid, Control{_pickable(p_mesh_instance_id), p_caption, p_hints, String(), p_pressed, p_released,
+                             p_increase, p_decrease, p_drag, p_step_rotation, p_step_offset});
         const MeshInstance3D *mesh = mesh_of(ObjectID(p_mesh_instance_id));
         if (mesh != nullptr) {
             Control &control = controls[rid];
@@ -126,22 +93,13 @@ namespace godot {
             const Quaternion step = Quaternion(p_step_rotation.orthonormalized());
             if (!Math::is_zero_approx(step.get_angle())) {
                 const Vector3 axis = step.get_axis().normalized();
-                const Transform3D to_control = mesh->get_global_transform().affine_inverse();
                 Vector3 grip;
                 double grip_distance = -1.0;
-                for (const Part &part: control.pickable.parts) {
-                    const MeshInstance3D *part_mesh = mesh_of(part.mesh);
-                    if (part_mesh == nullptr) {
-                        continue;
-                    }
-                    const Transform3D transform = to_control * part_mesh->get_global_transform();
-                    for (const Vector3 &vertex: part.faces) {
-                        const Vector3 point = transform.xform(vertex);
-                        const double distance = (point - axis * axis.dot(point)).length();
-                        if (distance > grip_distance) {
-                            grip_distance = distance;
-                            grip = point;
-                        }
+                for (const Vector3 &point: control.pickable.faces) {
+                    const double distance = (point - axis * axis.dot(point)).length();
+                    if (distance > grip_distance) {
+                        grip_distance = distance;
+                        grip = point;
                     }
                 }
                 control.grip = grip;
@@ -167,7 +125,7 @@ namespace godot {
 
     RID CabinHUDMouseSystem::occluder_create(const uint64_t p_mesh_instance_id) {
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
-        occluders.insert(rid, _pickable(p_mesh_instance_id, false, HashSet<uint64_t>()));
+        occluders.insert(rid, _pickable(p_mesh_instance_id));
         return rid;
     }
 
@@ -175,59 +133,45 @@ namespace godot {
         occluders.erase(p_occluder);
     }
 
-    CabinHUDMouseSystem::Pickable CabinHUDMouseSystem::_pickable(
-            const uint64_t p_mesh_instance_id, const bool p_with_children, const HashSet<uint64_t> &p_other_controls) {
-        Vector<ObjectID> meshes;
-        meshes.push_back(ObjectID(p_mesh_instance_id));
-        MeshInstance3D *root = mesh_of(meshes[0]);
-        if (p_with_children && root != nullptr) {
-            collect_meshes(root, p_other_controls, meshes);
-        }
-        Pickable pickable;
-        for (const ObjectID &id: meshes) {
-            const MeshInstance3D *mesh = mesh_of(id);
-            pickable.parts.push_back(
-                    Part{id, mesh != nullptr && mesh->get_mesh().is_valid() ? mesh->get_mesh()->get_faces()
-                                                                            : PackedVector3Array()});
-        }
-        return pickable;
+    CabinHUDMouseSystem::Pickable CabinHUDMouseSystem::_pickable(const uint64_t p_mesh_instance_id) {
+        const ObjectID id = ObjectID(p_mesh_instance_id);
+        const MeshInstance3D *mesh = mesh_of(id);
+        return Pickable{
+                id,
+                mesh != nullptr && mesh->get_mesh().is_valid() ? mesh->get_mesh()->get_faces() : PackedVector3Array()};
     }
 
     bool CabinHUDMouseSystem::_hit(
             const Pickable &p_pickable, const Vector3 &p_from, const Vector3 &p_to, double &p_r_distance,
             Vector3 &p_r_point) {
-        bool hit = false;
-        for (const Part &part: p_pickable.parts) {
-            const MeshInstance3D *mesh = mesh_of(part.mesh);
-            if (mesh == nullptr || !mesh->is_visible_in_tree()) {
-                continue;
-            }
-            const Transform3D transform = mesh->get_global_transform();
-            const Transform3D inverse = transform.affine_inverse();
-            const Vector3 from = inverse.xform(p_from);
-            const Vector3 to = inverse.xform(p_to);
-            // the box first: it rejects nearly every mesh, and one entered farther than the nearest
-            // hit so far cannot hold a nearer triangle
-            Vector3 entry;
-            if (!mesh->get_aabb().intersects_segment(from, to, &entry) ||
-                p_from.distance_to(transform.xform(entry)) >= p_r_distance) {
-                continue;
-            }
-
-            double t = 0.0;
-            if (!mouse_picking::intersect_faces(part.faces, from, to, t)) {
-                continue;
-            }
-            const Vector3 point = transform.xform(from + (to - from) * static_cast<real_t>(t));
-            const double distance = p_from.distance_to(point);
-            if (distance >= p_r_distance) {
-                continue;
-            }
-            p_r_distance = distance;
-            p_r_point = point;
-            hit = true;
+        const MeshInstance3D *mesh = mesh_of(p_pickable.mesh);
+        if (mesh == nullptr || !mesh->is_visible_in_tree()) {
+            return false;
         }
-        return hit;
+        const Transform3D transform = mesh->get_global_transform();
+        const Transform3D inverse = transform.affine_inverse();
+        const Vector3 from = inverse.xform(p_from);
+        const Vector3 to = inverse.xform(p_to);
+        // the box first: it rejects nearly every mesh, and one entered farther than the nearest
+        // hit so far cannot hold a nearer triangle
+        Vector3 entry;
+        if (!mesh->get_aabb().intersects_segment(from, to, &entry) ||
+            p_from.distance_to(transform.xform(entry)) >= p_r_distance) {
+            return false;
+        }
+
+        double t = 0.0;
+        if (!mouse_picking::intersect_faces(p_pickable.faces, from, to, t)) {
+            return false;
+        }
+        const Vector3 point = transform.xform(from + (to - from) * static_cast<real_t>(t));
+        const double distance = p_from.distance_to(point);
+        if (distance >= p_r_distance) {
+            return false;
+        }
+        p_r_distance = distance;
+        p_r_point = point;
+        return true;
     }
 
     void CabinHUDMouseSystem::control_free(const RID &p_control) {
@@ -342,7 +286,7 @@ namespace godot {
 
     Vector2 CabinHUDMouseSystem::_increase_signs(const Control &p_control) const {
         const Camera3D *view = Object::cast_to<Camera3D>(ObjectDB::get_instance(camera));
-        const MeshInstance3D *mesh = mesh_of(p_control.pickable.parts[0].mesh);
+        const MeshInstance3D *mesh = mesh_of(p_control.pickable.mesh);
         if (view == nullptr || mesh == nullptr) {
             return DEFAULT_DRAG_SIGNS;
         }
@@ -403,7 +347,7 @@ namespace godot {
         Vector2 nearest_middle;
         double nearest_distance = PICK_TOLERANCE_PIXELS;
         for (const KeyValue<RID, Control> &entry: controls) {
-            const MeshInstance3D *mesh = mesh_of(entry.value.pickable.parts[0].mesh);
+            const MeshInstance3D *mesh = mesh_of(entry.value.pickable.mesh);
             if (mesh == nullptr || !mesh->is_visible_in_tree()) {
                 continue;
             }
@@ -472,11 +416,9 @@ namespace godot {
         if (p_outlined) {
             material = control.small ? small_outline_material : large_outline_material;
         }
-        for (const Part &part: control.pickable.parts) {
-            MeshInstance3D *mesh = mesh_of(part.mesh);
-            if (mesh != nullptr) {
-                mesh->set_material_overlay(material);
-            }
+        MeshInstance3D *mesh = mesh_of(control.pickable.mesh);
+        if (mesh != nullptr) {
+            mesh->set_material_overlay(material);
         }
     }
 } // namespace godot

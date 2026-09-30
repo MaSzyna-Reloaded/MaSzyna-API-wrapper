@@ -203,13 +203,13 @@ func _rebuild_generated() -> void:
         print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
 
 
-## Every mesh of the cab model hides the controls behind it from the mouse, as the whole cab is
-## drawn into the original's pick buffer (opengl33renderer.cpp:1208). Control meshes are among
-## them and keep their own hits. Transparent submodels occlude as well, unlike the original's
-## opaque-only pick pass - see TODO.md.
+## Every opaque mesh of the cab model hides the controls behind it from the mouse, as the cab is
+## drawn into the original's pick buffer without its translucent submodels
+## (opengl33renderer.cpp:1208) - E186's spring brake buttons lie under glass caps. Control meshes
+## are among them and keep their own hits.
 func _create_occluders(cab_model:E3DModelInstance) -> void:
-    for mesh:Node in cab_model.find_children("*", "MeshInstance3D", true, false):
-        _occluders.append(CabinHUDMouseSystem.occluder_create(mesh.get_instance_id()))
+    for mesh_id:int in E3DRenderingServer.instance_get_opaque_meshes(cab_model.get_e3d_instance()):
+        _occluders.append(CabinHUDMouseSystem.occluder_create(mesh_id))
 
 
 func _free_occluders() -> void:

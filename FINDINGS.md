@@ -232,8 +232,12 @@ anything. Open work belongs in `TODO.md`.
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it
   (a pantograph's raise), and a rebuild resets nothing. *(09-29 a model rebuilt dropped the
   vehicle's voltage)*
-* A control's pickable ends at the next control's submodel below it - one mesh, one control.
-  *(09-29 the E186 screen's OP1/OP2 turned its page off)*
+* A cab control is its own submodel only - a mesh under it is another control's or nobody's, as
+  the original's `control_mapper::find` (`Train.cpp:64`). *(09-29 the E186 screen's OP1/OP2
+  turned its page off; 09-30 its op12 still did)*
+* Only an opaque submodel hides a cab control from the mouse - a translucent one is not in the
+  original's pick pass (`opengl33renderer.cpp:1208`). *(09-30 E186's spring brake release could
+  not be clicked through its glass cap)*
 * A control whose value lives only in the cab (`CabinState`) shows that value when it is built; a
   cab rebuilt resets nothing. *(09-29 a rebuilt cab showed the E186 screen's page button off)*
 * Who drives a vehicle is kept by the vehicle, not by its driver: a player may take the cab before

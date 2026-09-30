@@ -337,6 +337,9 @@ namespace godot {
             void instance_set_light_mode(const RID &p_instance, int p_light, LightMode p_mode);
             /// Lights addressed by index (light_on00...), 0 until the instance is built
             int instance_get_light_count(const RID &p_instance) const;
+            /// The instance ids of the drawn meshes of opaque submodels - what the original draws into
+            /// its pick buffer; empty until the instance is built as nodes
+            PackedInt64Array instance_get_opaque_meshes(const RID &p_instance) const;
             void instance_set_light_blink(
                     const RID &p_instance, int p_light, float p_on_time, float p_off_time, float p_phase);
 

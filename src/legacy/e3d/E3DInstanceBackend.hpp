@@ -53,6 +53,7 @@ namespace godot {
             struct SubmodelSettings {
                     Transform3D pose; // on top of the submodel's own transform, like an animation's
                     bool posed = false;
+                    bool visibility_set = false;
                     bool hidden = false;
                     Ref<Material> material_override;
                     /// The named submodel of the built model, found once per build
@@ -112,8 +113,9 @@ namespace godot {
             /// What the animations and the client's poses make of their submodels, on top of the
             /// submodel's own transform; what the backends read
             HashMap<E3DSubModel *, Transform3D> submodel_poses;
-            /// The submodels a client hid, and those it gave a material of its own, resolved out of
-            /// submodel_settings; what the backends read
+            /// The submodels a client explicitly showed or hid, and those it gave a material of its
+            /// own, resolved out of submodel_settings; what the backends read
+            HashSet<const E3DSubModel *> shown_submodels;
             HashSet<const E3DSubModel *> hidden_submodels;
             HashMap<E3DSubModel *, Ref<Material>> submodel_materials;
             /// instance_set_emission_energy(): the self-illumination energy of every emissive

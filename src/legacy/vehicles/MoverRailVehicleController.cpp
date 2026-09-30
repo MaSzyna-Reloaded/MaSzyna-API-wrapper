@@ -343,8 +343,14 @@ namespace godot {
         if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
             return;
         }
-        mover->Dettach(p_end);
+        const Ref<RailVehicleController> neighbour = get_coupled_controller(p_end);
+        const bool detached = mover->Dettach(p_end);
         _consume_coupler_events();
+        // Dettach() clears Connected on both ends before its event is consumed. Announce the other
+        // end here, while its controller is still known (Mover.cpp:616-646).
+        if (detached && neighbour.is_valid()) {
+            neighbour->emit_signal(trainset_changed_signal);
+        }
     }
 
     bool MoverRailVehicleController::is_coupled(const CouplerEnd p_end) const {
@@ -415,7 +421,7 @@ namespace godot {
         if (mover->DettachStatus(side) >= 0 || (mover->Couplers[side].CouplingFlag & coupling::permanent) != 0) {
             return;
         }
-        mover->Dettach(side);
+        uncouple(side);
     }
 
     // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock

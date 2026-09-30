@@ -57,3 +57,22 @@ func test_vehicle_model_hides_its_on_submodels() -> void:
     var instance:E3DModelInstance = _instance(E3DRenderingServer.INSTANCE_KIND_DYNAMIC, lights)
     var on_node:Node3D = instance.get_node(NodePath("karzel2/_on"))
     assert_false(on_node.visible, "a dynamic model should hide a \"_on\" submodel by default")
+
+
+func test_a_client_can_show_a_dynamic_hidden_submodel() -> void:
+    var lights:Dictionary[String, bool] = {}
+    var instance:E3DModelInstance = _instance(E3DRenderingServer.INSTANCE_KIND_DYNAMIC, lights)
+    var model:RID = instance.get_e3d_instance()
+
+    E3DRenderingServer.instance_set_submodel_visible(model, "_on", true)
+    assert_true((instance.get_node(NodePath("karzel2/_on")) as Node3D).visible,
+            "an explicit visibility setting should override the vehicle default")
+
+    E3DRenderingServer.instance_set_instancer(model, E3DRenderingServer.INSTANCER_OPTIMIZED)
+    E3DRenderingServer.instance_set_instancer(model, E3DRenderingServer.INSTANCER_NODES)
+    assert_true((instance.get_node(NodePath("karzel2/_on")) as Node3D).visible,
+            "the explicit setting should survive an instancer rebuild")
+
+    E3DRenderingServer.instance_set_submodel_visible(model, "_on", false)
+    assert_false((instance.get_node(NodePath("karzel2/_on")) as Node3D).visible,
+            "an explicit hide should still win")

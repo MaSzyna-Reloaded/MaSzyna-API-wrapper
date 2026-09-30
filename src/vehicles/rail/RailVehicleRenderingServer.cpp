@@ -61,6 +61,7 @@ namespace godot {
                 "coupler1",     "coupler2",   "cpneumatic1", "cpneumatic1r", "cpneumatic2",
                 "cpneumatic2r", "pneumatic1", "pneumatic1r", "pneumatic2",   "pneumatic2r"};
         constexpr std::array<const char *, 3> COUPLER_SUFFIXES = {"_on", "_off", "_xon"};
+        constexpr int COUPLER_PART_COUNT = 3;
         /* The low-poly interior's cabs, cab0 for a vehicle's single one (DynObj.cpp:2383-2391) */
         constexpr int LOW_POLY_CABS = 3;
         /* Wiper elements: arm 1, arm 2, blade (DynObj.cpp:5838-5870) */
@@ -71,9 +72,7 @@ namespace godot {
         constexpr int PANTOGRAPH_LOWER_ARM = 0;
         constexpr int PANTOGRAPH_UPPER_ARM = 2;
         constexpr int PANTOGRAPH_SLIDER = 4;
-        /* The variants of a coupler: none, drawn by this vehicle, drawn by the other one - and of a
-         * hose: 1 straight, 2 slanted, 3 slanted "r", 4 straight "r" (DynObj.cpp:430) */
-        constexpr int COUPLER_VARIANTS = 5;
+        constexpr std::array<const char *, 2> PNEUMATIC_SUBMODELS = {"cpneumatic", "pneumatic"};
     } // namespace
 
     template<typename T>
@@ -682,64 +681,66 @@ namespace godot {
     // Original engine: TDynamicObject::GetPneumatic() (DynObj.cpp:395) - which hoses the model has
     // at that end: 1 left, 2 right (the "r" variant), 3 both; AirCoupler::GetStatus()
     // (AirCoupler.cpp:30) tells a slanted (_xon) from a straight (_on) connected submodel
-    int RailVehicleRenderingServer::_pneumatic_layout(
-            const Visual &p_visual, const RailVehicleController::CouplerEnd p_end, const bool p_brake_hose) const {
-        const auto status = [&](const String &p_name) {
-            if (p_visual.coupler_submodels.has(p_name + String("_xon"))) {
-                return 2;
-            }
-            return p_visual.coupler_submodels.has(p_name + String("_on")) ? 1 : 0;
+    RailVehicleRenderingServer::PneumaticLayout RailVehicleRenderingServer::_pneumatic_layout(
+            const Visual &p_visual, const RailVehicleController::CouplerEnd p_end,
+            const RailVehicleRenderingServer::PneumaticLine p_line) const {
+        const auto has_connected = [&](const String &p_name) {
+            return p_visual.coupler_submodels.has(p_name + String("_xon")) ||
+                   p_visual.coupler_submodels.has(p_name + String("_on"));
         };
-        const String name = String(p_brake_hose ? "cpneumatic" : "pneumatic") + itos(p_end + 1);
-        const int left = status(name);
-        const int right = status(name + String("r"));
-        if (left > 0 && right > 0) {
-            return 3;
+        const String name = String(PNEUMATIC_SUBMODELS[p_line]) + itos(p_end + 1);
+        const bool left = has_connected(name);
+        const bool right = has_connected(name + String("r"));
+        if (left && right) {
+            return PNEUMATIC_LAYOUT_BOTH;
         }
-        if (left > 0) {
-            return 1;
+        if (left) {
+            return PNEUMATIC_LAYOUT_LEFT;
         }
-        return right > 0 ? 2 : 0;
+        return right ? PNEUMATIC_LAYOUT_RIGHT : PNEUMATIC_LAYOUT_NONE;
     }
 
     // Original engine: TDynamicObject::SetPneumatic() (DynObj.cpp:430) - picks the hose submodel
     // matching the layout of the vehicle coupled at that end: 1 straight, 2 slanted, 3 slanted "r",
     // 4 straight "r"
-    int RailVehicleRenderingServer::_pneumatic_variant(
+    RailVehicleRenderingServer::CouplerVariant RailVehicleRenderingServer::_pneumatic_variant(
             const RID &p_vehicle, const Visual &p_visual, const RailVehicleController::CouplerEnd p_end,
-            const bool p_brake_hose) const {
+            const RailVehicleRenderingServer::PneumaticLine p_line) const {
         const Ref<RailVehicleBuffCoupl> coupler = couplers(p_vehicle);
         RailVehicleServer *server = RailVehicleServer::get_instance();
         if (coupler.is_null() || server == nullptr) {
-            return 0;
+            return COUPLER_VARIANT_OFF;
         }
-        const int own = _pneumatic_layout(p_visual, p_end, p_brake_hose);
-        int other = 0;
+        const PneumaticLayout own = _pneumatic_layout(p_visual, p_end, p_line);
+        PneumaticLayout other = PNEUMATIC_LAYOUT_NONE;
         // the vehicles coupled beyond p_end, from the farthest one back through this one: the
         // neighbour is the one just before it
         const TypedArray<RID> coupled =
                 server->vehicle_get_coupled(p_vehicle, p_end, RailVehicleController::COUPLING_FLAG_COUPLER);
         if (const int64_t own_index = coupled.find(p_vehicle); own_index > 0) {
             if (const Visual *neighbour = vehicles.getptr(coupled[own_index - 1]); neighbour != nullptr) {
-                other = _pneumatic_layout(*neighbour, coupler->get_connected_end(p_end), p_brake_hose);
+                other = _pneumatic_layout(*neighbour, coupler->get_connected_end(p_end), p_line);
             }
         }
         if (own == other) {
             switch (own) {
-                case 1:
-                    return 2;
-                case 2:
-                    return 3;
-                case 3:
-                    return coupler->is_coupling_owner(p_end) ? 1 : 4;
+                case PNEUMATIC_LAYOUT_LEFT:
+                    return COUPLER_VARIANT_XON;
+                case PNEUMATIC_LAYOUT_RIGHT:
+                    return COUPLER_VARIANT_RIGHT_XON;
+                case PNEUMATIC_LAYOUT_BOTH:
+                    return coupler->is_coupling_owner(p_end) ? COUPLER_VARIANT_ON : COUPLER_VARIANT_RIGHT_ON;
                 default:
-                    return 0;
+                    return COUPLER_VARIANT_OFF;
             }
         }
-        if (own == 3) {
-            return other == 1 ? 4 : 1;
+        if (own == PNEUMATIC_LAYOUT_BOTH) {
+            return other == PNEUMATIC_LAYOUT_LEFT ? COUPLER_VARIANT_RIGHT_ON : COUPLER_VARIANT_ON;
         }
-        return own == 2 ? 4 : 1;
+        if (own == PNEUMATIC_LAYOUT_RIGHT) {
+            return COUPLER_VARIANT_RIGHT_ON;
+        }
+        return own == PNEUMATIC_LAYOUT_LEFT ? COUPLER_VARIANT_ON : COUPLER_VARIANT_OFF;
     }
 
     // Original engine: AirCoupler::Update() (AirCoupler.cpp:83)
@@ -761,24 +762,26 @@ namespace godot {
         if (p_visual.coupler_submodels.is_empty() || coupler.is_null()) {
             return;
         }
-        int variants[2][3];
+        CouplerVariant variants[2][COUPLER_PART_COUNT];
         int64_t state = 0;
         for (const RailVehicleController::CouplerEnd end:
              {RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLER_END_REAR}) {
             // _on for the vehicle that draws the coupler, _xon (or _off without it) for the other
             if (!coupler->is_coupled(end)) {
-                variants[end][0] = 0;
+                variants[end][0] = COUPLER_VARIANT_OFF;
             } else if (coupler->is_coupling_owner(end)) {
-                variants[end][0] = 1;
+                variants[end][0] = COUPLER_VARIANT_ON;
             } else {
-                variants[end][0] = 2;
+                variants[end][0] = COUPLER_VARIANT_XON;
             }
-            variants[end][1] =
-                    coupler->is_brake_hose_connected(end) ? _pneumatic_variant(p_vehicle, p_visual, end, true) : 0;
-            variants[end][2] =
-                    coupler->is_main_hose_connected(end) ? _pneumatic_variant(p_vehicle, p_visual, end, false) : 0;
-            for (const int variant: variants[end]) {
-                state = (state * COUPLER_VARIANTS) + variant;
+            variants[end][1] = coupler->is_brake_hose_connected(end)
+                                       ? _pneumatic_variant(p_vehicle, p_visual, end, PNEUMATIC_LINE_BRAKE)
+                                       : COUPLER_VARIANT_OFF;
+            variants[end][2] = coupler->is_main_hose_connected(end)
+                                       ? _pneumatic_variant(p_vehicle, p_visual, end, PNEUMATIC_LINE_MAIN)
+                                       : COUPLER_VARIANT_OFF;
+            for (const CouplerVariant variant: variants[end]) {
+                state = (state * COUPLER_VARIANT_COUNT) + variant;
             }
         }
         if (state == p_visual.coupler_state) {
@@ -790,14 +793,16 @@ namespace godot {
             // the original numbers the couplers from 1 (coupler1, coupler2)
             const String number = itos(end + 1);
             _show_air_coupler(
-                    p_visual, "coupler" + number, variants[end][0] == 1,
-                    variants[end][0] == 2 && p_visual.coupler_submodels.has("coupler" + number + "_xon"));
-            const char *hoses[] = {"cpneumatic", "pneumatic"};
-            for (int hose = 0; hose < static_cast<int>(std::size(hoses)); ++hose) {
-                const String name = String(hoses[hose]) + number;
-                const int variant = variants[end][hose + 1];
-                _show_air_coupler(p_visual, name, variant == 1, variant == 2);
-                _show_air_coupler(p_visual, name + String("r"), variant == 4, variant == 3);
+                    p_visual, "coupler" + number, variants[end][0] == COUPLER_VARIANT_ON,
+                    variants[end][0] == COUPLER_VARIANT_XON &&
+                            p_visual.coupler_submodels.has("coupler" + number + "_xon"));
+            for (const PneumaticLine line: {PNEUMATIC_LINE_BRAKE, PNEUMATIC_LINE_MAIN}) {
+                const String name = String(PNEUMATIC_SUBMODELS[line]) + number;
+                const CouplerVariant variant = variants[end][line + 1];
+                _show_air_coupler(p_visual, name, variant == COUPLER_VARIANT_ON, variant == COUPLER_VARIANT_XON);
+                _show_air_coupler(
+                        p_visual, name + String("r"), variant == COUPLER_VARIANT_RIGHT_ON,
+                        variant == COUPLER_VARIANT_RIGHT_XON);
             }
         }
     }
@@ -1041,6 +1046,23 @@ namespace godot {
     void RailVehicleRenderingServer::_on_vehicle_trainset_changed(const RID &p_vehicle) {
         if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
             _update_couplers(p_vehicle, *visual);
+        }
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return;
+        }
+        for (const RailVehicleController::CouplerEnd end:
+             {RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLER_END_REAR}) {
+            const TypedArray<RID> coupled =
+                    server->vehicle_get_coupled(p_vehicle, end, RailVehicleController::COUPLING_FLAG_COUPLER);
+            const int64_t vehicle_index = coupled.find(p_vehicle);
+            if (vehicle_index < 1) {
+                continue;
+            }
+            const RID neighbour = coupled[vehicle_index - 1];
+            if (Visual *visual = vehicles.getptr(neighbour); visual != nullptr) {
+                _update_couplers(neighbour, *visual);
+            }
         }
     }
 

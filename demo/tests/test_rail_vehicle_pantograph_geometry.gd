@@ -91,8 +91,8 @@ func _add_pantograph_arms(along:float) -> Array[NodePath]:
 
 
 func _build_electric_vehicle() -> void:
-    var model:VehicleModel = VehicleModel.new()
-    model.properties = {"type_name": "test"}
+    var model:VehicleController = MoverRailVehicleController.new()
+    model.type_name = "test"
     physics_node = build_vehicle_node("test_pantograph_geometry", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
@@ -136,8 +136,8 @@ func test_the_two_pantographs_do_not_share_one_sampling_point() -> void:
 
 
 func test_a_vehicle_without_pantograph_arms_publishes_no_position() -> void:
-    var model:VehicleModel = VehicleModel.new()
-    model.properties = {"type_name": "test"}
+    var model:VehicleController = MoverRailVehicleController.new()
+    model.type_name = "test"
     physics_node = build_vehicle_node("test_pantograph_geometry_bare", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
@@ -176,9 +176,11 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
             2000.0, 0.01)
     TractionServer.network_build()
 
-    var model:VehicleModel = VehicleModel.new()
+    var model:VehicleController = MoverRailVehicleController.new()
     # a vehicle with no power has no pantographs' tank to fill (Mover.cpp:1530)
-    model.properties = {"type_name": "test", "battery_voltage": 110.0, "power": ENGINE_POWER}
+    model.type_name = "test"
+    model.battery_voltage = 110.0
+    model.power = ENGINE_POWER
     physics_node = build_vehicle_node("test_pantograph_rebuilt", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR

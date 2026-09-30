@@ -2,7 +2,7 @@
 #include "VehicleComponentType.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/ref.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -23,8 +23,12 @@ namespace godot {
     /// with no statement about what simulates it - that is the implementation's business. It is
     /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
     /// these. Reached from outside by RID, through VehicleServer.
-    class VehicleController : public RefCounted {
-            GDCLASS(VehicleController, RefCounted)
+    ///
+    /// A Resource: its properties (and its components') are the vehicle's stored configuration,
+    /// so a parsed vehicle is saved and loaded as it is (the FIZ cache, a .tres), and a vehicle is
+    /// built from a copy of it (VehiclePhysicsNode).
+    class VehicleController : public Resource {
+            GDCLASS(VehicleController, Resource)
         public:
             /* Who drives the vehicle, in the words the `.scn` uses for it - a `dynamic` names
              * `headdriver`, `reardriver` or `nobody` as its drivertype (DynObj.cpp:1812-1825). It
@@ -149,9 +153,10 @@ namespace godot {
              * for the rear one, 0 for nobody. */
             int get_occupied_cab() const;
             static void _bind_methods();
-            /* This vehicle's handle in VehicleServer, set when the server attaches it. */
+            /* This vehicle's handle in VehicleServer, set when the server attaches it - what
+             * Resource.get_rid() answers, as a Mesh answers its RenderingServer handle. */
             void set_vehicle_rid(const RID &p_vehicle_rid);
-            RID get_rid() const;
+            RID _get_rid() const override;
             void emit_position_changed_if_needed();
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;
@@ -208,13 +213,20 @@ namespace godot {
              * the vehicle and freed with it. The shape Node::add_child() has, for the same
              * reason: the thing being handed over has no life of its own outside its owner. */
             void add_component(const Ref<VehicleComponent> &p_component);
+            /* The components as stored configuration: setting them lets go of the ones the vehicle
+             * had and takes these in, in their order (add_component()) */
+            void set_components(const TypedArray<VehicleComponent> &p_components);
+            TypedArray<VehicleComponent> get_components() const;
 
             void register_component(VehicleComponent *p_component);
             void unregister_component(VehicleComponent *p_component);
 
         private:
             Vector<Ref<VehicleComponent>> components;
-            void free_components();
+            /* In the system as a live vehicle (attach_to_system() .. release()): its components
+             * are joined to it. A description - the same class, only stored - never is. */
+            bool in_system = false;
+            void _detach_components();
             /* The lighting component, kept because the vehicle raises roof_light_changed for it.
              * Resolved when the component joins, not searched for per frame. */
             RailVehicleLighting *lighting = nullptr;

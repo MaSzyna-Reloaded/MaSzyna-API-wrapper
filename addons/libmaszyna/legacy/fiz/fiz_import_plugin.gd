@@ -22,7 +22,7 @@ func _get_recognized_extensions() -> PackedStringArray:
     return PackedStringArray(["fiz"])
 
 
-## A .fiz imports into a VehicleModel, a plain Resource - `.scn` is the packed-scene extension
+## A .fiz imports into the vehicle's description (a MoverRailVehicleController), a Resource - `.scn` is the packed-scene extension
 ## and ResourceSaver refuses anything else under it (ERR_FILE_UNRECOGNIZED), which left every
 ## .fiz in the project unimported.
 func _get_save_extension() -> String:
@@ -60,7 +60,7 @@ func _get_priority() -> float:
 func _import(
         source_file: String, save_path: String, _options: Dictionary,
         _platform_variants: Array[String], _gen_files: Array[String]) -> Error:
-    var model: VehicleModel = FizVehicleBuilder.build_model_at(source_file)
-    if model == null:
+    var description: VehicleController = FizVehicleBuilder.build_description_at(source_file)
+    if description == null:
         return ERR_CANT_CREATE
-    return ResourceSaver.save(model, "%s.%s" % [save_path, _get_save_extension()])
+    return ResourceSaver.save(description, "%s.%s" % [save_path, _get_save_extension()])

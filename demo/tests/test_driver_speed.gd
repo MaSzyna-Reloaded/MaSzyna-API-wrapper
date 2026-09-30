@@ -4,7 +4,7 @@ extends MaszynaGutTest
 ## (pick_optimal_speed(), Driver.cpp:7297-7400), without a speed table; a vehicle ahead set by hand.
 
 const Order = MaszynaLegacyAIDriver.Order
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const REACTION:float = MaszynaLegacyAIDriver.EASY_REACTION_TIME
 const SHUNT_VELOCITY:float = 25.0
 const BRAKING_DISTANCE:float = 50.0

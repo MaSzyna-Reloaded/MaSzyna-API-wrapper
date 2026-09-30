@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 const Order = MaszynaLegacyAIDriver.Order
 const MAX_WAIT:float = 5.0
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const SHUNT_SPEED:float = 40.0
 
 

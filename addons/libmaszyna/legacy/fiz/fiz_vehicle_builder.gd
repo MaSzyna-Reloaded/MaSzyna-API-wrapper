@@ -21,25 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 29
-
-## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
-const _COMPONENT_TYPES:Array[VehicleComponentType.Type] = [
-    VehicleComponentType.COMPONENT_DOORS, VehicleComponentType.COMPONENT_ENGINE,
-    VehicleComponentType.COMPONENT_HEATING, VehicleComponentType.COMPONENT_LIGHTING,
-    VehicleComponentType.COMPONENT_LOAD, VehicleComponentType.COMPONENT_HORNS,
-    VehicleComponentType.COMPONENT_WHEELS, VehicleComponentType.COMPONENT_WIPERS,
-    VehicleComponentType.COMPONENT_RADIO,
-]
-## ...and every railway kind, walked after them
-const _RAIL_COMPONENT_TYPES:Array[RailVehicleComponentType.Type] = [
-    RailVehicleComponentType.COMPONENT_BRAKES, RailVehicleComponentType.COMPONENT_SPRING_BRAKE,
-    RailVehicleComponentType.COMPONENT_EP_ED_BRAKE, RailVehicleComponentType.COMPONENT_BUFFERS,
-    RailVehicleComponentType.COMPONENT_SPEED_CONTROL, RailVehicleComponentType.COMPONENT_SWITCHES,
-    RailVehicleComponentType.COMPONENT_AI_HINTS, RailVehicleComponentType.COMPONENT_SECURITY,
-    RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER,
-    RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER,
-]
+const FIZ_PARSER_FORMAT_VERSION := 30
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -140,8 +122,8 @@ static func _static_init() -> void:
 ## Cntrl. general subset/...) are applied to `target` and every section's VehicleComponent is
 ## attached to it with add_component(). `target` is expected to carry no components yet - a
 ## second run would attach a second component of the same type - which is why its one caller,
-## build_model_at(), hands it a controller it has just created and throws away once the model is
-## captured. `fiz_path` must already be a fully resolved, openable path (res://, user://, or
+## build_description_at(), hands it a controller it has just created, which becomes the
+## description. `fiz_path` must already be a fully resolved, openable path (res://, user://, or
 ## absolute) - e.g. UserSettings.get_maszyna_game_dir().path_join("pkp/eu04_v1/eu04-01.fiz").
 ## `include` directives inside the file resolve relative to its own containing directory.
 static func build_into(target: VehicleController, fiz_path: String) -> void:
@@ -173,9 +155,9 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
 ## edited .fiz (or an `include`d one - mtime isn't recursive, but editing a shared .fiz.inc
 ## while iterating is rare enough not to warrant walking every include) invalidates the entry.
-## Stored as a VehicleModel - the parse result, which is the expensive part and the only part
-## worth keeping. What is built from it is the instancer's business, exactly as an E3DModel feeds
-## its backends.
+## Stored as the vehicle's description (a MoverRailVehicleController with its components) - the
+## parse result, which is the expensive part; a vehicle is built from a copy of it
+## (VehiclePhysicsNode).
 static var _cache = ResourceCache.create("fiz")
 
 static func clear_cache() -> void:
@@ -188,7 +170,7 @@ static func _make_cache_path(fiz_path: String) -> String:
 static func _make_cache_hash(fiz_path: String) -> String:
     return ("%s:%s:%s" % [
         FileAccess.get_modified_time(fiz_path),
-        "%d.%d" % [FIZ_PARSER_FORMAT_VERSION, VehicleModel.FORMAT_VERSION],
+        str(FIZ_PARSER_FORMAT_VERSION),
         fiz_path
     ]).md5_text()
 
@@ -196,39 +178,24 @@ static func _make_cache_hash(fiz_path: String) -> String:
 ## The vehicle a .fiz describes, parsed once and cached on disk - the shape
 ## E3DModelManager.load_model() has, and for the same reason: a scenery repeats the same file
 ## across many trainset entries, and parsing it is the expensive part.
-static func build_model(data_path: String, fiz_filename: String) -> VehicleModel:
-    return build_model_at(
+static func build_description(data_path: String, fiz_filename: String) -> VehicleController:
+    return build_description_at(
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))
 
 
-static func build_model_at(fiz_path: String) -> VehicleModel:
+static func build_description_at(fiz_path: String) -> VehicleController:
     var cache_path: String = _make_cache_path(fiz_path)
     var cache_hash: String = _make_cache_hash(fiz_path)
-    var model: VehicleModel = _cache.get(cache_path, cache_hash) as VehicleModel
-    if model:
-        return model
+    var description: VehicleController = _cache.get(cache_path, cache_hash) as VehicleController
+    if description:
+        return description
 
-    # FIZ is the Mover's own format, so the vehicle it describes is built on the Mover
-    var root: MoverRailVehicleController = MoverRailVehicleController.new()
-    build_into(root, fiz_path)
-    model = VehicleModel.new()
-    model.properties = VehicleModel.capture(root)
-    # every component of a type - BuffCoupl1./BuffCoupl2. are two, one per end
-    var found:Array = []
-    for type:VehicleComponentType.Type in _COMPONENT_TYPES:
-        found.append_array(root.find_components(type))
-    for type:RailVehicleComponentType.Type in _RAIL_COMPONENT_TYPES:
-        found.append_array(root.find_rail_components(type))
-    var components:Array[VehicleComponentModel] = []
-    for component:VehicleComponent in found:
-        var entry := VehicleComponentModel.new()
-        entry.implementation = component.get_class()
-        entry.properties = VehicleModel.capture(component)
-        components.append(entry)
-    model.components = components
-
-    _cache.set(cache_path, model, cache_hash)
-    return model
+    # FIZ is the Mover's own format, so the vehicle it describes is built on the Mover; its
+    # components are kept in the order the FIZ sections built them
+    description = MoverRailVehicleController.new()
+    build_into(description, fiz_path)
+    _cache.set(cache_path, description, cache_hash)
+    return description
 
 
 ## Reads one logical line off a MaszynaParser's byte stream, mirroring the original

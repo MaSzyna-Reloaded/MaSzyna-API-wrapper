@@ -16,15 +16,16 @@ namespace godot {
     }
 
     void VehiclePhysicsNode::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_model", "model"), &VehiclePhysicsNode::set_model);
-        ClassDB::bind_method(D_METHOD("get_model"), &VehiclePhysicsNode::get_model);
-        /* Shown, never stored: a model built from a source file (a .fiz) would otherwise be
+        ClassDB::bind_method(D_METHOD("set_description", "description"), &VehiclePhysicsNode::set_description);
+        ClassDB::bind_method(D_METHOD("get_description"), &VehiclePhysicsNode::get_description);
+        /* Shown, never stored: a description built from a source file (a .fiz) would otherwise be
          * embedded in whatever scene holds this node and drift from the file it came from. A
          * vehicle authored as a .tres is referenced by the subclass that loads it. */
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::OBJECT, "model", PROPERTY_HINT_RESOURCE_TYPE, "VehicleModel", PROPERTY_USAGE_EDITOR),
-                "set_model", "get_model");
+                        Variant::OBJECT, "description", PROPERTY_HINT_RESOURCE_TYPE, "VehicleController",
+                        PROPERTY_USAGE_EDITOR),
+                "set_description", "get_description");
 
         ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &VehiclePhysicsNode::set_train_id);
         ClassDB::bind_method(D_METHOD("get_train_id"), &VehiclePhysicsNode::get_train_id);
@@ -61,9 +62,10 @@ namespace godot {
         // on entering, not on ready: Godot readies children before their parent, and a
         // component proxy below this node has to find a vehicle already standing
         if (p_what == NOTIFICATION_ENTER_TREE && controller.is_null()) {
-            // with whatever model the node was given before it entered; without one the vehicle
-            // still comes up, empty - components can be added to it, or a model applied later
-            _build(model);
+            // with whatever description the node was given before it entered; without one the
+            // vehicle still comes up, empty - components can be added to it, or a description
+            // given later
+            _build();
         }
         if (p_what == NOTIFICATION_PREDELETE) {
             if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
@@ -81,30 +83,27 @@ namespace godot {
 
     /* The vehicle is built here and nowhere else: one owner of the handle, one owner of the
      * controller, both freed with this node. */
-    void VehiclePhysicsNode::set_model(const Ref<VehicleModel> &p_model) {
-        model = p_model;
+    void VehiclePhysicsNode::set_description(const Ref<VehicleController> &p_description) {
+        description = p_description;
         if (is_inside_tree()) {
-            _build(model);
+            _build();
         }
     }
 
-    void VehiclePhysicsNode::_build(const Ref<VehicleModel> &p_model) {
-        if (controller.is_null()) {
-            // held as it is created: a reference counted object left in the Variant alone is freed
-            // with it
-            controller = ClassDBSingleton::get_singleton()->instantiate(controller_implementation());
-            ERR_FAIL_COND_MSG(
-                    controller.is_null(),
-                    vformat("Unknown vehicle controller implementation: %s", controller_implementation()));
-        } else {
-            /* Rebuilding replaces what the vehicle is made of, not the vehicle. Destroying the
-             * controller here left every reference taken to it dangling - a sound bank registered
-             * against the vehicle before its model arrived held a freed object. */
+    void VehiclePhysicsNode::_build() {
+        /* Rebuilding replaces what the vehicle is made of, not the vehicle: its handle stays, and
+         * everything outside the vehicle layer holds that. The controller built before lets go of
+         * its components, commands and simulation. */
+        if (controller.is_valid()) {
             controller->release();
         }
-        if (p_model.is_valid()) {
-            VehicleModel::apply(controller.ptr(), p_model->get_properties());
-        }
+        // a copy: the description is shared by every vehicle built from it (a cached FIZ); held
+        // as it is created - a reference counted object left in the Variant alone is freed with it
+        controller = description.is_valid()
+                             ? Ref<VehicleController>(description->duplicate_deep(Resource::DEEP_DUPLICATE_INTERNAL))
+                             : Ref<VehicleController>(
+                                       ClassDBSingleton::get_singleton()->instantiate(controller_implementation()));
+        ERR_FAIL_COND_MSG(controller.is_null(), "The vehicle's controller could not be made");
         controller->set_train_id(train_id);
         controller->set_type_name(type_name);
         controller->set_initial_velocity(initial_velocity);
@@ -118,30 +117,12 @@ namespace godot {
             server->vehicle_attach_controller(vehicle_rid, controller->get_instance_id());
         }
         controller->attach_to_system();
-
-        const TypedArray<VehicleComponentModel> components =
-                p_model.is_valid() ? p_model->get_components() : TypedArray<VehicleComponentModel>();
-        for (int i = 0; i < components.size(); i++) {
-            const Ref<VehicleComponentModel> entry = components[i];
-            if (entry.is_null()) {
-                continue;
-            }
-            const Ref<VehicleComponent> component =
-                    ClassDBSingleton::get_singleton()->instantiate(entry->get_implementation());
-            if (component.is_null()) {
-                ERR_PRINT(vformat("Unknown vehicle component implementation: %s", entry->get_implementation()));
-                continue;
-            }
-            VehicleModel::apply(component.ptr(), entry->get_properties());
-            controller->add_component(component);
-        }
-
         controller->initialize();
         emit_signal(vehicle_changed_signal);
     }
 
-    Ref<VehicleModel> VehiclePhysicsNode::get_model() const {
-        return model;
+    Ref<VehicleController> VehiclePhysicsNode::get_description() const {
+        return description;
     }
 
     RID VehiclePhysicsNode::get_vehicle_rid() const {

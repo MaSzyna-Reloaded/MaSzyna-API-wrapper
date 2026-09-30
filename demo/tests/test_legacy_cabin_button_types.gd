@@ -3,14 +3,14 @@ extends MaszynaGutTest
 ## A control whose original handler branches on the kind of switch (TGaugeType) behaves by the type
 ## the cab's MMD gives it (LegacyCabinControls.button_type()), as TTrain branches on ggX.type().
 
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 
 var train: VehicleController
 var logic: LegacyCabinLogic
 
 
 func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
-        model:VehicleModel = SM42, components:Array[VehicleComponent] = [],
+        model:VehicleController = SM42, components:Array[VehicleComponent] = [],
         fields:Dictionary[StringName, Dictionary] = {}) -> void:
     train = build_vehicle("TestButtonTypes", model)
     for component:VehicleComponent in components:

@@ -4,7 +4,7 @@ extends MaszynaGutTest
 ## TableCheck(), Driver.cpp:945-1057), read from tracks built here.
 
 const Order = MaszynaLegacyAIDriver.Order
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 ## Longer than the reading of a standing driver both ways, so no line ends in it [m]
 const APPROACH_LENGTH:float = 4000.0
 const RESTRICTED_LENGTH:float = 100.0

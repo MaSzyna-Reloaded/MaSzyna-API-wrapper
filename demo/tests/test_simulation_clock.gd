@@ -46,7 +46,7 @@ func before_each() -> void:
     TrackServer.track_update(_track, TrackServer.TRACK_NORMAL, "", 1.435)
     TrackServer.topology_rebuild()
     # a real vehicle, because the dynamics need a mass - an empty Mover integrates to NaN
-    var model:VehicleModel = load("res://tests/fixtures/sm42_vehicle.tres") as VehicleModel
+    var model:VehicleController = load("res://tests/fixtures/sm42_vehicle.tres") as VehicleController
     _controller = build_vehicle("clock_test", model, VELOCITY_MS * 3.6)
     _controller.type_name = "test"
     # an unmanned vehicle is not simulated at all (Mover.cpp:4485) - see FINDINGS.md, 2026-09-23

@@ -4,7 +4,7 @@ class_name FizVehiclePhysicsNode
 
 ## A vehicle built from a legacy `.fiz` file.
 ##
-## All it does is name the file and ask FizVehicleBuilder for the VehicleModel it describes -
+## All it does is name the file and ask FizVehicleBuilder for the vehicle's description -
 ## the same shape E3DModelInstance has towards E3DModelManager. Everything else about owning a
 ## vehicle (the handle, the components, freeing them) belongs to VehiclePhysicsNode, and the
 ## parsing and its on-disk cache belong to the builder.
@@ -46,6 +46,6 @@ func _reload() -> void:
     if not is_inside_tree():
         return
     if not fiz_filename:
-        set_model(null)
+        set_description(null)
         return
-    set_model(FizVehicleBuilder.build_model(data_path, fiz_filename))
+    set_description(FizVehicleBuilder.build_description(data_path, fiz_filename))

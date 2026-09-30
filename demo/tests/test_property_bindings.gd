@@ -119,38 +119,36 @@ func test_group_paths_do_not_change_public_property_names() -> void:
 
 
 ## Authored configuration has to survive into the built vehicle. It used to be authored as a
-## scene of component nodes; a component is not a node any more, so it is authored as a
-## VehicleModel - and this asserts the same thing through it.
+## scene of component nodes; a vehicle is described by its controller and components now, stored
+## as they are - and this asserts the same thing through that description.
 func test_authored_configuration_reaches_the_built_vehicle() -> void:
-    var brake_model := VehicleComponentModel.new()
-    brake_model.implementation = &"MoverRailVehicleBrake"
-    brake_model.properties = {
-        "valve_type": 20,
-        "brake_force_max": 85.0,
-        "compressor_cab_a_min_pressure": 7.0,
-    }
-    var engine_model := VehicleComponentModel.new()
-    engine_model.implementation = &"MoverRailVehicleDieselElectricEngine"
-    engine_model.properties = {"oil_pump_pressure_minimum": 0.15}
-    var security_model := VehicleComponentModel.new()
-    security_model.implementation = &"MoverRailVehicleSecuritySystem"
-    security_model.properties = {"aware_system_active": true, "emergency_brake_delay": 2.5}
+    var brake: RailVehicleBrake = MoverRailVehicleBrake.new()
+    brake.valve_type = 20
+    brake.brake_force_max = 85.0
+    brake.compressor_cab_a_min_pressure = 7.0
+    var engine: RailVehicleDieselEngine = MoverRailVehicleDieselElectricEngine.new()
+    engine.oil_pump_pressure_minimum = 0.15
+    var security: RailVehicleSecuritySystem = MoverRailVehicleSecuritySystem.new()
+    security.aware_system_active = true
+    security.emergency_brake_delay = 2.5
 
-    var model := VehicleModel.new()
-    model.properties = {"train_id": "PropertyBindingsTest", "mass": 74000.0}
-    var components:Array[VehicleComponentModel] = [brake_model, engine_model, security_model]
-    model.components = components
+    var description: VehicleController = MoverRailVehicleController.new()
+    description.train_id = "PropertyBindingsTest"
+    description.mass = 74000.0
+    var components: Array[VehicleComponent] = [brake, engine, security]
+    description.components = components
 
     var vehicle := VehiclePhysicsNode.new()
     add_child_autofree(vehicle)
     RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
-    vehicle.set_model(model)
+    vehicle.set_description(description)
 
     var train: VehicleController = vehicle.get_controller()
-    var brake: RailVehicleBrake = train.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES)
-    var engine: RailVehicleDieselEngine = train.get_component(VehicleComponentType.COMPONENT_ENGINE)
+    brake = train.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES)
+    engine = train.get_component(VehicleComponentType.COMPONENT_ENGINE)
     var security_system: RailVehicleSecuritySystem = train.get_rail_component(RailVehicleComponentType.COMPONENT_SECURITY)
 
+    assert_ne(brake, components[0], "the vehicle is built from a copy - the description stays shared")
     assert_eq(train.mass, 74000.0, "the vehicle's own properties too")
     assert_eq(brake.valve_type, 20)
     assert_eq(brake.brake_force_max, 85.0)

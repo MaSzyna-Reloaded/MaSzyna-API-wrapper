@@ -191,7 +191,7 @@ namespace godot {
             /* Answered from VehicleServer's per-vehicle cache, which is keyed on the state
              * serial (a step or a command), so a reader per frame costs a lookup rather
              * than a rebuild of the whole dictionary. A controller the server does not hold - the
-             * throwaway one the FIZ builder captures a VehicleModel from - has no state to give
+             * throwaway one the FIZ builder saves as a description - has no state to give
              * and answers an empty dictionary. */
             Dictionary get_state() override;
             void update_state() override;

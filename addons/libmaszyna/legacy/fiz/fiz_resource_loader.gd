@@ -2,8 +2,8 @@
 extends ResourceFormatLoader
 class_name FIZResourceLoader
 
-## Makes `.fiz` files directly `load()`-able as a VehicleModel - the vehicle's properties
-## and the components it is made of - the same way `.e3d` files are directly loadable as an
+## Makes `.fiz` files directly `load()`-able as the vehicle's description - a
+## MoverRailVehicleController with the components it is made of - the same way `.e3d` files are directly loadable as an
 ## E3DModel via E3DResourceFormatLoader, with no import step. Registered in libmaszyna.gd.
 ##
 ## Not a PackedScene any more: a component belongs to a vehicle rather than to a scene, so a .fiz
@@ -23,7 +23,7 @@ func _get_resource_type(path: String) -> String:
 
 
 func _load(path: String, original_path: String, use_sub_threads: bool, cache_mode: int) -> Variant:
-    var model: VehicleModel = FizVehicleBuilder.build_model_at(path)
-    if model == null:
+    var description: VehicleController = FizVehicleBuilder.build_description_at(path)
+    if description == null:
         return ERR_CANT_OPEN
-    return model
+    return description

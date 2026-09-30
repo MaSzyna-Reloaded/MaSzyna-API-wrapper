@@ -3,7 +3,7 @@ extends HBoxContainer
 
 ## "Edit FIZ": shows the vehicle a MaszynaRailVehicle3D builds as internal children in the Scene
 ## dock, and hides it again. That node is the only one with something to show - a
-## FizVehiclePhysicsNode has no node tree of its own (a .fiz is data, VehicleModel).
+## FizVehiclePhysicsNode has no node tree of its own (a .fiz is data, the vehicle's description).
 
 var _selected_vehicle:MaszynaRailVehicle3D
 

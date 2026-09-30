@@ -25,6 +25,8 @@
 		</method>
 	</methods>
 	<members>
+		<member name="description" type="VehicleController" setter="set_description" getter="get_description">
+		</member>
 		<member name="driver_type" type="int" setter="set_driver_type" getter="get_driver_type" enum="VehicleController.DriverType" default="0">
 		</member>
 		<member name="initial_velocity" type="float" setter="set_initial_velocity" getter="get_initial_velocity" default="0.0">
@@ -32,8 +34,6 @@
 		<member name="load_amount" type="float" setter="set_load_amount" getter="get_load_amount" default="0.0">
 		</member>
 		<member name="load_name" type="String" setter="set_load_name" getter="get_load_name" default="&quot;&quot;">
-		</member>
-		<member name="model" type="VehicleModel" setter="set_model" getter="get_model">
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
 		</member>

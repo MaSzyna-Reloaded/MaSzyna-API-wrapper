@@ -6,7 +6,7 @@ extends MaszynaGutTest
 ## here.
 
 const Order = MaszynaLegacyAIDriver.Order
-const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const LINE_VELOCITY:float = 100.0
 const RESTRICTED_VELOCITY:float = 40.0
 const DIVERGING_VELOCITY:float = 20.0

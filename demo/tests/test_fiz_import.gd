@@ -6,15 +6,26 @@ var vehicle: VehiclePhysicsNode
 var controller: VehicleController
 
 
-## A .fiz is a VehicleModel now; a VehiclePhysicsNode is what builds a vehicle from one, and the
+## A .fiz is a vehicle's description (a VehicleController with its components) now; a VehiclePhysicsNode is what builds a vehicle from one, and the
 ## controller it owns is not a node - it lives and dies with the vehicle.
 func before_each():
     vehicle = VehiclePhysicsNode.new()
     add_child(vehicle)
     RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
-    vehicle.set_model(FizVehicleBuilder.build_model_at(FIXTURE_PATH))
+    vehicle.set_description(FizVehicleBuilder.build_description_at(FIXTURE_PATH))
     controller = vehicle.get_controller()
     await wait_idle_frames(2)
+
+
+## The description is data: the vehicle is built from a copy of it, and the description itself is
+## never a vehicle - no component joined to it, no command registered on it.
+func test_the_description_is_not_a_vehicle() -> void:
+    var description: VehicleController = FizVehicleBuilder.build_description_at(FIXTURE_PATH)
+    assert_true(description.components.size() > 0, "it carries its components")
+    for component: VehicleComponent in description.components:
+        assert_null(component.get_controller(), "%s joined no vehicle" % component.get_class())
+    assert_eq(description.get_commands(), PackedStringArray(), "and registers no command")
+    assert_ne(vehicle.get_controller(), description, "the vehicle is a copy")
 
 
 func after_each():
@@ -133,7 +144,7 @@ func test_two_coupler_sections_reach_both_ends() -> void:
     var two_couplers := VehiclePhysicsNode.new()
     add_child_autofree(two_couplers)
     RailVehicleServer.vehicle_attach(two_couplers.get_vehicle_rid())
-    two_couplers.set_model(FizVehicleBuilder.build_model_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
+    two_couplers.set_description(FizVehicleBuilder.build_description_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
     await wait_idle_frames(2)
 
     var couplers:Array = two_couplers.get_controller().find_rail_components(RailVehicleComponentType.COMPONENT_BUFFERS)

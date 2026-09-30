@@ -47,6 +47,7 @@ namespace godot {
         p_instance.root_nodes.clear();
         p_instance.light_nodes.clear();
         p_instance.submodel_nodes.clear();
+        p_instance.emissive_materials.clear();
     }
 
     void E3DNodesBackend::apply_poses(E3DInstanceData &p_instance) {
@@ -56,7 +57,10 @@ namespace godot {
                 continue;
             }
             if (Node3D *node = Object::cast_to<Node3D>(ObjectDB::get_instance(*node_id)); node != nullptr) {
-                node->set_transform(pose.key->get_transform() * pose.value);
+                const Transform3D rest = p_instance.root_nodes.has(*node_id)
+                                                 ? p_instance.node_transform * pose.key->get_transform()
+                                                 : pose.key->get_transform();
+                node->set_transform(rest * pose.value);
             }
         }
     }
@@ -113,6 +117,21 @@ namespace godot {
                 geometry->set_material_overlay(p_instance.material_overlay);
             }
         }
+        // what a client set on named submodels (E3DRenderingServer::instance_set_submodel_*())
+        for (const KeyValue<String, E3DInstanceData::SubmodelSettings> &settings: p_instance.submodel_settings) {
+            const ObjectID *node_id = p_instance.submodel_nodes.getptr(settings.value.submodel);
+            if (node_id == nullptr) {
+                continue;
+            }
+            _set_node_visible(*node_id, _is_submodel_shown(p_instance, settings.value.submodel));
+            if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(ObjectDB::get_instance(*node_id));
+                geometry != nullptr && settings.value.material_override.is_valid()) {
+                geometry->set_material_override(settings.value.material_override);
+            }
+        }
+        for (const Ref<ShaderMaterial> &material: p_instance.emissive_materials) {
+            material->set_shader_parameter("emission_energy", p_instance.emission_energy);
+        }
     }
 
     void E3DNodesBackend::_add_submodels(
@@ -158,7 +177,16 @@ namespace godot {
             const bool force_alpha =
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
-                const Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
+                Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
+                // the instance drives its self-illumination (instance_set_emission_energy()), so it
+                // draws with copies of its own rather than the materials every instance shares
+                if (const Ref<ShaderMaterial> shader_material = material;
+                    p_instance.emission_energy >= 0.0 && shader_material.is_valid() &&
+                    bool(shader_material->get_shader_parameter("emission_enabled"))) {
+                    const Ref<ShaderMaterial> own = shader_material->duplicate();
+                    p_instance.emissive_materials.push_back(own);
+                    material = own;
+                }
                 if (material.is_valid()) {
                     geometry->set_material_override(material);
                 }
@@ -179,10 +207,13 @@ namespace godot {
 
             // IMPORTANT: applying transform **after** adding to the tree
             // Applying transform before adding may cause issues (especially on windows)
+            // a submodel at the top of the model sits where the model sits in the attached node
+            const Transform3D transform = p_parent == p_target ? p_instance.node_transform * submodel->get_transform()
+                                                               : submodel->get_transform();
             if (SpotLight3D *spotlight = Object::cast_to<SpotLight3D>(child); spotlight != nullptr) {
                 // Do not scale SpotLight3D to avoid configuration warnings
-                spotlight->set_position(submodel->get_transform().origin);
-                spotlight->set_basis(submodel->get_transform().basis.orthonormalized());
+                spotlight->set_position(transform.origin);
+                spotlight->set_basis(transform.basis.orthonormalized());
                 if (!p_parent_light_name.is_empty()) {
                     E3DInstanceData::LightNodes &light_nodes = p_instance.light_nodes[p_parent_light_name];
                     light_nodes.spotlight = ObjectID(spotlight->get_instance_id());
@@ -208,7 +239,7 @@ namespace godot {
                     spotlight->add_child(point, false, Node::INTERNAL_MODE_BACK);
                 }
             } else {
-                child->set_transform(submodel->get_transform());
+                child->set_transform(transform);
             }
 
             if (is_editor) {

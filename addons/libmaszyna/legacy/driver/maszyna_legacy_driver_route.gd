@@ -462,7 +462,7 @@ func update(
     if trainset.vehicles:
         obstacle = RailVehicleServer.vehicle_find_vehicle(
                 trainset.vehicles[0],
-                MaszynaLegacyDriverTrainset.FRONT_END if trainset.front_direction > 0 else MaszynaLegacyDriverTrainset.REAR_END,
+                RailVehicleController.COUPLER_END_FRONT if trainset.front_direction > 0 else RailVehicleController.COUPLER_END_REAR,
                 maxf(OBSTACLE_RANGE, reach))
     if obstacle:
         obstacle_speed = VehicleServer.vehicle_get_speed(obstacle.vehicle_rid)

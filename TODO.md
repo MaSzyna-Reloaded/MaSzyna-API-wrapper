@@ -40,44 +40,35 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   through `_get_component_state` rather than being walked for its own variables; the
   dump mixes nine `prefix/key` namespaces with flat `component_key` names. Typed state names drop
   the prefix (`brake_pipe_pressure` -> `brakes.pipe_pressure`); dump keys keep it.
-* **D - one of three.** The controller is an `Object`. Not done: it is still created and owned by
-  `VehiclePhysicsNode::_build()` - it belongs in `vehicle_create()`, which would also remove
-  `VehiclePlacement::controller_id`; registering the name and the commands still hangs off
-  `attach_to_system()`.
+* **D - one of three.** The controller is a `RefCounted` `Resource`, and the vehicle has one
+  handle: `VehiclePhysicsNode` creates it and its controller in `VehicleServer`
+  (`controller_configure`, `vehicle_bind_controller`), from its `controller` property or, given
+  none, from `_build_controller()` (once, on entering the tree - `MaszynaRailVehiclePhysicsNode`
+  asks `FizVehicleBuilder`); the live controller is `VehicleServer.vehicle_get_controller(rid)`.
+  `RailVehicle3D` creates no RID, it only takes the node's (`set_vehicle()`). Not done: the
+  construction still lives in the node - it belongs in `vehicle_create()`; registering the name and
+  the commands still hangs off `attach_to_system()`.
 
-  **What the simulation already does without a node, measured 2026-09-27:** stepping keys off the
-  placements, not the nodes (`_refresh_stepping()` runs while `!vehicles.is_empty()`), and the step
-  skips a vehicle that nothing draws (`if (placement->rail_vehicle_id == 0) continue;`). The
-  controller and its components are `Object`s and `attach_to_system()` only names the vehicle and
-  registers its commands. So a vehicle can be simulated through the servers alone today; the node
-  is needed because the *code that constructs the controller* lives in it, which is all this stage
-  has left to move.
-
-  **The two handles are not removable churn, and an attempt to remove them failed.** Either node
-  may come first - a test sets `controller_path` after both are in the tree, so the physics node
-  builds and makes the vehicle before the drawing node binds - so whichever is second must adopt
-  the other's handle. Deleting the adoption gave the drawing node a vehicle with no controller and
-  a position frozen at the origin (14 of 21 cases of `test_rail_vehicle_track_movement`).
-  **Worth fixing properly:** `vehicle_attach_controller` is called from both nodes for the same
-  controller, and the matching detach has no owner at all - when the physics node goes, nothing
-  takes its controller out of a vehicle it does not own.
+  **What the simulation already does without a node:** stepping keys off the placements, and the
+  step skips only a vehicle `RailVehicleServer` does not hold (`vehicle_is_attached()`). So a
+  vehicle can be simulated through the servers alone; the node is needed because the *code that
+  constructs the controller* lives in it, which is all this stage has left to move.
 * **E - not started.** Zero of the ~20 proxy nodes; no `VehicleControllerNode`.
 * **F - done**, what is left of the area:
   * The node's public API is the `.scn` `dynamic` line only: `data_path` + `file_name` + `skin`
-    locate the data; exported stay `train_id`, `initial_velocity`, the occupant,
-    `start_track_name`, `start_track_offset`, `start_direction`, `head_display_material`. No cabin,
+    locate the data; exported stay `vehicle_id`, `initial_velocity`, the occupant (`driver_type`),
+    the load, and from `RailVehicle3D` `start_track_name`, `start_track_offset`, `start_direction`
+    (unused in a `TrainSet3D`, which places its vehicles) and `head_display_material`. No cabin,
     sound, pantograph or light property belongs on the node (all MMD).
   * The trailing `destination` of the `dynamic` line is dropped
     (`maszyna_node_dynamic_importer.gd`).
-  * `RailVehicle3D` switches processing on (`:64`, `:340`) and never off, so every vehicle ticks
-    forever to look at two dirty flags; the setter should turn processing on and the tick off.
 * **G - most of it landed.** `@export_node_path("VehicleController")` is gone from **all 14 files**.
   Of the cabin scripts, **20 take a single key** through `CabinSystem.vehicle_state_value()` and
   **9 still take the whole dump**, of which only `cabin_windscreen_wipers.gd` does it per frame.
-  `CabinSystem` is keyed on the RID. **`RailVehicle3D` no longer reads the dump at all** (2026-09-27):
-  the two pantograph helpers took a `Dictionary` they never opened - every value came from the
-  electric engine's and the controller's typed accessors - and the roof light and the wiper
-  positions now come from `RailVehicleLighting` and `RailVehicleWipers`. Left: `TrainSoundSystem`
+  `CabinSystem` is keyed on the RID. **Nothing that draws a vehicle reads the dump**:
+  `RailVehicle3D` reads nothing at all (2026-09-30), and `RailVehicleRenderingServer` takes every
+  value from the components' typed getters (`RailVehicleLighting`, `RailVehicleWipers`,
+  `RailVehicleWheels`, the engines). Left: `TrainSoundSystem`
   reads the whole dump, which is right for it (its triggers are keyed by the MMD's own
   `state_property` names), and `cabin_windscreen_wipers.gd` still reads it per frame.
 * **H - not started.** No `UpdatePhase`; the order is hand-written in
@@ -85,16 +76,11 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   `TMoverParameters::ComputeMovement`/`Update` and the three ordering bugs on record (#57 line
   breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` must exist first - `RailVehicleDoors`
   ticks and has no test.
-* **I - two of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone, and so is
-  `TrainSystem`: vehicles are held and commanded by RID, and `train_id` is only the scenery name in
-  `RailVehicleServer`'s name registry, where it may be empty or repeated. Left: `train_id` is still
-  written by the physics node rather than having `RailVehicle3D` as its only writer.
-
-**`RailVehicle3D` binds its tick under a virtual's name.**
-`ClassDB::bind_method(D_METHOD("_process", ...), &RailVehicle3D::process_manually)` registers a
-method called `_process`. No GDScript subclass defines `_process` today, so the trap of
-`FINDINGS.md` 2026-09-23 - a script replacing a native virtual, silently - is not active, but it is
-one subclass away. Either the tick gets a name of its own or the class stops binding that one.
+* **I.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone, and so is `TrainSystem`:
+  vehicles are held and commanded by RID, and `vehicle_id` is only the scenery name in
+  `VehicleServer`'s name registry, where it may be empty or repeated. The item left here -
+  `RailVehicle3D` as the name's only writer - is moot since the node became a proxy with no name:
+  `VehiclePhysicsNode.vehicle_id` is the one writer.
 
 **One state cache, in the vehicle server - done 2026-09-27.** `RailVehicleController::get_state()`
 answers from `RailVehicleServer::vehicle_dump_state(get_rid())`, `VehicleController::compose_state()`
@@ -107,23 +93,9 @@ command runs synchronously in the middle of a step, so keying on the step alone 
 one keypress late. Moving to a bare frame counter would bring that back.
 
 **The vehicle's name belongs to the vehicle server - done.** `vehicle_set_name()` /
-`vehicle_get_name()` / `vehicle_get_rid_by_name()` on `RailVehicleServer`, like
+`vehicle_get_name()` / `vehicle_get_rid_by_name()` on `VehicleServer`, like
 `TrackServer::track_get_rid_by_name()`, are the only name registry; TrainSystem is gone.
-`CabinSystem`'s whole vehicle-facing surface (`vehicle_state`, `vehicle_config`,
-`vehicle_component`, `vehicle_state_value`, `occupied_cab`) is keyed on `train_id` - flip it to the
-RID in one pass.
-
-**The pantograph's power path is simulation living in a node.**
-`RailVehicle3D::_update_pantograph_power()` computes contact points, asks `TractionServer`
-for the span and writes the voltage into `RailVehicleElectricEngine` every frame. It belongs in
-`RailVehicleServer`'s step (with the remembered span per pantograph); the node keeps
-`_apply_pantograph_animation()`. `pantograph_front_offset`/`pantograph_rear_offset` are exported on
-the node but are the vehicle's geometry (`TAnimPant::vPos`). Weaker: the wiper *positions* in
-`_update_wipers()` are simulation too.
-
-**Live bug:** `RailVehicle3D.cpp:93` offers a node path of type
-`"VehicleController,FIZTrainController"` - the first is an `Object` and cannot be picked, the
-second exists nowhere.
+`CabinSystem`'s vehicle-facing surface is keyed on the RID.
 
 **A test must not clobber a global setting.** `test_fiz_train_controller` points
 `UserSettings.save_maszyna_game_dir()` at its fixture in `before_all`; a crash skips the restore
@@ -155,11 +127,6 @@ does not help; it was believed to register against the template, the packing tha
 **The `.fiz` path has not been run in the game** since the components stopped being nodes - only
 in tests.
 
-**Coverage gap before stage C:** nothing tests `GenericVehicleComponent` (none of the 95 scripts);
-its renamed GDScript API (`_process_component`, `_get_component_state`, `_get_component_config`,
-`get_vehicle_state`, `get_controller`) was checked only by running
-`demo/examples/custom_train_part.tscn`/`custom_powered_train_part.tscn`.
-
 Traps for every stage: bump the cache tag with the code whose output is cached
 (`FIZ_PARSER_FORMAT_VERSION`, `MaterialManager.CACHE_VERSION`, `E3DModel.FORMAT_VERSION`,
 `structure-vN`); run `godot-double --headless --import` before believing "Identifier not
@@ -181,16 +148,15 @@ interfaces keep naming no backend.
 
 ### What still reaches a class by name from C++
 
-Allowed (GDScript hosted by C++, commented at the call site): `Cabin3D::_propagate_train_id()` ->
-`set_train_id`; `GenericVehicleComponent` -> `_process_component`, `_get_component_state`,
+Allowed (GDScript hosted by C++, commented at the call site): `Cabin3D::_propagate_vehicle_rid()` ->
+`set_vehicle_rid`; `GenericVehicleComponent` -> `_process_component`, `_get_component_state`,
 `_get_component_config`. Not allowed - our own classes still in GDScript, fixed when their base
 moves to C++:
 
 | Class | Named accesses | Where |
 | --- | --- | --- |
-| `E3DModelInstance` | 15 | `is_e3d_loaded` x6, `reload` x2, `get_aabb`, `set_smoke_intensity`, `instancer` x2, `lights_state` x3 |
+| `E3DModelInstance` | 3 | `get_e3d_instance`, `e3d_instance_created` (connect, disconnect) in `RailVehicle3D`, commented |
 | `TrackCurve` | 10 | `p1`, `c1`, `c2`, `p2`, `roll1`, `roll2` in `TrackServer` and `RailVehicleServer` |
-| `RainVolume` | 6 | `velocity_multiplier`, `bound_enabled`, `bound_min`, `bound_max` |
 
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
@@ -214,7 +180,8 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
   (increase/decrease/toggle/hold, repeat, monostable) goes to the cab logic, built from the same
   MMD/catalog as the widgets (`MmdCabinInstancer`, `LegacyCabinControls`); the player's keys reach
   it through `CabinSystem.act()`; the widgets only draw and take the mouse. Then the 3D cab can
-  exist only in the CABIN view (`RailVehicle3D.show_cabin()`/`hide_cabin()` are ready for it).
+  exist only in the CABIN view (`CabinSystem.vehicle_show_cabin()`/`vehicle_hide_cabin()` are
+  ready for it).
 * The start vehicle is still looked for every frame until the scenery has it
   (`MaszynaPlayer._find_start_vehicle()`), instead of an event saying the trainset is built.
 
@@ -322,8 +289,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `velsignalnext`, `velnext`, `actualproximitydist`, `train_atpassengerstop`, `train_length`,
   `trainnumber`, every `train_*` key (TTrainParameters::serialize(), mtable.cpp:641), and
   `$timetable=` (dictionary.cpp:36).
-* **No test** for `RailVehicleServer.vehicle_get_coupled()` (order from the far end, stop at a
-  coupling without the element, a turned vehicle); `PythonScreenState.compose()` is tested only for
+* **Half a test** for `RailVehicleServer.vehicle_get_coupled()`: the order through a turned vehicle
+  is covered (`test_train_set_3d.gd`), the stop at a coupling without the flags asked for is not;
+  `PythonScreenState.compose()` is tested only for
   the EIM row (test_train_electric_induction_engine.gd).
 * **Commands a script returns are not executed** (two scripts send `lightsset`); map
   `simulation::commandMap` names onto vehicle commands (PyInt.cpp:138-194).
@@ -356,8 +324,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Rest of TDynamicObject::Update's driver block (DynObj.cpp:3240-3400) not ported: the train-wide
   ED/PN brake force split of an induction motor trainset, `EqvtPipePress = GetEPP()`, and the
   unpowered-car copy of MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
-* `RailVehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
-  `set_pantograph_wire_voltage()` and read by nothing.
 * Wheels turn at half speed: `MoverRailVehicleWheels::_do_process_component` adds `rad_to_deg(V*dt/D)`,
   the original `114.59155... * V * dt / D` = `rad_to_deg(2*V*dt/D)` (DynObj.cpp:3780-3784 at
   df5a8a8). Waiting for the operator.
@@ -405,15 +371,15 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   vehicles' and the weather's players, and the global scale left at 1.
 
 * MMD offsets of non-running sounds are used raw - the `SfxPlayer3D`s are not turned 180 degrees
-  like the model (`maszyna_rail_vehicle_3d_instancer.gd:97`), so horns, compressor, brakes etc.
-  with `offset:` sit mirrored (x, z). Running sounds convert
+  like the model (`MASZYNA_VEHICLE_FRAME`, `maszyna_rail_vehicle_3d_instancer.gd`), so horns,
+  compressor, brakes etc. with `offset:` sit mirrored (x, z). Running sounds convert
   (`MmdSoundBankInstancer._build_running_events()`).
 * Missing running sounds: `tractionacmotor:`/`inverter:`/`motorblower:` (`DynObj.cpp:5745-5800`,
   `8012-8080`), `wheelflat:` (`DynObj.cpp:4722`), `derail:` (`DynObj.cpp:5910`), `transmission:`
   (`DynObj.cpp:5822`), cab `huntingnoise:` (`Train.cpp:8284`).
 * Wiper sounds (`wiperfrompark:`, `wipertopark:`, `DynObj.cpp:4082-4099`) not played; the arm swing
-  direction (`RailVehicle3D::_update_wipers()`, as `TDynamicObject::UpdateWiper()`) not checked in
-  game.
+  direction (`RailVehicleRenderingServer::_pose_wipers()`, as `TDynamicObject::UpdateWiper()`) not
+  checked in game.
 * Wheel clatter bump (`AccVert`, `DynObj.cpp:3533`, cab shake only) not ported.
 * Open cab window (`Global.CabWindowOpen`): the original plays the trainset's outer noise and stops
   the cab running noise (`DynObj.cpp:4638`, `Train.cpp:8274`); no cab window state yet.
@@ -438,12 +404,25 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ## Vehicles
 
-* `MaszynaRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` in its own `_process`), so
-  vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`). Building
-  belongs in a `MaszynaRailVehicle3DFactory`.
-* A distant vehicle's low-poly interior (`OPTIMIZED`, `RailVehicle3D::_update_model_detail()`) has
-  no materials to dim and keeps its baked emission regardless of `roof_light_enabled` until back
-  within `maszyna/rendering/vehicle_detail_distance`.
+* `MaszynaRailVehicle3D` builds itself (`MaszynaRailVehicle3DManager.build_into()` in its own
+  `_process`), so vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`
+  awaits `vehicle_built`). Building belongs in a `MaszynaRailVehicle3DFactory`.
+* A distant vehicle's low-poly interior (`OPTIMIZED`,
+  `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of
+  `roof_light_enabled` until back within `maszyna/vehicles/detail_distance`:
+  `E3DRenderingServer.instance_set_emission_energy()` reaches only the NODES backend.
+* The vehicle's lamps drawn from its lighting (`RailVehicleRenderingServer::_update_lights()`) have no
+  test since `test_rail_vehicle_lights.gd` went with `RailVehicle3D.lights`.
+* `MaszynaVehicleStructure` and `RailVehicleAppearance` - candidates for a better name.
+* `RailVehicleServer.trainset_move(vehicle, distance)` takes a vehicle RID while the other
+  `trainset_*` now act on a trainset handle - rename (e.g. `vehicle_move_coupled`).
+* A vehicle without a start track no longer moves by its own velocity: the off-track motion went
+  with `RailVehicle3D`'s `_process` (the KA car in `demo_3d` stands). Decide whether
+  `RailVehicleServer` should move off-track vehicles.
+* `RailVehicleLighting::LightEnd {LIGHT_END_FRONT, LIGHT_END_REAR}` duplicates
+  `RailVehicleController::CouplerEnd`.
+* The 8 m shift of a trainset's first vehicle on a track with `Event0`
+  (simulationstateserializer.cpp:1050-1057) is not ported (`RailVehicleServer.trainset_place()`).
 * The `structure-vN` tag (`maszyna_rail_vehicle_3d_manager.gd`) is bumped by hand; a
   `MaszynaRailVehicle3DInstancer` change without a bump keeps serving the old structure, and the
   cache survives a checkout.
@@ -462,16 +441,17 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
 * The energy meter (`MoverCurrentCollectorUnit::meter_energy()`, DynObj.cpp:3798-3832) ports the
   original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
-  `ShowCurrent(0) / active` (`RailVehicle3D.cpp:1480`) - whether it should take the ported one is
-  open. The meter has no test: it needs an electric fixture drawing current under a live wire.
+  `get_current0() / collecting` (`RailVehicleServer::vehicle_collect_current()`) - whether it
+  should take the ported one is open. The meter has no test: it needs an electric fixture drawing
+  current under a live wire.
 * "Edit FIZ" (taking a vehicle out of the tree and back) still logs errors in code the vehicle
   layer rework did not touch: `cabin_python_screen.gd` and `maszyna_dynamic_train_cabin.gd`
-  disconnect in `_exit_tree()` what they connected only once (`_ready()`/a guard);
-  `maszyna_rail_vehicle_3d.gd` `_apply_editable_in_editor()` calls `get_index()` on an internal
-  node without `include_internal`; and 26 `!is_inside_tree()` transform reads during the toggle.
-* Tests still reach the vehicle through `VehiclePhysicsNode.get_controller()` and call the
-  controller directly; the plan's "tests go by RID" (`VehicleServer`/`RailVehicleServer` calls, a
-  helper returning the RID) is not done.
+  disconnect in `_exit_tree()` what they connected only once (`_ready()`/a guard); and 26
+  `!is_inside_tree()` transform reads during the toggle (counted before `RailVehicle3D` became a
+  proxy - count again).
+* Tests still take the controller (`RailVehicle3D.get_controller()`,
+  `VehicleServer.vehicle_get_controller()`) and call it directly; the plan's "tests go by RID"
+  (`VehicleServer`/`RailVehicleServer` calls, a helper returning the RID) is not done.
 * `driver_type` (which end is manned - headdriver/reardriver) stays on the generic
   `VehicleController`/`VehicleServer`; whether it is a rail value like the type and the load is open.
 * `demo/examples/mover_demo.*` and the `custom_*_train_part` examples still assume components
@@ -557,7 +537,7 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * "Cold engine smokes grey" never ran in the original (`particles.cpp:176` compares instead of
   assigns); would need `dizel_heat.Ts` exposed.
 * Vehicle emitters are not switched off when the vehicle is culled, only when its
-  `E3DModelInstance` hides; the original stops beyond `2 * BaseDrawRange * fDistanceFactor`
+  E3D instance hides; the original stops beyond `2 * BaseDrawRange * fDistanceFactor`
   (`particles.cpp:452`), the wrapper streams only scenery ones (`maszyna/rendering/smoke_distance`).
 
 ### Other
@@ -1035,8 +1015,6 @@ ported, into a delegate.
   `test_rail_vehicle_rain_exclusion.gd` (sm42_v1). Replace with fixtures in `demo/tests/fixtures/`
   as the EP07 tests were: a cut `.scn` (`scenery/ep07.scn`), the vehicle's own `.fiz`/`.mmd`, no
   models and no sounds (a missing one is a warning).
-* The fixtures carry no models, so the low-poly interior's cab visibility (DynObj.cpp:1211-1219,
-  `test_zzz_ep07_cab_change.gd`) has no test any more.
 * Tests that switch the game dir with `UserSettings.save_maszyna_game_dir()` write the user's
   `settings.cfg`: `test_maszyna_rail_vehicle_3d_manager.gd`, `test_e3d_lights_state.gd`,
   `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,

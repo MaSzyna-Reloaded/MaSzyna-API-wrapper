@@ -11,7 +11,6 @@ extends PanelContainer
 signal close_requested
 
 const ROW:PackedScene = preload("timetable_row.tscn")
-const FRONT_END:int = 0
 const MINUTES_PER_HOUR:float = 60.0
 const SECONDS_PER_MINUTE:float = 60.0
 const HOURS_PER_DAY:int = 24
@@ -64,7 +63,7 @@ func _follow_trainset() -> void:
     var trainset:Array[RID] = []
     if _vehicle.is_valid():
         trainset = RailVehicleServer.vehicle_get_coupled(
-                _vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+                _vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     for vehicle:RID in trainset:
         var driver:RID = DriverSystem.vehicle_get_driver(vehicle)
         var driver_state:Dictionary = DriverSystem.driver_get_timetable_state(driver) if driver.is_valid() else {}

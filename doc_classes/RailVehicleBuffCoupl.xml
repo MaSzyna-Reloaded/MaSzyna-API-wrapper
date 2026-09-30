@@ -47,7 +47,7 @@
 		<member name="power_coupling" type="int" setter="set_power_coupling" getter="get_power_coupling" default="128">
 			Bitmask defining which power lines can be coupled.
 		</member>
-		<member name="power_flag" type="int" setter="set_power_flag" getter="get_power_flag" default="0">
+		<member name="power_flag" type="int" setter="set_power_flag" getter="get_power_flag" default="768">
 			Bitmask indicating the current power capabilities available at the coupler.
 		</member>
 	</members>
@@ -66,48 +66,6 @@
 		</constant>
 		<constant name="COUPLER_TYPE_ARTICULATED" value="4" enum="CouplerType">
 			Articulated connection (permanent or semi-permanent).
-		</constant>
-		<constant name="ALLOWED_MECHANICAL" value="1" enum="AllowedFlagBits">
-			Allows mechanical coupling.
-		</constant>
-		<constant name="ALLOWED_BRAKE_PIPE" value="2" enum="AllowedFlagBits">
-			Allows brake pipe connection (pneumatic).
-		</constant>
-		<constant name="ALLOWED_MULTIPLE_CONTROL" value="4" enum="AllowedFlagBits">
-			Allows multiple unit control signal connection.
-		</constant>
-		<constant name="ALLOWED_HIGH_VOLTAGE" value="8" enum="AllowedFlagBits">
-			Allows high voltage heating connection.
-		</constant>
-		<constant name="ALLOWED_PASSAGE" value="16" enum="AllowedFlagBits">
-			Allows passenger/crew passage connection.
-		</constant>
-		<constant name="ALLOWED_AIR_8_BAR" value="32" enum="AllowedFlagBits">
-			Allows 8-bar air pipe connection (supply pipe).
-		</constant>
-		<constant name="ALLOWED_HEATING" value="64" enum="AllowedFlagBits">
-			Allows steam/electric heating connection.
-		</constant>
-		<constant name="ALLOWED_FIXED_COUPLING_LOCK" value="128" enum="AllowedFlagBits">
-			Indicates a fixed coupling lock.
-		</constant>
-		<constant name="ALLOWED_ELEC_24V" value="256" enum="AllowedFlagBits">
-			Allows 24V electric cable connection.
-		</constant>
-		<constant name="ALLOWED_ELEC_110V" value="512" enum="AllowedFlagBits">
-			Allows 110V electric cable connection.
-		</constant>
-		<constant name="ALLOWED_ELEC_3X400_V" value="1024" enum="AllowedFlagBits">
-			Allows 3x400V electric cable connection.
-		</constant>
-		<constant name="POWER_24V" value="256" enum="PowerFlagBits">
-			Indicates presence of 24V power.
-		</constant>
-		<constant name="POWER_110V" value="512" enum="PowerFlagBits">
-			Indicates presence of 110V power.
-		</constant>
-		<constant name="POWER_3X400_V" value="1024" enum="PowerFlagBits">
-			Indicates presence of 3x400V power.
 		</constant>
 		<constant name="BUFFER_LOCATION_FRONT" value="0" enum="BufferLocation">
 		</constant>

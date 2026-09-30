@@ -76,7 +76,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     model.type_name = "test"
     model.battery_voltage = 110.0
     physics_node = build_vehicle_node("test_idle_pantograph_train", model)
-    controller = physics_node.get_controller()
+    controller = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
 
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
@@ -92,7 +92,6 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
     vehicle.start_direction = TrackServer.DIRECTION_NORMAL
-    vehicle.pantograph_collector_width = 0.5
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(physics_node)
     await wait_idle_frames(2)

@@ -1,16 +1,12 @@
 #include "PlayerServer.hpp"
 #include "driver/DriverSystem.hpp"
 #include "vehicles/base/VehicleServer.hpp"
+#include "vehicles/rail/RailVehicleRenderingServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/core/class_db.hpp>
 
 namespace godot {
     const char *PlayerServer::player_vehicle_changed_signal = "player_vehicle_changed";
-
-    namespace {
-        /// The end vehicle_get_coupled() starts listing a trainset from
-        constexpr int FRONT_END = 0;
-    } // namespace
 
     /// The vehicle's trainset driven by its drivers again, or not
     static void set_trainset_control_active(const RID &p_vehicle, const bool p_active) {
@@ -18,8 +14,8 @@ namespace godot {
         DriverSystem *drivers = DriverSystem::get_instance();
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_NULL(drivers);
-        const TypedArray<RID> trainset =
-                vehicles->vehicle_get_coupled(p_vehicle, FRONT_END, RailVehicleController::COUPLING_ELEMENT_COUPLER);
+        const TypedArray<RID> trainset = vehicles->vehicle_get_coupled(
+                p_vehicle, RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLING_FLAG_COUPLER);
         for (int index = 0; index < trainset.size(); ++index) {
             drivers->vehicle_set_control_active(trainset[index], p_active);
         }
@@ -67,11 +63,13 @@ namespace godot {
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_NULL(drivers);
         ERR_FAIL_COND(!vehicle_server->vehicle_exists(p_vehicle));
-        ERR_FAIL_COND_MSG(vehicles->vehicle_get_rail_vehicle(p_vehicle) == 0, "The vehicle has no cab to sit in");
+        const RailVehicleRenderingServer *drawn = RailVehicleRenderingServer::get_instance();
+        ERR_FAIL_COND_MSG(
+                drawn == nullptr || !drawn->vehicle_is_attached(p_vehicle), "The vehicle has no cab to sit in");
         if (vehicle.is_valid()) {
             // another trainset's vehicle: the one left is driven by its drivers again
-            const TypedArray<RID> trainset =
-                    vehicles->vehicle_get_coupled(vehicle, FRONT_END, RailVehicleController::COUPLING_ELEMENT_COUPLER);
+            const TypedArray<RID> trainset = vehicles->vehicle_get_coupled(
+                    vehicle, RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLING_FLAG_COUPLER);
             if (!trainset.has(p_vehicle)) {
                 set_trainset_control_active(vehicle, true);
             }

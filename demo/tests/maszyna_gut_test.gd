@@ -19,14 +19,14 @@ func wait_idle_frames(frames, message = ""):
 ## up empty and the test adds the components it cares about.
 func build_vehicle(train_id:String = "TestTrain", description:VehicleController = null,
         initial_velocity:float = 0.0) -> VehicleController:
-    return build_vehicle_node(train_id, description, initial_velocity).get_controller()
+    return VehicleServer.vehicle_get_controller(build_vehicle_node(train_id, description, initial_velocity).get_vehicle_rid())
 
 
 ## The node itself, for a test that needs a NodePath to the vehicle (RailVehicle3D.controller_path).
 func build_vehicle_node(train_id:String = "TestTrain", description:VehicleController = null,
         initial_velocity:float = 0.0) -> VehiclePhysicsNode:
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-    physics_node.set_description(description)
+    physics_node.controller = description
     physics_node.vehicle_id = train_id
     physics_node.initial_velocity = initial_velocity
     # a rail vehicle, stepped by RailVehicleServer whether or not a RailVehicle3D places it
@@ -58,8 +58,9 @@ func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> Rai
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name
     vehicle.start_track_offset = offset
+    # a sibling of the physics node, which it takes the vehicle from as it enters the tree
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
     return vehicle
 
 
@@ -70,3 +71,44 @@ func free_rail_vehicle(vehicle:RailVehicle3D) -> void:
     remove_child(vehicle)
     vehicle.free()
     physics_node.free()
+
+
+## An exterior model built in code, drawn as nodes - what a vehicle assembled by hand names its
+## parts in (RailVehicle3D.model_instance_path): a transform submodel for every name, placed as
+## given, under the submodel `parents` names for it or at the top. Added by the test to its vehicle.
+func build_model_instance(submodels:Dictionary, parents:Dictionary) -> E3DModelInstance:
+    var built:Dictionary[String, E3DSubModel] = {}
+    for submodel_name:String in submodels:
+        var submodel:E3DSubModel = E3DSubModel.new()
+        submodel.resource_name = submodel_name
+        submodel.submodel_type = E3DSubModel.SUBMODEL_TRANSFORM
+        submodel.transform = submodels[submodel_name]
+        built[submodel_name] = submodel
+    var top:Array[E3DSubModel] = []
+    for submodel_name:String in built:
+        if parents.has(submodel_name):
+            var parent:E3DSubModel = built[parents[submodel_name]]
+            var children:Array = parent.submodels
+            children.append(built[submodel_name])
+            parent.submodels = children
+        else:
+            top.append(built[submodel_name])
+    var model:E3DModel = E3DModel.new()
+    model.submodels = top
+    var instance:E3DModelInstance = E3DModelInstance.new()
+    instance.name = "Model"
+    instance.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
+    instance.model = model
+    return instance
+
+
+## A MaSzyna vehicle built from the game data, added to the test and built - awaited
+func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehicle_id:String) -> MaszynaRailVehicle3D:
+    var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    vehicle.data_path = data_path
+    vehicle.file_name = file_name
+    vehicle.skin = skin
+    vehicle.vehicle_id = vehicle_id
+    add_child(vehicle)
+    await vehicle.vehicle_built
+    return vehicle

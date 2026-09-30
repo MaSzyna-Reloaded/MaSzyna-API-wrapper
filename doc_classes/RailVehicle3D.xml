@@ -1,84 +1,55 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="RailVehicle3D" inherits="Node3D" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		A rail vehicle in the scene - the node it is drawn at.
 	</brief_description>
 	<description>
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_cabin" qualifiers="const">
-			<return type="Cabin3D" />
-			<description>
-				The cab interior while it is shown, else [code]null[/code].
-			</description>
-		</method>
 		<method name="get_controller" qualifiers="const">
 			<return type="RailVehicleController" />
 			<description>
+				The controller the vehicle runs on, null before it has one.
 			</description>
 		</method>
 		<method name="get_rid" qualifiers="const">
 			<return type="RID" />
 			<description>
+				The vehicle's handle.
 			</description>
 		</method>
-		<method name="hide_cabin">
+		<method name="set_vehicle">
 			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
 			<description>
-				The cab interior freed; a camera put into it is to be taken out first.
-			</description>
-		</method>
-		<method name="move_on_track">
-			<return type="void" />
-			<param index="0" name="distance" type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="show_cabin">
-			<return type="void" />
-			<description>
-				The cab interior built from [member cabin_scene] into the vehicle - only a view: the cab logic is the vehicle's ([code]CabinSystem[/code]). It is built within this call, so [method get_cabin] returns it once this returns.
+				Takes the vehicle [param vehicle]: the servers are handed it with what the scene set, and whoever follows this node hears [signal vehicle_changed].
 			</description>
 		</method>
 	</methods>
 	<members>
-		<member name="cabin_rotate_180deg" type="bool" setter="set_cabin_rotate_180deg" getter="get_cabin_rotate_180deg" default="false">
-		</member>
-		<member name="cabin_scene" type="PackedScene" setter="set_cabin_scene" getter="get_cabin_scene">
+		<member name="appearance" type="RailVehicleAppearance" setter="set_appearance" getter="get_appearance">
+			What a vehicle assembled by hand looks like, beyond the parts its paths name.
 		</member>
 		<member name="controller_path" type="NodePath" setter="set_controller_path" getter="get_controller_path" default="NodePath(&quot;&quot;)">
-		</member>
-		<member name="coupler_submodel_paths" type="Dictionary" setter="set_coupler_submodel_paths" getter="get_coupler_submodel_paths" default="{}">
+			The VehiclePhysicsNode a vehicle assembled by hand takes its vehicle from.
 		</member>
 		<member name="front_bogie_path" type="NodePath" setter="set_front_bogie_path" getter="get_front_bogie_path" default="NodePath(&quot;&quot;)">
 		</member>
 		<member name="front_rolling_wheel_paths" type="NodePath[]" setter="set_front_rolling_wheel_paths" getter="get_front_rolling_wheel_paths" default="[]">
 		</member>
-		<member name="head_display_e3d_path" type="NodePath" setter="set_head_display_e3d_path" getter="get_head_display_e3d_path" default="NodePath(&quot;&quot;)">
-		</member>
 		<member name="head_display_material" type="Material" setter="set_head_display_material" getter="get_head_display_material">
-		</member>
-		<member name="head_display_node_path" type="NodePath" setter="set_head_display_node_path" getter="get_head_display_node_path" default="NodePath(&quot;&quot;)">
-		</member>
-		<member name="joint_cabs" type="bool" setter="set_joint_cabs" getter="get_joint_cabs" default="false">
-		</member>
-		<member name="lights" type="Dictionary[String, bool]" setter="set_lights" getter="get_lights" default="{}">
-		</member>
-		<member name="load_model_path" type="NodePath" setter="set_load_model_path" getter="get_load_model_path" default="NodePath(&quot;&quot;)">
-		</member>
-		<member name="low_poly_cabin_emission_energy" type="float" setter="set_low_poly_cabin_emission_energy" getter="get_low_poly_cabin_emission_energy" default="0.2">
-		</member>
-		<member name="low_poly_cabin_emission_fade_time" type="float" setter="set_low_poly_cabin_emission_fade_time" getter="get_low_poly_cabin_emission_fade_time" default="0.2">
+			The material the vehicle's head display is drawn with.
 		</member>
 		<member name="low_poly_cabin_path" type="NodePath" setter="set_low_poly_cabin_path" getter="get_low_poly_cabin_path" default="NodePath(&quot;&quot;)">
+			The low-poly interior (E3DModelInstance) of a vehicle assembled by hand.
 		</member>
 		<member name="mirror_paths" type="NodePath[]" setter="set_mirror_paths" getter="get_mirror_paths" default="[]">
 			The exterior mirrors in the original's numbering from 1: odd on the left, even on the right. The ones at the end of the occupied cab turn about their vertical axis by [member RailVehicleDoors.mirror_max_shift], as far as their side is unfolded.
 		</member>
 		<member name="model_instance_path" type="NodePath" setter="set_model_instance_path" getter="get_model_instance_path" default="NodePath(&quot;&quot;)">
-		</member>
-		<member name="pantograph_collector_width" type="float" setter="set_pantograph_collector_width" getter="get_pantograph_collector_width" default="0.5">
+			The exterior model (E3DModelInstance) of a vehicle assembled by hand; the part paths name its submodels.
 		</member>
 		<member name="pantograph_front_arm_paths" type="NodePath[]" setter="set_pantograph_front_arm_paths" getter="get_pantograph_front_arm_paths" default="[]">
 		</member>
@@ -90,7 +61,8 @@
 		</member>
 		<member name="rear_rolling_wheel_paths" type="NodePath[]" setter="set_rear_rolling_wheel_paths" getter="get_rear_rolling_wheel_paths" default="[]">
 		</member>
-		<member name="start_direction" type="int" setter="set_start_direction" getter="get_start_direction" default="0">
+		<member name="start_direction" type="int" setter="set_start_direction" getter="get_start_direction" enum="TrackServer.Direction" default="0">
+			Which way the vehicle stands on its start track.
 		</member>
 		<member name="start_track_name" type="String" setter="set_start_track_name" getter="get_start_track_name" default="&quot;&quot;">
 		</member>
@@ -100,8 +72,9 @@
 		</member>
 	</members>
 	<signals>
-		<signal name="controller_changed">
+		<signal name="vehicle_changed">
 			<description>
+				The vehicle this node draws has changed - it has one now, or a different one.
 			</description>
 		</signal>
 	</signals>

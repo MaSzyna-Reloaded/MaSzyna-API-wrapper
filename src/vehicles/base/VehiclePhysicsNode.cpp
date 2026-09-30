@@ -16,16 +16,17 @@ namespace godot {
     }
 
     void VehiclePhysicsNode::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_description", "description"), &VehiclePhysicsNode::set_description);
-        ClassDB::bind_method(D_METHOD("get_description"), &VehiclePhysicsNode::get_description);
-        /* Shown, never stored: a description built from a source file (a .fiz) would otherwise be
+        ClassDB::bind_method(D_METHOD("set_controller", "controller"), &VehiclePhysicsNode::set_controller);
+        ClassDB::bind_method(D_METHOD("get_controller"), &VehiclePhysicsNode::get_controller);
+        /* Shown, never stored: a controller built from a source file (a .fiz) would otherwise be
          * embedded in whatever scene holds this node and drift from the file it came from. A
          * vehicle authored as a .tres is referenced by the subclass that loads it. */
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::OBJECT, "description", PROPERTY_HINT_RESOURCE_TYPE, "VehicleController",
+                        Variant::OBJECT, "controller", PROPERTY_HINT_RESOURCE_TYPE, "VehicleController",
                         PROPERTY_USAGE_EDITOR),
-                "set_description", "get_description");
+                "set_controller", "get_controller");
+        GDVIRTUAL_BIND(_build_controller);
 
         ClassDB::bind_method(D_METHOD("set_vehicle_id", "vehicle_id"), &VehiclePhysicsNode::set_vehicle_id);
         ClassDB::bind_method(D_METHOD("get_vehicle_id"), &VehiclePhysicsNode::get_vehicle_id);
@@ -40,22 +41,21 @@ namespace godot {
                 "set_driver_type", "get_driver_type");
 
         ClassDB::bind_method(D_METHOD("get_vehicle_rid"), &VehiclePhysicsNode::get_vehicle_rid);
-        ClassDB::bind_method(D_METHOD("get_controller"), &VehiclePhysicsNode::get_controller);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehiclePhysicsNode::add_component);
 
         ADD_SIGNAL(MethodInfo(vehicle_changed_signal));
     }
 
     void VehiclePhysicsNode::_notification(const int p_what) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
         // on entering, not on ready: Godot readies children before their parent, and a
         // component proxy below this node has to find a vehicle already standing
         if (p_what == NOTIFICATION_ENTER_TREE && !vehicle_rid.is_valid()) {
-            // with whatever description the node was given before it entered; without one the
-            // vehicle still comes up, empty - components can be added to it, or a description
-            // given later
+            // with the controller the node was given before it entered, or the one it builds;
+            // without either the vehicle still comes up, empty - components can be added to it,
+            // or a controller given later
+            if (controller.is_null()) {
+                GDVIRTUAL_CALL(_build_controller, controller);
+            }
             _build();
         }
         if (p_what == NOTIFICATION_PREDELETE) {
@@ -70,8 +70,8 @@ namespace godot {
 
     /* The vehicle is built here and nowhere else: one owner of the handle, one owner of the
      * controller, both freed with this node. */
-    void VehiclePhysicsNode::set_description(const Ref<VehicleController> &p_description) {
-        description = p_description;
+    void VehiclePhysicsNode::set_controller(const Ref<VehicleController> &p_controller) {
+        controller = p_controller;
         if (is_inside_tree()) {
             _build();
         }
@@ -85,9 +85,9 @@ namespace godot {
         VehicleServer *server = VehicleServer::get_instance();
         ERR_FAIL_NULL(server);
         const Ref<VehicleController> configuration =
-                description.is_valid() ? description
-                                       : Ref<VehicleController>(ClassDBSingleton::get_singleton()->instantiate(
-                                                 controller_implementation()));
+                controller.is_valid() ? controller
+                                      : Ref<VehicleController>(ClassDBSingleton::get_singleton()->instantiate(
+                                                controller_implementation()));
         ERR_FAIL_COND_MSG(configuration.is_null(), "The vehicle's controller could not be made");
         const bool created = !vehicle_rid.is_valid();
         if (created) {
@@ -107,28 +107,21 @@ namespace godot {
         emit_signal(vehicle_changed_signal);
     }
 
-    Ref<VehicleController> VehiclePhysicsNode::get_description() const {
-        return description;
+    Ref<VehicleController> VehiclePhysicsNode::get_controller() const {
+        return controller;
     }
 
     RID VehiclePhysicsNode::get_vehicle_rid() const {
         return vehicle_rid;
     }
 
-    Ref<VehicleController> VehiclePhysicsNode::get_controller() const {
-        const VehicleServer *server = VehicleServer::get_instance();
-        if (server == nullptr || !vehicle_rid.is_valid()) {
-            return Ref<VehicleController>();
-        }
-        return Object::cast_to<VehicleController>(
-                ObjectDB::get_instance(ObjectID(server->vehicle_get_controller_instance_id(vehicle_rid))));
-    }
-
     void VehiclePhysicsNode::add_component(const Ref<VehicleComponent> &p_component) {
         ERR_FAIL_COND(p_component.is_null());
-        const Ref<VehicleController> controller = get_controller();
-        ERR_FAIL_COND_MSG(controller.is_null(), "VehiclePhysicsNode has no vehicle to add a component to yet.");
-        controller->add_component(p_component);
+        const VehicleServer *server = VehicleServer::get_instance();
+        const Ref<VehicleController> vehicle =
+                server != nullptr ? server->vehicle_get_controller(vehicle_rid) : Ref<VehicleController>();
+        ERR_FAIL_COND_MSG(vehicle.is_null(), "VehiclePhysicsNode has no vehicle to add a component to yet.");
+        vehicle->add_component(p_component);
     }
 
     void VehiclePhysicsNode::set_vehicle_id(const String &p_vehicle_id) {

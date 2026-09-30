@@ -76,7 +76,7 @@ func after_each() -> void:
 ## A vehicle at the origin, not given its controller yet, and the player whose camera is the listener
 func _build_vehicle() -> void:
     _physics_node = build_vehicle_node("SoundCullingTest", SM42)
-    var controller:VehicleController = _physics_node.get_controller()
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(_physics_node.get_vehicle_rid())
     controller.battery_voltage = BATTERY_VOLTAGE
     controller.apply_configuration()
     _vehicle_rid = controller.get_rid()

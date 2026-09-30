@@ -89,18 +89,30 @@ namespace godot {
                 START_MODE_DIRECTION,
             };
 
-            /* The element a coupler attached or detached, as the original names them (coupler,
-             * brake hose, main hose, control, gangway, heating); permanent marks the couplings inside
-             * one unit (coupling::permanent) */
-            enum CouplingElement {
-                COUPLING_ELEMENT_COUPLER,
-                COUPLING_ELEMENT_BRAKEHOSE,
-                COUPLING_ELEMENT_MAINHOSE,
-                COUPLING_ELEMENT_CONTROL,
-                COUPLING_ELEMENT_GANGWAY,
-                COUPLING_ELEMENT_HEATING,
-                COUPLING_ELEMENT_PERMANENT,
+            /* The ends of a vehicle, as the original numbers them (end::front, end::rear, MOVER.h) */
+            enum CouplerEnd {
+                COUPLER_END_FRONT = 0,
+                COUPLER_END_REAR = 1,
             };
+
+            /* What joins two coupled vehicles, as the original names it; the flags combine into a
+             * coupling (enum coupling, MOVER.h:162). Permanent marks the couplings inside one unit. */
+            enum CouplingFlags {
+                COUPLING_FLAG_COUPLER = 0x1,
+                COUPLING_FLAG_BRAKEHOSE = 0x2,
+                COUPLING_FLAG_CONTROL = 0x4,
+                COUPLING_FLAG_HIGHVOLTAGE = 0x8,
+                COUPLING_FLAG_GANGWAY = 0x10,
+                COUPLING_FLAG_MAINHOSE = 0x20,
+                COUPLING_FLAG_HEATING = 0x40,
+                COUPLING_FLAG_PERMANENT = 0x80,
+                COUPLING_FLAG_POWER_24V = 0x100,
+                COUPLING_FLAG_POWER_110V = 0x200,
+                COUPLING_FLAG_POWER_3X400V = 0x400,
+            };
+
+            /* The other end of the same vehicle - what a walk along a trainset leaves a vehicle by */
+            static CouplerEnd opposite_end(CouplerEnd p_end);
 
             /* Type= : bitmask identifying a vehicle's special-cased behavior family */
             enum TrainType {
@@ -141,7 +153,7 @@ namespace godot {
             static const char *cabin_occupied_changed;
             /// The trainset this vehicle belongs to gained or lost a vehicle
             static const char *trainset_changed_signal;
-            /// One coupling element attached / detached, once per event. Two signals rather than
+            /// One coupling flag attached / detached, once per event. Two signals rather than
             /// one carrying a direction: every listener would have opened by branching on it.
             static const char *coupler_attached_signal;
             static const char *coupler_detached_signal;
@@ -167,23 +179,32 @@ namespace godot {
             virtual void distance_counter_activate(bool p_pressed) = 0;
             virtual double process_movement(double p_delta) = 0;
             virtual void update_location() = 0;
-            virtual void
-            update_neighbour(int p_end, RailVehicleController *p_other, int p_other_end, double p_track_distance) = 0;
+            /* The vehicle nearest beyond p_end, p_track_distance [m] center to center along the
+             * track, facing it with p_other_end */
+            virtual void update_neighbour(
+                    CouplerEnd p_end, const Ref<RailVehicleController> &p_other, CouplerEnd p_other_end,
+                    double p_track_distance) = 0;
+            /* Nothing beyond p_end within the scan range */
+            virtual void clear_neighbour(CouplerEnd p_end) = 0;
             virtual void compute_forces(double p_delta) = 0;
             virtual void compute_movement(double p_delta) = 0;
             virtual void compute_fast_movement(double p_delta) = 0;
-            virtual void couple(RailVehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) = 0;
-            virtual void uncouple(int p_end) = 0;
-            virtual bool is_coupled(int p_end) const = 0;
-            /* Whether this end is joined by p_element (TestFlag(Couplers[end].CouplingFlag, ...)) */
-            virtual bool is_coupled_by(int p_end, CouplingElement p_element) const = 0;
+            virtual void
+            couple(const Ref<RailVehicleController> &p_other, CouplerEnd p_end, CouplerEnd p_other_end,
+                   BitField<CouplingFlags> p_coupling) = 0;
+            virtual void uncouple(CouplerEnd p_end) = 0;
+            virtual bool is_coupled(CouplerEnd p_end) const = 0;
+            /* Whether this end is joined by every one of p_flags (TestFlag(Couplers[end].CouplingFlag, ...)) */
+            virtual bool is_coupled_by(CouplerEnd p_end, BitField<CouplingFlags> p_flags) const = 0;
             virtual void coupler_connect(const Variant &p_where) = 0;
             virtual void coupler_disconnect(const Variant &p_where) = 0;
-            virtual Ref<RailVehicleController> get_coupled_controller(int p_end) const = 0;
+            virtual Ref<RailVehicleController> get_coupled_controller(CouplerEnd p_end) const = 0;
             /* Wakes the simulation the vehicle switched off while it stood with nothing to do -
              * somebody took it (RailVehicleServer::vehicle_wake()) */
             virtual void wake() = 0;
-            virtual int get_coupled_end(int p_end) const = 0;
+            /* The end of the coupled vehicle facing this one (TCoupling::ConnectedNr); only while
+             * is_coupled(p_end) */
+            virtual CouplerEnd get_coupled_end(CouplerEnd p_end) const = 0;
             /* The railway component of a kind, or null when this vehicle has none; every one of a
              * kind - a vehicle has two couplers, one per end */
             Ref<VehicleComponent> get_rail_component(RailVehicleComponentType::Type p_type) const;
@@ -226,6 +247,7 @@ namespace godot {
 
 VARIANT_ENUM_CAST(RailVehicleController::TrainPowerSource);
 VARIANT_ENUM_CAST(RailVehicleController::TrainPowerType);
-VARIANT_ENUM_CAST(RailVehicleController::CouplingElement);
+VARIANT_ENUM_CAST(RailVehicleController::CouplerEnd);
+VARIANT_BITFIELD_CAST(RailVehicleController::CouplingFlags);
 VARIANT_ENUM_CAST(RailVehicleController::TrainType);
 VARIANT_ENUM_CAST(RailVehicleController::StartMode);

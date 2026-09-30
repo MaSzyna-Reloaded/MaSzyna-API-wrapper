@@ -175,8 +175,8 @@ anything. Open work belongs in `TODO.md`.
   field. Grep for the assignment. *(09-22 config vs state)*
 * A state/config key is data, not a method name (grep for `["get_`). `Dictionary.get(key,
   default)` hides typos, so test that the key is present. *(09-23 pivot spacing zero)*
-* Config-derived values are recomputed on the config event (`mover_config_changed`), never by a
-  retry flag or a "moved" gate. *(09-23 bogies never placed)*
+* Config-derived values are recomputed on the config event (`VehicleServer.vehicle_config_changed`),
+  never by a retry flag or a "moved" gate. *(09-23 bogies never placed)*
 * A setter applies what it is named after, not "everything the instance knows". *(09-23 cab
   backlight blinking)*
 * Put a state key on the part that owns the concept. *(09-21 diesel_max_rpm)*
@@ -184,6 +184,11 @@ anything. Open work belongs in `TODO.md`.
   server subscribes to the events itself. *(09-24 switch blades; 09-21 scenery unlit)*
 * Readiness describes built content for a specific camera revision, not an empty queue.
   *(09-20 streaming from menu camera)*
+* A vehicle is configured once, before anything can see it: a controller given after it entered the
+  tree restarts it and clears every coupling made meanwhile. *(09-30 couplings undone by the second
+  configuration)*
+* A trainset placed again in another order lets go of its old pairs first, or it closes into a ring
+  and every walk along it never ends. *(09-30 reordering a trainset hung the editor)*
 * A cab (the original's TTrain) is at work only for a driven vehicle: its logic is attached on
   `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
   each step)*
@@ -199,6 +204,12 @@ anything. Open work belongs in `TODO.md`.
 * A `Resource`'s setter stores data; joining, registering and connecting happen where the object
   becomes live - loading a resource calls every setter. Its server handle is `_get_rid()`, never a
   `get_rid()` of its own. *(09-30 a stored vehicle description came up half a vehicle)*
+* A builder hands the servers what it built by the node's handle, never through the node's exported
+  properties - a script subclass of a native node saves them with the scene. *(09-30 a builder's
+  paths saved into the scene)*
+* A native node a script may subclass does its lifecycle work in `_notification()`: a script's
+  `_enter_tree()`/`_ready()` replace the extension's. *(09-30 a script subclass shadows the native
+  lifecycle)*
 * A node taken out of the tree and put back ("Edit FIZ") runs `_enter_tree()`/`_exit_tree()` again
   but `_ready()` once: subscribe where you unsubscribe. *(09-30 "Edit FIZ" disconnected what was
   never connected)*

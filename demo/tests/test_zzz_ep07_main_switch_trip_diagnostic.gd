@@ -56,7 +56,7 @@ func _find_rail_vehicle(root:Node, vehicle_name:String) -> RailVehicle3D:
     var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
     if not dynamic_vehicle:
         return null
-    return dynamic_vehicle.find_child("RailVehicle3D", false, false) as RailVehicle3D
+    return dynamic_vehicle as RailVehicle3D
 
 
 func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:

@@ -15,14 +15,14 @@ func after_each() -> void:
 
 func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
     var physics_node: VehiclePhysicsNode = build_vehicle_node()
-    var controller: VehicleController = physics_node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     var rain_volume: RainVolume = autofree(RainVolume.new())
     controller.dimensions_length = 14.24
     controller.dimensions_width = 3.1
     controller.dimensions_height = 4.4
     controller.apply_configuration()
 
-    MaszynaRailVehicle3DInstancer._fit_rain_volume(physics_node, rain_volume)
+    MaszynaRailVehicle3DInstancer._fit_rain_volume(physics_node.get_vehicle_rid(), rain_volume)
 
     assert_eq(rain_volume.size, Vector3(3.1, 4.4, 14.24))
     assert_almost_eq(rain_volume.position.y, 2.2, 0.000001)
@@ -34,14 +34,12 @@ func test_real_vehicle_excludes_rain_over_its_body() -> void:
         pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    var vehicle: RailVehicle3D = MaszynaRailVehicle3DManager.load(
-        "dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rain", 0.0, null
-    )
+    var vehicle: RailVehicle3D = RailVehicle3D.new()
     add_child_autofree(vehicle)
-    var fiz_controller: MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
+    MaszynaRailVehicle3DManager.build_into(vehicle, "dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rain", 0.0)
     await wait_idle_frames(2)
 
-    var controller: VehicleController = fiz_controller.get_controller()
+    var controller: VehicleController = vehicle.get_controller()
     var rain_volume: RainVolume = vehicle.get_node("RainExclusion") as RainVolume
     assert_not_null(controller)
     assert_gt(controller.dimensions_length, 0.0)

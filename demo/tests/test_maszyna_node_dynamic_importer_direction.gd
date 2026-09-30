@@ -4,10 +4,10 @@ extends MaszynaGutTest
 ## (simulationstateserializer.cpp:960-988) and TDynamicObject::Init() (DynObj.cpp):
 ## - offset == -1.0 means "reversed in the trainset" (`Init(..., (offset == -1.0), ...)`,
 ##   DynObj.cpp:1807).
-## - the resulting distance marks the vehicle's FRONT; the vehicle's center sits half its
-##   Dimensions L= behind it (DynObj.cpp:2308, `fDist -= 0.5 * Dim.L`), and the next vehicle in
-##   the trainset starts a full L= further back. Placing the center at the front distance made
-##   neighbouring vehicles of different lengths overlap.
+## - inside a trainset the vehicle stands where the trainset puts it: the trainset takes the
+##   track and the offset of `trainset:`, and the vehicle's `offset` as its gap (TrainSet3D).
+## - outside one the distance marks the vehicle's FRONT; its center sits half its Dimensions L=
+##   behind it (DynObj.cpp:2308, `fDist -= 0.5 * Dim.L`).
 
 const TEST_GAME_DIR:String = "user://gut/dynamic_importer_fixture"
 const SHORT_LENGTH:float = 10.0
@@ -63,33 +63,37 @@ func _import(context:MaszynaImporterContext, text:String) -> MaszynaRailVehicle3
 
 
 func test_offset_minus_one_sentinel_imports_as_reversed() -> void:
-    var vehicle:MaszynaRailVehicle3D = _import(
-            _trainset_context(20.0), "fixtures skin short -1.0 headdriver 99 0 enddynamic")
+    var context:MaszynaImporterContext = _trainset_context(20.0)
+    var vehicle:MaszynaRailVehicle3D = _import(context, "fixtures skin short -1.0 headdriver 99 0 enddynamic")
     assert_eq(vehicle.start_direction, TrackServer.DIRECTION_REVERSED)
-    assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
+    assert_eq(context.trainset_node.vehicle_gaps, [0.0] as Array[float], "a reversed vehicle stands right behind")
 
 
 func test_normal_offset_imports_as_normal_direction() -> void:
-    var vehicle:MaszynaRailVehicle3D = _import(
-            _trainset_context(20.0), "fixtures skin short 0 headdriver 99 0 enddynamic")
+    var context:MaszynaImporterContext = _trainset_context(20.0)
+    var vehicle:MaszynaRailVehicle3D = _import(context, "fixtures skin short 2.5 headdriver 99 0 enddynamic")
     assert_eq(vehicle.start_direction, TrackServer.DIRECTION_NORMAL)
-    assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
+    assert_eq(context.trainset_node.vehicle_gaps, [2.5] as Array[float], "its offset is its gap in the trainset")
 
 
-func test_trainset_vehicles_of_different_length_touch_without_overlap() -> void:
+func test_the_trainset_places_its_vehicles_not_the_vehicles_themselves() -> void:
     var context:MaszynaImporterContext = _trainset_context(20.0)
     var first:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
     var second:MaszynaRailVehicle3D = _import(context, "fixtures skin long 0 nobody 3 0 enddynamic")
-    var third:MaszynaRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
 
-    assert_almost_eq(first.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
-    assert_almost_eq(
-            first.start_track_offset - second.start_track_offset, (SHORT_LENGTH + LONG_LENGTH) * 0.5, 0.001,
-            "centers of neighbouring vehicles must be half their lengths apart")
-    assert_almost_eq(
-            second.start_track_offset - third.start_track_offset, (LONG_LENGTH + SHORT_LENGTH) * 0.5, 0.001,
-            "centers of neighbouring vehicles must be half their lengths apart")
-    assert_almost_eq(context.trainset_offset, 20.0 - SHORT_LENGTH - LONG_LENGTH - SHORT_LENGTH, 0.001)
+    var trainset:TrainSet3D = context.trainset_node
+    assert_eq(trainset.start_track_name, "start")
+    assert_almost_eq(trainset.start_track_offset, 20.0, 0.001, "the trainset's front is the offset of trainset:")
+    assert_eq(first.start_track_name, "", "a vehicle of a trainset has no start track of its own")
+    assert_eq(second.start_track_name, "")
+    assert_eq(trainset.couplings, [3, 3] as Array[int], "the couplingdata of every vehicle")
+
+
+func test_a_vehicle_outside_a_trainset_stands_with_its_center_behind_its_front() -> void:
+    var context := MaszynaImporterContext.new()
+    var vehicle:MaszynaRailVehicle3D = _import(context, "fixtures skin short start -20.0 headdriver 0 0 enddynamic")
+    assert_eq(vehicle.start_track_name, "start")
+    assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 
 ## DynObj.cpp:1812-1825 - the driver type picks the occupied cab.

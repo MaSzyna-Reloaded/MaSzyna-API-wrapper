@@ -28,7 +28,7 @@ Legend:
 - [ ] [RC-004](#rc-004) Configuration applied two to three times per pass ✔
 - [ ] [RC-005](#rc-005) Cargo list duplicated by repeated configuration
 - [ ] [RC-006](#rc-006) Radio call commands never unregistered ✔
-- [ ] [RC-007](#rc-007) `e3d_loaded` connected again on every dirty frame ✔
+- [x] [RC-007](#rc-007) `e3d_loaded` connected again on every dirty frame ✔
 - [ ] [RC-008](#rc-008) Headlight colour 255 times overbright ✔
 - [ ] [RC-009](#rc-009) Main switch voltage defaults derived from zero
 - [ ] [RC-010](#rc-010) Mover controller commands dereference a null backend
@@ -45,7 +45,7 @@ Legend:
 ### Separation of concerns and getters (ALARM)
 
 - [ ] [RC-020](#rc-020) `wire_get_voltage()` changes the power source's state ✔
-- [ ] [RC-021](#rc-021) Vehicle server calls the scene node
+- [x] [RC-021](#rc-021) Vehicle server calls the scene node
 - [x] [RC-022](#rc-022) Drawing node runs pantograph physics and writes simulation inputs
 - [ ] [RC-023](#rc-023) Base vehicle layer knows rail and lighting
 - [ ] [RC-024](#rc-024) Controller and server call each other; `get_state()` builds a cache
@@ -68,10 +68,10 @@ Legend:
 ### Missing events and wiring
 
 - [x] [RC-040](#rc-040) Cabin shown after counting frames
-- [ ] [RC-041](#rc-041) `pending_start_track_retry` retry flag
-- [ ] [RC-042](#rc-042) `force_detail_refresh` "try again next tick" flag
-- [ ] [RC-043](#rc-043) `RailVehicle3D` wires nodes inside `_process`
-- [ ] [RC-044](#rc-044) Animation bindings resolved twice after reload
+- [x] [RC-041](#rc-041) `pending_start_track_retry` retry flag
+- [x] [RC-042](#rc-042) `force_detail_refresh` "try again next tick" flag
+- [x] [RC-043](#rc-043) `RailVehicle3D` wires nodes inside `_process`
+- [x] [RC-044](#rc-044) Animation bindings resolved twice after reload
 - [ ] [RC-045](#rc-045) Component enable and power source land a tick late through flags
 - [ ] [RC-046](#rc-046) Lazy `owner_create` inside the streaming build
 - [ ] [RC-047](#rc-047) `build_check_version()` once-guard called "to be sure"
@@ -81,9 +81,9 @@ Legend:
 
 ### Per-frame work
 
-- [ ] [RC-051](#rc-051) Every `RailVehicle3D` processes every frame
-- [ ] [RC-052](#rc-052) Whole config dictionary built per frame for the wiper angle
-- [ ] [RC-053](#rc-053) Coupler lookups and string building per frame
+- [x] [RC-051](#rc-051) Every `RailVehicle3D` processes every frame
+- [x] [RC-052](#rc-052) Whole config dictionary built per frame for the wiper angle
+- [x] [RC-053](#rc-053) Coupler lookups and string building per frame
 - [ ] [RC-054](#rc-054) Bogie track samples computed twice per frame
 - [x] [RC-055](#rc-055) Pantograph geometry through string-keyed dictionaries per frame
 - [ ] [RC-056](#rc-056) `ProjectSettings` read per vehicle every 0.25 s
@@ -108,19 +108,19 @@ Legend:
 - [x] [RC-072](#rc-072) `RailVehicleServer::vehicle_component_get()` returns a pointer
 - [ ] [RC-073](#rc-073) `SignalHeadNode::set_model(Node *)` / `get_model()`
 - [ ] [RC-074](#rc-074) `MaszynaTrianglesImporter::import_triangles(MaszynaParser *)`
-- [ ] [RC-075](#rc-075) Vehicle layer bound methods taking and returning pointers
+- [x] [RC-075](#rc-075) Vehicle layer bound methods taking and returning pointers
 - [ ] [RC-076](#rc-076) `E3DSubModel::set_parent(E3DSubModel *)`
 - [ ] [RC-123](#rc-123) Scene-tree nodes holding pointers to objects they do not own
 
 ### Calls by name
 
-- [ ] [RC-077](#rc-077) GDScript `E3DModelInstance` calls without the required comment ✔
+- [x] [RC-077](#rc-077) GDScript `E3DModelInstance` calls without the required comment ✔
 - [ ] [RC-078](#rc-078) Commands registered with `Callable(this, "name")`
 - [ ] [RC-079](#rc-079) Signal names as literals despite constants
 
 ### Magic numbers
 
-- [ ] [RC-080](#rc-080) `RailVehicle3D`
+- [x] [RC-080](#rc-080) `RailVehicle3D`
 - [ ] [RC-081](#rc-081) `Cabin3D`
 - [ ] [RC-082](#rc-082) `TractionServer`
 - [ ] [RC-083](#rc-083) `TrackServer`
@@ -247,6 +247,10 @@ Legend:
     runs three times, and `simulation_configured`/`config_changed` are emitted twice.
 * **Fix:** components are reached only by the direct loop, and the signal connection is
   removed. The order problem with `CheckLocomotiveParameters` is solved once, where it happens.
+* **Partly 2026-09-30:** one more pass is gone - `MaszynaRailVehiclePhysicsNode` configured every
+  vehicle a second time through a deferred `_reload`; the controller is now built once, on
+  entering the tree (`VehiclePhysicsNode._build_controller()`). The three paths above are
+  unchanged.
 
 ### RC-005
 
@@ -280,6 +284,8 @@ Legend:
   callable. The result is "already connected" errors, and the wiring happens in `_process`.
 * **Fix:** wire once, where `head_display_e3d_path` is resolved on entering the tree, and
   disconnect on change or exit.
+* **Done 2026-09-30:** `RailVehicle3D` is a proxy with no per-frame work; the head display is
+  `RailVehicleRenderingServer.vehicle_set_head_display_material()`, applied when the model is built.
 
 ### RC-008
 
@@ -430,7 +436,7 @@ Legend:
   * The read adds to `total_admittance`, sets `loaded`, `total_current` and `output_voltage`,
     and resets `fuse_timer`.
   * The voltage therefore depends on how many readers ask per tick. The caller is
-    `RailVehicle3D.cpp:1505`, once per pantograph.
+    `RailVehicleServer::vehicle_collect_current()`, once per pantograph.
   * It is a port of `TTraction::VoltageGet` (`Traction.cpp:470`). The loads ask from render
     frames while the sources tick on their own beat, and the "Quirk" keeps the previous load to
     cover that - a workaround for the timing.
@@ -449,6 +455,11 @@ Legend:
   calls `rail_vehicle->apply_track_placement()` from its tick.
 * **Decision:** the server publishes the placement (a signal or a pull by the node), and the node
   applies it.
+* **Done 2026-09-30:** `RailVehicleServer` includes no node and keeps no node id; it emits
+  `vehicle_placed` (`vehicle_set_track()`) and `vehicle_placement_changed`
+  (`vehicle_report_placement()`, which replaced `vehicle_apply_placement()`), and
+  `RailVehicleRenderingServer` moves the node the vehicle is drawn at.
+  `vehicle_attach_rail_vehicle()`/`vehicle_get_rail_vehicle()` are gone.
 
 ### RC-022
 
@@ -477,8 +488,9 @@ Legend:
   `VehicleController.cpp:3-5`
 * **Problem:** the base controller forward-declares rail classes and holds
   `RailVehicleLighting *lighting`, `prev_roof_light_enabled` and the `roof_light_changed` signal,
-  all of which exist only for `RailVehicle3D`'s cabin glow. It is also why `RailVehicle3D.hpp:94`
-  compiles without declaring `RailVehicleEngine` (RC-118).
+  all of which exist only for the low-poly interior's glow (relayed as
+  `VehicleServer.vehicle_roof_light_changed` to `RailVehicleRenderingServer`, formerly
+  `RailVehicle3D`).
 * **Decision:** the lighting component announces its own change; the base controller loses the
   rail knowledge.
 
@@ -689,6 +701,10 @@ Legend:
 * **Problem:** the flag is retried from both `_process_dirty` and
   `_on_track_server_tracks_changed`, and gates `apply_track_placement`.
 * **Fix:** place the vehicle on the event that says the tracks have landed, and only there.
+* **Done 2026-09-30:** the flag and its retries are gone. `RailVehicle3D` places the vehicle on
+  whichever comes last - its vehicle (`set_vehicle()`) or `TrackServer.tracks_changed`
+  (`_place_on_start_track()`); a vehicle in a `TrainSet3D` is placed by
+  `RailVehicleServer.trainset_place()`, which waits for `VehicleServer.vehicle_configured`.
 
 ### RC-042
 
@@ -700,6 +716,9 @@ Legend:
 * **Problem:** set on `screen_entered`, on a detail switch and on a config change, then consumed
   on a later tick.
 * **Fix:** refresh the detail in the handler of each event.
+* **Done 2026-09-30:** the flag is gone with `RailVehicle3D`'s tick. `RailVehicleRenderingServer`
+  poses a vehicle on `vehicle_placement_changed`, rebinds its parts on the model's
+  `instance_built`, and checks the detail distance in its bounded slow round.
 
 ### RC-043
 
@@ -711,6 +730,8 @@ Legend:
   `_bind_vehicle_node()`; `_cache_animation_bindings()` re-resolves every node path there too.
 * **Fix:** resolve and connect in `_enter_tree`/`_ready`, and on the setter's change when the
   node is in the tree.
+* **Done 2026-09-30:** `RailVehicle3D` has no `_process`; it connects its scene parts on
+  `NOTIFICATION_ENTER_TREE` and when a part path changes in the tree.
 
 ### RC-044
 
@@ -721,6 +742,8 @@ Legend:
   `_on_model_node_e3d_loaded` caches the bindings. `animation_bindings_dirty = true` then makes
   them resolve again next frame.
 * **Fix:** remove the dirty flag set after `reload()`.
+* **Done 2026-09-30:** the bindings are `RailVehicleRenderingServer`'s, resolved once per built
+  model (`_bind_parts()` on `instance_built`); there is no dirty flag.
 
 ### RC-045
 
@@ -801,6 +824,11 @@ Legend:
   `model_node->call("is_e3d_loaded")`. It also calls `Engine::get_singleton()` each frame.
 * **Fix:** drive the lights by the lighting change event (see RC-023), and turn processing off
   while nothing moves.
+* **Done 2026-09-30:** `RailVehicle3D` does no per-frame work. `RailVehicleRenderingServer` does
+  the drawing on `process_frame`, bounded round-robin (`MAX_SLOW_UPDATES_PER_FRAME` vehicles for
+  detail, lamps and smoke, `MAX_DETAILED_UPDATES_PER_FRAME` detailed ones for pantographs, wipers
+  and mirrors), and connects only while it draws a vehicle. Still per slow visit: the component
+  lookups by type and the detail-distance setting (RC-056).
 
 ### RC-052
 
@@ -811,6 +839,9 @@ Legend:
   dictionary per frame while the wipers move, although `RailVehicleWipers::get_angle()` exists.
   A `PackedFloat64Array` is also copied per frame.
 * **Fix:** read the typed getter of the cached component.
+* **Done 2026-09-30:** `RailVehicleRenderingServer::_pose_wipers()` reads
+  `RailVehicleWipers::get_angle()`/`get_sweep_positions()` and poses only when the positions
+  changed (the positions array is still copied per visit).
 
 ### RC-053
 
@@ -821,15 +852,19 @@ Legend:
   strings and calls `Dictionary::has`, and `_pneumatic_variant` looks up the server by name and
   the neighbour in ObjectDB - every frame.
 * **Fix:** cache the coupler and the layout when the coupling changes.
+* **Done 2026-09-30:** the couplers are drawn by `RailVehicleRenderingServer::_update_couplers()`
+  on `vehicle_trainset_changed`/`vehicle_coupler_attached`/`detached` and on a built model, not
+  per frame.
 
 ### RC-054
 
 **Bogie track samples computed twice per frame**
 
-* **Where:** `src/vehicles/rail/RailVehicle3D.cpp:1234-1237, 1376-1385`;
-  `RailVehicleServer.cpp:768-769`
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp` (`_pose_running_gear()`, was
+  `RailVehicle3D.cpp:1234-1237, 1376-1385`); `RailVehicleServer::_compose_body_transform()`
 * **Problem:** `wheels->get_bogie_transform(...)` repeats the ±half-spacing samples that
-  `_compose_body_transform` has just made, and the wheels component is looked up per frame.
+  `_compose_body_transform` has just made, and the wheels component is looked up on every
+  placement change of a detailed vehicle.
 * **Fix:** the server publishes the bogie transforms together with the body transform.
 
 ### RC-055
@@ -849,9 +884,10 @@ Legend:
 
 **`ProjectSettings` read per vehicle every 0.25 s**
 
-* **Where:** `src/vehicles/rail/RailVehicle3D.cpp:1261`
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp` (`_update_detail()`, was
+  `RailVehicle3D.cpp:1261`)
 * **Problem:** `ProjectSettings::get_singleton()->get_setting("maszyna/vehicles/detail_distance")`
-  runs per vehicle on every detail tick.
+  runs per vehicle on every slow visit.
 * **Fix:** read it once and refresh on `ProjectSettings.settings_changed`.
 
 ### RC-057
@@ -1036,10 +1072,10 @@ Legend:
 
 **Vehicle layer bound methods taking and returning pointers**
 
-* **Where (left):**
-  * `src/vehicles/rail/RailVehicleController.hpp`: `update_neighbour`, `couple` take a
-    `RailVehicleController *`
-  * `src/vehicles/rail/RailVehicle3D.cpp`: `get_cabin`
+* **Where (left):** none.
+* **Done 2026-09-30:** `update_neighbour` and `couple` take a `Ref<RailVehicleController>` and
+  typed `CouplerEnd`s (the "nothing found" case is `clear_neighbour(end)`); `get_cabin` left
+  `RailVehicle3D` for `CabinSystem.vehicle_get_cabin(vehicle_rid)`.
 * **Done 2026-09-30:** `VehicleController` and `VehicleComponent` are `RefCounted`; `add_component`,
   `get_component`, `get_controller` (`RailVehicle3D`, `VehicleComponent`,
   `GenericVehicleComponentNode`, `VehiclePhysicsNode`), `get_coupled_controller` and
@@ -1085,6 +1121,9 @@ Legend:
 * **Problem:** `model_node->call("is_e3d_loaded" | "reload" | "set_smoke_intensity" | "get_aabb")`
   is allowed, since `E3DModelInstance` is GDScript, but only `:416, 600, 667` carry the comment.
 * **Fix:** one comment at the `model_node` declaration, or at each call. Cache `StringName`s.
+* **Done 2026-09-30:** `RailVehicle3D` names `E3DModelInstance` three times
+  (`get_e3d_instance`, and `e3d_instance_created` connected and disconnected), each with the
+  comment; the rest went with the node's drawing code.
 
 ### RC-078
 
@@ -1094,7 +1133,7 @@ Legend:
   * `src/vehicles/rail/RailVehicle{Controller,Engine,ElectricEngine,DieselEngine,Brake,Lighting,Doors,SecuritySystem,Radio,SpeedControl,SpringBrake,ElectroPneumaticDynamicBrake,Horns,Heating,Switches,Wipers}.cpp`
   * `src/legacy/vehicles/MoverRailVehicle*Engine.cpp:66-73` and the other `Mover*`
   * `VehicleComponent.cpp:73, 91`
-  * `RailVehicle3D.cpp:206, 212, 225, 457, 468-469, 579, 591-598, 608, 614, 787, 828-829`
+  * (`RailVehicle3D.cpp`'s went with its rewrite, 2026-09-30)
 * **Rule:** call a method, do not name it
 * **Problem:** the class is known, so a rename or typo silently yields a callable to nothing.
 * **Fix:** `callable_mp(this, &Class::method)`.
@@ -1104,8 +1143,8 @@ Legend:
 **Signal names as literals despite constants**
 
 * **Where:**
-  * `src/vehicles/rail/RailVehicle3D.cpp:391, 397`: `connect("roof_light_changed", ...)`,
-    although `VehicleController::roof_light_changed` exists
+  * ~~`src/vehicles/rail/RailVehicle3D.cpp:391, 397`: `connect("roof_light_changed", ...)`~~ -
+    gone 2026-09-30; `VehicleServer` connects with the constant
   * `src/legacy/vehicles/MoverRailVehicleSecuritySystem.cpp:20, 24`:
     `emit_signal("blinking_changed")`
 * **Fix:** use the constants, and add one where it is missing.
@@ -1129,6 +1168,11 @@ ported value keeps the original's value and a source reference".
   * `:1312-1323`: smoke `4.0`, `0.01`, `60.0`, `0.005`, `0.02`
   * `:1551-1592`: pantograph `2.45`, `3.45`, `0.015`, `0.001`, `0.55`, `0.4`, `0.15`, `0.01`,
     with no per-value reference
+* **Done 2026-09-30:** the code left the node. The pantograph values are named constants of
+  `RailVehicleServer` (`PANTOGRAPH_*`), the smoke ones of
+  `RailVehicleRenderingServer::_update_smoke()` (`particles.cpp:188-205`); the cab, wiper and
+  pantograph element counts and the detail interval and budgets are named in
+  `RailVehicleRenderingServer`.
 
 ### RC-081
 
@@ -1295,8 +1339,8 @@ ported value keeps the original's value and a source reference".
   * `src/vehicles/rail/RailVehicleServer.cpp:823, 830`: `0.000001`, `0.999`
   * `src/vehicles/base/VehicleController.hpp:211`: `1e10`
   * `VehicleController.cpp:207`: 1.0 m threshold
-  * `src/vehicles/rail/RailVehicleBuffCoupl.hpp:56`: `power_coupling, 128`, which should use
-    `ALLOWED_FIXED_COUPLING_LOCK`
+  * ~~`src/vehicles/rail/RailVehicleBuffCoupl.hpp:56`: `power_coupling, 128`~~ - done
+    2026-09-30, `RailVehicleController::COUPLING_FLAG_PERMANENT`
 
 ### RC-098
 
@@ -1611,9 +1655,11 @@ ported value keeps the original's value and a source reference".
 
 **Functional casts instead of `static_cast`**
 
-* **Where:** `src/vehicles/rail/RailVehicle3D.cpp:280, 501, 615, 656, 1173, 1434, 1470,
-  1563-1589, 1645-1646` (`double(x)`, `int(x)`, `bool(x)`);
-  `src/legacy/e3d/E3DInstanceBackend.cpp:54`
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp` (`_update_lights()` `bool(...)`,
+  `_update_load()` `double(...)`); `RailVehicleServer.cpp` (`_track_position_text()`,
+  `vehicle_collect_current()`: `double(...)`, `int(...)`);
+  `src/legacy/e3d/E3DInstanceBackend.cpp:54`. (`RailVehicle3D.cpp`'s went with its rewrite,
+  2026-09-30.)
 * **Rule:** `CODE_STYLE.md` "Conversions"
 
 ### RC-117
@@ -1637,7 +1683,8 @@ ported value keeps the original's value and a source reference".
   * `MoverRailVehicleDoors.hpp:64` (`std::map`)
   * `MoverRailVehicleWipers.hpp:21` (`std::vector`)
   * `src/logging/GameLog.hpp:12-25` (macros use `UtilityFunctions` without the include)
-  * `src/vehicles/rail/RailVehicle3D.hpp:94` (`RailVehicleEngine` is not declared - see RC-023)
+  * ~~`src/vehicles/rail/RailVehicle3D.hpp:94` (`RailVehicleEngine` is not declared)~~ - gone
+    with the rewrite, 2026-09-30
 * **Rule:** `CODE_STYLE.md` "A header is self-contained"
 
 ### RC-119
@@ -1671,8 +1718,8 @@ ported value keeps the original's value and a source reference".
   * `MoverRailVehicleBrake.cpp:207, 263`, `MoverRailVehicleLighting.cpp:437`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `VehicleController.hpp:105-109`,
-    `VehicleController.cpp:158-161, 243-247`, `RailVehicleServer.cpp:977-985, 1004-1007`,
-    `RailVehicle3D.cpp:256-264`
+    `VehicleController.cpp:158-161, 243-247`, `RailVehicleServer.cpp:977-985, 1004-1007`
+    (line numbers of `bd2247f9`; `RailVehicle3D.cpp:256-264` went with its rewrite)
   * `VehicleController.cpp:143-147`: the comment contradicts the code (RC-004)
 
 ### RC-122

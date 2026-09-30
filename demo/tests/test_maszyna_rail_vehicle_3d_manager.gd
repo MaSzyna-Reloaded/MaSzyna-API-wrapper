@@ -31,12 +31,10 @@ func after_each() -> void:
 func test_cached_vehicles_have_independent_registered_sound_pools() -> void:
     var initial_banks:int = TrainSoundSystem._banks.size()
     for index:int in range(2):
-        var vehicle:RailVehicle3D = MaszynaRailVehicle3DManager.load(
-            DATA_PATH, FILE_NAME, "", "template_test_%s" % index, 0.0, null)
+        var vehicle:RailVehicle3D = RailVehicle3D.new()
         _vehicles.append(vehicle)
-        var model:E3DModelInstance = vehicle.get_node("ExteriorModel")
-        model.model = E3DModel.new()
         add_child(vehicle)
+        MaszynaRailVehicle3DManager.build_into(vehicle, DATA_PATH, FILE_NAME, "", "template_test_%s" % index, 0.0)
         await wait_idle_frames(3)
         assert_eq(TrainSoundSystem._banks.size(), initial_banks + 2 * (index + 1))
         for player_name:String in ["ExteriorSfxPlayer3D", "CabinSfxPlayer3D"]:

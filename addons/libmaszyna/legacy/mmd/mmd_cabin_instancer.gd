@@ -321,7 +321,7 @@ static func parse_body_model(abs_mmd_path:String) -> String:
 ## Reads the low-poly interior model filename from the MMD's own top-level `models:` section
 ## (e.g. "lowpolyinterior: 6da_interior.t3d") - the lower-detail interior visible from outside
 ## the cabin (through windows) before the player enters, matching
-## RailVehicle3D.low_poly_cabin_path. Returns "" if the MMD has no such entry.
+## RailVehicleAppearance.low_poly_model_filename. Returns "" if the MMD has no such entry.
 static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
     var context := MmdImportContext.new()
     var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)

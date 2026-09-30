@@ -38,9 +38,6 @@ const NO_MOVEMENT_SPEED:float = 0.05
 const POWERED:float = 1.0
 ## ... and one whose line breaker counts in the consist's state (Power > 0.01, Driver.cpp:6055)
 const LINE_BREAKER_POWER:float = 0.01
-## The vehicle's couplers (end::front, end::rear)
-const FRONT_END:int = 0
-const REAR_END:int = 1
 
 ## The way the driver drives along its vehicle (+1 or -1, iDirection)
 var direction:int = 1
@@ -92,18 +89,20 @@ var push_pull:bool = false
 ## Reads the trainset of the vehicle the driver drives, `driver_direction` +1 or -1 along the vehicle
 func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     direction = driver_direction
-    vehicles = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END if direction >= 0 else REAR_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    var ahead:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_FRONT if direction >= 0
+            else RailVehicleController.COUPLER_END_REAR)
+    vehicles = RailVehicleServer.vehicle_get_coupled(vehicle, ahead, RailVehicleController.COUPLING_FLAG_COUPLER)
     push_pull = false
     if vehicles:
         push_pull = RailVehicleServer.vehicle_get_coupled(
-                vehicles[0], FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL).has(vehicles[-1])
+                vehicles[0], RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_CONTROL).has(vehicles[-1])
     # the vehicles its controls reach (FindPowered(), the vehicles under control of UpdateSituation());
     # the original counts the front vehicle twice when it is not the driver's own
     # (Driver.cpp:2470-2489, MASZYNA_ORIGINAL_QUIRKS.md) - here every engine counts once
     controlling = RailVehicleServer.vehicle_find_powered(vehicle)
     pantograph_unit = RailVehicleServer.vehicle_find_pantograph_carrier(vehicle)
-    var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL)
+    var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_CONTROL)
     controlled_engines = 0
     motor_overload_relay_open = false
     line_breaker_open = false
@@ -118,7 +117,7 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
         if power > LINE_BREAKER_POWER:
             line_breaker_open = line_breaker_open or not other_state.get("main_switch_enabled", false)
     var strengths:PackedFloat64Array = VehicleServer.vehicle_dump_config(vehicle).get("coupler_max_force", PackedFloat64Array())
-    var behind:int = REAR_END if direction >= 0 else FRONT_END
+    var behind:RailVehicleController.CouplerEnd = RailVehicleController.opposite_end(ahead)
     coupler_strength = strengths[behind] if strengths.size() > behind else 0.0
     var driving:Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle).basis.z * direction
     var driven:Dictionary = VehicleServer.vehicle_dump_state(vehicle)

@@ -2,8 +2,8 @@
 extends RefCounted
 
 ## "trainset: name track offset velocity" (deserialize_trainset(), simulationstateserializer.cpp)
-## opens a trainset: every "node ... dynamic ... enddynamic" until the matching "endtrainset:"
-## places its vehicle relative to this track/offset (see maszyna_node_dynamic_importer.gd).
+## opens a trainset: every "node ... dynamic ... enddynamic" until the matching "endtrainset:" is a
+## vehicle of it, which the trainset stands on this track from this offset (TrainSet3D).
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> Array:
     var tokens:Array = p.get_tokens(4)
     if tokens.size() < 4:
@@ -18,4 +18,6 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> Array:
     context.trainset_node.name = context.trainset_name
     context.trainset_node.timetable = context.trainset_name
     context.trainset_node.velocity = context.trainset_velocity
+    context.trainset_node.start_track_name = context.trainset_track
+    context.trainset_node.start_track_offset = context.trainset_offset
     return [context.trainset_node]

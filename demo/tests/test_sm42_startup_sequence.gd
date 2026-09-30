@@ -10,9 +10,9 @@ func before_each():
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.vehicle_id = "TestTrain"
     physics_node.driver_type = VehicleController.DRIVER_HEAD
-    physics_node.set_description(load("res://tests/fixtures/sm42_vehicle.tres"))
+    physics_node.set_controller(load("res://tests/fixtures/sm42_vehicle.tres"))
     add_child_autofree(physics_node)
-    train = physics_node.get_controller()
+    train = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     await wait_idle_frames(2)
     train.send_command("battery", true)
     train.send_command("cab_activation", true)

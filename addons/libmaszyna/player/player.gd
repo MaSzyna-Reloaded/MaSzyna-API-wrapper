@@ -40,7 +40,7 @@ var _released_vehicle:RID
 ## The vehicle whose cab interior is shown with the cab camera in it - the one the player drives;
 ## the cab's widgets take the keys (CabinButton, CabinSwitch), so it stands while the player looks
 ## from outside too
-var _cabin_vehicle:RailVehicle3D
+var _cabin_vehicle:RID = RID()
 var _follow_jump_distance:float = ProjectSettings.get_setting(FOLLOW_JUMP_DISTANCE_SETTING, FOLLOW_JUMP_DISTANCE_DEFAULT)
 ## Stepping out of the cab, driver_mode::DistantView(true) (drivermode.cpp:1060): beside the vehicle
 ## on the side of the occupied cab, this far beyond its width and this high above it [m]
@@ -206,7 +206,7 @@ func _picked_vehicle() -> RailVehicle3D:
     while node and not node is RailVehicle3D:
         node = node.get_parent()
     var vehicle:RailVehicle3D = node as RailVehicle3D
-    return vehicle if vehicle and vehicle.cabin_scene else null
+    return vehicle if vehicle and CabinSystem.vehicle_get_cabin_scene(vehicle.get_rid()) else null
 
 
 func _find_start_vehicle() -> RailVehicle3D:
@@ -247,7 +247,7 @@ func _on_vehicle_emergency_signal_received(vehicle:RID) -> void:
 func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
     if not vehicle.is_valid() and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN:
         PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
-    if _cabin_vehicle:
+    if _cabin_vehicle.is_valid():
         _hide_cabin()
     if vehicle.is_valid():
         _show_cabin(vehicle)
@@ -255,12 +255,10 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
 
 ## The vehicle's cab interior shown, the cab camera in it, where the cab puts the driver
 func _show_cabin(vehicle:RID) -> void:
-    var node:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as RailVehicle3D
-    node.show_cabin()
-    var cabin:Cabin3D = node.get_cabin()
+    var cabin:Cabin3D = CabinSystem.vehicle_show_cabin(vehicle)
     if not cabin:
         return
-    _cabin_vehicle = node
+    _cabin_vehicle = vehicle
     _cabin_camera.reparent(cabin, false)
     cabin.camera_configuration_changed.connect(_on_cabin_camera_configuration_changed)
     _on_cabin_camera_configuration_changed()
@@ -268,11 +266,11 @@ func _show_cabin(vehicle:RID) -> void:
 
 ## The cab camera taken out of the cab, and its interior freed
 func _hide_cabin() -> void:
-    var cabin:Cabin3D = _cabin_vehicle.get_cabin()
+    var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(_cabin_vehicle)
     cabin.camera_configuration_changed.disconnect(_on_cabin_camera_configuration_changed)
     _cabin_camera.reparent(self)
-    _cabin_vehicle.hide_cabin()
-    _cabin_vehicle = null
+    CabinSystem.vehicle_hide_cabin(_cabin_vehicle)
+    _cabin_vehicle = RID()
 
 
 ## The cab camera at the driver's place of the cab, within its bounds, looking the way the occupied
@@ -295,12 +293,12 @@ func _on_cabin_camera_configuration_changed() -> void:
 func _on_camera_changed() -> void:
     var previous:Camera3D = get_viewport().get_camera_3d()
     var camera:Camera3D = _mode_camera()
-    if camera == free_camera and previous == _cabin_camera and _cabin_vehicle:
-        var body:Transform3D = _cabin_vehicle.global_transform
-        var cabin_occupied:int = VehicleServer.vehicle_dump_state(_cabin_vehicle.get_rid()).get("cabin_occupied", 0)
+    if camera == free_camera and previous == _cabin_camera and _cabin_vehicle.is_valid():
+        var body:Transform3D = RailVehicleServer.vehicle_get_transform(_cabin_vehicle)
+        var cabin_occupied:int = VehicleServer.vehicle_dump_state(_cabin_vehicle).get("cabin_occupied", 0)
         # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
         var side:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
-        var width:float = VehicleServer.vehicle_get_dimensions(_cabin_vehicle.get_rid()).x
+        var width:float = VehicleServer.vehicle_get_dimensions(_cabin_vehicle).x
         var head:Vector3 = _cabin_camera.global_position
         var position:Vector3 = Vector3(head.x, body.origin.y, head.z) \
                 + side * (width + DISTANT_VIEW_SIDE_MARGIN) + Vector3.UP * DISTANT_VIEW_HEIGHT
@@ -314,7 +312,7 @@ func _on_camera_changed() -> void:
         free_camera.glide(external_camera.velocity)
     elif camera == external_camera:
         var target_rid:RID = PlayerCameraServer.camera_get_target()
-        var target:RailVehicle3D = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(target_rid)) as RailVehicle3D
+        var target:RailVehicle3D = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(target_rid)) as RailVehicle3D
         external_camera.view = PlayerCameraServer.camera_get_follow_view() as ExternalCamera3D.View
         # another vehicle, or following anew: its view applied in full, flown to from where the view
         # is - or from beside the vehicle, when it is far; the same one keeps its view and offsets

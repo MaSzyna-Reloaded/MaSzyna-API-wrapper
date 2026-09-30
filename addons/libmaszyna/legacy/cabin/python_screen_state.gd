@@ -164,12 +164,13 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
 
     # TTrain::Update(), Train.cpp:8644-8768 - the cars under control, from the end the occupied
     # cab faces (GetFirstDynamic(CabOccupied < 0 ? rear : front, control))
-    var cab_end:int = 1 if state.get("cabin_occupied", 1) < 0 else 0
+    var cab_end:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_REAR
+            if state.get("cabin_occupied", 1) < 0 else RailVehicleController.COUPLER_END_FRONT)
     # Train.cpp:727-745 - the lamps at the outer ends of the train, its front the way the cab faces
-    var trainset:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    var trainset:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_FLAG_COUPLER)
     result["lights_train_front"] = _outer_light_bits(trainset.front())
     result["lights_train_rear"] = _outer_light_bits(trainset.back())
-    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_ELEMENT_CONTROL)
+    var cars:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_FLAG_CONTROL)
     var powered:int = 0
     var induction_cars:int = 0
     var unit_number:int = 1
@@ -264,7 +265,8 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
                 result[prefix + "error"] = inverter.error   # Error
                 result[prefix + "allow"] = inverter.allow   # Activate
         # a control coupling that is not a permanent one ends a unit (Train.cpp:8757)
-        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(car, 0, RailVehicleController.COUPLING_ELEMENT_PERMANENT):
+        if index + 1 < cars.size() and not cars[index + 1] in RailVehicleServer.vehicle_get_coupled(
+                car, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_PERMANENT):
             unit_number += 1
     result["car_no"] = mini(cars.size(), CAR_COUNT)
     result["power_no"] = powered
@@ -293,7 +295,8 @@ static func _light_bits(state:Dictionary, end:String) -> int:
 ## The lamps at the end of an outermost vehicle of the train that has nothing coupled to it
 ## (iLights[] of the train's end vehicle, by its own direction, Train.cpp:735-740)
 static func _outer_light_bits(end_vehicle:RID) -> int:
-    var beyond_front:Array = RailVehicleServer.vehicle_get_coupled(end_vehicle, 0, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    var beyond_front:Array = RailVehicleServer.vehicle_get_coupled(
+            end_vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     var outer:String = "front" if beyond_front.front() == end_vehicle else "rear"
     return _light_bits(VehicleServer.vehicle_dump_state(end_vehicle), outer)
 

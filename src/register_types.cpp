@@ -92,6 +92,7 @@
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicle3D.hpp"
 #include "vehicles/rail/RailVehicleAIHints.hpp"
+#include "vehicles/rail/RailVehicleAppearance.hpp"
 #include "vehicles/rail/RailVehicleBrake.hpp"
 #include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
@@ -120,6 +121,7 @@
 #include "vehicles/rail/RailVehiclePhysicsNode.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleRelayListItem.hpp"
+#include "vehicles/rail/RailVehicleRenderingServer.hpp"
 #include "vehicles/rail/RailVehicleSecuritySystem.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include "vehicles/rail/RailVehicleSpeedControl.hpp"
@@ -150,6 +152,7 @@ TrackServer *track_server_singleton = nullptr;
 VehicleServer *vehicle_server_singleton = nullptr;
 MaszynaMoverVehicleServer *maszyna_mover_vehicle_server_singleton = nullptr;
 RailVehicleServer *rail_vehicle_server_singleton = nullptr;
+RailVehicleRenderingServer *rail_vehicle_rendering_server_singleton = nullptr;
 TractionServer *traction_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
@@ -192,6 +195,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaMoverVehicleServer);
         GDREGISTER_CLASS(RailVehicleServer);
         GDREGISTER_CLASS(RailVehicleNeighbour);
+        GDREGISTER_CLASS(RailVehicleAppearance);
+        GDREGISTER_CLASS(RailVehicleRenderingServer);
         GDREGISTER_CLASS(TractionServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
@@ -362,6 +367,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after E3DRenderingServer is registered: it outlines and picks its instances
         scenery_hud_mouse_server_singleton = memnew(SceneryHUDMouseServer);
         Engine::get_singleton()->register_singleton("SceneryHUDMouseServer", scenery_hud_mouse_server_singleton); // 18
+        // after RailVehicleServer, E3DRenderingServer and SceneryHUDMouseServer: the constructor
+        // follows their vehicles and instances, and it registers what the player picks
+        rail_vehicle_rendering_server_singleton = memnew(RailVehicleRenderingServer);
+        Engine::get_singleton()->register_singleton(
+                "RailVehicleRenderingServer", rail_vehicle_rendering_server_singleton); // 18a
         // after RailVehicleServer and DriverSystem: it follows freed vehicles and hands trainsets
         // over to their drivers
         player_server_singleton = memnew(PlayerServer);
@@ -429,6 +439,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (player_server_singleton != nullptr) {
         memdelete(player_server_singleton);
         player_server_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("RailVehicleRenderingServer")) {
+        Engine::get_singleton()->unregister_singleton("RailVehicleRenderingServer"); // 18a
+    }
+    if (rail_vehicle_rendering_server_singleton != nullptr) {
+        memdelete(rail_vehicle_rendering_server_singleton);
+        rail_vehicle_rendering_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("SceneryHUDMouseServer")) {

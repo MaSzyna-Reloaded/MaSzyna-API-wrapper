@@ -18,8 +18,6 @@ const _COUPLER_TYPE_MAP := {
     "articulated": RailVehicleBuffCoupl.COUPLER_TYPE_ARTICULATED,
 }
 
-const ALLOWED_FIXED_COUPLING_LOCK := 128
-
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
@@ -50,7 +48,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     if kv.has("AllowedFlag"):
         var allowed: int = FizLineUtil.get_int(kv, "AllowedFlag")
         if allowed < 0:
-            allowed = -allowed | ALLOWED_FIXED_COUPLING_LOCK
+            allowed = -allowed | RailVehicleController.COUPLING_FLAG_PERMANENT
         node.allowed_flag = allowed
     if kv.has("AutomaticFlag"):
         node.automatic_flag = FizLineUtil.get_int(kv, "AutomaticFlag")

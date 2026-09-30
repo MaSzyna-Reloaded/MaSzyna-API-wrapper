@@ -9,7 +9,7 @@
 	<members>
 		<member name="distance" type="float" setter="set_distance" getter="get_distance" default="0.0">
 		</member>
-		<member name="end" type="int" setter="set_end" getter="get_end" default="0">
+		<member name="end" type="int" setter="set_end" getter="get_end" enum="RailVehicleController.CouplerEnd" default="0">
 		</member>
 		<member name="vehicle_rid" type="RID" setter="set_vehicle_rid" getter="get_vehicle_rid" default="RID()">
 		</member>

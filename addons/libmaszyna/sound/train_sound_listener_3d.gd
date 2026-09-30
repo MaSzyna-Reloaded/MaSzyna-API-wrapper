@@ -36,7 +36,7 @@ func is_inside_vehicle(vehicle:RailVehicle3D) -> bool:
 
 func _refresh_context() -> void:
     var cabin:Cabin3D = _camera_cabin()
-    # a cab is a child of its vehicle (RailVehicle3D.show_cabin())
+    # a cab is a child of the node its vehicle is drawn at (CabinSystem.vehicle_show_cabin())
     var vehicle:RailVehicle3D = cabin.get_parent() as RailVehicle3D if not cabin == null else null
     var context:int = cabin.get_sound_listener_context() if not cabin == null else EXTERIOR_CONTEXT
     if listener_vehicle == vehicle and listener_cabin == cabin and listener_context == context:

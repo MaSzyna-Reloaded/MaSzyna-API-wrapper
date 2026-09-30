@@ -80,10 +80,10 @@ func before_all() -> void:
     for index: int in VEHICLE_COUNT:
         var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
         physics_node.vehicle_id = "bench_vehicle_%d" % index
-        physics_node.set_description(model)
+        physics_node.set_controller(model)
         add_child(physics_node)
         _vehicle_nodes.append(physics_node)
-        var controller: VehicleController = physics_node.get_controller()
+        var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
 
         # the two biggest publishers the fixture has no section for, added as a scene would
         var engine: RailVehicleElectricSeriesEngine = MoverRailVehicleElectricSeriesEngine.new()

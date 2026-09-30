@@ -3,10 +3,10 @@ extends MaszynaGutTest
 ## Regression test for SM42 (and every MaSzyna-data vehicle) being drawn reversed. The original
 ## draws the exterior, low-poly interior, passengers and cab all under one vehicle-local frame
 ## with +Z = direction of travel (TDynamicObject::mMatrix, DynObj.cpp:2506-2508); RailVehicle3D
-## uses Godot's -Z forward. MaszynaRailVehicle3DInstancer._build_structure() converts all of them
-## with the same 180 degree yaw - these tests spawn the REAL SM42 via
-## MaszynaRailVehicle3DManager.load() and check every part ends up in the same frame, facing
-## the vehicle's own forward.
+## uses Godot's -Z forward. MaszynaRailVehicle3DInstancer converts all of them with the same 180
+## degree yaw (MASZYNA_VEHICLE_FRAME) - these tests spawn the REAL SM42 and check every part ends
+## up in the same frame, facing the vehicle's own forward. The models are drawn as nodes under the
+## vehicle (RailVehicleRenderingServer), found there by their submodels' names.
 
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
@@ -36,20 +36,14 @@ func _spawn_sm42() -> bool:
         pending("real SM42 game data not available on this machine at %s" % REAL_GAME_DIR)
         return false
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = MaszynaRailVehicle3DManager.load("dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rotation", 0.0, null)
-    add_child(vehicle)
-    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    for i in range(20):
-        await wait_idle_frames(1)
-        if model.is_e3d_loaded():
-            break
-    assert_true(model.is_e3d_loaded(), "SM42's real exterior model should finish loading")
-    return model.is_e3d_loaded()
+    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rotation")
+    var loaded:bool = RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid()).is_valid()
+    assert_true(loaded, "SM42's real exterior model should be built")
+    return loaded
 
 
 func _exterior_cab_z() -> float:
-    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    var cab:Node3D = model.find_child("budka_maszynisty", true, false) as Node3D
+    var cab:Node3D = vehicle.find_child("budka_maszynisty", true, false) as Node3D
     assert_not_null(cab, "SM42's exterior model should contain its cab shell (budka_maszynisty)")
     return vehicle.to_local(cab.global_position).z if cab else 0.0
 
@@ -57,8 +51,7 @@ func _exterior_cab_z() -> float:
 func test_exterior_nose_faces_vehicle_forward() -> void:
     if not await _spawn_sm42():
         return
-    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    var nose:Node3D = model.find_child("nos01", true, false) as Node3D
+    var nose:Node3D = vehicle.find_child("nos01", true, false) as Node3D
     assert_not_null(nose, "SM42's real model should contain a nos01 submodel")
     if not nose:
         return
@@ -69,14 +62,7 @@ func test_exterior_nose_faces_vehicle_forward() -> void:
 func test_low_poly_interior_shares_exterior_frame() -> void:
     if not await _spawn_sm42():
         return
-    var exterior:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    var low_poly:E3DModelInstance = vehicle.get_node(vehicle.low_poly_cabin_path) as E3DModelInstance
-    assert_not_null(low_poly, "SM42 declares a lowpolyinterior: model")
-    if not low_poly:
-        return
-    assert_true(low_poly.basis.is_equal_approx(exterior.basis), "low-poly interior must use the exterior's frame")
-
-    var cab_mesh:MeshInstance3D = low_poly.find_child("cab1", true, false) as MeshInstance3D
+    var cab_mesh:MeshInstance3D = vehicle.find_child("cab1", true, false) as MeshInstance3D
     assert_not_null(cab_mesh, "SM42's low-poly interior should contain cab1")
     if not cab_mesh or not cab_mesh.mesh:
         return

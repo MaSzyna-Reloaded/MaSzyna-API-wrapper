@@ -2,9 +2,9 @@ extends MaszynaGutTest
 
 ## Where each pantograph sits on the vehicle is the vehicle's own geometry, and it comes from the
 ## model: the original reads it off the pantograph submodel's matrix (TAnimPant::vPos,
-## DynObj.cpp:5508-5549 - sideways, up, and along the length). RailVehicle3D reads the same thing
-## from the arm nodes it resolves and publishes it to the electric engine, because the wire is
-## sampled at those points - one per pantograph.
+## DynObj.cpp:5508-5549 - sideways, up, and along the length). RailVehicleRenderingServer reads the
+## same thing off the arm submodels of the model and publishes it to RailVehicleServer, because the
+## wire is sampled at those points - one per pantograph.
 ##
 ## The test discriminates: until the position was published, both pantographs of every vehicle in
 ## the game sampled the wire at the same place - the vehicle's origin - because the two exported
@@ -19,10 +19,6 @@ const SLIDER_HEIGHT:float = 5.2
 const UPPER_LEAN:float = 0.1
 const ARM_NODE_COUNT:int = 5
 const TOLERANCE:float = 0.001
-## The vehicle's tick is driven here rather than awaited: the geometry is read once, when the arm
-## paths change, so a test that waits for frames is asserting against whatever the frame count
-## happened to be. RailVehicle3D binds its tick as a callable method for exactly this.
-const TICK:float = 1.0 / 60.0
 ## The wire over the track the pantograph is raised to, at 1 m over its lower arm's pivot - in reach
 ## of the arms above, and fed at the voltage a raised pantograph reads [m, V]
 const WIRE_HEIGHT:float = 5.0
@@ -69,24 +65,32 @@ func after_each() -> void:
     physics_node = null
 
 
-## The five nodes a pantograph is animated through, in the order RailVehicle3D resolves them:
-## lower arm 1, lower arm 2, upper arm 1, upper arm 2, slider. The second arm of each pair is
-## optional in the data, so it stands where the first one does.
-func _add_pantograph_arms(along:float) -> Array[NodePath]:
-    var positions:Array[Vector3] = [
-        Vector3(0.0, LOWER_HEIGHT, along),
-        Vector3(0.0, LOWER_HEIGHT, along),
-        Vector3(0.0, UPPER_HEIGHT, along + UPPER_LEAN),
-        Vector3(0.0, UPPER_HEIGHT, along + UPPER_LEAN),
-        Vector3(0.0, SLIDER_HEIGHT, along),
-    ]
+## A model with the five submodels a pantograph is animated through at each of `alongs`, in the order
+## they are named: lower arm 1, lower arm 2, upper arm 1, upper arm 2, slider. The second arm of each
+## pair is optional in the data, so it stands where the first one does.
+func _add_model(alongs:Array[float]) -> void:
+    var submodels:Dictionary = {}
+    for pantograph:int in alongs.size():
+        var along:float = alongs[pantograph]
+        var positions:Array[Vector3] = [
+            Vector3(0.0, LOWER_HEIGHT, along),
+            Vector3(0.0, LOWER_HEIGHT, along),
+            Vector3(0.0, UPPER_HEIGHT, along + UPPER_LEAN),
+            Vector3(0.0, UPPER_HEIGHT, along + UPPER_LEAN),
+            Vector3(0.0, SLIDER_HEIGHT, along),
+        ]
+        for index:int in range(ARM_NODE_COUNT):
+            submodels["arm%d_%d" % [pantograph, index]] = Transform3D(Basis(), positions[index])
+    var no_parents:Dictionary = {}
+    vehicle.add_child(build_model_instance(submodels, no_parents))
+    vehicle.model_instance_path = NodePath("Model")
+
+
+## The paths of the pantograph's submodels, as a vehicle assembled by hand names them
+func _arm_paths(pantograph:int) -> Array[NodePath]:
     var paths:Array[NodePath] = []
     for index:int in range(ARM_NODE_COUNT):
-        var arm:Node3D = Node3D.new()
-        arm.name = "Arm%s_%s" % [str(along).replace(".", "_").replace("-", "m"), index]
-        vehicle.add_child(arm)
-        arm.position = positions[index]
-        paths.append(vehicle.get_path_to(arm))
+        paths.append(NodePath("Model/arm%d_%d" % [pantograph, index]))
     return paths
 
 
@@ -97,14 +101,15 @@ func _build_electric_vehicle() -> void:
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_number_of_collectors = 2
-    physics_node.get_controller().add_component(engine)
+    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).add_component(engine)
 
     vehicle = RailVehicle3D.new()
+    var alongs:Array[float] = [FRONT_ALONG, REAR_ALONG]
+    _add_model(alongs)
+    vehicle.pantograph_front_arm_paths = _arm_paths(0)
+    vehicle.pantograph_rear_arm_paths = _arm_paths(1)
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
-    vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
-    vehicle.pantograph_rear_arm_paths = _add_pantograph_arms(REAR_ALONG)
-    vehicle._process(TICK)
 
 
 func test_each_pantograph_publishes_its_own_position_to_the_vehicle() -> void:
@@ -141,12 +146,11 @@ func test_a_vehicle_without_pantograph_arms_publishes_no_position() -> void:
     physics_node = build_vehicle_node("test_pantograph_geometry_bare", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    physics_node.get_controller().add_component(engine)
+    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).add_component(engine)
 
     vehicle = RailVehicle3D.new()
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
-    vehicle._process(TICK)
 
     assert_eq(
             RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST), Vector3(),
@@ -188,14 +192,16 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
     engine.power_current_collector_max_pantograph_tank_pressure = PANTOGRAPH_TANK_PRESSURE
-    var controller:VehicleController = physics_node.get_controller()
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     controller.add_component(engine)
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
+    var alongs:Array[float] = [FRONT_ALONG]
+    _add_model(alongs)
+    vehicle.pantograph_front_arm_paths = _arm_paths(0)
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
-    vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
     await wait_idle_frames(2)
     # no main reservoir here: the tank filled by the small compressor, as PrepareEngine() does
     controller.send_command("battery", true)
@@ -212,8 +218,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "the raised pantograph reaches the wire")
 
     # the model rebuilt: new arm nodes, at rest, as a model loaded again puts them
-    vehicle.pantograph_front_arm_paths = _add_pantograph_arms(FRONT_ALONG)
-    vehicle._process(TICK)
+    (vehicle.get_node("Model") as E3DModelInstance).reload()
     VehicleServer.stepping_advance(STEP)
 
     assert_gt(_front_voltage(controller), POWERED_VOLTAGE, "and stays at it when the model is rebuilt")

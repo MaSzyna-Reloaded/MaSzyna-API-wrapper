@@ -75,6 +75,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &VehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
                 D_METHOD("vehicle_component_get", "vehicle", "type"), &VehicleServer::vehicle_component_get);
+        ClassDB::bind_method(D_METHOD("vehicle_get_controller", "vehicle"), &VehicleServer::vehicle_get_controller);
         ClassDB::bind_method(
                 D_METHOD("vehicle_generic_component_find", "vehicle", "tag"),
                 &VehicleServer::vehicle_generic_component_find);
@@ -269,6 +270,10 @@ namespace godot {
         emit_signal(vehicle_controller_changed_signal, p_vehicle);
         controller->attach_to_system();
         controller->initialize();
+    }
+
+    Ref<VehicleController> VehicleServer::vehicle_get_controller(const RID &p_vehicle) const {
+        return Ref<VehicleController>(_get_controller(p_vehicle));
     }
 
     uint64_t VehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {

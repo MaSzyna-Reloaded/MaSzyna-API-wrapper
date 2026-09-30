@@ -1,19 +1,20 @@
 #pragma once
 #include "VehicleController.hpp"
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/core/gdvirtual.gen.inc>
 
 namespace godot {
     /* A vehicle's presence in the scene tree.
      *
      * The vehicle itself is an object of the server, addressed by a RID; this node owns that
-     * handle, builds the vehicle from a copy of its description - a VehicleController with its
+     * handle, builds the vehicle from a copy of its controller - a VehicleController with its
      * components, the vehicle's stored configuration - and frees it. It is the anchor everything in
      * the tree hangs off - a scripted component a modder adds, a cabin, a sound bank - so that
      * "which vehicle am I part of" is answered by where a node sits, not by a path it carries.
      *
-     * It knows nothing about where the description came from. A subclass brings one:
-     * MaszynaRailVehiclePhysicsNode asks the .fiz builder for it, and another format would be another
-     * subclass. */
+     * It knows nothing about where the controller came from: it is given one, or a subclass builds
+     * one (_build_controller()) - MaszynaRailVehiclePhysicsNode asks the .fiz builder for it, and
+     * another format would be another subclass. */
     class VehiclePhysicsNode : public Node {
             GDCLASS(VehiclePhysicsNode, Node)
 
@@ -24,7 +25,7 @@ namespace godot {
             static StringName &controller_implementation();
             RID vehicle_rid;
             RID controller_rid;
-            Ref<VehicleController> description;
+            Ref<VehicleController> controller;
             void _build();
             String vehicle_id;
             double initial_velocity = 0.0;
@@ -35,6 +36,9 @@ namespace godot {
             /* The vehicle exists and is about to be configured and (re)started: a kind of vehicle
              * hands its own servers what it knows of it (RailVehiclePhysicsNode) */
             virtual void _prepare_vehicle(const RID &p_vehicle) {}
+            /* The controller a node that was given none builds its vehicle from, as it enters the
+             * tree - once, before anything can see the vehicle */
+            GDVIRTUAL0RC(Ref<VehicleController>, _build_controller)
             void _notification(int p_what); // NOLINT(bugprone-derived-method-shadowing-base-method)
 
         public:
@@ -43,14 +47,14 @@ namespace godot {
             /* C++ only: register_types says which simulation the vehicles run on. */
             static void set_controller_implementation(const StringName &p_class);
 
-            /* Builds the vehicle this describes, replacing whatever this node held. */
-            void set_description(const Ref<VehicleController> &p_description);
-            Ref<VehicleController> get_description() const;
+            /* The vehicle's configuration, a VehicleController its simulation is built from a copy of;
+             * a new one rebuilds the vehicle, replacing whatever this node held. The running copy
+             * is the vehicle's, reached by its handle (VehicleServer::vehicle_get_controller()). */
+            void set_controller(const Ref<VehicleController> &p_controller);
+            Ref<VehicleController> get_controller() const;
 
             /* This vehicle's handle, for anything that talks to the servers */
             RID get_vehicle_rid() const;
-            /* The vehicle in the simulation, built from a copy of the description; null before it entered the tree. */
-            Ref<VehicleController> get_controller() const;
 
             /* Adds a component to this vehicle - what a proxy node in the tree calls when it
              * joins, so a modder's component reaches the vehicle it sits under. */

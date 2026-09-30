@@ -241,7 +241,6 @@ namespace godot {
             const E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance) const;
             void _rebuild_if_built(E3DInstanceData &p_instance);
             void _update_if_built(E3DInstanceData &p_instance);
-            Ref<E3DModel> _load_model(const String &p_data_path, const String &p_model_filename);
             Variant _stream_preload(const RID &p_instance);
             void _stream_build(const RID &p_instance, const Variant &p_preloaded);
             void _stream_clear(const RID &p_instance);
@@ -289,6 +288,16 @@ namespace godot {
                     const RID &p_instance, E3DInstanceData &p_instance_data, const String &p_submodel);
             /// Composes the poses out of the animations and hands them to the backend
             void _pose_submodels(E3DInstanceData &p_instance);
+            /// Finds the submodels the client's settings name in the built model, and what the
+            /// backends read of them
+            void _resolve_submodel_settings(E3DInstanceData &p_instance);
+            void _apply_client_submodels(E3DInstanceData &p_instance);
+            /// The submodel's transform in the model, through every parent; false when not found
+            static bool _find_submodel_transform(
+                    const TypedArray<E3DSubModel> &p_submodels, const String &p_name, const Transform3D &p_parent,
+                    Transform3D &p_r_transform);
+            static bool _merge_submodel_aabb(
+                    const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent, AABB &p_r_aabb);
             /// Connected to SceneTree's process_frame while a submodel moves
             void _process_animations();
             void _set_animation_processing(bool p_processing);
@@ -313,12 +322,37 @@ namespace godot {
             /// translate`, TAnimContainer::SetTranslateAnim())
             void instance_set_submodel_translation(
                     const RID &p_instance, const String &p_submodel, const Vector3 &p_offset, double p_speed);
+            /// Poses submodels, by name, on top of their own transform - a submodel to pose and the
+            /// transform it takes, kept across rebuilds. What a vehicle's running gear, pantographs,
+            /// wipers and mirrors are drawn with; an empty transform takes a submodel back to rest.
+            void instance_set_submodel_poses(const RID &p_instance, const Dictionary &p_poses);
+            /// Shows or hides a submodel, by name, kept across rebuilds - a vehicle's couplers and hoses
+            void instance_set_submodel_visible(const RID &p_instance, const String &p_submodel, bool p_visible);
+            /// Draws a submodel, by name, with p_material instead of its own - a head display
+            void instance_set_submodel_material_override(
+                    const RID &p_instance, const String &p_submodel, const Ref<Material> &p_material);
+            bool instance_has_submodel(const RID &p_instance, const String &p_submodel) const;
+            /// The submodel's transform in the model, through every parent, without any pose
+            Transform3D instance_get_submodel_transform(const RID &p_instance, const String &p_submodel) const;
+            /// The model the instance draws
+            Ref<E3DModel> instance_get_model(const RID &p_instance) const;
+            /// The bounds of every mesh of the model, in the model's space
+            AABB instance_get_aabb(const RID &p_instance) const;
+            /// Builds the instance again with another instancer, keeping the RID and everything set on
+            /// it - a vehicle drawn as nodes near the camera and as RenderingServer instances far away
+            void instance_set_instancer(const RID &p_instance, Instancer p_instancer);
+            /// The self-illumination energy of every emissive material of the instance (the
+            /// shaders' emission_energy) - a low-poly interior lit by the roof light
+            void instance_set_emission_energy(const RID &p_instance, float p_energy);
             void instance_build(const RID &p_instance);
             void instance_set_options(
                     const RID &p_instance, const String &p_data_path, const PackedStringArray &p_skins,
                     const Array &p_exclude_node_names, bool p_force_alpha,
                     const TypedArray<NodePath> &p_force_alpha_submodel_paths, int p_max_texture_size);
             void instance_attach_node(const RID &p_instance, Node3D *p_node);
+            /// Where the model sits in the attached node - a node tree built under it is placed
+            /// there; the instance's transform stays the model's own, in the world
+            void instance_set_node_transform(const RID &p_instance, const Transform3D &p_transform);
             void instance_set_scenario(const RID &p_instance, const RID &p_scenario);
             void instance_set_transform(const RID &p_instance, const Transform3D &p_transform);
             void instance_set_visible(const RID &p_instance, bool p_visible);
@@ -377,6 +411,8 @@ namespace godot {
 
             void material_set_resolver(const Callable &p_material_resolver);
             void model_set_loader(const Callable &p_model_loader);
+            /// The model of a file, loaded once through the loader and shared by every instance of it
+            Ref<E3DModel> model_load(const String &p_data_path, const String &p_model_filename);
             void smoke_set_source_resolver(const Callable &p_smoke_source_resolver);
     };
 } // namespace godot

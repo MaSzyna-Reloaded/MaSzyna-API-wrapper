@@ -117,7 +117,8 @@ func _get_trainset(vehicle:RID) -> Array[RID]:
             * int(VehicleServer.vehicle_dump_state(vehicle).get("direction", 1)))
     var trainset:Array[RID] = []
     trainset.assign(RailVehicleServer.vehicle_get_coupled(
-            vehicle, 0 if driving_sign >= 0 else 1, RailVehicleController.COUPLING_ELEMENT_COUPLER))
+            vehicle, RailVehicleController.COUPLER_END_FRONT if driving_sign >= 0 else RailVehicleController.COUPLER_END_REAR,
+            RailVehicleController.COUPLING_FLAG_COUPLER))
     return trainset
 
 

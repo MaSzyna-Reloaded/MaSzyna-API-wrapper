@@ -34,24 +34,24 @@ func test_the_script_is_ticked_with_the_frame_delta() -> void:
 
 
 func test_the_scripts_keys_reach_the_vehicle_state_dump() -> void:
-    var state: Dictionary = _vehicle.get_controller().get_state()
+    var state: Dictionary = VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()).get_state()
     assert_true(state.has("probe_process_calls"), "_get_component_state feeds the vehicle dump")
     assert_true(state.has("velocity"), "the vehicle's own keys are there too")
 
 
 func test_the_scripts_keys_reach_the_vehicle_config_dump() -> void:
     _probe.get_component().apply_config()
-    var config: Dictionary = _vehicle.get_controller().get_config()
+    var config: Dictionary = VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()).get_config()
     assert_eq(config.get("probe_config_key"), "probe", "_get_component_config feeds the config dump")
 
 
 func test_the_component_reaches_its_vehicle() -> void:
-    assert_same(_probe.get_component().get_controller(), _vehicle.get_controller(), "get_controller returns the owning vehicle")
+    assert_same(_probe.get_component().get_controller(), VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()), "get_controller returns the owning vehicle")
     assert_true(_probe.get_component().get_vehicle_state().has("velocity"), "get_vehicle_state is the whole vehicle's")
 
 
 func test_a_command_registered_from_the_script_is_received() -> void:
-    VehicleServer.vehicle_send_command(_vehicle.get_controller().get_rid(), "probe_command", null, null)
+    VehicleServer.vehicle_send_command(VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()).get_rid(), "probe_command", null, null)
     assert_eq(_probe.commands_received, 1, "register_command wired the script's handler")
 
 
@@ -62,4 +62,4 @@ func test_a_disabled_component_neither_ticks_nor_publishes() -> void:
     var before: int = _probe.process_calls
     await wait_idle_frames(2)
     assert_eq(_probe.process_calls, before, "a disabled component is not ticked")
-    assert_false(_vehicle.get_controller().get_state().has("probe_process_calls"), "nor does it publish state")
+    assert_false(VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()).get_state().has("probe_process_calls"), "nor does it publish state")

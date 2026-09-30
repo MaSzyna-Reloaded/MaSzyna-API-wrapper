@@ -9,7 +9,6 @@ extends Button
 ## The player confirmed that the vehicle's trainset is to be removed
 signal remove_confirmed(vehicle:RID)
 
-const FRONT_END:int = 0
 
 ## The vehicle the actions are for
 var vehicle:RID = RID()
@@ -29,7 +28,7 @@ func _on_pressed() -> void:
 func _on_release_brakes_pressed() -> void:
     %ActionsPopup.hide()
     for trainset_vehicle:RID in RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER):
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER):
         VehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", true)
 
 

@@ -30,11 +30,11 @@ func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void
     watch_signals(train)
     watch_signals(VehicleServer)
 
-    vehicle.move_on_track(0.5)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.5)
     assert_signal_not_emitted(train, "position_changed", "Should not emit for a 0.5m move")
     assert_signal_not_emitted(VehicleServer, "vehicle_moved", "VehicleServer should not relay yet")
 
-    vehicle.move_on_track(0.6)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.6)
     assert_signal_emitted(train, "position_changed", "Should emit after crossing 1m total movement")
     assert_signal_emitted_with_parameters(VehicleServer, "vehicle_moved", [train.get_rid(), train.get_world_position()])
 
@@ -46,10 +46,10 @@ func test_train_position_changed_signal_rearms_after_last_emission() -> void:
 
     watch_signals(train)
 
-    vehicle.move_on_track(0.9)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.9)
     assert_signal_not_emitted(train, "position_changed", "Should not emit before another full meter of movement")
 
-    vehicle.move_on_track(0.2)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.2)
     assert_signal_emitted(train, "position_changed", "Should emit after another 1m from the last emitted position")
 
 
@@ -61,7 +61,7 @@ func test_vehicle_server_stops_relaying_a_detached_controller() -> void:
     watch_signals(VehicleServer)
     VehicleServer.vehicle_bind_controller(train.get_rid(), RID())
 
-    vehicle.move_on_track(2.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 2.0)
     assert_signal_not_emitted(VehicleServer, "vehicle_moved", "Should not relay a controller that left its handle")
 
 
@@ -73,7 +73,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     TrackServer.topology_rebuild()
 
     var physics_node: VehiclePhysicsNode = build_vehicle_node(train_id)
-    var controller: VehicleController = physics_node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     _created_vehicle_nodes.append(physics_node)
 
     var vehicle: RailVehicle3D = RailVehicle3D.new()
@@ -86,7 +86,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     await wait_idle_frames(2)
 
     return {
-        "controller": physics_node.get_controller(),
+        "controller": VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()),
         "vehicle": vehicle,
     }
 

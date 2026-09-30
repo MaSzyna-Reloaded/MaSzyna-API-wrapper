@@ -862,7 +862,7 @@ func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if train_type == RailVehicleController.TRAIN_TYPE_ET41 or train_type == RailVehicleController.TRAIN_TYPE_ET42:
         # a unit of two joined for good, with nothing beyond it
         return RailVehicleServer.vehicle_get_coupled(
-                vehicle, MaszynaLegacyDriverTrainset.FRONT_END, RailVehicleController.COUPLING_ELEMENT_PERMANENT).size() \
+                vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_PERMANENT).size() \
                 == trainset.vehicles.size()
     if _dmu:
         return false
@@ -871,7 +871,7 @@ func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 < situation.route.velocity_plus + situation.route.velocity_minus:
         return true
     var controlled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL)
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_CONTROL)
     if not controlled.size() == trainset.vehicles.size():
         return false
     for other:RID in trainset.vehicles:

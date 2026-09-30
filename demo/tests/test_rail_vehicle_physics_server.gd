@@ -2,8 +2,6 @@ extends MaszynaGutTest
 
 
 ## trainset_move(): the ends and the coupling of a coupler alone (coupling::coupler, MOVER.h:161)
-const FRONT_END: int = 0
-const COUPLING_COUPLER: int = 1
 const MOVE_DISTANCE: float = 10.0
 
 var created_tracks: Array[RID] = []
@@ -310,7 +308,8 @@ func test_trainset_move_moves_every_vehicle_the_same_way() -> void:
     # the second stands the other way round: front to front
     RailVehicleServer.vehicle_set_track(first.get_rid(), created_tracks[0], 40.0, TrackServer.DIRECTION_NORMAL)
     RailVehicleServer.vehicle_set_track(second.get_rid(), created_tracks[0], 60.0, TrackServer.DIRECTION_REVERSED)
-    first.couple(second, FRONT_END, FRONT_END, COUPLING_COUPLER)
+    first.couple(second, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLER_END_FRONT,
+            RailVehicleController.COUPLING_FLAG_COUPLER)
     var forward: Vector3 = -RailVehicleServer.vehicle_get_transform(first.get_rid()).basis.z.normalized()
     var first_start: Vector3 = RailVehicleServer.vehicle_get_transform(first.get_rid()).origin
     var second_start: Vector3 = RailVehicleServer.vehicle_get_transform(second.get_rid()).origin

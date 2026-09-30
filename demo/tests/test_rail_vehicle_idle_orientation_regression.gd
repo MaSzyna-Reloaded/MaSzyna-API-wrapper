@@ -64,7 +64,7 @@ func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> 
 
     # A real driver boarding and moving off - even a tiny nudge is enough to trigger the
     # bogie-refined transform recompute that the coarse "parked" transform above never touched.
-    vehicle.move_on_track(0.5)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.5)
 
     assert_true(
         forward_while_parked.distance_to(_vehicle_forward(vehicle)) < 0.1,
@@ -88,7 +88,7 @@ func test_reversed_direction_vehicle_orientation_does_not_flip_once_it_moves() -
                 forward_while_parked],
     )
 
-    vehicle.move_on_track(0.5)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.5)
 
     assert_true(
         forward_while_parked.distance_to(_vehicle_forward(vehicle)) < 0.1,
@@ -107,7 +107,7 @@ func _spawn_bogie_vehicle(direction:TrackServer.Direction) -> RailVehicle3D:
     TrackServer.topology_rebuild()
 
     var physics_node: VehiclePhysicsNode = _create_vehicle_node()
-    var controller: VehicleController = physics_node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
     # composed configuration - so the vehicle has to actually have wheels
     var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()

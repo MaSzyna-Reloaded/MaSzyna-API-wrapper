@@ -65,6 +65,12 @@ namespace godot {
             rs->instance_set_visible(p_instance.rids[i], visible);
             rs->instance_set_layer_mask(p_instance.rids[i], p_instance.layer_mask);
             rs->instance_geometry_set_material_overlay(p_instance.rids[i], overlay);
+            // the chain ends with the submodel itself (instance_set_submodel_material_override())
+            if (const Ref<Material> *material =
+                        p_instance.submodel_materials.getptr(p_instance.chains[i][p_instance.chains[i].size() - 1]);
+                material != nullptr) {
+                rs->instance_geometry_set_material_override(p_instance.rids[i], (*material)->get_rid());
+            }
         }
     }
 

@@ -9,11 +9,10 @@ extends MaszynaGutTest
 const FIXTURE_PATH:String = "res://tests/fixtures/test_vehicle.fiz"
 const VEHICLE_COUNT:int = 3
 ## Original engine: coupling::coupler | coupling::brakehose (MOVER.h:161)
-const COUPLING_WITH_BRAKE_HOSE:int = 3
+const COUPLING_WITH_BRAKE_HOSE:int = (RailVehicleController.COUPLING_FLAG_COUPLER
+        | RailVehicleController.COUPLING_FLAG_BRAKEHOSE)
 ## Front and rear coupler of a vehicle standing the normal way (TDynamicObject::AttachNext,
 ## DynObj.cpp:2590)
-const FRONT_END:int = 0
-const REAR_END:int = 1
 ## A non-zero scenery velocity makes a vehicle ready to depart - reservoirs full and the brake
 ## pipe charged (TMoverParameters::CheckLocomotiveParameters, Mover.cpp:8902); 0.1 is what
 ## scenery authors write for a standing, ready vehicle
@@ -44,15 +43,16 @@ func before_each() -> void:
         # the first vehicle is driven - an unmanned one is not simulated (FINDINGS, 09-23)
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
         node.initial_velocity = READY_TO_DEPART_VELOCITY
-        node.set_description(model)
+        node.set_controller(model)
         add_child_autofree(node)
         nodes.append(node)
-        var controller:VehicleController = node.get_controller()
+        var controller:VehicleController = VehicleServer.vehicle_get_controller(node.get_vehicle_rid())
         controllers.append(controller)
         brakes.append(controller.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
     await wait_idle_frames(2)
     for index:int in range(1, VEHICLE_COUNT):
-        controllers[index - 1].couple(controllers[index], REAR_END, FRONT_END, COUPLING_WITH_BRAKE_HOSE)
+        controllers[index - 1].couple(controllers[index], RailVehicleController.COUPLER_END_REAR,
+                RailVehicleController.COUPLER_END_FRONT, COUPLING_WITH_BRAKE_HOSE)
 
 
 func after_each() -> void:
@@ -63,12 +63,12 @@ func after_each() -> void:
 
 func test_every_vehicle_is_joined_by_the_brake_hose() -> void:
     for index:int in range(VEHICLE_COUNT - 1):
-        assert_true(controllers[index].is_coupled(REAR_END), "vehicle %d rear coupler" % index)
-        assert_true(controllers[index].is_coupled_by(REAR_END, RailVehicleController.COUPLING_ELEMENT_BRAKEHOSE),
+        assert_true(controllers[index].is_coupled(RailVehicleController.COUPLER_END_REAR), "vehicle %d rear coupler" % index)
+        assert_true(controllers[index].is_coupled_by(RailVehicleController.COUPLER_END_REAR, RailVehicleController.COUPLING_FLAG_BRAKEHOSE),
                 "vehicle %d rear brake hose" % index)
-        assert_eq(controllers[index].get_coupled_controller(REAR_END), controllers[index + 1])
+        assert_eq(controllers[index].get_coupled_controller(RailVehicleController.COUPLER_END_REAR), controllers[index + 1])
     var joined:Array = RailVehicleServer.vehicle_get_coupled(
-            controllers[0].get_rid(), FRONT_END, RailVehicleController.COUPLING_ELEMENT_BRAKEHOSE)
+            controllers[0].get_rid(), RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_BRAKEHOSE)
     assert_eq(joined.size(), VEHICLE_COUNT)
 
 
@@ -86,18 +86,18 @@ func test_the_pipe_of_the_last_vehicle_follows_the_handle() -> void:
 
 
 func test_uncouple_parts_the_vehicles() -> void:
-    controllers[0].uncouple(REAR_END)
-    assert_false(controllers[0].is_coupled(REAR_END))
-    assert_false(controllers[1].is_coupled(FRONT_END))
+    controllers[0].uncouple(RailVehicleController.COUPLER_END_REAR)
+    assert_false(controllers[0].is_coupled(RailVehicleController.COUPLER_END_REAR))
+    assert_false(controllers[1].is_coupled(RailVehicleController.COUPLER_END_FRONT))
 
 
 func test_uncoupling_announces_the_trainset_change_once() -> void:
     watch_signals(controllers[0])
-    controllers[0].uncouple(REAR_END)
+    controllers[0].uncouple(RailVehicleController.COUPLER_END_REAR)
     assert_signal_emit_count(controllers[0], "trainset_changed", 1)
     # the coupler and the brake hose part; the coupler comes first
     var first_detached:Array = get_signal_parameters(controllers[0], "coupler_detached", 0)
-    assert_eq(first_detached, [RailVehicleController.COUPLING_ELEMENT_COUPLER])
+    assert_eq(first_detached, [RailVehicleController.COUPLING_FLAG_COUPLER])
 
 
 func test_the_consist_releaser_is_held_only_while_the_brakes_brake() -> void:
@@ -112,8 +112,8 @@ func test_a_freed_vehicle_leaves_its_neighbours_uncoupled() -> void:
     watch_signals(controllers[0])
     nodes[1].free()
 
-    assert_false(controllers[0].is_coupled(REAR_END), "the front neighbour lets go of the freed vehicle")
-    assert_false(controllers[2].is_coupled(FRONT_END), "the rear neighbour lets go of the freed vehicle")
+    assert_false(controllers[0].is_coupled(RailVehicleController.COUPLER_END_REAR), "the front neighbour lets go of the freed vehicle")
+    assert_false(controllers[2].is_coupled(RailVehicleController.COUPLER_END_FRONT), "the rear neighbour lets go of the freed vehicle")
     assert_eq(RailVehicleServer.vehicle_get_coupled(
-            first, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER).size(), 1)
+            first, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER).size(), 1)
     assert_signal_emitted(controllers[0], "trainset_changed")

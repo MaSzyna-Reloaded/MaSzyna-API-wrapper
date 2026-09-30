@@ -8,9 +8,6 @@ class_name LegacyCabinOccupiedCouplerDisconnect
 
 const CONTROL:StringName = &"coupler_disconnect_occupied"
 const ACTION:StringName = &"coupler_disconnect_occupied"
-## The couplers of the vehicle (end::front, end::rear)
-const FRONT_END:int = 0
-const REAR_END:int = 1
 
 var _vehicle_rid:RID
 var _cab:int
@@ -29,4 +26,5 @@ func unregister() -> void:
 func _disconnect(state:CabinState, action:StringName, _value:Variant) -> Variant:
     if not action == &"hold" or state.cab == 0:
         return null
-    return state.send_vehicle_command("coupler_disconnect", REAR_END if state.cab < 0 else FRONT_END)
+    return state.send_vehicle_command("coupler_disconnect",
+            RailVehicleController.COUPLER_END_REAR if state.cab < 0 else RailVehicleController.COUPLER_END_FRONT)

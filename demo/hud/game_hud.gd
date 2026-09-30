@@ -29,7 +29,6 @@ const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
 }
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
-const FRONT_END:int = 0
 
 @export var environment_node_path: NodePath
 
@@ -225,14 +224,11 @@ func _show_chips() -> void:
 ## is freed - the camera lives in the vehicle's cabin (MaszynaPlayer.clear_start_train())
 func _remove_trainset(vehicle: RID) -> void:
     var trainset: Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     if trainset.has(PlayerServer.player_get_vehicle()):
         PlayerServer.player_leave_vehicle()
     for trainset_vehicle: RID in trainset:
-        # the wrapper goes with the RailVehicle3D it built; freed alone, the wrapper builds it again
-        var wrapper: MaszynaRailVehicle3D = VehicleCard.legacy_vehicle(trainset_vehicle)
-        var node: Node = wrapper if wrapper else instance_from_id(
-                RailVehicleServer.vehicle_get_rail_vehicle(trainset_vehicle)) as Node
+        var node: Node = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(trainset_vehicle)) as Node
         if node:
             node.queue_free()
 

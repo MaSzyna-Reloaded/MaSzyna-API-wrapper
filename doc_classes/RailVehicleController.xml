@@ -67,9 +67,9 @@
 		<method name="couple">
 			<return type="void" />
 			<param index="0" name="other" type="RailVehicleController" />
-			<param index="1" name="end" type="int" />
-			<param index="2" name="other_end" type="int" />
-			<param index="3" name="coupling_type" type="int" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="2" name="other_end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="3" name="coupling" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
 			</description>
 		</method>
@@ -186,13 +186,13 @@
 		</method>
 		<method name="get_coupled_controller" qualifiers="const">
 			<return type="RailVehicleController" />
-			<param index="0" name="end" type="int" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
 			<description>
 			</description>
 		</method>
 		<method name="get_coupled_end" qualifiers="const">
-			<return type="int" />
-			<param index="0" name="end" type="int" />
+			<return type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
 			<description>
 			</description>
 		</method>
@@ -304,14 +304,14 @@
 		</method>
 		<method name="is_coupled" qualifiers="const">
 			<return type="bool" />
-			<param index="0" name="end" type="int" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
 			<description>
 			</description>
 		</method>
 		<method name="is_coupled_by" qualifiers="const">
 			<return type="bool" />
-			<param index="0" name="end" type="int" />
-			<param index="1" name="element" type="int" enum="RailVehicleController.CouplingElement" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="1" name="flags" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
 			</description>
 		</method>
@@ -327,6 +327,13 @@
 			<param index="0" name="step" type="int" default="1" />
 			<description>
 				Increase main controller position
+			</description>
+		</method>
+		<method name="opposite_end" qualifiers="static">
+			<return type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The other end of the same vehicle.
 			</description>
 		</method>
 		<method name="process_movement">
@@ -349,21 +356,12 @@
 		</method>
 		<method name="uncouple">
 			<return type="void" />
-			<param index="0" name="end" type="int" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
 			<description>
 			</description>
 		</method>
 		<method name="update_location">
 			<return type="void" />
-			<description>
-			</description>
-		</method>
-		<method name="update_neighbour">
-			<return type="void" />
-			<param index="0" name="end" type="int" />
-			<param index="1" name="other" type="RailVehicleController" />
-			<param index="2" name="other_end" type="int" />
-			<param index="3" name="track_distance" type="float" />
 			<description>
 			</description>
 		</method>
@@ -431,12 +429,12 @@
 			</description>
 		</signal>
 		<signal name="coupler_attached">
-			<param index="0" name="element" type="int" />
+			<param index="0" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
 			</description>
 		</signal>
 		<signal name="coupler_detached">
-			<param index="0" name="element" type="int" />
+			<param index="0" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
 			</description>
 		</signal>
@@ -494,19 +492,44 @@
 		<constant name="POWER_TYPE_STEAM" value="4" enum="TrainPowerType">
 			Represents steam power.
 		</constant>
-		<constant name="COUPLING_ELEMENT_COUPLER" value="0" enum="CouplingElement">
+		<constant name="COUPLER_END_FRONT" value="0" enum="CouplerEnd">
+			The vehicle's front end (end::front).
 		</constant>
-		<constant name="COUPLING_ELEMENT_BRAKEHOSE" value="1" enum="CouplingElement">
+		<constant name="COUPLER_END_REAR" value="1" enum="CouplerEnd">
+			The vehicle's rear end (end::rear).
 		</constant>
-		<constant name="COUPLING_ELEMENT_MAINHOSE" value="2" enum="CouplingElement">
+		<constant name="COUPLING_FLAG_COUPLER" value="1" enum="CouplingFlags" is_bitfield="true">
+			The coupler.
 		</constant>
-		<constant name="COUPLING_ELEMENT_CONTROL" value="3" enum="CouplingElement">
+		<constant name="COUPLING_FLAG_BRAKEHOSE" value="2" enum="CouplingFlags" is_bitfield="true">
+			The brake hose.
 		</constant>
-		<constant name="COUPLING_ELEMENT_GANGWAY" value="4" enum="CouplingElement">
+		<constant name="COUPLING_FLAG_CONTROL" value="4" enum="CouplingFlags" is_bitfield="true">
+			The control line.
 		</constant>
-		<constant name="COUPLING_ELEMENT_HEATING" value="5" enum="CouplingElement">
+		<constant name="COUPLING_FLAG_HIGHVOLTAGE" value="8" enum="CouplingFlags" is_bitfield="true">
+			The high voltage line.
 		</constant>
-		<constant name="COUPLING_ELEMENT_PERMANENT" value="6" enum="CouplingElement">
+		<constant name="COUPLING_FLAG_GANGWAY" value="16" enum="CouplingFlags" is_bitfield="true">
+			The gangway.
+		</constant>
+		<constant name="COUPLING_FLAG_MAINHOSE" value="32" enum="CouplingFlags" is_bitfield="true">
+			The main reservoir hose.
+		</constant>
+		<constant name="COUPLING_FLAG_HEATING" value="64" enum="CouplingFlags" is_bitfield="true">
+			The heating line.
+		</constant>
+		<constant name="COUPLING_FLAG_PERMANENT" value="128" enum="CouplingFlags" is_bitfield="true">
+			A permanent coupling, inside one unit.
+		</constant>
+		<constant name="COUPLING_FLAG_POWER_24V" value="256" enum="CouplingFlags" is_bitfield="true">
+			The 24 V line.
+		</constant>
+		<constant name="COUPLING_FLAG_POWER_110V" value="512" enum="CouplingFlags" is_bitfield="true">
+			The 110 V line.
+		</constant>
+		<constant name="COUPLING_FLAG_POWER_3X400V" value="1024" enum="CouplingFlags" is_bitfield="true">
+			The 3x400 V line.
 		</constant>
 		<constant name="TRAIN_TYPE_DEFAULT" value="0" enum="TrainType">
 		</constant>

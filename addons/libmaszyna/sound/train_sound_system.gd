@@ -119,9 +119,9 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
-## The coupling elements the physics side reports, in the order of RailVehicleController.CouplingElement,
-## attach first and detach second, then the pantograph events of RailVehicleElectricEngine - the layout
-## of a vehicle's entry in _vehicle_events.
+## The couplings the physics side reports, in the order of COUPLING_EVENT_INDICES, attach first and
+## detach second, then the pantograph events of RailVehicleElectricEngine - the layout of a vehicle's
+## entry in _vehicle_events.
 const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/attach_coupler": 0,
     "coupler_sound/attach_brakehose": 1,
@@ -137,6 +137,15 @@ const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/detach_heating": 11,
     "pantograph_sound/up": 12,
     "pantograph_sound/down": 13,
+}
+## A coupling flag's place among the attach (and, offset, the detach) counts
+const COUPLING_EVENT_INDICES:Dictionary[int, int] = {
+    RailVehicleController.COUPLING_FLAG_COUPLER: 0,
+    RailVehicleController.COUPLING_FLAG_BRAKEHOSE: 1,
+    RailVehicleController.COUPLING_FLAG_MAINHOSE: 2,
+    RailVehicleController.COUPLING_FLAG_CONTROL: 3,
+    RailVehicleController.COUPLING_FLAG_GANGWAY: 4,
+    RailVehicleController.COUPLING_FLAG_HEATING: 5,
 }
 const COUPLER_DETACH_OFFSET:int = 6
 const PANTOGRAPH_UP_EVENT:int = 12
@@ -363,7 +372,7 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
         vehicle_rid = RID()
     if not runtime.vehicle_rid == vehicle_rid:
         # the vehicle took its controller's handle in place of its own
-        # (RailVehicle3D::set_controller) - the counting moves to the new one
+        # (RailVehicle3D.set_vehicle()) - the counting moves to the new one
         _stop_counting_events(runtime.vehicle_rid)
         _vehicle_events.erase(runtime.vehicle_rid)
     runtime.vehicle_rid = vehicle_rid
@@ -393,14 +402,14 @@ func _stop_counting_events(vehicle_rid:RID) -> void:
 
 
 ## Every rail vehicle reports its couplings; only the counted ones are kept
-func _on_coupler_attached(vehicle_rid:RID, element:RailVehicleController.CouplingElement) -> void:
+func _on_coupler_attached(vehicle_rid:RID, flag:RailVehicleController.CouplingFlags) -> void:
     if _vehicle_events.has(vehicle_rid):
-        _vehicle_events[vehicle_rid][element] += 1
+        _vehicle_events[vehicle_rid][COUPLING_EVENT_INDICES[flag]] += 1
 
 
-func _on_coupler_detached(vehicle_rid:RID, element:RailVehicleController.CouplingElement) -> void:
+func _on_coupler_detached(vehicle_rid:RID, flag:RailVehicleController.CouplingFlags) -> void:
     if _vehicle_events.has(vehicle_rid):
-        _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
+        _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + COUPLING_EVENT_INDICES[flag]] += 1
 
 
 ## Both pantographs count as one event: the vehicle has one sound for them (sPantUp,
@@ -560,7 +569,8 @@ func _refresh_listener_trainset() -> void:
     if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
         return
     _listener_trainset.assign(RailVehicleServer.vehicle_get_coupled(
-            _listener.listener_vehicle.get_rid(), 0, RailVehicleController.COUPLING_ELEMENT_COUPLER))
+            _listener.listener_vehicle.get_rid(), RailVehicleController.COUPLER_END_FRONT,
+            RailVehicleController.COUPLING_FLAG_COUPLER))
 
 
 func _engine_gain(
@@ -795,7 +805,7 @@ func _set_bank_vehicle(runtime:BankRuntime, vehicle:RailVehicle3D) -> void:
         # a bank is unregistered from its player's tree_exiting, which is the vehicle being freed:
         # by then the vehicle may already be gone, and it takes its connections with it
         if is_instance_valid(previous):
-            previous.controller_changed.disconnect(_on_vehicle_controller_changed.bind(previous))
+            previous.vehicle_changed.disconnect(_on_vehicle_controller_changed.bind(previous))
         _banks_by_vehicle.erase(previous)
     if not vehicle:
         return
@@ -805,7 +815,7 @@ func _set_bank_vehicle(runtime:BankRuntime, vehicle:RailVehicle3D) -> void:
     if not _banks_by_vehicle.has(vehicle):
         # a bank is registered while its vehicle is still being built, so its controller comes
         # from the vehicle's own announcement rather than being looked for again later
-        vehicle.controller_changed.connect(_on_vehicle_controller_changed.bind(vehicle))
+        vehicle.vehicle_changed.connect(_on_vehicle_controller_changed.bind(vehicle))
     _banks_by_vehicle[vehicle] = runtime
 
 

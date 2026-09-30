@@ -70,11 +70,12 @@ RID names. Every vehicle handles its own subset of all commands, which can be in
 (`vehicle_get_commands`). Adding and removing commands is also possible at runtime, because commands are dynamic - a
 disabled component gives its commands back.
 
-A vehicle is addressed by its `RailVehicleServer` handle (RID). One known only by its scenery name - which may be
-empty or shared by several vehicles - is found first. For example, to enable battery in the `train1` vehicle:
+A vehicle is addressed by its `VehicleServer` handle (RID); `RailVehicleServer` knows the same handle for what is rail
+(the track, the couplers, the rail component kinds). One known only by its scenery name - which may be empty or shared
+by several vehicles - is found first. For example, to enable battery in the `train1` vehicle:
 ```gdscript
-var vehicle: RID = RailVehicleServer.vehicle_get_rid_by_name("train1")
-RailVehicleServer.vehicle_send_command(vehicle, "battery", true)
+var vehicle: RID = VehicleServer.vehicle_get_rid_by_name("train1")
+VehicleServer.vehicle_send_command(vehicle, "battery", true)
 ```
 
 A command runs on the vehicle immediately, but its effect may take time (i.e. some systems must spin up). To see
@@ -136,7 +137,7 @@ func operate_something():
 vehicle can call directly. Any other game object (HLC) goes through the **High-Level API**:
 
 ```gdscript
-RailVehicleServer.vehicle_send_command(vehicle_rid, "lock_power", true)
+VehicleServer.vehicle_send_command(vehicle_rid, "lock_power", true)
 ```
 
 This approach hides internal structure of the vehicle and creates a

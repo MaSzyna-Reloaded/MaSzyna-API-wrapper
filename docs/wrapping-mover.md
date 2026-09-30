@@ -60,6 +60,7 @@ classDiagram
     namespace Model {
     }
     namespace Vehicle {
+        class VehicleServer
         class RailVehicleServer
         class VehicleController
         class RailVehicleController
@@ -79,8 +80,10 @@ classDiagram
     MaszynaRailVehiclePhysicsNode ..> VehicleController : parses .fiz into a description
     VehiclePhysicsNode ..> VehicleController : builds a copy of the description
     VehiclePhysicsNode *-- VehicleController : owns
-    VehiclePhysicsNode --> RailVehicleServer : RID
-    RailVehicleServer o-- VehicleController : steps, commands
+    VehiclePhysicsNode --> VehicleServer : vehicle and controller RIDs
+    VehicleServer o-- VehicleController : configures, binds, commands
+    VehicleServer --> MaszynaMoverVehicleServer : hands it the step
+    MaszynaMoverVehicleServer --> RailVehicleServer : rail work per vehicle, in its phases
     RailVehicle3D --> VehiclePhysicsNode : draws
     GenericVehicleComponentNode *-- GenericVehicleComponent : proxy of
     VehicleController <|-- RailVehicleController
@@ -177,7 +180,7 @@ Every `MoverRailVehicle<X>` also inherits `MoverComponent` (see the overview), l
 | Vehicle data container        | FIZ files                           | the vehicle's description - a `MoverRailVehicleController` resource with its components - parsed from the `.fiz` (`FizVehicleBuilder`, `addons/libmaszyna/legacy/fiz`)
 | Vehicle data loading + init   | cParser + Mover's `LoadFIZ_*()`     | Component properties + `_apply_configuration()` of the `Mover*` implementation
 | Reading vehicle state         | Direct access to Mover's properties | Typed getters of the component; `vehicle_dump_state()` for diagnostics
-| Modyfing vehicle state        | Direct calls to Mover's methods     | Typed calls on the component or `RailVehicleServer.vehicle_send_command()`
+| Modyfing vehicle state        | Direct calls to Mover's methods     | Typed calls on the component or `VehicleServer.vehicle_send_command()`
 | Reading runtime config values | Direct property reading or calls    | `Dictionary` with a runtime config (`vehicle_dump_config()`, `config_changed`)
 | Propagating trainset commands | Internal notification + TTrain refs | Using High-Level API commands
 
@@ -596,7 +599,7 @@ void RailVehicleDoors::_register_commands() {
 ```
 
 > NOTE: Method `operate_doors` is not exposed as a command, but due to this technique it is available as a typed
-> call on the component - `RailVehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)` -
+> call on the component - `VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)` -
 > which can be handy in internal communication.
 
 #### Argument type conversion

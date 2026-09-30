@@ -143,6 +143,9 @@ anything. Open work belongs in `TODO.md`.
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
 
 ## State, ownership, events
+* An action that needs two things is spent only when both exist: a call with an invalid handle is
+  ignored silently, and the flag that said "still to do" is gone. *(09-30 the vehicles stood off
+  their tracks in the editor)*
 * A geometric value nobody publishes reads as zero, not as missing, and zero makes two things
   identical - grep for assignments to an exported property before trusting it is filled, and treat
   "both halves report the same number" as the signature. *(09-27 both pantographs at the origin;
@@ -193,6 +196,12 @@ anything. Open work belongs in `TODO.md`.
   RID. *(09-30 "Edit FIZ" aborted the editor)*
 * A `RefCounted` crosses a binding as `Ref<>`: a raw `T*` returned to GDScript takes a reference
   away and frees it. *(09-30 a raw pointer returned to GDScript freed the vehicle)*
+* A `Resource`'s setter stores data; joining, registering and connecting happen where the object
+  becomes live - loading a resource calls every setter. Its server handle is `_get_rid()`, never a
+  `get_rid()` of its own. *(09-30 a stored vehicle description came up half a vehicle)*
+* A node taken out of the tree and put back ("Edit FIZ") runs `_enter_tree()`/`_exit_tree()` again
+  but `_ready()` once: subscribe where you unsubscribe. *(09-30 "Edit FIZ" disconnected what was
+  never connected)*
 * `SceneTree.process_frame` is emitted **before** every node's `_process` (measured, Godot 4.7.2):
   a C++ singleton on it steps ahead of every reader, no node needed. A node added to the root from
   an `_enter_tree()` of the main scene fails (`add_child()`, root busy). *(09-30 the simulation
@@ -274,6 +283,8 @@ anything. Open work belongs in `TODO.md`.
   that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
 
 ## Threads and teardown
+* What points into another owner's memory asks for that owner by `ObjectID`, not by the
+  singleton's name - at teardown the name goes first. *(09-30 the Mover server freed the Movers)*
 * Every worker needs an owner that stops it before the scripts go. A destructor runs too late. A
   stop must not wait for the whole job, and a drain must not drop tasks someone waits on.
   *(09-24 no symbols / parser; 09-22 RID allocator)*

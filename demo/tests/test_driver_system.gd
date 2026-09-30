@@ -165,13 +165,13 @@ func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return train.state["battery_enabled"], MAX_WAIT)
-    assert_true(train.state["battery_enabled"], "the battery is switched on")
+    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    assert_true(train.get_state()["battery_enabled"], "the battery is switched on")
     assert_eq(CabinSystem.get_control(vehicle, 1, &"battery_sw"), true, "by its switch in the cab")
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 0.0, 0.0)
-    await wait_until(func() -> bool: return not train.state["battery_enabled"], MAX_WAIT)
-    assert_false(train.state["battery_enabled"], "put away, the battery is off")
+    await wait_until(func() -> bool: return not train.get_state()["battery_enabled"], MAX_WAIT)
+    assert_false(train.get_state()["battery_enabled"], "put away, the battery is off")
     DriverSystem.driver_free(driver)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
@@ -184,7 +184,7 @@ func test_the_trainset_shows_a_powered_vehicles_line_breaker_open() -> void:
 
     trainset.update(train.get_rid(), 1, true)
 
-    assert_false(train.state["main_switch_enabled"], "a cold engine's line breaker is open")
+    assert_false(train.get_state()["main_switch_enabled"], "a cold engine's line breaker is open")
     assert_true(trainset.line_breaker_open, "and the trainset's state shows it")
 
 
@@ -207,11 +207,11 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
     DriverSystem.vehicle_set_control_active(vehicle, false)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
     await wait_seconds(1.0)
-    assert_false(train.state["battery_enabled"], "the order is taken, the battery left alone")
+    assert_false(train.get_state()["battery_enabled"], "the order is taken, the battery left alone")
 
     DriverSystem.vehicle_set_control_active(vehicle, true)
-    await wait_until(func() -> bool: return train.state["battery_enabled"], MAX_WAIT)
-    assert_true(train.state["battery_enabled"], "back in control, it carries the order out")
+    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    assert_true(train.get_state()["battery_enabled"], "back in control, it carries the order out")
     DriverSystem.driver_free(driver)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
@@ -234,11 +234,11 @@ func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> vo
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
     await wait_seconds(1.0)
-    assert_false(train.state["battery_enabled"], "the order is taken, the battery left alone")
+    assert_false(train.get_state()["battery_enabled"], "the order is taken, the battery left alone")
 
     DriverSystem.vehicle_set_control_active(vehicle, true)
-    await wait_until(func() -> bool: return train.state["battery_enabled"], MAX_WAIT)
-    assert_true(train.state["battery_enabled"], "the player gone, it carries the order out")
+    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    assert_true(train.get_state()["battery_enabled"], "the player gone, it carries the order out")
     DriverSystem.driver_free(driver)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
@@ -256,7 +256,7 @@ func test_the_driver_reads_its_trainset() -> void:
     var state:Dictionary = DriverSystem.driver_get_state(driver)
     var alone:Array[RID] = [vehicle]
     assert_eq(state["trainset_vehicles"], alone, "a vehicle on its own is its whole trainset")
-    assert_eq(state["trainset_mass"], float(train.state["mass_total"]))
+    assert_eq(state["trainset_mass"], float(train.get_state()["mass_total"]))
     assert_almost_eq(state["trainset_gravity_acceleration"], 0.0, 0.0001, "on the flat nothing pulls")
     DriverSystem.driver_free(driver)
 
@@ -288,16 +288,16 @@ func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
     var cab:int = CabinSystem.occupied_cab(vehicle)
     # the player puts the reverser backwards and leaves the vehicle
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, -1)
-    var left_with:int = int(train.state["direction"])
+    var left_with:int = int(train.get_state()["direction"])
 
     DriverSystem.vehicle_set_control_active(vehicle, true)
 
     var way:int = DriverSystem.driver_get_state(driver)["direction"]
-    var cab_active:int = int(train.state["cabin"])
+    var cab_active:int = int(train.get_state()["cabin"])
     assert_eq(left_with, -1, "the player left the reverser backwards")
     assert_ne(cab_active, 0, "the driver switches its cab on")
     assert_eq(way, cab_active, "standing, the driver drives the way of the cab")
-    assert_eq(int(train.state["direction"]), way * cab_active, "and puts the reverser that way")
+    assert_eq(int(train.get_state()["direction"]), way * cab_active, "and puts the reverser that way")
     DriverSystem.driver_free(driver)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 

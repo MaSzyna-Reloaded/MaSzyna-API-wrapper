@@ -35,11 +35,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("get_next_position_velocity", "main_controller"),
                 &RailVehicleElectricSeriesEngine::get_next_position_velocity);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_resistor_fan_rotation");
     }
 
     RailVehicleEngine::EngineType RailVehicleElectricSeriesEngine::get_type() const {

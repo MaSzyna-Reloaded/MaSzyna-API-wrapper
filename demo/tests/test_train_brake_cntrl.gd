@@ -61,4 +61,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(brake.cntrl_brake_delays, RailVehicleBrake.BRAKE_DELAY_GPR_MG)
     assert_eq(brake.cntrl_dynamic_brake_type, RailVehicleBrake.DYNAMIC_BRAKE_AUTOMATIC)
     assert_true(brake.cntrl_local_brake_traxx)
-    assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after configuring the Cntrl. section")
+    assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after configuring the Cntrl. section")

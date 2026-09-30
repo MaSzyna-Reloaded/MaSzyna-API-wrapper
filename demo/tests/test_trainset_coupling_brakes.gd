@@ -75,15 +75,15 @@ func test_every_vehicle_is_joined_by_the_brake_hose() -> void:
 
 func test_the_pipe_of_the_last_vehicle_follows_the_handle() -> void:
     var last:RailVehicleBrake = brakes[VEHICLE_COUNT - 1]
-    assert_almost_eq(last.pipe_pressure, CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "a ready train starts charged")
+    assert_almost_eq(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "a ready train starts charged")
 
     controllers[0].send_command("brake_level_set_position", "full")
     await wait_seconds(BRAKING_SECONDS)
-    assert_lt(last.pipe_pressure, CHARGED_PIPE_PRESSURE - SERVICE_BRAKING_PIPE_DROP, "the pipe of the last vehicle empties")
+    assert_lt(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE - SERVICE_BRAKING_PIPE_DROP, "the pipe of the last vehicle empties")
 
     controllers[0].send_command("brake_level_set_position", "drive")
     await wait_seconds(RELEASING_SECONDS)
-    assert_almost_eq(last.pipe_pressure, CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "the pipe of the last vehicle refills")
+    assert_almost_eq(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "the pipe of the last vehicle refills")
 
 
 func test_uncouple_parts_the_vehicles() -> void:
@@ -103,9 +103,9 @@ func test_uncoupling_announces_the_trainset_change_once() -> void:
 
 func test_the_consist_releaser_is_held_only_while_the_brakes_brake() -> void:
     controllers[0].send_command("consist_releaser", true)
-    assert_true(brakes[0].releaser_active, "switched on")
+    assert_true(brakes[0].get_releaser_active(), "switched on")
     await wait_seconds(RELEASER_TICK_SECONDS)
-    assert_false(brakes[0].releaser_active, "a released brake lets go of it on the next tick")
+    assert_false(brakes[0].get_releaser_active(), "a released brake lets go of it on the next tick")
 
 
 func test_a_freed_vehicle_leaves_its_neighbours_uncoupled() -> void:

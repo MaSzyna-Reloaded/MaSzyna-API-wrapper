@@ -21,23 +21,8 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("heating", "enabled"), &RailVehicleHeating::heating);
         ClassDB::bind_method(D_METHOD("get_active"), &RailVehicleHeating::get_active);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_active");
         ClassDB::bind_method(D_METHOD("get_allowed"), &RailVehicleHeating::get_allowed);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::BOOL, "allowed", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_allowed");
         ClassDB::bind_method(D_METHOD("get_power"), &RailVehicleHeating::get_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_power");
     }
 
     void RailVehicleHeating::_register_commands() {

@@ -20,18 +20,18 @@ func before_each():
 
 # Train.cpp:8246-8289 - an eighth per press, between silent and full
 func test_volume_steps_and_stays_within_range():
-    assert_eq(train.state["radio_volume"], VOLUME_DEFAULT)
+    assert_eq(train.get_state()["radio_volume"], VOLUME_DEFAULT)
     train.send_command("radio_volume_increase", true)
-    assert_eq(train.state["radio_volume"], VOLUME_DEFAULT + VOLUME_STEP)
+    assert_eq(train.get_state()["radio_volume"], VOLUME_DEFAULT + VOLUME_STEP)
     for step:int in 10:
         train.send_command("radio_volume_increase", true)
-    assert_eq(train.state["radio_volume"], 1.0)
+    assert_eq(train.get_state()["radio_volume"], 1.0)
     for step:int in 10:
         train.send_command("radio_volume_decrease", true)
-    assert_eq(train.state["radio_volume"], 0.0)
+    assert_eq(train.get_state()["radio_volume"], 0.0)
 
 
 func test_radio_switch_reaches_the_mover():
     train.send_command("radio", true)
-    assert_true(train.state["radio_enabled"])
-    assert_false(train.state["radio_powered"], "no low voltage, no power")
+    assert_true(train.get_state()["radio_enabled"])
+    assert_false(train.get_state()["radio_powered"], "no low voltage, no power")

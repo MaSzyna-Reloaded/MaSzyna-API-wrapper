@@ -204,7 +204,7 @@ static func _ensure_built() -> void:
             "trigger_threshold_max": 10000.0,
         },
         # Brake-related labels only carry event_name/controller - MaszynaBrakeSfxEventFactory (not this
-        # catalog) decides gating/shaping/hardware wiring, built once from VehicleController.config +
+        # catalog) decides gating/shaping/hardware wiring, built once from VehicleServer.vehicle_dump_config() +
         # each MmdSoundSourceDefinition's own amplitude/frequency constants (see the brake-sound
         # redesign plan). event_name is a many-to-one COMPOSITION MAP: labels that are begin/
         # middle/end phases or same-physical-effect variants of one sound share one event_name, so

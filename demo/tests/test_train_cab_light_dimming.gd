@@ -14,11 +14,11 @@ func before_each():
 
 
 func test_the_cab_light_starts_undimmed():
-    assert_false(train.state["roof_light_dimmed"])
+    assert_false(train.get_state()["roof_light_dimmed"])
 
 
 func test_the_dim_command_dims_and_undims_the_cab_light():
     train.send_command("roof_light_dim", true)
-    assert_true(train.state["roof_light_dimmed"])
+    assert_true(train.get_state()["roof_light_dimmed"])
     train.send_command("roof_light_dim", false)
-    assert_false(train.state["roof_light_dimmed"])
+    assert_false(train.get_state()["roof_light_dimmed"])

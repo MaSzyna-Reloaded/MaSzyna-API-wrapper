@@ -12,17 +12,7 @@ namespace godot {
                 RailVehicleWipers, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING, "RailVehicleWiperListItem");
 
         ClassDB::bind_method(D_METHOD("get_switch_position"), &RailVehicleWipers::get_switch_position);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "switch_position", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_switch_position");
         ClassDB::bind_method(D_METHOD("get_sweep_positions"), &RailVehicleWipers::get_sweep_positions);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::PACKED_FLOAT64_ARRAY, "sweep_positions", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_sweep_positions");
     }
 
     void RailVehicleWipers::_register_commands() {

@@ -19,6 +19,226 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_camshaft_available" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_circuit_imax" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_max_current" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_max_lifting" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_max_pantograph_tank_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_max_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_min_lifting" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_min_main_switch_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_min_pantograph_tank_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_overvoltage_relay" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_compressor_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_compressor_valve" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_first_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_first_valve_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_first_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_pressure_switch_armed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_second_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_second_valve_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_second_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_tank_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantographs_dropped" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_required_main_switch_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_sliding_width" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_trainset_high_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_valve_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_valve_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_collector_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_contactors_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_converter_overload" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_diff_relay_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_dynamic_brake_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_engine_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_fuse_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_highcurrent_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_line_breaker_closes_at_no_power" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_line_breaker_delay" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_line_breaker_initial_delay" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mainbreaker_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_connectors_open" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_current" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_resistors_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_total_current" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_transducer_input_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_vent_overload_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="has_accumulator" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -83,6 +303,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="set_collector_voltage">
+			<return type="void" />
+			<param index="0" name="voltage" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="set_motor_connectors_open">
 			<return type="void" />
 			<param index="0" name="open" type="bool" />
@@ -98,10 +324,6 @@
 		</method>
 	</methods>
 	<members>
-		<member name="camshaft_available" type="bool" setter="" getter="get_camshaft_available">
-		</member>
-		<member name="circuit_imax" type="float" setter="" getter="get_circuit_imax">
-		</member>
 		<member name="circuit_imax_high" type="int" setter="set_circuit_imax_high" getter="get_circuit_imax_high">
 			[code]Circuit:ImaxHi[/code]
 			Maximum current on "high" starting stage, in amperes.
@@ -180,78 +402,6 @@
 		</member>
 		<member name="cntrl_pantographs_valve_start_mode" type="int" setter="set_cntrl_pantographs_valve_start_mode" getter="get_cntrl_pantographs_valve_start_mode" enum="RailVehicleController.StartMode">
 		</member>
-		<member name="collector_max_current" type="float" setter="" getter="get_collector_max_current">
-		</member>
-		<member name="collector_max_lifting" type="float" setter="" getter="get_collector_max_lifting">
-		</member>
-		<member name="collector_max_pantograph_tank_pressure" type="float" setter="" getter="get_collector_max_pantograph_tank_pressure">
-		</member>
-		<member name="collector_max_voltage" type="float" setter="" getter="get_collector_max_voltage">
-		</member>
-		<member name="collector_min_lifting" type="float" setter="" getter="get_collector_min_lifting">
-		</member>
-		<member name="collector_min_main_switch_voltage" type="float" setter="" getter="get_collector_min_main_switch_voltage">
-		</member>
-		<member name="collector_min_pantograph_tank_pressure" type="float" setter="" getter="get_collector_min_pantograph_tank_pressure">
-		</member>
-		<member name="collector_overvoltage_relay" type="bool" setter="" getter="get_collector_overvoltage_relay">
-		</member>
-		<member name="collector_pantograph_compressor_enabled" type="bool" setter="" getter="get_collector_pantograph_compressor_enabled">
-		</member>
-		<member name="collector_pantograph_compressor_valve" type="bool" setter="" getter="get_collector_pantograph_compressor_valve">
-		</member>
-		<member name="collector_pantograph_first_active" type="bool" setter="" getter="get_collector_pantograph_first_active">
-		</member>
-		<member name="collector_pantograph_first_valve_enabled" type="bool" setter="" getter="get_collector_pantograph_first_valve_enabled">
-		</member>
-		<member name="collector_pantograph_first_voltage" type="float" setter="" getter="get_collector_pantograph_first_voltage">
-		</member>
-		<member name="collector_pantograph_pressure_switch_armed" type="bool" setter="" getter="get_collector_pantograph_pressure_switch_armed">
-		</member>
-		<member name="collector_pantograph_second_active" type="bool" setter="" getter="get_collector_pantograph_second_active">
-		</member>
-		<member name="collector_pantograph_second_valve_enabled" type="bool" setter="" getter="get_collector_pantograph_second_valve_enabled">
-		</member>
-		<member name="collector_pantograph_second_voltage" type="float" setter="" getter="get_collector_pantograph_second_voltage">
-		</member>
-		<member name="collector_pantograph_tank_pressure" type="float" setter="" getter="get_collector_pantograph_tank_pressure">
-		</member>
-		<member name="collector_pantographs_dropped" type="bool" setter="" getter="get_collector_pantographs_dropped">
-		</member>
-		<member name="collector_required_main_switch_voltage" type="float" setter="" getter="get_collector_required_main_switch_voltage">
-		</member>
-		<member name="collector_sliding_width" type="float" setter="" getter="get_collector_sliding_width">
-		</member>
-		<member name="collector_valve_active" type="bool" setter="" getter="get_collector_valve_active">
-		</member>
-		<member name="collector_valve_enabled" type="bool" setter="" getter="get_collector_valve_enabled">
-		</member>
-		<member name="collector_voltage" type="float" setter="" getter="get_collector_voltage">
-		</member>
-		<member name="contactors_active" type="bool" setter="" getter="get_contactors_active">
-		</member>
-		<member name="converter_overload" type="bool" setter="" getter="get_converter_overload">
-		</member>
-		<member name="diff_relay_active" type="bool" setter="" getter="get_diff_relay_active">
-		</member>
-		<member name="dynamic_brake_active" type="bool" setter="" getter="get_dynamic_brake_active">
-		</member>
-		<member name="fuse_active" type="bool" setter="" getter="get_fuse_active">
-		</member>
-		<member name="highcurrent_active" type="bool" setter="" getter="get_highcurrent_active">
-		</member>
-		<member name="line_breaker_closes_at_no_power" type="bool" setter="" getter="get_line_breaker_closes_at_no_power">
-		</member>
-		<member name="line_breaker_delay" type="float" setter="" getter="get_line_breaker_delay">
-		</member>
-		<member name="line_breaker_initial_delay" type="float" setter="" getter="get_line_breaker_initial_delay">
-		</member>
-		<member name="mainbreaker_active" type="bool" setter="" getter="get_mainbreaker_active">
-		</member>
-		<member name="motor_connectors_open" type="bool" setter="" getter="get_motor_connectors_open">
-		</member>
-		<member name="motor_current" type="float" setter="" getter="get_motor_current">
-		</member>
 		<member name="power_accumulator_recharge_source" type="int" setter="set_power_accumulator_recharge_source" getter="get_power_accumulator_recharge_source" enum="RailVehicleController.TrainPowerSource">
 			Power source for recharging the accumulator
 		</member>
@@ -305,12 +455,6 @@
 		</member>
 		<member name="power_transducer_input_voltage" type="float" setter="set_power_transducer_input_voltage" getter="get_power_transducer_input_voltage">
 			Input voltage for the transducer
-		</member>
-		<member name="resistors_active" type="bool" setter="" getter="get_resistors_active">
-		</member>
-		<member name="transducer_input_voltage" type="float" setter="" getter="get_transducer_input_voltage">
-		</member>
-		<member name="vent_overload_active" type="bool" setter="" getter="get_vent_overload_active">
 		</member>
 	</members>
 	<signals>

@@ -12,6 +12,41 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_high_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_high_pressed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_horn" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_low_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_low_pressed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_whistle_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_whistle_pressed" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="set_horn_high">
 			<return type="void" />
 			<param index="0" name="state" type="bool" />
@@ -32,25 +67,11 @@
 		</method>
 	</methods>
 	<members>
-		<member name="high_active" type="bool" setter="" getter="get_high_active" default="false">
-		</member>
 		<member name="high_horn_enabled" type="bool" setter="set_high_horn_enabled" getter="get_high_horn_enabled" default="true">
-		</member>
-		<member name="high_pressed" type="bool" setter="" getter="get_high_pressed" default="false">
-		</member>
-		<member name="horn" type="int" setter="" getter="get_horn" default="0">
-		</member>
-		<member name="low_active" type="bool" setter="" getter="get_low_active" default="false">
 		</member>
 		<member name="low_horn_enabled" type="bool" setter="set_low_horn_enabled" getter="get_low_horn_enabled" default="true">
 		</member>
-		<member name="low_pressed" type="bool" setter="" getter="get_low_pressed" default="false">
-		</member>
-		<member name="whistle_active" type="bool" setter="" getter="get_whistle_active" default="false">
-		</member>
 		<member name="whistle_enabled" type="bool" setter="set_whistle_enabled" getter="get_whistle_enabled" default="true">
-		</member>
-		<member name="whistle_pressed" type="bool" setter="" getter="get_whistle_pressed" default="false">
 		</member>
 	</members>
 </class>

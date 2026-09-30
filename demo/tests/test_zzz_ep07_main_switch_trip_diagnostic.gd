@@ -76,7 +76,7 @@ func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:
     ]
     var line:String = "[%s] " % label
     for key in keys:
-        line += "%s=%s " % [key, controller.state.get(key, null)]
+        line += "%s=%s " % [key, controller.get_state().get(key, null)]
     print(line)
 
 
@@ -113,7 +113,7 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     # otherwise (it isn't retried later just because voltage shows up afterward).
     for i in range(20):
         await wait_seconds(0.5)
-        if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
+        if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     _dump_diagnostic_state(controller, "after pantograph")
     controller.send_command("direction_increase")
@@ -140,23 +140,23 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
 
     _dump_diagnostic_state(controller, "before any notch")
     assert_true(
-            controller.state.get("main_switch_enabled", false),
+            controller.get_state().get("main_switch_enabled", false),
             "main switch should be closed before advancing the controller")
 
     var tripped:bool = false
     for notch in range(1, 6):
         controller.send_command("main_controller_increase")
         print("-- sent main_controller_increase #%d (controller_main_position now %s) --" % [
-                notch, controller.state.get("controller_main_position", null)])
+                notch, controller.get_state().get("controller_main_position", null)])
         # Poll every single idle frame (not just every 0.5s) so the exact frame Mains flips is
         # caught, instead of a coarser 0.5s snapshot that could miss a one-frame relay blip that
         # already self-recovered by the next sample.
-        var prev_damage:int = controller.state.get("train_damage", 0)
+        var prev_damage:int = controller.get_state().get("train_damage", 0)
         for i in range(180): # ~3s at 60fps
-            var was_enabled:bool = controller.state.get("main_switch_enabled", false)
+            var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
             await wait_idle_frames(1)
-            var now_enabled:bool = controller.state.get("main_switch_enabled", false)
-            var now_damage:int = controller.state.get("train_damage", 0)
+            var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
+            var now_damage:int = controller.get_state().get("train_damage", 0)
             if now_damage != prev_damage:
                 _dump_diagnostic_state(
                         controller, "DAMAGE CHANGE notch %d, frame %d (%d -> %d)" % [
@@ -172,16 +172,16 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     _dump_diagnostic_state(controller, "final (tripped=%s)" % tripped)
     assert_false(tripped, "main switch should not self-trip while advancing the controller")
     assert_eq(
-            controller.state.get("train_damage", 0), 0,
+            controller.get_state().get("train_damage", 0), 0,
             "no engine damage should latch from normal acceleration")
     assert_true(
-            controller.state.get("velocity", 0.0) > 2.0,
+            controller.get_state().get("velocity", 0.0) > 2.0,
             "vehicle should have accelerated past 2 m/s across 5 controller notches")
     # Hasler (Train.cpp:6917-6940): wheel-based speed, jumpy needle and the tachoclock gate are
     # all live once the loco has been moving for more than a second.
-    assert_gt(float(controller.state.get("tachometer_speed", 0.0)), 1.0, "Hasler should see the speed")
-    assert_gt(float(controller.state.get("tachometer_speed_jump", 0.0)), 0.0, "Hasler needle should move")
-    assert_gt(float(controller.state.get("tachometer_clock_speed", 0.0)), 1.0, "Hasler should be ticking")
+    assert_gt(float(controller.get_state().get("tachometer_speed", 0.0)), 1.0, "Hasler should see the speed")
+    assert_gt(float(controller.get_state().get("tachometer_speed_jump", 0.0)), 0.0, "Hasler needle should move")
+    assert_gt(float(controller.get_state().get("tachometer_clock_speed", 0.0)), 1.0, "Hasler should be ticking")
 
 
 ## Diagnostic for the reported "rozpedza sie do 140+ km/h nawet na main_controller_position=5/6"
@@ -225,7 +225,7 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     # powerisavailable would silently refuse the close otherwise).
     for i in range(20):
         await wait_seconds(0.5)
-        if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
+        if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     controller.send_command("direction_increase")
     controller.send_command("converter_fuse_reset")
@@ -244,9 +244,9 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     for notch in range(TARGET_NOTCH):
         controller.send_command("main_controller_increase")
         for i in range(150): # ~2.5s at 60fps, frame-exact instead of a blind wait
-            var was_enabled:bool = controller.state.get("main_switch_enabled", false)
+            var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
             await wait_idle_frames(1)
-            var now_enabled:bool = controller.state.get("main_switch_enabled", false)
+            var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
             if was_enabled and not now_enabled:
                 _dump_diagnostic_state(controller, "TRIP FRAME notch %d, frame %d" % [notch + 1, i])
                 tripped = true
@@ -257,9 +257,9 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
 
     _dump_diagnostic_state(controller, "notch %d reached" % TARGET_NOTCH)
     for i in range(1800): # hold for up to 30s, frame-exact so the trip frame is caught precisely
-        var was_enabled:bool = controller.state.get("main_switch_enabled", false)
+        var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
         await wait_idle_frames(1)
-        var now_enabled:bool = controller.state.get("main_switch_enabled", false)
+        var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
         if was_enabled and not now_enabled:
             _dump_diagnostic_state(controller, "HOLD TRIP FRAME notch %d, frame %d" % [TARGET_NOTCH, i])
             break

@@ -27,4 +27,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(brake.universal_brake_button_1, 1)
     assert_eq(brake.universal_brake_button_2, 16)
     assert_eq(brake.universal_brake_button_3, 8)
-    assert_true(train.state.has("brake_air_pressure"), "RailVehicleBrake should keep functioning after configuring universal brake buttons")
+    assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after configuring universal brake buttons")

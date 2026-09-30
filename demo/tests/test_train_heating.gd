@@ -26,7 +26,7 @@ func test_generator_source_updates_without_crashing():
     heating.heating_generator_max_voltage = 140.0
     await wait_idle_frames(2)
 
-    assert_true(train.state.has("heating_enabled"), "VehicleController should keep functioning after configuring the generator heating source")
+    assert_true(train.get_state().has("heating_enabled"), "VehicleController should keep functioning after configuring the generator heating source")
 
 func test_power_cable_source_updates_without_crashing():
     heating.heating_source = RailVehicleController.POWER_SOURCE_POWERCABLE
@@ -34,4 +34,4 @@ func test_power_cable_source_updates_without_crashing():
     heating.heating_max_voltage = 3000.0
     await wait_idle_frames(2)
 
-    assert_true(train.state.has("heating_power"), "VehicleController should keep functioning after configuring the power cable heating source")
+    assert_true(train.get_state().has("heating_power"), "VehicleController should keep functioning after configuring the power cable heating source")

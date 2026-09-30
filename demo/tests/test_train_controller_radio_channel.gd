@@ -29,23 +29,23 @@ func test_radio_channel_starts_at_1_not_0():
     # visually invisible, since CabinSwitch's own switch_min_position clamp had already displayed
     # the invalid 0 as channel 1 before any command ran.
     await wait_idle_frames(2)
-    assert_eq(train.state["radio_channel"], 1)
+    assert_eq(train.get_state()["radio_channel"], 1)
 
 func test_radio_channel_set_is_a_valid_bound_command():
     train.send_command("radio_channel_set", 5)
     await wait_idle_frames(2)
-    assert_eq(train.state["radio_channel"], 5)
+    assert_eq(train.get_state()["radio_channel"], 5)
 
 func test_radio_channel_increase_actually_changes_state():
     train.send_command("radio_channel_set", 3)
     await wait_idle_frames(2)
     train.send_command("radio_channel_increase")
     await wait_idle_frames(2)
-    assert_eq(train.state["radio_channel"], 4)
+    assert_eq(train.get_state()["radio_channel"], 4)
 
 func test_radio_channel_decrease_actually_changes_state():
     train.send_command("radio_channel_set", 3)
     await wait_idle_frames(2)
     train.send_command("radio_channel_decrease")
     await wait_idle_frames(2)
-    assert_eq(train.state["radio_channel"], 2)
+    assert_eq(train.get_state()["radio_channel"], 2)

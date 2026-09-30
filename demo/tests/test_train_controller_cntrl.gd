@@ -27,4 +27,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(train.cntrl_converter_start_delay, 2.0)
     assert_false(train.cntrl_automatic_cab_activation)
     assert_eq(train.cntrl_inactive_cab_flag, 33)
-    assert_true(train.state.has("mass_total"), "VehicleController should keep functioning after configuring the Cntrl. section")
+    assert_true(train.get_state().has("mass_total"), "VehicleController should keep functioning after configuring the Cntrl. section")

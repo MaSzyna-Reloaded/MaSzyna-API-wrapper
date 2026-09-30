@@ -63,8 +63,8 @@ func test_native_mover_still_updates():
     await wait_idle_frames(3)
 
     var controller: VehicleController = node.get_controller()
-    assert_true(controller.state.has("velocity"), "VehicleController's native state dictionary should populate")
-    assert_true(controller.state.has("brake_air_pressure"), "RailVehicleBrake's mover state should be live")
+    assert_true(controller.get_state().has("velocity"), "VehicleController's native state dictionary should populate")
+    assert_true(controller.get_state().has("brake_air_pressure"), "RailVehicleBrake's mover state should be live")
 
 
 ## Clearing the file leaves the node holding an empty vehicle rather than the previous one -

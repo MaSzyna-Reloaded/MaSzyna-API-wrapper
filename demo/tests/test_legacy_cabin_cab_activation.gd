@@ -28,12 +28,12 @@ func test_cab_without_the_gauge_registers_the_control():
 
 
 func test_toggle_activates_and_deactivates_the_cab():
-    assert_eq(train.state["cabin"], 0)
+    assert_eq(train.get_state()["cabin"], 0)
 
     CabinSystem.act(train.get_rid(), 1, &"cabactivation_sw", &"toggle")
     await wait_idle_frames(2)
-    assert_eq(train.state["cabin"], 1)
+    assert_eq(train.get_state()["cabin"], 1)
 
     CabinSystem.act(train.get_rid(), 1, &"cabactivation_sw", &"toggle")
     await wait_idle_frames(2)
-    assert_eq(train.state["cabin"], 0)
+    assert_eq(train.get_state()["cabin"], 0)

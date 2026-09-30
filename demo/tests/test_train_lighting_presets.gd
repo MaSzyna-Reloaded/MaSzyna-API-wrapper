@@ -27,30 +27,30 @@ func before_each():
 
 
 func test_the_selector_starts_at_the_default_preset():
-    assert_eq(train.state["light_position"], 1)
-    assert_eq(train.state["light_selector_position"], 0)
-    assert_eq(train.config["light_position_max"], 1)
+    assert_eq(train.get_state()["light_position"], 1)
+    assert_eq(train.get_state()["light_selector_position"], 0)
+    assert_eq(train.get_config()["light_position_max"], 1)
 
 
 func test_stepping_the_selector_lights_the_next_preset():
     train.send_command("increase_light_selector_position")
-    assert_eq(train.state["light_position"], 2)
-    assert_true(train.state["lights/front_headlight_left_enabled"])
-    assert_true(train.state["lights/front_headlight_right_enabled"])
-    assert_false(train.state["lights/front_headlight_upper_enabled"])
+    assert_eq(train.get_state()["light_position"], 2)
+    assert_true(train.get_state()["lights/front_headlight_left_enabled"])
+    assert_true(train.get_state()["lights/front_headlight_right_enabled"])
+    assert_false(train.get_state()["lights/front_headlight_upper_enabled"])
 
     train.send_command("decrease_light_selector_position")
-    assert_eq(train.state["light_position"], 1)
-    assert_true(train.state["lights/front_headlight_upper_enabled"])
-    assert_true(train.state["lights/rear_redmarker_left_enabled"])
-    assert_true(train.state["lights/rear_redmarker_right_enabled"])
+    assert_eq(train.get_state()["light_position"], 1)
+    assert_true(train.get_state()["lights/front_headlight_upper_enabled"])
+    assert_true(train.get_state()["lights/rear_redmarker_left_enabled"])
+    assert_true(train.get_state()["lights/rear_redmarker_right_enabled"])
 
 
 # Train.cpp:5205 - without Wrap= the selector stops at its last preset
 func test_the_selector_does_not_wrap_unless_told_to():
     train.send_command("increase_light_selector_position")
     train.send_command("increase_light_selector_position")
-    assert_eq(train.state["light_position"], 2)
+    assert_eq(train.get_state()["light_position"], 2)
 
 
 # Train.cpp:2922-3135 - with a preset selector the single light switches do nothing
@@ -58,9 +58,9 @@ func test_the_single_light_switches_do_nothing_with_a_selector():
     # the upper preset, lit by stepping the selector away and back
     train.send_command("increase_light_selector_position")
     train.send_command("decrease_light_selector_position")
-    assert_true(train.state["lights/front_headlight_upper_enabled"])
+    assert_true(train.get_state()["lights/front_headlight_upper_enabled"])
     train.send_command("light_switch", "leftlight", false)
     train.send_command("light_switch", "upperlight", false)
-    assert_true(train.state["lights/front_headlight_upper_enabled"])
+    assert_true(train.get_state()["lights/front_headlight_upper_enabled"])
     train.send_command("light_switch", "leftlight", true)
-    assert_false(train.state["lights/front_headlight_left_enabled"])
+    assert_false(train.get_state()["lights/front_headlight_left_enabled"])

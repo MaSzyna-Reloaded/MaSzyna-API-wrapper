@@ -42,11 +42,12 @@ in any layer before.
    - Document the new method in `doc_classes/VehicleX.xml` (C++ API only).
 
 3. **State exposure** - if a UI widget needs to *read* the control's position (a knob/lever
-   that shows where it is), it becomes a typed state property. Skip this for pure buttons that
+   that shows where it is), it becomes a typed state getter. Skip this for pure buttons that
    are only toggled, not displayed continuously.
-   - **Interface:** a pure virtual const getter plus a read-only `ADD_PROPERTY`
-     (`PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY`), next to the closest analogous one
-     (`get_local_position_normalized`, `RailVehicleBrake.hpp:34`, `RailVehicleBrake.cpp:290-294`).
+   - **Interface:** a pure virtual const getter, bound with `ClassDB::bind_method` but **not** a
+     property - a property is stored configuration only (`test_property_bindings.gd`); the dump
+     (`_fill_state_dictionary`) publishes it by key, next to the closest analogous one
+     (`get_local_position_normalized`, `RailVehicleBrake.hpp`).
    - **Implementation:** the getter reads the Mover field and stores nothing
      (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverRailVehicleBrake.cpp:266`).
      A getter never changes state - no filters, flags or signals in it (`CODE_STYLE.md`).

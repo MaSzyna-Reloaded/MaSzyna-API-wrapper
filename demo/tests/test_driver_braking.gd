@@ -59,17 +59,17 @@ func test_standing_it_holds_the_locomotive_with_its_own_brake():
     _decide()
     _decide()
 
-    assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
+    assert_eq(float(train.get_state()["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
 
 func test_wanting_to_go_it_releases():
     speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking)
     _decide()
     _decide()
-    assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
+    assert_eq(float(train.get_state()["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
     speed.pick(Order.SHUNT, true, false, 20.0, 20.0, -1.0, 0.0, trainset, route, REACTION, braking)
     _decide()
 
-    assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_RELEASED)
+    assert_eq(float(train.get_state()["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_RELEASED)
     assert_eq(braking.position, MaszynaLegacyDriverBraking.POSITION_RUNNING, "the train brake at running")

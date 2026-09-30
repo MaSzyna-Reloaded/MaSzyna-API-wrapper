@@ -24,7 +24,7 @@ func test_round_trip_and_update_without_crashing():
     await wait_idle_frames(2)
 
     assert_true(engine.cntrl_pantograph_auto_valve)
-    assert_true(train.state.has("main_switch_enabled"), "RailVehicleElectricEngine should keep functioning after configuring the Cntrl. section")
+    assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleElectricEngine should keep functioning after configuring the Cntrl. section")
 
 
 func _pantograph_vehicle(master_valve_start:RailVehicleController.StartMode) -> VehicleController:
@@ -46,10 +46,10 @@ func _pantograph_vehicle(master_valve_start:RailVehicleController.StartMode) -> 
 # low voltage, which is what lets an EP07 raise a pantograph from its own switch alone
 func test_the_pantographs_master_valve_is_automatic_by_default():
     var vehicle:VehicleController = await _pantograph_vehicle(RailVehicleController.START_MODE_AUTOMATIC)
-    assert_true(vehicle.state["current_collector/valve_active"])
+    assert_true(vehicle.get_state()["current_collector/valve_active"])
 
 
 # PantEPValveStart=Manual (dynamic/pkp/e186_v2) - it waits for the pantograph lever
 func test_a_manual_master_valve_waits_for_the_lever():
     var vehicle:VehicleController = await _pantograph_vehicle(RailVehicleController.START_MODE_MANUAL)
-    assert_false(vehicle.state["current_collector/valve_active"])
+    assert_false(vehicle.get_state()["current_collector/valve_active"])

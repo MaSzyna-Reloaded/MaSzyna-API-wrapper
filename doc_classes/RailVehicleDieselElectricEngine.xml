@@ -27,6 +27,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_engine_voltage" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_fuse_active" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -91,7 +96,6 @@
 			Field-shunting relay behavior flag: 0 - current dependent, 1 - velocity dependent, 2 - velocity and power
 			dependent, 41/45/46 - extended variants for specific locomotive types.
 		</member>
-		<member name="type" type="int" setter="" getter="get_type" overrides="RailVehicleEngine" enum="RailVehicleEngine.EngineType" default="7" />
 		<member name="wwlist" type="RailVehicleWWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 			[code]WWList[/code]
 			Diesel-electric generator characteristics table. Each item describes a main controller position starting

@@ -101,13 +101,13 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     var voltage_reached:bool = false
     for i in range(60):
         await wait_idle_frames(1)
-        if float(controller.state.get("current_collector/pantograph_first_voltage", 0.0)) > 100.0:
+        if float(controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)) > 100.0:
             voltage_reached = true
             break
     assert_true(
         voltage_reached,
         "pantograph should read a real wire voltage from the overhead wire once raised, got %s" % [
-                controller.state.get("current_collector/pantograph_first_voltage", 0.0)],
+                controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)],
     )
 
     controller.send_command("direction_increase")
@@ -118,10 +118,10 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     await wait_idle_frames(2)
     print("[after main_switch] %s" % [_dump(controller)])
     assert_true(
-        bool(controller.state.get("main_switch_enabled", false)),
+        bool(controller.get_state().get("main_switch_enabled", false)),
         "main switch should close once parked under a healthy, stationary overhead wire",
     )
-    if not bool(controller.state.get("main_switch_enabled", false)):
+    if not bool(controller.get_state().get("main_switch_enabled", false)):
         return
 
     # Now just sit parked for several real seconds - exactly the reported "postoj" scenario, no
@@ -131,13 +131,13 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     var tripped:bool = false
     for i in range(300): # ~5s at 60fps
         await wait_idle_frames(1)
-        var voltage:float = float(controller.state.get("current_collector/pantograph_first_voltage", 0.0))
+        var voltage:float = float(controller.get_state().get("current_collector/pantograph_first_voltage", 0.0))
         min_voltage = minf(min_voltage, voltage)
-        if not bool(controller.state.get("main_switch_enabled", false)):
+        if not bool(controller.get_state().get("main_switch_enabled", false)):
             tripped = true
             print(
                 "main switch tripped at frame %d, voltage=%s"
-                % [i, controller.state.get("current_collector/pantograph_first_voltage", 0.0)]
+                % [i, controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)]
             )
             break
 
@@ -157,7 +157,7 @@ func _dump(controller:VehicleController) -> String:
     ]
     var line:String = ""
     for key in keys:
-        line += "%s=%s " % [key, controller.state.get(key, null)]
+        line += "%s=%s " % [key, controller.get_state().get(key, null)]
     return line
 
 

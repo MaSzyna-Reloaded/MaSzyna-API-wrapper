@@ -104,9 +104,9 @@ func test_buff_coupl():
 
 ## WiperList: as e186_v2 writes it - bounded by Size= and closed by "endL" instead of "endwl"
 func test_wiper_list_reaches_the_vehicle():
-    assert_eq(controller.config.get("wipers_switch_position_max", -1), 3)
+    assert_eq(controller.get_config().get("wipers_switch_position_max", -1), 3)
     controller.send_command("wipers_switch_increase")
-    assert_eq(controller.state.get("wipers_switch_position", -1), 1)
+    assert_eq(controller.get_state().get("wipers_switch_position", -1), 1)
 
 
 # LoadFIZ_LightsList / readLightsList (Mover.cpp:11531, 8558): each row is the light bits of cabin

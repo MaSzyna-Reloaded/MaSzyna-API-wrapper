@@ -2,7 +2,7 @@ extends RefCounted
 class_name CabinState
 
 ## State of one cabin of one vehicle - (vehicle_rid, cab), where cab is 1 (cab 1), 0 (machine room)
-## or -1 (cab 2), matching VehicleController.state["cabin_occupied"]. Owned by CabinSystem and
+## or -1 (cab 2), matching VehicleServer.vehicle_dump_state()["cabin_occupied"]. Owned by CabinSystem and
 ## handed to every registered cabin control handler, which may read and modify it.
 ##
 ## The vehicle is reached only by its VehicleServer handle (commands and state), never through

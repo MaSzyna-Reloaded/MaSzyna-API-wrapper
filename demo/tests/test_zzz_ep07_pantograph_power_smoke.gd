@@ -72,8 +72,8 @@ func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
     var active:bool = false
     for i in range(60):
         await wait_seconds(0.5)
-        active = controller.state.get("current_collector/pantograph_first_active", false)
-        voltage = controller.state.get("current_collector/pantograph_first_voltage", 0.0)
+        active = controller.get_state().get("current_collector/pantograph_first_active", false)
+        voltage = controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)
         if active and voltage > 100.0:
             break
 

@@ -17,7 +17,7 @@ class_name MaszynaBrakeSfxEventFactory
 ##
 ## Runtime control (TrainSoundSystem) is correspondingly trivial: play() each event once,
 ## lazily, the first time it's fed (never stop() - an inactive automation costs nothing, and the
-## curves themselves fade gain to ~0 at rest), then just copy VehicleController.state values into
+## curves themselves fade gain to ~0 at rest), then just copy VehicleServer.vehicle_dump_state() values into
 ## modulate()/set_parameters() every frame. It never decides gain/pitch/which-sample-plays itself.
 
 ## event_name -> ordered MMD labels composing it (first one present in a vehicle's `sources` wins

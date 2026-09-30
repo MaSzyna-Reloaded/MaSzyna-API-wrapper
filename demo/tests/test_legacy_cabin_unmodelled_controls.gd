@@ -52,7 +52,7 @@ func test_unmodelled_dirkey_steps_the_reverser():
 
     CabinSystem.act(train.get_rid(), 1, &"dirkey", &"increase")
     await wait_idle_frames(2)
-    assert_eq(train.state["direction"], 1)
+    assert_eq(train.get_state()["direction"], 1)
 
 
 func test_reverser_buttons_set_the_direction():
@@ -62,15 +62,15 @@ func test_reverser_buttons_set_the_direction():
 
     CabinSystem.act(train.get_rid(), 1, &"dirbackward_bt", &"hold")
     await wait_idle_frames(2)
-    assert_eq(train.state["direction"], -1)
+    assert_eq(train.get_state()["direction"], -1)
 
     CabinSystem.act(train.get_rid(), 1, &"dirforward_bt", &"hold")
     await wait_idle_frames(2)
-    assert_eq(train.state["direction"], 1)
+    assert_eq(train.get_state()["direction"], 1)
 
     CabinSystem.act(train.get_rid(), 1, &"dirneutral_bt", &"hold")
     await wait_idle_frames(2)
-    assert_eq(train.state["direction"], 0)
+    assert_eq(train.get_state()["direction"], 0)
 
 
 ## "cabin ... toggle" of the developer console sends no value

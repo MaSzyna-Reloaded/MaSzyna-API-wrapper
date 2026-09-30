@@ -65,8 +65,8 @@ func _dump_orientation(label:String, vehicle:RailVehicle3D, controller:VehicleCo
             _forward(vehicle),
             vehicle.global_position,
             vehicle.start_direction,
-            controller.state.get("velocity", null),
-            controller.state.get("main_switch_enabled", null),
+            controller.get_state().get("velocity", null),
+            controller.get_state().get("main_switch_enabled", null),
         ]
     )
 
@@ -104,7 +104,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     # td.scn's trainset velocity is 0.0 - the original spawns such a vehicle cold
     # (Mover.cpp:8943 only turns Battery on for a vehicle ready to depart).
     assert_false(
-        controller.state.get("battery_enabled", true),
+        controller.get_state().get("battery_enabled", true),
         "EP07-424 on td.scn should spawn with its battery off, like in the original",
     )
 
@@ -122,7 +122,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
-        if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
+        if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     controller.send_command("direction_increase")
     controller.send_command("converter_fuse_reset")
@@ -145,7 +145,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
         i += 1
         if i % DUMP_EVERY_FRAMES == 0:
             _dump_orientation("driving frame %d" % i, rail_vehicle, controller)
-        if not controller.state.get("main_switch_enabled", false):
+        if not controller.get_state().get("main_switch_enabled", false):
             _dump_orientation("MAIN SWITCH DROPPED at frame %d" % i, rail_vehicle, controller)
             tripped = true
             break
@@ -161,6 +161,6 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     _dump_orientation("final", rail_vehicle, controller)
     assert_false(tripped, "main switch should not self-trip while accelerating away from a stop")
     assert_true(
-        float(controller.state.get("velocity", 0.0)) > 0.0,
+        float(controller.get_state().get("velocity", 0.0)) > 0.0,
         "vehicle should have actually started moving",
     )

@@ -56,15 +56,21 @@ namespace godot {
         player->connect(
                 PlayerServer::player_vehicle_changed_signal,
                 callable_mp(this, &PlayerCameraServer::_on_player_vehicle_changed));
+        player->connect(
+                PlayerServer::player_vehicle_entered_signal,
+                callable_mp(this, &PlayerCameraServer::_on_player_vehicle_entered));
     }
 
     void PlayerCameraServer::_on_player_vehicle_changed(const RID &p_vehicle, const RID & /*p_previous*/) {
-        // taking a vehicle over puts the player in its cab (Train.cpp:9147)
-        if (p_vehicle.is_valid()) {
-            camera_set_mode(CAMERA_MODE_CABIN);
-        } else if (mode == CAMERA_MODE_CABIN) {
+        if (!p_vehicle.is_valid() && mode == CAMERA_MODE_CABIN) {
             camera_set_mode(CAMERA_MODE_FREE);
         }
+    }
+
+    /// Taking a vehicle over puts the player in its cab (Train.cpp:9147), the one already driven
+    /// too (drivermode.cpp:264)
+    void PlayerCameraServer::_on_player_vehicle_entered(const RID & /*p_vehicle*/) {
+        camera_set_mode(CAMERA_MODE_CABIN);
     }
 
     void PlayerCameraServer::_on_vehicle_freed(const RID &p_vehicle) {

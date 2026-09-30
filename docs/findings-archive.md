@@ -4,6 +4,19 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-30 - a test ran on the stack of the signal it awaited
+
+* **Symptom:** a test spawning a vehicle and awaiting its `vehicle_built` left the vehicle alive
+  after the test: GUT reported "3 unfreed children" and the next test's vehicle of the same name
+  "two vehicles named ...".
+* **What proved it:** a print around `vehicle.free()` in `after_each()`: "Object is locked and can't
+  be freed", with `after_each` called from the test's own frame. `await signal` resumes the test
+  inside the emission - here `MaszynaRailVehicle3D._process()` emitting `vehicle_built` - so the rest
+  of the test and its `after_each()` ran on the vehicle's stack, where the vehicle cannot be freed.
+* **Fix:** `MaszynaGutTest.spawn_maszyna_vehicle()` waits one frame after `vehicle_built`.
+* **Rule:** code resumed by `await` of a signal runs inside the emitter; it may not free the
+  emitter.
+
 ## 2026-09-30 - reordering a trainset hung the editor
 
 * **Symptom:** dragging a vehicle of `ImpulsTrainset` to another place among its siblings in the

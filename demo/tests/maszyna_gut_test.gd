@@ -111,4 +111,7 @@ func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehi
     vehicle.vehicle_id = vehicle_id
     add_child(vehicle)
     await vehicle.vehicle_built
+    # resumed inside the vehicle's own emission, the test would run on its stack - where the
+    # vehicle is locked and cannot be freed; the test goes on from the next frame
+    await wait_idle_frames(1)
     return vehicle

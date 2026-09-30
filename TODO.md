@@ -1010,15 +1010,11 @@ ported, into a delegate.
   other migrated panels too.
 * **A dump key does not name the class owning its getter** - check the declaring header, not the
   fill, when mapping keys to typed reads.
-* Tests reading game data (CI has none): `test_zzz_sm42_exterior_model_rotation_regression.gd`,
-  `test_zzz_su46_exterior_lights.gd`, `test_zzz_su46_machine_room.gd`,
-  `test_rail_vehicle_rain_exclusion.gd` (sm42_v1). Replace with fixtures in `demo/tests/fixtures/`
-  as the EP07 tests were: a cut `.scn` (`scenery/ep07.scn`), the vehicle's own `.fiz`/`.mmd`, no
-  models and no sounds (a missing one is a warning).
 * Tests that switch the game dir with `UserSettings.save_maszyna_game_dir()` write the user's
   `settings.cfg`: `test_maszyna_rail_vehicle_3d_manager.gd`, `test_e3d_lights_state.gd`,
   `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,
-  `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the game-data tests.
+  `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the tests spawning a
+  vehicle of `demo/tests/fixtures/dynamic/`.
   Needs a non-persistent override.
 
 ## Physics performance

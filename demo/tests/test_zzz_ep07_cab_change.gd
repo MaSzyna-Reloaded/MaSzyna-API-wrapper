@@ -23,6 +23,8 @@ func before_each() -> void:
 func after_each() -> void:
     # out of the cab before the vehicle goes: the player's cab camera is in it
     PlayerServer.player_leave_vehicle()
+    # the cab interior is freed at the end of the frame
+    await wait_idle_frames(1)
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):

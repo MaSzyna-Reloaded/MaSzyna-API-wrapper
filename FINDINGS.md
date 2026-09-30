@@ -257,9 +257,10 @@ anything. Open work belongs in `TODO.md`.
 * A bilateral detach that clears both backend links retains the former neighbour until both
   owners have announced their state change; do not invalidate a rendering cache to compensate
   for the missing event. *(09-30 recoupled wagon kept stale coupler state)*
-* A cab control is its own submodel only - a mesh under it is another control's or nobody's, as
-  the original's `control_mapper::find` (`Train.cpp:64`). *(09-29 the E186 screen's OP1/OP2
-  turned its page off; 09-30 its op12 still did)*
+* A cab button is its own submodel only - a mesh under it is another control's or nobody's, as
+  the original's `control_mapper::find` (`Train.cpp:64`); a lever is held by its handle too, the
+  meshes under it. *(09-29 the E186 screen's OP1/OP2 turned its page off; 09-30 its op12 still
+  did; 09-30 EP07's brake valve handles could not be grabbed)*
 * Only an opaque submodel hides a cab control from the mouse - a translucent one is not in the
   original's pick pass (`opengl33renderer.cpp:1208`). *(09-30 E186's spring brake release could
   not be clicked through its glass cap)*
@@ -288,6 +289,9 @@ anything. Open work belongs in `TODO.md`.
 * A RenderingServer RID inherits none of its node's defaults. Set every parameter the node's
   constructor sets, and place particles through the instance transform. *(09-21 RenderingServer
   light; 09-21 smoke at origin)*
+* A full-screen pass that reads `hint_screen_texture` only adds (`blend_add`): the copy is taken
+  before translucent geometry, and writing it back erases it. *(09-30 the torch put out the
+  signals)*
 * `color`, `color_initial_ramp` and `amount_ratio` reach particles already in the air. Only the
   emission itself affects new ones. *(09-21 plume cut off)*
 * An emitter whose rate its owner drives spawns nothing until the owner has set it - a default

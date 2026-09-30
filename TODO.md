@@ -268,6 +268,10 @@ themselves are `LegacyCabinDoorPermits`.
 * Captions are taken when a control is built - a language changed while sitting in a cab shows
   after the cab is entered again.
 * Hand-authored cabin scenes register no occluders at all.
+* EP07: round buttons get a rectangular outline, like the radio's buttons (reported 2026-09-30).
+  Not diagnosed - the game data was not at hand. First dump the button's submodel (mesh AABB,
+  faces, material transparency/alpha texture): a quad with a round alpha-tested texture outlines
+  as its quad, since the overlay stencil knows nothing of the texture.
 
 ### DebugWindow
 

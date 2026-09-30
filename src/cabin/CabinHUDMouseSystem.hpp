@@ -4,7 +4,9 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
+#include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/rid.hpp>
 
 namespace godot {
@@ -45,13 +47,19 @@ namespace godot {
             }
 
         private:
-            /// What the cursor ray can hit of one control or occluder: its mesh's triangles, taken
-            /// once, in its own space. A control is its own mesh only, not the meshes under it - the
-            /// original picks the control's exact submodel (Train.cpp:64 control_mapper::find), so
-            /// E186's op12 button under universal1's panel is nobody's control
-            struct Pickable {
+            /// A mesh the cursor ray can hit: its triangles, taken once, in its own space
+            struct Part {
                     ObjectID mesh;
                     PackedVector3Array faces;
+            };
+
+            /// What the cursor ray can hit of one control or occluder: the meshes its owner names,
+            /// the first one its own. A button is its own submodel only - the original picks the
+            /// control's exact submodel (Train.cpp:64 control_mapper::find), so E186's op12 button
+            /// under universal1's panel is nobody's control - while a lever is held by the handle
+            /// turning with it (EP07's and SM42's brake valves, raczkaKranu under zasadniczy)
+            struct Pickable {
+                    Vector<Part> parts;
             };
 
             struct Control {
@@ -74,7 +82,7 @@ namespace godot {
                     /// Outlined heavier and tinted - see SMALL_CONTROL_SIZE
                     bool small = false;
                     /// Of a control that turns: the point of it farthest from the axis, where the
-                    /// hand holds it (the control mesh's space)
+                    /// hand holds it - on the handle of a lever (the control's own mesh's space)
                     Vector3 grip;
                     /// Fixed signs of an increase per mouse axis (x: right, y: down), in place of
                     /// the ones the grip gives; zero to follow the grip
@@ -109,7 +117,7 @@ namespace godot {
             /// nothing) - the drag follows the control as the hand would
             Vector2 drag_signs;
 
-            static Pickable _pickable(uint64_t p_mesh_instance_id);
+            static Pickable _pickable(const PackedInt64Array &p_mesh_instance_ids);
             /// The nearest hit of the segment on the pickable closer than `r_distance`: updates
             /// `r_distance` and `r_point` (world space) and returns true
             static bool
@@ -133,12 +141,13 @@ namespace godot {
 
             void mouse_set_camera(uint64_t p_camera_id);
 
-            /// A valid `p_increase` makes the control draggable in steps, a valid `p_drag`
+            /// `p_mesh_instance_ids` are the meshes the control is made of, its own first; a valid
+            /// `p_increase` makes the control draggable in steps, a valid `p_drag`
             /// continuously; `p_step_rotation` (the mesh's own space) and `p_step_offset` (its
             /// parent's) say how an increase moves it; `p_drag_signs`, when not zero, fixes which
             /// way an increase goes on each mouse axis; `p_caption` empty shows no caption
             RID control_create(
-                    uint64_t p_mesh_instance_id, const String &p_caption, const String &p_hints,
+                    const PackedInt64Array &p_mesh_instance_ids, const String &p_caption, const String &p_hints,
                     const Callable &p_pressed, const Callable &p_released, const Callable &p_increase,
                     const Callable &p_decrease, const Basis &p_step_rotation, const Vector3 &p_step_offset,
                     const Callable &p_drag, const Vector2 &p_drag_signs);

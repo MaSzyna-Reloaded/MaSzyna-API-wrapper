@@ -255,8 +255,13 @@ func _process_dirty(delta):
             _mesh_original_rotation = _mesh.rotation_degrees
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            # a lever is held by its handle too, the meshes turning with it (EP07's and SM42's brake
+            # valves: raczkaKranu under zasadniczy)
+            var meshes:PackedInt64Array = [_mesh.get_instance_id()]
+            for handle:Node in _mesh.find_children("*", "MeshInstance3D", true, false):
+                meshes.append(handle.get_instance_id())
             # the drag's direction is that of a one-pixel move
-            _set_mouse_control(_mesh, [action_increase, action_decrease], press, release, Callable(),
+            _set_mouse_control(meshes, [action_increase, action_decrease], press, release, Callable(),
                     Callable(), mesh_rotation / MOUSE_PIXELS_PER_RANGE, mesh_position / MOUSE_PIXELS_PER_RANGE,
                     drag)
             _on_value_changed()

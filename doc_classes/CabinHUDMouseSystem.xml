@@ -12,7 +12,7 @@
 	<methods>
 		<method name="control_create">
 			<return type="RID" />
-			<param index="0" name="mesh_instance_id" type="int" />
+			<param index="0" name="mesh_instance_ids" type="PackedInt64Array" />
 			<param index="1" name="caption" type="String" />
 			<param index="2" name="hints" type="String" />
 			<param index="3" name="pressed" type="Callable" />
@@ -24,7 +24,7 @@
 			<param index="9" name="drag" type="Callable" />
 			<param index="10" name="drag_signs" type="Vector2" />
 			<description>
-				Registers the mesh with instance id [param mesh_instance_id] as a control - that mesh only, not the meshes under it, as the original picks a control's own submodel. [param pressed] and [param released] are called when the left button goes down on it and up again; a valid [param increase] makes it draggable, [param increase] and [param decrease] being called per step. An empty [param caption] shows no caption; [param hints] are the keys that work the control. A non-zero [param drag_signs] fixes which way an increase goes on each mouse axis (x: +1 right, y: +1 down) instead of taking it from the control's grip. A valid [param drag] makes the control move continuously instead: it is called with the travel of every mouse motion, in pixels along the control's movement on screen, and the steps are not used. One increase turns the mesh by [param step_rotation] in its own space and shifts it by [param step_offset] in its parent's - the drag direction on screen comes from that.
+				Registers the meshes with instance ids [param mesh_instance_ids] as one control, its own submodel first: a button is its own submodel only, as the original picks it, a lever its handle as well (the meshes turning with it). [param pressed] and [param released] are called when the left button goes down on it and up again; a valid [param increase] makes it draggable, [param increase] and [param decrease] being called per step. An empty [param caption] shows no caption; [param hints] are the keys that work the control. A non-zero [param drag_signs] fixes which way an increase goes on each mouse axis (x: +1 right, y: +1 down) instead of taking it from the control's grip. A valid [param drag] makes the control move continuously instead: it is called with the travel of every mouse motion, in pixels along the control's movement on screen, and the steps are not used. One increase turns the mesh by [param step_rotation] in its own space and shifts it by [param step_offset] in its parent's - the drag direction on screen comes from that.
 			</description>
 		</method>
 		<method name="control_free">

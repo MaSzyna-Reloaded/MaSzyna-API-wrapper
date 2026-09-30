@@ -4,6 +4,31 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-30 - EP07's brake valve handles could not be grabbed
+
+* **Symptom:** in the EP07 cab the end of the main brake valve's handle (`brakectrl`) and of the
+  independent brake's (`localbrake`) could not be taken with the mouse.
+* **Cause:** "a cab control is its own submodel only" (the entry above, E186's op12) took from
+  every control the meshes under it, the handle of a brake valve among them - the handle
+  (`raczkaKranu` on SM42) is a submodel under the valve's own. Not measured on the EP07 model: the
+  game data is not in the session that made the fix.
+* **Fix:** `CabinHUDMouseSystem.control_create()` takes the meshes the control is made of, its own
+  first. `CabinKnob` (a lever) hands in its submodel with every mesh under it and its grip is
+  taken from them all again; `CabinButton`/`CabinSwitch` their own submodel only, so op12 stays
+  nobody's. Test: `test_handle_given_with_the_control_is_part_of_it`.
+* **Rule:** a cab button is its own submodel only; a lever is held by its handle too.
+
+## 2026-09-30 - the torch put out the signals
+
+* **Symptom:** switching the player's torch on made the signal lights and the cab's emissive
+  displays (the radio's) disappear.
+* **Cause:** `headlamp_glow.gdshader`, a full-screen quad, wrote `screen * (1 + glow)` over the
+  whole screen. `hint_screen_texture` is copied after the opaque pass, before translucent geometry
+  is drawn, and the quad (nearest, drawn last) put that copy back over everything translucent -
+  outside the cone as well, where the glow is 0. Read off Godot's pipeline, not measured in-game.
+* **Fix:** `blend_add`, and the pass writes only the light it adds (`screen * boost * glow`).
+* **Rule:** a full-screen pass that reads the screen texture only adds to the screen.
+
 ## 2026-09-30 - a test ran on the stack of the signal it awaited
 
 * **Symptom:** a test spawning a vehicle and awaiting its `vehicle_built` left the vehicle alive

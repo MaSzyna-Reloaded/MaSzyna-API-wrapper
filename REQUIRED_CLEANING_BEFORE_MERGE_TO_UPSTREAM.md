@@ -647,6 +647,9 @@ Legend:
   build stamps and UI language are not simulation state; the language belongs with
   `MaszynaTranslationServer`, which only relays it.
 * **Decision:** which server owns cache and build, and move the language to translation.
+* **Done 2026-09-30 (cache and build):** `GameDataServer` owns them (`cache_clear()`,
+  `cache_clear_requested`, `build_get_number()`, `build_check_version()`), with the game's data
+  reload. Left: the language still sits on `SimulationServer`.
 
 ### RC-037
 

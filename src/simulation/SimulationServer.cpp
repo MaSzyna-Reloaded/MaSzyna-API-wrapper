@@ -2,17 +2,14 @@
 
 #include "utils/UserSettings.hpp"
 
-#include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/core/math.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
 
-    const char *SimulationServer::cache_clear_requested_signal = "cache_clear_requested";
     const char *SimulationServer::language_changed_signal = "language_changed";
     const char *SimulationServer::simulation_paused_signal = "simulation_paused";
     const char *SimulationServer::simulation_unpaused_signal = "simulation_unpaused";
@@ -27,9 +24,6 @@ namespace godot {
     } // namespace
 
     void SimulationServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("cache_clear"), &SimulationServer::cache_clear);
-        ClassDB::bind_method(D_METHOD("build_get_number"), &SimulationServer::build_get_number);
-        ClassDB::bind_method(D_METHOD("build_check_version"), &SimulationServer::build_check_version);
 
         ClassDB::bind_method(D_METHOD("set_time_of_day", "hours"), &SimulationServer::set_time_of_day);
         ClassDB::bind_method(D_METHOD("get_time_of_day"), &SimulationServer::get_time_of_day);
@@ -58,7 +52,6 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "language"), "set_language", "get_language");
         ADD_SIGNAL(MethodInfo(language_changed_signal));
 
-        ADD_SIGNAL(MethodInfo(cache_clear_requested_signal));
 
         ClassDB::bind_method(D_METHOD("simulation_pause"), &SimulationServer::simulation_pause);
         ClassDB::bind_method(D_METHOD("simulation_unpause"), &SimulationServer::simulation_unpause);
@@ -238,51 +231,4 @@ namespace godot {
     bool SimulationServer::simulation_is_paused() const {
         return paused;
     }
-
-    void SimulationServer::cache_clear() {
-        emit_signal(cache_clear_requested_signal);
-    }
-
-    /// Stamped by the build itself (cmake/write_build_number.cmake), empty in a checkout that was
-    /// never built.
-    String SimulationServer::build_get_number() {
-        if (build_number_read) {
-            return build_number;
-        }
-
-        build_number_read = true;
-        build_number = FileAccess::get_file_as_string(BUILD_NUMBER_PATH).strip_edges();
-        return build_number;
-    }
-
-    /// Clears every cache once per run when the build behind them is not the one that wrote them.
-    /// A cache on disk outlives the code that produced it, so a new build starts from clean data.
-    bool SimulationServer::build_check_version() {
-        if (build_version_checked) {
-            return false;
-        }
-
-        build_version_checked = true;
-
-        const String current = build_get_number();
-        if (current.is_empty()) {
-            return false;
-        }
-
-        UserSettings *settings = UserSettings::get_instance();
-        ERR_FAIL_NULL_V(settings, false);
-
-        const String stored = settings->get_setting(BUILD_SECTION, BUILD_NUMBER_KEY, "");
-        if (stored == current) {
-            return false;
-        }
-
-        UtilityFunctions::print(
-                "[SimulationServer] Build changed (" + (stored.is_empty() ? String("none") : stored) + " -> " +
-                current + "), clearing cache...");
-        cache_clear();
-        settings->save_setting(BUILD_SECTION, BUILD_NUMBER_KEY, current);
-        return true;
-    }
-
 } // namespace godot

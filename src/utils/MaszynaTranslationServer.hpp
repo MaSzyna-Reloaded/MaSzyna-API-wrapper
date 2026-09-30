@@ -30,7 +30,7 @@ namespace godot {
             Ref<Translation> translation;
             PackedStringArray languages;
 
-            void _on_game_dir_changed();
+            void _on_data_reload_requested();
             void _on_language_changed();
 
         protected:

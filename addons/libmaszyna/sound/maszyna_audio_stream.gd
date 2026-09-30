@@ -16,6 +16,16 @@ class_name MaszynaAudioStream
 
 var _real_stream:AudioStream
 
+
+## A resource has no tree to leave: the connection goes with the stream when it is freed
+func _init() -> void:
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
+
+
+## The sound file is read again, from the game directory set now, when the stream is next played
+func _on_data_unload_requested() -> void:
+    _real_stream = null
+
 func _get_stream_name() -> String:
     return file_path
 

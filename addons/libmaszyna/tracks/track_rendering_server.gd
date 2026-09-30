@@ -126,6 +126,26 @@ func _ready() -> void:
     _track_material_options.cull_disabled = true
     TrackServer.topology_rebuilt.connect(_on_topology_rebuilt)
     TrackServer.switch_offset_changed.connect(_on_switch_offset_changed)
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
+    GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
+
+
+## The rail profiles and the materials' sizes are the old data's
+func _on_data_unload_requested() -> void:
+    _rail_profile_cache.clear()
+    _material_texture_lengths.clear()
+
+
+## Every track takes its materials again and is built again: a streamed one as it is streamed, one
+## built directly at once
+func _on_data_reload_requested() -> void:
+    for track_render_rid: RID in _tracks:
+        var state: TrackState = _tracks[track_render_rid]
+        _resolve_materials(state)
+        if not state.stream_rid.is_valid():
+            rebuild_track(track_render_rid)
+    if _stream_owner >= 0:
+        SceneryStreamingServer.owner_rebuild(_stream_owner)
 
 
 func create_track(track_rid: RID) -> RID:
@@ -271,18 +291,30 @@ func set_track_render_options(
     state.material1_name = material1
     state.material2_name = material2
     state.material_trackbed_name = material_trackbed
-    # An unnamed slot has no material at all - MaterialManager would hand back the
-    # missing-texture placeholder instead (Track.cpp:485-491 keeps a null handle here).
-    state.material1 = MaterialManager.get_material("", material1, _track_material_options) if material1 else null
-    state.material2 = MaterialManager.get_material("", material2, _track_material_options) if material2 else null
-    state.material_trackbed = (
-        MaterialManager.get_material("", material_trackbed, _track_material_options) if material_trackbed else null
-    )
-    state.resolved_trackbed_material_valid = false
+    _resolve_materials(state)
     state.railprofile = railprofile
     state.rail_visible = rail_visible
     state.ballast_visible = ballast_visible
     #rebuild_track(track_render_rid)
+
+
+## The track's materials by the names it has - again whenever the game's data is read again
+func _resolve_materials(state: TrackState) -> void:
+    # An unnamed slot has no material at all - MaterialManager would hand back the
+    # missing-texture placeholder instead (Track.cpp:485-491 keeps a null handle here).
+    state.material1 = (
+        MaterialManager.get_material("", state.material1_name, _track_material_options)
+        if state.material1_name else null
+    )
+    state.material2 = (
+        MaterialManager.get_material("", state.material2_name, _track_material_options)
+        if state.material2_name else null
+    )
+    state.material_trackbed = (
+        MaterialManager.get_material("", state.material_trackbed_name, _track_material_options)
+        if state.material_trackbed_name else null
+    )
+    state.resolved_trackbed_material_valid = false
 
 
 func _get_track_data(track_rid: RID) -> TrackData:

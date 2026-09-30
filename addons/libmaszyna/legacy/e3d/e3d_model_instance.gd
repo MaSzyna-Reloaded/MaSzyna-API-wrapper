@@ -179,11 +179,15 @@ func _ready() -> void:
 
 
 func _enter_tree() -> void:
+    # the model file and its materials are read again - a model handed over as `model` keeps
+    # itself, its materials do not
+    GameDataServer.data_reload_requested.connect(reload)
     if _model:
         _create_instance()
 
 
 func _exit_tree() -> void:
+    GameDataServer.data_reload_requested.disconnect(reload)
     _free_instance()
 
 

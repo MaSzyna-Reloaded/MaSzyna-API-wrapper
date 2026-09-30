@@ -30,11 +30,22 @@ var _queue:SceneryLoadingTaskQueue = SceneryLoadingTaskQueue.new()
 
 
 func _ready() -> void:
-    SimulationServer.cache_clear_requested.connect(clear_cache)
+    GameDataServer.cache_clear_requested.connect(clear_cache)
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
 
 
 func _exit_tree() -> void:
-    SimulationServer.cache_clear_requested.disconnect(clear_cache)
+    GameDataServer.cache_clear_requested.disconnect(clear_cache)
+    GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
+
+
+## A profile is rendered again, from the model read again, when it is next asked for
+func _on_data_unload_requested() -> void:
+    _profiles.clear()
+    # at once: queued, it would still read its model again with everything else
+    if _model:
+        _model.free()
+        _model = null
 
 
 func clear_cache() -> void:
@@ -212,5 +223,8 @@ func _ensure_viewport() -> void:
     _viewport.add_child(_camera)
 
 
+## The same vehicle is another vehicle in another game directory
 static func _get_cache_path(key:String) -> String:
-    return ("%s:%d:%d" % [key, PROFILE_VERSION, E3DModel.FORMAT_VERSION]).md5_text() + ".res"
+    return ("%s:%s:%d:%d" % [
+        UserSettings.get_maszyna_game_dir(), key, PROFILE_VERSION, E3DModel.FORMAT_VERSION
+    ]).md5_text() + ".res"

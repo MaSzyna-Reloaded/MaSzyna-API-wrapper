@@ -1,6 +1,6 @@
 #include "ResourceCache.hpp"
 
-#include "simulation/SimulationServer.hpp"
+#include "game_data/GameDataServer.hpp"
 
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/engine.hpp>
@@ -35,12 +35,12 @@ namespace godot {
 
         // Every cache follows the one "throw the caches away" request, so a new cache is covered
         // by "Clear cache" and by a build change without its owner having to remember it.
-        SimulationServer *runtime = SimulationServer::get_instance();
-        if (runtime != nullptr) {
+        GameDataServer *game_data = GameDataServer::get_instance();
+        if (game_data != nullptr) {
             // No explicit disconnect: callable_mp reports this instance as the callable's object,
             // so the engine drops the connection when the instance dies.
-            runtime->connect(
-                    SimulationServer::cache_clear_requested_signal, callable_mp(cache.ptr(), &ResourceCache::clear));
+            game_data->connect(
+                    GameDataServer::cache_clear_requested_signal, callable_mp(cache.ptr(), &ResourceCache::clear));
         }
         return cache;
     }
@@ -105,6 +105,9 @@ namespace godot {
         if (err != OK) {
             UtilityFunctions::push_error("[ResourceCache] Failed to save cache: " + cache_path);
         } else {
+            // the resource loaded from this path before stays in Godot's cache while it lives, and
+            // get() would hand it out again in place of what was just saved
+            p_resource->take_over_path(cache_path);
             UtilityFunctions::print_verbose("[ResourceCache] Saved to disk: " + cache_path);
         }
 

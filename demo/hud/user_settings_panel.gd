@@ -14,10 +14,10 @@ func _input(event):
         visible = not visible
 
 
+## The game's data is read again by GameDataServer itself
 func _on_gamedir_changed():
     _auto_user_settings_visibility()
-    SimulationServer.cache_clear()
-    _reload_all_models()
+    GameDataServer.cache_clear()
 
 
 func _auto_user_settings_visibility():

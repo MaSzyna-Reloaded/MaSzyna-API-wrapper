@@ -1,34 +1,14 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="SimulationServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
-		Runtime-wide services shared by every on-disk cache.
+		The state of the world the whole simulation shares, and its one clock.
 	</brief_description>
 	<description>
-		Owns the single "throw the caches away" entry point and the build stamp those caches are keyed against.
-		Every [ResourceCache] connects its own [method ResourceCache.clear] to [signal cache_clear_requested] when it is created, so a new cache is covered by "Clear cache" without its owner having to remember it. A manager that also keeps state in memory connects its own [code]clear_cache()[/code] to the same signal.
+		Carries the light level and the air temperature as the environment publishes them ([code]Global.fLuminance[/code], [code]Global.AirTemperature[/code]) and runs the one clock of the simulation ([code]Timer::UpdateTimers()[/code], [code]Timer.cpp:70-92[/code]): the physics, the events, the drivers and the time of day all advance by the same seconds, read here. The caches and the game's data are [GameDataServer]'s.
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="build_check_version">
-			<return type="bool" />
-			<description>
-				Compares the build stamp with the one stored in the user settings ([code]app/build_number[/code]) and, when they differ, emits [signal cache_clear_requested] and stores the current stamp. Returns whether the caches were cleared.
-				Runs at most once per run and does nothing in a checkout that was never built. Call it from the entry point of a scene, before anything reads a cache.
-			</description>
-		</method>
-		<method name="build_get_number">
-			<return type="String" />
-			<description>
-				Returns the stamp written by the build itself ([code]cmake/write_build_number.cmake[/code]), so it names the library that is actually loaded. Empty in a checkout that was never built.
-			</description>
-		</method>
-		<method name="cache_clear">
-			<return type="void" />
-			<description>
-				Emits [signal cache_clear_requested], which clears every cache connected to it.
-			</description>
-		</method>
 		<method name="clock_hold">
 			<return type="void" />
 			<description>
@@ -95,11 +75,6 @@
 		</member>
 	</members>
 	<signals>
-		<signal name="cache_clear_requested">
-			<description>
-				Emitted when every cache is to be dropped, by [method cache_clear] or by [method build_check_version].
-			</description>
-		</signal>
 		<signal name="language_changed">
 			<description>
 				[member language] was set to another language.

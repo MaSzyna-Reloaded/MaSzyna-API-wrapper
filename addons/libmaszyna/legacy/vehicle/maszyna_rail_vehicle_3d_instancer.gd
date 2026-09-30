@@ -141,11 +141,13 @@ static func build_into(
     RailVehicleRenderingServer.vehicle_set_appearance(rid, structure.appearance)
     RailVehicleRenderingServer.vehicle_set_load_model(
             rid, structure.data_path, _load_model_filename(structure, load_name))
-    # the editor drives no vehicle, and has no CabinSystem
-    if not Engine.is_editor_hint():
-        CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
     _fit_rain_volume(rid, rain_volume)
     _apply_wiper_count(rid, structure.appearance)
+    # the editor drives no vehicle and plays no sound: CabinSystem and TrainSoundSystem are not
+    # there (placeholders) - a sound bank built without its registration was a null part
+    if Engine.is_editor_hint():
+        return parts
+    CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
 
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(structure.data_path)

@@ -90,6 +90,7 @@ var _render_data:Dictionary[int, Dictionary] = {
 ## E3DRenderingServer builds the emitters of an instance through this
 func _ready() -> void:
     E3DRenderingServer.smoke_set_source_resolver(build_render_data)
+    GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
 
 
 ## Everything E3DRenderingServer needs for one emitter: process_material, mesh, amount, lifetime,
@@ -146,7 +147,8 @@ func get_source(template_name:String) -> SmokeSource:
     return source
 
 
-func clear_cache() -> void:
+## The templates and the emitters built of them are read again when next asked for
+func _on_data_unload_requested() -> void:
     _sources.clear()
     for memo:Dictionary in _render_data.values():
         memo.clear()

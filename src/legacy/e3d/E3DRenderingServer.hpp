@@ -241,6 +241,8 @@ namespace godot {
             const E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance) const;
             void _rebuild_if_built(E3DInstanceData &p_instance);
             void _update_if_built(E3DInstanceData &p_instance);
+            void _on_data_unload_requested();
+            void _on_data_reload_requested();
             Variant _stream_preload(const RID &p_instance);
             void _stream_build(const RID &p_instance, const Variant &p_preloaded);
             void _stream_clear(const RID &p_instance);

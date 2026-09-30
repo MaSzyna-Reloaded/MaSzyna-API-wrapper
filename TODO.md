@@ -297,6 +297,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `simulation::commandMap` names onto vehicle commands (PyInt.cpp:138-194).
 * **Touch input** (`touches`, `screen_touch_list`, Train.cpp:10713) is always empty.
 * `pyrylandia` is referenced by an MMD and exists nowhere under `dynamic/`.
+* **Another game directory keeps the interpreter** and the runtime it was loaded from (CPython 2.7
+  with PIL is not started twice in one process): the worker only moves into the new directory. A
+  runtime taken from the old game directory (`python2.7/`, `python64/`) stays until a restart.
 
 ### Other
 
@@ -976,6 +979,14 @@ ported, into a delegate.
 * `VelLimitLastDist` is ported, `SwitchClearDist` only as far as it extends it; the original's
   `moveSwitchFound`/`moveStopPointFound` in the reset of `VelSignalLast` (Driver.cpp:1043) are not.
 
+## Game data (GameDataServer)
+
+* `MaszynaVehicleProfileManager._ensure_viewport()` is an `ensure_*` API (`AGENTS.md`
+  PROHIBITED): the render viewport is to be created where the manager is.
+* An owner that is not a scenery's still rebuilds its streamed pieces (`owner_rebuild()`) when the
+  scenery that registered them reloads itself in the same reload: the clears are wasted, the
+  builds are dropped with the freed pieces.
+
 ## Tests
 
 * `test_train_electric_induction_engine.gd` fails 3 tests on a clean `46a51cd2` (checked
@@ -1015,7 +1026,8 @@ ported, into a delegate.
   `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,
   `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the tests spawning a
   vehicle of `demo/tests/fixtures/dynamic/`.
-  Needs a non-persistent override.
+  Needs a non-persistent override. Every such switch also reloads the game's data
+  (`GameDataServer.data_reload()`), in `after_each` too.
 
 ## Physics performance
 

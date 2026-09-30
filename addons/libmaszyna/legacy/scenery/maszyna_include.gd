@@ -36,6 +36,8 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
             _editor_dirty = true
 
 var _loading:bool = false
+## The content of the file is here - the game's data read again loads it again
+var _loaded:bool = false
 
 ## Tracks, traction and models are built directly against TrackServer/TrackRenderingServer/
 ## TractionRenderingServer/TractionServer/E3DRenderingServer/SignallingServer RIDs, not as scene nodes (see
@@ -67,7 +69,19 @@ func _ready() -> void:
     _dirty = autoload
 
 
+func _enter_tree() -> void:
+    GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
+
+
+## A loaded scenery is the game's data - its tracks, events, drivers and vehicles are loaded again,
+## from the data read again, once the load under way (if any) is done
+func _on_data_reload_requested() -> void:
+    if _loaded or _loading:
+        _dirty = true
+
+
 func _exit_tree() -> void:
+    GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
     # The planning thread calls back into GDScript (the owner's preload) and can be creating
     # rendering resources for the very RIDs freed below. It is stopped and joined here, while the
     # scripts still exist - the server's own destructor runs long after they are gone.
@@ -154,8 +168,10 @@ func load() -> void:
     _dirty = false
     _loading = true
     await _clear_content(CLEAR_BUDGET_MSEC)
+    _loaded = false
     if filename:
         await _load_content()
+        _loaded = true
     _loading = false
     if filename:
         loaded.emit()
@@ -166,7 +182,7 @@ func _load_content() -> void:
 
 
 func _process(delta: float) -> void:
-    if _dirty:
+    if _dirty and not _loading:
         _dirty = false
         _process_dirty(delta)
     if _editor_dirty:

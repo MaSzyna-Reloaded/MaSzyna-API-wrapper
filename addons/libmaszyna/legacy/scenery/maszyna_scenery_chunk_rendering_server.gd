@@ -30,6 +30,16 @@ var _next_id:int = 0
 var _stream_owner:int = -1
 
 
+func _ready() -> void:
+    GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
+
+
+## A chunk takes its material again as it is streamed again
+func _on_data_reload_requested() -> void:
+    if _stream_owner >= 0:
+        SceneryStreamingServer.owner_rebuild(_stream_owner)
+
+
 ## Registers a chunk for streaming; nothing is rendered until the camera comes within its range
 func create_chunk(chunk:MaszynaTrianglesChunkData, scenario:RID) -> RID:
     if _stream_owner < 0:

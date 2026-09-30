@@ -1,4 +1,5 @@
 #include "RailVehicleRenderingServer.hpp"
+#include "game_data/GameDataServer.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
@@ -126,6 +127,38 @@ namespace godot {
             models->connect(
                     E3DRenderingServer::instance_built_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_instance_built));
+        }
+        if (GameDataServer *game_data = GameDataServer::get_instance(); game_data != nullptr) {
+            game_data->connect(
+                    GameDataServer::data_reload_requested_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_data_reload_requested));
+        }
+    }
+
+    /* The models this server built from model files are built again from them; the ones handed
+     * over are their owner's to build again. Building a model emits signals scripts answer, so the
+     * vehicles are taken first. */
+    void RailVehicleRenderingServer::_on_data_reload_requested() {
+        Vector<RID> reloaded;
+        for (const KeyValue<RID, Visual> &item: vehicles) {
+            reloaded.push_back(item.key);
+        }
+        for (const RID &vehicle: reloaded) {
+            const Visual *visual = vehicles.getptr(vehicle);
+            if (visual == nullptr) {
+                continue;
+            }
+            const Ref<RailVehicleAppearance> appearance = visual->appearance;
+            const bool own_models = visual->own_models;
+            const bool loaded = visual->load.is_valid();
+            const String load_data_path = visual->load_data_path;
+            const String load_model_filename = visual->load_model_filename;
+            if (own_models) {
+                vehicle_set_appearance(vehicle, appearance);
+            }
+            if (loaded) {
+                vehicle_set_load_model(vehicle, load_data_path, load_model_filename);
+            }
         }
     }
 
@@ -267,6 +300,8 @@ namespace godot {
             models->instance_free(visual->load);
             visual->load = RID();
         }
+        visual->load_data_path = p_data_path;
+        visual->load_model_filename = p_model_filename;
         const Ref<E3DModel> model =
                 p_model_filename.is_empty() ? Ref<E3DModel>() : models->model_load(p_data_path, p_model_filename);
         Node3D *node = _node(*visual);

@@ -1,4 +1,5 @@
 #include "PythonScreenServer.hpp"
+#include "game_data/GameDataServer.hpp"
 #include "utils/UserSettings.hpp"
 #include <cstdint>
 #include <godot_cpp/classes/image.hpp>
@@ -189,6 +190,27 @@ namespace godot {
 
     PythonScreenServer::PythonScreenServer() {
         semaphore.instantiate();
+        if (GameDataServer *game_data = GameDataServer::get_instance(); game_data != nullptr) {
+            game_data->connect(
+                    GameDataServer::data_reload_requested_signal,
+                    callable_mp(this, &PythonScreenServer::_on_data_reload_requested));
+        }
+    }
+
+    /// The scripts are the game directory's: the worker moves the interpreter into the new one.
+    /// The interpreter itself stays - CPython 2.7 with its extension modules (PIL) is not started
+    /// twice in one process - and so does the runtime it was loaded from.
+    void PythonScreenServer::_on_data_reload_requested() {
+        const UserSettings *user_settings = UserSettings::get_instance();
+        ERR_FAIL_NULL(user_settings);
+        if (worker.is_null()) {
+            return; // the worker starts in whatever game directory is set when a screen needs it
+        }
+        {
+            MutexLock lock(mutex);
+            entering_game_dir = user_settings->get_maszyna_game_dir();
+        }
+        semaphore->post();
     }
 
     PythonScreenServer::~PythonScreenServer() {
@@ -319,13 +341,6 @@ namespace godot {
             python.Py_SetPythonHome(home.ptrw());
             python.Py_InitializeEx(0);
             main = python.PyImport_AddModule("__main__");
-            PyObject *game_dir = python.PyString_FromString(p_game_dir.utf8().get_data());
-            python.PyObject_SetAttrString(main, "_maszyna_game_dir", game_dir);
-            python.Py_DecRef(game_dir);
-            // the scripts open "./fonts/..." and "./textures/..." and import "from scripts", all
-            // relative to the game directory, which the original is always started in
-            python.PyRun_SimpleStringFlags(
-                    "import os, sys\nos.chdir(_maszyna_game_dir)\nsys.path.insert(0, _maszyna_game_dir)\n", nullptr);
             // the data is made on Windows, whose file names ignore letter case, and the scripts
             // name files as they please ("WS_gotowosc.png" for ws_gotowosc.png): a path that is
             // not there as written is looked for letter case aside, one directory at a time -
@@ -359,15 +374,47 @@ namespace godot {
                     "_maszyna_isfile = os.path.isfile\n"
                     "os.path.isfile = lambda path: _maszyna_isfile(_maszyna_find_path(path))\n",
                     nullptr);
+        }
+        // The scripts open "./fonts/..." and "./textures/..." and import "from scripts", all
+        // relative to the game directory, which the original is always started in. Entering
+        // another one forgets the scripts' instances and the modules imported from the last one.
+        const auto enter_game_dir = [&](const String &p_entered) {
+            for (const KeyValue<String, PyObject *> &renderer: renderers) {
+                if (renderer.value != nullptr) {
+                    python.Py_DecRef(renderer.value);
+                }
+            }
+            renderers.clear();
+            PyObject *game_dir = python.PyString_FromString(p_entered.utf8().get_data());
+            python.PyObject_SetAttrString(main, "_maszyna_game_dir", game_dir);
+            python.Py_DecRef(game_dir);
+            python.PyRun_SimpleStringFlags(
+                    "import os, sys\n"
+                    "_maszyna_left_dir = globals().get('_maszyna_entered_dir')\n"
+                    "if _maszyna_left_dir:\n"
+                    "    if _maszyna_left_dir in sys.path:\n"
+                    "        sys.path.remove(_maszyna_left_dir)\n"
+                    "    for _maszyna_name, _maszyna_module in list(sys.modules.items()):\n"
+                    "        _maszyna_file = getattr(_maszyna_module, '__file__', None)\n"
+                    "        if _maszyna_file and os.path.abspath(_maszyna_file).startswith(_maszyna_left_dir):\n"
+                    "            del sys.modules[_maszyna_name]\n"
+                    "_maszyna_entered_dir = _maszyna_game_dir\n"
+                    "os.chdir(_maszyna_game_dir)\n"
+                    "sys.path.insert(0, _maszyna_game_dir)\n",
+                    nullptr);
             // the base class of nearly every screen; a script that does not derive from it
             // still runs when it is missing
-            python.run_file(main, p_game_dir.path_join("python/local/abstractscreenrenderer.py"));
+            python.run_file(main, p_entered.path_join("python/local/abstractscreenrenderer.py"));
+        };
+        if (main != nullptr) {
+            enter_game_dir(p_game_dir);
         }
 
         while (true) {
             semaphore->wait();
             while (true) {
                 Request request;
+                String entering;
                 {
                     MutexLock lock(mutex);
                     if (exiting) {
@@ -381,14 +428,22 @@ namespace godot {
                         }
                         return;
                     }
-                    if (requests.is_empty()) {
-                        break;
+                    entering = entering_game_dir;
+                    entering_game_dir = String();
+                    if (entering.is_empty()) {
+                        if (requests.is_empty()) {
+                            break;
+                        }
+                        request = requests.front()->get();
+                        requests.pop_front();
                     }
-                    request = requests.front()->get();
-                    requests.pop_front();
                 }
                 if (main == nullptr) {
                     continue; // no interpreter; the error has been printed once already
+                }
+                if (!entering.is_empty()) {
+                    enter_game_dir(entering);
+                    continue;
                 }
 
                 // python_taskqueue::fetch_renderer() - one instance per script, failures cached

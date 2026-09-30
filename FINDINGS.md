@@ -386,3 +386,9 @@ anything. Open work belongs in `TODO.md`.
 * The Mover's `DistCounter` (`total_distance`) grows only in its own movement, not with
   `vehicle_move()`/`trainset_move()`; a way driven that a test must see is measured along the
   driver's route table. *(09-30 station shown never caught up in a test)*
+* Whatever reads the game directory and keeps the result - a memo, a material, a built vehicle -
+  follows `GameDataServer.data_unload_requested`/`data_reload_requested` itself; a disk cache key
+  names the game directory. *(09-30 track textures stayed after a game directory change)*
+* Code that runs in the editor calls no autoload that is not `@tool` (`TrainSoundSystem`,
+  `CabinSystem`): the call is a script error returning null into the caller's data - a null part
+  of a vehicle crashed the editor on its first rebuild. *(09-30 editor crash on a game dir change)*

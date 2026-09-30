@@ -29,6 +29,13 @@
 				[param preload] is called as [code]preload(rid: RID) -&gt; Variant[/code] on the worker thread and its result is handed to [param build]; pass an empty [Callable] when there is nothing to prepare off the main thread. [param build] is called as [code]build(rid: RID, preloaded: Variant)[/code] and [param clear] as [code]clear(rid: RID)[/code], both on the main thread, within the per-frame budget.
 			</description>
 		</method>
+		<method name="owner_rebuild">
+			<return type="void" />
+			<param index="0" name="owner" type="int" />
+			<description>
+				Clears every piece of [param owner] built so far; the next plan builds again - [code]preload[/code] included - those it still wants. For an owner whose pieces are built of data that has changed, the game's data read again ([signal GameDataServer.data_reload_requested]). A piece out of range is built from the new data whenever it comes into range.
+			</description>
+		</method>
 		<method name="stream_free">
 			<return type="void" />
 			<param index="0" name="stream_rid" type="RID" />

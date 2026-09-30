@@ -1,4 +1,5 @@
 #include "MaszynaTranslationServer.hpp"
+#include "game_data/GameDataServer.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "utils/UserSettings.hpp"
 #include <godot_cpp/classes/dir_access.hpp>
@@ -12,15 +13,17 @@
 
 namespace godot {
     MaszynaTranslationServer::MaszynaTranslationServer() {
-        UserSettings *user_settings = UserSettings::get_instance();
-        ERR_FAIL_NULL(user_settings);
+        GameDataServer *game_data = GameDataServer::get_instance();
+        ERR_FAIL_NULL(game_data);
         SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        user_settings->connect("game_dir_changed", callable_mp(this, &MaszynaTranslationServer::_on_game_dir_changed));
+        game_data->connect(
+                GameDataServer::data_reload_requested_signal,
+                callable_mp(this, &MaszynaTranslationServer::_on_data_reload_requested));
         runtime->connect(
                 SimulationServer::language_changed_signal,
                 callable_mp(this, &MaszynaTranslationServer::_on_language_changed));
-        _on_game_dir_changed();
+        _on_data_reload_requested();
     }
 
     MaszynaTranslationServer::~MaszynaTranslationServer() {
@@ -35,7 +38,7 @@ namespace godot {
                 D_METHOD("translation_get_languages"), &MaszynaTranslationServer::translation_get_languages);
     }
 
-    void MaszynaTranslationServer::_on_game_dir_changed() {
+    void MaszynaTranslationServer::_on_data_reload_requested() {
         languages.clear();
         languages.push_back(SimulationServer::DEFAULT_LANGUAGE);
         const String lang_dir = UserSettings::get_instance()->get_maszyna_game_dir().path_join("lang");

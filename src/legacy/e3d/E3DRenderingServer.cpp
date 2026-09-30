@@ -1,5 +1,6 @@
 #include "E3DRenderingServer.hpp"
 #include "LegacyLightMode.hpp"
+#include "game_data/GameDataServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
@@ -158,7 +159,35 @@ namespace godot {
                 PropertyInfo(Variant::STRING, "submodel")));
     }
 
-    E3DRenderingServer::E3DRenderingServer() {}
+    /// What is read from the game's data is read again when the data is (GameDataServer)
+    E3DRenderingServer::E3DRenderingServer() {
+        GameDataServer *game_data = GameDataServer::get_instance();
+        ERR_FAIL_NULL(game_data);
+        game_data->connect(
+                GameDataServer::data_unload_requested_signal,
+                callable_mp(this, &E3DRenderingServer::_on_data_unload_requested));
+        game_data->connect(
+                GameDataServer::data_reload_requested_signal,
+                callable_mp(this, &E3DRenderingServer::_on_data_reload_requested));
+    }
+
+    /// The models and materials are the old data's - an instance built again asks for them anew
+    void E3DRenderingServer::_on_data_unload_requested() {
+        {
+            MutexLock lock(models_mutex);
+            models.clear();
+        }
+        material_resolver.clear();
+    }
+
+    /// A scenery placement is built again as it is streamed, loading its model on the way; an
+    /// instance created with its model is its client's to build again
+    void E3DRenderingServer::_on_data_reload_requested() {
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        if (stream_owner >= 0 && streaming != nullptr) {
+            streaming->owner_rebuild(stream_owner);
+        }
+    }
 
     E3DRenderingServer::~E3DRenderingServer() {
         // Nodes built by the NODES backends belong to the scene tree, only RenderingServer RIDs are freed here

@@ -2644,3 +2644,22 @@ lighting or the trainset.
   off the dump the same way; `RailVehicleEngine.get_transmission_ratio()` was bound for it.
 * **Rule:** a hot path reads a component, never a dump (`CODE_STYLE.md`); the dump is for readers
   driven by a name out of the data.
+
+## 2026-09-30 - BR285's speed NaN, from a key the FIZ gives twice
+
+* **Symptom:** a BR285 standing in a scenery had `speed`, `velocity`, `Ft`, `Im`, the brake
+  forces, the wheel angles and the diesel temperatures all `nan`.
+* **What proved it:** every NaN of the dump sits downstream of the diesel-electric branch of
+  `TractionForce()` (`diesel_fill` and the temperatures are computed from `Im`, `Mover.cpp:4944`).
+  The config ruled out the axles and the gear ratio, `engine_rpm_ratio=1.0` the WWList row. The
+  FIZ's `Engine:` says `Vadd=5.5 Cr=1 Vadd=0.0 Cr=1.0`; the original's `extract_value()` finds the
+  first (`utilities/utilities.h:170`), our `FizLineUtil.read_key_values()` kept the last, so
+  `Vadd = 0`. With the line contactor closed, the vehicle standing and `tempPmax` still zero, the
+  hyperbola gives `1000 * 0 / (0 + 0)` (`Mover.cpp:5310`) and the NaN stays in `V` for good.
+* **Fix:** `read_key_values()` keeps a key's first value. Found on the way, from the original's
+  `LoadFIZ_Engine`: a diesel-electric's `AIM` (default 1.25) and `RPMDecRate` were never read -
+  and `dizel_RevolutionsDecreaseRate` had a second writer, `rpm_change_rate`, fed by nothing - and
+  the cooling keys of both diesels (`Heat*`, `Water*`, `Oil*Temperature`, `Heater*`,
+  `NominalCoolingPower`) were not imported at all.
+* **Rule:** a FIZ key given twice counts once, with its first value - read how `extract_value`
+  looks a key up before reading a line into a dictionary.

@@ -20,7 +20,6 @@ namespace godot {
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::BOOL, generator_voltage_flat);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, hyperbolic_speed);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, additional_speed);
-        BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, rpm_change_rate);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::FLOAT, power_correction_ratio);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::INT, shunt_relay_type);
         BIND_PROPERTY(RailVehicleDieselElectricEngine, Variant::BOOL, shunt_mode_allowed);

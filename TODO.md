@@ -861,9 +861,9 @@ ported, into a delegate.
       (`Doors()`, `DepartureSignal` not published); the no-current sections (`fOverhead2`,
       `iOverheadZero`); the shunting mode of a 2Ls150 (`AnPos` in `SpeedSet()`) and of an induction
       motor; SN61's idle position after the reverser (`DirectionForward()`, Driver.cpp:5778); the
-      input action for `maxcurrent_sw` (Ctrl+F); the diesels' cooling keys of `Engine:`
-      (`HeaterMin/MaxTemperature`, `NominalCoolingPower`, the heat model's `Water*`/`Heat*`);
-      the radio off after a Radio-Stop.
+      input action for `maxcurrent_sw` (Ctrl+F); the diesels' `Engine:EngineMaxTemperature`
+      (the overheat lamp's threshold, `dizel_heat.engine_max_temp`, Mover.cpp:8306 of the
+      original - the vendored Mover has no such field); the radio off after a Radio-Stop.
    4. Braking through the cab for every brake system (`MaszynaLegacyDriverBraking`,
       `control_braking_force()`, `IncBrake()`/`DecBrake()`/`LapBrake()`, `Inc/DecBrakeEIM()`,
       `control_releaser()`, the brake part of `Check/SetTimeControllers()`): the individual brake

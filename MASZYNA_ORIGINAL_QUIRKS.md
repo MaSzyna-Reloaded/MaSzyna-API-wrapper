@@ -219,8 +219,8 @@ interface.
   force into `1000 * 0 / (0 + 0)` (`Mover.cpp:5310`) the moment the line contactor closes with
   the vehicle standing and `tempPmax` still zero (the engine not up to speed, or `eimic` at zero),
   and the NaN then stays in `V`, `Vel`, the brakes and the wheels for good. Wrapper:
-  `FizLineUtil.read_key_values()` stores every key in a `Dictionary`, so the last value wins -
-  this is the BR285's NaN speed; not fixed yet.
+  `FizLineUtil.read_key_values()` keeps a key's first value too; it used to keep the last, and
+  that was the BR285's NaN speed (`docs/findings-archive.md`, 2026-09-30).
 
 ## Cab definitions (MMD data)
 

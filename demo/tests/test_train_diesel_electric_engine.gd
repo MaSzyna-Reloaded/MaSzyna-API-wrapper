@@ -21,7 +21,6 @@ func test_defaults():
     assert_false(engine.generator_voltage_flat)
     assert_eq(engine.hyperbolic_speed, 1.0)
     assert_eq(engine.additional_speed, 1.0)
-    assert_eq(engine.rpm_change_rate, 2.0)
     assert_eq(engine.power_correction_ratio, 1.0)
     assert_eq(engine.shunt_relay_type, 0)
     assert_false(engine.shunt_mode_allowed)
@@ -32,7 +31,6 @@ func test_round_trip_and_wwlist_update():
     engine.generator_voltage_flat = true
     engine.hyperbolic_speed = 1.1
     engine.additional_speed = 1.2
-    engine.rpm_change_rate = 1.25
     engine.power_correction_ratio = 0.95
     engine.shunt_relay_type = 1
     engine.shunt_mode_allowed = true
@@ -41,7 +39,6 @@ func test_round_trip_and_wwlist_update():
     await wait_idle_frames(2)
 
     assert_true(engine.generator_voltage_flat)
-    assert_eq(engine.rpm_change_rate, 1.25)
     assert_eq(engine.wwlist.size(), 2)
     assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
 
@@ -66,3 +63,41 @@ func test_fiz_wwlist_row_uses_canonical_shunting_property():
 
     assert_eq(engine.wwlist.size(), 1)
     assert_true((engine.wwlist[0] as RailVehicleWWListItem).has_shunting)
+
+## BR285's Engine: gives Vadd and Cr twice; the original reads the first (extract_value's find(),
+## utilities.h:170). The last one, Vadd=0, made the traction force 0/0 on a standing vehicle.
+const BR285_ENGINE: String = "EngineType=DieselElectric Trans=18:64 Ftmax=300000 Vhyp=24 Vadd=5.5 Cr=1 Vadd=0.0 Cr=1.0 WaterMinTemperature=40 WaterFlowTemperature=70 WaterCoolingTemperature=82 WaterMaxTemperature=91 WaterShutters=Yes WaterAuxCircuit=Yes WaterAuxCoolingTemperature=50 WaterAuxMaxTemperature=74 WaterAuxShutters=Yes OilMinPressure=0.15 HeatKFO2=33"
+
+func _apply_engine_line(line: String) -> void:
+    var p: MaszynaParser = MaszynaParser.new()
+    p.initialize(line.to_utf8_buffer())
+    var kv: Dictionary = FizLineUtil.read_key_values(p)
+    FizTrainDieselElectricEngineParser.new().apply_engine_fields(kv, engine)
+    FizTrainDieselEngineParser.apply_diesel_common(kv, engine)
+
+func test_fiz_repeated_key_keeps_its_first_value():
+    _apply_engine_line(BR285_ENGINE)
+    assert_almost_eq(engine.additional_speed, 5.5 / 3.6, 0.0001)
+
+func test_fiz_diesel_electric_inertia_and_rpm_decrease_rate():
+    _apply_engine_line("EngineType=DieselElectric")
+    assert_eq(engine.mechanical_inertia, 1.25, "the diesel-electric's own AIM default (Mover.cpp:11282)")
+    _apply_engine_line("EngineType=DieselElectric AIM=2 RPMDecRate=3")
+    assert_eq(engine.mechanical_inertia, 2.0)
+    assert_eq(engine.mechanical_rpm_decrease_rate, 3.0)
+
+func test_fiz_diesel_cooling_keys():
+    _apply_engine_line(BR285_ENGINE)
+    assert_eq(engine.cooling_water_min_temperature, 40.0)
+    assert_eq(engine.cooling_water_flow_temperature, 70.0)
+    assert_eq(engine.cooling_water_cooling_temperature, 82.0)
+    assert_eq(engine.cooling_water_max_temperature, 91.0)
+    assert_true(engine.cooling_water_shutters)
+    assert_true(engine.cooling_water_aux_circuit)
+    assert_eq(engine.cooling_water_aux_cooling_temperature, 50.0)
+    assert_eq(engine.cooling_water_aux_max_temperature, 74.0)
+    assert_eq(engine.cooling_water_aux_min_temperature, -1.0, "a key the line lacks keeps the default")
+    assert_true(engine.cooling_water_aux_shutters)
+    assert_eq(engine.cooling_heat_kfo2, 33.0)
+    assert_eq(engine.cooling_heat_kw, 0.35)
+    assert_eq(engine.cooling_nominal_power, 1235.0)

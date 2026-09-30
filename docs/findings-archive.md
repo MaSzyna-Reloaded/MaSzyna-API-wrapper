@@ -4,6 +4,58 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-30 - vehicles stood off their tracks in the editor
+
+* **Symptom:** after `RailVehicle3D` stopped creating its own RID (RC-026), the vehicles of
+  `demo_3d` stood off their start tracks in the editor, and snapped onto them only when
+  `start_track_offset` was touched. The game was fine.
+* **What proved it:** `test_rail_vehicle_start_track.gd` - tracks announced (`tracks_changed`)
+  before the vehicle is built fails without the fix and passes with it. `_apply_start_track()`
+  cleared `pending_start_track_retry` and called `vehicle_set_track(RID(), ...)`, which the server
+  ignores silently. In the game the vehicle is built on entering the tree, before the tracks; in the
+  editor only once the `.fiz` is read, after them.
+* **Fix:** the placement stays pending until the node has its vehicle; the vehicle's arrival
+  (`_on_vehicle_changed()` -> `_process_dirty()`) places it.
+* **Rule:** an action that needs two things is spent only when both exist - a call with an invalid
+  handle is ignored without a word, and the flag that said "still to do" is gone.
+
+## 2026-09-30 - the Mover server freed the Movers under live controllers
+
+* **Symptom:** twelve `Failed to retrieve non-existent singleton 'MaszynaMoverVehicleServer'` at
+  every exit, once the Movers belonged to the server.
+* **What proved it:** the probe's exit log. The extension unregisters and deletes the
+  implementation server - and with it every `TMoverParameters` - before the scene lets go of the
+  controllers; `release()` then walked `mover->Couplers` of a freed Mover.
+* **Fix:** the controller keeps the implementation it took the Mover from as an `ObjectID`; gone,
+  the Mover went with it and nothing is read.
+* **Rule:** what points into another owner's memory asks for that owner by `ObjectID`, not by the
+  singleton's name - at teardown the name is gone first.
+
+## 2026-09-30 - "Edit FIZ" disconnected what was never connected
+
+* **Symptom:** the Edit FIZ probe printed `Attempt to disconnect a nonexistent connection` for
+  `vehicle_trainset_changed`, 24 times, from `maszyna_auto_rewident_node.gd`.
+* **What proved it:** the stack of each error: `_exit_tree()` disconnected on every exit, while
+  `_ready()` - where it connected - ran only the first time; Edit FIZ takes the vehicle out of the
+  tree and puts it back.
+* **Fix:** it subscribes in `_enter_tree()`. The cabin scripts (`cabin_python_screen.gd`,
+  `maszyna_dynamic_train_cabin.gd`) have the same asymmetry - in `TODO.md`.
+* **Rule:** subscribe where you unsubscribe - `_enter_tree()`/`_exit_tree()` run on every
+  re-entry, `_ready()` once.
+
+## 2026-09-30 - a stored vehicle description came up half a vehicle
+
+* **Symptom:** a description (the FIZ cache, a `.tres`) - a `VehicleController` with its
+  components, never started - had its components joined to it, its commands registered and the
+  configuration signal connected.
+* **What proved it:** review, then `test_fiz_import.gd` (`test_the_description_is_not_a_vehicle`).
+  Loading a resource sets `components`, and the setter did `add_component()`, which joins.
+* **Fix:** the setter stores the list; the components join in `attach_to_system()` and leave in
+  `release()`. Also, `VehicleController` had its own `get_rid()`, shadowing `Resource.get_rid()`
+  (clang-tidy): it overrides `_get_rid()` instead, as a `Mesh` answers its server handle.
+* **Rule:** a `Resource`'s setter stores data; joining, registering and connecting happen where the
+  object becomes live.
+
 ## 2026-09-30 - "Edit FIZ" aborted the editor
 
 * **Symptom:** toggling "Edit FIZ" on a vehicle aborted the editor (SIGABRT).

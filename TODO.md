@@ -466,6 +466,18 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
   `ShowCurrent(0) / active` (`RailVehicle3D.cpp:1480`) - whether it should take the ported one is
   open. The meter has no test: it needs an electric fixture drawing current under a live wire.
+* "Edit FIZ" (taking a vehicle out of the tree and back) still logs errors in code the vehicle
+  layer rework did not touch: `cabin_python_screen.gd` and `maszyna_dynamic_train_cabin.gd`
+  disconnect in `_exit_tree()` what they connected only once (`_ready()`/a guard);
+  `maszyna_rail_vehicle_3d.gd` `_apply_editable_in_editor()` calls `get_index()` on an internal
+  node without `include_internal`; and 26 `!is_inside_tree()` transform reads during the toggle.
+* Tests still reach the vehicle through `VehiclePhysicsNode.get_controller()` and call the
+  controller directly; the plan's "tests go by RID" (`VehicleServer`/`RailVehicleServer` calls, a
+  helper returning the RID) is not done.
+* `driver_type` (which end is manned - headdriver/reardriver) stays on the generic
+  `VehicleController`/`VehicleServer`; whether it is a rail value like the type and the load is open.
+* `demo/examples/mover_demo.*` and the `custom_*_train_part` examples still assume components
+  as nodes (`$SM42/Brake`) and do not run.
 * `README.md`, "No simulation time is ever dropped": describes `step_frame()`, owed time and
   `MAX_PHYSICS_ITERATIONS`, none of which exists any more - the step is
   `MaszynaMoverVehicleServer::stepping_advance()` over the frame `SimulationServer` hands on,

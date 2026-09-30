@@ -54,7 +54,7 @@ in any layer before.
    - **Dump key:** publish it in the implementation's `_fill_state_dictionary()` next to its
      sibling (`p_state["brake_local_position_normalized"] = get_local_position_normalized();`,
      `MoverRailVehicleBrake.cpp:351`). This key, as it appears in
-     `RailVehicleServer.vehicle_dump_state(rid)`, is what a catalog entry's `state_property` and
+     `VehicleServer.vehicle_dump_state(rid)`, is what a catalog entry's `state_property` and
      `CabinState.vehicle_state_value()` read.
 
 4. **MMD cabin catalog entry** (`addons/libmaszyna/legacy/mmd/mmd_semantic_catalog.gd`) - this
@@ -101,7 +101,7 @@ in any layer before.
    `action_name`/`command`/`command_param`/`controller_path`).
 
 **Sending commands:** code outside the vehicle composition (player, UI, console) sends
-commands by the vehicle's handle, `RailVehicleServer.vehicle_send_command(vehicle_rid, command,
+commands by the vehicle's handle, `VehicleServer.vehicle_send_command(vehicle_rid, command,
 p1, p2)`, using the vehicle it already holds (e.g. `MaszynaPlayer.controlled_vehicle.get_rid()`);
 a vehicle known only by its scenery name is found with `vehicle_get_rid_by_name` - never
 `vehicle.get_controller().send_command(...)`. Direct `VehicleController` access is fine only
@@ -126,7 +126,7 @@ One whose original behaviour lives in `TTrain` gets a new `legacy_cabin/<name>.g
 claims its control ids. Behaviours reach the train only through `CabinState.vehicle_state()` /
 `send_vehicle_command()`, never the Mover. Anything they need to read must first be a key of the
 vehicle's dump (`_fill_state_dictionary()`, layer 3) - `CabinSystem` reads
-`RailVehicleServer.vehicle_dump_state(rid)`.
+`VehicleServer.vehicle_dump_state(rid)`.
 
 **Where the logic of a `Train.cpp` handler goes.** Split it by what it touches:
 - whatever changes the vehicle (a Mover call, a counter the vehicle keeps: `OperatePantographsValve`,

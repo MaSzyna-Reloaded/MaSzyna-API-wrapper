@@ -61,12 +61,14 @@ own `_implementation_changed()` - no `dynamic_cast`, one lifetime (from the simu
 
     grep -l TMoverParameters $(find src -name 'Vehicle*.hpp')   # must print nothing
 
-**2. A public API takes handles, not pointers.** `RailVehicleServer` exposes `vehicle_create`,
-`vehicle_free`, `vehicle_set_track`, `vehicle_get_transform`, `vehicle_dump_state` - `RID` in,
-`Variant` out. Its two `RailVehicleController *` are private helpers (`RailVehicleServer.hpp:139,161`),
-which is the rule working: pointers stay inside one class. What a consumer would have wanted the
-controller for comes out under the handle instead - the controller's moves, commands and occupied
-cab are relayed as `vehicle_moved`, `vehicle_command_received` and `vehicle_occupied_cab_changed`.
+**2. A public API takes handles, not pointers.** `VehicleServer` exposes `vehicle_create`,
+`controller_create`/`controller_configure`, `vehicle_bind_controller`, `vehicle_dump_state`, and
+`RailVehicleServer` `vehicle_attach`, `vehicle_set_track`, `vehicle_get_transform` - `RID` in,
+`Variant` out. Their controller pointers are private helpers, which is the rule working: pointers
+stay inside one class. What a consumer would have wanted the controller for comes out under the
+handle instead - the controller's moves and commands are relayed by `VehicleServer`
+(`vehicle_moved`, `vehicle_command_received`), its rail events by `RailVehicleServer`
+(`vehicle_occupied_cab_changed`, `vehicle_trainset_changed`, `vehicle_coupler_*`).
 
 **3. State has one owner and one writer, and a getter only reads.** Values reach other layers
 through `_fill_state_dictionary` / `_fill_config_dictionary` on the component that owns them
@@ -147,15 +149,8 @@ These are known and being removed. **They are not precedent** - do not copy thei
 not cite them as "how this codebase does it". Counts measured 2026-09-27; re-measure before
 relying on one.
 
-* `VehiclePhysicsNode::_build()` creates, owns and frees the controller; `vehicle_create()` inserts
-  an empty placement. The server should allocate and own it. `RailVehicle3D.cpp:471` creates a
-  second handle on top of that - a node that draws a vehicle should own no handle.
-* `vehicle_attach_controller` is called from both the node that owns the controller and the node
-  that draws the vehicle, and the matching detach has no owner at all: when the physics node goes,
-  nothing takes its controller out of a vehicle it did not own. Removing either call without
-  giving the detach an owner is a behaviour change, not a tidy-up.
 * There are no update phases: the step order is a hand-written sequence in
-  `RailVehicleServer::stepping_advance()` (`:1060`), and `UpdatePhase` exists nowhere.
+  `MaszynaMoverVehicleServer::stepping_advance()`, and `UpdatePhase` exists nowhere.
 * The dump carries two key conventions - nine `prefix/key` namespaces against a majority of flat
   `component_key` names. 53 `state_property` values in the MMD catalog contain `/`, so this is a
   data contract, not a rename.

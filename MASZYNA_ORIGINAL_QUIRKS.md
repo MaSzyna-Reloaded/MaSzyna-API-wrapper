@@ -212,6 +212,15 @@ interface.
   same section are motor parameters of an electric motor or the gears of a diesel
   (`readMPTDieselEngine()`, `Mover.cpp:9175`: idx, mIsat, fi, mfi - the ratio, the lowest and the
   top speed of the gear).
+* **A key given twice in one FIZ line: the first one counts.** `extract_value()` looks the key up
+  with `find(" " + Key + "=")` (`utilities/utilities.h:170`), so a repeated key's later value is
+  never read. The data relies on it: BR285's `Engine:` says `Vadd=5.5 Cr=1 Vadd=0.0 Cr=1.0`, and
+  the original runs it with `Vadd = 5.5 / 3.6`. `Vadd = 0` turns the diesel-electric traction
+  force into `1000 * 0 / (0 + 0)` (`Mover.cpp:5310`) the moment the line contactor closes with
+  the vehicle standing and `tempPmax` still zero (the engine not up to speed, or `eimic` at zero),
+  and the NaN then stays in `V`, `Vel`, the brakes and the wheels for good. Wrapper:
+  `FizLineUtil.read_key_values()` stores every key in a `Dictionary`, so the last value wins -
+  this is the BR285's NaN speed; not fixed yet.
 
 ## Cab definitions (MMD data)
 

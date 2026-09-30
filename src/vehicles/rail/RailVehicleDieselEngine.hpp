@@ -44,6 +44,7 @@ namespace godot {
             double get_engine_temperature() const;
             double get_retarder_fill() const;
             double get_max_rpm() const;
+            double get_idle_rpm_count() const;
 
             /* R_Place= : retarder location within the mechanical transmission */
             enum RetarderPlacement {

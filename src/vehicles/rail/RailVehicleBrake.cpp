@@ -166,6 +166,17 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_PR_MG);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR_MG);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_MIN);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_MAX);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_FILLING);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_DRIVE);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_CUTOFF);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_FIRST_STEP);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_FULL);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_EMERGENCY);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_EP_RELEASE);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_EP_HOLD);
+        BIND_ENUM_CONSTANT(HANDLE_POSITION_EP_BRAKE);
 
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_NONE);
         BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PN);
@@ -280,6 +291,13 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_releaser_active"), &RailVehicleBrake::get_releaser_active);
         ClassDB::bind_method(D_METHOD("get_main_pipe_locked"), &RailVehicleBrake::get_main_pipe_locked);
         ClassDB::bind_method(D_METHOD("get_force"), &RailVehicleBrake::get_force);
+        ClassDB::bind_method(D_METHOD("get_delay_setting"), &RailVehicleBrake::get_delay_setting);
+        ClassDB::bind_method(
+                D_METHOD("get_control_reservoir_pressure"), &RailVehicleBrake::get_control_reservoir_pressure);
+        ClassDB::bind_method(D_METHOD("get_handle_position", "position"), &RailVehicleBrake::get_handle_position);
+        ClassDB::bind_method(D_METHOD("get_handle_time_controlled"), &RailVehicleBrake::get_handle_time_controlled);
+        ClassDB::bind_method(
+                D_METHOD("get_handle_ep_time_controlled"), &RailVehicleBrake::get_handle_ep_time_controlled);
         ClassDB::bind_method(D_METHOD("get_force_at", "ratio", "velocity"), &RailVehicleBrake::get_force_at);
         ClassDB::bind_method(D_METHOD("is_braking"), &RailVehicleBrake::is_braking);
         ClassDB::bind_method(D_METHOD("is_holding"), &RailVehicleBrake::is_holding);

@@ -97,24 +97,26 @@ func _on_vehicle_trainset_changed(vehicle:RID) -> void:
 ## The readiness condition of TController::PrepareEngine() (isready). Quirk: the converter and
 ## compressor terms are left out - the wrapper doesn't expose whether a vehicle has them.
 func _is_engine_ready(vehicle:RID) -> bool:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
-    var config:Dictionary = VehicleServer.vehicle_dump_config(vehicle)
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     var brake_handle_ready:bool = (
-            not config.has("brakes_controller_position_cutoff")
-            or not int(state.get("brake_controller_position", 0.0))
-                    == int(config["brakes_controller_position_cutoff"]))
+            brake == null
+            or not int(brake.get_controller_position())
+                    == int(brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_CUTOFF)))
     return (
-            not int(state.get("direction", 0)) == 0
-            and bool(state.get("main_switch_enabled", false))
-            and (float(state.get("feed_pipe_pressure", 0.0)) > READY_FEED_PIPE_PRESSURE
-                    or is_zero_approx(float(config.get("brake_main_reservoir_volume", 0.0))))
+            not VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0
+            and engine != null and engine.get_main_switch_enabled()
+            and (brake == null or brake.get_feed_pipe_pressure() > READY_FEED_PIPE_PRESSURE
+                    or is_zero_approx(brake.tank_volume_main))
             and brake_handle_ready)
 
 
 ## Coupled vehicles from the head of the train (in the driving direction, CheckVehicles()) to its tail.
 func _get_trainset(vehicle:RID) -> Array[RID]:
     var driving_sign:int = (VehicleServer.vehicle_get_occupied_cab(vehicle)
-            * int(VehicleServer.vehicle_dump_state(vehicle).get("direction", 1)))
+            * VehicleServer.vehicle_get_controller(vehicle).get_direction())
     var trainset:Array[RID] = []
     trainset.assign(RailVehicleServer.vehicle_get_coupled(
             vehicle, RailVehicleController.COUPLER_END_FRONT if driving_sign >= 0 else RailVehicleController.COUPLER_END_REAR,
@@ -131,11 +133,13 @@ func _rewident(vehicle:RID, trainset:Array[RID]) -> void:
     var length:float = 0.0
     var mass:float = 0.0
     for member:RID in trainset:
-        var member_config:Dictionary = VehicleServer.vehicle_dump_config(member)
-        length += float(member_config.get("length", 0.0))
-        mass += float(VehicleServer.vehicle_dump_state(member).get("mass_total", 0.0))
-        if float(member_config.get("power", 0.0)) < 1.0:
-            var delays:int = int(member_config.get("brake_delays", 0))
+        var member_controller:VehicleController = VehicleServer.vehicle_get_controller(member)
+        length += member_controller.dimensions_length
+        mass += member_controller.get_mass_total()
+        if member_controller.power < 1.0:
+            var member_brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+                    member, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+            var delays:int = member_brake.cntrl_brake_delays if member_brake else 0
             if delays & BDELAY_R:
                 express += 1
             elif delays & BDELAY_G:
@@ -157,9 +161,10 @@ func _rewident(vehicle:RID, trainset:Array[RID]) -> void:
 
     var near_locomotive:int = 0
     for member:RID in trainset:
-        var member_config:Dictionary = VehicleServer.vehicle_dump_config(member)
-        var is_locomotive:bool = float(member_config.get("power", 0.0)) > 1.0
-        var delays:int = int(member_config.get("brake_delays", 0))
+        var member_brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+                member, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+        var is_locomotive:bool = VehicleServer.vehicle_get_controller(member).power > 1.0
+        var delays:int = member_brake.cntrl_brake_delays if member_brake else 0
         var brake_delay:int = BDELAY_P
         match setting:
             BDELAY_P:

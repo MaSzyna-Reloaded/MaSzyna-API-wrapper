@@ -74,6 +74,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_transmission_ratio" qualifiers="const">
+			<return type="float" />
+			<description>
+				Wheel gear teeth over motor gear teeth, [code]1.0[/code] without a gear.
+			</description>
+		</method>
 		<method name="get_type" qualifiers="const">
 			<return type="int" enum="RailVehicleEngine.EngineType" />
 			<description>

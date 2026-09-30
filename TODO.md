@@ -158,6 +158,18 @@ moves to C++:
 | `E3DModelInstance` | 3 | `get_e3d_instance`, `e3d_instance_created` (connect, disconnect) in `RailVehicle3D`, commented |
 | `TrackCurve` | 10 | `p1`, `c1`, `c2`, `p2`, `roll1`, `roll2` in `TrackServer` and `RailVehicleServer` |
 
+### Readers still on the state dump (2026-09-30)
+
+The sound system, the AI driver, the player, the external camera and the auto-rewident read
+components now (`CODE_STYLE.md`, "A hot path reads a component, never a dump"). Left on the dump:
+
+* `demo/hud/` - `driving_aid.gd`, `vehicle_card.gd`, `vehicle_selector_row.gd`,
+  `mover_switches_*.gd`, `knob.gd`, `switch.gd`: HUD widgets refreshed on their own timers; the
+  ones that name no value from the data belong on components.
+* `TrainSoundSystem._build_brake_events()` and `MaszynaBrakeSfxEventFactory.build_events()` read
+  the config dump once per vehicle, at build - not a hot path, but the brake handle positions it
+  reads have getters now (`RailVehicleBrake.get_handle_position()`).
+
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
 `src/` is split into generic layers and the MaSzyna adapter (`src/legacy/`: `maszyna-mover`

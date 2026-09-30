@@ -35,6 +35,11 @@ namespace godot {
     double RailVehicleEngine::get_circuit_nmax_rpm() const {
         return drive_unit != nullptr ? drive_unit->get_circuit_nmax_rpm() : 0.0;
     }
+    double RailVehicleEngine::get_transmission_ratio() const {
+        return transmission_gear_teeth_motor > 0
+                       ? static_cast<double>(transmission_gear_teeth_wheel) / transmission_gear_teeth_motor
+                       : 1.0;
+    }
     int RailVehicleEngine::get_damage() const {
         return drive_unit != nullptr ? drive_unit->get_damage() : 0;
     }
@@ -83,6 +88,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
         BIND_PROPERTY(RailVehicleEngine, Variant::INT, transmission_gear_teeth_wheel, "transmission");
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, transmission_efficiency, "transmission");
+        ClassDB::bind_method(D_METHOD("get_transmission_ratio"), &RailVehicleEngine::get_transmission_ratio);
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, maximum_traction_force);
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, motor_blowers_speed, "motor_blowers");
         BIND_PROPERTY(RailVehicleEngine, Variant::FLOAT, motor_blowers_sustain_time, "motor_blowers");

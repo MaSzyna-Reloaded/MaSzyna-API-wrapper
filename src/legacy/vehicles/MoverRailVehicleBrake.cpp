@@ -221,25 +221,25 @@ namespace godot {
         if (mover->Handle == nullptr) {
             return;
         }
-        p_config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
-        p_config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
+        p_config["brakes_controller_position_min"] = get_handle_position(HANDLE_POSITION_MIN);
+        p_config["brakes_controller_position_max"] = get_handle_position(HANDLE_POSITION_MAX);
         // the handle's named positions, per its type (TFV4aM::pos_table, hamulce.h:1140)
-        p_config["brakes_controller_position_filling"] = mover->Handle->GetPos(bh_FS);
-        p_config["brakes_controller_position_drive"] = mover->Handle->GetPos(bh_RP);
-        p_config["brakes_controller_position_cutoff"] = mover->Handle->GetPos(bh_NP);
-        p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
-        p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
-        p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
+        p_config["brakes_controller_position_filling"] = get_handle_position(HANDLE_POSITION_FILLING);
+        p_config["brakes_controller_position_drive"] = get_handle_position(HANDLE_POSITION_DRIVE);
+        p_config["brakes_controller_position_cutoff"] = get_handle_position(HANDLE_POSITION_CUTOFF);
+        p_config["brakes_controller_position_first_step"] = get_handle_position(HANDLE_POSITION_FIRST_STEP);
+        p_config["brakes_controller_position_full"] = get_handle_position(HANDLE_POSITION_FULL);
+        p_config["brakes_controller_position_emergency"] = get_handle_position(HANDLE_POSITION_EMERGENCY);
         // the electro-pneumatic range: releasing, holding and full braking (bh_EPR/EPN/EPB); a
         // handle whose holding equals releasing works the EP brake by a switch (hamulce.h:173-177)
-        p_config["brakes_controller_position_ep_release"] = mover->Handle->GetPos(bh_EPR);
-        p_config["brakes_controller_position_ep_hold"] = mover->Handle->GetPos(bh_EPN);
-        p_config["brakes_controller_position_ep_brake"] = mover->Handle->GetPos(bh_EPB);
+        p_config["brakes_controller_position_ep_release"] = get_handle_position(HANDLE_POSITION_EP_RELEASE);
+        p_config["brakes_controller_position_ep_hold"] = get_handle_position(HANDLE_POSITION_EP_HOLD);
+        p_config["brakes_controller_position_ep_brake"] = get_handle_position(HANDLE_POSITION_EP_BRAKE);
         // the EP brake is applied by how long the handle is held (TDriverHandle::TimeEP)
-        p_config["brake_handle_ep_time_controlled"] = mover->Handle->TimeEP;
+        p_config["brake_handle_ep_time_controlled"] = get_handle_ep_time_controlled();
         // a handle that sets the pipe pressure by how long it is held, not by where it stands
         // (TDriverHandle::Time, hamulce.cpp: MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405)
-        p_config["brake_handle_time_controlled"] = mover->Handle->Time;
+        p_config["brake_handle_time_controlled"] = get_handle_time_controlled();
         // the pipe's running pressure and its working range (HighPipePress, DeltaPipePress)
         p_config["brake_pipe_pressure_high"] = mover->HighPipePress;
         p_config["brake_pipe_pressure_delta"] = mover->DeltaPipePress;
@@ -450,6 +450,31 @@ namespace godot {
         return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_dmg) != 0;
     }
 
+    int MoverRailVehicleBrake::get_delay_setting() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->BrakeDelayFlag : 0;
+    }
+
+    double MoverRailVehicleBrake::get_control_reservoir_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec ? mover->Hamulec->GetCRP() : 0.0;
+    }
+
+    double MoverRailVehicleBrake::get_handle_position(const HandlePosition p_position) const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle ? mover->Handle->GetPos(static_cast<int>(p_position)) : 0.0;
+    }
+
+    bool MoverRailVehicleBrake::get_handle_time_controlled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle && mover->Handle->Time;
+    }
+
+    bool MoverRailVehicleBrake::get_handle_ep_time_controlled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle && mover->Handle->TimeEP;
+    }
+
     void MoverRailVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -491,9 +516,9 @@ namespace godot {
         p_state["brake_is_holding"] = is_holding();
         p_state["brake_is_cut_off"] = is_cut_off();
         // the delay setting in use, a BrakeDelaySetting (BrakeDelayFlag)
-        p_state["brake_delay_setting"] = mover->BrakeDelayFlag;
+        p_state["brake_delay_setting"] = get_delay_setting();
         // the distributor's control reservoir (GetCRP())
-        p_state["brake_control_reservoir_pressure"] = mover->Hamulec ? mover->Hamulec->GetCRP() : 0.0;
+        p_state["brake_control_reservoir_pressure"] = get_control_reservoir_pressure();
         // the control pipe (CntrlPipePress) and the distributor's brake reservoir (GetBRP()),
         // Train.cpp:8677-8678
         p_state["brake_control_pipe_pressure"] = mover->CntrlPipePress;

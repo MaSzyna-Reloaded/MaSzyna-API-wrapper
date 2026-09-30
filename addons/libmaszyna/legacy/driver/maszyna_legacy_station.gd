@@ -46,7 +46,8 @@ static func update_load(
         if not (load_name == PASSENGERS or (not load_name and load.accepted_loads.has(PASSENGERS))):
             continue
         var amount:float = load.get_load_amount()
-        var derailed:bool = (int(CabinSystem.vehicle_state_value(vehicle, "train_damage", 0)) & DERAILED) > 0
+        var derailed:bool = ((VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController)
+                .get_train_damage() & DERAILED) > 0
         var getting_off:int = 0
         if derailed or last_stop:
             getting_off = int(amount)

@@ -134,9 +134,9 @@ func _process_dirty() -> void:
         _orbit = Vector2.ZERO
         _pan = Vector2.ZERO
         _zoom = 1.0
-    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle.get_rid())
-    var cabin_occupied:int = state.get("cabin_occupied", 0)
-    var direction:int = state.get("direction", 0)
+    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle.get_rid()) as RailVehicleController
+    var cabin_occupied:int = controller.get_cabin_occupied()
+    var direction:int = controller.get_direction()
     var cab:int = 1 if cabin_occupied == 0 else cabin_occupied
     # Godot vehicles face -Z; MaSzyna's vehicle frame is (left, up, front)
     var front:Vector3 = -vehicle.global_basis.z.normalized()

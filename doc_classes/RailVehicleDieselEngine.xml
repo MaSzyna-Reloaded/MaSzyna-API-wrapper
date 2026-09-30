@@ -69,6 +69,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_idle_rpm_count" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_ignition" qualifiers="const">
 			<return type="bool" />
 			<description>

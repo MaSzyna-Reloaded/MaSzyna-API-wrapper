@@ -93,10 +93,7 @@ namespace godot {
         // else in Mover.cpp. Without this, Transmision.Ratio stays at its compiled default
         // (1.0), silently dropping the real gear ratio out of Mw/Fw/Ft (ElectricSeriesMotor
         // case, Mover.cpp ~line 5791) and undertractioning every geared vehicle.
-        p_mover->Transmision.Ratio = p_engine->get_transmission_gear_teeth_motor() > 0
-                                             ? static_cast<double>(p_engine->get_transmission_gear_teeth_wheel()) /
-                                                       p_engine->get_transmission_gear_teeth_motor()
-                                             : 1.0;
+        p_mover->Transmision.Ratio = p_engine->get_transmission_ratio();
         p_mover->Transmision.Efficiency = p_engine->get_transmission_efficiency();
         p_mover->Ftmax = p_engine->get_maximum_traction_force();
         p_mover->HasControlPressureSwitch = p_engine->get_pressure_switch_present();

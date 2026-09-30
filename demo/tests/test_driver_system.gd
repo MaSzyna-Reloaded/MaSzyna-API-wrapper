@@ -332,7 +332,8 @@ func test_the_timetable_state_comes_from_the_delegate() -> void:
     assert_null(state["timetable"])
     assert_eq(state["station_index"], 0)
     assert_eq(state["latency"], 0.0)
-    assert_false(state["at_passenger_stop"])
+    assert_eq(state["delay"], 0.0)
+    assert_false(state["arrived"])
     assert_signal_emitted_with_parameters(DriverSystem, "driver_timetable_changed", [driver])
     DriverSystem.driver_free(driver)
 

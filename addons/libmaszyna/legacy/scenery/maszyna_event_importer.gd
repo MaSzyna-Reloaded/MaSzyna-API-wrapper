@@ -46,8 +46,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             event.random_delay = float(p.next_token())
             continue
         if keyword == "departuredelay":
-            # needs the activator's timetable, see TODO.md
-            p.next_token()
+            event.departure_delay = float(p.next_token())
             continue
         if keyword == "condition":
             in_condition = true

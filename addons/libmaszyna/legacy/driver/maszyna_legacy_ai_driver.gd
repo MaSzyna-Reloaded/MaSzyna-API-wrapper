@@ -231,8 +231,18 @@ func _get_timetable_state(driver:RID) -> Dictionary:
         "station_index": state.timetable.station_index,
         "station_start": state.timetable.station_start,
         "latency": state.timetable.latency,
-        "at_passenger_stop": state.route.at_passenger_stop,
+        "delay": state.timetable.delay,
+        "arrived": state.timetable.arrived,
     }
+
+
+## The seconds from `hours` to the departure of the driver's train, NAN without a timetable
+## (DriverDelegate.get_seconds_until_departure())
+func _get_seconds_until_departure(driver:RID, hours:float) -> float:
+    var state:DriverState = _drivers.get(driver)
+    if not state or not state.timetable.timetable:
+        return NAN
+    return state.timetable.seconds_until_departure(hours)
 
 
 ## What the driver keeps: its orders and what they asked for (DriverDelegate.get_state())

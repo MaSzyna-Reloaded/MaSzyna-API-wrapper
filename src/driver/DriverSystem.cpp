@@ -2,6 +2,7 @@
 #include "simulation/SimulationServer.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -34,6 +35,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_is_driven", "vehicle"), &DriverSystem::vehicle_is_driven);
         ClassDB::bind_method(
                 D_METHOD("driver_get_timetable_state", "driver"), &DriverSystem::driver_get_timetable_state);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_seconds_until_departure", "vehicle", "hours"),
+                &DriverSystem::vehicle_get_seconds_until_departure);
         ClassDB::bind_method(
                 D_METHOD("driver_report_timetable_changed", "driver"), &DriverSystem::driver_report_timetable_changed);
         ClassDB::bind_method(D_METHOD("driver_get_state", "driver"), &DriverSystem::driver_get_state);
@@ -268,6 +272,26 @@ namespace godot {
         const DriverData *data = drivers.getptr(p_driver);
         ERR_FAIL_NULL_V(data, Dictionary());
         return data->delegate.is_valid() ? data->delegate->get_timetable_state(p_driver) : Dictionary();
+    }
+
+    double DriverSystem::vehicle_get_seconds_until_departure(const RID &p_vehicle, const double p_hours) const {
+        const RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicles, 0.0);
+        TypedArray<RID> trainset = vehicles->vehicle_get_coupled(
+                p_vehicle, RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLING_FLAG_COUPLER);
+        trainset.push_front(p_vehicle);
+        for (int index = 0; index < trainset.size(); ++index) {
+            const RID driver = vehicle_get_driver(trainset[index]);
+            const DriverData *data = drivers.getptr(driver);
+            if (data == nullptr || data->delegate.is_null()) {
+                continue;
+            }
+            const double seconds = data->delegate->get_seconds_until_departure(driver, p_hours);
+            if (!Math::is_nan(seconds)) {
+                return seconds;
+            }
+        }
+        return 0.0;
     }
 
     void DriverSystem::driver_report_timetable_changed(const RID &p_driver) {

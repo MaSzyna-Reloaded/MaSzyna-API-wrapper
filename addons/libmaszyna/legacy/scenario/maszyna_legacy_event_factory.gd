@@ -224,6 +224,7 @@ static func build(
         ScenarioEventServer.event_set_name(rid, event.name)
         ScenarioEventServer.event_set_delay(rid, absf(event.delay))
         ScenarioEventServer.event_set_random_delay(rid, event.random_delay)
+        ScenarioEventServer.event_set_departure_delay(rid, event.departure_delay)
         event_rids.append(rid)
         events_by_name[event.name] = rid
 

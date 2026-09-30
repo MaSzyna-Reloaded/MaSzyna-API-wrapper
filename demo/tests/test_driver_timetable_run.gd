@@ -164,7 +164,11 @@ func test_late_it_leaves_at_once_and_the_delay_counts() -> void:
 
     assert_eq(_timetable.station_index, 1, "late: it goes at once")
     assert_almost_eq(_timetable.latency, -3.0, EPSILON, "3 min late")
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), 3, "still standing: 3 min late")
+    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), 4,
+            "still standing: 4 min late at its arrival (10:31)")
+    _run_to(STOPS[0] + 200.0, KRZYZOWA_DEPARTURE + 4.0 * MINUTE)
+    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 10.0 * MINUTE), 4,
+            "on the way: as it drove clear of Krzyżowa")
 
 
 func test_a_station_without_a_stop_is_passed_at_speed() -> void:
@@ -226,7 +230,8 @@ func _state() -> Dictionary:
         "station_index": _timetable.station_index,
         "station_start": _timetable.station_start,
         "latency": _timetable.latency,
-        "at_passenger_stop": _route.at_passenger_stop,
+        "delay": _timetable.delay,
+        "arrived": _timetable.arrived,
     }
 
 

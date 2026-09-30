@@ -4,8 +4,8 @@ extends PanelContainer
 ## The card of a driven vehicle - what the original's vehicle parameters panel shows of it
 ## (vehicleparams.cpp) laid out anew: its name, the side views of its trainset
 ## as the scenery selector previews them, its data, how it is going now, its trainset, its driver
-## and its timetable. The data is filled once; what changes is refreshed by one Timer while the
-## card is open, the timetable when the driver moves on.
+## and its timetable. The data is filled once; what changes - the timetable's delay counting on
+## too - is refreshed by one Timer while the card is open.
 
 ## The close button asks the owner to free the card
 signal close_requested
@@ -109,7 +109,6 @@ func _show_trainset_vehicle(p_vehicle:RID) -> void:
         data[tr("Brake valve")] = _enum_label(brake, &"valve_type")
     _show_values(%BasicData, data)
     _on_refresh_timer_timeout()
-    _on_driver_timetable_changed(DriverSystem.vehicle_get_driver(_shown))
 
 
 ## A side view clicked: the card shows that vehicle's data
@@ -118,14 +117,12 @@ func _on_trainset_activated() -> void:
 
 
 func _ready() -> void:
-    DriverSystem.driver_timetable_changed.connect(_on_driver_timetable_changed)
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
     RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
 
 
 func _exit_tree() -> void:
-    DriverSystem.driver_timetable_changed.disconnect(_on_driver_timetable_changed)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
@@ -270,19 +267,10 @@ func _on_refresh_timer_timeout() -> void:
             driver_data[tr("Stop time")] = "%d s" % driver_state["stop_time"]
     _show_values(%DriverData, driver_data)
 
-
-## A driver's speed; one below zero is no limit
-func _format_velocity(velocity:float) -> String:
-    return "%d km/h" % velocity if velocity >= NO_VELOCITY else tr("No limit")
-
-
-## The timetable of the _shown's driver: the train, its relation, the delay and the station passed
-## last, the one it drives to and the one after
-func _on_driver_timetable_changed(driver:RID) -> void:
-    if not driver == DriverSystem.vehicle_get_driver(_shown):
-        return
-    var state:Dictionary = DriverSystem.driver_get_timetable_state(driver) if driver.is_valid() else {}
-    var timetable:Timetable = state.get("timetable")
+    # the timetable of the driver: the train, its relation, the delay and the station passed last,
+    # the one it drives to and the one after
+    var timetable_state:Dictionary = DriverSystem.driver_get_timetable_state(driver) if driver.is_valid() else {}
+    var timetable:Timetable = timetable_state.get("timetable")
     %TrainLabel.text = "%s %s" % [timetable.train_category, timetable.train_name] if timetable else ""
     %TrainLabel.visible = not timetable == null
     var data:Dictionary[String, String] = {}
@@ -291,10 +279,10 @@ func _on_driver_timetable_changed(driver:RID) -> void:
         if timetable.relation_from or timetable.relation_to:
             data[tr("Relation")] = "%s  →  %s" % [
                 timetable.relation_from.replace("_", " "), timetable.relation_to.replace("_", " ")]
-        var late_minutes:int = TimetablePanel.delay_minutes(state, SimulationServer.time_of_day)
+        var late_minutes:int = TimetablePanel.delay_minutes(timetable_state, SimulationServer.time_of_day)
         data[tr("Delay")] = tr("On time") if late_minutes == 0 else "%+d min" % late_minutes
         var entries:Array = timetable.entries
-        var index:int = state.get("station_index", 0)
+        var index:int = timetable_state.get("station_index", 0)
         if index > 0 and index - 1 < entries.size():
             data[tr("Last station")] = (entries[index - 1] as TimetableEntry).station_name.replace("_", " ")
         if index < entries.size():
@@ -304,6 +292,11 @@ func _on_driver_timetable_changed(driver:RID) -> void:
     else:
         data[tr("Train")] = tr("No timetable")
     _show_values(%TimetableData, data)
+
+
+## A driver's speed; one below zero is no limit
+func _format_velocity(velocity:float) -> String:
+    return "%d km/h" % velocity if velocity >= NO_VELOCITY else tr("No limit")
 
 
 ## The player enters the cab, as when picking the vehicle in the world

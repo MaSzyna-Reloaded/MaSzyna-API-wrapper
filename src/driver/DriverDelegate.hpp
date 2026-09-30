@@ -27,6 +27,7 @@ namespace godot {
             GDVIRTUAL1(_update, RID)
             GDVIRTUAL1(_control_taken, RID)
             GDVIRTUAL1RC(Dictionary, _get_timetable_state, RID)
+            GDVIRTUAL2RC(double, _get_seconds_until_departure, RID, double)
             GDVIRTUAL1RC(Dictionary, _get_state, RID)
 
             /// Called by DriverSystem. A C++ delegate overrides these; the default forwards to the
@@ -45,9 +46,15 @@ namespace godot {
             /// The driver's timetable and how far it got through it: "timetable" (Timetable or
             /// null), "station_index" (the entry it drives to next), "station_start" (the entry
             /// shown as the station it stands at or has just left), "latency" (early on arriving at
-            /// the last station [min], late when negative), "at_passenger_stop"; empty for a
-            /// delegate that follows no timetable
+            /// the last station [min], late when negative), "delay" (late at the station reached
+            /// last [min]: its arrival, then its departure), "arrived" (it has reached the next
+            /// station and not gone on yet); empty for a delegate that follows no timetable
             virtual Dictionary get_timetable_state(const RID &p_driver) const;
+            /// The seconds from `p_hours` (the time of day) to the departure from the station the
+            /// driver's train stands at or has just left, 0 where it only passes
+            /// (seconds_until_departure(), mtable.cpp:184-190); NAN for a driver without a
+            /// timetable
+            virtual double get_seconds_until_departure(const RID &p_driver, double p_hours) const;
             /// What the driver keeps - its orders and what they asked for; the keys are the
             /// delegate's own, empty for a delegate that shows nothing
             virtual Dictionary get_state(const RID &p_driver) const;

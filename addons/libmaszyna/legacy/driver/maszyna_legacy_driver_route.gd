@@ -256,7 +256,7 @@ func update(
         _next_station_distance = maxf(0.0, _next_station_distance - maxf(0.0, _front_along - front_along))
         if order == MaszynaLegacyAIDriver.Order.OBEY_TRAIN and _next_station_distance == 0.0:
             _next_station_distance = NEXT_STATION_SHOWN
-            timetable.show_next_station()
+            timetable.show_next_station(hours)
     # the passenger stops left behind are forgotten
     var read:Dictionary[RID, bool] = {}
     for entry:Entry in _table:

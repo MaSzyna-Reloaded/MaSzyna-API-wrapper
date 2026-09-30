@@ -94,6 +94,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_seconds_until_departure" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="hours" type="float" />
+			<description>
+				The seconds from [param hours] (the time of day) to the departure of the vehicle's train ([method DriverDelegate._get_seconds_until_departure]): by the timetable of its own driver, else of the first driver of its trainset with one ([code]Mechanik[/code], else [code]ctOwner[/code], [code]Event.cpp:2431-2435[/code]); 0 for a train without a timetable.
+			</description>
+		</method>
 		<method name="vehicle_is_control_active" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="vehicle" type="RID" />

@@ -377,7 +377,10 @@ anything. Open work belongs in `TODO.md`.
   ramped over it switches on and off; the glare fades over its own band. *(09-28 glare blinking
   with the viewing angle)*
 * `LastStationLatency` (driver `latency`) is the departure less the arrival: positive is early,
-  the delay shown is its negative. *(09-29 an early freight train shown 7 min late)*
+  and it is the AI's, not a delay to show - the panel shows the timetable's `delay`. *(09-29 an
+  early freight train shown 7 min late; 09-30 the timetable's delay frozen on the way)*
+* A scenery keyword read and dropped is a behaviour dropped: `departuredelay` moves an event to
+  the departure of the train that queued it. *(09-30 the departure sound played on arrival)*
 * An extension class named like an engine class (`CameraServer`) builds fine and is refused at
   run time: check the name against Godot's classes, and the `--import` log for "already
   registered". *(09-29 an extension class named like an engine class never registered)*

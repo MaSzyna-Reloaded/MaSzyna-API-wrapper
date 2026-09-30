@@ -103,6 +103,11 @@ namespace godot {
             /// The driver's timetable and its progress (DriverDelegate::get_timetable_state()); empty
             /// without a delegate
             Dictionary driver_get_timetable_state(const RID &p_driver) const;
+            /// The seconds from p_hours (the time of day) to the departure of the vehicle's train
+            /// (DriverDelegate::get_seconds_until_departure()): by the timetable of its own
+            /// driver, else of the first driver of its trainset with one (Mechanik, else ctOwner,
+            /// Event.cpp:2431-2435); 0 for a train without a timetable
+            double vehicle_get_seconds_until_departure(const RID &p_vehicle, double p_hours) const;
             /// The driver's delegate reports that its timetable, or how far it got through it, has
             /// changed - announced as driver_timetable_changed
             void driver_report_timetable_changed(const RID &p_driver);

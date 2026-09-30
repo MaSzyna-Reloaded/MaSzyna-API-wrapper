@@ -1,4 +1,5 @@
 #include "DriverDelegate.hpp"
+#include <godot_cpp/core/math.hpp>
 
 namespace godot {
     void DriverDelegate::_bind_methods() {
@@ -8,6 +9,7 @@ namespace godot {
         GDVIRTUAL_BIND(_update, "driver");
         GDVIRTUAL_BIND(_control_taken, "driver");
         GDVIRTUAL_BIND(_get_timetable_state, "driver");
+        GDVIRTUAL_BIND(_get_seconds_until_departure, "driver", "hours");
         GDVIRTUAL_BIND(_get_state, "driver");
     }
 
@@ -37,6 +39,12 @@ namespace godot {
         Dictionary state;
         GDVIRTUAL_CALL(_get_timetable_state, p_driver, state);
         return state;
+    }
+
+    double DriverDelegate::get_seconds_until_departure(const RID &p_driver, const double p_hours) const {
+        double seconds = Math::NaN;
+        GDVIRTUAL_CALL(_get_seconds_until_departure, p_driver, p_hours, seconds);
+        return seconds;
     }
 
     Dictionary DriverDelegate::get_state(const RID &p_driver) const {

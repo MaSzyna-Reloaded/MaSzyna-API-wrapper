@@ -808,8 +808,11 @@ namespace godot {
         }
     }
 
+    /* Placing needs both the track and the vehicle: whichever comes last places it. The vehicle
+     * is the VehiclePhysicsNode's and may come after the tracks (in the editor it is built once
+     * the .fiz is read) - until then the placement stays pending. */
     void RailVehicle3D::_apply_start_track() {
-        if (start_track_name.is_empty()) {
+        if (start_track_name.is_empty() || !rid.is_valid()) {
             return;
         }
         TrackServer *tracks = TrackServer::get_instance();

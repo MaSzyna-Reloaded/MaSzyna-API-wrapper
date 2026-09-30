@@ -81,6 +81,23 @@ func test_a_vehicle_taken_over_is_looked_at_from_its_cab_and_f4_steps_out_and_in
     assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_FREE, "let go, the player steps out")
 
 
+## drivermode.cpp:258-267 - F5 on the vehicle already driven takes the player back into its cab and
+## the vehicle back from its driver
+func test_taking_over_the_vehicle_driven_goes_back_into_its_cab() -> void:
+    await wait_idle_frames(SETTLE_FRAMES)
+    PlayerServer.player_enter_vehicle(_vehicle.get_rid())
+    PlayerCameraServer.camera_toggle_cabin()
+    # Shift+Q: handed to its driver (it has none here, so nobody drives it)
+    DriverSystem.vehicle_set_control_active(_vehicle.get_rid(), true)
+    assert_false(DriverSystem.vehicle_is_driven(_vehicle.get_rid()))
+
+    PlayerServer.player_enter_vehicle(_vehicle.get_rid())
+
+    assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_CABIN)
+    assert_eq(PlayerServer.player_get_vehicle(), _vehicle.get_rid())
+    assert_true(DriverSystem.vehicle_is_driven(_vehicle.get_rid()), "taken back by the player")
+
+
 ## drivermode.cpp:803-804 - Shift+F4 follows the player's vehicle, then steps through the views
 func test_shift_f4_follows_the_vehicle_driven_then_cycles_the_views() -> void:
     await wait_idle_frames(SETTLE_FRAMES)

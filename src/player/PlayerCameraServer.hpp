@@ -49,9 +49,10 @@ namespace godot {
             CameraFollowView follow_view = CAMERA_FOLLOW_VIEW_TRAINSET_FRONT;
 
             void _on_vehicle_freed(const RID &p_vehicle);
-            /// Taken over, the view is from its cab; let go while looked from its cab, the free
-            /// camera
+            /// Let go while looked from its cab, the free camera
             void _on_player_vehicle_changed(const RID &p_vehicle, const RID &p_previous);
+            /// Taken over - the vehicle driven too - the view is from its cab
+            void _on_player_vehicle_entered(const RID &p_vehicle);
 
         protected:
             static void _bind_methods();

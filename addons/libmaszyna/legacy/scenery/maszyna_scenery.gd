@@ -27,15 +27,17 @@ const OVERCAST_PRECIPITATION_MEDIUM:float = 1.35
 const PRECIPITATION_LIGHT:float = 0.2
 const PRECIPITATION_MEDIUM:float = 0.4
 ## Original engine: clamp of Global.fFogEnd (simulationstateserializer.cpp:216)
+## The scenario clock of a scenery without a "time" section, 10:30 (scenario_time(),
+## simulationtime.h:21 - Time.init() takes it after the load, simulationtime.cpp:30-51)
+const START_TIME_DEFAULT:float = 10.5
 const FOG_END_MIN:float = 10.0
 const FOG_END_MAX:float = 25000.0
 
 ## train_id of the first vehicle found in the loaded scenery
 var first_train_id:String = ""
-## What the loaded scenery declares about its environment; each *_defined says whether it does
-var start_time_defined:bool = false
-## "time" section - scenario clock, hours
-var start_time:float = 0.0
+## "time" section - scenario clock, hours; START_TIME_DEFAULT without one
+var start_time:float = START_TIME_DEFAULT
+## What else the loaded scenery declares about its environment; each *_defined says whether it does
 var day_of_year_defined:bool = false
 ## "config movelight" - day of the year, 0 or less for today's date (simulationtime.cpp:45)
 var day_of_year:int = 0
@@ -54,7 +56,7 @@ var fog_end:float = 0.0
 func _clear_content(budget_msec:int = 0) -> void:
     await super._clear_content(budget_msec)
     first_train_id = ""
-    start_time_defined = false
+    start_time = START_TIME_DEFAULT
     day_of_year_defined = false
     temperature_defined = false
     overcast_defined = false
@@ -74,7 +76,6 @@ func _load_content() -> void:
 ## A later section overrides an earlier one, like the original parsing the file top to bottom
 func _read_environment_declarations() -> void:
     for node:Node in find_children("", "MaszynaTimeNode", true, false):
-        start_time_defined = true
         start_time = (node as MaszynaTimeNode).start_time
     for node:Node in find_children("", "MaszynaConfigNode", true, false):
         var values:Dictionary[String, String] = (node as MaszynaConfigNode).values
@@ -105,9 +106,8 @@ func _apply_environment_declarations() -> void:
     var environment_node:MaszynaEnvironmentNode = get_node_or_null(environment_node_path) as MaszynaEnvironmentNode
     if not environment_node:
         return
-    if start_time_defined:
-        environment_node.use_system_time = false
-        environment_node.current_time = start_time
+    environment_node.use_system_time = false
+    environment_node.current_time = start_time
     if day_of_year_defined:
         var date:Dictionary = (
             Time.get_date_dict_from_system() if day_of_year <= 0

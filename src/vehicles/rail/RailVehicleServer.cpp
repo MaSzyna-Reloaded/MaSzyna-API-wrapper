@@ -6,9 +6,9 @@
 #include "vehicles/rail/RailVehicleWheels.hpp"
 
 #include "logging/GameLog.hpp"
-#include "simulation/SimulationServer.hpp"
 #include "traction/TractionServer.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicle3D.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
@@ -20,10 +20,10 @@
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps) */
     constexpr const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
-    const char *RailVehicleServer::vehicle_moved_signal = "vehicle_moved";
-    const char *RailVehicleServer::vehicle_command_received_signal = "vehicle_command_received";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
-    const char *RailVehicleServer::vehicle_freed_signal = "vehicle_freed";
+    const char *RailVehicleServer::vehicle_trainset_changed_signal = "vehicle_trainset_changed";
+    const char *RailVehicleServer::vehicle_coupler_attached_signal = "vehicle_coupler_attached";
+    const char *RailVehicleServer::vehicle_coupler_detached_signal = "vehicle_coupler_detached";
     const char *RailVehicleServer::vehicle_heading_to_track_start_signal = "vehicle_heading_to_track_start";
     const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
     const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
@@ -33,48 +33,27 @@ namespace godot {
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
         diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
-        // The world steps by the runtime's clock, which stands still while paused. No explicit
-        // disconnect: callable_mp reports this instance as the callable's object, so the engine
-        // drops the connection when the instance dies.
-        SimulationServer *runtime = SimulationServer::get_instance();
-        ERR_FAIL_NULL(runtime);
-        runtime->connect(
-                SimulationServer::simulation_advanced_signal,
-                callable_mp(this, &RailVehicleServer::_on_simulation_advanced));
-    }
-
-    RailVehicleServer::~RailVehicleServer() {
-        _set_stepping(false);
+        // the vehicle is VehicleServer's: freed there, it leaves the route; driven by another
+        // controller, that one is stepped
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        vehicle_server->connect(
+                VehicleServer::vehicle_freed_signal, callable_mp(this, &RailVehicleServer::vehicle_detach));
+        vehicle_server->connect(
+                VehicleServer::vehicle_controller_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_controller_changed));
     }
 
     void RailVehicleServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("vehicle_create"), &RailVehicleServer::vehicle_create);
-        ClassDB::bind_method(D_METHOD("vehicle_free", "vehicle"), &RailVehicleServer::vehicle_free);
-        ClassDB::bind_method(D_METHOD("vehicle_exists", "vehicle"), &RailVehicleServer::vehicle_exists);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_attach_controller", "vehicle", "controller_id"),
-                &RailVehicleServer::vehicle_attach_controller);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_controller_instance_id", "vehicle"),
-                &RailVehicleServer::vehicle_get_controller_instance_id);
-        ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
-        ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
-        ClassDB::bind_method(D_METHOD("vehicle_get_type_name", "vehicle"), &RailVehicleServer::vehicle_get_type_name);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_driver_type", "vehicle"), &RailVehicleServer::vehicle_get_driver_type);
-        ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
-        ClassDB::bind_method(D_METHOD("vehicle_get_rids"), &RailVehicleServer::vehicle_get_rids);
+        ClassDB::bind_method(D_METHOD("vehicle_attach", "vehicle"), &RailVehicleServer::vehicle_attach);
+        ClassDB::bind_method(D_METHOD("vehicle_detach", "vehicle"), &RailVehicleServer::vehicle_detach);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_rids_in_rect", "rect"), &RailVehicleServer::vehicle_get_rids_in_rect);
         ClassDB::bind_method(
-                D_METHOD("vehicle_send_command", "vehicle", "command", "p1", "p2"),
-                &RailVehicleServer::vehicle_send_command, DEFVAL(Variant()), DEFVAL(Variant()));
+                D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
         ClassDB::bind_method(
-                D_METHOD("vehicle_broadcast_command", "command", "p1", "p2"),
-                &RailVehicleServer::vehicle_broadcast_command, DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("vehicle_get_commands", "vehicle"), &RailVehicleServer::vehicle_get_commands);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_has_command", "vehicle", "command"), &RailVehicleServer::vehicle_has_command);
+                D_METHOD("vehicle_couple", "vehicle", "end", "other", "other_end", "coupling_type"),
+                &RailVehicleServer::vehicle_couple);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_find_powered", "vehicle"), &RailVehicleServer::vehicle_find_powered);
@@ -97,16 +76,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("trainset_move", "vehicle", "distance"), &RailVehicleServer::trainset_move);
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
-        ClassDB::bind_method(D_METHOD("stepping_advance", "delta"), &RailVehicleServer::stepping_advance);
-        ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
-        ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_generic_component_find", "vehicle", "tag"),
-                &RailVehicleServer::vehicle_generic_component_find);
-        ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
-        ClassDB::bind_method(D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
         ClassDB::bind_method(D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
         ClassDB::bind_method(
                 D_METHOD(
@@ -137,21 +106,18 @@ namespace godot {
                 &RailVehicleServer::vehicle_attach_rail_vehicle);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_rail_vehicle", "vehicle"), &RailVehicleServer::vehicle_get_rail_vehicle);
-        ClassDB::bind_method(D_METHOD("stepping_set_enabled", "enabled"), &RailVehicleServer::stepping_set_enabled);
-        ClassDB::bind_method(D_METHOD("stepping_is_enabled"), &RailVehicleServer::stepping_is_enabled);
 
-        ADD_SIGNAL(MethodInfo(
-                vehicle_moved_signal, PropertyInfo(Variant::RID, "vehicle"),
-                PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(vehicle_emergency_signal_received_signal, PropertyInfo(Variant::RID, "vehicle")));
-        ADD_SIGNAL(MethodInfo(
-                vehicle_command_received_signal, PropertyInfo(Variant::RID, "vehicle"),
-                PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
-                PropertyInfo(Variant::NIL, "p2")));
         ADD_SIGNAL(MethodInfo(
                 vehicle_occupied_cab_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::INT, "cab")));
-        ADD_SIGNAL(MethodInfo(vehicle_freed_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(vehicle_trainset_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_coupler_attached_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::INT, "element")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_coupler_detached_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::INT, "element")));
         ADD_SIGNAL(MethodInfo(
                 vehicle_heading_to_track_start_signal, PropertyInfo(Variant::RID, "vehicle"),
                 PropertyInfo(Variant::RID, "track")));
@@ -174,42 +140,6 @@ namespace godot {
     uint64_t RailVehicleServer::vehicle_get_rail_vehicle(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         return placement == nullptr ? 0 : placement->rail_vehicle_id;
-    }
-
-    void RailVehicleServer::stepping_set_enabled(const bool p_enabled) {
-        stepping_enabled = p_enabled;
-        _refresh_stepping();
-    }
-
-    bool RailVehicleServer::stepping_is_enabled() const {
-        return stepping_enabled;
-    }
-
-    /// Steps while stepping is enabled and the world holds a vehicle
-    void RailVehicleServer::_refresh_stepping() {
-        _set_stepping(stepping_enabled && !vehicles.is_empty());
-    }
-
-    /// Stepping holds the runtime's clock, so time passes while there is a vehicle to move
-    void RailVehicleServer::_set_stepping(const bool p_stepping) {
-        if (stepping == p_stepping) {
-            return;
-        }
-        SimulationServer *runtime = SimulationServer::get_instance();
-        ERR_FAIL_NULL(runtime);
-        stepping = p_stepping;
-        if (p_stepping) {
-            runtime->clock_hold();
-            return;
-        }
-        runtime->clock_release();
-    }
-
-    /// One frame of the clock, before any node has been processed (SceneTree's `process_frame`)
-    void RailVehicleServer::_on_simulation_advanced(const double p_seconds) {
-        if (stepping && !Engine::get_singleton()->is_editor_hint()) {
-            stepping_advance(p_seconds);
-        }
     }
 
     void RailVehicleServer::vehicle_set_pantograph_geometry(
@@ -305,10 +235,12 @@ namespace godot {
         /* A pantograph that had a wire and now has none is a loss of line voltage that trips the
          * main switch; the original reports it with the place (scene.cpp:112, "Bad traction"), the
          * only way to tell a hole in the scenery's wiring from a defect in this search. */
-        if (p_pantograph.wire.is_valid() && !RID(found["rid"]).is_valid()) {
+        if (const VehicleServer *vehicle_server = VehicleServer::get_instance();
+            p_pantograph.wire.is_valid() && !RID(found["rid"]).is_valid() && vehicle_server != nullptr) {
             UtilityFunctions::push_warning(
                     vformat("Bad traction: %s lost the wire under pantograph %d - %s, %v",
-                            vehicles.getptr(p_vehicle)->name, p_index, _track_position_text(p_vehicle), contact_point));
+                            vehicle_server->vehicle_get_name(p_vehicle), p_index, _track_position_text(p_vehicle),
+                            contact_point));
         }
         p_pantograph.wire = found["rid"];
         return found;
@@ -348,81 +280,30 @@ namespace godot {
         return Object::cast_to<RailVehicleController>(ObjectDB::get_instance(p_placement.controller_id));
     }
 
-    RID RailVehicleServer::vehicle_create() {
-        ++next_vehicle_id;
-        const RID vehicle_rid = UtilityFunctions::rid_from_int64(next_vehicle_id);
-        VehiclePlacement placement;
-        vehicles.insert(vehicle_rid, placement);
-        _refresh_stepping();
-        return vehicle_rid;
+    void RailVehicleServer::vehicle_attach(const RID &p_vehicle) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        ERR_FAIL_COND_MSG(!vehicle_server->vehicle_exists(p_vehicle), "Not a vehicle of VehicleServer");
+        if (vehicles.has(p_vehicle)) {
+            return;
+        }
+        VehiclePlacement &placement = vehicles.insert(p_vehicle, VehiclePlacement())->value;
+        placement.controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
+        _connect_relays(p_vehicle, placement);
     }
 
-    void RailVehicleServer::vehicle_free(const RID &p_vehicle) {
+    void RailVehicleServer::vehicle_detach(const RID &p_vehicle) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return;
         }
         diagnostics_velocity.erase(placement->controller_id);
         _disconnect_relays(p_vehicle, *placement);
-        // the name may have passed to a later vehicle of the same name - that one keeps it
-        if (const RID *named = vehicles_by_name.getptr(placement->name); named != nullptr && *named == p_vehicle) {
-            vehicles_by_name.erase(placement->name);
-        }
         const RID reported_track = placement->reported_track;
         vehicles.erase(p_vehicle);
         if (TrackServer *tracks = TrackServer::get_instance(); tracks != nullptr && reported_track.is_valid()) {
             tracks->track_vehicle_left(reported_track, p_vehicle);
         }
-        if (vehicles.is_empty()) {
-            _set_stepping(false);
-        }
-        emit_signal(vehicle_freed_signal, p_vehicle);
-    }
-
-    bool RailVehicleServer::vehicle_exists(const RID &p_vehicle) const {
-        return vehicles.has(p_vehicle);
-    }
-
-    void RailVehicleServer::vehicle_set_name(const RID &p_vehicle, const String &p_name) {
-        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return;
-        }
-        if (const RID *named = vehicles_by_name.getptr(placement->name); named != nullptr && *named == p_vehicle) {
-            vehicles_by_name.erase(placement->name);
-        }
-        placement->name = p_name;
-        // Names.h:29 basic_table::insert - a vehicle named "" or "none" is not looked up by name
-        if (p_name.is_empty() || p_name == "none") {
-            return;
-        }
-        /* Two vehicles of one name is a scenery's mistake, and the second one silently taking the
-         * name away from the first is how it stays invisible - an event or a console command then
-         * reaches a vehicle nobody meant. */
-        if (const RID *taken = vehicles_by_name.getptr(p_name); taken != nullptr && *taken != p_vehicle) {
-            UtilityFunctions::push_warning(
-                    vformat("Bad scenario: two vehicles named \"%s\" - the later one takes the name", p_name));
-        }
-        vehicles_by_name[p_name] = p_vehicle;
-    }
-
-    VehicleController::DriverType RailVehicleServer::vehicle_get_driver_type(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL_V(placement, VehicleController::DRIVER_NOBODY);
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_driver_type() : VehicleController::DRIVER_NOBODY;
-    }
-
-    String RailVehicleServer::vehicle_get_name(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        return placement != nullptr ? placement->name : String();
-    }
-
-    String RailVehicleServer::vehicle_get_type_name(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL_V(placement, String());
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_type_name() : String();
     }
 
     void RailVehicleServer::vehicle_emergency_signal_send(const RID &p_vehicle) {
@@ -452,11 +333,6 @@ namespace godot {
         const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(sender);
         emit_signal(vehicle_radio_called_signal, p_vehicle, p_call, _placement_transform(*sender).origin);
-    }
-
-    RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {
-        const RID *found = vehicles_by_name.getptr(p_name);
-        return found != nullptr ? *found : RID();
     }
 
     TypedArray<RID> RailVehicleServer::vehicle_get_coupled(
@@ -556,11 +432,6 @@ namespace godot {
         return RID();
     }
 
-    uint64_t RailVehicleServer::vehicle_get_controller_instance_id(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        return placement != nullptr ? static_cast<uint64_t>(placement->controller_id) : 0;
-    }
-
     void RailVehicleServer::vehicle_wake(const RID &p_vehicle) {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(placement);
@@ -569,16 +440,36 @@ namespace godot {
         controller->wake();
     }
 
-    void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {
+    Ref<VehicleComponent>
+    RailVehicleServer::vehicle_component_get(const RID &p_vehicle, const RailVehicleComponentType::Type p_type) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        return controller != nullptr ? controller->get_rail_component(p_type) : Ref<VehicleComponent>();
+    }
+
+    void RailVehicleServer::vehicle_couple(
+            const RID &p_vehicle, const int p_end, const RID &p_other, const int p_other_end,
+            const int p_coupling_type) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const VehiclePlacement *other = vehicles.getptr(p_other);
+        ERR_FAIL_COND(placement == nullptr || other == nullptr);
+        RailVehicleController *controller = _get_controller(*placement);
+        RailVehicleController *other_controller = _get_controller(*other);
+        ERR_FAIL_COND(controller == nullptr || other_controller == nullptr);
+        controller->couple(other_controller, p_end, p_other_end, p_coupling_type);
+    }
+
+    void RailVehicleServer::_on_vehicle_controller_changed(const RID &p_vehicle) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        if (placement == nullptr || vehicle_server == nullptr) {
             return;
         }
         _disconnect_relays(p_vehicle, *placement);
-        placement->controller_id = ObjectID(p_controller_id);
+        diagnostics_velocity.erase(placement->controller_id);
+        placement->controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
         _connect_relays(p_vehicle, *placement);
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
-            controller->set_vehicle_rid(p_vehicle);
             controller->emit_position_changed_if_needed();
         }
     }
@@ -589,14 +480,17 @@ namespace godot {
             return;
         }
         controller->connect(
-                VehicleController::position_changed_signal,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_moved).bind(p_vehicle));
-        controller->connect(
-                VehicleController::command_received,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_command_received).bind(p_vehicle));
-        controller->connect(
                 RailVehicleController::cabin_occupied_changed,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
+        controller->connect(
+                RailVehicleController::trainset_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_trainset_changed).bind(p_vehicle));
+        controller->connect(
+                RailVehicleController::coupler_attached_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_attached).bind(p_vehicle));
+        controller->connect(
+                RailVehicleController::coupler_detached_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_detached).bind(p_vehicle));
     }
 
     void RailVehicleServer::_disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
@@ -605,35 +499,33 @@ namespace godot {
             return;
         }
         controller->disconnect(
-                VehicleController::position_changed_signal,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_moved).bind(p_vehicle));
-        controller->disconnect(
-                VehicleController::command_received,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_command_received).bind(p_vehicle));
-        controller->disconnect(
                 RailVehicleController::cabin_occupied_changed,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
-    }
-
-    void RailVehicleServer::_on_vehicle_moved(const Vector3 &p_position, const RID &p_vehicle) {
-        emit_signal(vehicle_moved_signal, p_vehicle, p_position);
-    }
-
-    void RailVehicleServer::_on_vehicle_command_received(
-            const String &p_command, const Variant &p_p1, const Variant &p_p2, const RID &p_vehicle) {
-        emit_signal(vehicle_command_received_signal, p_vehicle, p_command, p_p1, p_p2);
+        controller->disconnect(
+                RailVehicleController::trainset_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_trainset_changed).bind(p_vehicle));
+        controller->disconnect(
+                RailVehicleController::coupler_attached_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_attached).bind(p_vehicle));
+        controller->disconnect(
+                RailVehicleController::coupler_detached_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_coupler_detached).bind(p_vehicle));
     }
 
     void RailVehicleServer::_on_vehicle_cabin_occupied_changed(const int p_cab, const RID &p_vehicle) {
         emit_signal(vehicle_occupied_cab_changed_signal, p_vehicle, p_cab);
     }
 
-    TypedArray<RID> RailVehicleServer::vehicle_get_rids() const {
-        TypedArray<RID> result;
-        for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
-            result.push_back(entry.key);
-        }
-        return result;
+    void RailVehicleServer::_on_vehicle_trainset_changed(const RID &p_vehicle) {
+        emit_signal(vehicle_trainset_changed_signal, p_vehicle);
+    }
+
+    void RailVehicleServer::_on_vehicle_coupler_attached(const int p_element, const RID &p_vehicle) {
+        emit_signal(vehicle_coupler_attached_signal, p_vehicle, p_element);
+    }
+
+    void RailVehicleServer::_on_vehicle_coupler_detached(const int p_element, const RID &p_vehicle) {
+        emit_signal(vehicle_coupler_detached_signal, p_vehicle, p_element);
     }
 
     TypedArray<RID> RailVehicleServer::vehicle_get_rids_in_rect(const Rect2 &p_rect) const {
@@ -651,44 +543,6 @@ namespace godot {
             }
         }
         return result;
-    }
-
-    Variant RailVehicleServer::vehicle_send_command(
-            const RID &p_vehicle, const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL_V(placement, Variant());
-        RailVehicleController *controller = _get_controller(*placement);
-        ERR_FAIL_NULL_V(controller, Variant());
-        return controller->send_command(p_command, p_p1, p_p2);
-    }
-
-    void RailVehicleServer::vehicle_broadcast_command(
-            const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
-        bool known = false;
-        for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
-            RailVehicleController *controller = _get_controller(entry.value);
-            if (controller != nullptr && controller->get_commands().has(p_command)) {
-                known = true;
-                controller->send_command(p_command, p_p1, p_p2);
-            }
-        }
-        if (!known) {
-            UtilityFunctions::push_error(vformat("Unknown command: %s", p_command));
-        }
-    }
-
-    PackedStringArray RailVehicleServer::vehicle_get_commands(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL_V(placement, PackedStringArray());
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_commands() : PackedStringArray();
-    }
-
-    bool RailVehicleServer::vehicle_has_command(const RID &p_vehicle, const StringName &p_command) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        ERR_FAIL_NULL_V(placement, false);
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr && controller->has_command(p_command);
     }
 
     void RailVehicleServer::vehicle_set_track(
@@ -926,7 +780,10 @@ namespace godot {
     }
 
     Transform3D RailVehicleServer::_compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle) {
-        const Ref<RailVehicleWheels> wheels = vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS);
+        const RailVehicleController *controller = _get_controller(p_placement);
+        const Ref<RailVehicleWheels> wheels =
+                controller != nullptr ? controller->get_component(VehicleComponentType::COMPONENT_WHEELS)
+                                      : Ref<VehicleComponent>();
         const double spacing = wheels.is_valid() ? wheels->get_bogie_pivot_spacing() : 0.0;
         if (spacing <= 0.0) {
             // no bogies to be carried by: the track under the vehicle's own centre is all there is
@@ -1151,81 +1008,6 @@ namespace godot {
      * fixed tick the same step ran several times per frame to catch up and the vehicles juddered.
      * The vehicles are handed their new placement at the end of this (apply_track_placement)
      * rather than pulling it themselves on their own beat. */
-    double RailVehicleServer::vehicle_get_velocity(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return 0.0;
-        }
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_velocity() : 0.0;
-    }
-
-    double RailVehicleServer::vehicle_get_speed(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return 0.0;
-        }
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_speed() : 0.0;
-    }
-
-    /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on purpose: it is
-     * what a console, a diagnostic dump or a cab full of widgets wants. Built once per physics
-     * step and handed out unchanged until the next one, because nothing but a step can change it;
-     * a reader after one value still takes the component that owns it and reads its property. */
-    Ref<VehicleComponent>
-    RailVehicleServer::vehicle_component_get(const RID &p_vehicle, const VehicleComponentType::Type p_type) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return Ref<VehicleComponent>();
-        }
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_component(p_type) : Ref<VehicleComponent>();
-    }
-
-    TypedArray<VehicleComponent>
-    RailVehicleServer::vehicle_generic_component_find(const RID &p_vehicle, const StringName &p_tag) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return TypedArray<VehicleComponent>();
-        }
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->find_generic_components(p_tag) : TypedArray<VehicleComponent>();
-    }
-
-    Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) {
-        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return Dictionary();
-        }
-        RailVehicleController *controller = _get_controller(*placement);
-        /* A command runs between two reads of the same step and changes what the vehicle says, so
-         * the step alone does not decide whether the dump still describes it. A widget reads the
-         * state the moment it sends a command; keyed on the step alone it read the values from
-         * before the command and only caught up one command later. */
-        const uint64_t command_serial = controller != nullptr ? controller->get_command_serial() : 0;
-        if (placement->state_dump_step == step_serial && placement->state_dump_command_serial == command_serial) {
-            return placement->state_dump;
-        }
-        // compose_state(), not get_state(): the controller's accessor asks this cache, so calling
-        // it here would recurse.
-        placement->state_dump = controller != nullptr ? controller->compose_state() : Dictionary();
-        placement->state_dump_step = step_serial;
-        placement->state_dump_command_serial = command_serial;
-        return placement->state_dump;
-    }
-
-    /* The configuration this vehicle was built with, by name. Diagnostic, like the state dump -
-     * a reader after one value takes the component that owns it. */
-    Dictionary RailVehicleServer::vehicle_dump_config(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return Dictionary();
-        }
-        const RailVehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_config() : Dictionary();
-    }
-
     void RailVehicleServer::vehicle_process_movement(const RID &p_vehicle, const double p_delta) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
@@ -1248,22 +1030,20 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    void RailVehicleServer::stepping_advance(const double p_delta) {
+    void RailVehicleServer::stepping_advance(const Vector<RID> &p_vehicles, const double p_delta) {
         if (p_delta <= 0.0) {
             return;
         }
-        // every dump handed out before this step describes the world as it was
-        ++step_serial;
-
         stepped_vehicles.clear();
         stepped_controllers.clear();
         track_vehicles.clear();
-        for (KeyValue<RID, VehiclePlacement> &item: vehicles) {
-            RailVehicleController *controller = _get_controller(item.value);
+        for (const RID &vehicle_rid: p_vehicles) {
+            const VehiclePlacement *placement = vehicles.getptr(vehicle_rid);
+            RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
             if (controller == nullptr) {
                 continue;
             }
-            stepped_vehicles.push_back(item.key);
+            stepped_vehicles.push_back(vehicle_rid);
             stepped_controllers.push_back(controller);
         }
         if (stepped_vehicles.is_empty()) {
@@ -1276,7 +1056,10 @@ namespace godot {
                 Object::cast_to<RailVehicleController>(stepped_controllers[index])->emit_position_changed_if_needed();
             }
             placement->moved = false;
-            track_vehicles[placement->track].push_back(stepped_vehicles[index]);
+        }
+        // every rail vehicle is a neighbour to be found, whatever implementation steps it
+        for (const KeyValue<RID, VehiclePlacement> &item: vehicles) {
+            track_vehicles[item.value.track].push_back(item.key);
         }
 
         // the whole frame, in steps no longer than PHYSICS_STEP; the clock caps the frame
@@ -1350,6 +1133,8 @@ namespace godot {
                         controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
                 electric_engine.is_valid() && vehicles.getptr(stepped_vehicles[index])->track.is_valid()) {
                 const RID vehicle_rid = stepped_vehicles[index];
+                const VehicleServer *vehicle_server = VehicleServer::get_instance();
+                ERR_CONTINUE(vehicle_server == nullptr);
                 const Transform3D frame = vehicle_get_transform(vehicle_rid);
                 VehiclePlacement *powered = vehicles.getptr(vehicle_rid);
                 // the FIZ's slider, halved as the original does (DynObj.cpp:5718); else the model's
@@ -1396,8 +1181,9 @@ namespace godot {
                      * the transition, like the other two - from the cab all three look the same. */
                     if (active[pantograph] && collector.touching && !collector.reaches_wire) {
                         UtilityFunctions::push_warning(
-                                vformat("Lost contact: %s pantograph %d is not reaching the wire - %s", powered->name,
-                                        pantograph, _track_position_text(vehicle_rid)));
+                                vformat("Lost contact: %s pantograph %d is not reaching the wire - %s",
+                                        vehicle_server->vehicle_get_name(vehicle_rid), pantograph,
+                                        _track_position_text(vehicle_rid)));
                     }
                     collector.touching = active[pantograph] && collector.reaches_wire;
                     double voltage = 0.0;
@@ -1415,8 +1201,8 @@ namespace godot {
                         if (collector.powered && Math::is_zero_approx(voltage)) {
                             UtilityFunctions::push_warning(vformat(
                                     "Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
-                                    powered->name, pantograph, _track_position_text(vehicle_rid),
-                                    frame.xform(collector.position)));
+                                    vehicle_server->vehicle_get_name(vehicle_rid), pantograph,
+                                    _track_position_text(vehicle_rid), frame.xform(collector.position)));
                         }
                         collector.powered = !Math::is_zero_approx(voltage);
                     }

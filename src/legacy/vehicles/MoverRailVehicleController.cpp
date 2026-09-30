@@ -1,3 +1,4 @@
+#include "MaszynaMoverVehicleServer.hpp"
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
 #include "legacy/vehicles/MoverComponent.hpp"
@@ -15,6 +16,10 @@ namespace godot {
 
     /* release() runs from VehicleController's NOTIFICATION_PREDELETE, which the editor skips; the
      * Mover must not outlive the vehicle either way. */
+    MoverRailVehicleController::MoverRailVehicleController() {
+        set_implementation(MaszynaMoverVehicleServer::IMPLEMENTATION_NAME);
+    }
+
     MoverRailVehicleController::~MoverRailVehicleController() {
         if (mover != nullptr) {
             controllers_by_mover.erase(mover);

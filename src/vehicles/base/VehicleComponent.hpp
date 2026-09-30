@@ -46,9 +46,10 @@ namespace godot {
             bool is_simulation_ready() const;
 
         public:
-            /* Which kind this component is. Every interface answers for itself; an
-             * implementation inherits the answer. */
-            virtual VehicleComponentType::Type get_component_type() const;
+            /* Which kind this component is - a VehicleComponentType, or a kind of vehicle's own
+             * type numbered on from it (RailVehicleComponentType). Every interface answers for
+             * itself; an implementation inherits the answer. */
+            virtual int get_component_type() const;
 
             /* The vehicle takes the component in hand: from here on it owns it, ticks it and
              * frees it. Both are for the vehicle to call, not for a caller outside it. */

@@ -1,13 +1,8 @@
 extends MaszynaGutTest
 
-var _vehicle_server:Object
 var _created_tracks: Array[RID] = []
 var _created_vehicles: Array[RailVehicle3D] = []
 var _created_vehicle_nodes: Array[VehiclePhysicsNode] = []
-
-
-func before_each() -> void:
-    _vehicle_server = Engine.get_singleton("RailVehicleServer")
 
 
 func after_each() -> void:
@@ -33,15 +28,15 @@ func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(train)
-    watch_signals(_vehicle_server)
+    watch_signals(VehicleServer)
 
     vehicle.move_on_track(0.5)
     assert_signal_not_emitted(train, "position_changed", "Should not emit for a 0.5m move")
-    assert_signal_not_emitted(_vehicle_server, "vehicle_moved", "RailVehicleServer should not relay yet")
+    assert_signal_not_emitted(VehicleServer, "vehicle_moved", "VehicleServer should not relay yet")
 
     vehicle.move_on_track(0.6)
     assert_signal_emitted(train, "position_changed", "Should emit after crossing 1m total movement")
-    assert_signal_emitted_with_parameters(_vehicle_server, "vehicle_moved", [train.get_rid(), train.get_world_position()])
+    assert_signal_emitted_with_parameters(VehicleServer, "vehicle_moved", [train.get_rid(), train.get_world_position()])
 
 
 func test_train_position_changed_signal_rearms_after_last_emission() -> void:
@@ -63,11 +58,11 @@ func test_vehicle_server_stops_relaying_a_detached_controller() -> void:
     var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
-    watch_signals(_vehicle_server)
-    _vehicle_server.vehicle_attach_controller(train.get_rid(), 0)
+    watch_signals(VehicleServer)
+    VehicleServer.vehicle_attach_controller(train.get_rid(), 0)
 
     vehicle.move_on_track(2.0)
-    assert_signal_not_emitted(_vehicle_server, "vehicle_moved", "Should not relay a controller that left its handle")
+    assert_signal_not_emitted(VehicleServer, "vehicle_moved", "Should not relay a controller that left its handle")
 
 
 func _create_fixture(offset: float, train_id: String = "test_train") -> Dictionary:

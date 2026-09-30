@@ -131,9 +131,9 @@ func _input(event):
 
     # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
     if driven.is_valid() and event.is_action_pressed("cabin_previous"):
-        RailVehicleServer.vehicle_send_command(driven, "cab_change", 1)
+        VehicleServer.vehicle_send_command(driven, "cab_change", 1)
     if driven.is_valid() and event.is_action_pressed("cabin_next"):
-        RailVehicleServer.vehicle_send_command(driven, "cab_change", -1)
+        VehicleServer.vehicle_send_command(driven, "cab_change", -1)
 
     if walking:
         _walk_mode_input(event)
@@ -160,9 +160,9 @@ func _walk_mode_input(event:InputEvent) -> void:
     if event.is_action_pressed("brake_release", false, true):
         _released_vehicle = _find_nearest_vehicle()
         if _released_vehicle.is_valid():
-            RailVehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", true)
+            VehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", true)
     elif event.is_action_released("brake_release", true) and _released_vehicle.is_valid():
-        RailVehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", false)
+        VehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", false)
         _released_vehicle = RID()
     elif event.is_action_pressed("manual_brake_increase", true, true):
         _send_to_nearest_train("manual_brake_increase")
@@ -180,7 +180,7 @@ func _walk_mode_input(event:InputEvent) -> void:
 func _send_to_nearest_train(command:String, p1:Variant = null) -> void:
     var vehicle:RID = _find_nearest_vehicle()
     if vehicle.is_valid():
-        RailVehicleServer.vehicle_send_command(vehicle, command, p1)
+        VehicleServer.vehicle_send_command(vehicle, command, p1)
 
 
 ## TTrain::find_nearest_consist_vehicle() (Train.cpp:1023) scans up to 1500 m for the vehicle
@@ -189,7 +189,7 @@ func _find_nearest_vehicle() -> RID:
     var position:Vector3 = free_camera.global_position
     var nearest:RID = RID()
     var nearest_distance:float = 1500.0
-    for vehicle:RID in RailVehicleServer.vehicle_get_rids():
+    for vehicle:RID in VehicleServer.vehicle_get_rids():
         var distance:float = position.distance_to(RailVehicleServer.vehicle_get_transform(vehicle).origin)
         if distance < nearest_distance:
             nearest_distance = distance
@@ -221,14 +221,13 @@ func _find_start_vehicle() -> RailVehicle3D:
     if _auto_start_pending:
         for node:Node in vehicles:
             var vehicle:RailVehicle3D = node as RailVehicle3D
-            if vehicle and vehicle.get_controller():
+            if vehicle and VehicleServer.vehicle_is_simulation_ready(vehicle.get_rid()):
                 _auto_start_pending = false
                 return vehicle
     return null
 
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
-    var controller:VehicleController = vehicle.get_controller()
-    return controller.train_id if controller else ""
+    return VehicleServer.vehicle_get_name(vehicle.get_rid())
 
 ## The keys of the cab's controls act on the vehicle driven, whether the player looks from its cab
 ## or from outside - the cab logic is the vehicle's (CabinSystem), not the 3D cab's
@@ -298,10 +297,10 @@ func _on_camera_changed() -> void:
     var camera:Camera3D = _mode_camera()
     if camera == free_camera and previous == _cabin_camera and _cabin_vehicle:
         var body:Transform3D = _cabin_vehicle.global_transform
-        var cabin_occupied:int = RailVehicleServer.vehicle_dump_state(_cabin_vehicle.get_rid()).get("cabin_occupied", 0)
+        var cabin_occupied:int = VehicleServer.vehicle_dump_state(_cabin_vehicle.get_rid()).get("cabin_occupied", 0)
         # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
         var side:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
-        var width:float = _cabin_vehicle.get_controller().dimensions_width
+        var width:float = VehicleServer.vehicle_get_dimensions(_cabin_vehicle.get_rid()).x
         var head:Vector3 = _cabin_camera.global_position
         var position:Vector3 = Vector3(head.x, body.origin.y, head.z) \
                 + side * (width + DISTANT_VIEW_SIDE_MARGIN) + Vector3.UP * DISTANT_VIEW_HEIGHT

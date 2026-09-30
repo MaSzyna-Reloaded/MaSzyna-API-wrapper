@@ -12,6 +12,7 @@ func before_each():
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     physics_node.set_model(load("res://tests/fixtures/sm42_vehicle.tres"))
     add_child_autofree(physics_node)
+    RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
     train = physics_node.get_controller()
     await wait_idle_frames(2)
     train.send_command("battery", true)

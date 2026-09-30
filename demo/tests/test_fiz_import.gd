@@ -11,6 +11,7 @@ var controller: VehicleController
 func before_each():
     vehicle = VehiclePhysicsNode.new()
     add_child(vehicle)
+    RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
     vehicle.set_model(FizVehicleBuilder.build_model_at(FIXTURE_PATH))
     controller = vehicle.get_controller()
     await wait_idle_frames(2)
@@ -55,7 +56,7 @@ func test_wheels():
 
 
 func test_brake_and_bpt_table():
-    var brake: RailVehicleBrake = controller.get_component(VehicleComponentType.COMPONENT_BRAKES)
+    var brake: RailVehicleBrake = controller.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES)
     assert_not_null(brake)
     assert_eq(brake.brake_force_max, 250.0)
     assert_eq(brake.max_cylinder_pressure, 3.8)
@@ -89,7 +90,7 @@ func test_doors():
 
 
 func test_buff_coupl():
-    var coupler: RailVehicleBuffCoupl = controller.get_component(VehicleComponentType.COMPONENT_BUFFERS)
+    var coupler: RailVehicleBuffCoupl = controller.get_rail_component(RailVehicleComponentType.COMPONENT_BUFFERS)
     assert_not_null(coupler)
     assert_eq(coupler.coupler_type, RailVehicleBuffCoupl.COUPLER_TYPE_SCREW)
     assert_eq(coupler.coupler_stiffness_k, 2.5) # kC in kN/m, converted to N/m by RailVehicleBuffCoupl
@@ -131,10 +132,11 @@ func test_lights_list():
 func test_two_coupler_sections_reach_both_ends() -> void:
     var two_couplers := VehiclePhysicsNode.new()
     add_child_autofree(two_couplers)
+    RailVehicleServer.vehicle_attach(two_couplers.get_vehicle_rid())
     two_couplers.set_model(FizVehicleBuilder.build_model_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
     await wait_idle_frames(2)
 
-    var couplers:Array = two_couplers.get_controller().find_components(VehicleComponentType.COMPONENT_BUFFERS)
+    var couplers:Array = two_couplers.get_controller().find_rail_components(RailVehicleComponentType.COMPONENT_BUFFERS)
     assert_eq(couplers.size(), 2)
     var locations:Array = couplers.map(func(c: RailVehicleBuffCoupl) -> int: return c.buffer_location)
     assert_has(locations, RailVehicleBuffCoupl.BUFFER_LOCATION_FRONT)

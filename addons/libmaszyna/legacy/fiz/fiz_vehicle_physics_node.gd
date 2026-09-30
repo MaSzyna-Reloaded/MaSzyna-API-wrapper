@@ -27,6 +27,10 @@ var _reload_pending:bool = false
 
 
 func _ready() -> void:
+    # a FIZ describes a rail vehicle: it has a place on the route and is stepped there, with or
+    # without a RailVehicle3D drawing it (the editor builds no vehicle)
+    if get_vehicle_rid().is_valid():
+        RailVehicleServer.vehicle_attach(get_vehicle_rid())
     _request_reload()
 
 

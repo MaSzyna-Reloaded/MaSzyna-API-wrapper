@@ -46,8 +46,8 @@ const ANY_VELOCITY:float = 99999.0
 
 
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(situation.controlling)
-    var engine:RailVehicleElectricSeriesEngine = RailVehicleServer.vehicle_component_get(
+    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
+    var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     if engine == null:
         return false
@@ -64,7 +64,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var relays:Array = engine.relay_list
     var main:int = controller_position(situation, "controller_main_position")
     var second:int = controller_position(situation, "controller_second_position")
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(situation.controlling)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(situation.controlling)
     var main_max:int = int(config.get("main_controller_position_max", 0))
     var second_max:int = int(config.get("second_controller_position_max", 0))
     if relays.size() <= main_max:
@@ -159,7 +159,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
         return false
     if power == 1:
         return step_main(situation, -1)
-    var engine:RailVehicleElectricSeriesEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     var relays:Array = engine.relay_list if engine else []
     var main:int = controller_position(situation, "controller_main_position")

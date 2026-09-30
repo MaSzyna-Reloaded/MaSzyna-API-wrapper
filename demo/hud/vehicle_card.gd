@@ -25,8 +25,9 @@ var vehicle:RID = RID()
 var _shown:RID = RID()
 ## The trainset's vehicles, in the order of their side views
 var _trainset:Array[RID] = []
-## The controllers of the trainset, listened to for a coupling change
-var _controllers:Array[RailVehicleController] = []
+## Every vehicle coupled to the one shown, the side views' and the rest - a coupling change of any
+## of them changes the trainset
+var _coupled:Array[RID] = []
 
 ## The caption and value labels of each caption, per grid, made when the caption first appears
 var _values:Dictionary[GridContainer, Dictionary] = {}
@@ -51,39 +52,28 @@ func _on_player_vehicle_changed(_vehicle:RID, _previous:RID) -> void:
 
 ## A coupling changed in the trainset: its side views again, and the vehicle shown kept while it is
 ## still in it
-func _on_trainset_changed() -> void:
+func _on_vehicle_trainset_changed(p_vehicle:RID) -> void:
+    if not _coupled.has(p_vehicle):
+        return
     _show_trainset()
     _show_trainset_vehicle(_shown if _trainset.has(_shown) else vehicle)
 
 
-## The trainset as the scenery selector previews it, and its controllers listened to for the next
-## coupling change
+## The trainset as the scenery selector previews it, and the vehicles of it the next coupling
+## change is listened for
 func _show_trainset() -> void:
-    _disconnect_controllers()
     var tiles:Array[TileGrid.Tile] = []
     _trainset.clear()
-    for trainset_vehicle:RID in RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER):
-        var controller:RailVehicleController = instance_from_id(
-                RailVehicleServer.vehicle_get_controller_instance_id(trainset_vehicle)) as RailVehicleController
-        if controller:
-            controller.trainset_changed.connect(_on_trainset_changed)
-            _controllers.append(controller)
+    _coupled.assign(RailVehicleServer.vehicle_get_coupled(
+            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER))
+    for trainset_vehicle:RID in _coupled:
         var trainset_node:MaszynaRailVehicle3D = legacy_vehicle(trainset_vehicle)
         if not trainset_node:
             continue
         _trainset.append(trainset_vehicle)
         tiles.append(TileGrid.Tile.new(trainset_node.data_path, trainset_node.file_name, trainset_node.skin,
-                "%s (%s)" % [RailVehicleServer.vehicle_get_name(trainset_vehicle), trainset_node.data_path.get_file()]))
+                "%s (%s)" % [VehicleServer.vehicle_get_name(trainset_vehicle), trainset_node.data_path.get_file()]))
     %Trainset.set_tiles(tiles)
-
-
-## A controller freed meanwhile took its connection with it
-func _disconnect_controllers() -> void:
-    for controller:RailVehicleController in _controllers:
-        if is_instance_valid(controller):
-            controller.trainset_changed.disconnect(_on_trainset_changed)
-    _controllers.clear()
 
 
 ## The data of one vehicle of the trainset, marked in the side views: filled once, what changes
@@ -97,12 +87,12 @@ func _show_trainset_vehicle(p_vehicle:RID) -> void:
     %Trainset.set_marked(index)
     %ActionsButton.vehicle = _shown
     _on_camera_changed()
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(_shown)
-    var config:Dictionary = RailVehicleServer.vehicle_dump_config(_shown)
-    %Title.text = RailVehicleServer.vehicle_get_name(_shown)
-    %TypeName.text = RailVehicleServer.vehicle_get_type_name(_shown)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(_shown)
+    var config:Dictionary = VehicleServer.vehicle_dump_config(_shown)
+    %Title.text = VehicleServer.vehicle_get_name(_shown)
+    %TypeName.text = VehicleServer.vehicle_get_type_name(_shown)
     var node:MaszynaRailVehicle3D = legacy_vehicle(_shown)
-    var brake:Object = RailVehicleServer.vehicle_component_get(_shown, VehicleComponentType.COMPONENT_BRAKES)
+    var brake:Object = RailVehicleServer.vehicle_component_get(_shown, RailVehicleComponentType.COMPONENT_BRAKES)
     var data:Dictionary[String, String] = {}
     if node:
         data[tr("File")] = "%s/%s" % [node.data_path, node.file_name]
@@ -132,13 +122,14 @@ func _ready() -> void:
     DriverSystem.driver_timetable_changed.connect(_on_driver_timetable_changed)
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
+    RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
 
 
 func _exit_tree() -> void:
     DriverSystem.driver_timetable_changed.disconnect(_on_driver_timetable_changed)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
-    _disconnect_controllers()
+    RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
 
 
 ## The MaszynaRailVehicle3D a vehicle was spawned by - it wraps the RailVehicle3D the server knows
@@ -186,9 +177,9 @@ func _show_values(grid:GridContainer, values:Dictionary[String, String]) -> void
 
 ## How the vehicle and its trainset are going, and what its driver is doing
 func _on_refresh_timer_timeout() -> void:
-    if not RailVehicleServer.vehicle_exists(_shown):
+    if not VehicleServer.vehicle_exists(_shown):
         return
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(_shown)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(_shown)
     var motion:Dictionary[String, String] = {
         tr("Speed"): "%.1f km/h" % absf(state.get("speed", 0.0)),
         tr("Acceleration"): "%.2f m/s²" % state.get("acceleration", 0.0),
@@ -240,7 +231,7 @@ func _on_refresh_timer_timeout() -> void:
     var drawn:float = 0.0
     var returned:float = 0.0
     for trainset_vehicle:RID in trainset:
-        var vehicle_state:Dictionary = RailVehicleServer.vehicle_dump_state(trainset_vehicle)
+        var vehicle_state:Dictionary = VehicleServer.vehicle_dump_state(trainset_vehicle)
         mass += vehicle_state.get("mass_total", 0.0)
         drawn += vehicle_state.get("power_drawn", 0.0)
         returned += vehicle_state.get("power_returned", 0.0)

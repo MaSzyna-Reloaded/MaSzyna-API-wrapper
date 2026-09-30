@@ -27,7 +27,7 @@ var _active_vehicle:RID = RID()
 func _ready() -> void:
     DriverSystem.driver_vehicle_attached.connect(_on_driver_vehicle_attached)
     DriverSystem.driver_freed.connect(_on_driver_freed)
-    RailVehicleServer.vehicle_freed.connect(_on_vehicle_freed)
+    VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
     for driver:RID in DriverSystem.driver_get_rids():
         _on_driver_vehicle_attached(driver, DriverSystem.driver_get_vehicle(driver))
 
@@ -35,7 +35,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
     DriverSystem.driver_vehicle_attached.disconnect(_on_driver_vehicle_attached)
     DriverSystem.driver_freed.disconnect(_on_driver_freed)
-    RailVehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
+    VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
 
 
 ## The vehicle of the active row, lit alone; an invalid RID leaves none lit
@@ -76,7 +76,7 @@ func _on_vehicle_freed(vehicle:RID) -> void:
 func _update_row(vehicle:RID) -> void:
     if not vehicle.is_valid():
         return
-    var listed:bool = RailVehicleServer.vehicle_exists(vehicle) and (
+    var listed:bool = VehicleServer.vehicle_exists(vehicle) and (
             DriverSystem.vehicle_get_driver(vehicle).is_valid() or vehicle == _player_vehicle)
     var row:VehicleSelectorRow = _rows.get(vehicle)
     if row and not listed:
@@ -88,10 +88,10 @@ func _update_row(vehicle:RID) -> void:
         row.activated.connect(vehicle_activated.emit)
         row.remove_requested.connect(remove_trainset_requested.emit)
         row.show_active(vehicle == _active_vehicle)
-        var name:String = RailVehicleServer.vehicle_get_name(vehicle)
+        var name:String = VehicleServer.vehicle_get_name(vehicle)
         var index:int = 0
         while index < %Vehicles.get_child_count() and \
-                RailVehicleServer.vehicle_get_name((%Vehicles.get_child(index) as VehicleSelectorRow).vehicle) < name:
+                VehicleServer.vehicle_get_name((%Vehicles.get_child(index) as VehicleSelectorRow).vehicle) < name:
             index += 1
         %Vehicles.add_child(row)
         %Vehicles.move_child(row, index)

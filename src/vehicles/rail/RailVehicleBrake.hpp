@@ -13,8 +13,8 @@ namespace godot {
 
 
         public:
-            VehicleComponentType::Type get_component_type() const override {
-                return VehicleComponentType::COMPONENT_BRAKES;
+            int get_component_type() const override {
+                return RailVehicleComponentType::COMPONENT_BRAKES;
             }
 
         private:

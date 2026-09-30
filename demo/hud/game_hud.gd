@@ -272,18 +272,14 @@ func _on_player_vehicle_chip_action_pressed() -> void:
 ## given the vehicle itself now, and PlayerServer says when it changes.
 ## Each window gets the vehicle its target names (HUDWindow.vehicle_target), as a cab control does.
 func _bind_vehicle(node: Node = null) -> void:
-    var vehicle: RailVehicle3D = instance_from_id(
-            RailVehicleServer.vehicle_get_rail_vehicle(PlayerServer.player_get_vehicle())) as RailVehicle3D
-    var controller: VehicleController = vehicle.get_controller() if vehicle else null
+    var vehicle: RID = PlayerServer.player_get_vehicle()
     for window: HUDWindow in ([node] if node else _windows):
-        var target: RID = CabinState.vehicle_of(controller.get_rid(), window.vehicle_target) if controller else RID()
-        var target_controller: VehicleController = instance_from_id(
-                RailVehicleServer.vehicle_get_controller_instance_id(target)) as VehicleController if target.is_valid() else null
-        _propagate_vehicle(window, target_controller)
+        var target: RID = CabinState.vehicle_of(vehicle, window.vehicle_target) if vehicle.is_valid() else RID()
+        _propagate_vehicle(window, target)
 
 
-func _propagate_vehicle(node: Node, controller: VehicleController) -> void:
+func _propagate_vehicle(node: Node, vehicle: RID) -> void:
     for child: Node in node.get_children():
         if "vehicle" in child:
-            child.vehicle = controller
-        _propagate_vehicle(child, controller)
+            child.vehicle = vehicle
+        _propagate_vehicle(child, vehicle)

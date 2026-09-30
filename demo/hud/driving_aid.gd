@@ -93,11 +93,11 @@ func _on_visibility_changed() -> void:
 
 
 func _on_refresh_timer_timeout() -> void:
-    if not RailVehicleServer.vehicle_exists(vehicle):
+    if not VehicleServer.vehicle_exists(vehicle):
         return
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
     # the controllers of the vehicle that pulls (Controlling(), driveruipanels.cpp:139-140)
-    var powered:Dictionary = RailVehicleServer.vehicle_dump_state(RailVehicleServer.vehicle_find_powered(vehicle))
+    var powered:Dictionary = VehicleServer.vehicle_dump_state(RailVehicleServer.vehicle_find_powered(vehicle))
     %DirectionValue.text = DIRECTION_SYMBOLS[signi(int(powered.get("direction", 0)))]
     %ControllerValue.text = "%2d + %-2d" % [
             powered.get("controller_main_position", 0), powered.get("controller_second_position", 0)]

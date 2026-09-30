@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleController" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleController" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Base train controller controlling all train systems
 	</brief_description>
@@ -39,6 +39,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="find_components" qualifiers="const">
+			<return type="VehicleComponent[]" />
+			<param index="0" name="type" type="int" enum="VehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
 		<method name="find_generic_components" qualifiers="const">
 			<return type="VehicleComponent[]" />
 			<param index="0" name="tag" type="StringName" />
@@ -47,11 +53,6 @@
 		</method>
 		<method name="get_acceleration" qualifiers="const">
 			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_command_serial" qualifiers="const">
-			<return type="int" />
 			<description>
 			</description>
 		</method>
@@ -89,6 +90,11 @@
 		</method>
 		<method name="get_speed" qualifiers="const">
 			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_state_serial" qualifiers="const">
+			<return type="int" />
 			<description>
 			</description>
 		</method>
@@ -200,6 +206,8 @@
 			Vehicle width, in meters.
 		</member>
 		<member name="driver_type" type="int" setter="set_driver_type" getter="get_driver_type" enum="VehicleController.DriverType">
+		</member>
+		<member name="implementation" type="StringName" setter="set_implementation" getter="get_implementation">
 		</member>
 		<member name="initial_velocity" type="float" setter="set_initial_velocity" getter="get_initial_velocity">
 		</member>

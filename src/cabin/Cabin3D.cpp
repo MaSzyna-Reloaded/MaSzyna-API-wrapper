@@ -1,7 +1,7 @@
 #include "Cabin3D.hpp"
 #include "vehicles/base/VehicleComponentType.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
@@ -143,7 +143,7 @@ namespace godot {
         /* The revolutions the cab shakes with, or 0 for a vehicle whose engine does not shake it. In
          * the original only a diesel does, so the engine's own kind answers the question - no
          * configuration is looked up for it. */
-        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const VehicleServer *server = VehicleServer::get_instance();
         const Ref<RailVehicleDieselEngine> engine =
                 server != nullptr && vehicle_rid.is_valid()
                         ? server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE)

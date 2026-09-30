@@ -6,7 +6,7 @@ func test_engine_gain_uses_rpm_and_load_without_synthetic_sound_state() -> void:
     controller.power = 1000.0
     controller.apply_configuration()
     var runtime:TrainSoundSystem.BankRuntime = TrainSoundSystem.BankRuntime.new()
-    runtime.controller = controller
+    runtime.vehicle_rid = controller.get_rid()
     var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
     source.amplitude_offset = 0.5
     source.amplitude_factor = 1.5
@@ -25,7 +25,7 @@ func test_engine_gain_clamps_to_event_modulation_domain() -> void:
     controller.power = 1000.0
     controller.apply_configuration()
     var runtime:TrainSoundSystem.BankRuntime = TrainSoundSystem.BankRuntime.new()
-    runtime.controller = controller
+    runtime.vehicle_rid = controller.get_rid()
     var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
     source.amplitude_offset = 0.5
     source.amplitude_factor = 2.0
@@ -148,7 +148,7 @@ func _playing() -> bool:
 func test_running_sound_plays_again_when_the_camera_comes_back() -> void:
     _build(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
     _camera.global_position = NEAR
-    RailVehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
+    VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
     await wait_until(_playing, MAX_WAIT)
     assert_true(_playing(), "heard while the camera is near")
 
@@ -167,7 +167,7 @@ func test_sound_switched_on_while_heard_plays_its_opening_bookend() -> void:
     await wait_seconds(SETTLE)
     _camera.global_position = NEAR
     await wait_seconds(SETTLE)
-    RailVehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
+    VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
     await wait_until(_playing, MAX_WAIT)
 
     assert_almost_eq(
@@ -181,7 +181,7 @@ func test_one_shot_due_while_the_camera_is_away_is_dropped() -> void:
     await wait_seconds(SETTLE)
     _camera.global_position = FAR
     await wait_seconds(SETTLE)
-    RailVehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
+    VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
     await wait_seconds(SETTLE)
     _camera.global_position = NEAR
     await wait_seconds(SETTLE)
@@ -194,7 +194,7 @@ func test_bank_registered_after_its_vehicle_has_a_controller_is_heard() -> void:
     _attach_controller()
     _register_bank(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
     _camera.global_position = NEAR
-    RailVehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
+    VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
     await wait_until(_playing, MAX_WAIT)
 
     assert_true(_playing())

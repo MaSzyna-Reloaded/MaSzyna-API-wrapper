@@ -108,7 +108,6 @@ func test_group_paths_do_not_change_public_property_names() -> void:
 ## VehicleModel - and this asserts the same thing through it.
 func test_authored_configuration_reaches_the_built_vehicle() -> void:
     var brake_model := VehicleComponentModel.new()
-    brake_model.type = VehicleComponentType.COMPONENT_BRAKES
     brake_model.implementation = &"MoverRailVehicleBrake"
     brake_model.properties = {
         "valve_type": 20,
@@ -116,11 +115,9 @@ func test_authored_configuration_reaches_the_built_vehicle() -> void:
         "compressor_cab_a_min_pressure": 7.0,
     }
     var engine_model := VehicleComponentModel.new()
-    engine_model.type = VehicleComponentType.COMPONENT_ENGINE
     engine_model.implementation = &"MoverRailVehicleDieselElectricEngine"
     engine_model.properties = {"oil_pump_pressure_minimum": 0.15}
     var security_model := VehicleComponentModel.new()
-    security_model.type = VehicleComponentType.COMPONENT_SECURITY
     security_model.implementation = &"MoverRailVehicleSecuritySystem"
     security_model.properties = {"aware_system_active": true, "emergency_brake_delay": 2.5}
 
@@ -131,12 +128,13 @@ func test_authored_configuration_reaches_the_built_vehicle() -> void:
 
     var vehicle := VehiclePhysicsNode.new()
     add_child_autofree(vehicle)
+    RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
     vehicle.set_model(model)
 
     var train: VehicleController = vehicle.get_controller()
-    var brake: RailVehicleBrake = train.get_component(VehicleComponentType.COMPONENT_BRAKES)
+    var brake: RailVehicleBrake = train.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES)
     var engine: RailVehicleDieselEngine = train.get_component(VehicleComponentType.COMPONENT_ENGINE)
-    var security_system: RailVehicleSecuritySystem = train.get_component(VehicleComponentType.COMPONENT_SECURITY)
+    var security_system: RailVehicleSecuritySystem = train.get_rail_component(RailVehicleComponentType.COMPONENT_SECURITY)
 
     assert_eq(train.mass, 74000.0, "the vehicle's own properties too")
     assert_eq(brake.valve_type, 20)

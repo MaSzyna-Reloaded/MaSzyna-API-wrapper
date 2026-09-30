@@ -79,13 +79,13 @@ func test_taking_over_activates_the_cab() -> void:
     physics_node.get_controller().apply_configuration()
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
-    assert_eq(RailVehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 0), HEAD_CAB)
-    assert_eq(RailVehicleServer.vehicle_dump_state(vehicle).get("cabin", -1), 0, "no cab active before")
+    assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 0), HEAD_CAB)
+    assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin", -1), 0, "no cab active before")
 
     PlayerServer.player_enter_vehicle(vehicle)
     await wait_idle_frames(SETTLE_FRAMES)
 
-    assert_eq(RailVehicleServer.vehicle_dump_state(vehicle).get("cabin", 0), HEAD_CAB)
+    assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin", 0), HEAD_CAB)
 
 
 func test_a_vehicle_without_a_node_is_refused() -> void:

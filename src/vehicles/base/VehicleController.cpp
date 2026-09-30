@@ -1,5 +1,6 @@
 #include "vehicles/base/VehicleComponent.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -56,9 +57,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
         ClassDB::bind_method(D_METHOD("find_components", "type"), &VehicleController::find_components);
-        /* Read by whoever caches this vehicle's dump: a command runs synchronously, in the middle
-         * of a step, so the step alone does not say whether a dump is still current. */
-        ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
+        /* Read by whoever caches this vehicle's dump: a step or a command moves the state on. */
+        ClassDB::bind_method(D_METHOD("get_state_serial"), &VehicleController::get_state_serial);
         ClassDB::bind_method(D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
         ClassDB::bind_method(D_METHOD("is_physics_active"), &VehicleController::is_physics_active);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &VehicleController::get_world_transform);
@@ -69,6 +69,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);
 
+        ClassDB::bind_method(D_METHOD("set_implementation", "implementation"), &VehicleController::set_implementation);
+        ClassDB::bind_method(D_METHOD("get_implementation"), &VehicleController::get_implementation);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "implementation"), "set_implementation", "get_implementation");
         BIND_PROPERTY(VehicleController, Variant::STRING, train_id);
         BIND_PROPERTY(VehicleController, Variant::STRING, type_name);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
@@ -166,7 +169,7 @@ namespace godot {
         /* The name the scenery gave this vehicle goes to the server that owns its handle, so that
          * whoever knows the vehicle only by name - an event, the console, a `.scn` command - can
          * find the handle. Everything that already holds the vehicle uses the handle. */
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
             server->vehicle_set_name(rid, train_id);
         }
         _register_commands();
@@ -181,6 +184,7 @@ namespace godot {
     }
 
     void VehicleController::process_components(const double p_delta) {
+        ++state_serial;
         for (const Ref<VehicleComponent> &component: components) {
             component->process(p_delta);
         }
@@ -244,6 +248,14 @@ namespace godot {
     /* The whole vehicle's dump: its own share plus every component's. Expensive on purpose -
      * a console, a test or a diagnostic asks for it, never a per-frame reader. */
     Ref<VehicleComponent> VehicleController::get_component(const VehicleComponentType::Type p_type) const {
+        return _get_component_of_type(p_type);
+    }
+
+    TypedArray<VehicleComponent> VehicleController::find_components(const VehicleComponentType::Type p_type) const {
+        return _find_components_of_type(p_type);
+    }
+
+    Ref<VehicleComponent> VehicleController::_get_component_of_type(const int p_type) const {
         for (const Ref<VehicleComponent> &component: components) {
             if (component->get_component_type() == p_type) {
                 return component;
@@ -252,7 +264,7 @@ namespace godot {
         return Ref<VehicleComponent>();
     }
 
-    TypedArray<VehicleComponent> VehicleController::find_components(const VehicleComponentType::Type p_type) const {
+    TypedArray<VehicleComponent> VehicleController::_find_components_of_type(const int p_type) const {
         TypedArray<VehicleComponent> found;
         for (const Ref<VehicleComponent> &component: components) {
             if (component->get_component_type() == p_type) {
@@ -340,6 +352,14 @@ namespace godot {
         return server->vehicle_get_transform(rid);
     }
 
+    void VehicleController::set_implementation(const StringName &p_implementation) {
+        implementation = p_implementation;
+    }
+
+    StringName VehicleController::get_implementation() const {
+        return implementation;
+    }
+
     void VehicleController::set_vehicle_rid(const RID &p_vehicle_rid) {
         rid = p_vehicle_rid;
     }
@@ -349,13 +369,13 @@ namespace godot {
     }
 
     void VehicleController::command_executed(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        ++command_serial;
+        ++state_serial;
         update_state();
         emit_signal(command_received, p_command, p_p1, p_p2);
     }
 
-    uint64_t VehicleController::get_command_serial() const {
-        return command_serial;
+    uint64_t VehicleController::get_state_serial() const {
+        return state_serial;
     }
 
     /* A handler takes as many of the two arguments as it declares; its return value says whether

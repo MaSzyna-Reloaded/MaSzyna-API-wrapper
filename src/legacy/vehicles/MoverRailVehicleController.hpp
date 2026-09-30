@@ -84,6 +84,7 @@ namespace godot {
             int get_circuit_rlist_size() const override;
 
         public:
+            MoverRailVehicleController();
             ~MoverRailVehicleController() override;
 
             /* C++ only and unbound: the Mover is this implementation's own business. The Mover*

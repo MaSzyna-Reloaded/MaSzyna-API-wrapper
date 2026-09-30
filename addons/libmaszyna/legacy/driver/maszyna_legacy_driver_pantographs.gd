@@ -31,8 +31,8 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
     var unit:RID = trainset.pantograph_unit
     if not unit.is_valid():
         return
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(unit)
-    var engine:RailVehicleElectricEngine = RailVehicleServer.vehicle_component_get(
+    var state:Dictionary = VehicleServer.vehicle_dump_state(unit)
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             unit, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     var tank:float = float(state.get("current_collector/pantograph_tank_pressure", 0.0))
     var feeding_from_compressor:bool = state.get("current_collector/pantograph_compressor_valve", false)
@@ -61,9 +61,9 @@ static func control(
     var unit:RID = trainset.pantograph_unit
     if not unit.is_valid():
         return
-    var engine:RailVehicleElectricEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             unit, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(unit)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(unit)
     if not engine.cntrl_pantograph_auto_valve \
             and float(CabinSystem.vehicle_state_value(vehicle, "compressor_pressure", 0.0)) > MAIN_FEEDING_PRESSURE \
             and state.get("current_collector/pantograph_compressor_valve", false):
@@ -72,7 +72,7 @@ static func control(
     if speed <= MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED or waiting:
         return
     var hints:RailVehicleAIHints = RailVehicleServer.vehicle_component_get(
-            vehicle, VehicleComponentType.COMPONENT_AI_HINTS) as RailVehicleAIHints
+            vehicle, RailVehicleComponentType.COMPONENT_AI_HINTS) as RailVehicleAIHints
     var setup:RailVehicleAIHints.PantographState = hints.pantograph_state if hints else RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC
     if not setup == RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC:
         if speed > SETUP_SPEED:
@@ -82,7 +82,7 @@ static func control(
                     if setup & RailVehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)
         return
     # the regular layout: a lone vehicle, an EMU, an ET41 (Driver.cpp:6243-6246)
-    var train_type:RailVehicleController.TrainType = int(RailVehicleServer.vehicle_dump_config(unit).get(
+    var train_type:RailVehicleController.TrainType = int(VehicleServer.vehicle_dump_config(unit).get(
             "train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) as RailVehicleController.TrainType
     var regular:bool = RailVehicleServer.vehicle_get_coupled(
             vehicle, MaszynaLegacyDriverTrainset.FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL).size() == 1 \

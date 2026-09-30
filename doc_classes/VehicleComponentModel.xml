@@ -11,7 +11,5 @@
 		</member>
 		<member name="properties" type="Dictionary" setter="set_properties" getter="get_properties" default="{}">
 		</member>
-		<member name="type" type="int" setter="set_type" getter="get_type" enum="VehicleComponentType.Type" default="0">
-		</member>
 	</members>
 </class>

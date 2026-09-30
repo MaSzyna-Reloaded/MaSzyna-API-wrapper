@@ -66,9 +66,9 @@ const CABSIGNAL_RESET:StringName = &"shp_reset_bt"
 ## (Sandbox() switches nothing on without sand, Mover.cpp:3070); here the component that registers
 ## the command is missing (an EN96 has no RailVehicleSwitches, so no "sand").
 static func send(vehicle:RID, command:StringName, p1:Variant = null, p2:Variant = null) -> Variant:
-    if not RailVehicleServer.vehicle_has_command(vehicle, command):
+    if not VehicleServer.vehicle_has_command(vehicle, command):
         return null
-    return RailVehicleServer.vehicle_send_command(vehicle, command, p1, p2)
+    return VehicleServer.vehicle_send_command(vehicle, command, p1, p2)
 
 
 ## Operates the switch unless the vehicle shows the step done; true when it is. A vehicle without
@@ -123,7 +123,7 @@ static func set_zero_speed(vehicle:RID, cab:int) -> void:
 ## position with the clutch in (RList[].Mn), so that it does not stall - SN61's idle
 static func set_idle(vehicle:RID, cab:int) -> void:
     var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    var engine:RailVehicleDieselEngine = RailVehicleServer.vehicle_component_get(
+    var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
             controlled, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
     if engine == null:
         return

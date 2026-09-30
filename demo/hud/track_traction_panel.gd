@@ -58,8 +58,7 @@ func _refresh() -> void:
         return
 
     var rid:RID = vehicle.get_rid()
-    var controller:VehicleController = vehicle.get_controller()
-    var train_id:String = controller.train_id if controller else ""
+    var train_id:String = VehicleServer.vehicle_get_name(rid)
     _rows["Vehicle"].text = train_id if train_id else "(no train id)"
 
     var placement:Dictionary = RailVehicleServer.vehicle_get_track_position(rid)
@@ -89,7 +88,7 @@ func _refresh() -> void:
     var carrier:RID = CabinState.vehicle_of(rid, CabinState.Target.PANTOGRAPH_UNIT)
     if not _engine_vehicle == vehicle:
         _engine_vehicle = vehicle
-        _engine = RailVehicleServer.vehicle_component_get(
+        _engine = VehicleServer.vehicle_component_get(
                 carrier, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if not _engine:
         _rows["Slider"].text = "-"

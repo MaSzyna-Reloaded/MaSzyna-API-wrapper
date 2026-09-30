@@ -26,6 +26,7 @@
 #include "legacy/scenery/MaszynaTrianglesImporter.hpp"
 #include "legacy/signalling/MaszynaLegacySignalHeadKindFactory.hpp"
 #include "legacy/signalling/MaszynaLegacySignallingDelegate.hpp"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverRailVehicleAIHints.hpp"
 #include "legacy/vehicles/MoverRailVehicleBrake.hpp"
 #include "legacy/vehicles/MoverRailVehicleBuffCoupl.hpp"
@@ -87,14 +88,17 @@
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleCurvePointItem.hpp"
+#include "vehicles/base/VehicleImplementationServer.hpp"
 #include "vehicles/base/VehicleModel.hpp"
 #include "vehicles/base/VehiclePhysicsNode.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicle3D.hpp"
 #include "vehicles/rail/RailVehicleAIHints.hpp"
 #include "vehicles/rail/RailVehicleBrake.hpp"
 #include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 #include "vehicles/rail/RailVehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleComponentType.hpp"
 #include "vehicles/rail/RailVehicleCompressorListItem.hpp"
 #include "vehicles/rail/RailVehicleDieselElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
@@ -144,6 +148,8 @@ UserSettings *user_settings_singleton = nullptr;
 SimulationServer *simulation_server_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackServer *track_server_singleton = nullptr;
+VehicleServer *vehicle_server_singleton = nullptr;
+MaszynaMoverVehicleServer *maszyna_mover_vehicle_server_singleton = nullptr;
 RailVehicleServer *rail_vehicle_server_singleton = nullptr;
 TractionServer *traction_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
@@ -182,6 +188,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(PlanarMirror3D);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
+        GDREGISTER_CLASS(VehicleServer);
+        GDREGISTER_ABSTRACT_CLASS(VehicleImplementationServer);
+        GDREGISTER_CLASS(MaszynaMoverVehicleServer);
         GDREGISTER_CLASS(RailVehicleServer);
         GDREGISTER_CLASS(RailVehicleNeighbour);
         GDREGISTER_CLASS(TractionServer);
@@ -229,6 +238,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);
         GDREGISTER_CLASS(VehicleComponentModel);
         GDREGISTER_CLASS(VehicleModel);
         GDREGISTER_CLASS(VehiclePhysicsNode);
@@ -272,38 +282,38 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MoverRailVehicleHorns);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleAIHints);
         GDREGISTER_CLASS(MoverRailVehicleAIHints);
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleLighting)
-        GDREGISTER_CLASS(MoverRailVehicleLighting)
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleLighting);
+        GDREGISTER_CLASS(MoverRailVehicleLighting);
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(RailVehicleWWListItem);
         GDREGISTER_CLASS(RailVehicleInverter);
         GDREGISTER_CLASS(RailVehicleMotorParameter);
-        GDREGISTER_CLASS(RailVehicleLightListItem)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(MoverRailVehicleElectroPneumaticDynamicBrake)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleLoad)
-        GDREGISTER_CLASS(MoverRailVehicleLoad)
-        GDREGISTER_CLASS(RailVehicleLoadListItem)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleBuffCoupl)
-        GDREGISTER_CLASS(MoverRailVehicleBuffCoupl)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleSpeedControl)
-        GDREGISTER_CLASS(MoverRailVehicleSpeedControl)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleUniversalController)
-        GDREGISTER_CLASS(MoverRailVehicleUniversalController)
-        GDREGISTER_CLASS(RailVehicleUniversalControllerListItem)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleMasterController)
-        GDREGISTER_CLASS(MoverRailVehicleMasterController)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleWipers)
-        GDREGISTER_CLASS(MoverRailVehicleWipers)
-        GDREGISTER_CLASS(RailVehicleWiperListItem)
-        GDREGISTER_ABSTRACT_CLASS(RailVehicleSwitches)
-        GDREGISTER_CLASS(MoverRailVehicleSwitches)
-        GDREGISTER_CLASS(RailVehicleDimmerListItem)
-        GDREGISTER_CLASS(RailVehicleBrakePressureTableItem)
-        GDREGISTER_CLASS(RailVehicleCompressorListItem)
-        GDREGISTER_CLASS(RailVehicleRelayListItem)
-        GDREGISTER_CLASS(VehicleCurvePointItem)
-        GDREGISTER_CLASS(RailVehicleThrottlePositionItem)
+        GDREGISTER_CLASS(RailVehicleLightListItem);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleElectroPneumaticDynamicBrake);
+        GDREGISTER_CLASS(MoverRailVehicleElectroPneumaticDynamicBrake);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleLoad);
+        GDREGISTER_CLASS(MoverRailVehicleLoad);
+        GDREGISTER_CLASS(RailVehicleLoadListItem);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleBuffCoupl);
+        GDREGISTER_CLASS(MoverRailVehicleBuffCoupl);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSpeedControl);
+        GDREGISTER_CLASS(MoverRailVehicleSpeedControl);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleUniversalController);
+        GDREGISTER_CLASS(MoverRailVehicleUniversalController);
+        GDREGISTER_CLASS(RailVehicleUniversalControllerListItem);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleMasterController);
+        GDREGISTER_CLASS(MoverRailVehicleMasterController);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleWipers);
+        GDREGISTER_CLASS(MoverRailVehicleWipers);
+        GDREGISTER_CLASS(RailVehicleWiperListItem);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleSwitches);
+        GDREGISTER_CLASS(MoverRailVehicleSwitches);
+        GDREGISTER_CLASS(RailVehicleDimmerListItem);
+        GDREGISTER_CLASS(RailVehicleBrakePressureTableItem);
+        GDREGISTER_CLASS(RailVehicleCompressorListItem);
+        GDREGISTER_CLASS(RailVehicleRelayListItem);
+        GDREGISTER_CLASS(VehicleCurvePointItem);
+        GDREGISTER_CLASS(RailVehicleThrottlePositionItem);
 
         user_settings_singleton = memnew(UserSettings);
         simulation_server_singleton = memnew(SimulationServer);
@@ -323,9 +333,18 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);              // 7
         Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                        // 8
-        // after SimulationServer is registered: the constructor follows its pause
+        // after SimulationServer is registered: the constructor follows its clock
+        vehicle_server_singleton = memnew(VehicleServer);
+        Engine::get_singleton()->register_singleton("VehicleServer", vehicle_server_singleton); // 9
+        // after VehicleServer is registered: the constructor follows the vehicles' lifetime
         rail_vehicle_server_singleton = memnew(RailVehicleServer);
-        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton);   // 10
+        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
+        maszyna_mover_vehicle_server_singleton = memnew(MaszynaMoverVehicleServer);
+        Engine::get_singleton()->register_singleton(
+                "MaszynaMoverVehicleServer", maszyna_mover_vehicle_server_singleton); // 10a
+        vehicle_server_singleton->implementation_register(
+                MaszynaMoverVehicleServer::IMPLEMENTATION_NAME,
+                maszyna_mover_vehicle_server_singleton->get_instance_id());
         Engine::get_singleton()->register_singleton("TractionServer", traction_server_singleton);          // 11
         Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
         // after UserSettings is registered: the constructor reads the game directory from it
@@ -470,6 +489,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         python_screen_server_singleton = nullptr;
     }
 
+    if (Engine::get_singleton()->has_singleton("MaszynaMoverVehicleServer")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaMoverVehicleServer"); // 10a
+    }
+
     if (Engine::get_singleton()->has_singleton("RailVehicleServer")) {
         if (Engine::get_singleton()->has_singleton("TractionServer")) {
             Engine::get_singleton()->unregister_singleton("TractionServer"); // 11
@@ -479,6 +502,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             traction_server_singleton = nullptr;
         }
         Engine::get_singleton()->unregister_singleton("RailVehicleServer"); // 10
+    }
+
+    if (Engine::get_singleton()->has_singleton("VehicleServer")) {
+        Engine::get_singleton()->unregister_singleton("VehicleServer"); // 9
     }
 
     if (Engine::get_singleton()->has_singleton("TrackServer")) {
@@ -509,9 +536,22 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
     }
 
+    if (maszyna_mover_vehicle_server_singleton != nullptr) { // 10a
+        if (vehicle_server_singleton != nullptr) {
+            vehicle_server_singleton->implementation_unregister(MaszynaMoverVehicleServer::IMPLEMENTATION_NAME);
+        }
+        memdelete(maszyna_mover_vehicle_server_singleton);
+        maszyna_mover_vehicle_server_singleton = nullptr;
+    }
+
     if (rail_vehicle_server_singleton != nullptr) { // 10
         memdelete(rail_vehicle_server_singleton);
         rail_vehicle_server_singleton = nullptr;
+    }
+
+    if (vehicle_server_singleton != nullptr) { // 9
+        memdelete(vehicle_server_singleton);
+        vehicle_server_singleton = nullptr;
     }
 
     if (track_server_singleton != nullptr) { // 8

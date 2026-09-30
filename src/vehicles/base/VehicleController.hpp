@@ -22,7 +22,7 @@ namespace godot {
     /// The vehicle itself: its configuration, its components and the operations that change them,
     /// with no statement about what simulates it - that is the implementation's business. It is
     /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
-    /// these. Reached from outside by RID, through RailVehicleServer.
+    /// these. Reached from outside by RID, through VehicleServer.
     class VehicleController : public RefCounted {
             GDCLASS(VehicleController, RefCounted)
         public:
@@ -39,17 +39,24 @@ namespace godot {
 
         private:
             DriverType driver_type = DRIVER_NOBODY;
+            StringName implementation;
             /// state is rebuilt from the backend when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
             bool prev_roof_light_enabled = false;
-            /// Bumped by command_executed(); what tells a cached state dump that it is stale.
-            uint64_t command_serial = 0;
+            /// Bumped by every step (process_components()) and every command (command_executed());
+            /// what tells a cached state dump that it is stale.
+            uint64_t state_serial = 0;
             /// What this vehicle answers to, registered by itself and its components. A vehicle
             /// holds its own commands, so a scenery name shared by two vehicles, or none at all,
             /// leaves every one of them commandable.
             HashMap<StringName, Callable> commands;
 
         protected:
+            /* The lookups behind get_component()/find_components(), by a VehicleComponentType or
+             * a kind of vehicle's own type numbered on from it - a kind of vehicle answers its
+             * own typed lookup through them (RailVehicleController::get_rail_component()) */
+            Ref<VehicleComponent> _get_component_of_type(int p_type) const;
+            TypedArray<VehicleComponent> _find_components_of_type(int p_type) const;
             /// Writes the wrapper's configuration - the vehicle's and every component's - to the
             /// backend, then announces that the backend carries it.
             void apply_configuration();
@@ -95,11 +102,10 @@ namespace godot {
             PackedStringArray get_commands() const;
             bool has_command(const StringName &p_command) const;
             /* A command has run against this vehicle. Its state has moved on in the middle of a
-             * step, which is the one thing a dump cached for that step cannot see by itself -
-             * hence the serial below (RailVehicleServer::vehicle_dump_state). */
+             * step, so it bumps the serial below as a step does (VehicleServer::vehicle_dump_state). */
             void
             command_executed(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
-            uint64_t get_command_serial() const;
+            uint64_t get_state_serial() const;
             void register_command(const StringName &p_command, const Callable &p_callable);
             void unregister_command(const StringName &p_command);
             /* One tick of everything the vehicle is made of, after its physics has moved. The
@@ -142,12 +148,16 @@ namespace godot {
              * for the rear one, 0 for nobody. */
             int get_occupied_cab() const;
             static void _bind_methods();
-            /* This vehicle's handle in RailVehicleServer, set when the server attaches it. */
+            /* This vehicle's handle in VehicleServer, set when the server attaches it. */
             void set_vehicle_rid(const RID &p_vehicle_rid);
             RID get_rid() const;
             void emit_position_changed_if_needed();
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;
+            /* The name of what simulates this vehicle, as registered with VehicleServer
+             * (VehicleServer::implementation_register()) - the server hands that one the step */
+            void set_implementation(const StringName &p_implementation);
+            StringName get_implementation() const;
             MAKE_MEMBER_GS(String, train_id, "");
             /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
              * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The

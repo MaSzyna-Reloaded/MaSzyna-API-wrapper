@@ -1,6 +1,7 @@
 #include "LuaHandle.hpp"
 #include "LuaModules.hpp"
 #include "LuaVariant.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
@@ -25,7 +26,7 @@ namespace godot {
     static int vehicle_find(lua_State *p_state) {
         const String name = String::utf8(luaL_checkstring(p_state, 1));
         LuaHandle::push(
-                p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_rid_by_name(name),
+                p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_rid_by_name(name),
                 ScriptHandleKind::VEHICLE);
         return 1;
     }
@@ -33,7 +34,7 @@ namespace godot {
     /// find_all(name) - every vehicle of the name: a scenery may give one name to several
     static int vehicle_find_all(lua_State *p_state) {
         const String name = String::utf8(luaL_checkstring(p_state, 1));
-        const RailVehicleServer *vehicles = LuaModules::server<RailVehicleServer>(p_state);
+        const VehicleServer *vehicles = LuaModules::server<VehicleServer>(p_state);
         const TypedArray<RID> all = vehicles->vehicle_get_rids();
         TypedArray<RID> named;
         for (int64_t i = 0; i < all.size(); i++) {
@@ -46,33 +47,33 @@ namespace godot {
     }
 
     static int vehicle_all(lua_State *p_state) {
-        push_vehicles(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_rids());
+        push_vehicles(p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_rids());
         return 1;
     }
 
     static int vehicle_name(lua_State *p_state) {
         const RID vehicle = check_vehicle(p_state);
-        LuaVariant::push(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_name(vehicle));
+        LuaVariant::push(p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_name(vehicle));
         return 1;
     }
 
     /// Speed in km/h, never negative
     static int vehicle_speed(lua_State *p_state) {
         const RID vehicle = check_vehicle(p_state);
-        lua_pushnumber(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_speed(vehicle));
+        lua_pushnumber(p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_speed(vehicle));
         return 1;
     }
 
     /// Velocity in km/h, negative when moving backwards
     static int vehicle_velocity(lua_State *p_state) {
         const RID vehicle = check_vehicle(p_state);
-        lua_pushnumber(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_velocity(vehicle));
+        lua_pushnumber(p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_velocity(vehicle));
         return 1;
     }
 
     static int vehicle_commands(lua_State *p_state) {
         const RID vehicle = check_vehicle(p_state);
-        LuaVariant::push(p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_commands(vehicle));
+        LuaVariant::push(p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_get_commands(vehicle));
         return 1;
     }
 
@@ -81,8 +82,7 @@ namespace godot {
         const RID vehicle = check_vehicle(p_state);
         const String key = String::utf8(luaL_checkstring(p_state, 2));
         LuaVariant::push(
-                p_state,
-                LuaModules::server<RailVehicleServer>(p_state)->vehicle_dump_state(vehicle).get(key, Variant()));
+                p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_dump_state(vehicle).get(key, Variant()));
         return 1;
     }
 
@@ -90,8 +90,7 @@ namespace godot {
         const RID vehicle = check_vehicle(p_state);
         const String key = String::utf8(luaL_checkstring(p_state, 2));
         LuaVariant::push(
-                p_state,
-                LuaModules::server<RailVehicleServer>(p_state)->vehicle_dump_config(vehicle).get(key, Variant()));
+                p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_dump_config(vehicle).get(key, Variant()));
         return 1;
     }
 
@@ -102,8 +101,7 @@ namespace godot {
         const Variant p1 = LuaVariant::to_variant(p_state, 3);
         const Variant p2 = LuaVariant::to_variant(p_state, 4);
         LuaVariant::push(
-                p_state,
-                LuaModules::server<RailVehicleServer>(p_state)->vehicle_send_command(vehicle, command, p1, p2));
+                p_state, LuaModules::server<VehicleServer>(p_state)->vehicle_send_command(vehicle, command, p1, p2));
         return 1;
     }
 

@@ -10,6 +10,7 @@
 
 #include "logging/GameLog.hpp"
 #include "tracks/TrackServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
 #include "vehicles/rail/RailVehicleDoors.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
@@ -35,7 +36,7 @@
 namespace godot {
     template<typename T>
     Ref<T> RailVehicle3D::_component(const VehicleComponentType::Type p_type) const {
-        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const VehicleServer *server = VehicleServer::get_instance();
         return server != nullptr && rid.is_valid() ? Ref<T>(server->vehicle_component_get(rid, p_type)) : Ref<T>();
     }
 
@@ -342,7 +343,9 @@ namespace godot {
             controller->connect(
                     VehicleController::config_changed, callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
         }
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        if (RailVehicleServer *server = RailVehicleServer::get_instance();
+            server != nullptr && vehicle_server != nullptr) {
             /* A vehicle has one handle. When the controller already carries one - it does
              * whenever a VehiclePhysicsNode built it - this node renders that vehicle rather than
              * creating a second one, which would step the same controller twice and place only
@@ -350,10 +353,11 @@ namespace godot {
             const RID vehicle_rid = controller != nullptr ? controller->get_rid() : RID();
             if (vehicle_rid.is_valid() && vehicle_rid != rid) {
                 if (rid_owned && rid.is_valid()) {
-                    server->vehicle_free(rid);
+                    vehicle_server->vehicle_free(rid);
                 }
                 rid = vehicle_rid;
                 rid_owned = false;
+                server->vehicle_attach(rid);
                 server->vehicle_attach_rail_vehicle(rid, get_instance_id());
                 // the pantographs belong to the handle: the model's arms go with it to the new one
                 _publish_pantograph_geometry(RailVehicleElectricEngine::PANTOGRAPH_FIRST, pantograph_front_arm_nodes);
@@ -364,7 +368,8 @@ namespace godot {
                 }
             }
             if (rid.is_valid()) {
-                server->vehicle_attach_controller(rid, controller != nullptr ? controller->get_instance_id() : 0);
+                vehicle_server->vehicle_attach_controller(
+                        rid, controller != nullptr ? controller->get_instance_id() : 0);
             }
         }
         if (cabin != nullptr) {
@@ -382,9 +387,12 @@ namespace godot {
                     TrackServer::tracks_changed_signal,
                     callable_mp(this, &RailVehicle3D::_on_track_server_tracks_changed));
         }
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
-            rid = server->vehicle_create();
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        if (RailVehicleServer *server = RailVehicleServer::get_instance();
+            server != nullptr && vehicle_server != nullptr) {
+            rid = vehicle_server->vehicle_create();
             rid_owned = true;
+            server->vehicle_attach(rid);
             server->vehicle_attach_rail_vehicle(rid, get_instance_id());
         }
         pending_start_track_retry = !start_track_name.is_empty();
@@ -424,7 +432,7 @@ namespace godot {
         // only the handle this node created is this node's to free; an adopted one belongs to
         // the VehiclePhysicsNode that built the vehicle
         if (rid_owned && rid.is_valid()) {
-            if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
                 server->vehicle_free(rid);
             }
         }
@@ -478,7 +486,7 @@ namespace godot {
                     _update_pantograph_animation();
                 }
             } else if (rid.is_valid() && start_track_name.is_empty()) {
-                const RailVehicleServer *server = RailVehicleServer::get_instance();
+                const VehicleServer *server = VehicleServer::get_instance();
                 const double velocity = server != nullptr ? server->vehicle_get_velocity(rid) : 0.0;
                 const real_t distance = static_cast<real_t>(p_delta * velocity);
                 set_position(get_position() + (Vector3(0.0, 0.0, -1.0) * distance));
@@ -669,7 +677,7 @@ namespace godot {
         }
         mouse->pickable_free(pickable);
         pickable = RID();
-        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const VehicleServer *server = VehicleServer::get_instance();
         if (!model_detailed || !p_instance.is_valid() || !rid.is_valid() || server == nullptr) {
             return;
         }
@@ -1069,7 +1077,10 @@ namespace godot {
     }
 
     Ref<RailVehicleBuffCoupl> RailVehicle3D::_coupler() const {
-        return _component<RailVehicleBuffCoupl>(VehicleComponentType::COMPONENT_BUFFERS);
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        return server != nullptr && rid.is_valid() ? Ref<RailVehicleBuffCoupl>(server->vehicle_component_get(
+                                                             rid, RailVehicleComponentType::COMPONENT_BUFFERS))
+                                                   : Ref<RailVehicleBuffCoupl>();
     }
 
     // Original engine: coupler and hose submodel visibility (DynObj.cpp:758-925, bnewAirCouplers branch)

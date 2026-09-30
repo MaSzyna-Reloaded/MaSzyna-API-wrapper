@@ -69,7 +69,7 @@ static func _control(vehicles:Array[RID], vehicle:RID, direction:int, order:int,
         _light(vehicles, direction, PC1 if hints.x == NO_HINT else hints.x,
                 _end_of_train(vehicles[-1], PC5 if hints.y == NO_HINT else hints.y))
     elif order & SHUNTING_ORDERS:
-        if int(RailVehicleServer.vehicle_dump_state(vehicle).get("direction", 0)) >= 0:
+        if int(VehicleServer.vehicle_dump_state(vehicle).get("direction", 0)) >= 0:
             _light(vehicles, direction, HEADLIGHT_RIGHT, HEADLIGHT_LEFT)
         else:
             _light(vehicles, direction, HEADLIGHT_LEFT, HEADLIGHT_RIGHT)
@@ -83,7 +83,7 @@ static func off(vehicle:RID, direction:int) -> void:
 ## One end of a vehicle showing `pattern` (the original's bits): only the lamps that differ are
 ## switched. A vehicle without lamps lights none (head & iInventory[end], DynObj.cpp:7293).
 static func set_end(vehicle:RID, end:int, pattern:int) -> void:
-    var lighting:RailVehicleLighting = RailVehicleServer.vehicle_component_get(
+    var lighting:RailVehicleLighting = VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_LIGHTING) as RailVehicleLighting
     if not lighting:
         return
@@ -112,8 +112,8 @@ static func _light(vehicles:Array[RID], direction:int, head:int, rear:int) -> vo
 static func _end_of_train(vehicle:RID, pattern:int) -> int:
     if not pattern == PC5:
         return pattern
-    var powered:bool = float(RailVehicleServer.vehicle_dump_config(vehicle).get("power", 0.0)) > POWERED
-    if powered and int(RailVehicleServer.vehicle_dump_state(vehicle).get("direction", 0)) == 0:
+    var powered:bool = float(VehicleServer.vehicle_dump_config(vehicle).get("power", 0.0)) > POWERED
+    if powered and int(VehicleServer.vehicle_dump_state(vehicle).get("direction", 0)) == 0:
         return 0
     return RED_MARKERS
 

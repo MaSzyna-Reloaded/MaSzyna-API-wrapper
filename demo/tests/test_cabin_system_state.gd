@@ -1,7 +1,7 @@
 extends MaszynaGutTest
 
 ## CabinSystem is the one place a cab talks to the vehicle servers from, and every element of a cab
-## asks it within one frame. It keeps no dump of its own: RailVehicleServer builds one per step and
+## asks it within one frame. It keeps no dump of its own: VehicleServer builds one per step and
 ## per command, and that one must not outlive a command - a control reports its manipulation and
 ## reads the result in the very same frame (see `FINDINGS.md`, 2026-09-23).
 
@@ -39,7 +39,7 @@ func test_a_command_shows_through_without_waiting_for_the_next_frame() -> void:
 
 func test_a_vehicle_that_left_is_not_still_being_described() -> void:
     assert_true(CabinSystem.vehicle_state(_vehicle).has("velocity"))
-    RailVehicleServer.vehicle_free(_vehicle)
+    VehicleServer.vehicle_free(_vehicle)
     assert_eq(
             CabinSystem.vehicle_state(_vehicle).size(), 0,
             "the dump of a vehicle that is gone is not handed out for the rest of the frame")

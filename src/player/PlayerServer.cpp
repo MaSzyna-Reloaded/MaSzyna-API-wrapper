@@ -1,5 +1,6 @@
 #include "PlayerServer.hpp"
 #include "driver/DriverSystem.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/core/class_db.hpp>
 
@@ -38,9 +39,9 @@ namespace godot {
     /// callable_mp reports this instance as the callable's object, so the engine drops the
     /// connection when it dies.
     PlayerServer::PlayerServer() {
-        RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
-        vehicles->connect(RailVehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerServer::_on_vehicle_freed));
+        vehicles->connect(VehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerServer::_on_vehicle_freed));
     }
 
     void PlayerServer::_on_vehicle_freed(const RID &p_vehicle) {
@@ -59,11 +60,13 @@ namespace godot {
         if (p_vehicle == vehicle) {
             return;
         }
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
         DriverSystem *drivers = DriverSystem::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_NULL(drivers);
-        ERR_FAIL_COND(!vehicles->vehicle_exists(p_vehicle));
+        ERR_FAIL_COND(!vehicle_server->vehicle_exists(p_vehicle));
         ERR_FAIL_COND_MSG(vehicles->vehicle_get_rail_vehicle(p_vehicle) == 0, "The vehicle has no cab to sit in");
         if (vehicle.is_valid()) {
             // another trainset's vehicle: the one left is driven by its drivers again
@@ -75,7 +78,7 @@ namespace godot {
         }
         drivers->vehicle_set_control_active(p_vehicle, false);
         // taking a vehicle over activates its cab when the FIZ allows it (Train.cpp:9147)
-        vehicles->vehicle_send_command(p_vehicle, "cab_activation_auto");
+        vehicle_server->vehicle_send_command(p_vehicle, "cab_activation_auto");
         _set_vehicle(p_vehicle);
     }
 

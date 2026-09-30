@@ -1,5 +1,6 @@
 #include "DriverSystem.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -49,9 +50,9 @@ namespace godot {
     /// A freed vehicle leaves its driver without one. No explicit disconnect: callable_mp reports
     /// this instance as the callable's object, so the engine drops the connection when it dies.
     DriverSystem::DriverSystem() {
-        RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
-        vehicles->connect(RailVehicleServer::vehicle_freed_signal, callable_mp(this, &DriverSystem::_on_vehicle_freed));
+        vehicles->connect(VehicleServer::vehicle_freed_signal, callable_mp(this, &DriverSystem::_on_vehicle_freed));
     }
 
     DriverSystem::~DriverSystem() {

@@ -177,7 +177,7 @@ var _drivers:Dictionary[RID, DriverState] = {}
 func _driver_attached(driver:RID) -> void:
     var state:DriverState = DriverState.new()
     var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
-    if vehicle.is_valid() and RailVehicleServer.vehicle_get_driver_type(vehicle) == VehicleController.DRIVER_REAR:
+    if vehicle.is_valid() and VehicleServer.vehicle_get_driver_type(vehicle) == VehicleController.DRIVER_REAR:
         state.direction = -1
     # told to drive the way it faces until told otherwise (iDirectionOrder = CabActive,
     # Driver.cpp:1872) - never none: turning towards none puts the reverser at neutral and takes
@@ -300,7 +300,7 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
     var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
     # the original writes every order to its log (TController::PutCommand(), Driver.cpp:4470)
     GameLog.debug("%s: %s %s %s (order %s)" % [
-            RailVehicleServer.vehicle_get_name(vehicle), command, value1, value2,
+            VehicleServer.vehicle_get_name(vehicle), command, value1, value2,
             state.orders[state.order_position]])
     if command.begins_with(TIMETABLE_PREFIX):
         _take_timetable(driver, state, command.trim_prefix(TIMETABLE_PREFIX), value1, value2, position)

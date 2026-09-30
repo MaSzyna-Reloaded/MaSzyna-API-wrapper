@@ -82,7 +82,7 @@ func test_nothing_is_hovered_off_the_model_or_while_inactive() -> void:
 
 func test_a_click_on_a_vehicle_model_announces_the_vehicle() -> void:
     var instance:RID = _create_instance()
-    var vehicle:RID = RailVehicleServer.vehicle_create()
+    var vehicle:RID = VehicleServer.vehicle_create()
     var pickable:RID = SceneryHUDMouseServer.vehicle_pickable_create(instance, "EU07-424", vehicle)
     watch_signals(SceneryHUDMouseServer)
 
@@ -93,12 +93,12 @@ func test_a_click_on_a_vehicle_model_announces_the_vehicle() -> void:
 
     SceneryHUDMouseServer.pickable_free(pickable)
     E3DRenderingServer.instance_free(instance)
-    RailVehicleServer.vehicle_free(vehicle)
+    VehicleServer.vehicle_free(vehicle)
 
 
 func test_a_pickable_goes_with_its_instance() -> void:
     var instance:RID = _create_instance()
-    var vehicle:RID = RailVehicleServer.vehicle_create()
+    var vehicle:RID = VehicleServer.vehicle_create()
     SceneryHUDMouseServer.vehicle_pickable_create(instance, "EU07-424", vehicle)
     SceneryHUDMouseServer.mouse_input(_motion(_camera.unproject_position(MODEL_POSITION)))
     watch_signals(SceneryHUDMouseServer)
@@ -108,7 +108,7 @@ func test_a_pickable_goes_with_its_instance() -> void:
     assert_false(SceneryHUDMouseServer.pickable_get_hovered().is_valid())
     assert_signal_emitted(SceneryHUDMouseServer, "pickable_unhovered")
     assert_false(SceneryHUDMouseServer.mouse_input(_click(false)))
-    RailVehicleServer.vehicle_free(vehicle)
+    VehicleServer.vehicle_free(vehicle)
 
 
 func test_a_scenery_model_fires_the_launcher_of_its_name_that_has_it_in_range() -> void:

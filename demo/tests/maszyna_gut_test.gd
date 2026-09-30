@@ -30,6 +30,8 @@ func build_vehicle_node(train_id:String = "TestTrain", model:VehicleModel = null
     physics_node.train_id = train_id
     physics_node.initial_velocity = initial_velocity
     add_child_autofree(physics_node)
+    # a rail vehicle, stepped by RailVehicleServer whether or not a RailVehicle3D places it
+    RailVehicleServer.vehicle_attach(physics_node.get_vehicle_rid())
     return physics_node
 
 

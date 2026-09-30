@@ -13,22 +13,22 @@ func before_each() -> void:
     _controller.type_name = "test"
     _radio = MoverRailVehicleRadio.new()
     _controller.add_component(_radio)
-    _rid = RailVehicleServer.vehicle_create()
-    RailVehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
+    _rid = VehicleServer.vehicle_create()
+    VehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
     await wait_idle_frames(2)
 
 
 func after_each() -> void:
     if _rid.is_valid():
-        RailVehicleServer.vehicle_free(_rid)
+        VehicleServer.vehicle_free(_rid)
         _rid = RID()
     _controller = null
     _radio = null
 
 
 func test_two_reads_in_one_step_see_the_same_values() -> void:
-    var first: Dictionary = RailVehicleServer.vehicle_dump_state(_rid)
-    var second: Dictionary = RailVehicleServer.vehicle_dump_state(_rid)
+    var first: Dictionary = VehicleServer.vehicle_dump_state(_rid)
+    var second: Dictionary = VehicleServer.vehicle_dump_state(_rid)
     assert_eq(first, second, "the dump is composed once, not per reader")
     assert_true(first.has("velocity"), "and it is the real dump")
 
@@ -36,16 +36,16 @@ func test_two_reads_in_one_step_see_the_same_values() -> void:
 ## The point of the cache: a change made between two reads of the same step is not visible until
 ## the step that actually applied it.
 func test_a_change_is_not_visible_until_the_next_step() -> void:
-    var before: int = int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
+    var before: int = int(VehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
     _radio.channel_set(before + 1)
     assert_eq(
-        int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
+        int(VehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before,
         "still the dump this step was given"
     )
-    RailVehicleServer.stepping_advance(0.016)
+    VehicleServer.stepping_advance(0.016)
     assert_eq(
-        int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
+        int(VehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before + 1,
         "the step rebuilt it"
     )
@@ -56,18 +56,18 @@ func test_a_change_is_not_visible_until_the_next_step() -> void:
 ## command, so pressing a key played its sound and the operation only showed up on the next
 ## keypress (see FINDINGS.md, 2026-09-23).
 func test_a_command_shows_in_the_dump_without_waiting_for_a_step() -> void:
-    var before: int = int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
-    RailVehicleServer.vehicle_send_command(_rid, "radio_channel_set", before + 1, null)
+    var before: int = int(VehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
+    VehicleServer.vehicle_send_command(_rid, "radio_channel_set", before + 1, null)
     assert_eq(
-        int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
+        int(VehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before + 1,
         "the dump follows the command, not the next step"
     )
 
 
 func test_a_freed_vehicle_dumps_nothing() -> void:
-    RailVehicleServer.vehicle_free(_rid)
-    var empty: Dictionary = RailVehicleServer.vehicle_dump_state(_rid)
+    VehicleServer.vehicle_free(_rid)
+    var empty: Dictionary = VehicleServer.vehicle_dump_state(_rid)
     _rid = RID()
     assert_eq(empty.size(), 0, "no handle, no dump")
 
@@ -79,12 +79,12 @@ func test_a_component_is_reached_by_its_kind() -> void:
     _controller.add_component(heating)
     await wait_idle_frames(2)
 
-    var found: VehicleComponent = RailVehicleServer.vehicle_component_get(
+    var found: VehicleComponent = VehicleServer.vehicle_component_get(
         _rid, VehicleComponentType.COMPONENT_HEATING
     )
     assert_same(found, heating, "the vehicle answers with its heating")
     assert_true(found is RailVehicleHeating, "and it is the interface that kind promises")
     assert_null(
-        RailVehicleServer.vehicle_component_get(_rid, VehicleComponentType.COMPONENT_DOORS),
+        VehicleServer.vehicle_component_get(_rid, VehicleComponentType.COMPONENT_DOORS),
         "a kind this vehicle has not got answers with nothing"
     )

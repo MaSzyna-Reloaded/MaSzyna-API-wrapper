@@ -6,13 +6,14 @@ extends "res://hud/mover_switches_section.gd"
 ## position of its main controller. Dropping the second one emptied the panel on every locomotive
 ## that has no universal controller, which is most of them.
 func _on_refresh_timer_timeout() -> void:
-    if not controller:
+    if not vehicle.is_valid():
         return
-    var direction:int = controller.get_direction()
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
+    var direction:int = state.get("direction", 0)
     %Forward.modulate = Color.GREEN if direction > 0 else Color.WHITE
     %Reverse.modulate = Color.GREEN if direction < 0 else Color.WHITE
     if universal_controller:
         %MainPosition.text = tr("Pos: %s") % universal_controller.get_selector_position()
     else:
-        %MainPosition.text = tr("Pos: %s") % controller.get_controller_main_position()
-    %SecondPosition.text = tr("Pos: %s") % controller.get_controller_second_position()
+        %MainPosition.text = tr("Pos: %s") % state.get("controller_main_position", 0)
+    %SecondPosition.text = tr("Pos: %s") % state.get("controller_second_position", 0)

@@ -109,19 +109,19 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     line_breaker_open = false
     converter_overload_relay_open = false
     for other:RID in controlled:
-        var power:float = float(RailVehicleServer.vehicle_dump_config(other).get("power", 0.0))
+        var power:float = float(VehicleServer.vehicle_dump_config(other).get("power", 0.0))
         if power > POWERED:
             controlled_engines += 1
-        var other_state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
+        var other_state:Dictionary = VehicleServer.vehicle_dump_state(other)
         motor_overload_relay_open = motor_overload_relay_open or other_state.get("fuse_active", false)
         converter_overload_relay_open = converter_overload_relay_open or other_state.get("converter_overload", false)
         if power > LINE_BREAKER_POWER:
             line_breaker_open = line_breaker_open or not other_state.get("main_switch_enabled", false)
-    var strengths:PackedFloat64Array = RailVehicleServer.vehicle_dump_config(vehicle).get("coupler_max_force", PackedFloat64Array())
+    var strengths:PackedFloat64Array = VehicleServer.vehicle_dump_config(vehicle).get("coupler_max_force", PackedFloat64Array())
     var behind:int = REAR_END if direction >= 0 else FRONT_END
     coupler_strength = strengths[behind] if strengths.size() > behind else 0.0
     var driving:Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle).basis.z * direction
-    var driven:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
+    var driven:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
     ready = true
     brake_pressure_max = 0.0
     braked = float(driven.get("pipe_pressure", 0.0)) < BRAKED_PIPE_PRESSURE + BRAKED_PIPE_MARGIN
@@ -133,7 +133,7 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     var moving:bool = float(driven.get("speed", 0.0)) > NO_MOVEMENT_SPEED
     coupler_stretched = false
     for other:RID in vehicles:
-        var state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
+        var state:Dictionary = VehicleServer.vehicle_dump_state(other)
         coupler_stretched = coupler_stretched or state.get("coupler_stretched", false)
         var brake_pressure:float = maxf(0.0, float(state.get("brake_air_pressure", 0.0)))
         if ready and (state.get("brake_is_holding", false) or state.get("brake_is_braking", false)
@@ -143,7 +143,7 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
         brake_pressure_max = maxf(brake_pressure, brake_pressure_max)
         var vehicle_mass:float = float(state.get("mass_total", 0.0))
         mass += vehicle_mass
-        var config:Dictionary = RailVehicleServer.vehicle_dump_config(other)
+        var config:Dictionary = VehicleServer.vehicle_dump_config(other)
         length += float(config.get("length", 0.0))
         velocity_max = MaszynaLegacyDriverSpeed.min_speed(velocity_max, float(config.get("max_speed", MaszynaLegacyDriverSpeed.NO_LIMIT)))
         # the vehicle's front along the way the driver drives: its slope and its acceleration count
@@ -164,7 +164,7 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     for other:RID in vehicles:
         if not ready:
             return
-        var state:Dictionary = RailVehicleServer.vehicle_dump_state(other)
-        var idle:float = float(RailVehicleServer.vehicle_dump_config(other).get("engine_idle_rpm_count", 0.0))
+        var state:Dictionary = VehicleServer.vehicle_dump_state(other)
+        var idle:float = float(VehicleServer.vehicle_dump_config(other).get("engine_idle_rpm_count", 0.0))
         ready = float(state.get("speed", 0.0)) > MOVEMENT_SPEED or not state.get("main_switch_enabled", false) \
                 or float(state.get("engine_rpm_count", 0.0)) > ENGINE_STARTED_RATIO * idle

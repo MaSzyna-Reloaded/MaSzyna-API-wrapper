@@ -487,15 +487,15 @@ Legend:
 **Controller and server call each other; `get_state()` builds a cache** ALARM
 
 * **Where:**
-  * `src/vehicles/rail/RailVehicleController.cpp:230` (`get_state()` →
-    `server->vehicle_dump_state()`), cache written at `RailVehicleServer.cpp:1042-1046`
-  * `src/vehicles/base/VehicleController.cpp:172, 344, 367` (`vehicle_set_name`,
-    `vehicle_get_transform`, `vehicle_broadcast_command`)
+  * `src/vehicles/rail/RailVehicleController.cpp` (`get_state()` →
+    `VehicleServer::vehicle_dump_state()`), cache written in `VehicleServer::vehicle_dump_state()`
+  * `src/vehicles/base/VehicleController.cpp` (`VehicleServer::vehicle_set_name`,
+    `RailVehicleServer::vehicle_get_transform` - the base layer reaching the rail one, RC-023)
   * `VehicleComponent.cpp:219`, `RailVehicleWheels.cpp:18`
 * **Rule:** layers do not call each other both ways; a getter never changes state
 * **Problem:** the server steps controllers and components, and they call back into it. The
-  getter `get_state()`, also the `state` property, writes `state_dump`, `state_dump_step` and
-  `state_dump_command_serial`. The comment admits the call "would recurse".
+  getter `get_state()`, also the `state` property, writes `state_dump`, `state_dump_serial` and
+  `state_dump_valid`. The comment admits the call "would recurse".
 * **Decision:** one direction of calls; the dump is built in the tick, not in the getter.
 
 ### RC-025

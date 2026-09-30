@@ -1,5 +1,6 @@
 #include "PlayerCameraServer.hpp"
 #include "PlayerServer.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
@@ -46,10 +47,10 @@ namespace godot {
     /// explicit disconnect: callable_mp reports this instance as the callable's object, so the
     /// engine drops the connection when it dies.
     PlayerCameraServer::PlayerCameraServer() {
-        RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         vehicles->connect(
-                RailVehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerCameraServer::_on_vehicle_freed));
+                VehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerCameraServer::_on_vehicle_freed));
         PlayerServer *player = PlayerServer::get_instance();
         ERR_FAIL_NULL(player);
         player->connect(
@@ -150,10 +151,12 @@ namespace godot {
     }
 
     Transform3D PlayerCameraServer::camera_get_show_transform(const RID &p_vehicle) const {
-        RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL_V(vehicles, Transform3D());
+        ERR_FAIL_NULL_V(rail_vehicles, Transform3D());
         ERR_FAIL_COND_V(!vehicles->vehicle_exists(p_vehicle), Transform3D());
-        const Transform3D body = vehicles->vehicle_get_transform(p_vehicle);
+        const Transform3D body = rail_vehicles->vehicle_get_transform(p_vehicle);
         const double length = vehicles->vehicle_dump_config(p_vehicle).get("length", 0.0);
         const Vector3 eye(0.0, SHOW_EYE_HEIGHT, 0.0);
         const Vector3 position =
@@ -165,7 +168,7 @@ namespace godot {
     }
 
     void PlayerCameraServer::camera_show_vehicle(const RID &p_vehicle) {
-        const RailVehicleServer *vehicles = RailVehicleServer::get_instance();
+        const VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_COND(!vehicles->vehicle_exists(p_vehicle));
         // placed first: the free camera is where it is to be before the view is announced as free

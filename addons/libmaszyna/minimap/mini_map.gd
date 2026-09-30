@@ -42,12 +42,12 @@ func _ready() -> void:
 func _enter_tree() -> void:
     TrackServer.switch_active_track_changed.connect(_on_switch_changed)
     TrackServer.topology_changed.connect(_on_topology_changed)
-    RailVehicleServer.vehicle_moved.connect(_on_vehicle_moved)
+    VehicleServer.vehicle_moved.connect(_on_vehicle_moved)
 
 func _exit_tree() -> void:
     TrackServer.switch_active_track_changed.disconnect(_on_switch_changed)
     TrackServer.topology_changed.disconnect(_on_topology_changed)
-    RailVehicleServer.vehicle_moved.disconnect(_on_vehicle_moved)
+    VehicleServer.vehicle_moved.disconnect(_on_vehicle_moved)
 
     resized.disconnect(_sync_switch_handles)
 
@@ -151,7 +151,7 @@ func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void
         var vehicles: Array[RID] = RailVehicleServer.vehicle_get_rids_in_rect(visible_rect)
         for vehicle: RID in vehicles:
             var vehicle_position:Vector3 = RailVehicleServer.vehicle_get_transform(vehicle).origin
-            var vehicle_name: String = RailVehicleServer.vehicle_get_name(vehicle)
+            var vehicle_name: String = VehicleServer.vehicle_get_name(vehicle)
             var view_pos: Vector2 = _world_to_view_centered(vehicle_position, cam_pos, cam_rot)
             var square_size: float = 10.0
             draw_rect(Rect2(view_pos - Vector2(square_size / 2, square_size / 2), Vector2(square_size, square_size)), Color.GREEN)

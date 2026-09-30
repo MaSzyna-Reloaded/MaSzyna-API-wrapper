@@ -134,8 +134,7 @@ func _process_dirty() -> void:
         _orbit = Vector2.ZERO
         _pan = Vector2.ZERO
         _zoom = 1.0
-    var controller:VehicleController = vehicle.get_controller()
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle.get_rid())
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle.get_rid())
     var cabin_occupied:int = state.get("cabin_occupied", 0)
     var direction:int = state.get("direction", 0)
     var cab:int = 1 if cabin_occupied == 0 else cabin_occupied
@@ -158,11 +157,15 @@ func _process_dirty() -> void:
         flip = -flip
 
     # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the trainset on that side
-    _view_vehicle = _find_vehicle(_get_trainset_end(controller, 0 if flip > 0.0 else 1))
-    var owner_controller:VehicleController = _view_vehicle.get_controller()
-    var width:float = owner_controller.dimensions_width
-    var height:float = owner_controller.dimensions_height
-    var length:float = owner_controller.dimensions_length
+    var trainset_end:RID = RailVehicleServer.vehicle_get_coupled(
+            vehicle.get_rid(), 0 if flip > 0.0 else 1, RailVehicleController.COUPLING_ELEMENT_COUPLER)[0]
+    _view_vehicle = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(trainset_end)) as RailVehicle3D
+    if not _view_vehicle:
+        _view_vehicle = vehicle
+    var dimensions:Vector3 = VehicleServer.vehicle_get_dimensions(_view_vehicle.get_rid())
+    var width:float = dimensions.x
+    var height:float = dimensions.y
+    var length:float = dimensions.z
 
     var offset:Vector3
     match view:
@@ -200,22 +203,5 @@ func _zoom_by(p_factor:float) -> void:
 
 
 func _get_vehicle_center(p_vehicle:RailVehicle3D) -> Vector3:
-    return p_vehicle.global_position + p_vehicle.global_basis.y.normalized() * 0.5 * p_vehicle.get_controller().dimensions_height
-
-
-func _get_trainset_end(controller:VehicleController, end:int) -> VehicleController:
-    var last:VehicleController = controller
-    var next:VehicleController = last.get_coupled_controller(end)
-    while next:
-        end = 1 - last.get_coupled_end(end)
-        last = next
-        next = last.get_coupled_controller(end)
-    return last
-
-
-func _find_vehicle(controller:VehicleController) -> RailVehicle3D:
-    for node:Node in get_tree().get_root().find_children("", "RailVehicle3D", true, false):
-        var candidate:RailVehicle3D = node as RailVehicle3D
-        if candidate and candidate.get_controller() == controller:
-            return candidate
-    return vehicle
+    return (p_vehicle.global_position + p_vehicle.global_basis.y.normalized() * 0.5
+            * VehicleServer.vehicle_get_dimensions(p_vehicle.get_rid()).y)

@@ -11,8 +11,8 @@ namespace godot {
             /// The original's default - every coupling passes the command on
             static constexpr int ALL_COUPLER_CONNECTIONS = 127;
 
-            VehicleComponentType::Type get_component_type() const override {
-                return VehicleComponentType::COMPONENT_SPRING_BRAKE;
+            int get_component_type() const override {
+                return RailVehicleComponentType::COMPONENT_SPRING_BRAKE;
             }
 
         private:

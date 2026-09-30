@@ -4,15 +4,13 @@ extends Button
 class_name DebugButton
 
 var _dirty = false
-var _controller:VehicleController
 
 ## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
 ## somebody else's scene.
-var vehicle:VehicleController:
+var vehicle:RID = RID():
     set(x):
         if not vehicle == x:
             vehicle = x
-            _controller = x
             _dirty = true
 
 @export var command:String
@@ -28,7 +26,7 @@ func _process(delta):
     if _dirty:
         _dirty = false
 
-        if _controller:
+        if vehicle.is_valid():
             disabled = false
         else:
             disabled = true
@@ -37,17 +35,17 @@ func _process(delta):
         _t += delta
         if _t > 0.1:
             _t = 0.0
-            if _controller:
+            if vehicle.is_valid():
                 disabled = false
             else:
                 disabled = true
 
 func _on_pressed():
-    if _controller and command:
+    if vehicle.is_valid() and command:
         if convert_argument_to_bool:
             if command_argument.to_lower() == "true":
-                _controller.send_command(command, true)
+                VehicleServer.vehicle_send_command(vehicle, command, true)
             if command_argument.to_lower() == "false":
-                _controller.send_command(command, false)
+                VehicleServer.vehicle_send_command(vehicle, command, false)
         else:
-             _controller.send_command(command, command_argument)
+             VehicleServer.vehicle_send_command(vehicle, command, command_argument)

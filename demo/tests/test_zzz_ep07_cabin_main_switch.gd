@@ -55,19 +55,19 @@ func _cab() -> int:
 
 
 func _power_up() -> void:
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
+    VehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
     await wait_idle_frames(2)
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", true)
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", false)
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    VehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", true)
+    VehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", false)
+    VehicleServer.vehicle_send_command(vehicle_rid, "pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     # the ground relay only resets with a direction set (Mover.cpp:6038-6051)
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "direction_increase")
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "converter_fuse_reset")
-    RailVehicleServer.vehicle_send_command(vehicle_rid, "fuse_reset")
+    VehicleServer.vehicle_send_command(vehicle_rid, "direction_increase")
+    VehicleServer.vehicle_send_command(vehicle_rid, "converter_fuse_reset")
+    VehicleServer.vehicle_send_command(vehicle_rid, "fuse_reset")
     await wait_idle_frames(2)
 
 
@@ -141,9 +141,9 @@ func test_send_command_returns_result() -> void:
     if not controller:
         return
     await _power_up()
-    assert_true(RailVehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing a closable breaker returns true")
-    assert_false(RailVehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing it again changes nothing")
-    assert_false(RailVehicleServer.vehicle_get_rid_by_name("no_such_train").is_valid(), "an unknown name reaches no vehicle")
+    assert_true(VehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing a closable breaker returns true")
+    assert_false(VehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing it again changes nothing")
+    assert_false(VehicleServer.vehicle_get_rid_by_name("no_such_train").is_valid(), "an unknown name reaches no vehicle")
 
 
 ## Console "cabin <train> toggle battery_sw" - no value flips the control, and a cabin widget of

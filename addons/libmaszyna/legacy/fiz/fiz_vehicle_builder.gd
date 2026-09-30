@@ -21,20 +21,24 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 28
+const FIZ_PARSER_FORMAT_VERSION := 29
 
 ## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
-const _COMPONENT_TYPES:Array[int] = [
-    VehicleComponentType.COMPONENT_BRAKES, VehicleComponentType.COMPONENT_SPRING_BRAKE,
-    VehicleComponentType.COMPONENT_EP_ED_BRAKE, VehicleComponentType.COMPONENT_BUFFERS,
+const _COMPONENT_TYPES:Array[VehicleComponentType.Type] = [
     VehicleComponentType.COMPONENT_DOORS, VehicleComponentType.COMPONENT_ENGINE,
     VehicleComponentType.COMPONENT_HEATING, VehicleComponentType.COMPONENT_LIGHTING,
-    VehicleComponentType.COMPONENT_LOAD, VehicleComponentType.COMPONENT_SPEED_CONTROL,
-    VehicleComponentType.COMPONENT_SWITCHES, VehicleComponentType.COMPONENT_AI_HINTS,
-    VehicleComponentType.COMPONENT_HORNS, VehicleComponentType.COMPONENT_SECURITY,
+    VehicleComponentType.COMPONENT_LOAD, VehicleComponentType.COMPONENT_HORNS,
     VehicleComponentType.COMPONENT_WHEELS, VehicleComponentType.COMPONENT_WIPERS,
-    VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER, VehicleComponentType.COMPONENT_RADIO,
-    VehicleComponentType.COMPONENT_MASTER_CONTROLLER,
+    VehicleComponentType.COMPONENT_RADIO,
+]
+## ...and every railway kind, walked after them
+const _RAIL_COMPONENT_TYPES:Array[RailVehicleComponentType.Type] = [
+    RailVehicleComponentType.COMPONENT_BRAKES, RailVehicleComponentType.COMPONENT_SPRING_BRAKE,
+    RailVehicleComponentType.COMPONENT_EP_ED_BRAKE, RailVehicleComponentType.COMPONENT_BUFFERS,
+    RailVehicleComponentType.COMPONENT_SPEED_CONTROL, RailVehicleComponentType.COMPONENT_SWITCHES,
+    RailVehicleComponentType.COMPONENT_AI_HINTS, RailVehicleComponentType.COMPONENT_SECURITY,
+    RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER,
+    RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER,
 ]
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
@@ -209,15 +213,18 @@ static func build_model_at(fiz_path: String) -> VehicleModel:
     build_into(root, fiz_path)
     model = VehicleModel.new()
     model.properties = VehicleModel.capture(root)
-    var components:Array[VehicleComponentModel] = []
     # every component of a type - BuffCoupl1./BuffCoupl2. are two, one per end
-    for type:int in _COMPONENT_TYPES:
-        for component:VehicleComponent in root.find_components(type):
-            var entry := VehicleComponentModel.new()
-            entry.type = type
-            entry.implementation = component.get_class()
-            entry.properties = VehicleModel.capture(component)
-            components.append(entry)
+    var found:Array = []
+    for type:VehicleComponentType.Type in _COMPONENT_TYPES:
+        found.append_array(root.find_components(type))
+    for type:RailVehicleComponentType.Type in _RAIL_COMPONENT_TYPES:
+        found.append_array(root.find_rail_components(type))
+    var components:Array[VehicleComponentModel] = []
+    for component:VehicleComponent in found:
+        var entry := VehicleComponentModel.new()
+        entry.implementation = component.get_class()
+        entry.properties = VehicleModel.capture(component)
+        components.append(entry)
     model.components = components
 
     _cache.set(cache_path, model, cache_hash)

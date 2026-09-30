@@ -60,6 +60,7 @@ SceneryInstancer="*uid://d33kyubri6utw"
 
 [debug]
 
+file_logging/enable_file_logging=true
 file_logging/log_path="user://logs/app.log"
 
 [display]

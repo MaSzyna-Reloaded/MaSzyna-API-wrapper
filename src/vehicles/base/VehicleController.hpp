@@ -62,9 +62,10 @@ namespace godot {
             void apply_configuration();
             /* Creates the simulation behind the vehicle and writes its configuration there. */
             virtual void _initialize_simulation() = 0;
-            /* A component joined or left the vehicle - the implementation hooks it up to itself. */
-            virtual void _component_attached(VehicleComponent *p_component) {}
-            virtual void _component_detached(VehicleComponent *p_component) {}
+            /* The simulation behind the vehicle exists (p_implementation, the
+             * VehicleImplementationServer that runs it) or is about to go (ObjectID()): every
+             * component takes it, and every one joining later too. */
+            void _attach_implementation(const ObjectID &p_implementation);
             virtual void _fill_config_dictionary(Dictionary &p_config) const = 0;
             /* The vehicle's own share of the dump - what every vehicle has, whatever it is
              * made of. Its components add theirs. */
@@ -218,6 +219,8 @@ namespace godot {
              * Resolved when the component joins, not searched for per frame. */
             RailVehicleLighting *lighting = nullptr;
             RID rid;
+            /* What runs the simulation while it exists (_attach_implementation()) */
+            ObjectID implementation_server;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };
 } // namespace godot

@@ -53,9 +53,11 @@ Examples of what must raise the alarm:
 **1. The backend never appears above its adapter.** No `Vehicle*.hpp` interface mentions
 `TMoverParameters`, and only `Mover*` files hold one. Every one of the `MoverRailVehicle<Domain>`
 implementations has a `RailVehicle<Domain>` interface of the same name, and none of those interfaces
-names the backend. A component reaches the backend through `MoverComponent` - which is not
-an `Object`, so it needs `dynamic_cast`, not `Object::cast_to<>`, and the two base pointers of one
-object differ in address.
+names the backend. A component reaches the backend through `MoverComponent`: the vehicle hands
+every component its implementation (`VehicleComponent::attach_implementation()`), and a Mover
+component takes its vehicle's Mover from `MaszynaMoverVehicleServer`, which owns the Movers, in its
+own `_implementation_changed()` - no `dynamic_cast`, one lifetime (from the simulation's start to
+`release()`).
 
     grep -l TMoverParameters $(find src -name 'Vehicle*.hpp')   # must print nothing
 

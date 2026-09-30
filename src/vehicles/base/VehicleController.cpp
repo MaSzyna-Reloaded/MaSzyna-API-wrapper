@@ -163,6 +163,14 @@ namespace godot {
     void VehicleController::release() {
         shutdown();
         free_components();
+        implementation_server = ObjectID();
+    }
+
+    void VehicleController::_attach_implementation(const ObjectID &p_implementation) {
+        implementation_server = p_implementation;
+        for (const Ref<VehicleComponent> &component: components) {
+            component->attach_implementation(implementation_server);
+        }
     }
 
     void VehicleController::attach_to_system() {
@@ -314,7 +322,7 @@ namespace godot {
 
     void VehicleController::register_component(VehicleComponent *p_component) {
         components.push_back(Ref<VehicleComponent>(p_component));
-        _component_attached(p_component);
+        p_component->attach_implementation(implementation_server);
         if (RailVehicleLighting *component_lighting = Object::cast_to<RailVehicleLighting>(p_component);
             component_lighting != nullptr) {
             lighting = component_lighting;
@@ -322,7 +330,7 @@ namespace godot {
     }
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
-        _component_detached(p_component);
+        p_component->attach_implementation(ObjectID());
         components.erase(Ref<VehicleComponent>(p_component));
         if (static_cast<VehicleComponent *>(lighting) == p_component) {
             lighting = nullptr;

@@ -20,6 +20,44 @@ namespace godot {
                 VehicleServer::vehicle_freed_signal, callable_mp(this, &MaszynaMoverVehicleServer::_on_vehicle_freed));
     }
 
+    MaszynaMoverVehicleServer::~MaszynaMoverVehicleServer() {
+        for (const KeyValue<RID, TMoverParameters *> &entry: movers) {
+            delete entry.value;
+        }
+    }
+
+    TMoverParameters *MaszynaMoverVehicleServer::mover_create(
+            const RID &p_vehicle, const double p_velocity, const String &p_type_name, const String &p_name,
+            const int p_cab) {
+        ERR_FAIL_COND_V_MSG(!p_vehicle.is_valid(), nullptr, "A Mover belongs to a vehicle");
+        ERR_FAIL_COND_V_MSG(movers.has(p_vehicle), movers[p_vehicle], "The vehicle has its Mover already");
+        TMoverParameters *mover = new TMoverParameters(
+                p_velocity, std::string(p_type_name.utf8().get_data()), std::string(p_name.utf8().get_data()), p_cab);
+        movers.insert(p_vehicle, mover);
+        vehicles_by_mover.insert(mover, p_vehicle);
+        return mover;
+    }
+
+    void MaszynaMoverVehicleServer::mover_free(const RID &p_vehicle) {
+        TMoverParameters **mover = movers.getptr(p_vehicle);
+        if (mover == nullptr) {
+            return;
+        }
+        vehicles_by_mover.erase(*mover);
+        delete *mover;
+        movers.erase(p_vehicle);
+    }
+
+    TMoverParameters *MaszynaMoverVehicleServer::mover_get(const RID &p_vehicle) const {
+        TMoverParameters *const *mover = movers.getptr(p_vehicle);
+        return mover != nullptr ? *mover : nullptr;
+    }
+
+    RID MaszynaMoverVehicleServer::mover_get_vehicle(const TMoverParameters *p_mover) const {
+        const RID *vehicle = vehicles_by_mover.getptr(p_mover);
+        return vehicle != nullptr ? *vehicle : RID();
+    }
+
     void MaszynaMoverVehicleServer::_on_vehicle_freed(const RID &p_vehicle) {
         diagnostics_velocity.erase(p_vehicle);
     }

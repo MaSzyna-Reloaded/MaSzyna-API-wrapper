@@ -1,4 +1,5 @@
 #pragma once
+#include "legacy/maszyna-mover/McZapkie/MOVER.h"
 #include "vehicles/base/VehicleImplementationServer.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 
@@ -21,6 +22,11 @@ namespace godot {
             /* Velocity change of a vehicle within one frame reported as a kick (m/s^2) */
             static constexpr double DIAGNOSTICS_MAX_ACCELERATION = 3.0;
 
+            /* The Mover of each vehicle on it, created and deleted here (mover_create(),
+             * mover_free()); coupled Movers only know each other (TCoupling::Connected), hence the
+             * way back to the vehicle */
+            HashMap<RID, TMoverParameters *> movers;
+            HashMap<const TMoverParameters *, RID> vehicles_by_mover;
             bool diagnostics = false;
             /* The velocity each vehicle had after the last step, for the kick diagnostics */
             HashMap<RID, double> diagnostics_velocity;
@@ -46,6 +52,18 @@ namespace godot {
             }
 
             MaszynaMoverVehicleServer();
+            ~MaszynaMoverVehicleServer() override;
+
+            /* C++ only and unbound: the Mover is this implementation's own business, and the
+             * pointers stay in it - the vehicle's Mover controller and components take it from
+             * here when its simulation starts and let go of it before it is freed. */
+            TMoverParameters *mover_create(
+                    const RID &p_vehicle, double p_velocity, const String &p_type_name, const String &p_name,
+                    int p_cab);
+            void mover_free(const RID &p_vehicle);
+            TMoverParameters *mover_get(const RID &p_vehicle) const;
+            /* The vehicle a Mover belongs to - what a coupler's Connected is traced back with */
+            RID mover_get_vehicle(const TMoverParameters *p_mover) const;
 
             void stepping_advance(const Vector<RID> &p_vehicles, double p_delta) override;
     };

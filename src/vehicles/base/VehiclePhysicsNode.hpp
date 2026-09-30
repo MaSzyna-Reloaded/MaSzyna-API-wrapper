@@ -12,7 +12,7 @@ namespace godot {
      * "which vehicle am I part of" is answered by where a node sits, not by a path it carries.
      *
      * It knows nothing about where the description came from. A subclass brings one:
-     * FizVehiclePhysicsNode asks the .fiz builder for it, and another format would be another
+     * MaszynaRailVehiclePhysicsNode asks the .fiz builder for it, and another format would be another
      * subclass. */
     class VehiclePhysicsNode : public Node {
             GDCLASS(VehiclePhysicsNode, Node)
@@ -27,14 +27,14 @@ namespace godot {
             Ref<VehicleController> description;
             void _build();
             String train_id;
-            String type_name;
             double initial_velocity = 0.0;
             VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
-            String load_name;
-            double load_amount = 0.0;
 
         protected:
             static void _bind_methods();
+            /* The vehicle exists and is about to be configured and (re)started: a kind of vehicle
+             * hands its own servers what it knows of it (RailVehiclePhysicsNode) */
+            virtual void _prepare_vehicle(const RID &p_vehicle) {}
             void _notification(int p_what); // NOLINT(bugprone-derived-method-shadowing-base-method)
 
         public:
@@ -60,17 +60,9 @@ namespace godot {
              * model came from - a scenery names its vehicles, a .fiz does not. */
             void set_train_id(const String &p_train_id);
             String get_train_id() const;
-            /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
-             * as TypeName (DynObj.cpp:2019) */
-            void set_type_name(const String &p_type_name);
-            String get_type_name() const;
             void set_initial_velocity(double p_velocity);
             double get_initial_velocity() const;
             void set_driver_type(VehicleController::DriverType p_driver_type);
             VehicleController::DriverType get_driver_type() const;
-            void set_load_name(const String &p_load_name);
-            String get_load_name() const;
-            void set_load_amount(double p_load_amount);
-            double get_load_amount() const;
     };
 } // namespace godot

@@ -165,13 +165,6 @@ namespace godot {
             void set_implementation(const StringName &p_implementation);
             StringName get_implementation() const;
             MAKE_MEMBER_GS(String, train_id, "");
-            /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
-             * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The
-             * simulation takes both at once, and it reads more than cargo out of them: `pantstate`
-             * is how a scenery starts a locomotive with its pantographs already up. */
-            MAKE_MEMBER_GS(String, load_name, "");
-            MAKE_MEMBER_GS(double, load_amount, 0.0);
-            MAKE_MEMBER_GS(String, type_name, "");
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);

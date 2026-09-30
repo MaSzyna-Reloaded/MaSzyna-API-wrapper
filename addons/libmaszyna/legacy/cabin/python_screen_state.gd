@@ -197,7 +197,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
         result["doorstep_r_%d" % car_number] = car_state.get("doors_right_step_position", 0.0) > 0.0
         result["car_name%d" % car_number] = VehicleServer.vehicle_get_name(car)
         # the unit and the last letter of the vehicle's type (Train.cpp:895, 8687-8688)
-        result["code_%d" % car_number] = "%d%s" % [unit_number, VehicleServer.vehicle_get_type_name(car).right(1)]
+        result["code_%d" % car_number] = "%d%s" % [unit_number, RailVehicleServer.vehicle_get_type_name(car).right(1)]
         result["slip_%d" % car_number] = car_state.get("slipping_wheels", false)
         if unit_number <= EIM_CAR_COUNT:
             if COLLECTOR_KEY in car_state:

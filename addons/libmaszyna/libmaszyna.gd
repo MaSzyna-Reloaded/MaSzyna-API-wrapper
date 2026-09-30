@@ -11,7 +11,7 @@ var e3d_model_instance_icon = preload("res://addons/libmaszyna/legacy/e3d/e3d_mo
 var track_3d_script = preload("res://addons/libmaszyna/tracks/track_3d.gd")
 var track_normal_3d_script = preload("res://addons/libmaszyna/tracks/track_normal_3d.gd")
 var track_switch_3d_script = preload("res://addons/libmaszyna/tracks/track_switch_3d.gd")
-var fiz_vehicle_physics_node_script = preload("res://addons/libmaszyna/legacy/fiz/fiz_vehicle_physics_node.gd")
+var maszyna_rail_vehicle_physics_node_script = preload("res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_physics_node.gd")
 var fiz_import_plugin = preload("res://addons/libmaszyna/legacy/fiz/fiz_import_plugin.gd").new()
 
 func _enable_plugin():
@@ -68,9 +68,9 @@ func _enable_plugin():
     )
 
     add_custom_type(
-        "FizVehiclePhysicsNode",
+        "MaszynaRailVehiclePhysicsNode",
         "Node",
-        fiz_vehicle_physics_node_script,
+        maszyna_rail_vehicle_physics_node_script,
         null
     )
 
@@ -94,7 +94,7 @@ func _disable_plugin():
     remove_custom_type("Track3D")
     remove_custom_type("TrackNormal3D")
     remove_custom_type("TrackSwitch3D")
-    remove_custom_type("FizVehiclePhysicsNode")
+    remove_custom_type("MaszynaRailVehiclePhysicsNode")
 
     remove_autoload_singleton("TrainSoundSystem")
     remove_autoload_singleton("ScenerySoundServer")

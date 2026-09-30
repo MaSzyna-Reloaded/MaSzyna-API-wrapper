@@ -69,7 +69,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_implementation"), &VehicleController::get_implementation);
         ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "implementation"), "set_implementation", "get_implementation");
         BIND_PROPERTY(VehicleController, Variant::STRING, train_id);
-        BIND_PROPERTY(VehicleController, Variant::STRING, type_name);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, max_velocity);
@@ -91,8 +90,6 @@ namespace godot {
         BIND_ENUM_CONSTANT(DRIVER_NOBODY);
         BIND_ENUM_CONSTANT(DRIVER_HEAD);
         BIND_ENUM_CONSTANT(DRIVER_REAR);
-        BIND_PROPERTY(VehicleController, Variant::STRING, load_name);
-        BIND_PROPERTY(VehicleController, Variant::FLOAT, load_amount);
 
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));

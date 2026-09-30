@@ -1,7 +1,7 @@
 extends Cabin3D
 class_name MaszynaDynamicTrainCabin
 
-## MMD-driven cabin builder, analogous to E3DModelInstance/FizVehiclePhysicsNode: given
+## MMD-driven cabin builder, analogous to E3DModelInstance/MaszynaRailVehiclePhysicsNode: given
 ## data_path/mmd_filename/skin it parses the vehicle's MMD file, resolves cab0/cab1/cab2 from the
 ## controller's cabin_occupied state, and builds a real, interactive cabin (Etap A+B scope -
 ## see mmd_cabin_instancer.gd) instead of requiring a hand-authored cabin_scene.

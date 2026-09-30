@@ -10,7 +10,6 @@ var _controller:VehicleController = null
 
 func before_each() -> void:
     _controller = build_vehicle("name_registry_test")
-    _controller.type_name = "test"
     await wait_idle_frames(2)
 
 
@@ -46,7 +45,6 @@ func test_a_freed_vehicle_takes_its_name_with_it() -> void:
 ## anything but the lookup: both keep their handle and their commands.
 func test_a_repeated_name_goes_to_the_later_vehicle_and_both_take_commands() -> void:
     var later:VehicleController = build_vehicle("name_registry_test")
-    later.type_name = "test"
     await wait_idle_frames(2)
     assert_eq(
             VehicleServer.vehicle_get_rid_by_name("name_registry_test"), later.get_rid(),

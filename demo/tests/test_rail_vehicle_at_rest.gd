@@ -65,7 +65,7 @@ func _curved_track() -> String:
 
 func _assert_still(track_name:String, offset:float, where:String) -> void:
     # a vehicle with no mass integrates to NaN, which is a fixture of no vehicle at all
-    var model:VehicleController = MoverRailVehicleController.new()
+    var model:RailVehicleController = MoverRailVehicleController.new()
     model.train_id = "test_at_rest"
     model.mass = 74000.0
     model.type_name = "test"

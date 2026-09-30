@@ -49,7 +49,7 @@ A High-Level Component is not implemented by its nodes. The node standing in the
 answers commands. A vehicle is the reference case:
 
 * `VehiclePhysicsNode` is the vehicle's presence in the tree. It builds the vehicle from a copy of its description (the
-  parsed `.fiz`, a `VehicleController` with its components, supplied by `FizVehiclePhysicsNode`), owns its
+  parsed `.fiz`, a `VehicleController` with its components, supplied by `MaszynaRailVehiclePhysicsNode`), owns its
   `VehicleServer` handle and frees both with itself.
 * The vehicle - a `VehicleController` and the `VehicleComponent`s it is made of - is a `Resource`, not a node: its
   properties are its stored configuration. It is held through `VehicleServer`, stepped by its implementation once per

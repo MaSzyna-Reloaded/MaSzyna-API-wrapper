@@ -126,6 +126,11 @@ namespace godot {
                     /* The controller this server steps and relays the rail events of - the one
                      * VehicleServer drives the vehicle with, taken again when that changes */
                     ObjectID controller_id;
+                    /* What the scenery placed the rail vehicle with - its type and its load -
+                     * handed to every controller bound to it before its simulation starts */
+                    String type_name;
+                    String load_name;
+                    double load_amount = 0.0;
                     RID track;
                     double track_offset = 0.0;
                     TrackServer::Direction track_direction = TrackServer::DIRECTION_NORMAL;
@@ -231,6 +236,12 @@ namespace godot {
             void vehicle_attach(const RID &p_vehicle);
             void vehicle_detach(const RID &p_vehicle);
             bool vehicle_is_attached(const RID &p_vehicle) const;
+            /* The rail vehicle's type - the original's CHK/MMD name, TMoverParameters::TypeName
+             * (DynObj.cpp:2019) - and what it carries when the scenery places it (`loadtype`,
+             * `loadcount` of a `dynamic`). Handed to its controller when it is bound. */
+            void vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name);
+            String vehicle_get_type_name(const RID &p_vehicle) const;
+            void vehicle_set_load(const RID &p_vehicle, const String &p_load_name, double p_load_amount);
             /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
              * somebody took it (DriverSystem) */
             void vehicle_wake(const RID &p_vehicle);

@@ -1,13 +1,13 @@
 @tool
-extends VehiclePhysicsNode
-class_name FizVehiclePhysicsNode
+extends RailVehiclePhysicsNode
+class_name MaszynaRailVehiclePhysicsNode
 
-## A vehicle built from a legacy `.fiz` file.
+## A MaSzyna rail vehicle, built from a legacy `.fiz` file.
 ##
 ## All it does is name the file and ask FizVehicleBuilder for the vehicle's description -
 ## the same shape E3DModelInstance has towards E3DModelManager. Everything else about owning a
-## vehicle (the handle, the components, freeing them) belongs to VehiclePhysicsNode, and the
-## parsing and its on-disk cache belong to the builder.
+## vehicle (the handle, the components, freeing them) belongs to VehiclePhysicsNode, making it a
+## rail one to RailVehiclePhysicsNode, and the parsing and its on-disk cache to the builder.
 
 ## Base MaSzyna data path used to resolve the FIZ file, matching E3DModelInstance.data_path.
 @export var data_path:String = "":
@@ -27,10 +27,6 @@ var _reload_pending:bool = false
 
 
 func _ready() -> void:
-    # a FIZ describes a rail vehicle: it has a place on the route and is stepped there, with or
-    # without a RailVehicle3D drawing it (the editor builds no vehicle)
-    if get_vehicle_rid().is_valid():
-        RailVehicleServer.vehicle_attach(get_vehicle_rid())
     _request_reload()
 
 

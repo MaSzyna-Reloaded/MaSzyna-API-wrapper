@@ -9,9 +9,8 @@ var controller: VehicleController
 ## A .fiz is a vehicle's description (a VehicleController with its components) now; a VehiclePhysicsNode is what builds a vehicle from one, and the
 ## controller it owns is not a node - it lives and dies with the vehicle.
 func before_each():
-    vehicle = VehiclePhysicsNode.new()
+    vehicle = RailVehiclePhysicsNode.new()
     add_child(vehicle)
-    RailVehicleServer.vehicle_attach(vehicle.get_vehicle_rid())
     vehicle.set_description(FizVehicleBuilder.build_description_at(FIXTURE_PATH))
     controller = vehicle.get_controller()
     await wait_idle_frames(2)
@@ -141,9 +140,8 @@ func test_lights_list():
 ## BuffCoupl1./BuffCoupl2. are two components, one per end - both reach the vehicle (the model
 ## once kept one per type and left the rear coupler at the Mover's 1000 N default)
 func test_two_coupler_sections_reach_both_ends() -> void:
-    var two_couplers := VehiclePhysicsNode.new()
+    var two_couplers := RailVehiclePhysicsNode.new()
     add_child_autofree(two_couplers)
-    RailVehicleServer.vehicle_attach(two_couplers.get_vehicle_rid())
     two_couplers.set_description(FizVehicleBuilder.build_description_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
     await wait_idle_frames(2)
 

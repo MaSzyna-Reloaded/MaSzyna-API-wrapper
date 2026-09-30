@@ -141,8 +141,8 @@ static func build_from_structure(
         # the exterior (_update_model_detail).
         passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
-    var fiz_controller := FizVehiclePhysicsNode.new()
-    fiz_controller.name = "FizVehiclePhysicsNode"
+    var fiz_controller := MaszynaRailVehiclePhysicsNode.new()
+    fiz_controller.name = "MaszynaRailVehiclePhysicsNode"
     fiz_controller.data_path = structure.data_path
     fiz_controller.fiz_filename = structure.file_name
     fiz_controller.train_id = train_id
@@ -174,7 +174,7 @@ static func build_from_structure(
     auto_rewident.name = "AutoRewident"
     vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
-    # the vehicle's presence in the tree is the FizVehiclePhysicsNode itself - the controller it
+    # the vehicle's presence in the tree is the MaszynaRailVehiclePhysicsNode itself - the controller it
     # owns is not a node and has no path of its own.
     vehicle.controller_path = NodePath(fiz_controller.name)
     vehicle.cabin_scene = structure.cabin_scene
@@ -240,15 +240,15 @@ static func initialize_instance(
             .path_join(structure.file_name + ".mmd"))
     _bind_animation_paths(vehicle, model, structure.wiper_prefix, structure.mirror_names)
     var sound_diagnostics:Array[Dictionary] = []
-    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FizVehiclePhysicsNode", {}, sound_diagnostics)
+    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "MaszynaRailVehiclePhysicsNode", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
         if diagnostic["severity"] != "info":
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
     configure_head_display(vehicle, model, head_display_material)
 
-    # FIZ Dimensions are known only once FizVehiclePhysicsNode has built its deferred controller.
-    var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
+    # FIZ Dimensions are known only once MaszynaRailVehiclePhysicsNode has built its deferred controller.
+    var fiz_controller:MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
     var rain_volume:RainVolume = vehicle.get_node(NodePath(RAIN_VOLUME_NAME)) as RainVolume
     fiz_controller.vehicle_changed.connect(_fit_rain_volume.bind(fiz_controller, rain_volume))
 
@@ -338,7 +338,7 @@ static func _resolve_animation_paths(
 
     if wiper_prefix:
         vehicle.wiper_arm_paths = _find_wiper_arm_paths(vehicle, submodel_index, wiper_prefix)
-        var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
+        var fiz_controller:MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
         fiz_controller.vehicle_changed.connect(_apply_wiper_count.bind(fiz_controller, vehicle))
         _apply_wiper_count(fiz_controller, vehicle)
 

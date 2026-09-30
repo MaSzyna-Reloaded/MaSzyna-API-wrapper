@@ -38,7 +38,7 @@ func test_real_vehicle_excludes_rain_over_its_body() -> void:
         "dynamic/pkp/sm42_v1", "6da", "6d-907", "test_sm42_rain", 0.0, null
     )
     add_child_autofree(vehicle)
-    var fiz_controller: FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
+    var fiz_controller: MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
     await wait_idle_frames(2)
 
     var controller: VehicleController = fiz_controller.get_controller()

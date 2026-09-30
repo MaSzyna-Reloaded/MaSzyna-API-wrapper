@@ -30,9 +30,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &VehiclePhysicsNode::set_train_id);
         ClassDB::bind_method(D_METHOD("get_train_id"), &VehiclePhysicsNode::get_train_id);
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
-        ClassDB::bind_method(D_METHOD("set_type_name", "type_name"), &VehiclePhysicsNode::set_type_name);
-        ClassDB::bind_method(D_METHOD("get_type_name"), &VehiclePhysicsNode::get_type_name);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
         ClassDB::bind_method(D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
@@ -41,12 +38,6 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::INT, "driver_type", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver"),
                 "set_driver_type", "get_driver_type");
-        ClassDB::bind_method(D_METHOD("set_load_name", "load_name"), &VehiclePhysicsNode::set_load_name);
-        ClassDB::bind_method(D_METHOD("get_load_name"), &VehiclePhysicsNode::get_load_name);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "load_name"), "set_load_name", "get_load_name");
-        ClassDB::bind_method(D_METHOD("set_load_amount", "load_amount"), &VehiclePhysicsNode::set_load_amount);
-        ClassDB::bind_method(D_METHOD("get_load_amount"), &VehiclePhysicsNode::get_load_amount);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "load_amount"), "set_load_amount", "get_load_amount");
 
         ClassDB::bind_method(D_METHOD("get_vehicle_rid"), &VehiclePhysicsNode::get_vehicle_rid);
         ClassDB::bind_method(D_METHOD("get_controller"), &VehiclePhysicsNode::get_controller);
@@ -105,10 +96,9 @@ namespace godot {
         }
         // the scenery's values first: the controller takes them when its simulation starts
         server->vehicle_set_name(vehicle_rid, train_id);
-        server->vehicle_set_type_name(vehicle_rid, type_name);
         server->vehicle_set_initial_velocity(vehicle_rid, initial_velocity);
         server->vehicle_set_driver_type(vehicle_rid, driver_type);
-        server->vehicle_set_load(vehicle_rid, load_name, load_amount);
+        _prepare_vehicle(vehicle_rid);
         // configuring a bound controller restarts the vehicle on it; the first time it is bound
         server->controller_configure(controller_rid, configuration);
         if (created) {
@@ -152,16 +142,6 @@ namespace godot {
         return train_id;
     }
 
-    void VehiclePhysicsNode::set_type_name(const String &p_type_name) {
-        type_name = p_type_name;
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
-            server->vehicle_set_type_name(vehicle_rid, type_name);
-        }
-    }
-
-    String VehiclePhysicsNode::get_type_name() const {
-        return type_name;
-    }
 
     void VehiclePhysicsNode::set_initial_velocity(const double p_velocity) {
         initial_velocity = p_velocity;
@@ -185,25 +165,5 @@ namespace godot {
         return driver_type;
     }
 
-    void VehiclePhysicsNode::set_load_name(const String &p_load_name) {
-        load_name = p_load_name;
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
-            server->vehicle_set_load(vehicle_rid, load_name, load_amount);
-        }
-    }
 
-    String VehiclePhysicsNode::get_load_name() const {
-        return load_name;
-    }
-
-    void VehiclePhysicsNode::set_load_amount(const double p_load_amount) {
-        load_amount = p_load_amount;
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
-            server->vehicle_set_load(vehicle_rid, load_name, load_amount);
-        }
-    }
-
-    double VehiclePhysicsNode::get_load_amount() const {
-        return load_amount;
-    }
 } // namespace godot

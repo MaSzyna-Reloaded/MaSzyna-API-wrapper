@@ -59,7 +59,7 @@ func test_vehicle_server_stops_relaying_a_detached_controller() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(VehicleServer)
-    VehicleServer.vehicle_attach_controller(train.get_rid(), 0)
+    VehicleServer.vehicle_bind_controller(train.get_rid(), RID())
 
     vehicle.move_on_track(2.0)
     assert_signal_not_emitted(VehicleServer, "vehicle_moved", "Should not relay a controller that left its handle")

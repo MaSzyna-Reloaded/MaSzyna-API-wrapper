@@ -61,23 +61,19 @@ namespace godot {
         }
         // on entering, not on ready: Godot readies children before their parent, and a
         // component proxy below this node has to find a vehicle already standing
-        if (p_what == NOTIFICATION_ENTER_TREE && controller.is_null()) {
+        if (p_what == NOTIFICATION_ENTER_TREE && !vehicle_rid.is_valid()) {
             // with whatever description the node was given before it entered; without one the
             // vehicle still comes up, empty - components can be added to it, or a description
             // given later
             _build();
         }
         if (p_what == NOTIFICATION_PREDELETE) {
-            if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
                 server->vehicle_free(vehicle_rid);
+                server->controller_free(controller_rid);
             }
             vehicle_rid = RID();
-            // the vehicle lets go of its components and commands; whoever still holds it keeps
-            // an empty vehicle, never a freed one
-            if (controller.is_valid()) {
-                controller->release();
-                controller.unref();
-            }
+            controller_rid = RID();
         }
     }
 
@@ -90,34 +86,34 @@ namespace godot {
         }
     }
 
+    /* The vehicle and its controller are VehicleServer's; this node creates both once, has the
+     * controller configured from the description - or from an empty vehicle of the simulation the
+     * extension ships - and binds it, which (re)starts the vehicle. Its handle stays across a
+     * rebuild, and everything outside the vehicle layer holds that. */
     void VehiclePhysicsNode::_build() {
-        /* Rebuilding replaces what the vehicle is made of, not the vehicle: its handle stays, and
-         * everything outside the vehicle layer holds that. The controller built before lets go of
-         * its components, commands and simulation. */
-        if (controller.is_valid()) {
-            controller->release();
+        VehicleServer *server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(server);
+        const Ref<VehicleController> configuration =
+                description.is_valid() ? description
+                                       : Ref<VehicleController>(ClassDBSingleton::get_singleton()->instantiate(
+                                                 controller_implementation()));
+        ERR_FAIL_COND_MSG(configuration.is_null(), "The vehicle's controller could not be made");
+        const bool created = !vehicle_rid.is_valid();
+        if (created) {
+            vehicle_rid = server->vehicle_create();
+            controller_rid = server->controller_create();
         }
-        // a copy: the description is shared by every vehicle built from it (a cached FIZ); held
-        // as it is created - a reference counted object left in the Variant alone is freed with it
-        controller = description.is_valid()
-                             ? Ref<VehicleController>(description->duplicate_deep(Resource::DEEP_DUPLICATE_INTERNAL))
-                             : Ref<VehicleController>(
-                                       ClassDBSingleton::get_singleton()->instantiate(controller_implementation()));
-        ERR_FAIL_COND_MSG(controller.is_null(), "The vehicle's controller could not be made");
-        controller->set_train_id(train_id);
-        controller->set_type_name(type_name);
-        controller->set_initial_velocity(initial_velocity);
-        controller->set_driver_type(driver_type);
-        controller->set_load_name(load_name);
-        controller->set_load_amount(load_amount);
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
-            if (!vehicle_rid.is_valid()) {
-                vehicle_rid = server->vehicle_create();
-            }
-            server->vehicle_attach_controller(vehicle_rid, controller->get_instance_id());
+        // the scenery's values first: the controller takes them when its simulation starts
+        server->vehicle_set_name(vehicle_rid, train_id);
+        server->vehicle_set_type_name(vehicle_rid, type_name);
+        server->vehicle_set_initial_velocity(vehicle_rid, initial_velocity);
+        server->vehicle_set_driver_type(vehicle_rid, driver_type);
+        server->vehicle_set_load(vehicle_rid, load_name, load_amount);
+        // configuring a bound controller restarts the vehicle on it; the first time it is bound
+        server->controller_configure(controller_rid, configuration);
+        if (created) {
+            server->vehicle_bind_controller(vehicle_rid, controller_rid);
         }
-        controller->attach_to_system();
-        controller->initialize();
         emit_signal(vehicle_changed_signal);
     }
 
@@ -130,19 +126,25 @@ namespace godot {
     }
 
     Ref<VehicleController> VehiclePhysicsNode::get_controller() const {
-        return controller;
+        const VehicleServer *server = VehicleServer::get_instance();
+        if (server == nullptr || !vehicle_rid.is_valid()) {
+            return Ref<VehicleController>();
+        }
+        return Object::cast_to<VehicleController>(
+                ObjectDB::get_instance(ObjectID(server->vehicle_get_controller_instance_id(vehicle_rid))));
     }
 
     void VehiclePhysicsNode::add_component(const Ref<VehicleComponent> &p_component) {
         ERR_FAIL_COND(p_component.is_null());
+        const Ref<VehicleController> controller = get_controller();
         ERR_FAIL_COND_MSG(controller.is_null(), "VehiclePhysicsNode has no vehicle to add a component to yet.");
         controller->add_component(p_component);
     }
 
     void VehiclePhysicsNode::set_train_id(const String &p_train_id) {
         train_id = p_train_id;
-        if (controller.is_valid()) {
-            controller->set_train_id(train_id);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_name(vehicle_rid, train_id);
         }
     }
 
@@ -152,8 +154,8 @@ namespace godot {
 
     void VehiclePhysicsNode::set_type_name(const String &p_type_name) {
         type_name = p_type_name;
-        if (controller.is_valid()) {
-            controller->set_type_name(type_name);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_type_name(vehicle_rid, type_name);
         }
     }
 
@@ -163,8 +165,8 @@ namespace godot {
 
     void VehiclePhysicsNode::set_initial_velocity(const double p_velocity) {
         initial_velocity = p_velocity;
-        if (controller.is_valid()) {
-            controller->set_initial_velocity(initial_velocity);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_initial_velocity(vehicle_rid, initial_velocity);
         }
     }
 
@@ -174,8 +176,8 @@ namespace godot {
 
     void VehiclePhysicsNode::set_driver_type(const VehicleController::DriverType p_driver_type) {
         driver_type = p_driver_type;
-        if (controller.is_valid()) {
-            controller->set_driver_type(driver_type);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_driver_type(vehicle_rid, driver_type);
         }
     }
 
@@ -185,8 +187,8 @@ namespace godot {
 
     void VehiclePhysicsNode::set_load_name(const String &p_load_name) {
         load_name = p_load_name;
-        if (controller.is_valid()) {
-            controller->set_load_name(load_name);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_load(vehicle_rid, load_name, load_amount);
         }
     }
 
@@ -196,8 +198,8 @@ namespace godot {
 
     void VehiclePhysicsNode::set_load_amount(const double p_load_amount) {
         load_amount = p_load_amount;
-        if (controller.is_valid()) {
-            controller->set_load_amount(load_amount);
+        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
+            server->vehicle_set_load(vehicle_rid, load_name, load_amount);
         }
     }
 

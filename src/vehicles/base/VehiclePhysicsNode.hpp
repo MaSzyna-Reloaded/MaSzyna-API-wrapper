@@ -23,7 +23,7 @@ namespace godot {
              * rather than a static member: a StringName cannot be built before the engine is up. */
             static StringName &controller_implementation();
             RID vehicle_rid;
-            Ref<VehicleController> controller;
+            RID controller_rid;
             Ref<VehicleController> description;
             void _build();
             String train_id;

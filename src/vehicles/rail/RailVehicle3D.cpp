@@ -343,20 +343,12 @@ namespace godot {
             controller->connect(
                     VehicleController::config_changed, callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
         }
-        VehicleServer *vehicle_server = VehicleServer::get_instance();
-        if (RailVehicleServer *server = RailVehicleServer::get_instance();
-            server != nullptr && vehicle_server != nullptr) {
-            /* A vehicle has one handle. When the controller already carries one - it does
-             * whenever a VehiclePhysicsNode built it - this node renders that vehicle rather than
-             * creating a second one, which would step the same controller twice and place only
-             * one of the two on a track. */
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            /* The vehicle and its handle are the VehiclePhysicsNode's (RC-026); this node draws
+             * that vehicle and makes it a rail one - a place on the route, stepped there. */
             const RID vehicle_rid = controller != nullptr ? controller->get_rid() : RID();
             if (vehicle_rid.is_valid() && vehicle_rid != rid) {
-                if (rid_owned && rid.is_valid()) {
-                    vehicle_server->vehicle_free(rid);
-                }
                 rid = vehicle_rid;
-                rid_owned = false;
                 server->vehicle_attach(rid);
                 server->vehicle_attach_rail_vehicle(rid, get_instance_id());
                 // the pantographs belong to the handle: the model's arms go with it to the new one
@@ -366,10 +358,6 @@ namespace godot {
                     // the model node is a GDScript E3DModelInstance, unknown at build time
                     _register_pickable(model_node->call("get_e3d_instance"));
                 }
-            }
-            if (rid.is_valid()) {
-                vehicle_server->vehicle_attach_controller(
-                        rid, controller != nullptr ? controller->get_instance_id() : 0);
             }
         }
         if (cabin != nullptr) {
@@ -386,14 +374,6 @@ namespace godot {
             tracks->connect(
                     TrackServer::tracks_changed_signal,
                     callable_mp(this, &RailVehicle3D::_on_track_server_tracks_changed));
-        }
-        VehicleServer *vehicle_server = VehicleServer::get_instance();
-        if (RailVehicleServer *server = RailVehicleServer::get_instance();
-            server != nullptr && vehicle_server != nullptr) {
-            rid = vehicle_server->vehicle_create();
-            rid_owned = true;
-            server->vehicle_attach(rid);
-            server->vehicle_attach_rail_vehicle(rid, get_instance_id());
         }
         pending_start_track_retry = !start_track_name.is_empty();
         dirty = true;
@@ -429,15 +409,8 @@ namespace godot {
             model_node_id = ObjectID();
         }
         _register_pickable(RID());
-        // only the handle this node created is this node's to free; an adopted one belongs to
-        // the VehiclePhysicsNode that built the vehicle
-        if (rid_owned && rid.is_valid()) {
-            if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr) {
-                server->vehicle_free(rid);
-            }
-        }
+        // the handle is the VehiclePhysicsNode's, freed with it; this node only lets go of it
         rid = RID();
-        rid_owned = false;
         if (fiz_controller != nullptr) {
             fiz_controller->disconnect(
                     VehiclePhysicsNode::vehicle_changed_signal, callable_mp(this, &RailVehicle3D::_on_vehicle_changed));

@@ -50,7 +50,7 @@ Legend:
 - [ ] [RC-023](#rc-023) Base vehicle layer knows rail and lighting
 - [ ] [RC-024](#rc-024) Controller and server call each other; `get_state()` builds a cache
 - [ ] [RC-025](#rc-025) `vehicle_get_transform()` writes a cache
-- [ ] [RC-026](#rc-026) Drawing node creates a second vehicle RID
+- [x] [RC-026](#rc-026) Drawing node creates a second vehicle RID
 - [ ] [RC-027](#rc-027) Mover member names as public state keys
 - [ ] [RC-028](#rc-028) `RailVehicleHorns` includes the vendored Mover
 - [ ] [RC-029](#rc-029) `Mover*` classes public and instantiated from GDScript
@@ -520,6 +520,10 @@ Legend:
   and re-attaches a controller the server already has.
 * **Decision:** the RID is created only by `VehiclePhysicsNode`/the server, and the drawing node
   only receives it.
+* **Done 2026-09-30:** `VehiclePhysicsNode` creates the vehicle and its controller in
+  `VehicleServer` (`controller_configure`, `vehicle_bind_controller`); `RailVehicle3D` creates no
+  RID, takes the node's when it is built and only attaches it to `RailVehicleServer`;
+  `vehicle_attach_controller` is gone.
 
 ### RC-027
 

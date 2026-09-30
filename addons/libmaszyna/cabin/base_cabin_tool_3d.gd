@@ -89,13 +89,14 @@ func _apply_control_value(_value:Variant) -> void:
     pass
 
 
-## Makes `mesh` operable by mouse with this control's own operations; an empty `increase` leaves
-## it click-only. `actions` are the keys that do the same, shown next to the caption
-## (drivermode.cpp:373). `step_rotation` (degrees, applied X, Y, Z as the widgets animate) and
-## `step_position` are how far one increase moves the mesh, so a drag follows the grip. A valid
-## `drag` takes the drag's travel in pixels in place of the increase/decrease steps.
-func _set_mouse_control(mesh:Node3D, actions:PackedStringArray, pressed:Callable, released:Callable,
-        increase:Callable, decrease:Callable, step_rotation:Vector3, step_position:Vector3,
+## Makes the control operable by mouse with its own operations - `meshes` (instance ids) are what
+## it is made of, its own submodel first; an empty `increase` leaves it click-only. `actions` are
+## the keys that do the same, shown next to the caption (drivermode.cpp:373). `step_rotation`
+## (degrees, applied X, Y, Z as the widgets animate) and `step_position` are how far one increase
+## moves the mesh, so a drag follows the grip. A valid `drag` takes the drag's travel in pixels in
+## place of the increase/decrease steps.
+func _set_mouse_control(meshes:PackedInt64Array, actions:PackedStringArray, pressed:Callable,
+        released:Callable, increase:Callable, decrease:Callable, step_rotation:Vector3, step_position:Vector3,
         drag:Callable = Callable()) -> void:
     if _mouse_control.is_valid():
         CabinHUDMouseSystem.control_free(_mouse_control)
@@ -107,7 +108,7 @@ func _set_mouse_control(mesh:Node3D, actions:PackedStringArray, pressed:Callable
     var step_basis:Basis = Basis(Vector3.RIGHT, deg_to_rad(step_rotation.x)) \
             * Basis(Vector3.UP, deg_to_rad(step_rotation.y)) \
             * Basis(Vector3.FORWARD, deg_to_rad(step_rotation.z))
-    _mouse_control = CabinHUDMouseSystem.control_create(mesh.get_instance_id(),
+    _mouse_control = CabinHUDMouseSystem.control_create(meshes,
             MmdCabControlCaptions.caption(control_id), " / ".join(hints), pressed, released, increase, decrease,
             step_basis, step_position, drag, mouse_drag_signs)
 

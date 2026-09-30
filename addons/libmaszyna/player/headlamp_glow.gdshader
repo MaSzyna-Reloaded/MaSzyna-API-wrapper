@@ -1,8 +1,11 @@
 // Head torch near-field glow: Godot's spot light barely lights the cone right in front of the
 // projector, so this full-screen pass brightens what lies inside the torch cone, reconstructed
 // from the depth buffer - the cone and the distance falloff follow the Headlamp spot light.
+// The pass only adds its light: the screen texture is copied before translucent geometry is drawn,
+// so a pass writing it back over the whole screen erased every translucent emission (signal lights,
+// cab displays) whenever the torch was on.
 shader_type spatial;
-render_mode unshaded, depth_test_disabled, depth_draw_never, cull_disabled, fog_disabled, shadows_disabled;
+render_mode unshaded, blend_add, depth_test_disabled, depth_draw_never, cull_disabled, fog_disabled, shadows_disabled;
 
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap;
 uniform sampler2D depth_texture : hint_depth_texture, filter_nearest;
@@ -58,5 +61,5 @@ void fragment() {
 	float adapted_boost = boost / (1.0 + dot(average, vec3(0.2126, 0.7152, 0.0722)) / adaptation_luminance);
 
 	vec3 screen = texture(screen_texture, SCREEN_UV).rgb;
-	ALBEDO = screen * (1.0 + adapted_boost * glow * light_color) + lift * glow * light_color;
+	ALBEDO = screen * adapted_boost * glow * light_color + lift * glow * light_color;
 }

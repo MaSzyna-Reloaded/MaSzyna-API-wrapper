@@ -25,6 +25,10 @@ enum LitCondition { TRUE, POSITIVE, ZERO, NEGATIVE }
 
 @export var enabled:bool = false
 @export var state_property:String = ""
+## Lit by a light of the cab it sits in (CabinSystem's cab light signals) instead of state_property
+@export var cab_light:CabinState.Light = CabinState.Light.NONE
+## What that light of the cab is at: its level, or 1 for a lit instrument light
+var _cab_light_level:float = 0.0
 @export var lit_condition:LitCondition = LitCondition.TRUE
 ## Lit while state_property is false - an "inactive" lamp of the same state (Train.cpp:9196).
 @export var invert_value:bool = false
@@ -38,6 +42,28 @@ enum LitCondition { TRUE, POSITIVE, ZERO, NEGATIVE }
         off_target_path = value
         _off_target = null
         _dirty = true
+
+
+func _enter_tree() -> void:
+    match cab_light:
+        CabinState.Light.CAB:
+            CabinSystem.cab_light_level_changed.connect(_on_cab_light_changed)
+        CabinState.Light.INSTRUMENT:
+            CabinSystem.cab_instrument_light_changed.connect(_on_cab_light_changed)
+
+
+func _exit_tree() -> void:
+    match cab_light:
+        CabinState.Light.CAB:
+            CabinSystem.cab_light_level_changed.disconnect(_on_cab_light_changed)
+        CabinState.Light.INSTRUMENT:
+            CabinSystem.cab_instrument_light_changed.disconnect(_on_cab_light_changed)
+
+
+func _on_cab_light_changed(vehicle_rid:RID, cab:int, value:Variant) -> void:
+    if vehicle_rid == _vehicle_rid and cab == CabinSystem.occupied_cab(_vehicle_rid):
+        _cab_light_level = float(value)
+        _update_state()
 
 
 func _process(delta:float) -> void:
@@ -56,12 +82,21 @@ func _process_dirty() -> void:
         _on_target = get_node_or_null(on_target_path)
     if not _off_target and off_target_path:
         _off_target = get_node_or_null(off_target_path)
+    if _vehicle_rid:
+        # the light of the cab this element sits in, as the cab holds it now
+        var cab:int = CabinSystem.occupied_cab(_vehicle_rid)
+        match cab_light:
+            CabinState.Light.CAB:
+                _cab_light_level = CabinSystem.cab_get_light_level(_vehicle_rid, cab)
+            CabinState.Light.INSTRUMENT:
+                _cab_light_level = float(CabinSystem.cab_get_instrument_light_enabled(_vehicle_rid, cab))
     _update_state()
 
 
 func _update_state() -> void:
-    if _vehicle_rid and state_property:
-        var state:Variant = CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false)
+    if _vehicle_rid and (state_property or not cab_light == CabinState.Light.NONE):
+        var state:Variant = (_cab_light_level if not cab_light == CabinState.Light.NONE
+                else CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false))
         var value:bool = false
         match lit_condition:
             LitCondition.TRUE:

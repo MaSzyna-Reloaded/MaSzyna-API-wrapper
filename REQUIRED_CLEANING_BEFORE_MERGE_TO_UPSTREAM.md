@@ -493,6 +493,10 @@ Legend:
   `RailVehicle3D`).
 * **Decision:** the lighting component announces its own change; the base controller loses the
   rail knowledge.
+* **Done 2026-09-30 (lighting):** the cab light and the instrument light are the cab's
+  (`LegacyCabinCabLights`, `CabinState`), not the vehicle's: `lighting`, `prev_roof_light_enabled`,
+  `roof_light_changed` and `VehicleServer.vehicle_roof_light_changed` are gone, and the low-poly
+  cabs are lit by `CabinSystem.cab_set_light_level()`. The rail forward declarations remain.
 
 ### RC-024
 
@@ -581,8 +585,7 @@ Legend:
     wipers at all")
   * `MoverRailVehicleWheels.hpp:25-27`: `wheel_angle_*_deg` ("vehicle layer's, not the Mover's")
   * `MoverRailVehicleDoors.hpp:62-63`: `mirror_left_position`
-  * `MoverRailVehicleLighting.hpp:49-57`: `roof_light_active`, `headlights_dimmed`,
-    `roof_light_dimmed`, `devices_light_active`
+  * `MoverRailVehicleLighting.hpp`: `headlights_dimmed` (the cab lights went to the cab layer)
   * `MoverRailVehicleController.hpp:27-40`: tachometer, `distance_counter`
 * **Rule:** "if this layer were replaced wholesale, would the field go with it?"
 * **Problem:** replacing the backend would lose vehicle state.

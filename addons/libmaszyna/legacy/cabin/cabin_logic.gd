@@ -61,6 +61,7 @@ func register(vehicle_rid:RID, cab:int) -> void:
     var switch_behaviours:Array[RefCounted] = [
         LegacyCabinBattery.new(),
         LegacyCabinCabActivation.new(),
+        LegacyCabinCabLights.new(),
         LegacyCabinPump.new(&"fuelpump_sw", "fuel_pump", "fuel_pump_switch_off", "fuel_pump_enabled",
                 controls.button_type(&"fuelpump_sw")),
         LegacyCabinPump.new(&"oilpump_sw", "oil_pump", "oil_pump_switch_off", "oil_pump_enabled",

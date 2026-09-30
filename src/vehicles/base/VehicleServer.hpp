@@ -81,7 +81,6 @@ namespace godot {
                     const String &p_command, const Variant &p_p1, const Variant &p_p2, const RID &p_vehicle);
             void _on_vehicle_configured(const RID &p_vehicle);
             void _on_vehicle_config_changed(const RID &p_vehicle);
-            void _on_vehicle_roof_light_changed(bool p_enabled, const RID &p_vehicle);
 
         protected:
             static void _bind_methods();
@@ -96,7 +95,6 @@ namespace godot {
             static const char *vehicle_configured_signal;
             /* A component of the vehicle (re)applied its configuration */
             static const char *vehicle_config_changed_signal;
-            static const char *vehicle_roof_light_changed_signal;
 
             VehicleServer();
             ~VehicleServer() override;

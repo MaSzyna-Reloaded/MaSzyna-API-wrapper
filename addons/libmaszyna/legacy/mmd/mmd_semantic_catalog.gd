@@ -528,16 +528,12 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against demo/vehicles/sm42/sm_42_cabin.tscn's own hand-authored wiring
-        # (command/state_property/action copied verbatim) and now backed generically by
-        # RailVehicleLighting::devices_light()/roof_light() (RailVehicleLighting.cpp) instead of a
-        # per-vehicle script - state is power-gated the same way there (24V/110V availability).
+        # The cab's own lights (LegacyCabinCabLights): each cab keeps its switches, and the
+        # button shows what its cab holds - no vehicle command, no vehicle state
         "instrumentlight_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
-                "command": "devices_light",
-                "state_property": "devices_light_enabled",
                 "action": "devices_light_toggle",
             },
             "config_max_property": "",
@@ -547,8 +543,6 @@ static func _ensure_built() -> void:
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
-                "command": "roof_light",
-                "state_property": "roof_light_enabled",
                 "action": "cabin_light_toggle",
             },
             "config_max_property": "",
@@ -560,8 +554,6 @@ static func _ensure_built() -> void:
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
-                "command": "roof_light_dim",
-                "state_property": "roof_light_dimmed",
                 "action": "cabin_light_dim_toggle",
             },
             "config_max_property": "",
@@ -1393,7 +1385,7 @@ static func _ensure_built() -> void:
         "i-cablight": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": {
-                "state_property": "roof_light_enabled",
+                "cab_light": CabinState.Light.CAB,
             },
             "config_max_property": "",
             "mesh_path_field": "",
@@ -1403,7 +1395,7 @@ static func _ensure_built() -> void:
             "spread_light_along_submodel": true,
             "light_fixed_fields": {
                 # the level, so that the dimmed and the 24 V-only light is dimmer (Train.cpp:9745)
-                "state_property": "roof_light_level",
+                "cab_light": CabinState.Light.CAB,
                 "light_enabled": true,
                 "light_color": Color(0.960938, 0.881759, 0.75824, 1.0),
                 "light_energy_on": 0.411,
@@ -1421,7 +1413,7 @@ static func _ensure_built() -> void:
         "i-instrumentlight": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": {
-                "state_property": "devices_light_enabled",
+                "cab_light": CabinState.Light.INSTRUMENT,
             },
             "config_max_property": "",
             "mesh_path_field": "",

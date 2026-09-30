@@ -293,6 +293,8 @@ namespace godot {
             /// Finds the submodels the client's settings name in the built model, and what the
             /// backends read of them
             void _resolve_submodel_settings(E3DInstanceData &p_instance);
+            static void
+            _set_subtree_emission_energy(E3DInstanceData &p_instance, const E3DSubModel *p_submodel, float p_energy);
             void _apply_client_submodels(E3DInstanceData &p_instance);
             /// The submodel's transform in the model, through every parent; false when not found
             static bool _find_submodel_transform(
@@ -333,6 +335,10 @@ namespace godot {
             /// Draws a submodel, by name, with p_material instead of its own - a head display
             void instance_set_submodel_material_override(
                     const RID &p_instance, const String &p_submodel, const Ref<Material> &p_material);
+            /// The self-illumination energy of a submodel, by name, and of everything under it,
+            /// kept across rebuilds; below 0 gives it the instance's own again - one cab of a
+            /// low-poly interior lit by its cab light
+            void instance_set_submodel_emission_energy(const RID &p_instance, const String &p_submodel, float p_energy);
             bool instance_has_submodel(const RID &p_instance, const String &p_submodel) const;
             /// The submodel's transform in the model, through every parent, without any pose
             Transform3D instance_get_submodel_transform(const RID &p_instance, const String &p_submodel) const;

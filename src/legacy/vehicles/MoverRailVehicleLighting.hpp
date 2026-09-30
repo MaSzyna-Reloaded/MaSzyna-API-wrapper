@@ -44,9 +44,6 @@ namespace godot {
             bool get_opposite_headlight_right_enabled() const override;
             bool get_opposite_redmarker_left_enabled() const override;
             bool get_opposite_redmarker_right_enabled() const override;
-            bool get_devices_light_enabled() const override;
-            double get_roof_light_level() const override;
-            bool get_roof_light_enabled() const override;
 
         private:
             /* Lights[2][17] - readLightsList refuses a row past index 16 (Mover.cpp:8566) */
@@ -54,15 +51,8 @@ namespace godot {
             /* the preset that lights both ends of every vehicle (DynObj.cpp:7337) */
             static constexpr int LIGHTS_POSITION_ALL_ENDS = 18;
             TypedArray<RailVehicleLightListItem> light_position_list;
-            bool roof_light_active = false;
             /* DynObj's DimHeadlights - the vendored Mover has no dimmer of its own */
             bool headlights_dimmed = false;
-            bool roof_light_dimmed = false;
-            /// A dimmed compartment light's level (Train.cpp:9745)
-            static constexpr double ROOF_LIGHT_DIMMED_LEVEL = 0.4;
-            /// The compartment light's level fed from 24 V alone, without the 110 V converter (Train.cpp:9745)
-            static constexpr double ROOF_LIGHT_LOW_VOLTAGE_LEVEL = 0.5;
-            bool devices_light_active = false;
             const std::unordered_map<LightEnd, Maszyna::end> light_end_map = {
                     {LIGHT_END_FRONT, Maszyna::end::front},
                     {LIGHT_END_REAR, Maszyna::end::rear},
@@ -77,7 +67,6 @@ namespace godot {
             bool _light_enabled(const TMoverParameters *p_mover, LightEnd p_end, LightType p_type) const;
             static LightEnd _active_end(const TMoverParameters *p_mover);
             static LightEnd _opposite_end(const TMoverParameters *p_mover);
-            static bool _is_powered(const TMoverParameters *p_mover);
             void _set_lights(TMoverParameters *p_mover) const;
 
         protected:
@@ -97,11 +86,7 @@ namespace godot {
             void light(const String &p_light, bool p_enabled) override;
             bool light_is_enabled(const String &p_light) const override;
             void light_switch(const String &p_light, bool p_enabled) override;
-            void roof_light(bool p_enabled) override;
-            void devices_light(bool p_enabled) override;
             void headlights_dim(bool p_enabled) override;
             bool get_headlights_dimmed() const override;
-            void roof_light_dim(bool p_enabled) override;
-            bool get_roof_light_dimmed() const override;
     };
 } // namespace godot

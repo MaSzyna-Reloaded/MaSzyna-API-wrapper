@@ -2592,3 +2592,20 @@ lighting or the trainset.
   its timer.
 * **Rule:** a value the original keeps for the AI is not a figure for the player: check what it
   measures before showing it, and show only what the owner announces when it changes.
+
+## 2026-09-30 - the EP07 orientation test braked by its driver
+
+* **Symptom:** `test_zzz_ep07_orientation_regression` failed on CI ("vehicle should have
+  actually started moving") and passed alone; after `test_zzz_ep07_main_switch_trip_diagnostic`
+  it failed in about two runs of three.
+* **What proved it:** a full state dump at the end of the drive, failing against passing: the
+  failing run had `brake_local_position_normalized` 1.0 and the brake cylinder at 4.4 bar. A
+  listener on `vehicle_command_received` caught `local_brake_set 1.0` during the parked frames,
+  before the test took the vehicle over, sent by `MaszynaLegacyAIDriver._update()` ->
+  `_apply_independent_brake_only()` - the driver holds a standing locomotive by its independent
+  brake (Driver.cpp:8166-8180). Whether its scheduled update fell inside the parked frames
+  depended on the timing left by the scripts before.
+* **Fix:** the test releases the independent brake after taking the vehicle over, as a player
+  does; four runs with the AI's brake applied each time all passed.
+* **Rule:** a test that takes a scenery vehicle over sets every control it drives by, not only
+  the ones a fresh vehicle has wrong.

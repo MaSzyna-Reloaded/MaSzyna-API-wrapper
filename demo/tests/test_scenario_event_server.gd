@@ -10,6 +10,12 @@ const NEVER:float = 3600.0
 const FAST_SPEED:float = 1000.0
 ## SimulationServer::MAX_FRAME_DELTA
 const MAX_FRAME_DELTA:float = 0.25
+## `departuredelay`: an event of this delay [s] and this departure delay [s], queued by a train that
+## departs this many seconds from now; run times compared within this [s]
+const EVENT_DELAY:float = 5.0
+const DEPARTURE_DELAY:float = -30.0
+const UNTIL_DEPARTURE:float = 600.0
+const RUN_TIME_EPSILON:float = 0.01
 
 
 class RecordingAction extends ScenarioEventAction:
@@ -216,29 +222,31 @@ func test_putvalues_cab_signal_reaches_the_security_system() -> void:
 func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
     var vehicle:RID = build_vehicle("DepartureDelayTest").get_rid()
     var departing:DepartingDriver = DepartingDriver.new()
-    departing.seconds = 600.0
+    departing.seconds = UNTIL_DEPARTURE
     var driver:RID = DriverSystem.driver_create()
     DriverSystem.driver_attach_vehicle(driver, vehicle)
     DriverSystem.driver_attach_delegate(driver, departing)
-    var event:RID = _create_event(RecordingAction.new(), 5.0)
-    ScenarioEventServer.event_set_departure_delay(event, -30.0)
+    var event:RID = _create_event(RecordingAction.new(), EVENT_DELAY)
+    ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
     var now:float = SimulationServer.simulation_get_time()
 
     ScenarioEventServer.event_queue(event, vehicle)
-    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + 5.0 + 600.0 - 30.0, 0.01)
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + EVENT_DELAY + UNTIL_DEPARTURE + DEPARTURE_DELAY,
+            RUN_TIME_EPSILON)
     ScenarioEventServer.event_free(event)
 
-    event = _create_event(RecordingAction.new(), 5.0)
-    ScenarioEventServer.event_set_departure_delay(event, -30.0)
+    event = _create_event(RecordingAction.new(), EVENT_DELAY)
+    ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
     ScenarioEventServer.event_queue(event)
-    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + 5.0, 0.01, "no train, no departure")
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now + EVENT_DELAY, RUN_TIME_EPSILON,
+            "no train, no departure")
     ScenarioEventServer.event_free(event)
 
-    event = _create_event(RecordingAction.new(), 5.0)
-    ScenarioEventServer.event_set_departure_delay(event, -30.0)
-    departing.seconds = -600.0
+    event = _create_event(RecordingAction.new(), EVENT_DELAY)
+    ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
+    departing.seconds = -UNTIL_DEPARTURE
     ScenarioEventServer.event_queue(event, vehicle)
-    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now, 0.01, "departed long ago: at once")
+    assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now, RUN_TIME_EPSILON, "departed long ago: at once")
     ScenarioEventServer.event_free(event)
     DriverSystem.driver_free(driver)
 
@@ -274,10 +282,10 @@ func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
 func test_a_departure_delay_is_read_from_the_scenery() -> void:
     var models:Array[MaszynaModelData] = []
     var root:MaszynaIncludeNode = _build_scenery("event odjazd multiple 2 none endevent "
-            + "event odjazd_signal multiple 0 none departuredelay -15 endevent", models)
+            + "event odjazd_signal multiple 0 none departuredelay %s endevent" % DEPARTURE_DELAY, models)
 
     assert_eq(ScenarioEventServer.event_get_departure_delay(ScenarioEventServer.event_get_rid_by_name(&"odjazd_signal")),
-            -15.0)
+            DEPARTURE_DELAY)
     assert_true(is_nan(ScenarioEventServer.event_get_departure_delay(ScenarioEventServer.event_get_rid_by_name(&"odjazd"))),
             "none without the keyword")
     root.free()

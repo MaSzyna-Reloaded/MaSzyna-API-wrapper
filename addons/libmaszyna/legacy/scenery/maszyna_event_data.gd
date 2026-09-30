@@ -3,7 +3,7 @@ extends Resource
 class_name MaszynaEventData
 
 ## Scenery `event <name> <type> <delay> <targets> <parameters> [condition ...] [randomdelay <s>]
-## endevent` (basic_event::deserialize(), Event.cpp:289-333). The parameters are kept as they
+## [departuredelay <s>] endevent` (basic_event::deserialize(), Event.cpp:289-333). The parameters are kept as they
 ## stand in the file; what they mean is the type's business (see [MaszynaLegacyEventFactory])
 
 ## Lower case, as the original keeps event names (Event.cpp:2202)
@@ -14,6 +14,9 @@ class_name MaszynaEventData
 @export var delay:float = 0.0
 ## Up to this many seconds more, drawn each time the event is queued (Event.cpp:2407-2411)
 @export var random_delay:float = 0.0
+## Seconds from the departure of the train that queues the event, NAN for an event that does not
+## wait for one (m_delaydeparture, Event.cpp:314-316, 2431-2441)
+@export var departure_delay:float = NAN
 ## Lower case names of what the event is aimed at, "none" left out (Event.cpp:323-333)
 @export var targets:PackedStringArray = []
 ## The type's own tokens

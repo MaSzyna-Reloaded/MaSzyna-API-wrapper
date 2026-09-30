@@ -2519,3 +2519,34 @@ lighting or the trainset.
   `CabinSystem`.
 * **Rule:** code that runs in the editor calls no autoload that is not `@tool` - the call is a
   script error that returns null into the caller's data, not a warning.
+
+## 2026-09-30 - the departure sound played on arrival
+
+* **Symptom:** a station's departure sound ("odjazd") played straight after the train stopped,
+  while the timetable panel still counted down to the departure correctly.
+* **What proved it:** read off the code, not measured in the game: the scenery importer read
+  `departuredelay <s>` and dropped it. The original (`event_manager::AddToQuery`,
+  Event.cpp:2431-2444) adds to such an event's launch time the seconds until the departure of the
+  queueing vehicle's train (`seconds_until_departure()`, mtable.cpp:184-190, from `StationStart`),
+  plus the keyword's value. Without it the event runs after its own delay, which is the moment the
+  train rolls onto the stop's track event.
+* **Fix:** `ScenarioEventServer.event_set_departure_delay()`; `event_queue()` adds
+  `DriverSystem.vehicle_get_seconds_until_departure()` of its activator vehicle (its own driver's
+  timetable, else its trainset's), not before now.
+* **Rule:** a scenery keyword read and dropped is a behaviour dropped - look for one in the
+  importer first when an event fires at the wrong time.
+
+## 2026-09-30 - the timetable's delay frozen on the way
+
+* **Symptom:** the timetable panel showed a delay that did not change between stations and was
+  off by the stop's dwell; the vehicle card did not count on while the train stood.
+* **What proved it:** read off the code: the panel showed `-latency` on the way, and
+  `LastStationLatency` (departure less arrival, mtable.cpp:122) is written only on arriving; the
+  original shows no delay figure at all (driveruipanels.cpp:298-466). "At the platform" was a
+  snapshot taken on a timetable change, while the route changes it every update without a signal.
+* **Fix:** the driver's timetable records `delay` - at the arrival against the arrival time, once
+  the train has driven clear of the station against its departure - and owns `arrived`; the
+  panel counts on from the departure while the train stands; the card refreshes its timetable on
+  its timer.
+* **Rule:** a value the original keeps for the AI is not a figure for the player: check what it
+  measures before showing it, and show only what the owner announces when it changes.

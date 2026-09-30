@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/global_constants.hpp>
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/core/math.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <queue>
@@ -73,6 +74,8 @@ namespace godot {
                     StringName name;
                     double delay = 0.0;
                     double random_delay = 0.0;
+                    /// NAN for none
+                    double departure_delay = Math::NaN;
                     Ref<ScenarioEventAction> action;
                     Ref<ScenarioEventCondition> condition;
                     /// The sequence of its entry in the queue, 0 while it is not queued
@@ -205,6 +208,11 @@ namespace godot {
             /// Up to this many seconds more, drawn each time the event is queued
             void event_set_random_delay(const RID &p_event, double p_seconds);
             double event_get_random_delay(const RID &p_event) const;
+            /// Queued by a vehicle, the event runs this many seconds from the departure of the
+            /// vehicle's train by its timetable instead of from now (`departuredelay`,
+            /// Event.cpp:2431-2441); NAN for an event that does not wait for a departure
+            void event_set_departure_delay(const RID &p_event, double p_seconds);
+            double event_get_departure_delay(const RID &p_event) const;
             /// A passive event is never queued - nothing runs it; drivers read it on the tracks
             /// ahead (the original's m_passive, Event.cpp:2380-2384)
             void event_set_passive(const RID &p_event, bool p_passive);

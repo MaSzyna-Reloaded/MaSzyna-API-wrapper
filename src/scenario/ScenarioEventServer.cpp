@@ -1,5 +1,6 @@
 #include "../tracks/TrackServer.hpp"
 #include "ScenarioEventServer.hpp"
+#include "driver/DriverSystem.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "utils/Names.hpp"
@@ -25,6 +26,11 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("event_set_random_delay", "event", "seconds"), &ScenarioEventServer::event_set_random_delay);
         ClassDB::bind_method(D_METHOD("event_get_random_delay", "event"), &ScenarioEventServer::event_get_random_delay);
+        ClassDB::bind_method(
+                D_METHOD("event_set_departure_delay", "event", "seconds"),
+                &ScenarioEventServer::event_set_departure_delay);
+        ClassDB::bind_method(
+                D_METHOD("event_get_departure_delay", "event"), &ScenarioEventServer::event_get_departure_delay);
         ClassDB::bind_method(
                 D_METHOD("event_set_passive", "event", "passive"), &ScenarioEventServer::event_set_passive);
         ClassDB::bind_method(D_METHOD("event_is_passive", "event"), &ScenarioEventServer::event_is_passive);
@@ -494,6 +500,18 @@ namespace godot {
         return event->random_delay;
     }
 
+    void ScenarioEventServer::event_set_departure_delay(const RID &p_event, const double p_seconds) {
+        EventData *event = events.getptr(p_event);
+        ERR_FAIL_NULL(event);
+        event->departure_delay = p_seconds;
+    }
+
+    double ScenarioEventServer::event_get_departure_delay(const RID &p_event) const {
+        const EventData *event = events.getptr(p_event);
+        ERR_FAIL_NULL_V(event, Math::NaN);
+        return event->departure_delay;
+    }
+
     void ScenarioEventServer::event_set_passive(const RID &p_event, const bool p_passive) {
         EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL(event);
@@ -539,8 +557,18 @@ namespace godot {
         }
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL_V(runtime, false);
-        const double run_time = runtime->simulation_get_time() + event->delay + p_extra_delay +
-                                (event->random_delay * UtilityFunctions::randf());
+        const double now = runtime->simulation_get_time();
+        double run_time = now + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        if (!Math::is_nan(event->departure_delay) && vehicles != nullptr && vehicles->vehicle_exists(p_activator)) {
+            const DriverSystem *drivers = DriverSystem::get_instance();
+            ERR_FAIL_NULL_V(drivers, false);
+            // the departure may be past already: the event runs at once (Event.cpp:2444)
+            run_time = MAX(
+                    now, run_time +
+                                 drivers->vehicle_get_seconds_until_departure(p_activator, runtime->get_time_of_day()) +
+                                 event->departure_delay);
+        }
         event->queued_sequence = _schedule(p_event, run_time, p_activator);
         event->run_time = run_time;
         emit_signal(event_queued_signal, p_event, p_activator);

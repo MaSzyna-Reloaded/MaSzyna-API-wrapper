@@ -61,25 +61,38 @@ func test_the_station_left_stays_shown_until_the_train_is_clear_of_it():
     timetable.arrive(DEPARTURE)
     timetable.advance()
     assert_eq(timetable.station_start, 0, "still at the station it has left")
-    timetable.show_next_station()
+    timetable.show_next_station(DEPARTURE)
     assert_eq(timetable.station_start, 1, "clear of it")
     timetable.rewind("End")
     assert_eq(timetable.station_start, 3, "shown from the station it rewound to (Driver.cpp:1092)")
 
 
+func test_the_delay_is_the_arrival_then_the_departure():
+    timetable.get_entries()[0].arrival = DEPARTURE - 2 * MINUTE
+    timetable.arrive(DEPARTURE + MINUTE)
+    assert_almost_eq(timetable.delay, 3.0, EPSILON, "three minutes late at the arrival")
+    assert_true(timetable.arrived)
+    timetable.advance()
+    assert_false(timetable.arrived)
+    timetable.show_next_station(DEPARTURE + 2 * MINUTE)
+    assert_almost_eq(timetable.delay, 2.0, EPSILON, "two minutes late at the departure")
+
+
 func test_the_delay_counts_on_while_the_train_stands_past_its_departure():
+    timetable.get_entries()[0].arrival = DEPARTURE - 2 * MINUTE
     timetable.arrive(DEPARTURE - 3 * MINUTE)
-    var state:Dictionary = {
-        "timetable": timetable.timetable,
-        "station_index": timetable.station_index,
-        "station_start": timetable.station_start,
-        "latency": timetable.latency,
-        "at_passenger_stop": true,
-    }
-    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE - MINUTE), 0, "before the departure")
-    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE + 2.5 * MINUTE), 2, "two whole minutes past it")
-    state["at_passenger_stop"] = false
-    assert_eq(TimetablePanel.delay_minutes(state, DEPARTURE + 2.5 * MINUTE), -3, "on the way: as it arrived")
+    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE - MINUTE), 0, "early, it waits for the departure")
+    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE + 2.5 * MINUTE), 2, "two whole minutes past it")
+    timetable.advance()
+    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE + 2.5 * MINUTE), 2, "still at the station it has left")
+    timetable.show_next_station(DEPARTURE + 3 * MINUTE)
+    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE + 10 * MINUTE), 3, "on the way: as it left")
+
+
+func test_the_delay_of_a_late_arrival_stays_until_the_departure():
+    timetable.get_entries()[0].arrival = DEPARTURE - 5 * MINUTE
+    timetable.arrive(DEPARTURE - MINUTE)
+    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE - MINUTE), 4, "four minutes late at the arrival")
 
 
 func test_it_leaves_at_the_departure_time():
@@ -120,6 +133,18 @@ func test_every_step_through_it_is_announced():
     timetable.rewind("Nowhere")
     timetable.finish()
     assert_signal_emit_count(timetable, "changed", 4, "arrival, leaving, a rewind and the end - not a repeated arrival nor an unknown station")
+
+
+## The timetable's state as the driver reports it (MaszynaLegacyAIDriver._get_timetable_state())
+func _state() -> Dictionary:
+    return {
+        "timetable": timetable.timetable,
+        "station_index": timetable.station_index,
+        "station_start": timetable.station_start,
+        "latency": timetable.latency,
+        "delay": timetable.delay,
+        "arrived": timetable.arrived,
+    }
 
 
 func _entry(station:String, velocity:float, departure:float, facilities:String) -> TimetableEntry:

@@ -29,17 +29,14 @@ namespace godot {
      * and the simulation behind it. The vehicle itself - its handle, name, commands and
      * components - is VehicleServer's; this server takes a vehicle created there
      * (vehicle_attach()), moves it and ties it to the tracks, the traction wires and the other
-     * servers, and steps its controller.
+     * servers. The step itself is the implementation's (MaszynaMoverVehicleServer), which calls
+     * the per-vehicle rail operations below in its phases.
      *
      * Ported from addons/libmaszyna/servers/rail_vehicle_physics_server.gd. */
     class RailVehicleServer : public Object {
             GDCLASS(RailVehicleServer, Object)
 
         public:
-            /* Original engine: the primary physics update rate - a frame is integrated whole, in as
-             * many steps as keep each at or below it (drivermode.cpp:193-206) */
-            static constexpr double PHYSICS_STEP = 0.01;
-
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
             }
@@ -52,8 +49,6 @@ namespace godot {
             static constexpr double SCAN_RANGE_MARGIN = 40.0;
             /* A vehicle moved along the track by more or less than requested (m) */
             static constexpr double DIAGNOSTICS_MOVE_TOLERANCE = 0.001;
-            /* Velocity change of a vehicle within one frame reported as a kick (m/s^2) */
-            static constexpr double DIAGNOSTICS_MAX_ACCELERATION = 3.0;
             /* Movement below this is not worth walking the route for (m) */
             static constexpr double MOVEMENT_EPSILON = 0.0001;
             /* Below this speed (km/h) a vehicle stands - TTrackFollower::Move(), TrkFoll.cpp:104 */
@@ -170,10 +165,8 @@ namespace godot {
 
             HashMap<RID, VehiclePlacement> vehicles;
             bool diagnostics = false;
-            HashMap<uint64_t, double> diagnostics_velocity;
-            /* Rebuilt every tick, kept as members so the step allocates nothing per frame */
-            Vector<RID> stepped_vehicles;
-            TypedArray<VehicleController> stepped_controllers;
+            /* The rail vehicles on each track, rebuilt once a step (neighbour_index_rebuild()),
+             * kept as a member so the step allocates nothing per frame */
             HashMap<RID, Vector<RID>> track_vehicles;
 
             RailVehicleController *_get_controller(const VehiclePlacement &p_placement) const;
@@ -201,7 +194,6 @@ namespace godot {
             bool _find_vehicle(
                     const RID &p_vehicle, const VehiclePlacement &p_placement, int p_end, double p_scan_range,
                     RID &p_found_out, int &p_found_end_out, double &p_found_distance_out);
-            void _check_velocity_jumps(double p_delta);
             /* Where the vehicle is, in the terms a scenery is written in - for the pantographs'
              * warnings, which a world position alone does not tie to the .scn */
             String _track_position_text(const RID &p_vehicle) const;
@@ -238,6 +230,7 @@ namespace godot {
              * freed by VehicleServer is detached on its own. */
             void vehicle_attach(const RID &p_vehicle);
             void vehicle_detach(const RID &p_vehicle);
+            bool vehicle_is_attached(const RID &p_vehicle) const;
             /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
              * somebody took it (DriverSystem) */
             void vehicle_wake(const RID &p_vehicle);
@@ -289,10 +282,26 @@ namespace godot {
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);
 
-            /* One whole step of p_vehicles, those of them attached here, together - handed over by
-             * the implementation that simulates them (MaszynaMoverVehicleServer), once a frame of
-             * VehicleServer's step */
-            void stepping_advance(const Vector<RID> &p_vehicles, double p_delta);
+            /* What the rail does for a vehicle within a step - C++ only, called by the
+             * implementation that steps its vehicles in its own phases (MaszynaMoverVehicleServer). */
+            /* Which vehicle stands on which track, for this step's neighbour scans: once a step,
+             * before any vehicle looks for its neighbours */
+            void neighbour_index_rebuild();
+            /* The vehicle moved since its position was last announced: announce it */
+            void vehicle_report_position(const RID &p_vehicle);
+            /* Hands the simulated vehicle its location on the route, where it has moved */
+            void vehicle_update_location(const RID &p_vehicle);
+            /* The nearest vehicle beyond each free end, the coupled one at a coupled end
+             * (TDynamicObject::update_neighbours(), DynObj.cpp:7135) */
+            void vehicle_update_neighbours(const RID &p_vehicle);
+            /* The pantographs at the wire the vehicle now stands under, and the voltage they
+             * feed it (DynObj.cpp:3714-3920) - before its circuits run on what they collect */
+            void vehicle_collect_current(const RID &p_vehicle, double p_delta);
+            /* The vehicle's heading on its track, reported to the track events on a change
+             * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
+            void vehicle_report_track_heading(const RID &p_vehicle);
+            /* The RailVehicle3D drawing the vehicle takes the placement this step produced */
+            void vehicle_apply_placement(const RID &p_vehicle);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             /* A pantograph as the model builds it: where its lower arm stands in the vehicle's own
              * space, the arms' lengths, the horizontal offset between their ends and their angles

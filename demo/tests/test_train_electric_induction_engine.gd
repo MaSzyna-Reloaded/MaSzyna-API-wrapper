@@ -227,7 +227,7 @@ func test_main_init_time_reaches_the_config():
     assert_eq(float(train.config["main_init_time"]), 2.5)
 
 
-## What RailVehicleServer's step does for a vehicle standing under a live wire, for one standing on
+## What the vehicles' step does for a vehicle standing under a live wire, for one standing on
 ## no track: the wire's voltage on the first pantograph and the vehicle fed with it
 func _feed_wire(engine:RailVehicleElectricEngine) -> void:
     engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, WIRE_VOLTAGE)

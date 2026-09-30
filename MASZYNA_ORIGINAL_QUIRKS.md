@@ -192,7 +192,7 @@ interface.
   every coupler: at 60 fps nobody notices, at a slow frame or a faster simulation a long train
   locks up - the Stary Jawor eszelon, 21 vehicles, stood at 0.18 m/s with 391 kN at the wheels at
   0.17 s a frame, and ran to 14 m/s at 0.03 s. Wrapper: locations and neighbours refreshed before
-  every sub-step (`RailVehicleServer::stepping_advance()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
+  every sub-step (`MaszynaMoverVehicleServer::stepping_advance()`, `FINDINGS.md` 2026-09-27); the Mover untouched.
 * **The FIZ loader is not in the vendored copy.** Ours is 9598 lines against the original's 12813
   and holds no `LoadFIZ_*` at all, so every quirk of how a FIZ key reaches a Mover field has to be
   read in `~/src/maszyna`, not in `src/legacy/maszyna-mover`.

@@ -619,7 +619,7 @@ Known quirks are listed in `MASZYNA_ORIGINAL_QUIRKS.md`.
 
 The original engine updates everything within one simulation step: producers (e.g. `TTractionPowerSource::Update()`)
 and their consumers (e.g. pantographs calling `TTraction::VoltageGet()` from `TDynamicObject`) always run in the same
-step. In this wrapper `RailVehicleServer::stepping_advance()` runs the vehicles once per rendered frame (`process_frame`), like
+step. In this wrapper `MaszynaMoverVehicleServer::stepping_advance()` runs the vehicles once per rendered frame (`process_frame`), like
 the original, but the servers they consume are stepped on their own: `TractionServer` ticks its power sources from
 `process_frame` too, and a load asks for voltage whenever its vehicle's step reaches it. Nothing guarantees that every
 producer step has a consumer.

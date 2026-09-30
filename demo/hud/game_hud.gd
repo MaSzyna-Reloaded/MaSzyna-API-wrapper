@@ -3,7 +3,8 @@ extends Control
 ## HUD shared by the demo scenes: the top bar with its "Controls" menu and the windows it opens.
 ## A scene that needs a menu entry of its own adds a Button to MenuActions (editable children),
 ## like demo_scenery_loading.tscn does with "Exit to menu": the button is never shown, its text
-## becomes an entry at the end of the menu and picking the entry emits its pressed signal.
+## becomes an entry at the end of the menu, its shortcut the entry's, and picking the entry emits
+## its pressed signal.
 
 ## The entries of the "View" menu
 enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
@@ -65,6 +66,7 @@ func _ready() -> void:
     for child: Node in $MenuActions.get_children():
         var action: Button = child as Button
         menu.add_item(action.text)
+        menu.set_item_shortcut(menu.item_count - 1, action.shortcut)
         _menu_actions.append(action)
     # the menus show their keys and handle them: a key picks its entry as a click would
     menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))

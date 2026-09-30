@@ -23,7 +23,7 @@ static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/m
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 28
+const CACHE_FORMAT_VERSION:int = 29
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -165,30 +165,25 @@ static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, 
     await _report_progress(root, progress, message)
 
 
-## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached, and the vehicle
-## is placed on its track in its own _process after that - the trainsets are coupled only then, as a
-## coupler measures from the positions. A vehicle that failed to load has no simulation.
+## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached; built, it
+## stands on its track - every track is registered by now - and its trainset has coupled it
+## (TrainSet3D). A vehicle that failed to load has no simulation, a road car no track (roads are not
+## built yet, maszyna_node_track_importer.gd).
 static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
-    var vehicles:Array[Node] = root.find_children("", "MaszynaRailVehicle3D", true, false)
-    for node:Node in vehicles:
+    await _report_progress(root, 0.9, "Instancing vehicles")
+    for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
         var vehicle:MaszynaRailVehicle3D = node
-        # every track is built by now: one missing is never built - a road car's (roads are not
-        # built yet, maszyna_node_track_importer.gd) - and its vehicle never placed
-        var on_track:bool = TrackServer.track_get_rid_by_name(vehicle.start_track_name).is_valid()
-        while not vehicle.is_built() or (
-                on_track and VehicleServer.vehicle_is_simulation_ready(vehicle.get_rid()) and not vehicle.is_placed()):
-            await _report_progress(root, 0.9, "Instancing vehicles")
+        if not vehicle.is_built():
+            await vehicle.vehicle_built
     root.load_progress.emit(1.0, "")
 
 
-## Every trainset coupled, then every vehicle with somebody aboard gets the original's driver - once
-## the vehicles are built, as their handles exist only then. The vehicle goes first: the driver
-## learns its cab from it. Then every trainset's driver gets the trainset's timetable.
+## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
+## their handles exist only then, and their trainsets coupled (TrainSet3D), as the original couples
+## them before the driver is given its orders (simulationstateserializer.cpp:818-840) - what the
+## driver does first is sent along the couplers. The vehicle goes first: the driver learns its cab
+## from it. Then every trainset's driver gets the trainset's timetable.
 static func _build_drivers(root:MaszynaIncludeNode) -> void:
-    # endtrainset couples the vehicles before the driver is given its orders
-    # (simulationstateserializer.cpp:818-840) - what the driver does first is sent along the couplers
-    for node:Node in root.find_children("", "TrainSet3D", true, false):
-        (node as TrainSet3D).couple()
     for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
         var vehicle_node:MaszynaRailVehicle3D = node
         var vehicle:RID = vehicle_node.get_rid()
@@ -206,7 +201,7 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         var trainset:TrainSet3D = node
         var trainset_driver:RID = RID()
         for child:Node in trainset.get_children():
-            var vehicle_node:MaszynaRailVehicle3D = child as MaszynaRailVehicle3D
+            var vehicle_node:RailVehicle3D = child as RailVehicle3D
             var driver:RID = DriverSystem.vehicle_get_driver(vehicle_node.get_rid()) if vehicle_node else RID()
             if driver.is_valid():
                 trainset_driver = driver

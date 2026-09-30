@@ -36,7 +36,7 @@ func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController
     var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
     if not dynamic_vehicle:
         return null
-    var rail_vehicle:RailVehicle3D = dynamic_vehicle.find_child("RailVehicle3D", false, false) as RailVehicle3D
+    var rail_vehicle:RailVehicle3D = dynamic_vehicle as RailVehicle3D
     if not rail_vehicle:
         return null
     return rail_vehicle.get_controller()

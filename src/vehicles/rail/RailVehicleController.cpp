@@ -19,6 +19,10 @@ namespace godot {
         return server->vehicle_dump_state(get_rid());
     }
 
+    RailVehicleController::CouplerEnd RailVehicleController::opposite_end(const CouplerEnd p_end) {
+        return p_end == COUPLER_END_FRONT ? COUPLER_END_REAR : COUPLER_END_FRONT;
+    }
+
     Ref<VehicleComponent> RailVehicleController::get_rail_component(const RailVehicleComponentType::Type p_type) const {
         return _get_component_of_type(p_type);
     }
@@ -56,17 +60,16 @@ namespace godot {
                 D_METHOD("distance_counter_activate", "pressed"), &RailVehicleController::distance_counter_activate);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &RailVehicleController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &RailVehicleController::update_location);
-        ClassDB::bind_method(
-                D_METHOD("update_neighbour", "end", "other", "other_end", "track_distance"),
-                &RailVehicleController::update_neighbour);
         ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &RailVehicleController::compute_forces);
         ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &RailVehicleController::compute_movement);
         ClassDB::bind_method(D_METHOD("compute_fast_movement", "delta"), &RailVehicleController::compute_fast_movement);
         ClassDB::bind_method(
-                D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &RailVehicleController::couple);
+                D_METHOD("couple", "other", "end", "other_end", "coupling"), &RailVehicleController::couple);
+        ClassDB::bind_static_method(
+                "RailVehicleController", D_METHOD("opposite_end", "end"), &RailVehicleController::opposite_end);
         ClassDB::bind_method(D_METHOD("uncouple", "end"), &RailVehicleController::uncouple);
         ClassDB::bind_method(D_METHOD("is_coupled", "end"), &RailVehicleController::is_coupled);
-        ClassDB::bind_method(D_METHOD("is_coupled_by", "end", "element"), &RailVehicleController::is_coupled_by);
+        ClassDB::bind_method(D_METHOD("is_coupled_by", "end", "flags"), &RailVehicleController::is_coupled_by);
         ClassDB::bind_method(D_METHOD("get_coupled_controller", "end"), &RailVehicleController::get_coupled_controller);
         ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &RailVehicleController::get_coupled_end);
         ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &RailVehicleController::coupler_connect);
@@ -116,20 +119,11 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(trainset_changed_signal));
-        const String coupling_element_hint = enum_hint(
-                {{"Coupler", COUPLING_ELEMENT_COUPLER},
-                 {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},
-                 {"MainHose", COUPLING_ELEMENT_MAINHOSE},
-                 {"Control", COUPLING_ELEMENT_CONTROL},
-                 {"Gangway", COUPLING_ELEMENT_GANGWAY},
-                 {"Heating", COUPLING_ELEMENT_HEATING},
-                 {"Permanent", COUPLING_ELEMENT_PERMANENT}});
-        ADD_SIGNAL(MethodInfo(
-                coupler_attached_signal,
-                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
-        ADD_SIGNAL(MethodInfo(
-                coupler_detached_signal,
-                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
+        const PropertyInfo coupling_flag(
+                Variant::INT, "flag", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_CLASS_IS_BITFIELD,
+                "RailVehicleController.CouplingFlags");
+        ADD_SIGNAL(MethodInfo(coupler_attached_signal, coupling_flag));
+        ADD_SIGNAL(MethodInfo(coupler_detached_signal, coupling_flag));
 
         BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
         BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
@@ -147,13 +141,20 @@ namespace godot {
         BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
         BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
 
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_COUPLER);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_BRAKEHOSE);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_MAINHOSE);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_CONTROL);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_GANGWAY);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_HEATING);
-        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_PERMANENT);
+        BIND_ENUM_CONSTANT(COUPLER_END_FRONT);
+        BIND_ENUM_CONSTANT(COUPLER_END_REAR);
+
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_COUPLER);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_BRAKEHOSE);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_CONTROL);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_HIGHVOLTAGE);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_GANGWAY);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_MAINHOSE);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_HEATING);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_PERMANENT);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_POWER_24V);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_POWER_110V);
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_POWER_3X400V);
 
         BIND_ENUM_CONSTANT(TRAIN_TYPE_DEFAULT);
         BIND_ENUM_CONSTANT(TRAIN_TYPE_EZT);

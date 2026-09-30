@@ -26,24 +26,18 @@ func test_exterior_lights_resolve_and_switch() -> void:
         pending("real SU46 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = MaszynaRailVehicle3DManager.load("dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_lights", 0.0, null)
-    add_child(vehicle)
-    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    for i in range(60):
-        await wait_idle_frames(1)
-        if model.is_e3d_loaded():
-            break
-    assert_true(model.is_e3d_loaded(), "SU46 exterior model should load")
-    if not model.is_e3d_loaded():
+    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_lights")
+    var model:RID = RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid())
+    assert_true(model.is_valid(), "SU46 exterior model should load")
+    if not model.is_valid():
         return
 
-    assert_true(model.lights_state.has("headlamp11"), "headlamp11 should be a light of the model")
-    assert_true(model.lights_state.has("endsignal12"), "endsignal12 should be a light of the model")
+    var lights:Dictionary = E3DRenderingServer.instance_get_model(model).lights
+    assert_true(lights.has("headlamp11"), "headlamp11 should be a light of the model")
+    assert_true(lights.has("endsignal12"), "endsignal12 should be a light of the model")
 
-    var state:Dictionary[String, bool] = model.lights_state.duplicate()
-    state["headlamp11"] = true
-    model.lights_state = state
-    var on_node:Node3D = model.find_child("headlamp11_on", true, false) as Node3D
+    E3DRenderingServer.instance_set_lights_state(model, {"headlamp11": true})
+    var on_node:Node3D = vehicle.find_child("headlamp11_on", true, false) as Node3D
     assert_not_null(on_node, "SU46 exterior should contain headlamp11_on")
     if on_node:
         assert_true(on_node.visible, "headlamp11_on should be shown when the lamp is on")

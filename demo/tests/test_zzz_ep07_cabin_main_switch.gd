@@ -31,7 +31,7 @@ func before_each():
     for i in range(10):
         var dynamic_vehicle:Node = scenery.find_child("EP07-424", true, false)
         var rail_vehicle:RailVehicle3D = (
-                dynamic_vehicle.find_child("RailVehicle3D", false, false) as RailVehicle3D if dynamic_vehicle else null)
+                dynamic_vehicle as RailVehicle3D if dynamic_vehicle else null)
         controller = rail_vehicle.get_controller() if rail_vehicle else null
         if controller:
             break

@@ -11,6 +11,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/hash_set.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -149,6 +150,8 @@ namespace godot {
                      * simulated vehicle's location was last set (every sub-step) */
                     bool moved = true;
                     bool location_stale = true;
+                    /* Moved since vehicle_placement_changed last said so */
+                    bool placement_unreported = true;
                     /* The body's transform and whether it still describes the placement above. A
                      * parked vehicle is asked for it every frame by everything that draws it or
                      * listens from it, and composing it samples the track twice. */
@@ -157,9 +160,6 @@ namespace godot {
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
-                    /* The RailVehicle3D that owns this handle, so the tick can hand it its new
-                     * placement instead of letting it pull one a frame late */
-                    uint64_t rail_vehicle_id = 0;
                     /* PANTOGRAPH_FIRST, PANTOGRAPH_SECOND */
                     Pantograph pantographs[2];
                     /* The slider's width the model gives, for a vehicle whose FIZ declares none */
@@ -169,6 +169,26 @@ namespace godot {
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
+
+            /* A scenery's trainset (deserialize_trainset(), simulationstateserializer.cpp): its
+             * vehicles in order, standing one after another from its front on its track */
+            struct TrainsetMember {
+                    RID vehicle;
+                    TrackServer::Direction direction = TrackServer::DIRECTION_NORMAL;
+                    /* How far it stands behind the one before it [m] - the `offset` of its `dynamic` */
+                    double gap = 0.0;
+                    /* The coupling with the next vehicle - the `couplingdata` of its `dynamic` */
+                    BitField<RailVehicleController::CouplingFlags> coupling = 0;
+            };
+            struct Trainset {
+                    RID track;
+                    double offset = 0.0;
+                    Vector<TrainsetMember> members;
+                    /* Asked to stand while a vehicle of it had no simulation yet: it stands once it has */
+                    bool placement_pending = false;
+            };
+            HashMap<RID, Trainset> trainsets;
+            void _on_vehicle_configured(const RID &p_vehicle);
             bool diagnostics = false;
             /* The rail vehicles on each track, rebuilt once a step (neighbour_index_rebuild()),
              * kept as a member so the step allocates nothing per frame */
@@ -183,8 +203,8 @@ namespace godot {
             void _on_vehicle_controller_changed(const RID &p_vehicle);
             void _on_vehicle_cabin_occupied_changed(int p_cab, const RID &p_vehicle);
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
-            void _on_vehicle_coupler_attached(int p_element, const RID &p_vehicle);
-            void _on_vehicle_coupler_detached(int p_element, const RID &p_vehicle);
+            void _on_vehicle_coupler_attached(int64_t p_flag, const RID &p_vehicle);
+            void _on_vehicle_coupler_detached(int64_t p_flag, const RID &p_vehicle);
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
             Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
@@ -194,11 +214,14 @@ namespace godot {
                     const RID &p_track, int p_endpoint_index, bool p_force_switch_state, RID &p_track_out,
                     int &p_endpoint_out);
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
-            void _clear_neighbour(RailVehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
+            void _clear_neighbour(
+                    RailVehicleController *p_controller, VehiclePlacement &p_placement,
+                    RailVehicleController::CouplerEnd p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
-                    const RID &p_vehicle, const VehiclePlacement &p_placement, int p_end, double p_scan_range,
-                    RID &p_found_out, int &p_found_end_out, double &p_found_distance_out);
+                    const RID &p_vehicle, const VehiclePlacement &p_placement, RailVehicleController::CouplerEnd p_end,
+                    double p_scan_range, RID &p_found_out, RailVehicleController::CouplerEnd &p_found_end_out,
+                    double &p_found_distance_out);
             /* Where the vehicle is, in the terms a scenery is written in - for the pantographs'
              * warnings, which a world position alone does not tie to the .scn */
             String _track_position_text(const RID &p_vehicle) const;
@@ -212,6 +235,11 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            /* The vehicle stands on a track now - it was put there (vehicle_set_track()) */
+            static const char *vehicle_placed_signal;
+            /* The vehicle is somewhere else on the route - once a step it moved in, or once a
+             * deliberate move (vehicle_move()); what draws it follows */
+            static const char *vehicle_placement_changed_signal;
             static const char *vehicle_occupied_cab_changed_signal;
             /* The vehicles coupled to this one are others now (RailVehicleController::trainset_changed) */
             static const char *vehicle_trainset_changed_signal;
@@ -251,15 +279,18 @@ namespace godot {
              * the kinds every vehicle has */
             Ref<VehicleComponent>
             vehicle_component_get(const RID &p_vehicle, RailVehicleComponentType::Type p_type) const;
-            /* Couples p_end of the vehicle to p_other_end of p_other with p_coupling_type, a mask
-             * of CouplingElement (TMoverParameters::Attach(), Mover.cpp:548) */
-            void
-            vehicle_couple(const RID &p_vehicle, int p_end, const RID &p_other, int p_other_end, int p_coupling_type);
-            /* The vehicles joined to this one by p_element, in order: from the last of them beyond
-             * p_end back through this one to the last on the other side (TDynamicObject::
+            /* Couples p_end of the vehicle to p_other_end of p_other by p_coupling
+             * (TMoverParameters::Attach(), Mover.cpp:548) */
+            void vehicle_couple(
+                    const RID &p_vehicle, RailVehicleController::CouplerEnd p_end, const RID &p_other,
+                    RailVehicleController::CouplerEnd p_other_end,
+                    BitField<RailVehicleController::CouplingFlags> p_coupling);
+            /* The vehicles joined to this one by every one of p_flags, in order: from the last of them
+             * beyond p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
             TypedArray<RID> vehicle_get_coupled(
-                    const RID &p_vehicle, int p_end, RailVehicleController::CouplingElement p_element) const;
+                    const RID &p_vehicle, RailVehicleController::CouplerEnd p_end,
+                    BitField<RailVehicleController::CouplingFlags> p_flags) const;
             /* The vehicle a cab's controls drive (TDynamicObject::FindPowered(), DynObj.cpp:7772): this
              * one if it has power, else the nearest with power joined to it - within an EMU's or DMU's
              * unit, else by the control line; this one when there is none */
@@ -276,15 +307,30 @@ namespace godot {
             void emergency_signal_send(const Vector3 &p_position);
             /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
             void vehicle_radio_call(const RID &p_vehicle, RailVehicleRadio::RadioCall p_call);
-            /* The RailVehicle3D this handle belongs to, by instance id. */
-            void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
-            uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;
 
 
             void vehicle_set_track(
                     const RID &p_vehicle, const RID &p_track, double p_track_offset,
                     TrackServer::Direction p_track_direction);
             void vehicle_move(const RID &p_vehicle, double p_distance);
+            /* A scenery's trainset: vehicles standing one after another on a track, coupled - the
+             * handle of what a `trainset:` block places (TrainSet3D) */
+            RID trainset_create();
+            void trainset_free(const RID &p_trainset);
+            /* Where the trainset's front stands - the track and the distance along it [m] */
+            void trainset_set_track(const RID &p_trainset, const RID &p_track, double p_offset);
+            void trainset_clear(const RID &p_trainset);
+            /* The next vehicle of the trainset: which way it stands, how far behind the one before
+             * it [m] (none when it stands reversed) and how it couples to the next one */
+            void trainset_add_vehicle(
+                    const RID &p_trainset, const RID &p_vehicle, TrackServer::Direction p_direction, double p_gap,
+                    BitField<RailVehicleController::CouplingFlags> p_coupling);
+            TypedArray<RID> trainset_get_vehicles(const RID &p_trainset) const;
+            /* Stands the vehicles on the track one after another, each as long as it is, and couples
+             * them (deserialize_dynamic(), simulationstateserializer.cpp:1062-1076, and endtrainset,
+             * simulationstateserializer.cpp:818-837) - at once, or as soon as every vehicle of it
+             * has its simulation */
+            void trainset_place(const RID &p_trainset);
             /* The whole trainset coupled to the vehicle moved p_distance [m] towards the vehicle's
              * front, every vehicle whichever way round it stands (TDynamicObject::move_set(),
              * DynObj.cpp:4302) */
@@ -303,7 +349,7 @@ namespace godot {
             /* Hands the simulated vehicle its location on the route, where it has moved */
             void vehicle_update_location(const RID &p_vehicle);
             /* The nearest vehicle beyond each free end, the coupled one at a coupled end
-             * (TDynamicObject::update_neighbours(), DynObj.cpp:7135) */
+             * (TDynamicObject::update_neighbours(), DynObj.cpp:7544) */
             void vehicle_update_neighbours(const RID &p_vehicle);
             /* The pantographs at the wire the vehicle now stands under, and the voltage they
              * feed it (DynObj.cpp:3714-3920) - before its circuits run on what they collect */
@@ -311,8 +357,9 @@ namespace godot {
             /* The vehicle's heading on its track, reported to the track events on a change
              * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
             void vehicle_report_track_heading(const RID &p_vehicle);
-            /* The RailVehicle3D drawing the vehicle takes the placement this step produced */
-            void vehicle_apply_placement(const RID &p_vehicle);
+            /* The vehicle moved since its placement was last announced: announce it, so nothing
+             * draws it a frame late */
+            void vehicle_report_placement(const RID &p_vehicle);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
             /* A pantograph as the model builds it: where its lower arm stands in the vehicle's own
              * space, the arms' lengths, the horizontal offset between their ends and their angles
@@ -338,7 +385,8 @@ namespace godot {
             /* The nearest vehicle along the route from the vehicle's p_end (0 front, 1 rear), on the
              * tracks entered within p_distance [m] of its centre, null when there is none
              * (TDynamicObject::find_vehicle(), DynObj.cpp:7688) */
-            Ref<RailVehicleNeighbour> vehicle_find_vehicle(const RID &p_vehicle, int p_end, double p_distance);
+            Ref<RailVehicleNeighbour>
+            vehicle_find_vehicle(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end, double p_distance);
             /* Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */

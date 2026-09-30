@@ -8,7 +8,7 @@ func before_each():
     vehicle = RailVehiclePhysicsNode.new()
     vehicle.vehicle_id = "TestTrain"
     add_child(vehicle)
-    train = vehicle.get_controller()
+    train = VehicleServer.vehicle_get_controller(vehicle.get_vehicle_rid())
 
     brake = MoverRailVehicleBrake.new()
     train.add_component(brake)

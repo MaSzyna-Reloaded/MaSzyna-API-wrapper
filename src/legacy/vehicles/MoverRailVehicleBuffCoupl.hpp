@@ -25,10 +25,10 @@ namespace godot {
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
         public:
-            bool is_coupled(End p_end) const override;
-            bool is_brake_hose_connected(End p_end) const override;
-            bool is_main_hose_connected(End p_end) const override;
-            bool is_coupling_owner(End p_end) const override;
-            End get_connected_end(End p_end) const override;
+            bool is_coupled(RailVehicleController::CouplerEnd p_end) const override;
+            bool is_brake_hose_connected(RailVehicleController::CouplerEnd p_end) const override;
+            bool is_main_hose_connected(RailVehicleController::CouplerEnd p_end) const override;
+            bool is_coupling_owner(RailVehicleController::CouplerEnd p_end) const override;
+            RailVehicleController::CouplerEnd get_connected_end(RailVehicleController::CouplerEnd p_end) const override;
     };
 } // namespace godot

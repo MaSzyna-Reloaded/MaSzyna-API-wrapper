@@ -4,8 +4,10 @@
 #include "E3DModel.hpp"
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/material.hpp>
+#include <godot_cpp/classes/shader_material.hpp>
 #include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/hash_set.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -46,6 +48,17 @@ namespace godot {
                     E3DSubModel *submodel = nullptr;
             };
 
+            /// What a client set on one named submodel (instance_set_submodel_*()) - a vehicle's
+            /// running gear posed, a coupler hidden, a head display drawn with its own material
+            struct SubmodelSettings {
+                    Transform3D pose; // on top of the submodel's own transform, like an animation's
+                    bool posed = false;
+                    bool hidden = false;
+                    Ref<Material> material_override;
+                    /// The named submodel of the built model, found once per build
+                    E3DSubModel *submodel = nullptr;
+            };
+
             struct LightNodes {
                     ObjectID on;
                     ObjectID off;
@@ -70,6 +83,9 @@ namespace godot {
             TypedArray<NodePath> force_alpha_submodel_paths;
             int max_texture_size = 0; // 0 - the project's DDS size limit, see MaterialManager
             ObjectID node_id;
+            /// Where the model sits in the attached node, for the node tree built under it
+            /// (instance_set_node_transform()); `transform` is the model's own, in the world
+            Transform3D node_transform;
             RID scenario;
             Transform3D transform;
             bool visible = true;
@@ -91,9 +107,18 @@ namespace godot {
             Vector<RID> light_objects;
             /// By lower-case submodel name, kept across a stream clear/build cycle
             HashMap<String, SubmodelAnimation> submodel_animations;
-            /// What the animations make of their submodels, on top of the submodel's own transform;
-            /// what the backends read
+            /// By lower-case submodel name, kept across a rebuild (instance_set_submodel_*())
+            HashMap<String, SubmodelSettings> submodel_settings;
+            /// What the animations and the client's poses make of their submodels, on top of the
+            /// submodel's own transform; what the backends read
             HashMap<E3DSubModel *, Transform3D> submodel_poses;
+            /// The submodels a client hid, and those it gave a material of its own, resolved out of
+            /// submodel_settings; what the backends read
+            HashSet<const E3DSubModel *> hidden_submodels;
+            HashMap<E3DSubModel *, Ref<Material>> submodel_materials;
+            /// instance_set_emission_energy(): the self-illumination energy of every emissive
+            /// material of the instance, or below 0 to leave the materials' own
+            float emission_energy = -1.0;
             /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
             Vector<RID> smoke_objects;
             /// Spawn rate multiplier of those emitters (instance_set_smoke_intensity()), kept here so
@@ -114,6 +139,8 @@ namespace godot {
             Vector<Ref<Material>> materials;
 
             // NODES backend
+            /// The instance's own copies of its emissive materials, while emission_energy is set
+            Vector<Ref<ShaderMaterial>> emissive_materials;
             Vector<ObjectID> root_nodes;
             HashMap<String, LightNodes> light_nodes;
             HashMap<E3DSubModel *, ObjectID> submodel_nodes;

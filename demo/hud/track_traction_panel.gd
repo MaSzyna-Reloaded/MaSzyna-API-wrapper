@@ -50,7 +50,7 @@ func _process(delta:float) -> void:
 
 func _refresh() -> void:
     var vehicle:RailVehicle3D = instance_from_id(
-            RailVehicleServer.vehicle_get_rail_vehicle(PlayerServer.player_get_vehicle())) as RailVehicle3D
+            RailVehicleRenderingServer.vehicle_get_node(PlayerServer.player_get_vehicle())) as RailVehicle3D
     if not vehicle:
         _rows["Vehicle"].text = "none"
         _engine = null

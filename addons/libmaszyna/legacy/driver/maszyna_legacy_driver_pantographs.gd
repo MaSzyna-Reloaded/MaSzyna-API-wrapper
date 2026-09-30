@@ -85,7 +85,7 @@ static func control(
     var train_type:RailVehicleController.TrainType = int(VehicleServer.vehicle_dump_config(unit).get(
             "train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) as RailVehicleController.TrainType
     var regular:bool = RailVehicleServer.vehicle_get_coupled(
-            vehicle, MaszynaLegacyDriverTrainset.FRONT_END, RailVehicleController.COUPLING_ELEMENT_CONTROL).size() == 1 \
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_CONTROL).size() == 1 \
             or emu or train_type == RailVehicleController.TRAIN_TYPE_ET41
     var collectors:int = engine.power_current_collector_number_of_collectors
     var voltage:float = float(state.get("current_collector/voltage", 0.0))

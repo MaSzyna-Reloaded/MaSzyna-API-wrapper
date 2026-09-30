@@ -22,7 +22,6 @@ func test_a_vehicle_built_after_the_tracks_is_placed_on_its_start_track() -> voi
     vehicle.start_track_name = TRACK_NAME
     vehicle.start_track_offset = OFFSET
     add_child_autofree(vehicle)
-    vehicle.controller_path = NodePath("../LateVehicle")
     # the tracks are announced while the vehicle does not exist yet
     TrackServer.topology_rebuild()
 
@@ -30,8 +29,9 @@ func test_a_vehicle_built_after_the_tracks_is_placed_on_its_start_track() -> voi
     description.mass = RAIL_VEHICLE_MASS
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.name = "LateVehicle"
-    physics_node.set_description(description)
+    physics_node.set_controller(description)
     add_child_autofree(physics_node)
+    vehicle.controller_path = NodePath("../LateVehicle")
     await wait_idle_frames(3)
 
     assert_eq(vehicle.get_rid(), physics_node.get_vehicle_rid(), "the node draws the vehicle built later")

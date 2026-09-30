@@ -2,10 +2,11 @@
 extends RefCounted
 class_name MaszynaRailVehicle3DInstancer
 
-## Builds a complete, driveable RailVehicle3D from nothing but a data_path/file_name/skin
-## triple: exterior E3D model, FIZ physics controller, interactive MMD-driven cabin, sound bank,
-## head display, and bogie/wheel animation bindings. Used by MaszynaRailVehicle3D, which owns
-## only the dirty-flag lifecycle and track placement around whatever build() returns.
+## Builds a complete, driveable vehicle into a RailVehicle3D from nothing but a
+## data_path/file_name/skin triple: its FIZ physics, its appearance (the models and the submodels
+## that move, drawn by RailVehicleRenderingServer), its interactive MMD-driven cabin (CabinSystem)
+## and its sound bank. Used by MaszynaRailVehicle3D, which owns only the dirty-flag lifecycle.
+## It writes no property of the vehicle: what it builds goes to the servers by the vehicle's handle.
 
 ## Fixed original-engine submodel naming convention for bogies/wheel axles (DynObj.cpp:2341-2346
 ## for bogies, DynObj.cpp:5132-5176 for wheel axles) - confirmed against real game data (e.g.
@@ -18,11 +19,6 @@ class_name MaszynaRailVehicle3DInstancer
 ## powered-wheel diameter - no vehicle in the current game data needs that, and it would require
 ## threading the parsed RailVehicleWheels config through to spawn time. Left unimplemented until an
 ## actual vehicle needs it.
-const COUPLER_SUBMODEL_NAMES:Array[String] = [
-    "coupler1", "coupler2",
-    "cpneumatic1", "cpneumatic1r", "cpneumatic2", "cpneumatic2r",
-    "pneumatic1", "pneumatic1r", "pneumatic2", "pneumatic2r",
-]
 const FRONT_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie1", "boogie01"]
 const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
 const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
@@ -36,18 +32,11 @@ const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
 ## Whether the mirror glass reflects the scene (PlanarMirror3D)
 const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
 
-## Fixed original-engine submodel naming convention for pantograph arms
-## (DynObj.cpp's animpantrd1prefix:/rd2/rg1/rg2/sl tokens - configurable in
-## principle, but confirmed identical across every real vehicle checked,
-## e.g. dynamic/pkp/303e_v1/303e-ep-tv.mmd, dynamic/pkp/ep09_v1/104e_1.mmd,
-## dynamic/pkp/sr61_v2/sr61v1.mmd - same simplification already made above
-## for WHEEL_SUBMODEL_PREFIX). Order matches RailVehicle3D's own
-## pantograph_*_arm_paths index meaning (lower arm pair, upper arm pair,
-## slider); the trailing pantograph number (1=front, 2=rear) is appended by
-## _find_pantograph_arm_paths() below.
 ## Whole vehicle body excludes rain (negative precipitation delta), sized from FIZ Dimensions.
 const RAIN_VOLUME_NAME:StringName = &"RainExclusion"
 const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
+## The vehicle's physics among its parts
+const PHYSICS_NODE_NAME:StringName = &"PhysicsNode"
 
 ## lower arm 1, upper arm 1 and the slider
 const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [0, 2, 4]
@@ -55,9 +44,17 @@ const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
     "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
 ]
 
+## Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab) lives in
+## one vehicle-local frame where +Z is the direction of travel: the original draws all of them under
+## the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp, vFront) (DynObj.cpp:2506-2508;
+## opengl33renderer.cpp:1174, 2856, 2976). A vehicle faces -Z here, so each of them is turned about
+## its vertical by half a turn.
+const MASZYNA_VEHICLE_FRAME:Transform3D = Transform3D(Basis(Vector3.UP, PI), Vector3.ZERO)
+
 
 ## Reads what the vehicle's MMD says it is built from. This is the expensive half - every call
-## opens and re-parses the MMD - and its result is what MaszynaRailVehicle3DManager caches.
+## opens and re-parses the MMD and loads the exterior model - and its result is what
+## MaszynaRailVehicle3DManager caches.
 static func read_structure(data_path:String, file_name:String, skin:String) -> MaszynaVehicleStructure:
     if not data_path or not file_name:
         return null
@@ -75,134 +72,90 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> M
     var structure := MaszynaVehicleStructure.new()
     structure.data_path = normalized_data_path
     structure.file_name = file_name
+    var appearance := RailVehicleAppearance.new()
+    appearance.data_path = normalized_data_path
+    appearance.model_transform = MASZYNA_VEHICLE_FRAME
     # The exterior body model filename is NOT the same as file_name in general (confirmed
     # against real data: dynamic/pkp/st44_v2's body model isn't named after its .fiz/.mmd base) -
     # it comes from the MMD's own top-level "models:" line. Fall back to file_name only if that
-    # can't be read, rather than silently building an ExteriorModel with no model at all.
+    # can't be read, rather than silently building a vehicle with no model at all.
     var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
     if not body_model_filename:
         body_model_filename = file_name
-    structure.body_model_filename = MmdCabinInstancer.resolve_model_case(
-            normalized_data_path, body_model_filename)
+    appearance.model_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, body_model_filename)
 
     var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path)
     if lowpoly_filename:
-        structure.low_poly_model_filename = MmdCabinInstancer.resolve_model_case(
+        appearance.low_poly_model_filename = MmdCabinInstancer.resolve_model_case(
                 normalized_data_path, lowpoly_filename)
 
     structure.load_models = MmdCabinInstancer.parse_loads(abs_mmd_path)
     var passengers_filename:String = structure.load_models.get("passengers", "")
     if passengers_filename:
-        structure.passengers_model_filename = MmdCabinInstancer.resolve_model_case(
+        appearance.passengers_model_filename = MmdCabinInstancer.resolve_model_case(
                 normalized_data_path, passengers_filename)
 
-    structure.skins = PackedStringArray(MmdCabinInstancer.resolve_skins(normalized_data_path, skin))
-    structure.wiper_prefix = MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path)
-    structure.mirror_names = MmdCabinInstancer.parse_mirror_names(abs_mmd_path)
-    structure.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
+    appearance.skins = PackedStringArray(MmdCabinInstancer.resolve_skins(normalized_data_path, skin))
+    appearance.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
+    var model:E3DModel = E3DModelManager.load_model(normalized_data_path, appearance.model_filename)
+    if model:
+        _resolve_parts(appearance, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path),
+                MmdCabinInstancer.parse_mirror_names(abs_mmd_path))
+    structure.appearance = appearance
     structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     return structure
 
 
-## Builds the vehicle a structure describes. Cheap - it reads no file - so every vehicle gets its
-## own nodes instead of a copy of a packed tree.
-static func build_from_structure(
-        structure:MaszynaVehicleStructure, train_id:String, initial_velocity:float,
-        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY,
-        load_name:String = "", load_amount:float = 0.0) -> RailVehicle3D:
-    var model:E3DModelInstance = _build_model(
-            structure.data_path, "ExteriorModel", structure.body_model_filename, structure.skins)
-
-    # Optional: the lower-detail interior seen from outside (through windows) before the player
-    # enters the cabin. Most MMD files don't declare one - only build it if present.
-    var low_poly_model:E3DModelInstance = (
-            _build_model(structure.data_path, "LowPolyInterior", structure.low_poly_model_filename,
-                    structure.skins)
-            if structure.low_poly_model_filename else null)
-
-    var load_model:E3DModelInstance = null
-    var load_model_filename:String = _load_model_filename(structure, load_name)
-    if load_model_filename:
-        # the original draws the load at the floor of the vehicle (DynObj.cpp:866)
-        load_model = _build_model(structure.data_path, "Load", load_model_filename, PackedStringArray())
-        load_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
-
-    var passengers_model:E3DModelInstance = null
-    if structure.passengers_model_filename:
-        # the passengers carry no skin of their own
-        passengers_model = _build_model(structure.data_path, "Passengers",
-                structure.passengers_model_filename, PackedStringArray())
-        # nobody looks into the passengers by node name or collects their materials, so they need
-        # no node tree - one RenderingServer instance per submodel instead of a Node3D each.
-        # The low-poly interior starts as NODES instead: RailVehicle3D finds its cab0/cab1/cab2
-        # nodes to hide the occupied cab (_update_low_poly_cabs_visibility) and collects its
-        # MeshInstance3D materials to dim them with the cab lights
-        # (_on_low_poly_cabin_e3d_loaded); it goes OPTIMIZED only at a distance, together with
-        # the exterior (_update_model_detail).
-        passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
-
-    var fiz_controller := MaszynaRailVehiclePhysicsNode.new()
-    fiz_controller.name = "MaszynaRailVehiclePhysicsNode"
-    fiz_controller.data_path = structure.data_path
-    fiz_controller.fiz_filename = structure.file_name
-    fiz_controller.vehicle_id = train_id
+## Builds the vehicle a structure describes into `vehicle`, which is in the tree. Cheap - it reads no
+## file but the vehicle's own sound bank - so every vehicle gets its own parts.
+##
+## Its physics is configured before it enters the tree, so it is configured once and nothing sees
+## an empty vehicle first; the vehicle's handle exists as soon as it has entered. Returns the parts
+## built, all internal children of `vehicle`.
+static func build_into(
+        vehicle:RailVehicle3D, structure:MaszynaVehicleStructure, vehicle_id:String, initial_velocity:float,
+        driver_type:VehicleController.DriverType, load_name:String, load_amount:float) -> Array[Node]:
+    var physics := RailVehiclePhysicsNode.new()
+    physics.name = PHYSICS_NODE_NAME
+    physics.controller = FizVehicleBuilder.build_description(structure.data_path, structure.file_name)
+    physics.vehicle_id = vehicle_id
     # the original's TypeName is the CHK/MMD name (DynObj.cpp:2019)
-    fiz_controller.type_name = structure.file_name
-    fiz_controller.initial_velocity = initial_velocity
-    fiz_controller.driver_type = driver_type
-    fiz_controller.load_name = load_name
-    fiz_controller.load_amount = load_amount
+    physics.type_name = structure.file_name
+    physics.initial_velocity = initial_velocity
+    physics.driver_type = driver_type
+    physics.load_name = load_name
+    physics.load_amount = load_amount
 
     var rain_volume := RainVolume.new()
     rain_volume.name = RAIN_VOLUME_NAME
     rain_volume.precipitation_delta = RAIN_EXCLUSION_PRECIPITATION_DELTA
 
-    var vehicle := RailVehicle3D.new()
-    vehicle.name = "RailVehicle3D"
-    vehicle.add_child(model, false, Node.INTERNAL_MODE_BACK)
-    vehicle.add_child(fiz_controller, false, Node.INTERNAL_MODE_BACK)
-    vehicle.add_child(rain_volume, false, Node.INTERNAL_MODE_BACK)
-    if low_poly_model:
-        vehicle.add_child(low_poly_model, false, Node.INTERNAL_MODE_BACK)
-        vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
-    if load_model:
-        vehicle.add_child(load_model, false, Node.INTERNAL_MODE_BACK)
-        vehicle.load_model_path = vehicle.get_path_to(load_model)
-    if passengers_model:
-        vehicle.add_child(passengers_model, false, Node.INTERNAL_MODE_BACK)
     var auto_rewident := MaszynaAutoRewidentNode.new()
     auto_rewident.name = "AutoRewident"
-    vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
-    vehicle.model_instance_path = vehicle.get_path_to(model)
-    # the vehicle's presence in the tree is the MaszynaRailVehiclePhysicsNode itself - the controller it
-    # owns is not a node and has no path of its own.
-    vehicle.controller_path = NodePath(fiz_controller.name)
-    vehicle.cabin_scene = structure.cabin_scene
-    vehicle.cabin_rotate_180deg = true
-    vehicle.joint_cabs = structure.joint_cabs
-    return vehicle
 
+    var parts:Array[Node] = [physics, rain_volume, auto_rewident]
+    for part:Node in parts:
+        vehicle.add_child(part, false, Node.INTERNAL_MODE_BACK)
+    var rid:RID = physics.get_vehicle_rid()
+    vehicle.set_vehicle(rid)
+    RailVehicleRenderingServer.vehicle_set_appearance(rid, structure.appearance)
+    RailVehicleRenderingServer.vehicle_set_load_model(
+            rid, structure.data_path, _load_model_filename(structure, load_name))
+    # the editor drives no vehicle, and has no CabinSystem
+    if not Engine.is_editor_hint():
+        CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
+    _fit_rain_volume(rid, rain_volume)
+    _apply_wiper_count(rid, structure.appearance)
 
-## Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab)
-## lives in one vehicle-local frame where +Z is the direction of travel: the original draws
-## all of them under the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp,
-## vFront) (DynObj.cpp:2506-2508; opengl33renderer.cpp:1174, 2856, 2976). RailVehicle3D uses
-## Godot's -Z forward, so each of them gets the same 180 degree yaw - the cab via
-## cabin_rotate_180deg above.
-static func _build_model(
-        data_path:String, node_name:String, model_filename:String,
-        skins:PackedStringArray) -> E3DModelInstance:
-    var model := E3DModelInstance.new()
-    model.name = node_name
-    # The .scn calls a vehicle a "dynamic" and a static prop a "node model"; the wrapper builds
-    # only the first kind here. Smoke density reads it (maszyna/smoke/*/density).
-    model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
-    model.data_path = data_path
-    model.model_filename = model_filename
-    model.skins = skins
-    model.rotation.y = PI
-    return model
-
+    var abs_mmd_path:String = (
+            UserSettings.get_maszyna_game_dir().path_join(structure.data_path)
+            .path_join(structure.file_name + ".mmd"))
+    var sound_diagnostics:Array[Dictionary] = []
+    parts.append_array(MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, {}, sound_diagnostics))
+    for diagnostic:Dictionary in sound_diagnostics:
+        if not diagnostic["severity"] == "info":
+            push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
+    return parts
 
 
 ## Which model a cargo is drawn as, in the order the original tries them
@@ -230,63 +183,40 @@ static func _model_exists(data_path:String, relpath:String) -> bool:
     return FileAccess.file_exists(
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(relpath + ".e3d"))
 
-## What every vehicle gets for itself rather than from the cache: its sound pools, and the
-## animation bindings, which are paths into the E3D submodel tree this very vehicle builds.
-static func initialize_instance(
-        vehicle:RailVehicle3D, structure:MaszynaVehicleStructure, head_display_material:Material) -> void:
-    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(structure.data_path)
-            .path_join(structure.file_name + ".mmd"))
-    _bind_animation_paths(vehicle, model, structure.wiper_prefix, structure.mirror_names)
-    var sound_diagnostics:Array[Dictionary] = []
-    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "MaszynaRailVehiclePhysicsNode", {}, sound_diagnostics)
-    for diagnostic:Dictionary in sound_diagnostics:
-        if diagnostic["severity"] != "info":
-            push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
-    configure_head_display(vehicle, model, head_display_material)
-
-    # FIZ Dimensions are known only once MaszynaRailVehiclePhysicsNode has built its deferred controller.
-    var fiz_controller:MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
-    var rain_volume:RainVolume = vehicle.get_node(NodePath(RAIN_VOLUME_NAME)) as RainVolume
-    fiz_controller.vehicle_changed.connect(_fit_rain_volume.bind(fiz_controller, rain_volume))
-
-
-static func _fit_rain_volume(physics_node:VehiclePhysicsNode, rain_volume:RainVolume) -> void:
-    var vehicle:RID = physics_node.get_vehicle_rid()
+## FIZ Dimensions: the vehicle's origin lies on the rail level, so the box is lifted by half of
+## its height.
+static func _fit_rain_volume(vehicle:RID, rain_volume:RainVolume) -> void:
     if not VehicleServer.vehicle_is_simulation_ready(vehicle):
         return
     rain_volume.size = VehicleServer.vehicle_get_dimensions(vehicle)
-    # Vehicle origin lies on the rail level, so the box is lifted by half of its height.
     rain_volume.position.y = rain_volume.size.y * 0.5
 
 
-## Public: also called by MaszynaRailVehicle3DManager to (re-)apply the per-instance
-## head_display_material onto a cached vehicle template's fresh instantiate()'d copy, since
-## unlike data_path/file_name/skin it isn't part of that template's cache key (see
-## MaszynaRailVehicle3DManager's own doc comment for why).
-static func configure_head_display(
-        vehicle:RailVehicle3D, model:E3DModelInstance, head_display_material:Material) -> void:
-    if not head_display_material:
+## The mirrors' glass reflects the scene (maszyna/rendering/real_mirrors): a submodel with nothing
+## under it, named after a mirror, gets a PlanarMirror3D - put on the nodes the exterior is built
+## as near the camera, so again every time it is built (RailVehicleRenderingServer.vehicle_model_built)
+static func add_mirrors(vehicle:RailVehicle3D) -> void:
+    if not ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true):
         return
-    var head_display:MeshInstance3D = model.find_child("tablice_relacyjne", true, false) as MeshInstance3D
-    if not head_display:
-        return
-    vehicle.head_display_e3d_path = vehicle.get_path_to(model)
-    vehicle.head_display_material = head_display_material
-    vehicle.head_display_node_path = vehicle.get_path_to(head_display)
+    for node:Node in vehicle.find_children("*", "MeshInstance3D", true, false):
+        var glass:MeshInstance3D = node as MeshInstance3D
+        var submodel_name:String = glass.name.to_lower()
+        if glass.get_child_count(true) == 0 \
+                and MIRROR_GLASS_NAME_PARTS.any(func(part:String) -> bool: return submodel_name.contains(part)):
+            glass.add_child(PlanarMirror3D.new())
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by
-## FizVehicleBuilder.build_scene() - lets RailVehicle3D.show_cabin()'s existing
-## cabin_scene.instantiate() produce a correctly pre-configured MaszynaDynamicTrainCabin every time,
-## with no changes to rail_vehicle_3d.gd.
+## FizVehicleBuilder.build_scene() - CabinSystem.vehicle_show_cabin() instantiates a correctly
+## pre-configured MaszynaDynamicTrainCabin every time. The cab is drawn in the MaSzyna vehicle frame
+## like the models (MASZYNA_VEHICLE_FRAME).
 static func _build_cabin_scene(normalized_data_path:String, file_name:String, skin:String) -> PackedScene:
     var cabin := MaszynaDynamicTrainCabin.new()
     cabin.data_path = normalized_data_path
     cabin.mmd_filename = file_name
     cabin.skin = skin
+    cabin.transform = MASZYNA_VEHICLE_FRAME
     var packed := PackedScene.new()
     var err:Error = packed.pack(cabin)
     cabin.free()
@@ -296,139 +226,87 @@ static func _build_cabin_scene(normalized_data_path:String, file_name:String, sk
     return packed
 
 
-## Resolves vehicle's bogie/wheel animation paths against model's submodel tree. model may not
-## be e3d_loaded yet (E3DModelInstance builds its submodel tree in _process(), not synchronously
-## in add_child()) - in that case resolution is deferred to model's own e3d_loaded signal.
-static func _bind_animation_paths(
-        vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String, mirror_names:PackedStringArray) -> void:
-    if model.is_e3d_loaded():
-        _resolve_animation_paths(vehicle, model, wiper_prefix, mirror_names)
-    else:
-        model.e3d_loaded.connect(
-                _resolve_animation_paths.bind(vehicle, model, wiper_prefix, mirror_names), CONNECT_ONE_SHOT)
+## The submodels of the exterior model that move, by the original's names.
+static func _resolve_parts(
+        appearance:RailVehicleAppearance, model:E3DModel, wiper_prefix:String,
+        mirror_names:PackedStringArray) -> void:
+    var names:Dictionary[String, bool] = {}
+    _index_submodels(model.submodels, names)
 
+    appearance.front_bogie = _find_submodel(names, FRONT_BOGIE_SUBMODEL_NAMES)
+    appearance.rear_bogie = _find_submodel(names, REAR_BOGIE_SUBMODEL_NAMES)
 
-static func _resolve_animation_paths(
-        vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String, mirror_names:PackedStringArray) -> void:
-    var submodel_index:Dictionary = {}
-    _index_submodels(model, submodel_index)
-
-    var front_bogie:Node3D = _find_submodel(submodel_index, FRONT_BOGIE_SUBMODEL_NAMES)
-    if front_bogie:
-        vehicle.front_bogie_path = vehicle.get_path_to(front_bogie)
-
-    var rear_bogie:Node3D = _find_submodel(submodel_index, REAR_BOGIE_SUBMODEL_NAMES)
-    if rear_bogie:
-        vehicle.rear_bogie_path = vehicle.get_path_to(rear_bogie)
-
-    var powered_wheel_paths:Array[NodePath] = []
+    var powered_wheels:PackedStringArray = []
     for axle_index:int in range(1, MAX_WHEEL_AXLES + 1):
-        var wheel:Node3D = _find_submodel(submodel_index, ["%s%d" % [WHEEL_SUBMODEL_PREFIX, axle_index]])
+        var wheel:String = _find_submodel(names, ["%s%d" % [WHEEL_SUBMODEL_PREFIX, axle_index]])
         if wheel:
-            powered_wheel_paths.append(vehicle.get_path_to(wheel))
-    if powered_wheel_paths:
-        vehicle.powered_wheel_paths = powered_wheel_paths
+            powered_wheels.append(wheel)
+    appearance.powered_wheels = powered_wheels
 
-    var front_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 1)
-    if front_arm_paths:
-        vehicle.pantograph_front_arm_paths = front_arm_paths
-    var rear_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 2)
-    if rear_arm_paths:
-        vehicle.pantograph_rear_arm_paths = rear_arm_paths
-
+    appearance.pantograph_front_arms = _find_pantograph_arms(names, 1)
+    appearance.pantograph_rear_arms = _find_pantograph_arms(names, 2)
     if wiper_prefix:
-        vehicle.wiper_arm_paths = _find_wiper_arm_paths(vehicle, submodel_index, wiper_prefix)
-        var fiz_controller:MaszynaRailVehiclePhysicsNode = vehicle.get_node("MaszynaRailVehiclePhysicsNode") as MaszynaRailVehiclePhysicsNode
-        fiz_controller.vehicle_changed.connect(_apply_wiper_count.bind(fiz_controller, vehicle))
-        _apply_wiper_count(fiz_controller, vehicle)
-
-    if mirror_names:
-        var mirror_paths:Array[NodePath] = []
-        for mirror_name:String in mirror_names:
-            var mirror:Node3D = _find_submodel(submodel_index, [mirror_name.to_lower()])
-            mirror_paths.append(vehicle.get_path_to(mirror) if mirror else NodePath())
-        vehicle.mirror_paths = mirror_paths
-
-    if ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true):
-        for submodel_name:String in submodel_index:
-            var glass:MeshInstance3D = submodel_index[submodel_name] as MeshInstance3D
-            if glass and glass.get_child_count(true) == 0 \
-                    and MIRROR_GLASS_NAME_PARTS.any(func(part:String) -> bool: return submodel_name.contains(part)):
-                glass.add_child(PlanarMirror3D.new())
-
-    # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
-    var coupler_paths:Dictionary = {}
-    for coupler_name:String in COUPLER_SUBMODEL_NAMES:
-        for suffix:String in ["_on", "_off", "_xon"]:
-            var submodel:Node3D = _find_submodel(submodel_index, [coupler_name + suffix])
-            if submodel:
-                coupler_paths[coupler_name + suffix] = vehicle.get_path_to(submodel)
-    if coupler_paths:
-        vehicle.coupler_submodel_paths = coupler_paths
+        appearance.wiper_arms = _find_wiper_arms(names, wiper_prefix)
+    var mirrors:PackedStringArray = []
+    for mirror_name:String in mirror_names:
+        mirrors.append(_find_submodel(names, [mirror_name.to_lower()]))
+    appearance.mirrors = mirrors
 
 
-## Returns the 5 arm/slider paths for the given pantograph number (1=front, 2=rear), or [] when
-## the lower arm 1, the upper arm 1 or the slider is missing - RailVehicle3D takes the geometry of
-## the pantograph from these three. The second arm of each pair is optional, an empty path without
-## it: a single-arm pantograph has none (dynamic/pkp/e186_v2 has no "ramiegorne2"), and the
+## The 5 arm/slider names for the given pantograph number (1=front, 2=rear), or none when the lower
+## arm 1, the upper arm 1 or the slider is missing - RailVehicleRenderingServer takes the geometry
+## of the pantograph from these three. The second arm of each pair is optional, an empty name
+## without it: a single-arm pantograph has none (dynamic/pkp/e186_v2 has no "ramiegorne2"), and the
 ## original does not animate a missing element either (DynObj.cpp:5414).
-static func _find_pantograph_arm_paths(
-        vehicle:RailVehicle3D, submodel_index:Dictionary, pantograph_number:int) -> Array[NodePath]:
-    var paths:Array[NodePath] = []
+static func _find_pantograph_arms(names:Dictionary[String, bool], pantograph_number:int) -> PackedStringArray:
+    var arms:PackedStringArray = []
     for index:int in PANTOGRAPH_ARM_SUBMODEL_PREFIXES.size():
-        var node:Node3D = _find_submodel(
-                submodel_index, ["%s%d" % [PANTOGRAPH_ARM_SUBMODEL_PREFIXES[index], pantograph_number]])
-        if not node and index in PANTOGRAPH_REQUIRED_ARMS:
-            return []
-        paths.append(vehicle.get_path_to(node) if node else NodePath())
-    return paths
+        var arm:String = _find_submodel(names, ["%s%d" % [PANTOGRAPH_ARM_SUBMODEL_PREFIXES[index], pantograph_number]])
+        if not arm and index in PANTOGRAPH_REQUIRED_ARMS:
+            return PackedStringArray()
+        arms.append(arm)
+    return arms
 
 
 ## RailVehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
-static func _apply_wiper_count(physics_node:VehiclePhysicsNode, vehicle:RailVehicle3D) -> void:
+static func _apply_wiper_count(vehicle:RID, appearance:RailVehicleAppearance) -> void:
     var wipers:RailVehicleWipers = VehicleServer.vehicle_component_get(
-            physics_node.get_vehicle_rid(), VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
+            vehicle, VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
     if wipers:
-        wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
+        wipers.wiper_count = appearance.wiper_arms.size() / WIPER_ELEMENT_SUFFIXES.size()
         wipers.apply_config()
 
 
 ## Arm 1, arm 2 and blade of every wiper - "<prefix><number>_p1/_p2/_p3", numbered from 1
-## (DynObj.cpp:5838-5870); an empty path for an element the model does not have. The original
+## (DynObj.cpp:5838-5870); an empty name for an element the model does not have. The original
 ## takes the number of wipers from the MMD "animations:" counts, here they are collected until a
 ## wiper with no element at all.
-static func _find_wiper_arm_paths(
-        vehicle:RailVehicle3D, submodel_index:Dictionary, wiper_prefix:String) -> Array[NodePath]:
-    var paths:Array[NodePath] = []
+static func _find_wiper_arms(names:Dictionary[String, bool], wiper_prefix:String) -> PackedStringArray:
+    var arms:PackedStringArray = []
     for wiper:int in range(1, MAX_WIPERS + 1):
-        var wiper_paths:Array[NodePath] = []
+        var wiper_arms:PackedStringArray = []
         for element:String in WIPER_ELEMENT_SUFFIXES:
-            var node:Node3D = _find_submodel(submodel_index, ["%s%d%s" % [wiper_prefix.to_lower(), wiper, element]])
-            wiper_paths.append(vehicle.get_path_to(node) if node else NodePath())
-        if not wiper_paths.any(func(path:NodePath) -> bool: return not path.is_empty()):
+            wiper_arms.append(_find_submodel(names, ["%s%d%s" % [wiper_prefix.to_lower(), wiper, element]]))
+        if not Array(wiper_arms).any(func(arm:String) -> bool: return not arm == ""):
             break
-        paths.append_array(wiper_paths)
-    return paths
+        arms.append_array(wiper_arms)
+    return arms
 
 
-static func _find_submodel(submodel_index:Dictionary, names:Array[String]) -> Node3D:
-    for submodel_name:String in names:
-        var node:Node = submodel_index.get(submodel_name)
-        if node is Node3D:
-            return node
-    return null
+static func _find_submodel(names:Dictionary[String, bool], candidates:Array[String]) -> String:
+    for candidate:String in candidates:
+        if names.has(candidate):
+            return candidate
+    return ""
 
 
 ## Indexed by LOWERCASED name, matching the original engine's own TSubModel::GetFromName
 ## (case-insensitive by default) - see mmd_cabin_instancer.gd's _index_submodels for the
 ## real-data case mismatch (su45_v2) this guards against.
-##
-## get_children(true) is required: the NODES instancer adds every submodel node as an INTERNAL
-## child (INTERNAL_MODE_BACK), which plain get_children() silently skips.
-static func _index_submodels(node:Node, index:Dictionary) -> void:
-    for child:Node in node.get_children(true):
-        var child_name:String = child.name.to_lower()
-        if not index.has(child_name):
-            index[child_name] = child
-        _index_submodels(child, index)
+static func _index_submodels(submodels:Array, names:Dictionary[String, bool]) -> void:
+    for item:Variant in submodels:
+        var submodel:E3DSubModel = item as E3DSubModel
+        if submodel:
+            names[submodel.resource_name.to_lower()] = true
+            _index_submodels(submodel.submodels, names)

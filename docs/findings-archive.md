@@ -4,6 +4,56 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-30 - reordering a trainset hung the editor
+
+* **Symptom:** dragging a vehicle of `ImpulsTrainset` to another place among its siblings in the
+  editor froze it; a headless probe doing `move_child()` on the trainset never reached its next
+  frame.
+* **What proved it:** the probe stopped after the reorder, the trainset placed anew. Before the fix
+  `RailVehicleServer::trainset_place()` coupled the new pairs on top of the old ones: the vehicle
+  moved to the front coupled to the old first one, whose pairs were still there - a ring. The next
+  walk along the trainset (`vehicle_get_coupled()`, from the couplers' drawing) never ended.
+* **Fix:** `trainset_place()` uncouples every coupling between vehicles of the trainset before it
+  couples them in the new order (`test_train_set_3d.gd` asserts the trainset open at both ends).
+* **Rule:** a trainset placed again in another order lets go of its old pairs first.
+
+## 2026-09-30 - couplings undone by the second configuration
+
+* **Symptom:** coupling a trainset on `vehicle_placed` coupled nothing that lasted.
+* **What proved it:** the order of the build: `VehiclePhysicsNode` built an empty vehicle on entering
+  the tree, then `MaszynaRailVehiclePhysicsNode` gave it its `.fiz` controller from a deferred
+  `_reload()`; `controller_configure()` restarts the vehicle - `release()` - and every coupler is
+  cleared. The vehicle was placed after the first, empty configuration, so whatever coupled it on
+  that event was undone by the second. The per-frame wait in `_wait_for_vehicles()` hid it.
+* **Fix:** a vehicle is configured once: the controller is given before the node enters the tree
+  (the instancer sets `controller`) or built by the node as it enters (`_build_controller()`); the
+  deferred `_reload()` is gone.
+* **Rule:** a vehicle is configured once, before anything can see it.
+
+## 2026-09-30 - a builder's paths saved into the scene
+
+* **Symptom:** with `MaszynaRailVehicle3D` made a `RailVehicle3D` subclass, everything its instancer
+  set on the vehicle - `controller_path`, the part paths, `cabin_scene` - would have been saved with
+  the scene and the scenery cache, and a saved `controller_path` to a child built at run time would
+  have held the loaded node waiting for a controller nobody built.
+* **What proved it:** the exported properties of a native base are the subclass's own - storage
+  follows them; the instancer wrote them on the node.
+* **Fix:** nothing a builder builds goes through the node's properties: the MaSzyna instancer hands
+  `RailVehicleRenderingServer` the vehicle's appearance and `CabinSystem` its cab by the vehicle's
+  handle; `RailVehicle3D`'s paths are for vehicles assembled by hand.
+* **Rule:** a builder hands the servers what it built by the node's handle, never through the node's
+  exported properties.
+
+## 2026-09-30 - a script subclass shadows the native lifecycle
+
+* **Symptom:** a GDScript `extends RailVehicle3D` defining `_enter_tree()`/`_ready()` would have
+  replaced `RailVehicle3D`'s own, which subscribed to the tracks and took the vehicle.
+* **What proved it:** Godot calls a virtual on the script instance first; the extension class's
+  override of the same name is not reached.
+* **Fix:** `RailVehicle3D` does its work in `_notification(ENTER_TREE/EXIT_TREE)` (as `Cabin3D`
+  does), and binds nothing under `_process`.
+* **Rule:** a native node a script may subclass does its own lifecycle work in `_notification()`.
+
 ## 2026-09-30 - vehicles stood off their tracks in the editor
 
 * **Symptom:** after `RailVehicle3D` stopped creating its own RID (RC-026), the vehicles of
@@ -15,7 +65,9 @@ and the rule. Headings keep their date and title, because comments in the code c
   ignores silently. In the game the vehicle is built on entering the tree, before the tracks; in the
   editor only once the `.fiz` is read, after them.
 * **Fix:** the placement stays pending until the node has its vehicle; the vehicle's arrival
-  (`_on_vehicle_changed()` -> `_process_dirty()`) places it.
+  (`_on_vehicle_changed()` -> `_process_dirty()`) places it. Since `RailVehicle3D` became a proxy
+  with no tick: `set_vehicle()` or `tracks_changed`, whichever comes last, calls
+  `_place_on_start_track()`.
 * **Rule:** an action that needs two things is spent only when both exist - a call with an invalid
   handle is ignored without a word, and the flag that said "still to do" is gone.
 
@@ -459,7 +511,7 @@ and the rule. Headings keep their date and title, because comments in the code c
 * **Latent, not fixed:** `RailVehicle3D` binds its tick as `ClassDB::bind_method(D_METHOD("_process",
   ...))`, i.e. it registers a method under a virtual's name. No GDScript subclass defines `_process`
   today, so the trap of 2026-09-23 (a script replacing a native virtual) is not active - but it is
-  one subclass away. Recorded in `TODO.md`.
+  one subclass away. Gone 2026-09-30: `RailVehicle3D` has no tick and binds no `_process`.
 
 ## 2026-09-27 - the SM42 stood braked: "zero speed" took its controller into the braking positions
 
@@ -1056,7 +1108,8 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   force_detail_refresh`, came from the chord between the bogie pivots. The two agree on straight
   track only.
 * **Fix:** `RailVehicleServer` composes the body from the two pivots, cached against the
-  placement. `RailVehicle3D` takes that one answer and only places the bogie nodes.
+  placement. `RailVehicle3D` takes that one answer and only places the bogie nodes (today
+  `RailVehicleRenderingServer` does, on `vehicle_placement_changed`).
 * **Rule:** one piece of state, one writer. Two writers that both look correct disagree only where
   the geometry shows it.
 * **Trap:** a vehicle with no mass integrates to NaN, and NaN never equals itself, so "did it move"
@@ -1201,7 +1254,8 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
 * **Cause:** components added after `VehiclePhysicsNode::_build()`'s `initialize()` configure
   nothing until the next tick dirties the Mover. `MoverVehicleWheels` reads `mover->BDist`, so the
   only placement saw spacing 0, and `moved` stays false while the vehicle stands still.
-* **Fix:** `RailVehicle3D` reacts to `mover_config_changed`.
+* **Fix:** `RailVehicle3D` reacts to `mover_config_changed`. Today the drawing is
+  `RailVehicleRenderingServer`'s, and it reacts to `VehicleServer.vehicle_config_changed`.
 * **Rules:**
   * A per-frame path gated on "moved" never picks up a late value. Recompute config-derived values
     on the config event, not with a retry flag.
@@ -1363,7 +1417,8 @@ Found by reading every `_do_fetch_state_from_mover()` in #184 stage 1:
 * **Fix:** the work moved to `_do_process_mover()` / `_handle_mover_update()`, and the fetches
   only read.
 * The twelve coupler counters were sound bookkeeping living in the vehicle. The vehicle now emits
-  `coupler_attached`/`coupler_detached` (carrying a `CouplingElement`), and `TrainSoundSystem`
+  `coupler_attached`/`coupler_detached` (carrying a `CouplingElement`, since 2026-09-30 a
+  `RailVehicleController.CouplingFlags` flag), and `TrainSoundSystem`
   counts per vehicle RID.
 * `power_source` was written by `TrainElectricEngine` and `TrainLighting`, and the last to merge
   (FIZ section order) won. Lighting now publishes `light_power_source`.
@@ -1473,7 +1528,8 @@ lighting or the trainset.
   end it recomputes `Neighbours[end].distance` from `CouplerDist()` (`TrainController.cpp:423-430`,
   DynObj.cpp:7144-7154, called from DynObj.cpp:8193), which `CouplerForce()` starts from
   (Mover.cpp:4781).
-* **Fix:** coupled ends refresh every frame. The saving stays for free ends.
+* **Fix:** coupled ends refresh every frame. The saving stays for free ends. (The "nothing found"
+  call is `clear_neighbour(end)` since 2026-09-30.)
 * **Rule:** before caching a call as redundant, open the callee and the original line cited above
   it.
 
@@ -1845,7 +1901,9 @@ lighting or the trainset.
      `CabActivisation()` of the master cab (Mover.cpp:2905).
 * **Fix:** no cab activation at creation; `SceneryInstancer._wait_for_vehicles()` waits until the
   vehicles stand on their tracks and `_build_drivers()` couples the trainsets (`TrainSet3D.couple()`)
-  before any driver exists; the alerter is left to the cab's activation.
+  before any driver exists; the alerter is left to the cab's activation. Since 2026-09-30
+  `RailVehicleServer.trainset_place()` stands and couples a trainset's vehicles, and
+  `_wait_for_vehicles()` awaits each vehicle's `vehicle_built`.
 * **Rule:** a command sent along the couplers is sent once the trainset is coupled and placed; a
   configuration never sets what the original switches at run time.
 

@@ -46,7 +46,9 @@ namespace godot {
             /* TTrain::m_distancecounter (Train.h:904) - metres since activation, -1 while off */
             double distance_counter = DISTANCE_COUNTER_OFF;
             static constexpr double DISTANCE_COUNTER_OFF = -1.0;
-            int _resolve_coupler_end(const Variant &p_where) const;
+            CouplerEnd _resolve_coupler_end(const Variant &p_where) const;
+            /* The coupled vehicle as this end's neighbour; false when the end is not coupled */
+            bool _neighbour_from_coupler(CouplerEnd p_end);
             void _consume_coupler_events();
 
         protected:
@@ -124,19 +126,23 @@ namespace godot {
             double process_movement(double p_delta) override;
             void update_location() override;
             void update_neighbour(
-                    int p_end, RailVehicleController *p_other, int p_other_end, double p_track_distance) override;
+                    CouplerEnd p_end, const Ref<RailVehicleController> &p_other, CouplerEnd p_other_end,
+                    double p_track_distance) override;
+            void clear_neighbour(CouplerEnd p_end) override;
             void compute_forces(double p_delta) override;
             void compute_movement(double p_delta) override;
             void compute_fast_movement(double p_delta) override;
             bool is_physics_active() const override;
             void wake() override;
-            void couple(RailVehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) override;
-            void uncouple(int p_end) override;
-            bool is_coupled(int p_end) const override;
-            bool is_coupled_by(int p_end, CouplingElement p_element) const override;
+            void
+            couple(const Ref<RailVehicleController> &p_other, CouplerEnd p_end, CouplerEnd p_other_end,
+                   BitField<CouplingFlags> p_coupling) override;
+            void uncouple(CouplerEnd p_end) override;
+            bool is_coupled(CouplerEnd p_end) const override;
+            bool is_coupled_by(CouplerEnd p_end, BitField<CouplingFlags> p_flags) const override;
             void coupler_connect(const Variant &p_where) override;
             void coupler_disconnect(const Variant &p_where) override;
-            Ref<RailVehicleController> get_coupled_controller(int p_end) const override;
-            int get_coupled_end(int p_end) const override;
+            Ref<RailVehicleController> get_coupled_controller(CouplerEnd p_end) const override;
+            CouplerEnd get_coupled_end(CouplerEnd p_end) const override;
     };
 } // namespace godot

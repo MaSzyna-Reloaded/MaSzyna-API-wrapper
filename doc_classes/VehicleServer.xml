@@ -126,6 +126,13 @@
 				Returns the commands [param vehicle] answers to.
 			</description>
 		</method>
+		<method name="vehicle_get_controller" qualifiers="const">
+			<return type="VehicleController" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The controller the vehicle runs on - the copy its simulation was built from, null without one.
+			</description>
+		</method>
 		<method name="vehicle_get_dimensions" qualifiers="const">
 			<return type="Vector3" />
 			<param index="0" name="vehicle" type="RID" />

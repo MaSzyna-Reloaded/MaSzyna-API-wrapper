@@ -400,9 +400,9 @@ if (pivot_spacing <= 0.0) {
 }
 
 // this - the owner announces that the configuration reached the backend, and the work happens
-// there, once
-controller->connect(VehicleController::mover_config_changed_signal,
-                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+// there, once (RailVehicleRenderingServer places the vehicle's running gear again)
+vehicle_server->connect(VehicleServer::vehicle_config_changed_signal,
+                        callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_config_changed));
 ```
 
 The same applies to a deferred call added beside a direct one, a second `_ready()`-time retry, a

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_qg2pq"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/legacy/e3d/e3d_model_instance.gd" id="4_drlsl"]
+[ext_resource type="Script" uid="uid://onxj3ocy4jip" path="res://addons/libmaszyna/trainsets/train_set_3d.gd" id="9_ss847"]
 [ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
@@ -117,120 +118,121 @@ tonemap_agx_contrast = 1.0
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, -18.508982, 1.959, 168.0919)
 sfx_bank = ExtResource("player_sfx_bank")
 
+[node name="ImpulsTrainset" type="Node3D" parent="." unique_id=1580396332]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)
+script = ExtResource("9_ss847")
+start_track_name = "diverging2"
+start_track_offset = 149.24
+couplings = Array[int]([255, 255, 255])
+velocity = 20.0
+metadata/_custom_type_script = "uid://onxj3ocy4jip"
+
+[node name="Impuls-024a" type="RailVehicle3D" parent="ImpulsTrainset" unique_id=300782032]
+head_display_material = ExtResource("28_tdoik")
+transform = Transform3D(-1, 0, 1.2779545607196068e-16, 0, 1, 0, -1.2779545607196068e-16, 0, -1, -11.923031099999998, 0.6616861199999999, 38.14975780000001)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/impuls_v1"
+file_name = "36wea-a_kd"
+skin = "36wea-019a"
+vehicle_id = "impuls-a"
+metadata/_custom_type_script = "uid://djd17om24oh3s"
+
+[node name="Impuls-024b" type="RailVehicle3D" parent="ImpulsTrainset" unique_id=1161615865]
+head_display_material = ExtResource("28_tdoik")
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -11.9230311, 0.6616861199999999, 19.659757800000012)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/impuls_v1"
+file_name = "31wea-b_kd"
+skin = "36wea-019b,1|36wea-019b,2|36wea-019b,3|36wea-019c,4"
+vehicle_id = "impuls-b"
+metadata/_custom_type_script = "uid://djd17om24oh3s"
+
+[node name="Impuls-024c" type="RailVehicle3D" parent="ImpulsTrainset" unique_id=1550835407]
+head_display_material = ExtResource("28_tdoik")
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -11.9230311, 0.6616861199999999, 3.739757800000011)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/impuls_v1"
+file_name = "31wea-c_kd"
+skin = "36wea-019b,1|36wea-019c,2|36wea-019c,3|36wea-019c,4"
+vehicle_id = "impuls-c"
+metadata/_custom_type_script = "uid://djd17om24oh3s"
+
+[node name="Impuls-024d" type="RailVehicle3D" parent="ImpulsTrainset" unique_id=1037242744]
+head_display_material = ExtResource("28_tdoik")
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -11.9230311, 0.6616861199999999, -14.750242199999997)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/impuls_v1"
+file_name = "31wea-d_kd"
+skin = "36wea-019a,1|36wea-019a,2|36wea-019a,3|36wea-019a,4"
+vehicle_id = "impuls-d"
+metadata/_custom_type_script = "uid://djd17om24oh3s"
+
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)
 material_override = ExtResource("2_imrpy")
 size = Vector3(5000, 0.1, 5000)
 
-[node name="Impuls-024a" type="Node3D" parent="." unique_id=300782032]
-transform = Transform3D(-1, 0, -8.742278e-08, 0, 1, 0, 8.742278e-08, 0, -1, -0.021647027, -0.019251347, -4.3020163)
-script = ExtResource("29_dcvyd")
-data_path = "/dynamic/pkp/impuls_v1"
-file_name = "36wea-a_kd"
-skin = "36wea-019a"
-head_display_material = ExtResource("28_tdoik")
-vehicle_id = "impuls-a"
-start_track_name = "diverging2"
-start_track_offset = 70.0
-metadata/_custom_type_script = "uid://djd17om24oh3s"
-
-[node name="Impuls-024b" type="Node3D" parent="." unique_id=1161615865]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -0.021647027, -0.019251347, 14.222983)
-script = ExtResource("29_dcvyd")
-data_path = "/dynamic/pkp/impuls_v1"
-file_name = "31wea-b_kd"
-skin = "36wea-019b,1|36wea-019b,2|36wea-019b,3|36wea-019c,4"
-head_display_material = ExtResource("28_tdoik")
-vehicle_id = "impuls-b"
-start_track_name = "diverging2"
-start_track_offset = 88.5
-metadata/_custom_type_script = "uid://djd17om24oh3s"
-
-[node name="Impuls-024c" type="Node3D" parent="." unique_id=1550835407]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -0.021647027, -0.019251347, 30.116581)
-script = ExtResource("29_dcvyd")
-data_path = "/dynamic/pkp/impuls_v1"
-file_name = "31wea-c_kd"
-skin = "36wea-019b,1|36wea-019c,2|36wea-019c,3|36wea-019c,4"
-head_display_material = ExtResource("28_tdoik")
-vehicle_id = "impuls-c"
-start_track_name = "diverging2"
-start_track_offset = 104.4
-metadata/_custom_type_script = "uid://djd17om24oh3s"
-
-[node name="Impuls-024d" type="Node3D" parent="." unique_id=1037242744]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -0.021647027, -0.019251347, 48.627384)
-script = ExtResource("29_dcvyd")
-data_path = "/dynamic/pkp/impuls_v1"
-file_name = "31wea-d_kd"
-skin = "36wea-019a,1|36wea-019a,2|36wea-019a,3|36wea-019a,4"
-head_display_material = ExtResource("28_tdoik")
-vehicle_id = "impuls-d"
-start_track_name = "diverging2"
-start_track_offset = 122.9
-metadata/_custom_type_script = "uid://djd17om24oh3s"
-
-[node name="ST44-700" type="Node3D" parent="." unique_id=917708164]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.254089, 0, 20.364653)
+[node name="ST44-700" type="RailVehicle3D" parent="." unique_id=917708164]
+start_track_name = "left_diverging_track"
+start_track_offset = 100.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0.18, 0)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/st44_v2"
 file_name = "st44-700"
 skin = "st44-700"
 vehicle_id = "st44"
-start_track_name = "left_diverging_track"
-start_track_offset = 100.0
 
-[node name="SU45" type="Node3D" parent="." unique_id=1297199175]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
+[node name="SU45" type="RailVehicle3D" parent="." unique_id=1297199175]
+start_track_name = "common"
+start_track_offset = 120.0
+transform = Transform3D(-1, 0, 3.4492365813597056e-16, 0, 1, 0, -3.4492365813597056e-16, 0, -1, -25.799999999999997, 0.18, -16)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/su45_v2"
 file_name = "301d"
 skin = "301d-225"
 vehicle_id = "su45"
-start_track_name = "common"
-start_track_offset = 120.0
 
-[node name="SM42" type="Node3D" parent="." unique_id=769861990]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
+[node name="SM42" type="RailVehicle3D" parent="." unique_id=769861990]
+start_track_name = "left_diverging_track"
+start_track_offset = 180.0
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0.18, -80)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/sm42_v1"
 file_name = "6d1"
 skin = "6d-1076"
 vehicle_id = "sm42"
-start_track_name = "left_diverging_track"
-start_track_offset = 180.0
 
-[node name="SM42-907" type="Node3D" parent="." unique_id=1204789574]
-transform = Transform3D(-0.9996828, 0, 0.025186649, 0, 1, 0, -0.025186649, 0, -0.9996828, -25.735577, 0.16, 180.73814)
+[node name="SM42-907" type="RailVehicle3D" parent="." unique_id=1204789574]
+start_track_name = "start"
+start_track_offset = 12.0
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -25.800000000000004, 0.18, 248)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/sm42_v1"
 file_name = "6da"
 skin = "6d-907"
 vehicle_id = "sm42-907"
-start_track_name = "start"
-start_track_offset = 12.0
 
-[node name="EP09" type="Node3D" parent="." unique_id=426636050]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.381563, 0, 128.24704)
+[node name="EP09" type="RailVehicle3D" parent="." unique_id=426636050]
+start_track_name = "left_diverging_track"
+start_track_offset = 50.0
+start_direction = 1
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -32.5, 0.18, 50)
 script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/ep09_v1/"
 file_name = "104e_1"
 skin = "104e-035"
 vehicle_id = "ep09"
-start_track_name = "left_diverging_track"
-start_track_offset = 50.0
-start_direction = 1
 
-[node name="SM31" type="Node3D" parent="." unique_id=162152882]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.559359, 0, 95.37102)
+[node name="SM31" type="RailVehicle3D" parent="." unique_id=162152882]
+start_track_name = "common"
+start_track_offset = 17.23
+transform = Transform3D(-1, 0, -2.711995174656872e-16, 0, 1, 0, 2.711995174656872e-16, 0, -1, -25.800000000000004, 0.18, -118.77)
 script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/sm31_v1/"
 file_name = "411d"
 vehicle_id = "sm31"
-start_track_name = "common"
-start_track_offset = 17.23
 
-[node name="KA" type="Node3D" parent="." unique_id=754884786]
+[node name="KA" type="RailVehicle3D" parent="." unique_id=754884786]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.631773, 0, 119.65934)
 script = ExtResource("29_dcvyd")
 data_path = "/dynamic/road/clio"
@@ -238,15 +240,15 @@ file_name = "clio"
 skin = "red"
 vehicle_id = "clio"
 
-[node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)
+[node name="TEM2-122" type="RailVehicle3D" parent="." unique_id=225663093]
+start_track_name = "diverging"
+start_track_offset = 112.0
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -19.19, 0.18, 12)
 script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/tem2_v2"
 file_name = "tem2-122a"
 skin = "tem2-122"
 vehicle_id = "tem2"
-start_track_name = "diverging"
-start_track_offset = 112.0
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1893813040]
 

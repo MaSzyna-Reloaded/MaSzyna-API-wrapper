@@ -11,8 +11,8 @@ var controller: VehicleController
 func before_each():
     vehicle = RailVehiclePhysicsNode.new()
     add_child(vehicle)
-    vehicle.set_description(FizVehicleBuilder.build_description_at(FIXTURE_PATH))
-    controller = vehicle.get_controller()
+    vehicle.set_controller(FizVehicleBuilder.build_description_at(FIXTURE_PATH))
+    controller = VehicleServer.vehicle_get_controller(vehicle.get_vehicle_rid())
     await wait_idle_frames(2)
 
 
@@ -24,7 +24,7 @@ func test_the_description_is_not_a_vehicle() -> void:
     for component: VehicleComponent in description.components:
         assert_null(component.get_controller(), "%s joined no vehicle" % component.get_class())
     assert_eq(description.get_commands(), PackedStringArray(), "and registers no command")
-    assert_ne(vehicle.get_controller(), description, "the vehicle is a copy")
+    assert_ne(VehicleServer.vehicle_get_controller(vehicle.get_vehicle_rid()), description, "the vehicle is a copy")
 
 
 func after_each():
@@ -108,7 +108,7 @@ func test_buff_coupl():
     assert_eq(coupler.buffer_location, RailVehicleBuffCoupl.BUFFER_LOCATION_BOTH)
     assert_eq(coupler.allowed_flag, 63)
     # no PowerFlag in the fixture: 24V and 110V pass, as TCoupling::PowerFlag (MOVER.h:1215)
-    assert_eq(coupler.power_flag, RailVehicleBuffCoupl.POWER_24V | RailVehicleBuffCoupl.POWER_110V)
+    assert_eq(coupler.power_flag, RailVehicleController.COUPLING_FLAG_POWER_24V | RailVehicleController.COUPLING_FLAG_POWER_110V)
 
 
 
@@ -142,10 +142,10 @@ func test_lights_list():
 func test_two_coupler_sections_reach_both_ends() -> void:
     var two_couplers := RailVehiclePhysicsNode.new()
     add_child_autofree(two_couplers)
-    two_couplers.set_description(FizVehicleBuilder.build_description_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
+    two_couplers.set_controller(FizVehicleBuilder.build_description_at("res://tests/fixtures/test_vehicle_two_couplers.fiz"))
     await wait_idle_frames(2)
 
-    var couplers:Array = two_couplers.get_controller().find_rail_components(RailVehicleComponentType.COMPONENT_BUFFERS)
+    var couplers:Array = VehicleServer.vehicle_get_controller(two_couplers.get_vehicle_rid()).find_rail_components(RailVehicleComponentType.COMPONENT_BUFFERS)
     assert_eq(couplers.size(), 2)
     var locations:Array = couplers.map(func(c: RailVehicleBuffCoupl) -> int: return c.buffer_location)
     assert_has(locations, RailVehicleBuffCoupl.BUFFER_LOCATION_FRONT)

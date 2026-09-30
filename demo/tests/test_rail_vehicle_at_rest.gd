@@ -3,9 +3,9 @@ extends MaszynaGutTest
 ## A vehicle standing still is standing still. Reported from the cab: at zero speed the transform
 ## changes a little from frame to frame and the vehicle visibly jumps.
 ##
-## RailVehicle3D::apply_track_placement() writes the transform on every call, whether or not the
-## vehicle moved, so anything that makes the server hand back a slightly different transform each
-## step is visible immediately.
+## RailVehicleRenderingServer puts the node where RailVehicleServer places the vehicle every step
+## it moved, so anything that makes the server hand back a slightly different transform each step
+## is visible immediately.
 
 var created_tracks:Array[RID] = []
 var created_vehicles:Array[RailVehicle3D] = []
@@ -73,7 +73,7 @@ func _assert_still(track_name:String, offset:float, where:String) -> void:
     created_vehicle_nodes.append(physics_node)
     var wheels:RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.bogie_pivot_spacing = 6.0
-    physics_node.get_controller().add_component(wheels)
+    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).add_component(wheels)
 
     var vehicle := RailVehicle3D.new()
     var front_bogie := Node3D.new()
@@ -103,7 +103,7 @@ func _assert_still(track_name:String, offset:float, where:String) -> void:
         worst_turn = maxf(worst_turn, (now.basis.z - settled.basis.z).length())
 
     assert_almost_eq(
-            float(physics_node.get_controller().get_velocity()), 0.0, 0.001,
+            float(VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).get_velocity()), 0.0, 0.001,
             "the vehicle under test is meant to be standing still %s" % where)
     # a tenth of a millimetre over 40 frames; anything a driver can see is far above this
     assert_lt(worst_move, 0.0001, "a vehicle at rest must not drift %s" % where)

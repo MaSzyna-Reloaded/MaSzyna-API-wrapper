@@ -7,29 +7,31 @@ namespace godot {
 
     /* The coupling flags of one end, read straight from the backend - this class is the only one
      * that may (Mover.h: TCoupling, coupling::). */
-    bool MoverRailVehicleBuffCoupl::is_coupled(const End p_end) const {
+    bool MoverRailVehicleBuffCoupl::is_coupled(const RailVehicleController::CouplerEnd p_end) const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::coupler) != 0;
     }
 
-    bool MoverRailVehicleBuffCoupl::is_brake_hose_connected(const End p_end) const {
+    bool MoverRailVehicleBuffCoupl::is_brake_hose_connected(const RailVehicleController::CouplerEnd p_end) const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::brakehose) != 0;
     }
 
-    bool MoverRailVehicleBuffCoupl::is_main_hose_connected(const End p_end) const {
+    bool MoverRailVehicleBuffCoupl::is_main_hose_connected(const RailVehicleController::CouplerEnd p_end) const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::mainhose) != 0;
     }
 
-    bool MoverRailVehicleBuffCoupl::is_coupling_owner(const End p_end) const {
+    bool MoverRailVehicleBuffCoupl::is_coupling_owner(const RailVehicleController::CouplerEnd p_end) const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr && mover->Couplers[p_end].Render;
     }
 
-    RailVehicleBuffCoupl::End MoverRailVehicleBuffCoupl::get_connected_end(const End p_end) const {
+    RailVehicleController::CouplerEnd
+    MoverRailVehicleBuffCoupl::get_connected_end(const RailVehicleController::CouplerEnd p_end) const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr && mover->Couplers[p_end].ConnectedNr == 1 ? END_REAR : END_FRONT;
+        return mover != nullptr ? static_cast<RailVehicleController::CouplerEnd>(mover->Couplers[p_end].ConnectedNr)
+                                : RailVehicleController::COUPLER_END_FRONT;
     }
 
 
@@ -39,9 +41,9 @@ namespace godot {
         // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
         if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BACK) {
-            coupler = &p_mover->Couplers[1];
+            coupler = &p_mover->Couplers[end::rear];
         } else {
-            coupler = &p_mover->Couplers[0];
+            coupler = &p_mover->Couplers[end::front];
         }
         const double mass = train_controller_node->get_mass();
         const double max_velocity = train_controller_node->get_max_velocity();
@@ -65,10 +67,8 @@ namespace godot {
         coupler->FmaxB = get_buffer_max_tension_tolerance();
         coupler->beta = get_damping_beta();
         coupler->AutomaticCouplingFlag = get_automatic_flag();
+        // the FIZ's negative AllowedFlag is made a permanent one by its parser (fiz_train_buff_coupl_parser.gd)
         coupler->AllowedFlag = get_allowed_flag();
-        if (coupler->AllowedFlag < 0) {
-            coupler->AllowedFlag = -coupler->AllowedFlag | coupling::permanent;
-        }
 
         coupler->PowerCoupling = get_power_coupling();
         coupler->PowerFlag = get_power_flag();
@@ -102,7 +102,7 @@ namespace godot {
         if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BOTH) {
             // single entry for both couplers (Mover.cpp:10370); copy only the configuration, never the
             // runtime connection state (Connected, CouplingFlag, ...) of an already coupled vehicle
-            TCoupling &rear = p_mover->Couplers[1];
+            TCoupling &rear = p_mover->Couplers[end::rear];
             rear.CouplerType = coupler->CouplerType;
             rear.SpringKC = coupler->SpringKC;
             rear.DmaxC = coupler->DmaxC;

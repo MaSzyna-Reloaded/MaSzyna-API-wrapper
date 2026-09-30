@@ -133,6 +133,9 @@ namespace godot {
             /* The controller object bound to the vehicle, 0 without one - C++ only and unbound,
              * for the servers that step and couple the vehicles */
             uint64_t vehicle_get_controller_instance_id(const RID &p_vehicle) const;
+            /* The controller the vehicle runs on - the copy its simulation was built from, null
+             * without one */
+            Ref<VehicleController> vehicle_get_controller(const RID &p_vehicle) const;
             /* What the scenery placed the vehicle with - the velocity it starts with and who drives
              * it. Handed to its controller when it is bound. */
             void vehicle_set_initial_velocity(const RID &p_vehicle, double p_velocity);

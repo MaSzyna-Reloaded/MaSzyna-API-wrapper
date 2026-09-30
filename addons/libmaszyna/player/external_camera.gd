@@ -158,8 +158,9 @@ func _process_dirty() -> void:
 
     # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the trainset on that side
     var trainset_end:RID = RailVehicleServer.vehicle_get_coupled(
-            vehicle.get_rid(), 0 if flip > 0.0 else 1, RailVehicleController.COUPLING_ELEMENT_COUPLER)[0]
-    _view_vehicle = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(trainset_end)) as RailVehicle3D
+            vehicle.get_rid(), RailVehicleController.COUPLER_END_FRONT if flip > 0.0 else RailVehicleController.COUPLER_END_REAR,
+            RailVehicleController.COUPLING_FLAG_COUPLER)[0]
+    _view_vehicle = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(trainset_end)) as RailVehicle3D
     if not _view_vehicle:
         _view_vehicle = vehicle
     var dimensions:Vector3 = VehicleServer.vehicle_get_dimensions(_view_vehicle.get_rid())

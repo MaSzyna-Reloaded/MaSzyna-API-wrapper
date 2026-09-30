@@ -48,7 +48,7 @@ func test_builds_child_controller_from_data_path_and_filename():
     _set_fixture_path()
     await wait_idle_frames(2)
 
-    var controller: VehicleController = node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(node.get_vehicle_rid())
     assert_not_null(controller)
     assert_eq(node.get_child_count(), 0, "the vehicle is the node's own, not a child of it")
     assert_eq(controller.mass, 74000.0)
@@ -62,7 +62,7 @@ func test_native_mover_still_updates():
     _set_fixture_path()
     await wait_idle_frames(3)
 
-    var controller: VehicleController = node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(node.get_vehicle_rid())
     assert_true(controller.get_state().has("velocity"), "VehicleController's native state dictionary should populate")
     assert_true(controller.get_state().has("brake_air_pressure"), "RailVehicleBrake's mover state should be live")
 
@@ -72,12 +72,12 @@ func test_native_mover_still_updates():
 func test_clearing_the_fiz_filename_empties_the_vehicle():
     _set_fixture_path()
     await wait_idle_frames(2)
-    assert_not_null(node.get_controller().get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES))
+    assert_not_null(VehicleServer.vehicle_get_controller(node.get_vehicle_rid()).get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES))
 
     node.fiz_filename = ""
     await wait_idle_frames(2)
-    assert_not_null(node.get_controller(), "the vehicle is still there")
+    assert_not_null(VehicleServer.vehicle_get_controller(node.get_vehicle_rid()), "the vehicle is still there")
     assert_null(
-        node.get_controller().get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES),
+        VehicleServer.vehicle_get_controller(node.get_vehicle_rid()).get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES),
         "with nothing in it"
     )

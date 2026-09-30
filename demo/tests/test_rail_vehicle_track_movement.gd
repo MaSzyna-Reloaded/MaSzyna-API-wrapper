@@ -1,15 +1,5 @@
 extends MaszynaGutTest
 
-class MaszynaRailVehicleSpy extends MaszynaRailVehicle3D:
-    var rebuild_count:int = 0
-
-    func _rebuild() -> void:
-        rebuild_count += 1
-
-    func set_generated_vehicle(vehicle:RailVehicle3D) -> void:
-        _vehicle = vehicle
-
-
 var created_tracks: Array[RID] = []
 var created_vehicles: Array[RailVehicle3D] = []
 var created_vehicle_nodes: Array[VehiclePhysicsNode] = []
@@ -33,28 +23,17 @@ func after_each() -> void:
 
 
 func test_dynamic_vehicle_track_properties_do_not_rebuild_vehicle() -> void:
-    var dynamic_vehicle:MaszynaRailVehicleSpy = MaszynaRailVehicleSpy.new()
-    var generated_vehicle:RailVehicle3D = RailVehicle3D.new()
-    dynamic_vehicle._process(0.0)
-    dynamic_vehicle.set_generated_vehicle(generated_vehicle)
+    var dynamic_vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    watch_signals(dynamic_vehicle)
+    add_child_autofree(dynamic_vehicle)
+    await wait_idle_frames(2)
 
     dynamic_vehicle.start_track_name = "common"
     dynamic_vehicle.start_track_offset = 12.0
     dynamic_vehicle.start_direction = TrackServer.DIRECTION_REVERSED
-    dynamic_vehicle._process(0.0)
+    await wait_idle_frames(2)
 
-    assert_eq(dynamic_vehicle.rebuild_count, 1, "track placement should not rebuild the dynamic vehicle")
-    assert_eq(generated_vehicle.start_track_name, "common", "track name should be forwarded")
-    assert_eq(generated_vehicle.start_track_offset, 12.0, "track offset should be forwarded")
-    assert_eq(
-        generated_vehicle.start_direction,
-        TrackServer.DIRECTION_REVERSED,
-        "track direction should be forwarded",
-    )
-
-    dynamic_vehicle.set_generated_vehicle(null)
-    generated_vehicle.free()
-    dynamic_vehicle.free()
+    assert_signal_emit_count(dynamic_vehicle, "vehicle_built", 1, "track placement should not rebuild the dynamic vehicle")
 
 
 func test_start_track_name_initializes_and_clamps_offset() -> void:
@@ -89,7 +68,7 @@ func test_bogies_follow_track_tangents() -> void:
     TrackServer.topology_rebuild()
 
     var physics_node: VehiclePhysicsNode = _create_vehicle_node()
-    var controller: VehicleController = physics_node.get_controller()
+    var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
     # composed configuration - so the vehicle has to actually have wheels
     # a component is configured and then attached - attaching is what writes it to the backend
@@ -97,27 +76,27 @@ func test_bogies_follow_track_tangents() -> void:
     wheels.bogie_pivot_spacing = 6.0
     controller.add_component(wheels)
     var vehicle:RailVehicle3D = RailVehicle3D.new()
-    var front_bogie:Node3D = Node3D.new()
-    front_bogie.name = "FrontBogie"
-    front_bogie.position.z = -3.0
-    var powered_wheel:Node3D = Node3D.new()
-    powered_wheel.name = "PoweredWheel"
-    front_bogie.add_child(powered_wheel)
-    vehicle.add_child(front_bogie)
-    var rear_bogie:Node3D = Node3D.new()
-    rear_bogie.name = "RearBogie"
-    rear_bogie.position.z = 3.0
-    vehicle.add_child(rear_bogie)
-    vehicle.front_bogie_path = NodePath("FrontBogie")
-    vehicle.rear_bogie_path = NodePath("RearBogie")
-    vehicle.powered_wheel_paths = [NodePath("FrontBogie/PoweredWheel")]
+    var submodels:Dictionary = {
+        "bogie1": Transform3D(Basis(), Vector3(0.0, 0.0, -3.0)),
+        "bogie2": Transform3D(Basis(), Vector3(0.0, 0.0, 3.0)),
+        "wheel01": Transform3D(),
+    }
+    var parents:Dictionary = {"wheel01": "bogie1"}
+    vehicle.add_child(build_model_instance(submodels, parents))
+    vehicle.model_instance_path = NodePath("Model")
+    vehicle.front_bogie_path = NodePath("Model/bogie1")
+    vehicle.rear_bogie_path = NodePath("Model/bogie2")
+    vehicle.powered_wheel_paths = [NodePath("Model/bogie1/wheel01")]
     vehicle.start_track_name = "curve"
     vehicle.start_track_offset = TrackServer.track_get_length(created_tracks[0]) * 0.5
     vehicle.start_direction = TrackServer.DIRECTION_REVERSED
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
     created_vehicles.append(vehicle)
     await wait_idle_frames(2)
+    var front_bogie:Node3D = vehicle.get_node("Model/bogie1")
+    var rear_bogie:Node3D = vehicle.get_node("Model/bogie2")
+    var powered_wheel:Node3D = vehicle.get_node("Model/bogie1/wheel01")
 
     var front_forward:Vector3 = -front_bogie.global_basis.z.normalized()
     var rear_forward:Vector3 = -rear_bogie.global_basis.z.normalized()
@@ -129,7 +108,7 @@ func test_bogies_follow_track_tangents() -> void:
     # The vehicle publishes the axle angle; the node's only job is to put it on the wheel, around
     # its local X, like the original's UpdateAxle() (DynObj.cpp:489). Driving the vehicle is what
     # makes the angle non-trivial - the state is read-only, so it cannot be injected.
-    vehicle.move_on_track(1.5)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 1.5)
     await wait_idle_frames(2)
     var published_angle:float = wheels.get_angle_powered_deg()
     assert_almost_eq(
@@ -174,11 +153,11 @@ func test_move_on_track_moves_forward_and_backward_on_current_track() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(3.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 3.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(5.0, 0.0), "positive movement should update controller position")
     _assert_vector_eq(vehicle.global_position, _rail_position(5.0, 0.0), "positive movement should update position")
 
-    vehicle.move_on_track(-4.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), -4.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(1.0, 0.0), "negative movement should update controller position")
     _assert_vector_eq(vehicle.global_position, _rail_position(1.0, 0.0), "negative movement should update position")
 
@@ -196,11 +175,11 @@ func test_move_on_track_crosses_connected_tracks_and_clamps_at_dead_end() -> voi
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(5.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 5.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(13.0, 0.0), "movement should continue on next track")
     _assert_vector_eq(vehicle.global_position, _rail_position(13.0, 0.0), "position should continue on next track")
 
-    vehicle.move_on_track(20.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 20.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(20.0, 0.0), "movement should clamp at graph end")
     _assert_vector_eq(vehicle.global_position, _rail_position(20.0, 0.0), "dead-end clamp should place vehicle at endpoint")
 
@@ -226,15 +205,18 @@ func test_find_vehicle_measures_between_the_ends_across_tracks() -> void:
     var lengths: float = (searching["controller"] as VehicleController).get_dimensions_length() \
             + (standing["controller"] as VehicleController).get_dimensions_length()
 
-    var ahead: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 0, 1000.0)
-    var behind: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 1, 1000.0)
+    var ahead: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
+            searching_rid, RailVehicleController.COUPLER_END_FRONT, 1000.0)
+    var behind: RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
+            searching_rid, RailVehicleController.COUPLER_END_REAR, 1000.0)
     var found: RailVehicleNeighbour = ahead if ahead else behind
 
     assert_not_null(found, "the other vehicle is on the next track")
     assert_true(ahead == null or behind == null, "and only one way")
     assert_eq(found.vehicle_rid, standing_rid)
     _assert_float_eq(found.distance, 140.0 - 0.5 * lengths, "centres 140 m apart, less the half lengths")
-    assert_null(RailVehicleServer.vehicle_find_vehicle(searching_rid, 0 if ahead else 1, 80.0),
+    assert_null(RailVehicleServer.vehicle_find_vehicle(
+            searching_rid, RailVehicleController.COUPLER_END_FRONT if ahead else RailVehicleController.COUPLER_END_REAR, 80.0),
             "its track begins 90 m ahead, past the range")
 
 
@@ -251,7 +233,7 @@ func test_move_on_track_updates_direction_when_entering_track_end() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(5.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 5.0)
 
     _assert_vector_eq(_vehicle_forward(vehicle), Vector3.LEFT, "vehicle should follow reversed track orientation")
     _assert_vector_eq(vehicle.global_position, _rail_position(13.0, 0.0), "vehicle should continue through reversed track")
@@ -277,7 +259,7 @@ func test_move_on_track_uses_switch_common_route() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(15.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 15.0)
 
     _assert_vector_eq(controller.get_world_position(), _rail_position(13.0, 0.0), "common switch route should continue on main track")
     _assert_vector_eq(vehicle.global_position, _rail_position(13.0, 0.0), "common switch route should use curve1")
@@ -303,7 +285,7 @@ func test_move_on_track_uses_switch_diverging_route() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(19.1421)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 19.1421)
 
     _assert_vector_eq(controller.get_world_position(), _rail_position(12.1213, 12.1213), "diverging route should continue after switch curve length")
     _assert_vector_eq(vehicle.global_position, _rail_position(12.1213, 12.1213), "diverging route should use curve2")
@@ -330,7 +312,7 @@ func test_move_on_track_forces_switch_diverging_when_entering_from_diverging_bra
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(move_distance)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), move_distance)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_DIVERGING)
     _assert_vector_eq(
@@ -361,7 +343,7 @@ func test_move_on_track_does_not_force_switch_before_entering_from_diverging_tra
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(0.1)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.1)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
 
@@ -387,7 +369,7 @@ func test_move_on_track_does_not_force_switch_when_approaching_diverging_endpoin
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(0.05)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 0.05)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
 
@@ -410,7 +392,7 @@ func test_move_on_track_forces_switch_common_when_entering_from_straight_branch(
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(5.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 5.0)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
     _assert_vector_eq(
@@ -438,11 +420,10 @@ func test_switch_change_does_not_move_vehicle_already_on_switch() -> void:
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(5.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 5.0)
     var position_before_switch_change: Vector3 = controller.get_world_position()
 
     TrackServer.switch_set_active_track(switch_rid, TrackServer.TRACK_COMMON)
-    vehicle._process(0.0)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
     _assert_vector_eq(
@@ -475,10 +456,10 @@ func test_switch_change_then_reverse_keeps_vehicle_on_occupied_diverging_branch(
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(5.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 5.0)
 
     TrackServer.switch_set_active_track(switch_rid, TrackServer.TRACK_COMMON)
-    vehicle.move_on_track(-1.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), -1.0)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
     _assert_vector_eq(
@@ -518,15 +499,14 @@ func test_reversing_from_diverging_track_forces_switch_at_blade_boundary() -> vo
     var controller: VehicleController = fixture["controller"]
 
     TrackServer.switch_set_active_track(switch_rid, TrackServer.TRACK_COMMON)
-    vehicle._process(0.0)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
 
-    vehicle.move_on_track(-0.01)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), -0.01)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_COMMON)
 
-    vehicle.move_on_track(-0.02)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), -0.02)
 
     assert_eq(TrackServer.switch_get_active_track(switch_rid), TrackServer.TRACK_DIVERGING)
 
@@ -543,7 +523,7 @@ func test_move_on_track_forces_demo3d_second_switch_when_entering_from_diverging
     var vehicle: RailVehicle3D = fixture["vehicle"]
     var controller: VehicleController = fixture["controller"]
 
-    vehicle.move_on_track(2.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 2.0)
 
     assert_eq(TrackServer.switch_get_active_track(second_switch_rid), TrackServer.TRACK_DIVERGING)
 
@@ -567,7 +547,7 @@ func test_move_on_track_continues_after_entering_demo3d_second_switch() -> void:
         12.0 + TrackServer.track_get_length(first_switch_rid, TrackServer.TRACK_DIVERGING) + second_switch_offset
     )
 
-    vehicle.move_on_track(distance_to_second_switch)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), distance_to_second_switch)
 
     var second_switch_position: Vector3 = _track_position(second_switch_rid, second_switch_offset)
     _assert_vector_eq(
@@ -577,7 +557,7 @@ func test_move_on_track_continues_after_entering_demo3d_second_switch() -> void:
     )
 
     var position_before_followup_move: Vector3 = controller.get_world_position()
-    vehicle.move_on_track(10.0)
+    RailVehicleServer.vehicle_move(vehicle.get_rid(), 10.0)
 
     assert_true(
         controller.get_world_position().distance_to(position_before_followup_move) > 1.0,
@@ -602,8 +582,7 @@ func test_track_transform_applies_roll_and_direction_rotation() -> void:
     var aligned_forward: Vector3 = -vehicle.global_basis.z.normalized()
     var aligned_up: Vector3 = vehicle.global_basis.y.normalized()
 
-    vehicle.set("start_direction", TrackServer.DIRECTION_REVERSED)
-    vehicle._process_dirty()
+    vehicle.start_direction = TrackServer.DIRECTION_REVERSED
     var opposite_forward: Vector3 = -vehicle.global_basis.z.normalized()
 
     _assert_vector_eq(aligned_forward, Vector3.RIGHT, "aligned vehicle forward should follow track tangent")
@@ -655,14 +634,14 @@ func _create_vehicle(
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name
     vehicle.start_track_offset = offset
-    vehicle.set("start_direction", direction)
+    vehicle.start_direction = direction
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(physics_node)
     created_vehicles.append(vehicle)
     await wait_idle_frames(2)
     return {
         "vehicle": vehicle,
-        "controller": physics_node.get_controller(),
+        "controller": VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()),
     }
 
 

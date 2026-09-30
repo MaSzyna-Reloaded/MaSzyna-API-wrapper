@@ -80,10 +80,24 @@
 				Frees the [param instance] with its [RenderingServer] instances or generated nodes.
 			</description>
 		</method>
+		<method name="instance_get_aabb" qualifiers="const">
+			<return type="AABB" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The bounds of every mesh of the model, in the model's space.
+			</description>
+		</method>
 		<method name="instance_get_light_count" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="instance" type="RID" />
 			<description>
+			</description>
+		</method>
+		<method name="instance_get_model" qualifiers="const">
+			<return type="E3DModel" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The model the instance draws.
 			</description>
 		</method>
 		<method name="instance_get_opaque_meshes" qualifiers="const">
@@ -91,6 +105,22 @@
 			<param index="0" name="instance" type="RID" />
 			<description>
 				The instance ids of the [MeshInstance3D] nodes of the instance's opaque submodels - what the original draws into its pick buffer; a translucent submodel is left out. Empty for an instance not built as nodes.
+			</description>
+		</method>
+		<method name="instance_get_submodel_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<description>
+				The submodel's transform in the model, through every parent, without any pose.
+			</description>
+		</method>
+		<method name="instance_has_submodel" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<description>
+				Whether the model has the submodel.
 			</description>
 		</method>
 		<method name="instance_intersect_segment" qualifiers="const">
@@ -114,6 +144,22 @@
 			<description>
 				Registers a scenery model placement for streaming instead of building it right away. Nothing is loaded or built until [SceneryStreamingServer]'s camera comes within [param range_end] of the chunk the [param transform] falls into; the instance is cleared again when the camera leaves. [param range_end] of [code]0[/code] (a scenery node that declares no range) means the global draw distance. The model is loaded on the streaming worker thread with the callable set by [method model_set_loader].
 				Without a streaming camera a registered instance is never built. Free it with [method instance_free] like any other instance.
+			</description>
+		</method>
+		<method name="instance_set_emission_energy">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="energy" type="float" />
+			<description>
+				The self-illumination energy of every emissive material of the instance.
+			</description>
+		</method>
+		<method name="instance_set_instancer">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="instancer" type="int" enum="E3DRenderingServer.Instancer" />
+			<description>
+				Builds the instance again with another instancer, keeping the RID and everything set on it.
 			</description>
 		</method>
 		<method name="instance_set_layer_mask">
@@ -181,6 +227,14 @@
 				Draws [param material] over every submodel of the instance (an outline, a tint); [code]null[/code] for none. Kept while the instance is streamed out and in again.
 			</description>
 		</method>
+		<method name="instance_set_node_transform">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="transform" type="Transform3D" />
+			<description>
+				Where the model sits in the attached node - a node tree built under it is placed there.
+			</description>
+		</method>
 		<method name="instance_set_options">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -211,6 +265,23 @@
 				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
 			</description>
 		</method>
+		<method name="instance_set_submodel_material_override">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<param index="2" name="material" type="Material" />
+			<description>
+				Draws a submodel, by name, with [param material] instead of its own.
+			</description>
+		</method>
+		<method name="instance_set_submodel_poses">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="poses" type="Dictionary" />
+			<description>
+				Poses submodels, by name, on top of their own transform, kept across rebuilds.
+			</description>
+		</method>
 		<method name="instance_set_submodel_rotation">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -227,6 +298,15 @@
 			<param index="2" name="offset" type="Vector3" />
 			<param index="3" name="speed" type="float" />
 			<description>
+			</description>
+		</method>
+		<method name="instance_set_submodel_visible">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<param index="2" name="visible" type="bool" />
+			<description>
+				Shows or hides a submodel, by name, kept across rebuilds.
 			</description>
 		</method>
 		<method name="instance_set_transform">
@@ -282,6 +362,14 @@
 			<param index="0" name="material_resolver" type="Callable" />
 			<description>
 				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, force_alpha: bool) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
+			</description>
+		</method>
+		<method name="model_load">
+			<return type="E3DModel" />
+			<param index="0" name="data_path" type="String" />
+			<param index="1" name="model_filename" type="String" />
+			<description>
+				The model of a file, loaded once and shared by every instance of it.
 			</description>
 		</method>
 		<method name="model_set_loader">

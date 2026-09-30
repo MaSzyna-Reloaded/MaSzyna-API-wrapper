@@ -28,8 +28,8 @@ func after_each() -> void:
 
 
 func _low_poly_cab_visible(cab_index:int) -> bool:
-    var low_poly:Node3D = vehicle.get_node(vehicle.low_poly_cabin_path) as Node3D
-    var cab_node:Node3D = low_poly.find_child("cab%d" % cab_index, true, false) as Node3D
+    # the low-poly interior is drawn as nodes under the vehicle with its exterior
+    var cab_node:Node3D = vehicle.find_child("cab%d" % cab_index, true, false) as Node3D
     assert_not_null(cab_node, "SU46 low-poly interior should contain cab%d" % cab_index)
     return cab_node.visible if cab_node else false
 
@@ -39,13 +39,7 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
         pending("real SU46 game data not available on this machine at %s" % REAL_GAME_DIR)
         return
     UserSettings.save_maszyna_game_dir(REAL_GAME_DIR)
-    vehicle = MaszynaRailVehicle3DManager.load(
-            "dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_machine_room", 0.0, null)
-    add_child(vehicle)
-    for i in range(20):
-        if vehicle.get_controller():
-            break
-        await wait_idle_frames(1)
+    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/su46_v2", "303d2", "303d-048", "test_su46_machine_room")
     var controller:VehicleController = vehicle.get_controller()
     assert_not_null(controller, "SU46's FIZ controller should be built")
     if not controller:

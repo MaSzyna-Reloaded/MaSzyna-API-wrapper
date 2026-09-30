@@ -166,7 +166,7 @@ namespace godot {
         }
 
         for (const RID &vehicle_rid: stepped_vehicles) {
-            rail_vehicles->vehicle_apply_placement(vehicle_rid);
+            rail_vehicles->vehicle_report_placement(vehicle_rid);
         }
     }
 

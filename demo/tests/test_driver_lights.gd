@@ -10,9 +10,6 @@ const WAGON_PATH:String = "res://tests/fixtures/test_wagon.fiz"
 const VEHICLE_COUNT:int = 3
 const WAGON:int = 2
 ## Original engine: coupling::coupler (MOVER.h:161)
-const COUPLING_COUPLER:int = 1
-const FRONT_END:int = 0
-const REAR_END:int = 1
 const NO_HINTS:Vector2i = Vector2i(-1, -1)
 const LAMPS:PackedStringArray = [
     "headlight_upper", "headlight_left", "headlight_right", "redmarker_left", "redmarker_right",
@@ -34,13 +31,14 @@ func before_each() -> void:
         node.vehicle_id = "LightsVehicle%d" % index
         # the first vehicle is driven - an unmanned one is not simulated (FINDINGS, 09-23)
         node.driver_type = VehicleController.DRIVER_HEAD if index == 0 else VehicleController.DRIVER_NOBODY
-        node.set_description(wagon if index == WAGON else engine)
+        node.set_controller(wagon if index == WAGON else engine)
         add_child_autofree(node)
-        controllers.append(node.get_controller())
-        vehicles.append(node.get_controller().get_rid())
+        controllers.append(VehicleServer.vehicle_get_controller(node.get_vehicle_rid()))
+        vehicles.append(VehicleServer.vehicle_get_controller(node.get_vehicle_rid()).get_rid())
     await wait_idle_frames(2)
     for index:int in range(1, VEHICLE_COUNT):
-        controllers[index - 1].couple(controllers[index], REAR_END, FRONT_END, COUPLING_COUPLER)
+        controllers[index - 1].couple(controllers[index], RailVehicleController.COUPLER_END_REAR,
+                RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
 
 
 func after_each() -> void:

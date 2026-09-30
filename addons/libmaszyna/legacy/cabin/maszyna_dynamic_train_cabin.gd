@@ -10,7 +10,7 @@ class_name MaszynaDynamicTrainCabin
 ## cabin_ready immediately, before this class's own children (cab model, widgets) exist -
 ## readiness here must wait until the whole MMD-derived "Generated" subtree is actually built.
 ## Everything below runs synchronously within one _ready() call (MMD parsing and E3D loading
-## are both synchronous), so RailVehicle3D.show_cabin()'s wait on cabin_ready still resolves
+## are both synchronous), so CabinSystem.vehicle_show_cabin()'s wait on cabin_ready still resolves
 ## within the same add_child() call that creates this node.
 ##
 ## A view of the vehicle's cab only: the cab logic it shows is the vehicle's
@@ -57,7 +57,7 @@ func _ready() -> void:
     add_child(_radio_player)
     CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
-    # placed in a scene rather than built by RailVehicle3D.show_cabin(), which names it itself.
+    # placed in a scene rather than built by CabinSystem.vehicle_show_cabin(), which names it itself.
     if controller_path:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
         set_vehicle_rid(physics_node.vehicle_rid if physics_node else "")

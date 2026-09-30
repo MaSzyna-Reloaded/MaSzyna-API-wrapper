@@ -63,9 +63,10 @@ const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
 static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
 
 
+## The vehicle's sound players, built into `vehicle` as its internal children; returned
 static func build_into(
-        vehicle:Node3D, abs_mmd_path:String, _fiz_controller_name:String,
-        random_choices:Dictionary, diagnostics:Array[Dictionary]) -> void:
+        vehicle:Node3D, abs_mmd_path:String, random_choices:Dictionary,
+        diagnostics:Array[Dictionary]) -> Array[Node]:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
     context.random_choices = random_choices
@@ -104,18 +105,22 @@ static func build_into(
         else:
             routed_exterior.append(definition)
 
-    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false, locations)
-    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true, locations)
+    var players:Array[Node] = [
+        _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false, locations),
+        _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true, locations),
+    ]
     # own voice pool, so the looping running sounds never steal from (or lose to) the others
     if running_exterior:
-        _build_player(vehicle, "RunningSfxPlayer3D", running_exterior, soundproofing, context, abs_mmd_path, false, locations)
+        players.append(_build_player(
+                vehicle, "RunningSfxPlayer3D", running_exterior, soundproofing, context, abs_mmd_path, false, locations))
     diagnostics.append_array(context.diagnostics)
+    return players
 
 
 static func _build_player(
         vehicle:Node3D, player_name:String, definitions:Array[MmdSoundSourceDefinition],
         soundproofing:Array[PackedFloat32Array], context:MmdImportContext,
-        abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> void:
+        abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> SfxPlayer3D:
     var events:Array[SfxEvent] = []
     var regular_definitions:Array[MmdSoundSourceDefinition] = []
     var brake_sources:Dictionary = {}
@@ -182,6 +187,7 @@ static func _build_player(
         "running": running if running.sources else null,
         "soundproofing": soundproofing,
     })
+    return player
 
 
 static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_internal_data:bool) -> void:

@@ -38,8 +38,6 @@ const POWERED:float = 1.0
 ## No pattern asked for (m_lighthints, Driver.h)
 const NO_HINT:int = -1
 ## The vehicle's couplers (end::front, end::rear) and the prefix of their lamps' names
-const FRONT_END:int = 0
-const REAR_END:int = 1
 const END_PREFIXES:PackedStringArray = ["front_", "rear_"]
 ## The orders that light a headcode (TOrders, Driver.h:29-45)
 const SHUNTING_ORDERS:int = (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT
@@ -51,8 +49,8 @@ const SHUNTING_ORDERS:int = (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAI
 static func check_vehicles(vehicle:RID, direction:int, order:int, hints:Vector2i) -> void:
     var vehicles:Array[RID] = _trainset(vehicle, direction)
     for other:RID in vehicles:
-        set_end(other, FRONT_END, 0)
-        set_end(other, REAR_END, 0)
+        set_end(other, RailVehicleController.COUPLER_END_FRONT, 0)
+        set_end(other, RailVehicleController.COUPLER_END_REAR, 0)
     _control(vehicles, vehicle, direction, order, hints)
 
 
@@ -82,7 +80,7 @@ static func off(vehicle:RID, direction:int) -> void:
 
 ## One end of a vehicle showing `pattern` (the original's bits): only the lamps that differ are
 ## switched. A vehicle without lamps lights none (head & iInventory[end], DynObj.cpp:7293).
-static func set_end(vehicle:RID, end:int, pattern:int) -> void:
+static func set_end(vehicle:RID, end:RailVehicleController.CouplerEnd, pattern:int) -> void:
     var lighting:RailVehicleLighting = VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_LIGHTING) as RailVehicleLighting
     if not lighting:
@@ -98,11 +96,14 @@ static func set_end(vehicle:RID, end:int, pattern:int) -> void:
 ## the last vehicle's trailing end - each the end nothing is coupled to, a lone vehicle's the way the
 ## driver drives
 static func _light(vehicles:Array[RID], direction:int, head:int, rear:int) -> void:
-    var leading:int = FRONT_END if direction >= 0 else REAR_END
-    var trailing:int = 1 - leading
+    var leading:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_FRONT if direction >= 0
+            else RailVehicleController.COUPLER_END_REAR)
+    var trailing:RailVehicleController.CouplerEnd = RailVehicleController.opposite_end(leading)
     if vehicles.size() > 1:
-        leading = FRONT_END if _is_free(vehicles[0], FRONT_END) else REAR_END
-        trailing = FRONT_END if _is_free(vehicles[-1], FRONT_END) else REAR_END
+        leading = (RailVehicleController.COUPLER_END_FRONT
+                if _is_free(vehicles[0], RailVehicleController.COUPLER_END_FRONT) else RailVehicleController.COUPLER_END_REAR)
+        trailing = (RailVehicleController.COUPLER_END_FRONT
+                if _is_free(vehicles[-1], RailVehicleController.COUPLER_END_FRONT) else RailVehicleController.COUPLER_END_REAR)
     set_end(vehicles[0], leading, head)
     set_end(vehicles[-1], trailing, rear)
 
@@ -121,10 +122,11 @@ static func _end_of_train(vehicle:RID, pattern:int) -> int:
 ## The trainset from the front the way the driver drives, read afresh - after coupling or uncoupling
 ## it is already the new one (pVehicles[], CheckVehicles(), Driver.cpp:2358-2389)
 static func _trainset(vehicle:RID, direction:int) -> Array[RID]:
-    return RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END if direction >= 0 else REAR_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+    var end:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_FRONT if direction >= 0
+            else RailVehicleController.COUPLER_END_REAR)
+    return RailVehicleServer.vehicle_get_coupled(vehicle, end, RailVehicleController.COUPLING_FLAG_COUPLER)
 
 
 ## Nothing is coupled at the vehicle's end - the walk out through it starts at the vehicle itself
-static func _is_free(vehicle:RID, end:int) -> bool:
-    return RailVehicleServer.vehicle_get_coupled(vehicle, end, RailVehicleController.COUPLING_ELEMENT_COUPLER)[0] == vehicle
+static func _is_free(vehicle:RID, end:RailVehicleController.CouplerEnd) -> bool:
+    return RailVehicleServer.vehicle_get_coupled(vehicle, end, RailVehicleController.COUPLING_FLAG_COUPLER)[0] == vehicle

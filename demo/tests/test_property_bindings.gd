@@ -140,9 +140,9 @@ func test_authored_configuration_reaches_the_built_vehicle() -> void:
 
     var vehicle := RailVehiclePhysicsNode.new()
     add_child_autofree(vehicle)
-    vehicle.set_description(description)
+    vehicle.set_controller(description)
 
-    var train: VehicleController = vehicle.get_controller()
+    var train: VehicleController = VehicleServer.vehicle_get_controller(vehicle.get_vehicle_rid())
     brake = train.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES)
     engine = train.get_component(VehicleComponentType.COMPONENT_ENGINE)
     var security_system: RailVehicleSecuritySystem = train.get_rail_component(RailVehicleComponentType.COMPONENT_SECURITY)

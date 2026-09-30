@@ -2,8 +2,9 @@
 extends RefCounted
 
 const MAX_FIZ_INCLUDE_DEPTH:int = 4
-## coupling::permanent (MOVER.h)
-const COUPLING_PERMANENT:int = 128
+## The furthest a vehicle may stand from the previous one and still be coupled to it [m]
+## (simulationstateserializer.cpp:1028)
+const MAX_COUPLING_OFFSET:float = 0.5
 
 ## Ports deserialize_dynamic()'s placement math (simulationstateserializer.cpp) onto
 ## MaszynaRailVehicle3D. Field order: datafolder, skinfile, mmdfile, [pathname - only when not
@@ -11,12 +12,11 @@ const COUPLING_PERMANENT:int = 128
 ## [velocity - only when not inside a trainset], loadcount, [loadtype if loadcount != 0],
 ## optional trailing destination, "enddynamic".
 ##
-## Placement offset is NOT simply trainset_offset: the original computes
-## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements
-## trainset.offset by the vehicle's own physical length (from its .fiz Dimensions: L=) for the
-## NEXT vehicle in the trainset - read directly and synchronously here (not via
-## MaszynaRailVehiclePhysicsNode's own async pipeline, which only finishes loading after scene
-## construction, too late to affect this vehicle's own placement).
+## Inside a trainset the vehicle stands where the trainset puts it: the original computes
+## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements trainset.offset by
+## the vehicle's own length for the NEXT vehicle - TrainSet3D does that, with the vehicle's `offset`
+## as its gap. Outside one it stands at `-offset` itself, its length read from its .fiz
+## Dimensions (L=) to put its centre there.
 ##
 ## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle
 ## reversed in the trainset" - confirmed against simulationstateserializer.cpp:983
@@ -41,18 +41,18 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehi
         load_type = ""
 
     var reversed:bool = is_equal_approx(offset, -1.0)
-    var trainset_offset:float = context.trainset_offset if context.trainset_open else 0.0
-    var start_offset:float = trainset_offset if reversed else trainset_offset - offset
-    var length:float = _read_vehicle_length(data_folder, mmd_file, context)
 
     var vehicle := MaszynaRailVehicle3D.new()
     vehicle.data_path = data_folder
     vehicle.file_name = mmd_file
     vehicle.skin = skin_file
-    vehicle.start_track_name = path_name
-    # start_offset marks the vehicle's front; start_track_offset is its center, which the
-    # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
-    vehicle.start_track_offset = start_offset - 0.5 * length
+    # a vehicle of a trainset stands where the trainset puts it (TrainSet3D)
+    if not context.trainset_open:
+        vehicle.start_track_name = path_name
+        # the front at -offset (none reversed); start_track_offset is its center, which the
+        # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
+        var start_offset:float = 0.0 if reversed else -offset
+        vehicle.start_track_offset = start_offset - 0.5 * _read_vehicle_length(data_folder, mmd_file, context)
     vehicle.start_direction = (
         TrackServer.DIRECTION_REVERSED if reversed else TrackServer.DIRECTION_NORMAL
     )
@@ -67,7 +67,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehi
     vehicle.load_amount = float(load_count)
 
     if context.trainset_open:
-        context.trainset_offset -= length
+        context.trainset_node.vehicle_gaps.append(0.0 if reversed else offset)
         context.trainset_node.couplings.append(_parse_coupling(coupling_data, offset, reversed))
 
     var next_token:String = p.next_token()
@@ -84,8 +84,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehi
 func _parse_coupling(coupling_data:String, offset:float, reversed:bool) -> int:
     var coupling:int = int(coupling_data.get_slice(".", 0))
     if coupling < 0:
-        coupling = -coupling | COUPLING_PERMANENT
-    if not reversed and absf(offset) > 0.5:
+        coupling = -coupling | RailVehicleController.COUPLING_FLAG_PERMANENT
+    if not reversed and absf(offset) > MAX_COUPLING_OFFSET:
         coupling = 0
     return coupling
 

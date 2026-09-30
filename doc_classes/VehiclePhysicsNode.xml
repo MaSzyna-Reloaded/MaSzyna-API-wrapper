@@ -7,14 +7,15 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="_build_controller" qualifiers="virtual const">
+			<return type="VehicleController" />
+			<description>
+				The controller a node that was given none builds its vehicle from, as it enters the tree - once, before anything can see the vehicle.
+			</description>
+		</method>
 		<method name="add_component">
 			<return type="void" />
 			<param index="0" name="component" type="VehicleComponent" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller" qualifiers="const">
-			<return type="VehicleController" />
 			<description>
 			</description>
 		</method>
@@ -25,7 +26,8 @@
 		</method>
 	</methods>
 	<members>
-		<member name="description" type="VehicleController" setter="set_description" getter="get_description">
+		<member name="controller" type="VehicleController" setter="set_controller" getter="get_controller">
+			The vehicle's configuration, a VehicleController its simulation is built from a copy of; a new one rebuilds the vehicle. The running copy is the vehicle's ([method VehicleServer.vehicle_get_controller]).
 		</member>
 		<member name="driver_type" type="int" setter="set_driver_type" getter="get_driver_type" enum="VehicleController.DriverType" default="0">
 		</member>

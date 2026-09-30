@@ -79,6 +79,32 @@ namespace godot {
                 D_METHOD("instance_set_submodel_translation", "instance", "submodel", "offset", "speed"),
                 &E3DRenderingServer::instance_set_submodel_translation);
         ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_poses", "instance", "poses"),
+                &E3DRenderingServer::instance_set_submodel_poses);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_visible", "instance", "submodel", "visible"),
+                &E3DRenderingServer::instance_set_submodel_visible);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_material_override", "instance", "submodel", "material"),
+                &E3DRenderingServer::instance_set_submodel_material_override);
+        ClassDB::bind_method(
+                D_METHOD("instance_has_submodel", "instance", "submodel"), &E3DRenderingServer::instance_has_submodel);
+        ClassDB::bind_method(
+                D_METHOD("instance_get_submodel_transform", "instance", "submodel"),
+                &E3DRenderingServer::instance_get_submodel_transform);
+        ClassDB::bind_method(D_METHOD("instance_get_aabb", "instance"), &E3DRenderingServer::instance_get_aabb);
+        ClassDB::bind_method(D_METHOD("instance_get_model", "instance"), &E3DRenderingServer::instance_get_model);
+        ClassDB::bind_method(D_METHOD("model_load", "data_path", "model_filename"), &E3DRenderingServer::model_load);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_node_transform", "instance", "transform"),
+                &E3DRenderingServer::instance_set_node_transform);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_instancer", "instance", "instancer"),
+                &E3DRenderingServer::instance_set_instancer);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_emission_energy", "instance", "energy"),
+                &E3DRenderingServer::instance_set_emission_energy);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_light_blink", "instance", "light", "on_time", "off_time", "phase"),
                 &E3DRenderingServer::instance_set_light_blink);
         ClassDB::bind_method(
@@ -179,6 +205,7 @@ namespace godot {
             E3DInstanceBackend &backend = _get_backend(p_instance);
             backend.clear(p_instance);
             backend.build(p_instance, material_resolver);
+            _apply_client_submodels(p_instance);
         }
     }
 
@@ -267,9 +294,7 @@ namespace godot {
         for (KeyValue<String, E3DInstanceData::SubmodelAnimation> &animation: instance->submodel_animations) {
             animation.value.submodel = _find_submodel(instance->model->get_submodels(), animation.key);
         }
-        if (!instance->submodel_animations.is_empty()) {
-            _pose_submodels(*instance);
-        }
+        _apply_client_submodels(*instance);
         _build_instance_lights(p_instance, *instance);
         _build_instance_smoke_sources(p_instance, *instance);
         emit_signal(instance_built_signal, p_instance);
@@ -296,6 +321,13 @@ namespace godot {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         instance->node_id = p_node != nullptr ? ObjectID(p_node->get_instance_id()) : ObjectID();
+        _rebuild_if_built(*instance);
+    }
+
+    void E3DRenderingServer::instance_set_node_transform(const RID &p_instance, const Transform3D &p_transform) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        instance->node_transform = p_transform;
         _rebuild_if_built(*instance);
     }
 
@@ -553,7 +585,7 @@ namespace godot {
 
     /// Memoized: a scenery places the same few hundred models thousands of times. Two threads
     /// loading the same model at once only duplicate work the loader itself caches.
-    Ref<E3DModel> E3DRenderingServer::_load_model(const String &p_data_path, const String &p_model_filename) {
+    Ref<E3DModel> E3DRenderingServer::model_load(const String &p_data_path, const String &p_model_filename) {
         const String key = p_data_path.path_join(p_model_filename);
         Callable loader;
         {
@@ -583,7 +615,7 @@ namespace godot {
             }
             stream_model = *found;
         }
-        return _load_model(stream_model.data_path, stream_model.model_filename);
+        return model_load(stream_model.data_path, stream_model.model_filename);
     }
 
     void E3DRenderingServer::_stream_build(const RID &p_instance, const Variant &p_preloaded) {
@@ -1180,7 +1212,7 @@ namespace godot {
     }
 
     /// TSubModel::RaAnimation() at_RotateXYZ (Model3d.cpp:1145-1152): the offset, then the angles
-    /// about x, y and z, on top of the submodel's own transform
+    /// about x, y and z, on top of the submodel's own transform; a client's pose on top of that
     void E3DRenderingServer::_pose_submodels(E3DInstanceData &p_instance) {
         p_instance.submodel_poses.clear();
         for (const KeyValue<String, E3DInstanceData::SubmodelAnimation> &animation: p_instance.submodel_animations) {
@@ -1193,7 +1225,190 @@ namespace godot {
                                    Basis(Vector3(0.0, 0.0, 1.0), Math::deg_to_rad(angles.z));
             p_instance.submodel_poses[animation.value.submodel] = Transform3D(rotation, animation.value.offset);
         }
+        for (const KeyValue<String, E3DInstanceData::SubmodelSettings> &settings: p_instance.submodel_settings) {
+            if (settings.value.submodel == nullptr || !settings.value.posed) {
+                continue;
+            }
+            const Transform3D *animated = p_instance.submodel_poses.getptr(settings.value.submodel);
+            p_instance.submodel_poses[settings.value.submodel] =
+                    animated != nullptr ? *animated * settings.value.pose : settings.value.pose;
+        }
         _get_backend(p_instance).apply_poses(p_instance);
+    }
+
+    /// What a new build is given of what was set on it before: the client's submodel settings
+    /// and every pose
+    void E3DRenderingServer::_apply_client_submodels(E3DInstanceData &p_instance) {
+        if (!p_instance.submodel_settings.is_empty()) {
+            _resolve_submodel_settings(p_instance);
+            _get_backend(p_instance).update(p_instance);
+        }
+        if (!p_instance.submodel_animations.is_empty() || !p_instance.submodel_settings.is_empty()) {
+            _pose_submodels(p_instance);
+        }
+    }
+
+    void E3DRenderingServer::_resolve_submodel_settings(E3DInstanceData &p_instance) {
+        p_instance.hidden_submodels.clear();
+        p_instance.submodel_materials.clear();
+        for (KeyValue<String, E3DInstanceData::SubmodelSettings> &settings: p_instance.submodel_settings) {
+            settings.value.submodel = _find_submodel(p_instance.model->get_submodels(), settings.key);
+            if (settings.value.submodel == nullptr) {
+                continue;
+            }
+            if (settings.value.hidden) {
+                p_instance.hidden_submodels.insert(settings.value.submodel);
+            }
+            if (settings.value.material_override.is_valid()) {
+                p_instance.submodel_materials[settings.value.submodel] = settings.value.material_override;
+            }
+        }
+    }
+
+    void E3DRenderingServer::instance_set_submodel_poses(const RID &p_instance, const Dictionary &p_poses) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        bool added = false;
+        const Array names = p_poses.keys();
+        for (int index = 0; index < names.size(); index++) {
+            const String name = String(names[index]).to_lower();
+            added = added || !instance->submodel_settings.has(name);
+            E3DInstanceData::SubmodelSettings &settings = instance->submodel_settings[name];
+            settings.pose = p_poses[names[index]];
+            settings.posed = true;
+        }
+        if (!instance->built) {
+            return;
+        }
+        if (added) {
+            _resolve_submodel_settings(*instance);
+        }
+        _pose_submodels(*instance);
+    }
+
+    void E3DRenderingServer::instance_set_submodel_visible(
+            const RID &p_instance, const String &p_submodel, const bool p_visible) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        instance->submodel_settings[p_submodel.to_lower()].hidden = !p_visible;
+        if (instance->built) {
+            _resolve_submodel_settings(*instance);
+            _get_backend(*instance).update(*instance);
+        }
+    }
+
+    void E3DRenderingServer::instance_set_submodel_material_override(
+            const RID &p_instance, const String &p_submodel, const Ref<Material> &p_material) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        instance->submodel_settings[p_submodel.to_lower()].material_override = p_material;
+        if (instance->built) {
+            _resolve_submodel_settings(*instance);
+            _get_backend(*instance).update(*instance);
+        }
+    }
+
+    bool E3DRenderingServer::instance_has_submodel(const RID &p_instance, const String &p_submodel) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, false);
+        return _find_submodel(instance->model->get_submodels(), p_submodel.to_lower()) != nullptr;
+    }
+
+    bool E3DRenderingServer::_find_submodel_transform(
+            const TypedArray<E3DSubModel> &p_submodels, const String &p_name, const Transform3D &p_parent,
+            Transform3D &p_r_transform) {
+        for (int index = 0; index < p_submodels.size(); index++) {
+            const Ref<E3DSubModel> submodel = p_submodels[index];
+            if (submodel.is_null()) {
+                continue;
+            }
+            const Transform3D transform = p_parent * submodel->get_transform();
+            if (submodel->get_name().to_lower() == p_name) {
+                p_r_transform = transform;
+                return true;
+            }
+            if (_find_submodel_transform(submodel->get_submodels(), p_name, transform, p_r_transform)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    Transform3D
+    E3DRenderingServer::instance_get_submodel_transform(const RID &p_instance, const String &p_submodel) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, Transform3D());
+        Transform3D transform;
+        ERR_FAIL_COND_V_MSG(
+                !_find_submodel_transform(
+                        instance->model->get_submodels(), p_submodel.to_lower(), Transform3D(), transform),
+                Transform3D(), vformat("No submodel '%s' in the model.", p_submodel));
+        return transform;
+    }
+
+    bool E3DRenderingServer::_merge_submodel_aabb(
+            const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent, AABB &p_r_aabb) {
+        bool found = false;
+        for (int index = 0; index < p_submodels.size(); index++) {
+            const Ref<E3DSubModel> submodel = p_submodels[index];
+            if (submodel.is_null()) {
+                continue;
+            }
+            const Transform3D transform = p_parent * submodel->get_transform();
+            if (submodel->get_mesh().is_valid()) {
+                const AABB aabb = transform.xform(submodel->get_mesh()->get_aabb());
+                p_r_aabb = found || p_r_aabb.has_volume() ? p_r_aabb.merge(aabb) : aabb;
+                found = true;
+            }
+            found = _merge_submodel_aabb(submodel->get_submodels(), transform, p_r_aabb) || found;
+        }
+        return found;
+    }
+
+    Ref<E3DModel> E3DRenderingServer::instance_get_model(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, Ref<E3DModel>());
+        return instance->model;
+    }
+
+    AABB E3DRenderingServer::instance_get_aabb(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, AABB());
+        AABB aabb;
+        _merge_submodel_aabb(instance->model->get_submodels(), Transform3D(), aabb);
+        return aabb;
+    }
+
+    void E3DRenderingServer::instance_set_instancer(const RID &p_instance, const Instancer p_instancer) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        if (instance->instancer == p_instancer) {
+            return;
+        }
+        const bool built = instance->built;
+        // cleared by the instancer that built it, built by the new one
+        if (built) {
+            _clear_instance_lights(*instance);
+            _clear_instance_smoke_sources(*instance);
+            _get_backend(*instance).clear(*instance);
+            instance->built = false;
+        }
+        instance->instancer = p_instancer;
+        if (built) {
+            instance_build(p_instance);
+        }
+    }
+
+    void E3DRenderingServer::instance_set_emission_energy(const RID &p_instance, const float p_energy) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        const bool copies_needed = instance->emission_energy < 0.0 && p_energy >= 0.0;
+        instance->emission_energy = p_energy;
+        // the instance's own copies of its emissive materials are made as it is built
+        if (copies_needed) {
+            _rebuild_if_built(*instance);
+        }
+        _update_if_built(*instance);
     }
 
     /// TAnimContainer::UpdateModel() (AnimModel.cpp:92-188): every angle turns towards its target at

@@ -5,9 +5,15 @@
 #include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
-    /// The coupling elements, as a script names them (RailVehicleController::CouplingElement)
-    static constexpr const char *COUPLING_ELEMENT_NAMES[] = {
+    /// The couplings, as a script names them, and the flag each name stands for
+    static constexpr const char *COUPLING_NAMES[] = {
             "coupler", "brake_hose", "main_hose", "control", "gangway", "heating", "permanent", nullptr,
+    };
+    static constexpr RailVehicleController::CouplingFlags COUPLING_FLAGS[] = {
+            RailVehicleController::COUPLING_FLAG_COUPLER,   RailVehicleController::COUPLING_FLAG_BRAKEHOSE,
+            RailVehicleController::COUPLING_FLAG_MAINHOSE,  RailVehicleController::COUPLING_FLAG_CONTROL,
+            RailVehicleController::COUPLING_FLAG_GANGWAY,   RailVehicleController::COUPLING_FLAG_HEATING,
+            RailVehicleController::COUPLING_FLAG_PERMANENT,
     };
 
     static void push_vehicles(lua_State *p_state, const TypedArray<RID> &p_vehicles) {
@@ -105,15 +111,21 @@ namespace godot {
         return 1;
     }
 
-    /// coupled(v, end, element) - the vehicles joined to this one by the element ("coupler",
-    /// "brake_hose", ...), from the last one beyond the end back through this one
+    /// coupled(v, end, coupling) - the vehicles joined to this one by the coupling ("coupler",
+    /// "brake_hose", ...), from the last one beyond the end (0 front, 1 rear) back through this one
     static int vehicle_coupled(lua_State *p_state) {
         const RID vehicle = check_vehicle(p_state);
-        const int end = static_cast<int>(luaL_checkinteger(p_state, 2));
-        const auto element = static_cast<RailVehicleController::CouplingElement>(
-                luaL_checkoption(p_state, 3, nullptr, COUPLING_ELEMENT_NAMES));
+        // a script's number, checked before it becomes an end
+        const lua_Integer end = luaL_checkinteger(p_state, 2);
+        luaL_argcheck(
+                p_state,
+                end == RailVehicleController::COUPLER_END_FRONT || end == RailVehicleController::COUPLER_END_REAR, 2,
+                "end must be 0 (front) or 1 (rear)");
+        const RailVehicleController::CouplingFlags flag =
+                COUPLING_FLAGS[luaL_checkoption(p_state, 3, nullptr, COUPLING_NAMES)];
         push_vehicles(
-                p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_coupled(vehicle, end, element));
+                p_state, LuaModules::server<RailVehicleServer>(p_state)->vehicle_get_coupled(
+                                 vehicle, static_cast<RailVehicleController::CouplerEnd>(end), flag));
         return 1;
     }
 

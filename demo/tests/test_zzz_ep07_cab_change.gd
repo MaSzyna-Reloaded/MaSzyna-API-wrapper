@@ -9,8 +9,6 @@ extends MaszynaGutTest
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
-## Seconds the FIZ description gets to reach the vehicle
-const CONTROLLER_WAIT:float = 2.0
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -33,12 +31,8 @@ func after_each() -> void:
 
 
 func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
-    vehicle = MaszynaRailVehicle3DManager.load(
-            "dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change", 0.0, null)
-    add_child(vehicle)
-    # the FIZ description lands after _ready() and binds a new controller to the vehicle, so the
-    # vehicle is held by its RID - a controller taken before that is released
-    var bound:bool = await wait_for_signal(VehicleServer.vehicle_controller_changed, CONTROLLER_WAIT)
+    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change")
+    var bound:bool = vehicle.get_rid().is_valid()
     assert_true(bound, "EP07's FIZ controller should be built")
     if not bound:
         return

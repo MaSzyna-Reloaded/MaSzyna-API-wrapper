@@ -98,7 +98,8 @@ namespace godot {
 
     bool E3DInstanceBackend::_is_submodel_shown(const E3DInstanceData &p_instance, const E3DSubModel *p_submodel) {
         const bool dynamic_instance = p_instance.instance_kind == E3DRenderingServer::INSTANCE_KIND_DYNAMIC;
-        return p_submodel->get_visible() && !(dynamic_instance && p_submodel->get_dynamic_hidden());
+        return p_submodel->get_visible() && !(dynamic_instance && p_submodel->get_dynamic_hidden()) &&
+               !p_instance.hidden_submodels.has(p_submodel);
     }
 
     Vector<E3DSubModel *> E3DInstanceBackend::_get_force_alpha_submodels(const E3DInstanceData &p_instance) {

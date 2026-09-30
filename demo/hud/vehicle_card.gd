@@ -12,7 +12,6 @@ signal close_requested
 ## The player confirmed that the vehicle's trainset is to be removed
 signal remove_trainset_requested(vehicle:RID)
 
-const FRONT_END:int = 0
 const KILOGRAMS_PER_TONNE:float = 1000.0
 ## A driver's speed below zero is no limit (VelNext = -1, Driver.h)
 const NO_VELOCITY:float = 0.0
@@ -65,7 +64,7 @@ func _show_trainset() -> void:
     var tiles:Array[TileGrid.Tile] = []
     _trainset.clear()
     _coupled.assign(RailVehicleServer.vehicle_get_coupled(
-            vehicle, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER))
+            vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER))
     for trainset_vehicle:RID in _coupled:
         var trainset_node:MaszynaRailVehicle3D = legacy_vehicle(trainset_vehicle)
         if not trainset_node:
@@ -132,11 +131,10 @@ func _exit_tree() -> void:
     RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
 
 
-## The MaszynaRailVehicle3D a vehicle was spawned by - it wraps the RailVehicle3D the server knows
-## (vehicle_get_rail_vehicle()) and keeps the data path, file and skin; null for any other vehicle
+## The MaszynaRailVehicle3D a vehicle is drawn at (RailVehicleRenderingServer.vehicle_get_node()) -
+## it keeps the data path, file and skin; null for any other vehicle
 static func legacy_vehicle(vehicle:RID) -> MaszynaRailVehicle3D:
-    var node:Node = instance_from_id(RailVehicleServer.vehicle_get_rail_vehicle(vehicle)) as Node
-    return node.get_parent() as MaszynaRailVehicle3D if node else null
+    return instance_from_id(RailVehicleRenderingServer.vehicle_get_node(vehicle)) as MaszynaRailVehicle3D
 
 
 ## The label of an enum property's value, from the property's own hint ("Name" or "Name:value")
@@ -226,7 +224,7 @@ func _on_refresh_timer_timeout() -> void:
 
     # the whole trainset, as the original's electricity usage (vehicleparams.cpp:240-262)
     var trainset:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            _shown, FRONT_END, RailVehicleController.COUPLING_ELEMENT_COUPLER)
+            _shown, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     var mass:float = 0.0
     var drawn:float = 0.0
     var returned:float = 0.0

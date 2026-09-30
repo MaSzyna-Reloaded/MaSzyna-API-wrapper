@@ -230,6 +230,11 @@ interface.
 * **Stary Jawor, `osobowy1`:** `mps74142` and `mps47141` both stand at JAWOR 16:00-16:02 in
   their timetables, but the scenario places them some kilometres out; they arrive half an hour
   late and leave at once.
+* **A scenery without a `time` section runs at 10:30.** `scenario_time` starts at 10:30
+  (`simulation/simulationtime.h:21`) and `Time.init()` takes it after the load
+  (`simulationtime.cpp:30-51`), whatever the timetables say. Zwierzyniec, `zwierzyniec_osob.scn`,
+  has none (its RPE58102 is due at Pawianowo at 10:37); `zwierzyniec_posp.scn` sets 15:30.
+  Wrapper: `MaszynaSceneryNode.START_TIME_DEFAULT`.
 * A timetable file saved as UTF-8 rather than cp1250 keeps mangled Polish letters in its labels
   (`linia053/scenariusz_os`).
 * **A load count with no type behind it is not a load.** The `dynamic` line gives the count

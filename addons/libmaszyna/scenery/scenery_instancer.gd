@@ -39,6 +39,10 @@ static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 ## GDScript and call GDScript handlers, which must not be reached once the scripts are going away
 static var _active_queues:Array[SceneryLoadingTaskQueue] = []
 static var _last_report_msec:int = 0
+## The file a queue worker opened last (open_parser()), for the loading screen to show the parse
+## going on while its progress stands - written by the workers, read by the main thread
+static var _file_in_parse:String = ""
+static var _file_in_parse_mutex:Mutex = Mutex.new()
 ## Cache paths of subscenes being saved by queue workers - one writer per file
 static var _saving_subscenes:Dictionary = {}
 static var _saving_subscenes_mutex:Mutex = Mutex.new()
@@ -93,7 +97,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         compiled = await _load_cached_with_progress(root, cache_path, source_path, parameters_hash)
 
     if compiled:
-        await _report_progress(root, 0.3, "Registering tracks and traction")
+        await _report_progress(root, 0.3, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
         await _instantiate_server_data(
             root,
             world_3d,
@@ -109,9 +113,9 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             0.3,
             0.6,
         )
-        await _report_progress(root, 0.6, "Registering terrain")
+        await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
         _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
-        await _report_progress(root, 0.7, "Instancing objects")
+        await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
         await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
         await _wait_for_vehicles(root)
         _build_drivers(root)
@@ -122,25 +126,25 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var objects:Array = context.objects
     assign_signal_head_kinds(context.models, context.events)
 
-    await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
+    await _report_progress(root, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
     await _instantiate_server_data(
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
         context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
         PARSE_PROGRESS, 0.6
     )
-    await _report_progress(root, 0.6, "Building terrain")
+    await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Building terrain")
     var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
 
     if root.use_cache and context.cacheable:
-        await _report_progress(root, 0.6, "Saving cache")
+        await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Saving cache")
         compiled = _compile_scenery(source_path, parameters_hash, context, objects)
         if compiled:
             compiled.triangle_chunks = triangle_chunks
             _cache.set(cache_path, compiled)
 
-    await _report_progress(root, 0.65, "Registering terrain")
+    await _report_progress(root, 0.65, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
     _build_triangle_chunks(root, triangle_chunks, world_3d)
-    await _report_progress(root, 0.7, "Instancing objects")
+    await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
     await _attach_objects(root, objects, 0.7, 0.9)
     await _wait_for_vehicles(root)
     _build_drivers(root)
@@ -150,17 +154,21 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
 ## `message` is a msgid the loading screen's Label translates; one composed with a value is
 ## translated before the value goes in.
-static func _report_progress(root:MaszynaIncludeNode, progress:float, message:String) -> void:
-    root.load_progress.emit(progress, message)
+static func _report_progress(
+    root:MaszynaIncludeNode, progress:float, stage:MaszynaIncludeNode.LoadStage, message:String
+) -> void:
+    root.load_progress.emit(progress, stage, message)
     await root.get_tree().process_frame
     _last_report_msec = Time.get_ticks_msec()
 
 
 ## _report_progress() for loops over many objects - reports only after PROGRESS_FRAME_BUDGET_MSEC
-static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, message:String) -> void:
+static func _report_progress_throttled(
+    root:MaszynaIncludeNode, progress:float, stage:MaszynaIncludeNode.LoadStage, message:String
+) -> void:
     if Time.get_ticks_msec() - _last_report_msec < PROGRESS_FRAME_BUDGET_MSEC:
         return
-    await _report_progress(root, progress, message)
+    await _report_progress(root, progress, stage, message)
 
 
 ## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached; built, it
@@ -168,12 +176,12 @@ static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, 
 ## (TrainSet3D). A vehicle that failed to load has no simulation, a road car no track (roads are not
 ## built yet, maszyna_node_track_importer.gd).
 static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
-    await _report_progress(root, 0.9, "Instancing vehicles")
+    await _report_progress(root, 0.9, MaszynaIncludeNode.LoadStage.VEHICLES, "Instancing vehicles")
     for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
         var vehicle:MaszynaRailVehicle3D = node
         if not vehicle.is_built():
             await vehicle.vehicle_built
-    root.load_progress.emit(1.0, "")
+    root.load_progress.emit(1.0, MaszynaIncludeNode.LoadStage.VEHICLES, "")
 
 
 ## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
@@ -247,7 +255,7 @@ static func _instantiate_server_data(
         track_rids.append(built["track_rid"])
         root._track_render_rids.append(built["track_render_rid"])
         built_count += 1
-        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering tracks")
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks")
 
     for power_source_data:MaszynaPowerSourceData in power_sources:
         root._power_source_rids.append(_build_power_source(power_source_data))
@@ -257,7 +265,7 @@ static func _instantiate_server_data(
         root._traction_rids.append(traction_rid)
         root._wire_power_rids.append(_build_wire_power(traction_data))
         built_count += 1
-        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering traction")
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering traction")
     if root._wire_power_rids.size() > 0:
         TractionServer.network_build()
 
@@ -276,7 +284,8 @@ static func _instantiate_server_data(
             root._e3d_rids.append(e3d_rid)
         built_count += 1
         await _report_progress_throttled(
-            root, lerpf(progress_from, progress_to, built_count / total), TranslationServer.translate("Registering %s") % model_data.model_filename
+            root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE,
+            TranslationServer.translate("Registering %s") % model_data.model_filename
         )
     # the original's firstinit: everything the events are aimed at exists by now
     MaszynaLegacyEventFactory.build(
@@ -345,7 +354,7 @@ static func _attach_objects(
         _apply_skin_overrides(root, node)
         root.add_child(node)
         var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
-        await _report_progress_throttled(root, progress, TranslationServer.translate("Instancing %s") % node.name)
+        await _report_progress_throttled(root, progress, MaszynaIncludeNode.LoadStage.OBJECTS, TranslationServer.translate("Instancing %s") % node.name)
     if Engine.is_editor_hint():
         root.SceneryEditor.update_owners(root)
 
@@ -441,7 +450,7 @@ static func _load_cached_with_progress(
     _active_queues.append(queue)
     var task_id:int = queue.submit(_load_cached.bind(cache_path, source_path, parameters_hash))
     while not queue.is_done(task_id):
-        await _report_progress(root, 0.0, "Reading cache")
+        await _report_progress(root, 0.0, MaszynaIncludeNode.LoadStage.FILES, "Reading cache")
     _active_queues.erase(queue)
     return queue.wait(task_id) as MaszynaCompiledScenery
 
@@ -600,7 +609,11 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
     var parsed:float = 0.0
     while not queue.is_done(task_id):
         parsed = maxf(parsed, float(queue.get_completed_count()) / float(queue.get_submitted_count()))
-        await _report_progress(root, PARSE_PROGRESS * parsed, tr("Parsing %s") % root.filename)
+        _file_in_parse_mutex.lock()
+        var file_in_parse:String = _file_in_parse
+        _file_in_parse_mutex.unlock()
+        root.load_files_parsed.emit(queue.get_completed_count(), file_in_parse)
+        await _report_progress(root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
     if not context:
@@ -611,6 +624,9 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
 
 func open_parser(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> MaszynaParser:
     var abs_file:String = _get_source_path(filename)
+    _file_in_parse_mutex.lock()
+    _file_in_parse = filename
+    _file_in_parse_mutex.unlock()
     if not context.begin_file(abs_file):
         push_error("Recursive scenery include: " + abs_file)
         return null

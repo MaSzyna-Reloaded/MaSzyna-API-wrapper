@@ -813,7 +813,7 @@ msgid "Departure"
 msgstr ""
 
 msgid "Vehicles"
-msgstr ""
+msgstr "Járművek"
 
 msgid "No vehicle has a driver"
 msgstr ""
@@ -1115,3 +1115,25 @@ msgstr "Kirakodás %d"
 
 msgid "Load %d"
 msgstr "Berakodás %d"
+
+# the loading screen (loading_screen/)
+msgid "Loading scenery"
+msgstr "Pálya betöltése"
+
+msgid "Scenery files"
+msgstr "Pályafájlok"
+
+msgid "Infrastructure"
+msgstr "Infrastruktúra"
+
+msgid "Terrain"
+msgstr "Terep"
+
+msgid "Files %d"
+msgstr "Fájlok: %d"
+
+msgid "Time %d:%02d"
+msgstr "Idő: %d:%02d"
+
+msgid "Still working"
+msgstr "Feldolgozás folyamatban"

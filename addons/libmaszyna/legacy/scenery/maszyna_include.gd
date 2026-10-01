@@ -3,8 +3,16 @@ extends Node3D
 class_name MaszynaIncludeNode
 
 signal loaded
-## Emitted by SceneryInstancer before each loading stage (progress 0..1, stage description)
-signal load_progress(progress:float, message:String)
+## What a load is doing, in the order SceneryInstancer goes through it: the scenery's files read
+## (parsed, or its cache), tracks, traction and models registered, terrain built, objects
+## instanced, vehicles built
+enum LoadStage { FILES, INFRASTRUCTURE, TERRAIN, OBJECTS, VEHICLES }
+## Emitted by SceneryInstancer as the load goes (progress 0..1 of the whole load, its stage, what
+## it is doing now)
+signal load_progress(progress:float, stage:LoadStage, message:String)
+## Emitted by SceneryInstancer while the files are parsed: includes parsed so far and the file being
+## parsed now - the progress of the files stage alone cannot tell a large include from a stall
+signal load_files_parsed(count:int, filename:String)
 
 ## Milliseconds spent freeing content per frame while reloading
 const CLEAR_BUDGET_MSEC:int = 8

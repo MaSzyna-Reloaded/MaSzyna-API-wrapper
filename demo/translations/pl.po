@@ -1115,3 +1115,25 @@ msgstr "Wyładuj %d"
 
 msgid "Load %d"
 msgstr "Załaduj %d"
+
+# the loading screen (loading_screen/)
+msgid "Loading scenery"
+msgstr "Wczytywanie scenerii"
+
+msgid "Scenery files"
+msgstr "Pliki scenerii"
+
+msgid "Infrastructure"
+msgstr "Infrastruktura"
+
+msgid "Terrain"
+msgstr "Teren"
+
+msgid "Files %d"
+msgstr "Pliki %d"
+
+msgid "Time %d:%02d"
+msgstr "Czas %d:%02d"
+
+msgid "Still working"
+msgstr "Nadal przetwarzam"

@@ -70,7 +70,6 @@ title = "Exit to menu"
 dialog_text = "Leave the scenery and go back to the menu?"
 
 [node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
-scene_path = ""
 
 [node name="ScenerySelectorScreen" parent="." unique_id=969482359 instance=ExtResource("10_scenery_selector")]
 visible = false
@@ -92,6 +91,7 @@ mouse_filter = 2
 color = Color(0, 0, 0, 1)
 
 [connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
+[connection signal="load_files_parsed" from="MaszynaSceneryNode" to="LoadingScreen" method="set_files"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]
 [connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]

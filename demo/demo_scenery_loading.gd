@@ -23,6 +23,15 @@ const EXIT_FADE_TIME: float = 0.5
 const EXIT_SPINNER_HOLD_TIME: float = 0.5
 ## Seconds of the fade to black (and the music fade) before quitting
 const QUIT_FADE_TIME: float = 0.5
+## Command line of the original's eu07.exe, as its Starter.exe gives it: "-s <scenery>.scn" starts
+## that scenery of scenery/ without the selector, "-v <vehicle>" puts the player in that vehicle.
+## An exported game leaves "-s <scenery>" alone (its templates run no script from the command line,
+## main.cpp), but takes "-v" for itself as --verbose and leaves only its value - so a vehicle
+## without its "-v" is the one argument that is neither a flag nor the scenery. The editor's binary
+## (the editor, tests: "-s addons/gut/gut_cmdln.gd") runs "-s" as a script, so there the engine's
+## arguments are never read and the two come after Godot's "--" (OS.get_cmdline_user_args()).
+const ARG_SCENERY: String = "-s"
+const ARG_VEHICLE: String = "-v"
 
 var _music_tween: Tween
 ## The trainset chosen in the selector, handed to the player once the scenery is loaded
@@ -35,13 +44,29 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
-    if not $MaszynaSceneryNode.filename:
+    var exported: bool = OS.has_feature("template")
+    var args: PackedStringArray = OS.get_cmdline_user_args()
+    if exported:
+        args = OS.get_cmdline_args() + args
+    var scenery_at: int = args.find(ARG_SCENERY)
+    if scenery_at >= 0 and scenery_at + 1 < args.size():
+        var train_id: String = ""
+        var vehicle_at: int = args.find(ARG_VEHICLE)
+        if vehicle_at >= 0 and vehicle_at + 1 < args.size():
+            train_id = args[vehicle_at + 1]
+        elif exported and OS.is_stdout_verbose():
+            for at: int in args.size():
+                if not at == scenery_at + 1 and not args[at].begins_with("-"):
+                    train_id = args[at]
+                    break
+        start_scenery(args[scenery_at + 1], train_id, {})
+    elif not $MaszynaSceneryNode.filename:
         $ScenerySelectorScreen.open()
 
 
-func _on_scenery_selector_scenery_selected(
-    filename: String, train_id: String, skin_overrides: Dictionary
-) -> void:
+## Loads scenery/<filename> and puts the player in train_id (none: the scenery's own driver) -
+## chosen in the selector, or given on the command line
+func start_scenery(filename: String, train_id: String, skin_overrides: Dictionary) -> void:
     _play_music(MUSIC_LOADING_VOLUME_DB)
     # the world starts while the loading screen fades out, not when it is built, and at the wall
     # clock's speed whatever the last one ran at
@@ -57,7 +82,8 @@ func _on_scenery_selector_scenery_selected(
     $LoadingScreen.show_loading(MaszynaSceneryInfo.read_display_name(filename))
     # the selector dissolves into the loading screen and hides once it is done; the loading below
     # blocks the main thread, so it waits for the dissolve not to stutter
-    await $ScenerySelectorScreen.hidden
+    if $ScenerySelectorScreen.visible:
+        await $ScenerySelectorScreen.hidden
     $MaszynaSceneryNode.filename = filename
     $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
     $Player.clear_start_train()

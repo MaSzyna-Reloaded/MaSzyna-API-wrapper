@@ -95,7 +95,7 @@ color = Color(0, 0, 0, 1)
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]
 [connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
-[connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]
+[connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="start_scenery"]
 [connection signal="pressed" from="GameHud/MenuActions/ExitToMenu" to="." method="_on_exit_to_menu_pressed"]
 [connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
 

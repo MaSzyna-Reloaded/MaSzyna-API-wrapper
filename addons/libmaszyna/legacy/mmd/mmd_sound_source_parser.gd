@@ -377,10 +377,10 @@ static func _parse_block_field(
             definition.placement_defined = true
             i += 1
         "pitchvariation:":
-            definition.pitch_variation = float(tokens[i])
+            definition.pitch_variation = clampf(float(tokens[i]), 0.0, 1.0)
             i += 1
         "startoffset:":
-            definition.start_offset = float(tokens[i])
+            definition.start_offset = clampf(float(tokens[i]), 0.0, 1.0)
             i += 1
         _:
             if key.begins_with("sound") and not _threshold_from_key(key) == null:

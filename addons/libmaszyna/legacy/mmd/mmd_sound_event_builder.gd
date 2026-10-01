@@ -292,6 +292,7 @@ static func _build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
     stream.loop = loop
+    stream.length = stream_length(filename)
     return stream
 
 

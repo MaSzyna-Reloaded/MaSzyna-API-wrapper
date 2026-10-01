@@ -15,6 +15,9 @@ const BOGIE_NOISE_EVEN_START_MIN:float = 0.5
 const BOGIE_NOISE_EVEN_START_MAX:float = 0.8
 const BOGIE_NOISE_ODD_START_MIN:float = 0.0
 const BOGIE_NOISE_ODD_START_MAX:float = 0.3
+## An emitter's own pitch factor when the MMD gives no pitchvariation: (sound.cpp:374-377)
+const DEFAULT_PITCH_VARIATION_MIN:float = 0.975
+const DEFAULT_PITCH_VARIATION_MAX:float = 1.025
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
 ## gnd_sfx/hard_cut_distance when the project does not set it (sfx_player_3d.gd:143)
 const HARD_CUT_DISTANCE_DEFAULT:float = 1000.0
@@ -80,10 +83,12 @@ class BankRuntime extends RefCounted:
     var events_built:bool = false
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
-    ## Where each looping running sound of this bank starts inside its own sample, as a fraction
-    ## of it, drawn once per copy as the original does: every wagon of a trainset, and every bogie
-    ## and motor copy of one wagon, runs out of phase with the others
-    var running_start_fractions:Dictionary[StringName, float] = {}
+    ## Every event of this bank as its own emitter, the original's sound_source: where it starts
+    ## in its sample (a fraction of it) and the factor on its pitch, both fixed once. Copies of one
+    ## recording - every wagon of a trainset, every bogie and motor of one wagon - then neither
+    ## start together nor stay together (sound.cpp:374-377, DynObj.cpp:6505-6514, 6085)
+    var start_fractions:Dictionary[StringName, float] = {}
+    var pitch_variations:Dictionary[StringName, float] = {}
     var culled:bool = false
     var last_batch:Dictionary = {}
     ## Within the culling distance, so the frame visits it - owned by _refresh_active_banks()
@@ -234,7 +239,6 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
     runtime.running = registration.get("running") as RunningSoundModel
-    runtime.running_start_fractions.clear()
     if runtime.running:
         var copies:Dictionary[String, int] = {}
         for entry:Dictionary in runtime.running.sources:
@@ -245,7 +249,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
             var label:String = (entry["source"] as MmdSoundSourceDefinition).label
             var copy:int = copy_index.get(label, 0)
             copy_index[label] = copy + 1
-            var fraction:float = 0.0
+            var fraction:float = (entry["source"] as MmdSoundSourceDefinition).start_offset
             match label:
                 "outernoise":
                     fraction = (randf_range(BOGIE_NOISE_ODD_START_MIN, BOGIE_NOISE_ODD_START_MAX) if copy % 2
@@ -253,8 +257,12 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
                 "tractionmotor":
                     # each located motor anywhere in its sample, a lone one from its start
                     # (DynObj.cpp:6072-6086)
-                    fraction = randf() if copies[label] > 1 else 0.0
-            runtime.running_start_fractions[entry["event"]] = fraction
+                    if copies[label] > 1:
+                        fraction = randf()
+            # a chunked clatter axle is one emitter, its chunk events one each
+            var event_names:Array[StringName] = [entry["event"]]
+            event_names.append_array(entry.get("chunk_events", []))
+            _add_emitter(runtime, event_names, entry["source"], fraction)
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
@@ -389,6 +397,8 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     trigger.threshold_max = float(descriptor.get("trigger_threshold_max", 1.0))
     trigger.placement = StringName(descriptor.get("sound_placement", &"general"))
     trigger.source = descriptor.get("source") as MmdSoundSourceDefinition
+    var event_names:Array[StringName] = [trigger.event_name]
+    _add_emitter(runtime, event_names, trigger.source, trigger.source.start_offset if trigger.source else 0.0)
     if trigger.source:
         trigger.beginning_length = MmdSoundEventBuilder.stream_length(trigger.source.sound_begin)
     runtime.triggers.append(trigger)
@@ -433,6 +443,21 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
         _pantograph_sources[vehicle_rid] = engine
         engine.pantograph_up.connect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.connect(_on_pantograph_down.bind(vehicle_rid))
+
+
+## Makes `event_names` one emitter of the bank: they start at `start_fraction` of their sample and
+## run at one pitch factor drawn for them - the MMD's pitchvariation: as a share around 1, none for
+## 0, or the original's default range when the MMD gives none (sound.cpp:207-216, 374-377)
+func _add_emitter(
+        runtime:BankRuntime, event_names:Array[StringName], source:MmdSoundSourceDefinition,
+        start_fraction:float) -> void:
+    var pitch_variation:float = randf_range(DEFAULT_PITCH_VARIATION_MIN, DEFAULT_PITCH_VARIATION_MAX)
+    if source and not source.pitch_variation == MmdSoundSourceDefinition.NO_PITCH_VARIATION:
+        var half_range:float = source.pitch_variation / 2.0
+        pitch_variation = randf_range(1.0 - half_range, 1.0 + half_range)
+    for event_name:StringName in event_names:
+        runtime.start_fractions[event_name] = start_fraction
+        runtime.pitch_variations[event_name] = pitch_variation
 
 
 ## Disconnects a vehicle's pantograph events; its counts stay, the caller decides about them.
@@ -492,6 +517,10 @@ func _build_brake_events(runtime:BankRuntime) -> void:
             brake_event.gate_on = float(gate[1])
             brake_event.gate_off = float(gate[2])
         brake_event.source = _primary_source(runtime, event_name)
+        var event_names:Array[StringName] = [event_name]
+        _add_emitter(
+                runtime, event_names, brake_event.source,
+                brake_event.source.start_offset if brake_event.source else 0.0)
         _resolve_brake_readers(brake_event, runtime.vehicle_rid)
         runtime.brake_events.append(brake_event)
     runtime.anchored_cabin_instance_id = 0
@@ -531,7 +560,9 @@ func _update_brake_sounds(runtime:BankRuntime, batch:Dictionary) -> void:
         event_parameters[&"unit_size"] = _unit_size_factor(runtime)
         event_parameters[&"gain"] = _volume_factor(runtime)
         if not playing:
-            runtime.player.play(brake_event.name, event_parameters)
+            runtime.player.play(
+                    brake_event.name, event_parameters, {}, runtime.start_fractions.get(brake_event.name, 0.0),
+                    runtime.pitch_variations.get(brake_event.name, 1.0))
         batch[brake_event.name] = event_parameters
 
 
@@ -552,7 +583,10 @@ func _update_triggers(runtime:BankRuntime, batch:Dictionary) -> void:
             trigger.last_value = value
             if is_inf(previous_value) or is_equal_approx(previous_value, value):
                 continue
-            runtime.player.play(trigger.event_name, _trigger_parameters(runtime, trigger, value))
+            runtime.player.play(
+                    trigger.event_name, _trigger_parameters(runtime, trigger, value), {},
+                    runtime.start_fractions.get(trigger.event_name, 0.0),
+                    runtime.pitch_variations.get(trigger.event_name, 1.0))
             continue
 
         var should_play:bool = value <= trigger.threshold_max and value >= trigger.threshold_min
@@ -569,7 +603,8 @@ func _update_triggers(runtime:BankRuntime, batch:Dictionary) -> void:
             runtime.player.play(
                     trigger.event_name,
                     0.0 if trigger.play_beginning else trigger.beginning_length,
-                    parameters)
+                    parameters, runtime.start_fractions.get(trigger.event_name, 0.0),
+                    runtime.pitch_variations.get(trigger.event_name, 1.0))
             trigger.play_beginning = false
             trigger.activated = true
         elif not should_play and trigger.activated:
@@ -610,13 +645,17 @@ func _update_running_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary
         var parameters:Dictionary = result["parameters"]
         parameters[&"soundproofing"] = _soundproofing(runtime, result["source"])
         if action == RunningSoundModel.Action.ONE_SHOT:
-            runtime.player.play(event_name, parameters)
+            runtime.player.play(
+                    event_name, parameters, {}, runtime.start_fractions[event_name],
+                    runtime.pitch_variations[event_name])
             continue
         if not runtime.player.is_playing(event_name):
             # every vehicle of a trainset plays the same recording, and started together they
             # comb-filter into a metallic ring heard from outside. Each copy starts further into
-            # the sample (DynObj.cpp:6505-6514, 6085, audiorenderer.cpp:99).
-            runtime.player.play(event_name, null, parameters, runtime.running_start_fractions[event_name])
+            # the sample and runs at its own pitch (DynObj.cpp:6505-6514, 6085, sound.cpp:374-377).
+            runtime.player.play(
+                    event_name, null, parameters, runtime.start_fractions[event_name],
+                    runtime.pitch_variations[event_name])
         batch[event_name] = parameters
 
 

@@ -1115,3 +1115,25 @@ msgstr ""
 
 msgid "Load %d"
 msgstr ""
+
+# the loading screen (loading_screen/)
+msgid "Loading scenery"
+msgstr ""
+
+msgid "Scenery files"
+msgstr ""
+
+msgid "Infrastructure"
+msgstr ""
+
+msgid "Terrain"
+msgstr ""
+
+msgid "Files %d"
+msgstr ""
+
+msgid "Time %d:%02d"
+msgstr ""
+
+msgid "Still working"
+msgstr ""

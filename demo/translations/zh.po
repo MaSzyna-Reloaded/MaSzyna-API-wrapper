@@ -813,7 +813,7 @@ msgid "Departure"
 msgstr ""
 
 msgid "Vehicles"
-msgstr ""
+msgstr "车辆"
 
 msgid "No vehicle has a driver"
 msgstr ""
@@ -1115,3 +1115,25 @@ msgstr "卸下 %d"
 
 msgid "Load %d"
 msgstr "装载 %d"
+
+# the loading screen (loading_screen/)
+msgid "Loading scenery"
+msgstr "正在加载场景"
+
+msgid "Scenery files"
+msgstr "场景文件"
+
+msgid "Infrastructure"
+msgstr "基础设施"
+
+msgid "Terrain"
+msgstr "地形"
+
+msgid "Files %d"
+msgstr "文件 %d"
+
+msgid "Time %d:%02d"
+msgstr "时间 %d:%02d"
+
+msgid "Still working"
+msgstr "仍在处理"

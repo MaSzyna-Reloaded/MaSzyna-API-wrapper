@@ -813,7 +813,7 @@ msgid "Departure"
 msgstr ""
 
 msgid "Vehicles"
-msgstr ""
+msgstr "Vozidla"
 
 msgid "No vehicle has a driver"
 msgstr ""
@@ -1115,3 +1115,25 @@ msgstr "Vyložit %d"
 
 msgid "Load %d"
 msgstr "Naložit %d"
+
+# the loading screen (loading_screen/)
+msgid "Loading scenery"
+msgstr "Načítání scenérie"
+
+msgid "Scenery files"
+msgstr "Soubory scenérie"
+
+msgid "Infrastructure"
+msgstr "Infrastruktura"
+
+msgid "Terrain"
+msgstr "Terén"
+
+msgid "Files %d"
+msgstr "Soubory %d"
+
+msgid "Time %d:%02d"
+msgstr "Čas %d:%02d"
+
+msgid "Still working"
+msgstr "Stále se zpracovává"

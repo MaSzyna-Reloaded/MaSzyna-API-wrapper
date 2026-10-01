@@ -203,7 +203,7 @@ func _input(event: InputEvent) -> void:
     elif event.is_action_pressed("ui_home"):
         _go_to(_next_visible_slot(-1, 1))
     # Enter on a group header folds it - on a row it is the screen's, as activated
-    elif event.is_action_pressed("ui_text_submit") and _selected >= 0 and _slot_rows[_selected] < 0:
+    elif event.is_action_pressed("ui_text_submit", false, true) and _selected >= 0 and _slot_rows[_selected] < 0:
         _ui_sounds.play(click_event)
         _toggle_group(_slot_groups[_selected])
     elif event.is_action_pressed("ui_right"):

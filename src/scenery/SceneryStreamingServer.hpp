@@ -45,6 +45,9 @@ namespace godot {
             static constexpr uint64_t CATCHUP_BUDGET_MSEC = 16;
             /// Backlog above which the catch-up budget is used
             static constexpr int CATCHUP_BACKLOG = 64;
+            /// Pieces cleared before the memory they held is given back to the system, once the
+            /// clearing is done (ProcessMemory::release_unused())
+            static constexpr int RELEASE_CLEARED_PIECES = 256;
             /// Fallback for maszyna/scenery/draw_distance, also the range of the pieces
             /// that declare none of their own
             static constexpr float DEFAULT_DRAW_DISTANCE_M = 3000.0;
@@ -145,9 +148,10 @@ namespace godot {
             /// back, so the pieces around the camera are built first
             Vector<PendingBuild> pending_builds;
             Vector<PendingClear> pending_clears;
-            uint64_t plan_msec = 0; // duration of the last planning pass
-            int applied_builds = 0; // builds applied in the second being counted
-            int build_rate = 0;     // ...and in the last full second, for the debug window
+            uint64_t plan_msec = 0;        // duration of the last planning pass
+            int cleared_since_release = 0; // main thread only
+            int applied_builds = 0;        // builds applied in the second being counted
+            int build_rate = 0;            // ...and in the last full second, for the debug window
             uint64_t build_rate_msec = 0;
             int passes = 0; // planning passes finished, so a caller can tell "not started yet"
 

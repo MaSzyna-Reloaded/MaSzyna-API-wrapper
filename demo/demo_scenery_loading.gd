@@ -170,6 +170,10 @@ func _exit_to_menu() -> void:
     await _world.unload_scenery()
     _world.queue_free()
     _world = null
+    # the world is gone a frame later, and the allocator keeps what it held until asked
+    await get_tree().process_frame
+    ProcessMemory.release_unused()
+    SceneryLoadMeasurement.print_process("SceneryMemory", "menu")
     await get_tree().create_timer(EXIT_SPINNER_HOLD_TIME).timeout
     $ScenerySelectorScreen.open()
     await $SpinnerOverlay.fade_out(EXIT_FADE_TIME)

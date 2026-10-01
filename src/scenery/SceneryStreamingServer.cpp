@@ -1,4 +1,5 @@
 #include "SceneryStreamingServer.hpp"
+#include "utils/ProcessMemory.hpp"
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
@@ -510,10 +511,16 @@ namespace godot {
             }
             if (apply && pending.clear.is_valid()) {
                 pending.clear.call(pending.user_rid);
+                cleared_since_release++;
             }
             if (Time::get_singleton()->get_ticks_msec() >= deadline) {
                 return;
             }
+        }
+        // what the cleared pieces held is free, but the allocator keeps it until asked
+        if (cleared_since_release >= RELEASE_CLEARED_PIECES) {
+            cleared_since_release = 0;
+            ProcessMemory::release_unused();
         }
 
         while (pending_builds.size() > 0) {

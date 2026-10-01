@@ -36,6 +36,8 @@ const PARSE_PROGRESS:float = 0.5
 ## Time the main thread may work through a load before it lets a frame be drawn - the loading
 ## screen's animations move only between frames (it was 100 ms: 10 frames a second at best)
 const FRAME_BUDGET_MSEC:int = 12
+## The memory lines of the steps of a .scn converted (SceneryLoadMeasurement.print_process())
+const CONVERT_TAG:String = "SceneryConvert"
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 ## Queues currently parsing, so a scenery leaving the tree can stop them - their tasks are
@@ -118,14 +120,18 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             _cache.get_file_path(cache_path.get_basename())
         )
         var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters, triangles_sink)
+        SceneryLoadMeasurement.print_process(CONVERT_TAG, "parsed")
         await _run_on_worker(
             root, assign_signal_head_kinds.bind(context.models, context.events), PARSE_PROGRESS,
             MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename
         )
+        SceneryLoadMeasurement.print_process(CONVERT_TAG, "signal heads")
         var chunk_descriptors:Variant = await _run_on_worker(
             root, triangles_sink.finish, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.FILES, "Building terrain"
         )
+        SceneryLoadMeasurement.print_process(CONVERT_TAG, "terrain written")
         compiled = _compile_scenery(source_path, parameters_hash, context, context.objects)
+        SceneryLoadMeasurement.print_process(CONVERT_TAG, "packed")
         for object:Variant in context.objects:
             if object is Node:
                 (object as Node).free()
@@ -133,6 +139,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         context = null
         # the parse ran on a dozen workers, and the allocator keeps what each one freed
         ProcessMemory.release_unused()
+        SceneryLoadMeasurement.print_process(CONVERT_TAG, "parse let go")
         if not compiled:
             measurement.finish()
             return
@@ -149,6 +156,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
                 root, _cache.set.bind(cache_path, compiled), PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.FILES,
                 "Saving cache"
             )
+            SceneryLoadMeasurement.print_process(CONVERT_TAG, "saved")
 
     await _report_progress(root, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
     await _instantiate_server_data(
@@ -174,7 +182,11 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _build_drivers(root)
     _run_scripts(root, compiled.scripts)
     measurement.finish()
-    measurement.print_memory(compiled)
+    SceneryLoadMeasurement.print_scenery(compiled)
+    # what the load read and built from is let go of with the compiled scenery, and given back
+    compiled = null
+    ProcessMemory.release_unused()
+    SceneryLoadMeasurement.print_process("SceneryMemory", "loaded")
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.

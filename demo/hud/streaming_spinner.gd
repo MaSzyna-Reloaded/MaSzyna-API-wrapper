@@ -1,13 +1,18 @@
 extends PanelContainer
 
-## A spinner on a faint grey chip while SceneryStreamingServer builds the pieces around
-## the camera: it fades in when the builds start and out when they finish. The spinning is the
-## shader's (streaming_spinner.gdshader), so no script runs per frame.
+## A spinner on a HUD tile, looking like the others (DrivingAid.apply_style()), while
+## SceneryStreamingServer builds the pieces around the camera: it fades in when the builds start
+## and out when they finish. The spinning is the shader's (streaming_spinner.gdshader), so no
+## script runs per frame.
 
 ## Seconds of the fade in and of the fade out
 const FADE_SEC:float = 0.35
 
 var _fade:Tween = null
+
+
+func _ready() -> void:
+    DrivingAid.apply_style(self)
 
 
 func _enter_tree() -> void:

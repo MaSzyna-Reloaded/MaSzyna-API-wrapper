@@ -962,6 +962,9 @@ msgstr ""
 msgid "Take over"
 msgstr ""
 
+msgid "Enter cabin"
+msgstr ""
+
 msgid "Hand over to AI"
 msgstr ""
 

@@ -28,7 +28,6 @@
 [ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
 [ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
-[ext_resource type="Texture2D" path="res://hud/icons/cab.svg" id="31_cab"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye_off.svg" id="34_eye_off"]
 
@@ -447,7 +446,7 @@ action_tooltip = "Stop following"
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Your vehicle (click to enter the cab)"
-icon = ExtResource("31_cab")
+badge = 1
 action_icon = ExtResource("32_hand_over")
 action_tooltip = "Hand over to AI"
 
@@ -473,3 +472,4 @@ mouse_filter = 2
 [connection signal="action_pressed" from="FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_action_pressed"]
 [connection signal="pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
 [connection signal="action_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]
+[connection signal="driver_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_driver_pressed"]

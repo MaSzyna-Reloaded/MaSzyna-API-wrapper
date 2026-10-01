@@ -10,7 +10,14 @@ namespace godot {
         return 1;
     }
 
-    /// enter(v) - the player takes the vehicle over, into its cab
+    /// take_over(v) - the player takes the vehicle over, into its cab
+    static int player_take_over(lua_State *p_state) {
+        const RID vehicle = LuaHandle::check(p_state, 1, ScriptHandleKind::VEHICLE);
+        LuaModules::server<PlayerServer>(p_state)->player_take_over_vehicle(vehicle);
+        return 0;
+    }
+
+    /// enter(v) - the player sits in the vehicle's cab, its driver drives on
     static int player_enter(lua_State *p_state) {
         const RID vehicle = LuaHandle::check(p_state, 1, ScriptHandleKind::VEHICLE);
         LuaModules::server<PlayerServer>(p_state)->player_enter_vehicle(vehicle);
@@ -24,9 +31,8 @@ namespace godot {
     }
 
     const luaL_Reg LuaModules::PLAYER[] = {
-            {"vehicle", player_vehicle},
-            {"enter", player_enter},
-            {"leave", player_leave},
+            {"vehicle", player_vehicle}, {"take_over", player_take_over},
+            {"enter", player_enter},     {"leave", player_leave},
             {nullptr, nullptr},
     };
 } // namespace godot

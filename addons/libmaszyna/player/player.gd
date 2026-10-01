@@ -88,7 +88,7 @@ func _process(_delta:float) -> void:
         _dirty = false
         var vehicle:RailVehicle3D = _find_start_vehicle()
         if vehicle:
-            PlayerServer.player_enter_vehicle(vehicle.get_rid())
+            PlayerServer.player_take_over_vehicle(vehicle.get_rid())
         elif start_vehicle_id or _auto_start_pending:
             _dirty = true
 
@@ -125,7 +125,7 @@ func _input(event):
     var picked:RailVehicle3D = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle")
             or (event.is_action_pressed("cabin_mode_toggle", false, true) and not driven.is_valid())) else null
     if picked:
-        PlayerServer.player_enter_vehicle(picked.get_rid())
+        PlayerServer.player_take_over_vehicle(picked.get_rid())
     elif event.is_action_pressed("cabin_mode_toggle", false, true):
         PlayerCameraServer.camera_toggle_cabin()
 

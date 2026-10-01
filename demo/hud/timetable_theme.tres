@@ -232,12 +232,57 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_driver_ai"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.78, 0.2, 0.18, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_driver_player"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.2, 0.62, 0.3, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_driver_unmanned"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.38, 0.4, 0.44, 0.95)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+
 [resource]
 default_font_size = 14
 AIBadge/base_type = &"Label"
 AIBadge/colors/font_color = Color(0.62, 0.92, 0.7, 1)
 AIPill/base_type = &"PanelContainer"
 AIPill/styles/panel = SubResource("StyleBoxFlat_ai_pill")
+DriverAIButton/base_type = &"Button"
+DriverAIButton/styles/hover = SubResource("StyleBoxFlat_driver_ai")
+DriverAIButton/styles/normal = SubResource("StyleBoxFlat_driver_ai")
+DriverAIButton/styles/pressed = SubResource("StyleBoxFlat_driver_ai")
+DriverPlayerButton/base_type = &"Button"
+DriverPlayerButton/styles/hover = SubResource("StyleBoxFlat_driver_player")
+DriverPlayerButton/styles/normal = SubResource("StyleBoxFlat_driver_player")
+DriverPlayerButton/styles/pressed = SubResource("StyleBoxFlat_driver_player")
+DriverUnmannedButton/base_type = &"Button"
+DriverUnmannedButton/styles/hover = SubResource("StyleBoxFlat_driver_unmanned")
+DriverUnmannedButton/styles/normal = SubResource("StyleBoxFlat_driver_unmanned")
+DriverUnmannedButton/styles/pressed = SubResource("StyleBoxFlat_driver_unmanned")
 DrivingAidCaption/base_type = &"Label"
 DrivingAidCaption/colors/font_color = Color(0.78, 0.78, 0.78, 1)
 DrivingAidCaption/font_sizes/font_size = 12

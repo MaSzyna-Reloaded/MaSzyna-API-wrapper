@@ -23,6 +23,14 @@ size_flags_vertical = 4
 mouse_filter = 2
 stretch_mode = 3
 
+[node name="DriverButton" type="Button" parent="Layout"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
+
 [node name="Info" type="VBoxContainer" parent="Layout"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -56,4 +64,5 @@ wait_time = 0.5
 [connection signal="mouse_entered" from="." to="." method="_on_mouse_entered"]
 [connection signal="mouse_exited" from="." to="." method="_on_mouse_exited"]
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]
+[connection signal="pressed" from="Layout/DriverButton" to="." method="_on_driver_button_pressed"]
 [connection signal="pressed" from="Layout/ActionButton" to="." method="_on_action_button_pressed"]

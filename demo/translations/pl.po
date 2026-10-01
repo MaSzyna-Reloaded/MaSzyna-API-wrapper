@@ -962,6 +962,9 @@ msgstr "Bilans energii"
 msgid "Take over"
 msgstr "Przejmij prowadzenie"
 
+msgid "Enter cabin"
+msgstr "Wejdź do kabiny"
+
 msgid "Hand over to AI"
 msgstr "Oddaj prowadzenie AI"
 

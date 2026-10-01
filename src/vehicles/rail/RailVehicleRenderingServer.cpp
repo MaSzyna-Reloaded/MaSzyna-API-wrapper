@@ -74,11 +74,12 @@ namespace godot {
         constexpr int PANTOGRAPH_SLIDER = 4;
         constexpr std::array<const char *, 2> PNEUMATIC_SUBMODELS = {"cpneumatic", "pneumatic"};
 
-        /* The low-poly cab of a cab as the cab layer counts them - 1, 0 or -1 */
-        int low_poly_cab(const int p_cab) {
-            return p_cab < 0 ? LOW_POLY_REAR_CAB : p_cab;
-        }
     } // namespace
+
+    /* The low-poly cab of a cab as the cab layer counts them - 1, 0 or -1 */
+    static int low_poly_cab(const int p_cab) {
+        return p_cab < 0 ? LOW_POLY_REAR_CAB : p_cab;
+    }
 
     template<typename T>
     static Ref<T> component(const RID &p_vehicle, const VehicleComponentType::Type p_type) {

@@ -6,6 +6,9 @@ comments cite those entries by date and title. Check the matching area before di
 anything. Open work belongs in `TODO.md`.
 
 ## Diagnosing
+* A local clang-tidy older than CI's (`LLVM_VERSION` in `clang-tidy.yml`) passes what CI fails:
+  checks added since are unknown to it. Run CI's major version (`pip install clang-tidy==22.*`).
+  *(10-01 style-check red behind a green local check)*
 * Measure the data before reading the code, and after two failed hypotheses read off the code,
   stop reading and print. *(09-24 pantograph lost the wire; 09-23 four guesses before one print)*
 * Split frame time into CPU and GPU before any performance hypothesis, and confirm the adapter,

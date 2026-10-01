@@ -630,8 +630,16 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   only owns `MaszynaTrianglesChunkData` streaming for `SceneryStreamingServer` and creates the
   `RenderingServer` instances. Remove it: let `SceneryStreamingServer` stream a triangle chunk
   (mesh + transform) itself, as it does `E3DRenderingServer`'s models.
-* Nothing gives geometry back: `MaszynaSceneryChunkRenderingServer.ChunkState.mesh` and
-  `E3DRenderingServer`'s model cache never evict. Needs the per-chunk disk cache.
+* Memory left after the lazy loading (`ResourceLazyLoader`, 2026-10-01): every model placement
+  keeps a full `E3DInstanceData` for the whole session; the subscene cache
+  (`MaszynaCompiledSubscene.triangles`) still holds raw triangles, read whole; a terrain chunk's
+  geometry is held as arrays beside its mesh while built.
+* Main-thread stalls left in a load: `TractionServer.network_build()` and
+  `TrackServer.topology_rebuild()` run once, unbudgeted; `ScenerySoundServer.sound_create()` sets
+  `SfxBank.events` once per sound and the vendored setter rebuilds the bank each time (O(n^2)) -
+  needs an append in `gnd-sfx`.
+* Not measured on a heavy scenery yet: the `[SceneryLoad]` lines (`SceneryLoadMeasurement`) before
+  and after, from a parse and from the cache.
 * In the editor streaming follows 3D viewport 0 only (`addons/libmaszyna/editor/scenery_streaming/`).
 * `maszyna_node_track_importer.gd` drops every type but `switch`/`normal`: `road` (~16 700),
   `river` (~900), `cross` (72), `turn`, `table`. `road`/`river` need a flat surface path

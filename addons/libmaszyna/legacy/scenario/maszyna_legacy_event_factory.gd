@@ -153,6 +153,7 @@ static func build(
     var reaches_by_name:Dictionary[String, float] = {}
     var transcripts_by_name:Dictionary[String, Transcript] = {}
     for sound:MaszynaSoundData in sounds:
+        await SceneryInstancer.frame_budget_wait()
         # heard as far as a vehicle's sound of the same range (sound_source::range(), sound.cpp:364-389)
         var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
         source.range = sound.range_max
@@ -231,6 +232,7 @@ static func build(
         events_by_name[event.name] = rid
 
     for index:int in events.size():
+        await SceneryInstancer.frame_budget_wait()
         var event:MaszynaEventData = events[index]
         var rid:RID = event_rids[index]
         var event_memories:Array[RID] = _get_memories(event.targets, memories)

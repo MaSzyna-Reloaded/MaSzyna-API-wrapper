@@ -1,14 +1,11 @@
 class_name LoadingLayout
 extends Control
 
-## What the loading screen shows, in one of its looks (loading_board.tscn, loading_card.tscn - the
-## same nodes, laid out apart): the scenery's name, a ring with the progress and a comet that keeps
-## turning, the stages of the load (MaszynaIncludeNode.LoadStage), the files parsed, the time and,
-## once the progress stands, that the load is still going. The screen (loading_screen.gd) decides
-## what is shown; this only shows it.
+## What the loading screen shows (loading_board.tscn): the scenery's name, a ring with the progress
+## and a comet that keeps turning, the stages of the load (MaszynaIncludeNode.LoadStage) as bars,
+## the files parsed, the time and, once the progress stands, that the load is still going. The
+## screen (loading_screen.gd) decides what is shown; this only shows it.
 
-## How a stage is drawn: a bar over its name, or a round mark before it
-enum StageLook { BAR, MARK }
 ## Where the load is with a stage
 enum StageState { TO_COME, DONE, UNDER_WAY }
 
@@ -19,13 +16,10 @@ const STAGE_SHADER: Shader = preload("loading_stage.gdshader")
 const STAGE_COLORS: Array[Color] = [Color(0.81, 0.88, 1.0, 0.4), Color(0.75, 0.82, 0.92, 1.0), Color(1.0, 1.0, 1.0, 1.0)]
 const STAGE_FONT_SIZE: int = 15
 const BAR_HEIGHT: float = 6.0
-const MARK_SIZE: float = 16.0
 const STAGE_SEPARATION: int = 10
 ## Seconds of a cycle of the "still working" pulse
 const STALLED_PULSE_SEC: float = 1.2
 const STALLED_PULSE_MIN_ALPHA: float = 0.35
-
-@export var stage_look: StageLook = StageLook.BAR
 
 ## The indicator of each stage, in the order of MaszynaIncludeNode.LoadStage
 var _stage_indicators: Array[ColorRect] = []
@@ -35,14 +29,13 @@ var _pulse: Tween = null
 
 func _ready() -> void:
     for stage_name: String in STAGE_NAMES:
-        var row: BoxContainer = VBoxContainer.new() if stage_look == StageLook.BAR else HBoxContainer.new()
+        var row := VBoxContainer.new()
         row.add_theme_constant_override("separation", STAGE_SEPARATION)
         row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         var indicator := ColorRect.new()
         indicator.material = ShaderMaterial.new()
         (indicator.material as ShaderMaterial).shader = STAGE_SHADER
-        (indicator.material as ShaderMaterial).set_shader_parameter("mark", stage_look == StageLook.MARK)
-        indicator.custom_minimum_size = Vector2(0.0, BAR_HEIGHT) if stage_look == StageLook.BAR else Vector2(MARK_SIZE, MARK_SIZE)
+        indicator.custom_minimum_size = Vector2(0.0, BAR_HEIGHT)
         indicator.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         var label := Label.new()
         label.text = stage_name

@@ -16,7 +16,39 @@ extends Node
 ## at all, because they say which *instance* a vehicle is, and two wagons of the same type are
 ## still two vehicles.
 
+## Time the vehicle builds may take per frame; a vehicle that started is finished, so a frame
+## builds at least one. Built all in one frame, a scenery's vehicles stalled the loading screen.
+const BUILD_BUDGET_MSEC:int = 8
+
 var _cache = ResourceCache.create("rail_vehicle")
+## Vehicles waiting for their build, in the order they asked; processed while it is not empty
+var _build_queue:Array[MaszynaRailVehicle3D] = []
+
+
+## The vehicle is built in its turn, within the per-frame budget
+func build_request(vehicle:MaszynaRailVehicle3D) -> void:
+    if _build_queue.has(vehicle):
+        return
+    _build_queue.append(vehicle)
+    if _build_queue.size() == 1:
+        get_tree().process_frame.connect(_on_process_frame)
+
+
+## A vehicle leaving the tree is not built
+func build_cancel(vehicle:MaszynaRailVehicle3D) -> void:
+    if not _build_queue.has(vehicle):
+        return
+    _build_queue.erase(vehicle)
+    if not _build_queue:
+        get_tree().process_frame.disconnect(_on_process_frame)
+
+
+func _on_process_frame() -> void:
+    var deadline:int = Time.get_ticks_msec() + BUILD_BUDGET_MSEC
+    while _build_queue and Time.get_ticks_msec() < deadline:
+        _build_queue.pop_front().build()
+    if not _build_queue:
+        get_tree().process_frame.disconnect(_on_process_frame)
 
 
 func clear_cache() -> void:

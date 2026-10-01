@@ -4,7 +4,6 @@
 [ext_resource type="Shader" uid="uid://i1xw36oqcfs4" path="res://loading_screen/loading_screen.gdshader" id="3_5prnv"]
 [ext_resource type="Texture2D" uid="uid://gf4uwruf30ac" path="res://loading_screen/loading_screen_bg.jpg" id="4_eev04"]
 [ext_resource type="PackedScene" path="res://loading_screen/loading_board.tscn" id="5_board"]
-[ext_resource type="PackedScene" path="res://loading_screen/loading_card.tscn" id="6_card"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_wi7ft"]
 shader = ExtResource("3_5prnv")
@@ -34,12 +33,6 @@ stretch_mode = 6
 
 [node name="Board" parent="." instance=ExtResource("5_board")]
 unique_name_in_owner = true
-visible = false
-layout_mode = 1
-
-[node name="Card" parent="." instance=ExtResource("6_card")]
-unique_name_in_owner = true
-visible = false
 layout_mode = 1
 
 [node name="Clock" type="Timer" parent="."]

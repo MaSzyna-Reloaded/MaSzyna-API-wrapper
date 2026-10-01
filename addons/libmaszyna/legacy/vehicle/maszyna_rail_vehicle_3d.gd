@@ -109,6 +109,7 @@ func _enter_tree() -> void:
 
 
 func _exit_tree() -> void:
+    MaszynaRailVehicle3DManager.build_cancel(self)
     RailVehicleRenderingServer.vehicle_model_built.disconnect(_on_vehicle_model_built)
     GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
     if not Engine.is_editor_hint():
@@ -120,8 +121,16 @@ func is_built() -> bool:
     return not _dirty
 
 
+## A change asks for a build; MaszynaRailVehicle3DManager runs it, spreading the vehicles of a
+## scenery over frames
 func _process(_delta:float) -> void:
     set_process(false)
+    if _dirty:
+        MaszynaRailVehicle3DManager.build_request(self)
+
+
+## Builds the vehicle anew from what it is set to. Called by MaszynaRailVehicle3DManager in its turn.
+func build() -> void:
     if not _dirty:
         return
     _dirty = false

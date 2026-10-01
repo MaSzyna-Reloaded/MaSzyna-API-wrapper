@@ -201,12 +201,6 @@ namespace godot {
             E3DNodesBackend editable_nodes_backend{true};
             E3DMaterialResolver material_resolver;
 
-            /// What _stream_preload() needs off the main thread, where instances is not safe
-            struct StreamModel {
-                    String data_path;
-                    String model_filename;
-            };
-
             /// Registered instances are built through SceneryStreamingServer under this owner
             int stream_owner = -1;
             /// ...and the real lights of scenery instances under this one, with a range of their
@@ -233,8 +227,9 @@ namespace godot {
             double light_level = 1.0; // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
             Callable smoke_source_resolver;
-            HashMap<String, Ref<E3DModel>> models;
-            HashMap<RID, StreamModel> stream_models;
+            /// The ResourceLazyLoader resource of each registered instance's model - in a map of
+            /// its own, as _stream_preload() runs off the main thread, where instances is not safe
+            HashMap<RID, RID> stream_models;
             Mutex models_mutex;
 
             E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance);
@@ -243,6 +238,7 @@ namespace godot {
             void _update_if_built(E3DInstanceData &p_instance);
             void _on_data_unload_requested();
             void _on_data_reload_requested();
+            RID _get_stream_model(const RID &p_instance);
             Variant _stream_preload(const RID &p_instance);
             void _stream_build(const RID &p_instance, const Variant &p_preloaded);
             void _stream_clear(const RID &p_instance);
@@ -419,7 +415,7 @@ namespace godot {
 
             void material_set_resolver(const Callable &p_material_resolver);
             void model_set_loader(const Callable &p_model_loader);
-            /// The model of a file, loaded once through the loader and shared by every instance of it
+            /// The model of a file, through the loader (shared by every instance of it while it lives)
             Ref<E3DModel> model_load(const String &p_data_path, const String &p_model_filename);
             void smoke_set_source_resolver(const Callable &p_smoke_source_resolver);
     };

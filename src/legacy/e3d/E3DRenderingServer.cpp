@@ -1,6 +1,7 @@
 #include "E3DRenderingServer.hpp"
 #include "LegacyLightMode.hpp"
 #include "game_data/GameDataServer.hpp"
+#include "resources/ResourceLazyLoader.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
@@ -174,12 +175,9 @@ namespace godot {
                 callable_mp(this, &E3DRenderingServer::_on_data_reload_requested));
     }
 
-    /// The models and materials are the old data's - an instance built again asks for them anew
+    /// The materials are the old data's - an instance built again asks for them anew; the models
+    /// are let go by ResourceLazyLoader
     void E3DRenderingServer::_on_data_unload_requested() {
-        {
-            MutexLock lock(models_mutex);
-            models.clear();
-        }
         material_resolver.clear();
     }
 
@@ -283,8 +281,18 @@ namespace godot {
             if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance(); streaming != nullptr) {
                 streaming->stream_free(data.stream_rid);
             }
-            MutexLock lock(models_mutex);
-            stream_models.erase(p_instance);
+            RID model_resource;
+            {
+                MutexLock lock(models_mutex);
+                model_resource = stream_models[p_instance];
+                stream_models.erase(p_instance);
+            }
+            if (ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance(); lazy_loader != nullptr) {
+                if (data.built) {
+                    lazy_loader->resource_release(model_resource);
+                }
+                lazy_loader->resource_free(model_resource);
+            }
         }
         if (blinking_instances.has(p_instance)) {
             blinking_instances.erase(p_instance);
@@ -573,6 +581,8 @@ namespace godot {
             const Transform3D &p_transform, const float p_range_begin, const float p_range_end, const RID &p_scenario) {
         SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
         ERR_FAIL_NULL_V(streaming, RID());
+        ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
+        ERR_FAIL_NULL_V(lazy_loader, RID());
         if (stream_owner < 0) {
             stream_owner = streaming->owner_create(
                     callable_mp(this, &E3DRenderingServer::_stream_preload),
@@ -590,12 +600,13 @@ namespace godot {
         instance.visibility_range_begin = p_range_begin;
         instance.visibility_range_end = p_range_end;
         instance.scenario = p_scenario;
+        // one resource per model file, shared by every placement of it
+        const RID model_resource = lazy_loader->resource_register(
+                p_data_path.path_join(p_model_filename),
+                callable_mp(this, &E3DRenderingServer::model_load).bind(p_data_path, p_model_filename));
         {
             MutexLock lock(models_mutex);
-            StreamModel stream_model;
-            stream_model.data_path = p_data_path;
-            stream_model.model_filename = p_model_filename;
-            stream_models[rid] = stream_model;
+            stream_models[rid] = model_resource;
         }
         instance.stream_rid = streaming->stream_register(stream_owner, rid, p_transform.origin, p_range_end);
         return rid;
@@ -615,39 +626,33 @@ namespace godot {
         smoke_source_resolver = p_smoke_source_resolver;
     }
 
-    /// Memoized: a scenery places the same few hundred models thousands of times. Two threads
-    /// loading the same model at once only duplicate work the loader itself caches.
+    /// Not memoized here: a model kept for the whole session is what filled the memory of a large
+    /// scenery. The loader's own cache (ResourceLoader's) shares a model while anything holds it,
+    /// and a streamed placement holds it through ResourceLazyLoader only while it is built.
     Ref<E3DModel> E3DRenderingServer::model_load(const String &p_data_path, const String &p_model_filename) {
-        const String key = p_data_path.path_join(p_model_filename);
         Callable loader;
         {
             MutexLock lock(models_mutex);
-            const Ref<E3DModel> *cached = models.getptr(key);
-            if (cached != nullptr) {
-                return *cached;
-            }
             loader = model_loader;
         }
-        const Ref<E3DModel> model =
-                loader.is_valid() ? Ref<E3DModel>(loader.call(p_data_path, p_model_filename)) : Ref<E3DModel>();
-        MutexLock lock(models_mutex);
-        models[key] = model;
-        return model;
+        return loader.is_valid() ? Ref<E3DModel>(loader.call(p_data_path, p_model_filename)) : Ref<E3DModel>();
     }
 
-    /// Streaming worker thread - the instances map belongs to the main thread, so the model path
-    /// is read from the copy made by instance_register()
+    /// The model resource of a registered instance, from the copy made by instance_register()
+    RID E3DRenderingServer::_get_stream_model(const RID &p_instance) {
+        MutexLock lock(models_mutex);
+        const RID *found = stream_models.getptr(p_instance);
+        return found != nullptr ? *found : RID();
+    }
+
+    /// Streaming worker thread: loads the model, the build holds it
     Variant E3DRenderingServer::_stream_preload(const RID &p_instance) {
-        StreamModel stream_model;
-        {
-            MutexLock lock(models_mutex);
-            const StreamModel *found = stream_models.getptr(p_instance);
-            if (found == nullptr) {
-                return Variant();
-            }
-            stream_model = *found;
+        const RID model_resource = _get_stream_model(p_instance);
+        ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
+        if (!model_resource.is_valid() || lazy_loader == nullptr) {
+            return Variant();
         }
-        return model_load(stream_model.data_path, stream_model.model_filename);
+        return lazy_loader->resource_load(model_resource);
     }
 
     void E3DRenderingServer::_stream_build(const RID &p_instance, const Variant &p_preloaded) {
@@ -655,9 +660,15 @@ namespace godot {
         if (instance == nullptr) {
             return;
         }
-        const Ref<E3DModel> model = p_preloaded;
-        if (model.is_null()) {
+        ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
+        if (Ref<E3DModel>(p_preloaded).is_null() || lazy_loader == nullptr) {
             return; // the loader already reported why
+        }
+        // the preloaded model is the one handed out, as it is alive; fetched to be held while built
+        // (nothing is held when the fetch has nothing)
+        const Ref<E3DModel> model = lazy_loader->resource_fetch(_get_stream_model(p_instance));
+        if (model.is_null()) {
+            return;
         }
         instance->model = model;
         instance_build(p_instance);
@@ -673,6 +684,9 @@ namespace godot {
         _get_backend(*instance).clear(*instance);
         instance->built = false;
         instance->model.unref();
+        if (ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance(); lazy_loader != nullptr) {
+            lazy_loader->resource_release(_get_stream_model(p_instance));
+        }
     }
 
     RID E3DRenderingServer::_light_create(

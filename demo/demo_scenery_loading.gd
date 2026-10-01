@@ -51,10 +51,10 @@ func _on_scenery_selector_scenery_selected(
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
     SceneryStreamingServer.streaming_set_camera(null)
-    # the title from the .scn header ("//$n"), not the file name
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
     $GameHud.show_scenario(info, train_id)
-    $LoadingScreen.show_loading(info.title if info.title else filename.get_basename())
+    # the name the scenery list gave it ("//$l", "//$n" and the file name)
+    $LoadingScreen.show_loading(MaszynaSceneryInfo.read_display_name(filename))
     # the selector dissolves into the loading screen and hides once it is done; the loading below
     # blocks the main thread, so it waits for the dissolve not to stutter
     await $ScenerySelectorScreen.hidden

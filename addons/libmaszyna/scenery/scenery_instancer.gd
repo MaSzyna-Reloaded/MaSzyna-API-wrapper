@@ -28,6 +28,9 @@ const CACHE_DIRECTORY:String = "scenery_compiled"
 const SUBSCENE_MIN_SIZE:int = 65536
 ## Cached subscenes nested deeper are parsed as part of their parent's cache entry
 const SUBSCENE_MAX_DEPTH:int = 2
+## Includes smaller than this are parsed in place of the include, not as a task of the queue, and
+## read from disk once per parse (open_parser())
+const INLINE_INCLUDE_MAX_SIZE:int = 16384
 ## Share of the loading progress taken by reading the scenery - parsing the .scn, or the cache
 const PARSE_PROGRESS:float = 0.5
 ## Time the main thread may work through a load before it lets a frame be drawn - the loading
@@ -43,6 +46,10 @@ static var _last_report_msec:int = 0
 ## going on while its progress stands - written by the workers, read by the main thread
 static var _file_in_parse:String = ""
 static var _file_in_parse_mutex:Mutex = Mutex.new()
+## The small includes read so far in this parse, by path - grass.inc is included tens of thousands
+## of times; emptied as the parse ends
+static var _include_buffers:Dictionary[String, PackedByteArray] = {}
+static var _include_buffers_mutex:Mutex = Mutex.new()
 ## Cache paths of subscenes being saved by queue workers - one writer per file
 static var _saving_subscenes:Dictionary = {}
 static var _saving_subscenes_mutex:Mutex = Mutex.new()
@@ -122,6 +129,10 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         for object:Variant in context.objects:
             if object is Node:
                 (object as Node).free()
+        var cacheable:bool = context.cacheable
+        context = null
+        # the parse ran on a dozen workers, and the allocator keeps what each one freed
+        ProcessMemory.release_unused()
         if not compiled:
             measurement.finish()
             return
@@ -133,7 +144,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             chunk.range_min = descriptor["range_min"]
             chunk.range_max = maxf(descriptor["range_max"], 0.0)
             compiled.triangle_chunks.append(chunk)
-        if root.use_cache and context.cacheable:
+        if root.use_cache and cacheable:
             await _run_on_worker(
                 root, _cache.set.bind(cache_path, compiled), PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.FILES,
                 "Saving cache"
@@ -163,6 +174,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _build_drivers(root)
     _run_scripts(root, compiled.scripts)
     measurement.finish()
+    measurement.print_memory(compiled)
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
@@ -614,6 +626,9 @@ func _parse_file_with_progress(
         await _report_progress(root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
+    _include_buffers_mutex.lock()
+    _include_buffers.clear()
+    _include_buffers_mutex.unlock()
     if not context:
         push_error("Cannot parse scenery: " + root.filename)
         return MaszynaImporterContext.new()
@@ -628,16 +643,25 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
     if not context.begin_file(abs_file):
         push_error("Recursive scenery include: " + abs_file)
         return null
-    var file := FileAccess.open(abs_file, FileAccess.READ)
-    if not file:
-        context.end_file(abs_file)
-        push_error("Cannot load scenery: " + abs_file)
-        return null
-    context.register_dependency(abs_file, file.get_length())
+    _include_buffers_mutex.lock()
+    var buffer:PackedByteArray = _include_buffers.get(abs_file, PackedByteArray())
+    _include_buffers_mutex.unlock()
+    if not buffer:
+        var file := FileAccess.open(abs_file, FileAccess.READ)
+        if not file:
+            context.end_file(abs_file)
+            push_error("Cannot load scenery: " + abs_file)
+            return null
+        buffer = file.get_buffer(file.get_length())
+        if buffer.size() < INLINE_INCLUDE_MAX_SIZE:
+            _include_buffers_mutex.lock()
+            _include_buffers[abs_file] = buffer
+            _include_buffers_mutex.unlock()
+    context.register_dependency(abs_file, buffer.size())
 
     var parser := MaszynaParser.new()
     parser.set_parameters(parameters)
-    parser.initialize(file.get_buffer(file.get_length()))
+    parser.initialize(buffer)
     parser.register_handler("sky", _make_importer_callback(sky_importer, context))
     parser.register_handler("atmo", _make_importer_callback(atmo_importer, context))
     parser.register_handler("time", _make_importer_callback(time_importer, context))

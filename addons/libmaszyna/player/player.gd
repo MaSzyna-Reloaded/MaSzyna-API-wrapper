@@ -122,7 +122,7 @@ func _input(event):
     var driven:RID = PlayerServer.player_get_vehicle()
     # on foot, F4 or change_vehicle takes the vehicle in front of the player; F4 only while the
     # player has no cab to go back to
-    var picked:RailVehicle3D = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle")
+    var picked:RailVehicle3D = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle", false, true)
             or (event.is_action_pressed("cabin_mode_toggle", false, true) and not driven.is_valid())) else null
     if picked:
         PlayerServer.player_take_over_vehicle(picked.get_rid())
@@ -130,9 +130,9 @@ func _input(event):
         PlayerCameraServer.camera_toggle_cabin()
 
     # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
-    if driven.is_valid() and event.is_action_pressed("cabin_previous"):
+    if driven.is_valid() and event.is_action_pressed("cabin_previous", false, true):
         VehicleServer.vehicle_send_command(driven, "cab_change", 1)
-    if driven.is_valid() and event.is_action_pressed("cabin_next"):
+    if driven.is_valid() and event.is_action_pressed("cabin_next", false, true):
         VehicleServer.vehicle_send_command(driven, "cab_change", -1)
 
     if walking:

@@ -2804,3 +2804,19 @@ lighting or the trainset.
 * **Rule:** no delay-based stage (reverb, echo, Haas widening) on the bus where many copies of one
   recording play - it is a comb filter of its own.
 
+## 2026-10-01 - Alt+Enter loaded a scenery
+
+* **Symptom:** none seen yet - found while adding Alt+Enter (fullscreen) to the game window: on the
+  scenery selector the same keypress would also have run Enter and loaded the selected scenery.
+* **What proved it:** a GUT probe built `InputEventKey` Enter with `alt_pressed`:
+  `is_action_pressed("ui_text_submit")` true, `is_action_pressed("ui_text_submit", false, true)`
+  false. The selector's `FocusSection`/`SelectorList`/`TileGrid` tested Godot's `ui_*` actions
+  with the default loose match. A handler earlier in the tree cannot stop it either: a window's
+  `window_input` signal comes before `push_input()`, which resets the handled flag
+  (`window.cpp` `_window_input`, `viewport.cpp` `push_input`), and `_input` reaches an autoload
+  last.
+* **Fix:** the starter's keys are the project's `menu_*` actions (`demo/project.godot`), each
+  matched with `exact_match` true; `toggle_fullscreen` is Alt+Enter.
+* **Rule:** a key is the project's input action, matched exactly - never a keycode, never a
+  built-in `ui_*` action, never a loose match (`AGENTS.md`, `CODE_STYLE.md` "Input is the
+  project's actions, matched exactly").

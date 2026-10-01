@@ -190,25 +190,25 @@ func get_selected() -> int:
 func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
-    if event.is_action_pressed("ui_down", true):
+    if event.is_action_pressed("menu_down", true, true):
         _walk(_next_visible_slot(_selected, 1), navigate_down)
-    elif event.is_action_pressed("ui_up", true):
+    elif event.is_action_pressed("menu_up", true, true):
         _walk(_next_visible_slot(_selected, -1), navigate_up)
-    elif event.is_action_pressed("ui_page_down", true):
+    elif event.is_action_pressed("menu_page_down", true, true):
         _go_to(_next_visible_slot(_selected, PAGE_STEP))
-    elif event.is_action_pressed("ui_page_up", true):
+    elif event.is_action_pressed("menu_page_up", true, true):
         _go_to(_next_visible_slot(_selected, -PAGE_STEP))
-    elif event.is_action_pressed("ui_end"):
+    elif event.is_action_pressed("menu_end", false, true):
         _go_to(_next_visible_slot(_slots.size(), -1))
-    elif event.is_action_pressed("ui_home"):
+    elif event.is_action_pressed("menu_home", false, true):
         _go_to(_next_visible_slot(-1, 1))
     # Enter on a group header folds it - on a row it is the screen's, as activated
-    elif event.is_action_pressed("ui_text_submit", false, true) and _selected >= 0 and _slot_rows[_selected] < 0:
+    elif event.is_action_pressed("menu_activate", false, true) and _selected >= 0 and _slot_rows[_selected] < 0:
         _ui_sounds.play(click_event)
         _toggle_group(_slot_groups[_selected])
-    elif event.is_action_pressed("ui_right"):
+    elif event.is_action_pressed("menu_right", false, true):
         navigate_right.emit()
-    elif event.is_action_pressed("ui_left"):
+    elif event.is_action_pressed("menu_left", false, true):
         navigate_left.emit()
     else:
         super(event)

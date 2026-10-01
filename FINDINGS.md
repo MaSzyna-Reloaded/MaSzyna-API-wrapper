@@ -209,6 +209,8 @@ anything. Open work belongs in `TODO.md`.
   each step)*
 
 ## Godot / GDExtension
+* A key is the project's input action, matched exactly (`is_action_pressed(a, echo, true)`): a
+  loose match takes Alt+Enter for Enter. *(10-01 Alt+Enter loaded a scenery)*
 * Memory that grows with a flat object count and no leak reported at exit is a referenced
   container: diff two jemalloc heap dumps before reading code, and suspect the binding's value
   types too. *(09-27 every rebuilt state dump stayed in memory)*

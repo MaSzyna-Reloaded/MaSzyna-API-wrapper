@@ -2791,3 +2791,16 @@ lighting or the trainset.
   the brake publishes only physical values (the FV4a handle flows, the accelerator event).
 * **Rule:** port a sound whose original computes its gain at the call site as that code, with its
   own state, not as a curve over one parameter.
+
+## 2026-10-01 - a phaser on the Exterior bus
+
+* **Symptom:** from outside, a passing trainset (445w_v2 coaches) swept like a phaser, after the
+  start offsets and pitch factors were fixed.
+* **Cause (read off the bus layout, not measured):** the Exterior bus carried a reverb, a 60 ms
+  slap-back delay and a StereoEnhance with `time_pullout_ms` 12 - a Haas delay of one channel. A
+  source panning across the field during a pass-by changes the mix of the direct and the delayed
+  copy: a moving comb filter on every exterior sound. The original (OpenAL) has none of them.
+* **Fix:** all three removed; the bus keeps the wall low-pass, air absorption, amplify and limiter.
+* **Rule:** no delay-based stage (reverb, echo, Haas widening) on the bus where many copies of one
+  recording play - it is a comb filter of its own.
+

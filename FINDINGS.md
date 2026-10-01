@@ -36,6 +36,8 @@ anything. Open work belongs in `TODO.md`.
 * Prove a sound fix on the stream class the game plays (`MaszynaAudioStream` reads its file only on
   the first playback), and give every emitter its own pitch factor as the original does.
   *(10-01 start offset that never reached the game)*
+* No delay-based effect (reverb, echo, Haas stereo widening) on the bus of the vehicles' sounds:
+  it combs many copies of one recording. *(10-01 a phaser on the Exterior bus)*
 * Prove a fix to a value by printing it where it is used, not where it is set. A later line
   can overwrite it. *(09-24 trainset ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).

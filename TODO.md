@@ -406,11 +406,13 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * `pantographup:`/`pantographdown:` play at the bank's position for both pantographs; the original
   places them at the pantograph that moved (`DynObj.cpp:3881-3934`, `4007-4036`). The E186 bank
   was not dumped after adding them, nor after `converter:`/`small-compressor:` were wired.
-* `brake_release_hiss` (`unbrake`) is the one pneumatic event the brake factory does not build - it
-  goes through `TrainSoundSystem._update_triggers()` without `gain` or the `listener_inside`
-  correction, so it is louder in the cab than the other hisses.
-* `TrainSoundSystem`'s `VOLUME_FACTOR`/`CABIN_UNIT_SIZE_FACTOR` (2.0) were run at 1.0 through a
-  `project.godot` override and are not verified by ear at 2.0 (`EXTERIOR_*` are 1.0).
+* Brake sounds (`BrakeSoundModel`, 2026-10-01): a loop due while the bank was out of earshot
+  starts from its opening bookend when heard again; the original resumes past it
+  (`sound.cpp:360-367`). The pressure rates are reset when a bank is silenced; the original keeps
+  computing them for every vehicle. `TrainSoundSystem._process()` keeps the remainder of
+  `sound_update_elapsed` (`fmod`) and passes the whole `elapsed` on, so a far bank's next update
+  counts that remainder twice - the brake rates (`dp/dt`) of far vehicles read a little low.
+  Not heard by the operator against the original yet.
 * The gnd-sfx tick is GDScript on a worker (12 ms/frame for 200 players, headless). If it limits,
   move the runtime to a C++ singleton beside `E3DRenderingServer`.
 * `SfxGeneratorPlayback.update()` runs on the sfx worker (single producer into the ring buffer);

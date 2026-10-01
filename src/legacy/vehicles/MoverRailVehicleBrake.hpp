@@ -40,8 +40,11 @@ namespace godot {
             double get_emergency_valve_flow() const override;
             double get_main_valve_flow() const override;
             double get_local_valve_flow() const override;
-            double get_loco_pressure_fall_rate() const override;
-            double get_loco_pressure_rise_rate() const override;
+            double get_handle_braking_flow() const override;
+            double get_handle_release_flow() const override;
+            double get_handle_emergency_flow() const override;
+            double get_handle_control_chamber_flow() const override;
+            double get_handle_timing_reservoir_flow() const override;
             double get_control_pressure() const override;
             double get_handle_control_pressure() const override;
             double get_local_aeim_position() const override;
@@ -130,8 +133,6 @@ namespace godot {
             }
 
         private:
-            double local_brake_pressure_previous = -1.0;
-            double local_brake_pressure_change_rate = 0.0;
             /* The releaser was switched on by consist_releaser() and is held until the brakes stop
              * braking */
             bool trainset_releasing = false;

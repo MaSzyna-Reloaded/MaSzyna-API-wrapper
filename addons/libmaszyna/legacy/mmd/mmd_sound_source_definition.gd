@@ -40,3 +40,14 @@ var pitch_variation:float = NO_PITCH_VARIATION
 ## startoffset: - where the sound starts in its sample, 0-1 (sound.cpp:218-222)
 var start_offset:float = 0.0
 var source_file:String = ""
+
+
+## This definition under another label - the sound a vehicle plays for one it does not define
+## (Train.cpp:9082-9089)
+func copy_as(copy_label:String) -> MmdSoundSourceDefinition:
+    var copy := MmdSoundSourceDefinition.new()
+    for property:Dictionary in get_property_list():
+        if property["usage"] & PROPERTY_USAGE_SCRIPT_VARIABLE:
+            copy.set(property["name"], get(property["name"]))
+    copy.label = copy_label
+    return copy

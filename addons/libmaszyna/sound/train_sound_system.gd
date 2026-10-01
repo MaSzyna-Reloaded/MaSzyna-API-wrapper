@@ -5,10 +5,6 @@ const TRIGGER_MODE_TOGGLE:int = 0
 const TRIGGER_MODE_CONTINUOUS:int = 1
 const TRIGGER_MODE_CHANGE:int = 2
 const EXTERIOR_CONTEXT:int = 5
-const VOLUME_FACTOR:float = 2.0
-const EXTERIOR_VOLUME_FACTOR:float = 1.0
-const CABIN_UNIT_SIZE_FACTOR:float = 2.0
-const EXTERIOR_UNIT_SIZE_FACTOR:float = 1.0
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
 ## gnd_sfx/hard_cut_distance when the project does not set it (sfx_player_3d.gd:143)
 const HARD_CUT_DISTANCE_DEFAULT:float = 1000.0
@@ -57,9 +53,7 @@ class BankRuntime extends RefCounted:
     var vehicle_rid:RID = RID()
     var cabin_only:bool = false
     var enabled:bool = true
-    var brake_sources:Dictionary = {}
-    ## brake events this bank really has, resolved once they are built
-    var brake_events:Array[BrakeEvent] = []
+    var brakes:BrakeSoundModel
     var running:RunningSoundModel
     ## The vehicle's own, taken once per controller in _resolve_vehicle() - an engine trigger's
     ## gain is read off them on the trigger tick
@@ -71,7 +65,6 @@ class BankRuntime extends RefCounted:
     var soundproofing:Array[PackedFloat32Array] = []
     var triggers:Array[Trigger] = []
     var trigger_elapsed:float = 0.0
-    var events_built:bool = false
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
     var culled:bool = false
@@ -109,25 +102,9 @@ class Trigger extends RefCounted:
     var beginning_length:float = 0.0
 
 
-## One brake event of a bank, with the static tables of MaszynaBrakeSfxEventFactory already resolved
-## into it - they are walked per event per tick otherwise.
-class BrakeEvent extends RefCounted:
-    var name:StringName = &""
-    var parameter_names:Array[StringName] = []
-    var state_keys:Array[String] = []
-    ## The component getters answering state_keys, one each, and gate_key - the frame reads these
-    ## (MaszynaBrakeSfxEventFactory.state_reader())
-    var readers:Array[Callable] = []
-    var gate_key:String = ""
-    var gate_reader:Callable = Callable()
-    var gate_on:float = 0.0
-    var gate_off:float = 0.0
-    var source:MmdSoundSourceDefinition
-
-
 ## The couplings the physics side reports, in the order of COUPLING_EVENT_INDICES, attach first and
-## detach second, then the pantograph events of RailVehicleElectricEngine - the layout of a vehicle's
-## entry in _vehicle_events.
+## detach second, then the pantograph events of RailVehicleElectricEngine and the accelerator of
+## RailVehicleBrake - the layout of a vehicle's entry in _vehicle_events.
 const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/attach_coupler": 0,
     "coupler_sound/attach_brakehose": 1,
@@ -156,7 +133,12 @@ const COUPLING_EVENT_INDICES:Dictionary[int, int] = {
 const COUPLER_DETACH_OFFSET:int = 6
 const PANTOGRAPH_UP_EVENT:int = 12
 const PANTOGRAPH_DOWN_EVENT:int = 13
-const VEHICLE_EVENT_COUNT:int = 14
+const BRAKE_ACCELERATOR_EVENT:int = 14
+const VEHICLE_EVENT_COUNT:int = 15
+## The cab's brake hisses sit at their handle, the local brake's at the driver's brake valve when the
+## cab has no local brake handle (Train.cpp:9406-9421)
+const _BRAKE_VALVE_LABELS:Array[String] = ["airsound", "airsound2", "airsound3", "airsound4", "airsound5"]
+const _LOCAL_BRAKE_LABELS:Array[String] = ["localbrakesound", "localbrakesound2"]
 
 var _banks:Dictionary = {}
 ## The bank of a vehicle, so looking one up does not mean scanning every bank in the scenery
@@ -170,6 +152,8 @@ var _vehicle_events:Dictionary[RID, PackedInt32Array] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
 var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
+## The brake each counted vehicle's accelerator events come from
+var _accelerator_sources:Dictionary[RID, RailVehicleBrake] = {}
 ## Vehicles of the listener's own trainset, refreshed with the sweep and on a context change
 var _listener_trainset:Array[RID] = []
 var _culling_distance:float = 1000.0
@@ -222,7 +206,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     _set_bank_vehicle(runtime, registration.get("vehicle") as RailVehicle3D)
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
-    runtime.brake_sources = registration.get("brake_sources", {})
+    runtime.brakes = registration.get("brakes") as BrakeSoundModel
     runtime.running = registration.get("running") as RunningSoundModel
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
@@ -272,7 +256,7 @@ func _process(delta:float) -> void:
                 runtime.sound_update_elapsed, maxf(runtime.update_interval, 0.001))
 
         var batch:Dictionary = {}
-        _update_brake_sounds(runtime, batch)
+        _update_brake_sounds(runtime, elapsed, batch)
         _update_running_sounds(runtime, elapsed, batch)
         runtime.trigger_elapsed += delta
         if runtime.trigger_elapsed >= TRIGGER_INTERVAL:
@@ -303,8 +287,6 @@ func _refresh_active_banks() -> void:
     for runtime:BankRuntime in _banks.values():
         if not runtime.vehicle_rid.is_valid() or not runtime.enabled:
             continue
-        if not runtime.events_built and runtime.brake_sources:
-            _build_brake_events(runtime)
 
         # Vehicles beyond every event's own max_distance are already inaudible - skip building
         # their sound state entirely instead of paying full per-frame cost (soundproofing,
@@ -388,8 +370,8 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
             vehicle_rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     if runtime.running:
         runtime.running.attach_vehicle(vehicle_rid)
-    for brake_event:BrakeEvent in runtime.brake_events:
-        _resolve_brake_readers(brake_event, vehicle_rid)
+    if runtime.brakes:
+        runtime.brakes.attach_vehicle(vehicle_rid)
     # the vehicle was built again: its engine is another component now
     _stop_counting_events(vehicle_rid)
     if not _vehicle_events.has(vehicle_rid):
@@ -402,15 +384,25 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
         _pantograph_sources[vehicle_rid] = engine
         engine.pantograph_up.connect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.connect(_on_pantograph_down.bind(vehicle_rid))
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    if brake:
+        _accelerator_sources[vehicle_rid] = brake
+        brake.accelerator_activated.connect(_on_accelerator_activated.bind(vehicle_rid))
 
 
-## Disconnects a vehicle's pantograph events; its counts stay, the caller decides about them.
+## Disconnects a vehicle's pantograph and accelerator events; its counts stay, the caller decides
+## about them.
 func _stop_counting_events(vehicle_rid:RID) -> void:
     var engine:RailVehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
     if is_instance_valid(engine):
         engine.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
         engine.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
     _pantograph_sources.erase(vehicle_rid)
+    var brake:RailVehicleBrake = _accelerator_sources.get(vehicle_rid)
+    if is_instance_valid(brake):
+        brake.accelerator_activated.disconnect(_on_accelerator_activated.bind(vehicle_rid))
+    _accelerator_sources.erase(vehicle_rid)
 
 
 ## Every rail vehicle reports its couplings; only the counted ones are kept
@@ -434,74 +426,37 @@ func _on_pantograph_down(_selector:int, vehicle_rid:RID) -> void:
     _vehicle_events[vehicle_rid][PANTOGRAPH_DOWN_EVENT] += 1
 
 
-## Builds the bank's brake events from its MMD sources and resolves the static tables of
-## MaszynaBrakeSfxEventFactory into BrakeEvents. Runs once, as soon as the sweep sees a controller -
-## the config it needs does not exist before that.
-func _build_brake_events(runtime:BankRuntime) -> void:
-    var built:Array[SfxEvent] = MaszynaBrakeSfxEventFactory.build_events(
-            runtime.brake_sources, VehicleServer.vehicle_dump_config(runtime.vehicle_rid))
-    if not built:
+func _on_accelerator_activated(vehicle_rid:RID) -> void:
+    _vehicle_events[vehicle_rid][BRAKE_ACCELERATOR_EVENT] += 1
+
+
+func _update_brake_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary) -> void:
+    if not runtime.brakes:
         return
-    var events:Array[SfxEvent] = runtime.player.bank.events.duplicate()
-    events.append_array(built)
-    runtime.player.bank.events = events
-    runtime.events_built = true
-    for event_name:StringName in MaszynaBrakeSfxEventFactory.EVENT_PARAMETERS:
-        if not runtime.player.bank.get_event(event_name):
+    var vehicle_events:PackedInt32Array = _vehicle_events.get(runtime.vehicle_rid, PackedInt32Array())
+    var results:Dictionary = runtime.brakes.update(
+            vehicle_events[BRAKE_ACCELERATOR_EVENT] if vehicle_events else 0, elapsed)
+    for event_name:StringName in results:
+        var result:Dictionary = results[event_name]
+        var action:int = result["action"]
+        if action == BrakeSoundModel.Action.STOP:
+            if runtime.player.is_playing(event_name):
+                runtime.player.stop(event_name, false)
             continue
-        var brake_event := BrakeEvent.new()
-        brake_event.name = event_name
-        var parameters:Dictionary = MaszynaBrakeSfxEventFactory.EVENT_PARAMETERS[event_name]
-        for parameter_name:StringName in parameters:
-            brake_event.parameter_names.append(parameter_name)
-            brake_event.state_keys.append(String(parameters[parameter_name]))
-        var gate:Array = MaszynaBrakeSfxEventFactory.EVENT_GATES.get(event_name, [])
-        if gate:
-            brake_event.gate_key = String(gate[0])
-            brake_event.gate_on = float(gate[1])
-            brake_event.gate_off = float(gate[2])
-        brake_event.source = _primary_source(runtime, event_name)
-        _resolve_brake_readers(brake_event, runtime.vehicle_rid)
-        runtime.brake_events.append(brake_event)
-    runtime.anchored_cabin_instance_id = 0
-    _update_spatial_anchors(runtime)
-
-
-## The readers of a brake event for the vehicle's current components
-func _resolve_brake_readers(brake_event:BrakeEvent, vehicle_rid:RID) -> void:
-    brake_event.readers.clear()
-    for state_key:String in brake_event.state_keys:
-        brake_event.readers.append(MaszynaBrakeSfxEventFactory.state_reader(state_key, vehicle_rid))
-    brake_event.gate_reader = (
-            MaszynaBrakeSfxEventFactory.state_reader(brake_event.gate_key, vehicle_rid)
-            if brake_event.gate_key else Callable())
-
-
-func _update_brake_sounds(runtime:BankRuntime, batch:Dictionary) -> void:
-    for brake_event:BrakeEvent in runtime.brake_events:
-        var event_parameters:Dictionary = {}
-        var has_active_parameter:bool = false
-        for index:int in range(brake_event.parameter_names.size()):
-            var reader:Callable = brake_event.readers[index]
-            var value:float = _parameter_value(reader.call()) if reader.is_valid() else 0.0
-            event_parameters[brake_event.parameter_names[index]] = value
-            has_active_parameter = has_active_parameter or not is_zero_approx(value)
-        var playing:bool = runtime.player.is_playing(brake_event.name)
-        if brake_event.gate_reader.is_valid():
-            has_active_parameter = _parameter_value(brake_event.gate_reader.call()) > (
-                    brake_event.gate_off if playing else brake_event.gate_on)
-            if playing and not has_active_parameter:
-                runtime.player.stop(brake_event.name, false)
-                continue
-        # an idle, silent brake event needs no listener-dependent parameters at all
-        if not playing and not has_active_parameter:
+        var parameters:Dictionary = result["parameters"]
+        parameters[&"soundproofing"] = _soundproofing(runtime, result["source"])
+        if action == BrakeSoundModel.Action.ONE_SHOT:
+            runtime.player.play(event_name, parameters)
             continue
-        event_parameters[&"soundproofing"] = _soundproofing(runtime, brake_event.source)
-        event_parameters[&"unit_size"] = _unit_size_factor(runtime)
-        event_parameters[&"gain"] = _volume_factor(runtime)
-        if not playing:
-            runtime.player.play(brake_event.name, event_parameters)
-        batch[brake_event.name] = event_parameters
+        if action == BrakeSoundModel.Action.EXCLUSIVE_ONE_SHOT:
+            if not runtime.player.is_playing(event_name):
+                runtime.player.play(event_name, parameters)
+            continue
+        # a loop stopped a moment ago may still play its closing bookend - it starts again
+        # alongside it, from its opening one (sound.cpp:403-412)
+        if action == BrakeSoundModel.Action.START or not runtime.player.is_playing(event_name):
+            runtime.player.play(event_name, parameters)
+        batch[event_name] = parameters
 
 
 ## A trigger is driven by a state value named in the MMD, the same contract as a cab element: it
@@ -672,6 +627,8 @@ func _refresh_bank_context(runtime:BankRuntime) -> void:
 ## bookend when heard again, and a one-shot due while unheard is dropped (sound.cpp:360-367)
 func _silence_bank(runtime:BankRuntime) -> void:
     runtime.player.stop(false)
+    if runtime.brakes:
+        runtime.brakes.silence()
     for trigger:Trigger in runtime.triggers:
         trigger.activated = false
         trigger.play_beginning = false
@@ -746,29 +703,6 @@ func _placement_index(placement:StringName) -> int:
     return 3
 
 
-func _unit_size_factor(runtime:BankRuntime) -> float:
-    if _inside_vehicle(runtime.vehicle):
-        return CABIN_UNIT_SIZE_FACTOR
-    return EXTERIOR_UNIT_SIZE_FACTOR
-
-
-func _volume_factor(runtime:BankRuntime) -> float:
-    var factor:float = VOLUME_FACTOR
-    if not _inside_vehicle(runtime.vehicle):
-        factor *= EXTERIOR_VOLUME_FACTOR
-    return factor
-
-
-func _primary_source(runtime:BankRuntime, event_name:StringName) -> MmdSoundSourceDefinition:
-    for label:String in MaszynaBrakeSfxEventFactory.EVENT_LABEL_GROUPS.get(event_name, []):
-        if runtime.brake_sources.has(label):
-            return runtime.brake_sources[label] as MmdSoundSourceDefinition
-    for trigger:Trigger in runtime.triggers:
-        if trigger.event_name == event_name:
-            return trigger.source
-    return null
-
-
 func _update_spatial_anchors(runtime:BankRuntime) -> void:
     var cabin:Cabin3D = _listener.listener_cabin if _listener else null
     # Home/End rebuilds the controls inside the same cabin node, so the occupied cab is part of the key.
@@ -786,16 +720,23 @@ func _update_spatial_anchors(runtime:BankRuntime) -> void:
         brake_anchor = fallback
     if local_anchor == Vector3.ZERO:
         local_anchor = fallback
-    _apply_anchor(runtime, &"pipe_hiss", brake_anchor)
-    _apply_anchor(runtime, &"local_brake_hiss", local_anchor)
+    if runtime.brakes:
+        for sound:BrakeSoundModel.BrakeSound in runtime.brakes.sounds:
+            if sound.source.label in _BRAKE_VALVE_LABELS:
+                _apply_anchor(runtime, sound.event_name, sound.source, brake_anchor)
+            elif sound.source.label in _LOCAL_BRAKE_LABELS:
+                _apply_anchor(runtime, sound.event_name, sound.source, local_anchor)
     # Train.cpp:10281 - the Hasler ticks from its own needle (dsbHasler->offset(gauge.model_offset())).
     var tacho_anchor:Vector3 = _cabin_anchor(runtime.vehicle, cabin, "tachometer_")
-    if not tacho_anchor == Vector3.ZERO:
-        _apply_anchor(runtime, &"tachoclock", tacho_anchor)
+    if tacho_anchor == Vector3.ZERO:
+        return
+    for trigger:Trigger in runtime.triggers:
+        if trigger.event_name == &"tachoclock":
+            _apply_anchor(runtime, trigger.event_name, trigger.source, tacho_anchor)
 
 
-func _apply_anchor(runtime:BankRuntime, event_name:StringName, position:Vector3) -> void:
-    var source:MmdSoundSourceDefinition = _primary_source(runtime, event_name)
+func _apply_anchor(
+        runtime:BankRuntime, event_name:StringName, source:MmdSoundSourceDefinition, position:Vector3) -> void:
     if not source or not source.offset == Vector3.ZERO:
         return
     var event:SfxEvent = runtime.player.bank.get_event(event_name)

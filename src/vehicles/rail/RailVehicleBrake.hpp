@@ -13,6 +13,9 @@ namespace godot {
 
 
         public:
+            /* The distributor's accelerator fired (sf_Acc, hamulce.cpp:555) - an event, once */
+            static const char *accelerator_activated_signal;
+
             int get_component_type() const override {
                 return RailVehicleComponentType::COMPONENT_BRAKES;
             }
@@ -43,8 +46,14 @@ namespace godot {
             virtual double get_emergency_valve_flow() const = 0;
             virtual double get_main_valve_flow() const = 0;
             virtual double get_local_valve_flow() const = 0;
-            virtual double get_loco_pressure_fall_rate() const = 0;
-            virtual double get_loco_pressure_rise_rate() const = 0;
+            /* The flows of the driver's brake valve its handle reports for its hiss
+             * (Handle->GetSound(), hamulce.h:77-81): braking, release, emergency, the control
+             * chamber's wave outflow and the timing reservoir's outflow */
+            virtual double get_handle_braking_flow() const = 0;
+            virtual double get_handle_release_flow() const = 0;
+            virtual double get_handle_emergency_flow() const = 0;
+            virtual double get_handle_control_chamber_flow() const = 0;
+            virtual double get_handle_timing_reservoir_flow() const = 0;
             virtual double get_control_pressure() const = 0;
             /* Control reservoir of the driver's brake valve (Handle->GetCP(), Train.cpp:8908) */
             virtual double get_handle_control_pressure() const = 0;

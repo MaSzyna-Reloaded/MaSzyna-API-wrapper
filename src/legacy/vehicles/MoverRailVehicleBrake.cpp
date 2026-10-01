@@ -245,23 +245,17 @@ namespace godot {
         p_config["brake_pipe_pressure_delta"] = mover->DeltaPipePress;
     }
 
-    // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered rate of
-    // LocBrakePress change, factor 0.1/frame) - see local_brake_pressure_previous' own doc comment
-    // in RailVehicleBrake.hpp for why the sound layer needs this instead of the raw dpLocalValve field.
-    // Published by _do_fetch_state_from_mover() as two already-non-negative magnitudes, matching
-    // how maszyna_brake_sfx_event_factory.gd's local-brake-hiss automation consumes them (one track per
-    // sign, same shape as the original's separate rsSBHiss/rsSBHissU sounds).
     void MoverRailVehicleBrake::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         if (trainset_releasing && !is_braking()) {
             consist_releaser(false);
         }
-        if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {
-            const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / p_delta);
-            local_brake_pressure_change_rate = (local_brake_pressure_change_rate * 0.9) + (raw_rate * 0.1);
+        // GetSoundFlag() clears the flag it returns, so it is read once per tick, here, and never
+        // in a getter (DynObj.cpp:4718-4723)
+        if (p_mover->Hamulec && (p_mover->Hamulec->GetSoundFlag() & Maszyna::sf_Acc) != 0) {
+            emit_signal(accelerator_activated_signal);
         }
-        local_brake_pressure_previous = p_mover->LocBrakePress;
     }
 
     bool MoverRailVehicleBrake::get_alarm_chain_pulled() const {
@@ -375,14 +369,29 @@ namespace godot {
         return mover != nullptr ? mover->dpLocalValve : 0.0;
     }
 
-    double MoverRailVehicleBrake::get_loco_pressure_fall_rate() const {
+    double MoverRailVehicleBrake::get_handle_braking_flow() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? std::max(0.0, -local_brake_pressure_change_rate) : 0.0;
+        return mover != nullptr && mover->Handle ? mover->Handle->GetSound(Maszyna::s_fv4a_b) : 0.0;
     }
 
-    double MoverRailVehicleBrake::get_loco_pressure_rise_rate() const {
+    double MoverRailVehicleBrake::get_handle_release_flow() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? std::max(0.0, local_brake_pressure_change_rate) : 0.0;
+        return mover != nullptr && mover->Handle ? mover->Handle->GetSound(Maszyna::s_fv4a_u) : 0.0;
+    }
+
+    double MoverRailVehicleBrake::get_handle_emergency_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle ? mover->Handle->GetSound(Maszyna::s_fv4a_e) : 0.0;
+    }
+
+    double MoverRailVehicleBrake::get_handle_control_chamber_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle ? mover->Handle->GetSound(Maszyna::s_fv4a_x) : 0.0;
+    }
+
+    double MoverRailVehicleBrake::get_handle_timing_reservoir_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Handle ? mover->Handle->GetSound(Maszyna::s_fv4a_t) : 0.0;
     }
 
     double MoverRailVehicleBrake::get_control_pressure() const {
@@ -499,8 +508,11 @@ namespace godot {
         p_state["brake_emergency_valve_flow"] = get_emergency_valve_flow();
         p_state["brake_main_valve_flow"] = get_main_valve_flow();
         p_state["brake_local_valve_flow"] = get_local_valve_flow();
-        p_state["brake_loco_pressure_fall_rate"] = get_loco_pressure_fall_rate();
-        p_state["brake_loco_pressure_rise_rate"] = get_loco_pressure_rise_rate();
+        p_state["brake_handle_braking_flow"] = get_handle_braking_flow();
+        p_state["brake_handle_release_flow"] = get_handle_release_flow();
+        p_state["brake_handle_emergency_flow"] = get_handle_emergency_flow();
+        p_state["brake_handle_control_chamber_flow"] = get_handle_control_chamber_flow();
+        p_state["brake_handle_timing_reservoir_flow"] = get_handle_timing_reservoir_flow();
         p_state["brake_control_pressure"] = get_control_pressure();
         p_state["brake_handle_control_pressure"] = get_handle_control_pressure();
         p_state["brake_local_aeim_position"] = get_local_aeim_position();

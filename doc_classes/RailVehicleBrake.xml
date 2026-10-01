@@ -179,7 +179,32 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_handle_braking_flow" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_control_chamber_flow" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_handle_control_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_emergency_flow" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_release_flow" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_handle_timing_reservoir_flow" qualifiers="const">
 			<return type="float" />
 			<description>
 			</description>
@@ -216,16 +241,6 @@
 			</description>
 		</method>
 		<method name="get_loco_pressure" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_loco_pressure_fall_rate" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_loco_pressure_rise_rate" qualifiers="const">
 			<return type="float" />
 			<description>
 			</description>
@@ -540,6 +555,12 @@
 			Brake distributor/valve type.
 		</member>
 	</members>
+	<signals>
+		<signal name="accelerator_activated">
+			<description>
+			</description>
+		</signal>
+	</signals>
 	<constants>
 		<constant name="BRAKE_HANDLE_TYPE_NO_HANDLE" value="0" enum="BrakeHandleType">
 			No brake handle.

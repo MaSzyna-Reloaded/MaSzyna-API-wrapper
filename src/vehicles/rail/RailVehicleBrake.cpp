@@ -7,6 +7,8 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    const char *RailVehicleBrake::accelerator_activated_signal = "accelerator_activated";
+
     void RailVehicleBrake::_bind_methods() {
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, valve_type, "valve", PROPERTY_HINT_ENUM,
@@ -282,8 +284,13 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_emergency_valve_flow"), &RailVehicleBrake::get_emergency_valve_flow);
         ClassDB::bind_method(D_METHOD("get_main_valve_flow"), &RailVehicleBrake::get_main_valve_flow);
         ClassDB::bind_method(D_METHOD("get_local_valve_flow"), &RailVehicleBrake::get_local_valve_flow);
-        ClassDB::bind_method(D_METHOD("get_loco_pressure_fall_rate"), &RailVehicleBrake::get_loco_pressure_fall_rate);
-        ClassDB::bind_method(D_METHOD("get_loco_pressure_rise_rate"), &RailVehicleBrake::get_loco_pressure_rise_rate);
+        ClassDB::bind_method(D_METHOD("get_handle_braking_flow"), &RailVehicleBrake::get_handle_braking_flow);
+        ClassDB::bind_method(D_METHOD("get_handle_release_flow"), &RailVehicleBrake::get_handle_release_flow);
+        ClassDB::bind_method(D_METHOD("get_handle_emergency_flow"), &RailVehicleBrake::get_handle_emergency_flow);
+        ClassDB::bind_method(
+                D_METHOD("get_handle_control_chamber_flow"), &RailVehicleBrake::get_handle_control_chamber_flow);
+        ClassDB::bind_method(
+                D_METHOD("get_handle_timing_reservoir_flow"), &RailVehicleBrake::get_handle_timing_reservoir_flow);
         ClassDB::bind_method(D_METHOD("get_control_pressure"), &RailVehicleBrake::get_control_pressure);
         ClassDB::bind_method(D_METHOD("get_handle_control_pressure"), &RailVehicleBrake::get_handle_control_pressure);
         ClassDB::bind_method(D_METHOD("get_local_aeim_position"), &RailVehicleBrake::get_local_aeim_position);
@@ -302,6 +309,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_braking"), &RailVehicleBrake::is_braking);
         ClassDB::bind_method(D_METHOD("is_holding"), &RailVehicleBrake::is_holding);
         ClassDB::bind_method(D_METHOD("is_cut_off"), &RailVehicleBrake::is_cut_off);
+
+        ADD_SIGNAL(MethodInfo(accelerator_activated_signal));
     }
 
     void RailVehicleBrake::_register_commands() {

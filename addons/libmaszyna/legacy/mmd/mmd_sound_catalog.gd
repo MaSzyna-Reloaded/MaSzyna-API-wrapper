@@ -14,10 +14,8 @@ class_name MmdSoundCatalog
 ## v1 is Tier 1 (exact parity with the proven SM42 reference: oilpump/fuelpump/horn1/horn2/horn3/
 ## engine) + Tier 2 (same shapes, additional labels with confirmed wrapper state: battery/
 ## compressor) + Tier 3 (brake-related labels - `entry["controller"] == &"brake"` marks these;
-## MmdSoundBankInstancer routes them to MaszynaBrakeSfxEventFactory instead of building a TrainSoundTrigger
-## from `state_property`/`trigger_mode` the way Tier 1/2 entries do - see each label's own comment
-## for its DynObj.cpp/Train.cpp source and MaszynaBrakeSfxEventFactory for how gating/shaping is actually
-## built) + running sounds (`entry["controller"] == &"running"`, see RunningSoundModel). Every
+## MmdSoundBankInstancer hands them to BrakeSoundModel instead of building a TrainSoundTrigger
+## from `state_property`/`trigger_mode` the way Tier 1/2 entries do) + running sounds (`entry["controller"] == &"running"`, see RunningSoundModel). Every
 ## other label surveyed in dynamic/pkp/ (turbo/door family/announcements/...) is deliberately
 ## absent - each still needs its own wrapper-state cross-reference before it can be added, same
 ## discipline as the cabin catalog.
@@ -203,61 +201,32 @@ static func _ensure_built() -> void:
             "trigger_threshold_min": 10.0,
             "trigger_threshold_max": 10000.0,
         },
-        # Brake-related labels only carry event_name/controller - MaszynaBrakeSfxEventFactory (not this
-        # catalog) decides gating/shaping/hardware wiring, built once from VehicleServer.vehicle_dump_config() +
-        # each MmdSoundSourceDefinition's own amplitude/frequency constants (see the brake-sound
-        # redesign plan). event_name is a many-to-one COMPOSITION MAP: labels that are begin/
-        # middle/end phases or same-physical-effect variants of one sound share one event_name, so
-        # MmdSoundBankInstancer groups them before handing them to the factory, instead of building
-        # one event per label. "brake" (squeal, DynObj.cpp:4437-4458 rsPisk) + "brakesound"
-        # (friction rumble, DynObj.cpp:4411-4428 rsBrake) compose into "brake_shoe" - both keyed off
-        # the same brakeforceratio in the original engine. The cab-local copy of "brakesound"
-        # is routed to a separate bank, so it keeps the same label and event name without either
-        # definition being overwritten.
-        "brake": {"event_name": &"brake_shoe", "controller": &"brake"},
+        # Brake sounds - one event per label, played by BrakeSoundModel with the original's own
+        # per-frame logic (MmdSoundBankInstancer builds the events, TrainSoundSystem plays them).
+        # The vehicle's (DynObj.cpp:4545-4760): shoes rsBrake, squeal rsPisk, cylinder release
+        # rsUnbrake, emergency valve, wheel slip, releaser, accelerator, cylinder and EP clicks,
+        # spring brake. The cab's (Train.cpp:8474-8641): local brake rsSBHiss/rsSBHissU, the
+        # driver's brake valve rsHiss/rsHissU/rsHissE/rsHissX/rsHissT, and its own copy of the shoes.
         "brakesound": {"event_name": &"brake_shoe", "controller": &"brake"},
-        # Brake cylinder release hiss (DynObj.cpp:4351-4372, rsUnbrake) - unique driving parameter
-        # (rate of brake_air_pressure dropping), no natural counterpart to compose with.
+        "brake": {"event_name": &"brake_squeal", "controller": &"brake"},
         "unbrake": {"event_name": &"brake_release_hiss", "controller": &"brake"},
-        # Emergency valve dump hiss (DynObj.cpp:4332-4349) - unique driving parameter
-        # (EmergencyValveFlow).
         "emergencybrake": {"event_name": &"emergency_brake_hiss", "controller": &"brake"},
-        # Wheel-slip squeal (DynObj.cpp:4387-4401, rsSlippery) - unique driving parameter
-        # (slipping_wheels).
         "slipperysound": {"event_name": &"wheel_slip_squeal", "controller": &"brake"},
-        # Main pipe pneumatic hiss family, cab-only (Train.cpp:8129-8229, rsHiss/rsHissU/rsHissE/
-        # rsHissX/rsHissT - one function, one physical valve system) - all five compose into one
-        # "pipe_hiss" event; MaszynaBrakeSfxEventFactory picks FV4a-handle-specific or generic dpMainValve-
-        # derived sub-signals for each, once, from config.
-        "airsound": {"event_name": &"pipe_hiss", "controller": &"brake"},
-        "airsound2": {"event_name": &"pipe_hiss", "controller": &"brake"},
-        "airsound3": {"event_name": &"pipe_hiss", "controller": &"brake"},
-        "airsound4": {"event_name": &"pipe_hiss", "controller": &"brake"},
-        "airsound5": {"event_name": &"pipe_hiss", "controller": &"brake"},
-        # Auxiliary/independent (loco) brake cylinder hiss, cab-only (Train.cpp:8090-8127,
-        # rsSBHiss/rsSBHissU) - release/engage halves of one effect, compose into "local_brake_hiss".
-        "localbrakesound": {"event_name": &"local_brake_hiss", "controller": &"brake"},
-        "localbrakesound2": {"event_name": &"local_brake_hiss", "controller": &"brake"},
-        # Brake cylinder piston advance/recede clicks (DynObj.cpp:4258-4287) and EP brake pressure
-        # clicks (DynObj.cpp:4289-4330) - each pair composes into one event with two boolean-pulse
-        # automations (one per direction), matching the original engine's own coupled clicks; see
-        # MaszynaBrakeSfxEventFactory for the pulse-automation shape (a domain like [0.5,1.5] IS the right
-        # model for a genuinely discrete one-shot trigger, same idea as horn1/horn2's own begin/
-        # sustain/end shape in demo/vehicles/sm42/sounds - not every parameter needs to be
-        # continuous, just never a pre-combined "gain" value).
-        "brakecylinderinc": {"event_name": &"brake_cylinder_click", "controller": &"brake"},
-        "brakecylinderdec": {"event_name": &"brake_cylinder_click", "controller": &"brake"},
-        "epbrakeinc": {"event_name": &"ep_brake_click", "controller": &"brake"},
-        "epbrakedec": {"event_name": &"ep_brake_click", "controller": &"brake"},
-        # Quick-release accelerator valve one-shot ("przyspieszacz") - unique, no counterpart,
-        # single boolean-pulse automation.
-        "brakeacc": {"event_name": &"brake_accelerator", "controller": &"brake"},
-        # Release valve ("odluzniacz") hiss, driven by its raw mover state.
         "releaser": {"event_name": &"brake_releaser", "controller": &"brake"},
-        # Spring/parking brake activation and release use the high and low domains of the same raw
-        # spring_brake/active parameter.
-        "springbrake": {"event_name": &"springbrake", "controller": &"brake"},
-        "springbrakeoff": {"event_name": &"springbrake", "controller": &"brake"},
+        "brakeacc": {"event_name": &"brake_accelerator", "controller": &"brake"},
+        "brakecylinderinc": {"event_name": &"brake_cylinder_increase", "controller": &"brake"},
+        "brakecylinderdec": {"event_name": &"brake_cylinder_decrease", "controller": &"brake"},
+        "epbrakeinc": {"event_name": &"ep_brake_increase", "controller": &"brake"},
+        "epbrakedec": {"event_name": &"ep_brake_decrease", "controller": &"brake"},
+        "springbrake": {"event_name": &"spring_brake_activate", "controller": &"brake"},
+        "springbrakeoff": {"event_name": &"spring_brake_release", "controller": &"brake"},
+        "localbrakesound": {"event_name": &"local_brake_release_hiss", "controller": &"brake"},
+        "localbrakesound2": {"event_name": &"local_brake_engage_hiss", "controller": &"brake"},
+        "airsound": {"event_name": &"brake_valve_braking_hiss", "controller": &"brake"},
+        "airsound2": {"event_name": &"brake_valve_release_hiss", "controller": &"brake"},
+        "airsound3": {"event_name": &"brake_valve_emergency_hiss", "controller": &"brake"},
+        "airsound4": {"event_name": &"brake_valve_control_chamber_hiss", "controller": &"brake"},
+        "airsound5": {"event_name": &"brake_valve_timing_reservoir_hiss", "controller": &"brake"},
         # Running sounds - gain/pitch computed each update by RunningSoundModel from the mover state
         # and the track under the vehicle, the same formulas as the original. Positional labels get
         # one event per location, suffixed with its index.

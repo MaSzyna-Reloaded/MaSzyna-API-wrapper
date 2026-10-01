@@ -394,6 +394,9 @@ anything. Open work belongs in `TODO.md`.
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through
   its own `AudioStream` player. *(09-25 cab clicks cut each other off)*
 * A gain derived as a normalisation divisor is never also applied as a gain. *(09-21 +38 dB)*
+* A sound whose original computes its gain at the call site (filters, hysteresis, a hand-made
+  fade) is ported as that code with its own state, not as a curve over one parameter. *(10-01
+  the local brake hiss keyed to a parameter nobody sent)*
 * Check what the MMD declares (`placement:`) before modulating with a parameter. *(09-21 brake
   hiss)*
 * Stopping a player resets what its triggers remember about playing. A sound that is due

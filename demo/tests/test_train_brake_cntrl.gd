@@ -61,3 +61,14 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(brake.cntrl_dynamic_brake_type, RailVehicleBrake.DYNAMIC_BRAKE_AUTOMATIC)
     assert_true(brake.cntrl_local_brake_traxx)
     assert_true(train.get_state().has("brake_air_pressure"), "RailVehicleBrake should keep functioning after configuring the Cntrl. section")
+
+
+func test_state_reports_the_handle_flows_its_hiss_is_made_of() -> void:
+    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle.get_vehicle_rid())
+    for key:String in [
+            "brake_handle_braking_flow", "brake_handle_release_flow", "brake_handle_emergency_flow",
+            "brake_handle_control_chamber_flow", "brake_handle_timing_reservoir_flow"]:
+        assert_true(state.has(key), key)
+    # the sound's own filtering is the sound system's business (BrakeSoundModel)
+    assert_false(state.has("brake_loco_pressure_fall_rate"))
+    assert_true(brake.has_signal(&"accelerator_activated"))

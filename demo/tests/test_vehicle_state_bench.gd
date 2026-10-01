@@ -39,16 +39,18 @@ const SAMPLE_FRAMES: int = 30
 
 const MICROSECONDS_PER_MILLISECOND: float = 1000.0
 
-## What one TrainSoundSystem update pulls out of a vehicle per tick: the brake automation
-## parameters and gates of MaszynaBrakeSfxEventFactory, the MMD trigger properties of
+## What one TrainSoundSystem update pulls out of a vehicle per tick: what BrakeSoundModel reads,
+## the MMD trigger properties of
 ## mmd_sound_catalog.gd, and what RunningSoundModel reads. Kept as the strings the sound system
 ## itself uses, because the point of the measurement is what a by-name read costs today.
 const SOUND_KEYS: PackedStringArray = [
     "speed", "velocity", "mass_total", "direction", "cabin_occupied",
     "brake_force_ratio", "brake_emergency_valve_flow", "brake_air_pressure",
-    "brake_releaser_active", "brake_local_valve_flow", "brake_main_valve_flow",
-    "brake_controller_position", "brake_control_pressure", "brake_unit_force",
-    "brake_loco_pressure_fall_rate", "brake_loco_pressure_rise_rate",
+    "brake_releaser_active", "brake_loco_pressure", "brake_main_valve_flow", "pipe_pressure",
+    "brake_control_pressure", "brake_unit_force", "brake_local_aeim_position",
+    "brake_edb_cylinder_pressure", "brake_handle_braking_flow", "brake_handle_release_flow",
+    "brake_handle_emergency_flow", "brake_handle_control_chamber_flow",
+    "brake_handle_timing_reservoir_flow",
     "spring_brake/active", "slipping_wheels", "wheel_rotation_speed_rps",
     "battery_enabled", "compressor_enabled", "engine_rpm_ratio", "engine_power",
     "engine_type", "engine_rpm_count", "dynamic_brake_active", "Mm",

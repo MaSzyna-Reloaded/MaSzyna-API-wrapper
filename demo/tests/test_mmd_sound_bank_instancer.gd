@@ -110,3 +110,33 @@ func test_explicit_placement_wins_over_original_defaults() -> void:
     MmdSoundBankInstancer._apply_original_defaults(definition, false)
 
     assert_eq(definition.placement, &"custom")
+
+
+func test_brake_sounds_are_built_with_their_bookends_chunks_and_fallbacks() -> void:
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    add_child_autofree(vehicle)
+    var diagnostics:Array[Dictionary] = []
+    MmdSoundBankInstancer.build_into(
+            vehicle, ProjectSettings.globalize_path("res://tests/fixtures/test_brake_sound.mmd"), {}, diagnostics)
+    var exterior:SfxPlayer3D = vehicle.get_node("ExteriorSfxPlayer3D") as SfxPlayer3D
+    var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
+
+    # the local brake engage hiss plays its opening bookend, its loop, and its closing one on stop
+    var engage:SfxEvent = cabin.bank.get_event(&"local_brake_engage_hiss")
+    assert_not_null(engage)
+    assert_eq(engage.clips.size(), 3)
+    assert_eq(engage.clips[2].trigger_mode, SfxClip.TriggerMode.TRIGGER_SUSTAIN)
+    # no local brake release hiss in the cab - a copy of the main valve's (Train.cpp:9082-9089)
+    var release:SfxEvent = cabin.bank.get_event(&"local_brake_release_hiss")
+    assert_not_null(release)
+    assert_eq((release.clips[0].stream as MaszynaAudioStream).file_path,
+            (cabin.bank.get_event(&"brake_valve_braking_hiss").clips[0].stream as MaszynaAudioStream).file_path)
+
+    # a vehicle without unbrake: plays the default one (DynObj.cpp:7059-7062)
+    assert_not_null(exterior.bank.get_event(&"brake_release_hiss"))
+    assert_not_null(exterior.bank.get_event(&"brake_releaser"))
+    assert_not_null(exterior.bank.get_event(&"emergency_brake_hiss"))
+    # a combined cylinder click is one one-shot event per chunk
+    assert_not_null(exterior.bank.get_event(&"brake_cylinder_increase_0"))
+    assert_not_null(exterior.bank.get_event(&"brake_cylinder_increase_1"))
+    assert_null(exterior.bank.get_event(&"brake_cylinder_increase"))

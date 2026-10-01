@@ -12,10 +12,16 @@ const _COUPLER_LABELS:Array[String] = [
     "couplerattach", "brakehoseattach", "mainhoseattach", "controlattach", "gangwayattach", "heatingattach",
     "couplerdetach", "brakehosedetach", "mainhosedetach", "controldetach", "gangwaydetach", "heatingdetach",
 ]
-## Used when the vehicle defines none (DynObj.cpp:6693-6700)
-const _COUPLER_DEFAULT_SOUNDS:Dictionary = {
+## Used when the vehicle defines none (DynObj.cpp:6693-6700, 7059-7062)
+const _DEFAULT_SOUNDS:Dictionary = {
     "couplerattach": "couplerattach_default",
     "couplerdetach": "couplerdetach_default",
+    "unbrake": "[1007]estluz",
+}
+## A cab without its own local brake hiss plays a copy of the main valve's (Train.cpp:9082-9089)
+const _LOCAL_BRAKE_FALLBACKS:Dictionary = {
+    "localbrakesound": "airsound",
+    "localbrakesound2": "airsound2",
 }
 ## Placement and range of the running sounds when the MMD gives none (DynObj.h:390, 528-533,
 ## DynObj.cpp:5711, 6125; Train.cpp:8571)
@@ -98,7 +104,7 @@ static func build_into(
         else:
             exterior_definitions.append(definition)
 
-    _add_coupler_default_sounds(exterior_definitions)
+    _add_default_sounds(exterior_definitions)
 
     var routed_exterior:Array[MmdSoundSourceDefinition] = []
     var running_exterior:Array[MmdSoundSourceDefinition] = []
@@ -129,7 +135,7 @@ static func _build_player(
         abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> SfxPlayer3D:
     var events:Array[SfxEvent] = []
     var regular_definitions:Array[MmdSoundSourceDefinition] = []
-    var brake_sources:Dictionary = {}
+    var brake_definitions:Dictionary[String, MmdSoundSourceDefinition] = {}
     var running := RunningSoundModel.new()
     for definition:MmdSoundSourceDefinition in definitions:
         if not MmdSoundCatalog.has_label(definition.label):
@@ -138,7 +144,7 @@ static func _build_player(
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
         if entry.get("controller", &"") == &"brake":
             _apply_brake_source_defaults(definition)
-            brake_sources[definition.label] = definition
+            brake_definitions[definition.label] = definition
             continue
         if entry.get("controller", &"") == &"running":
             _build_running_events(definition, entry["event_name"], locations, events, running)
@@ -156,6 +162,14 @@ static func _build_player(
         events.append(event)
         regular_definitions.append(definition)
 
+    for label:String in _LOCAL_BRAKE_FALLBACKS:
+        var fallback:MmdSoundSourceDefinition = brake_definitions.get(_LOCAL_BRAKE_FALLBACKS[label])
+        if fallback and not brake_definitions.has(label):
+            brake_definitions[label] = fallback.copy_as(label)
+    var brakes := BrakeSoundModel.new()
+    for definition:MmdSoundSourceDefinition in brake_definitions.values():
+        _build_brake_sound(definition, MmdSoundCatalog.get_entry(definition.label)["event_name"], events, brakes)
+
     var bank := SfxBank.new()
     bank.events = events
     var player := SfxPlayer3D.new()
@@ -163,7 +177,7 @@ static func _build_player(
     player.bank = bank
     # a running sound (or a clatter axle) crossfades at most two chunks at once
     player.max_tracks = (
-            2 * running.sources.size() if running.sources and not (regular_definitions or brake_sources)
+            2 * running.sources.size() if running.sources and not (regular_definitions or brake_definitions)
             else _VEHICLE_PLAYER_VOICE_COUNT)
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
@@ -191,7 +205,7 @@ static func _build_player(
         "vehicle": vehicle,
         "cabin_only": cabin_only,
         "triggers": triggers,
-        "brake_sources": brake_sources,
+        "brakes": brakes if brakes.sounds else null,
         "running": running if running.sources else null,
         "soundproofing": soundproofing,
     })
@@ -215,6 +229,9 @@ static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_i
         definition.placement = &"external"
     elif _RUNNING_PLACEMENTS.has(definition.label):
         definition.placement = _RUNNING_PLACEMENTS[definition.label]
+    elif definition.label == "emergencybrake":
+        # DynObj.h:543 - m_emergencybrake { sound_placement::engine }
+        definition.placement = &"engine"
     elif MmdSoundCatalog.has_label(definition.label) \
             and MmdSoundCatalog.get_entry(definition.label).get("controller", &"") == &"brake":
         definition.placement = &"external"
@@ -249,7 +266,7 @@ static func _build_running_events(
         if definition.label == "wheel_clatter" and definition.chunks:
             running.sources.append({
                 "event": event_id, "source": definition,
-                "chunk_events": _build_clatter_chunk_events(definition, event_id, position, events),
+                "chunk_events": _build_chunk_events(definition, event_id, position, events),
             })
             continue
         var event:SfxEvent = MmdSoundEventBuilder.build(
@@ -270,13 +287,32 @@ static func _build_running_events(
         running.sources.append({"event": event_id, "source": definition})
 
 
-## A clatter click is a one-shot of the chunk picked by the speed - one single-sample event per
-## chunk, since an automation event never finishes while any of its chunks is left unplayed.
-static func _build_clatter_chunk_events(
+## One brake sound's event, played as BrakeSoundModel decides: a loop with its bookends or its
+## chunks crossfaded on `point`, or a one-shot
+static func _build_brake_sound(
+        definition:MmdSoundSourceDefinition, event_name:StringName, events:Array[SfxEvent],
+        brakes:BrakeSoundModel) -> void:
+    var chunk_events:Array[StringName] = []
+    if definition.label in BrakeSoundModel.ONE_SHOT_LABELS and definition.chunks:
+        chunk_events = _build_chunk_events(definition, event_name, definition.offset, events)
+    else:
+        var looped:bool = not definition.label in BrakeSoundModel.ONE_SHOT_LABELS
+        var event:SfxEvent = MmdSoundEventBuilder.build(
+                definition, event_name, &"point" if looped else &"", true, true, looped)
+        var emitter:Array[SfxEvent] = [event]
+        MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
+        events.append(event)
+    brakes.add_sound(definition, event_name, chunk_events)
+
+
+## A combined one-shot (a clatter click, a brake cylinder click) plays the chunk its value picks -
+## one single-sample event per chunk, since an automation event never finishes while any of its
+## chunks is left unplayed.
+static func _build_chunk_events(
         definition:MmdSoundSourceDefinition, event_id:StringName, position:Vector3,
         events:Array[SfxEvent]) -> Array[StringName]:
     var chunk_events:Array[StringName] = []
-    var axle:Array[SfxEvent] = []
+    var emitter:Array[SfxEvent] = []
     for chunk:Dictionary in RunningSoundModel.sorted_chunks(definition):
         var chunk_definition := MmdSoundSourceDefinition.new()
         chunk_definition.label = definition.label
@@ -288,10 +324,10 @@ static func _build_clatter_chunk_events(
         var event:SfxEvent = MmdSoundEventBuilder.build(chunk_definition, chunk_event_id, &"", true, true, false)
         event.spatial_config.position = position
         events.append(event)
-        axle.append(event)
+        emitter.append(event)
         chunk_events.append(chunk_event_id)
-    # an axle is one emitter whichever chunk it clicks with
-    MmdSoundEventBuilder.shape_emitter(axle, definition, definition.start_offset)
+    # one emitter whichever chunk it clicks with
+    MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
     return chunk_events
 
 
@@ -347,13 +383,13 @@ static func _merge_ignition_and_shutdown_into_engine(
             engine.sound_end = definition.sound_main
 
 
-static func _add_coupler_default_sounds(definitions:Array[MmdSoundSourceDefinition]) -> void:
-    for label:String in _COUPLER_DEFAULT_SOUNDS:
+static func _add_default_sounds(definitions:Array[MmdSoundSourceDefinition]) -> void:
+    for label:String in _DEFAULT_SOUNDS:
         if definitions.any(func(definition:MmdSoundSourceDefinition) -> bool: return definition.label == label):
             continue
         var definition := MmdSoundSourceDefinition.new()
         definition.label = label
-        definition.sound_main = _COUPLER_DEFAULT_SOUNDS[label]
+        definition.sound_main = _DEFAULT_SOUNDS[label]
         definition.placement = &"external"
         definition.placement_defined = true
         definitions.append(definition)

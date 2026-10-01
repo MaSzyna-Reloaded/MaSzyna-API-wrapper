@@ -55,7 +55,7 @@ Legend:
 - [ ] [RC-028](#rc-028) `RailVehicleHorns` includes the vendored Mover
 - [ ] [RC-029](#rc-029) `Mover*` classes public and instantiated from GDScript
 - [ ] [RC-030](#rc-030) `Mover*` components hold state the Mover does not have
-- [ ] [RC-031](#rc-031) Brake backend keeps a rate only the sound needs
+- [x] [RC-031](#rc-031) Brake backend keeps a rate only the sound needs
 - [ ] [RC-032](#rc-032) Radio component calls up into the vehicle server
 - [ ] [RC-033](#rc-033) `E3DInstanceBackend` and `E3DRenderingServer` include each other
 - [ ] [RC-034](#rc-034) Driver layer tracks player-controlled vehicles
@@ -600,6 +600,8 @@ Legend:
 * **Problem:** `local_brake_pressure_change_rate` is filtered (`0.9`/`0.1`) in the brake backend,
   and the comment says it exists for `maszyna_brake_sfx_event_factory.gd`'s hiss automation.
 * **Decision:** the sound layer derives the rate from the pressure it already receives.
+* **Done 2026-10-01:** the filter is gone from the brake; `BrakeSoundModel` keeps the original's
+  `m_localbrakepressurechange` (Train.cpp:8480-8486) from `brake_loco_pressure`.
 
 ### RC-032
 

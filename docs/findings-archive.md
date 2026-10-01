@@ -2772,3 +2772,22 @@ lighting or the trainset.
 * **Rule:** a fix to a value is proven on the object the game uses (`MaszynaAudioStream`), not on
   a stand-in the test finds easier to build.
 
+## 2026-10-01 - the local brake hiss keyed to a parameter nobody sent
+
+* **Symptom:** the brake sounds did not sound like the original's, the local brake worst: too
+  loud, no fade-out, no opening or closing bookend.
+* **What proved it:** read against `Train.cpp:8474-8641` and `DynObj.cpp:4545-4760`.
+  `local_brake_hiss` was played with `brake_local_valve_flow`, while its automations listened to
+  `brake_loco_pressure_fall_rate`/`rise_rate`, so gnd-sfx saw their `min_domain` instead. Its
+  curve had no `* 0.05`, was divided by a `maximum_gain` and bent by a cubic bias, the release
+  condition `LocBrakePress > BrakePress - 0.05` was missing, a 0.6 s ADSR stood in for the
+  original's 0.1/s fade, and only `soundmain:` was played. `unbrake`, `brakeacc` and the cylinder
+  and EP clicks were never built at all, and `VOLUME_FACTOR` (2.0) multiplied the brakes alone.
+* **Cause:** the original computes each sound's gain at its call site - filters, hysteresis, a
+  hand-made fade, extra conditions - and the curve model mapped one parameter to one curve, which
+  cannot say any of that. Every gap was filled by a guessed constant.
+* **Fix:** `BrakeSoundModel` ports the call sites line by line and keeps their sound-only state;
+  `MmdSoundBankInstancer` builds one plain event per label (bookends, or chunks on `point`), and
+  the brake publishes only physical values (the FV4a handle flows, the accelerator event).
+* **Rule:** port a sound whose original computes its gain at the call site as that code, with its
+  own state, not as a curve over one parameter.

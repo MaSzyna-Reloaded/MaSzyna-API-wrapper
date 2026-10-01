@@ -1130,11 +1130,19 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   one clip, no automation), and the test covered only the automation path - a plain looping clip
   with `start_fraction` 0.5 started at 0.0. A looping timeline clip takes the shift now. The
   bogie and motor copies of one vehicle (`outer_noise_0/1`, `traction_motor_0/1`) also shared one
-  drawn fraction and played one recording in step a few metres apart; each running event draws its
-  own (`BankRuntime.running_start_fractions`). `play()` was not restarting the loop: the instance
-  of a looping clip outlives its length (`test_sfx_start_fraction.gd`).
+  drawn fraction and played one recording in step a few metres apart. `play()` was not restarting
+  the loop: the instance of a looping clip outlives its length (`test_sfx_start_fraction.gd`).
+* **And the "cause" above misread the original.** `Random(0.0, 80.0)` once per vehicle
+  (DynObj.cpp:6518) is the `#else` branch; `DynObj.h:27` defines `EU07_SOUND_BOGIESOUNDS`, so the
+  original plays an `outernoise` copy per bogie and starts an even one at 50-80 % of the sample,
+  an odd one at 0-30 % (DynObj.cpp:6505-6514) - two neighbours never start close. Located traction
+  motors start anywhere (`LocalRandom(0.0, 1.0)`, DynObj.cpp:6085), a lone one at 0; other loops
+  have no offset. A first port drew 0-80 % per copy independently, and two bogies of one wagon
+  could land close together - heard as a doubled sound. `TrainSoundSystem.register_bank()` draws
+  exactly the original's ranges now.
 * **Rule:** a fix to how a clip starts is proven on every path a clip can start by - automation,
-  timeline, sustain - not on the one the first bug report went through.
+  timeline, sustain - not on the one the first bug report went through. A ported constant is read
+  with the preprocessor: check which branch of an `#ifdef` the original builds.
 
 ## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
 

@@ -9,8 +9,12 @@ const VOLUME_FACTOR:float = 2.0
 const EXTERIOR_VOLUME_FACTOR:float = 1.0
 const CABIN_UNIT_SIZE_FACTOR:float = 2.0
 const EXTERIOR_UNIT_SIZE_FACTOR:float = 1.0
-## How far into its own sample a vehicle's looping running noise may start (DynObj.cpp:6511).
-const RUNNING_NOISE_MAX_START_FRACTION:float = 0.8
+## Where an outernoise bogie copy starts in its sample, as a fraction of it: an even copy in the
+## later range, an odd one in the earlier, so two neighbours never start close (DynObj.cpp:6505-6514)
+const BOGIE_NOISE_EVEN_START_MIN:float = 0.5
+const BOGIE_NOISE_EVEN_START_MAX:float = 0.8
+const BOGIE_NOISE_ODD_START_MIN:float = 0.0
+const BOGIE_NOISE_ODD_START_MAX:float = 0.3
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
 ## gnd_sfx/hard_cut_distance when the project does not set it (sfx_player_3d.gd:143)
 const HARD_CUT_DISTANCE_DEFAULT:float = 1000.0
@@ -77,9 +81,8 @@ class BankRuntime extends RefCounted:
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
     ## Where each looping running sound of this bank starts inside its own sample, as a fraction
-    ## of it - drawn once per event, so every wagon of a trainset, and every bogie and motor copy
-    ## of one wagon, runs out of phase with the others. The original draws once per vehicle
-    ## (DynObj.cpp:6511); the copies of one vehicle comb as well.
+    ## of it, drawn once per copy as the original does: every wagon of a trainset, and every bogie
+    ## and motor copy of one wagon, runs out of phase with the others
     var running_start_fractions:Dictionary[StringName, float] = {}
     var culled:bool = false
     var last_batch:Dictionary = {}
@@ -233,9 +236,25 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.running = registration.get("running") as RunningSoundModel
     runtime.running_start_fractions.clear()
     if runtime.running:
+        var copies:Dictionary[String, int] = {}
         for entry:Dictionary in runtime.running.sources:
-            runtime.running_start_fractions[entry["event"]] = randf_range(
-                    0.0, RUNNING_NOISE_MAX_START_FRACTION)
+            var label:String = (entry["source"] as MmdSoundSourceDefinition).label
+            copies[label] = copies.get(label, 0) + 1
+        var copy_index:Dictionary[String, int] = {}
+        for entry:Dictionary in runtime.running.sources:
+            var label:String = (entry["source"] as MmdSoundSourceDefinition).label
+            var copy:int = copy_index.get(label, 0)
+            copy_index[label] = copy + 1
+            var fraction:float = 0.0
+            match label:
+                "outernoise":
+                    fraction = (randf_range(BOGIE_NOISE_ODD_START_MIN, BOGIE_NOISE_ODD_START_MAX) if copy % 2
+                            else randf_range(BOGIE_NOISE_EVEN_START_MIN, BOGIE_NOISE_EVEN_START_MAX))
+                "tractionmotor":
+                    # each located motor anywhere in its sample, a lone one from its start
+                    # (DynObj.cpp:6072-6086)
+                    fraction = randf() if copies[label] > 1 else 0.0
+            runtime.running_start_fractions[entry["event"]] = fraction
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
@@ -596,7 +615,7 @@ func _update_running_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary
         if not runtime.player.is_playing(event_name):
             # every vehicle of a trainset plays the same recording, and started together they
             # comb-filter into a metallic ring heard from outside. Each copy starts further into
-            # the sample (DynObj.cpp:6511, audiorenderer.cpp:99).
+            # the sample (DynObj.cpp:6505-6514, 6085, audiorenderer.cpp:99).
             runtime.player.play(event_name, null, parameters, runtime.running_start_fractions[event_name])
         batch[event_name] = parameters
 

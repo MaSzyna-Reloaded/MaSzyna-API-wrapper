@@ -237,7 +237,7 @@ func test_the_player_its_view_and_the_hud_are_reached_by_vehicle_handles() -> vo
     var source:String = (
         "local v = maszyna.vehicle.find('LuaPlayerTrain')\n"
         + "assert(maszyna.camera.mode() == 'free')\n"
-        + "maszyna.player.enter(v)\n"
+        + "maszyna.player.take_over(v)\n"
         + "assert(maszyna.player.vehicle() == v)\n"
         + "assert(maszyna.camera.mode() == 'cabin')\n"
         + "maszyna.camera.toggle_cabin()\n"
@@ -257,7 +257,10 @@ func test_the_player_its_view_and_the_hud_are_reached_by_vehicle_handles() -> vo
         + "maszyna.hud.close_card()\n"
         + "assert(maszyna.hud.card() == nil)\n"
         + "maszyna.player.leave()\n"
-        + "assert(maszyna.player.vehicle() == nil)"
+        + "assert(maszyna.player.vehicle() == nil)\n"
+        + "maszyna.player.enter(v)\n"
+        + "assert(maszyna.player.vehicle() == v)\n"
+        + "maszyna.player.leave()"
     )
 
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"player", source))

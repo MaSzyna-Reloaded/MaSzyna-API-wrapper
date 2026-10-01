@@ -30,8 +30,8 @@ Code generation:
   a key, a button, a signal, another object - calls that operation, not a private helper chain
   (`_request_*` -> `_dirty` -> `_process` -> ...) that ends up in the same place by another road.
   A second road to the same effect is deleted, not added. Example: the player leaves a vehicle
-  only through `PlayerServer.player_leave_vehicle()` (`player_enter_vehicle()` leaves the current
-  one itself), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
+  only through `PlayerServer.player_leave_vehicle()` (`player_take_over_vehicle()` and
+  `player_enter_vehicle()` leave the current one themselves), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
   leads there
 * PROHIBITED: **treating a view change as leaving the cab.** The player drives a vehicle
   (`PlayerServer.player_get_vehicle()`, the original's `simulation::Train`) until

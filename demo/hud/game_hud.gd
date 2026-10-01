@@ -213,13 +213,11 @@ func _on_card_changed(vehicle: RID) -> void:
 
 
 ## The floating buttons: the followed vehicle's while no card is open, the player's vehicle's while
-## the player looks from outside its cab
+## the player has one, in its cab as well
 func _show_chips() -> void:
-    var mode: PlayerCameraServer.CameraMode = PlayerCameraServer.camera_get_mode()
     %FollowedVehicleChip.show_vehicle(PlayerCameraServer.camera_get_target()
-            if mode == PlayerCameraServer.CAMERA_MODE_FOLLOW and not _card else RID())
-    %PlayerVehicleChip.show_vehicle(PlayerServer.player_get_vehicle()
-            if not mode == PlayerCameraServer.CAMERA_MODE_CABIN else RID())
+            if PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_FOLLOW and not _card else RID())
+    %PlayerVehicleChip.show_vehicle(PlayerServer.player_get_vehicle())
 
 
 ## Every vehicle of the trainset freed; a player in its cab steps out first, as before a scenery
@@ -262,6 +260,14 @@ func _on_player_vehicle_chip_pressed() -> void:
 
 func _on_player_vehicle_chip_action_pressed() -> void:
     PlayerServer.player_leave_vehicle()
+
+
+## The driver of the player's vehicle switched, as by the vehicle card's AI button: the AI's to the
+## player, the player's to the AI, nobody's to the player
+func _on_player_vehicle_chip_driver_pressed() -> void:
+    var vehicle: RID = %PlayerVehicleChip.vehicle
+    DriverSystem.vehicle_set_control_active(vehicle,
+            VehicleSelectorRow.driver_of(vehicle, true) == VehicleSelectorRow.Driver.PLAYER)
 
 
 ## The vehicle the player is driving, handed to every widget that shows something about it. The

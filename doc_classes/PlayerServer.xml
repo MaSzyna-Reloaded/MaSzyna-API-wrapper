@@ -4,7 +4,7 @@
 		What the player drives.
 	</brief_description>
 	<description>
-		The one owner of the vehicle the player drives (the original's [code]simulation::Train[/code]). Taking a vehicle over and letting it go happen here, by the vehicles' [RailVehicleServer] handles, whoever asks - the keys, the HUD, scripts ([code]maszyna.player[/code]) - and are announced by [signal player_vehicle_changed]; the player's node follows it into the cab and out. It knows nothing of the view: [PlayerCameraServer] follows [signal player_vehicle_entered] into the cab.
+		The one owner of the vehicle the player drives (the original's [code]simulation::Train[/code]). Taking a vehicle over, entering its cab while its driver drives on and letting it go happen here, by the vehicles' [RailVehicleServer] handles, whoever asks - the keys, the HUD, scripts ([code]maszyna.player[/code]) - and are announced by [signal player_vehicle_changed]; the player's node follows it into the cab and out. It knows nothing of the view: [PlayerCameraServer] follows [signal player_vehicle_entered] into the cab.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -13,7 +13,7 @@
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
-				The player takes the vehicle over: the vehicle's driver stops driving it (drivermode.cpp:266), the trainset left - when another one - is driven by its drivers again, and the vehicle's cab is activated when its FIZ allows it (Train.cpp:9147). Refused for a vehicle without a node, whose cab there is nothing to sit in. The vehicle already driven is only taken back from its driver. Emits [signal player_vehicle_entered] either way.
+				The player sits in the vehicle's cab and its driver, if it has one, drives on; the trainset left - when another one - is driven by its drivers again. Refused for a vehicle without a node, whose cab there is nothing to sit in. Emits [signal player_vehicle_entered].
 			</description>
 		</method>
 		<method name="player_get_vehicle" qualifiers="const">
@@ -28,6 +28,13 @@
 				The player lets the trainset go: its drivers drive it again (simulation.cpp:257-270).
 			</description>
 		</method>
+		<method name="player_take_over_vehicle">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The player takes the vehicle over: the vehicle's driver stops driving it (drivermode.cpp:266), the trainset left - when another one - is driven by its drivers again, and the vehicle's cab is activated when its FIZ allows it (Train.cpp:9147). Refused for a vehicle without a node, whose cab there is nothing to sit in. The vehicle already driven is only taken back from its driver. Emits [signal player_vehicle_entered] either way.
+			</description>
+		</method>
 	</methods>
 	<signals>
 		<signal name="player_vehicle_changed">
@@ -40,7 +47,7 @@
 		<signal name="player_vehicle_entered">
 			<param index="0" name="vehicle" type="RID" />
 			<description>
-				The player took [param vehicle] over - also the vehicle it already drives, which is only taken back from its driver (the original's F5 on its own train, [code]drivermode.cpp:258-267[/code]).
+				The player entered [param vehicle] - taken over or not - also the vehicle it already drives, which is only taken back from its driver when taken over (the original's F5 on its own train, [code]drivermode.cpp:258-267[/code]).
 			</description>
 		</signal>
 	</signals>

@@ -9,7 +9,7 @@ enum Progress { PASSED, NEXT, AHEAD }
 ## Where the station stands in the timetable - the line is drawn only towards its neighbours
 enum Place { FIRST, BETWEEN, LAST }
 ## What the status of the next station tells the driver
-enum Tone { NEUTRAL, WAIT, GO }
+enum Tone { NEUTRAL, WAIT, GO, EXCHANGE }
 
 ## The speed shown beside a station where it does not change from the station before
 const NO_SPEED:float = -1.0
@@ -32,6 +32,8 @@ const TONE_COLORS:Dictionary[Tone, Color] = {
     Tone.NEUTRAL: Color(0.45, 0.72, 1.0),
     Tone.WAIT: Color(1.0, 0.72, 0.35),
     Tone.GO: Color(0.4, 0.85, 0.55),
+    # red while the passengers get off and on (driveruipanels.cpp:440)
+    Tone.EXCHANGE: Color(1.0, 0.4, 0.35),
 }
 ## A pass-through station is named in the muted colour
 const PASS_THROUGH_COLOR:Color = Color(0.72, 0.77, 0.85)

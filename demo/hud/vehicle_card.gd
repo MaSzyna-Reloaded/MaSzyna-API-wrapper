@@ -6,6 +6,8 @@ extends PanelContainer
 ## as the scenery selector previews them, its data, how it is going now, its trainset, its driver
 ## and its timetable. The data is filled once; what changes - the timetable's delay counting on
 ## too - is refreshed by one Timer while the card is open.
+## The driver section takes the vehicle over (Take over), puts the player in its cab with its
+## driver driving on (Enter cabin) and switches its AI.
 
 ## The close button asks the owner to free the card
 signal close_requested
@@ -15,6 +17,12 @@ signal remove_trainset_requested(vehicle:RID)
 const KILOGRAMS_PER_TONNE:float = 1000.0
 ## A driver's speed below zero is no limit (VelNext = -1, Driver.h)
 const NO_VELOCITY:float = 0.0
+## What the train's dispatch at a stop is doing (StationServer)
+const DISPATCH_STEP_NAMES:Dictionary[StationServer.DispatchStep, String] = {
+    StationServer.DISPATCH_STEP_EXCHANGE: "Passenger exchange",
+    StationServer.DISPATCH_STEP_WAIT_DEPARTURE: "Waiting for departure",
+    StationServer.DISPATCH_STEP_CLOSE_DOORS: "Closing doors",
+}
 
 ## The vehicle the card was opened for
 var vehicle:RID = RID()
@@ -245,6 +253,8 @@ func _on_refresh_timer_timeout() -> void:
     var driver_kind:VehicleSelectorRow.Driver = VehicleSelectorRow.driver_of(_shown, _shown == PlayerServer.player_get_vehicle())
     %Driver.text = VehicleSelectorRow.driver_label(driver_kind)
     %TakeOverButton.visible = not driver_kind == VehicleSelectorRow.Driver.PLAYER
+    %EnterCabinButton.visible = not (_shown == PlayerServer.player_get_vehicle()
+            and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN)
     %AIButton.visible = driver.is_valid()
     %AIButton.text = tr("Disable AI") if driving else tr("Enable AI")
     var driver_state:Dictionary = DriverSystem.driver_get_state(driver) if driver.is_valid() else {}
@@ -265,6 +275,9 @@ func _on_refresh_timer_timeout() -> void:
             driver_data[tr("At the platform")] = tr("Yes")
         if driver_state.get("stop_time", 0.0) > 0.0:
             driver_data[tr("Stop time")] = "%d s" % driver_state["stop_time"]
+        var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(DriverSystem.driver_get_vehicle(driver))
+        if DISPATCH_STEP_NAMES.has(dispatch_step):
+            driver_data[tr("Dispatch")] = tr(DISPATCH_STEP_NAMES[dispatch_step])
     _show_values(%DriverData, driver_data)
 
     # the timetable of the driver: the train, its relation, the delay and the station passed last,
@@ -299,8 +312,13 @@ func _format_velocity(velocity:float) -> String:
     return "%d km/h" % velocity if velocity >= NO_VELOCITY else tr("No limit")
 
 
-## The player enters the cab, as when picking the vehicle in the world
+## The player takes the vehicle over, as when picking the vehicle in the world
 func _on_take_over_button_pressed() -> void:
+    PlayerServer.player_take_over_vehicle(_shown)
+
+
+## The player sits in the cab, its driver drives on
+func _on_enter_cabin_button_pressed() -> void:
     PlayerServer.player_enter_vehicle(_shown)
 
 

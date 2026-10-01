@@ -31,7 +31,6 @@ namespace godot {
             MAKE_MEMBER_GS(bool, generator_voltage_flat, false);
             MAKE_MEMBER_GS(double, hyperbolic_speed, 1.0);
             MAKE_MEMBER_GS(double, additional_speed, 1.0);
-            MAKE_MEMBER_GS(double, rpm_change_rate, 2.0);
             MAKE_MEMBER_GS(double, power_correction_ratio, 1.0);
             MAKE_MEMBER_GS(int, shunt_relay_type, 0);
             MAKE_MEMBER_GS(bool, shunt_mode_allowed, false);

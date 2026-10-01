@@ -46,55 +46,54 @@ const ANY_VELOCITY:float = 99999.0
 
 
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
     var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     if engine == null:
         return false
     # an engine running off its battery reckons with the battery's voltage (Driver.cpp:3424-3426)
-    if int(state.get("power_source", RailVehicleController.POWER_SOURCE_NOT_DEFINED)) == RailVehicleController.POWER_SOURCE_ACCUMULATOR:
-        voltage = float(state.get("battery_voltage", 0.0))
-    if situation.trainset.motor_overload_relay_open or state.get("pressure_switch_tripped", false):
+    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
+    if engine.power_source == RailVehicleController.POWER_SOURCE_ACCUMULATOR:
+        voltage = controlling.get_live_battery_voltage()
+    if situation.trainset.motor_overload_relay_open or engine.is_pressure_switch_tripped():
         return false
     # past the first position only once the line contactors closed
-    if not (state.get("main_no_power_pos", false) or state.get("line_contactor_closed", false)):
+    if not (engine.get_main_no_power_pos() or engine.is_line_contactor_closed()):
         return false
     if not (situation.trainset.ready or situation.pressing):
         return false
     var relays:Array = engine.relay_list
-    var main:int = controller_position(situation, "controller_main_position")
-    var second:int = controller_position(situation, "controller_second_position")
-    var config:Dictionary = VehicleServer.vehicle_dump_config(situation.controlling)
-    var main_max:int = int(config.get("main_controller_position_max", 0))
-    var second_max:int = int(config.get("second_controller_position_max", 0))
+    var main:int = main_controller_position(situation)
+    var second:int = second_controller_position(situation)
+    var main_max:int = main_position_count(situation)
+    var second_max:int = second_position_count(situation)
     if relays.size() <= main_max:
         return false
-    var imax:float = float(state.get("circuit_imax", 0.0))
-    var current:float = absf(float(state.get("Im", 0.0)))
+    var imax:float = engine.get_circuit_imax()
+    var current:float = absf(engine.get_motor_current())
     var high_on:bool = engine.circuit_imax_high > engine.circuit_imax_low and imax > engine.circuit_imax_low
-    var velocity:float = float(CabinSystem.vehicle_state_value(situation.vehicle, "speed", 0.0))
+    var velocity:float = VehicleServer.vehicle_get_speed(situation.vehicle)
     var trainset:MaszynaLegacyDriverTrainset = situation.trainset
     var cargo:bool = situation.braking.cargo
     var heavy:bool = situation.braking.heavy_cargo
     var engines:int = trainset.controlled_engines
     var gravity:float = trainset.gravity_acceleration
     # ET42 uses these variables for another purpose (Driver.cpp:3430)
-    var et42:bool = int(config.get("train_type", 0)) == RailVehicleController.TRAIN_TYPE_ET42
-    var engine_voltage:float = absf(float(state.get("engine_voltage", 0.0)))
+    var et42:bool = controlling.train_type == RailVehicleController.TRAIN_TYPE_ET42
+    var engine_voltage:float = absf(engine.get_engine_voltage())
     var slope:float = HIGH_THRESHOLD_GRAVITY_FLAT if gravity == HIGH_THRESHOLD_GRAVITY else gravity - HIGH_THRESHOLD_GRAVITY
     var use_high_threshold:bool = not et42 and engine.circuit_imax_high > engine.circuit_imax_low \
             and velocity < (HIGH_THRESHOLD_VELOCITY if high_on else LOW_THRESHOLD_VELOCITY) \
             and trainset.vehicles.size() - engines > 0 and trainset.mass > 0.0 \
             and imax * engine_voltage * engines / (trainset.mass * slope) < HIGH_THRESHOLD_SPEED
-    var sufficient_force:bool = absf(float(state.get("Ft", 0.0))) * engines > (HEAVY_SUFFICIENT_FORCE if heavy else SUFFICIENT_FORCE)
+    var sufficient_force:bool = absf(engine.get_tractive_force()) * engines > (HEAVY_SUFFICIENT_FORCE if heavy else SUFFICIENT_FORCE)
     var sufficient_acceleration:bool = trainset.acceleration >= (HEAVY_SUFFICIENT_ACCELERATION if heavy
             else GOODS_SUFFICIENT_ACCELERATION if cargo else SUFFICIENT_ACCELERATION)
     var branches:int = (relays[main] as RailVehicleRelayListItem).branch_count
     var series_shunting:bool = second > 0 and branches == 1
     var parallel_shunting:bool = second > 0 and branches > 1
-    var collector:bool = int(state.get("power_source", RailVehicleController.POWER_SOURCE_NOT_DEFINED)) == RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    var min_voltage:float = float(state.get("current_collector/min_main_switch_voltage", 0.0)) if collector else 0.0
-    var max_voltage:float = float(state.get("current_collector/max_voltage", 0.0)) if collector else 0.0
+    var collector:bool = engine.power_source == RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var min_voltage:float = engine.get_collector_min_main_switch_voltage() if collector else 0.0
+    var max_voltage:float = engine.get_collector_max_voltage() if collector else 0.0
     var series_mode_voltage:float = lerpf(min_voltage, max_voltage, HEAVY_SERIES_VOLTAGE_SHARE if heavy else SERIES_VOLTAGE_SHARE)
     var use_series:bool = imax > engine.circuit_imax_low or use_high_threshold or voltage < series_mode_voltage \
             or (sufficient_acceleration and sufficient_force
@@ -105,7 +104,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var parallel_early:bool = sufficient_acceleration and sufficient_force \
             and velocity <= (GOODS_PARALLEL_VELOCITY if cargo else PARALLEL_VELOCITY) \
                 + (SHUNTING_VELOCITY_BONUS if parallel_shunting else 0.0)
-    var use_field_shunt:bool = state.get("line_contactor_closed", false) \
+    var use_field_shunt:bool = engine.is_line_contactor_closed() \
             and (relays[main] as RailVehicleRelayListItem).resistance < RESISTORLESS \
             and (branches == 1 if use_series else (branches > 1 if parallel_early else main == main_max))
     if not et42:
@@ -114,21 +113,24 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
                 # the high threshold needs the series mode (Driver.cpp:3490-3500)
                 if branches > 1:
                     set_second_controller(situation, 0)
-                    while not CabinSystem.vehicle_state_value(situation.vehicle, "main_no_power_pos", true) \
-                            and (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count > 1 \
+                    # a vehicle without an engine counts as at its last position without power
+                    var driven:RailVehicleEngine = VehicleServer.vehicle_component_get(
+                            situation.vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+                    while not (driven.get_main_no_power_pos() if driven else true) \
+                            and (relays[main_controller_position(situation)] as RailVehicleRelayListItem).branch_count > 1 \
                             and step_main(situation, -1):
                         pass
                 MaszynaLegacyDriverHints.send(situation.controlling, "motor_overload_relay_threshold", true)
         elif high_on and current < engine.circuit_imax_low:
             MaszynaLegacyDriverHints.send(situation.controlling, "motor_overload_relay_threshold", false)
-    main = controller_position(situation, "controller_main_position")
-    second = controller_position(situation, "controller_second_position")
+    main = main_controller_position(situation)
+    second = second_controller_position(situation)
     var safe_velocity:float = ANY_VELOCITY
     if (second < second_max) if use_field_shunt else (main < main_max):
         safe_velocity = engine.get_next_position_velocity(not use_field_shunt)
-    var step_current:float = float(state.get("circuit_imin", 0.0)) \
+    var step_current:float = engine.get_circuit_imin() \
             if trainset.brake_pressure_max < RELEASED_BRAKE_PRESSURE else float(engine.circuit_imin_low)
-    if not (current < step_current or float(state.get("speed", 0.0)) > safe_velocity):
+    if not (current < step_current or VehicleServer.vehicle_get_speed(situation.controlling) > safe_velocity):
         return false
     var margin:float = (HEAVY_POWER_MARGIN if heavy else POWER_MARGIN) * engines
     if use_field_shunt:
@@ -140,17 +142,17 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var next_branches:int = (relays[mini(main + 1, main_max)] as RailVehicleRelayListItem).branch_count
     var moved:bool = true
     if voltage - (min_voltage if next_branches == 1 else series_mode_voltage) > margin \
-            and not CabinSystem.vehicle_state_value(situation.vehicle, "controller_main_delayed", false):
+            and not (VehicleServer.vehicle_get_controller(situation.vehicle) as RailVehicleController).get_controller_main_delayed():
         moved = step_main(situation, 1)
     # no current on the further positions: the relay tripped or the engine is not on
-    if float(state.get("Im", 0.0)) == 0.0 and main_powercontroller_position(situation) > 1:
+    if engine.get_motor_current() == 0.0 and main_powercontroller_position(situation) > 1:
         retry = true
     return moved
 
 
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = false) -> bool:
     # the field shunt off first
-    if controller_position(situation, "controller_second_position") > 0:
+    if second_controller_position(situation) > 0:
         return set_second_controller(situation, 0)
     # DecMainCtrl(min(MainCtrlPowerPos(), 2)): one position, or back to the previous resistorless
     # one (Mover.cpp:2607-2619)
@@ -162,15 +164,15 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
     var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     var relays:Array = engine.relay_list if engine else []
-    var main:int = controller_position(situation, "controller_main_position")
+    var main:int = main_controller_position(situation)
     if main >= relays.size():
         return step_main(situation, -1)
     if (relays[main] as RailVehicleRelayListItem).resistance == 0.0:
         step_main(situation, -1)
-    while (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).resistance > 0.0 \
+    while (relays[main_controller_position(situation)] as RailVehicleRelayListItem).resistance > 0.0 \
             and step_main(situation, -1):
         pass
-    return not controller_position(situation, "controller_main_position") == main
+    return not main_controller_position(situation) == main
 
 
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:

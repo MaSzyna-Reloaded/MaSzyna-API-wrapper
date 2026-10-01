@@ -242,8 +242,8 @@ func _build_driver_aid_commands() -> void:
 
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term
 ## InteriorLight * InteriorLightLevel (DynObj.h:240, openglrenderer.cpp:3684-3692); here a shadow
-## casting light at the cab ceiling lamp, driven by the same level (roof_light_level,
-## Train.cpp:8041-8060).
+## casting light at the cab ceiling lamp, driven by the same level - the cab light of this cab
+## (CabinSystem.cab_light_level_changed, Train.cpp:8436-8453).
 func _build_cab_light(definition:MmdCabinDefinition) -> void:
     var light := CabinOmniLight3D.new()
     light.name = "CabLight"
@@ -254,7 +254,7 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.position = (definition.bounds_min + definition.bounds_max) * 0.5
     light.position.y = definition.bounds_max.y
     light.omni_range = maxf((definition.bounds_max - definition.bounds_min).length(), 1.0)
-    light.state_property = "roof_light_level"
+    light.cab_light = CabinState.Light.CAB
     _generated.add_child(light)
     light.set_vehicle_rid(get_vehicle_rid())
 

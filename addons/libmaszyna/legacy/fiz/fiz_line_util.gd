@@ -13,7 +13,9 @@ const _STOPS: Array = [" ", "\t", "\n", "\r", ";"]
 
 
 ## Pulls every `Key=Value` token out of `p` (until eof) into a String->String dictionary. Keys
-## are kept case-sensitive, matching the original `extract_value`'s exact-substring lookup.
+## are kept case-sensitive, matching the original `extract_value`'s exact-substring lookup. A key
+## given twice keeps its first value, as `extract_value`'s `find()` does (utilities.h:170) - the
+## data relies on it (BR285's `Engine:` says `Vadd=5.5 ... Vadd=0.0`).
 static func read_key_values(p: MaszynaParser) -> Dictionary:
     var result: Dictionary = {}
     while not p.eof_reached():
@@ -23,7 +25,9 @@ static func read_key_values(p: MaszynaParser) -> Dictionary:
         var eq: int = token.find("=")
         if eq <= 0:
             continue
-        result[token.substr(0, eq)] = token.substr(eq + 1)
+        var key: String = token.substr(0, eq)
+        if not result.has(key):
+            result[key] = token.substr(eq + 1)
     return result
 
 

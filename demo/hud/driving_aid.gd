@@ -192,6 +192,8 @@ func _on_refresh_timer_timeout() -> void:
                 %StopReasonValue.text = tr("Waiting for orders")
             MaszynaLegacyDriverSpeed.StopReason.SIGNAL:
                 %StopReasonValue.text = tr("Signal at stop")
+            MaszynaLegacyDriverSpeed.StopReason.DISPATCH:
+                %StopReasonValue.text = tr("Station dispatch")
         %StopReasonDetail.text = ", ".join(detail)
         %StopReasonDetail.visible = detail.size() > 0
     # the next limit only when there is a change; the sign stays put, the tile narrows on its left

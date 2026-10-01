@@ -13,12 +13,15 @@ const UNIVERSAL_HYSTERESIS:float = 0.05
 
 
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
+    var engine:RailVehicleDieselElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselElectricEngine
+    if engine == null:
+        return false
     # not with the overload relay or the pressure switch tripped; past the first position only
     # once the line contactors closed
-    if situation.trainset.motor_overload_relay_open or state.get("pressure_switch_tripped", false):
+    if situation.trainset.motor_overload_relay_open or engine.is_pressure_switch_tripped():
         return false
-    if not (state.get("main_no_power_pos", false) or state.get("line_contactor_closed", false)):
+    if not (engine.get_main_no_power_pos() or engine.is_line_contactor_closed()):
         return false
     if not (situation.trainset.ready or situation.pressing):
         return false
@@ -26,7 +29,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 
 
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = false) -> bool:
-    if controller_position(situation, "controller_second_position") > 0:
+    if second_controller_position(situation) > 0:
         return set_second_controller(situation, 0)
     # DecMainCtrl(min(MainCtrlPowerPos(), 2 + MainCtrlPowerPos() / 2)), Driver.cpp:3712
     var power:int = main_powercontroller_position(situation)
@@ -37,8 +40,10 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 
 
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
-    if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
+    var engine:RailVehicleDieselElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselElectricEngine
+    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
+    if not (engine and engine.is_line_contactor_closed()) and not controlling.get_controller_main_delayed() \
             and main_powercontroller_position(situation) > 1:
         zero(situation)
     if not situation.trainset.ready and main_powercontroller_position(situation) > 1:
@@ -52,7 +57,9 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
     if not eim_control_type(situation) == RailVehicleEngine.EIM_CONTROL_TYPE_3:
         return
     var acceleration:float = situation.speed.acceleration_desired
-    if acceleration < 0.0 or not VehicleServer.vehicle_dump_state(situation.controlling).get("line_contactor_closed", false):
+    var engine:RailVehicleDieselElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselElectricEngine
+    if acceleration < 0.0 or not (engine and engine.is_line_contactor_closed()):
         return
     var controller:RailVehicleUniversalController = RailVehicleServer.vehicle_component_get(
             situation.controlling, RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
@@ -60,7 +67,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         return
     var positions:Array = controller.positions
     var increase_position:int = mini(positions.size() - 1,
-            int(VehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)))
+            main_position_count(situation))
     var keep_position:int = 0
     var decrease_position:int = 0
     for index:int in range(increase_position, -1, -1):

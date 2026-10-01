@@ -87,6 +87,23 @@ const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
 const CAB_CHANGE_STEPS:int = 2
 ## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334)
 const PRESSING_VELOCITY:float = 2.0
+## Faster than this [km/h] the trainset is taken as gone from the stop, and its dispatch is over
+## (the "force timer reset" HACK, Driver.cpp:7450-7452)
+const DISPATCH_MAX_SPEED:float = 2.0
+## Doors that close by themselves only on a speed have none set (Doors.auto_velocity == -1.f,
+## Driver.cpp:4332)
+const NO_AUTO_CLOSE_VELOCITY:float = -1.0
+## The doors the driver works for the whole trainset, and the doors passengers close by hand
+## (control_t, Driver.cpp:4282-4284, 4316-4318, 4333-4334)
+const REMOTE_OPEN_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_CONDUCTOR, RailVehicleDoors.CONTROLS_DRIVER,
+]
+const REMOTE_CLOSE_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_CONDUCTOR, RailVehicleDoors.CONTROLS_DRIVER, RailVehicleDoors.CONTROLS_MIXED,
+]
+const MANUAL_CLOSE_CONTROLS:Array[RailVehicleDoors.Controls] = [
+    RailVehicleDoors.CONTROLS_PASSENGER, RailVehicleDoors.CONTROLS_MIXED,
+]
 ## Coupling up: it starts within this of the vehicle ahead, and couples within ATTACH_DISTANCE [m]
 ## (UpdateConnect(), Driver.cpp:7005-7040)
 const CONNECT_DISTANCE:float = 20.0
@@ -167,6 +184,10 @@ class DriverState:
 var _drivers:Dictionary[RID, DriverState] = {}
 
 
+func _init() -> void:
+    StationServer.dispatch_step_changed.connect(_on_dispatch_step_changed)
+
+
 func _driver_attached(driver:RID) -> void:
     var state:DriverState = DriverState.new()
     var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
@@ -196,15 +217,15 @@ func _control_taken(driver:RID) -> void:
         return
     # the cab the crew sits in switched on (CabActivisation(true), Driver.cpp:5705)
     MaszynaLegacyDriverHints.cue(vehicle, CabinSystem.occupied_cab(vehicle), MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
-    if float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
+    if VehicleServer.vehicle_get_speed(vehicle) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
         # the active cab, else the one the crew sits in; a vehicle with neither keeps its way
-        var cab:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", 0))
+        var cab:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
         if cab == 0:
             cab = CabinSystem.occupied_cab(vehicle)
         if not cab == 0:
             state.direction = cab
     else:
-        state.direction = 1 if float(CabinSystem.vehicle_state_value(vehicle, "velocity", 0.0)) >= 0.0 else -1
+        state.direction = 1 if VehicleServer.vehicle_get_velocity(vehicle) >= 0.0 else -1
     state.direction_order = state.direction
     state.route.forget()
     # and the reverser put that way - a player may have left it the other (PrepareDirection())
@@ -217,8 +238,57 @@ func _control_taken(driver:RID) -> void:
 ## way the driver drives, relative to the cab
 func _prepare_direction(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
-    var cab_active:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab))
+    var cab_active:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction * cab_active)
+
+
+## Doors() (Driver.cpp:4266-4356): a driver the computer is (AIControllFlag) permits and opens the
+## doors it works at the platform as the dispatch lets the passengers off and on, and closes them
+## once the train is let go - the doors passengers close by hand too, in the cars done exchanging.
+## Each car's doors are closed by the way they close, so a train is not held by a vehicle driven
+## from that has no doors of its own. A player works them. The departure signal before closing is
+## not published (TODO.md).
+func _on_dispatch_step_changed(vehicle:RID, step:StationServer.DispatchStep) -> void:
+    var state:DriverState = _drivers.get(DriverSystem.vehicle_get_driver(vehicle))
+    if not state or not DriverSystem.vehicle_is_control_active(vehicle):
+        return
+    var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)
+    match step:
+        StationServer.DISPATCH_STEP_EXCHANGE:
+            if not doors:
+                return
+            # the platform's side of the train, on the vehicle driven from as it stands
+            var platform:RailVehicleLoad.PlatformSide = state.route.exchange_platform
+            if state.trainset.directions[state.trainset.vehicles.find(vehicle)] < 0:
+                platform = MaszynaLegacyStation.opposite_side(platform)
+            var left:bool = not platform == RailVehicleLoad.PLATFORM_SIDE_RIGHT
+            var right:bool = not platform == RailVehicleLoad.PLATFORM_SIDE_LEFT
+            if doors.permit_required:
+                if left:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_left_permit", true)
+                if right:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_right_permit", true)
+            if doors.open_method in REMOTE_OPEN_CONTROLS:
+                if left:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_left", true)
+                if right:
+                    MaszynaLegacyDriverHints.send(vehicle, &"doors_right", true)
+        StationServer.DISPATCH_STEP_CLOSE_DOORS:
+            if doors and doors.permit_required:
+                MaszynaLegacyDriverHints.send(vehicle, &"doors_left_permit", false)
+                MaszynaLegacyDriverHints.send(vehicle, &"doors_right_permit", false)
+            for car:RID in state.trainset.vehicles:
+                var car_doors:RailVehicleDoors = VehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_DOORS)
+                if not car_doors:
+                    continue
+                if car_doors.close_method in REMOTE_CLOSE_CONTROLS:
+                    MaszynaLegacyDriverHints.send(car, &"doors_left", false)
+                    MaszynaLegacyDriverHints.send(car, &"doors_right", false)
+                if car_doors.close_auto_close_velocity == NO_AUTO_CLOSE_VELOCITY \
+                        and car_doors.close_method in MANUAL_CLOSE_CONTROLS \
+                        and RailVehicleServer.load_get_exchange_time(car) == 0.0:
+                    MaszynaLegacyDriverHints.send(car, &"doors_left_local", false)
+                    MaszynaLegacyDriverHints.send(car, &"doors_right_local", false)
 
 
 ## The timetable and how far the driver got through it (DriverDelegate.get_timetable_state())
@@ -401,16 +471,17 @@ func _update(driver:RID) -> void:
     # what happened to the trainset from outside - a line breaker tripped by a loss of voltage, a
     # relay a player opened - takes the engine's readiness away, and handle_engine() gets it ready
     # again (determine_consist_state(), Driver.cpp:6100-6104)
-    var converter:Variant = CabinSystem.vehicle_state_value(state.trainset.controlling, "converter_enabled")
+    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(
+            state.trainset.controlling) as RailVehicleController
     if state.trainset.line_breaker_open or state.trainset.converter_overload_relay_open \
-            or not (converter == null or bool(converter)):
+            or not controlling.get_converter_enabled():
         state.engine_active = false
     # what its brakes can do - the table again when the trainset or the kind of order changed
     state.braking.read_trainset(
             vehicle, state.orders[state.order_position], state.trainset, DriverSystem.vehicle_is_control_active(vehicle))
     # DirectionalVel(), Driver.h:312: the speed, negative when it runs against the way it drives
-    var directional_speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) \
-            * signf(state.direction * float(CabinSystem.vehicle_state_value(vehicle, "velocity", 0.0)))
+    var directional_speed:float = VehicleServer.vehicle_get_speed(vehicle) \
+            * signf(state.direction * VehicleServer.vehicle_get_velocity(vehicle))
     # shunting, the speed allowed is the shunting speed (pick_optimal_speed(), Driver.cpp:7320-7327)
     if not state.orders[state.order_position] & (Order.OBEY_TRAIN | Order.BANK):
         state.velocity = state.shunt_velocity
@@ -443,7 +514,13 @@ func _update(driver:RID) -> void:
                             else Order.SHUNT)
             MaszynaLegacyDriverRoute.StopOrder.NEXT_ORDER:
                 _jump_to_next_order(state, vehicle)
+            MaszynaLegacyDriverRoute.StopOrder.LOAD_EXCHANGE:
+                # the station's passengers, and the train's dispatch waits for them (Driver.cpp:1233-1241)
+                MaszynaLegacyStation.update_load(state.trainset, state.timetable, state.route.exchange_platform)
+                StationServer.dispatch_start(vehicle, state.trainset.vehicles)
             MaszynaLegacyDriverRoute.StopOrder.GUARD_SIGNAL:
+                # the timetable lets it go: its doors close once the passengers are done
+                StationServer.dispatch_depart(vehicle)
                 # on the radio channel of the station left (Driver.cpp:1103-1112), once the train
                 # may go (Driver.cpp:1313-1316)
                 var left:TimetableEntry = state.timetable.get_entries()[state.timetable.station_index - 1]
@@ -460,15 +537,20 @@ func _update(driver:RID) -> void:
         CabinSystem.send_radio_message(state.guard_signal, state.guard_transcript, state.guard_radio,
                 RailVehicleServer.vehicle_get_transform(vehicle).origin, GUARD_RADIO_RANGE)
         state.traction.hold(GUARD_HOLD_TIME)
+    # gone from the stop, its dispatch is over (Driver.cpp:7449-7452)
+    if absf(directional_speed) > DISPATCH_MAX_SPEED:
+        StationServer.dispatch_cancel(vehicle)
     state.speed.pick(
-            state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
+            state.orders[state.order_position], state.engine_active, state.stop_here,
+            StationServer.dispatch_get_step(vehicle), state.velocity,
             state.shunt_velocity, state.timetable.velocity,
             directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking)
     state.reaction_time = state.speed.reaction_time
     var cab:int = CabinSystem.occupied_cab(vehicle)
     # the engine it drives decides how (IncSpeed()'s switch on the engine type, Driver.cpp:3409)
-    var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", RailVehicleEngine.NONE)) \
-            as RailVehicleEngine.EngineType
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    var engine_type:RailVehicleEngine.EngineType = engine.get_type() if engine else RailVehicleEngine.NONE
     if not state.traction.engine_type == engine_type:
         state.traction = MaszynaLegacyDriverTraction.create(engine_type)
     var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
@@ -507,7 +589,7 @@ func _update(driver:RID) -> void:
         state.braking.control(situation, elapsed)
     state.traction.set_time_controllers(situation)
     state.braking.set_time_controllers(situation)
-    var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
+    var standing:bool = VehicleServer.vehicle_get_speed(vehicle) < NO_MOVEMENT_SPEED
     _handle_engine(state, vehicle, cab)
     if state.orders[state.order_position] == Order.RELEASE_ENGINE and standing:
         if _release_engine(state, vehicle, cab):
@@ -530,7 +612,7 @@ func _update(driver:RID) -> void:
 func _handle_engine(state:DriverState, vehicle:RID, cab:int) -> void:
     # the original's HACK (Driver.cpp:7226-7231)
     if state.orders[state.order_position] == Order.WAIT_FOR_ORDERS and not state.engine_active \
-            and CabinSystem.vehicle_state_value(vehicle, "power24_available", false):
+            and (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_power24_available():
         _order_next(state, Order.PREPARE_ENGINE)
     if state.orders[state.order_position] == Order.PREPARE_ENGINE:
         if _prepare_engine(state, vehicle, cab):
@@ -543,11 +625,14 @@ func _handle_engine(state:DriverState, vehicle:RID, cab:int) -> void:
 ## update until it is - to a player only hinted (cue_action()), so the driver then just reads
 ## whether the vehicle is ready. What the cab does not have yet is left out (TODO.md, "Drivers").
 func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
-    var speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0))
+    var speed:float = VehicleServer.vehicle_get_speed(vehicle)
     state.reaction_time = PREPARE_TIME if speed < ROLLING_START_SPEED else EASY_REACTION_TIME
     var controlling:RID = state.trainset.controlling
-    var converter_overload:bool = CabinSystem.vehicle_state_value(controlling, "converter_overload", false)
-    var mains:bool = CabinSystem.vehicle_state_value(controlling, "main_switch_enabled", false)
+    var controlling_engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    var converter_overload:bool = controlling_engine is RailVehicleElectricEngine \
+            and (controlling_engine as RailVehicleElectricEngine).get_converter_overload()
+    var mains:bool = controlling_engine != null and controlling_engine.get_main_switch_enabled()
     # to a player the steps are only hinted (cue_action()) - the driver just reads whether it is ready
     if DriverSystem.vehicle_is_control_active(vehicle):
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.BATTERY_ON)
@@ -569,9 +654,9 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
         if not mains:
             MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
             # a diesel with a gearbox starts at its idle position, or it stalls (Driver.cpp:2840-2843)
-            var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type",
-                    RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
-            if engine_type == RailVehicleEngine.DIESEL:
+            var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+                    vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+            if engine and engine.get_type() == RailVehicleEngine.DIESEL:
                 MaszynaLegacyDriverHints.set_idle(vehicle, cab)
             MaszynaLegacyDriverHints.close_line_breaker(vehicle, cab)
         elif not converter_overload:
@@ -580,17 +665,18 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
             if converter_enabled:
                 MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON, controlling)
             MaszynaLegacyDriverHints.release_train_brake(vehicle, cab)
-    var converter:Variant = CabinSystem.vehicle_state_value(controlling, "converter_enabled")
     var missing:int = 0
     if converter_overload:
         missing |= EngineCheck.CONVERTER_OVERLOAD
     if not mains:
         missing |= EngineCheck.LINE_BREAKER
-    if int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0:
+    if VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0:
         missing |= EngineCheck.DIRECTION
-    if not (converter == null or bool(converter)):
+    if not (VehicleServer.vehicle_get_controller(controlling) as RailVehicleController).get_converter_enabled():
         missing |= EngineCheck.CONVERTER
-    if float(CabinSystem.vehicle_state_value(controlling, "compressor_pressure", 0.0)) <= MIN_MAIN_RESERVOIR_PRESSURE:
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            controlling, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    if (brake.get_compressor_pressure() if brake else 0.0) <= MIN_MAIN_RESERVOIR_PRESSURE:
         missing |= EngineCheck.AIR
     state.engine_missing = missing
     state.engine_active = missing == 0
@@ -610,15 +696,17 @@ func _release_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF)
     # lightsoff (Driver.cpp:2932)
     MaszynaLegacyDriverLights.off(vehicle, state.direction)
-    if not CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false):
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    if not (engine and engine.get_main_switch_enabled()):
         if _has_diesel_engine(vehicle):
             MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_OFF)
             MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.OIL_PUMP_OFF)
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.RADIO_OFF)
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.BATTERY_OFF)
-    var released:bool = int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0 \
-            and not CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false) \
-            and not CabinSystem.vehicle_state_value(vehicle, "power24_available", false)
+    var released:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0 \
+            and not (engine and engine.get_main_switch_enabled()) \
+            and not (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_power24_available()
     if released:
         state.engine_active = false
         _order_next(state, Order.WAIT_FOR_ORDERS)
@@ -733,9 +821,9 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
 ## master controller at zero first; the driver's direction follows once the reverser has moved
 func _reverse(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
-    var cab_active:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab))
+    var cab_active:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction_order * cab_active)
-    if int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == state.direction_order * cab_active:
+    if VehicleServer.vehicle_get_controller(vehicle).get_direction() == state.direction_order * cab_active:
         state.direction = state.direction_order
 
 
@@ -744,11 +832,14 @@ func _reverse(state:DriverState, vehicle:RID, cab:int) -> void:
 ## security system applied is released by the driving (MaszynaLegacyDriverBraking). Radio-Stop's
 ## radio switched off at a stop is not ported yet (TODO.md).
 func _control_security_system(vehicle:RID, cab:int) -> void:
-    var cabsignal:bool = CabinSystem.vehicle_state_value(vehicle, "cabsignal_blinking", false) \
-            and CabinSystem.vehicle_state_value(vehicle, "separate_acknowledge", false)
-    var blinking:bool = CabinSystem.vehicle_state_value(vehicle, "blinking", false)
-    if (cabsignal or blinking) and int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == 0:
-        MaszynaLegacyDriverHints.set_direction(vehicle, cab, int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab)))
+    var security:RailVehicleSecuritySystem = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
+    if security == null:
+        return
+    var cabsignal:bool = security.get_cabsignal_blinking() and security.get_separate_acknowledge()
+    var blinking:bool = security.get_blinking()
+    if (cabsignal or blinking) and VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0:
+        MaszynaLegacyDriverHints.set_direction(vehicle, cab, (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin())
     if cabsignal:
         MaszynaLegacyDriverHints.reset_security_system(vehicle, cab, MaszynaLegacyDriverHints.CABSIGNAL_RESET)
     if blinking:
@@ -756,9 +847,8 @@ func _control_security_system(vehicle:RID, cab:int) -> void:
 
 
 static func _has_diesel_engine(vehicle:RID) -> bool:
-    var engine_type:RailVehicleEngine.EngineType = int(CabinSystem.vehicle_state_value(vehicle, "engine_type", RailVehicleEngine.NONE)) \
-            as RailVehicleEngine.EngineType
-    return engine_type == RailVehicleEngine.DIESEL or engine_type == RailVehicleEngine.DIESEL_ELECTRIC
+    return VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) is RailVehicleDieselEngine
 
 
 ## `Timetable:<name> <velocity> <minutes>` (Driver.cpp:4494-4576): the timetable, the first station
@@ -798,6 +888,8 @@ func _take_timetable(
             var clips:Array[SfxClip] = [clip]
             state.guard_signal = SfxEvent.new()
             state.guard_signal.clips = clips
+            var emitter:Array[SfxEvent] = [state.guard_signal]
+            MmdSoundEventBuilder.shape_emitter(emitter, null, 0.0)
             # its caption beside it (openal_buffer::fetch_caption(), audio.cpp:84-94)
             state.guard_transcript = MaszynaLegacySoundCaption.from_sound_file(path.get_basename())
             state.guard_radio = state.radio_channel if state.radio_channel > 0 else RADIO_CHANNEL_DEFAULT

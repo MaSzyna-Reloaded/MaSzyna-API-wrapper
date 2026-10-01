@@ -962,6 +962,9 @@ msgstr ""
 msgid "Take over"
 msgstr ""
 
+msgid "Enter cabin"
+msgstr ""
+
 msgid "Hand over to AI"
 msgstr ""
 
@@ -1066,4 +1069,49 @@ msgid "converter"
 msgstr ""
 
 msgid "main reservoir below %.1f bar"
+msgstr ""
+
+msgid "Station dispatch"
+msgstr ""
+
+msgid "Passenger exchange · %d s"
+msgstr ""
+
+msgid "Passenger exchange"
+msgstr ""
+
+msgid "Closing doors"
+msgstr ""
+
+msgid "Waiting for departure"
+msgstr ""
+
+msgid "Dispatch"
+msgstr ""
+
+msgid "Vehicle load"
+msgstr ""
+
+msgid "Cargo"
+msgstr ""
+
+msgid "Empty"
+msgstr ""
+
+msgid "Amount"
+msgstr ""
+
+msgid "Getting off"
+msgstr ""
+
+msgid "Getting on"
+msgstr ""
+
+msgid "Exchange time"
+msgstr ""
+
+msgid "Unload %d"
+msgstr ""
+
+msgid "Load %d"
 msgstr ""

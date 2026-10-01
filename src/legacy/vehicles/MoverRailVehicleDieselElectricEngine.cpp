@@ -15,7 +15,6 @@ namespace godot {
         p_mover->Flat = get_generator_voltage_flat();
         p_mover->Vhyp = get_hyperbolic_speed();
         p_mover->Vadd = get_additional_speed();
-        p_mover->dizel_RevolutionsDecreaseRate = get_rpm_change_rate();
         p_mover->PowerCorRatio = get_power_correction_ratio();
         p_mover->RelayType = get_shunt_relay_type();
         p_mover->ShuntModeAllow = get_shunt_mode_allowed();

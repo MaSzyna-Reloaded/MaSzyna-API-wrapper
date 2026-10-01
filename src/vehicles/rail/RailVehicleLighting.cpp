@@ -40,11 +40,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light", "light", "enabled"), &RailVehicleLighting::light);
         ClassDB::bind_method(D_METHOD("light_is_enabled", "light"), &RailVehicleLighting::light_is_enabled);
         ClassDB::bind_method(D_METHOD("light_switch", "light", "enabled"), &RailVehicleLighting::light_switch);
-        ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &RailVehicleLighting::roof_light);
-        ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &RailVehicleLighting::devices_light);
         ClassDB::bind_method(D_METHOD("headlights_dim", "enabled"), &RailVehicleLighting::headlights_dim);
-        ClassDB::bind_method(D_METHOD("roof_light_dim", "enabled"), &RailVehicleLighting::roof_light_dim);
-        ClassDB::bind_method(D_METHOD("get_roof_light_dimmed"), &RailVehicleLighting::get_roof_light_dimmed);
         ClassDB::bind_method(D_METHOD("get_headlights_dimmed"), &RailVehicleLighting::get_headlights_dimmed);
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
 
@@ -99,8 +95,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("get_opposite_redmarker_right_enabled"),
                 &RailVehicleLighting::get_opposite_redmarker_right_enabled);
-        ClassDB::bind_method(D_METHOD("get_devices_light_enabled"), &RailVehicleLighting::get_devices_light_enabled);
-        ClassDB::bind_method(D_METHOD("get_roof_light_level"), &RailVehicleLighting::get_roof_light_level);
     }
 
     const char *RailVehicleLighting::selector_position_changed_signal = "selector_position_changed";
@@ -111,10 +105,7 @@ namespace godot {
         register_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
         register_command("light", Callable(this, "light"));
         register_command("light_switch", Callable(this, "light_switch"));
-        register_command("roof_light", Callable(this, "roof_light"));
-        register_command("devices_light", Callable(this, "devices_light"));
         register_command("headlights_dim", Callable(this, "headlights_dim"));
-        register_command("roof_light_dim", Callable(this, "roof_light_dim"));
         VehicleComponent::_register_commands();
     }
 
@@ -123,10 +114,7 @@ namespace godot {
         unregister_command("decrease_light_selector_position");
         unregister_command("light");
         unregister_command("light_switch");
-        unregister_command("roof_light");
-        unregister_command("devices_light");
         unregister_command("headlights_dim");
-        unregister_command("roof_light_dim");
         VehicleComponent::_unregister_commands();
     }
 } // namespace godot

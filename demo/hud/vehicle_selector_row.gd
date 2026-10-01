@@ -67,11 +67,12 @@ func show_player_vehicle(p_player_vehicle:bool) -> void:
 
 
 ## Who drives the vehicle: its AI, the player, or nobody - Take over (Q, Train.cpp:1088) only turns
-## the AI off, so a vehicle without it is the player's only when the player drives it
+## the AI off, so a vehicle without it is the player's only when the player drives it; the player's
+## vehicle handed over to an AI it does not have is driven by nobody
 static func driver_of(p_vehicle:RID, p_player_vehicle:bool) -> Driver:
     if DriverSystem.vehicle_is_control_active(p_vehicle):
         return Driver.AI
-    return Driver.PLAYER if p_player_vehicle else Driver.UNMANNED
+    return Driver.PLAYER if p_player_vehicle and DriverSystem.vehicle_is_driven(p_vehicle) else Driver.UNMANNED
 
 
 static func driver_label(p_driver:Driver) -> String:

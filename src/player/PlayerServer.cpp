@@ -23,6 +23,7 @@ namespace godot {
     }
 
     void PlayerServer::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("player_take_over_vehicle", "vehicle"), &PlayerServer::player_take_over_vehicle);
         ClassDB::bind_method(D_METHOD("player_enter_vehicle", "vehicle"), &PlayerServer::player_enter_vehicle);
         ClassDB::bind_method(D_METHOD("player_leave_vehicle"), &PlayerServer::player_leave_vehicle);
         ClassDB::bind_method(D_METHOD("player_get_vehicle"), &PlayerServer::player_get_vehicle);
@@ -54,13 +55,24 @@ namespace godot {
         emit_signal(player_vehicle_changed_signal, vehicle, previous);
     }
 
+    void PlayerServer::player_take_over_vehicle(const RID &p_vehicle) {
+        _enter_vehicle(p_vehicle, EnterMode::TAKE_OVER);
+    }
+
     void PlayerServer::player_enter_vehicle(const RID &p_vehicle) {
+        _enter_vehicle(p_vehicle, EnterMode::KEEP_DRIVER);
+    }
+
+    void PlayerServer::_enter_vehicle(const RID &p_vehicle, const EnterMode p_mode) {
         DriverSystem *drivers = DriverSystem::get_instance();
         ERR_FAIL_NULL(drivers);
+        const bool take_over = p_mode == EnterMode::TAKE_OVER;
         if (p_vehicle == vehicle && vehicle.is_valid()) {
             // the train already driven: only the driver switched off (aidriverdisable), and the
             // player back in its cab (InOutKey(), drivermode.cpp:258-267)
-            drivers->vehicle_set_control_active(p_vehicle, false);
+            if (take_over) {
+                drivers->vehicle_set_control_active(p_vehicle, false);
+            }
             emit_signal(player_vehicle_entered_signal, p_vehicle);
             return;
         }
@@ -80,9 +92,11 @@ namespace godot {
                 set_trainset_control_active(vehicle, true);
             }
         }
-        drivers->vehicle_set_control_active(p_vehicle, false);
-        // taking a vehicle over activates its cab when the FIZ allows it (Train.cpp:9147)
-        vehicle_server->vehicle_send_command(p_vehicle, "cab_activation_auto");
+        if (take_over) {
+            drivers->vehicle_set_control_active(p_vehicle, false);
+            // taking a vehicle over activates its cab when the FIZ allows it (Train.cpp:9147)
+            vehicle_server->vehicle_send_command(p_vehicle, "cab_activation_auto");
+        }
         _set_vehicle(p_vehicle);
         emit_signal(player_vehicle_entered_signal, p_vehicle);
     }

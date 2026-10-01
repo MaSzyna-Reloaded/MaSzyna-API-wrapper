@@ -69,6 +69,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_idle_rpm_count" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_ignition" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -156,6 +161,94 @@
 		<member name="clutch_max_force" type="float" setter="set_clutch_max_force" getter="get_clutch_max_force" default="6000.0">
 		</member>
 		<member name="clutch_min_velocity_full_engage" type="float" setter="set_clutch_min_velocity_full_engage" getter="get_clutch_min_velocity_full_engage" default="0.0">
+		</member>
+		<member name="cooling_fan_speed" type="float" setter="set_cooling_fan_speed" getter="get_cooling_fan_speed" default="0.075">
+			[code]Engine:WaterCoolingFanSpeed[/code]
+			Cooling fan speed: a share of the engine's revolutions, or an absolute value when negative.
+		</member>
+		<member name="cooling_heat_kfe" type="float" setter="set_cooling_heat_kfe" getter="get_cooling_heat_kfe" default="1.0">
+			[code]Engine:HeatKFE[/code]
+			Heat exchange factor.
+		</member>
+		<member name="cooling_heat_kfo" type="float" setter="set_cooling_heat_kfo" getter="get_cooling_heat_kfo" default="25.0">
+			[code]Engine:HeatKFO[/code]
+			Heat exchange factor of the oil.
+		</member>
+		<member name="cooling_heat_kfo2" type="float" setter="set_cooling_heat_kfo2" getter="get_cooling_heat_kfo2" default="25.0">
+			[code]Engine:HeatKFO2[/code]
+			Heat exchange factor of the oil to the auxiliary water circuit.
+		</member>
+		<member name="cooling_heat_kfs" type="float" setter="set_cooling_heat_kfs" getter="get_cooling_heat_kfs" default="80.0">
+			[code]Engine:HeatKFS[/code]
+			Heat exchange factor.
+		</member>
+		<member name="cooling_heat_kv" type="float" setter="set_cooling_heat_kv" getter="get_cooling_heat_kv" default="0.6">
+			[code]Engine:HeatKV[/code]
+			Heat exchange factor of the radiator in the air flow.
+		</member>
+		<member name="cooling_heat_kw" type="float" setter="set_cooling_heat_kw" getter="get_cooling_heat_kw" default="0.35">
+			[code]Engine:HeatKW[/code]
+			Heat exchange factor.
+		</member>
+		<member name="cooling_heater_max_temperature" type="float" setter="set_cooling_heater_max_temperature" getter="get_cooling_heater_max_temperature" default="-1.0">
+			[code]Engine:HeaterMaxTemperature[/code]
+			Water temperature the water heater switches off above [deg C], -1 when not set.
+		</member>
+		<member name="cooling_heater_min_temperature" type="float" setter="set_cooling_heater_min_temperature" getter="get_cooling_heater_min_temperature" default="-1.0">
+			[code]Engine:HeaterMinTemperature[/code]
+			Water temperature the water heater switches on below [deg C], -1 when not set.
+		</member>
+		<member name="cooling_nominal_power" type="float" setter="set_cooling_nominal_power" getter="get_cooling_nominal_power" default="1235.0">
+			[code]Engine:NominalCoolingPower[/code]
+			Nominal cooling power; the engine's heat is scaled by 1235 (su45) over it.
+		</member>
+		<member name="cooling_oil_max_temperature" type="float" setter="set_cooling_oil_max_temperature" getter="get_cooling_oil_max_temperature" default="-1.0">
+			[code]Engine:OilMaxTemperature[/code]
+			Highest accepted oil temperature [deg C], -1 when not set.
+		</member>
+		<member name="cooling_oil_min_temperature" type="float" setter="set_cooling_oil_min_temperature" getter="get_cooling_oil_min_temperature" default="-1.0">
+			[code]Engine:OilMinTemperature[/code]
+			Lowest accepted oil temperature [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_aux_circuit" type="bool" setter="set_cooling_water_aux_circuit" getter="get_cooling_water_aux_circuit" default="false">
+			[code]Engine:WaterAuxCircuit[/code]
+			The cooling has an auxiliary water circuit.
+		</member>
+		<member name="cooling_water_aux_cooling_temperature" type="float" setter="set_cooling_water_aux_cooling_temperature" getter="get_cooling_water_aux_cooling_temperature" default="-1.0">
+			[code]Engine:WaterAuxCoolingTemperature[/code]
+			Temperature the auxiliary circuit's active cooling starts at [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_aux_max_temperature" type="float" setter="set_cooling_water_aux_max_temperature" getter="get_cooling_water_aux_max_temperature" default="-1.0">
+			[code]Engine:WaterAuxMaxTemperature[/code]
+			Highest accepted temperature of the auxiliary circuit [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_aux_min_temperature" type="float" setter="set_cooling_water_aux_min_temperature" getter="get_cooling_water_aux_min_temperature" default="-1.0">
+			[code]Engine:WaterAuxMinTemperature[/code]
+			Lowest accepted temperature of the auxiliary circuit [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_aux_shutters" type="bool" setter="set_cooling_water_aux_shutters" getter="get_cooling_water_aux_shutters" default="false">
+			[code]Engine:WaterAuxShutters[/code]
+			The auxiliary circuit's radiator has shutters.
+		</member>
+		<member name="cooling_water_cooling_temperature" type="float" setter="set_cooling_water_cooling_temperature" getter="get_cooling_water_cooling_temperature" default="-1.0">
+			[code]Engine:WaterCoolingTemperature[/code]
+			Water temperature the active cooling starts at [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_flow_temperature" type="float" setter="set_cooling_water_flow_temperature" getter="get_cooling_water_flow_temperature" default="-1.0">
+			[code]Engine:WaterFlowTemperature[/code]
+			Water temperature the flow through the radiator starts at [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_max_temperature" type="float" setter="set_cooling_water_max_temperature" getter="get_cooling_water_max_temperature" default="-1.0">
+			[code]Engine:WaterMaxTemperature[/code]
+			Highest accepted water temperature [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_min_temperature" type="float" setter="set_cooling_water_min_temperature" getter="get_cooling_water_min_temperature" default="-1.0">
+			[code]Engine:WaterMinTemperature[/code]
+			Lowest accepted water temperature [deg C], -1 when not set.
+		</member>
+		<member name="cooling_water_shutters" type="bool" setter="set_cooling_water_shutters" getter="get_cooling_water_shutters" default="false">
+			[code]Engine:WaterShutters[/code]
+			The radiator has shutters.
 		</member>
 		<member name="fuel_pump_start_mode" type="int" setter="set_fuel_pump_start_mode" getter="get_fuel_pump_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.FuelStart[/code]

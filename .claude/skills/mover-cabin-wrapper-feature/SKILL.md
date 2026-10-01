@@ -185,8 +185,11 @@ clicked" is usually missing one of these:
   (`mesh_rotation`/`mesh_position` for a switch, a per-step fraction for a knob).
 - **What is hit.** Triangles (`Mesh.get_faces()`), not the bounding box - SM42's `jointctrl`
   (`nastawnik`) is one long submodel with a wheel at each side, and its box swallowed the whole
-  desk. A control is its mesh **and every mesh under it**: SM42's brake valve `zasadniczy` has the
-  handle `raczkaKranu` and the knob `glowka` as child submodels that rotate with it. Dump a cab's
+  desk. A control is its mesh **and every mesh under it**: SM42's and EP07's brake valve
+  `zasadniczy` has the handle `raczkaKranu` and the knob `glowka` as child submodels that rotate
+  with it, a reverser its handle. A control with another control under it is a panel and only its
+  own mesh (E186's universal1 holds op1/op2, so op12 on it is nobody's, `Train.cpp:64`). The model's
+  tree decides this in `CabinHUDMouseSystem`, never the widget class or the cab. Dump a cab's
   E3D tree with `E3DParser.parse(FileAccess)` and `E3DSubModel.resource_name`/`.submodels` to see it.
 - **Occlusion.** `MaszynaDynamicTrainCabin` registers every mesh of its `CabModel` as an occluder once the
   model is loaded (`e3d_loaded`): the desk hides the shaft under it, like the original's pick buffer

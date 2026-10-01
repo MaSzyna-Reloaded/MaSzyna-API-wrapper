@@ -153,6 +153,32 @@ namespace godot {
         p_mover->hydro_R_Clutch = p_engine->get_retarder_clutch();
         p_mover->hydro_R_ClutchSpeed = p_engine->get_retarder_clutch_speed();
         p_mover->hydro_R_WithIndividual = p_engine->get_retarder_with_individual();
+
+        // LoadFIZ_Engine's cooling, shared by both diesel kinds (Mover.cpp:11340-11373 of the original)
+        auto &heat = p_mover->dizel_heat;
+        heat.kw = p_engine->get_cooling_heat_kw();
+        heat.kv = p_engine->get_cooling_heat_kv();
+        heat.kfe = p_engine->get_cooling_heat_kfe();
+        heat.kfs = p_engine->get_cooling_heat_kfs();
+        heat.kfo = p_engine->get_cooling_heat_kfo();
+        heat.kfo2 = p_engine->get_cooling_heat_kfo2();
+        heat.water.config.temp_min = static_cast<float>(p_engine->get_cooling_water_min_temperature());
+        heat.water.config.temp_max = static_cast<float>(p_engine->get_cooling_water_max_temperature());
+        heat.water.config.temp_flow = static_cast<float>(p_engine->get_cooling_water_flow_temperature());
+        heat.water.config.temp_cooling = static_cast<float>(p_engine->get_cooling_water_cooling_temperature());
+        heat.water.config.shutters = p_engine->get_cooling_water_shutters();
+        heat.auxiliary_water_circuit = p_engine->get_cooling_water_aux_circuit();
+        heat.water_aux.config.temp_min = static_cast<float>(p_engine->get_cooling_water_aux_min_temperature());
+        heat.water_aux.config.temp_max = static_cast<float>(p_engine->get_cooling_water_aux_max_temperature());
+        heat.water_aux.config.temp_cooling = static_cast<float>(p_engine->get_cooling_water_aux_cooling_temperature());
+        heat.water_aux.config.shutters = p_engine->get_cooling_water_aux_shutters();
+        heat.oil.config.temp_min = static_cast<float>(p_engine->get_cooling_oil_min_temperature());
+        heat.oil.config.temp_max = static_cast<float>(p_engine->get_cooling_oil_max_temperature());
+        heat.fan_speed = p_engine->get_cooling_fan_speed();
+        p_mover->WaterHeater.config.temp_min = static_cast<float>(p_engine->get_cooling_heater_min_temperature());
+        p_mover->WaterHeater.config.temp_max = static_cast<float>(p_engine->get_cooling_heater_max_temperature());
+        heat.powerfactor = static_cast<float>(
+                RailVehicleDieselEngine::NOMINAL_COOLING_POWER / p_engine->get_cooling_nominal_power());
         // LoadFIZ_Engine (Mover.cpp:11172-11203): derived from what was read
         p_mover->dizel_nreg_min = p_engine->get_mechanical_min_rpm() * NREG_MIN_SHARE;
         p_mover->ShuntModeAllow = p_engine->get_mechanical_shunt_mode_ratio() > 0.0;
@@ -249,15 +275,21 @@ namespace godot {
         }
     }
 
-    void MoverDieselEngineUnit::fill_config(Dictionary &p_config) const {
+    // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it: the one
+    // the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
+    double MoverDieselEngineUnit::get_idle_rpm_count() const {
         TMoverParameters *p_mover = owner.get_mover();
         if (p_mover == nullptr) {
+            return 0.0;
+        }
+        return p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
+    }
+
+    void MoverDieselEngineUnit::fill_config(Dictionary &p_config) const {
+        if (owner.get_mover() == nullptr) {
             return;
         }
-        // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it:
-        // the one the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
-        p_config["engine_idle_rpm_count"] =
-                p_mover->EngineType == TEngineType::DieselEngine ? p_mover->dizel_nmin : p_mover->DElist[0].RPM / 60.0;
+        p_config["engine_idle_rpm_count"] = get_idle_rpm_count();
     }
 
     void MoverDieselEngineUnit::oil_pump(const bool p_enabled) const {

@@ -62,8 +62,8 @@ namespace godot {
                 "cpneumatic2r", "pneumatic1", "pneumatic1r", "pneumatic2",   "pneumatic2r"};
         constexpr std::array<const char *, 3> COUPLER_SUFFIXES = {"_on", "_off", "_xon"};
         constexpr int COUPLER_PART_COUNT = 3;
-        /* The low-poly interior's cabs, cab0 for a vehicle's single one (DynObj.cpp:2383-2391) */
-        constexpr int LOW_POLY_CABS = 3;
+        /* The rear cab's low-poly cab, cab2 (LowPolyIntCabs[2], DynObj.cpp:2391) */
+        constexpr int LOW_POLY_REAR_CAB = 2;
         /* Wiper elements: arm 1, arm 2, blade (DynObj.cpp:5838-5870) */
         constexpr int WIPER_ELEMENTS = 3;
         constexpr int WIPER_BLADE = 2;
@@ -73,7 +73,13 @@ namespace godot {
         constexpr int PANTOGRAPH_UPPER_ARM = 2;
         constexpr int PANTOGRAPH_SLIDER = 4;
         constexpr std::array<const char *, 2> PNEUMATIC_SUBMODELS = {"cpneumatic", "pneumatic"};
+
     } // namespace
+
+    /* The low-poly cab of a cab as the cab layer counts them - 1, 0 or -1 */
+    static int low_poly_cab(const int p_cab) {
+        return p_cab < 0 ? LOW_POLY_REAR_CAB : p_cab;
+    }
 
     template<typename T>
     static Ref<T> component(const RID &p_vehicle, const VehicleComponentType::Type p_type) {
@@ -101,9 +107,6 @@ namespace godot {
             vehicle_server->connect(
                     VehicleServer::vehicle_config_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_config_changed));
-            vehicle_server->connect(
-                    VehicleServer::vehicle_roof_light_changed_signal,
-                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_roof_light_changed));
         }
         if (RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance(); rail_vehicles != nullptr) {
             rail_vehicles->connect(
@@ -193,6 +196,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_cab", "vehicle", "cab", "has_cab_model"),
                 &RailVehicleRenderingServer::vehicle_set_cab);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_cab_light_level", "vehicle", "cab", "level"),
+                &RailVehicleRenderingServer::vehicle_set_cab_light_level);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_detailed", "vehicle"), &RailVehicleRenderingServer::vehicle_is_detailed);
         ADD_SIGNAL(MethodInfo(vehicle_model_built_signal, PropertyInfo(Variant::RID, "vehicle")));
@@ -342,6 +348,21 @@ namespace godot {
         _update_low_poly_cabs(*visual);
     }
 
+    void RailVehicleRenderingServer::vehicle_set_cab_light_level(
+            const RID &p_vehicle, const int p_cab, const double p_level) {
+        // a vehicle not drawn (never attached) has no low-poly cab to light
+        Visual *visual = vehicles.getptr(p_vehicle);
+        if (visual == nullptr) {
+            return;
+        }
+        const int cab = low_poly_cab(p_cab);
+        ERR_FAIL_INDEX(cab, static_cast<int>(LOW_POLY_CABS.size()));
+        visual->cab_light_levels[cab] = p_level;
+        if (!fading.has(p_vehicle)) {
+            fading.push_back(p_vehicle);
+        }
+    }
+
     bool RailVehicleRenderingServer::vehicle_is_detailed(const RID &p_vehicle) const {
         const Visual *visual = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(visual, false);
@@ -478,6 +499,13 @@ namespace godot {
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
         _update_detection_area(p_visual);
         _update_low_poly_cabs(p_visual);
+        // the interior is lit only by the lights of its cabs (vehicle_set_cab_light_level())
+        if (p_visual.low_poly.is_valid()) {
+            models->instance_set_emission_energy(p_visual.low_poly, 0.0);
+            if (!fading.has(p_vehicle)) {
+                fading.push_back(p_vehicle);
+            }
+        }
         _place(p_vehicle, p_visual);
         _update_couplers(p_vehicle, p_visual);
         _update_lights(p_vehicle, p_visual);
@@ -947,11 +975,10 @@ namespace godot {
         if (models == nullptr || !p_visual.low_poly.is_valid() || p_visual.appearance.is_null()) {
             return;
         }
-        // the rear cab is cab 2 (LowPolyIntCabs[2], DynObj.cpp:2391)
-        const int occupied = p_visual.cab < 0 ? 2 : p_visual.cab;
+        const int occupied = low_poly_cab(p_visual.cab);
         const bool joint_cabs = p_visual.appearance->get_joint_cabs();
-        for (int cab = 0; cab < LOW_POLY_CABS; ++cab) {
-            const String name = "cab" + itos(cab);
+        for (int cab = 0; cab < static_cast<int>(LOW_POLY_CABS.size()); ++cab) {
+            const String name = LOW_POLY_CABS[cab];
             if (models->instance_has_submodel(p_visual.low_poly, name)) {
                 models->instance_set_submodel_visible(
                         p_visual.low_poly, name, !p_visual.has_cab_model || (!joint_cabs && cab != occupied));
@@ -1077,17 +1104,6 @@ namespace godot {
         }
     }
 
-    void RailVehicleRenderingServer::_on_vehicle_roof_light_changed(const RID &p_vehicle, const bool p_enabled) {
-        Visual *visual = vehicles.getptr(p_vehicle);
-        if (visual == nullptr || !visual->low_poly.is_valid() || visual->appearance.is_null()) {
-            return;
-        }
-        visual->emission_target = p_enabled ? visual->appearance->get_low_poly_emission_energy() : 0.0;
-        if (!fading.has(p_vehicle)) {
-            fading.push_back(p_vehicle);
-        }
-    }
-
     void RailVehicleRenderingServer::_on_vehicle_freed(const RID &p_vehicle) {
         vehicle_detach(p_vehicle);
     }
@@ -1162,17 +1178,29 @@ namespace godot {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
         for (int index = static_cast<int>(fading.size()) - 1; index >= 0 && models != nullptr; --index) {
             Visual *visual = vehicles.getptr(fading[index]);
-            if (visual == nullptr || visual->appearance.is_null()) {
+            if (visual == nullptr || visual->appearance.is_null() || !visual->low_poly.is_valid()) {
                 fading.remove_at(index);
                 continue;
             }
+            const double full_energy = visual->appearance->get_low_poly_emission_energy();
             const double fade_time = visual->appearance->get_low_poly_emission_fade_time();
-            const double step = fade_time > 0.0 ? visual->appearance->get_low_poly_emission_energy() * delta / fade_time
-                                                : Math::abs(visual->emission_target - visual->emission_energy);
-            const double remaining = visual->emission_target - visual->emission_energy;
-            visual->emission_energy += CLAMP(remaining, -step, step);
-            models->instance_set_emission_energy(visual->low_poly, static_cast<float>(visual->emission_energy));
-            if (Math::is_equal_approx(visual->emission_energy, visual->emission_target)) {
+            // jointcabs: one light for every cab (Train.cpp:5249-5256)
+            const bool joint_cabs = visual->appearance->get_joint_cabs();
+            double joint_level = 0.0;
+            for (const double level: visual->cab_light_levels) {
+                joint_level = MAX(joint_level, level);
+            }
+            bool faded = true;
+            for (int cab = 0; cab < static_cast<int>(LOW_POLY_CABS.size()); ++cab) {
+                const double target = (joint_cabs ? joint_level : visual->cab_light_levels[cab]) * full_energy;
+                double &energy = visual->cab_light_energies[cab];
+                const double step = fade_time > 0.0 ? full_energy * delta / fade_time : Math::abs(target - energy);
+                energy += CLAMP(target - energy, -step, step);
+                models->instance_set_submodel_emission_energy(
+                        visual->low_poly, LOW_POLY_CABS[cab], static_cast<float>(energy));
+                faded = faded && Math::is_equal_approx(energy, target);
+            }
+            if (faded) {
                 fading.remove_at(index);
             }
         }

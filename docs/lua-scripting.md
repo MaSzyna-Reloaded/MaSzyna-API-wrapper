@@ -164,7 +164,8 @@ lighting a head.
 | Function | Returns / does |
 |---|---|
 | `vehicle()` | the vehicle the player drives; `nil` for none |
-| `enter(v)` | the player takes the vehicle over and sits in its cab; its driver only takes orders meanwhile |
+| `take_over(v)` | the player takes the vehicle over and sits in its cab; its driver only takes orders meanwhile |
+| `enter(v)` | the player sits in the vehicle's cab; its driver, if it has one, drives on |
 | `leave()` | the player lets the trainset go; its drivers drive it again |
 
 ### `maszyna.camera` - where the player looks from

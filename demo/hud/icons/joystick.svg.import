@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bt5byr7pj3ocu"
-path="res://.godot/imported/cab.svg-18e0316c882f48157d7ad8a4b9362715.ctex"
+uid="uid://dydj8xlhpdyv0"
+path="res://.godot/imported/joystick.svg-77b3525f6b643c6953a15c7128cefa4a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://hud/icons/cab.svg"
-dest_files=["res://.godot/imported/cab.svg-18e0316c882f48157d7ad8a4b9362715.ctex"]
+source_file="res://hud/icons/joystick.svg"
+dest_files=["res://.godot/imported/joystick.svg-77b3525f6b643c6953a15c7128cefa4a.ctex"]
 
 [params]
 

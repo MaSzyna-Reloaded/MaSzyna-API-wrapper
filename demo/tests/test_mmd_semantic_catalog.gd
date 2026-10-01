@@ -120,18 +120,18 @@ func test_spring_brake_indicators_show_the_spring_braking_and_its_inverse():
 func test_cab_light_indicator_and_spotlight_are_separate():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-cablight")
     assert_eq(entry["widget_class"], CabinIndicator3D)
-    assert_eq(entry["fixed_fields"]["state_property"], "roof_light_enabled")
+    assert_eq(entry["fixed_fields"]["cab_light"], CabinState.Light.CAB)
     assert_eq(entry["light_widget_class"], CabinSpotLight3D)
     assert_true(entry["flip_upward_spotlight"])
     # the level: dimmed (cablightdim_sw) and 24 V-only it shines at part of its energy
-    assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_level")
+    assert_eq(entry["light_fixed_fields"]["cab_light"], CabinState.Light.CAB)
     assert_true(entry["light_fixed_fields"]["light_enabled"])
 
 
 func test_instrument_light_glows_at_each_backlight_piece():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-instrumentlight")
     assert_eq(entry["widget_class"], CabinIndicator3D)
-    assert_eq(entry["fixed_fields"]["state_property"], "devices_light_enabled")
+    assert_eq(entry["fixed_fields"]["cab_light"], CabinState.Light.INSTRUMENT)
     assert_eq(entry["island_lights"], MmdSemanticCatalog.IslandLights.GLOW)
 
 
@@ -180,12 +180,13 @@ func test_cabin_spot_light_3d_defaults_light_enabled_to_false():
     assert_false(widget.light_enabled)
 
 
-func test_cab_light_dim_switch_dims_the_roof_light():
-    var entry:Dictionary = MmdSemanticCatalog.get_entry("cablightdim_sw")
-    assert_eq(entry["widget_class"], CabinButton)
-    assert_eq(entry["fixed_fields"]["command"], "roof_light_dim")
-    assert_eq(entry["fixed_fields"]["state_property"], "roof_light_dimmed")
-    assert_eq(entry["fixed_fields"]["action"], "cabin_light_dim_toggle")
+func test_cab_light_switches_are_the_cabs_own():
+    for label:String in ["cablight_sw", "cablightdim_sw", "instrumentlight_sw"]:
+        var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
+        assert_eq(entry["widget_class"], CabinButton, label)
+        assert_false(entry["fixed_fields"].has("command"), "%s sends no vehicle command" % label)
+        assert_false(entry["fixed_fields"].has("state_property"), "%s shows what its cab holds" % label)
+    assert_eq(MmdSemanticCatalog.get_entry("cablightdim_sw")["fixed_fields"]["action"], "cabin_light_dim_toggle")
 
 
 func test_every_speedometer_of_the_original_binds_its_speed():

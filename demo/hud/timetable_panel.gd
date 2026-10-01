@@ -188,10 +188,18 @@ func _tick() -> void:
         return
     var entry:TimetableEntry = _timetable.entries[_current]
     var row:TimetableRow = _rows[_current]
+    # the train's dispatch at the stop, kept under the vehicle its driver drives
+    var vehicle:RID = DriverSystem.driver_get_vehicle(_driver)
+    var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(vehicle)
     if not is_standing(_state) or not entry.is_stop():
         row.show_status(tr("Next station"), TimetableRow.Tone.NEUTRAL)
     elif _current == _rows.size() - 1:
         row.show_status(tr("Terminus"), TimetableRow.Tone.NEUTRAL)
+    elif dispatch_step == StationServer.DISPATCH_STEP_EXCHANGE:
+        row.show_status(tr("Passenger exchange · %d s") % ceili(StationServer.dispatch_get_exchange_time(vehicle)),
+                TimetableRow.Tone.EXCHANGE)
+    elif dispatch_step == StationServer.DISPATCH_STEP_CLOSE_DOORS:
+        row.show_status(tr("Closing doors"), TimetableRow.Tone.WAIT)
     else:
         var minutes:float = minutes_to(entry.departure, hours)
         if minutes > 0.0:

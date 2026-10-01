@@ -158,6 +158,18 @@ moves to C++:
 | `E3DModelInstance` | 3 | `get_e3d_instance`, `e3d_instance_created` (connect, disconnect) in `RailVehicle3D`, commented |
 | `TrackCurve` | 10 | `p1`, `c1`, `c2`, `p2`, `roll1`, `roll2` in `TrackServer` and `RailVehicleServer` |
 
+### Readers still on the state dump (2026-09-30)
+
+The sound system, the AI driver, the player, the external camera and the auto-rewident read
+components now (`CODE_STYLE.md`, "A hot path reads a component, never a dump"). Left on the dump:
+
+* `demo/hud/` - `driving_aid.gd`, `vehicle_card.gd`, `vehicle_selector_row.gd`,
+  `mover_switches_*.gd`, `knob.gd`, `switch.gd`: HUD widgets refreshed on their own timers; the
+  ones that name no value from the data belong on components.
+* `TrainSoundSystem._build_brake_events()` and `MaszynaBrakeSfxEventFactory.build_events()` read
+  the config dump once per vehicle, at build - not a hot path, but the brake handle positions it
+  reads have getters now (`RailVehicleBrake.get_handle_position()`).
+
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
 `src/` is split into generic layers and the MaSzyna adapter (`src/legacy/`: `maszyna-mover`
@@ -256,6 +268,10 @@ themselves are `LegacyCabinDoorPermits`.
 * Captions are taken when a control is built - a language changed while sitting in a cab shows
   after the cab is entered again.
 * Hand-authored cabin scenes register no occluders at all.
+* EP07: round buttons get a rectangular outline, like the radio's buttons (reported 2026-09-30).
+  Not diagnosed - the game data was not at hand. First dump the button's submodel (mesh AABB,
+  faces, material transparency/alpha texture): a quad with a round alpha-tested texture outlines
+  as its quad, since the overlay stencil knows nothing of the texture.
 
 ### DebugWindow
 
@@ -274,8 +290,8 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   * `off_from_dimmer` (dimPositions[modernDimmerPosition].isOff) - the vendored Mover has no
     dimmer positions; RailVehicleSwitches keeps DimmerList/ModernDimmer only as data;
   * `lights_compartments` (CompartmentLights) - the wrapper never drives the Mover's
-    CompartmentLights (`compartmentlights_sw` is not ported, see Cabins); `roof_light_enabled` is
-    the cab light, not the compartments;
+    CompartmentLights (`compartmentlights_sw` is not ported, see Cabins); the cab light
+    (`CabinSystem.cab_get_light_level()`) is not the compartments;
   * `doors_no_N` (iAnimType[ANIM_DOORS]) - the MMD `animations:` count, held by the model layer,
     not the vehicle's state;
   * lamps beyond the five carried (rearendsignals, auxiliary_*) in `lights_front`/`lights_rear`/
@@ -390,11 +406,13 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * `pantographup:`/`pantographdown:` play at the bank's position for both pantographs; the original
   places them at the pantograph that moved (`DynObj.cpp:3881-3934`, `4007-4036`). The E186 bank
   was not dumped after adding them, nor after `converter:`/`small-compressor:` were wired.
-* `brake_release_hiss` (`unbrake`) is the one pneumatic event the brake factory does not build - it
-  goes through `TrainSoundSystem._update_triggers()` without `gain` or the `listener_inside`
-  correction, so it is louder in the cab than the other hisses.
-* `TrainSoundSystem`'s `VOLUME_FACTOR`/`CABIN_UNIT_SIZE_FACTOR` (2.0) were run at 1.0 through a
-  `project.godot` override and are not verified by ear at 2.0 (`EXTERIOR_*` are 1.0).
+* Brake sounds (`BrakeSoundModel`, 2026-10-01): a loop due while the bank was out of earshot
+  starts from its opening bookend when heard again; the original resumes past it
+  (`sound.cpp:360-367`). The pressure rates are reset when a bank is silenced; the original keeps
+  computing them for every vehicle. `TrainSoundSystem._process()` keeps the remainder of
+  `sound_update_elapsed` (`fmod`) and passes the whole `elapsed` on, so a far bank's next update
+  counts that remainder twice - the brake rates (`dp/dt`) of far vehicles read a little low.
+  Not heard by the operator against the original yet.
 * The gnd-sfx tick is GDScript on a worker (12 ms/frame for 200 players, headless). If it limits,
   move the runtime to a C++ singleton beside `E3DRenderingServer`.
 * `SfxGeneratorPlayback.update()` runs on the sfx worker (single producer into the ring buffer);
@@ -413,9 +431,16 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `_process`), so vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`
   awaits `vehicle_built`). Building belongs in a `MaszynaRailVehicle3DFactory`.
 * A distant vehicle's low-poly interior (`OPTIMIZED`,
-  `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of
-  `roof_light_enabled` until back within `maszyna/vehicles/detail_distance`:
-  `E3DRenderingServer.instance_set_emission_energy()` reaches only the NODES backend.
+  `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of its cab
+  lights until back within `maszyna/vehicles/detail_distance`:
+  `E3DRenderingServer.instance_set_emission_energy()` and `instance_set_submodel_emission_energy()`
+  reach only the NODES backend.
+* The low-poly interior lights only its `cabN` sections (`vehicle_set_cab_light_level()`); its
+  compartment and corridor sections (`corridor`/`korytarz`/`compartment`/`przedzial`,
+  `DynObj.cpp:2425-2433`) stay unlit - the original lights them from CompartmentLights at its own
+  intensity (`DynObj.cpp:1334-1352`), which is not ported.
+* `RailVehicleRenderingServer`'s low-poly cab lights have no test: the test models are transform
+  submodels without meshes or emissive materials.
 * The vehicle's lamps drawn from its lighting (`RailVehicleRenderingServer::_update_lights()`) have no
   test since `test_rail_vehicle_lights.gd` went with `RailVehicle3D.lights`.
 * `MaszynaVehicleStructure` and `RailVehicleAppearance` - candidates for a better name.
@@ -823,7 +848,7 @@ ported, into a delegate.
       (`MaszynaLegacyDriverSpeed`, `pick_optimal_speed()`, `Driver.cpp:7297-7400`) - the
       trainset's top speed, the timetable's, the shunting speed, the speed allowed, the track's,
       waiting told to stop here. Left: the next speed and its distance (with the speed table),
-      obstacles ahead, the load exchange, waiting (`fStopTime`), an aggressive driver, EMU/DMU
+      obstacles ahead, an aggressive driver, EMU/DMU
       thresholds, the cargo trains' and couplers' acceleration limits, the braking test.
    3. Tractive force through the cab for every engine type (`MaszynaLegacyDriverTraction` and one
       subclass per engine, chosen by the driver's vehicle's engine: series motor, diesel-electric,
@@ -848,9 +873,9 @@ ported, into a delegate.
       (`Doors()`, `DepartureSignal` not published); the no-current sections (`fOverhead2`,
       `iOverheadZero`); the shunting mode of a 2Ls150 (`AnPos` in `SpeedSet()`) and of an induction
       motor; SN61's idle position after the reverser (`DirectionForward()`, Driver.cpp:5778); the
-      input action for `maxcurrent_sw` (Ctrl+F); the diesels' cooling keys of `Engine:`
-      (`HeaterMin/MaxTemperature`, `NominalCoolingPower`, the heat model's `Water*`/`Heat*`);
-      the radio off after a Radio-Stop.
+      input action for `maxcurrent_sw` (Ctrl+F); the diesels' `Engine:EngineMaxTemperature`
+      (the overheat lamp's threshold, `dizel_heat.engine_max_temp`, Mover.cpp:8306 of the
+      original - the vendored Mover has no such field); the radio off after a Radio-Stop.
    4. Braking through the cab for every brake system (`MaszynaLegacyDriverBraking`,
       `control_braking_force()`, `IncBrake()`/`DecBrake()`/`LapBrake()`, `Inc/DecBrakeEIM()`,
       `control_releaser()`, the brake part of `Check/SetTimeControllers()`): the individual brake
@@ -900,10 +925,18 @@ ported, into a delegate.
       ahead rewinds the timetable to it; `@` turns a push-pull train by its cab (a locomotive
       goes on to its next order, `Disconnect`); the last station ends the
       timetable. The timetable's speed per stretch (`TTVmax`).
-      Left: the load exchange and its waiting (`simulation::Station.update_load()`,
-      `WaitingSet()`, `fStopTime`), the doors (and the guard's `moveGuardOpenDoor`), the
-      announcements; of the guard's departure message (`tsGuardSignal`) only the radio one is
-      played - the one heard beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870)
+      The stop's passengers (`MaszynaLegacyStation.update_load()`, station.cpp:25-88) and the
+      train's dispatch (`StationServer`: exchange, wait for the departure, doors closed - in
+      place of the original's negative `fStopTime`); the AI's doors at the platform
+      (`Doors()`, Driver.cpp:4266-4356) through the vehicle's door commands.
+      Left: the departure signal before the doors close (`DepartureSignal`,
+      `departuresignalon/off`, Driver.cpp:4305-4320 - not published) and the wait after closing
+      (`fActionTime = Random(-3.5, -1.0)`, Driver.cpp:4351); the guard's `moveGuardOpenDoor`; the
+      car load weights (`load_weights.txt`) and the visible load of a car
+      (`update_load_visibility()`, `update_load_sections()`); the passenger announcements; the
+      load unit sent to the Mover as `"tons"` where the original parses `"tonns"`
+      (Mover.cpp:4464, `MoverRailVehicleLoad`); of the guard's departure message
+      (`tsGuardSignal`) only the radio one is played - the one heard beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870)
       needs a place for a train's own world sounds, and a .flac one has no loader; the hint to
       tune the radio to a station's channel (`cue_action(radiochannel)`, Driver.cpp:1113), the
       delay flag (`UpdateDelayFlag()`),
@@ -915,8 +948,7 @@ ported, into a delegate.
       The player's timetable panel (`demo/hud/timetable_panel.gd`, F2 / View menu, fed by
       `DriverSystem.driver_get_timetable_state()` and `driver_timetable_changed`) left out:
       the list starting at `StationStart` (driveruipanels.cpp:392) - the panel lists every
-      station, passed ones faded; the original's red row while loading
-      (`fStopTime`, driveruipanels.cpp:432) - no load exchange yet; the expanded mode's
+      station, passed ones faded; the expanded mode's
       trainset weight and length (driveruipanels.cpp:360-386); coupling or uncoupling does not
       re-resolve which driver of the trainset the panel follows until the next timetable change
       or a change of the player's vehicle.

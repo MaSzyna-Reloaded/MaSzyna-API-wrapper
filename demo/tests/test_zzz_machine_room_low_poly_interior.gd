@@ -51,7 +51,7 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
     player = PLAYER_SCENE.instantiate()
     player.auto_start = false
     add_child(player)
-    PlayerServer.player_enter_vehicle(vehicle.get_rid())
+    PlayerServer.player_take_over_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
     assert_false(_low_poly_cab_visible(1), "hi-fi cab 1 hides its low-poly counterpart")
 

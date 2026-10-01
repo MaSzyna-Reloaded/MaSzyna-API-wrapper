@@ -4,6 +4,50 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-10-01 - style-check red behind a green local check
+
+* **Symptom:** `style-check / clang-tidy` failed on the PR with
+  `llvm-prefer-static-over-anonymous-namespace` (RailVehicleRenderingServer.cpp),
+  `readability-avoid-nested-conditional-operator` and `readability-math-missing-parentheses`
+  (MoverRailVehicleLoad.cpp), while a local clang-tidy run on changed files reported nothing.
+* **What proved it:** the local clang-tidy was LLVM 18; CI runs 22.1.4 (`LLVM_VERSION`). The three
+  checks do not exist in 18, and 18 also refuses the `.clang-tidy` key `RemovedArgs`. clang-tidy
+  22.1.0 from PyPI reported the same findings, and none after the fix.
+* **Fix:** a static function out of the anonymous namespace, an if/else for the nested
+  conditional, parentheses around the divisions.
+* **Rule:** run clang-tidy of CI's major version before pushing C++.
+
+## 2026-09-30 - EP07's brake valve handles could not be grabbed
+
+* **Symptom:** in the EP07 cab the end of the main brake valve's handle (`brakectrl`), of the
+  independent brake's (`localbrake`) and the reverser's (`dirkey`) could not be taken with the
+  mouse.
+* **Cause:** "a cab control is its own submodel only" (the entry above, E186's op12) took from
+  every control the meshes under it, the handle among them - the handle (`raczkaKranu` on SM42)
+  is a submodel under the valve's own. Not measured on the EP07 model: the game data is not in
+  the session that made the fix.
+* **First fix, wrong:** only `CabinKnob` took its handle - a rule by widget class left the
+  reverser (a `CabinSwitch`) without it. A class or a cab is no criterion; the model's tree is.
+* **Fix:** `CabinHUDMouseSystem.control_create()` takes a control's mesh with every mesh under it,
+  unless another control's mesh lies under it: then the control is a panel and its own mesh only
+  (E186's universal1 holds op1/op2, so op12 on it is nobody's). Whichever registers first, the
+  outer control gives up its children when the inner one comes. Tests:
+  `test_child_mesh_is_part_of_the_control`,
+  `test_control_holding_another_control_is_its_own_mesh_only`.
+* **Rule:** a control is its mesh and its subtree, a panel (a control over another control) its
+  own mesh only.
+
+## 2026-09-30 - the torch put out the signals
+
+* **Symptom:** switching the player's torch on made the signal lights and the cab's emissive
+  displays (the radio's) disappear.
+* **Cause:** `headlamp_glow.gdshader`, a full-screen quad, wrote `screen * (1 + glow)` over the
+  whole screen. `hint_screen_texture` is copied after the opaque pass, before translucent geometry
+  is drawn, and the quad (nearest, drawn last) put that copy back over everything translucent -
+  outside the cone as well, where the glow is 0. Read off Godot's pipeline, not measured in-game.
+* **Fix:** `blend_add`, and the pass writes only the light it adds (`screen * boost * glow`).
+* **Rule:** a full-screen pass that reads the screen texture only adds to the screen.
+
 ## 2026-09-30 - a test ran on the stack of the signal it awaited
 
 * **Symptom:** a test spawning a vehicle and awaiting its `vehicle_built` left the vehicle alive
@@ -1079,6 +1123,26 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   With the phase-lock override limited to phase-locked automations, it prints 0.5 in both places
   (`demo/tests/test_sfx_start_fraction.gd`).
 * **Rule:** prove a fix to a value by printing the value where it is used, not where it is set.
+* **It did not work a third time (2026-10-01).** Rolling wagons still rang metallic from outside.
+  `SfxPlaybackRuntime._resolve_voice_start_position()` applied the shift to an automation clip and
+  to a `TRIGGER_SUSTAIN` clip only; a plain looping timeline clip started at its stream offset. A
+  single-sample `outernoise: { soundmain: ... }` is exactly that (the EP07 bank dump: `outer_noise_0/1`,
+  one clip, no automation), and the test covered only the automation path - a plain looping clip
+  with `start_fraction` 0.5 started at 0.0. A looping timeline clip takes the shift now. The
+  bogie and motor copies of one vehicle (`outer_noise_0/1`, `traction_motor_0/1`) also shared one
+  drawn fraction and played one recording in step a few metres apart. `play()` was not restarting
+  the loop: the instance of a looping clip outlives its length (`test_sfx_start_fraction.gd`).
+* **And the "cause" above misread the original.** `Random(0.0, 80.0)` once per vehicle
+  (DynObj.cpp:6518) is the `#else` branch; `DynObj.h:27` defines `EU07_SOUND_BOGIESOUNDS`, so the
+  original plays an `outernoise` copy per bogie and starts an even one at 50-80 % of the sample,
+  an odd one at 0-30 % (DynObj.cpp:6505-6514) - two neighbours never start close. Located traction
+  motors start anywhere (`LocalRandom(0.0, 1.0)`, DynObj.cpp:6085), a lone one at 0; other loops
+  have no offset. A first port drew 0-80 % per copy independently, and two bogies of one wagon
+  could land close together - heard as a doubled sound. `TrainSoundSystem.register_bank()` draws
+  exactly the original's ranges now.
+* **Rule:** a fix to how a clip starts is proven on every path a clip can start by - automation,
+  timeline, sustain - not on the one the first bug report went through. A ported constant is read
+  with the preprocessor: check which branch of an `#ifdef` the original builds.
 
 ## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
 
@@ -2609,3 +2673,134 @@ lighting or the trainset.
   does; four runs with the AI's brake applied each time all passed.
 * **Rule:** a test that takes a scenery vehicle over sets every control it drives by, not only
   the ones a fresh vehicle has wrong.
+
+## 2026-09-30 - the load exchange that never ran
+
+* **Symptom:** the first `test_rail_vehicle_load_exchange` test called `load_add()` on the car's
+  load component and waited for the doors and the exchange - nothing happened, the exchange time
+  never moved; a later assertion read the old load straight after `load_add()`.
+* **What proved it:** `MaszynaMoverVehicleServer::stepping_advance()` steps only the vehicles
+  `RailVehicleServer` has on a track, and the car was built without one; the component the test
+  held was the `MoverRailVehicleLoad` it had added to the controller description, while the
+  running vehicle's component came from `VehicleServer.vehicle_component_get()`. The state dump
+  (`vehicle_dump_state()`) is built once per step, so it still showed the load before the call.
+* **Fix:** `MaszynaGutTest.build_passenger_car()` stands the car on a test track; the tests take
+  the component by `vehicle_component_get()` and read its getters after an operation.
+* **Rule:** a test of a component's tick needs a vehicle standing on a track and the vehicle's
+  own component; after an operation read the getters, not the cached dump.
+
+## 2026-09-30 - the sound system's dump per frame
+
+* **Symptom:** in the editor profiler at x8 simulation speed `TrainSoundSystem._process` was the
+  heaviest untyped `_process` (~836 against ~95 for the next one) while the train was moving.
+* **What proved it:** a GDScript profile counts a native call in its caller's self time, and the
+  sound's per-frame path had two: `VehicleServer.vehicle_dump_state()` per vehicle in earshot per
+  frame, whose cache is keyed on the controller's state serial - moved by every step
+  (`VehicleController::process_components()`) and every command, so on the frame path it is always
+  a full `compose_state()` of every component (~28 per call in the cab's own `vehicle_state` row) -
+  and `VehicleServer.vehicle_dump_config()`, not cached at all (`VehicleController::get_config()`),
+  called by `RunningSoundModel.update()` per moving bank per update and by the engine gain per
+  trigger tick - only when moving, hence the x8 drive.
+* **Fix:** the sound takes its vehicle's components once, in `_resolve_vehicle()`, and reads their
+  typed getters and properties (`RunningSoundModel.attach_vehicle()`,
+  `MaszynaBrakeSfxEventFactory.state_reader()`); MMD triggers, which name their value in the data,
+  read the dump on the trigger tick only. The AI driver, the player and the external camera moved
+  off the dump the same way; `RailVehicleEngine.get_transmission_ratio()` was bound for it.
+* **Rule:** a hot path reads a component, never a dump (`CODE_STYLE.md`); the dump is for readers
+  driven by a name out of the data.
+
+## 2026-09-30 - BR285's speed NaN, from a key the FIZ gives twice
+
+* **Symptom:** a BR285 standing in a scenery had `speed`, `velocity`, `Ft`, `Im`, the brake
+  forces, the wheel angles and the diesel temperatures all `nan`.
+* **What proved it:** every NaN of the dump sits downstream of the diesel-electric branch of
+  `TractionForce()` (`diesel_fill` and the temperatures are computed from `Im`, `Mover.cpp:4944`).
+  The config ruled out the axles and the gear ratio, `engine_rpm_ratio=1.0` the WWList row. The
+  FIZ's `Engine:` says `Vadd=5.5 Cr=1 Vadd=0.0 Cr=1.0`; the original's `extract_value()` finds the
+  first (`utilities/utilities.h:170`), our `FizLineUtil.read_key_values()` kept the last, so
+  `Vadd = 0`. With the line contactor closed, the vehicle standing and `tempPmax` still zero, the
+  hyperbola gives `1000 * 0 / (0 + 0)` (`Mover.cpp:5310`) and the NaN stays in `V` for good.
+* **Fix:** `read_key_values()` keeps a key's first value. Found on the way, from the original's
+  `LoadFIZ_Engine`: a diesel-electric's `AIM` (default 1.25) and `RPMDecRate` were never read -
+  and `dizel_RevolutionsDecreaseRate` had a second writer, `rpm_change_rate`, fed by nothing - and
+  the cooling keys of both diesels (`Heat*`, `Water*`, `Oil*Temperature`, `Heater*`,
+  `NominalCoolingPower`) were not imported at all.
+* **Rule:** a FIZ key given twice counts once, with its first value - read how `extract_value`
+  looks a key up before reading a line into a dictionary.
+
+## 2026-09-30 - release export without CabinSystem
+
+* **Symptom:** `make release-linux` printed `Failed to create an autoload, script
+  'uid://lx8tmya3o3dj' is not compiling`, `Identifier not found: CabinSystem` (`player.gd:209`) and
+  `!info->node` from `debug_menu/plugin.gd:27` while saving the pack.
+* **What proved it:** the export is `godot-double --headless --export-release`, the editor, and an
+  editor build carries the `debug` feature tag: it loads `linux.debug.x86_64` from
+  `libmaszyna.gdextension` even for a release export. `release-linux` built only
+  `libmaszyna.64.so`; the debug library predated `vehicle_set_cab_light_level()`, so
+  `cabin_system.gd:197` failed to parse and the `CabinSystem` autoload was never created.
+* **Fix:** `release-linux`, `release-linux-symbols`, `release-windows` and `release-android`
+  depend on `compile-debug`.
+* **Rule:** the library the exporting editor loads is the debug one - build it with every export.
+
+## 2026-10-01 - the start offset that never reached the game, and the pitch every emitter shares
+
+* **Symptom:** after the start-offset fixes (09-24, 10-01) trainsets still drifted in and out of
+  phase from outside, "the phase still overlaps somewhere".
+* **What proved it:** a probe built the stream the way a vehicle does
+  (`MmdSoundEventBuilder._build_stream()`) on a real 2.61 s `.ogg` and played it with
+  `start_fraction` 0.5: `MaszynaAudioStream.get_length()` was 0.0 and the voice started at 0.0.
+  The stream reads its file on the first playback, after gnd-sfx has placed the start
+  (`length * fraction`); the tests used `AudioStreamWAV`, whose length is known. No offset had ever
+  reached a vehicle's sound in the game.
+* **And the original's other half:** every `sound_source` draws its own pitch factor on its first
+  play, 97.5-102.5 % unless the MMD's `pitchvariation:` says otherwise (sound.cpp:207-216, 374-377,
+  applied per buffer at audiorenderer.cpp:206). Two copies of one recording then run at slightly
+  different speeds, so copies that start close drift apart; with one pitch for all, a close pair
+  stays in phase for as long as it plays. `startoffset:` was parsed and never used either.
+* **Fix:** one shape for every sound made of MaSzyna's data. `MmdSoundEventBuilder.build_stream()`
+  is the only maker of a `MaszynaAudioStream` and sets its length at build;
+  `MmdSoundEventBuilder.shape_emitter()` gives every `SfxEvent` - vehicle banks, brake events, cab
+  controls, scenery and scenario sounds, the guard's signal - its own `start_fraction`
+  (`startoffset:`, or the bogie/motor rule of DynObj.cpp:6505-6514, 6085) and `pitch_variation`.
+  gnd-sfx keeps both on the `SfxEvent` (the emitter) and applies the fraction to every clip but a
+  `bookend` (begin/end), one-shots included, as audiorenderer_extra.h does; it steals a releasing
+  voice first, then a one-shot, a loop last - a stolen loop is never started again.
+* **First done only in TrainSoundSystem**, with the cab, scenery and one-shots left to TODO: the
+  same original rule covered by one system and not the others, and two more makers of
+  `MaszynaAudioStream` without a length. A rule ported from the original is one operation every
+  caller goes through, not a copy in the system the bug report came from.
+* **Rule:** a fix to a value is proven on the object the game uses (`MaszynaAudioStream`), not on
+  a stand-in the test finds easier to build.
+
+## 2026-10-01 - the local brake hiss keyed to a parameter nobody sent
+
+* **Symptom:** the brake sounds did not sound like the original's, the local brake worst: too
+  loud, no fade-out, no opening or closing bookend.
+* **What proved it:** read against `Train.cpp:8474-8641` and `DynObj.cpp:4545-4760`.
+  `local_brake_hiss` was played with `brake_local_valve_flow`, while its automations listened to
+  `brake_loco_pressure_fall_rate`/`rise_rate`, so gnd-sfx saw their `min_domain` instead. Its
+  curve had no `* 0.05`, was divided by a `maximum_gain` and bent by a cubic bias, the release
+  condition `LocBrakePress > BrakePress - 0.05` was missing, a 0.6 s ADSR stood in for the
+  original's 0.1/s fade, and only `soundmain:` was played. `unbrake`, `brakeacc` and the cylinder
+  and EP clicks were never built at all, and `VOLUME_FACTOR` (2.0) multiplied the brakes alone.
+* **Cause:** the original computes each sound's gain at its call site - filters, hysteresis, a
+  hand-made fade, extra conditions - and the curve model mapped one parameter to one curve, which
+  cannot say any of that. Every gap was filled by a guessed constant.
+* **Fix:** `BrakeSoundModel` ports the call sites line by line and keeps their sound-only state;
+  `MmdSoundBankInstancer` builds one plain event per label (bookends, or chunks on `point`), and
+  the brake publishes only physical values (the FV4a handle flows, the accelerator event).
+* **Rule:** port a sound whose original computes its gain at the call site as that code, with its
+  own state, not as a curve over one parameter.
+
+## 2026-10-01 - a phaser on the Exterior bus
+
+* **Symptom:** from outside, a passing trainset (445w_v2 coaches) swept like a phaser, after the
+  start offsets and pitch factors were fixed.
+* **Cause (read off the bus layout, not measured):** the Exterior bus carried a reverb, a 60 ms
+  slap-back delay and a StereoEnhance with `time_pullout_ms` 12 - a Haas delay of one channel. A
+  source panning across the field during a pass-by changes the mix of the direct and the delayed
+  copy: a moving comb filter on every exterior sound. The original (OpenAL) has none of them.
+* **Fix:** all three removed; the bus keeps the wall low-pass, air absorption, amplify and limiter.
+* **Rule:** no delay-based stage (reverb, echo, Haas widening) on the bus where many copies of one
+  recording play - it is a comb filter of its own.
+

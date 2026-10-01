@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://hud/mover_switches_lights.tscn" id="13_lights"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_load.tscn" id="36_load"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
 [ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
@@ -27,7 +28,6 @@
 [ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
 [ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
-[ext_resource type="Texture2D" path="res://hud/icons/cab.svg" id="31_cab"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye_off.svg" id="34_eye_off"]
 
@@ -229,6 +229,25 @@ layout_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
+[node name="Load" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 678.0
+offset_top = 810.0
+offset_right = 870.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Vehicle load"
+
+[node name="LoadScroll" type="ScrollContainer" parent="ControlWindows/Load"]
+layout_mode = 2
+
+[node name="Load" parent="ControlWindows/Load/LoadScroll" instance=ExtResource("36_load")]
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="Security" type="Container" parent="ControlWindows" unique_id=483370992]
 top_level = true
 custom_minimum_size = Vector2(100, 50)
@@ -427,7 +446,7 @@ action_tooltip = "Stop following"
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Your vehicle (click to enter the cab)"
-icon = ExtResource("31_cab")
+badge = 1
 action_icon = ExtResource("32_hand_over")
 action_tooltip = "Hand over to AI"
 
@@ -453,3 +472,4 @@ mouse_filter = 2
 [connection signal="action_pressed" from="FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_action_pressed"]
 [connection signal="pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
 [connection signal="action_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]
+[connection signal="driver_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_driver_pressed"]

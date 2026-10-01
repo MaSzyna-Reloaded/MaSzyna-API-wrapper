@@ -265,6 +265,15 @@
 				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
 			</description>
 		</method>
+		<method name="instance_set_submodel_emission_energy">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="submodel" type="String" />
+			<param index="2" name="energy" type="float" />
+			<description>
+				The self-illumination energy of a submodel, by name, and of everything under it, kept across rebuilds; below 0 gives it the instance's own again - one cab of a low-poly interior lit by its cab light.
+			</description>
+		</method>
 		<method name="instance_set_submodel_material_override">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />

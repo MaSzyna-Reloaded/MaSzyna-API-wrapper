@@ -467,6 +467,35 @@ polled. If it truly has to run every frame:
   rest for the next one, or `E3DRenderingServer::_process_smoke()` visits at most
   `MAX_SMOKE_SOURCES_PER_FRAME` emitters and carries on round-robin.
 
+### A hot path reads a component, never a dump
+
+A vehicle publishes each value twice: as a typed getter of the component that owns it, and by name
+in `VehicleServer.vehicle_dump_state()` / `vehicle_dump_config()`. The dump is **composed on
+request** - every component's `_fill_state_dictionary()`, a few hundred keys - and is valid only
+until the next physics step or command; the config dump is not cached at all. Reading one value
+out of it costs the whole dictionary.
+
+Anything that runs per frame, per simulation step or per tick - a sound, an AI driver, a camera -
+takes the component **once**, where it resolves its vehicle (`VehicleServer.vehicle_component_get()`,
+`RailVehicleServer.vehicle_component_get()`), takes it again when the vehicle gets another
+controller, and calls the component's typed getters. Configuration is the component's (or the
+controller's) **properties** - `wheels.track_width`, `controller.max_velocity` - not a key of the
+config dump. The hot values have their own server getters (`VehicleServer.vehicle_get_speed()`,
+`vehicle_get_velocity()`, `vehicle_get_occupied_cab()`).
+
+```gdscript
+# not this - a 300-key dictionary built for one number, every frame
+var ratio:float = float(VehicleServer.vehicle_dump_state(vehicle_rid).get("brake_force_ratio", 0.0))
+
+# this - the component taken when the vehicle was resolved, its getter per frame
+var ratio:float = _brake.get_force_ratio()
+```
+
+The dump is for a reader driven **by a name out of the data**: a cab element (the MMD names its
+value; `CabinSystem.vehicle_state_value()`), an MMD sound trigger, the console, a test, a
+diagnostic. A value a hot path needs and no component exposes gets a bound getter in C++ - never a
+dump read "for now".
+
 ## Classes
 1. Explicit privacy declarations
 ```hpp

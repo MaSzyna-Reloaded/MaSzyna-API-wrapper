@@ -30,26 +30,25 @@ enum Hint {
 }
 
 ## A switch of the cab: its control, the state key that shows it done and the value that does
+## The switch of a hint and the position it wants; what the vehicle shows of it is read in cue()
 const SWITCHES:Dictionary = {
-    # on once the low voltage is there - a car without a battery of its own takes it from the
-    # unit's (batteryon's check, driverhints.cpp:88-91)
-    Hint.BATTERY_ON: [&"battery_sw", "power24_available", true],
-    Hint.BATTERY_OFF: [&"battery_sw", "battery_enabled", false],
-    Hint.CAB_ACTIVATION: [&"cabactivation_sw", "cabin_controleable", true],
-    Hint.RADIO_ON: [&"radio_sw", "radio_enabled", true],
-    Hint.RADIO_OFF: [&"radio_sw", "radio_enabled", false],
-    Hint.OIL_PUMP_ON: [&"oilpump_sw", "oil_pump_enabled", true],
-    Hint.OIL_PUMP_OFF: [&"oilpump_sw", "oil_pump_enabled", false],
-    Hint.FUEL_PUMP_ON: [&"fuelpump_sw", "fuel_pump_enabled", true],
-    Hint.FUEL_PUMP_OFF: [&"fuelpump_sw", "fuel_pump_enabled", false],
-    Hint.CONVERTER_ON: [&"converter_sw", "converter_enabled", true],
-    Hint.CONVERTER_OFF: [&"converter_sw", "converter_enabled", false],
-    Hint.COMPRESSOR_ON: [&"compressor_sw", "compressor_enabled", true],
-    Hint.COMPRESSOR_OFF: [&"compressor_sw", "compressor_enabled", false],
-    Hint.FRONT_PANTOGRAPH_VALVE_ON: [&"pantfront_sw", "current_collector/pantograph_first_active", true],
-    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [&"pantfront_sw", "current_collector/pantograph_first_active", false],
-    Hint.REAR_PANTOGRAPH_VALVE_ON: [&"pantrear_sw", "current_collector/pantograph_second_active", true],
-    Hint.REAR_PANTOGRAPH_VALVE_OFF: [&"pantrear_sw", "current_collector/pantograph_second_active", false],
+    Hint.BATTERY_ON: [&"battery_sw", true],
+    Hint.BATTERY_OFF: [&"battery_sw", false],
+    Hint.CAB_ACTIVATION: [&"cabactivation_sw", true],
+    Hint.RADIO_ON: [&"radio_sw", true],
+    Hint.RADIO_OFF: [&"radio_sw", false],
+    Hint.OIL_PUMP_ON: [&"oilpump_sw", true],
+    Hint.OIL_PUMP_OFF: [&"oilpump_sw", false],
+    Hint.FUEL_PUMP_ON: [&"fuelpump_sw", true],
+    Hint.FUEL_PUMP_OFF: [&"fuelpump_sw", false],
+    Hint.CONVERTER_ON: [&"converter_sw", true],
+    Hint.CONVERTER_OFF: [&"converter_sw", false],
+    Hint.COMPRESSOR_ON: [&"compressor_sw", true],
+    Hint.COMPRESSOR_OFF: [&"compressor_sw", false],
+    Hint.FRONT_PANTOGRAPH_VALVE_ON: [&"pantfront_sw", true],
+    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [&"pantfront_sw", false],
+    Hint.REAR_PANTOGRAPH_VALVE_ON: [&"pantrear_sw", true],
+    Hint.REAR_PANTOGRAPH_VALVE_OFF: [&"pantrear_sw", false],
 }
 const LINE_BREAKER_CLOSE:StringName = LegacyCabinMainSwitch.ON_BUTTON
 const LINE_BREAKER_OPEN:StringName = LegacyCabinMainSwitch.OFF_BUTTON
@@ -77,8 +76,33 @@ static func send(vehicle:RID, command:StringName, p1:Variant = null, p2:Variant 
 ## motor car's (mvPantographUnit)
 static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     var control:StringName = SWITCHES[hint][0]
-    var wanted:bool = SWITCHES[hint][2]
-    var shown:Variant = CabinSystem.vehicle_state_value(shown_by if shown_by.is_valid() else vehicle, SWITCHES[hint][1])
+    var wanted:bool = SWITCHES[hint][1]
+    var device:RID = shown_by if shown_by.is_valid() else vehicle
+    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(device) as RailVehicleController
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            device, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    var diesel:RailVehicleDieselEngine = engine as RailVehicleDieselEngine
+    var electric:RailVehicleElectricEngine = engine as RailVehicleElectricEngine
+    var radio:RailVehicleRadio = VehicleServer.vehicle_component_get(
+            device, VehicleComponentType.COMPONENT_RADIO) as RailVehicleRadio
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            device, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    var shown:Variant = null
+    match hint:
+        # on once the low voltage is there - a car without a battery of its own takes it from the
+        # unit's (batteryon's check, driverhints.cpp:88-91)
+        Hint.BATTERY_ON: shown = controller.get_power24_available()
+        Hint.BATTERY_OFF: shown = controller.get_battery_enabled()
+        Hint.CAB_ACTIVATION: shown = controller.get_cabin_controleable()
+        Hint.CONVERTER_ON, Hint.CONVERTER_OFF: shown = controller.get_converter_enabled()
+        Hint.RADIO_ON, Hint.RADIO_OFF: shown = radio.get_enabled() if radio else null
+        Hint.OIL_PUMP_ON, Hint.OIL_PUMP_OFF: shown = diesel.get_oil_pump_enabled() if diesel else null
+        Hint.FUEL_PUMP_ON, Hint.FUEL_PUMP_OFF: shown = diesel.get_fuel_pump_enabled() if diesel else null
+        Hint.COMPRESSOR_ON, Hint.COMPRESSOR_OFF: shown = brake.get_compressor_enabled() if brake else null
+        Hint.FRONT_PANTOGRAPH_VALVE_ON, Hint.FRONT_PANTOGRAPH_VALVE_OFF:
+            shown = electric.get_collector_pantograph_first_active() if electric else null
+        Hint.REAR_PANTOGRAPH_VALVE_ON, Hint.REAR_PANTOGRAPH_VALVE_OFF:
+            shown = electric.get_collector_pantograph_second_active() if electric else null
     if shown == null or bool(shown) == wanted:
         return true
     CabinSystem.act(vehicle, cab, control, &"toggle", wanted)
@@ -93,12 +117,12 @@ static func close_line_breaker(vehicle:RID, cab:int) -> void:
     if CabinSystem.get_control(vehicle, cab, LINE_BREAKER_CLOSE):
         CabinSystem.act(vehicle, cab, LINE_BREAKER_CLOSE, &"release")
         return
-    if not CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false):
+    if not _main_switch_enabled(vehicle):
         CabinSystem.act(vehicle, cab, LINE_BREAKER_CLOSE, &"hold")
 
 
 static func open_line_breaker(vehicle:RID, cab:int) -> void:
-    if not CabinSystem.vehicle_state_value(vehicle, "main_switch_enabled", false):
+    if not _main_switch_enabled(vehicle):
         return
     CabinSystem.act(vehicle, cab, LINE_BREAKER_OPEN, &"hold")
     CabinSystem.act(vehicle, cab, LINE_BREAKER_OPEN, &"release")
@@ -110,12 +134,12 @@ static func open_line_breaker(vehicle:RID, cab:int) -> void:
 ## controller brakes (SM42 6Dg, UCList with IntegratedLocBrake).
 static func set_zero_speed(vehicle:RID, cab:int) -> void:
     # the controllers are the driven engine's (mvControlling)
-    var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_second_position", 0)):
+    var controlled:RailVehicleController = VehicleServer.vehicle_get_controller(
+            RailVehicleServer.vehicle_find_powered(vehicle)) as RailVehicleController
+    for _step:int in controlled.get_controller_second_position():
         CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
     var controller:StringName = master_controller(vehicle, cab)
-    for _step:int in int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)) \
-            - int(CabinSystem.vehicle_state_value(controlled, "controller_main_no_power_position", 0)):
+    for _step:int in controlled.get_controller_main_position() - controlled.get_controller_main_no_power_position():
         CabinSystem.act(vehicle, cab, controller, &"decrease")
 
 
@@ -129,10 +153,11 @@ static func set_idle(vehicle:RID, cab:int) -> void:
         return
     var positions:Array = engine.throttle_table_positions
     var controller:StringName = master_controller(vehicle, cab)
-    var position:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
+    var controlled_controller:RailVehicleController = VehicleServer.vehicle_get_controller(controlled) as RailVehicleController
+    var position:int = controlled_controller.get_controller_main_position()
     while position < positions.size() and (positions[position] as RailVehicleThrottlePositionItem).clutch_behavior == 0:
         CabinSystem.act(vehicle, cab, controller, &"increase")
-        var stepped:int = int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0))
+        var stepped:int = controlled_controller.get_controller_main_position()
         if stepped == position:
             return
         position = stepped
@@ -145,22 +170,30 @@ static func master_controller(vehicle:RID, cab:int) -> StringName:
 
 
 static func is_zero_speed(vehicle:RID) -> bool:
-    var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    return int(CabinSystem.vehicle_state_value(controlled, "controller_main_position", 0)) == 0 \
-            and int(CabinSystem.vehicle_state_value(controlled, "controller_second_position", 0)) == 0
+    var controlled:RailVehicleController = VehicleServer.vehicle_get_controller(
+            RailVehicleServer.vehicle_find_powered(vehicle)) as RailVehicleController
+    return controlled.get_controller_main_position() == 0 and controlled.get_controller_second_position() == 0
 
 
 ## directionforward/directionbackward/directionnone (DirectionForward(), ZeroDirection(),
 ## Driver.cpp:5756-5791): the reverser, relative to the cab, stepped until it stands at `direction`
 ## (+1, -1 or 0); a step is refused when the vehicle does not allow it, which ends the stepping
 static func set_direction(vehicle:RID, cab:int, direction:int) -> void:
-    var current:int = int(CabinSystem.vehicle_state_value(vehicle, "direction", 0))
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(vehicle)
+    var current:int = controller.get_direction()
     while not current == direction:
         CabinSystem.act(vehicle, cab, REVERSER, &"increase" if direction > current else &"decrease")
-        var stepped:int = int(CabinSystem.vehicle_state_value(vehicle, "direction", 0))
+        var stepped:int = controller.get_direction()
         if stepped == current:
             return
         current = stepped
+
+
+## The line breaker of the vehicle's engine closed; a vehicle without an engine has none
+static func _main_switch_enabled(vehicle:RID) -> bool:
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    return engine != null and engine.get_main_switch_enabled()
 
 
 ## securitysystemreset / shpsystemreset (driverhints.cpp): a press of the vigilance button, or of the

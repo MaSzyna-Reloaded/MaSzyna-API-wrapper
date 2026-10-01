@@ -15,8 +15,13 @@ const PROFILE_VERSION:int = 6
 ## Kept around the trimmed vehicle, so a glow drawn around it has somewhere to go
 const PROFILE_MARGIN:int = 8
 const CACHE_DIRECTORY:String = "vehicle_profiles"
+## Profiles kept in memory; past it the least recently used go - read back from the disk cache
+## when asked again. A game directory holds thousands of vehicles and skins; a profile is at most
+## PROFILE_SIZE in RGBA8 (~115 KB), so this is ~100 MB at most.
+const PROFILE_MEMORY_LIMIT:int = 900
 
 var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
+## The profiles in memory, least recently used first (a Dictionary keeps its insertion order)
 var _profiles:Dictionary[String, Texture2D] = {}
 var _viewport:SubViewport
 var _environment:Environment
@@ -59,19 +64,30 @@ func get_profile(data_path:String, file_name:String, skin:String) -> Texture2D:
     # callers spell the path with or without the leading slash, it is the same vehicle
     var key:String = "%s:%s" % [data_path.to_lower().trim_prefix("/"), skin.to_lower()]
     if _profiles.has(key):
-        return _profiles[key]
+        var kept:Texture2D = _profiles[key]
+        _remember_profile(key, kept)
+        return kept
 
     var cache_path:String = _get_cache_path(key)
     var cached:Texture2D = await _run_in_queue(_cache.get.bind(cache_path)) as Texture2D
     if cached:
-        _profiles[key] = cached
+        _remember_profile(key, cached)
         return cached
 
     var rendered:Texture2D = await _render_profile(data_path, file_name, skin)
     if rendered:
-        _profiles[key] = rendered
+        _remember_profile(key, rendered)
         _queue.submit(_cache.set.bind(cache_path, rendered, ""))
     return rendered
+
+
+## Keeps the profile in memory as the most recently used, letting go of the least recently used
+## one past PROFILE_MEMORY_LIMIT
+func _remember_profile(key:String, texture:Texture2D) -> void:
+    _profiles.erase(key)
+    _profiles[key] = texture
+    if _profiles.size() > PROFILE_MEMORY_LIMIT:
+        _profiles.erase(_profiles.keys()[0])
 
 
 ## Runs task on a queue worker while the main thread keeps drawing

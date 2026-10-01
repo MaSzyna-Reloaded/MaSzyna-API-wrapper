@@ -119,9 +119,10 @@ jobs:
             echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=maszyna"
           } >> "$GITHUB_ENV"
 
-      # the Linux library is built in the SDK container, which has no ccache
+      # every export builds the debug library on the runner first (compile-debug, for the exporting
+      # editor), through ccache; the Linux release library is built in the SDK container, which
+      # gets none of this environment
       - uses: hendrikmuhs/ccache-action@v1.2
-        if: matrix.platform != 'linux'
         with:
           key: ${{ matrix.platform }}
 

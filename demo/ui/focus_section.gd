@@ -60,7 +60,8 @@ func release_section_focus() -> void:
 func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
-    if event.is_action_pressed("ui_text_submit"):
+    # exact: Alt+Enter is the game window's (game_window.gd), not Enter
+    if event.is_action_pressed("ui_text_submit", false, true):
         activated.emit()
     elif event.is_action_pressed("ui_cancel"):
         cancelled.emit()

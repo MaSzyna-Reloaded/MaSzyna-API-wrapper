@@ -559,6 +559,34 @@ Before changing any sound constant, dump the built bank first - every event, eve
 `track.volume_db`, `unit_size` and `max_distance` - and look for the value that stands out. An
 anomaly is visible in one listing; guessing at multipliers is not.
 
+### Input is the project's actions, matched exactly
+
+**Every key the game reacts to is an input action of the project, and every test of it is an
+exact match.** Not a keycode, not Godot's built-in `ui_*` actions, not a loose match - none of the
+three, ever.
+
+```gdscript
+# not this - a keycode, a built-in action, a loose match
+if event is InputEventKey and event.keycode == KEY_ENTER:
+if event.is_action_pressed("ui_text_submit"):
+
+# this - the project's action, exact
+if event.is_action_pressed("menu_activate", false, true):
+```
+
+* **An action of the project** (`demo/project.godot`, `[input]`) is named after what it does -
+  `menu_activate`, `menu_back`, `toggle_fullscreen`, `cabin_next` - so the binding can be changed
+  in one place and read in the input map, and the code says what happens, not which key it was.
+* **Not `ui_*`.** Those are Godot's own, for its controls: a `LineEdit` takes `ui_text_submit`,
+  `ui_left`, `ui_home` in its `gui_input`, a `Button` takes `ui_accept` (Space too). Binding game
+  behaviour to them shares the keys with every control on the screen, and a remap of the editor's
+  defaults moves the game with it.
+* **Exactly** - `is_action_pressed(action, echo, true)`, and `Input.is_action_pressed(action,
+  true)`. Godot's default is a loose match: an action bound to Enter is pressed by Alt+Enter,
+  Ctrl+Enter and Shift+Enter as well. The starter's sections took `ui_text_submit` loosely and
+  loaded a scenery on Alt+Enter, the fullscreen shortcut (`FINDINGS.md`, 2026-10-01). A shortcut
+  with a modifier is another action, and only an exact match keeps it one.
+
 ### Tests
 Tests use only the public interface of the tested classes - no calls to private methods
 (`_name()`) and no reads/writes of private members (`_name`). If a test needs private access,

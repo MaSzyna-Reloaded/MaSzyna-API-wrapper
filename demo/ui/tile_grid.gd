@@ -144,21 +144,21 @@ func reload_tile(index: int, skin: String) -> void:
 func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
-    if event.is_action_pressed("ui_right", true):
+    if event.is_action_pressed("menu_right", true, true):
         _walk(_tile_in_row(1), navigate_right)
-    elif event.is_action_pressed("ui_left", true):
+    elif event.is_action_pressed("menu_left", true, true):
         _walk(_tile_in_row(-1), navigate_left)
-    elif event.is_action_pressed("ui_down", true):
+    elif event.is_action_pressed("menu_down", true, true):
         _walk(_tile_in_next_row(1), navigate_down)
-    elif event.is_action_pressed("ui_up", true):
+    elif event.is_action_pressed("menu_up", true, true):
         _walk(_tile_in_next_row(-1), navigate_up)
-    elif event.is_action_pressed("ui_page_down", true):
+    elif event.is_action_pressed("menu_page_down", true, true):
         _go_to(_selected + PAGE_STEP)
-    elif event.is_action_pressed("ui_page_up", true):
+    elif event.is_action_pressed("menu_page_up", true, true):
         _go_to(_selected - PAGE_STEP)
-    elif event.is_action_pressed("ui_end"):
+    elif event.is_action_pressed("menu_end", false, true):
         _go_to(_controls.size() - 1)
-    elif event.is_action_pressed("ui_home"):
+    elif event.is_action_pressed("menu_home", false, true):
         _go_to(0)
     else:
         super(event)

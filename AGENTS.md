@@ -98,6 +98,14 @@ Code generation:
 * PROHIBITED: **never work around a missing or mistimed event** - no retry, re-request, poll,
   "next frame" flag, deferred call or second attempt. Fix the order, or give the owner an event
   that says the value has landed - see `CODE_STYLE.md`
+* PROHIBITED, ABSOLUTE: **a key is an input action of the project, matched exactly - never a
+  keycode, never Godot's built-in `ui_*` actions, never a loose match.** Every key, button and
+  shortcut the game reacts to is an action in `demo/project.godot`'s input map, named after what
+  it does (`menu_activate`, `toggle_fullscreen`, `cabin_next`), and is tested with
+  `is_action_pressed(action, echo, true)` - `exact_match` true, always. A loose match takes
+  Alt+Enter for Enter: the starter's sections ran their Enter on the fullscreen shortcut. The
+  `ui_*` actions belong to Godot's controls, which consume them in their own `gui_input` - see
+  `CODE_STYLE.md`
 * PROHIBITED: **never wire anything up in a hot path** - no `connect`, `get_node`, path resolution
   or subscription in `_process`/`_physics_process`/a tick, not even behind `_dirty`; wire once in
   `_enter_tree()`, `_ready()` or an owner's init - see `CODE_STYLE.md`

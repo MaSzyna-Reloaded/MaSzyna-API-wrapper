@@ -56,22 +56,22 @@ func release_section_focus() -> void:
 ## The keys every section has: Enter, Escape, and the four arrows as the way out of it. A subclass
 ## that walks items takes the arrows first and ends its own handler with super(event), so only what
 ## it did not use reaches this.
-## ui_text_submit and not ui_accept: that one is Space as well, and Space belongs to a search field.
+## Enter and not Space: Space belongs to a search field. The keys are the project's menu_* actions,
+## matched exactly - see CODE_STYLE.md, "Input".
 func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
-    # exact: Alt+Enter is the game window's (game_window.gd), not Enter
-    if event.is_action_pressed("ui_text_submit", false, true):
+    if event.is_action_pressed("menu_activate", false, true):
         activated.emit()
-    elif event.is_action_pressed("ui_cancel"):
+    elif event.is_action_pressed("menu_back", false, true):
         cancelled.emit()
-    elif event.is_action_pressed("ui_left", true):
+    elif event.is_action_pressed("menu_left", true, true):
         navigate_left.emit()
-    elif event.is_action_pressed("ui_right", true):
+    elif event.is_action_pressed("menu_right", true, true):
         navigate_right.emit()
-    elif event.is_action_pressed("ui_up", true):
+    elif event.is_action_pressed("menu_up", true, true):
         navigate_up.emit()
-    elif event.is_action_pressed("ui_down", true):
+    elif event.is_action_pressed("menu_down", true, true):
         navigate_down.emit()
     else:
         return

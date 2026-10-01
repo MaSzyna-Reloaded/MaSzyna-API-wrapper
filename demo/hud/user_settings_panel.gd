@@ -10,7 +10,7 @@ func _ready() -> void:
 
 
 func _input(event):
-    if event.is_action_pressed("ui_cancel"):
+    if event.is_action_pressed("menu_back", false, true):
         visible = not visible
 
 

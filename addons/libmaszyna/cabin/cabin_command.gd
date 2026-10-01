@@ -21,5 +21,5 @@ func set_vehicle_rid(vehicle_rid:RID) -> void:
 func _input(event):
     if not _vehicle_rid or not action_name or not command:
         return
-    if event.is_action_pressed(action_name):
+    if event.is_action_pressed(action_name, false, true):
         CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, &"hold")

@@ -30,8 +30,9 @@ anything. Open work belongs in `TODO.md`.
   core. A shipped build keeps its symbol table. *(09-24 shipped library had no symbols)*
 * When a fix is being reinvented, `git log -S` the moved code and read the commit that made it
   first. *(09-24 simulation stepped after readers)*
-* Many copies of one sound: the defect is phase, not level. Look for a start offset first.
-  *(09-24 trainset ringing)*
+* Many copies of one sound: the defect is phase, not level. Look for a start offset first, and
+  prove it on every path a clip starts by (automation, timeline, sustain). *(09-24 trainset
+  ringing)*
 * Prove a fix to a value by printing it where it is used, not where it is set. A later line
   can overwrite it. *(09-24 trainset ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).

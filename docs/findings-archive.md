@@ -1123,6 +1123,18 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   With the phase-lock override limited to phase-locked automations, it prints 0.5 in both places
   (`demo/tests/test_sfx_start_fraction.gd`).
 * **Rule:** prove a fix to a value by printing the value where it is used, not where it is set.
+* **It did not work a third time (2026-10-01).** Rolling wagons still rang metallic from outside.
+  `SfxPlaybackRuntime._resolve_voice_start_position()` applied the shift to an automation clip and
+  to a `TRIGGER_SUSTAIN` clip only; a plain looping timeline clip started at its stream offset. A
+  single-sample `outernoise: { soundmain: ... }` is exactly that (the EP07 bank dump: `outer_noise_0/1`,
+  one clip, no automation), and the test covered only the automation path - a plain looping clip
+  with `start_fraction` 0.5 started at 0.0. A looping timeline clip takes the shift now. The
+  bogie and motor copies of one vehicle (`outer_noise_0/1`, `traction_motor_0/1`) also shared one
+  drawn fraction and played one recording in step a few metres apart; each running event draws its
+  own (`BankRuntime.running_start_fractions`). `play()` was not restarting the loop: the instance
+  of a looping clip outlives its length (`test_sfx_start_fraction.gd`).
+* **Rule:** a fix to how a clip starts is proven on every path a clip can start by - automation,
+  timeline, sustain - not on the one the first bug report went through.
 
 ## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
 

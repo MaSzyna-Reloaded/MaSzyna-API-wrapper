@@ -46,9 +46,10 @@ func _play(start_fraction:float, speed:float) -> SfxPlaybackRuntime:
     event.name = &"outer_noise"
     var automations:Array[SfxAutomation] = [automation]
     event.automations = automations
+    event.start_fraction = start_fraction
     var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
     runtime.set_slot_capacity(VOICE_SLOTS)
-    runtime.play(event, 0.0, {&"speed": speed}, start_fraction)
+    runtime.play(event, 0.0, {&"speed": speed})
     runtime.update(TICK)
     return runtime
 
@@ -75,25 +76,12 @@ func test_automation_voice_without_fraction_starts_at_the_stream_offset() -> voi
 
 ## A single-sample running noise (outernoise: { soundmain: ... }) is one plain looping clip, not an
 ## automation - it has to take the shift as well
-func _play_plain(start_fraction:float) -> SfxPlaybackRuntime:
-    var clip:SfxClip = _chunk(0.0)
-    var event:SfxEvent = SfxEvent.new()
-    event.name = &"outer_noise"
-    var clips:Array[SfxClip] = [clip]
-    event.clips = clips
-    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
-    runtime.set_slot_capacity(VOICE_SLOTS)
-    runtime.play(event, 0.0, {}, start_fraction)
-    runtime.update(TICK)
-    return runtime
-
-
 func test_plain_looping_clip_starts_at_the_start_fraction() -> void:
-    assert_almost_eq(_start_position(_play_plain(START_FRACTION)), START_FRACTION, 0.001)
+    assert_almost_eq(_start_position(_play_clip(_chunk(0.0))), START_FRACTION, 0.001)
 
 
 func test_plain_looping_clip_keeps_playing_past_its_length() -> void:
-    var runtime:SfxPlaybackRuntime = _play_plain(START_FRACTION)
+    var runtime:SfxPlaybackRuntime = _play_clip(_chunk(0.0))
     var stream_length:float = runtime.get_slots()[0].stream.get_length()
     var elapsed:float = 0.0
     while elapsed < 2.0 * stream_length:
@@ -109,15 +97,8 @@ func test_maszyna_stream_starts_at_the_start_fraction_before_its_first_playback(
     var previous:String = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     var clip:SfxClip = SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(FIXTURE_LOOP, true)
-    var event:SfxEvent = SfxEvent.new()
-    event.name = &"outer_noise"
-    var clips:Array[SfxClip] = [clip]
-    event.clips = clips
-    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
-    runtime.set_slot_capacity(VOICE_SLOTS)
-    runtime.play(event, 0.0, {}, START_FRACTION)
-    runtime.update(TICK)
+    clip.stream = MmdSoundEventBuilder.build_stream(FIXTURE_LOOP, true)
+    var runtime:SfxPlaybackRuntime = _play_clip(clip)
     UserSettings.save_maszyna_game_dir(previous)
     assert_gt(clip.stream.get_length(), 0.0)
     assert_almost_eq(_start_position(runtime), START_FRACTION, 0.001)
@@ -131,6 +112,34 @@ func test_pitch_variation_scales_every_voice() -> void:
     event.name = &"outer_noise"
     var clips:Array[SfxClip] = [clip]
     event.clips = clips
-    runtime.play(event, 0.0, {}, 0.0, PITCH_VARIATION)
+    event.pitch_variation = PITCH_VARIATION
+    runtime.play(event, 0.0, {})
     runtime.update(TICK)
     assert_almost_eq(runtime.get_slots()[0].pitch_scale, PITCH_VARIATION, 0.001)
+
+
+## A one-shot is a single sample too, and takes the shift (audiorenderer_extra.h)
+func test_one_shot_starts_at_the_start_fraction() -> void:
+    var clip:SfxClip = _chunk(0.0)
+    (clip.stream as AudioStreamWAV).loop_mode = AudioStreamWAV.LOOP_DISABLED
+    assert_almost_eq(_start_position(_play_clip(clip)), START_FRACTION, 0.001)
+
+
+## An opening bookend plays from its own start (audiorenderer_extra.h, is_bookend())
+func test_bookend_is_not_shifted() -> void:
+    var clip:SfxClip = _chunk(0.0)
+    clip.bookend = true
+    assert_almost_eq(_start_position(_play_clip(clip)), 0.0, 0.001)
+
+
+func _play_clip(clip:SfxClip) -> SfxPlaybackRuntime:
+    var event:SfxEvent = SfxEvent.new()
+    event.name = &"outer_noise"
+    var clips:Array[SfxClip] = [clip]
+    event.clips = clips
+    event.start_fraction = START_FRACTION
+    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
+    runtime.set_slot_capacity(VOICE_SLOTS)
+    runtime.play(event, 0.0, {})
+    runtime.update(TICK)
+    return runtime

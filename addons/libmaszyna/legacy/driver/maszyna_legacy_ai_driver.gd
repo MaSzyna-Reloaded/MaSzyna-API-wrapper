@@ -888,6 +888,8 @@ func _take_timetable(
             var clips:Array[SfxClip] = [clip]
             state.guard_signal = SfxEvent.new()
             state.guard_signal.clips = clips
+            var emitter:Array[SfxEvent] = [state.guard_signal]
+            MmdSoundEventBuilder.shape_emitter(emitter, null, 0.0)
             # its caption beside it (openal_buffer::fetch_caption(), audio.cpp:84-94)
             state.guard_transcript = MaszynaLegacySoundCaption.from_sound_file(path.get_basename())
             state.guard_radio = state.radio_channel if state.radio_channel > 0 else RADIO_CHANNEL_DEFAULT

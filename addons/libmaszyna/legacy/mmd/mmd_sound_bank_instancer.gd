@@ -26,6 +26,12 @@ const _RUNNING_PLACEMENTS:Dictionary = {
     "outernoise": &"external",
     "wheel_clatter": &"external",
 }
+## Where an outernoise bogie copy starts in its sample, as a fraction of it: an even copy in the
+## later range, an odd one in the earlier, so two neighbours never start close (DynObj.cpp:6505-6514)
+const _BOGIE_NOISE_EVEN_START_MIN:float = 0.5
+const _BOGIE_NOISE_EVEN_START_MAX:float = 0.8
+const _BOGIE_NOISE_ODD_START_MIN:float = 0.0
+const _BOGIE_NOISE_ODD_START_MAX:float = 0.3
 const _RUNNING_RANGES:Dictionary = {
     "curve": 200.0,
     "outernoise": 200.0,
@@ -145,6 +151,8 @@ static func _build_player(
             _apply_horn_spatial_config(event, definition)
         elif _CABIN_SPATIAL.has(definition.label) and not definition.range_defined:
             _apply_cabin_spatial_config(event, definition.label)
+        var emitter:Array[SfxEvent] = [event]
+        MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
         events.append(event)
         regular_definitions.append(definition)
 
@@ -247,6 +255,17 @@ static func _build_running_events(
         var event:SfxEvent = MmdSoundEventBuilder.build(
                 definition, event_id, &"point", true, true, not definition.label == "wheel_clatter")
         event.spatial_config.position = position
+        # every copy its own start, as the original sets it when it reads the MMD: bogies
+        # alternate between two ranges (DynObj.cpp:6505-6514), located motors start anywhere
+        # (DynObj.cpp:6085), anything else where the MMD's startoffset: says
+        var start_fraction:float = definition.start_offset
+        if definition.label == "outernoise":
+            start_fraction = (randf_range(_BOGIE_NOISE_ODD_START_MIN, _BOGIE_NOISE_ODD_START_MAX) if index % 2
+                    else randf_range(_BOGIE_NOISE_EVEN_START_MIN, _BOGIE_NOISE_EVEN_START_MAX))
+        elif definition.label == "tractionmotor" and location_key and locations[location_key]:
+            start_fraction = randf()
+        var emitter:Array[SfxEvent] = [event]
+        MmdSoundEventBuilder.shape_emitter(emitter, definition, start_fraction)
         events.append(event)
         running.sources.append({"event": event_id, "source": definition})
 
@@ -257,6 +276,7 @@ static func _build_clatter_chunk_events(
         definition:MmdSoundSourceDefinition, event_id:StringName, position:Vector3,
         events:Array[SfxEvent]) -> Array[StringName]:
     var chunk_events:Array[StringName] = []
+    var axle:Array[SfxEvent] = []
     for chunk:Dictionary in RunningSoundModel.sorted_chunks(definition):
         var chunk_definition := MmdSoundSourceDefinition.new()
         chunk_definition.label = definition.label
@@ -268,7 +288,10 @@ static func _build_clatter_chunk_events(
         var event:SfxEvent = MmdSoundEventBuilder.build(chunk_definition, chunk_event_id, &"", true, true, false)
         event.spatial_config.position = position
         events.append(event)
+        axle.append(event)
         chunk_events.append(chunk_event_id)
+    # an axle is one emitter whichever chunk it clicks with
+    MmdSoundEventBuilder.shape_emitter(axle, definition, definition.start_offset)
     return chunk_events
 
 

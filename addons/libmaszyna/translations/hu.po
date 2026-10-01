@@ -109,9 +109,6 @@ msgstr "Elfoglalt vezetőállás: controls | state | get [control] | increase|de
 
 # loading a scenery, under the loading screen's progress bar
 
-msgid "Scanning includes"
-msgstr "Include fájlok keresése"
-
 msgid "Parsing %s"
 msgstr "%s feldolgozása"
 

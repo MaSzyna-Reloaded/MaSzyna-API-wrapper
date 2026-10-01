@@ -20,6 +20,12 @@
 				Number of finished tasks.
 			</description>
 		</method>
+		<method name="get_submitted_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Number of tasks submitted so far, including those submitted by other tasks.
+			</description>
+		</method>
 		<method name="get_worker_count" qualifiers="const">
 			<return type="int" />
 			<description>

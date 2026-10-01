@@ -591,7 +591,6 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   `full` (key = path + hash of all params); cache in local space, invalidate by dependency list.
 * The subscene cache (`SceneryInstancer.parse_subscene_task()`) is used only by queued parsing;
   `parse_file()` reparses every include.
-* `_count_includes()` counts includes of cached subscenes that never run as tasks - the bar jumps.
 * Streaming keeps the six `TrackRenderingServer` and two `TractionRenderingServer` instances of
   every piece and drops only meshes; freeing them would save ~16k empty instances in `baltyk`.
 * A track streams by the chunk of its first curve point, not its nearest point.

@@ -55,6 +55,7 @@ namespace godot {
             bool is_done(int p_task_id) const;
             Variant wait(int p_task_id);
             int get_completed_count() const;
+            int get_submitted_count() const;
             int get_worker_count() const;
     };
 } // namespace godot

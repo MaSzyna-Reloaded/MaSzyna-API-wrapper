@@ -29,6 +29,7 @@ func test_more_tasks_than_workers_return_results_by_id() -> void:
     for i:int in task_count:
         assert_eq(queue.wait(task_ids[i]), i * 2)
     assert_eq(queue.get_completed_count(), task_count)
+    assert_eq(queue.get_submitted_count(), task_count)
 
 
 func test_nested_waiting_tasks_do_not_deadlock() -> void:

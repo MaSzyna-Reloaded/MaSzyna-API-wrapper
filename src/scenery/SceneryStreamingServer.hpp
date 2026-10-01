@@ -49,6 +49,11 @@ namespace godot {
             /// that declare none of their own
             static constexpr float DEFAULT_DRAW_DISTANCE_M = 3000.0;
 
+            /// Pieces in range started waiting to be built...
+            static const char *streaming_builds_started_signal;
+            /// ...and every one of them is built
+            static const char *streaming_builds_finished_signal;
+
             static SceneryStreamingServer *get_instance() {
                 return Object::cast_to<SceneryStreamingServer>(
                         Engine::get_singleton()->get_singleton("SceneryStreamingServer"));
@@ -133,6 +138,7 @@ namespace godot {
             uint64_t target_revision = 0;
             uint64_t scanned_revision = 0;
             int pending_build_count = 0;
+            bool building = false;               // main thread only: pending_build_count > 0, as last announced
             Vector<PendingBuild> planned_builds; // published by the worker
             Vector<PendingClear> planned_clears;
             /// Taken over by the main thread; builds are ordered farthest first and taken from the
@@ -158,6 +164,7 @@ namespace godot {
             void _worker_loop();
             void _process_streaming();
             void _apply_plan();
+            void _set_building(bool p_building);
 
         protected:
             static void _bind_methods();
@@ -189,6 +196,8 @@ namespace godot {
             /// Where the streaming camera is, for anything else that has to know what is near
             Vector3 streaming_get_camera_position() const;
             bool streaming_has_camera() const;
+            /// Pieces in range are still waiting to be built (streaming_builds_started/finished)
+            bool streaming_is_building() const;
             bool area_is_ready(int p_chunk_radius = 1) const;
             int streaming_get_streamed_count() const;
             Dictionary streaming_get_statistics() const;

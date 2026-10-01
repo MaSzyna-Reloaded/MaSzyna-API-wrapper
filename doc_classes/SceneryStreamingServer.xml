@@ -87,6 +87,12 @@
 				Returns whether the streaming currently follows a camera.
 			</description>
 		</method>
+		<method name="streaming_is_building" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns whether pieces in range are still waiting to be built - between [signal streaming_builds_started] and [signal streaming_builds_finished].
+			</description>
+		</method>
 		<method name="streaming_is_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -106,4 +112,16 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="streaming_builds_finished">
+			<description>
+				Every piece in range of the camera is built, or the streaming has no camera any more.
+			</description>
+		</signal>
+		<signal name="streaming_builds_started">
+			<description>
+				Pieces in range of the camera started waiting to be built.
+			</description>
+		</signal>
+	</signals>
 </class>

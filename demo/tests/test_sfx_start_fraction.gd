@@ -66,3 +66,32 @@ func test_chunk_swapped_in_keeps_the_start_fraction() -> void:
 
 func test_automation_voice_without_fraction_starts_at_the_stream_offset() -> void:
     assert_almost_eq(_start_position(_play(0.0, FIRST_CHUNK_SPEED)), 0.0, 0.001)
+
+
+## A single-sample running noise (outernoise: { soundmain: ... }) is one plain looping clip, not an
+## automation - it has to take the shift as well
+func _play_plain(start_fraction:float) -> SfxPlaybackRuntime:
+    var clip:SfxClip = _chunk(0.0)
+    var event:SfxEvent = SfxEvent.new()
+    event.name = &"outer_noise"
+    var clips:Array[SfxClip] = [clip]
+    event.clips = clips
+    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
+    runtime.set_slot_capacity(VOICE_SLOTS)
+    runtime.play(event, 0.0, {}, start_fraction)
+    runtime.update(TICK)
+    return runtime
+
+
+func test_plain_looping_clip_starts_at_the_start_fraction() -> void:
+    assert_almost_eq(_start_position(_play_plain(START_FRACTION)), START_FRACTION, 0.001)
+
+
+func test_plain_looping_clip_keeps_playing_past_its_length() -> void:
+    var runtime:SfxPlaybackRuntime = _play_plain(START_FRACTION)
+    var stream_length:float = runtime.get_slots()[0].stream.get_length()
+    var elapsed:float = 0.0
+    while elapsed < 2.0 * stream_length:
+        runtime.update(TICK)
+        elapsed += TICK
+    assert_true(runtime.is_playing(&"outer_noise"))

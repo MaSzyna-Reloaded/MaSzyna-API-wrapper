@@ -76,9 +76,11 @@ class BankRuntime extends RefCounted:
     var events_built:bool = false
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
-    ## Where this vehicle's looping running noise starts inside its own sample, as a fraction of
-    ## it - drawn once, so every wagon of a trainset runs its copy out of phase with the others.
-    var running_start_fraction:float = 0.0
+    ## Where each looping running sound of this bank starts inside its own sample, as a fraction
+    ## of it - drawn once per event, so every wagon of a trainset, and every bogie and motor copy
+    ## of one wagon, runs out of phase with the others. The original draws once per vehicle
+    ## (DynObj.cpp:6511); the copies of one vehicle comb as well.
+    var running_start_fractions:Dictionary[StringName, float] = {}
     var culled:bool = false
     var last_batch:Dictionary = {}
     ## Within the culling distance, so the frame visits it - owned by _refresh_active_banks()
@@ -222,7 +224,6 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     if not runtime:
         runtime = BankRuntime.new()
         runtime.player = player
-        runtime.running_start_fraction = randf_range(0.0, RUNNING_NOISE_MAX_START_FRACTION)
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     _set_bank_vehicle(runtime, registration.get("vehicle") as RailVehicle3D)
@@ -230,6 +231,11 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
     runtime.running = registration.get("running") as RunningSoundModel
+    runtime.running_start_fractions.clear()
+    if runtime.running:
+        for entry:Dictionary in runtime.running.sources:
+            runtime.running_start_fractions[entry["event"]] = randf_range(
+                    0.0, RUNNING_NOISE_MAX_START_FRACTION)
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
@@ -589,9 +595,9 @@ func _update_running_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary
             continue
         if not runtime.player.is_playing(event_name):
             # every vehicle of a trainset plays the same recording, and started together they
-            # comb-filter into a metallic ring heard from outside. Each one starts its own copy
-            # further into the sample (DynObj.cpp:6511, audiorenderer.cpp:99).
-            runtime.player.play(event_name, null, parameters, runtime.running_start_fraction)
+            # comb-filter into a metallic ring heard from outside. Each copy starts further into
+            # the sample (DynObj.cpp:6511, audiorenderer.cpp:99).
+            runtime.player.play(event_name, null, parameters, runtime.running_start_fractions[event_name])
         batch[event_name] = parameters
 
 

@@ -327,6 +327,9 @@ anything. Open work belongs in `TODO.md`.
   that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
 
 ## Threads and teardown
+* An include placed thousands of times is parsed in place, not as a task (a task costs a context
+  kept until its parent's merge); after a parse on many workers the allocator's free memory is
+  given back (`ProcessMemory.release_unused()`). *(10-01 a task per include)*
 * A parse that repeats an include in world space reduces each node to its final form as it reads
   it (`SceneryTrianglesSink`), with a bound on memory; nothing is kept per include until the end.
   *(10-01 the parse kept every include's triangles)*
@@ -344,6 +347,9 @@ anything. Open work belongs in `TODO.md`.
   not also belong in the synchronous API. *(09-22 sfx tick off main thread)*
 
 ## Build, release, export
+* No C++ iostreams in the extension: libstdc++ is linked statically (`GODOTCPP_USE_STATIC_CPP`) and
+  a stream crashed the release library only - `FileAccess` and `String` instead.
+  *(10-02 a C++ stream crashed the release build)*
 * A game or editor still running the old library writes cache entries under a version the new
   scripts bumped - rebuild with Godot closed, or bump the version again. *(09-28 ED72 cache)*
 * glibc is only forward compatible. Check the highest `GLIBC_` of every shipped binary, and build

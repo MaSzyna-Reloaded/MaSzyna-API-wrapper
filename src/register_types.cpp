@@ -84,6 +84,7 @@
 #include "tracks/TrackServer.hpp"
 #include "traction/TractionServer.hpp"
 #include "utils/MaszynaTranslationServer.hpp"
+#include "utils/ProcessMemory.hpp"
 #include "utils/UserSettings.hpp"
 #include "vehicles/base/GenericVehicleComponent.hpp"
 #include "vehicles/base/GenericVehicleComponentNode.hpp"
@@ -185,6 +186,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
+        GDREGISTER_CLASS(ProcessMemory);
         GDREGISTER_CLASS(SimulationServer);
         GDREGISTER_CLASS(GameDataServer);
         GDREGISTER_CLASS(MaszynaTranslationServer);

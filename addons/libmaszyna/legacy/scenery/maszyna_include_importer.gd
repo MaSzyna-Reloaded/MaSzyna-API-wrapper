@@ -17,7 +17,9 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
     for i in range(tokens.size()):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
-        if context.queue:
+        # a small include - an object placed thousands of times (grass.inc, tree.inc) - is parsed in
+        # place: as a task of its own each one kept a whole context until its parent's merge
+        if context.queue and file.get_length() >= SceneryInstancer.INLINE_INCLUDE_MAX_SIZE:
             # parsed by a queue worker, the result is merged at the end of the current file.
             # The original engine uses the same "include" for parameterised object instances and
             # for subscenes - a large include without parameters is taken as a (cached) subscene.

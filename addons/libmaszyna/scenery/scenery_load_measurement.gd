@@ -61,3 +61,28 @@ func _close_stage() -> void:
         STAGE_NAMES[_stage], _durations_usec[_stage] / USEC_PER_SEC,
         _longest_frames_usec[_stage] / USEC_PER_SEC, _peaks_bytes[_stage] / BYTES_PER_GB,
     ])
+
+
+## What the loaded scenery holds, once loaded: the process as the system sees it (before and after
+## the allocator gives its free memory back - ProcessMemory), Godot's count of its own, its objects
+## and the scenery's data
+func print_memory(compiled: MaszynaCompiledScenery) -> void:
+    var resident: int = ProcessMemory.get_resident_bytes()
+    var godot_static: int = int(Performance.get_monitor(Performance.MEMORY_STATIC))
+    ProcessMemory.release_unused()
+    print("[SceneryMemory] resident %.2f GB (%.2f GB after trim), Godot static %.2f GB" % [
+        resident / BYTES_PER_GB, ProcessMemory.get_resident_bytes() / BYTES_PER_GB, godot_static / BYTES_PER_GB,
+    ])
+    print("[SceneryMemory] objects %d, resources %d, nodes %d" % [
+        Performance.get_monitor(Performance.OBJECT_COUNT),
+        Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT),
+        Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+    ])
+    print("[SceneryMemory] models %d, events %d, tracks %d, traction %d, terrain chunks %d, packed nodes %d" % [
+        compiled.models.size(), compiled.events.size(), compiled.tracks.size(), compiled.traction.size(),
+        compiled.triangle_chunks.size(), compiled.nodes.get_state().get_node_count(),
+    ])
+    print("[SceneryMemory] lazy resources %s, streamed %d" % [
+        ResourceLazyLoader.resource_get_statistics(), SceneryStreamingServer.streaming_get_streamed_count(),
+    ])
+

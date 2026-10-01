@@ -2861,3 +2861,33 @@ lighting or the trainset.
 * **Rule:** a parse whose output is in world space and repeats per include must not keep it per
   include - reduce it to what it ends up as while parsing, and bound what is held in memory.
 
+## 2026-10-01 - a task per include, and memory the allocator kept
+
+* **Symptom:** with the terrain chunked as it was parsed, Galicja still reached 7.7 GB in the
+  parse and held ~8.7 GB loaded, ~8.5 GB with the camera off the map - the streamed part was a
+  margin, and nothing came back after the parse.
+* **What proved it:** the loading screen counted 294 286 parsed files - every `include` with
+  parameters (`grass.inc`, `tree.inc`) was a task of the queue with a whole
+  `MaszynaImporterContext`, a `PendingInclude` and a bound Callable, kept until its parent finished
+  its file, and its file read from disk each time. The resident size stayed up because glibc keeps
+  what each worker's arena freed.
+* **Fix:** includes under 16 KB are parsed in place and read once per parse
+  (`SceneryInstancer.INLINE_INCLUDE_MAX_SIZE`); `ProcessMemory.release_unused()` (`malloc_trim`)
+  after the parsed scenery is packed. Galicja loaded: 2.8-2.9 GB.
+* **Rule:** a unit of parallel work costs a context; an object placed thousands of times is not a
+  task. After a parse on many threads, give the allocator's free memory back, and measure the
+  resident size, not Godot's own count.
+
+## 2026-10-02 - a C++ stream crashed the release build
+
+* **Symptom:** the exported game (`./reloaded`) loaded Galicja and died with SIGSEGV as the load
+  ended; the debug library in the editor ran the same code without fault.
+* **What proved it:** the core's main-thread stack (`coredumpctl -r info reloaded`): libstdc++'s
+  `std::istream::_M_extract<long>` and a `codecvt` frame inside `libmaszyna.64.so`, called from the
+  engine - `ProcessMemory::get_resident_bytes()` reading `/proc/self/statm` with `std::ifstream`,
+  through `SceneryLoadMeasurement.print_memory()`. godot-cpp links libstdc++ statically
+  (`GODOTCPP_USE_STATIC_CPP`), and its stream locale broke in the release library.
+* **Fix:** the file is read with `FileAccess` and parsed with `String`.
+* **Rule:** no C++ iostreams in the extension - files through `FileAccess`, numbers through
+  `String`; a crash of the shipped build only is read off its core, never guessed.
+

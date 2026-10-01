@@ -55,6 +55,16 @@ class Trainset:
 const MAX_BYTES:int = 262144
 ## The title alone is in the first lines of the file
 const MAX_HEADER_BYTES:int = 8192
+## How a header writes the stations of a line ("//$n Macierzewo - Całkowo - Wili - Jarkawki")
+const NAME_SEPARATOR:String = "-"
+## Between "//$l", "//$n" and the file name in read_display_name()
+const PART_SEPARATOR:String = " · "
+## Words of a header that name nothing ("//$n Sceneria Linia053_Wrzosy"), as _simplify() gives them
+const NAME_FILLER_WORDS:PackedStringArray = ["sceneria"]
+## A "//$n" this long is a description, not a name
+const NAME_MAX_LENGTH:int = 60
+## ...and so is one with any of these ("//$n Bieszczady topuwa, dużo izoluw przy torach wisi...")
+const SENTENCE_MARKS:PackedStringArray = [",", "...", "!", "?"]
 var title:String = ""
 var description:String = ""
 ## Absolute path of the scenario image, empty when it does not exist
@@ -62,44 +72,88 @@ var image_path:String = ""
 var trainsets:Array[Trainset] = []
 
 
-## Name of scenery/<filename> for a list of sceneries: the scenery of its "//$n" line and the
-## file name, which is what tells apart the dozen scenarios sharing one scenery
-## ("stary_jawor_eszelon.scn" with "//$n Stary Jawor" -> "Stary Jawor - Eszelon").
+## Name of scenery/<filename> for a list of sceneries: its "//$l" line made readable (written as
+## carelessly as "Całkowo_v2_towarowe"), its "//$n" line unless it is a sentence (the scenario's
+## description written there instead of a name) and the file name made readable, each
+## without the words an earlier one already has - the file name is what tells apart the scenarios
+## of one scenery ("baltyk_skm1.scn" with "//$l Bałtyk" and "//$n Bałtyk" -> "Bałtyk · SKM1").
 static func read_display_name(filename:String) -> String:
-    var scenery_name:String = _read_scenery_name(filename)
-    var file_name:String = humanize_file_name(filename.get_basename())
-    if not scenery_name:
-        return file_name
+    var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
+    var file:FileAccess = FileAccess.open(scenery_dir.path_join(filename), FileAccess.READ)
+    var bytes:PackedByteArray = (
+        file.get_buffer(mini(file.get_length(), MAX_HEADER_BYTES)) if file else PackedByteArray()
+    )
+    var scenery_name:String = ""
+    var scenario_name:String = ""
+    var start:int = 0
+    while start < bytes.size():
+        var end:int = bytes.find(10, start)  # "\n"
+        if end < 0:
+            end = bytes.size()
+        var line:String = Windows1250.decode(bytes.slice(start, end)).strip_edges()
+        start = end + 1
+        if line.begins_with("//$l"):
+            scenery_name = humanize_name(line.substr(4).strip_edges())
+        elif line.begins_with("//$n"):
+            # a description, so its words keep their case - only "Linia053_Wrzosy" is split
+            scenario_name = line.substr(4).strip_edges().replace("_", " ")
+        elif line and not line.begins_with("//"):
+            break
+    var known_words:PackedStringArray = NAME_FILLER_WORDS.duplicate()
+    var parts:PackedStringArray = []
+    if scenario_name.length() > NAME_MAX_LENGTH:
+        scenario_name = ""
+    for mark:String in SENTENCE_MARKS:
+        if scenario_name.contains(mark):
+            scenario_name = ""
+    for part:String in [scenery_name, scenario_name, humanize_name(filename.get_basename())]:
+        var part_words:PackedStringArray = part.split(" ", false)
+        var words:PackedStringArray = []
+        for word:String in part_words:
+            # a separator ("Macierzewo - Całkowo - Wili") goes with the word dropped beside it
+            if word == NAME_SEPARATOR:
+                if words and not words[-1] == NAME_SEPARATOR:
+                    words.append(word)
+                continue
+            if not known_words.has(_simplify(word)):
+                words.append(word)
+        if words and words[-1] == NAME_SEPARATOR:
+            words.remove_at(words.size() - 1)
+        if words:
+            parts.append(" ".join(words))
+        for word:String in part_words:
+            known_words.append(_simplify(word))
+    return PART_SEPARATOR.join(parts)
 
-    # what the file name adds to the name of the scenery: "braniewo_szeroki" of "Wojskowy Rejon
-    # Przeladunkowy - Braniewo" is its "Szeroki" variant, the rest is already in the name
-    var known_words:PackedStringArray = _simplify(scenery_name).split(" ", false)
-    var scenario_words:PackedStringArray = []
-    for word:String in file_name.split(" ", false):
-        if not known_words.has(_simplify(word)):
-            scenario_words.append(word)
-    if not scenario_words:
-        return scenery_name
-    return "%s - %s" % [scenery_name, " ".join(scenario_words)]
 
-
-## Lowercased and without the Polish letters, for comparing words of a name with a file name
-static func _simplify(text:String) -> String:
-    var simplified:String = text.to_lower()
+## Lowercased and without the Polish letters, for comparing the words of the parts of a name
+static func _simplify(word:String) -> String:
+    var simplified:String = word.to_lower()
     for replacement:Array in [
         ["ą", "a"], ["ć", "c"], ["ę", "e"], ["ł", "l"], ["ń", "n"],
-        ["ó", "o"], ["ś", "s"], ["ź", "z"], ["ż", "z"], ["-", " "],
+        ["ó", "o"], ["ś", "s"], ["ź", "z"], ["ż", "z"],
     ]:
         simplified = simplified.replace(replacement[0], replacement[1])
     return simplified
 
 
 ## "stary_jawor_noc" -> "Stary Jawor Noc", "calkowo_sm42_v2" -> "Calkowo SM42 V2" (a word with
-## a digit in it is a vehicle or a version, those are written in capitals)
-static func humanize_file_name(file_name:String) -> String:
+## a digit in it is a vehicle or a version, those are written in capitals); a word already written
+## with a capital ("SKM", "Całkowo") is kept as it is
+static func humanize_name(text:String) -> String:
     var words:PackedStringArray = []
-    for word:String in file_name.replace("_", " ").replace("-", " ").split(" ", false):
-        words.append(word.to_upper() if _has_digit(word) else word.capitalize())
+    for token:String in text.replace("_", " ").split(" ", false):
+        # "-" standing alone separates names ("Macierzewo - Wili"), inside a word it is a space
+        if token == NAME_SEPARATOR:
+            words.append(token)
+            continue
+        for word:String in token.split("-", false):
+            if _has_digit(word):
+                words.append(word.to_upper())
+            elif word == word.to_lower():
+                words.append(word.capitalize())
+            else:
+                words.append(word)
     return " ".join(words)
 
 
@@ -108,27 +162,6 @@ static func _has_digit(word:String) -> bool:
         if character.is_valid_int():
             return true
     return false
-
-
-## The "//$n" line of the header, empty when the scenery has none
-static func _read_scenery_name(filename:String) -> String:
-    var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
-    var file:FileAccess = FileAccess.open(scenery_dir.path_join(filename), FileAccess.READ)
-    if not file:
-        return ""
-    var bytes:PackedByteArray = file.get_buffer(mini(file.get_length(), MAX_HEADER_BYTES))
-    var start:int = 0
-    while start < bytes.size():
-        var end:int = bytes.find(10, start)  # "\n"
-        if end < 0:
-            end = bytes.size()
-        var line:String = Windows1250.decode(bytes.slice(start, end)).strip_edges()
-        start = end + 1
-        if line.begins_with("//$n"):
-            return line.substr(4).strip_edges()
-        if line and not line.begins_with("//"):
-            break
-    return ""
 
 
 ## Reads the header of scenery/<filename> and the trainsets declared in it

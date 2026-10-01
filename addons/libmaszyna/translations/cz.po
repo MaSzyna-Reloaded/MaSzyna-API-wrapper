@@ -109,9 +109,6 @@ msgstr "Obsazená kabina: controls | state | get [control] | increase|decrease|h
 
 # loading a scenery, under the loading screen's progress bar
 
-msgid "Scanning includes"
-msgstr "Prohledávání souborů include"
-
 msgid "Parsing %s"
 msgstr "Zpracování %s"
 

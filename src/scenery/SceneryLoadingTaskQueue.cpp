@@ -8,6 +8,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_done", "task_id"), &SceneryLoadingTaskQueue::is_done);
         ClassDB::bind_method(D_METHOD("wait", "task_id"), &SceneryLoadingTaskQueue::wait);
         ClassDB::bind_method(D_METHOD("get_completed_count"), &SceneryLoadingTaskQueue::get_completed_count);
+        ClassDB::bind_method(D_METHOD("get_submitted_count"), &SceneryLoadingTaskQueue::get_submitted_count);
         ClassDB::bind_method(D_METHOD("get_worker_count"), &SceneryLoadingTaskQueue::get_worker_count);
     }
 
@@ -98,6 +99,12 @@ namespace godot {
     int SceneryLoadingTaskQueue::get_completed_count() const {
         MutexLock lock(mutex);
         return completed;
+    }
+
+    /// Tasks submitted so far - task ids are handed out in order from 0
+    int SceneryLoadingTaskQueue::get_submitted_count() const {
+        MutexLock lock(mutex);
+        return next_id;
     }
 
     int SceneryLoadingTaskQueue::get_worker_count() const {

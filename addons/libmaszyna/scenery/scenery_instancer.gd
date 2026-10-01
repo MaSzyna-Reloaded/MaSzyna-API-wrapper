@@ -39,7 +39,6 @@ static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 ## GDScript and call GDScript handlers, which must not be reached once the scripts are going away
 static var _active_queues:Array[SceneryLoadingTaskQueue] = []
 static var _last_report_msec:int = 0
-static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
 ## Cache paths of subscenes being saved by queue workers - one writer per file
 static var _saving_subscenes:Dictionary = {}
 static var _saving_subscenes_mutex:Mutex = Mutex.new()
@@ -119,7 +118,6 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         _run_scripts(root, compiled.scripts)
         return
 
-    await _report_progress(root, 0.0, "Scanning includes")
     var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
     var objects:Array = context.objects
     assign_signal_head_kinds(context.models, context.events)
@@ -589,25 +587,19 @@ func parse_subscene_task(
 
 
 ## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
-## progress every frame: finished tasks / includes counted by _count_includes().
+## progress every frame: finished tasks / tasks submitted so far.
 func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -> MaszynaImporterContext:
     var root_context := MaszynaImporterContext.new()
     root_context.rotate = root.context_rotate
     root_context.origin = root.context_origin
     var queue := SceneryLoadingTaskQueue.new()
     _active_queues.append(queue)
-    # the prescan reads every included file - on a worker thread, like the parsing itself, so the
-    # main thread keeps drawing frames
-    var count_task_id:int = queue.submit(_count_includes.bind(root.filename, {}))
-    while not queue.is_done(count_task_id):
-        await _report_progress(root, 0.0, "Scanning includes")
-    var include_count:int = queue.wait(count_task_id)
-    var parsed_before:int = queue.get_completed_count()
     var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
+    # every include is a task submitted while parsing, so the total grows with the parse; the bar
+    # does not go back when it does
+    var parsed:float = 0.0
     while not queue.is_done(task_id):
-        var parsed:float = minf(
-            float(queue.get_completed_count() - parsed_before) / float(maxi(include_count, 1)), 1.0
-        )
+        parsed = maxf(parsed, float(queue.get_completed_count()) / float(queue.get_submitted_count()))
         await _report_progress(root, PARSE_PROGRESS * parsed, tr("Parsing %s") % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
@@ -615,33 +607,6 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
         push_error("Cannot parse scenery: " + root.filename)
         return MaszynaImporterContext.new()
     return context
-
-
-## Grep-like prescan: every "include" in filename and, recursively, in the included files (each
-## occurrence counts, files are scanned once - counts caches the per-file totals). Parameterised
-## include paths that don't resolve to a file count as one include without children.
-func _count_includes(filename:String, counts:Dictionary) -> int:
-    # the prescan runs on the same worker as the parse and reads every included file, so it stops
-    # on the same signal - otherwise a teardown joining that worker waits the whole scan out
-    if MaszynaParser.is_cancelled():
-        return 0
-    if counts.has(filename):
-        return counts[filename]
-    counts[filename] = 0
-    var path:String = _get_source_path(filename)
-    if not FileAccess.file_exists(path):
-        return 0
-    var total:int = 0
-    for line:String in FileAccess.get_file_as_bytes(path).get_string_from_ascii().split("\n"):
-        if MaszynaParser.is_cancelled():
-            return 0
-        var code:String = line.get_slice("//", 0)
-        if not code.containsn("include"):
-            continue
-        for found:RegExMatch in _include_regex.search_all(code):
-            total += 1 + _count_includes(include_importer.resolve_filename(found.get_string(1)), counts)
-    counts[filename] = total
-    return total
 
 
 func open_parser(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> MaszynaParser:

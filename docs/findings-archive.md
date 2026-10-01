@@ -2842,3 +2842,22 @@ lighting or the trainset.
   Whatever is loaded for a streamed piece is held by that piece's build and let go by its clear,
   and a cache file holds data, not render resources.
 
+## 2026-10-01 - the parse kept every include's triangles in world space
+
+* **Symptom:** after the terrain went to a file per chunk, Galicja (Linia 107 Objazdy) still took
+  10.6 GB while it was parsed and went into swap; the memory stayed at the top once the parse was
+  over, through the registration of the models.
+* **What proved it:** following one `triangles` node through the parse. `MaszynaTrianglesImporter`
+  put every node into world space and the context kept it as an entry until the end of the parse -
+  `grass.inc`, included 24 000 times, as 24 000 full copies. The project is built in double
+  precision, so a vertex with its normal and UV is 64 B, plus about 1 KB of Array, String and
+  packed-array wrappers per node; the chunks were cut only after the parse, so for a while both were
+  held. The cutting itself needs no more than one triangle: it clips to a fixed grid and appends to
+  the chunk of its texture, cell and range.
+* **Fix:** the triangles go to a `SceneryTrianglesSink` as each node is read - cut into chunks at
+  once, kept as floats, and past 256 MB written to disk part by part; the parse ends by writing a
+  file per chunk. The parsed scenery is packed and let go of, and built from that the same way as a
+  cached one.
+* **Rule:** a parse whose output is in world space and repeats per include must not keep it per
+  include - reduce it to what it ends up as while parsing, and bound what is held in memory.
+

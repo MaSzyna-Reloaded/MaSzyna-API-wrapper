@@ -2,5 +2,6 @@
 extends MaszynaCompiledScenery
 class_name MaszynaCompiledSubscene
 
-## Raw triangle entries - chunked into meshes together with the rest of the scenery
-@export var triangles:Array = []
+## The subscene's terrain, chunked (SceneryTrianglesSink) - added to the scenery's sink wherever the
+## subscene is included
+@export var triangle_geometries:Array[MaszynaTrianglesChunkGeometry] = []

@@ -8,14 +8,17 @@
 namespace godot {
     void MaszynaTrianglesImporter::_bind_methods() {
         ClassDB::bind_static_method(
-                "MaszynaTrianglesImporter", D_METHOD("import_triangles", "parser", "rotate", "origin"),
+                "MaszynaTrianglesImporter",
+                D_METHOD("import_triangles", "parser", "rotate", "origin", "sink", "range_min", "range_max"),
                 &MaszynaTrianglesImporter::import_triangles);
     }
 
-    Array MaszynaTrianglesImporter::import_triangles(
-            MaszynaParser *p_parser, const Vector3 &p_rotate, const Vector3 &p_origin) {
-        if (p_parser == nullptr) {
-            return Array();
+    /// The triangles go to the sink at once, in world space - nothing of the node is kept here
+    bool MaszynaTrianglesImporter::import_triangles(
+            MaszynaParser *p_parser, const Vector3 &p_rotate, const Vector3 &p_origin,
+            const Ref<SceneryTrianglesSink> &p_sink, const float p_range_min, const float p_range_max) {
+        if (p_parser == nullptr || p_sink.is_null()) {
+            return false;
         }
 
         String texture;
@@ -52,7 +55,7 @@ namespace godot {
 
             if (!(stop_token == "end" || stop_token == "endtri")) {
                 UtilityFunctions::push_error("!!! Incorrect triangle format ");
-                return Array();
+                return false;
             }
 
             const Vector3 vertex =
@@ -73,11 +76,7 @@ namespace godot {
         normals.reverse();
         uvs.reverse();
 
-        Array triangle;
-        triangle.append(texture);
-        triangle.append(vertices);
-        triangle.append(normals);
-        triangle.append(uvs);
-        return triangle;
+        p_sink->add_triangles(texture, vertices, normals, uvs, p_range_min, p_range_max);
+        return true;
     }
 } // namespace godot

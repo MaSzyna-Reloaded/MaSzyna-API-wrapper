@@ -5,21 +5,31 @@ extends MaszynaGutTest
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const ROOT:String = "subscene/root.scn"
+const LOAD_TIMEOUT_SEC:float = 30.0
 
 var _previous_game_dir:String = ""
 var _cache_dir:String = "user://cache".path_join(SceneryInstancer.CACHE_DIRECTORY)
 var _existing_files:PackedStringArray = []
+var _existing_directories:PackedStringArray = []
 
 
 func before_each() -> void:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     _existing_files = _list_cache_files()
+    _existing_directories = DirAccess.get_directories_at(_cache_dir)
 
 
 func after_each() -> void:
     for file:String in _new_cache_files():
         DirAccess.remove_absolute(_cache_dir.path_join(file))
+    # the terrain chunks of a parsed scenery, a directory beside its cache entry
+    for directory:String in DirAccess.get_directories_at(_cache_dir):
+        if _existing_directories.has(directory):
+            continue
+        for file:String in DirAccess.get_files_at(_cache_dir.path_join(directory)):
+            DirAccess.remove_absolute(_cache_dir.path_join(directory).path_join(file))
+        DirAccess.remove_absolute(_cache_dir.path_join(directory))
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
@@ -35,11 +45,31 @@ func test_subscenes_are_cached_per_origin_and_match_in_place_parsing() -> void:
 
     var expected:Array = _describe(in_place)
     assert_eq(expected[0].size(), 7)
-    assert_eq(expected[1].size(), 3)
+    # big.scm's triangle straddles both grid lines through the origin: four cells, which its three
+    # placements share
+    assert_eq(expected[1].size(), 4)
     assert_eq(_describe(parsed), expected)
     assert_eq(_describe(cached), expected)
     assert_eq(cached.dependencies.keys().size(), 3)
     assert_true(cached.cacheable)
+
+
+## The parse writes the terrain out chunk by chunk, beside the cache entry, and the scenery streams it
+## from those files (ResourceLazyLoader), letting go of every one as it is freed
+func test_loaded_scenery_writes_its_terrain_chunks_as_files() -> void:
+    var registered:int = ResourceLazyLoader.resource_get_statistics()["registered"]
+    var scenery := MaszynaIncludeNode.new()
+    scenery.use_cache = false
+    scenery.filename = ROOT
+    add_child(scenery)
+    await wait_for_signal(scenery.loaded, LOAD_TIMEOUT_SEC)
+    var chunk_files:int = 0
+    for directory:String in DirAccess.get_directories_at(_cache_dir):
+        if not _existing_directories.has(directory):
+            chunk_files += DirAccess.get_files_at(_cache_dir.path_join(directory)).size()
+    assert_eq(chunk_files, 4, "one file per texture, cell and range")
+    scenery.free()
+    assert_eq(ResourceLazyLoader.resource_get_statistics()["registered"], registered, "chunks left registered")
 
 
 func _parse_threaded() -> MaszynaImporterContext:
@@ -47,12 +77,18 @@ func _parse_threaded() -> MaszynaImporterContext:
     return SceneryInstancer.parse_file_task(ROOT, {}, MaszynaImporterContext.new().get_state(), queue)
 
 
-## [models as [filename, position], triangle entries]
+## [models as [filename, position], terrain chunks as [texture, cell, range, vertex floats], sorted -
+## the order the chunks appear in is the order the workers finished in]
 func _describe(context:MaszynaImporterContext) -> Array:
     var models:Array = context.models.map(
         func(model:MaszynaModelData) -> Array: return [model.model_filename, model.position]
     )
-    return [models, context.triangles]
+    var chunks:Array = context.triangles_sink.get_geometries().map(
+        func(geometry:MaszynaTrianglesChunkGeometry) -> Array:
+            return [geometry.texture, geometry.cell, geometry.range_max, geometry.vertices.size()]
+    )
+    chunks.sort()
+    return [models, chunks]
 
 
 func _new_cache_files() -> PackedStringArray:

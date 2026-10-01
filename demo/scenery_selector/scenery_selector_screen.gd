@@ -9,6 +9,8 @@ signal scenery_selected(filename: String, train_id: String, skin_overrides: Dict
 signal quit_requested
 
 const DISSOLVE_TIME: float = 1.0
+## Project Setting: sceneries listed in folded groups by the first part of their title
+const GROUP_SETTING: String = "maszyna/starter/group_sceneries"
 
 ## UI feedback of the startup screens. Events are named after what happened, not after the
 ## sample - what each one sounds like is the bank's decision, not this screen's.
@@ -71,8 +73,23 @@ func _ready() -> void:
     var notes: PackedStringArray = []
     for file: String in _files:
         notes.append(file.get_basename().to_upper())
-    # the list selects its first row and reports it back, so the details follow from here on
-    %SceneryList.set_rows(_titles, notes)
+    var groups: PackedStringArray = []
+    if ProjectSettings.get_setting(GROUP_SETTING, true):
+        # "Bałtyk · SKM1" goes under "Bałtyk"
+        var names: PackedStringArray = []
+        for title: String in _titles:
+            names.append(title.get_slice(MaszynaSceneryInfo.PART_SEPARATOR, 0))
+        # and one scenery written as "Całkowo V2 Towarowe" goes under "Całkowo V2" when there is
+        # one - the shortest name of the others its own begins with, as whole words
+        for scenery_name: String in names:
+            var group_name: String = scenery_name
+            for other: String in names:
+                if scenery_name.begins_with(other + " ") and other.length() < group_name.length():
+                    group_name = other
+            groups.append(group_name)
+    %SceneryList.title_separator = MaszynaSceneryInfo.PART_SEPARATOR
+    # the list selects its first slot and reports it back, so the details follow from here on
+    %SceneryList.set_rows(_titles, notes, groups)
 
 
 ## The build caption is composed, not a msgid a Label translates itself; the tree sends this on

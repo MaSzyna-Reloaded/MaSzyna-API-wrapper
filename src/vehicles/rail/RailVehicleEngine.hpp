@@ -86,6 +86,8 @@ namespace godot {
             MAKE_MEMBER_GS(int, transmission_gear_teeth_motor, 0);
             MAKE_MEMBER_GS(int, transmission_gear_teeth_wheel, 0);
             MAKE_MEMBER_GS(double, transmission_efficiency, 1.0);
+            /* Wheel teeth over motor teeth, 1.0 without a gear (LoadFIZ_Engine, Mover.cpp) */
+            double get_transmission_ratio() const;
             MAKE_MEMBER_GS(double, maximum_traction_force, 0.0);
             MAKE_MEMBER_GS(double, motor_blowers_speed, 0.0);
             MAKE_MEMBER_GS(double, motor_blowers_sustain_time, 0.0);

@@ -36,6 +36,7 @@ namespace godot {
             double get_engine_temperature() const override;
             double get_retarder_fill() const override;
             double get_max_rpm() const override;
+            double get_idle_rpm_count() const override;
             void apply_configuration(const RailVehicleDieselEngine *p_engine) const override;
             void oil_pump(bool p_enabled) const override;
             void fuel_pump(bool p_enabled) const override;

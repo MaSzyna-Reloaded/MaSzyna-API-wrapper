@@ -14,12 +14,6 @@
 				Returns current position the light wrapper is on
 			</description>
 		</method>
-		<method name="devices_light">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="get_active_headlight_left_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -41,11 +35,6 @@
 			</description>
 		</method>
 		<method name="get_active_redmarker_right_enabled" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_devices_light_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>
 			</description>
@@ -145,17 +134,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_roof_light_dimmed" qualifiers="const">
-			<return type="bool" />
-			<description>
-			Whether the compartment (cab) light is dimmed.
-			</description>
-		</method>
-		<method name="get_roof_light_level" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
 		<method name="headlights_dim">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -186,19 +164,6 @@
 			<param index="0" name="light" type="String" />
 			<param index="1" name="enabled" type="bool" />
 			<description>
-			</description>
-		</method>
-		<method name="roof_light">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="roof_light_dim">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Dims the compartment (cab) light to 0.4 of its level ([code]cablightdim_sw[/code], original [code]Train.cpp:9745[/code]).
 			</description>
 		</method>
 	</methods>

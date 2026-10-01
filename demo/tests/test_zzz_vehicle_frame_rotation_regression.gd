@@ -87,7 +87,7 @@ func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
     player = PLAYER_SCENE.instantiate()
     player.auto_start = false
     add_child(player)
-    PlayerServer.player_enter_vehicle(vehicle.get_rid())
+    PlayerServer.player_take_over_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
 
     var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D

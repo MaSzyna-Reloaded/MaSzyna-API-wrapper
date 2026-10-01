@@ -979,10 +979,8 @@ static func _add_control_sound(
         sound_position:Vector3) -> StringName:
     if not filename:
         return &""
-    var stream := MaszynaAudioStream.new()
-    stream.file_path = filename
     var clip := SfxClip.new()
-    clip.stream = stream
+    clip.stream = MmdSoundEventBuilder.build_stream(filename, false)
     var clips:Array[SfxClip] = [clip]
     var event := SfxEvent.new()
     event.name = StringName("%s_%s" % [widget.name, sound_case])
@@ -990,6 +988,8 @@ static func _add_control_sound(
     event.spatial_config = SfxSpatialConfig.new()
     event.spatial_config.position = sound_position
     event.spatial_config.max_distance = CONTROL_SOUND_MAX_DISTANCE
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, null, 0.0)
     events.append(event)
     return event.name
 

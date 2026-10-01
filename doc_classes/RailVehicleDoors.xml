@@ -30,6 +30,12 @@
 				Keep the exterior mirrors folded ([code]MirrorForbidden[/code], the cab's [code]mirrors_sw[/code]). Command [code]mirrors_forbid[/code].
 			</description>
 		</method>
+		<method name="get_left_closed" qualifiers="const">
+			<return type="bool" />
+			<description>
+				The left doors are fully closed.
+			</description>
+		</method>
 		<method name="get_left_local_open" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -113,6 +119,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_right_closed" qualifiers="const">
+			<return type="bool" />
+			<description>
+				The right doors are fully closed.
+			</description>
+		</method>
 		<method name="get_right_local_open" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -175,6 +187,14 @@
 			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
 			<description>
 				Open or close doors on the specified side
+			</description>
+		</method>
+		<method name="operate_doors_locally">
+			<return type="void" />
+			<param index="0" name="state" type="bool" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
+			<description>
+				Open or close the doors on the specified side with the vehicle's own door handle, as a passenger or the guard works it - nothing is sent along the trainset ([code]OperateDoors(range_t::local)[/code]). Commands [code]doors_left_local[/code], [code]doors_right_local[/code].
 			</description>
 		</method>
 		<method name="permit_doors">
@@ -316,6 +336,20 @@
 			Voltage of low-voltage circuit required to control doors
 		</member>
 	</members>
+	<signals>
+		<signal name="doors_closed">
+			<param index="0" name="side" type="int" />
+			<description>
+				The doors on [param side] ([enum Side]) came fully closed.
+			</description>
+		</signal>
+		<signal name="doors_opened">
+			<param index="0" name="side" type="int" />
+			<description>
+				The doors on [param side] ([enum Side]) came fully open.
+			</description>
+		</signal>
+	</signals>
 	<constants>
 		<constant name="PERMIT_LIGHT_CONTINUOUS" value="0" enum="PermitLight">
 			Continuous light

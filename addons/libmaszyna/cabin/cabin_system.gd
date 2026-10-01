@@ -16,6 +16,10 @@ signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Va
 signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant)
 ## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
 signal vehicle_cabin_occupied_changed(vehicle_rid:RID, cabin_occupied:int)
+## The light of a cab shines at another level (cab_set_light_level())
+signal cab_light_level_changed(vehicle_rid:RID, cab:int, level:float)
+## The instrument light of a cab came on or went out (cab_set_instrument_light_enabled())
+signal cab_instrument_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
 ## A radio message sent from `position`: heard on the radio of the player's cab tuned to
 ## `channel`, within `reach` [m] of it when that is positive (simulation::radio_message(),
 ## simulation.cpp:506); `transcript` is what it says, null when unknown
@@ -181,6 +185,35 @@ func _on_cabin_camera_configuration_changed(vehicle_rid:RID) -> void:
 
 static func _key(vehicle_rid:RID, cab:int) -> String:
     return "%d:%d" % [vehicle_rid.get_id(), cab]
+
+
+## The cab light of a cab at `level` (0..1): its low-poly cab is lit at it as well
+## (RailVehicleRenderingServer.vehicle_set_cab_light_level())
+func cab_set_light_level(vehicle_rid:RID, cab:int, level:float) -> void:
+    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+    if state.light_level == level:
+        return
+    state.light_level = level
+    RailVehicleRenderingServer.vehicle_set_cab_light_level(vehicle_rid, cab, level)
+    cab_light_level_changed.emit(vehicle_rid, cab, level)
+
+
+func cab_get_light_level(vehicle_rid:RID, cab:int) -> float:
+    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+    return state.light_level if state else 0.0
+
+
+func cab_set_instrument_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+    if state.instrument_light_enabled == enabled:
+        return
+    state.instrument_light_enabled = enabled
+    cab_instrument_light_changed.emit(vehicle_rid, cab, enabled)
+
+
+func cab_get_instrument_light_enabled(vehicle_rid:RID, cab:int) -> bool:
+    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+    return state.instrument_light_enabled if state else false
 
 
 func get_cabin_state(vehicle_rid:RID, cab:int) -> CabinState:

@@ -172,6 +172,8 @@ static func build(
         if ambient:
             for sound_event:SfxEvent in bank_events:
                 sound_event.master_track.volume_db = linear_to_db(AMBIENT_GAIN)
+        # the once and the looped event are one sound source of the original
+        MmdSoundEventBuilder.shape_emitter(bank_events, null, 0.0)
         # streamed as far as it is heard; heard everywhere (-1), it is never out of reach
         var sound_rid:RID = ScenerySoundServer.sound_create(
                 bank_events[0], bank_events[1], sound.position, spatial_config.max_distance)
@@ -576,11 +578,8 @@ static func _set_memcompare(
 
 
 static func _build_sound_event(file:String, loop:bool, spatial_config:SfxSpatialConfig) -> SfxEvent:
-    var stream:MaszynaAudioStream = MaszynaAudioStream.new()
-    stream.file_path = file
-    stream.loop = loop
     var clip:SfxClip = SfxClip.new()
-    clip.stream = stream
+    clip.stream = MmdSoundEventBuilder.build_stream(file, loop)
     var event:SfxEvent = SfxEvent.new()
     event.spatial_config = spatial_config
     var clips:Array[SfxClip] = [clip]

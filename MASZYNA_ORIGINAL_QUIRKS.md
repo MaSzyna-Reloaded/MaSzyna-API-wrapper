@@ -91,6 +91,15 @@ interface.
   the vehicle's (`Driver.h:377`). Kept as is (`NO_MED_DECELERATION`, `EIM_MAX_DECELERATION`).
 * **IncBrake() divides by `ActualProximityDist` unguarded** in the DMU's stronger braking
   (`fBrakeDist / ActualProximityDist`, `Driver.cpp:3140`). Kept as is.
+* **The wait at a stop is a negative timer.** The station's passenger exchange sets
+  `fStopTime` to minus the longest exchange (`WaitingSet()`, `Driver.cpp:2652`), the timer counts
+  up (`Driver.cpp:5910`), `check_load_exchange()` pushes it back down while any car still
+  exchanges (`Driver.cpp:6767-6781`), a speed above 2 km/h resets it (the "force timer reset" HACK,
+  `Driver.cpp:7449-7452`) and `VelDesired` is 0 while it is negative (`Driver.cpp:7454-7457`); the
+  same field is the wait of `Wait_for_orders` and `Shunt`. The doors are closed in `Doors(false)`,
+  called from the tractive force code before adding power (`Driver.cpp:7949`). Wrapper: not
+  ported as such - `StationServer` keeps the dispatch as steps (exchange, wait for the departure,
+  doors closed), each over on the cars' own events, and the driver stands while there is one.
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 
@@ -203,6 +212,15 @@ interface.
   same section are motor parameters of an electric motor or the gears of a diesel
   (`readMPTDieselEngine()`, `Mover.cpp:9175`: idx, mIsat, fi, mfi - the ratio, the lowest and the
   top speed of the gear).
+* **A key given twice in one FIZ line: the first one counts.** `extract_value()` looks the key up
+  with `find(" " + Key + "=")` (`utilities/utilities.h:170`), so a repeated key's later value is
+  never read. The data relies on it: BR285's `Engine:` says `Vadd=5.5 Cr=1 Vadd=0.0 Cr=1.0`, and
+  the original runs it with `Vadd = 5.5 / 3.6`. `Vadd = 0` turns the diesel-electric traction
+  force into `1000 * 0 / (0 + 0)` (`Mover.cpp:5310`) the moment the line contactor closes with
+  the vehicle standing and `tempPmax` still zero (the engine not up to speed, or `eimic` at zero),
+  and the NaN then stays in `V`, `Vel`, the brakes and the wheels for good. Wrapper:
+  `FizLineUtil.read_key_values()` keeps a key's first value too; it used to keep the last, and
+  that was the BR285's NaN speed (`docs/findings-archive.md`, 2026-09-30).
 
 ## Cab definitions (MMD data)
 

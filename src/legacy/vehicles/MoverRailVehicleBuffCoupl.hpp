@@ -30,5 +30,6 @@ namespace godot {
             bool is_main_hose_connected(RailVehicleController::CouplerEnd p_end) const override;
             bool is_coupling_owner(RailVehicleController::CouplerEnd p_end) const override;
             RailVehicleController::CouplerEnd get_connected_end(RailVehicleController::CouplerEnd p_end) const override;
+            double get_coupler_max_force(RailVehicleController::CouplerEnd p_end) const override;
     };
 } // namespace godot

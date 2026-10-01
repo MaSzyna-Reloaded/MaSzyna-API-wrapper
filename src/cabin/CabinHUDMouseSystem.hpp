@@ -4,7 +4,9 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
+#include <godot_cpp/variant/packed_int64_array.hpp>
 #include <godot_cpp/variant/rid.hpp>
 
 namespace godot {
@@ -45,13 +47,19 @@ namespace godot {
             }
 
         private:
-            /// What the cursor ray can hit of one control or occluder: its mesh's triangles, taken
-            /// once, in its own space. A control is its own mesh only, not the meshes under it - the
-            /// original picks the control's exact submodel (Train.cpp:64 control_mapper::find), so
-            /// E186's op12 button under universal1's panel is nobody's control
-            struct Pickable {
+            /// A mesh the cursor ray can hit: its triangles, taken once, in its own space
+            struct Part {
                     ObjectID mesh;
                     PackedVector3Array faces;
+            };
+
+            /// What the cursor ray can hit of one control or occluder, its own mesh first. A control
+            /// is its mesh and every mesh under it (EP07's and SM42's brake valves: the handle
+            /// raczkaKranu under zasadniczy), but a control with another control under it is a
+            /// panel and its own mesh only (E186's universal1 with op1/op2, and op12 under it that
+            /// is nobody's - the original picks a control's exact submodel, Train.cpp:64)
+            struct Pickable {
+                    Vector<Part> parts;
             };
 
             struct Control {
@@ -74,7 +82,7 @@ namespace godot {
                     /// Outlined heavier and tinted - see SMALL_CONTROL_SIZE
                     bool small = false;
                     /// Of a control that turns: the point of it farthest from the axis, where the
-                    /// hand holds it (the control mesh's space)
+                    /// hand holds it - on its handle (the control's own mesh's space)
                     Vector3 grip;
                     /// Fixed signs of an increase per mouse axis (x: right, y: down), in place of
                     /// the ones the grip gives; zero to follow the grip
@@ -109,7 +117,10 @@ namespace godot {
             /// nothing) - the drag follows the control as the hand would
             Vector2 drag_signs;
 
-            static Pickable _pickable(uint64_t p_mesh_instance_id);
+            static Pickable _pickable(const PackedInt64Array &p_mesh_instance_ids);
+            /// Of a control that turns by `p_step_rotation`: the point of it farthest from the axis,
+            /// in its own mesh's space; zero for one that does not turn
+            static Vector3 _grip(const Pickable &p_pickable, const Basis &p_step_rotation);
             /// The nearest hit of the segment on the pickable closer than `r_distance`: updates
             /// `r_distance` and `r_point` (world space) and returns true
             static bool

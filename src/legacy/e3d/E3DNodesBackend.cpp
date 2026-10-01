@@ -129,8 +129,12 @@ namespace godot {
                 geometry->set_material_override(settings.value.material_override);
             }
         }
-        for (const Ref<ShaderMaterial> &material: p_instance.emissive_materials) {
-            material->set_shader_parameter("emission_energy", p_instance.emission_energy);
+        for (const E3DInstanceData::EmissiveMaterial &emissive: p_instance.emissive_materials) {
+            const float *submodel_energy = p_instance.submodel_emission_energies.getptr(emissive.submodel);
+            const float energy = submodel_energy != nullptr ? *submodel_energy : p_instance.emission_energy;
+            if (energy >= 0.0) {
+                emissive.material->set_shader_parameter("emission_energy", energy);
+            }
         }
     }
 
@@ -178,13 +182,14 @@ namespace godot {
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
                 Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
-                // the instance drives its self-illumination (instance_set_emission_energy()), so it
-                // draws with copies of its own rather than the materials every instance shares
+                // the instance drives its self-illumination (instance_set_emission_energy(),
+                // instance_set_submodel_emission_energy()), so it draws with copies of its own
+                // rather than the materials every instance shares
                 if (const Ref<ShaderMaterial> shader_material = material;
-                    p_instance.emission_energy >= 0.0 && shader_material.is_valid() &&
+                    (p_instance.emission_energy >= 0.0 || p_instance.submodel_emission) && shader_material.is_valid() &&
                     bool(shader_material->get_shader_parameter("emission_enabled"))) {
                     const Ref<ShaderMaterial> own = shader_material->duplicate();
-                    p_instance.emissive_materials.push_back(own);
+                    p_instance.emissive_materials.push_back({own, submodel.ptr()});
                     material = own;
                 }
                 if (material.is_valid()) {

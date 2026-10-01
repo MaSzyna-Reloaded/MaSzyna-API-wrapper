@@ -6,6 +6,9 @@ comments cite those entries by date and title. Check the matching area before di
 anything. Open work belongs in `TODO.md`.
 
 ## Diagnosing
+* A local clang-tidy older than CI's (`LLVM_VERSION` in `clang-tidy.yml`) passes what CI fails:
+  checks added since are unknown to it. Run CI's major version (`pip install clang-tidy==22.*`).
+  *(10-01 style-check red behind a green local check)*
 * Measure the data before reading the code, and after two failed hypotheses read off the code,
   stop reading and print. *(09-24 pantograph lost the wire; 09-23 four guesses before one print)*
 * Split frame time into CPU and GPU before any performance hypothesis, and confirm the adapter,
@@ -27,8 +30,14 @@ anything. Open work belongs in `TODO.md`.
   core. A shipped build keeps its symbol table. *(09-24 shipped library had no symbols)*
 * When a fix is being reinvented, `git log -S` the moved code and read the commit that made it
   first. *(09-24 simulation stepped after readers)*
-* Many copies of one sound: the defect is phase, not level. Look for a start offset first.
-  *(09-24 trainset ringing)*
+* Many copies of one sound: the defect is phase, not level. Look for a start offset first, and
+  prove it on every path a clip starts by (automation, timeline, sustain). *(09-24 trainset
+  ringing)*
+* Prove a sound fix on the stream class the game plays (`MaszynaAudioStream` reads its file only on
+  the first playback), and give every emitter its own pitch factor as the original does.
+  *(10-01 start offset that never reached the game)*
+* No delay-based effect (reverb, echo, Haas stereo widening) on the bus of the vehicles' sounds:
+  it combs many copies of one recording. *(10-01 a phaser on the Exterior bus)*
 * Prove a fix to a value by printing it where it is used, not where it is set. A later line
   can overwrite it. *(09-24 trainset ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).
@@ -142,7 +151,13 @@ anything. Open work belongs in `TODO.md`.
 * "The AI can drive it, the player cannot": log the AI's vehicle commands and replay them on the
   player's path - what the AI sends and the cab cannot is the gap. *(09-28 ST45 FuelStart)*
 
+* A FIZ key given twice counts with its first value (`extract_value`'s `find()`); a dictionary
+  that keeps the last one made BR285's `Vadd` 0 and its traction force 0/0. *(09-30 BR285 NaN)*
+
 ## State, ownership, events
+* A hot path takes a vehicle's component once and calls its getters; the state dump is rebuilt
+  after every step or command and the config dump on every call, so one value read from either
+  costs the whole dictionary. *(09-30 the sound system's dump per frame)*
 * An action that needs two things is spent only when both exist: a call with an invalid handle is
   ignored silently, and the flag that said "still to do" is gone. *(09-30 the vehicles stood off
   their tracks in the editor)*
@@ -251,9 +266,10 @@ anything. Open work belongs in `TODO.md`.
 * A bilateral detach that clears both backend links retains the former neighbour until both
   owners have announced their state change; do not invalidate a rendering cache to compensate
   for the missing event. *(09-30 recoupled wagon kept stale coupler state)*
-* A cab control is its own submodel only - a mesh under it is another control's or nobody's, as
-  the original's `control_mapper::find` (`Train.cpp:64`). *(09-29 the E186 screen's OP1/OP2
-  turned its page off; 09-30 its op12 still did)*
+* A cab control is its mesh and every mesh under it (a handle), unless another control lies under
+  it - then it is a panel and its own mesh only. Decided by the model's tree, never by the widget
+  class or the cab. *(09-29 the E186 screen's OP1/OP2 turned its page off; 09-30 its op12 still
+  did; 09-30 EP07's brake valve and reverser handles could not be grabbed)*
 * Only an opaque submodel hides a cab control from the mouse - a translucent one is not in the
   original's pick pass (`opengl33renderer.cpp:1208`). *(09-30 E186's spring brake release could
   not be clicked through its glass cap)*
@@ -282,6 +298,9 @@ anything. Open work belongs in `TODO.md`.
 * A RenderingServer RID inherits none of its node's defaults. Set every parameter the node's
   constructor sets, and place particles through the instance transform. *(09-21 RenderingServer
   light; 09-21 smoke at origin)*
+* A full-screen pass that reads `hint_screen_texture` only adds (`blend_add`): the copy is taken
+  before translucent geometry, and writing it back erases it. *(09-30 the torch put out the
+  signals)*
 * `color`, `color_initial_ramp` and `amount_ratio` reach particles already in the air. Only the
   emission itself affects new ones. *(09-21 plume cut off)*
 * An emitter whose rate its owner drives spawns nothing until the owner has set it - a default
@@ -338,6 +357,8 @@ anything. Open work belongs in `TODO.md`.
 * The export reconverts a scene only when its own file changes; a scene instancing another,
   changed one (`[editable]` above all) ships its old diff of it. A release is exported from an
   empty `demo/.godot/exported`. *(09-29 vehicle card missing in release)*
+* The export is run by the editor, and the editor loads the debug library whatever the export:
+  every `release-*` export builds `compile-debug` too. *(09-30 release export without CabinSystem)*
 
 ## Tests
 * A test is checked against a build without the fix, and one that cannot fail is deleted.
@@ -359,6 +380,11 @@ anything. Open work belongs in `TODO.md`.
 * A scenery vehicle has a driver from the start: taken over after it has stood, it may be held
   by its independent brake (Driver.cpp:8166-8180). A test that drives it sets every control it
   needs, the independent brake too. *(09-30 the EP07 orientation test braked by its driver)*
+* Only a vehicle standing on a track is stepped, and the component a test built its controller
+  from is a description, not the vehicle's: a test of a component's tick puts the vehicle on a
+  track and takes the component by `VehicleServer.vehicle_component_get()`. After an operation,
+  read the component's getters - the state dump is cached until the next step. *(09-30 the load
+  exchange that never ran)*
 
 * Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
   every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less
@@ -370,6 +396,9 @@ anything. Open work belongs in `TODO.md`.
 * A cab control sounds through the cab's bank as an event placed at its submodel, never through
   its own `AudioStream` player. *(09-25 cab clicks cut each other off)*
 * A gain derived as a normalisation divisor is never also applied as a gain. *(09-21 +38 dB)*
+* A sound whose original computes its gain at the call site (filters, hysteresis, a hand-made
+  fade) is ported as that code with its own state, not as a curve over one parameter. *(10-01
+  the local brake hiss keyed to a parameter nobody sent)*
 * Check what the MMD declares (`placement:`) before modulating with a parameter. *(09-21 brake
   hiss)*
 * Stopping a player resets what its triggers remember about playing. A sound that is due

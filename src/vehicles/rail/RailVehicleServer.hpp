@@ -2,6 +2,7 @@
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 
 #include "RailVehicleNeighbour.hpp"
@@ -205,6 +206,9 @@ namespace godot {
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_attached(int64_t p_flag, const RID &p_vehicle);
             void _on_vehicle_coupler_detached(int64_t p_flag, const RID &p_vehicle);
+            void _on_load_add_command(double p_amount, int p_side, const RID &p_vehicle);
+            void _on_load_remove_command(double p_amount, int p_side, const RID &p_vehicle);
+            RailVehicleLoad *_get_load(const RID &p_vehicle) const;
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
             Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
@@ -270,6 +274,17 @@ namespace godot {
             void vehicle_set_type_name(const RID &p_vehicle, const String &p_type_name);
             String vehicle_get_type_name(const RID &p_vehicle) const;
             void vehicle_set_load(const RID &p_vehicle, const String &p_load_name, double p_load_amount);
+            /* So much more to get on the vehicle at the platform's side, in its own frame; an empty
+             * vehicle takes p_load_name, or the first load it accepts (RailVehicleLoad::load_add()).
+             * The vehicle's `load_add` command (amount, side) comes here. */
+            void load_add(
+                    const RID &p_vehicle, double p_amount, RailVehicleLoad::PlatformSide p_side,
+                    const String &p_load_name = String());
+            /* So much more to get off the vehicle at the platform's side (RailVehicleLoad::load_remove());
+             * the vehicle's `load_remove` command (amount, side) comes here */
+            void load_remove(const RID &p_vehicle, double p_amount, RailVehicleLoad::PlatformSide p_side);
+            /* The seconds the vehicle's exchange still takes, 0 for none or a vehicle without a load */
+            double load_get_exchange_time(const RID &p_vehicle) const;
             /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
              * somebody took it (DriverSystem) */
             void vehicle_wake(const RID &p_vehicle);

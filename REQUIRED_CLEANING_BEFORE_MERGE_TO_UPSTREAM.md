@@ -55,7 +55,7 @@ Legend:
 - [ ] [RC-028](#rc-028) `RailVehicleHorns` includes the vendored Mover
 - [ ] [RC-029](#rc-029) `Mover*` classes public and instantiated from GDScript
 - [ ] [RC-030](#rc-030) `Mover*` components hold state the Mover does not have
-- [ ] [RC-031](#rc-031) Brake backend keeps a rate only the sound needs
+- [x] [RC-031](#rc-031) Brake backend keeps a rate only the sound needs
 - [ ] [RC-032](#rc-032) Radio component calls up into the vehicle server
 - [ ] [RC-033](#rc-033) `E3DInstanceBackend` and `E3DRenderingServer` include each other
 - [ ] [RC-034](#rc-034) Driver layer tracks player-controlled vehicles
@@ -493,6 +493,10 @@ Legend:
   `RailVehicle3D`).
 * **Decision:** the lighting component announces its own change; the base controller loses the
   rail knowledge.
+* **Done 2026-09-30 (lighting):** the cab light and the instrument light are the cab's
+  (`LegacyCabinCabLights`, `CabinState`), not the vehicle's: `lighting`, `prev_roof_light_enabled`,
+  `roof_light_changed` and `VehicleServer.vehicle_roof_light_changed` are gone, and the low-poly
+  cabs are lit by `CabinSystem.cab_set_light_level()`. The rail forward declarations remain.
 
 ### RC-024
 
@@ -581,8 +585,7 @@ Legend:
     wipers at all")
   * `MoverRailVehicleWheels.hpp:25-27`: `wheel_angle_*_deg` ("vehicle layer's, not the Mover's")
   * `MoverRailVehicleDoors.hpp:62-63`: `mirror_left_position`
-  * `MoverRailVehicleLighting.hpp:49-57`: `roof_light_active`, `headlights_dimmed`,
-    `roof_light_dimmed`, `devices_light_active`
+  * `MoverRailVehicleLighting.hpp`: `headlights_dimmed` (the cab lights went to the cab layer)
   * `MoverRailVehicleController.hpp:27-40`: tachometer, `distance_counter`
 * **Rule:** "if this layer were replaced wholesale, would the field go with it?"
 * **Problem:** replacing the backend would lose vehicle state.
@@ -597,6 +600,8 @@ Legend:
 * **Problem:** `local_brake_pressure_change_rate` is filtered (`0.9`/`0.1`) in the brake backend,
   and the comment says it exists for `maszyna_brake_sfx_event_factory.gd`'s hiss automation.
 * **Decision:** the sound layer derives the rate from the pressure it already receives.
+* **Done 2026-10-01:** the filter is gone from the brake; `BrakeSoundModel` keeps the original's
+  `m_localbrakepressurechange` (Train.cpp:8480-8486) from `brake_loco_pressure`.
 
 ### RC-032
 

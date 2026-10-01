@@ -30,8 +30,8 @@ Code generation:
   a key, a button, a signal, another object - calls that operation, not a private helper chain
   (`_request_*` -> `_dirty` -> `_process` -> ...) that ends up in the same place by another road.
   A second road to the same effect is deleted, not added. Example: the player leaves a vehicle
-  only through `PlayerServer.player_leave_vehicle()` (`player_enter_vehicle()` leaves the current
-  one itself), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
+  only through `PlayerServer.player_leave_vehicle()` (`player_take_over_vehicle()` and
+  `player_enter_vehicle()` leave the current one themselves), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
   leads there
 * PROHIBITED: **treating a view change as leaving the cab.** The player drives a vehicle
   (`PlayerServer.player_get_vehicle()`, the original's `simulation::Train`) until
@@ -86,6 +86,10 @@ Code generation:
   as themselves and literal positional indices - see `CODE_STYLE.md`
 * PROHIBITED: **a getter never changes state** - no filter ticks, flag consumption, signals,
   writes elsewhere or lazy building in any `get_*`/property getter/`_get()` - see `CODE_STYLE.md`
+* PROHIBITED: **a hot path never reads the state or config dump** - per frame, per step or per
+  tick a vehicle's value comes from its component (taken once, typed getter) and configuration
+  from the component's properties; `vehicle_dump_state()`/`vehicle_dump_config()` only for
+  readers driven by a name out of the data (cab/MMD, console, tests) - see `CODE_STYLE.md`
 * PROHIBITED: **never reach a known class through `Object::call("method_name")`**, nor a singleton
   by name or `get_tree()->get_root()->get_node_or_null(name)`; a string call only where the class
   cannot be known at build time, with a comment saying so - see `CODE_STYLE.md`

@@ -390,7 +390,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     assert_true(not light.on_target_path)
     assert_eq(light.global_position, on_node.global_position)
     assert_true((-light.global_basis.z).normalized().is_equal_approx(Vector3.DOWN))
-    assert_eq(light.state_property, "roof_light_level")
+    assert_eq(light.cab_light, CabinState.Light.CAB)
     assert_eq(diagnostics.size(), 0)
 
 

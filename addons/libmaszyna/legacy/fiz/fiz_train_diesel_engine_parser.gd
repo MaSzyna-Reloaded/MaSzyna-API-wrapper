@@ -83,13 +83,57 @@ static func apply_clutch(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
         node.clutch_friction = FizLineUtil.get_float(kv, "engagefriction")
 
 
-## Engine:'s keys both diesel engine kinds share (Mover.cpp:11326-11338); the cooling ones
-## (HeaterMin/MaxTemperature, NominalCoolingPower) are not mapped yet (TODO.md).
+## Engine:'s keys both diesel engine kinds share (Mover.cpp:11340-11373 of the original): the
+## oil pump and the cooling. EngineMaxTemperature has no field in the vendored Mover (TODO.md).
 static func apply_diesel_common(kv: Dictionary, node: RailVehicleDieselEngine) -> void:
     if kv.has("OilMinPressure"):
         node.oil_pump_pressure_minimum = FizLineUtil.get_float(kv, "OilMinPressure")
     if kv.has("OilMaxPressure"):
         node.oil_pump_pressure_maximum = FizLineUtil.get_float(kv, "OilMaxPressure")
+    if kv.has("HeatKW"):
+        node.cooling_heat_kw = FizLineUtil.get_float(kv, "HeatKW")
+    if kv.has("HeatKV"):
+        node.cooling_heat_kv = FizLineUtil.get_float(kv, "HeatKV")
+    if kv.has("HeatKFE"):
+        node.cooling_heat_kfe = FizLineUtil.get_float(kv, "HeatKFE")
+    if kv.has("HeatKFS"):
+        node.cooling_heat_kfs = FizLineUtil.get_float(kv, "HeatKFS")
+    if kv.has("HeatKFO"):
+        node.cooling_heat_kfo = FizLineUtil.get_float(kv, "HeatKFO")
+    if kv.has("HeatKFO2"):
+        node.cooling_heat_kfo2 = FizLineUtil.get_float(kv, "HeatKFO2")
+    if kv.has("WaterMinTemperature"):
+        node.cooling_water_min_temperature = FizLineUtil.get_float(kv, "WaterMinTemperature")
+    if kv.has("WaterMaxTemperature"):
+        node.cooling_water_max_temperature = FizLineUtil.get_float(kv, "WaterMaxTemperature")
+    if kv.has("WaterFlowTemperature"):
+        node.cooling_water_flow_temperature = FizLineUtil.get_float(kv, "WaterFlowTemperature")
+    if kv.has("WaterCoolingTemperature"):
+        node.cooling_water_cooling_temperature = FizLineUtil.get_float(kv, "WaterCoolingTemperature")
+    if kv.has("WaterShutters"):
+        node.cooling_water_shutters = FizLineUtil.get_bool(kv, "WaterShutters")
+    if kv.has("WaterAuxCircuit"):
+        node.cooling_water_aux_circuit = FizLineUtil.get_bool(kv, "WaterAuxCircuit")
+    if kv.has("WaterAuxMinTemperature"):
+        node.cooling_water_aux_min_temperature = FizLineUtil.get_float(kv, "WaterAuxMinTemperature")
+    if kv.has("WaterAuxMaxTemperature"):
+        node.cooling_water_aux_max_temperature = FizLineUtil.get_float(kv, "WaterAuxMaxTemperature")
+    if kv.has("WaterAuxCoolingTemperature"):
+        node.cooling_water_aux_cooling_temperature = FizLineUtil.get_float(kv, "WaterAuxCoolingTemperature")
+    if kv.has("WaterAuxShutters"):
+        node.cooling_water_aux_shutters = FizLineUtil.get_bool(kv, "WaterAuxShutters")
+    if kv.has("OilMinTemperature"):
+        node.cooling_oil_min_temperature = FizLineUtil.get_float(kv, "OilMinTemperature")
+    if kv.has("OilMaxTemperature"):
+        node.cooling_oil_max_temperature = FizLineUtil.get_float(kv, "OilMaxTemperature")
+    if kv.has("WaterCoolingFanSpeed"):
+        node.cooling_fan_speed = FizLineUtil.get_float(kv, "WaterCoolingFanSpeed")
+    if kv.has("HeaterMinTemperature"):
+        node.cooling_heater_min_temperature = FizLineUtil.get_float(kv, "HeaterMinTemperature")
+    if kv.has("HeaterMaxTemperature"):
+        node.cooling_heater_max_temperature = FizLineUtil.get_float(kv, "HeaterMaxTemperature")
+    if kv.has("NominalCoolingPower"):
+        node.cooling_nominal_power = FizLineUtil.get_float(kv, "NominalCoolingPower")
 
 
 ## The torque converter and the retarder behind it (Mover.cpp:11214-11241)

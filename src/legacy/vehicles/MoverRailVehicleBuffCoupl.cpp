@@ -34,6 +34,11 @@ namespace godot {
                                 : RailVehicleController::COUPLER_END_FRONT;
     }
 
+    double MoverRailVehicleBuffCoupl::get_coupler_max_force(const RailVehicleController::CouplerEnd p_end) const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Couplers[p_end].FmaxC : 0.0;
+    }
+
 
     void MoverRailVehicleBuffCoupl::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();
@@ -145,7 +150,8 @@ namespace godot {
             return;
         }
         // what the Mover made of it: each coupler's strength [N], front and rear (FmaxC)
-        p_config["coupler_max_force"] =
-                PackedFloat64Array({mover->Couplers[end::front].FmaxC, mover->Couplers[end::rear].FmaxC});
+        p_config["coupler_max_force"] = PackedFloat64Array(
+                {get_coupler_max_force(RailVehicleController::COUPLER_END_FRONT),
+                 get_coupler_max_force(RailVehicleController::COUPLER_END_REAR)});
     }
 } // namespace godot

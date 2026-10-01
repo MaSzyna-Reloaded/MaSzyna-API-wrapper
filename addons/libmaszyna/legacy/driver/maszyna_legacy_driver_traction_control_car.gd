@@ -18,7 +18,7 @@ var driving:bool = false
 
 
 func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
-    if int(VehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)) > 0:
+    if main_position_count(situation) > 0:
         driving = true
     return false
 
@@ -26,7 +26,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = false) -> bool:
     driving = false
     # at a cab's activation it goes to zero at once
-    if force and int(VehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)) > 0:
+    if force and main_position_count(situation) > 0:
         for _step:int in mini(main_powercontroller_position(situation), 2):
             step_main(situation, -1)
     return false
@@ -34,14 +34,14 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
 
 ## control_handles() goes by the engine the car drives (mvControlling, Driver.cpp:6440)
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var controlled:RailVehicleEngine.EngineType = int(VehicleServer.vehicle_dump_state(situation.controlling).get(
-            "engine_type", RailVehicleEngine.NONE)) as RailVehicleEngine.EngineType
-    if controlled == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    if engine and engine.get_type() == RailVehicleEngine.ELECTRIC_SERIES_MOTOR:
         control_series_motor_handles(situation)
 
 
 func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    if int(VehicleServer.vehicle_dump_config(situation.controlling).get("main_controller_position_max", 0)) <= 0:
+    if main_position_count(situation) <= 0:
         return
     if not driving:
         # the line off at once, whatever the time
@@ -52,18 +52,20 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     if action_time < 0.0 or not situation.trainset.ready:
         return
     # the second position of the reverser, so that an EN57 drives at full field (Driver.cpp:3874)
-    if int(CabinSystem.vehicle_state_value(situation.vehicle, "direction", 0)) > 0:
+    if VehicleServer.vehicle_get_controller(situation.vehicle).get_direction() > 0:
         CabinSystem.act(situation.vehicle, situation.cab, MaszynaLegacyDriverHints.REVERSER, &"increase")
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
-    var main:int = controller_position(situation, "controller_main_position")
-    if main > 0 and not state.get("line_contactor_closed", false):
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+    var main:int = main_controller_position(situation)
+    if main > 0 and not (engine and engine.is_line_contactor_closed()):
         # the line contactors open: to zero, and wait for the camshaft to turn back
         for _step:int in 2:
             step_main(situation, -1)
-    elif not (main == 0 and int(state.get("controller_main_actual_position", 0)) > 0):
+    elif not (main == 0 and (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController)
+            .get_controller_main_actual_position() > 0):
         # from the position it stands at on, every one the speed wanted takes
         for position:int in range(main, POSITION_VELOCITIES.size()):
             if situation.speed.velocity_desired >= POSITION_VELOCITIES[position]:
                 step_main(situation, 1)
-    if controller_position(situation, "controller_main_position") > 0:
+    if main_controller_position(situation) > 0:
         action_time = -HOLD_TIME

@@ -126,9 +126,10 @@ func hold(seconds:float) -> void:
 ## 6232-6240): the time it waits runs on, and the line's voltage
 func read(situation:Situation, elapsed:float) -> void:
     action_time += elapsed
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
-    voltage = VOLTAGE_SMOOTHING * (voltage + float(state.get("current_collector/voltage", 0.0)))
-    if voltage < float(state.get("current_collector/min_main_switch_voltage", 0.0)) \
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+    voltage = VOLTAGE_SMOOTHING * (voltage + (engine.get_collector_voltage() if engine else 0.0))
+    if voltage < (engine.get_collector_min_main_switch_voltage() if engine else 0.0) \
             and action_time >= MaszynaLegacyAIDriver.PREPARE_TIME:
         action_time = -LOW_VOLTAGE_WAIT_MIN - randf() * LOW_VOLTAGE_WAIT_SPREAD
 
@@ -137,30 +138,34 @@ func read(situation:Situation, elapsed:float) -> void:
 ## control_relays(), control_motor_connectors(), control_wheelslip(), Driver.cpp:7925-7952,
 ## 7967-7993, 6200-6217); false when the power and the brakes are to be left alone
 func prepare(situation:Situation) -> bool:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
+    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
     if action_time >= 0.0:
         if situation.trainset.motor_overload_relay_open:
             zero(situation)
             # tractionnmotoroverloadreset: a press of the relay's reset button
             CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"hold")
             CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"release")
-        if not state.get("relay_ground", true):
+        if not controlling.get_relay_ground():
             zero(situation)
             MaszynaLegacyDriverHints.send(situation.vehicle, "ground_relay_reset")
     if retry:
         zero(situation)
         retry = false
     # after a Radio-Stop the power only comes off, nothing else is touched
-    if CabinSystem.vehicle_state_value(situation.vehicle, "radio_stop_active", false) \
-            and float(CabinSystem.vehicle_state_value(situation.vehicle, "speed", 0.0)) > MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
+    if (VehicleServer.vehicle_get_controller(situation.vehicle) as RailVehicleController).get_radio_stop_active() \
+            and VehicleServer.vehicle_get_speed(situation.vehicle) > MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
         zero(situation)
         return false
-    var slipping:bool = state.get("slipping_wheels", false)
-    var sanding:bool = state.get("sand_active", false)
+    var wheels:RailVehicleWheels = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_WHEELS) as RailVehicleWheels
+    var slipping:bool = wheels != null and wheels.get_slipping()
+    var switches:RailVehicleSwitches = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_SWITCHES) as RailVehicleSwitches
+    var sanding:bool = switches != null and switches.get_sand_active()
     var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     var high_current:bool = engine != null \
-            and absf(float(state.get("Im", 0.0))) > SANDING_CURRENT_SHARE * engine.circuit_imax_high
+            and absf(engine.get_motor_current()) > SANDING_CURRENT_SHARE * engine.circuit_imax_high
     if slipping or high_current:
         if not sanding:
             MaszynaLegacyDriverHints.send(situation.controlling, "sand", true)
@@ -181,10 +186,10 @@ func control(situation:Situation) -> void:
     var speed:MaszynaLegacyDriverSpeed = situation.speed
     var velocity_desired:float = speed.velocity_desired
     var acceleration_desired:float = speed.acceleration_desired
-    var speed_control:bool = CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/active", false)
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
             situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-    var full_power:bool = speed_control and control != null and velocity < control.full_power_velocity
+    var speed_control:bool = control != null and control.get_active()
+    var full_power:bool = speed_control and velocity < control.full_power_velocity
     if acceleration_desired > MaszynaLegacyDriverSpeed.NO_ACCELERATION \
             and (situation.trainset.acceleration < acceleration_desired or full_power) and not situation.pressing:
         var margin:float = 0.0 if velocity_desired == CRAWL_VELOCITY else situation.route.velocity_minus
@@ -194,7 +199,9 @@ func control(situation:Situation) -> void:
         if velocity < velocity_desired - margin and (speed.proximity_distance > situation.route.max_proximity
                 or velocity + NEXT_VELOCITY_MARGIN < speed.velocity_next) \
                 and action_time >= 0.0 and not situation.trainset.coupler_stretched:
-            if CabinSystem.vehicle_state_value(situation.vehicle, "spring_brake/active", false):
+            var spring_brake:RailVehicleSpringBrake = RailVehicleServer.vehicle_component_get(
+                    situation.vehicle, RailVehicleComponentType.COMPONENT_SPRING_BRAKE) as RailVehicleSpringBrake
+            if spring_brake and spring_brake.get_active():
                 MaszynaLegacyDriverHints.send(situation.vehicle, "set_spring_brake_active", false)
             increase(situation)
     if not situation.pressing:
@@ -211,7 +218,9 @@ func control(situation:Situation) -> void:
 
 ## bufferscompress (driverhints.cpp:582-594): power against its own brakes, to press the buffers
 func press(situation:Situation) -> void:
-    if absf(float(VehicleServer.vehicle_dump_state(situation.controlling).get("Ft", 0.0))) < PRESSING_FORCE:
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    if absf(engine.get_tractive_force() if engine else 0.0) < PRESSING_FORCE:
         increase(situation)
 
 
@@ -260,8 +269,8 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
             situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
     if control == null or not control.speed_control_enabled:
         return
-    var second:int = controller_position(situation, "controller_second_position")
-    var second_max:int = int(VehicleServer.vehicle_dump_config(situation.controlling).get("second_controller_position_max", 0))
+    var second:int = second_controller_position(situation)
+    var second_max:int = second_position_count(situation)
     if engine_type == RailVehicleEngine.DIESEL:
         if velocity < SPEED_CONTROL_TARGET_FROM:
             set_second_controller(situation, 0)
@@ -273,10 +282,12 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
         set_second_controller(situation, 1)
         MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_set", velocity)
     elif second_max > 1 and not control.impulse_lever:
-        var velocity_max:float = float(VehicleServer.vehicle_dump_config(situation.controlling).get("max_speed", 0.0))
+        var velocity_max:float = VehicleServer.vehicle_get_controller(situation.controlling).max_velocity
         set_second_controller(situation, 1 + int(second_max * ((velocity - 1.0) / velocity_max)))
-    if control.power_step > 0.0 and controller_position(situation, "controller_second_position") > 0:
-        while float(CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/desired_power", 0.0)) < control.max_power:
+    var driven:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+            situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+    if control.power_step > 0.0 and second_controller_position(situation) > 0 and driven:
+        while driven.get_desired_power() < control.max_power:
             MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_power_increase")
 
 
@@ -285,8 +296,9 @@ func set_cruise_control(situation:Situation, velocity:float) -> void:
 func cruise(situation:Situation) -> void:
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
             situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-    if control == null or not control.speed_control_enabled \
-            or not VehicleServer.vehicle_dump_state(situation.controlling).get("main_switch_enabled", false):
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    if control == null or not control.speed_control_enabled or not (engine and engine.get_main_switch_enabled()):
         return
     var speed:MaszynaLegacyDriverSpeed = situation.speed
     var velocity:float = speed.velocity_desired \
@@ -300,47 +312,67 @@ func cruise(situation:Situation) -> void:
         set_second_controller(situation, 0)
 
 
-## A controller's position of the engine the controls drive (mvControlling->MainCtrlPos) - the
-## cab's controllers act on it (CabinState.CONTROLLED_COMMANDS)
-static func controller_position(situation:Situation, key:String) -> int:
-    return int(CabinSystem.vehicle_state_value(situation.controlling, key, 0))
+## The master controller's position of the engine the controls drive (mvControlling->MainCtrlPos)
+## - the cab's controllers act on it (CabinState.CONTROLLED_COMMANDS)
+static func main_controller_position(situation:Situation) -> int:
+    return (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
+            .get_controller_main_position()
 
 
-## A step of a controller; true when its position moved
-static func step(situation:Situation, control:StringName, action:StringName, key:String) -> bool:
-    var before:int = controller_position(situation, key)
+## The second controller's position of the engine the controls drive (ScndCtrlPos)
+static func second_controller_position(situation:Situation) -> int:
+    return (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
+            .get_controller_second_position()
+
+
+## A step of a controller; true when its `position` (one of the two above) moved
+static func step(situation:Situation, control:StringName, action:StringName, position:Callable) -> bool:
+    var before:int = position.call(situation)
     CabinSystem.act(situation.vehicle, situation.cab, control, action)
-    return not controller_position(situation, key) == before
+    return not position.call(situation) == before
 
 
 ## A step of the master controller up (+1) or down (-1); true when it moved
 static func step_main(situation:Situation, direction:int) -> bool:
     return step(situation, MaszynaLegacyDriverHints.master_controller(situation.vehicle, situation.cab),
-            &"increase" if direction > 0 else &"decrease", "controller_main_position")
+            &"increase" if direction > 0 else &"decrease", main_controller_position)
 
 
 static func step_second(situation:Situation, direction:int) -> bool:
     return step(situation, SECOND_CONTROLLER, &"increase" if direction > 0 else &"decrease",
-            "controller_second_position")
+            second_controller_position)
 
 
 ## The master controller stepped to `position`, as far as it goes; true when it moved
 static func set_main_controller(situation:Situation, position:int) -> bool:
-    var start:int = controller_position(situation, "controller_main_position")
+    var start:int = main_controller_position(situation)
     var current:int = start
     while not current == position and step_main(situation, signi(position - current)):
-        current = controller_position(situation, "controller_main_position")
+        current = main_controller_position(situation)
     return not current == start
 
 
 ## The second controller stepped to `position`, as far as it goes (DecScndCtrl(2) to 0); true when
 ## it moved
 static func set_second_controller(situation:Situation, position:int) -> bool:
-    var start:int = controller_position(situation, "controller_second_position")
+    var start:int = second_controller_position(situation)
     var current:int = start
     while not current == position and step_second(situation, signi(position - current)):
-        current = controller_position(situation, "controller_second_position")
+        current = second_controller_position(situation)
     return not current == start
+
+
+## MainCtrlPosNo / ScndCtrlPosNo of the engine the controls drive: its controllers' last positions
+static func main_position_count(situation:Situation) -> int:
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    return master.main_position_count if master else 0
+
+
+static func second_position_count(situation:Situation) -> int:
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    return master.second_position_count if master else 0
 
 
 ## EIMCtrlType of the engine the controls drive (Cntrl. EIMCtrlType)
@@ -353,7 +385,7 @@ static func eim_control_type(situation:Situation) -> RailVehicleEngine.EimContro
 ## IncSpeedEIM() (Driver.cpp:3761-3789): power by the EIM controller's kind - a step, or straight to
 ## its driving position (Traxx 6, Elf 4); true when it moved
 func increase_eim(situation:Situation) -> bool:
-    var main:int = controller_position(situation, "controller_main_position")
+    var main:int = main_controller_position(situation)
     match eim_control_type(situation):
         RailVehicleEngine.EIM_CONTROL_TYPE_0:
             return step_main(situation, 1)
@@ -369,7 +401,7 @@ func increase_eim(situation:Situation) -> bool:
 ## DecSpeedEIM() (Driver.cpp:3791-3826): power off by the EIM controller's kind - a step, to its
 ## neutral position, or the cruise control's power down while the driver still wants to go
 func decrease_eim(situation:Situation) -> bool:
-    var main:int = controller_position(situation, "controller_main_position")
+    var main:int = main_controller_position(situation)
     match eim_control_type(situation):
         RailVehicleEngine.EIM_CONTROL_TYPE_0:
             return step_main(situation, -1)
@@ -379,9 +411,8 @@ func decrease_eim(situation:Situation) -> bool:
         RailVehicleEngine.EIM_CONTROL_TYPE_2:
             var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
                     situation.controlling, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-            var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
-            if situation.speed.acceleration_desired > 0.0 and control and state.get("speed_control/active", false) \
-                    and control.power_step > 0.0 and float(state.get("speed_control/desired_power", 0.0)) > control.min_power:
+            if situation.speed.acceleration_desired > 0.0 and control and control.get_active() \
+                    and control.power_step > 0.0 and control.get_desired_power() > control.min_power:
                 MaszynaLegacyDriverHints.send(situation.vehicle, "speed_control_power_decrease")
             elif main > ELF_NEUTRAL_POSITION:
                 return set_main_controller(situation, ELF_NEUTRAL_POSITION)
@@ -390,18 +421,22 @@ func decrease_eim(situation:Situation) -> bool:
 
 ## The voltage under which a series motor's controls keep to series mode (Driver.cpp:3456-3461)
 func series_voltage(situation:Situation) -> float:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
-    return lerpf(float(state.get("current_collector/min_main_switch_voltage", 0.0)),
-            float(state.get("current_collector/max_voltage", 0.0)),
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+    if engine == null:
+        return 0.0
+    return lerpf(engine.get_collector_min_main_switch_voltage(), engine.get_collector_max_voltage(),
             HEAVY_SERIES_VOLTAGE_SHARE if situation.braking.heavy_cargo else SERIES_VOLTAGE_SHARE)
 
 
 ## control_handles() of a series motor (Driver.cpp:6441-6464) - of the driver's own, or of the one
 ## an EMU's control car drives
 func control_series_motor_handles(situation:Situation) -> void:
-    var state:Dictionary = VehicleServer.vehicle_dump_state(situation.controlling)
+    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
+    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
     # the line contactors dropped out: back to zero
-    if not state.get("line_contactor_closed", false) and not state.get("controller_main_delayed", false) \
+    if not (engine and engine.is_line_contactor_closed()) and not controlling.get_controller_main_delayed() \
             and main_powercontroller_position(situation) > 1:
         zero(situation)
     # a heavily burdened substation: series mode, to lessen the load
@@ -418,16 +453,17 @@ func set_series_mode(situation:Situation) -> void:
     if engine == null:
         return
     var relays:Array = engine.relay_list
-    if controller_position(situation, "controller_main_position") >= relays.size() \
-            or (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count <= 1:
+    if main_controller_position(situation) >= relays.size() \
+            or (relays[main_controller_position(situation)] as RailVehicleRelayListItem).branch_count <= 1:
         return
     set_second_controller(situation, 0)
-    while (relays[controller_position(situation, "controller_main_position")] as RailVehicleRelayListItem).branch_count > 1 \
+    while (relays[main_controller_position(situation)] as RailVehicleRelayListItem).branch_count > 1 \
             and step_main(situation, -1):
         pass
 
 
 ## MainCtrlPowerPos(): the master controller's position past the last without power
 static func main_powercontroller_position(situation:Situation) -> int:
-    return controller_position(situation, "controller_main_position") \
-            - controller_position(situation, "controller_main_no_power_position")
+    return main_controller_position(situation) \
+            - (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
+            .get_controller_main_no_power_position()

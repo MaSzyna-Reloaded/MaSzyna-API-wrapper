@@ -43,7 +43,7 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 ## CheckTimeControllers() 3.-4. (Driver.cpp:4280-4299): a Traxx's controller to its holding driving
 ## or braking position, an Elf's by what it asks for, the impulse lever back to its middle
 func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> void:
-    var main:int = controller_position(situation, "controller_main_position")
+    var main:int = main_controller_position(situation)
     match eim_control_type(situation):
         RailVehicleEngine.EIM_CONTROL_TYPE_1:
             if main > TRAXX_NEUTRAL:
@@ -51,7 +51,9 @@ func check_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> 
             elif main < TRAXX_NEUTRAL:
                 set_main_controller(situation, TRAXX_BRAKING_HOLD)
         RailVehicleEngine.EIM_CONTROL_TYPE_2:
-            var asked:float = float(CabinSystem.vehicle_state_value(situation.vehicle, "eimic_real", 0.0))
+            var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+                    situation.vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+            var asked:float = engine.get_eimic_real() if engine else 0.0
             if asked > 0.0:
                 set_main_controller(situation, ELF_DRIVING_HOLD)
             elif asked < 0.0:
@@ -68,7 +70,9 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
             if speed.proximity_distance > maxf(SPEED_CONTROL_PROXIMITY, situation.route.max_proximity) \
             else MaszynaLegacyDriverSpeed.min_speed(speed.velocity_desired, speed.velocity_next)
     velocity = IMPULSE_LEVER_STEP * floorf(velocity / IMPULSE_LEVER_STEP)
-    var set_velocity:float = float(CabinSystem.vehicle_state_value(situation.vehicle, "speed_control/set_velocity", 0.0))
+    var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
+            situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
+    var set_velocity:float = control.get_set_velocity()
     if set_velocity + IMPULSE_LEVER_TOLERANCE < velocity:
         set_second_controller(situation, IMPULSE_LEVER_RAISE)
     if set_velocity - IMPULSE_LEVER_TOLERANCE > velocity:
@@ -79,5 +83,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 func _impulse_lever(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var control:RailVehicleSpeedControl = RailVehicleServer.vehicle_component_get(
             situation.vehicle, RailVehicleComponentType.COMPONENT_SPEED_CONTROL) as RailVehicleSpeedControl
-    var second_max:int = int(VehicleServer.vehicle_dump_config(situation.vehicle).get("second_controller_position_max", 0))
-    return control != null and control.impulse_lever and second_max == IMPULSE_LEVER_POSITIONS
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            situation.vehicle, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    return control != null and control.impulse_lever and master != null \
+            and master.second_position_count == IMPULSE_LEVER_POSITIONS

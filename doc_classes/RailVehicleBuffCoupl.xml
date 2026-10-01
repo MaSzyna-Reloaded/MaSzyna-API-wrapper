@@ -8,6 +8,14 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="get_coupler_max_force" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="allowed_flag" type="int" setter="set_allowed_flag" getter="get_allowed_flag" default="0">
 			Bitmask defining the allowed connections (mechanical, pneumatic, electric, etc.). See [enum AllowedFlagBits].

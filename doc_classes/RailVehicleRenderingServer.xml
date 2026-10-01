@@ -76,6 +76,15 @@
 				The cab the player looks from (0 for none) and whether it is modelled: the low-poly interior hides that cab, or all of them with jointcabs:.
 			</description>
 		</method>
+		<method name="vehicle_set_cab_light_level">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="cab" type="int" />
+			<param index="2" name="level" type="float" />
+			<description>
+				The level (0..1) of the light of a cab - 1, 0 or -1, as the cab layer counts them - that its low-poly cab is lit at (original [code]DynObj.cpp:841-853[/code]); with jointcabs: every cab at the brightest.
+			</description>
+		</method>
 		<method name="vehicle_set_head_display_material">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />

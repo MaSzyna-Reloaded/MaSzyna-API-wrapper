@@ -44,6 +44,11 @@ namespace godot {
             double get_engine_temperature() const;
             double get_retarder_fill() const;
             double get_max_rpm() const;
+            double get_idle_rpm_count() const;
+
+            /* Original engine: Mover.cpp:11371 NominalCoolingPower's default - su45's, the engine
+             * the heat model was written for */
+            static constexpr double NOMINAL_COOLING_POWER = 1235.0;
 
             /* R_Place= : retarder location within the mechanical transmission */
             enum RetarderPlacement {
@@ -138,6 +143,38 @@ namespace godot {
 
             /* DMList: charakterystyka momentu obrotowego */
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<VehicleCurvePointItem>, torque_table)
+
+            /* Engine: cooling (dizel_heat, LoadFIZ_Engine, Mover.cpp:11340-11373 of the original);
+             * a temperature of -1 [deg C] is not set */
+            /* HeatKW, HeatKV, HeatKFE, HeatKFS, HeatKFO, HeatKFO2: heat exchange factors */
+            MAKE_MEMBER_GS(double, cooling_heat_kw, 0.35);
+            MAKE_MEMBER_GS(double, cooling_heat_kv, 0.6);
+            MAKE_MEMBER_GS(double, cooling_heat_kfe, 1.0);
+            MAKE_MEMBER_GS(double, cooling_heat_kfs, 80.0);
+            MAKE_MEMBER_GS(double, cooling_heat_kfo, 25.0);
+            MAKE_MEMBER_GS(double, cooling_heat_kfo2, 25.0);
+            /* WaterMin/Max/Flow/CoolingTemperature [deg C], WaterShutters */
+            MAKE_MEMBER_GS(double, cooling_water_min_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_water_max_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_water_flow_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_water_cooling_temperature, -1.0);
+            MAKE_MEMBER_GS(bool, cooling_water_shutters, false);
+            /* WaterAuxCircuit: the cooling has a second water circuit, WaterAux*: its settings */
+            MAKE_MEMBER_GS(bool, cooling_water_aux_circuit, false);
+            MAKE_MEMBER_GS(double, cooling_water_aux_min_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_water_aux_max_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_water_aux_cooling_temperature, -1.0);
+            MAKE_MEMBER_GS(bool, cooling_water_aux_shutters, false);
+            /* OilMin/MaxTemperature [deg C] */
+            MAKE_MEMBER_GS(double, cooling_oil_min_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_oil_max_temperature, -1.0);
+            /* WaterCoolingFanSpeed: a share of the engine's revolutions, or absolute when negative */
+            MAKE_MEMBER_GS(double, cooling_fan_speed, 0.075);
+            /* HeaterMin/MaxTemperature [deg C]: the water heater */
+            MAKE_MEMBER_GS(double, cooling_heater_min_temperature, -1.0);
+            MAKE_MEMBER_GS(double, cooling_heater_max_temperature, -1.0);
+            /* NominalCoolingPower: the engine's heat is scaled by su45's 1235 over it */
+            MAKE_MEMBER_GS(double, cooling_nominal_power, NOMINAL_COOLING_POWER);
 
         private:
         protected:

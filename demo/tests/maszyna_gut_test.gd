@@ -64,6 +64,31 @@ func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> Rai
     return vehicle
 
 
+## A passenger car standing on the track at the offset, as build_rail_vehicle(), with doors and room
+## for `capacity` passengers getting off and on `exchange_speed` a second through one open side
+func build_passenger_car(train_id:String, track_name:String, offset:float, capacity:float,
+        exchange_speed:float, initial_velocity:float = 0.0) -> RailVehicle3D:
+    var model:RailVehicleController = MoverRailVehicleController.new()
+    model.vehicle_id = train_id
+    model.mass = RAIL_VEHICLE_MASS
+    model.type_name = "test"
+    model.add_component(MoverRailVehicleDoors.new())
+    var load:MoverRailVehicleLoad = MoverRailVehicleLoad.new()
+    load.max_load = capacity
+    load.load_speed = exchange_speed
+    load.unload_speed = exchange_speed
+    var accepted:Array[String] = [MaszynaLegacyStation.PASSENGERS]
+    load.accepted_loads = accepted
+    model.add_component(load)
+    var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model, initial_velocity)
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    vehicle.start_track_name = track_name
+    vehicle.start_track_offset = offset
+    vehicle.controller_path = NodePath("../%s" % physics_node.name)
+    add_child(vehicle)
+    return vehicle
+
+
 ## The vehicle build_rail_vehicle() made, gone: the node first - it lets go of its controller - then
 ## its physics node, which takes the vehicle out of RailVehicleServer (vehicle_freed)
 func free_rail_vehicle(vehicle:RailVehicle3D) -> void:

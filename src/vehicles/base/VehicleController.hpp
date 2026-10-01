@@ -16,7 +16,6 @@ namespace godot {
     class VehicleComponent;
     class RailVehicleEngine;
     class RailVehicleSecuritySystem;
-    class RailVehicleLighting;
 
 
     /// The vehicle itself: its configuration, its components and the operations that change them,
@@ -44,9 +43,6 @@ namespace godot {
         private:
             DriverType driver_type = DRIVER_NOBODY;
             StringName implementation;
-            /// state is rebuilt from the backend when it is asked for, not on every physics step:
-            /// a scenery runs hundreds of vehicles and almost none of them is ever read
-            bool prev_roof_light_enabled = false;
             /// Bumped by every step (process_components()) and every command (command_executed());
             /// what tells a cached state dump that it is stale.
             uint64_t state_serial = 0;
@@ -93,7 +89,6 @@ namespace godot {
             /// The simulation behind the vehicle exists and is configured
             static const char *simulation_initialized_signal;
             static const char *command_received;
-            static const char *roof_light_changed;
             static const char *config_changed;
             static const char *position_changed_signal;
 
@@ -220,9 +215,6 @@ namespace godot {
              * are joined to it. A description - the same class, only stored - never is. */
             bool in_system = false;
             void _detach_components();
-            /* The lighting component, kept because the vehicle raises roof_light_changed for it.
-             * Resolved when the component joins, not searched for per frame. */
-            RailVehicleLighting *lighting = nullptr;
             RID rid;
             /* What runs the simulation while it exists (_attach_implementation()) */
             ObjectID implementation_server;

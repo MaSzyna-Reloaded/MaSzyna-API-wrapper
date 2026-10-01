@@ -2,7 +2,6 @@
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
-#include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -15,7 +14,6 @@ namespace godot {
     const char *VehicleController::simulation_configured_signal = "simulation_configured";
     const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
     const char *VehicleController::command_received = "command_received";
-    const char *VehicleController::roof_light_changed = "roof_light_changed";
     const char *VehicleController::config_changed = "config_changed";
     const char *VehicleController::position_changed_signal = "position_changed";
 
@@ -93,7 +91,6 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
-        ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(
@@ -181,7 +178,6 @@ namespace godot {
     void VehicleController::initialize() {
         _initialize_simulation();
         update_state();
-        emit_signal(roof_light_changed, prev_roof_light_enabled);
     }
 
     void VehicleController::process_components(const double p_delta) {
@@ -191,19 +187,8 @@ namespace godot {
         }
     }
 
-    /// Only marks the state for a rebuild - whoever reads it gets it fresh (see get_state()). The
-    /// signals below have to be decided every step though, so they read the live getters directly
-    /// rather than through a dictionary that may not be built at all.
-    void VehicleController::update_state() {
-        if (!is_simulation_ready()) {
-            return;
-        }
-        if (const bool new_roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
-            prev_roof_light_enabled != new_roof_light_enabled) {
-            prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
-            emit_signal(roof_light_changed, new_roof_light_enabled);
-        }
-    }
+    /// Only marks the state for a rebuild - whoever reads it gets it fresh (see get_state())
+    void VehicleController::update_state() {}
 
     void VehicleController::emit_position_changed_if_needed() {
         const Vector3 position = get_world_position();
@@ -336,17 +321,10 @@ namespace godot {
 
     void VehicleController::register_component(VehicleComponent *p_component) {
         p_component->attach_implementation(implementation_server);
-        if (RailVehicleLighting *component_lighting = Object::cast_to<RailVehicleLighting>(p_component);
-            component_lighting != nullptr) {
-            lighting = component_lighting;
-        }
     }
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
         p_component->attach_implementation(ObjectID());
-        if (static_cast<VehicleComponent *>(lighting) == p_component) {
-            lighting = nullptr;
-        }
     }
 
     Dictionary VehicleController::compose_state() {

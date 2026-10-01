@@ -43,7 +43,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     player = PLAYER_SCENE.instantiate()
     player.auto_start = false
     add_child(player)
-    PlayerServer.player_enter_vehicle(vehicle_rid)
+    PlayerServer.player_take_over_vehicle(vehicle_rid)
     await wait_idle_frames(3)
 
     var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D

@@ -67,7 +67,7 @@ func test_the_cab_interior_stands_while_the_vehicle_is_driven() -> void:
     assert_true(vehicle.is_valid(), "the vehicle should have its controller")
     CabinSystem.vehicle_set_cabin_scene(vehicle, _cabin_scene())
 
-    PlayerServer.player_enter_vehicle(vehicle)
+    PlayerServer.player_take_over_vehicle(vehicle)
     var cabin_camera:Camera3D = get_viewport().get_camera_3d()
     assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_CABIN)
     assert_not_null(CabinSystem.vehicle_get_cabin(vehicle), "taken over, the cab interior is shown")

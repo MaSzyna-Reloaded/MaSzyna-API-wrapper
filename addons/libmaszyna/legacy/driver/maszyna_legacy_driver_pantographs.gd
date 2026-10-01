@@ -31,22 +31,23 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
     var unit:RID = trainset.pantograph_unit
     if not unit.is_valid():
         return
-    var state:Dictionary = VehicleServer.vehicle_dump_state(unit)
     var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             unit, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    var tank:float = float(state.get("current_collector/pantograph_tank_pressure", 0.0))
-    var feeding_from_compressor:bool = state.get("current_collector/pantograph_compressor_valve", false)
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            unit, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    var tank:float = engine.get_collector_pantograph_tank_pressure()
+    var feeding_from_compressor:bool = engine.get_collector_pantograph_compressor_valve()
     if tank < (EMU_RAISING_PRESSURE if emu else RAISING_PRESSURE) + RAISING_MARGIN:
         # the main reservoir cannot fill it: the three-way valve to the small compressor
         if not engine.cntrl_pantograph_auto_valve and not feeding_from_compressor:
             MaszynaLegacyDriverHints.send(unit, "pantograph_compressor_valve", true)
-        if not state.get("current_collector/pantograph_compressor_enabled", false):
+        if not engine.get_collector_pantograph_compressor_enabled():
             MaszynaLegacyDriverHints.send(unit, "pantograph_compressor", true)
-    elif not feeding_from_compressor or tank <= float(state.get("compressor_pressure", 0.0)):
-        if state.get("current_collector/pantograph_compressor_enabled", false):
+    elif not feeding_from_compressor or tank <= (brake.get_compressor_pressure() if brake else 0.0):
+        if engine.get_collector_pantograph_compressor_enabled():
             MaszynaLegacyDriverHints.send(unit, "pantograph_compressor", false)
     # pantographsvalveon: the pantographs' master valve (OperatePantographsValve(), no cab control)
-    if not state.get("current_collector/valve_active", true):
+    if not engine.get_collector_valve_active():
         MaszynaLegacyDriverHints.send(unit, "pantographs_valve", true)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
     MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
@@ -63,12 +64,13 @@ static func control(
         return
     var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             unit, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    var state:Dictionary = VehicleServer.vehicle_dump_state(unit)
+    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
     if not engine.cntrl_pantograph_auto_valve \
-            and float(CabinSystem.vehicle_state_value(vehicle, "compressor_pressure", 0.0)) > MAIN_FEEDING_PRESSURE \
-            and state.get("current_collector/pantograph_compressor_valve", false):
+            and (brake.get_compressor_pressure() if brake else 0.0) > MAIN_FEEDING_PRESSURE \
+            and engine.get_collector_pantograph_compressor_valve():
         MaszynaLegacyDriverHints.send(unit, "pantograph_compressor_valve", false)
-    var speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0))
+    var speed:float = VehicleServer.vehicle_get_speed(vehicle)
     if speed <= MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED or waiting:
         return
     var hints:RailVehicleAIHints = RailVehicleServer.vehicle_component_get(
@@ -82,15 +84,15 @@ static func control(
                     if setup & RailVehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)
         return
     # the regular layout: a lone vehicle, an EMU, an ET41 (Driver.cpp:6243-6246)
-    var train_type:RailVehicleController.TrainType = int(VehicleServer.vehicle_dump_config(unit).get(
-            "train_type", RailVehicleController.TRAIN_TYPE_DEFAULT)) as RailVehicleController.TrainType
+    var train_type:RailVehicleController.TrainType = (
+            VehicleServer.vehicle_get_controller(unit) as RailVehicleController).train_type
     var regular:bool = RailVehicleServer.vehicle_get_coupled(
             vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_CONTROL).size() == 1 \
             or emu or train_type == RailVehicleController.TRAIN_TYPE_ET41
     var collectors:int = engine.power_current_collector_number_of_collectors
-    var voltage:float = float(state.get("current_collector/voltage", 0.0))
-    var front_voltage:float = float(state.get("current_collector/pantograph_first_voltage", 0.0))
-    var rear_voltage:float = float(state.get("current_collector/pantograph_second_voltage", 0.0))
+    var voltage:float = engine.get_collector_voltage()
+    var front_voltage:float = engine.get_collector_pantograph_first_voltage()
+    var rear_voltage:float = engine.get_collector_pantograph_second_voltage()
     var on_rear:bool = direction >= 0 and regular
     # the one at the rear up, unless another one works and it is the only one
     var raised_voltage:float = rear_voltage if on_rear else front_voltage

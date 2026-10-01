@@ -106,6 +106,9 @@ namespace godot {
                 D_METHOD("instance_set_emission_energy", "instance", "energy"),
                 &E3DRenderingServer::instance_set_emission_energy);
         ClassDB::bind_method(
+                D_METHOD("instance_set_submodel_emission_energy", "instance", "submodel", "energy"),
+                &E3DRenderingServer::instance_set_submodel_emission_energy);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_light_blink", "instance", "light", "on_time", "off_time", "phase"),
                 &E3DRenderingServer::instance_set_light_blink);
         ClassDB::bind_method(
@@ -1281,6 +1284,7 @@ namespace godot {
         p_instance.shown_submodels.clear();
         p_instance.hidden_submodels.clear();
         p_instance.submodel_materials.clear();
+        p_instance.submodel_emission_energies.clear();
         for (KeyValue<String, E3DInstanceData::SubmodelSettings> &settings: p_instance.submodel_settings) {
             settings.value.submodel = _find_submodel(p_instance.model->get_submodels(), settings.key);
             if (settings.value.submodel == nullptr) {
@@ -1295,6 +1299,21 @@ namespace godot {
             }
             if (settings.value.material_override.is_valid()) {
                 p_instance.submodel_materials[settings.value.submodel] = settings.value.material_override;
+            }
+            if (settings.value.emission_energy >= 0.0) {
+                _set_subtree_emission_energy(p_instance, settings.value.submodel, settings.value.emission_energy);
+            }
+        }
+    }
+
+    void E3DRenderingServer::_set_subtree_emission_energy(
+            E3DInstanceData &p_instance, const E3DSubModel *p_submodel, const float p_energy) {
+        p_instance.submodel_emission_energies[p_submodel] = p_energy;
+        const TypedArray<E3DSubModel> children = p_submodel->get_submodels();
+        for (int index = 0; index < children.size(); index++) {
+            const Ref<E3DSubModel> child = children[index];
+            if (child.is_valid()) {
+                _set_subtree_emission_energy(p_instance, child.ptr(), p_energy);
             }
         }
     }
@@ -1342,6 +1361,25 @@ namespace godot {
             _resolve_submodel_settings(*instance);
             _get_backend(*instance).update(*instance);
         }
+    }
+
+    void E3DRenderingServer::instance_set_submodel_emission_energy(
+            const RID &p_instance, const String &p_submodel, const float p_energy) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        const bool copies_needed = instance->emission_energy < 0.0 && !instance->submodel_emission;
+        instance->submodel_emission = true;
+        instance->submodel_settings[p_submodel.to_lower()].emission_energy = p_energy;
+        if (!instance->built) {
+            return;
+        }
+        // the instance's own copies of its emissive materials are made as it is built
+        if (copies_needed) {
+            _rebuild_if_built(*instance);
+            return;
+        }
+        _resolve_submodel_settings(*instance);
+        _get_backend(*instance).update(*instance);
     }
 
     bool E3DRenderingServer::instance_has_submodel(const RID &p_instance, const String &p_submodel) const {
@@ -1438,7 +1476,7 @@ namespace godot {
     void E3DRenderingServer::instance_set_emission_energy(const RID &p_instance, const float p_energy) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
-        const bool copies_needed = instance->emission_energy < 0.0 && p_energy >= 0.0;
+        const bool copies_needed = instance->emission_energy < 0.0 && !instance->submodel_emission && p_energy >= 0.0;
         instance->emission_energy = p_energy;
         // the instance's own copies of its emissive materials are made as it is built
         if (copies_needed) {

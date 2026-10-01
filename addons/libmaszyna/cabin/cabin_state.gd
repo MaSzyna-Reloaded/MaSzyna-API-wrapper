@@ -22,12 +22,27 @@ enum Target {
     PANTOGRAPH_UNIT,
 }
 
+## A light of the cab itself, as a cab element follows it
+enum Light {
+    NONE,
+    ## the cab light, at its level (CabinSystem.cab_light_level_changed)
+    CAB,
+    ## the instrument light (CabinSystem.cab_instrument_light_changed)
+    INSTRUMENT,
+}
+
 var vehicle_rid:RID
 var cab:int = 1
 ## control_id -> current value of the physical control (button pressed, switch position, ...)
 var values:Dictionary = {}
 ## Private state of the cabin logic behaviours (timers, state machines, ...)
 var data:Dictionary = {}
+## The level (0..1) the cab light shines at - TTrain::Cabine[].LightLevel (Train.cpp:8436-8453).
+## Written only by CabinSystem.cab_set_light_level().
+var light_level:float = 0.0
+## Whether the instrument light is lit - TTrain::InstrumentLightActive. Written only by
+## CabinSystem.cab_set_instrument_light_enabled().
+var instrument_light_enabled:bool = false
 
 
 func _init(p_vehicle_rid:RID, p_cab:int) -> void:

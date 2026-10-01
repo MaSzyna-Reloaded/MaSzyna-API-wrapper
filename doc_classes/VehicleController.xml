@@ -248,11 +248,6 @@
 			<description>
 			</description>
 		</signal>
-		<signal name="roof_light_changed">
-			<param index="0" name="is_enabled" type="bool" />
-			<description>
-			</description>
-		</signal>
 		<signal name="simulation_configured">
 			<description>
 				The simulation now carries the vehicle's configuration - its own and every component's.

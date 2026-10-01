@@ -24,6 +24,7 @@
 #include "legacy/scenario/MaszynaLegacyTrackVelocityAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVehicleCommandAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVoltageAction.hpp"
+#include "legacy/scenery/MaszynaTrianglesChunkGeometry.hpp"
 #include "legacy/scenery/MaszynaTrianglesImporter.hpp"
 #include "legacy/signalling/MaszynaLegacySignalHeadKindFactory.hpp"
 #include "legacy/signalling/MaszynaLegacySignallingDelegate.hpp"
@@ -66,7 +67,7 @@
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
-#include "scenery/SceneryTrianglesBuilder.hpp"
+#include "scenery/SceneryTrianglesSink.hpp"
 #include "scripting/ScenarioScriptAction.hpp"
 #include "scripting/ScenarioScriptCabinDelegate.hpp"
 #include "scripting/ScenarioScriptServer.hpp"
@@ -245,10 +246,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaLegacyEventCondition);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
+        GDREGISTER_CLASS(MaszynaTrianglesChunkGeometry);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
         GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(PythonScreenServer);
-        GDREGISTER_CLASS(SceneryTrianglesBuilder);
+        GDREGISTER_CLASS(SceneryTrianglesSink);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);

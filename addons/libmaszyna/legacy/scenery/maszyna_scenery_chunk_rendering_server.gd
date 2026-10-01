@@ -107,13 +107,8 @@ func _stream_build(rid:RID, preloaded:Variant) -> void:
         return
     # the preloaded geometry is the one handed out, as it is alive; fetched to be held while built
     var geometry:MaszynaTrianglesChunkGeometry = ResourceLazyLoader.resource_fetch(state.geometry)
-    var arrays:Array = []
-    arrays.resize(Mesh.ARRAY_MAX)
-    arrays[Mesh.ARRAY_VERTEX] = geometry.vertices
-    arrays[Mesh.ARRAY_NORMAL] = geometry.normals
-    arrays[Mesh.ARRAY_TEX_UV] = geometry.uvs
     state.mesh = ArrayMesh.new()
-    state.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+    state.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, geometry.to_mesh_arrays())
     state.mesh_instance = RenderingServer.instance_create()
     RenderingServer.instance_set_base(state.mesh_instance, state.mesh.get_rid())
     RenderingServer.instance_set_scenario(state.mesh_instance, state.scenario)

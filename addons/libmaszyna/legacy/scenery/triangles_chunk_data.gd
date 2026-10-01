@@ -3,13 +3,14 @@ extends Resource
 class_name MaszynaTrianglesChunkData
 
 ## One merged mesh of scenery "triangles" nodes sharing a texture, a 1 km cell and a visibility
-## range (SceneryTrianglesBuilder.build_chunks()). The material is resolved through
+## range (SceneryTrianglesSink). The material is resolved through
 ## MaterialManager when the chunk is built, never stored here, so a cached scenery still follows
 ## season/weather material variants (material_manager::on_season_change, material.cpp:571).
 ## The triangles themselves are a MaszynaTrianglesChunkGeometry of their own, loaded only while the
 ## chunk is built.
 
-## The ResourceCache path of the geometry, unique to the scenery and the chunk
+## The resource path of the geometry (MaszynaTrianglesChunkGeometry), unique to the scenery and the
+## chunk
 @export var geometry_path:String = ""
 @export var position:Vector3 = Vector3.ZERO
 @export var material_name:String = ""

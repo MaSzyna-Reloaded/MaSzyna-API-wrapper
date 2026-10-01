@@ -18,6 +18,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get", "path", "hash"), &ResourceCache::get, DEFVAL(""));
         ClassDB::bind_method(D_METHOD("set", "path", "resource", "hash"), &ResourceCache::set, DEFVAL(""));
         ClassDB::bind_method(D_METHOD("remove", "path"), &ResourceCache::remove);
+        ClassDB::bind_method(D_METHOD("get_file_path", "path"), &ResourceCache::get_file_path);
         ClassDB::bind_method(D_METHOD("clear"), &ResourceCache::clear);
         ClassDB::bind_method(D_METHOD("get_cache_dir"), &ResourceCache::get_cache_dir, DEFVAL(""));
 
@@ -132,6 +133,10 @@ namespace godot {
         if (FileAccess::file_exists(hash_path)) {
             DirAccess::remove_absolute(hash_path);
         }
+    }
+
+    String ResourceCache::get_file_path(const String &p_path) const {
+        return _get_cache_path(p_path);
     }
 
     void ResourceCache::_clear_cache_dir(String p_path) const {

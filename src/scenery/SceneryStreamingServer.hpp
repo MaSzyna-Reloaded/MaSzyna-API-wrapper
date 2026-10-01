@@ -27,7 +27,7 @@ namespace godot {
 
         public:
             /// XZ size of a streaming chunk, same grid as the scenery triangle chunks
-            /// (SceneryInstancer.TRIANGLE_CHUNK_SIZE_M)
+            /// (SceneryTrianglesSink::CHUNK_SIZE_M)
             static constexpr float CHUNK_SIZE_M = 1000.0;
             /// Pieces are cleared only beyond their range plus this margin (whichever of the two
             /// is larger), so a camera moving around a range boundary does not rebuild them over

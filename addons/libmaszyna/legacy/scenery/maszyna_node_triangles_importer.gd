@@ -1,10 +1,8 @@
 @tool
 extends RefCounted
 
-func import(p: MaszynaParser, context: MaszynaImporterContext, range_min: float, range_max: float):
-    var triangle: Array = MaszynaTrianglesImporter.import_triangles(p, context.rotate, context.origin)
-    if not triangle:
-        return triangle
-    triangle.append(range_min)
-    triangle.append(range_max)
-    return triangle
+## The triangles go to the context's sink as they are read (SceneryTrianglesSink)
+func import(p: MaszynaParser, context: MaszynaImporterContext, range_min: float, range_max: float) -> void:
+    MaszynaTrianglesImporter.import_triangles(
+        p, context.rotate, context.origin, context.triangles_sink, range_min, range_max
+    )

@@ -22,14 +22,13 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 30
+const CACHE_FORMAT_VERSION:int = 31
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
 ## Cached subscenes nested deeper are parsed as part of their parent's cache entry
 const SUBSCENE_MAX_DEPTH:int = 2
-## Share of the loading progress taken by .scn parsing (the rest goes fairly fast)
+## Share of the loading progress taken by reading the scenery - parsing the .scn, or the cache
 const PARSE_PROGRESS:float = 0.5
 ## Time the main thread may work through a load before it lets a frame be drawn - the loading
 ## screen's animations move only between frames (it was 100 ms: 10 frames a second at best)
@@ -103,81 +102,66 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             MaszynaIncludeNode.LoadStage.FILES, "Reading cache"
         ) as MaszynaCompiledScenery
 
-    if compiled:
-        await _report_progress(root, 0.3, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
-        await _instantiate_server_data(
-            root,
-            world_3d,
-            compiled.tracks,
-            compiled.traction,
-            compiled.power_sources,
-            compiled.models,
-            compiled.events,
-            compiled.memcells,
-            compiled.launchers,
-            compiled.sounds,
-            compiled.isolated_sections,
-            0.3,
-            0.6,
+    if not compiled:
+        # The .scn is converted into what a cached scenery is read from, and the parse let go of:
+        # its terrain goes to disk chunk by chunk as it is parsed (SceneryTrianglesSink), its nodes
+        # are packed, and the scenery is built below from that alone, as from the cache - a large
+        # scenery kept whole in memory as it was parsed filled it
+        var triangles_sink:SceneryTrianglesSink = SceneryTrianglesSink.create(
+            _cache.get_file_path(cache_path.get_basename())
         )
-        await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
-        await _build_triangle_chunks(root, compiled.triangle_chunks, world_3d, _cache.get)
-        await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
-        await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
-        await _wait_for_vehicles(root)
-        await _build_drivers(root)
-        _run_scripts(root, compiled.scripts)
-        measurement.finish()
-        return
-
-    var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
-    var objects:Array = context.objects
-    await _run_on_worker(
-        root, assign_signal_head_kinds.bind(context.models, context.events), PARSE_PROGRESS,
-        MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction"
-    )
+        var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters, triangles_sink)
+        await _run_on_worker(
+            root, assign_signal_head_kinds.bind(context.models, context.events), PARSE_PROGRESS,
+            MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename
+        )
+        var chunk_descriptors:Variant = await _run_on_worker(
+            root, triangles_sink.finish, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.FILES, "Building terrain"
+        )
+        compiled = _compile_scenery(source_path, parameters_hash, context, context.objects)
+        for object:Variant in context.objects:
+            if object is Node:
+                (object as Node).free()
+        if not compiled:
+            measurement.finish()
+            return
+        for descriptor:Dictionary in (chunk_descriptors if chunk_descriptors else []):
+            var chunk := MaszynaTrianglesChunkData.new()
+            chunk.geometry_path = descriptor["path"]
+            chunk.position = descriptor["position"]
+            chunk.material_name = descriptor["texture"]
+            chunk.range_min = descriptor["range_min"]
+            chunk.range_max = maxf(descriptor["range_max"], 0.0)
+            compiled.triangle_chunks.append(chunk)
+        if root.use_cache and context.cacheable:
+            await _run_on_worker(
+                root, _cache.set.bind(cache_path, compiled), PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.FILES,
+                "Saving cache"
+            )
 
     await _report_progress(root, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
     await _instantiate_server_data(
-        root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
-        context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
-        PARSE_PROGRESS, 0.6
+        root,
+        world_3d,
+        compiled.tracks,
+        compiled.traction,
+        compiled.power_sources,
+        compiled.models,
+        compiled.events,
+        compiled.memcells,
+        compiled.launchers,
+        compiled.sounds,
+        compiled.isolated_sections,
+        PARSE_PROGRESS,
+        0.6,
     )
-    # the geometry goes to the cache chunk by chunk as it is built, so the terrain is never in
-    # memory whole; without a cache it stays in memory
-    var caching:bool = root.use_cache and context.cacheable
-    var geometries:Dictionary[String, MaszynaTrianglesChunkGeometry] = {}
-    var geometry_store:Callable = _cache.set if caching else (
-        func(path:String, geometry:MaszynaTrianglesChunkGeometry) -> void: geometries[path] = geometry
-    )
-    var geometry_load:Callable = _cache.get if caching else (
-        func(path:String) -> MaszynaTrianglesChunkGeometry: return geometries[path]
-    )
-    var triangle_chunks:Array[MaszynaTrianglesChunkData] = []
-    var built_chunks:Variant = await _run_on_worker(
-        root, _build_triangle_chunk_data.bind(context.triangles, cache_path.get_basename(), geometry_store), 0.6,
-        MaszynaIncludeNode.LoadStage.TERRAIN, "Building terrain"
-    )
-    if built_chunks:
-        triangle_chunks.assign(built_chunks)
-    # the raw triangles are in the chunks now
-    context.triangles = []
-
-    if caching:
-        compiled = _compile_scenery(source_path, parameters_hash, context, objects)
-        if compiled:
-            compiled.triangle_chunks = triangle_chunks
-            await _run_on_worker(
-                root, _cache.set.bind(cache_path, compiled), 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Saving cache"
-            )
-
-    await _report_progress(root, 0.65, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
-    await _build_triangle_chunks(root, triangle_chunks, world_3d, geometry_load)
+    await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
+    await _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
     await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
-    await _attach_objects(root, objects, 0.7, 0.9)
+    await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
     await _wait_for_vehicles(root)
     await _build_drivers(root)
-    _run_scripts(root, context.scripts)
+    _run_scripts(root, compiled.scripts)
     measurement.finish()
 
 
@@ -334,57 +318,17 @@ static func _instantiate_server_data(
     )
 
 
-## Registers the merged meshes with MaszynaSceneryChunkRenderingServer; they are rendered only while the
-## camera is within range of their chunk (see the server's doc comment for why).
-## `geometry_load(path) -> MaszynaTrianglesChunkGeometry` reads a chunk's triangles.
+## Registers the terrain chunks with MaszynaSceneryChunkRenderingServer; they are rendered, and their
+## geometry read from its file, only while the camera is within range of their chunk (see the
+## server's doc comment for why)
 static func _build_triangle_chunks(
-    root:MaszynaIncludeNode, chunks:Array[MaszynaTrianglesChunkData], world_3d:World3D, geometry_load:Callable
+    root:MaszynaIncludeNode, chunks:Array[MaszynaTrianglesChunkData], world_3d:World3D
 ) -> void:
     for chunk:MaszynaTrianglesChunkData in chunks:
         root._triangle_chunk_rids.append(MaszynaSceneryChunkRenderingServer.create_chunk(
-            chunk, world_3d.scenario, geometry_load.bind(chunk.geometry_path)
+            chunk, world_3d.scenario, ResourceLoader.load.bind(chunk.geometry_path)
         ))
         await frame_budget_wait()
-
-
-## A SceneryLoadingTaskQueue task: the chunks of the scenery's triangles, their geometry handed to
-## `geometry_store(path, geometry)` one chunk at a time, under `geometry_directory`
-static func _build_triangle_chunk_data(
-    triangles:Array, geometry_directory:String, geometry_store:Callable
-) -> Array[MaszynaTrianglesChunkData]:
-    var chunk_data:Array[MaszynaTrianglesChunkData] = []
-    # merge triangles grouped by material and by their per-node
-    # range_min/range_max (e.g. grass.inc's "node 300 0 ... triangles" is only meant to be
-    # visible within 300m - see maszyna_node_importer.gd's own range_min/range_max handling for
-    # regular model nodes). Triangles are bucketed by range before chunking so a distance-limited
-    # patch of grass never ends up merged into an always-visible terrain chunk mesh.
-    var triangles_by_range: Dictionary = {}
-    for triangle_entry: Array in triangles:
-        var entry_range_min: float = triangle_entry[4] if triangle_entry.size() > 4 else 0.0
-        var entry_range_max: float = triangle_entry[5] if triangle_entry.size() > 5 else -1.0
-        var range_key: Vector2 = Vector2(entry_range_min, entry_range_max)
-        if not triangles_by_range.has(range_key):
-            triangles_by_range[range_key] = []
-        (triangles_by_range[range_key] as Array).append(triangle_entry)
-
-    for range_key: Vector2 in triangles_by_range.keys():
-        var range_min: float = range_key.x
-        var range_max: float = range_key.y
-        var built_chunks: Array = SceneryTrianglesBuilder.build_chunks(triangles_by_range[range_key], TRIANGLE_CHUNK_SIZE_M)
-        for chunk in built_chunks:
-            var geometry := MaszynaTrianglesChunkGeometry.new()
-            geometry.vertices = chunk["vertices"]
-            geometry.normals = chunk["normals"]
-            geometry.uvs = chunk["uvs"]
-            var data := MaszynaTrianglesChunkData.new()
-            data.geometry_path = geometry_directory.path_join("%d.res" % chunk_data.size())
-            geometry_store.call(data.geometry_path, geometry)
-            data.position = chunk["origin"]
-            data.material_name = chunk["texture"]
-            data.range_min = range_min
-            data.range_max = range_max if range_max > 0 else 0.0
-            chunk_data.append(data)
-    return chunk_data
 
 
 ## Adds objects to root, reporting the object being attached (see _report_progress_throttled())
@@ -592,13 +536,15 @@ func parse_file_task(
 
 ## parse_file_task() of a subscene (see maszyna_include_importer.gd), read from / saved to the
 ## cache. The cache key includes the inherited origin/rotate - parsed objects are already placed
-## in world coordinates.
+## in world coordinates. The subscene's terrain is chunked in a sink of its own, cached with it,
+## and added to the scenery's sink.
 func parse_subscene_task(
     filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
 ) -> MaszynaImporterContext:
     var source_path:String = _get_source_path(filename)
     var state_hash:String = var_to_str([state["origin"], state["rotate"]]).md5_text()
     var cache_path:String = _get_cache_path(source_path, state_hash)
+    var scenery_sink:SceneryTrianglesSink = state["triangles_sink"]
     var compiled:MaszynaCompiledSubscene = _load_cached(cache_path, source_path, state_hash) as MaszynaCompiledSubscene
     if compiled:
         var cached := MaszynaImporterContext.new()
@@ -611,13 +557,19 @@ func parse_subscene_task(
         cached.launchers.assign(compiled.launchers)
         cached.sounds.assign(compiled.sounds)
         cached.isolated_sections.assign(compiled.isolated_sections)
-        cached.triangles.assign(compiled.triangles)
+        for geometry:MaszynaTrianglesChunkGeometry in compiled.triangle_geometries:
+            scenery_sink.add_geometry(geometry)
         cached.dependencies = compiled.dependencies.duplicate(true)
         cached.objects = _instantiate_cached_nodes(compiled.nodes)
         return cached
 
     state["subscene_depth"] = int(state["subscene_depth"]) + 1
+    var subscene_sink:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+    state["triangles_sink"] = subscene_sink
     var context:MaszynaImporterContext = parse_file_task(filename, parameters, state, queue)
+    var geometries:Array[MaszynaTrianglesChunkGeometry] = subscene_sink.get_geometries()
+    for geometry:MaszynaTrianglesChunkGeometry in geometries:
+        scenery_sink.add_geometry(geometry)
     if not context.cacheable:
         return context
 
@@ -629,7 +581,7 @@ func parse_subscene_task(
         return context
 
     var subscene := MaszynaCompiledSubscene.new()
-    subscene.triangles = context.triangles
+    subscene.triangle_geometries = geometries
     if _compile_scenery(source_path, state_hash, context, context.objects, subscene):
         _cache.set(cache_path, subscene)
     _saving_subscenes_mutex.lock()
@@ -640,10 +592,13 @@ func parse_subscene_task(
 
 ## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
 ## progress every frame: finished tasks / tasks submitted so far.
-func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -> MaszynaImporterContext:
+func _parse_file_with_progress(
+    root:MaszynaIncludeNode, parameters:Dictionary, triangles_sink:SceneryTrianglesSink
+) -> MaszynaImporterContext:
     var root_context := MaszynaImporterContext.new()
     root_context.rotate = root.context_rotate
     root_context.origin = root.context_origin
+    root_context.triangles_sink = triangles_sink
     var queue := SceneryLoadingTaskQueue.new()
     _active_queues.append(queue)
     var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))

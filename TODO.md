@@ -631,9 +631,20 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   `RenderingServer` instances. Remove it: let `SceneryStreamingServer` stream a triangle chunk
   (mesh + transform) itself, as it does `E3DRenderingServer`'s models.
 * Memory left after the lazy loading (`ResourceLazyLoader`, 2026-10-01): every model placement
-  keeps a full `E3DInstanceData` for the whole session; the subscene cache
-  (`MaszynaCompiledSubscene.triangles`) still holds raw triangles, read whole; a terrain chunk's
-  geometry is held as arrays beside its mesh while built.
+  keeps a full `E3DInstanceData` for the whole session; a subscene's terrain is chunked in a sink
+  of its own kept whole in memory until the subscene is parsed; a terrain chunk's geometry is held
+  as arrays beside its mesh while built.
+* Next step of loading on demand: model placements (`MaszynaModelData`) and the packed `nodes` per
+  1 km chunk, as the terrain is - today in the one compiled `.res`. Needs events and signal heads to
+  reach a model otherwise than by the RID it gets as the scenery is loaded.
+* The parse reads a file from disk at every include of it (`grass.inc` 24 000 times in Galicja) -
+  no cache of file buffers; every include task builds a whole `MaszynaImporterContext` (~3-5 KB
+  even when empty).
+* The order of the triangles inside a terrain chunk is the order the parse workers add them in
+  (`SceneryTrianglesSink`), so it may differ between conversions - visible, if anywhere, in
+  overlapping alpha-blended grass.
+* `SceneryLoadMeasurement` reads `Performance.MEMORY_STATIC`, which counts Godot's allocations
+  only - the sink's `std::vector` buffers are not in it; the process RSS is the honest figure.
 * Main-thread stalls left in a load: `TractionServer.network_build()` and
   `TrackServer.topology_rebuild()` run once, unbudgeted; `ScenerySoundServer.sound_create()` sets
   `SfxBank.events` once per sound and the vendored setter rebuilds the bank each time (O(n^2)) -

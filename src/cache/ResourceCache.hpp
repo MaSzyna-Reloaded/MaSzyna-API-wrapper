@@ -32,6 +32,8 @@ namespace godot {
             Ref<Resource> get(const String &p_path, const String &p_hash = "") const;
             void set(const String &p_path, const Ref<Resource> &p_resource, const String &p_hash = "") const;
             void remove(const String &p_path) const;
+            /* Where an entry is kept, for files a cache entry writes beside it (a scenery's chunks) */
+            String get_file_path(const String &p_path) const;
             void clear();
             String get_cache_dir() const;
     };

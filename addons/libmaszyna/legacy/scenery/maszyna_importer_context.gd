@@ -12,7 +12,7 @@ class PendingInclude:
     var parent_trainset:TrainSet3D = null
 
 const RESULT_LISTS:Array[String] = [
-    "tracks", "traction", "power_sources", "models", "events", "memcells", "launchers", "sounds", "isolated_sections", "terrains", "triangles",
+    "tracks", "traction", "power_sources", "models", "events", "memcells", "launchers", "sounds", "isolated_sections", "terrains",
     "scripts"
 ]
 
@@ -34,7 +34,9 @@ var isolated_sections:Array[MaszynaIsolatedData] = []
 ## The `lua` scripts, relative to the scenery directory
 var scripts:Array[String] = []
 var terrains: Array = []
-var triangles: Array = []
+## Where the "triangles" nodes go as they are parsed - shared by the includes of one scenery, a
+## subscene's own (SceneryInstancer.parse_subscene_task())
+var triangles_sink:SceneryTrianglesSink = SceneryTrianglesSink.create("")
 var dependencies:Dictionary = {}
 var cacheable:bool = true
 ## Objects parsed from the file (set by SceneryInstancer.parse_file_task())
@@ -56,7 +58,6 @@ var trainset_node: TrainSet3D = null
 
 var _rotates = []
 var _origins = []
-var _triangles = []
 var _active_files:Dictionary = {}
 
 
@@ -118,6 +119,7 @@ func get_state() -> Dictionary:
         "trainset_offset": trainset_offset,
         "trainset_velocity": trainset_velocity,
         "trainset_node": trainset_node,
+        "triangles_sink": triangles_sink,
         "active_files": _active_files.duplicate(),
     }
 
@@ -134,6 +136,7 @@ static func from_state(state:Dictionary) -> MaszynaImporterContext:
     context.trainset_offset = state["trainset_offset"]
     context.trainset_velocity = state["trainset_velocity"]
     context.trainset_node = state["trainset_node"]
+    context.triangles_sink = state["triangles_sink"]
     context._active_files = state["active_files"]
     return context
 

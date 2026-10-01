@@ -36,9 +36,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             context.launchers.append(launcher)
 
         "triangles":
-            var triangles = triangles_importer.import(p, context, range_min, range_max)
-            if triangles:
-                context.triangles.append(triangles)
+            triangles_importer.import(p, context, range_min, range_max)
 
         "sound":
             var sound:MaszynaSoundData = sound_importer.import(p, context)
@@ -113,4 +111,5 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     if obj is MaszynaRailVehicle3D and context.trainset_node:
         context.trainset_node.add_child(obj)
         return []
-    return [obj]
+    # a node that is data (a model, a track, triangles...) leaves nothing among the objects
+    return [obj] if obj else []

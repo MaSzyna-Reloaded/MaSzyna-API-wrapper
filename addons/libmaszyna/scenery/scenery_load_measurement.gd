@@ -4,8 +4,8 @@ extends RefCounted
 
 ## What a scenery load costs, stage by stage (MaszynaIncludeNode.LoadStage): how long the stage
 ## took, its longest frame - the main thread blocked, and nothing on the loading screen moves - and
-## the peak of static memory. Started by SceneryInstancer.instantiate() for one load and printed
-## when it ends, one line per stage:
+## the peak of static memory. Started by SceneryInstancer.instantiate() for one load; a stage is
+## printed as it ends, so a load stopped half way still says what it cost:
 ## [SceneryLoad] FILES 41.2 s, longest frame 0.90 s, peak 6.10 GB
 
 const STAGE_NAMES: PackedStringArray = ["FILES", "INFRASTRUCTURE", "TERRAIN", "OBJECTS", "VEHICLES"]
@@ -32,18 +32,11 @@ func _init(root: MaszynaIncludeNode) -> void:
     _root.get_tree().process_frame.connect(_on_process_frame)
 
 
-## The load has ended: the last stage is closed and every stage printed
+## The load has ended: the last stage is closed
 func finish() -> void:
     _root.load_progress.disconnect(_on_load_progress)
     _root.get_tree().process_frame.disconnect(_on_process_frame)
     _close_stage()
-    for stage: int in STAGE_NAMES.size():
-        if _durations_usec[stage] == 0:
-            continue
-        print("[SceneryLoad] %s %.1f s, longest frame %.2f s, peak %.2f GB" % [
-            STAGE_NAMES[stage], _durations_usec[stage] / USEC_PER_SEC,
-            _longest_frames_usec[stage] / USEC_PER_SEC, _peaks_bytes[stage] / BYTES_PER_GB,
-        ])
 
 
 func _on_load_progress(_progress: float, stage: MaszynaIncludeNode.LoadStage, _message: String) -> void:
@@ -64,3 +57,7 @@ func _close_stage() -> void:
     var now: int = Time.get_ticks_usec()
     _durations_usec[_stage] += now - _stage_started_usec
     _stage_started_usec = now
+    print("[SceneryLoad] %s %.1f s, longest frame %.2f s, peak %.2f GB" % [
+        STAGE_NAMES[_stage], _durations_usec[_stage] / USEC_PER_SEC,
+        _longest_frames_usec[_stage] / USEC_PER_SEC, _peaks_bytes[_stage] / BYTES_PER_GB,
+    ])

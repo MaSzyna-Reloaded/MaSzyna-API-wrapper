@@ -1,7 +1,43 @@
 extends MaszynaGutTest
 
+## SceneryTrianglesSink: "triangles" are cut along the 1 km grid into chunks as they are added, and
+## a sink with a directory writes them out, past its budget part by part.
 
+## SceneryTrianglesSink::CHUNK_SIZE_M
 const CELL_SIZE:float = 1000.0
+const DIRECTORY:String = "user://test_scenery_triangles_sink"
+## A budget of a few triangles, so that the sink writes parts many times over
+const TEST_BUDGET_BYTES:int = 1024
+const TEST_TRIANGLES:int = 100
+
+
+func after_each() -> void:
+    if not DirAccess.dir_exists_absolute(DIRECTORY):
+        return
+    for file:String in DirAccess.get_files_at(DIRECTORY):
+        DirAccess.remove_absolute(DIRECTORY.path_join(file))
+    DirAccess.remove_absolute(DIRECTORY)
+
+
+## The chunks of the entries ([texture, vertices, normals, uvs]) as the old builder listed them,
+## positions relative to "origin"
+func _build_chunks(entries:Array) -> Array[Dictionary]:
+    var sink:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+    for entry:Array in entries:
+        sink.add_triangles(entry[0], entry[1], entry[2], entry[3], 0.0, 0.0)
+    var chunks:Array[Dictionary] = []
+    for geometry:MaszynaTrianglesChunkGeometry in sink.get_geometries():
+        var arrays:Array = geometry.to_mesh_arrays()
+        chunks.append({
+            "texture": geometry.texture,
+            "chunk_x": geometry.cell.x,
+            "chunk_z": geometry.cell.y,
+            "origin": SceneryTrianglesSink.cell_get_origin(geometry.cell),
+            "vertices": arrays[Mesh.ARRAY_VERTEX],
+            "normals": arrays[Mesh.ARRAY_NORMAL],
+            "uvs": arrays[Mesh.ARRAY_TEX_UV],
+        })
+    return chunks
 
 
 func _triangle_area(a:Vector3, b:Vector3, c:Vector3) -> float:
@@ -18,7 +54,7 @@ func test_triangle_crossing_cells_is_cut_along_the_grid() -> void:
         Vector2(-1.5, -1.5), Vector2(0.0, 1.5), Vector2(1.5, -1.5),
     ])
     var source_facing:Vector3 = (vertices[1] - vertices[0]).cross(vertices[2] - vertices[0])
-    var chunks:Array = SceneryTrianglesBuilder.build_chunks([["grass", vertices, normals, uvs]], CELL_SIZE)
+    var chunks:Array = _build_chunks([["grass", vertices, normals, uvs]])
     assert_gt(chunks.size(), 1)
     var area:float = 0.0
     for chunk:Dictionary in chunks:
@@ -47,7 +83,7 @@ func test_triangle_within_one_cell_is_stored_unchanged() -> void:
     ])
     var normals:PackedVector3Array = PackedVector3Array([Vector3.UP, Vector3.RIGHT, Vector3.FORWARD])
     var uvs:PackedVector2Array = PackedVector2Array([Vector2(0, 0), Vector2(1, 0), Vector2(0, 1)])
-    var chunks:Array = SceneryTrianglesBuilder.build_chunks([["grass", vertices, normals, uvs]], CELL_SIZE)
+    var chunks:Array = _build_chunks([["grass", vertices, normals, uvs]])
     assert_eq(chunks.size(), 1)
     var chunk:Dictionary = chunks[0]
     assert_eq(chunk["vertices"].size(), 3)
@@ -70,7 +106,7 @@ func test_shared_edge_is_cut_at_identical_vertices() -> void:
         PackedVector3Array([edge_end, edge_start, Vector3(200, 0, 2800)]),
     ]:
         var on_edge:Array[Vector3] = []
-        for chunk:Dictionary in SceneryTrianglesBuilder.build_chunks([["grass", triangle, normals, uvs]], CELL_SIZE):
+        for chunk:Dictionary in _build_chunks([["grass", triangle, normals, uvs]]):
             for point:Vector3 in chunk["vertices"]:
                 var world_position:Vector3 = point + chunk["origin"]
                 var along:float = (world_position - edge_start).dot(edge_end - edge_start) / (edge_end - edge_start).length_squared()
@@ -89,13 +125,52 @@ func test_entries_share_buffers_only_with_same_material_and_cell() -> void:
     ])
     var normals:PackedVector3Array = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP])
     var uvs:PackedVector2Array = PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.DOWN])
-    var chunks:Array = SceneryTrianglesBuilder.build_chunks([
+    var chunks:Array = _build_chunks([
         ["grass", vertices, normals, uvs],
         ["grass", vertices, normals, uvs],
         ["sand", vertices, normals, uvs],
-    ], 1000.0)
+    ])
     assert_eq(chunks.size(), 2)
     for chunk:Dictionary in chunks:
         assert_eq(chunk["chunk_x"], -1)
         assert_eq(chunk["chunk_z"], -1)
         assert_eq(chunk["vertices"].size(), 6 if chunk["texture"] == "grass" else 3)
+
+
+## Past the budget, chunks go to disk as parts; finish() puts every chunk back together whole
+func test_finished_chunks_hold_every_triangle_also_past_the_budget() -> void:
+    var normals:PackedVector3Array = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP])
+    var uvs:PackedVector2Array = PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.DOWN])
+    var triangle:PackedVector3Array = PackedVector3Array([
+        Vector3(100, 0, 100), Vector3(100, 0, 200), Vector3(200, 0, 100),
+    ])
+    var sink:SceneryTrianglesSink = SceneryTrianglesSink.create(DIRECTORY, TEST_BUDGET_BYTES)
+    for index:int in TEST_TRIANGLES:
+        sink.add_triangles("grass", triangle, normals, uvs, 0.0, 0.0)
+    assert_gt(DirAccess.get_files_at(DIRECTORY).size(), 0, "nothing went to disk past the budget")
+
+    var descriptors:Array = sink.finish()
+    assert_eq(descriptors.size(), 1)
+    assert_eq(DirAccess.get_files_at(DIRECTORY).size(), 1, "parts were left beside the chunk")
+    var geometry:MaszynaTrianglesChunkGeometry = ResourceLoader.load(descriptors[0]["path"])
+    assert_eq(geometry.vertices.size(), TEST_TRIANGLES * 3 * 3, "triangles lost between the parts")
+    assert_eq(descriptors[0]["position"], SceneryTrianglesSink.cell_get_origin(Vector2i.ZERO))
+
+
+func test_added_geometry_joins_the_chunk_of_its_texture_cell_and_range() -> void:
+    var vertices:PackedVector3Array = PackedVector3Array([
+        Vector3(100, 0, 100), Vector3(100, 0, 200), Vector3(200, 0, 100),
+    ])
+    var normals:PackedVector3Array = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP])
+    var uvs:PackedVector2Array = PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.DOWN])
+    var subscene:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+    subscene.add_triangles("grass", vertices, normals, uvs, 0.0, 300.0)
+    var scenery:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+    scenery.add_triangles("grass", vertices, normals, uvs, 0.0, 300.0)
+    scenery.add_triangles("grass", vertices, normals, uvs, 0.0, 0.0)
+    for geometry:MaszynaTrianglesChunkGeometry in subscene.get_geometries():
+        scenery.add_geometry(geometry)
+    var geometries:Array[MaszynaTrianglesChunkGeometry] = scenery.get_geometries()
+    assert_eq(geometries.size(), 2, "another range is another chunk")
+    assert_eq(geometries[0].range_max, 300.0)
+    assert_eq(geometries[0].vertices.size(), 2 * 3 * 3)

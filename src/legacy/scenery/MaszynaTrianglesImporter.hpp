@@ -1,6 +1,7 @@
 #pragma once
 
 #include "legacy/parsers/maszyna_parser.hpp"
+#include "scenery/SceneryTrianglesSink.hpp"
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
@@ -12,6 +13,9 @@ namespace godot {
             static void _bind_methods();
 
         public:
-            static Array import_triangles(MaszynaParser *p_parser, const Vector3 &p_rotate, const Vector3 &p_origin);
+            /* Reads a "triangles" node into the sink; false when it is malformed */
+            static bool import_triangles(
+                    MaszynaParser *p_parser, const Vector3 &p_rotate, const Vector3 &p_origin,
+                    const Ref<SceneryTrianglesSink> &p_sink, float p_range_min, float p_range_max);
     };
 } // namespace godot

@@ -51,9 +51,12 @@ namespace godot {
         // an empty vehicle takes the load first, or the first it accepts (basic_station::update_load(),
         // station.cpp:49-54)
         if (mover->LoadType.name.empty()) {
-            const std::string name = !p_load_name.is_empty()          ? std::string(p_load_name.utf8().get_data())
-                                     : !mover->LoadAttributes.empty() ? mover->LoadAttributes.front().name
-                                                                      : std::string();
+            std::string name;
+            if (!p_load_name.is_empty()) {
+                name = p_load_name.utf8().get_data();
+            } else if (!mover->LoadAttributes.empty()) {
+                name = mover->LoadAttributes.front().name;
+            }
             mover->LoadAmount = 0.f;
             mover->AssignLoad(name);
             mover->ComputeMass();
@@ -93,7 +96,7 @@ namespace godot {
         if (mover == nullptr || (exchange_unload < EXCHANGE_DONE && exchange_load < EXCHANGE_DONE)) {
             return 0.0;
         }
-        const double base = exchange_unload / mover->UnLoadSpeed + exchange_load / mover->LoadSpeed;
+        const double base = (exchange_unload / mover->UnLoadSpeed) + (exchange_load / mover->LoadSpeed);
         // both sides exchange twice as fast (DynObj.cpp:2848)
         const int nominal = exchange_side == PLATFORM_SIDE_BOTH ? 2 : 1;
         const int speed = get_load_exchange_speed();

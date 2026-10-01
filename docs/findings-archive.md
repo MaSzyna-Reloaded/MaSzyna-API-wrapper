@@ -4,6 +4,19 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-10-01 - style-check red behind a green local check
+
+* **Symptom:** `style-check / clang-tidy` failed on the PR with
+  `llvm-prefer-static-over-anonymous-namespace` (RailVehicleRenderingServer.cpp),
+  `readability-avoid-nested-conditional-operator` and `readability-math-missing-parentheses`
+  (MoverRailVehicleLoad.cpp), while a local clang-tidy run on changed files reported nothing.
+* **What proved it:** the local clang-tidy was LLVM 18; CI runs 22.1.4 (`LLVM_VERSION`). The three
+  checks do not exist in 18, and 18 also refuses the `.clang-tidy` key `RemovedArgs`. clang-tidy
+  22.1.0 from PyPI reported the same findings, and none after the fix.
+* **Fix:** a static function out of the anonymous namespace, an if/else for the nested
+  conditional, parentheses around the divisions.
+* **Rule:** run clang-tidy of CI's major version before pushing C++.
+
 ## 2026-09-30 - EP07's brake valve handles could not be grabbed
 
 * **Symptom:** in the EP07 cab the end of the main brake valve's handle (`brakectrl`), of the

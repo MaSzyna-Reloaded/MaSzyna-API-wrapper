@@ -20,8 +20,8 @@ func after_each() -> void:
 func test_controls_drive_environment_node() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
     var controls: HFlowContainer = WEATHER_CONTROLS_SCENE.instantiate() as HFlowContainer
-    controls.environment_node_path = NodePath("../%s" % environment_node.name)
     add_child_autofree(controls)
+    controls.attach_environment(environment_node)
 
     controls._rain_slider.value = 0.5
     controls._cloud_slider.value = 0.7
@@ -41,8 +41,8 @@ func test_controls_drive_environment_node() -> void:
 func test_controls_follow_weather_preset() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
     var controls: HFlowContainer = WEATHER_CONTROLS_SCENE.instantiate() as HFlowContainer
-    controls.environment_node_path = NodePath("../%s" % environment_node.name)
     add_child_autofree(controls)
+    controls.attach_environment(environment_node)
 
     controls.visible = true
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_RAIN

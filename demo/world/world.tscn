@@ -1,0 +1,48 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://world/world.gd" id="1_world"]
+[ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_env"]
+[ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="3_player"]
+[ext_resource type="Script" uid="uid://b1awg5iad35ss" path="res://addons/libmaszyna/legacy/scenery/maszyna_scenery.gd" id="4_scenery"]
+[ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="5_weather_sfx"]
+[ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="6_player_sfx_bank"]
+[ext_resource type="Script" path="res://addons/libmaszyna/scenario/scenario_keyboard.gd" id="7_scenario_keyboard"]
+
+[node name="World" type="Node3D"]
+script = ExtResource("1_world")
+
+[node name="MaszynaEnvironmentNode" type="Node" parent="."]
+unique_name_in_owner = true
+script = ExtResource("2_env")
+current_time = 14.913
+day = 19
+month = 9
+wind_strength = 0.2
+fog_density = 0.015
+fog_distance = 235.0
+tonemap_white = 10.0
+tonemap_agx_white = 8.0
+tonemap_agx_contrast = 1.1
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
+sfx_bank = ExtResource("6_player_sfx_bank")
+auto_start = false
+
+[node name="MaszynaSceneryNode" type="Node3D" parent="."]
+unique_name_in_owner = true
+script = ExtResource("4_scenery")
+environment_node_path = NodePath("../MaszynaEnvironmentNode")
+autoload = false
+
+[node name="ScenarioKeyboard" type="Node" parent="."]
+script = ExtResource("7_scenario_keyboard")
+
+[node name="WeatherSfx" parent="." instance=ExtResource("5_weather_sfx")]
+weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
+
+[connection signal="load_progress" from="MaszynaSceneryNode" to="." method="_on_scenery_load_progress"]
+[connection signal="load_files_parsed" from="MaszynaSceneryNode" to="." method="_on_scenery_load_files_parsed"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]

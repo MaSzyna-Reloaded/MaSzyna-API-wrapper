@@ -381,11 +381,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ## Sounds
 
-* Emitter shape (2026-10-01): `ScenerySoundServer` sounds play without the original's per-emitter
-  pitch factor (sound.cpp:374-377); a one-shot ignores `startoffset:` (gnd-sfx takes the start
-  fraction on loops, automations and sustain clips only, the original on any single buffer -
-  audiorenderer_extra.h).
-
 * **The UI's sounds follow the simulation's speed too.** `TrainSoundSystem` sets
   `AudioServer.playback_speed_scale` to the running speed (up to x4, a tape's effect; set above x8,
   the Cabin and Exterior buses are muted; 2026-09-29) -

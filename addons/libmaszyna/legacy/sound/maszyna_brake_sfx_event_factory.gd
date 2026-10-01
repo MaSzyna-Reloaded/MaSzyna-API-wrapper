@@ -188,6 +188,8 @@ static func _build_brake_shoe(
     event.parameter_modulations = _generic_modulations()
     event.parameter_modulations.append(_force_ratio_modulation())
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(primary)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, primary, primary.start_offset)
     return event
 
 
@@ -208,7 +210,7 @@ static func _brake_friction_automation(
     automation.min_domain = 0.05
     automation.max_domain = speed_limit
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), true)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), true)
     clip.offset = 0.05
     clip.length = 0.0
     var maximum_gain:float = maxf(definition.amplitude_offset + definition.amplitude_factor, 0.001)
@@ -280,6 +282,8 @@ static func _build_continuous_event(
     event.automations = [_automation_for(definition, parameter_name, min_value, max_value)]
     event.parameter_modulations = _generic_modulations()
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(definition)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
     return event
 
 
@@ -293,7 +297,7 @@ static func _build_releaser(definition:MmdSoundSourceDefinition) -> SfxEvent:
     automation.min_domain = 0.0
     automation.max_domain = 1.0
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), true)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), true)
     clip.offset = 0.5
     clip.length = 0.5
     clip.track = _track_for(definition, true)
@@ -302,6 +306,8 @@ static func _build_releaser(definition:MmdSoundSourceDefinition) -> SfxEvent:
     event.parameter_modulations = _generic_modulations()
     event.parameter_modulations.append(_pressure_gain_modulation())
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(definition)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
     return event
 
 
@@ -358,6 +364,8 @@ static func _build_pulse_event(
     event.automations = automations
     event.parameter_modulations = _generic_modulations()
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(primary)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, primary, primary.start_offset)
     return event
 
 
@@ -367,7 +375,7 @@ static func _pulse_automation(definition:MmdSoundSourceDefinition, parameter_nam
     automation.min_domain = 0.5
     automation.max_domain = 1.5
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), false)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), false)
     clip.offset = 0.5
     clip.length = 1.0
     clip.cut = false
@@ -392,6 +400,8 @@ static func _build_spring_brake(
     event.automations = automations
     event.parameter_modulations = _generic_modulations()
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(primary)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, primary, primary.start_offset)
     return event
 
 
@@ -402,7 +412,7 @@ static func _domain_clip_automation(
     automation.min_domain = 0.0
     automation.max_domain = 1.0
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), false)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), false)
     clip.offset = 0.5 if high_domain else 0.0
     clip.length = 0.5
     clip.cut = false
@@ -434,6 +444,8 @@ static func _build_local_brake_hiss(
     var primary:MmdSoundSourceDefinition = release_def if release_def else engage_def
     event.parameter_modulations = _generic_modulations()
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(primary)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, primary, primary.start_offset)
     return event
 
 
@@ -511,6 +523,8 @@ static func _build_pipe_hiss(sources:Dictionary, config:Dictionary) -> SfxEvent:
     event.automations = automations
     event.parameter_modulations = _generic_modulations()
     event.spatial_config = MmdSoundEventBuilder._build_spatial_config(primary)
+    var emitter:Array[SfxEvent] = [event]
+    MmdSoundEventBuilder.shape_emitter(emitter, primary, primary.start_offset)
     return event
 
 
@@ -522,7 +536,7 @@ static func _position_automation(
     automation.min_domain = position - 0.49
     automation.max_domain = position + 0.49
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), true)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), true)
     clip.offset = automation.min_domain
     clip.length = automation.max_domain - automation.min_domain
     clip.track = _track_for(definition, true)
@@ -545,7 +559,7 @@ static func _signed_flow_automation(
     var automation := SfxAutomation.new()
     automation.parameter_name = parameter_name
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), true)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), true)
     var curve := Curve.new()
     if direction > 0.0:
         automation.min_domain = 0.0
@@ -634,7 +648,7 @@ static func _automation_for(
     automation.max_domain = max_value
 
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder._build_stream(_primary_sound(definition), true)
+    clip.stream = MmdSoundEventBuilder.build_stream(_primary_sound(definition), true)
     clip.offset = min_value
     clip.length = 0.0 # extends to automation.max_domain
     clip.fade_in_curve = _envelope_curve(definition.amplitude_offset, max_value - min_value)

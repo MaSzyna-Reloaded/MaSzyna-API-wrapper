@@ -25,6 +25,9 @@ class_name MmdSoundEventBuilder
 const _AUTOMATION_HEADROOM:float = 100000.0
 const _CROSSFADE_CURVE_SEGMENTS:int = 8
 const _CROSSFADE_LOG_FACTOR:float = -0.57
+## An emitter's own pitch factor when the MMD gives no pitchvariation: (sound.cpp:374-377)
+const DEFAULT_PITCH_VARIATION_MIN:float = 0.975
+const DEFAULT_PITCH_VARIATION_MAX:float = 1.025
 
 
 static func build(
@@ -46,7 +49,7 @@ static func build(
         event.clips = _build_begin_main_end_clips(definition)
     elif not has_chunks and definition.sound_main:
         var clip := SfxClip.new()
-        clip.stream = _build_stream(definition.sound_main, loop)
+        clip.stream = build_stream(definition.sound_main, loop)
         event.clips = [clip]
 
     if parameterized:
@@ -129,22 +132,24 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
 
     if definition.sound_begin:
         var begin_clip := SfxClip.new()
-        begin_clip.stream = _build_stream(definition.sound_begin, false)
+        begin_clip.stream = build_stream(definition.sound_begin, false)
         # the span is known before the stream is loaded, so an event started past it
         # (TrainSoundSystem, a running sound heard again) does not play it
         begin_clip.length = main_offset
+        begin_clip.bookend = true
         clips.append(begin_clip)
 
     if definition.sound_main:
         var main_clip := SfxClip.new()
-        main_clip.stream = _build_stream(definition.sound_main, true)
+        main_clip.stream = build_stream(definition.sound_main, true)
         main_clip.offset = main_offset
         clips.append(main_clip)
 
     if definition.sound_end:
         var end_clip := SfxClip.new()
-        end_clip.stream = _build_stream(definition.sound_end, false)
+        end_clip.stream = build_stream(definition.sound_end, false)
         end_clip.trigger_mode = SfxClip.TriggerMode.TRIGGER_SUSTAIN
+        end_clip.bookend = true
         clips.append(end_clip)
 
     return clips
@@ -194,7 +199,7 @@ static func _build_automation(
         var fadein:float = fadeins[idx]
 
         var clip := SfxClip.new()
-        clip.stream = _build_stream(chunks[idx]["filename"], loop)
+        clip.stream = build_stream(chunks[idx]["filename"], loop)
         clip.offset = fadein
         # top chunk: 0 means "active up to automation.max_domain" (_automation_clip_contains_value)
         # - stays audible at any RPM above its own threshold instead of cutting out past Chunkrange.
@@ -288,7 +293,25 @@ static func _build_pitch_curve(
     return curve
 
 
-static func _build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
+## Makes `events` one emitter, the original's sound_source: they start at `start_fraction` of their
+## samples and share one pitch factor - the MMD's pitchvariation: as a share around 1, none for 0,
+## or the original's default range when there is no definition or it gives none
+## (sound.cpp:207-222, 374-377). Every event built from MaSzyna's data goes through here.
+static func shape_emitter(
+        events:Array[SfxEvent], definition:MmdSoundSourceDefinition, start_fraction:float) -> void:
+    var pitch_variation:float = randf_range(DEFAULT_PITCH_VARIATION_MIN, DEFAULT_PITCH_VARIATION_MAX)
+    if definition and not definition.pitch_variation == MmdSoundSourceDefinition.NO_PITCH_VARIATION:
+        var half_range:float = definition.pitch_variation / 2.0
+        pitch_variation = randf_range(1.0 - half_range, 1.0 + half_range)
+    for event:SfxEvent in events:
+        event.start_fraction = start_fraction
+        event.pitch_variation = pitch_variation
+
+
+## A sound file of the game, with its length known before its first playback - a voice's start in
+## it (a start fraction, a seek) is placed before the file is read. Every MaSzyna sound stream is
+## made here.
+static func build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
     stream.loop = loop

@@ -2757,11 +2757,18 @@ lighting or the trainset.
   applied per buffer at audiorenderer.cpp:206). Two copies of one recording then run at slightly
   different speeds, so copies that start close drift apart; with one pitch for all, a close pair
   stays in phase for as long as it plays. `startoffset:` was parsed and never used either.
-* **Fix:** `MaszynaAudioStream.length` is set at build (`MmdSoundEventBuilder.stream_length()`);
-  gnd-sfx `play()` takes a `pitch_variation` on every voice of the instance;
-  `TrainSoundSystem._add_emitter()` makes every event of a bank an emitter with its own start
-  fraction (`startoffset:`, or the bogie/motor rule) and pitch factor. gnd-sfx steals a releasing
+* **Fix:** one shape for every sound made of MaSzyna's data. `MmdSoundEventBuilder.build_stream()`
+  is the only maker of a `MaszynaAudioStream` and sets its length at build;
+  `MmdSoundEventBuilder.shape_emitter()` gives every `SfxEvent` - vehicle banks, brake events, cab
+  controls, scenery and scenario sounds, the guard's signal - its own `start_fraction`
+  (`startoffset:`, or the bogie/motor rule of DynObj.cpp:6505-6514, 6085) and `pitch_variation`.
+  gnd-sfx keeps both on the `SfxEvent` (the emitter) and applies the fraction to every clip but a
+  `bookend` (begin/end), one-shots included, as audiorenderer_extra.h does; it steals a releasing
   voice first, then a one-shot, a loop last - a stolen loop is never started again.
+* **First done only in TrainSoundSystem**, with the cab, scenery and one-shots left to TODO: the
+  same original rule covered by one system and not the others, and two more makers of
+  `MaszynaAudioStream` without a length. A rule ported from the original is one operation every
+  caller goes through, not a copy in the system the bug report came from.
 * **Rule:** a fix to a value is proven on the object the game uses (`MaszynaAudioStream`), not on
   a stand-in the test finds easier to build.
 

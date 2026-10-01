@@ -25,6 +25,7 @@
 [ext_resource type="PackedScene" path="res://hud/script_editor_panel.tscn" id="27_script_editor"]
 [ext_resource type="PackedScene" path="res://hud/vehicle_selector_panel.tscn" id="28_vehicle_selector"]
 [ext_resource type="PackedScene" path="res://hud/vehicle_chip.tscn" id="29_vehicle_chip"]
+[ext_resource type="PackedScene" path="res://hud/streaming_spinner.tscn" id="37_streaming_spinner"]
 [ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
 [ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
@@ -417,7 +418,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 1
 
-[node name="FloatingButtons" type="HBoxContainer" parent="."]
+[node name="FloatingCorner" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -434,7 +435,17 @@ mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 2
 
-[node name="FollowedVehicleChip" parent="FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+[node name="StreamingSpinner" parent="FloatingCorner" instance=ExtResource("37_streaming_spinner")]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="FloatingButtons" type="HBoxContainer" parent="FloatingCorner"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="FollowedVehicleChip" parent="FloatingCorner/FloatingButtons" instance=ExtResource("29_vehicle_chip")]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Followed vehicle (click to open its card)"
@@ -442,7 +453,7 @@ icon = ExtResource("30_eye")
 action_icon = ExtResource("34_eye_off")
 action_tooltip = "Stop following"
 
-[node name="PlayerVehicleChip" parent="FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+[node name="PlayerVehicleChip" parent="FloatingCorner/FloatingButtons" instance=ExtResource("29_vehicle_chip")]
 unique_name_in_owner = true
 layout_mode = 2
 tooltip_text = "Your vehicle (click to enter the cab)"
@@ -468,8 +479,8 @@ mouse_filter = 2
 [connection signal="close_requested" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_close_requested"]
 [connection signal="vehicle_activated" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_vehicle_activated"]
 [connection signal="remove_trainset_requested" from="VehicleSelectorPanel" to="." method="_remove_trainset"]
-[connection signal="pressed" from="FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_pressed"]
-[connection signal="action_pressed" from="FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_action_pressed"]
-[connection signal="pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
-[connection signal="action_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]
-[connection signal="driver_pressed" from="FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_driver_pressed"]
+[connection signal="pressed" from="FloatingCorner/FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_pressed"]
+[connection signal="action_pressed" from="FloatingCorner/FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_action_pressed"]
+[connection signal="pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
+[connection signal="action_pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]
+[connection signal="driver_pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_driver_pressed"]

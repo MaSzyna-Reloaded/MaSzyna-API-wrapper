@@ -6,6 +6,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    const char *SceneryStreamingServer::streaming_builds_started_signal = "streaming_builds_started";
+    const char *SceneryStreamingServer::streaming_builds_finished_signal = "streaming_builds_finished";
+
     void SceneryStreamingServer::_bind_methods() {
         ClassDB::bind_method(
                 D_METHOD("owner_create", "preload", "build", "clear"), &SceneryStreamingServer::owner_create);
@@ -24,11 +27,15 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("streaming_get_camera_position"), &SceneryStreamingServer::streaming_get_camera_position);
         ClassDB::bind_method(D_METHOD("streaming_has_camera"), &SceneryStreamingServer::streaming_has_camera);
+        ClassDB::bind_method(D_METHOD("streaming_is_building"), &SceneryStreamingServer::streaming_is_building);
         ClassDB::bind_method(
                 D_METHOD("area_is_ready", "chunk_radius"), &SceneryStreamingServer::area_is_ready, DEFVAL(1));
         ClassDB::bind_method(
                 D_METHOD("streaming_get_streamed_count"), &SceneryStreamingServer::streaming_get_streamed_count);
         ClassDB::bind_method(D_METHOD("streaming_get_statistics"), &SceneryStreamingServer::streaming_get_statistics);
+
+        ADD_SIGNAL(MethodInfo(streaming_builds_started_signal));
+        ADD_SIGNAL(MethodInfo(streaming_builds_finished_signal));
     }
 
     SceneryStreamingServer::SceneryStreamingServer() {
@@ -279,6 +286,8 @@ namespace godot {
         }
         if (was_streaming) {
             tree->disconnect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
+            // nothing streams without a camera, and the tick that would announce it has stopped
+            _set_building(false);
             return;
         }
         tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
@@ -386,7 +395,8 @@ namespace godot {
         camera_position = p_position;
         target_revision++;
         scanned_revision = 0;
-        pending_build_count = 0;
+        // pending_build_count stays until the pass replaces it: a camera moving through a backlog
+        // would otherwise report no builds between every two passes (streaming_builds_finished)
         content_dirty = false;
         force_plan = false;
         _drop_stale_work();
@@ -436,6 +446,24 @@ namespace godot {
             _request_plan(position);
         }
         _apply_plan();
+        bool is_building;
+        {
+            MutexLock lock(mutex);
+            is_building = pending_build_count > 0;
+        }
+        _set_building(is_building);
+    }
+
+    void SceneryStreamingServer::_set_building(const bool p_building) {
+        if (p_building == building) {
+            return;
+        }
+        building = p_building;
+        emit_signal(building ? streaming_builds_started_signal : streaming_builds_finished_signal);
+    }
+
+    bool SceneryStreamingServer::streaming_is_building() const {
+        return building;
     }
 
     /// Applies incrementally published work within a frame budget. Every task is validated against

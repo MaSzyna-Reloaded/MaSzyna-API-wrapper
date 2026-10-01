@@ -66,7 +66,7 @@ file_logging/log_path="user://logs/app.log"
 [display]
 
 window/size/mode=3
-window/size/initial_position_type=3
+window/size/initial_position_type=1
 
 [editor_overrides]
 

@@ -270,7 +270,7 @@ func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
 
 func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
     var models:Array[MaszynaModelData] = []
-    _build_scenery("event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models)
+    await _build_scenery("event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models)
     var event:RID = ScenarioEventServer.event_get_rid_by_name(&"w4_stopinfo")
     var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event)
 
@@ -281,7 +281,7 @@ func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
 
 func test_a_departure_delay_is_read_from_the_scenery() -> void:
     var models:Array[MaszynaModelData] = []
-    var root:MaszynaIncludeNode = _build_scenery("event odjazd multiple 2 none endevent "
+    var root:MaszynaIncludeNode = await _build_scenery("event odjazd multiple 2 none endevent "
             + "event odjazd_signal multiple 0 none departuredelay %s endevent" % DEPARTURE_DELAY, models)
 
     assert_eq(ScenarioEventServer.event_get_departure_delay(ScenarioEventServer.event_get_rid_by_name(&"odjazd_signal")),
@@ -292,7 +292,7 @@ func test_a_departure_delay_is_read_from_the_scenery() -> void:
 
 
 func test_scenery_memcells_and_value_events() -> void:
-    var root:MaszynaIncludeNode = _build_scenery(
+    var root:MaszynaIncludeNode = await _build_scenery(
         "node -1 0 Cell1 memcell 0 0 0 Start 1 2 none endmemcell "
         + "node -1 0 cell2 memcell 0 0 0 Other 7 8 none endmemcell "
         + "event set_cell updatevalues 0 cell1 Go * 5 endevent "
@@ -322,7 +322,7 @@ func test_scenery_memcells_and_value_events() -> void:
 
 
 func test_scenery_onstart_and_negative_delay_events_are_queued() -> void:
-    var root:MaszynaIncludeNode = _build_scenery(
+    var root:MaszynaIncludeNode = await _build_scenery(
         "event scenery_onstart updatevalues 0.0 none a 0 0 endevent "
         + "event at_start updatevalues -30 none b 0 0 endevent "
         + "event later updatevalues 30 none c 0 0 endevent",
@@ -351,7 +351,7 @@ func test_scenery_lights_event_shows_the_aspect() -> void:
     var model_data:MaszynaModelData = MaszynaModelData.new()
     model_data.name = "Sem_A"
     var models:Array[MaszynaModelData] = [model_data]
-    var root:MaszynaIncludeNode = _build_scenery("event sem_a_sem_ligh1 lights 0 sem_a 1 endevent", models)
+    var root:MaszynaIncludeNode = await _build_scenery("event sem_a_sem_ligh1 lights 0 sem_a 1 endevent", models)
 
     await _run_event(&"sem_a_sem_ligh1")
 
@@ -425,7 +425,7 @@ func test_scenery_animation_turns_the_submodel() -> void:
     model_data.name = "rog1"
     var models:Array[MaszynaModelData] = [model_data]
     var instances:Dictionary[String, RID] = {"rog1": instance.get_e3d_instance()}
-    var root:MaszynaIncludeNode = _build_scenery(
+    var root:MaszynaIncludeNode = await _build_scenery(
         "node -1 0 c1 memcell 0 0 0 moving 0 0 none endmemcell "
         + "event rog1on animation 0 rog1 rotate ramie01 0 0 90 900 endevent "
         + "event rog1.ramie01:done updatevalues 0 c1 done * * endevent",
@@ -460,7 +460,7 @@ func test_scenery_voltage_event_sets_the_power_source() -> void:
     var models:Array[MaszynaModelData] = []
     var model_rids:Array[RID] = []
     var isolated_sections:Array[MaszynaIsolatedData] = []
-    MaszynaLegacyEventFactory.build(
+    await MaszynaLegacyEventFactory.build(
         root, context.events, context.memcells, context.launchers, context.sounds, isolated_sections, context.tracks,
         tracks, models, model_rids, power_sources
     )
@@ -494,7 +494,7 @@ func test_scenery_isolated_section_fires_busy_and_marks_its_memory() -> void:
     var vehicle:RID = ScenarioEventServer.memory_create() # stands in for a vehicle
     var tracks:Dictionary[String, RID] = {"t1": track}
     var models:Array[MaszynaModelData] = []
-    var root:MaszynaIncludeNode = _build_scenery(
+    var root:MaszynaIncludeNode = await _build_scenery(
         "node -1 0 c1 memcell 0 0 0 idle 0 0 none endmemcell "
         + "isolated s1 t1 endisolated "
         + "event s1:busy updatevalues 0 c1 busy * * endevent",
@@ -596,7 +596,7 @@ func _build_scenery(
         scenery_tracks.append(track_data)
         track_rids.append(tracks[track_name])
     var power_sources:Array[MaszynaPowerSourceData] = []
-    MaszynaLegacyEventFactory.build(
+    await MaszynaLegacyEventFactory.build(
         root, context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
         scenery_tracks, track_rids, models, model_rids, power_sources
     )

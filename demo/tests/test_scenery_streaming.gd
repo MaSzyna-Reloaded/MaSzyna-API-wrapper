@@ -45,6 +45,19 @@ func test_registered_instance_is_built_only_within_range() -> void:
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "not cleared after leaving")
 
 
+func test_model_is_held_only_while_an_instance_of_it_is_built() -> void:
+    _register(Vector3.ZERO, 200.0)
+    # the same key is the same resource; this registration only lets the test look at it
+    var model_resource:RID = ResourceLazyLoader.resource_register("models/test/streamed", Callable())
+
+    await _move_camera(Vector3.ZERO)
+    assert_true(ResourceLazyLoader.resource_is_resident(model_resource), "built without holding its model")
+
+    await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
+    assert_false(ResourceLazyLoader.resource_is_resident(model_resource), "model held after leaving")
+    ResourceLazyLoader.resource_free(model_resource)
+
+
 func test_range_of_a_node_without_one_is_capped_by_the_draw_distance() -> void:
     var draw_distance:float = SceneryStreamingServer.streaming_get_draw_distance()
     _register(Vector3.ZERO, 0.0)
@@ -71,10 +84,13 @@ func test_registered_instance_is_freed_before_it_is_ever_built() -> void:
 ## registration side only: an out-of-range chunk stays unbuilt and frees cleanly
 func test_triangle_chunk_out_of_range_is_not_built() -> void:
     var chunk := MaszynaTrianglesChunkData.new()
-    chunk.mesh = _create_mesh()
+    chunk.geometry_path = "test/chunk_out_of_range.res"
     chunk.position = Vector3.ZERO
     chunk.range_max = 200.0
-    var rid:RID = MaszynaSceneryChunkRenderingServer.create_chunk(chunk, get_tree().root.world_3d.scenario)
+    var rid:RID = MaszynaSceneryChunkRenderingServer.create_chunk(
+        chunk, get_tree().root.world_3d.scenario,
+        func() -> MaszynaTrianglesChunkGeometry: return MaszynaTrianglesChunkGeometry.new()
+    )
 
     await _move_camera(Vector3(4 * CHUNK_SIZE_M, 0, 0))
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "chunk built while out of range")

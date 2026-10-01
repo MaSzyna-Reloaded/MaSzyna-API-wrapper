@@ -85,7 +85,7 @@ func before_each() -> void:
     var models:Array[MaszynaModelData] = []
     var model_rids:Array[RID] = []
     var power_sources:Array[MaszynaPowerSourceData] = []
-    MaszynaLegacyEventFactory.build(_scenery, context.events, memcells, launchers, sounds, isolated, track_data,
+    await MaszynaLegacyEventFactory.build(_scenery, context.events, memcells, launchers, sounds, isolated, track_data,
             track_rids, models, model_rids, power_sources)
     for name:String in STOP_NAMES:
         var event:RID = ScenarioEventServer.event_get_rid_by_name(StringName((name + "_stopinfo").to_lower()))

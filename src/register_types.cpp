@@ -57,6 +57,7 @@
 #include "player/PlayerServer.hpp"
 #include "register_types.h"
 #include "rendering/PlanarMirror3D.hpp"
+#include "resources/ResourceLazyLoader.hpp"
 #include "scenario/ScenarioEventAction.hpp"
 #include "scenario/ScenarioEventCondition.hpp"
 #include "scenario/ScenarioEventServer.hpp"
@@ -150,6 +151,7 @@ E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
 SimulationServer *simulation_server_singleton = nullptr;
 GameDataServer *game_data_server_singleton = nullptr;
+ResourceLazyLoader *resource_lazy_loader_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackServer *track_server_singleton = nullptr;
 VehicleServer *vehicle_server_singleton = nullptr;
@@ -186,6 +188,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(GameDataServer);
         GDREGISTER_CLASS(MaszynaTranslationServer);
         GDREGISTER_CLASS(ResourceCache);
+        GDREGISTER_CLASS(ResourceLazyLoader);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);
@@ -330,6 +333,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // every server whose constructor creates a ResourceCache, which follows its cache clearing
         game_data_server_singleton = memnew(GameDataServer);
         Engine::get_singleton()->register_singleton("GameDataServer", game_data_server_singleton); // 1a
+        // after GameDataServer is registered: the constructor follows its unloading; before the
+        // streamed servers, which load through it
+        resource_lazy_loader_singleton = memnew(ResourceLazyLoader);
+        Engine::get_singleton()->register_singleton("ResourceLazyLoader", resource_lazy_loader_singleton); // 1b
         simulation_server_singleton = memnew(SimulationServer);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
@@ -569,6 +576,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("E3DParser"); // 2
     }
 
+    if (Engine::get_singleton()->has_singleton("ResourceLazyLoader")) {
+        Engine::get_singleton()->unregister_singleton("ResourceLazyLoader"); // 1b
+    }
+
     if (Engine::get_singleton()->has_singleton("GameDataServer")) {
         Engine::get_singleton()->unregister_singleton("GameDataServer"); // 1a
     }
@@ -624,6 +635,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_parser_singleton != nullptr) { // 2
         memdelete(e3d_parser_singleton);
         e3d_parser_singleton = nullptr;
+    }
+
+    if (resource_lazy_loader_singleton != nullptr) { // 1b
+        memdelete(resource_lazy_loader_singleton);
+        resource_lazy_loader_singleton = nullptr;
     }
 
     if (game_data_server_singleton != nullptr) { // 1a

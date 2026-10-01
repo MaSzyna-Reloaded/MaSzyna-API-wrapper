@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ResourceLazyLoader" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Resources loaded when they are wanted and let go when nobody wants them.
+	</brief_description>
+	<description>
+		Holds the resources needed only while something near the camera uses them - a scenery's models, its terrain - so their memory, RAM and the VRAM of a mesh or a texture, goes back once nothing holds them. A resource is registered under a key with the [Callable] that loads it; one key is one resource, shared by everybody who registers it. [method resource_fetch] holds it, [method resource_release] lets it go. A copy still alive elsewhere is handed out again rather than loaded twice. Everything held is let go when the game's data is unloaded ([signal GameDataServer.data_unload_requested]). Thread-safe.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="resource_fetch">
+			<return type="Resource" />
+			<param index="0" name="resource" type="RID" />
+			<description>
+				Loads the resource unless it is in memory, and holds it until the matching [method resource_release]. Nothing is held when it cannot be loaded.
+			</description>
+		</method>
+		<method name="resource_free">
+			<return type="void" />
+			<param index="0" name="resource" type="RID" />
+			<description>
+				Frees one registration; the resource goes with the last one.
+			</description>
+		</method>
+		<method name="resource_get_statistics" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				[code]registered[/code], [code]resident[/code] (held now) and [code]loads[/code] (loader calls so far).
+			</description>
+		</method>
+		<method name="resource_is_resident" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="resource" type="RID" />
+			<description>
+				Returns [code]true[/code] while somebody holds the resource.
+			</description>
+		</method>
+		<method name="resource_load">
+			<return type="Resource" />
+			<param index="0" name="resource" type="RID" />
+			<description>
+				Loads the resource unless it is in memory, without holding it - for a worker preparing what the main thread then fetches.
+			</description>
+		</method>
+		<method name="resource_register">
+			<return type="RID" />
+			<param index="0" name="key" type="String" />
+			<param index="1" name="loader" type="Callable" />
+			<description>
+				Registers the resource [param loader] ([code]() -&gt; Resource[/code]) loads. The same [param key] gives the same RID; each registration is freed by its own [method resource_free].
+			</description>
+		</method>
+		<method name="resource_release">
+			<return type="void" />
+			<param index="0" name="resource" type="RID" />
+			<description>
+				Lets go of a resource held by [method resource_fetch]; once nobody holds it, the loader keeps no reference of its own.
+			</description>
+		</method>
+	</methods>
+</class>

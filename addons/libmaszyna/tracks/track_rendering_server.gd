@@ -136,12 +136,11 @@ func _on_data_unload_requested() -> void:
     _material_texture_lengths.clear()
 
 
-## Every track takes its materials again and is built again: a streamed one as it is streamed, one
+## Every track is built again, taking its materials again: a streamed one as it is streamed, one
 ## built directly at once
 func _on_data_reload_requested() -> void:
     for track_render_rid: RID in _tracks:
         var state: TrackState = _tracks[track_render_rid]
-        _resolve_materials(state)
         if not state.stream_rid.is_valid():
             rebuild_track(track_render_rid)
     if _stream_owner >= 0:
@@ -291,14 +290,14 @@ func set_track_render_options(
     state.material1_name = material1
     state.material2_name = material2
     state.material_trackbed_name = material_trackbed
-    _resolve_materials(state)
     state.railprofile = railprofile
     state.rail_visible = rail_visible
     state.ballast_visible = ballast_visible
     #rebuild_track(track_render_rid)
 
 
-## The track's materials by the names it has - again whenever the game's data is read again
+## The track's materials by the names it has, as it is built - a streamed track holds them, and their
+## textures, only while it is built
 func _resolve_materials(state: TrackState) -> void:
     # An unnamed slot has no material at all - MaterialManager would hand back the
     # missing-texture placeholder instead (Track.cpp:485-491 keeps a null handle here).
@@ -370,6 +369,11 @@ func _stream_clear(track_render_rid: RID) -> void:
         return
     state.streamed = false
     _clear_track_meshes(state)
+    state.material1 = null
+    state.material2 = null
+    state.material_trackbed = null
+    state.resolved_trackbed_material = null
+    state.resolved_trackbed_material_valid = false
 
 
 func _clear_track_meshes(state: TrackState) -> void:
@@ -400,6 +404,7 @@ func rebuild_track(track_render_rid: RID) -> void:
         return
 
     _clear_track_meshes(state)
+    _resolve_materials(state)
 
     var curve1_data: TrackCurve = track.curve1
     var curve2_data: TrackCurve = track.curve2
@@ -790,7 +795,8 @@ func _resolve_trackbed_material(state: TrackState, _track: TrackData) -> Materia
         state.resolved_trackbed_material = null
         if owner:
             material_name = owner.material_trackbed_name if owner.material_trackbed_name else owner.material2_name
-            state.resolved_trackbed_material = owner.material_trackbed if owner.material_trackbed_name else owner.material2
+            # the neighbour's own material, which it holds only while it is built itself
+            state.resolved_trackbed_material = MaterialManager.get_material("", material_name, _track_material_options)
         # TTrack::texture_length() (Track.cpp:2481-2493): the material's size, else the track's own
         var size_length: float = _get_material_texture_length(material_name) if material_name else -1.0
         state.resolved_trackbed_texture_length = size_length if size_length >= 0.0 else state.tex_length
@@ -819,7 +825,7 @@ func _copy_adjacent_trackbed_material(state: TrackState, visited: Dictionary[RID
     if state.material_trackbed_name:
         return state
     var is_switch: bool = TrackServer.track_is_switch(state.track_rid)
-    if not is_switch and state.material2:
+    if not is_switch and state.material2_name:
         return state
 
     for neighbor_track_rid: RID in _get_trackbed_material_sources(state.track_rid, is_switch):

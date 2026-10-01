@@ -134,7 +134,7 @@ func test_a_scenery_model_fires_the_launcher_of_its_name_that_has_it_in_range() 
     var tracks:Array[MaszynaTrackData] = []
     var track_rids:Array[RID] = []
     var power_sources:Array[MaszynaPowerSourceData] = []
-    MaszynaLegacyEventFactory.build(
+    await MaszynaLegacyEventFactory.build(
         root, context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
         tracks, track_rids, models, model_rids, power_sources
     )

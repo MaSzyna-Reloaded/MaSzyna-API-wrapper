@@ -327,6 +327,9 @@ anything. Open work belongs in `TODO.md`.
   that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
 
 ## Threads and teardown
+* What a streamed piece loads is held by its build and let go by its clear
+  (`ResourceLazyLoader`); a memo that never evicts grows with the session, and a cache file holds
+  data, never a mesh. *(10-01 a scenery's whole terrain kept in memory)*
 * What points into another owner's memory asks for that owner by `ObjectID`, not by the
   singleton's name - at teardown the name goes first. *(09-30 the Mover server freed the Movers)*
 * Every worker needs an owner that stops it before the scripts go. A destructor runs too late. A

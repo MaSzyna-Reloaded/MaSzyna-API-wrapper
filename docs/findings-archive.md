@@ -2820,3 +2820,25 @@ lighting or the trainset.
 * **Rule:** a key is the project's input action, matched exactly - never a keycode, never a
   built-in `ui_*` action, never a loose match (`AGENTS.md`, `CODE_STYLE.md` "Input is the
   project's actions, matched exactly").
+
+## 2026-10-01 - a scenery's whole terrain and every model it ever showed, kept in memory
+
+* **Symptom:** a large scenery took almost 10 GB of RAM while it parsed, and again while it loaded
+  from the cache, and the OOM killer ended the game - though the streaming builds only what is
+  near the camera.
+* **What proved it:** reading what holds the data, not what builds it. The compiled scenery
+  (`MaszynaCompiledScenery.triangle_chunks`) carried an `ArrayMesh` for every terrain chunk, so
+  reading the cache loaded the whole terrain into RAM and VRAM at once, and the parse built every
+  mesh at once from raw triangles it kept as well. Three memos never let go:
+  `E3DRenderingServer.models` (every model ever streamed), `MaterialManager._dds_cache` (strong
+  refs to every texture) and `ChunkState.mesh` (every chunk mesh until the scenery unloaded).
+* **Fix:** `ResourceLazyLoader` holds a resource while something built uses it and lets it go
+  after; the E3D models go through it. A terrain chunk's geometry is a cache file of its own
+  (`MaszynaTrianglesChunkGeometry`), written on a worker as it is built and read only while the
+  chunk is in range; its mesh is made as it is built and freed as it is cleared. The texture memo
+  is weak, track materials are resolved as a track is built, and a scenery sound out of reach
+  lets its file go.
+* **Rule:** a cache in memory that never evicts grows with the session, not with what is in view.
+  Whatever is loaded for a streamed piece is held by that piece's build and let go by its clear,
+  and a cache file holds data, not render resources.
+

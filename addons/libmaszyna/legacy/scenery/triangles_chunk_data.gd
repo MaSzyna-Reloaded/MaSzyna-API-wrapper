@@ -6,8 +6,11 @@ class_name MaszynaTrianglesChunkData
 ## range (SceneryTrianglesBuilder.build_chunks()). The material is resolved through
 ## MaterialManager when the chunk is built, never stored here, so a cached scenery still follows
 ## season/weather material variants (material_manager::on_season_change, material.cpp:571).
+## The triangles themselves are a MaszynaTrianglesChunkGeometry of their own, loaded only while the
+## chunk is built.
 
-@export var mesh:ArrayMesh
+## The ResourceCache path of the geometry, unique to the scenery and the chunk
+@export var geometry_path:String = ""
 @export var position:Vector3 = Vector3.ZERO
 @export var material_name:String = ""
 @export var range_min:float = 0.0

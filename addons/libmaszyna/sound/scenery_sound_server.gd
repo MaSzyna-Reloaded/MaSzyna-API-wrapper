@@ -139,3 +139,8 @@ func _stream_clear(sound_rid:RID) -> void:
     state.streamed = false
     _player.stop(state.play_event.name)
     _player.stop(state.loop_event.name)
+    # out of reach the sound is not played, so its files need not be in memory
+    for clip:SfxClip in state.play_event.clips + state.loop_event.clips:
+        var stream:MaszynaAudioStream = clip.stream as MaszynaAudioStream
+        if stream:
+            stream.unload()

@@ -41,7 +41,8 @@ var _materials_cache = ResourceCache.create("materials")
 ## The point with its glare, built in _ready() when RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is on
 var _free_spotlight_material: ShaderMaterial = null
 var _managed_materials: Dictionary = {}
-var _dds_cache: Dictionary = {}
+## Weak, like _managed_materials: a texture goes, from RAM and VRAM, with the last material using it
+var _dds_cache: Dictionary[String, WeakRef] = {}
 
 enum Transparency { Disabled, Alpha, AlphaScissor }
 
@@ -264,11 +265,13 @@ func load_texture(
 ## (e.g. a shared normal map across dynamic skin slots).
 func _load_dds_clamped(full_path:String, max_size:int) -> Texture2D:
     var cache_key:String = "%s:%d" % [full_path, max_size]
-    if _dds_cache.has(cache_key):
-        return _dds_cache[cache_key]
-    var texture:Texture2D = DDSTextureLoader.load_texture(full_path, max_size)
+    var cached:WeakRef = _dds_cache.get(cache_key)
+    var texture:Texture2D = cached.get_ref() as Texture2D if cached else null
     if texture:
-        _dds_cache[cache_key] = texture
+        return texture
+    texture = DDSTextureLoader.load_texture(full_path, max_size)
+    if texture:
+        _dds_cache[cache_key] = weakref(texture)
     return texture
 
 

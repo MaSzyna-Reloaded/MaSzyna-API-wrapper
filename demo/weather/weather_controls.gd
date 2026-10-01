@@ -3,8 +3,6 @@ extends HFlowContainer
 ## Weather and time controls driving MaszynaEnvironmentNode, content of the "Weather and Time" HUD window
 ## (ported from forest-test-scene ui/WeatherControlsCanvas.gd).
 
-@export var environment_node_path: NodePath
-
 ## How often the running clock is read back. The environment announces every other change, so
 ## this is the only thing left that has to be looked at repeatedly - and a label showing hours and
 ## minutes gains nothing from being rewritten 60 times a second.
@@ -13,7 +11,9 @@ const CLOCK_REFRESH_INTERVAL: float = 0.1
 ## not stop the world; stopping it is the pause button's
 const TIME_SCALE_STEPS: Array[float] = [0.1, 0.25, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 20.0]
 
-var _environment_node: MaszynaEnvironmentNode
+## The environment of the world being shown (attach_environment()); null in the menu, where the HUD
+## and this window are hidden
+var _environment_node: MaszynaEnvironmentNode = null
 var _time_slider_dragging: bool = false
 var _dirty: bool = true
 var _refresh_timer: Timer
@@ -46,7 +46,6 @@ var _refresh_timer: Timer
 
 
 func _ready() -> void:
-    _environment_node = get_node(environment_node_path) as MaszynaEnvironmentNode
     _wind_strength_slider.value_changed.connect(_on_wind_strength_changed)
     _wind_direction_slider.value_changed.connect(_on_wind_direction_changed)
     _rain_slider.value_changed.connect(_on_rain_changed)
@@ -68,7 +67,6 @@ func _ready() -> void:
     _month_slider.value_changed.connect(_on_month_changed)
     _year_slider.value_changed.connect(_on_year_changed)
     _system_time_check_box.toggled.connect(_on_system_time_toggled)
-    _environment_node.configuration_changed.connect(_on_environment_configuration_changed)
     _refresh_timer = Timer.new()
     _refresh_timer.wait_time = CLOCK_REFRESH_INTERVAL
     add_child(_refresh_timer)
@@ -77,10 +75,19 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
-    _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
     SimulationServer.simulation_paused.disconnect(_pause_button.set_pressed_no_signal.bind(true))
     SimulationServer.simulation_unpaused.disconnect(_pause_button.set_pressed_no_signal.bind(false))
     SimulationServer.simulation_speed_changed.disconnect(_on_simulation_speed_changed)
+
+
+## The world made for a scenery brings its environment, and takes it with it to the menu (null)
+func attach_environment(environment: MaszynaEnvironmentNode) -> void:
+    if _environment_node:
+        _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
+    _environment_node = environment
+    if _environment_node:
+        _environment_node.configuration_changed.connect(_on_environment_configuration_changed)
+        _dirty = true
 
 
 ## The environment applied a change, so everything the window shows is out of date.

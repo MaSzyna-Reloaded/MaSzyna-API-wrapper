@@ -368,6 +368,7 @@ script = ExtResource("9_window")
 title = "Weather and Time"
 
 [node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
+unique_name_in_owner = true
 clip_contents = true
 layout_mode = 2
 

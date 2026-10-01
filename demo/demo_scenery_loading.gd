@@ -32,8 +32,16 @@ const QUIT_FADE_TIME: float = 0.5
 ## arguments are never read and the two come after Godot's "--" (OS.get_cmdline_user_args()).
 const ARG_SCENERY: String = "-s"
 const ARG_VEHICLE: String = "-v"
+## The 3D world of a scenery - made when one is chosen, freed in the menu, which renders nothing
+## behind it
+const WORLD_SCENE: PackedScene = preload("world/world.tscn")
+
+## A scenery started at once, without the selector - as "-s" on the command line does
+@export var scenery: String = ""
 
 var _music_tween: Tween
+## The world of the scenery being played, null in the menu
+var _world: SceneryWorld = null
 ## The trainset chosen in the selector, handed to the player once the scenery is loaded
 var _chosen_train_id: String = ""
 
@@ -60,7 +68,9 @@ func _ready() -> void:
                     train_id = args[at]
                     break
         start_scenery(args[scenery_at + 1], train_id, {})
-    elif not $MaszynaSceneryNode.filename:
+    elif scenery:
+        start_scenery(scenery, "", {})
+    else:
         $ScenerySelectorScreen.open()
 
 
@@ -84,11 +94,15 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     # blocks the main thread, so it waits for the dissolve not to stutter
     if $ScenerySelectorScreen.visible:
         await $ScenerySelectorScreen.hidden
-    $MaszynaSceneryNode.filename = filename
-    $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
-    $Player.clear_start_train()
+    # made under the loading screen: its environment and first frames stall the main thread
+    _world = WORLD_SCENE.instantiate() as SceneryWorld
+    _world.load_progress.connect($LoadingScreen.set_progress)
+    _world.load_files_parsed.connect($LoadingScreen.set_files)
+    _world.scenery_loaded.connect(_on_scenery_loaded)
+    add_child(_world)
+    $GameHud.attach_environment(_world.get_environment())
     _chosen_train_id = train_id
-    await $MaszynaSceneryNode.load()
+    await _world.load_scenery(filename, skin_overrides)
     await _wait_for_cabin()
     SceneryStreamingServer.streaming_set_camera(get_viewport().get_camera_3d())
     await _wait_for_streaming()
@@ -150,11 +164,12 @@ func _exit_to_menu() -> void:
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     SceneryStreamingServer.streaming_set_camera(null)
-    $Player.clear_start_train()
-    # the scenery's script context goes with it
+    # the scenery's script context and environment go with the world
     $GameHud.attach_script_context(RID())
-    $MaszynaSceneryNode.filename = ""
-    await $MaszynaSceneryNode.load()
+    $GameHud.attach_environment(null)
+    await _world.unload_scenery()
+    _world.queue_free()
+    _world = null
     await get_tree().create_timer(EXIT_SPINNER_HOLD_TIME).timeout
     $ScenerySelectorScreen.open()
     await $SpinnerOverlay.fade_out(EXIT_FADE_TIME)
@@ -174,8 +189,8 @@ func _play_music(volume_db: float) -> void:
 ## entering reaches every car of its unit (CabActivisation() sends to the coupled ones, Mover.cpp:2905).
 ## The trainset chosen in the selector; none chosen, the scenery's own driver.
 func _on_scenery_loaded(first_train_id: String) -> void:
-    $Player.start_vehicle_id = _chosen_train_id if _chosen_train_id else first_train_id
-    $GameHud.attach_script_context($MaszynaSceneryNode.get_script_context())
+    _world.start_player(_chosen_train_id if _chosen_train_id else first_train_id)
+    $GameHud.attach_script_context(_world.get_script_context())
     _music_tween = create_tween()
     _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)
     _music_tween.tween_callback($Music.stop)

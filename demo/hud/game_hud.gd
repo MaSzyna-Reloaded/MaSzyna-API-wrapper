@@ -31,8 +31,6 @@ const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 
-@export var environment_node_path: NodePath
-
 ## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
 var _windows: Array[HUDWindow] = []
 var _menu_actions: Array[Button] = []
@@ -40,13 +38,6 @@ var _menu_actions: Array[Button] = []
 var _card: VehicleCard = null
 ## Where the card was when it was last closed; it opens there again (no area until then)
 var _card_rect: Rect2 = Rect2()
-
-
-func _enter_tree() -> void:
-    # WeatherControls resolves its path in _ready(), before this node's own _ready(); it sits three
-    # levels below this node, so the path given relative to this node is rebased by that much
-    $ControlWindows/WeatherAndTime/WeatherControls.environment_node_path = NodePath(
-        "../../../%s" % environment_node_path)
 
 
 ## The HUD draws what HUDServer, PlayerCameraServer and PlayerServer hold, and asks them for every change
@@ -236,6 +227,12 @@ func _remove_trainset(vehicle: RID) -> void:
 ## The script context of the scenario being played, for the Lua editor; an invalid RID while none is
 func attach_script_context(context: RID) -> void:
     %ScriptEditorPanel.attach_context(context)
+
+
+## The environment of the world being shown, for the weather and time window; null while there is
+## no world (the menu)
+func attach_environment(environment: MaszynaEnvironmentNode) -> void:
+    %WeatherControls.attach_environment(environment)
 
 
 ## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until

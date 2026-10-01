@@ -165,7 +165,7 @@ theme_override_constants/separation = 2
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
-autowrap_mode = 3
+text_overrun_behavior = 3
 
 [node name="FileName" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow/TitleBox" unique_id=743962307]
 unique_name_in_owner = true
@@ -195,7 +195,7 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Trainset"
 
-[node name="UndrivableCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="UndrivableCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=820972816]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -284,7 +284,7 @@ theme_override_font_sizes/font_size = 16
 text = "https://maszyna-reloaded.pl"
 uri = "https://maszyna-reloaded.pl"
 
-[node name="LanguageSwitcher" parent="Footer" instance=ExtResource("12_language")]
+[node name="LanguageSwitcher" parent="Footer" unique_id=1119282794 instance=ExtResource("12_language")]
 layout_mode = 2
 
 [connection signal="activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_trainset_list"]
@@ -294,6 +294,7 @@ layout_mode = 2
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
+[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/UndrivableCheckBox" to="." method="_on_undrivable_check_box_toggled"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_actions"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
 [connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]
@@ -313,4 +314,3 @@ layout_mode = 2
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
 [connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]
-[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/UndrivableCheckBox" to="." method="_on_undrivable_check_box_toggled"]

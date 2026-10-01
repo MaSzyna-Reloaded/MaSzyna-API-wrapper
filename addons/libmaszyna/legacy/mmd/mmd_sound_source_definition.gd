@@ -1,6 +1,9 @@
 extends RefCounted
 class_name MmdSoundSourceDefinition
 
+## pitch_variation when the MMD gives no pitchvariation:
+const NO_PITCH_VARIATION:float = -1.0
+
 ## One parsed label from the MMD's own vehicle-wide `sounds:`...`endsounds` section, in the
 ## neutral shape the original engine's audio/sound.cpp `sound_source` class settles every one of
 ## its ~46 label syntaxes into: an optional single/begin/end sound (all three normalized,
@@ -31,6 +34,9 @@ var placement:StringName = &"general"
 var placement_defined:bool = false
 var offset:Vector3 = Vector3.ZERO
 var soundproofing:PackedFloat32Array = PackedFloat32Array()
-var pitch_variation:float = 0.0
+## pitchvariation: - the share of the pitch an emitter may be off by, 0-1; NO_PITCH_VARIATION when
+## the MMD gives none, and the original's default range applies (sound.cpp:207-216, 374-377)
+var pitch_variation:float = NO_PITCH_VARIATION
+## startoffset: - where the sound starts in its sample, 0-1 (sound.cpp:218-222)
 var start_offset:float = 0.0
 var source_file:String = ""

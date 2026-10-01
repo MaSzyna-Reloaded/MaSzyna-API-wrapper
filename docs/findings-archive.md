@@ -2741,3 +2741,27 @@ lighting or the trainset.
 * **Fix:** `release-linux`, `release-linux-symbols`, `release-windows` and `release-android`
   depend on `compile-debug`.
 * **Rule:** the library the exporting editor loads is the debug one - build it with every export.
+
+## 2026-10-01 - the start offset that never reached the game, and the pitch every emitter shares
+
+* **Symptom:** after the start-offset fixes (09-24, 10-01) trainsets still drifted in and out of
+  phase from outside, "the phase still overlaps somewhere".
+* **What proved it:** a probe built the stream the way a vehicle does
+  (`MmdSoundEventBuilder._build_stream()`) on a real 2.61 s `.ogg` and played it with
+  `start_fraction` 0.5: `MaszynaAudioStream.get_length()` was 0.0 and the voice started at 0.0.
+  The stream reads its file on the first playback, after gnd-sfx has placed the start
+  (`length * fraction`); the tests used `AudioStreamWAV`, whose length is known. No offset had ever
+  reached a vehicle's sound in the game.
+* **And the original's other half:** every `sound_source` draws its own pitch factor on its first
+  play, 97.5-102.5 % unless the MMD's `pitchvariation:` says otherwise (sound.cpp:207-216, 374-377,
+  applied per buffer at audiorenderer.cpp:206). Two copies of one recording then run at slightly
+  different speeds, so copies that start close drift apart; with one pitch for all, a close pair
+  stays in phase for as long as it plays. `startoffset:` was parsed and never used either.
+* **Fix:** `MaszynaAudioStream.length` is set at build (`MmdSoundEventBuilder.stream_length()`);
+  gnd-sfx `play()` takes a `pitch_variation` on every voice of the instance;
+  `TrainSoundSystem._add_emitter()` makes every event of a bank an emitter with its own start
+  fraction (`startoffset:`, or the bogie/motor rule) and pitch factor. gnd-sfx steals a releasing
+  voice first, then a one-shot, a loop last - a stolen loop is never started again.
+* **Rule:** a fix to a value is proven on the object the game uses (`MaszynaAudioStream`), not on
+  a stand-in the test finds easier to build.
+

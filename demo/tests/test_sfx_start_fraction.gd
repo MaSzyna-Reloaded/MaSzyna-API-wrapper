@@ -13,6 +13,11 @@ const VOICE_SLOTS:int = 4
 ## a speed inside the first chunk and one inside the second
 const FIRST_CHUNK_SPEED:float = 10.0
 const SECOND_CHUNK_SPEED:float = 70.0
+## A looping sample in the fixtures game directory (demo/tests/fixtures/sounds)
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+const FIXTURE_LOOP:String = "test_loop"
+## An emitter's own pitch factor, inside the original's 97.5-102.5 % (sound.cpp:374-377)
+const PITCH_VARIATION:float = 1.02
 
 
 func _chunk(offset:float) -> SfxClip:
@@ -95,3 +100,37 @@ func test_plain_looping_clip_keeps_playing_past_its_length() -> void:
         runtime.update(TICK)
         elapsed += TICK
     assert_true(runtime.is_playing(&"outer_noise"))
+
+
+## A vehicle's sound is a MaszynaAudioStream that reads its file on the first playback - after
+## gnd-sfx has already placed the voice's start in it; the length known at build is what puts the
+## start there at all (FINDINGS.md, 2026-10-01)
+func test_maszyna_stream_starts_at_the_start_fraction_before_its_first_playback() -> void:
+    var previous:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    var clip:SfxClip = SfxClip.new()
+    clip.stream = MmdSoundEventBuilder._build_stream(FIXTURE_LOOP, true)
+    var event:SfxEvent = SfxEvent.new()
+    event.name = &"outer_noise"
+    var clips:Array[SfxClip] = [clip]
+    event.clips = clips
+    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
+    runtime.set_slot_capacity(VOICE_SLOTS)
+    runtime.play(event, 0.0, {}, START_FRACTION)
+    runtime.update(TICK)
+    UserSettings.save_maszyna_game_dir(previous)
+    assert_gt(clip.stream.get_length(), 0.0)
+    assert_almost_eq(_start_position(runtime), START_FRACTION, 0.001)
+
+
+func test_pitch_variation_scales_every_voice() -> void:
+    var runtime:SfxPlaybackRuntime = SfxPlaybackRuntime.new()
+    runtime.set_slot_capacity(VOICE_SLOTS)
+    var clip:SfxClip = _chunk(0.0)
+    var event:SfxEvent = SfxEvent.new()
+    event.name = &"outer_noise"
+    var clips:Array[SfxClip] = [clip]
+    event.clips = clips
+    runtime.play(event, 0.0, {}, 0.0, PITCH_VARIATION)
+    runtime.update(TICK)
+    assert_almost_eq(runtime.get_slots()[0].pitch_scale, PITCH_VARIATION, 0.001)

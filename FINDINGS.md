@@ -33,6 +33,9 @@ anything. Open work belongs in `TODO.md`.
 * Many copies of one sound: the defect is phase, not level. Look for a start offset first, and
   prove it on every path a clip starts by (automation, timeline, sustain). *(09-24 trainset
   ringing)*
+* Prove a sound fix on the stream class the game plays (`MaszynaAudioStream` reads its file only on
+  the first playback), and give every emitter its own pitch factor as the original does.
+  *(10-01 start offset that never reached the game)*
 * Prove a fix to a value by printing it where it is used, not where it is set. A later line
   can overwrite it. *(09-24 trainset ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).

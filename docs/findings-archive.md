@@ -3036,3 +3036,36 @@ lighting or the trainset.
 * **Rule:** a streamed piece's main-thread build creates only what needs the main thread - every
   file it needs (model, material, texture) is read on the preload thread; a cache that is applied
   over again saves nothing. A real-renderer run goes through `gamescope --backend headless`.
+
+## 2026-10-03 hundreds of vehicles
+
+* **Symptom:** Wrzosy EIC (`wrzosy_eie2620.scn`, 852 vehicles: 553 parked, 291 road cars in
+  one-vehicle trainsets on roads) ran at ~80 ms a frame with the GPU at ~22 ms, wherever the
+  camera was; the Vehicles stage took 59 s with a warm cache.
+* **What proved it:** a probe under `gamescope --backend headless` (real GPU, no window), the
+  player in the cab, the simulation running, taking one system away every 10 s and reading the
+  difference (debug build, so C++ costs read high): of 131 ms a frame, the cab logic 47 ms, the
+  WeatherNode 24 ms, the road cars' physics 15 ms and their drivers 3 ms, the stepping of the
+  other ~560 vehicles 22 ms, the GPU 17.5 ms.
+* **The causes:**
+  * The cab logic of every driven vehicle (322, the road cars among them) read
+    `vehicle_dump_state()` on every simulation slice (`LegacyCabinCabLights`,
+    `LegacyCabinMainSwitch`) - and the dump is invalidated by every step, so it was composed anew
+    for each.
+  * Every vehicle carried a `RainVolume`; `WeatherServer` walks all of them every frame.
+  * Roads are not built, so the road cars could never be placed - yet each was a whole vehicle:
+    stepped, with an AI driver and cab logic, and a third of the Vehicles stage.
+  * Every vehicle took longer than `BUILD_BUDGET_MSEC` (8 ms), so each frame of the loading
+    screen built one and paid the scenery's drawing on top.
+* **Fix:** the cab logic reads typed getters (`CabinState.vehicle_component()`); one
+  `RainVolume`, in the shown cab (`MaszynaDynamicTrainCabin`); a vehicle or trainset on a track
+  that is not registered is left out at attach (`SceneryInstancer._attach_objects()`); the build
+  budget is 33 ms. Wrzosy: 131 -> 62 ms a frame (debug build), Vehicles 59 -> 17.8 s.
+* **Trap on the way:** a headless load of Wrzosy crashed in `E3DModelManager.load_model()` after
+  "Attempting to initialize the wrong RID" from `servers/rendering/dummy/storage/mesh_storage.h`:
+  the dummy renderer's RID owners are not thread-safe, and models are made on the preload threads
+  and the main thread at once. Not a game defect - a real renderer's are - but a headless run of
+  a large scenery is no proof of anything; use `gamescope --backend headless`.
+* **Rule:** a per-step reader takes typed getters, never the dump; something every vehicle carries
+  for the player alone (a rain volume, a cab) belongs to the player's vehicle; a scenery object
+  that cannot be placed is not built.

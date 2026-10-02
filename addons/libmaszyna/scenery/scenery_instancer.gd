@@ -372,15 +372,38 @@ static func _build_triangle_chunks(
 static func _attach_objects(
     root:MaszynaIncludeNode, objects:Array, progress_from:float, progress_to:float
 ) -> void:
+    var left_out:int = 0
     for i:int in objects.size():
         var node:Node = objects[i] as Node
         if not node:
+            continue
+        # A vehicle or a trainset on a track that is not built - a road car, roads are not built
+        # yet (maszyna_node_track_importer.gd) - could never be placed, and still cost a whole
+        # vehicle: its physics stepped, its driver and cab logic run (docs/findings-archive.md,
+        # 2026-10-03 hundreds of vehicles). Every track is registered by now; either may sit
+        # inside an include's node, and a trainset takes its vehicles with it.
+        var placed:Array[Node] = [node]
+        placed.append_array(node.find_children("", "TrainSet3D", true, false))
+        placed.append_array(node.find_children("", "MaszynaRailVehicle3D", true, false))
+        for candidate:Node in placed:
+            if not is_instance_valid(candidate):
+                continue
+            var track_name:String = (
+                (candidate as TrainSet3D).start_track_name if candidate is TrainSet3D
+                else (candidate as MaszynaRailVehicle3D).start_track_name if candidate is MaszynaRailVehicle3D
+                else "")
+            if track_name and not TrackServer.track_get_rid_by_name(track_name).is_valid():
+                candidate.free()
+                left_out += 1
+        if not is_instance_valid(node):
             continue
 
         _apply_skin_overrides(root, node)
         root.add_child(node)
         var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
         await _report_progress_throttled(root, progress, MaszynaIncludeNode.LoadStage.OBJECTS, TranslationServer.translate("Instancing %s") % node.name)
+    if left_out:
+        print("[SceneryLoad] %d vehicles and trainsets on tracks that are not built (roads) left out" % left_out)
     if Engine.is_editor_hint():
         root.SceneryEditor.update_owners(root)
 

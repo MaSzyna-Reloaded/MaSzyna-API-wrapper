@@ -145,7 +145,8 @@ func _close_released(state:CabinState) -> Variant:
 # Train.cpp:8436-8474
 func _process(state:CabinState, delta:float) -> void:
     var linebreaker_state:int = state.data.get("linebreaker_state", OPEN)
-    var mains:bool = state.vehicle_state_value("main_switch_enabled", false, TARGET)
+    var engine:RailVehicleEngine = state.vehicle_component(VehicleComponentType.COMPONENT_ENGINE, TARGET) as RailVehicleEngine
+    var mains:bool = engine and engine.get_main_switch_enabled()
     # sync with the vehicle - closed by someone else, or knocked out
     if linebreaker_state == OPEN and mains:
         linebreaker_state = CLOSED
@@ -155,19 +156,19 @@ func _process(state:CabinState, delta:float) -> void:
     var relay_timer:float = state.data.get("relay_timer", 0.0)
     if state.get_value(ON_BUTTON, false) \
             or float(state.get_value(TOGGLE_SWITCH, LEVER_OPEN)) > LEVER_HELD_THRESHOLD:
-        if state.vehicle_state_value("main_switch_closable", false, TARGET):
+        if engine and engine.get_main_switch_closable():
             relay_timer += delta
     else:
         relay_timer = 0.0
     if state.get_value(OFF_BUTTON, false):
         relay_timer = 0.0
 
-    if linebreaker_state == OPEN and relay_timer > float(
-            state.vehicle_state_value("line_breaker_initial_delay", 0.0, TARGET)):
+    var electric:RailVehicleElectricEngine = engine as RailVehicleElectricEngine
+    if linebreaker_state == OPEN and relay_timer > (electric.get_line_breaker_initial_delay() if electric else 0.0):
         linebreaker_state = READY
     # Train.cpp:8467 - without main_on_bt, or for anything but a series motor, closing completes here
     if linebreaker_state == READY and (not _has_on_button
-            or not int(state.vehicle_state_value("engine_type", 0, TARGET)) == RailVehicleEngine.ELECTRIC_SERIES_MOTOR):
+            or not (engine and engine.get_type() == RailVehicleEngine.ELECTRIC_SERIES_MOTOR)):
         linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true, null, TARGET) else OPEN
 
     state.data["linebreaker_state"] = linebreaker_state

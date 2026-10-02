@@ -433,6 +433,16 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `maszyna/vehicles/pantographs_from_model` (default true) turns that read off; once the data
   pack's FIZ has a pantograph section, the geometry comes from the FIZ and the E3D is not loaded
   at load at all.
+* **Road vehicles return with roads:** a vehicle or trainset on a track that is not registered
+  (every road, `maszyna_node_track_importer.gd`) is left out at load
+  (`SceneryInstancer._attach_objects()`); build roads and the road cars come back.
+* **The stepping of parked vehicles** (Wrzosy: ~560 vehicles, ~17-22 ms a frame in a debug build):
+  `vehicle_update_neighbours` runs in every sub-step (`MaszynaMoverVehicleServer::stepping_advance`,
+  a deliberate departure - couplers), and parked EMUs/DMUs never switch their physics off. Measure
+  in a `compile-profiling` build first; a candidate: no neighbour scan for a vehicle whose physics
+  is off and whose neighbours did not move.
+* **WeatherNode costs ~16 ms a frame** on Wrzosy with one rain volume (gnd-weather
+  `WeatherNode._process`: weather state, rain field, lightning) - not the vehicles; measure inside.
 * **Textures loaded on the streaming's preload threads** (`docs/findings-archive.md`, 2026-10-02
   streaming hitches): every owner's preload (`E3DRenderingServer::_stream_preload`, the terrain's
   `_stream_preload`, a preload the tracks do not have yet) parses the `.mat` of each material its

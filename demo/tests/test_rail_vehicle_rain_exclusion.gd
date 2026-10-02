@@ -14,41 +14,43 @@ func after_each() -> void:
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
-    var physics_node: VehiclePhysicsNode = build_vehicle_node()
-    var controller: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
-    var rain_volume: RainVolume = autofree(RainVolume.new())
-    controller.dimensions_length = 14.24
-    controller.dimensions_width = 3.1
-    controller.dimensions_height = 4.4
-    controller.apply_configuration()
-
-    MaszynaRailVehicle3DInstancer._fit_rain_volume(physics_node.get_vehicle_rid(), rain_volume)
-
-    assert_eq(rain_volume.size, Vector3(3.1, 4.4, 14.24))
-    assert_almost_eq(rain_volume.position.y, 2.2, 0.000001)
-    assert_almost_eq(rain_volume.precipitation_delta, -1.0, 0.000001)
-
-
-func test_real_vehicle_excludes_rain_over_its_body() -> void:
+func test_vehicle_keeps_no_rain_volume_of_its_own() -> void:
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     add_child_autofree(vehicle)
     MaszynaRailVehicle3DManager.build_into(vehicle, "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain", 0.0)
     await wait_idle_frames(2)
 
+    assert_eq(_rain_volumes(vehicle).size(), 0)
+
+
+func test_shown_cab_excludes_rain_over_the_vehicle_body() -> void:
+    var vehicle: RailVehicle3D = RailVehicle3D.new()
+    add_child_autofree(vehicle)
+    MaszynaRailVehicle3DManager.build_into(vehicle, "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain", 0.0)
+    await wait_idle_frames(2)
+
+    var cabin: Cabin3D = CabinSystem.vehicle_show_cabin(vehicle.get_rid())
+    var volumes: Array[RainVolume] = _rain_volumes(cabin)
     var controller: VehicleController = vehicle.get_controller()
-    var rain_volume: RainVolume = vehicle.get_node("RainExclusion") as RainVolume
-    assert_not_null(controller)
-    assert_gt(controller.dimensions_length, 0.0)
+    CabinSystem.vehicle_hide_cabin(vehicle.get_rid())
+
+    assert_eq(volumes.size(), 1)
     assert_eq(
-        rain_volume.size,
-        Vector3(
-            controller.dimensions_width,
-            controller.dimensions_height,
-            controller.dimensions_length
-        )
+        volumes[0].size,
+        Vector3(controller.dimensions_width, controller.dimensions_height, controller.dimensions_length)
     )
-    assert_almost_eq(rain_volume.precipitation_delta, -1.0, 0.000001)
+    assert_almost_eq(volumes[0].position.y, controller.dimensions_height * 0.5, 0.000001)
+    assert_almost_eq(volumes[0].precipitation_delta, -1.0, 0.000001)
+
+
+## Internal children too: the vehicle's parts and the cab's generated interior are internal
+func _rain_volumes(node: Node) -> Array[RainVolume]:
+    var found: Array[RainVolume] = []
+    for child: Node in node.get_children(true):
+        if child is RainVolume:
+            found.append(child)
+        found.append_array(_rain_volumes(child))
+    return found
 
 
 func test_rain_volumes_beyond_active_distance_are_ignored() -> void:

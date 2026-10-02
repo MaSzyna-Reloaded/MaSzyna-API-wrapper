@@ -32,12 +32,6 @@ const RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT: float = 0.4
 const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_min_screen_size"
 const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT: float = 0.03
 
-## The cache key cannot see changes to MaszynaMaterialFactory's own code - bump this whenever that code
-## changes what a built material holds. v2: normal_scale 1.0 like the original. v4: shaders moved
-## to legacy/materials/types. v5: the specgloss texture of the *_specgloss types.
-const CACHE_VERSION: int = 6
-
-var _materials_cache = ResourceCache.create("materials")
 ## The point with its glare, built in _ready() when RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is on
 var _free_spotlight_material: ShaderMaterial = null
 var _managed_materials: Dictionary = {}
@@ -124,7 +118,6 @@ func _on_data_reload_requested() -> void:
 
 
 func clear_cache() -> void:
-    _materials_cache.clear()
     _dds_cache.clear()
     _refresh_managed_materials()
 
@@ -136,23 +129,20 @@ func get_material(
     material_path:String,
     options: MaterialOptions = MaterialOptions.new(),
 ) -> Material:
-    var cache_hash: String = _compute_cache_hash(model_path, material_path, options)
-    var managed_material: Dictionary = _managed_materials.get(cache_hash, {})
+    var material_key: String = _material_key(model_path, material_path, options)
+    var managed_material: Dictionary = _managed_materials.get(material_key, {})
     if managed_material:
         var material_ref: WeakRef = managed_material.get("material_ref") as WeakRef
         var material: ShaderMaterial = material_ref.get_ref() as ShaderMaterial if material_ref else null
         if material:
             return material
-        _managed_materials.erase(cache_hash)
-    var force_transparent = options.force_transparent  # TODO: ALPHA
-    var output: ShaderMaterial = _materials_cache.get(cache_hash) as ShaderMaterial
-    var is_newly_created:bool = not output
+        _managed_materials.erase(material_key)
+    # built anew, never read from a disk cache: a cached material carried its textures embedded,
+    # reading it cost up to 80 ms on the main thread and apply() loaded every texture again anyway
+    # (docs/findings-archive.md, 2026-10-02 streaming hitches)
     var mmat: MaszynaMaterial = load_material(model_path, material_path)
-    if is_newly_created:
-        output = MaszynaMaterialFactory.create(mmat, model_path, season, weather, options)
-    else:
-        MaszynaMaterialFactory.apply(output, mmat, model_path, season, weather, options)
-    _managed_materials[cache_hash] = {
+    var output: ShaderMaterial = MaszynaMaterialFactory.create(mmat, model_path, season, weather, options)
+    _managed_materials[material_key] = {
         "material_ref": weakref(output),
         # most materials declare no season or weather variant and never change with them
         "has_variants": mmat.variants.size() > 0,
@@ -160,12 +150,6 @@ func get_material(
         "material_path": material_path,
         "options": options,
     }
-    # _materials_cache.set() writes a resource file to disk (see ResourceCache::set() in
-    # src/cache/ResourceCache.cpp) - only actually needed the first time this hash is seen, not
-    # on every lookup. A scenery with hundreds of track/model segments sharing the same handful
-    # of materials was otherwise doing hundreds of redundant disk writes per load.
-    if is_newly_created:
-        _materials_cache.set(cache_hash, output)
     return output
 
 ## Material override of an E3D submodel - the material resolver of [E3DRenderingServer].
@@ -276,14 +260,14 @@ func _load_dds_clamped(full_path:String, max_size:int) -> Texture2D:
     return texture
 
 
-func _compute_cache_hash(
+## The material handed out for a path with these options, the same while it is alive
+func _material_key(
     model_path: String,
     material_path: String,
     options: MaterialOptions,
 ) -> String:
     # the same material path is another material in another game directory
     var options_hash = ":".join([
-        CACHE_VERSION,
         UserSettings.get_maszyna_game_dir(),
         options.force_transparent,
         options.diffuse_color.to_html(true),
@@ -294,22 +278,22 @@ func _compute_cache_hash(
         options.cull_disabled,
         options.max_texture_size,
     ].map(str)).md5_text()
-    return model_path.path_join("%s_%s.res" % [material_path, options_hash])
+    return model_path.path_join("%s_%s" % [material_path, options_hash])
 
 
 func _refresh_managed_materials() -> void:
-    var cache_hashes: Array = _managed_materials.keys()
-    for cache_hash: String in cache_hashes:
-        _refresh_managed_material(cache_hash)
+    var material_keys: Array = _managed_materials.keys()
+    for material_key: String in material_keys:
+        _refresh_managed_material(material_key)
 
-func _refresh_managed_material(cache_hash: String) -> void:
-    var managed_material: Dictionary = _managed_materials.get(cache_hash, {})
+func _refresh_managed_material(material_key: String) -> void:
+    var managed_material: Dictionary = _managed_materials.get(material_key, {})
     if not managed_material:
         return
     var material_ref: WeakRef = managed_material.get("material_ref") as WeakRef
     var material: ShaderMaterial = material_ref.get_ref() as ShaderMaterial if material_ref else null
     if not material:
-        _managed_materials.erase(cache_hash)
+        _managed_materials.erase(material_key)
         return
     if not managed_material.get("has_variants", true):
         return
@@ -317,7 +301,4 @@ func _refresh_managed_material(cache_hash: String) -> void:
     var material_path: String = managed_material.get("material_path", "")
     var options:MaterialOptions = managed_material.get("options")
     var mmat: MaszynaMaterial = load_material(model_path, material_path)
-    # not written back to the disk cache: its key knows neither the season nor the weather, a
-    # loaded material gets its variant applied anyway (get_material()), and the write - a resource
-    # with its textures embedded, for every material at once - is what froze the game
     MaszynaMaterialFactory.apply(material, mmat, model_path, season, weather, options)

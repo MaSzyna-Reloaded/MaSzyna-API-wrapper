@@ -128,7 +128,7 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
     # once, then switch to looping main" state machine - the main clip's start is approximated
     # from the begin clip's own real duration (queried from the actual audio asset, not guessed)
     # so it starts right as the begin clip finishes.
-    var main_offset:float = stream_length(definition.sound_begin)
+    var main_offset:float = AudioStreamManager.get_stream_length(definition.sound_begin)
 
     if definition.sound_begin:
         var begin_clip := SfxClip.new()
@@ -315,22 +315,5 @@ static func build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
     stream.loop = loop
-    stream.length = stream_length(filename)
+    stream.length = AudioStreamManager.get_stream_length(filename)
     return stream
-
-
-## Real asset duration, queried once at build time (not a guessed constant) - 0.0 if the file
-## can't be resolved (e.g. in a test environment with no game data configured), which degrades to
-## the main clip simply starting at the same time as begin instead of after it. Checks existence
-## first (same path formula as AudioStreamManager.get_stream()) rather than calling it directly,
-## since that function warns on a miss - appropriate when actually resolving a clip to play, not
-## for this best-effort lookup where "unknown length" is an expected, silent outcome.
-static func stream_length(filename:String) -> float:
-    if not filename:
-        return 0.0
-    var sounds_dir:String = UserSettings.get_maszyna_game_dir().path_join("sounds")
-    var path:String = sounds_dir.path_join(MaszynaDataPath.resolve(sounds_dir, filename + ".ogg"))
-    if not ResourceLoader.exists(path):
-        return 0.0
-    var stream:AudioStream = AudioStreamManager.get_stream(filename)
-    return stream.get_length() if stream else 0.0

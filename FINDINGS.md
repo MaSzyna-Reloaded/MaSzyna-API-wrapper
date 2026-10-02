@@ -459,6 +459,9 @@ anything. Open work belongs in `TODO.md`.
 * Whatever reads the game directory and keeps the result - a memo, a material, a built vehicle -
   follows `GameDataServer.data_unload_requested`/`data_reload_requested` itself; a disk cache key
   names the game directory. *(09-30 track textures stayed after a game directory change)*
+* A vehicle's sound bank is built when the vehicle comes within earshot, not at load; a sound's
+  length is read off its Ogg pages, never by loading the file. *(10-02 the Vehicles stage spent
+  its time on sound banks nobody heard)*
 * Code that runs in the editor calls no autoload that is not `@tool` (`TrainSoundSystem`,
   `CabinSystem`): the call is a script error returning null into the caller's data - a null part
   of a vehicle crashed the editor on its first rebuild. *(09-30 editor crash on a game dir change)*

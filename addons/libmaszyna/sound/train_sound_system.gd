@@ -37,6 +37,9 @@ const FAR_UPDATE_INTERVAL:float = 0.5
 ## How often the distance to the listener is looked at. Between sweeps the frame only visits the
 ## banks that are in range.
 const SWEEP_INTERVAL:float = 0.25
+## Time the banks of vehicles come within earshot may take to build per frame; a bank that started is
+## finished, so a frame builds at least one
+const BANK_BUILD_BUDGET_MSEC:int = 8
 
 var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
     PackedFloat32Array([1.0, sqrt(0.2), 1.0, sqrt(0.65), sqrt(0.2), sqrt(0.2)]),
@@ -157,6 +160,10 @@ var _accelerator_sources:Dictionary[RID, RailVehicleBrake] = {}
 ## Vehicles of the listener's own trainset, refreshed with the sweep and on a context change
 var _listener_trainset:Array[RID] = []
 var _culling_distance:float = 1000.0
+## Vehicles whose sound is built only once they are within the culling distance: what builds it
+var _bank_builders:Dictionary[RailVehicle3D, Callable] = {}
+## Of those, the ones the sweep found within it, the nearest first - built a budget a frame
+var _bank_build_queue:Array[RailVehicle3D] = []
 var _sweep_timer:Timer
 var _listener:TrainSoundListener3D
 var _next_trigger_id:int = 1
@@ -193,6 +200,21 @@ func clear_listener(listener:TrainSoundListener3D) -> void:
     _listener.context_changed.disconnect(_refresh_context)
     _listener = null
     _refresh_context()
+
+
+## The vehicle's sound is built by `builder` once the vehicle is within the culling distance of the
+## listener - its banks register as they are built. An empty Callable takes it back: the vehicle is
+## built anew or gone.
+func vehicle_set_bank_builder(vehicle:RailVehicle3D, builder:Callable) -> void:
+    if builder.is_valid():
+        _bank_builders[vehicle] = builder
+        return
+    _bank_builders.erase(vehicle)
+    if not _bank_build_queue.has(vehicle):
+        return
+    _bank_build_queue.erase(vehicle)
+    if not _bank_build_queue:
+        get_tree().process_frame.disconnect(_on_bank_build_frame)
 
 
 func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
@@ -307,10 +329,35 @@ func _refresh_active_banks() -> void:
                 0.0, FAR_UPDATE_INTERVAL, clampf(distance / _culling_distance, 0.0, 1.0))
         _mark_active(runtime)
 
+    # the sound of a vehicle within earshot is built, the nearest first - and not before there is a
+    # listener to be near; a queue still draining is refilled once it is empty
+    if _listener and not _bank_build_queue:
+        for vehicle:RailVehicle3D in _bank_builders:
+            if vehicle.global_position.distance_to(listener_position) <= _culling_distance:
+                _bank_build_queue.append(vehicle)
+        if _bank_build_queue:
+            _bank_build_queue.sort_custom(func(a:RailVehicle3D, b:RailVehicle3D) -> bool:
+                return a.global_position.distance_squared_to(listener_position) \
+                        < b.global_position.distance_squared_to(listener_position))
+            get_tree().process_frame.connect(_on_bank_build_frame)
+
     if _active:
         set_process(true)
         return
     set_process(false)
+
+
+## The queued vehicles' sound, a budget a frame: a station's worth of vehicles coming within earshot
+## at once stalled the frame
+func _on_bank_build_frame() -> void:
+    var deadline:int = Time.get_ticks_msec() + BANK_BUILD_BUDGET_MSEC
+    while _bank_build_queue and Time.get_ticks_msec() < deadline:
+        var vehicle:RailVehicle3D = _bank_build_queue.pop_front()
+        var builder:Callable = _bank_builders[vehicle]
+        _bank_builders.erase(vehicle)
+        builder.call()
+    if not _bank_build_queue:
+        get_tree().process_frame.disconnect(_on_bank_build_frame)
 
 
 ## Takes a bank into the set the frame visits, before the next sweep has looked at it.
@@ -341,7 +388,7 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     trigger.placement = StringName(descriptor.get("sound_placement", &"general"))
     trigger.source = descriptor.get("source") as MmdSoundSourceDefinition
     if trigger.source:
-        trigger.beginning_length = MmdSoundEventBuilder.stream_length(trigger.source.sound_begin)
+        trigger.beginning_length = AudioStreamManager.get_stream_length(trigger.source.sound_begin)
     runtime.triggers.append(trigger)
     return trigger.id
 

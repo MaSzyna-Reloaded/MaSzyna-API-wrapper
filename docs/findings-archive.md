@@ -2988,3 +2988,24 @@ lighting or the trainset.
   (`model_loaded_uncached`, connected deferred), so no preload waits for it at all.
 * **Rule:** nothing on a worker reads back from the RenderingServer, and nothing that loads or saves
   runs on the `WorkerThreadPool`; a threading change is proven on a real renderer, not headless.
+
+## 2026-10-02 - the Vehicles stage spent its time on sound banks nobody heard
+
+* **Symptom:** on Galicja (`linia_107_poludnie.scn`, 129 vehicles, 104 types and skins) the
+  loading screen's Vehicles stage was the longest: 6.6 s headless with every cache warm (22 s
+  cold), one vehicle built per frame.
+* **What proved it:** a headless probe of the real load, timing every step of
+  `MaszynaRailVehicle3DInstancer.build_into()` on the vehicles the scenery placed: the build
+  itself 4.4 s, of it the sound bank 2.4 s (the MMD parsed four times per vehicle 0.43 s,
+  1905 `SfxEvent`s built 1.5 s - the length of each of their 1535 streams by loading the whole
+  Ogg file - players and registration 0.45 s), the appearance 0.5-1.1 s (headless, nothing sent
+  to the GPU), the physics 0.1 s; 1.6 s were the frames themselves, as every build exceeded
+  `BUILD_BUDGET_MSEC` and a frame built one; drivers and scripts 0.5 s. Every vehicle's bank was
+  built at load, though `TrainSoundSystem` culls a bank beyond `maszyna/sound/culling_distance`.
+* **Fix:** a vehicle's bank is built only once it is within the culling distance of the listener
+  (`TrainSoundSystem.vehicle_set_bank_builder()`, the nearest first, a budget a frame), and a
+  stream's length is read off its Ogg pages (`AudioStreamManager.get_stream_length()`: the
+  identification header's rate, the last page's granule) instead of loading the file. Vehicles
+  6.6 s -> 4.1 s headless, the build 4.4 s -> 2.1 s.
+* **Rule:** what a vehicle has only for being seen or heard is built when it comes within sight
+  or earshot, not at load; a file's metadata is read off its header, not by loading the file.

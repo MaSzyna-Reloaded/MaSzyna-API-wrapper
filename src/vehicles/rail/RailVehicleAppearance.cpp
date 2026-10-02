@@ -23,6 +23,14 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::STRING, "passengers_model_filename"), "set_passengers_model_filename",
                 "get_passengers_model_filename");
+        ClassDB::bind_method(
+                D_METHOD("set_attachment_model_filenames", "value"),
+                &RailVehicleAppearance::set_attachment_model_filenames);
+        ClassDB::bind_method(
+                D_METHOD("get_attachment_model_filenames"), &RailVehicleAppearance::get_attachment_model_filenames);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::PACKED_STRING_ARRAY, "attachment_model_filenames"),
+                "set_attachment_model_filenames", "get_attachment_model_filenames");
         ClassDB::bind_method(D_METHOD("set_skins", "value"), &RailVehicleAppearance::set_skins);
         ClassDB::bind_method(D_METHOD("get_skins"), &RailVehicleAppearance::get_skins);
         ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "skins"), "set_skins", "get_skins");
@@ -136,6 +144,14 @@ namespace godot {
 
     String RailVehicleAppearance::get_passengers_model_filename() const {
         return passengers_model_filename;
+    }
+
+    void RailVehicleAppearance::set_attachment_model_filenames(const PackedStringArray &p_value) {
+        attachment_model_filenames = p_value;
+    }
+
+    PackedStringArray RailVehicleAppearance::get_attachment_model_filenames() const {
+        return attachment_model_filenames;
     }
 
     void RailVehicleAppearance::set_skins(const PackedStringArray &p_value) {

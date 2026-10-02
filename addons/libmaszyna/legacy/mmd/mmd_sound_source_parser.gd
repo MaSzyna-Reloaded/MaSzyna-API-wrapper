@@ -107,7 +107,7 @@ const _BARE_PARAMETERS:Dictionary = {
 
 
 static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
-    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context, context.parameters)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "sounds:")
     if start_index == -1:
         return []
@@ -131,7 +131,7 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
 ## exact same generic block/bare consumption as parse() above) and then discarded, with no
 ## diagnostic (this region isn't otherwise covered by MmdSoundCatalog).
 static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
-    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context, context.parameters)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
     if start_index == -1:
         return []
@@ -154,7 +154,7 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
 ## (DynObj.cpp:6289-6326), as MMD values - negative means ahead of the centre.
 static func parse_locations(abs_mmd_path:String, context:MmdImportContext) -> Dictionary:
     var locations:Dictionary = {"tractionmotors": PackedFloat32Array(), "bogies": PackedFloat32Array()}
-    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context, context.parameters)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "locations:")
     if start_index == -1:
         return locations
@@ -176,7 +176,7 @@ static func parse_locations(abs_mmd_path:String, context:MmdImportContext) -> Di
 
 
 static func parse_vehicle_soundproofing(abs_mmd_path:String, context:MmdImportContext) -> Array[PackedFloat32Array]:
-    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context, context.parameters)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
     var end_index:int = MmdCabinInstancer._find_label_index(tokens, "cab1definition:", start_index + 1)
     if start_index < 0 or end_index < 0:

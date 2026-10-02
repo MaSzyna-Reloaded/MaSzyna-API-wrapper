@@ -5,7 +5,7 @@ const MINUTE:float = 1.0 / 60.0
 
 
 func test_the_header_is_read() -> void:
-    var timetable:Timetable = MaszynaLegacyTimetableFactory.load_timetable(FIXTURES, "test_timetable")
+    var timetable:Timetable = MaszynaLegacyTimetableFactory.load_timetable(FIXTURES, "TEST_TIMETABLE")
 
     assert_eq(timetable.train_name, "TST12345")
     assert_eq(timetable.train_category, "OS")

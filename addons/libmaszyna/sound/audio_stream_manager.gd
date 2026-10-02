@@ -18,8 +18,9 @@ func _init() -> void:
 
 
 func get_stream(name:String, loop:bool = false) -> AudioStream:
-    var project_data_dir = UserSettings.get_maszyna_game_dir()
-    var full_path = "%s/sounds/%s.ogg" % [project_data_dir, name.to_lower()]
+    var project_data_dir:String = UserSettings.get_maszyna_game_dir()
+    var sounds_dir:String = project_data_dir.path_join("sounds")
+    var full_path:String = sounds_dir.path_join(MaszynaDataPath.resolve(sounds_dir, name + ".ogg"))
     if not ResourceLoader.exists(full_path):
         push_warning("[%s] file does not exist: %s" % [self, full_path])
         return _silence

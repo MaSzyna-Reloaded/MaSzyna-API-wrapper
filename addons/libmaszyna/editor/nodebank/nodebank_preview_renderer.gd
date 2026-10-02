@@ -93,8 +93,14 @@ func _fit_camera(camera: Camera3D, aabb: AABB) -> void:
 
 
 func _get_source_path(item_data: NodebankGridItem) -> String:
-    return UserSettings.get_maszyna_game_dir().path_join(
-        item_data.model.data_path.path_join(item_data.model.model_filename + ".e3d"))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_base_path:String = item_data.model.data_path.path_join(item_data.model.model_filename)
+    var relative_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".e3d")
+    var source_path:String = game_dir.path_join(relative_path)
+    if FileAccess.file_exists(source_path):
+        return source_path
+    relative_path = MaszynaDataPath.resolve(game_dir, relative_base_path + ".t3d")
+    return game_dir.path_join(relative_path)
 
 
 func _make_cache_path(item_data: NodebankGridItem) -> String:

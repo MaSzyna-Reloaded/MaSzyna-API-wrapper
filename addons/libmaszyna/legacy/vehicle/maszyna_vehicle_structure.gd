@@ -5,7 +5,7 @@ class_name MaszynaVehicleStructure
 ## What a vehicle's `.mmd` says it is built from, read once and cached on disk.
 ##
 ## Everything here is a property of the vehicle *type*, so it is shared by every vehicle of that
-## data_path/file_name/skin: its appearance (the models the MMD names, the resolved skin slots, the
+## data_path/file_name/skin - and of that name, when the MMD names its (p1): its appearance (the models the MMD names, the resolved skin slots, the
 ## submodels that move), the models of its cargo and the cab. What says which *instance* a vehicle is - its train_id, its speed, who occupies it,
 ## where it stands - is not here; it is applied to the vehicle that is built from this.
 ##

@@ -872,8 +872,9 @@ func _take_timetable(
         for suffix:String in ["", GUARD_RADIO_SUFFIX]:
             for directory:String in [SCENERY_DIRECTORY, SOUNDS_DIRECTORY]:
                 for extension:String in GUARD_SOUND_EXTENSIONS:
-                    var candidate:String = UserSettings.get_maszyna_game_dir().path_join(directory).path_join(
-                            "%s%s.%s" % [name, suffix, extension])
+                    var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(directory)
+                    var filename:String = "%s%s.%s" % [name, suffix, extension]
+                    var candidate:String = base_dir.path_join(MaszynaDataPath.resolve(base_dir, filename))
                     if not path and FileAccess.file_exists(candidate):
                         path = candidate
                         radio = suffix == GUARD_RADIO_SUFFIX

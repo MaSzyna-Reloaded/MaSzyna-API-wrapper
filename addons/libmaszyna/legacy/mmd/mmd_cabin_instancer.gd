@@ -51,6 +51,9 @@ const LAMP_LIGHT_MAX_COUNT:int = 6
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
 const _INCLUDE_END_KEYWORD := "end"
+## The highest (pN) the datapack names; past what an include passes each is "none", as any (pN) is
+## in the original (parser.cpp:280)
+const MAX_INCLUDE_PARAMETERS:int = 12
 const _VARIABLE_ANIMATION_TYPES := ["rotvar", "movvar"]
 ## Original engine: Globals.h:123 PythonScreenUpdateRate - the shortest interval a Python screen is
 ## redrawn at, in milliseconds
@@ -65,13 +68,14 @@ const CONTROL_SOUND_VOICE_COUNT:int = 16
 ## Parses an MMD file (with includes expanded) into a neutral MmdCabinDefinition for one cab.
 ## `random_choices` is owned by the caller and reused verbatim across repeated parse() calls
 ## (e.g. a later cab1<->cab2 rebuild) so a random include set isn't re-rolled each time.
-static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary) -> MmdCabinDefinition:
+static func parse(
+        abs_mmd_path:String, parameters:Dictionary, cab_number:int, random_choices:Dictionary) -> MmdCabinDefinition:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
     context.cab_number = cab_number
     context.random_choices = random_choices
 
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
 
     # An MMD file's models:/sounds:/locations: preamble (everything before the cab/instrument
     # section) has a completely different, non-uniform grammar this parser doesn't understand -
@@ -140,7 +144,7 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
             "pyscreen:":
                 # TTrain::screen_entry::deserialize_mapping() (Train.cpp:93): either
                 # "{ script target: x updatetime: n parameters: a=1&b=2 }" or the legacy
-                # "target script". Every token is lowercased, as cParser::getToken() does.
+                # "target script". The script keeps the spelling authored in the MMD.
                 var screen := MmdPythonScreenDescriptor.new()
                 var script:String = ""
                 while i < end_index:
@@ -149,7 +153,7 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                     if key == "}":
                         break
                     if key == "{":
-                        script = tokens[i].to_lower()
+                        script = tokens[i]
                     elif key == "target:":
                         screen.target = tokens[i].to_lower()
                     elif key == "updatetime:":
@@ -161,14 +165,17 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                                 screen.parameters[pair.get_slice("=", 0)] = pair.substr(pair.find("=") + 1)
                     else:
                         screen.target = key
-                        script = tokens[i].to_lower()
+                        script = tokens[i]
                         i += 1
                         break
                     i += 1
                 # a script given without a directory lives next to the vehicle (Train.cpp:10667)
-                screen.script_path = (
-                        context.base_dir.path_join(script) if not script.get_base_dir()
-                        else UserSettings.get_maszyna_game_dir().path_join(script))
+                var script_base_dir:String = (
+                    context.base_dir if not script.get_base_dir()
+                    else UserSettings.get_maszyna_game_dir()
+                )
+                var script_file:String = MaszynaDataPath.resolve(script_base_dir, script + ".py")
+                screen.script_path = script_base_dir.path_join(script_file).trim_suffix(".py")
                 python_screens.append(screen)
             "pyscreenupdatetime:":
                 python_screen_update_time_msec = int(tokens[i])
@@ -246,36 +253,6 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
     return definition
 
 
-## Real MaSzyna data on Linux frequently has a case mismatch between what an MMD declares (e.g.
-## "st44_A.t3d") and the actual file on disk (e.g. "st44_a.e3d") - harmless on Windows' case-
-## insensitive filesystem, fatal here (feasibility doc section 3.1: ~59/730 real models affected).
-## Falls back to `relpath` unchanged if no case-insensitive match exists either - the caller's
-## own MMD_MODEL_NOT_FOUND still fires in that case.
-static func resolve_model_case(data_path:String, relpath:String) -> String:
-    if not relpath:
-        return relpath
-    var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(data_path)
-    if FileAccess.file_exists(base_dir.path_join(relpath + ".e3d")):
-        return relpath
-
-    var dir_part:String = relpath.get_base_dir()
-    var file_part:String = relpath.get_file()
-    var dir_access:DirAccess = DirAccess.open(base_dir.path_join(dir_part))
-    if not dir_access:
-        return relpath
-
-    var wanted:String = (file_part + ".e3d").to_lower()
-    dir_access.list_dir_begin()
-    var entry:String = dir_access.get_next()
-    while entry:
-        if not dir_access.current_is_dir() and entry.to_lower() == wanted:
-            dir_access.list_dir_end()
-            return dir_part.path_join(entry.substr(0, entry.length() - 4)) # strip ".e3d"
-        entry = dir_access.get_next()
-    dir_access.list_dir_end()
-    return relpath
-
-
 ## A model can need more than one dynamic-material skin slot. MaSzyna first looks for
 ## "<skin>,1.mat" and, if present, maps consecutive numbered materials directly to slots 0-3.
 ## The unnumbered "<skin>.mat" is only the fallback for a single-material model.
@@ -284,7 +261,9 @@ static func resolve_skins(data_path:String, skin:String) -> Array:
         return [skin]
     if skin.contains("|"):
         return Array(skin.split("|", false, 4))
-    var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(data_path)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var resolved_data_path:String = MaszynaDataPath.resolve(game_dir, data_path.trim_prefix("/"))
+    var base_dir:String = game_dir.path_join(resolved_data_path)
     var skins:Array = []
     var n:int = 1
     while n <= 4 and _skin_slot_exists(base_dir, "%s,%d" % [skin, n]):
@@ -298,9 +277,24 @@ static func resolve_skins(data_path:String, skin:String) -> Array:
 ## are "<skin>,1.dds" and "<skin>,2.dds" with no .mat, next to a 1x1 "<skin>.dds" placeholder.
 static func _skin_slot_exists(base_dir:String, slot:String) -> bool:
     for extension:String in [".mat", ".dds"]:
-        if FileAccess.file_exists(base_dir.path_join(slot.to_lower() + extension)):
+        var relative_path:String = MaszynaDataPath.resolve(base_dir, slot + extension)
+        if FileAccess.file_exists(base_dir.path_join(relative_path)):
             return true
     return false
+
+
+## The (pN) a vehicle's own MMD is read with: the original parses the text
+## "include <TypeName>.mmd <name> <TypeName> <skin> end" (DynObj.cpp:5260) - SN61's MMD is only
+## "include sn61.mmd.inc (p2)", SM42 6D names its attachments by (p3)
+static func vehicle_parameters(vehicle_name:String, type_name:String, skin:String) -> Dictionary:
+    var values:Array[String] = [vehicle_name, type_name, skin]
+    return _include_parameters(values)
+
+
+## Whether what the MMD reads depends on the vehicle's own name - its text names (p1), which no
+## include of it can name unless passed it. What is read from it then belongs to that vehicle alone.
+static func names_vehicle(abs_mmd_path:String) -> bool:
+    return FileAccess.get_file_as_bytes(abs_mmd_path).get_string_from_ascii().contains("(p1)")
 
 
 ## Reads just the exterior body model filename from the MMD's own top-level `models:` section
@@ -309,9 +303,9 @@ static func _skin_slot_exists(base_dir:String, slot:String) -> bool:
 ## dynamic/pkp/st44_v2's body model is not named "st44-700"), so MaszynaRailVehicle3D must read
 ## it from here rather than assuming it equals file_name. Returns "" if the file can't be read
 ## or has no `models:` section - the caller decides the fallback.
-static func parse_body_model(abs_mmd_path:String) -> String:
+static func parse_body_model(abs_mmd_path:String, parameters:Dictionary) -> String:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var index:int = _find_label_index(tokens, "models:")
     if index == -1 or index + 1 >= tokens.size():
         return ""
@@ -322,9 +316,9 @@ static func parse_body_model(abs_mmd_path:String) -> String:
 ## (e.g. "lowpolyinterior: 6da_interior.t3d") - the lower-detail interior visible from outside
 ## the cabin (through windows) before the player enters, matching
 ## RailVehicleAppearance.low_poly_model_filename. Returns "" if the MMD has no such entry.
-static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
+static func parse_lowpoly_interior_model(abs_mmd_path:String, parameters:Dictionary) -> String:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var index:int = _find_label_index(tokens, "lowpolyinterior:")
     if index == -1 or index + 1 >= tokens.size():
         return ""
@@ -333,9 +327,9 @@ static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
 
 ## Reads `animwiperprefix:` from the MMD (DynObj.cpp:5833) - the name the wiper submodels of the
 ## vehicle model start with, "" without wipers.
-static func parse_wiper_prefix(abs_mmd_path:String) -> String:
+static func parse_wiper_prefix(abs_mmd_path:String, parameters:Dictionary) -> String:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var index:int = _find_label_index(tokens, "animwiperprefix:")
     if index == -1 or index + 1 >= tokens.size():
         return ""
@@ -349,9 +343,9 @@ const ANIM_MIRRORS:int = 8
 ## The mirror submodels of the vehicle model: `animmirrorprefix:` numbered from 1, as many as the
 ## `animations:` line declares (DynObj.cpp:5309-5333, 5887-5910) - a count list ends at its first
 ## negative number, and a vehicle without the line has no mirrors.
-static func parse_mirror_names(abs_mmd_path:String) -> PackedStringArray:
+static func parse_mirror_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var names:PackedStringArray = PackedStringArray()
     var prefix_index:int = _find_label_index(tokens, "animmirrorprefix:")
     var counts_index:int = _find_label_index(tokens, "animations:")
@@ -370,9 +364,9 @@ static func parse_mirror_names(abs_mmd_path:String) -> PackedStringArray:
 
 ## Reads `jointcabs:` from the MMD (DynObj.cpp:6626) - all virtual cabs share one location and
 ## model, so the whole low-poly cab is hidden from inside any of them.
-static func parse_joint_cabs(abs_mmd_path:String) -> bool:
+static func parse_joint_cabs(abs_mmd_path:String, parameters:Dictionary) -> bool:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var index:int = _find_label_index(tokens, "jointcabs:")
     if index == -1 or index + 1 >= tokens.size():
         return false
@@ -383,10 +377,10 @@ static func parse_joint_cabs(abs_mmd_path:String) -> bool:
 ## declares one entry per cargo it can carry (`logs: loads/eaos_vrz-99_logs`), and `passengers` is
 ## one of those entries - which is why the passenger model comes out of here too. 235 vehicles of
 ## the datapack declare the block; the rest rely on the model simply being named after the cargo.
-static func parse_loads(abs_mmd_path:String) -> Dictionary[String, String]:
+static func parse_loads(abs_mmd_path:String, parameters:Dictionary) -> Dictionary[String, String]:
     var models:Dictionary[String, String] = {}
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
     var loads_index:int = _find_label_index(tokens, "loads:")
     if loads_index == -1 or loads_index + 1 >= tokens.size() or not tokens[loads_index + 1] == "{":
         return models
@@ -406,6 +400,40 @@ static func parse_loads(abs_mmd_path:String) -> Dictionary[String, String]:
     return models
 
 
+## The models the MMD's `attachments:` draws with the exterior (DynObj.cpp:5384-5398), one per entry
+## up to its `}`; an entry "[a b ...]" is one of them picked at random (deserialize_random_set(),
+## utilities.cpp:436). The pick is made once for the vehicle's structure, shared by every vehicle of
+## the type and skin - no attachment in the datapack is a random set.
+static func parse_attachments(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
+    var models:PackedStringArray = PackedStringArray()
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
+    var index:int = _find_label_index(tokens, "attachments:")
+    if index == -1:
+        return models
+
+    var random_set:Array[String] = []
+    var in_random_set:bool = false
+    for i:int in range(index + 1, tokens.size()):
+        var token:String = tokens[i]
+        if in_random_set:
+            if token == _RANDOM_INCLUDE_CLOSE:
+                in_random_set = false
+                if random_set:
+                    models.append(_resolve_model_relpath(random_set.pick_random()))
+                random_set.clear()
+            else:
+                random_set.append(token)
+            continue
+        if token == "}":
+            break
+        if token == _RANDOM_INCLUDE_OPEN:
+            in_random_set = true
+        elif not token == "{":
+            models.append(_resolve_model_relpath(token))
+    return models
+
+
 ## Builds real, interactive cabin widgets (CabinButton/CabinSwitch/CabinKnob/CabinGauge) plus
 ## the cab's own E3D model as children of `generated_root`, which must already be inside the
 ## scene tree. Appends any build-time diagnostics to `diagnostics` (caller-owned, merged with
@@ -418,17 +446,13 @@ static func build_into(
         diagnostics.append(_diag("info", "MMD_MODEL_NOT_FOUND", "Cab %d has no model (model: none)" % definition.cab_number, definition.cab_number))
         return
 
-    var model_relpath:String = resolve_model_case(data_path, definition.model_relpath)
-    if model_relpath != definition.model_relpath:
-        diagnostics.append(_diag("info", "MMD_MODEL_CASE_NORMALIZED", "Cab model '%s' resolved case-insensitively to '%s'" % [definition.model_relpath, model_relpath], definition.cab_number))
-
     var model := E3DModelInstance.new()
     model.name = "CabModel"
     # the original loads a cab as a dynamic model (Train.cpp:10599), which hides its "_on" controls
     model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
     model.data_path = data_path
     # the resource itself rather than its filename, so the indicator lights can read its submodels
-    model.model = E3DModelManager.load_model(data_path, model_relpath)
+    model.model = E3DModelManager.load_model(data_path, definition.model_relpath)
     model.skins = resolve_skins(data_path, skin)
     # the cab loads under its own texture size limit (Train.cpp:660)
     model.max_texture_size = int(ProjectSettings.get_setting("maszyna/import/dds_max_cab_texture_size", 4096))
@@ -442,11 +466,15 @@ static func build_into(
     # the resolved submodel needs real alpha blending from the moment its material is first
     # created, not as a later refresh.
     model.force_alpha_submodel_paths = _resolve_force_alpha_submodel_paths(
-            data_path, model_relpath, definition.instruments)
+            data_path, definition.model_relpath, definition.instruments)
     generated_root.add_child(model)
 
     if not model.is_e3d_loaded():
-        diagnostics.append(_diag("error", "MMD_MODEL_NOT_FOUND", "Could not load cab model '%s'" % model_relpath, definition.cab_number))
+        diagnostics.append(_diag(
+            "error", "MMD_MODEL_NOT_FOUND",
+            "Could not load cab model '%s'" % definition.model_relpath,
+            definition.cab_number
+        ))
         return
 
     var submodel_index:Dictionary = {}
@@ -1480,6 +1508,14 @@ static func _tokenize_file(abs_path:String, context:MmdImportContext, parameters
         context.include_depth -= 1
         return []
 
+    var game_dir:String = UserSettings.get_maszyna_game_dir().trim_suffix("/")
+    var base_dir:String = abs_path.get_base_dir()
+    var relative_path:String = abs_path.get_file()
+    if abs_path.begins_with(game_dir + "/"):
+        base_dir = game_dir
+        relative_path = abs_path.trim_prefix(game_dir + "/")
+    abs_path = base_dir.path_join(MaszynaDataPath.resolve(base_dir, relative_path))
+
     var file:FileAccess = FileAccess.open(abs_path, FileAccess.READ)
     if not file:
         context.add_diagnostic("error", "MMD_INCLUDE_NOT_FOUND", "Cannot open MMD file: " + abs_path, abs_path)
@@ -1550,15 +1586,15 @@ static func _handle_include(p:MaszynaParser, dir:String, context:MmdImportContex
         context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "Empty include filename", current_file)
         return []
 
-    var param_dict:Dictionary = {}
-    for i in range(params.size()):
-        param_dict["p%d" % (i + 1)] = params[i]
-    for i in range(1, 10):
-        var key:String = "p%d" % i
-        if not param_dict.has(key):
-            param_dict[key] = "none" # missing (pN) reference defaults to "none"
+    return _tokenize_file(dir.path_join(include_filename), context, _include_parameters(params))
 
-    return _tokenize_file(dir.path_join(include_filename), context, param_dict)
+
+## The (pN) of an included file - a missing one is "none" (parser.cpp:280)
+static func _include_parameters(values:Array[String]) -> Dictionary:
+    var parameters:Dictionary = {}
+    for i:int in range(1, maxi(values.size(), MAX_INCLUDE_PARAMETERS) + 1):
+        parameters["p%d" % i] = values[i - 1] if i <= values.size() else "none"
+    return parameters
 
 
 static func _strip_bom(buffer:PackedByteArray) -> PackedByteArray:

@@ -9,6 +9,6 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaSoundDat
     var z:float = float(p.next_token())
     sound.position = Vector3(x, y, z)
     # the streams are looked up as <name>.ogg (AudioStreamManager.get_stream())
-    sound.file = p.next_token().to_lower().get_basename()
+    sound.file = p.next_token().get_basename()
     p.get_tokens_until("endsound")
     return sound

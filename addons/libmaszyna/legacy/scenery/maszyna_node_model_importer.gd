@@ -7,16 +7,18 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelDat
     var loc_y = p.next_token()
     var loc_z = p.next_token()
     var rot_y = p.next_token()
-    var filename:String = p.next_token().to_lower()
+    var filename:String = p.next_token().replace("\\", "/")
     var data_path:String = filename.get_base_dir()
 
     var obj := MaszynaModelData.new()
     obj.model_filename = filename.get_file().get_basename()
     var data_path_array = data_path.split("/")
-    if not data_path_array or not data_path_array[0] == "dynamic":
+    if not data_path_array or not String(data_path_array[0]).to_lower() == "dynamic":
         data_path_array.insert(0, "models")
-        
-    obj.data_path = "/".join(data_path_array)
+
+    obj.data_path = MaszynaDataPath.resolve(
+        UserSettings.get_maszyna_game_dir(), "/".join(data_path_array)
+    )
 
     obj.position = Vector3(float(loc_x), float(loc_y), float(loc_z))
     obj.rotation = Vector3(0.0, deg_to_rad(float(rot_y)), 0.0)

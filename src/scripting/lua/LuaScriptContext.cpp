@@ -3,6 +3,7 @@
 #include "LuaScriptContext.hpp"
 #include "LuaVariant.hpp"
 #include "lauxlib.h"
+#include "legacy/MaszynaDataPath.hpp"
 #include "legacy/scenario/MaszynaLegacyLuaEventsModule.hpp"
 #include "logging/GameLog.hpp"
 #include "lualib.h"
@@ -328,7 +329,7 @@ namespace godot {
             lua_pushstring(p_state, ("cannot open " + p_path + ": outside the scenery directory").utf8().get_data());
             return false;
         }
-        const String path = base_dir.path_join(relative);
+        const String path = base_dir.path_join(MaszynaDataPath::resolve(base_dir, relative));
         if (!FileAccess::file_exists(path)) {
             lua_pushstring(p_state, ("cannot open " + p_path).utf8().get_data());
             return false;

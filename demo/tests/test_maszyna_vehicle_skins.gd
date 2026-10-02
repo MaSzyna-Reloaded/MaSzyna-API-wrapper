@@ -15,7 +15,8 @@ func test_skips_skins_of_other_vehicles_and_rule_lines() -> void:
     var skins: Array[String] = MaszynaVehicleSkins.list_skins(
             ProjectSettings.globalize_path("res://tests/fixtures/skins"), "F140MS")
 
-    assert_eq(skins, ["e186_240"] as Array[String])
+    # the spelling of the index - a skin's files are found whatever their case (MaszynaDataPath)
+    assert_eq(skins, ["E186_240"] as Array[String])
 
 
 func test_lists_materials_without_textures_index() -> void:

@@ -11,14 +11,16 @@ func parse(model_path:String, material_file:String) -> MaszynaMaterial:
     var material_name:String = material_file
     # FIXME: move this to MaterialManager
     var possible_paths:Array[String] = [
-        project_data_dir+"/"+model_path+"/"+material_name+".mat",
-        project_data_dir+"/textures/"+model_path+"/"+material_name+".mat",
-        project_data_dir+"/"+material_name+".mat",
-        project_data_dir+"/"+"textures/"+material_name+".mat",
+        model_path.trim_prefix("/").path_join(material_name + ".mat"),
+        "textures".path_join(model_path.trim_prefix("/")).path_join(material_name + ".mat"),
+        material_name + ".mat",
+        "textures".path_join(material_name + ".mat"),
     ]
-    for p:String in possible_paths:
-        if FileAccess.file_exists(p):
-            final_path = p
+    for relative_path:String in possible_paths:
+        relative_path = MaszynaDataPath.resolve(project_data_dir, relative_path)
+        var full_path:String = project_data_dir.path_join(relative_path)
+        if FileAccess.file_exists(full_path):
+            final_path = full_path
             break
 
     var file:FileAccess = FileAccess.open(final_path, FileAccess.READ) as FileAccess

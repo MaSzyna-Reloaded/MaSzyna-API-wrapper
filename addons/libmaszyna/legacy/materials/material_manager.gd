@@ -239,8 +239,9 @@ func load_texture(
 
     var final_path:String = ""
     for p:String in possible_paths:
-        if FileAccess.file_exists(project_data_dir.path_join(p)):
-            final_path = p
+        var resolved_path:String = MaszynaDataPath.resolve(project_data_dir, p)
+        if FileAccess.file_exists(project_data_dir.path_join(resolved_path)):
+            final_path = resolved_path
             break
 
     if not final_path:

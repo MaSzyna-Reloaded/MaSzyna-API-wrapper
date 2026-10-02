@@ -15,7 +15,7 @@ const FIRST_CHUNK_SPEED:float = 10.0
 const SECOND_CHUNK_SPEED:float = 70.0
 ## A looping sample in the fixtures game directory (demo/tests/fixtures/sounds)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
-const FIXTURE_LOOP:String = "test_loop"
+const FIXTURE_LOOP:String = "TEST_LOOP"
 ## An emitter's own pitch factor, inside the original's 97.5-102.5 % (sound.cpp:374-377)
 const PITCH_VARIATION:float = 1.02
 

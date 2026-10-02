@@ -328,7 +328,8 @@ static func build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
 static func stream_length(filename:String) -> float:
     if not filename:
         return 0.0
-    var path:String = "%s/sounds/%s.ogg" % [UserSettings.get_maszyna_game_dir(), filename.to_lower()]
+    var sounds_dir:String = UserSettings.get_maszyna_game_dir().path_join("sounds")
+    var path:String = sounds_dir.path_join(MaszynaDataPath.resolve(sounds_dir, filename + ".ogg"))
     if not ResourceLoader.exists(path):
         return 0.0
     var stream:AudioStream = AudioStreamManager.get_stream(filename)

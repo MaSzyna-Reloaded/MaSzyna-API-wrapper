@@ -378,17 +378,21 @@ namespace godot {
                     models->instance_free(instance);
                 }
             }
+            for (const RID &instance: p_visual.attachments) {
+                models->instance_free(instance);
+            }
         }
         p_visual.model = RID();
         p_visual.low_poly = RID();
         p_visual.passengers = RID();
+        p_visual.attachments.clear();
         p_visual.own_models = false;
     }
 
     /* Every MaSzyna-authored model of a vehicle lives in one vehicle-local frame (the original
      * draws all of them under TDynamicObject::mMatrix, DynObj.cpp:2506-2508); the appearance says
      * where that frame sits in the node. The exterior and the low-poly interior are nodes near the
-     * camera - their submodels are posed and hidden - the passengers never are. */
+     * camera - their submodels are posed and hidden - the passengers and the attachments never are. */
     void RailVehicleRenderingServer::_create_models(const RID &p_vehicle, Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
         Node3D *node = _node(p_visual);
@@ -426,6 +430,13 @@ namespace godot {
         p_visual.passengers =
                 create(appearance->get_passengers_model_filename(), PackedStringArray(),
                        E3DRenderingServer::INSTANCER_OPTIMIZED);
+        // drawn as the exterior is, never posed (DynObj.cpp:5384, opengl33renderer.cpp:3195)
+        for (const String &filename: appearance->get_attachment_model_filenames()) {
+            const RID attachment = create(filename, appearance->get_skins(), E3DRenderingServer::INSTANCER_OPTIMIZED);
+            if (attachment.is_valid()) {
+                p_visual.attachments.push_back(attachment);
+            }
+        }
         _register_pickable(p_vehicle, p_visual);
     }
 
@@ -562,6 +573,9 @@ namespace godot {
                 if (instance.is_valid()) {
                     models->instance_set_transform(instance, model_transform);
                 }
+            }
+            for (const RID &instance: p_visual.attachments) {
+                models->instance_set_transform(instance, model_transform);
             }
         }
         _update_load(p_vehicle, p_visual);

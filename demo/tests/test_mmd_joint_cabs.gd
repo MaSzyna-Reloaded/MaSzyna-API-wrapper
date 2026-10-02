@@ -17,9 +17,9 @@ func _write_mmd(file_name:String, content:String) -> String:
 
 func test_joint_cabs_true_is_read() -> void:
     var path:String = _write_mmd("joint.mmd", "internaldata:\njointcabs: true\ncab1definition:\n")
-    assert_true(MmdCabinInstancer.parse_joint_cabs(path))
+    assert_true(MmdCabinInstancer.parse_joint_cabs(path, {}))
 
 
 func test_joint_cabs_defaults_to_false() -> void:
     var path:String = _write_mmd("separate.mmd", "internaldata:\ncab1definition:\n")
-    assert_false(MmdCabinInstancer.parse_joint_cabs(path))
+    assert_false(MmdCabinInstancer.parse_joint_cabs(path, {}))

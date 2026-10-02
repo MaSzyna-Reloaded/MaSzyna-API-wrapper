@@ -79,7 +79,9 @@ var trainsets:Array[Trainset] = []
 ## of one scenery ("baltyk_skm1.scn" with "//$l Bałtyk" and "//$n Bałtyk" -> "Bałtyk · SKM1").
 static func read_display_name(filename:String) -> String:
     var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
-    var file:FileAccess = FileAccess.open(scenery_dir.path_join(filename), FileAccess.READ)
+    var file:FileAccess = FileAccess.open(
+        scenery_dir.path_join(MaszynaDataPath.resolve(scenery_dir, filename)), FileAccess.READ
+    )
     var bytes:PackedByteArray = (
         file.get_buffer(mini(file.get_length(), MAX_HEADER_BYTES)) if file else PackedByteArray()
     )
@@ -168,7 +170,9 @@ static func _has_digit(word:String) -> bool:
 static func read(filename:String) -> MaszynaSceneryInfo:
     var info := MaszynaSceneryInfo.new()
     var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
-    var file:FileAccess = FileAccess.open(scenery_dir.path_join(filename), FileAccess.READ)
+    var file:FileAccess = FileAccess.open(
+        scenery_dir.path_join(MaszynaDataPath.resolve(scenery_dir, filename)), FileAccess.READ
+    )
     if not file:
         return info
     # raw bytes - FileAccess.get_line() decodes UTF-8 and would lose the cp1250 characters
@@ -198,7 +202,10 @@ static func read(filename:String) -> MaszynaSceneryInfo:
                 description_lines.append(line.substr(4).strip_edges())
                 continue
             elif line.begins_with("//$i"):
-                var image_path:String = scenery_dir.path_join("images").path_join(line.substr(4).strip_edges())
+                var images_dir:String = scenery_dir.path_join("images")
+                var image_path:String = images_dir.path_join(
+                    MaszynaDataPath.resolve(images_dir, line.substr(4).strip_edges())
+                )
                 if FileAccess.file_exists(image_path):
                     info.image_path = image_path
                 continue
@@ -225,10 +232,10 @@ static func read(filename:String) -> MaszynaSceneryInfo:
                     var vehicle := Vehicle.new()
                     vehicle.train_id = tokens[3]
                     vehicle.data_path = _resolve_data_path(tokens[5])
-                    # lowercased like maszyna_node_dynamic_importer.gd does - the data files are
-                    # lowercase, the .scn spells them however it likes
-                    vehicle.skin = tokens[6].to_lower()
-                    vehicle.file_name = tokens[7].to_lower()
+                    # spelled as the .scn spells them, like maszyna_node_dynamic_importer.gd - the
+                    # files are found by MaszynaDataPath.resolve() whatever the letter case
+                    vehicle.skin = tokens[6]
+                    vehicle.file_name = tokens[7]
                     vehicle.driver_type = tokens[9].to_lower()
                     trainset.vehicles.append(vehicle)
     info.description = "\n".join(description_lines)
@@ -237,7 +244,7 @@ static func read(filename:String) -> MaszynaSceneryInfo:
 
 ## "PKP\\SU42_V1" -> "dynamic/pkp/su42_v1", same as maszyna_node_dynamic_importer.gd
 static func _resolve_data_path(data_folder:String) -> String:
-    var segments:PackedStringArray = data_folder.replace("\\", "/").to_lower().split("/", false)
-    if not segments or not segments[0] == "dynamic":
+    var segments:PackedStringArray = data_folder.replace("\\", "/").split("/", false)
+    if not segments or not segments[0].to_lower() == "dynamic":
         segments.insert(0, "dynamic")
-    return "/".join(segments)
+    return MaszynaDataPath.resolve(UserSettings.get_maszyna_game_dir(), "/".join(segments))

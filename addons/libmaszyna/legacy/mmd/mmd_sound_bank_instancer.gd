@@ -77,10 +77,11 @@ static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.
 
 ## The vehicle's sound players, built into `vehicle` as its internal children; returned
 static func build_into(
-        vehicle:Node3D, abs_mmd_path:String, random_choices:Dictionary,
+        vehicle:Node3D, abs_mmd_path:String, parameters:Dictionary, random_choices:Dictionary,
         diagnostics:Array[Dictionary]) -> Array[Node]:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
+    context.parameters = parameters
     context.random_choices = random_choices
 
     var exterior_definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)

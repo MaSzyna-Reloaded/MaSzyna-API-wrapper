@@ -69,6 +69,7 @@ namespace godot {
                     RID model;
                     RID low_poly;
                     RID passengers;
+                    Vector<RID> attachments;
                     RID load;
                     /* The cargo's model file, read again with the game's data */
                     String load_data_path;

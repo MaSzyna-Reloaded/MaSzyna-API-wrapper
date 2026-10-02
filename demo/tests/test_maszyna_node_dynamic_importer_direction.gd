@@ -26,6 +26,7 @@ func before_each() -> void:
     DirAccess.make_dir_recursive_absolute(fixture_dir)
     _write_fiz(fixture_dir.path_join("short.fiz"), SHORT_LENGTH)
     _write_fiz(fixture_dir.path_join("long.fiz"), LONG_LENGTH)
+    _write_fiz(fixture_dir.path_join("MixedVehicle.fiz"), SHORT_LENGTH)
     UserSettings.save_maszyna_game_dir(TEST_GAME_DIR)
 
 
@@ -93,6 +94,17 @@ func test_a_vehicle_outside_a_trainset_stands_with_its_center_behind_its_front()
     var context := MaszynaImporterContext.new()
     var vehicle:MaszynaRailVehicle3D = _import(context, "fixtures skin short start -20.0 headdriver 0 0 enddynamic")
     assert_eq(vehicle.start_track_name, "start")
+    assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
+
+
+func test_vehicle_file_and_skin_keep_the_spelling_from_the_scenery() -> void:
+    var context := MaszynaImporterContext.new()
+    var vehicle:MaszynaRailVehicle3D = _import(
+        context, "FIXTURES MixedSkin MixedVehicle start -20.0 headdriver 0 0 enddynamic"
+    )
+    assert_eq(vehicle.data_path, "dynamic/fixtures", "the missing mixed-case directory falls back")
+    assert_eq(vehicle.file_name, "MixedVehicle", "the existing exact filename is not lowercased")
+    assert_eq(vehicle.skin, "MixedSkin", "the skin keeps its authored spelling")
     assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 

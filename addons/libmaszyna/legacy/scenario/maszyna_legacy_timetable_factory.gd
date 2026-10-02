@@ -41,7 +41,7 @@ const MAX_RADIO_CHANNEL:int = 10
 ## The timetable `name` in the scenery's directory, null when there is none. Times move by
 ## `minutes_offset`.
 static func load_timetable(directory:String, name:String, minutes_offset:float = 0.0) -> Timetable:
-    var path:String = directory.path_join(name + EXTENSION)
+    var path:String = directory.path_join(MaszynaDataPath.resolve(directory, name + EXTENSION))
     if not FileAccess.file_exists(path):
         # no file, but a number: the train's speed
         if not name.is_valid_int():

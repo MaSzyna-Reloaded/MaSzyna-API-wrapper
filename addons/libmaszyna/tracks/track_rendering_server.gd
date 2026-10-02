@@ -1860,9 +1860,10 @@ func _load_rail_profile(profile_name: String) -> RailProfile:
     if profile_name.begins_with("railprofile_"):
         profile_name = profile_name.trim_prefix("railprofile_")
 
-    var profile_path: String = game_dir.path_join("models").path_join("tory").path_join(
-        "railprofile_%s.txt" % profile_name
-    )
+    var profile_dir:String = game_dir.path_join("models").path_join("tory")
+    var profile_path:String = profile_dir.path_join(MaszynaDataPath.resolve(
+        profile_dir, "railprofile_%s.txt" % profile_name
+    ))
     if not FileAccess.file_exists(profile_path):
         return null
 

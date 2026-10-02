@@ -18,7 +18,7 @@ const RULE_PREFIXES: Array[String] = ["!", "*", "@"]
 
 ## Skins made for the given vehicle, in the order of the index. vehicle_dir is an absolute path.
 static func list_skins(vehicle_dir: String, file_name: String) -> Array[String]:
-    var index_path: String = vehicle_dir.path_join(INDEX_FILE)
+    var index_path: String = vehicle_dir.path_join(MaszynaDataPath.resolve(vehicle_dir, INDEX_FILE))
     if FileAccess.file_exists(index_path):
         return _list_indexed_skins(index_path, file_name)
     return _list_material_skins(vehicle_dir)
@@ -35,7 +35,7 @@ static func _list_indexed_skins(index_path: String, file_name: String) -> Array[
         var vehicle: String = line.get_slice("=", 1).get_slice(",", 0).strip_edges()
         if not vehicle.to_lower() == file_name.to_lower():
             continue
-        var skin: String = line.get_slice("=", 0).strip_edges().get_basename().to_lower()
+        var skin: String = line.get_slice("=", 0).strip_edges().get_basename()
         if not skin in skins:
             skins.append(skin)
     return skins
@@ -48,7 +48,7 @@ static func _list_material_skins(vehicle_dir: String) -> Array[String]:
     for file: String in files:
         if not file.get_extension().to_lower() == "mat":
             continue
-        var skin: String = file.get_basename().to_lower()
+        var skin: String = file.get_basename()
         # multi-slot skins are "<name>,<slot>.mat", only the first slot is a skin of its own
         if skin.contains(",") and not skin.ends_with(",1"):
             continue

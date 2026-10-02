@@ -5,17 +5,27 @@ extends MaszynaGutTest
 ## instruments around them still read.
 
 const FIXTURE_PATH:String = "res://tests/fixtures/test_cabin_pyscreen.mmd"
+## A game directory without the scripts - a test reads no game data of its own
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 
 var _definition:MmdCabinDefinition = null
+var _previous_game_dir:String
 
 
 func before_each() -> void:
-    _definition = MmdCabinInstancer.parse(ProjectSettings.globalize_path(FIXTURE_PATH), 1, {})
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(ProjectSettings.globalize_path(FIXTURES_GAME_DIR))
+    _definition = MmdCabinInstancer.parse(ProjectSettings.globalize_path(FIXTURE_PATH), {}, 1, {})
+
+
+func after_each() -> void:
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func test_block_form_screen_reads_script_target_and_parameters() -> void:
     var screen:MmdPythonScreenDescriptor = _definition.python_screens[0]
-    assert_eq(screen.script_path, UserSettings.get_maszyna_game_dir().path_join("scripts/koliber"))
+    # the spelling of the MMD - the file is found whatever its case when it is there (MaszynaDataPath)
+    assert_eq(screen.script_path, UserSettings.get_maszyna_game_dir().path_join("scripts/Koliber"))
     assert_eq(screen.target, "ekran")
     var parameters:Dictionary = {"kod_e": "ic", "margin1": "20"}
     assert_eq(screen.parameters, parameters)

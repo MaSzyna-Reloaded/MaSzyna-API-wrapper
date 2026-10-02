@@ -237,6 +237,14 @@ interface.
   flips a two-state `main_sw`, but an impulse one acts only on release; a push pump runs while held,
   a toggle one sets `*SwitchOff`. A switch without `type:` is a toggle (`Gauge.h:89`). Wrapper: the
   MMD factory maps the type onto the widget, the branching lives in `legacy_cabin/` behaviours.
+* **A vehicle's own MMD takes parameters.** The original never opens it directly: it parses the
+  text `include <TypeName>.mmd <name> <TypeName> <skin> end` (`DynObj.cpp:5260`), so the MMD's
+  `(p1)` is the vehicle's scenery name, `(p2)` its type name and `(p3)` its skin. The data relies
+  on it: SN61 has only `include sn61.mmd.inc (p2)` and the include's `models: (p1).t3d#` - read
+  without the parameters the body model is `none` and only the low-poly interior is drawn;
+  SM42 6D and PWM10 name their `attachments:` by `(p3)`, 4E (`4e-staraklima`) by `(p1)`. Wrapper:
+  every reader of a vehicle's MMD takes `MmdCabinInstancer.vehicle_parameters()`; a structure read
+  from an MMD that names `(p1)` is cached for its vehicle alone (`names_vehicle()`).
 
 ## Scenery data
 
@@ -253,6 +261,12 @@ interface.
   (`simulationtime.cpp:30-51`), whatever the timetables say. Zwierzyniec, `zwierzyniec_osob.scn`,
   has none (its RPE58102 is due at Pawianowo at 10:37); `zwierzyniec_posp.scn` sets 15:30.
   Wrapper: `MaszynaSceneryNode.START_TIME_DEFAULT`.
+* **File names in the data ignore letter case.** The datapack is made on Windows: the scenery
+  says `PKP\SN61_V2 SN61-179 SN61_v2` and `2M62-0571-A`, the files on disk are
+  `pkp/sn61_v2/sn61_v2.mmd` - or, the other way round, uppercase `2M62-0571-A.fiz` exist as
+  written, and 821 names on disk carry capitals. Wrapper: `MaszynaDataPath.resolve()` keeps the
+  base directory, tries the relative path as authored, then its lowercase form, then each part
+  letter case aside (`docs/findings-archive.md`, 2026-10-02).
 * A timetable file saved as UTF-8 rather than cp1250 keeps mangled Polish letters in its labels
   (`linia053/scenariusz_os`).
 * **A load count with no type behind it is not a load.** The `dynamic` line gives the count

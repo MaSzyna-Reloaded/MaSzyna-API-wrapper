@@ -51,7 +51,7 @@ func after_each() -> void:
     ScenarioEventServer.memory_free(_output)
 
 
-func test_a_file_runs_and_requires_a_module_of_its_directory() -> void:
+func test_a_file_runs_and_requires_a_lowercase_fallback_module_of_its_directory() -> void:
     assert_true(ScenarioScriptServer.context_run_file(_context, "hello.lua"))
 
     assert_eq(ScenarioEventServer.memory_get_text(_output), "hello")

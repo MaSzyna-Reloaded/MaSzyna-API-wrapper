@@ -153,9 +153,13 @@ func _rebuild_generated() -> void:
     _last_cab_number = _select_cab_number()
     cab_number = -1 if _last_cab_number == 2 else _last_cab_number
 
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(mmd_filename + ".mmd"))
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(abs_mmd_path, _last_cab_number, _random_choices)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = data_path.trim_prefix("/").path_join(mmd_filename + ".mmd")
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
+    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(
+            VehicleServer.vehicle_get_name(get_vehicle_rid()), mmd_filename, skin)
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(
+            abs_mmd_path, parameters, _last_cab_number, _random_choices)
     _diagnostics.append_array(definition.diagnostics)
 
     camera_bound_min = definition.bounds_min

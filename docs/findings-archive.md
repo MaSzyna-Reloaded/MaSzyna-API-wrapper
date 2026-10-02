@@ -2923,3 +2923,33 @@ lighting or the trainset.
 * **Rule:** parallel tasks are for parts of the scenery, never for placed objects - a task costs a
   context kept until its parent's merge, and a scenery places objects by the tens of thousands.
 
+## 2026-10-02 - uppercase vehicle files were reported missing
+
+* **Symptom:** loading `braniewo_szeroki.scn` reported that
+  `dynamic/pkp/st44_v2/2m62-0571-a.fiz` and `.mmd` did not exist. The same happened for the B
+  section and the 2M62-0662 consist.
+* **What proved it:** the scenery names `2M62-0571-A` and `2M62-0571-B`, and files with exactly
+  those uppercase names exist on disk. `MaszynaNodeDynamicImporter` lowercased the data folder,
+  skin and vehicle filename before any lookup, so Linux never got the valid exact-case attempt.
+* **Fix:** `MaszynaDataPath.resolve()` is the one databack-path operation: it keeps the base
+  directory unchanged, tries the relative path as authored, then its lowercase form, then each part
+  of it against its directory's entries letter case aside (821 names on disk carry capitals, e.g.
+  `scripts/kilometry/EP07P-2003_przebieg.txt`). Every data loader uses it, and parsers retain the
+  spelling of filename tokens.
+* **Rule:** preserve the filename from the databack and try it exactly, then lowercase, then letter
+  case aside; never lowercase only the token before the first lookup.
+
+## 2026-10-02 - SN61 drawn without its body
+
+* **Symptom:** SN61 in `stary_jawor_retro.scn` showed holes - only parts of the vehicle were drawn.
+  The case-sensitivity fixes of the same day did not change it.
+* **What proved it:** a probe calling `MaszynaRailVehicle3DInstancer.read_structure()` for
+  `dynamic/pkp/sn61_v2` / `SN61_v2` printed `model=none`. `sn61_v2.mmd` is only
+  `include sn61.mmd.inc (p2)`, and the include's `models: (p1).t3d#`; the top-level MMD was
+  tokenized without parameters, so `(p2)` became the include's default `none`.
+* **Fix:** the original parses a vehicle's MMD as `include <TypeName>.mmd <name> <TypeName> <skin>
+  end` (`DynObj.cpp:5260`); every reader of it takes `MmdCabinInstancer.vehicle_parameters()`, and
+  `attachments:` (`DynObj.cpp:5384`), which name their models by `(p1)`/`(p3)`, are drawn with the
+  exterior. Structure cache v24, profile version 7.
+* **Rule:** a vehicle's own MMD takes parameters like an include; a model name that comes out as
+  `none` is a missing parameter, not missing data.

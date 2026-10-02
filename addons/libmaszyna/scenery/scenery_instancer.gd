@@ -31,8 +31,8 @@ const SUBSCENE_MAX_DEPTH:int = 2
 ## Triangles a subscene keeps in memory before its largest chunks go to disk - subscenes are parsed
 ## on every worker at once (SceneryTrianglesSink.BUDGET_BYTES is the scenery's own)
 const SUBSCENE_TRIANGLES_BUDGET_BYTES:int = 32 * 1024 * 1024
-## Includes smaller than this are parsed in place of the include, not as a task of the queue, and
-## read from disk once per parse (open_parser())
+## Parameterless includes smaller than this are parsed in place of the include, not as a task of the
+## queue - as every include with parameters is (maszyna_include_importer.gd)
 const INLINE_INCLUDE_MAX_SIZE:int = 16384
 ## Share of the loading progress taken by reading the scenery - parsing the .scn, or the cache
 const PARSE_PROGRESS:float = 0.5
@@ -51,8 +51,8 @@ static var _last_report_msec:int = 0
 ## going on while its progress stands - written by the workers, read by the main thread
 static var _file_in_parse:String = ""
 static var _file_in_parse_mutex:Mutex = Mutex.new()
-## The small includes read so far in this parse, by path - grass.inc is included tens of thousands
-## of times; emptied as the parse ends
+## The files read so far in this parse that are parsed again - included with parameters, or small;
+## grass.inc is included tens of thousands of times. Emptied as the parse ends
 static var _include_buffers:Dictionary[String, PackedByteArray] = {}
 static var _include_buffers_mutex:Mutex = Mutex.new()
 ## Cache paths of subscenes being saved by queue workers - one writer per file
@@ -676,7 +676,7 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
             push_error("Cannot load scenery: " + abs_file)
             return null
         buffer = file.get_buffer(file.get_length())
-        if buffer.size() < INLINE_INCLUDE_MAX_SIZE:
+        if parameters or buffer.size() < INLINE_INCLUDE_MAX_SIZE:
             _include_buffers_mutex.lock()
             _include_buffers[abs_file] = buffer
             _include_buffers_mutex.unlock()

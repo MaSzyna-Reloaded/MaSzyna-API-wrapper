@@ -2906,3 +2906,20 @@ lighting or the trainset.
 * **Rule:** every sink of parsed geometry has a directory and a limit, a subscene's too; geometry
   moves between sinks as files, never as a copy of everything.
 
+## 2026-10-02 - a queue task for every placed object over 16 KB
+
+* **Symptom:** Całkowo parsed with a peak of 4.5 GB resident and 2.76 GB of Godot's own memory
+  (`[SceneryLoad] FILES`), yet right after the parse Godot held 0.31 GB (`[SceneryConvert] parsed`) -
+  over 2 GB alive only while the files were parsed; the loading screen counted ~29 000 files at half
+  way.
+* **What proved it:** a synthetic scenery placing a 20 KB object 30 000 times with parameters,
+  parsed headless: peak (`VmHWM`) +466 MB, against +48 MB for the same number of small includes.
+  Only includes under 16 KB were parsed in place; a larger one with parameters - an object placed
+  again and again - became a queue task with a whole `MaszynaImporterContext`, a `PendingInclude`
+  and a bound Callable, its result kept until the parent's file ended and merged it.
+* **Fix:** an include with parameters is always parsed in place and its file read once per parse;
+  only a parameterless part of the scenery (16 KB and more) is a task, from 64 KB a subscene.
+  Peak +28 MB, the parse no slower (16.4 s against 17.0 s).
+* **Rule:** parallel tasks are for parts of the scenery, never for placed objects - a task costs a
+  context kept until its parent's merge, and a scenery places objects by the tens of thousands.
+

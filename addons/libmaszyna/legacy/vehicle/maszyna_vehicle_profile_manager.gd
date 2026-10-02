@@ -6,7 +6,7 @@ extends Node
 ## skins (e.g. dynamic/pkp/4e_v1 has three for over forty) and look nothing like the game.
 ##
 ## Rendered profiles go into a ResourceCache, so a skin is only ever rendered once. Reading and
-## writing that cache and loading the vehicle model run on SceneryLoadingTaskQueue workers; the
+## writing that cache and loading the vehicle model run on WorkerTaskQueue workers; the
 ## render itself has to stay on the main thread, a SubViewport is only drawn with the frame.
 
 const PROFILE_SIZE:Vector2i = Vector2i(360, 80)
@@ -33,7 +33,7 @@ var _attachments:Array[E3DModelInstance] = []
 ## data_path and models of the vehicle currently in the render viewport
 var _model_key:String = ""
 var _rendering:bool = false
-var _queue:SceneryLoadingTaskQueue = SceneryLoadingTaskQueue.new()
+var _queue:WorkerTaskQueue = WorkerTaskQueue.new()
 
 
 func _ready() -> void:

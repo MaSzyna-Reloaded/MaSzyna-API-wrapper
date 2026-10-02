@@ -59,7 +59,7 @@ var cacheable:bool = true
 var objects:Array = []
 ## When set, "include" is parsed as a task of this queue instead of in place
 ## (see submit_include()/merge_pending_includes())
-var queue:SceneryLoadingTaskQueue = null
+var queue:WorkerTaskQueue = null
 
 ## Set by "trainset:"/"endtrainset:" (maszyna_trainset_importer.gd/maszyna_endtrainset_importer.gd)
 ## and consumed by maszyna_node_dynamic_importer.gd - mirrors scene::scratch_data::trainset_data

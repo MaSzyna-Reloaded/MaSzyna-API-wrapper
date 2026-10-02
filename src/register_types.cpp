@@ -67,7 +67,6 @@
 #include "scenario/Timetable.hpp"
 #include "scenario/TimetableEntry.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
-#include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryModelPlacement.hpp"
 #include "scenery/ScenerySoundPlacement.hpp"
 #include "scenery/SceneryStreamingProvider.hpp"
@@ -91,6 +90,7 @@
 #include "utils/MaszynaTranslationServer.hpp"
 #include "utils/ProcessMemory.hpp"
 #include "utils/UserSettings.hpp"
+#include "utils/WorkerTaskQueue.hpp"
 #include "vehicles/base/GenericVehicleComponent.hpp"
 #include "vehicles/base/GenericVehicleComponentNode.hpp"
 #include "vehicles/base/VehicleComponent.hpp"
@@ -255,7 +255,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(MaszynaTrianglesChunkGeometry);
-        GDREGISTER_CLASS(SceneryLoadingTaskQueue);
+        GDREGISTER_CLASS(WorkerTaskQueue);
         GDREGISTER_VIRTUAL_CLASS(SceneryStreamingProvider);
         // after the provider it implements
         GDREGISTER_CLASS(MaszynaLegacySBTTerrainProvider);

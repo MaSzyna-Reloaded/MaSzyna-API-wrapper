@@ -102,7 +102,7 @@ func test_triangle_chunk_out_of_range_is_not_built() -> void:
 
 func test_camera_can_pause_registration_until_the_final_start_position() -> void:
     SceneryStreamingServer.streaming_set_camera(null)
-    var owner:int = SceneryStreamingServer.owner_create(Callable(), _record_build, _record_clear)
+    var owner:int = SceneryStreamingServer.owner_create("test", Callable(), _record_build, _record_clear)
     var menu_rid:RID = _stream_register(owner, Vector3.ZERO)
     var cabin_rid:RID = _stream_register(owner, Vector3(4 * CHUNK_SIZE_M, 0, 0))
 
@@ -118,7 +118,7 @@ func test_camera_can_pause_registration_until_the_final_start_position() -> void
 
 func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void:
     SceneryStreamingServer.streaming_set_camera(null)
-    var owner:int = SceneryStreamingServer.owner_create(Callable(), _record_build, _record_clear)
+    var owner:int = SceneryStreamingServer.owner_create("test", Callable(), _record_build, _record_clear)
     var far_rid:RID = _stream_register(owner, Vector3(CHUNK_SIZE_M, 0, 0))
     var near_rid:RID = _stream_register(owner, Vector3.ZERO)
     assert_false(SceneryStreamingServer.area_is_ready(1), "paused streaming reported ready")
@@ -128,6 +128,58 @@ func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void
     assert_eq(_build_order[0], near_rid, "farther chunk was built before the camera chunk")
     assert_has(_build_order, far_rid, "neighbour chunk was not built")
     assert_true(SceneryStreamingServer.area_is_ready(1), "camera neighbourhood did not become ready")
+
+
+## The catch-up budget fills the area around a new camera, or one that jumped - never the world a
+## train drives through
+func test_the_area_is_filled_after_a_new_camera_and_a_jump_only() -> void:
+    _register(Vector3.ZERO, 200.0)
+    SceneryStreamingServer.streaming_set_camera(_camera)
+    assert_true(SceneryStreamingServer.streaming_get_statistics()["filling"], "a new camera is not filling")
+    await _move_camera(Vector3.ZERO)
+    assert_false(SceneryStreamingServer.streaming_get_statistics()["filling"], "still filling a ready area")
+
+    _camera.global_position = Vector3(10.0 * CHUNK_SIZE_M, 0, 0)
+    await wait_idle_frames(1)
+    assert_true(SceneryStreamingServer.streaming_get_statistics()["filling"], "a jump is not filling")
+    await _move_camera(Vector3(10.0 * CHUNK_SIZE_M + 40.0, 0, 0))
+    assert_false(SceneryStreamingServer.streaming_get_statistics()["filling"], "still filling after the jump")
+
+
+## A piece just past its range is built ahead, with what is left of a frame, and nothing waits for it
+func test_a_piece_just_past_its_range_is_built_ahead_without_holding_the_area() -> void:
+    _register(Vector3(10.0, 0, 10.0), 200.0)
+    # 500 m past the chunk's edge: past the range, within the prefetch ring
+    await _move_camera(Vector3(CHUNK_SIZE_M + 500.0, 0, 10.0))
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "not built ahead")
+    assert_true(SceneryStreamingServer.area_is_ready(1), "the area waited for a piece out of range")
+    assert_eq(SceneryStreamingServer.streaming_get_statistics()["pending_builds"], 0)
+
+
+## The anchor's chunk (the player's vehicle) is kept built wherever the camera is, follows the anchor
+## into another chunk, and is let go with it
+func test_the_anchor_chunk_is_kept_built_wherever_the_camera_is() -> void:
+    var anchor:Node3D = Node3D.new()
+    add_child_autoqfree(anchor)
+    _register(Vector3(10.0, 0, 10.0), 200.0)
+    await _move_camera(Vector3(20.0 * CHUNK_SIZE_M, 0, 0))
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0)
+
+    anchor.global_position = Vector3(500.0, 0, 500.0)
+    SceneryStreamingServer.streaming_set_anchor(anchor.get_instance_id())
+    await wait_idle_frames(STREAMING_FRAMES)
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "the anchor's chunk was not built")
+
+    # driven on by an AI into the next chunk: the one it left is no longer kept
+    anchor.global_position = Vector3(1500.0, 0, 500.0)
+    await wait_idle_frames(STREAMING_FRAMES)
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "the chunk left is still kept")
+
+    anchor.global_position = Vector3(500.0, 0, 500.0)
+    await wait_idle_frames(STREAMING_FRAMES)
+    SceneryStreamingServer.streaming_set_anchor(0)
+    await wait_idle_frames(STREAMING_FRAMES)
+    assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "kept after the anchor went")
 
 
 func test_detached_camera_uses_the_last_valid_position() -> void:

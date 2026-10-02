@@ -367,19 +367,24 @@ namespace godot {
             whole.uvs.insert(whole.uvs.end(), chunk.uvs.begin(), chunk.uvs.end());
             chunk = Chunk(); // its memory goes before the next chunk is read
 
-            const String path = directory.path_join(String::num_int64(index) + String(".res"));
-            const Error error = ResourceSaver::get_singleton()->save(_to_geometry(whole), path);
-            if (error != OK) {
-                UtilityFunctions::push_error("[SceneryTrianglesSink] Cannot write a terrain chunk to " + path);
-                continue;
+            // a chunk is uploaded in one go when it is streamed: a large one goes as pieces
+            const TypedArray<MaszynaTrianglesChunkGeometry> pieces = _to_geometry(whole)->split();
+            for (int64_t piece = 0; piece < pieces.size(); piece++) {
+                const String path = directory.path_join(
+                        String::num_int64(index) + String("-") + String::num_int64(piece) + String(".res"));
+                const Error error = ResourceSaver::get_singleton()->save(pieces[piece], path);
+                if (error != OK) {
+                    UtilityFunctions::push_error("[SceneryTrianglesSink] Cannot write a terrain chunk to " + path);
+                    continue;
+                }
+                Dictionary descriptor;
+                descriptor["path"] = path;
+                descriptor["position"] = cell_get_origin(whole.cell);
+                descriptor["texture"] = whole.texture;
+                descriptor["range_min"] = whole.range_min;
+                descriptor["range_max"] = whole.range_max;
+                descriptors.append(descriptor);
             }
-            Dictionary descriptor;
-            descriptor["path"] = path;
-            descriptor["position"] = cell_get_origin(whole.cell);
-            descriptor["texture"] = whole.texture;
-            descriptor["range_min"] = whole.range_min;
-            descriptor["range_max"] = whole.range_max;
-            descriptors.append(descriptor);
         }
         chunks.clear();
         chunk_indices.clear();

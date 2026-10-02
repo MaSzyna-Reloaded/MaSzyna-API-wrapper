@@ -152,7 +152,7 @@ func stream_traction(traction_rid: RID) -> void:
     if not state:
         return
     if _stream_owner < 0:
-        _stream_owner = SceneryStreamingServer.owner_create(Callable(), _stream_build, _stream_clear)
+        _stream_owner = SceneryStreamingServer.owner_create("traction", Callable(), _stream_build, _stream_clear)
     state.stream_rid = SceneryStreamingServer.stream_register(
         _stream_owner, traction_rid, state.contact_p1, 0.0
     )

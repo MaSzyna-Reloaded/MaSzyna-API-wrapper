@@ -346,7 +346,7 @@ func stream_track(track_render_rid: RID) -> void:
     if not state:
         return
     if _stream_owner < 0:
-        _stream_owner = SceneryStreamingServer.owner_create(Callable(), _stream_build, _stream_clear)
+        _stream_owner = SceneryStreamingServer.owner_create("tracks", Callable(), _stream_build, _stream_clear)
     var track: TrackData = _get_track_data(state.track_rid)
     if not track.is_valid():
         return

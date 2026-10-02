@@ -16,10 +16,11 @@ extends Node
 ## @deprecated: streaming glue for legacy "triangles" chunks, to be replaced by SceneryStreamingServer.
 
 class ChunkState:
-    ## ResourceLazyLoader's MaszynaTrianglesChunkGeometry, held while the chunk is built
+    ## ResourceLazyLoader's MaszynaTrianglesChunkGeometry, read on the streaming worker
     var geometry:RID
-    ## Made from the geometry as the chunk is built, freed as it is cleared
-    var mesh:ArrayMesh
+    ## RenderingServer's mesh, made from the worker's arrays as the chunk is built and freed as it is
+    ## cleared
+    var mesh:RID
     var transform:Transform3D
     var material_name:String
     var range_min:float
@@ -55,7 +56,7 @@ func _on_data_reload_requested() -> void:
 ## `geometry_loader() -> MaszynaTrianglesChunkGeometry` reads its triangles, on the streaming worker.
 func create_chunk(chunk:MaszynaTrianglesChunkData, scenario:RID, geometry_loader:Callable) -> RID:
     if _stream_owner < 0:
-        _stream_owner = SceneryStreamingServer.owner_create(_stream_preload, _stream_build, _stream_clear)
+        _stream_owner = SceneryStreamingServer.owner_create("terrain", _stream_preload, _stream_build, _stream_clear)
 
     var state := ChunkState.new()
     state.geometry = ResourceLazyLoader.resource_register(chunk.geometry_path, geometry_loader)
@@ -103,12 +104,19 @@ func free_chunk(rid:RID) -> void:
     ResourceLazyLoader.resource_free(state.geometry)
 
 
-## Streaming worker thread: reads the geometry, the build holds it
+## Streaming worker thread: the geometry read and made mesh arrays, so the main thread only makes the
+## mesh of them - a chunk is at most MaszynaTrianglesChunkGeometry.MAX_VERTICES, the upload of one fits
+## the frame budget
 func _stream_preload(rid:RID) -> Variant:
     _geometries_mutex.lock()
-    var geometry:RID = _geometries.get(rid, RID())
+    var geometry_rid:RID = _geometries.get(rid, RID())
     _geometries_mutex.unlock()
-    return ResourceLazyLoader.resource_load(geometry) if geometry.is_valid() else null
+    if not geometry_rid.is_valid():
+        return null
+    var geometry:MaszynaTrianglesChunkGeometry = ResourceLazyLoader.resource_load(geometry_rid)
+    if not geometry:
+        return null
+    return geometry.to_mesh_arrays()
 
 
 func _stream_build(rid:RID, preloaded:Variant) -> void:
@@ -119,12 +127,10 @@ func _stream_build(rid:RID, preloaded:Variant) -> void:
     var material:Material = MaterialManager.get_material("", state.material_name)
     if not material:
         return
-    # the preloaded geometry is the one handed out, as it is alive; fetched to be held while built
-    var geometry:MaszynaTrianglesChunkGeometry = ResourceLazyLoader.resource_fetch(state.geometry)
-    state.mesh = ArrayMesh.new()
-    state.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, geometry.to_mesh_arrays())
+    state.mesh = RenderingServer.mesh_create()
+    RenderingServer.mesh_add_surface_from_arrays(state.mesh, RenderingServer.PRIMITIVE_TRIANGLES, preloaded)
     state.mesh_instance = RenderingServer.instance_create()
-    RenderingServer.instance_set_base(state.mesh_instance, state.mesh.get_rid())
+    RenderingServer.instance_set_base(state.mesh_instance, state.mesh)
     RenderingServer.instance_set_scenario(state.mesh_instance, state.scenario)
     RenderingServer.instance_set_transform(state.mesh_instance, state.transform)
     state.material = material
@@ -144,5 +150,5 @@ func _stream_clear(rid:RID) -> void:
     RenderingServer.free_rid(state.mesh_instance)
     state.mesh_instance = RID()
     state.material = null
-    state.mesh = null
-    ResourceLazyLoader.resource_release(state.geometry)
+    RenderingServer.free_rid(state.mesh)
+    state.mesh = RID()

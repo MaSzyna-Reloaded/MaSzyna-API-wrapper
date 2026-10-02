@@ -5,6 +5,7 @@
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/packed_float32_array.hpp>
 #include <godot_cpp/variant/string.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/vector2i.hpp>
 
 namespace godot {
@@ -33,6 +34,10 @@ namespace godot {
             /// Floats per vertex in vertices and normals, and per vertex in uvs
             static constexpr int VECTOR3_FLOATS = 3;
             static constexpr int VECTOR2_FLOATS = 2;
+            /// The most vertices a chunk is built of: it is uploaded on the main thread in one go,
+            /// and a dense section of a region file is ~700 000 of them - past this an upload no
+            /// longer fits SceneryStreamingServer's frame budget, and nothing can cut it
+            static constexpr int64_t MAX_VERTICES = 65536;
 
             void set_texture(const String &p_texture);
             String get_texture() const;
@@ -51,5 +56,8 @@ namespace godot {
 
             /* Mesh.ARRAY_MAX arrays with the vertices, normals and UVs, for add_surface_from_arrays() */
             Array to_mesh_arrays() const;
+            /* The chunk as pieces of at most MAX_VERTICES, cut between whole triangles - itself when
+             * it is no larger */
+            TypedArray<MaszynaTrianglesChunkGeometry> split();
     };
 } // namespace godot

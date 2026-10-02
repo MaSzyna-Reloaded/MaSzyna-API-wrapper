@@ -1,10 +1,12 @@
 #include "SceneryStreamingServer.hpp"
 #include "utils/ProcessMemory.hpp"
+
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <vector>
 
 namespace godot {
     const char *SceneryStreamingServer::streaming_builds_started_signal = "streaming_builds_started";
@@ -12,7 +14,7 @@ namespace godot {
 
     void SceneryStreamingServer::_bind_methods() {
         ClassDB::bind_method(
-                D_METHOD("owner_create", "preload", "build", "clear"), &SceneryStreamingServer::owner_create);
+                D_METHOD("owner_create", "name", "preload", "build", "clear"), &SceneryStreamingServer::owner_create);
         ClassDB::bind_method(
                 D_METHOD("stream_register", "owner", "rid", "position", "range_end"),
                 &SceneryStreamingServer::stream_register);
@@ -28,6 +30,8 @@ namespace godot {
                 D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
         ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
+        ClassDB::bind_method(
+                D_METHOD("streaming_set_anchor", "node_id"), &SceneryStreamingServer::streaming_set_anchor);
         ClassDB::bind_method(D_METHOD("streaming_drain"), &SceneryStreamingServer::streaming_drain);
         ClassDB::bind_method(
                 D_METHOD("streaming_get_draw_distance"), &SceneryStreamingServer::streaming_get_draw_distance);
@@ -47,6 +51,7 @@ namespace godot {
 
     SceneryStreamingServer::SceneryStreamingServer() {
         semaphore.instantiate();
+        preload_queue.instantiate();
         draw_distance =
                 ProjectSettings::get_singleton()->get_setting("maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
     }
@@ -65,9 +70,14 @@ namespace godot {
             MutexLock lock(mutex);
             exiting = true;
         }
+        // the preloads first: the pass waiting for them then gives up at once instead of going on
+        // batch by batch, and they may be scripts, none of which may still run when the scripts go
+        preload_queue->drain();
         semaphore->post();
         worker->wait_to_finish();
         worker.unref();
+        // a drained queue runs nothing more: the next scenery gets a queue of its own
+        preload_queue.instantiate();
         // the thread is joined, so the next plan may start a new one
         MutexLock lock(mutex);
         exiting = false;
@@ -112,14 +122,16 @@ namespace godot {
     /// Registers a rendering server with the streaming. [param preload] is called on the worker
     /// thread and its result is passed to [param build]; pass an invalid Callable when there is
     /// nothing to prepare off the main thread.
-    int
-    SceneryStreamingServer::owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear) {
+    int SceneryStreamingServer::owner_create(
+            const String &p_name, const Callable &p_preload, const Callable &p_build, const Callable &p_clear) {
         MutexLock lock(mutex);
         Owner owner;
+        owner.name = p_name;
         owner.preload = p_preload;
         owner.build = p_build;
         owner.clear = p_clear;
         owners.push_back(owner);
+        owner_times.push_back(WorkTime());
         return static_cast<int>(owners.size() - 1);
     }
 
@@ -293,6 +305,13 @@ namespace godot {
         }
         pending_builds = builds;
         builds.clear();
+        for (const PendingBuild &pending: pending_prefetches) {
+            if (entry_chunks.has(pending.stream_rid)) {
+                builds.push_back(pending);
+            }
+        }
+        pending_prefetches = builds;
+        builds.clear();
         for (const PendingBuild &pending: planned_builds) {
             if (entry_chunks.has(pending.stream_rid)) {
                 builds.push_back(pending);
@@ -354,6 +373,13 @@ namespace godot {
             }
         }
         pending_builds = builds;
+        builds.clear();
+        for (const PendingBuild &pending: pending_prefetches) {
+            if (pending.revision == target_revision && entry_chunks.has(pending.stream_rid)) {
+                builds.push_back(pending);
+            }
+        }
+        pending_prefetches = builds;
         planned_builds.clear();
 
         Vector<PendingClear> clears;
@@ -395,6 +421,7 @@ namespace godot {
             was_streaming = camera_id.is_valid();
             camera_id = p_camera != nullptr ? ObjectID(p_camera->get_instance_id()) : ObjectID();
             is_streaming = camera_id.is_valid();
+            filling = is_streaming;
             target_revision++;
             scanned_revision = 0;
             pending_build_count = 0;
@@ -415,6 +442,11 @@ namespace godot {
             return;
         }
         tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
+    }
+
+    void SceneryStreamingServer::streaming_set_anchor(const uint64_t p_node_id) {
+        MutexLock lock(mutex);
+        anchor_id = ObjectID(p_node_id);
     }
 
     float SceneryStreamingServer::streaming_get_draw_distance() const {
@@ -451,7 +483,7 @@ namespace godot {
                     continue;
                 }
                 for (const Entry &entry: chunk->entries) {
-                    if (entry.wanted_revision == target_revision && !entry.built) {
+                    if (entry.wanted_revision == target_revision && !entry.built && !entry.ahead) {
                         pending++;
                     }
                 }
@@ -462,7 +494,7 @@ namespace godot {
             for (int x = camera_key.x - p_chunk_radius; x <= camera_key.x + p_chunk_radius; x++) {
                 for (int y = camera_key.y - p_chunk_radius; y <= camera_key.y + p_chunk_radius; y++) {
                     const ProviderCell *cell = item.value.cells.getptr(Vector2i(x, y));
-                    if (cell != nullptr && cell->wanted_revision == target_revision && !cell->adopted) {
+                    if (cell != nullptr && cell->wanted_revision == target_revision && !cell->adopted && !cell->ahead) {
                         pending++;
                     }
                 }
@@ -511,6 +543,7 @@ namespace godot {
         statistics["chunks"] = chunks.size();
         statistics["active_chunks"] = active_chunks;
         statistics["pending_builds"] = pending_build_count;
+        statistics["pending_prefetches"] = pending_prefetches.size();
         statistics["pending_clears"] = pending_clears.size() + planned_clears.size();
         statistics["plan_msec"] = plan_msec;
         statistics["build_rate"] = build_rate;
@@ -520,10 +553,22 @@ namespace godot {
         statistics["scanned_revision"] = scanned_revision;
         statistics["pending_nearby"] = _get_pending_nearby_locked(1);
         statistics["nearby_ready"] = _is_area_ready_locked(1);
-        statistics["budget_msec"] =
-                !_is_area_ready_locked(1) && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG
-                        ? CATCHUP_BUDGET_MSEC
-                        : BUDGET_MSEC;
+        statistics["budget_msec"] = filling && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG
+                                            ? CATCHUP_BUDGET_MSEC
+                                            : BUDGET_MSEC;
+        statistics["filling"] = filling;
+        // main thread time in the last full second, by owner and for the providers' cells [ms]
+        Dictionary owner_msec;
+        Dictionary owner_max_msec;
+        for (int index = 0; index < owners.size(); index++) {
+            owner_msec[owners[index].name] = static_cast<double>(owner_times[index].last_usec) / USEC_PER_MSEC;
+            owner_max_msec[owners[index].name] = static_cast<double>(owner_times[index].last_max_usec) / USEC_PER_MSEC;
+        }
+        statistics["owner_msec"] = owner_msec;
+        statistics["owner_max_msec"] = owner_max_msec;
+        statistics["provide_msec"] = static_cast<double>(provide_time.last_usec) / USEC_PER_MSEC;
+        statistics["provide_max_msec"] = static_cast<double>(provide_time.last_max_usec) / USEC_PER_MSEC;
+        statistics["withdraw_msec"] = static_cast<double>(withdraw_time.last_usec) / USEC_PER_MSEC;
         statistics["draw_distance"] = draw_distance;
         statistics["chunk_size"] = CHUNK_SIZE_M;
         statistics["camera_position"] = camera_position;
@@ -534,6 +579,10 @@ namespace godot {
 
     void SceneryStreamingServer::_request_plan(const Vector3 &p_position) {
         MutexLock lock(mutex);
+        // a jump - another vehicle, a teleport - leaves an area to fill, as a new camera does
+        if (p_position.distance_to(camera_position) > CHUNK_SIZE_M) {
+            filling = true;
+        }
         camera_position = p_position;
         target_revision++;
         scanned_revision = 0;
@@ -568,10 +617,24 @@ namespace godot {
             return;
         }
         ObjectID current_camera_id;
-        bool requested;
+        ObjectID current_anchor_id;
         {
             MutexLock lock(mutex);
             current_camera_id = camera_id;
+            current_anchor_id = anchor_id;
+        }
+        // the anchor moving into another chunk, or going, is a change of what is kept
+        const Node3D *anchor = Object::cast_to<Node3D>(ObjectDB::get_instance(current_anchor_id));
+        const bool anchored = anchor != nullptr && anchor->is_inside_tree();
+        const Vector2i anchor_key = anchored ? _get_chunk_key(anchor->get_global_position()) : Vector2i();
+        bool requested;
+        {
+            MutexLock lock(mutex);
+            if (anchored != has_anchor_chunk || anchor_key != anchor_chunk) {
+                has_anchor_chunk = anchored;
+                anchor_chunk = anchor_key;
+                content_dirty = true;
+            }
             requested = force_plan || content_dirty;
         }
         const Camera3D *camera = Object::cast_to<Camera3D>(ObjectDB::get_instance(current_camera_id));
@@ -615,11 +678,14 @@ namespace godot {
         {
             MutexLock lock(mutex);
             if (planned_builds.size() > 0 || planned_clears.size() > 0) {
-                pending_builds.append_array(planned_builds);
+                for (const PendingBuild &build: planned_builds) {
+                    (build.ahead ? pending_prefetches : pending_builds).push_back(build);
+                }
                 pending_clears.append_array(planned_clears);
                 planned_builds.clear();
                 planned_clears.clear();
                 pending_builds.sort_custom<DistanceComparator>();
+                pending_prefetches.sort_custom<DistanceComparator>();
             }
             if (planned_provides.size() > 0 || planned_withdraws.size() > 0) {
                 pending_provides.append_array(planned_provides);
@@ -631,15 +697,24 @@ namespace godot {
             if (freed_pending) {
                 _drop_freed_work();
             }
-            catching_up = !_is_area_ready_locked(1) && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG;
+            if (filling && _is_area_ready_locked(1)) {
+                filling = false;
+            }
+            catching_up = filling && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG;
         }
 
-        const uint64_t now = Time::get_singleton()->get_ticks_msec();
-        const uint64_t deadline = now + (catching_up ? CATCHUP_BUDGET_MSEC : BUDGET_MSEC);
-        if (now - build_rate_msec >= 1000) {
+        Time *time = Time::get_singleton();
+        const uint64_t now = time->get_ticks_usec();
+        const uint64_t deadline = now + (USEC_PER_MSEC * (catching_up ? CATCHUP_BUDGET_MSEC : BUDGET_MSEC));
+        if (now - build_rate_usec >= USEC_PER_SECOND) {
             build_rate = applied_builds;
             applied_builds = 0;
-            build_rate_msec = now;
+            build_rate_usec = now;
+            for (WorkTime &owner_time: owner_times) {
+                owner_time.roll();
+            }
+            provide_time.roll();
+            withdraw_time.roll();
         }
 
         // Clearing first gives back what the builds below take.
@@ -658,10 +733,12 @@ namespace godot {
                 }
             }
             if (apply && pending.clear.is_valid()) {
+                const uint64_t started = time->get_ticks_usec();
                 pending.clear.call(pending.user_rid);
+                owner_times.write[pending.owner].add(time->get_ticks_usec() - started);
                 cleared_since_release++;
             }
-            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
+            if (time->get_ticks_usec() >= deadline) {
                 return;
             }
         }
@@ -681,15 +758,19 @@ namespace godot {
                     provider->adopted_cells.erase(pending.cell);
                 }
             }
+            const uint64_t started = time->get_ticks_usec();
             _release_content(released);
-            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
+            withdraw_time.add(time->get_ticks_usec() - started);
+            if (time->get_ticks_usec() >= deadline) {
                 return;
             }
         }
-        // what the cleared pieces held is free, but the allocator keeps it until asked
+        // what the cleared pieces held is free, but the allocator keeps it until asked - and asking
+        // takes long on a heap of gigabytes, so the worker asks
         if (cleared_since_release >= RELEASE_CLEARED_PIECES) {
             cleared_since_release = 0;
-            ProcessMemory::release_unused();
+            MutexLock lock(mutex);
+            release_requested = true;
         }
 
         // a provider's cell in reach: its content goes to the consumers, which register its pieces
@@ -716,6 +797,7 @@ namespace godot {
             if (!apply) {
                 continue;
             }
+            const uint64_t started = time->get_ticks_usec();
             std::array<Vector<RID>, CONTENT_KIND_COUNT> adopted;
             for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
                 const Callable &adopt = kind_consumers[kind].adopt;
@@ -739,21 +821,35 @@ namespace godot {
                     cell->adopted = true;
                     cell->adopted_rids = adopted;
                     provider->adopted_cells.insert(pending.cell);
-                    pending_build_count--;
+                    if (!cell->ahead) {
+                        pending_build_count--;
+                    }
                     kept = true;
                 }
             }
             if (!kept) {
                 _release_content(adopted);
             }
-            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
+            provide_time.add(time->get_ticks_usec() - started);
+            if (time->get_ticks_usec() >= deadline) {
                 return;
             }
         }
 
-        while (pending_builds.size() > 0) {
-            const PendingBuild pending = pending_builds[pending_builds.size() - 1];
-            pending_builds.resize(pending_builds.size() - 1);
+        if (!_apply_builds(pending_builds, deadline)) {
+            return;
+        }
+        // nothing in range waits: what is ahead of the train is built with what is left, a little
+        const uint64_t prefetch_deadline =
+                MIN(deadline, time->get_ticks_usec() + (USEC_PER_MSEC * PREFETCH_BUDGET_MSEC));
+        _apply_builds(pending_prefetches, prefetch_deadline);
+    }
+
+    bool SceneryStreamingServer::_apply_builds(Vector<PendingBuild> &p_builds, const uint64_t p_deadline) {
+        Time *time = Time::get_singleton();
+        while (p_builds.size() > 0) {
+            const PendingBuild pending = p_builds[p_builds.size() - 1];
+            p_builds.resize(p_builds.size() - 1);
             bool apply = false;
             {
                 MutexLock lock(mutex);
@@ -765,21 +861,26 @@ namespace godot {
                 }
             }
             if (apply && pending.build.is_valid()) {
+                const uint64_t started = time->get_ticks_usec();
                 pending.build.call(pending.user_rid, pending.preloaded);
+                owner_times.write[pending.owner].add(time->get_ticks_usec() - started);
                 MutexLock lock(mutex);
                 Entry *entry = _get_entry(pending.stream_rid);
                 if (pending.revision == target_revision && entry != nullptr && !entry->built &&
                     entry->wanted_revision == target_revision) {
                     entry->built = true;
                     chunks[entry_chunks[pending.stream_rid]].built_count++;
-                    pending_build_count--;
+                    if (!pending.ahead) {
+                        pending_build_count--;
+                    }
                 }
                 applied_builds++;
             }
-            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
-                return;
+            if (time->get_ticks_usec() >= p_deadline) {
+                return false;
             }
         }
+        return true;
     }
 
     /// Computes the complete desired set first, then preloads and publishes it nearest-first. A
@@ -802,12 +903,17 @@ namespace godot {
                     _sort_chunk(chunk);
                 }
                 const float distance = _get_chunk_distance(item.key, p_camera_position);
+                const bool anchored = has_anchor_chunk && item.key == anchor_chunk;
                 for (Entry &entry: chunk.entries) {
-                    const bool wanted =
-                            entry.built ? distance <= entry.range_end + HYSTERESIS_M : distance <= entry.range_end;
+                    // in range, built ahead of it, kept a while after it - or in the anchor's chunk
+                    const bool wanted = anchored || (entry.built ? distance <= entry.range_end + HYSTERESIS_M
+                                                                 : distance <= entry.range_end + PREFETCH_M);
+                    entry.ahead = distance > entry.range_end;
                     entry.wanted_revision = wanted ? p_revision : 0;
                     if (wanted && !entry.built && entry.queued_revision != p_revision) {
                         PendingBuild build;
+                        build.owner = entry.owner;
+                        build.ahead = entry.ahead;
                         build.preload = owners[entry.owner].preload;
                         build.build = owners[entry.owner].build;
                         build.stream_rid = entry.stream_rid;
@@ -819,13 +925,14 @@ namespace godot {
                         entry.queued_revision = p_revision;
                     } else if (!wanted && entry.built) {
                         PendingClear clear;
+                        clear.owner = entry.owner;
                         clear.clear = owners[entry.owner].clear;
                         clear.stream_rid = entry.stream_rid;
                         clear.user_rid = entry.user_rid;
                         clear.revision = p_revision;
                         leaving.push_back(clear);
                     }
-                    if (wanted && !entry.built) {
+                    if (wanted && !entry.built && !entry.ahead) {
                         wanted_unbuilt++;
                     }
                 }
@@ -835,34 +942,44 @@ namespace godot {
             const Vector2i camera_key = _get_chunk_key(p_camera_position);
             for (KeyValue<RID, Provider> &item: providers) {
                 Provider &provider = item.value;
+                // a cell in reach of the camera, or the anchor's wherever it is
+                const auto plan_cell = [&](const Vector2i &p_key, const bool p_anchored) {
+                    ProviderCell *cell = provider.cells.getptr(p_key);
+                    if (cell == nullptr) {
+                        return;
+                    }
+                    const float distance = _get_chunk_distance(p_key, p_camera_position);
+                    const float reach = draw_distance + cell->overhang;
+                    const bool wanted = p_anchored || (cell->adopted ? distance <= reach + HYSTERESIS_M
+                                                                     : distance <= reach + PREFETCH_M);
+                    cell->ahead = distance > reach;
+                    cell->wanted_revision = wanted ? p_revision : 0;
+                    if (wanted && !cell->adopted && cell->queued_revision != p_revision) {
+                        PendingProvide provide;
+                        provide.provider_rid = item.key;
+                        provide.provider = provider.provider;
+                        provide.kinds = provider.kinds;
+                        provide.cell = p_key;
+                        provide.distance = distance;
+                        provide.revision = p_revision;
+                        supplying.push_back(provide);
+                        cell->queued_revision = p_revision;
+                    }
+                    if (wanted && !cell->adopted && !cell->ahead) {
+                        wanted_unbuilt++;
+                    }
+                };
                 const int radius = static_cast<int>(
                         Math::ceil((draw_distance + provider.max_overhang + HYSTERESIS_M) / CHUNK_SIZE_M));
                 for (int x = camera_key.x - radius; x <= camera_key.x + radius; x++) {
                     for (int y = camera_key.y - radius; y <= camera_key.y + radius; y++) {
                         const Vector2i key(x, y);
-                        ProviderCell *cell = provider.cells.getptr(key);
-                        if (cell == nullptr) {
-                            continue;
-                        }
-                        const float distance = _get_chunk_distance(key, p_camera_position);
-                        const float reach = draw_distance + cell->overhang;
-                        const bool wanted = cell->adopted ? distance <= reach + HYSTERESIS_M : distance <= reach;
-                        cell->wanted_revision = wanted ? p_revision : 0;
-                        if (wanted && !cell->adopted && cell->queued_revision != p_revision) {
-                            PendingProvide provide;
-                            provide.provider_rid = item.key;
-                            provide.provider = provider.provider;
-                            provide.kinds = provider.kinds;
-                            provide.cell = key;
-                            provide.distance = distance;
-                            provide.revision = p_revision;
-                            supplying.push_back(provide);
-                            cell->queued_revision = p_revision;
-                        }
-                        if (wanted && !cell->adopted) {
-                            wanted_unbuilt++;
-                        }
+                        plan_cell(key, has_anchor_chunk && key == anchor_chunk);
                     }
+                }
+                if (has_anchor_chunk && (Math::abs(anchor_chunk.x - camera_key.x) > radius ||
+                                         Math::abs(anchor_chunk.y - camera_key.y) > radius)) {
+                    plan_cell(anchor_chunk, true);
                 }
                 // a supplied cell the pass above did not want, however far the camera has gone
                 for (const Vector2i &key: provider.adopted_cells) {
@@ -897,25 +1014,46 @@ namespace godot {
             planned_provides.push_back(provide);
         }
 
+        // nearest first, a batch at a time on the preloads' own threads (reading and decoding is
+        // what makes a piece buildable), each batch published whole
         entering.sort_custom<DistanceComparator>();
-        for (int64_t i = entering.size() - 1; i >= 0; i--) {
-            PendingBuild build = entering[i];
+        const int64_t batch_size = preload_queue->get_worker_count();
+        int64_t next = entering.size() - 1;
+        std::vector<PendingBuild> batch;
+        std::vector<int> tasks;
+        while (next >= 0) {
+            batch.clear();
             {
                 MutexLock lock(mutex);
-                if (p_revision != target_revision || !entry_chunks.has(build.stream_rid)) {
+                if (p_revision != target_revision) {
                     return false;
                 }
-            }
-            if (build.preload.is_valid()) {
-                build.preloaded = build.preload.call(build.user_rid);
-            }
-            {
-                MutexLock lock(mutex);
-                Entry *entry = _get_entry(build.stream_rid);
-                if (p_revision != target_revision || entry == nullptr || entry->wanted_revision != p_revision) {
-                    return false;
+                for (; next >= 0 && static_cast<int64_t>(batch.size()) < batch_size; next--) {
+                    if (entry_chunks.has(entering[next].stream_rid)) {
+                        batch.push_back(entering[next]);
+                    }
                 }
-                planned_builds.push_back(build);
+            }
+            tasks.assign(batch.size(), -1);
+            for (size_t index = 0; index < batch.size(); index++) {
+                if (batch[index].preload.is_valid()) {
+                    tasks[index] = preload_queue->submit(batch[index].preload.bind(batch[index].user_rid));
+                }
+            }
+            for (size_t index = 0; index < batch.size(); index++) {
+                if (tasks[index] >= 0) {
+                    batch[index].preloaded = preload_queue->wait(tasks[index]);
+                }
+            }
+            MutexLock lock(mutex);
+            if (p_revision != target_revision) {
+                return false;
+            }
+            for (const PendingBuild &build: batch) {
+                const Entry *entry = _get_entry(build.stream_rid);
+                if (entry != nullptr && entry->wanted_revision == p_revision) {
+                    planned_builds.push_back(build);
+                }
             }
         }
 
@@ -947,6 +1085,15 @@ namespace godot {
                     position = camera_position;
                 }
                 const bool completed = _plan(revision, position);
+                bool release = false;
+                {
+                    MutexLock lock(mutex);
+                    release = release_requested;
+                    release_requested = false;
+                }
+                if (release) {
+                    ProcessMemory::release_unused();
+                }
                 MutexLock lock(mutex);
                 if (exiting) {
                     return;

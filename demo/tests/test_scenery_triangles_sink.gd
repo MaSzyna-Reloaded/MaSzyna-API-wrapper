@@ -206,3 +206,29 @@ func test_a_cell_a_triangle_only_touches_gets_no_chunk() -> void:
     var chunks:Array[Dictionary] = _build_chunks([["border", vertices, normals, uvs]])
     assert_eq(chunks.size(), 1)
     assert_eq(chunks[0]["chunk_x"], 0)
+
+
+## A chunk is uploaded in one go when it is streamed, so a large one is cut into pieces of whole
+## triangles that together are the same geometry
+func test_a_chunk_larger_than_an_upload_is_split_into_whole_triangles() -> void:
+    # whole triangles, one more than fit below the limit
+    var vertex_count:int = (MaszynaTrianglesChunkGeometry.MAX_VERTICES / 3 + 1) * 3
+    var floats:PackedFloat32Array = PackedFloat32Array()
+    floats.resize(vertex_count * 3)
+    var uv_floats:PackedFloat32Array = PackedFloat32Array()
+    uv_floats.resize(vertex_count * 2)
+    var geometry:MaszynaTrianglesChunkGeometry = MaszynaTrianglesChunkGeometry.new()
+    geometry.texture = "split"
+    geometry.vertices = floats
+    geometry.normals = floats
+    geometry.uvs = uv_floats
+    var pieces:Array[MaszynaTrianglesChunkGeometry] = geometry.split()
+    assert_eq(pieces.size(), 2)
+    var total:int = 0
+    for piece:MaszynaTrianglesChunkGeometry in pieces:
+        var piece_vertices:int = piece.vertices.size() / 3
+        assert_eq(piece_vertices % 3, 0, "a piece cut a triangle")
+        assert_true(piece_vertices <= MaszynaTrianglesChunkGeometry.MAX_VERTICES)
+        assert_eq(piece.texture, "split")
+        total += piece_vertices
+    assert_eq(total, vertex_count)

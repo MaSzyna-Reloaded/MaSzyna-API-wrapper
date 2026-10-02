@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-## SceneryLoadingTaskQueue runs tasks on worker threads; scenery includes parsed as queue tasks
+## WorkerTaskQueue runs tasks on worker threads; scenery includes parsed as queue tasks
 ## give the same result, in the same order, as parsing them in place.
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
@@ -21,7 +21,7 @@ func after_each() -> void:
 
 
 func test_more_tasks_than_workers_return_results_by_id() -> void:
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     var task_count:int = queue.get_worker_count() * 4
     var task_ids:Array[int] = []
     for i:int in task_count:
@@ -33,7 +33,7 @@ func test_more_tasks_than_workers_return_results_by_id() -> void:
 
 
 func test_nested_waiting_tasks_do_not_deadlock() -> void:
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     var task_id:int = queue.submit(_count_leaves.bind(queue, 6))
     assert_eq(queue.wait(task_id), 64)
 
@@ -43,7 +43,7 @@ func test_nested_waiting_tasks_do_not_deadlock() -> void:
 ## on real sceneries (thousands of includes). Waiting in reverse order makes the awaited task
 ## something other than the oldest pending one, which is what the old wait() picked.
 func test_waiting_runs_only_the_awaited_task() -> void:
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     var task_ids:Array[int] = []
     for i:int in 200:
         task_ids.append(queue.submit(_waiting_task.bind(queue, i)))
@@ -56,7 +56,7 @@ func test_threaded_includes_match_in_place_parsing() -> void:
     var in_place := MaszynaImporterContext.new()
     SceneryInstancer.parse_file("threaded/root.scn", {}, in_place)
 
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     var threaded:MaszynaImporterContext = SceneryInstancer.parse_file_task(
         "threaded/root.scn", {}, MaszynaImporterContext.new().get_state(), queue
     )
@@ -77,7 +77,7 @@ func _double(value:int) -> int:
 
 
 ## _double() as a task waiting for a task of its own, counting how deep tasks nest per thread
-func _waiting_task(queue:SceneryLoadingTaskQueue, value:int) -> int:
+func _waiting_task(queue:WorkerTaskQueue, value:int) -> int:
     _enter_task()
     var result:int = queue.wait(queue.submit(_double.bind(value)))
     _leave_task()
@@ -100,7 +100,7 @@ func _leave_task() -> void:
     _depth_mutex.unlock()
 
 
-func _count_leaves(queue:SceneryLoadingTaskQueue, depth:int) -> int:
+func _count_leaves(queue:WorkerTaskQueue, depth:int) -> int:
     if depth == 0:
         return 1
     var first:int = queue.submit(_count_leaves.bind(queue, depth - 1))

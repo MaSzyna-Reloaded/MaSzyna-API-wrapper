@@ -2965,3 +2965,26 @@ lighting or the trainset.
   chunk with nothing in it, written to the cache like any other.
 * **Fix:** a piece without vertices makes no chunk; scenery cache version 34.
 * **Rule:** a grid cut keeps a cell only when a piece with area lands in it.
+
+## 2026-10-02 - Infrastructure hung with parallel preloads
+
+* **Symptom:** Stary Jawor (and other sceneries without an SBT) hung for minutes on the loading
+  screen's Infrastructure stage, on one model name, after the streaming's preloads were fanned out
+  over the `WorkerThreadPool`. Headless loads and every test passed.
+* **What proved it:** the full game under `xvfb-run` with `--rendering-driver opengl3` reproduced it;
+  `kill -ABRT` and `coredumpctl info` (ptrace is blocked here) gave the stacks: the main thread in
+  an engine wait under a GDScript call, the pool's threads in `SceneryStreamingServer::_preload` ->
+  `E3DRenderingServer::_stream_preload` -> `model_load` -> `ResourceCache::set` ->
+  `ResourceSaver.save`, waiting on a condition. Saving a mesh needs the main thread with a real
+  renderer; the main thread's own loading needed the pool, whose threads were all ours.
+* **The cause in the preload:** every model cache was cold after the cache versions were bumped, so
+  each preload read the model from its source and saved it (`E3DModelManager.load_model`). Saving
+  an `ArrayMesh` reads its surfaces back from the RenderingServer, and off the main thread with a
+  real renderer that call waits for the main thread to flush its commands; the dummy renderer does
+  not, so headless never waited.
+* **Fix:** preloads run in batches on the streaming's own queue (`SceneryLoadingTaskQueue`, renamed
+  `WorkerTaskQueue` the same day - the entries above keep the name they had), which the main thread
+  never waits for; a model read off the main thread is saved into the cache by the main thread
+  (`model_loaded_uncached`, connected deferred), so no preload waits for it at all.
+* **Rule:** nothing on a worker reads back from the RenderingServer, and nothing that loads or saves
+  runs on the `WorkerThreadPool`; a threading change is proven on a real renderer, not headless.

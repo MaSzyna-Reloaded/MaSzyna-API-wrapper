@@ -1,13 +1,25 @@
 @tool
 extends Node
 
+## A model read from its source on a thread other than the main one, still to be saved into the
+## cache - by the main thread, as the signal is connected deferred
+signal model_loaded_uncached(cached_path:String, model:E3DModel, cache_hash:String)
+
 var _cache = ResourceCache.create("e3d")
 
 
-## E3DRenderingServer loads the models of registered scenery placements through this, on its
-## streaming worker thread
+## E3DRenderingServer loads the models of registered scenery placements through this, on the
+## streaming's worker threads
 func _ready() -> void:
     E3DRenderingServer.model_set_loader(load_model)
+    model_loaded_uncached.connect(_save_model, CONNECT_DEFERRED)
+
+
+## Saving a model reads its meshes back from the RenderingServer, which off the main thread waits
+## for the main thread to flush its commands - a worker waiting there deadlocked the load
+## (docs/findings-archive.md, 2026-10-02). So a worker hands the save to the main thread.
+func _save_model(cached_path:String, model:E3DModel, cache_hash:String) -> void:
+    _cache.set(cached_path, model, cache_hash)
 
 
 func clear_cache():
@@ -56,6 +68,9 @@ func load_model(data_path:String, filename: String) -> E3DModel:
     if FileAccess.file_exists(path):
         output = load(path) as E3DModel # load external e3d
         if output:
+            if not OS.get_thread_caller_id() == OS.get_main_thread_id():
+                model_loaded_uncached.emit(cached_path, output, cache_hash)
+                return output
             _cache.set(cached_path, output, cache_hash)
             return _cache.get(cached_path)  # force use proper resource ref
         else:

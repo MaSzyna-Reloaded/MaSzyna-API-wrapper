@@ -77,7 +77,7 @@ func test_loaded_scenery_writes_its_terrain_chunks_as_files() -> void:
 
 
 func _parse_threaded() -> MaszynaImporterContext:
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     return SceneryInstancer.parse_file_task(ROOT, {}, MaszynaImporterContext.new().get_state(), queue)
 
 

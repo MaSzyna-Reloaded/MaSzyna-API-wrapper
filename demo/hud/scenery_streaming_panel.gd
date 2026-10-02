@@ -13,9 +13,9 @@ var _elapsed:float = 0.0
 func _ready() -> void:
     for caption:String in [
         "Camera", "Camera chunk", "Draw distance", "Chunks", "Chunks in range",
-        "Registered", "Streamed in", "Pending builds", "Pending nearby", "Nearby ready",
-        "Pending clears", "Planning", "Builds/s", "Budget", "Last pass", "Owners",
-        "Scenery lights",
+        "Registered", "Streamed in", "Pending builds", "Built ahead", "Pending nearby", "Nearby ready",
+        "Pending clears", "Planning", "Builds/s", "Budget", "Filling", "Last pass", "Owners",
+        "Supplied cells", "Provides", "Withdraws", "Main thread", "Scenery lights",
     ]:
         _rows[caption] = _add_row(caption)
     _refresh()
@@ -50,6 +50,8 @@ func _refresh() -> void:
         else str(streamed)
     )
     _rows["Pending builds"].text = str(statistics["pending_builds"])
+    # ahead of their range, with the little left of a frame once nothing in range waits
+    _rows["Built ahead"].text = tr("%d waiting") % statistics["pending_prefetches"]
     _rows["Pending nearby"].text = str(statistics["pending_nearby"])
     _rows["Nearby ready"].text = str(statistics["nearby_ready"])
     _rows["Pending clears"].text = str(statistics["pending_clears"])
@@ -58,6 +60,22 @@ func _refresh() -> void:
     _rows["Budget"].text = "%d ms/frame" % statistics["budget_msec"]
     _rows["Last pass"].text = "%d ms" % statistics["plan_msec"]
     _rows["Owners"].text = str(statistics["owners"])
+    _rows["Filling"].text = str(statistics["filling"])
+    _rows["Supplied cells"].text = "%d (%d providers, %d waiting)" % [
+        statistics["supplied_cells"], statistics["providers"], statistics["pending_provides"],
+    ]
+    _rows["Provides"].text = tr("%.1f ms/s, longest %.1f ms") % [
+        statistics["provide_msec"], statistics["provide_max_msec"],
+    ]
+    _rows["Withdraws"].text = tr("%.1f ms/s") % statistics["withdraw_msec"]
+    # what each owner's builds and clears took of the main thread in the last second, and the
+    # longest single one - a build longer than the budget cannot be cut
+    var owner_msec:Dictionary = statistics["owner_msec"]
+    var owner_max_msec:Dictionary = statistics["owner_max_msec"]
+    var lines:PackedStringArray = []
+    for owner_name:String in owner_msec:
+        lines.append(tr("%s: %.1f ms/s, longest %.1f ms") % [owner_name, owner_msec[owner_name], owner_max_msec[owner_name]])
+    _rows["Main thread"].text = "\n".join(lines)
 
     # Real (spot/omni) lights of the streamed scenery models; "synth" are the ones the street lamp
     # quirk derived for models that light the scene without declaring a spotlight submodel

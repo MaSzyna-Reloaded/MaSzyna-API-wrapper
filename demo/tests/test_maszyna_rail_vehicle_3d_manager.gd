@@ -35,6 +35,7 @@ func test_cached_vehicles_have_independent_registered_sound_pools() -> void:
         _vehicles.append(vehicle)
         add_child(vehicle)
         MaszynaRailVehicle3DManager.build_into(vehicle, DATA_PATH, FILE_NAME, "", "template_test_%s" % index, 0.0)
+        MaszynaRailVehicle3DInstancer.build_sounds(vehicle, DATA_PATH, FILE_NAME, "", "template_test_%s" % index)
         await wait_idle_frames(3)
         assert_eq(TrainSoundSystem._banks.size(), initial_banks + 2 * (index + 1))
         for player_name:String in ["ExteriorSfxPlayer3D", "CabinSfxPlayer3D"]:

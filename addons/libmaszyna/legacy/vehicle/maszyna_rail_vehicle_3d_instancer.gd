@@ -110,7 +110,7 @@ static func read_structure(
 
 
 ## Builds the vehicle a structure describes into `vehicle`, which is in the tree. Cheap - it reads no
-## file but the vehicle's own sound bank - so every vehicle gets its own parts.
+## file - so every vehicle gets its own parts; its sound comes later (build_sounds()).
 ##
 ## Its physics is configured before it enters the tree, so it is configured once and nothing sees
 ## an empty vehicle first; the vehicle's handle exists as soon as it has entered. Returns the parts
@@ -147,24 +147,28 @@ static func build_into(
             rid, structure.data_path, _load_model_filename(structure, load_name))
     _fit_rain_volume(rid, rain_volume)
     _apply_wiper_count(rid, structure.appearance)
-    # the editor drives no vehicle and plays no sound: CabinSystem and TrainSoundSystem are not
-    # there (placeholders) - a sound bank built without its registration was a null part
-    if Engine.is_editor_hint():
-        return parts
-    CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
+    # the editor drives no vehicle: CabinSystem is not there (a placeholder)
+    if not Engine.is_editor_hint():
+        CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
+    return parts
 
+
+## The vehicle's sound players, built into `vehicle` as its internal children and returned. Not part
+## of build_into(): a vehicle's sound is built only once it is within earshot
+## (TrainSoundSystem.vehicle_set_bank_builder()) - a scenery's vehicles all built at once spent
+## most of their loading on banks nobody hears.
+static func build_sounds(
+        vehicle:RailVehicle3D, data_path:String, file_name:String, skin:String, vehicle_id:String) -> Array[Node]:
     var game_dir:String = UserSettings.get_maszyna_game_dir()
-    var relative_mmd_path:String = (
-        structure.data_path.trim_prefix("/").path_join(structure.file_name + ".mmd")
-    )
+    var relative_mmd_path:String = data_path.trim_prefix("/").path_join(file_name + ".mmd")
     var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_mmd_path))
     var sound_diagnostics:Array[Dictionary] = []
-    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_id, structure.file_name, skin)
-    parts.append_array(MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, parameters, {}, sound_diagnostics))
+    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_id, file_name, skin)
+    var players:Array[Node] = MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, parameters, {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
         if not diagnostic["severity"] == "info":
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
-    return parts
+    return players
 
 
 ## Which model a cargo is drawn as, in the order the original tries them

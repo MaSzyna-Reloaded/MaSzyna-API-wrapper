@@ -118,12 +118,6 @@ cannot gate anything. It also loads `scenery/td.scn` from the game dir - needs a
 work. Check the occupant (`DriverType`)/`CabActive` first - `test_sm42_startup_sequence` was an
 unoccupied cab (`FINDINGS.md`, 2026-09-23).
 
-**`test_maszyna_rail_vehicle_3d_manager` is red:** `registration.controller` is `null` - the sound bank
-registers against a vehicle with no controller yet, and only the 4 Hz sweep repairs it, later than
-the three frames the test waits. Connecting to `ready` (too late) or `tree_entered` (too early)
-does not help; it was believed to register against the template, the packing that stage F removed
-- re-check now that F has landed, and fix it in the vehicle building, not the sound system.
-
 **The `.fiz` path has not been run in the game** since the components stopped being nodes - only
 in tests.
 
@@ -426,6 +420,26 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   starts it as soon as the play ends (`scene.cpp:148-152`).
 
 ## Vehicles
+
+* **The body of a vehicle built only within the streaming's range** (operator's proposal,
+  2026-10-02; `docs/findings-archive.md`, 2026-10-02 Vehicles stage): today
+  `RailVehicleRenderingServer.vehicle_set_appearance()` builds every vehicle's models at load
+  (`_create_models()` -> `instance_build()`). Planned: a "vehicles" owner of
+  `SceneryStreamingServer` builds/clears the instances (`E3DRenderingServer.instance_clear()` to
+  add), with `SceneryStreamingServer.stream_set_position()` (to add) moving a vehicle's entry
+  between chunks from `_place()`. The E3D stays loaded at load (`model_load()`) only for the
+  pantograph geometry `_publish_pantograph_geometry()` gives the simulation - its parts are read
+  off the `E3DModel` resource, so an unbuilt instance is enough. A project setting
+  `maszyna/vehicles/pantographs_from_model` (default true) turns that read off; once the data
+  pack's FIZ has a pantograph section, the geometry comes from the FIZ and the E3D is not loaded
+  at load at all.
+* **One `SfxBank` per vehicle type** instead of one per vehicle: everything of a bank but its
+  random choices is the type's (`MmdSoundBankInstancer`). Per vehicle are the sample picked of a
+  `[a b c]` set (`random_choices`), each emitter's `pitch_variation` and the `start_fraction` of
+  the bogie/traction motor copies - both fields of `SfxEvent`, so sharing needs them per player
+  in the vendored gnd-sfx, and the random sample as variants of the event.
+* The vehicle build still exceeds `MaszynaRailVehicle3DManager.BUILD_BUDGET_MSEC` (~16 ms a
+  vehicle headless on Galicja), so a frame builds one vehicle.
 
 * `MaszynaRailVehicle3D` builds itself (`MaszynaRailVehicle3DManager.build_into()` in its own
   `_process`), so vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`
@@ -1083,9 +1097,9 @@ ported, into a delegate.
 * **A dump key does not name the class owning its getter** - check the declaring header, not the
   fill, when mapping keys to typed reads.
 * Tests that switch the game dir with `UserSettings.save_maszyna_game_dir()` write the user's
-  `settings.cfg`: `test_maszyna_rail_vehicle_3d_manager.gd`, `test_e3d_lights_state.gd`,
-  `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,
-  `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the tests spawning a
+  `settings.cfg`: `test_maszyna_rail_vehicle_3d_manager.gd`, `test_audio_stream_manager.gd`,
+  `test_e3d_lights_state.gd`, `test_fiz_train_controller.gd`,
+  `test_maszyna_node_dynamic_importer_direction.gd`, `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the tests spawning a
   vehicle of `demo/tests/fixtures/dynamic/`.
   Needs a non-persistent override. Every such switch also reloads the game's data
   (`GameDataServer.data_reload()`), in `after_each` too.

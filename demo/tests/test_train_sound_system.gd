@@ -182,3 +182,29 @@ func test_bank_registered_after_its_vehicle_has_a_controller_is_heard() -> void:
     await wait_until(_playing, MAX_WAIT)
 
     assert_true(_playing())
+
+
+func test_bank_is_built_once_its_vehicle_is_within_earshot() -> void:
+    _build_vehicle()
+    var built:Array[int] = [0]
+    _camera.global_position = FAR
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, func() -> void: built[0] += 1)
+    await wait_seconds(SETTLE)
+    assert_eq(built[0], 0, "not built while the camera is away")
+
+    _camera.global_position = NEAR
+    await wait_until(func() -> bool: return built[0] > 0, MAX_WAIT)
+    await wait_seconds(SETTLE)
+    assert_eq(built[0], 1, "built once, when the camera came near")
+
+
+func test_bank_builder_taken_back_is_never_called() -> void:
+    _build_vehicle()
+    var built:Array[int] = [0]
+    _camera.global_position = FAR
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, func() -> void: built[0] += 1)
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, Callable())
+    _camera.global_position = NEAR
+    await wait_seconds(SETTLE)
+
+    assert_eq(built[0], 0)

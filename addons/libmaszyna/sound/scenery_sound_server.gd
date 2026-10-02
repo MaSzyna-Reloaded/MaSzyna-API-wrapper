@@ -87,7 +87,7 @@ func sound_create(play_event:SfxEvent, loop_event:SfxEvent, position:Vector3, re
     _player.max_tracks = _sounds.size()
     if reach > 0.0:
         if _stream_owner < 0:
-            _stream_owner = SceneryStreamingServer.owner_create(Callable(), _stream_build, _stream_clear)
+            _stream_owner = SceneryStreamingServer.owner_create("sounds", Callable(), _stream_build, _stream_clear)
         state.streamed = false
         state.stream_rid = SceneryStreamingServer.stream_register(_stream_owner, sound_rid, position, reach)
     return sound_rid

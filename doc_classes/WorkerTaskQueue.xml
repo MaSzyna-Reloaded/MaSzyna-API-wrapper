@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="SceneryLoadingTaskQueue" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="WorkerTaskQueue" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
-		Multithreaded FIFO of scenery loading tasks.
+		Multithreaded FIFO of tasks on worker threads of its own.
 	</brief_description>
 	<description>
-		Runs submitted [Callable]s on [code]max(processor count - 2, 1)[/code] worker threads, started with the first task. A task may submit further tasks and [method wait] for them: the waiting thread runs queued tasks meanwhile, so nested waiting does not deadlock. Used by [code]SceneryInstancer[/code] to parse every scenery include as a separate task. Queued tasks are dropped when the queue is freed; the queue must not be freed by its own task.
+		Runs submitted [Callable]s on [code]max(processor count - 2, 1)[/code] worker threads of its own, started with the first task - never Godot's [WorkerThreadPool], which the engine's own loading waits for: a task there that waits for the main thread (a mesh read back from the [RenderingServer]) deadlocks it. A task may submit further tasks and [method wait] for them: the waiting thread runs queued tasks meanwhile, so nested waiting does not deadlock. Used by [code]SceneryInstancer[/code] to parse every scenery include as a separate task, by [SceneryStreamingServer] to preload what it streams, and to read vehicle profiles. Queued tasks are dropped when the queue is freed; the queue must not be freed by its own task.
 	</description>
 	<tutorials>
 	</tutorials>

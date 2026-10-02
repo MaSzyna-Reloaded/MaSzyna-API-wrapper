@@ -22,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const CACHE_FORMAT_VERSION:int = 35
+const CACHE_FORMAT_VERSION:int = 36
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -45,7 +45,7 @@ const CONVERT_TAG:String = "SceneryConvert"
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 ## Queues currently parsing, so a scenery leaving the tree can stop them - their tasks are
 ## GDScript and call GDScript handlers, which must not be reached once the scripts are going away
-static var _active_queues:Array[SceneryLoadingTaskQueue] = []
+static var _active_queues:Array[WorkerTaskQueue] = []
 static var _last_report_msec:int = 0
 ## The file a queue worker opened last (open_parser()), for the loading screen to show the parse
 ## going on while its progress stands - written by the workers, read by the main thread
@@ -67,7 +67,7 @@ static var _saving_subscenes_mutex:Mutex = Mutex.new()
 static func cancel_loading() -> void:
     # the parse has to stop between tokens, or joining its worker means waiting out a whole file
     MaszynaParser.set_cancelled(true)
-    for queue:SceneryLoadingTaskQueue in _active_queues.duplicate():
+    for queue:WorkerTaskQueue in _active_queues.duplicate():
         queue.drain()
     _active_queues.clear()
     # the workers are joined, so nothing is parsing and the next scenery may start clean
@@ -465,12 +465,12 @@ static func _instantiate_cached_nodes(packed_scene:PackedScene) -> Array:
     return objects
 
 
-## Runs `task` on a SceneryLoadingTaskQueue worker while the main thread keeps drawing frames with
+## Runs `task` on a WorkerTaskQueue worker while the main thread keeps drawing frames with
 ## the progress reported; its result, null when the load is cancelled (cancel_loading())
 static func _run_on_worker(
     root:MaszynaIncludeNode, task:Callable, progress:float, stage:MaszynaIncludeNode.LoadStage, message:String
 ) -> Variant:
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     _active_queues.append(queue)
     var task_id:int = queue.submit(task)
     while not queue.is_done(task_id):
@@ -560,9 +560,9 @@ func parse_file(filename: String, parameters: Dictionary, context: MaszynaImport
 
 
 ## Parses a file in its own context restored from state (MaszynaImporterContext.get_state()) -
-## a SceneryLoadingTaskQueue task. Includes become further tasks of the queue, merged at the end.
+## a WorkerTaskQueue task. Includes become further tasks of the queue, merged at the end.
 func parse_file_task(
-    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+    filename:String, parameters:Dictionary, state:Dictionary, queue:WorkerTaskQueue
 ) -> MaszynaImporterContext:
     var context:MaszynaImporterContext = MaszynaImporterContext.from_state(state)
     context.queue = queue
@@ -578,7 +578,7 @@ func parse_file_task(
 ## The subscene's terrain is chunked in a sink of its own, cached with it,
 ## and added to the scenery's sink.
 func parse_subscene_task(
-    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+    filename:String, parameters:Dictionary, state:Dictionary, queue:WorkerTaskQueue
 ) -> MaszynaImporterContext:
     var source_path:String = _get_source_path(filename)
     var state_hash:String = var_to_str(
@@ -640,7 +640,7 @@ func parse_subscene_task(
     return context
 
 
-## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
+## Parses root's scenery on WorkerTaskQueue workers (every include is a task), reporting
 ## progress every frame: finished tasks / tasks submitted so far.
 func _parse_file_with_progress(
     root:MaszynaIncludeNode, parameters:Dictionary, triangles_sink:SceneryTrianglesSink
@@ -649,7 +649,7 @@ func _parse_file_with_progress(
     root_context.rotate = root.context_rotate
     root_context.origin = root.context_origin
     root_context.triangles_sink = triangles_sink
-    var queue := SceneryLoadingTaskQueue.new()
+    var queue := WorkerTaskQueue.new()
     _active_queues.append(queue)
     # the scenario's region file first: what is parsed after it depends on whether it is there
     root_context.load_scenario_binary_terrain(root.filename)

@@ -621,6 +621,11 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 * A track streams by the chunk of its first curve point, not its nearest point.
 * Tracks and traction have no worker `preload` - built on the main thread in the per-frame budget;
   with ~5 000 pieces at 3 000 m that is thousands of builds after a load.
+* A terrain chunk's material is looked up on the main thread as it is built: on a miss
+  `MaterialManager` parses the `.mat` and decodes every DDS there, and its weak caches miss again
+  for a cell streamed back in; every lookup also hashes its key with md5 (`_compute_cache_hash`).
+  Move the parse and decode to the chunk's worker preload, keep the materials of streamed cells,
+  key them cheaply - once the streaming panel's "Main thread" row shows terrain dominated by it.
 * The loading screen does not wait for the first pass; waiting for
   `get_statistics()["pending_builds"] == 0` would hide the fill-in.
 * Streaming per piece is the wrong granularity: bake a 1 km chunk into one unit (MultiMesh per

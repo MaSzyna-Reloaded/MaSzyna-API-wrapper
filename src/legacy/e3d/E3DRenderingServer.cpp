@@ -597,7 +597,7 @@ namespace godot {
         ERR_FAIL_NULL_V(lazy_loader, RID());
         if (stream_owner < 0) {
             stream_owner = streaming->owner_create(
-                    callable_mp(this, &E3DRenderingServer::_stream_preload),
+                    "models", callable_mp(this, &E3DRenderingServer::_stream_preload),
                     callable_mp(this, &E3DRenderingServer::_stream_build),
                     callable_mp(this, &E3DRenderingServer::_stream_clear));
         }
@@ -729,7 +729,7 @@ namespace godot {
         if (instance->stream_rid.is_valid() && streaming != nullptr) {
             if (light_stream_owner < 0) {
                 light_stream_owner = streaming->owner_create(
-                        Callable(), callable_mp(this, &E3DRenderingServer::_light_stream_build),
+                        "model lights", Callable(), callable_mp(this, &E3DRenderingServer::_light_stream_build),
                         callable_mp(this, &E3DRenderingServer::_light_clear));
             }
             const ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -939,7 +939,7 @@ namespace godot {
             if (p_instance_data.stream_rid.is_valid() && streaming != nullptr) {
                 if (smoke_stream_owner < 0) {
                     smoke_stream_owner = streaming->owner_create(
-                            Callable(), callable_mp(this, &E3DRenderingServer::_smoke_stream_build),
+                            "model smoke", Callable(), callable_mp(this, &E3DRenderingServer::_smoke_stream_build),
                             callable_mp(this, &E3DRenderingServer::_smoke_clear));
                 }
                 const Vector3 position = p_instance_data.transform.xform(placement.offset);

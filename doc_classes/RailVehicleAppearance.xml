@@ -9,6 +9,9 @@
 	<tutorials>
 	</tutorials>
 	<members>
+		<member name="attachment_model_filenames" type="PackedStringArray" setter="set_attachment_model_filenames" getter="get_attachment_model_filenames" default="PackedStringArray()">
+			Models drawn with the exterior, in its frame and with its skins - the MMD's [code]attachments:[/code] (DynObj.cpp:5384), named by the vehicle's [code](p1)[/code]-[code](p3)[/code].
+		</member>
 		<member name="data_path" type="String" setter="set_data_path" getter="get_data_path" default="&quot;&quot;">
 			Where the model files are.
 		</member>

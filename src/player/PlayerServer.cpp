@@ -1,5 +1,6 @@
 #include "PlayerServer.hpp"
 #include "driver/DriverSystem.hpp"
+#include "scenery/SceneryStreamingServer.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleRenderingServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -52,6 +53,14 @@ namespace godot {
     void PlayerServer::_set_vehicle(const RID &p_vehicle) {
         const RID previous = vehicle;
         vehicle = p_vehicle;
+        // the player's vehicle is kept streamed in where it stands - an AI may drive it on while the
+        // camera looks elsewhere - and nothing is kept for a player without one
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        const RailVehicleRenderingServer *rendering = RailVehicleRenderingServer::get_instance();
+        if (streaming != nullptr) {
+            streaming->streaming_set_anchor(
+                    vehicle.is_valid() && rendering != nullptr ? rendering->vehicle_get_node(vehicle) : 0);
+        }
         emit_signal(player_vehicle_changed_signal, vehicle, previous);
     }
 

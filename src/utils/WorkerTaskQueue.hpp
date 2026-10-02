@@ -9,12 +9,15 @@
 #include <godot_cpp/variant/callable.hpp>
 
 namespace godot {
-    /// FIFO of tasks (Callables) run by max(processor count - 2, 1) worker threads.
+    /// FIFO of tasks (Callables) run by max(processor count - 2, 1) worker threads of its own -
+    /// never Godot's WorkerThreadPool, which the engine's own loading waits for: a task that waits
+    /// for the main thread there deadlocks it (docs/findings-archive.md, 2026-10-02).
     /// A task may submit further tasks and wait() for them: the waiting thread runs the task it
     /// waits for, so nested waiting never deadlocks the workers and never nests deeper than the
-    /// tasks themselves. Used to parse scenery includes.
-    class SceneryLoadingTaskQueue : public RefCounted {
-            GDCLASS(SceneryLoadingTaskQueue, RefCounted)
+    /// tasks themselves. Used to parse scenery includes, to preload streamed pieces
+    /// (SceneryStreamingServer) and to read vehicle profiles.
+    class WorkerTaskQueue : public RefCounted {
+            GDCLASS(WorkerTaskQueue, RefCounted)
 
         private:
             struct Task {
@@ -41,8 +44,8 @@ namespace godot {
             static void _bind_methods();
 
         public:
-            SceneryLoadingTaskQueue();
-            ~SceneryLoadingTaskQueue() override;
+            WorkerTaskQueue();
+            ~WorkerTaskQueue() override;
 
             /* Drops what is queued and joins the workers, finishing whatever is running. Called
              * while the scene tree is still alive: the tasks are GDScript and they call GDScript

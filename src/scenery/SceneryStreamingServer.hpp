@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scenery/SceneryStreamingProvider.hpp"
+#include "utils/WorkerTaskQueue.hpp"
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -38,20 +39,30 @@ namespace godot {
             /// XZ size of a streaming chunk, same grid as the scenery triangle chunks
             /// (SceneryTrianglesSink::CHUNK_SIZE_M)
             static constexpr float CHUNK_SIZE_M = 1000.0;
-            /// Pieces are cleared only beyond their range plus this margin (whichever of the two
-            /// is larger), so a camera moving around a range boundary does not rebuild them over
-            /// and over - rebuilding is far more expensive than keeping them a little longer
-            static constexpr float HYSTERESIS_M = 250.0;
+            /// Pieces are cleared only beyond their range plus this margin, so a camera moving
+            /// around a range boundary does not rebuild them over and over - rebuilding is far more
+            /// expensive than keeping them a little longer. One chunk: a train shunting into the
+            /// next chunk and back finds what it left built (250 m cleared short-range terrain
+            /// ~550 m past its chunk, and shunting rebuilt it every time)
+            static constexpr float HYSTERESIS_M = CHUNK_SIZE_M;
+            /// Pieces are built ahead this far past their range - with what is left of a frame once
+            /// nothing in range waits, at most PREFETCH_BUDGET_MSEC - so the world a train drives
+            /// into is there already. Within HYSTERESIS_M, so a piece built ahead is not cleared at once
+            static constexpr float PREFETCH_M = HYSTERESIS_M / 2;
+            static constexpr uint64_t PREFETCH_BUDGET_MSEC = 1;
             /// A pass is planned at most this often...
             static constexpr uint64_t INTERVAL_MSEC = 250;
             /// ...or as soon as the camera has moved this far
             static constexpr float CAMERA_STEP_M = 50.0;
             /// Time spent building and clearing per frame once the streaming has caught up
             static constexpr uint64_t BUDGET_MSEC = 4;
-            /// ...and while it has not: filling a scenery in means thousands of builds, and at the
-            /// idle budget that takes minutes of pop-in (the backlog only drains at frame rate
-            /// times budget). A short hitch while catching up beats watching the world appear.
+            /// ...and while an area is filled - a new camera, or one that jumped: filling a scenery
+            /// in means thousands of builds, and at the idle budget that takes minutes of pop-in
+            /// (the backlog only drains at frame rate times budget). Never while driving through the
+            /// world: there a frame on time beats the world appearing a little sooner.
             static constexpr uint64_t CATCHUP_BUDGET_MSEC = 16;
+            static constexpr uint64_t USEC_PER_MSEC = 1000;
+            static constexpr uint64_t USEC_PER_SECOND = 1000000;
             /// Backlog above which the catch-up budget is used
             static constexpr int CATCHUP_BACKLOG = 64;
             /// Pieces cleared before the memory they held is given back to the system, once the
@@ -73,9 +84,29 @@ namespace godot {
 
         private:
             struct Owner {
+                    String name;      // what the debug window calls it
                     Callable preload; // (rid) -> Variant, on the worker thread; may be invalid
                     Callable build;   // (rid, preloaded) on the main thread
                     Callable clear;   // (rid) on the main thread
+            };
+            /// Main thread time spent in one kind of work - in the second being counted, and in the
+            /// last full one for the debug window
+            struct WorkTime {
+                    uint64_t usec = 0;
+                    uint64_t max_usec = 0;
+                    uint64_t last_usec = 0;
+                    uint64_t last_max_usec = 0;
+
+                    void add(const uint64_t p_usec) {
+                        usec += p_usec;
+                        max_usec = MAX(max_usec, p_usec);
+                    }
+                    void roll() {
+                        last_usec = usec;
+                        last_max_usec = max_usec;
+                        usec = 0;
+                        max_usec = 0;
+                    }
             };
 
             struct Entry {
@@ -84,6 +115,8 @@ namespace godot {
                     RID user_rid;
                     float range_end = 0.0;
                     bool built = false;
+                    /// Wanted only ahead of its range (PREFETCH_M): nothing waits for it
+                    bool ahead = false;
                     uint64_t wanted_revision = 0; // 0 means out of range
                     uint64_t queued_revision = 0;
             };
@@ -95,6 +128,8 @@ namespace godot {
             };
 
             struct PendingBuild {
+                    int owner = 0;
+                    bool ahead = false; // built ahead of its range, with the prefetch budget
                     Callable preload;
                     Callable build;
                     RID stream_rid;
@@ -106,6 +141,7 @@ namespace godot {
             };
 
             struct PendingClear {
+                    int owner = 0;
                     Callable clear;
                     RID stream_rid;
                     RID user_rid;
@@ -122,6 +158,7 @@ namespace godot {
             struct ProviderCell {
                     float overhang = 0.0;
                     bool adopted = false;
+                    bool ahead = false; // wanted only ahead of the draw distance (PREFETCH_M)
                     uint64_t wanted_revision = 0;
                     uint64_t queued_revision = 0;
                     /// What the consumers made of the cell's content, by kind
@@ -187,6 +224,11 @@ namespace godot {
             float draw_distance = DEFAULT_DRAW_DISTANCE_M;
 
             ObjectID camera_id;
+            /// The node whose chunk is kept built wherever the camera is, none when invalid
+            ObjectID anchor_id;
+            /// Its chunk as the last frame saw it - main thread writes, the planner reads
+            bool has_anchor_chunk = false;
+            Vector2i anchor_chunk;
             Vector3 last_camera_position;
             uint64_t last_plan_msec = 0;
             uint64_t target_revision = 0;
@@ -198,6 +240,8 @@ namespace godot {
             /// Taken over by the main thread; builds are ordered farthest first and taken from the
             /// back, so the pieces around the camera are built first
             Vector<PendingBuild> pending_builds;
+            /// Builds ahead of the range, nearest last - applied only when pending_builds is empty
+            Vector<PendingBuild> pending_prefetches;
             Vector<PendingClear> pending_clears;
             HashMap<RID, Provider> providers;
             std::array<Consumer, CONTENT_KIND_COUNT> consumers;
@@ -208,9 +252,20 @@ namespace godot {
             Vector<PendingWithdraw> pending_withdraws;
             uint64_t plan_msec = 0;        // duration of the last planning pass
             int cleared_since_release = 0; // main thread only
-            int applied_builds = 0;        // builds applied in the second being counted
-            int build_rate = 0;            // ...and in the last full second, for the debug window
-            uint64_t build_rate_msec = 0;
+            /// The cleared pieces' memory is to be given back - by the worker, malloc_trim takes long
+            bool release_requested = false;
+            /// The camera is new or has jumped, and the area around it is not filled yet: the
+            /// catch-up budget is spent only then, never while driving through the world
+            bool filling = false;
+            Vector<WorkTime> owner_times; // main thread only, by owner
+            /// The preloads' own threads: never the WorkerThreadPool, which the engine's loading
+            /// waits for while a preload waits for the main thread (docs/findings-archive.md, 10-02)
+            Ref<WorkerTaskQueue> preload_queue;
+            WorkTime provide_time;  // main thread only
+            WorkTime withdraw_time; // main thread only
+            int applied_builds = 0; // builds applied in the second being counted
+            int build_rate = 0;     // ...and in the last full second, for the debug window
+            uint64_t build_rate_usec = 0;
             int passes = 0; // planning passes finished, so a caller can tell "not started yet"
 
             static Vector2i _get_chunk_key(const Vector3 &p_origin);
@@ -227,6 +282,8 @@ namespace godot {
             void _process_streaming();
             void _apply_plan();
             void _set_building(bool p_building);
+            /// Builds from the back of the queue until the deadline; false once it is reached
+            bool _apply_builds(Vector<PendingBuild> &p_builds, uint64_t p_deadline);
             /// Hands each RID back to the consumer of its kind
             void _release_content(const std::array<Vector<RID>, CONTENT_KIND_COUNT> &p_rids);
 
@@ -244,7 +301,8 @@ namespace godot {
              * once the scripts are - and it must not be creating rendering resources while the
              * scenery frees them (see FINDINGS.md, 2026-09-22). */
             void streaming_drain();
-            int owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
+            int owner_create(
+                    const String &p_name, const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
             RID stream_register(int p_owner, const RID &p_user_rid, const Vector3 &p_position, float p_range_end);
             void stream_free(const RID &p_stream_rid);
             /* Every piece of the owner is built again from what it is built of now */
@@ -265,6 +323,10 @@ namespace godot {
             bool streaming_is_enabled() const;
 
             void streaming_set_camera(Camera3D *p_camera);
+            /* The node (its ObjectID; 0 for none) whose chunk is kept built - never cleared, its
+             * pieces built with the prefetch budget while out of the camera's range - wherever the
+             * camera goes and however far it is */
+            void streaming_set_anchor(uint64_t p_node_id);
             float streaming_get_draw_distance() const;
             /// Where the streaming camera is, for anything else that has to know what is near
             Vector3 streaming_get_camera_position() const;

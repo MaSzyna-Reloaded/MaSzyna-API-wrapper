@@ -340,6 +340,11 @@ anything. Open work belongs in `TODO.md`.
 * A parse that repeats an include in world space reduces each node to its final form as it reads
   it (`SceneryTrianglesSink`), with a bound on memory; nothing is kept per include until the end.
   *(10-01 the parse kept every include's triangles)*
+* Nothing on a worker reads back from the RenderingServer (saving a mesh does - off the main thread
+  it waits for the main thread), and nothing that loads or saves runs on the `WorkerThreadPool`,
+  which the engine's loading waits for; ours is `WorkerTaskQueue`. Headless never shows it -
+  reproduce on a real renderer (`xvfb-run ... --rendering-driver opengl3`). *(10-02 Infrastructure
+  hung with parallel preloads)*
 * A grid cut keeps a cell only when a piece with area lands in it: a triangle touching a border
   made an empty chunk, cached and failing as a mesh when streamed (`array_len == 0`). *(10-02 an
   empty terrain chunk)*

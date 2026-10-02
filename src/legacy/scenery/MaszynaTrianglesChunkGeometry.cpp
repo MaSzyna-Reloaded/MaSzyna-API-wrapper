@@ -21,6 +21,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_uvs", "uvs"), &MaszynaTrianglesChunkGeometry::set_uvs);
         ClassDB::bind_method(D_METHOD("get_uvs"), &MaszynaTrianglesChunkGeometry::get_uvs);
         ClassDB::bind_method(D_METHOD("to_mesh_arrays"), &MaszynaTrianglesChunkGeometry::to_mesh_arrays);
+        ClassDB::bind_method(D_METHOD("split"), &MaszynaTrianglesChunkGeometry::split);
+        BIND_CONSTANT(MAX_VERTICES);
 
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "texture"), "set_texture", "get_texture");
         ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "cell"), "set_cell", "get_cell");
@@ -108,5 +110,31 @@ namespace godot {
         arrays[Mesh::ARRAY_NORMAL] = mesh_normals;
         arrays[Mesh::ARRAY_TEX_UV] = mesh_uvs;
         return arrays;
+    }
+
+    TypedArray<MaszynaTrianglesChunkGeometry> MaszynaTrianglesChunkGeometry::split() {
+        TypedArray<MaszynaTrianglesChunkGeometry> pieces;
+        const int64_t vertex_count = vertices.size() / VECTOR3_FLOATS;
+        if (vertex_count <= MAX_VERTICES) {
+            pieces.append(Ref<MaszynaTrianglesChunkGeometry>(this));
+            return pieces;
+        }
+        // MAX_VERTICES is a power of two; a whole number of triangles below it
+        constexpr int64_t TRIANGLE_VERTICES = 3;
+        const int64_t piece_vertices = MAX_VERTICES - (MAX_VERTICES % TRIANGLE_VERTICES);
+        for (int64_t first = 0; first < vertex_count; first += piece_vertices) {
+            const int64_t last = MIN(first + piece_vertices, vertex_count);
+            Ref<MaszynaTrianglesChunkGeometry> piece;
+            piece.instantiate();
+            piece->set_texture(texture);
+            piece->set_cell(cell);
+            piece->set_range_min(range_min);
+            piece->set_range_max(range_max);
+            piece->set_vertices(vertices.slice(first * VECTOR3_FLOATS, last * VECTOR3_FLOATS));
+            piece->set_normals(normals.slice(first * VECTOR3_FLOATS, last * VECTOR3_FLOATS));
+            piece->set_uvs(uvs.slice(first * VECTOR2_FLOATS, last * VECTOR2_FLOATS));
+            pieces.append(piece);
+        }
+        return pieces;
     }
 } // namespace godot

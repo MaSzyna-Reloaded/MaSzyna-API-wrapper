@@ -319,7 +319,7 @@ namespace godot {
             geometry->set_vertices(to_packed(group.vertices));
             geometry->set_normals(to_packed(group.normals));
             geometry->set_uvs(to_packed(group.uvs));
-            geometries.append(geometry);
+            geometries.append_array(geometry->split());
         }
         return geometries;
     }

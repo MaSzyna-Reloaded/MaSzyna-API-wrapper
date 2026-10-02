@@ -791,7 +791,7 @@ Legend:
 
 **Loading queue waits by sleeping and is polled**
 
-* **Where:** `src/scenery/SceneryLoadingTaskQueue.cpp:64-66, 97`; pollers
+* **Where:** `src/utils/WorkerTaskQueue.cpp:64-66, 97`; pollers
   `scenery_instancer.gd:450, 607, 612`
 * **Rule:** never work around a missing event
 * **Problem:** `wait()` loops on `OS::delay_usec(100)`, and `is_done()` exists so callers can
@@ -1335,7 +1335,7 @@ ported value keeps the original's value and a source reference".
 **Scenery loading and streaming timings**
 
 * **Where:**
-  * `src/scenery/SceneryLoadingTaskQueue.cpp:97, 108`: `delay_usec(100)`,
+  * `src/utils/WorkerTaskQueue.cpp:97, 108`: `delay_usec(100)`,
     `get_processor_count() - 2`
   * `src/scenery/SceneryStreamingServer.cpp:433`: `>= 1000`
 
@@ -1478,7 +1478,7 @@ ported value keeps the original's value and a source reference".
   * `Cabin3D::_engine_revolutions` (`src/cabin/Cabin3D.cpp:144`)
   * `CabinHUDMouseSystem::_grip`, `_hit_part`, `_increase_signs` (`CabinHUDMouseSystem.cpp:100,
     180, 296`)
-  * `SceneryLoadingTaskQueue::_start_workers`, `_run_next` (`:19, 112`)
+  * `WorkerTaskQueue::_start_workers`, `_run_next` (`:19, 112`)
   * `TrackServer`: `_set_curves`, `_update_length`, `_update_switch_endpoint_metadata`,
     `_curve_common_endpoint_index`, `_connect_all_tracks`, `_rebuild_graph_ids`,
     `_add_track_topology`, `_merge_endpoint_nodes`

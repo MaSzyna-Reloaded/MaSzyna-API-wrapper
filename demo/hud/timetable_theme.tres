@@ -265,8 +265,99 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_menu_item"]
+content_margin_left = 8.0
+content_margin_top = 5.0
+content_margin_right = 10.0
+content_margin_bottom = 5.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_panel"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.28)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.15)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_dialog"]
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.28)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+expand_margin_left = 16.0
+expand_margin_top = 52.0
+expand_margin_right = 16.0
+expand_margin_bottom = 14.0
+shadow_color = Color(0, 0, 0, 0.15)
+shadow_size = 12
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dialog_panel"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus"]
+draw_center = false
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
 [resource]
 default_font_size = 14
+CardButton/base_type = &"Button"
+CardButton/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+CardButton/colors/font_hover_color = Color(1, 1, 1, 1)
+CardButton/colors/font_pressed_color = Color(1, 1, 1, 1)
+CardButton/colors/font_focus_color = Color(1, 1, 1, 1)
+CardButton/styles/focus = SubResource("StyleBoxFlat_focus")
+CardButton/styles/hover = SubResource("StyleBoxFlat_row_current")
+CardButton/styles/normal = SubResource("StyleBoxFlat_vehicle_row")
+CardButton/styles/pressed = SubResource("StyleBoxFlat_row_current")
+CardButtonDefault/base_type = &"CardButton"
+CardButtonDefault/styles/normal = SubResource("StyleBoxFlat_row_current")
+AcceptDialog/styles/panel = SubResource("StyleBoxEmpty_dialog_panel")
+MenuBar/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+MenuBar/colors/font_hover_color = Color(1, 1, 1, 1)
+MenuBar/colors/font_hover_pressed_color = Color(1, 1, 1, 1)
+MenuBar/colors/font_pressed_color = Color(1, 1, 1, 1)
+MenuBar/styles/hover = SubResource("StyleBoxFlat_vehicle_row")
+MenuBar/styles/hover_pressed = SubResource("StyleBoxFlat_row_current")
+MenuBar/styles/normal = SubResource("StyleBoxEmpty_menu_item")
+MenuBar/styles/pressed = SubResource("StyleBoxFlat_row_current")
+PopupMenu/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+PopupMenu/colors/font_disabled_color = Color(0.6, 0.66, 0.75, 1)
+PopupMenu/colors/font_hover_color = Color(1, 1, 1, 1)
+PopupMenu/colors/font_separator_color = Color(0.6, 0.66, 0.75, 1)
+PopupMenu/constants/v_separation = 6
+PopupMenu/styles/hover = SubResource("StyleBoxFlat_row_current")
+PopupMenu/styles/panel = SubResource("StyleBoxFlat_menu_panel")
+PopupMenu/styles/separator = SubResource("StyleBoxFlat_separator")
+Window/colors/title_color = Color(1, 1, 1, 1)
+Window/constants/title_height = 36
+Window/font_sizes/title_font_size = 18
+Window/styles/embedded_border = SubResource("StyleBoxFlat_dialog")
+Window/styles/embedded_unfocused_border = SubResource("StyleBoxFlat_dialog")
 AIBadge/base_type = &"Label"
 AIBadge/colors/font_color = Color(0.62, 0.92, 0.7, 1)
 AIPill/base_type = &"PanelContainer"

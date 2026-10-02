@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" path="res://scenery_selector/scenery_selector_screen.tscn" id="10_scenery_selector"]
 [ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="card_theme"]
 
 [sub_resource type="InputEventAction" id="exit_to_menu_event"]
 action = &"ui_cancel"
@@ -32,6 +33,7 @@ shortcut = SubResource("exit_to_menu_shortcut")
 text = "Exit to menu"
 
 [node name="ExitConfirmation" type="ConfirmationDialog" parent="."]
+theme = ExtResource("card_theme")
 title = "Exit to menu"
 dialog_text = "Leave the scenery and go back to the menu?"
 

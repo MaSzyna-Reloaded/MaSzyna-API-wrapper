@@ -52,6 +52,9 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+    # the dialog's own buttons, like the card it is drawn as (timetable_theme.tres)
+    $ExitConfirmation.get_ok_button().theme_type_variation = &"CardButtonDefault"
+    $ExitConfirmation.get_cancel_button().theme_type_variation = &"CardButton"
     var exported: bool = OS.has_feature("template")
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if exported:

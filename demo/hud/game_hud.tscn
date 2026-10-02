@@ -31,6 +31,7 @@
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye_off.svg" id="34_eye_off"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="38_card_theme"]
 
 [sub_resource type="Theme" id="Theme_control_windows"]
 default_font_size = 12
@@ -45,26 +46,18 @@ grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("game_hud")
 
-[node name="TopBar" type="Container" parent="." unique_id=702463713]
-self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
-top_level = true
-clip_contents = true
-anchors_preset = 10
-anchor_right = 1.0
-offset_bottom = 31.0
-grow_horizontal = 2
+[node name="TopBar" type="PanelContainer" parent="." unique_id=702463713]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 8.0
+theme = ExtResource("38_card_theme")
+theme_type_variation = &"FloatingChip"
 script = ExtResource("8_top_bar")
-drag_enabled = false
-resize_enabled = false
-window_decorations = false
-allow_close = false
 
 [node name="HBoxContainer" type="HBoxContainer" parent="TopBar" unique_id=1628639189]
-clip_contents = true
 layout_mode = 2
 
 [node name="MenuBar" type="MenuBar" parent="TopBar/HBoxContainer" unique_id=524829392]
-clip_contents = true
 layout_mode = 2
 focus_mode = 0
 prefer_global_menu = false

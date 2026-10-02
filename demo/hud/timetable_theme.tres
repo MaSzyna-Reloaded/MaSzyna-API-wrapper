@@ -97,6 +97,19 @@ corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_menu_brow"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.06, 0.075, 0.1, 0.9)
+border_width_left = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.72, 1, 0.28)
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip_hover"]
 content_margin_left = 12.0
 content_margin_top = 8.0
@@ -413,6 +426,8 @@ FloatingChip/styles/panel = SubResource("StyleBoxFlat_floating_chip")
 FloatingChipHover/base_type = &"PanelContainer"
 FloatingChipHover/styles/panel = SubResource("StyleBoxFlat_floating_chip_hover")
 Label/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+MenuBrow/base_type = &"PanelContainer"
+MenuBrow/styles/panel = SubResource("StyleBoxFlat_menu_brow")
 PlayerBadge/base_type = &"Label"
 PlayerBadge/colors/font_color = Color(0.14, 0.09, 0.02, 1)
 PlayerPill/base_type = &"PanelContainer"

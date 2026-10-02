@@ -329,9 +329,10 @@ anything. Open work belongs in `TODO.md`.
 ## Threads and teardown
 * Every sink of parsed geometry - a subscene's too - writes to a directory with a limit, and hands
   its chunks on as files, never as a copy of everything. *(10-02 a subscene kept its triangles)*
-* An include placed thousands of times is parsed in place, not as a task (a task costs a context
-  kept until its parent's merge); after a parse on many workers the allocator's free memory is
-  given back (`ProcessMemory.release_unused()`). *(10-01 a task per include)*
+* An include with parameters (a placed object, any size) is parsed in place, never as a task - a
+  task costs a context kept until its parent's merge; after a parse on many workers the allocator's
+  free memory is given back (`ProcessMemory.release_unused()`). *(10-01 a task per include; 10-02 a
+  queue task for every placed object over 16 KB)*
 * A parse that repeats an include in world space reduces each node to its final form as it reads
   it (`SceneryTrianglesSink`), with a bound on memory; nothing is kept per include until the end.
   *(10-01 the parse kept every include's triangles)*

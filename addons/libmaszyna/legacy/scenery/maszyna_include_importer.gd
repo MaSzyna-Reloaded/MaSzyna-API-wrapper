@@ -17,15 +17,15 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
     for i in range(tokens.size()):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
-        # a small include - an object placed thousands of times (grass.inc, tree.inc) - is parsed in
-        # place: as a task of its own each one kept a whole context until its parent's merge
-        if context.queue and file.get_length() >= SceneryInstancer.INLINE_INCLUDE_MAX_SIZE:
-            # parsed by a queue worker, the result is merged at the end of the current file.
-            # The original engine uses the same "include" for parameterised object instances and
-            # for subscenes - a large include without parameters is taken as a (cached) subscene.
+        # The original engine uses the same "include" for parameterised object instances and for
+        # parts of the scenery. An object - placed thousands of times (grass.inc, tree.inc), any
+        # size - is parsed in place, as is a small part: a task of its own kept a whole context
+        # until its parent's merge, gigabytes for a large scenery. A larger part without parameters
+        # is parsed by a queue worker and merged at the end of the current file; at least
+        # SUBSCENE_MIN_SIZE, it is a (cached) subscene.
+        if context.queue and not parameters and file.get_length() >= SceneryInstancer.INLINE_INCLUDE_MAX_SIZE:
             if (
-                not parameters
-                and file.get_length() >= SceneryInstancer.SUBSCENE_MIN_SIZE
+                file.get_length() >= SceneryInstancer.SUBSCENE_MIN_SIZE
                 and not context.trainset_open
                 and context.subscene_depth < SceneryInstancer.SUBSCENE_MAX_DEPTH
             ):

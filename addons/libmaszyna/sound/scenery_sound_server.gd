@@ -38,6 +38,33 @@ func _ready() -> void:
     _player.bank = _bank
     _player.hard_cut_enabled = false
     add_child(_player)
+    SceneryStreamingServer.content_set_consumer(SceneryStreamingProvider.CONTENT_SOUNDS, adopt_sound, sound_free)
+
+
+## An event of a sound: its stream, heard as spatial_config says
+static func event_build(stream:AudioStream, spatial_config:SfxSpatialConfig) -> SfxEvent:
+    var clip:SfxClip = SfxClip.new()
+    clip.stream = stream
+    var event:SfxEvent = SfxEvent.new()
+    event.spatial_config = spatial_config
+    var clips:Array[SfxClip] = [clip]
+    event.clips = clips
+    return event
+
+
+## A sound a SceneryStreamingProvider supplies: looped at its place within its reach for as long as
+## its cell is supplied (ScenerySoundPlacement)
+func adopt_sound(placement:ScenerySoundPlacement, _scenario:RID) -> RID:
+    var spatial_config:SfxSpatialConfig = SfxSpatialConfig.new()
+    spatial_config.position = placement.position
+    spatial_config.max_distance = placement.reach
+    var play_event:SfxEvent = event_build(placement.stream, spatial_config)
+    var loop_event:SfxEvent = event_build(placement.stream, spatial_config)
+    play_event.master_track.volume_db = placement.volume_db
+    loop_event.master_track.volume_db = placement.volume_db
+    var sound_rid:RID = sound_create(play_event, loop_event, placement.position, placement.reach)
+    sound_play(sound_rid, Playback.LOOP)
+    return sound_rid
 
 
 ## A sound at `position`, with its once and looped events (their names are the server's; their

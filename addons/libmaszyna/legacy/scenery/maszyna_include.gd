@@ -61,6 +61,8 @@ var _power_source_rids:Array[RID] = []
 var _e3d_rids:Array[RID] = []
 var _signalling_system_rids:Array[RID] = []
 var _triangle_chunk_rids:Array[RID] = []
+## SceneryStreamingServer's providers of the scenery's region files
+var _provider_rids:Array[RID] = []
 var _launcher_rids:Array[RID] = []
 var _pickable_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
@@ -127,6 +129,7 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_e3d_rids, E3DRenderingServer.instance_free],
         # after the instances, whose signal heads leave the system as they go
         [_signalling_system_rids, SignallingServer.system_free],
+        [_provider_rids, SceneryStreamingServer.provider_free],
         [_triangle_chunk_rids, MaszynaSceneryChunkRenderingServer.free_chunk],
     ]
     var frame_start:int = Time.get_ticks_msec()

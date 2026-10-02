@@ -167,8 +167,8 @@ static func build(
         # the voices of the one player at the origin stand at the sound's own place
         spatial_config.position = sound.position
         var bank_events:Array[SfxEvent] = [
-            _build_sound_event(sound.file, false, spatial_config),
-            _build_sound_event(sound.file, true, spatial_config),
+            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, false), spatial_config),
+            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, true), spatial_config),
         ]
         if ambient:
             for sound_event:SfxEvent in bank_events:
@@ -577,13 +577,3 @@ static func _set_memcompare(
     condition.text = fields[0]
     condition.value1 = float(fields[1])
     condition.value2 = float(fields[2])
-
-
-static func _build_sound_event(file:String, loop:bool, spatial_config:SfxSpatialConfig) -> SfxEvent:
-    var clip:SfxClip = SfxClip.new()
-    clip.stream = MmdSoundEventBuilder.build_stream(file, loop)
-    var event:SfxEvent = SfxEvent.new()
-    event.spatial_config = spatial_config
-    var clips:Array[SfxClip] = [clip]
-    event.clips = clips
-    return event

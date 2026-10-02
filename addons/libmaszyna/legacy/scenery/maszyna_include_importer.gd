@@ -1,6 +1,10 @@
 @tool
 extends RefCounted
 
+## What an include of terrain is named with (parser.cpp:330)
+const TERRAIN_INCLUDE:String = "_ter.scm"
+
+
 func import(p: MaszynaParser, context: MaszynaImporterContext):
     var tokens = p.get_tokens_until("end")
     tokens.pop_back()
@@ -9,6 +13,9 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         # a truncated or malformed "include" - nothing to resolve
         context.cacheable = false
         push_error("Include without a filename at offset %d" % p.get_position())
+        return []
+    # with a region file the terrain is the file's (parser.cpp:330, "SBT found, ignoring")
+    if context.binary_terrain_state and String(include_token).to_lower().contains(TERRAIN_INCLUDE):
         return []
     var filename:String = resolve_filename(include_token)
     var final_path = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename)

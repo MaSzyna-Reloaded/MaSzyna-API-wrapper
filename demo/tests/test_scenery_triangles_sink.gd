@@ -193,3 +193,16 @@ func test_finished_chunk_file_joins_another_sink() -> void:
     assert_eq(geometries.size(), 1, "the same texture, cell and range is one chunk")
     assert_eq(geometries[0].vertices.size(), 2 * 3 * 3)
 
+
+
+## A triangle with an edge on a cell border only touches the next cell: an empty chunk of it was
+## written to the cache and could not be made a mesh when streamed
+func test_a_cell_a_triangle_only_touches_gets_no_chunk() -> void:
+    var vertices:PackedVector3Array = [
+        Vector3(CELL_SIZE, 0.0, 10.0), Vector3(CELL_SIZE - 10.0, 0.0, 10.0), Vector3(CELL_SIZE, 0.0, 20.0)
+    ]
+    var normals:PackedVector3Array = [Vector3.UP, Vector3.UP, Vector3.UP]
+    var uvs:PackedVector2Array = [Vector2.ZERO, Vector2.ZERO, Vector2.ZERO]
+    var chunks:Array[Dictionary] = _build_chunks([["border", vertices, normals, uvs]])
+    assert_eq(chunks.size(), 1)
+    assert_eq(chunks[0]["chunk_x"], 0)

@@ -25,6 +25,7 @@
 #include "legacy/scenario/MaszynaLegacyTrackVelocityAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVehicleCommandAction.hpp"
 #include "legacy/scenario/MaszynaLegacyVoltageAction.hpp"
+#include "legacy/scenery/MaszynaLegacySBTTerrainProvider.hpp"
 #include "legacy/scenery/MaszynaTrianglesChunkGeometry.hpp"
 #include "legacy/scenery/MaszynaTrianglesImporter.hpp"
 #include "legacy/signalling/MaszynaLegacySignalHeadKindFactory.hpp"
@@ -67,6 +68,9 @@
 #include "scenario/TimetableEntry.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryLoadingTaskQueue.hpp"
+#include "scenery/SceneryModelPlacement.hpp"
+#include "scenery/ScenerySoundPlacement.hpp"
+#include "scenery/SceneryStreamingProvider.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesSink.hpp"
 #include "scripting/ScenarioScriptAction.hpp"
@@ -252,6 +256,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(MaszynaTrianglesChunkGeometry);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
+        GDREGISTER_VIRTUAL_CLASS(SceneryStreamingProvider);
+        // after the provider it implements
+        GDREGISTER_CLASS(MaszynaLegacySBTTerrainProvider);
+        GDREGISTER_CLASS(SceneryModelPlacement);
+        GDREGISTER_CLASS(ScenerySoundPlacement);
         GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(PythonScreenServer);
         GDREGISTER_CLASS(SceneryTrianglesSink);
@@ -347,7 +356,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
-        e3d_rendering_server_singleton = memnew(E3DRenderingServer);
         track_server_singleton = memnew(TrackServer);
         traction_server_singleton = memnew(TractionServer);
         python_screen_server_singleton = memnew(PythonScreenServer);
@@ -356,9 +364,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                                // 3
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
-        Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
-        Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);              // 7
-        Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                        // 8
+        // after SceneryStreamingServer is registered: the constructor takes the models providers supply
+        e3d_rendering_server_singleton = memnew(E3DRenderingServer);
+        Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton); // 6
+        Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);      // 7
+        Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                // 8
         // after SimulationServer is registered: the constructor follows its clock
         vehicle_server_singleton = memnew(VehicleServer);
         Engine::get_singleton()->register_singleton("VehicleServer", vehicle_server_singleton); // 9

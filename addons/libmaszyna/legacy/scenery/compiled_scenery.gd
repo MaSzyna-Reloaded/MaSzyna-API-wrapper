@@ -19,5 +19,8 @@ class_name MaszynaCompiledScenery
 @export var isolated_sections:Array[MaszynaIsolatedData] = []
 ## The `lua` scripts, relative to the scenery directory
 @export var scripts:Array[String] = []
+## The region files (.sbt) whose terrain is supplied as the camera comes near
+## (MaszynaLegacySBTTerrainProvider), not read into triangle_chunks
+@export var region_files:Array[String] = []
 ## Merged triangle meshes, streamed by MaszynaSceneryChunkRenderingServer (not nodes, so not in [member nodes])
 @export var triangle_chunks:Array[MaszynaTrianglesChunkData] = []

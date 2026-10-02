@@ -2953,3 +2953,15 @@ lighting or the trainset.
   exterior. Structure cache v24, profile version 7.
 * **Rule:** a vehicle's own MMD takes parameters like an include; a model name that comes out as
   `none` is a missing parameter, not missing data.
+
+## 2026-10-02 - an empty terrain chunk
+
+* **Symptom:** loading a scenery logged `Condition "array_len == 0" is true` from
+  `mesh_create_surface_data_from_arrays()` in `MaszynaSceneryChunkRenderingServer._stream_build()`.
+* **What proved it:** `to_mesh_arrays()` drops nothing, so the chunk's geometry itself was empty. A
+  probe adding to a `SceneryTrianglesSink` one triangle of cell (0, 0) with an edge on the border
+  x = 1000 got two chunks back: (0, 0) with 9 floats and (1, 0) with none. `add_triangles()` made
+  the cell's piece before testing the area of its triangles, and a piece of only slivers became a
+  chunk with nothing in it, written to the cache like any other.
+* **Fix:** a piece without vertices makes no chunk; scenery cache version 34.
+* **Rule:** a grid cut keeps a cell only when a piece with area lands in it.

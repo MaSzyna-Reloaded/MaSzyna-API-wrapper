@@ -36,7 +36,11 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             context.launchers.append(launcher)
 
         "triangles":
-            triangles_importer.import(p, context, range_min, range_max)
+            # with a region file the shapes are the file's (simulationstateserializer.cpp:567-585)
+            if context.binary_terrain:
+                p.get_tokens_until("endtri")
+            else:
+                triangles_importer.import(p, context, range_min, range_max)
 
         "sound":
             var sound:MaszynaSoundData = sound_importer.import(p, context)
@@ -57,7 +61,13 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 context.power_sources.append(power_source)
 
         "model":
-            var model:MaszynaModelData = model_importer.import(p, context)
+            # terrain - a negative range_min - is shapes of the region file when there is one
+            # (simulationstateserializer.cpp:502-533)
+            var model:MaszynaModelData = null
+            if range_min < 0.0 and context.binary_terrain:
+                p.get_tokens_until("endmodel")
+            else:
+                model = model_importer.import(p, context)
             if model:
                 model.name = name
                 # same context transform as for Node3D objects below

@@ -463,6 +463,11 @@ anything. Open work belongs in `TODO.md`.
 * Whatever reads the game directory and keeps the result - a memo, a material, a built vehicle -
   follows `GameDataServer.data_unload_requested`/`data_reload_requested` itself; a disk cache key
   names the game directory. *(09-30 track textures stayed after a game directory change)*
+* A per-step reader (cab logic, sound, AI) takes typed getters, never `vehicle_dump_state()`: the
+  dump is composed anew after every step. What only the player's vehicle needs (a rain volume)
+  lives in its shown cab; an object that cannot be placed is not built. A headless load of a large
+  scenery can crash in the dummy renderer's RIDs - measure under `gamescope --backend headless`.
+  *(10-03 hundreds of vehicles)*
 * A streamed piece reads every file it needs (model, material, texture) on the preload thread;
   the main thread only creates what has to be created there. *(10-02 streaming hitches)*
 * A vehicle's sound bank is built when the vehicle comes within earshot, not at load; a sound's

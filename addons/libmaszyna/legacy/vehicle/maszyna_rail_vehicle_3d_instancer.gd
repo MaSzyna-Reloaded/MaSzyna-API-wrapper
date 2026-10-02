@@ -32,9 +32,6 @@ const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
 ## Whether the mirror glass reflects the scene (PlanarMirror3D)
 const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
 
-## Whole vehicle body excludes rain (negative precipitation delta), sized from FIZ Dimensions.
-const RAIN_VOLUME_NAME:StringName = &"RainExclusion"
-const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
 ## The vehicle's physics among its parts
 const PHYSICS_NODE_NAME:StringName = &"PhysicsNode"
 
@@ -130,14 +127,10 @@ static func build_into(
     physics.load_name = load_name
     physics.load_amount = load_amount
 
-    var rain_volume := RainVolume.new()
-    rain_volume.name = RAIN_VOLUME_NAME
-    rain_volume.precipitation_delta = RAIN_EXCLUSION_PRECIPITATION_DELTA
-
     var auto_rewident := MaszynaAutoRewidentNode.new()
     auto_rewident.name = "AutoRewident"
 
-    var parts:Array[Node] = [physics, rain_volume, auto_rewident]
+    var parts:Array[Node] = [physics, auto_rewident]
     for part:Node in parts:
         vehicle.add_child(part, false, Node.INTERNAL_MODE_BACK)
     var rid:RID = physics.get_vehicle_rid()
@@ -145,7 +138,6 @@ static func build_into(
     RailVehicleRenderingServer.vehicle_set_appearance(rid, structure.appearance)
     RailVehicleRenderingServer.vehicle_set_load_model(
             rid, structure.data_path, _load_model_filename(structure, load_name))
-    _fit_rain_volume(rid, rain_volume)
     _apply_wiper_count(rid, structure.appearance)
     # the editor drives no vehicle: CabinSystem is not there (a placeholder)
     if not Engine.is_editor_hint():
@@ -199,15 +191,6 @@ static func _model_exists(data_path:String, relpath:String) -> bool:
         return true
     var t3d_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".t3d")
     return FileAccess.file_exists(game_dir.path_join(t3d_path))
-
-
-## FIZ Dimensions: the vehicle's origin lies on the rail level, so the box is lifted by half of
-## its height.
-static func _fit_rain_volume(vehicle:RID, rain_volume:RainVolume) -> void:
-    if not VehicleServer.vehicle_is_simulation_ready(vehicle):
-        return
-    rain_volume.size = VehicleServer.vehicle_get_dimensions(vehicle)
-    rain_volume.position.y = rain_volume.size.y * 0.5
 
 
 ## The mirrors' glass reflects the scene (maszyna/rendering/real_mirrors): a submodel with nothing

@@ -94,6 +94,13 @@ func vehicle_state_value(key:String, default_value:Variant = null, target:Target
     return CabinSystem.vehicle_state_value(vehicle_of(vehicle_rid, target), key, default_value)
 
 
+## One component of a target - what a cab logic reads on every step: the dump is composed anew
+## for each read in a step, which for a scenery's driven vehicles was half of the frame
+## (docs/findings-archive.md, 2026-10-03 hundreds of vehicles)
+func vehicle_component(type:VehicleComponentType.Type, target:Target = Target.OCCUPIED) -> VehicleComponent:
+    return CabinSystem.vehicle_component(vehicle_of(vehicle_rid, target), type)
+
+
 ## A command of a control, to its target
 func send_vehicle_command(
     command:String, p1:Variant = null, p2:Variant = null, target:Target = Target.OCCUPIED

@@ -17,8 +17,11 @@ extends Node
 ## still two vehicles.
 
 ## Time the vehicle builds may take per frame; a vehicle that started is finished, so a frame
-## builds at least one. Built all in one frame, a scenery's vehicles stalled the loading screen.
-const BUILD_BUDGET_MSEC:int = 8
+## builds at least one. Built all in one frame, a scenery's vehicles stalled the loading screen; at
+## 8 ms - less than one vehicle takes - every frame built one, and a frame of the loading screen
+## cost the scenery's drawing on top of each: Wrzosy's 561 vehicles took 370 frames
+## (docs/findings-archive.md, 2026-10-03 hundreds of vehicles). A frame at 30 fps.
+const BUILD_BUDGET_MSEC:int = 33
 
 var _cache = ResourceCache.create("rail_vehicle")
 ## Vehicles waiting for their build, in the order they asked; processed while it is not empty

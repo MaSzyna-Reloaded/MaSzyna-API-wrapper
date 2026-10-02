@@ -340,6 +340,9 @@ anything. Open work belongs in `TODO.md`.
 * A parse that repeats an include in world space reduces each node to its final form as it reads
   it (`SceneryTrianglesSink`), with a bound on memory; nothing is kept per include until the end.
   *(10-01 the parse kept every include's triangles)*
+* A grid cut keeps a cell only when a piece with area lands in it: a triangle touching a border
+  made an empty chunk, cached and failing as a mesh when streamed (`array_len == 0`). *(10-02 an
+  empty terrain chunk)*
 * What a streamed piece loads is held by its build and let go by its clear
   (`ResourceLazyLoader`); a memo that never evicts grows with the session, and a cache file holds
   data, never a mesh. *(10-01 a scenery's whole terrain kept in memory)*

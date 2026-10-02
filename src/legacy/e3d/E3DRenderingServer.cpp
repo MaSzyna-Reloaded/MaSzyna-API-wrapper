@@ -173,6 +173,18 @@ namespace godot {
         game_data->connect(
                 GameDataServer::data_reload_requested_signal,
                 callable_mp(this, &E3DRenderingServer::_on_data_reload_requested));
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        ERR_FAIL_NULL(streaming);
+        streaming->content_set_consumer(
+                SceneryStreamingProvider::CONTENT_MODELS, callable_mp(this, &E3DRenderingServer::_adopt_model),
+                callable_mp(this, &E3DRenderingServer::instance_free));
+    }
+
+    RID E3DRenderingServer::_adopt_model(const Ref<SceneryModelPlacement> &p_placement, const RID &p_scenario) {
+        ERR_FAIL_COND_V(p_placement.is_null(), RID());
+        return instance_register(
+                p_placement->get_data_path(), p_placement->get_model_filename(), p_placement->get_skins(),
+                p_placement->get_transform(), p_placement->get_range_min(), p_placement->get_range_max(), p_scenario);
     }
 
     /// The materials are the old data's - an instance built again asks for them anew; the models

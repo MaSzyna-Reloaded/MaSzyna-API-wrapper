@@ -9,6 +9,7 @@
 #include <godot_cpp/variant/vector2.hpp>
 
 #include <algorithm>
+#include <array>
 
 namespace godot {
     void SceneryTrianglesSink::_bind_methods() {
@@ -48,28 +49,41 @@ namespace godot {
         return cut;
     }
 
+    /// A triangle cut by the four sides of a cell: a convex polygon cut by one side gains at most
+    /// one vertex, so three plus four
+    constexpr int MAX_CLIP_VERTICES = 7;
+
+    /// A clipped polygon on the stack - a heap allocation per triangle cost more than the cutting
+    struct ClipPolygon {
+            std::array<ClipVertex, MAX_CLIP_VERTICES> vertices;
+            int count = 0;
+
+            void push(const ClipVertex &p_vertex) {
+                vertices[count++] = p_vertex;
+            }
+    };
+
     // Sutherland-Hodgman against one axis-aligned bound; the winding of the polygon is kept.
-    static std::vector<ClipVertex> clip_polygon(
-            const std::vector<ClipVertex> &p_polygon, const int p_axis, const real_t p_bound, const bool p_keep_above) {
-        std::vector<ClipVertex> clipped;
-        for (size_t index = 0; index < p_polygon.size(); index++) {
-            const ClipVertex &current = p_polygon[index];
-            const ClipVertex &next = p_polygon[(index + 1) % p_polygon.size()];
+    static ClipPolygon
+    clip_polygon(const ClipPolygon &p_polygon, const int p_axis, const real_t p_bound, const bool p_keep_above) {
+        ClipPolygon clipped;
+        for (int index = 0; index < p_polygon.count; index++) {
+            const ClipVertex &current = p_polygon.vertices[index];
+            const ClipVertex &next = p_polygon.vertices[(index + 1) % p_polygon.count];
             const bool current_inside =
                     p_keep_above ? current.position[p_axis] >= p_bound : current.position[p_axis] <= p_bound;
             const bool next_inside = p_keep_above ? next.position[p_axis] >= p_bound : next.position[p_axis] <= p_bound;
             if (current_inside) {
-                clipped.push_back(current);
+                clipped.push(current);
             }
             if (!(current_inside == next_inside)) {
-                clipped.push_back(cut_edge(current, next, p_axis, p_bound));
+                clipped.push(cut_edge(current, next, p_axis, p_bound));
             }
         }
         return clipped;
     }
 
-    static std::vector<ClipVertex>
-    clip_to_cell_range(const std::vector<ClipVertex> &p_polygon, const int p_axis, const int p_cell) {
+    static ClipPolygon clip_to_cell_range(const ClipPolygon &p_polygon, const int p_axis, const int p_cell) {
         const real_t lower = static_cast<real_t>(static_cast<double>(p_cell) * SceneryTrianglesSink::CHUNK_SIZE_M);
         const real_t upper = static_cast<real_t>(static_cast<double>(p_cell + 1) * SceneryTrianglesSink::CHUNK_SIZE_M);
         return clip_polygon(clip_polygon(p_polygon, p_axis, lower, true), p_axis, upper, false);
@@ -214,13 +228,53 @@ namespace godot {
             const String &p_texture, const PackedVector3Array &p_vertices, const PackedVector3Array &p_normals,
             const PackedVector2Array &p_uvs, const float p_range_min, const float p_range_max) {
         std::vector<Piece> pieces;
+        // a cell's piece is made by its first triangle with area: a cell the triangles only touch
+        // gets none, and no empty chunk (FINDINGS.md, 10-02). Most nodes lie in one cell, so the
+        // piece of the last cell is found again without a search
+        Piece *last_piece = nullptr;
+        const auto piece_of = [&](const Vector2i &p_cell) -> Piece & {
+            if (last_piece != nullptr && last_piece->cell == p_cell) {
+                return *last_piece;
+            }
+            auto found = std::find_if(
+                    pieces.begin(), pieces.end(), [&p_cell](const Piece &p_piece) { return p_piece.cell == p_cell; });
+            if (found == pieces.end()) {
+                Piece &piece = pieces.emplace_back(Piece{p_cell, {}, {}, {}});
+                if (pieces.size() == 1) {
+                    piece.vertices.reserve(p_vertices.size() * MaszynaTrianglesChunkGeometry::VECTOR3_FLOATS);
+                    piece.normals.reserve(p_vertices.size() * MaszynaTrianglesChunkGeometry::VECTOR3_FLOATS);
+                    piece.uvs.reserve(p_vertices.size() * MaszynaTrianglesChunkGeometry::VECTOR2_FLOATS);
+                }
+                last_piece = &piece;
+                return piece;
+            }
+            last_piece = &*found;
+            return *found;
+        };
+        // a triangle touching the cell with an edge or a corner leaves no area in it
+        const auto append_fan = [&](const Vector2i &p_cell, const ClipPolygon &p_polygon) {
+            const Vector3 origin = cell_get_origin(p_cell);
+            // the piece is convex, so a fan from its first vertex keeps the winding
+            for (int corner = 1; corner + 1 < p_polygon.count; corner++) {
+                const ClipVertex *fan[3] = {
+                        p_polygon.vertices.data(), &p_polygon.vertices[corner], &p_polygon.vertices[corner + 1]};
+                const Vector3 area = (fan[1]->position - fan[0]->position).cross(fan[2]->position - fan[0]->position);
+                if (area.length_squared() < CMP_EPSILON2) {
+                    continue;
+                }
+                Piece &piece = piece_of(p_cell);
+                for (const ClipVertex *vertex: fan) {
+                    append_vertex(piece, *vertex, origin);
+                }
+            }
+        };
         for (int64_t base = 0; base + 2 < p_vertices.size(); base += 3) {
-            std::vector<ClipVertex> triangle_polygon;
+            ClipPolygon triangle;
             Vector3 lower = p_vertices[base];
             Vector3 upper = p_vertices[base];
             for (int vertex_offset = 0; vertex_offset < 3; vertex_offset++) {
                 const int64_t index = base + vertex_offset;
-                triangle_polygon.push_back({p_vertices[index], p_normals[index], p_uvs[index]});
+                triangle.push({p_vertices[index], p_normals[index], p_uvs[index]});
                 lower = lower.min(p_vertices[index]);
                 upper = upper.max(p_vertices[index]);
             }
@@ -228,36 +282,16 @@ namespace godot {
             const int last_x = static_cast<int>(Math::floor(upper.x / CHUNK_SIZE_M));
             const int first_z = static_cast<int>(Math::floor(lower.z / CHUNK_SIZE_M));
             const int last_z = static_cast<int>(Math::floor(upper.z / CHUNK_SIZE_M));
-            const bool single_cell = first_x == last_x && first_z == last_z;
-
+            if (first_x == last_x && first_z == last_z) {
+                append_fan(Vector2i(first_x, first_z), triangle);
+                continue;
+            }
             for (int chunk_x = first_x; chunk_x <= last_x; chunk_x++) {
-                const std::vector<ClipVertex> strip =
-                        single_cell ? triangle_polygon : clip_to_cell_range(triangle_polygon, Vector3::AXIS_X, chunk_x);
-                for (int chunk_z = first_z; chunk_z <= last_z && strip.size() >= 3; chunk_z++) {
-                    const std::vector<ClipVertex> piece_polygon =
-                            single_cell ? strip : clip_to_cell_range(strip, Vector3::AXIS_Z, chunk_z);
-                    if (piece_polygon.size() < 3) {
-                        continue;
-                    }
-                    const Vector2i cell(chunk_x, chunk_z);
-                    auto found = std::find_if(pieces.begin(), pieces.end(), [&cell](const Piece &p_piece) {
-                        return p_piece.cell == cell;
-                    });
-                    Piece &piece = found == pieces.end() ? pieces.emplace_back(Piece{cell, {}, {}, {}}) : *found;
-                    const Vector3 origin = cell_get_origin(cell);
-                    // the piece is convex, so a fan from its first vertex keeps the winding
-                    for (size_t corner = 1; corner + 1 < piece_polygon.size(); corner++) {
-                        const ClipVertex *fan[3] = {
-                                piece_polygon.data(), &piece_polygon[corner], &piece_polygon[corner + 1]};
-                        // a triangle touching the cell with an edge or a corner leaves no area in it
-                        const Vector3 area =
-                                (fan[1]->position - fan[0]->position).cross(fan[2]->position - fan[0]->position);
-                        if (area.length_squared() < CMP_EPSILON2) {
-                            continue;
-                        }
-                        for (const ClipVertex *vertex: fan) {
-                            append_vertex(piece, *vertex, origin);
-                        }
+                const ClipPolygon strip = clip_to_cell_range(triangle, Vector3::AXIS_X, chunk_x);
+                for (int chunk_z = first_z; chunk_z <= last_z && strip.count >= 3; chunk_z++) {
+                    const ClipPolygon piece_polygon = clip_to_cell_range(strip, Vector3::AXIS_Z, chunk_z);
+                    if (piece_polygon.count >= 3) {
+                        append_fan(Vector2i(chunk_x, chunk_z), piece_polygon);
                     }
                 }
             }

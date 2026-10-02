@@ -19,6 +19,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
         ClassDB::bind_method(D_METHOD("owner_rebuild", "owner"), &SceneryStreamingServer::owner_rebuild);
         ClassDB::bind_method(
+                D_METHOD("provider_register", "provider", "scenario"), &SceneryStreamingServer::provider_register);
+        ClassDB::bind_method(D_METHOD("provider_free", "provider"), &SceneryStreamingServer::provider_free);
+        ClassDB::bind_method(
+                D_METHOD("content_set_consumer", "kind", "adopt", "release"),
+                &SceneryStreamingServer::content_set_consumer);
+        ClassDB::bind_method(
                 D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
         ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
@@ -147,6 +153,77 @@ namespace godot {
         }
     }
 
+    /// The cells, their overhang and the kinds are asked for once: a provider's map does not change
+    RID
+    SceneryStreamingServer::provider_register(const Ref<SceneryStreamingProvider> &p_provider, const RID &p_scenario) {
+        ERR_FAIL_COND_V(p_provider.is_null(), RID());
+        Provider provider;
+        provider.provider = p_provider;
+        provider.scenario = p_scenario;
+        for (const int32_t kind: p_provider->get_content_kinds()) {
+            ERR_CONTINUE(kind < 0 || kind >= CONTENT_KIND_COUNT);
+            provider.kinds.push_back(static_cast<ContentKind>(kind));
+        }
+        const TypedArray<Vector2i> cells = p_provider->get_chunk_cells();
+        for (int64_t index = 0; index < cells.size(); index++) {
+            const Vector2i cell = cells[index];
+            ProviderCell &state = provider.cells[cell];
+            state.overhang = MAX(0.0F, p_provider->chunk_get_overhang(cell));
+            provider.max_overhang = MAX(provider.max_overhang, state.overhang);
+        }
+        const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        MutexLock lock(mutex);
+        providers[rid] = provider;
+        content_dirty = true;
+        return rid;
+    }
+
+    /// What the provider supplied goes at once; its loads still in flight are dropped
+    void SceneryStreamingServer::provider_free(const RID &p_provider) {
+        std::array<Vector<RID>, CONTENT_KIND_COUNT> released;
+        {
+            MutexLock lock(mutex);
+            Provider *provider = providers.getptr(p_provider);
+            if (provider == nullptr) {
+                return;
+            }
+            for (const Vector2i &cell: provider->adopted_cells) {
+                const ProviderCell &state = provider->cells[cell];
+                for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
+                    released[kind].append_array(state.adopted_rids[kind]);
+                }
+            }
+            providers.erase(p_provider);
+            freed_pending = true;
+            content_dirty = true;
+        }
+        _release_content(released);
+    }
+
+    void SceneryStreamingServer::content_set_consumer(
+            const SceneryStreamingProvider::ContentKind p_kind, const Callable &p_adopt, const Callable &p_release) {
+        ERR_FAIL_INDEX(p_kind, CONTENT_KIND_COUNT);
+        MutexLock lock(mutex);
+        consumers[p_kind] = Consumer{p_adopt, p_release};
+    }
+
+    /// Called without the mutex: a consumer frees the pieces it registered
+    void SceneryStreamingServer::_release_content(const std::array<Vector<RID>, CONTENT_KIND_COUNT> &p_rids) {
+        for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
+            Callable release;
+            {
+                MutexLock lock(mutex);
+                release = consumers[kind].release;
+            }
+            if (!release.is_valid()) {
+                continue;
+            }
+            for (const RID &rid: p_rids[kind]) {
+                release.call(rid);
+            }
+        }
+    }
+
     /// Registers one piece of an owner. [param range_end] of 0 or less means the piece declares no
     /// range of its own and is streamed up to the global draw distance.
     RID SceneryStreamingServer::stream_register(
@@ -236,6 +313,34 @@ namespace godot {
             }
         }
         planned_clears = clears;
+        Vector<PendingProvide> provides;
+        for (const PendingProvide &pending: pending_provides) {
+            if (providers.has(pending.provider_rid)) {
+                provides.push_back(pending);
+            }
+        }
+        pending_provides = provides;
+        provides.clear();
+        for (const PendingProvide &pending: planned_provides) {
+            if (providers.has(pending.provider_rid)) {
+                provides.push_back(pending);
+            }
+        }
+        planned_provides = provides;
+        Vector<PendingWithdraw> withdraws;
+        for (const PendingWithdraw &pending: pending_withdraws) {
+            if (providers.has(pending.provider_rid)) {
+                withdraws.push_back(pending);
+            }
+        }
+        pending_withdraws = withdraws;
+        withdraws.clear();
+        for (const PendingWithdraw &pending: planned_withdraws) {
+            if (providers.has(pending.provider_rid)) {
+                withdraws.push_back(pending);
+            }
+        }
+        planned_withdraws = withdraws;
         freed_pending = false;
     }
 
@@ -259,6 +364,24 @@ namespace godot {
         }
         pending_clears = clears;
         planned_clears.clear();
+
+        Vector<PendingProvide> provides;
+        for (const PendingProvide &pending: pending_provides) {
+            if (pending.revision == target_revision && providers.has(pending.provider_rid)) {
+                provides.push_back(pending);
+            }
+        }
+        pending_provides = provides;
+        planned_provides.clear();
+
+        Vector<PendingWithdraw> withdraws;
+        for (const PendingWithdraw &pending: pending_withdraws) {
+            if (pending.revision == target_revision && providers.has(pending.provider_rid)) {
+                withdraws.push_back(pending);
+            }
+        }
+        pending_withdraws = withdraws;
+        planned_withdraws.clear();
     }
 
     /// Camera the streaming follows; without one nothing is ever built. Setting the first camera
@@ -334,6 +457,17 @@ namespace godot {
                 }
             }
         }
+        // a provider's cell not supplied yet is content still to come
+        for (const KeyValue<RID, Provider> &item: providers) {
+            for (int x = camera_key.x - p_chunk_radius; x <= camera_key.x + p_chunk_radius; x++) {
+                for (int y = camera_key.y - p_chunk_radius; y <= camera_key.y + p_chunk_radius; y++) {
+                    const ProviderCell *cell = item.value.cells.getptr(Vector2i(x, y));
+                    if (cell != nullptr && cell->wanted_revision == target_revision && !cell->adopted) {
+                        pending++;
+                    }
+                }
+            }
+        }
         return pending;
     }
 
@@ -364,7 +498,14 @@ namespace godot {
                 active_chunks++;
             }
         }
+        int64_t supplied_cells = 0;
+        for (const KeyValue<RID, Provider> &item: providers) {
+            supplied_cells += static_cast<int64_t>(item.value.adopted_cells.size());
+        }
         statistics["owners"] = owners.size();
+        statistics["providers"] = providers.size();
+        statistics["supplied_cells"] = supplied_cells;
+        statistics["pending_provides"] = pending_provides.size() + planned_provides.size();
         statistics["registered"] = entry_chunks.size();
         statistics["streamed"] = streamed;
         statistics["chunks"] = chunks.size();
@@ -480,6 +621,13 @@ namespace godot {
                 planned_clears.clear();
                 pending_builds.sort_custom<DistanceComparator>();
             }
+            if (planned_provides.size() > 0 || planned_withdraws.size() > 0) {
+                pending_provides.append_array(planned_provides);
+                pending_withdraws.append_array(planned_withdraws);
+                planned_provides.clear();
+                planned_withdraws.clear();
+                pending_provides.sort_custom<DistanceComparator>();
+            }
             if (freed_pending) {
                 _drop_freed_work();
             }
@@ -517,10 +665,90 @@ namespace godot {
                 return;
             }
         }
+        // a provider's cell out of reach: what was made of its content goes, pieces and all
+        while (pending_withdraws.size() > 0) {
+            const PendingWithdraw pending = pending_withdraws[pending_withdraws.size() - 1];
+            pending_withdraws.resize(pending_withdraws.size() - 1);
+            std::array<Vector<RID>, CONTENT_KIND_COUNT> released;
+            {
+                MutexLock lock(mutex);
+                Provider *provider = providers.getptr(pending.provider_rid);
+                ProviderCell *cell = provider != nullptr ? provider->cells.getptr(pending.cell) : nullptr;
+                if (pending.revision == target_revision && cell != nullptr && cell->adopted &&
+                    cell->wanted_revision != target_revision) {
+                    released.swap(cell->adopted_rids);
+                    cell->adopted = false;
+                    provider->adopted_cells.erase(pending.cell);
+                }
+            }
+            _release_content(released);
+            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
+                return;
+            }
+        }
         // what the cleared pieces held is free, but the allocator keeps it until asked
         if (cleared_since_release >= RELEASE_CLEARED_PIECES) {
             cleared_since_release = 0;
             ProcessMemory::release_unused();
+        }
+
+        // a provider's cell in reach: its content goes to the consumers, which register its pieces
+        while (pending_provides.size() > 0) {
+            const PendingProvide pending = pending_provides[pending_provides.size() - 1];
+            pending_provides.resize(pending_provides.size() - 1);
+            std::array<Consumer, CONTENT_KIND_COUNT> kind_consumers;
+            RID scenario;
+            bool apply = false;
+            {
+                MutexLock lock(mutex);
+                Provider *provider = providers.getptr(pending.provider_rid);
+                ProviderCell *cell = provider != nullptr ? provider->cells.getptr(pending.cell) : nullptr;
+                apply = pending.revision == target_revision && cell != nullptr && !cell->adopted &&
+                        cell->wanted_revision == target_revision;
+                if (cell != nullptr && cell->queued_revision == pending.revision) {
+                    cell->queued_revision = 0;
+                }
+                if (apply) {
+                    kind_consumers = consumers;
+                    scenario = provider->scenario;
+                }
+            }
+            if (!apply) {
+                continue;
+            }
+            std::array<Vector<RID>, CONTENT_KIND_COUNT> adopted;
+            for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
+                const Callable &adopt = kind_consumers[kind].adopt;
+                ERR_CONTINUE_MSG(
+                        !adopt.is_valid() && !pending.items[kind].is_empty(),
+                        "No consumer of supplied content of kind " + itos(kind));
+                for (int64_t index = 0; index < pending.items[kind].size(); index++) {
+                    const RID rid = adopt.call(pending.items[kind][index], scenario);
+                    if (rid.is_valid()) {
+                        adopted[kind].push_back(rid);
+                    }
+                }
+            }
+            bool kept = false;
+            {
+                MutexLock lock(mutex);
+                Provider *provider = providers.getptr(pending.provider_rid);
+                ProviderCell *cell = provider != nullptr ? provider->cells.getptr(pending.cell) : nullptr;
+                // the provider freed while its content was handed over takes nothing with it
+                if (cell != nullptr && !cell->adopted) {
+                    cell->adopted = true;
+                    cell->adopted_rids = adopted;
+                    provider->adopted_cells.insert(pending.cell);
+                    pending_build_count--;
+                    kept = true;
+                }
+            }
+            if (!kept) {
+                _release_content(adopted);
+            }
+            if (Time::get_singleton()->get_ticks_msec() >= deadline) {
+                return;
+            }
         }
 
         while (pending_builds.size() > 0) {
@@ -560,6 +788,8 @@ namespace godot {
         const uint64_t started_msec = Time::get_singleton()->get_ticks_msec();
         Vector<PendingBuild> entering;
         Vector<PendingClear> leaving;
+        Vector<PendingProvide> supplying;
+        Vector<PendingWithdraw> withdrawing;
         int wanted_unbuilt = 0;
         {
             MutexLock lock(mutex);
@@ -600,9 +830,71 @@ namespace godot {
                     }
                 }
             }
+            // a provider's cell is wanted within the draw distance - the farthest any piece is
+            // drawn (stream_register()) - of its content, which may reach out of it by its overhang
+            const Vector2i camera_key = _get_chunk_key(p_camera_position);
+            for (KeyValue<RID, Provider> &item: providers) {
+                Provider &provider = item.value;
+                const int radius = static_cast<int>(
+                        Math::ceil((draw_distance + provider.max_overhang + HYSTERESIS_M) / CHUNK_SIZE_M));
+                for (int x = camera_key.x - radius; x <= camera_key.x + radius; x++) {
+                    for (int y = camera_key.y - radius; y <= camera_key.y + radius; y++) {
+                        const Vector2i key(x, y);
+                        ProviderCell *cell = provider.cells.getptr(key);
+                        if (cell == nullptr) {
+                            continue;
+                        }
+                        const float distance = _get_chunk_distance(key, p_camera_position);
+                        const float reach = draw_distance + cell->overhang;
+                        const bool wanted = cell->adopted ? distance <= reach + HYSTERESIS_M : distance <= reach;
+                        cell->wanted_revision = wanted ? p_revision : 0;
+                        if (wanted && !cell->adopted && cell->queued_revision != p_revision) {
+                            PendingProvide provide;
+                            provide.provider_rid = item.key;
+                            provide.provider = provider.provider;
+                            provide.kinds = provider.kinds;
+                            provide.cell = key;
+                            provide.distance = distance;
+                            provide.revision = p_revision;
+                            supplying.push_back(provide);
+                            cell->queued_revision = p_revision;
+                        }
+                        if (wanted && !cell->adopted) {
+                            wanted_unbuilt++;
+                        }
+                    }
+                }
+                // a supplied cell the pass above did not want, however far the camera has gone
+                for (const Vector2i &key: provider.adopted_cells) {
+                    if (provider.cells[key].wanted_revision != p_revision) {
+                        withdrawing.push_back(PendingWithdraw{item.key, key, p_revision});
+                    }
+                }
+            }
             pending_build_count = wanted_unbuilt;
             scanned_revision = p_revision;
             planned_clears.append_array(leaving);
+            planned_withdraws.append_array(withdrawing);
+        }
+
+        // the cells' content first, nearest first: a provider's terrain is what the area stands on
+        supplying.sort_custom<DistanceComparator>();
+        for (int64_t i = supplying.size() - 1; i >= 0; i--) {
+            PendingProvide provide = supplying[i];
+            {
+                MutexLock lock(mutex);
+                if (p_revision != target_revision || !providers.has(provide.provider_rid)) {
+                    return false;
+                }
+            }
+            for (const ContentKind kind: provide.kinds) {
+                provide.items[kind] = provide.provider->chunk_load(provide.cell, kind);
+            }
+            MutexLock lock(mutex);
+            if (p_revision != target_revision) {
+                return false;
+            }
+            planned_provides.push_back(provide);
         }
 
         entering.sort_custom<DistanceComparator>();

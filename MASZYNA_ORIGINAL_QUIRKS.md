@@ -245,6 +245,14 @@ interface.
   SM42 6D and PWM10 name their `attachments:` by `(p3)`, 4E (`4e-staraklima`) by `(p1)`. Wrapper:
   every reader of a vehicle's MMD takes `MmdCabinInstancer.vehicle_parameters()`; a structure read
   from an MMD that names `(p1)` is cached for its vehicle alone (`names_vehicle()`).
+* **A comment eats the parameters of an include.** Six ST44/M62 MMDs pass theirs as
+  `include st44.mmd.inc 2M62-0685-A // 2M62-0571-A end` (`2M62-0571-A/B`, `2M62-0662-A/B`,
+  `2M62-0685-A/B`, `m62-1579`): the comment runs to the end of the line, `end` with it, and
+  `st44-324.mmd` passes only one. The include's `attachments: { components/decals/(p2).t3d }` is
+  then `components/decals/none`, which `cParser` gives any parameter not passed (`parser.cpp:290`).
+  The original fails to find the model, logs "Bad file: failed to locate 3d model file" once and
+  remembers the miss (`TModelsManager::GetModel()`, `MdlMngr.cpp`). Wrapper: the same miss, warned
+  by `E3DModelManager.load_model()` for every vehicle.
 
 ## Scenery data
 
@@ -267,6 +275,36 @@ interface.
   written, and 821 names on disk carry capitals. Wrapper: `MaszynaDataPath.resolve()` keeps the
   base directory, tries the relative path as authored, then its lowercase form, then each part
   letter case aside (`docs/findings-archive.md`, 2026-10-02).
+* **`include none`.** `l204/deko/204_trawky_ter.scm:33698` and
+  `linia053_wrzosy/scm_wrzosy/1-tory.scm:51026` include a file named `none`. The original opens
+  it, logs "Failed to open file" (`parser.cpp:89`) and goes on with an empty include. Wrapper: the
+  same error (`MaszynaIncludeImporter`), and the file is then not cached
+  (`context.cacheable = false`), so it is parsed again on every load.
+* **Terrain that exists only as an SBT.** A scenery's shapes may come in a binary region file:
+  `<scenario>.sbt` beside the `.scn`, or one named by a `terrain x.sbt endterrain` line
+  (`simulationstateserializer.cpp:51-66`, `:786-799`). With one, the original reads every
+  `triangles` shape from it (`basic_region::deserialize()`, `scene.cpp:1180`) and leaves out the
+  scenery's own `triangles` nodes, its terrain models (`range_min` below 0) and every include whose
+  name contains `_ter.scm` (`parser.cpp:330`, "SBT found, ignoring"); without one it parses them and
+  writes the SBT itself (`scene.cpp:1141`) - so most `.sbt` in a game directory are the original's
+  own cache (12 of 15 here postdate the datapack). The flag is global and set where the file is
+  read, so it holds for everything parsed after it, in the including file too. Two ship with the
+  datapack as the only copy of their terrain: `braniewo_szeroki.sbt` (1.2 GB) holds six `_ter.scm`
+  that `l254/` includes and the datapack lacks (`deko/254_placki_ter.scm`, `254_roslinky_ter.scm`,
+  `254_wielkopow_ter.scm`, `teren/fro_ter.scm`, `suh_ter.scm`, `tol_ter.scm`), and `l107/l107.scm`
+  names `terrain l107/l107_teren.sbt` (955 MB) on its third line - after `l107_deko.scm`, before
+  `l107_ziel.scm` with its `deko/107_*_ter.scm` and before `nmt100_podkarpackie_ter.scm`, which
+  `linia_107_*.scn` include next; the original leaves all three out. A `terrain` line sets the
+  include flag even when its file is missing; the shapes are left out only when the file is a
+  region file. Wrapper: the two flags in `MaszynaImporterContext` (`binary_terrain`,
+  `binary_terrain_state`), which `pop_state()` keeps; the region file is not read at load but
+  supplied section by section as the camera comes near (`MaszynaLegacySBTTerrainProvider`, a
+  `SceneryStreamingProvider` - a section is the streaming's own 1 km cell, its radius in the header
+  says how far its shapes reach out of it). A small include is parsed
+  in place, so a `terrain` line in it reaches the rest of the including file as the original's
+  does; one in an include large enough to be parsed as a task of its own
+  (`SceneryInstancer.INLINE_INCLUDE_MAX_SIZE`) reaches only what it includes itself - the datapack
+  has none. The region file's lines are left out, as `lines` nodes are.
 * A timetable file saved as UTF-8 rather than cp1250 keeps mangled Polish letters in its labels
   (`linia053/scenariusz_os`).
 * **A load count with no type behind it is not a load.** The `dynamic` line gives the count

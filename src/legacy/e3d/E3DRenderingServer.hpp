@@ -4,6 +4,7 @@
 #include "E3DNodesBackend.hpp"
 #include "E3DOptimizedBackend.hpp"
 #include "E3DSmokeSourceFactory.hpp"
+#include "scenery/SceneryModelPlacement.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -238,6 +239,8 @@ namespace godot {
             void _update_if_built(E3DInstanceData &p_instance);
             void _on_data_unload_requested();
             void _on_data_reload_requested();
+            /// A model a SceneryStreamingProvider supplies: a scenery placement named by nothing
+            RID _adopt_model(const Ref<SceneryModelPlacement> &p_placement, const RID &p_scenario);
             RID _get_stream_model(const RID &p_instance);
             Variant _stream_preload(const RID &p_instance);
             void _stream_build(const RID &p_instance, const Variant &p_preloaded);

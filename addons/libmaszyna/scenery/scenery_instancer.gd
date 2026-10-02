@@ -22,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const CACHE_FORMAT_VERSION:int = 32
+const CACHE_FORMAT_VERSION:int = 35
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -179,6 +179,15 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     )
     await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
     await _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
+    # the terrain of a region file is supplied as the camera comes near; its sections are listed on
+    # a worker - a file lists twenty thousand of them
+    for region_file:String in compiled.region_files:
+        var provider:MaszynaLegacySBTTerrainProvider = MaszynaLegacySBTTerrainProvider.new()
+        var opened:bool = await _run_on_worker(
+            root, provider.open.bind(region_file), 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain"
+        )
+        if opened:
+            root._provider_rids.append(SceneryStreamingServer.provider_register(provider, world_3d.scenario))
     await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
     await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
     await _wait_for_vehicles(root)
@@ -415,6 +424,7 @@ static func _compile_scenery(
     compiled.sounds = context.sounds
     compiled.isolated_sections = context.isolated_sections
     compiled.scripts = context.scripts
+    compiled.region_files = context.region_files
     return compiled
 
 
@@ -564,13 +574,16 @@ func parse_file_task(
 
 ## parse_file_task() of a subscene (see maszyna_include_importer.gd), read from / saved to the
 ## cache. The cache key includes the inherited origin/rotate - parsed objects are already placed
-## in world coordinates. The subscene's terrain is chunked in a sink of its own, cached with it,
+## in world coordinates - and whether a region file holds the terrain, which leaves its shapes out.
+## The subscene's terrain is chunked in a sink of its own, cached with it,
 ## and added to the scenery's sink.
 func parse_subscene_task(
     filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
 ) -> MaszynaImporterContext:
     var source_path:String = _get_source_path(filename)
-    var state_hash:String = var_to_str([state["origin"], state["rotate"]]).md5_text()
+    var state_hash:String = var_to_str(
+        [state["origin"], state["rotate"], state["binary_terrain"], state["binary_terrain_state"]]
+    ).md5_text()
     var cache_path:String = _get_cache_path(source_path, state_hash)
     var scenery_sink:SceneryTrianglesSink = state["triangles_sink"]
     var compiled:MaszynaCompiledSubscene = _load_cached(cache_path, source_path, state_hash) as MaszynaCompiledSubscene
@@ -585,6 +598,7 @@ func parse_subscene_task(
         cached.launchers.assign(compiled.launchers)
         cached.sounds.assign(compiled.sounds)
         cached.isolated_sections.assign(compiled.isolated_sections)
+        cached.region_files.assign(compiled.region_files)
         for chunk_path:String in compiled.triangle_chunk_paths:
             scenery_sink.add_geometry_file(chunk_path)
         cached.dependencies = compiled.dependencies.duplicate(true)
@@ -637,6 +651,8 @@ func _parse_file_with_progress(
     root_context.triangles_sink = triangles_sink
     var queue := SceneryLoadingTaskQueue.new()
     _active_queues.append(queue)
+    # the scenario's region file first: what is parsed after it depends on whether it is there
+    root_context.load_scenario_binary_terrain(root.filename)
     var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
     # every include is a task submitted while parsing, so the total grows with the parse; the bar
     # does not go back when it does
@@ -647,7 +663,9 @@ func _parse_file_with_progress(
         var file_in_parse:String = _file_in_parse
         _file_in_parse_mutex.unlock()
         root.load_files_parsed.emit(queue.get_completed_count(), file_in_parse)
-        await _report_progress(root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename)
+        await _report_progress(
+            root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename
+        )
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
     _include_buffers_mutex.lock()
@@ -656,6 +674,9 @@ func _parse_file_with_progress(
     if not context:
         push_error("Cannot parse scenery: " + root.filename)
         return MaszynaImporterContext.new()
+    # the scenario's region file is found before the parse, in the root's own context
+    context.dependencies.merge(root_context.dependencies)
+    context.region_files.assign(root_context.region_files + context.region_files)
     return context
 
 

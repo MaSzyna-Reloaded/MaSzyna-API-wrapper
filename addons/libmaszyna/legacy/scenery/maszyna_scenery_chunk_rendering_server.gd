@@ -42,6 +42,7 @@ var _stream_owner:int = -1
 
 func _ready() -> void:
     GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
+    SceneryStreamingServer.content_set_consumer(SceneryStreamingProvider.CONTENT_TERRAIN, adopt_terrain, free_chunk)
 
 
 ## A chunk takes its material again as it is streamed again
@@ -74,6 +75,19 @@ func create_chunk(chunk:MaszynaTrianglesChunkData, scenario:RID, geometry_loader
         _stream_owner, rid, chunk.position, chunk.range_max
     )
     return rid
+
+
+## Terrain a SceneryStreamingProvider supplies: a chunk whose triangles are in memory already, and
+## held by it until the provider lets the cell go
+func adopt_terrain(geometry:MaszynaTrianglesChunkGeometry, scenario:RID) -> RID:
+    var chunk:MaszynaTrianglesChunkData = MaszynaTrianglesChunkData.new()
+    # ResourceLazyLoader's key - the geometry has no file of its own
+    chunk.geometry_path = "supplied://%d" % geometry.get_instance_id()
+    chunk.position = SceneryTrianglesSink.cell_get_origin(geometry.cell)
+    chunk.material_name = geometry.texture
+    chunk.range_min = geometry.range_min
+    chunk.range_max = maxf(geometry.range_max, 0.0)
+    return create_chunk(chunk, scenario, func() -> MaszynaTrianglesChunkGeometry: return geometry)
 
 
 func free_chunk(rid:RID) -> void:

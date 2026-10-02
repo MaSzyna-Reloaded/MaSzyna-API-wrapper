@@ -13,8 +13,14 @@ class PendingInclude:
 
 const RESULT_LISTS:Array[String] = [
     "tracks", "traction", "power_sources", "models", "events", "memcells", "launchers", "sounds", "isolated_sections", "terrains",
-    "scripts"
+    "scripts", "region_files"
 ]
+
+## The region file's extension (EU07_FILEEXTENSION_REGION, scene.cpp:27)
+const REGION_EXTENSION:String = ".sbt"
+## What Rainsted prefixes a scenario it modified with, and the base scenario it writes
+const RAINSTED_PREFIX:String = "$"
+const RAINSTED_SCENARIO:String = "$.scn"
 
 var _states: Array[Dictionary] = []
 var include_depth: int = 0
@@ -33,10 +39,20 @@ var sounds:Array[MaszynaSoundData] = []
 var isolated_sections:Array[MaszynaIsolatedData] = []
 ## The `lua` scripts, relative to the scenery directory
 var scripts:Array[String] = []
+## The region files (.sbt) whose terrain the scenery is drawn with (MaszynaLegacySBTTerrainProvider)
+var region_files:Array[String] = []
 var terrains: Array = []
 ## Where the "triangles" nodes go as they are parsed - shared by the includes of one scenery, a
 ## subscene's own (SceneryInstancer.parse_subscene_task())
 var triangles_sink:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+## The original's Scratchpad.binary.terrain: the scenery's shapes come from a region file (.sbt),
+## so its "triangles" nodes and terrain models are left out (simulationstateserializer.cpp:503-600).
+## Like the original's, it holds for the rest of the load from where it is set: push_state() and
+## pop_state() leave it, an include inherits it (load_binary_terrain())
+var binary_terrain:bool = false
+## The original's Global.file_binary_terrain_state: includes of "_ter.scm" files are left out
+## (parser.cpp:330)
+var binary_terrain_state:bool = false
 var dependencies:Dictionary = {}
 var cacheable:bool = true
 ## Objects parsed from the file (set by SceneryInstancer.parse_file_task())
@@ -90,6 +106,31 @@ func begin_file(path:String) -> bool:
 func end_file(path:String) -> void:
     _active_files.erase(path)
 
+## The scenery's terrain from here on is the region file's: `terrain <file>.sbt` in the scenery
+## (state_serializer::deserialize_terrain(), simulationstateserializer.cpp:786), or the scenario's
+## own <scenario>.sbt from the start (:51-66). Its shapes are not read here: the scenery supplies
+## them as the camera comes near (MaszynaLegacySBTTerrainProvider)
+func load_binary_terrain(path:String) -> void:
+    binary_terrain = MaszynaLegacySBTTerrainProvider.is_region(path)
+    binary_terrain_state = true
+    if binary_terrain:
+        register_dependency(path)
+        region_files.append(path)
+
+
+## The scenario's own region file, <scenario>.sbt beside it, holds its terrain from the start
+## (simulationstateserializer.cpp:51-66). basic_region::is_scene() trims Rainsted's leading "$",
+## and the "$.scn" Rainsted writes has none (scene.cpp:1113)
+func load_scenario_binary_terrain(scenario:String) -> void:
+    if scenario == RAINSTED_SCENARIO:
+        return
+    var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
+    var region_file:String = scenario.lstrip(RAINSTED_PREFIX).get_basename() + REGION_EXTENSION
+    var path:String = scenery_dir.path_join(MaszynaDataPath.resolve(scenery_dir, region_file))
+    if MaszynaLegacySBTTerrainProvider.is_region(path):
+        load_binary_terrain(path)
+
+
 func push_rotate(new_rotate: Vector3):
     _rotates.push_front(rotate)
     rotate = new_rotate
@@ -120,6 +161,8 @@ func get_state() -> Dictionary:
         "trainset_velocity": trainset_velocity,
         "trainset_node": trainset_node,
         "triangles_sink": triangles_sink,
+        "binary_terrain": binary_terrain,
+        "binary_terrain_state": binary_terrain_state,
         "active_files": _active_files.duplicate(),
     }
 
@@ -137,6 +180,8 @@ static func from_state(state:Dictionary) -> MaszynaImporterContext:
     context.trainset_velocity = state["trainset_velocity"]
     context.trainset_node = state["trainset_node"]
     context.triangles_sink = state["triangles_sink"]
+    context.binary_terrain = state["binary_terrain"]
+    context.binary_terrain_state = state["binary_terrain_state"]
     context._active_files = state["active_files"]
     return context
 

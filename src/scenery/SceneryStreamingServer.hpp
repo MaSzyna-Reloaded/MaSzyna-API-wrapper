@@ -1,4 +1,6 @@
 #pragma once
+
+#include "scenery/SceneryStreamingProvider.hpp"
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -6,10 +8,13 @@
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/hash_set.hpp>
 #include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+
+#include <array>
 
 namespace godot {
     /// Spatial streaming of scenery content. A rendering server registers where each of its pieces
@@ -22,6 +27,10 @@ namespace godot {
     /// Planning runs on a worker thread, together with whatever an owner wants prepared off the
     /// main thread (loading a model, building a mesh). Building and clearing run on the main
     /// thread within a per-frame time budget, because they touch RenderingServer and GDScript.
+    ///
+    /// Content may also be supplied by chunk (SceneryStreamingProvider): a provider's cell is asked
+    /// for as the camera comes within the draw distance of it, and what it gives is handed to the
+    /// consumer of its kind, which registers it as pieces like any other.
     class SceneryStreamingServer : public Object {
             GDCLASS(SceneryStreamingServer, Object)
 
@@ -102,6 +111,45 @@ namespace godot {
                     RID user_rid;
                     uint64_t revision = 0;
             };
+            using ContentKind = SceneryStreamingProvider::ContentKind;
+            static constexpr int CONTENT_KIND_COUNT = SceneryStreamingProvider::CONTENT_KIND_MAX;
+            /// What a server does with the content of its kind: adopt(item, scenario) -> RID, and
+            /// release(RID) once the cell is let go
+            struct Consumer {
+                    Callable adopt;
+                    Callable release;
+            };
+            struct ProviderCell {
+                    float overhang = 0.0;
+                    bool adopted = false;
+                    uint64_t wanted_revision = 0;
+                    uint64_t queued_revision = 0;
+                    /// What the consumers made of the cell's content, by kind
+                    std::array<Vector<RID>, CONTENT_KIND_COUNT> adopted_rids;
+            };
+            struct Provider {
+                    Ref<SceneryStreamingProvider> provider;
+                    RID scenario;
+                    Vector<ContentKind> kinds;
+                    HashMap<Vector2i, ProviderCell> cells;
+                    /// The cells whose content is out, wherever the camera is
+                    HashSet<Vector2i> adopted_cells;
+                    float max_overhang = 0.0;
+            };
+            struct PendingProvide {
+                    RID provider_rid;
+                    Ref<SceneryStreamingProvider> provider;
+                    Vector<ContentKind> kinds;
+                    Vector2i cell;
+                    std::array<Array, CONTENT_KIND_COUNT> items;
+                    float distance = 0.0;
+                    uint64_t revision = 0;
+            };
+            struct PendingWithdraw {
+                    RID provider_rid;
+                    Vector2i cell;
+                    uint64_t revision = 0;
+            };
 
             /// Longest visible range first, so the pieces a chunk wants at a given distance are
             /// always a prefix of its entries
@@ -115,6 +163,9 @@ namespace godot {
             /// nearest build is its last element and taking it costs nothing
             struct DistanceComparator {
                     bool operator()(const PendingBuild &p_left, const PendingBuild &p_right) const {
+                        return p_left.distance > p_right.distance;
+                    }
+                    bool operator()(const PendingProvide &p_left, const PendingProvide &p_right) const {
                         return p_left.distance > p_right.distance;
                     }
             };
@@ -148,6 +199,13 @@ namespace godot {
             /// back, so the pieces around the camera are built first
             Vector<PendingBuild> pending_builds;
             Vector<PendingClear> pending_clears;
+            HashMap<RID, Provider> providers;
+            std::array<Consumer, CONTENT_KIND_COUNT> consumers;
+            Vector<PendingProvide> planned_provides; // published by the worker
+            Vector<PendingWithdraw> planned_withdraws;
+            /// Taken over by the main thread, nearest provide last like pending_builds
+            Vector<PendingProvide> pending_provides;
+            Vector<PendingWithdraw> pending_withdraws;
             uint64_t plan_msec = 0;        // duration of the last planning pass
             int cleared_since_release = 0; // main thread only
             int applied_builds = 0;        // builds applied in the second being counted
@@ -169,6 +227,9 @@ namespace godot {
             void _process_streaming();
             void _apply_plan();
             void _set_building(bool p_building);
+            /// Hands each RID back to the consumer of its kind
+            void _release_content(const std::array<Vector<RID>, CONTENT_KIND_COUNT> &p_rids);
+
 
         protected:
             static void _bind_methods();
@@ -188,6 +249,14 @@ namespace godot {
             void stream_free(const RID &p_stream_rid);
             /* Every piece of the owner is built again from what it is built of now */
             void owner_rebuild(int p_owner);
+            /* A provider supplies the content of its cells into the scenario as the camera comes
+             * near them; freeing it lets go of everything it supplied */
+            RID provider_register(const Ref<SceneryStreamingProvider> &p_provider, const RID &p_scenario);
+            void provider_free(const RID &p_provider);
+            /* The server taking a kind of supplied content: adopt(item, scenario) -> RID makes it
+             * (registering its pieces), release(RID) frees it */
+            void content_set_consumer(
+                    SceneryStreamingProvider::ContentKind p_kind, const Callable &p_adopt, const Callable &p_release);
 
             /* Streaming builds and clears content on `process_frame`. Tearing a scenery down
              * frees the very RIDs it streams, and that teardown yields a frame for its budget -

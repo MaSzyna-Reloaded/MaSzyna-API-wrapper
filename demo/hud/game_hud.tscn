@@ -312,9 +312,12 @@ script = ExtResource("9_window")
 title = "Scenery Streaming"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
-[node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming" unique_id=1011989969 instance=ExtResource("21_streaming")]
-clip_contents = true
+[node name="SceneryStreamingScroll" type="ScrollContainer" parent="ControlWindows/SceneryStreaming"]
 layout_mode = 2
+
+[node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming/SceneryStreamingScroll" unique_id=1011989969 instance=ExtResource("21_streaming")]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="TrackAndTraction" type="Container" parent="ControlWindows" unique_id=609847833]
 top_level = true
@@ -329,9 +332,12 @@ script = ExtResource("9_window")
 title = "Track & Traction"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
-[node name="TrackTractionPanel" parent="ControlWindows/TrackAndTraction" unique_id=1011989970 instance=ExtResource("22_tracktrac")]
-clip_contents = true
+[node name="TrackTractionScroll" type="ScrollContainer" parent="ControlWindows/TrackAndTraction"]
 layout_mode = 2
+
+[node name="TrackTractionPanel" parent="ControlWindows/TrackAndTraction/TrackTractionScroll" unique_id=1011989970 instance=ExtResource("22_tracktrac")]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="ScenarioAndEvents" type="Container" parent="ControlWindows"]
 top_level = true
@@ -346,9 +352,12 @@ script = ExtResource("9_window")
 title = "Scenario and Events"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
-[node name="ScenarioEventsPanel" parent="ControlWindows/ScenarioAndEvents" instance=ExtResource("23_scenario_events")]
-clip_contents = true
+[node name="ScenarioEventsScroll" type="ScrollContainer" parent="ControlWindows/ScenarioAndEvents"]
 layout_mode = 2
+
+[node name="ScenarioEventsPanel" parent="ControlWindows/ScenarioAndEvents/ScenarioEventsScroll" instance=ExtResource("23_scenario_events")]
+layout_mode = 2
+size_flags_horizontal = 3
 
 [node name="WeatherAndTime" type="Container" parent="ControlWindows" unique_id=1426730518]
 top_level = true

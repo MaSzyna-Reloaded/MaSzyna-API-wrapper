@@ -3009,3 +3009,30 @@ lighting or the trainset.
   6.6 s -> 4.1 s headless, the build 4.4 s -> 2.1 s.
 * **Rule:** what a vehicle has only for being seen or heard is built when it comes within sight
   or earshot, not at load; a file's metadata is read off its header, not by loading the file.
+
+## 2026-10-02 - streaming hitches: materials and textures loaded on the main thread
+
+* **Symptom:** players report Braniewo dropping from 60 to 20 fps, and streaming "cutting" despite
+  `SceneryStreamingServer::BUDGET_MSEC` (4 ms) and the preload threads.
+* **What proved it:** a probe driving the camera at 25-30 m/s, `streaming_get_statistics()` each
+  second (main-thread time and the longest single piece per owner) on a real GPU, and the
+  material resolver timed per call, then `MaterialManager.get_material()` timed step by step:
+  single pieces took 85-169 ms (a track), 163 ms (a model) - the budget is checked between pieces,
+  so it cannot split one. A track's geometry is at most 2.8 ms with its textures loaded; the 163 ms
+  model was 160.6 ms of one material: reading the disk-cached material (up to 80 ms - its `.res`
+  carried the textures embedded) and then `MaszynaMaterialFactory.apply()` loading every texture
+  again (10-83 ms). The preload threads load only geometry; materials and textures are resolved
+  in the build, on the main thread. The game data here is on a spinning disk.
+* **Also measured:** at Braniewo station (`braniewo_szeroki.scn`) a steady ~30 fps with ~5400
+  draw calls, ~8400 objects and ~11 M triangles a frame, GPU ~32 ms - the steady drop is the
+  rendering load; the streaming adds the hitches on top.
+* **Fix (partial):** the material disk cache is gone - a material is always built from its `.mat`
+  (`MaterialManager.get_material()`). Not measured yet. Open: textures loaded on the streaming's
+  preload threads (`TODO.md`).
+* **Trap on the way:** `xvfb-run` does not hide Godot under Wayland - it ignores `DISPLAY` and
+  opens its window on the operator's desktop; Xvfb has no DRI3, so Vulkan cannot present there at
+  all. `gamescope --backend headless -- godot-double ...` (with `WAYLAND_DISPLAY` unset) renders on
+  the real GPU with no window.
+* **Rule:** a streamed piece's main-thread build creates only what needs the main thread - every
+  file it needs (model, material, texture) is read on the preload thread; a cache that is applied
+  over again saves nothing. A real-renderer run goes through `gamescope --backend headless`.

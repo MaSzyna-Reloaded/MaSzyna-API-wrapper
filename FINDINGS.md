@@ -15,6 +15,10 @@ anything. Open work belongs in `TODO.md`.
   power profile and build flags. *(09-22 GPU that never woke up)*
 * Measure by phase before restructuring: the visible loop is rarely the cost. *(09-22 sound
   system's per-frame cost)*
+* A streaming budget is checked between pieces: measure the longest single piece per owner
+  (`owner_max_msec`), not the total. A real-renderer run goes through `gamescope --backend
+  headless` - `xvfb-run` shows Godot on a Wayland desktop and has no DRI3 for Vulkan. *(10-02
+  streaming hitches)*
 * When a build or a code change "has no effect", prove that the binary running is the one built
   (mtime, md5), then read the cache file (`strings`, `.hash`) before any other hypothesis.
   *(09-21 release never unpacked; 09-20 low-poly interior)*
@@ -459,6 +463,8 @@ anything. Open work belongs in `TODO.md`.
 * Whatever reads the game directory and keeps the result - a memo, a material, a built vehicle -
   follows `GameDataServer.data_unload_requested`/`data_reload_requested` itself; a disk cache key
   names the game directory. *(09-30 track textures stayed after a game directory change)*
+* A streamed piece reads every file it needs (model, material, texture) on the preload thread;
+  the main thread only creates what has to be created there. *(10-02 streaming hitches)*
 * A vehicle's sound bank is built when the vehicle comes within earshot, not at load; a sound's
   length is read off its Ogg pages, never by loading the file. *(10-02 the Vehicles stage spent
   its time on sound banks nobody heard)*

@@ -433,6 +433,16 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `maszyna/vehicles/pantographs_from_model` (default true) turns that read off; once the data
   pack's FIZ has a pantograph section, the geometry comes from the FIZ and the E3D is not loaded
   at load at all.
+* **Textures loaded on the streaming's preload threads** (`docs/findings-archive.md`, 2026-10-02
+  streaming hitches): every owner's preload (`E3DRenderingServer::_stream_preload`, the terrain's
+  `_stream_preload`, a preload the tracks do not have yet) parses the `.mat` of each material its
+  build will resolve and loads all its textures (`_textures` and every random candidate) into
+  `MaterialManager`'s texture cache (a mutex around `_dds_cache`), holding them until the build -
+  the build on the main thread then only assembles the material. Measure before and after with the
+  Braniewo route probe under `gamescope --backend headless`. The disk cache removal (done) is not
+  measured yet either.
+* **Braniewo station renders ~5400 draw calls and ~11 M triangles a frame** (~30 fps on an
+  RX 580, GPU ~32 ms): the steady drop players report is the rendering load, not the streaming.
 * **One `SfxBank` per vehicle type** instead of one per vehicle: everything of a bank but its
   random choices is the type's (`MmdSoundBankInstancer`). Per vehicle are the sample picked of a
   `[a b c]` set (`random_choices`), each emitter's `pitch_variation` and the `start_fraction` of

@@ -55,9 +55,10 @@ const CABIN_BOUND_CEILING_RAISE:float = 1.8
 const RADIO_STOP_TRANSCRIPT:String = "!! RADIO-STOP !!"
 const RADIO_STOP_TRANSCRIPT_SECONDS:float = 10.0
 ## A vehicle to follow farther than this from the view is not flown to: the view jumps beside it, where
-## the crosshair puts it, and follows from there [m]
+## the crosshair puts it, and follows from there - one chunk of SceneryStreamingServer, past which the
+## world around it may not be built yet and the flight crosses nothing [m]
 const FOLLOW_JUMP_DISTANCE_SETTING:StringName = &"maszyna/camera/follow_jump_distance"
-const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 10000.0
+const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 1000.0
 
 func _ready() -> void:
     _auto_start_pending = auto_start and not start_vehicle_id

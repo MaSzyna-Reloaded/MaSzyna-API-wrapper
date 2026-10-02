@@ -10,14 +10,14 @@ const SETTLE_FRAMES:int = 4
 const TRACK_NAME:String = "player_cabin_test"
 const TRACK_LENGTH:float = 200.0
 const TRACK_OFFSET:float = 100.0
-## A track long enough for a vehicle past MaszynaPlayer's follow jump distance (10 km), and where the
-## vehicles stand on it: two within it, one 20 km off [m]
-const LONG_TRACK_LENGTH:float = 25000.0
+## A track long enough for a vehicle past MaszynaPlayer's follow jump distance (1 km), and where the
+## vehicles stand on it: two within it, one 3 km off [m]
+const LONG_TRACK_LENGTH:float = 4000.0
 const NEAR_OFFSET:float = 200.0
-const SECOND_OFFSET:float = 5200.0
-const FAR_OFFSET:float = 20200.0
+const SECOND_OFFSET:float = 700.0
+const FAR_OFFSET:float = 3700.0
 ## How high above the near vehicle the view stands before following - too far for a view [m]
-const VIEW_HEIGHT:float = 2000.0
+const VIEW_HEIGHT:float = 500.0
 ## Long enough for the following camera to have flown to its view (ExternalCamera3D.response 2/s) [s]
 const FLIGHT_TIME:float = 3.0
 ## A view stands within this of its vehicle [m]
@@ -119,3 +119,28 @@ func test_the_vehicle_followed_is_looked_at_from_its_view() -> void:
     assert_eq(_player.external_camera.global_transform,
             PlayerCameraServer.camera_get_show_transform(_far_vehicle.get_rid()),
             "a far one: the view jumps beside it, then flies to its view")
+
+
+## Followed from the cab of another vehicle, the one the player came from and left to its driver:
+## the view jumps beside it when far, and stands at its view after the flight
+func test_the_vehicle_left_is_followed_from_the_cab_of_another() -> void:
+    _track = build_track(TRACK_NAME, LONG_TRACK_LENGTH)
+    _vehicle = build_rail_vehicle("PlayerFollowLeft", TRACK_NAME, NEAR_OFFSET)
+    _second_vehicle = build_rail_vehicle("PlayerFollowEntered", TRACK_NAME, FAR_OFFSET)
+    _player = PLAYER_SCENE.instantiate()
+    _player.auto_start = false
+    add_child(_player)
+    await wait_idle_frames(SETTLE_FRAMES)
+    var left:RID = _vehicle.get_rid()
+    CabinSystem.vehicle_set_cabin_scene(left, _cabin_scene())
+    CabinSystem.vehicle_set_cabin_scene(_second_vehicle.get_rid(), _cabin_scene())
+    PlayerServer.player_take_over_vehicle(left)
+    PlayerServer.player_enter_vehicle(_second_vehicle.get_rid())
+
+    PlayerCameraServer.camera_set_target(left)
+    PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FOLLOW)
+    assert_eq(_player.external_camera.global_transform, PlayerCameraServer.camera_get_show_transform(left),
+            "far from the cab: the view jumps beside the vehicle left")
+    await wait_seconds(FLIGHT_TIME)
+    assert_true(_player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
+            "the vehicle left is followed from its view")

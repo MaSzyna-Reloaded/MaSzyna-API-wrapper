@@ -2,6 +2,6 @@
 extends MaszynaCompiledScenery
 class_name MaszynaCompiledSubscene
 
-## The subscene's terrain, chunked (SceneryTrianglesSink) - added to the scenery's sink wherever the
-## subscene is included
-@export var triangle_geometries:Array[MaszynaTrianglesChunkGeometry] = []
+## The subscene's triangles, one MaszynaTrianglesChunkGeometry file per chunk beside the cache entry
+## (SceneryTrianglesSink) - added to the scenery's sink wherever the subscene is included
+@export var triangle_chunk_paths:PackedStringArray = []

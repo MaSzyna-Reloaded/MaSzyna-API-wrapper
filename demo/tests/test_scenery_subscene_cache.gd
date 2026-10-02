@@ -54,7 +54,8 @@ func test_subscenes_are_cached_per_origin_and_match_in_place_parsing() -> void:
     assert_true(cached.cacheable)
 
 
-## The parse writes the terrain out chunk by chunk, beside the cache entry, and the scenery streams it
+## The parse writes the terrain out chunk by chunk, beside the cache entries of the scenery and of its
+## subscenes, and the scenery streams it
 ## from those files (ResourceLazyLoader), letting go of every one as it is freed
 func test_loaded_scenery_writes_its_terrain_chunks_as_files() -> void:
     var registered:int = ResourceLazyLoader.resource_get_statistics()["registered"]
@@ -67,7 +68,9 @@ func test_loaded_scenery_writes_its_terrain_chunks_as_files() -> void:
     for directory:String in DirAccess.get_directories_at(_cache_dir):
         if not _existing_directories.has(directory):
             chunk_files += DirAccess.get_files_at(_cache_dir.path_join(directory)).size()
-    assert_eq(chunk_files, 4, "one file per texture, cell and range")
+    # one file per texture, cell and range: the scenery's four, and each cached subscene's own - big.scm
+    # at the origin straddles four cells, at x = 100 two
+    assert_eq(chunk_files, 4 + 4 + 2, "one file per texture, cell and range")
     scenery.free()
     assert_eq(ResourceLazyLoader.resource_get_statistics()["registered"], registered, "chunks left registered")
 

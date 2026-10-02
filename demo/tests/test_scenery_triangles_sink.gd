@@ -174,3 +174,22 @@ func test_added_geometry_joins_the_chunk_of_its_texture_cell_and_range() -> void
     assert_eq(geometries.size(), 2, "another range is another chunk")
     assert_eq(geometries[0].range_max, 300.0)
     assert_eq(geometries[0].vertices.size(), 2 * 3 * 3)
+
+
+## A subscene's finished chunks join the scenery's sink file by file
+func test_finished_chunk_file_joins_another_sink() -> void:
+    var vertices:PackedVector3Array = PackedVector3Array([
+        Vector3(100, 0, 100), Vector3(100, 0, 200), Vector3(200, 0, 100),
+    ])
+    var normals:PackedVector3Array = PackedVector3Array([Vector3.UP, Vector3.UP, Vector3.UP])
+    var uvs:PackedVector2Array = PackedVector2Array([Vector2.ZERO, Vector2.RIGHT, Vector2.DOWN])
+    var subscene:SceneryTrianglesSink = SceneryTrianglesSink.create(DIRECTORY)
+    subscene.add_triangles("grass", vertices, normals, uvs, 0.0, 300.0)
+    var descriptors:Array = subscene.finish()
+    var scenery:SceneryTrianglesSink = SceneryTrianglesSink.create("")
+    scenery.add_triangles("grass", vertices, normals, uvs, 0.0, 300.0)
+    scenery.add_geometry_file(descriptors[0]["path"])
+    var geometries:Array[MaszynaTrianglesChunkGeometry] = scenery.get_geometries()
+    assert_eq(geometries.size(), 1, "the same texture, cell and range is one chunk")
+    assert_eq(geometries[0].vertices.size(), 2 * 3 * 3)
+

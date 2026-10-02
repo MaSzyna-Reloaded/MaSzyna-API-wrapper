@@ -327,6 +327,8 @@ anything. Open work belongs in `TODO.md`.
   that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
 
 ## Threads and teardown
+* Every sink of parsed geometry - a subscene's too - writes to a directory with a limit, and hands
+  its chunks on as files, never as a copy of everything. *(10-02 a subscene kept its triangles)*
 * An include placed thousands of times is parsed in place, not as a task (a task costs a context
   kept until its parent's merge); after a parse on many workers the allocator's free memory is
   given back (`ProcessMemory.release_unused()`). *(10-01 a task per include)*

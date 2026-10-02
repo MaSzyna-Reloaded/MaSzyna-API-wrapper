@@ -47,11 +47,13 @@ mouse_filter = 2
 script = ExtResource("game_hud")
 
 [node name="TopBar" type="PanelContainer" parent="." unique_id=702463713]
-layout_mode = 0
-offset_left = 10.0
-offset_top = 8.0
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
 theme = ExtResource("38_card_theme")
-theme_type_variation = &"FloatingChip"
+theme_type_variation = &"MenuBrow"
 script = ExtResource("8_top_bar")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="TopBar" unique_id=1628639189]
@@ -303,7 +305,7 @@ custom_minimum_size = Vector2(100, 50)
 clip_contents = true
 layout_mode = 0
 offset_left = 1252.0
-offset_top = 40.0
+offset_top = 8.0
 offset_right = 1604.0
 offset_bottom = 441.0
 script = ExtResource("9_window")
@@ -354,7 +356,7 @@ custom_minimum_size = Vector2(100, 50)
 clip_contents = true
 layout_mode = 0
 offset_left = 8.0
-offset_top = 40.0
+offset_top = 8.0
 offset_right = 1244.0
 offset_bottom = 310.0
 script = ExtResource("9_window")
@@ -371,7 +373,7 @@ custom_minimum_size = Vector2(100, 50)
 clip_contents = true
 layout_mode = 0
 offset_left = 1612.0
-offset_top = 40.0
+offset_top = 8.0
 offset_right = 1912.0
 offset_bottom = 730.0
 script = ExtResource("9_window")

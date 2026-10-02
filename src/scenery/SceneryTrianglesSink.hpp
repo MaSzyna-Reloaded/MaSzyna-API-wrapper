@@ -82,6 +82,8 @@ namespace godot {
                     const PackedVector2Array &p_uvs, float p_range_min, float p_range_max);
             /* Appends a whole chunk's geometry to the chunk of its texture, cell and range */
             void add_geometry(const Ref<MaszynaTrianglesChunkGeometry> &p_geometry);
+            /* add_geometry() of a chunk file another sink finished - read, added and let go of */
+            void add_geometry_file(const String &p_path);
             /* The chunks kept in memory, in the order they first appeared */
             TypedArray<MaszynaTrianglesChunkGeometry> get_geometries() const;
             /* Writes every chunk to <directory>/<index>.res and empties the sink; returns a Dictionary per

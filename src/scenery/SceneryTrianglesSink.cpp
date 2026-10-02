@@ -22,6 +22,7 @@ namespace godot {
                 D_METHOD("add_triangles", "texture", "vertices", "normals", "uvs", "range_min", "range_max"),
                 &SceneryTrianglesSink::add_triangles);
         ClassDB::bind_method(D_METHOD("add_geometry", "geometry"), &SceneryTrianglesSink::add_geometry);
+        ClassDB::bind_method(D_METHOD("add_geometry_file", "path"), &SceneryTrianglesSink::add_geometry_file);
         ClassDB::bind_method(D_METHOD("get_geometries"), &SceneryTrianglesSink::get_geometries);
         ClassDB::bind_method(D_METHOD("finish"), &SceneryTrianglesSink::finish);
     }
@@ -288,6 +289,13 @@ namespace godot {
         if (!directory.is_empty() && buffered_bytes > budget_bytes) {
             _spill();
         }
+    }
+
+    void SceneryTrianglesSink::add_geometry_file(const String &p_path) {
+        const Ref<MaszynaTrianglesChunkGeometry> geometry =
+                ResourceLoader::get_singleton()->load(p_path, "", ResourceLoader::CACHE_MODE_IGNORE);
+        ERR_FAIL_COND_MSG(geometry.is_null(), "Cannot read a terrain chunk: " + p_path);
+        add_geometry(geometry);
     }
 
     TypedArray<MaszynaTrianglesChunkGeometry> SceneryTrianglesSink::get_geometries() const {

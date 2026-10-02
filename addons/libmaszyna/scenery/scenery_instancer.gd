@@ -22,12 +22,15 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const CACHE_FORMAT_VERSION:int = 31
+const CACHE_FORMAT_VERSION:int = 32
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
 ## Cached subscenes nested deeper are parsed as part of their parent's cache entry
 const SUBSCENE_MAX_DEPTH:int = 2
+## Triangles a subscene keeps in memory before its largest chunks go to disk - subscenes are parsed
+## on every worker at once (SceneryTrianglesSink.BUDGET_BYTES is the scenery's own)
+const SUBSCENE_TRIANGLES_BUDGET_BYTES:int = 32 * 1024 * 1024
 ## Includes smaller than this are parsed in place of the include, not as a task of the queue, and
 ## read from disk once per parse (open_parser())
 const INLINE_INCLUDE_MAX_SIZE:int = 16384
@@ -581,33 +584,41 @@ func parse_subscene_task(
         cached.launchers.assign(compiled.launchers)
         cached.sounds.assign(compiled.sounds)
         cached.isolated_sections.assign(compiled.isolated_sections)
-        for geometry:MaszynaTrianglesChunkGeometry in compiled.triangle_geometries:
-            scenery_sink.add_geometry(geometry)
+        for chunk_path:String in compiled.triangle_chunk_paths:
+            scenery_sink.add_geometry_file(chunk_path)
         cached.dependencies = compiled.dependencies.duplicate(true)
         cached.objects = _instantiate_cached_nodes(compiled.nodes)
         return cached
 
     state["subscene_depth"] = int(state["subscene_depth"]) + 1
-    var subscene_sink:SceneryTrianglesSink = SceneryTrianglesSink.create("")
-    state["triangles_sink"] = subscene_sink
-    var context:MaszynaImporterContext = parse_file_task(filename, parameters, state, queue)
-    var geometries:Array[MaszynaTrianglesChunkGeometry] = subscene_sink.get_geometries()
-    for geometry:MaszynaTrianglesChunkGeometry in geometries:
-        scenery_sink.add_geometry(geometry)
-    if not context.cacheable:
-        return context
-
+    # one writer per cache entry and its chunk directory; the same subscene parsed twice at once
+    # (included twice at the same origin and rotation) keeps its second copy in memory, unsaved
     _saving_subscenes_mutex.lock()
     var is_saving:bool = _saving_subscenes.has(cache_path)
-    _saving_subscenes[cache_path] = true
+    if not is_saving:
+        _saving_subscenes[cache_path] = true
     _saving_subscenes_mutex.unlock()
+    # the subscene's triangles go to disk beside its cache entry as they are parsed, like the
+    # scenery's - kept whole in memory, the vegetation of a large scenery took gigabytes
+    var subscene_sink:SceneryTrianglesSink = SceneryTrianglesSink.create(
+        "" if is_saving else _cache.get_file_path(cache_path.get_basename()), SUBSCENE_TRIANGLES_BUDGET_BYTES
+    )
+    state["triangles_sink"] = subscene_sink
+    var context:MaszynaImporterContext = parse_file_task(filename, parameters, state, queue)
     if is_saving:
+        for geometry:MaszynaTrianglesChunkGeometry in subscene_sink.get_geometries():
+            scenery_sink.add_geometry(geometry)
         return context
 
-    var subscene := MaszynaCompiledSubscene.new()
-    subscene.triangle_geometries = geometries
-    if _compile_scenery(source_path, state_hash, context, context.objects, subscene):
-        _cache.set(cache_path, subscene)
+    var chunk_paths:PackedStringArray = []
+    for descriptor:Dictionary in subscene_sink.finish():
+        chunk_paths.append(descriptor["path"])
+        scenery_sink.add_geometry_file(descriptor["path"])
+    if context.cacheable:
+        var subscene := MaszynaCompiledSubscene.new()
+        subscene.triangle_chunk_paths = chunk_paths
+        if _compile_scenery(source_path, state_hash, context, context.objects, subscene):
+            _cache.set(cache_path, subscene)
     _saving_subscenes_mutex.lock()
     _saving_subscenes.erase(cache_path)
     _saving_subscenes_mutex.unlock()

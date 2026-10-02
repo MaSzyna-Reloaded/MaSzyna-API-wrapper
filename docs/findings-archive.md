@@ -2891,3 +2891,18 @@ lighting or the trainset.
 * **Rule:** no C++ iostreams in the extension - files through `FileAccess`, numbers through
   `String`; a crash of the shipped build only is read off its core, never guessed.
 
+## 2026-10-02 - a subscene kept its triangles in memory three times over
+
+* **Symptom:** Całkowo took 6.5 GB while its files were parsed, the loading screen at `tree.inc`.
+* **What proved it:** a synthetic scenery of 40 000 `tree.inc`/`grass.inc` includes in eight
+  vegetation files, parsed headless: included with a parameter (in the scenery's sink) the peak
+  (`VmHWM`) was +66 MB, included as subscenes (no parameters, >= 64 KB) +160 MB. A subscene had a
+  sink of its own without a directory or a limit, copied it out whole (`get_geometries()`) and
+  serialised the copy into its cache entry before handing it on - three copies, on every worker at
+  once. The same includes in the scenery file itself kept nothing (+48 MB for 30 000, all freed).
+* **Fix:** a subscene's sink writes to a directory beside its cache entry with a 32 MB limit
+  (`SUBSCENE_TRIANGLES_BUDGET_BYTES`); its cache entry keeps the chunk file paths, and the
+  scenery's sink takes them file by file (`SceneryTrianglesSink.add_geometry_file()`). Peak +80 MB.
+* **Rule:** every sink of parsed geometry has a directory and a limit, a subscene's too; geometry
+  moves between sinks as files, never as a copy of everything.
+

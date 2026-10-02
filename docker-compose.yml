@@ -93,8 +93,7 @@ services:
     image: jezsonic/build-tools:4.7.2.stable.linux.double
     container_name: style_check
     working_dir: /var/maszyna
-    # The image ships without LLVM; clang is needed for the compile database, clang-tidy and clang-format
-    entrypoint: /bin/bash -c "pacman -Sy --noconfirm --needed --quiet clang llvm-libs && make style-check"
+    entrypoint: /bin/bash -c "make style-check"
     volumes:
       - type: bind
         source: ./

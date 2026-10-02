@@ -1,5 +1,7 @@
 #!/bin/bash
 cd /var/maszyna || exit
+# cmake --build with the Makefile generator runs a single job unless told otherwise
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-$(nproc)}"
 while getopts a:p:t:u: flag
 do
     # shellcheck disable=SC2220
@@ -11,8 +13,16 @@ do
         *) echo "Invalid option"; exit 1;;
     esac
 done
+# The image's Godot is built with precision=double, godot-cpp's bundled extension_api.json is single
+echo "Dumping extension API from the image's Godot"
+mkdir -p build-api/dump && (cd build-api/dump && godot --headless --dump-extension-api) || exit 1
+# Replace only on change; a fresh mtime regenerates godot-cpp bindings and rebuilds the whole library
+cmp -s build-api/dump/extension_api.json build-api/extension_api.json || \
+    mv build-api/dump/extension_api.json build-api/extension_api.json
+godotcpp_common_args=(-DGODOTCPP_PRECISION=double -DGODOTCPP_CUSTOM_API_FILE=/var/maszyna/build-api/extension_api.json)
+
 echo "Building Dynamic-linked library for host platform"
-cmake -B build-host -DGODOTCPP_TARGET=template_debug || exit 1
+cmake -B build-host -DGODOTCPP_TARGET=template_debug "${godotcpp_common_args[@]}" || exit 1
 cmake --build build-host || exit 1
 if [ "$unit_tests" = "true" ]; then
     echo "Running unit tests..."
@@ -26,6 +36,7 @@ case $platform in
   "windows")
     cmake -B build-win64 \
       -DGODOTCPP_TARGET="$target" \
+      "${godotcpp_common_args[@]}" \
       -DGODOTCPP_PLATFORM=windows \
       -DCMAKE_SYSTEM_NAME=Windows \
       -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -34,14 +45,16 @@ case $platform in
     cmake --build build-win64 || exit 1 ;;
   "linux")
     cmake -B build-linux64 \
-      -DGODOTCPP_TARGET="$target" || exit 1
+      -DGODOTCPP_TARGET="$target" \
+      "${godotcpp_common_args[@]}" || exit 1
     cmake --build build-linux64 || exit 1 ;;
   "android")
     cmake -B build-android64 \
       -DGODOTCPP_PLATFORM=android \
       -DANDROID_NDK_ROOT=/usr/lib/android-sdk/ndk/28.1.13356709 \
       -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=24 \
-      -DGODOTCPP_TARGET="$target" || exit 1
+      -DGODOTCPP_TARGET="$target" \
+      "${godotcpp_common_args[@]}" || exit 1
     cmake --build build-android64 || exit 1 ;;
 esac
 

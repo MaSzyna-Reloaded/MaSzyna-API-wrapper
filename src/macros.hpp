@@ -118,11 +118,11 @@ namespace libmaszyna::internal {
 
         const godot::PackedStringArray prefix_words = p_prefix.split("_");
         const godot::PackedStringArray segment_words = p_segment.split("_");
-        int overlap = 0;
-        const int maximum_overlap = std::min(prefix_words.size(), segment_words.size());
-        for (int size = maximum_overlap; size > 0; --size) {
+        int64_t overlap = 0;
+        const int64_t maximum_overlap = std::min(prefix_words.size(), segment_words.size());
+        for (int64_t size = maximum_overlap; size > 0; --size) {
             bool matches = true;
-            for (int index = 0; index < size; ++index) {
+            for (int64_t index = 0; index < size; ++index) {
                 if (prefix_words[prefix_words.size() - size + index] != segment_words[index]) {
                     matches = false;
                     break;
@@ -135,7 +135,7 @@ namespace libmaszyna::internal {
         }
 
         godot::String result = p_prefix;
-        for (int index = overlap; index < segment_words.size(); ++index) {
+        for (int64_t index = overlap; index < segment_words.size(); ++index) {
             result += "_" + segment_words[index];
         }
         return result;

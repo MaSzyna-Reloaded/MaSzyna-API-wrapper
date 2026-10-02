@@ -9,6 +9,8 @@ const EP07_MMD:String = "dynamic/pkp/303e_v1/303e-ep-tv.mmd"
 ## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
+## The listener a vehicle's sound is built for once it is within earshot (TrainSoundSystem)
+const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
@@ -92,7 +94,18 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     if not rail_vehicle:
         return
     var controller:VehicleController = rail_vehicle.get_controller()
-    var running:SfxPlayer3D = rail_vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
+    # the sound is built once a listener is near the vehicle - on foot the player listens through
+    # the free camera
+    var player:MaszynaPlayer = PLAYER_SCENE.instantiate()
+    player.auto_start = false
+    add_child_autofree(player)
+    player.free_camera.global_position = rail_vehicle.global_position
+    var running:SfxPlayer3D = null
+    for i in range(40):
+        running = rail_vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
+        if running:
+            break
+        await wait_seconds(0.25)
     assert_not_null(running)
     if not running:
         return

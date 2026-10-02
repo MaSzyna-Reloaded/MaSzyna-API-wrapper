@@ -88,4 +88,8 @@ func _format_event(event: InputEvent) -> String:
         if key.keycode:
             return key.as_text_keycode()
         return key.as_text_physical_keycode()
+    # as_text() names the button on every pad ("Joypad Button 0 (Bottom Action, Sony Cross, ...)"),
+    # wider than the window, which cannot be narrower than its widest row
+    if event is InputEventJoypadButton:
+        return "Joypad Button %d" % (event as InputEventJoypadButton).button_index
     return event.as_text()

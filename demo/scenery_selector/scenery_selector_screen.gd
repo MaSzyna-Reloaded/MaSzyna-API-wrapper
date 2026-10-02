@@ -334,7 +334,7 @@ func _show_trainset(index: int) -> void:
         _vehicles.assign(trainset.vehicles)
         for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
             tiles.append(TileGrid.Tile.new(
-                vehicle.data_path, vehicle.file_name, vehicle.skin,
+                vehicle.data_path, vehicle.file_name, vehicle.skin, vehicle.train_id,
                 "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
             ))
     %TrainsetGrid.set_tiles(tiles)

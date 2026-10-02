@@ -31,7 +31,7 @@ func test_ep07_mmd_builds_positioned_running_sound_events() -> void:
     add_child_autofree(vehicle)
     var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, UserSettings.get_maszyna_game_dir().path_join(EP07_MMD), {}, diagnostics)
+            vehicle, UserSettings.get_maszyna_game_dir().path_join(EP07_MMD), {}, {}, diagnostics)
 
     var running:SfxPlayer3D = vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
     assert_not_null(running, "EP07 should get its own running sound player")

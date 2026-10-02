@@ -7,6 +7,8 @@ class_name MmdImportContext
 var base_dir:String = ""
 var include_depth:int = 0
 var cab_number:int = 1
+## The (pN) the vehicle's own MMD is read with (MmdCabinInstancer.vehicle_parameters())
+var parameters:Dictionary = {}
 
 ## Random-file-set `include [a.inc b.inc] end` choices, keyed by "source_file:line" of the
 ## include directive - owned by the caller (MaszynaDynamicTrainCabin) and passed back in on every

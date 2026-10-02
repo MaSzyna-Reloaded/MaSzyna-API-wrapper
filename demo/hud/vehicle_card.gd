@@ -78,8 +78,9 @@ func _show_trainset() -> void:
         if not trainset_node:
             continue
         _trainset.append(trainset_vehicle)
+        var vehicle_name:String = VehicleServer.vehicle_get_name(trainset_vehicle)
         tiles.append(TileGrid.Tile.new(trainset_node.data_path, trainset_node.file_name, trainset_node.skin,
-                "%s (%s)" % [VehicleServer.vehicle_get_name(trainset_vehicle), trainset_node.data_path.get_file()]))
+                vehicle_name, "%s (%s)" % [vehicle_name, trainset_node.data_path.get_file()]))
     %Trainset.set_tiles(tiles)
 
 

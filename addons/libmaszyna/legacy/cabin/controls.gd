@@ -25,9 +25,9 @@ var _targets:Dictionary[StringName, CabinState.Target] = {}
 
 
 ## The controls of the cab the MMD defines as `cab` (1, 0, or -1 for the rear one)
-static func from_mmd(cab:int, abs_mmd_path:String) -> LegacyCabinControls:
+static func from_mmd(cab:int, abs_mmd_path:String, parameters:Dictionary) -> LegacyCabinControls:
     # Train.cpp:8684 (InitializeCab) - the rear cab is cab2definition:
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(abs_mmd_path, 2 if cab < 0 else cab, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(abs_mmd_path, parameters, 2 if cab < 0 else cab, {})
     return from_definition(definition)
 
 

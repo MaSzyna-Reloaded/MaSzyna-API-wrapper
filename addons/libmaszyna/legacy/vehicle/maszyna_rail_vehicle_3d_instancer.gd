@@ -55,7 +55,8 @@ const MASZYNA_VEHICLE_FRAME:Transform3D = Transform3D(Basis(Vector3.UP, PI), Vec
 ## Reads what the vehicle's MMD says it is built from. This is the expensive half - every call
 ## opens and re-parses the MMD and loads the exterior model - and its result is what
 ## MaszynaRailVehicle3DManager caches.
-static func read_structure(data_path:String, file_name:String, skin:String) -> MaszynaVehicleStructure:
+static func read_structure(
+        data_path:String, file_name:String, skin:String, vehicle_name:String) -> MaszynaVehicleStructure:
     if not data_path or not file_name:
         return null
 
@@ -66,8 +67,10 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> M
     # (e.g. "/dynamic/pkp/ep09_v1/") for exactly this reason. Normalize here so operators don't
     # need to know about this quirk.
     var normalized_data_path:String = data_path if data_path.begins_with("/") else "/" + data_path
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_mmd_path:String = normalized_data_path.trim_prefix("/").path_join(file_name + ".mmd")
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_mmd_path))
+    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_name, file_name, skin)
 
     var structure := MaszynaVehicleStructure.new()
     structure.data_path = normalized_data_path
@@ -79,28 +82,28 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> M
     # against real data: dynamic/pkp/st44_v2's body model isn't named after its .fiz/.mmd base) -
     # it comes from the MMD's own top-level "models:" line. Fall back to file_name only if that
     # can't be read, rather than silently building a vehicle with no model at all.
-    var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
+    var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path, parameters)
     if not body_model_filename:
         body_model_filename = file_name
-    appearance.model_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, body_model_filename)
+    appearance.model_filename = body_model_filename
 
-    var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path)
+    var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path, parameters)
     if lowpoly_filename:
-        appearance.low_poly_model_filename = MmdCabinInstancer.resolve_model_case(
-                normalized_data_path, lowpoly_filename)
+        appearance.low_poly_model_filename = lowpoly_filename
 
-    structure.load_models = MmdCabinInstancer.parse_loads(abs_mmd_path)
+    appearance.attachment_model_filenames = MmdCabinInstancer.parse_attachments(abs_mmd_path, parameters)
+
+    structure.load_models = MmdCabinInstancer.parse_loads(abs_mmd_path, parameters)
     var passengers_filename:String = structure.load_models.get("passengers", "")
     if passengers_filename:
-        appearance.passengers_model_filename = MmdCabinInstancer.resolve_model_case(
-                normalized_data_path, passengers_filename)
+        appearance.passengers_model_filename = passengers_filename
 
     appearance.skins = PackedStringArray(MmdCabinInstancer.resolve_skins(normalized_data_path, skin))
-    appearance.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
+    appearance.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path, parameters)
     var model:E3DModel = E3DModelManager.load_model(normalized_data_path, appearance.model_filename)
     if model:
-        _resolve_parts(appearance, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path),
-                MmdCabinInstancer.parse_mirror_names(abs_mmd_path))
+        _resolve_parts(appearance, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_mirror_names(abs_mmd_path, parameters))
     structure.appearance = appearance
     structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     return structure
@@ -113,8 +116,9 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> M
 ## an empty vehicle first; the vehicle's handle exists as soon as it has entered. Returns the parts
 ## built, all internal children of `vehicle`.
 static func build_into(
-        vehicle:RailVehicle3D, structure:MaszynaVehicleStructure, vehicle_id:String, initial_velocity:float,
-        driver_type:VehicleController.DriverType, load_name:String, load_amount:float) -> Array[Node]:
+        vehicle:RailVehicle3D, structure:MaszynaVehicleStructure, skin:String, vehicle_id:String,
+        initial_velocity:float, driver_type:VehicleController.DriverType, load_name:String,
+        load_amount:float) -> Array[Node]:
     var physics := RailVehiclePhysicsNode.new()
     physics.name = PHYSICS_NODE_NAME
     physics.controller = FizVehicleBuilder.build_description(structure.data_path, structure.file_name)
@@ -149,11 +153,14 @@ static func build_into(
         return parts
     CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
 
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(structure.data_path)
-            .path_join(structure.file_name + ".mmd"))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_mmd_path:String = (
+        structure.data_path.trim_prefix("/").path_join(structure.file_name + ".mmd")
+    )
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_mmd_path))
     var sound_diagnostics:Array[Dictionary] = []
-    parts.append_array(MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, {}, sound_diagnostics))
+    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_id, structure.file_name, skin)
+    parts.append_array(MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, parameters, {}, sound_diagnostics))
     for diagnostic:Dictionary in sound_diagnostics:
         if not diagnostic["severity"] == "info":
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
@@ -170,20 +177,24 @@ static func _load_model_filename(structure:MaszynaVehicleStructure, load_name:St
         return ""
     var override:String = structure.load_models.get(load_name.to_lower(), "")
     if override:
-        return MmdCabinInstancer.resolve_model_case(structure.data_path, override)
-    var specialized:String = MmdCabinInstancer.resolve_model_case(
-            structure.data_path, "%s_%s" % [structure.file_name, load_name])
+        return override
+    var specialized:String = "%s_%s" % [structure.file_name, load_name]
     if _model_exists(structure.data_path, specialized):
         return specialized
-    var generic:String = MmdCabinInstancer.resolve_model_case(structure.data_path, load_name)
+    var generic:String = load_name
     return generic if _model_exists(structure.data_path, generic) else ""
 
 
 static func _model_exists(data_path:String, relpath:String) -> bool:
     if not relpath:
         return false
-    return FileAccess.file_exists(
-            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(relpath + ".e3d"))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_base_path:String = data_path.trim_prefix("/").path_join(relpath)
+    var e3d_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".e3d")
+    if FileAccess.file_exists(game_dir.path_join(e3d_path)):
+        return true
+    var t3d_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".t3d")
+    return FileAccess.file_exists(game_dir.path_join(t3d_path))
 
 
 ## FIZ Dimensions: the vehicle's origin lies on the rail level, so the box is lifted by half of

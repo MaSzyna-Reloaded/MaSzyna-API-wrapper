@@ -29,6 +29,7 @@ namespace godot {
             String model_filename;
             String low_poly_model_filename;
             String passengers_model_filename;
+            PackedStringArray attachment_model_filenames;
             PackedStringArray skins;
             Transform3D model_transform;
             String front_bogie;
@@ -60,6 +61,10 @@ namespace godot {
             String get_low_poly_model_filename() const;
             void set_passengers_model_filename(const String &p_value);
             String get_passengers_model_filename() const;
+            /* Models drawn with the exterior, in its frame and with its skins (attachments:,
+             * DynObj.cpp:5384) */
+            void set_attachment_model_filenames(const PackedStringArray &p_value);
+            PackedStringArray get_attachment_model_filenames() const;
             void set_skins(const PackedStringArray &p_value);
             PackedStringArray get_skins() const;
             /* Where every model of the vehicle sits in the vehicle's own frame */

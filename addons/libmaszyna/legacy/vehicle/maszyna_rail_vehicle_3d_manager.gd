@@ -55,16 +55,21 @@ func clear_cache() -> void:
     _cache.clear()
 
 
-func _make_cache_path(normalized_data_path:String, file_name:String, skin:String) -> String:
-    return normalized_data_path.path_join("%s_%s.res" % [file_name, skin.md5_text()])
+## The structure of a vehicle type and skin; of the vehicle itself when its MMD names (p1), the
+## vehicle's own name (DynObj.cpp:5263)
+func _make_cache_path(
+        normalized_data_path:String, file_name:String, skin:String, vehicle_name:String,
+        abs_mmd_path:String) -> String:
+    var variant:String = skin
+    if MmdCabinInstancer.names_vehicle(abs_mmd_path):
+        variant += "|" + vehicle_name
+    return normalized_data_path.path_join("%s_%s.res" % [file_name, variant.md5_text()])
 
 
-func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
+func _make_cache_hash(abs_mmd_path:String) -> String:
     # Only the .mmd's own mtime is checked - not every .e3d/.fiz file it transitively
     # references - matching FizVehicleBuilder._make_cache_hash()'s same simplification
     # for FIZ `include`s.
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
     # The hash cannot see changes to MaszynaRailVehicle3DInstancer's own code - bump this tag
     # whenever that code changes the cached structure. v6: MaSzyna->Godot vehicle-frame
     # conversion applied to every vehicle model and the cab. v12: LowPolyInterior carries no
@@ -76,8 +81,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # so a vehicle can be drawn with the cargo the scenery gave it. v19: spring brake, line breaker and cab gauge
     # fixes of 2026-09-24 (catalog entries, component defaults) - bumped on request. v21: the
     # mirror submodels of `animmirrorprefix:` and the cab's mirrors_sw. v23: the models and the
-    # submodels that move are a RailVehicleAppearance, the cab carries the vehicle frame.
-    return ("structure-v23:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # submodels that move are a RailVehicleAppearance, the cab carries the vehicle frame. v24: the
+    # MMD is read with the vehicle's (p1)-(p3), SN61's body model was "none"; attachments.
+    return ("structure-v24:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Builds the vehicle of data_path/file_name/skin into `vehicle` (in the tree), returning its
@@ -92,15 +98,18 @@ func build_into(
         return parts
 
     var normalized_data_path:String = data_path if data_path.begins_with("/") else "/" + data_path
-    var cache_path:String = _make_cache_path(normalized_data_path, file_name, skin)
-    var cache_hash:String = _make_cache_hash(normalized_data_path, file_name)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = normalized_data_path.trim_prefix("/").path_join(file_name + ".mmd")
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
+    var cache_path:String = _make_cache_path(normalized_data_path, file_name, skin, vehicle_id, abs_mmd_path)
+    var cache_hash:String = _make_cache_hash(abs_mmd_path)
 
     var structure:MaszynaVehicleStructure = _cache.get(cache_path, cache_hash) as MaszynaVehicleStructure
     if not structure:
-        structure = MaszynaRailVehicle3DInstancer.read_structure(data_path, file_name, skin)
+        structure = MaszynaRailVehicle3DInstancer.read_structure(data_path, file_name, skin, vehicle_id)
         if not structure:
             return parts
         _cache.set(cache_path, structure, cache_hash)
 
     return MaszynaRailVehicle3DInstancer.build_into(
-            vehicle, structure, vehicle_id, initial_velocity, driver_type, load_name, load_amount)
+            vehicle, structure, skin, vehicle_id, initial_velocity, driver_type, load_name, load_amount)

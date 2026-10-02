@@ -179,8 +179,9 @@ static func _make_cache_hash(fiz_path: String) -> String:
 ## E3DModelManager.load_model() has, and for the same reason: a scenery repeats the same file
 ## across many trainset entries, and parsing it is the expensive part.
 static func build_description(data_path: String, fiz_filename: String) -> VehicleController:
-    return build_description_at(
-            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = data_path.path_join(fiz_filename + ".fiz")
+    return build_description_at(game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path)))
 
 
 static func build_description_at(fiz_path: String) -> VehicleController:
@@ -315,7 +316,7 @@ static func _parse_file(
                 var include_params: Dictionary = {}
                 for i in range(1, include_tokens.size()):
                     include_params["p%d" % i] = include_tokens[i]
-                var include_path: String = dir.path_join(include_filename)
+                var include_path: String = dir.path_join(MaszynaDataPath.resolve(dir, include_filename))
                 _parse_file(include_path, include_path.get_base_dir(), context, table_state, include_params)
             continue
         if first_token == _INCLUDE_END_KEYWORD:

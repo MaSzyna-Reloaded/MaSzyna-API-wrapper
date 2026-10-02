@@ -38,16 +38,19 @@ class Tile:
     var data_path: String
     var file_name: String
     var skin: String
+    ## The vehicle's own name, which its MMD may name as (p1)
+    var vehicle_name: String
     var tooltip: String
     var caption: String
 
     func _init(
-        p_data_path: String, p_file_name: String, p_skin: String,
+        p_data_path: String, p_file_name: String, p_skin: String, p_vehicle_name: String,
         p_tooltip: String = "", p_caption: String = ""
     ) -> void:
         data_path = p_data_path
         file_name = p_file_name
         skin = p_skin
+        vehicle_name = p_vehicle_name
         tooltip = p_tooltip
         caption = p_caption
 
@@ -323,7 +326,7 @@ func _create_placeholder(size: Vector2) -> ColorRect:
 func _load_profile(preview: TextureButton, tile: Tile) -> void:
     # nothing of the button is drawn while it has no texture - the placeholder is what shows
     var profile: Texture2D = await MaszynaVehicleProfileManager.get_profile(
-        tile.data_path, tile.file_name, tile.skin
+        tile.data_path, tile.file_name, tile.skin, tile.vehicle_name
     )
     if not is_instance_valid(preview):
         return

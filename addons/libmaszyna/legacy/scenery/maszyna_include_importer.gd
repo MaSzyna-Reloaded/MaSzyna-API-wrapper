@@ -42,42 +42,8 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         return []
 
 
-## Include path relative to scenery/, as it exists on disk. Original assets assume Windows'
-## path separators ("mieszkalne\blokWL.inc") and its case-insensitive filesystem (e.g. .scm files
-## referencing "EST-bramka770.inc" when the file on disk is "est-bramka770.inc") - separators are
-## normalized and a case-insensitive lookup is the fallback; returns the normalized filename when
-## nothing matches. Also used by SceneryInstancer's include prescan.
+## Include path relative to scenery/, as it exists on disk. Also used by SceneryInstancer's
+## include prescan.
 func resolve_filename(filename: String) -> String:
-    var relative_path: String = filename.replace("\\", "/")
     var scenery_dir: String = UserSettings.get_maszyna_game_dir().path_join("scenery")
-    if FileAccess.file_exists(scenery_dir.path_join(relative_path)):
-        return relative_path
-    var resolved_path: String = _find_case_insensitive(scenery_dir, relative_path)
-    return resolved_path if resolved_path else relative_path
-
-
-## Original MaSzyna assets assume a case-insensitive filesystem. Walks p_relative_path segment by
-## segment under p_base_dir, matching each against the actual directory listing case-insensitively,
-## and returns the path (relative to p_base_dir) as it actually exists on disk, or "" if no match.
-func _find_case_insensitive(base_dir: String, relative_path: String) -> String:
-    var segments = relative_path.split("/")
-    var current_dir = base_dir
-    var resolved_segments: Array[String] = []
-    for segment in segments:
-        var dir = DirAccess.open(current_dir)
-        if not dir:
-            return ""
-        var match_name = ""
-        dir.list_dir_begin()
-        var entry = dir.get_next()
-        while entry:
-            if entry.to_lower() == segment.to_lower():
-                match_name = entry
-                break
-            entry = dir.get_next()
-        dir.list_dir_end()
-        if not match_name:
-            return ""
-        resolved_segments.append(match_name)
-        current_dir = current_dir.path_join(match_name)
-    return "/".join(resolved_segments)
+    return MaszynaDataPath.resolve(scenery_dir, filename)

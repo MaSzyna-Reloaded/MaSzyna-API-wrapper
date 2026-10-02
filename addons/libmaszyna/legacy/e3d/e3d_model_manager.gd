@@ -33,11 +33,16 @@ func _make_cache_hash(source_abs_path:String) -> String:
 
 func load_model(data_path:String, filename: String) -> E3DModel:
     var output:E3DModel
-    var base_path:String = UserSettings.get_maszyna_game_dir().path_join(data_path.path_join(filename))
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_base_path:String = data_path.trim_prefix("/").path_join(filename)
     # the binary model first, the text one when there is none (MdlMngr.cpp:144 find_on_disk)
-    var path:String = base_path + ".e3d"
-    if not FileAccess.file_exists(path) and FileAccess.file_exists(base_path + ".t3d"):
-        path = base_path + ".t3d"
+    var relative_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".e3d")
+    var path:String = game_dir.path_join(relative_path)
+    if not FileAccess.file_exists(path):
+        relative_path = MaszynaDataPath.resolve(game_dir, relative_base_path + ".t3d")
+        var t3d_path:String = game_dir.path_join(relative_path)
+        if FileAccess.file_exists(t3d_path):
+            path = t3d_path
 
     # check users cache
 

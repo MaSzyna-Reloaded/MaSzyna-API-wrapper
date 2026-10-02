@@ -531,7 +531,8 @@ static func _get_cache_path(source_path:String, parameters_hash:String) -> Strin
 
 
 static func _get_source_path(filename:String) -> String:
-    return UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename).simplify_path()
+    var scenery_dir:String = UserSettings.get_maszyna_game_dir().path_join("scenery")
+    return scenery_dir.path_join(MaszynaDataPath.resolve(scenery_dir, filename)).simplify_path()
 
 
 func scenery_exists(filename: String):

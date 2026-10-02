@@ -39,7 +39,7 @@ func test_the_caption_is_read_beside_its_sound_wherever_it_is() -> void:
     file.store_string("[0][30]EX6435 odjazd.")
     file.close()
 
-    var transcript:Transcript = MaszynaLegacySoundCaption.from_sound_file(directory.path_join("ex6435radio"))
+    var transcript:Transcript = MaszynaLegacySoundCaption.from_sound_file(directory.path_join("EX6435RADIO"))
 
     DirAccess.remove_absolute(caption)
     DirAccess.remove_absolute(directory)

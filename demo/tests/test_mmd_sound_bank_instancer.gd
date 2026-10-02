@@ -49,7 +49,7 @@ func test_build_creates_independent_exterior_and_cabin_banks() -> void:
     add_child(vehicle)
     var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), {}, diagnostics)
+            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), {}, {}, diagnostics)
 
     var exterior:SfxPlayer3D = vehicle.get_node("ExteriorSfxPlayer3D") as SfxPlayer3D
     var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
@@ -74,7 +74,7 @@ func test_tachoclock_builds_one_cabin_event_with_speed_chunks() -> void:
     add_child(vehicle)
     var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), {}, diagnostics)
+            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), {}, {}, diagnostics)
 
     var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
     var event:SfxEvent = cabin.bank.get_event(&"tachoclock")
@@ -117,7 +117,7 @@ func test_brake_sounds_are_built_with_their_bookends_chunks_and_fallbacks() -> v
     add_child_autofree(vehicle)
     var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, ProjectSettings.globalize_path("res://tests/fixtures/test_brake_sound.mmd"), {}, diagnostics)
+            vehicle, ProjectSettings.globalize_path("res://tests/fixtures/test_brake_sound.mmd"), {}, {}, diagnostics)
     var exterior:SfxPlayer3D = vehicle.get_node("ExteriorSfxPlayer3D") as SfxPlayer3D
     var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
 

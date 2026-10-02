@@ -141,7 +141,8 @@ func get_source(template_name:String) -> SmokeSource:
     if _sources.has(template_name):
         return _sources[template_name]
 
-    var path:String = UserSettings.get_maszyna_game_dir().path_join("data").path_join(template_name + ".txt")
+    var data_dir:String = UserSettings.get_maszyna_game_dir().path_join("data")
+    var path:String = data_dir.path_join(MaszynaDataPath.resolve(data_dir, template_name + ".txt"))
     var source:SmokeSource = parse_file(path)
     _sources[template_name] = source
     return source

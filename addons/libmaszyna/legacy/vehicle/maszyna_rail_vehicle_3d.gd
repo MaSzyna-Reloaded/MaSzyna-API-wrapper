@@ -165,7 +165,7 @@ func _free_parts() -> void:
 func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
     if not get_rid() == vehicle:
         return
-    CabinSystem.vehicle_attach_cab_logic(vehicle, LegacyCabinLogic.from_mmd(data_path, file_name) if driven else null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, LegacyCabinLogic.from_mmd(data_path, file_name, skin, vehicle_id) if driven else null)
 
 
 func _on_vehicle_model_built(vehicle:RID) -> void:

@@ -4,13 +4,13 @@ const FIXTURE_PATH := "res://tests/fixtures/test_cabin.mmd"
 
 
 func test_parse_body_model_reads_top_level_models_key():
-    assert_eq(MmdCabinInstancer.parse_body_model(FIXTURE_PATH), "test_body")
+    assert_eq(MmdCabinInstancer.parse_body_model(FIXTURE_PATH, {}), "test_body")
 
 
 ## The passenger model is one entry of the `loads:` block, not a thing of its own: a vehicle's
 ## passengers are cargo as far as the MMD is concerned, which is why they are read from here.
 func test_parse_loads_reads_every_cargo_model_including_the_passengers():
-    var loads:Dictionary[String, String] = MmdCabinInstancer.parse_loads(FIXTURE_PATH)
+    var loads:Dictionary[String, String] = MmdCabinInstancer.parse_loads(FIXTURE_PATH, {})
     assert_eq(loads.get("passengers", ""), "loads/test_passengers")
 
 
@@ -42,7 +42,7 @@ func test_resolve_skins_preserves_explicit_slot_list():
 
 
 func test_cab1_bounds_and_driver_position():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     assert_eq(definition.cab_number, 1)
     assert_eq(definition.bounds_min, Vector3(-1.0, 1.0, -2.0))
     assert_eq(definition.bounds_max, Vector3(1.0, 2.0, -1.0))
@@ -51,7 +51,7 @@ func test_cab1_bounds_and_driver_position():
 
 
 func test_camera_shake_parameters_are_read_from_mmd_preamble():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     assert_almost_eq(definition.shake_spring_stiffness, 200.0, 0.001)
     assert_almost_eq(definition.shake_spring_damping, 0.02, 0.001)
     assert_eq(definition.shake_jolt_scale, Vector3(0.2, 0.2, 0.03))
@@ -63,19 +63,19 @@ func test_camera_shake_parameters_are_read_from_mmd_preamble():
 
 
 func test_cab2_does_not_leak_cab1_driver_position():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 2, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 2, {})
     assert_eq(definition.cab_number, 2)
     assert_eq(definition.driver_pos, Vector3(-0.5, 3.0, -3.0))
 
 
 func test_instruments_are_shared_between_cabs():
-    var cab1:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
-    var cab2:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 2, {})
+    var cab1:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
+    var cab2:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 2, {})
     assert_eq(cab1.instruments.size(), cab2.instruments.size(), "instrument list is shared, not per-cab")
 
 
 func test_plain_form_instrument_is_parsed():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var mainctrl:MmdInstrumentDescriptor = _find(definition, "mainctrl")
     assert_not_null(mainctrl)
     assert_eq(mainctrl.submodel_name, "nastawnik")
@@ -85,14 +85,14 @@ func test_plain_form_instrument_is_parsed():
 
 
 func test_colon_glued_label_and_value_are_split():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var dirkey:MmdInstrumentDescriptor = _find(definition, "dirkey")
     assert_not_null(dirkey, "dirkey:kier (no space after colon) should still parse")
     assert_eq(dirkey.submodel_name, "kier")
 
 
 func test_block_form_instrument_captures_button_type():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var brakectrl:MmdInstrumentDescriptor = _find(definition, "brakectrl")
     assert_not_null(brakectrl)
     assert_eq(brakectrl.submodel_name, "zasadniczy")
@@ -100,7 +100,7 @@ func test_block_form_instrument_captures_button_type():
 
 
 func test_line_and_block_comments_are_stripped():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     # If comments leaked into the token stream, "security_reset_bt" (the label right after the
     # block comment) would either be missing or have a garbled submodel_name.
     var security:MmdInstrumentDescriptor = _find(definition, "security_reset_bt")
@@ -111,14 +111,14 @@ func test_line_and_block_comments_are_stripped():
 # a label that lost its colon (dynamic/pkp/e186_v2/base.mmd.inc:210) is passed over whole, as the
 # original passes over tokens it does not know - its block must not swallow the controls after it
 func test_a_block_without_a_label_is_passed_over():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     assert_null(_find(definition, "soundinc"))
     assert_eq(_find(definition, "radiostop_sw").submodel_name, "radio_rs")
     assert_eq(_find(definition, "battery_sw").submodel_name, "bat")
 
 
 func test_duplicate_labels_are_preserved_in_order():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var tachometers:Array[MmdInstrumentDescriptor] = []
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if descriptor.label == "tachometer":
@@ -129,7 +129,7 @@ func test_duplicate_labels_are_preserved_in_order():
 
 
 func test_unrecognized_label_does_not_desync_following_labels():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var unknown:MmdInstrumentDescriptor = _find(definition, "unknownlabel")
     assert_not_null(unknown)
     # If "unknownlabel"'s 5 tokens were misconsumed, the include right after it would desync too.
@@ -138,7 +138,7 @@ func test_unrecognized_label_does_not_desync_following_labels():
 
 
 func test_indicator_light_label_is_parsed_as_bare_submodel_name():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var indicator:MmdInstrumentDescriptor = _find(definition, "i-security_aware")
     assert_not_null(indicator)
     assert_eq(indicator.submodel_name, "czuwak_lamp")
@@ -150,7 +150,7 @@ func test_indicator_light_label_is_parsed_as_bare_submodel_name():
 
 
 func test_clock_type_does_not_desync_following_indicator_labels():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     assert_not_null(_find(definition, "i-security_aware"))
     assert_not_null(_find(definition, "i-cablight"))
     assert_not_null(_find(definition, "i-instrumentlight"))
@@ -160,7 +160,7 @@ func test_block_form_indicator_light_reads_submodel_from_inside_the_block():
     # confirmed real (dynamic/pkp/su45_v2/301d.mmd): "i-security_cabsignal: { i-shp soundinc:
     # ... sounddec: ... }" - the submodel name is the block's FIRST token, not a token before "{"
     # (unlike every other block-form instrument label).
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var indicator:MmdInstrumentDescriptor = _find(definition, "i-security_cabsignal")
     assert_not_null(indicator)
     assert_eq(indicator.submodel_name, "i-shp")
@@ -171,7 +171,7 @@ func test_block_form_indicator_light_reads_submodel_from_inside_the_block():
 
 
 func test_newly_catalogued_labels_parse_and_do_not_desync_the_include_that_follows():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     for label:String in ["battery_sw", "converter_sw", "compressor_sw", "radiochannel_sw", "radiochannelnext_sw", "radiochannelprev_sw", "pantfront_sw", "distcounter", "hvcurrent1"]:
         assert_not_null(_find(definition, label), label)
     var radio_indicator:MmdInstrumentDescriptor = _find(definition, "i-radio")
@@ -183,7 +183,7 @@ func test_newly_catalogued_labels_parse_and_do_not_desync_the_include_that_follo
 
 
 func test_include_substitutes_positional_parameter():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")
     assert_not_null(radio)
     assert_eq(radio.submodel_name, "radio_antenna")
@@ -191,8 +191,8 @@ func test_include_substitutes_positional_parameter():
 
 func test_random_include_choice_is_persisted_across_reparse():
     var random_choices:Dictionary = {}
-    var first:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
-    var second:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
+    var first:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, random_choices)
+    var second:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, random_choices)
     var whistle_first:MmdInstrumentDescriptor = _find(first, "whistle_bt")
     var whistle_second:MmdInstrumentDescriptor = _find(second, "whistle_bt")
     assert_not_null(whistle_first)
@@ -200,13 +200,13 @@ func test_random_include_choice_is_persisted_across_reparse():
 
 
 func test_cab0_definition_ends_the_instrument_section():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         assert_ne(descriptor.label, "driver0pos", "cab0's own fields must not leak in as an instrument")
 
 
 func test_bare_filename_sound_fields_are_parsed_and_extension_stripped():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var brakectrl:MmdInstrumentDescriptor = _find(definition, "brakectrl")
     assert_not_null(brakectrl)
     assert_eq(brakectrl.sound_increase, "brake_inc")
@@ -216,7 +216,7 @@ func test_bare_filename_sound_fields_are_parsed_and_extension_stripped():
 
 
 func test_numbered_sound_position_fields_are_parsed():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var main_on:MmdInstrumentDescriptor = _find(definition, "main_on_bt")
     assert_not_null(main_on)
     assert_eq(main_on.sound_positions.get(1), "click_pos1")
@@ -224,7 +224,7 @@ func test_numbered_sound_position_fields_are_parsed():
 
 
 func test_bracketed_random_sound_list_resolves_to_one_entry():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var fuelpump:MmdInstrumentDescriptor = _find(definition, "fuelpump_sw")
     assert_not_null(fuelpump)
     assert_true(
@@ -234,22 +234,22 @@ func test_bracketed_random_sound_list_resolves_to_one_entry():
 
 func test_random_sound_choice_is_persisted_across_reparse():
     var random_choices:Dictionary = {}
-    var first:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
-    var second:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
+    var first:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, random_choices)
+    var second:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, random_choices)
     var fuelpump_first:MmdInstrumentDescriptor = _find(first, "fuelpump_sw")
     var fuelpump_second:MmdInstrumentDescriptor = _find(second, "fuelpump_sw")
     assert_eq(fuelpump_first.sound_increase, fuelpump_second.sound_increase)
 
 
 func test_nested_sound_subblock_extracts_only_soundmain():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     var oilpump:MmdInstrumentDescriptor = _find(definition, "oilpump_sw")
     assert_not_null(oilpump)
     assert_eq(oilpump.sound_increase, "nested_click")
 
 
 func test_sound_fields_do_not_desync_following_labels():
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, {}, 1, {})
     # oilpump_sw's nested soundinc:{...} block is the last instrument before the includes -
     # if its brace-matching miscounted, the includes right after it would fail to parse.
     var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")
@@ -546,7 +546,7 @@ func test_a_cab_leaves_the_vehicles_logic_alone():
     var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURE_PATH.get_base_dir())
     var vehicle:RID = build_vehicle("CabLogicOwnerTest").get_rid()
-    var vehicle_logic:LegacyCabinLogic = LegacyCabinLogic.from_mmd("", FIXTURE_PATH.get_file().get_basename())
+    var vehicle_logic:LegacyCabinLogic = LegacyCabinLogic.from_mmd("", FIXTURE_PATH.get_file().get_basename(), "", "")
     CabinSystem.vehicle_attach_cab_logic(vehicle, vehicle_logic)
     var cabin:MaszynaDynamicTrainCabin = MaszynaDynamicTrainCabin.new()
     cabin.mmd_filename = FIXTURE_PATH.get_file().get_basename()

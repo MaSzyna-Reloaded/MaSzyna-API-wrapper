@@ -20,6 +20,8 @@ const CAMERA_DISTANCE: float = 1.15
 var _vehicle: MaszynaSceneryInfo.Vehicle = null
 var _data_path: String = ""
 var _model: E3DModelInstance = null
+## The vehicle's attachments, children of _model
+var _attachments: Array[E3DModelInstance] = []
 ## Skin of the model, the one the trainset gives the vehicle until another is picked
 var _skin: String = ""
 ## Skins of the vehicle, in the order the grid shows them
@@ -65,17 +67,29 @@ func _build_model(skin: String) -> void:
     if _model:
         _model.queue_free()
 
-    var abs_mmd_path: String = (
-        UserSettings.get_maszyna_game_dir().path_join(_data_path).path_join(_vehicle.file_name.to_lower() + ".mmd")
-    )
-    var body_model: String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = _data_path.trim_prefix("/").path_join(_vehicle.file_name + ".mmd")
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
+    var parameters: Dictionary = MmdCabinInstancer.vehicle_parameters(_vehicle.train_id, _vehicle.file_name, skin)
+    var body_model: String = MmdCabinInstancer.parse_body_model(abs_mmd_path, parameters)
     if not body_model:
         body_model = _vehicle.file_name
+    var skins: Array = MmdCabinInstancer.resolve_skins(_data_path, skin)
     _model = E3DModelInstance.new()
     _model.instancer = E3DModelInstance.Instancer.OPTIMIZED
     _model.data_path = _data_path
-    _model.model_filename = MmdCabinInstancer.resolve_model_case(_data_path, body_model)
-    _model.skins = MmdCabinInstancer.resolve_skins(_data_path, skin)
+    _model.model_filename = body_model
+    _model.skins = skins
+    _attachments.clear()
+    # the attachments are drawn in the exterior's frame (DynObj.cpp:5384), so they turn with it
+    for attachment_filename: String in MmdCabinInstancer.parse_attachments(abs_mmd_path, parameters):
+        var attachment := E3DModelInstance.new()
+        attachment.instancer = E3DModelInstance.Instancer.OPTIMIZED
+        attachment.data_path = _data_path
+        attachment.model_filename = attachment_filename
+        attachment.skins = skins
+        _model.add_child(attachment)
+        _attachments.append(attachment)
     %ModelRoot.add_child(_model)
     _frame_model()
 
@@ -83,6 +97,8 @@ func _build_model(skin: String) -> void:
 ## Puts the model in the middle of the turntable and pulls the camera back to fit it
 func _frame_model() -> void:
     var bounds: AABB = _model.submodels_aabb
+    for attachment: E3DModelInstance in _attachments:
+        bounds = bounds.merge(attachment.submodels_aabb)
     _model.position = -bounds.get_center()
     var radius: float = maxf(bounds.size.length() * 0.5, 1.0)
     %Camera.position = Vector3(0.0, radius * 0.35, radius * CAMERA_DISTANCE * 2.0)
@@ -102,7 +118,7 @@ func _build_skin_grid() -> void:
             _skins.append(skin)
     var tiles: Array[TileGrid.Tile] = []
     for skin: String in _skins:
-        tiles.append(TileGrid.Tile.new(_data_path, _vehicle.file_name, skin, skin, skin))
+        tiles.append(TileGrid.Tile.new(_data_path, _vehicle.file_name, skin, _vehicle.train_id, skin, skin))
     %SkinsGrid.set_tiles(tiles)
 
 

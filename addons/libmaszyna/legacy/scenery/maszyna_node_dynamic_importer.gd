@@ -25,9 +25,10 @@ const MAX_COUPLING_OFFSET:float = 0.5
 ## never for direction - a real vehicle placed with offset: -1.0 (e.g. a reversed EZT member)
 ## silently always imported as DIRECTION_NORMAL.
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehicle3D:
-    var data_folder:String = _resolve_data_path(p.next_token().replace("\\", "/").to_lower())
-    var skin_file:String = p.next_token().to_lower()
-    var mmd_file:String = p.next_token().to_lower()
+    var data_folder:String = _resolve_data_path(p.next_token().replace("\\", "/"))
+    data_folder = MaszynaDataPath.resolve(UserSettings.get_maszyna_game_dir(), data_folder)
+    var skin_file:String = p.next_token()
+    var mmd_file:String = p.next_token()
     var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
     var offset:float = float(p.next_token())
     var driver_type:String = p.next_token()
@@ -92,11 +93,10 @@ func _parse_coupling(coupling_data:String, offset:float, reversed:bool) -> int:
 
 ## Same convention as maszyna_node_model_importer.gd's data_path handling: the .scn token gives
 ## a path relative to the "dynamic" data root (e.g. "pkp/303e_v1"), not a full path - prepend
-## "dynamic" when it isn't already there. Real game data paths are lowercase on disk even when
-## the .scn token itself uses mixed/upper case (e.g. "PKP/303E_V1").
+## "dynamic" when it isn't already there.
 func _resolve_data_path(data_folder:String) -> String:
     var data_path_array:Array = data_folder.split("/")
-    if not data_path_array or not data_path_array[0] == "dynamic":
+    if not data_path_array or not String(data_path_array[0]).to_lower() == "dynamic":
         data_path_array.insert(0, "dynamic")
     return "/".join(data_path_array)
 
@@ -108,7 +108,9 @@ func _resolve_data_path(data_folder:String) -> String:
 ## lines ("include" / "303e-ep.fiz" / "end"), which a line-oriented reader silently misses
 ## entirely - the token itself doesn't care where the line breaks fall.
 func _read_vehicle_length(data_path:String, file_name:String, context:MaszynaImporterContext) -> float:
-    var abs_path:String = UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(file_name + ".fiz")
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = data_path.path_join(file_name + ".fiz")
+    var abs_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
     return _read_length_from_fiz_file(abs_path, 0, context)
 
 
@@ -133,6 +135,7 @@ func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImpor
         var lower_token:String = token.to_lower()
         if lower_token == "include":
             var include_filename:String = parser.next_token()
+            include_filename = MaszynaDataPath.resolve(base_dir, include_filename)
             var included_length:float = _read_length_from_fiz_file(
                 base_dir.path_join(include_filename), depth + 1, context
             )

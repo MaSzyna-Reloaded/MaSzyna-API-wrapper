@@ -166,6 +166,13 @@ anything. Open work belongs in `TODO.md`.
   that keeps the last one made BR285's `Vadd` 0 and its traction force 0/0. *(09-30 BR285 NaN)*
 
 ## State, ownership, events
+* An operation somebody awaits is done only when everything its waiter relies on is; a signal
+  relayed after an `await` arrives after the call that caused it returned. *(10-03 the loading
+  screen faded onto a world not streamed yet)*
+* A thing enters the world with its first position, not with its construction: drawn before it
+  has a place, it is drawn in the wrong one. *(10-03 a scenery's vehicles drawn at the origin)*
+* A default changed for one owner of a field is checked against every other writer of it, and
+  the tests of all of them are run. *(10-03 hand-assembled vehicles stopped animating)*
 * A hot path takes a vehicle's component once and calls its getters; the state dump is rebuilt
   after every step or command and the config dump on every call, so one value read from either
   costs the whole dictionary. *(09-30 the sound system's dump per frame)*
@@ -409,6 +416,9 @@ anything. Open work belongs in `TODO.md`.
   every `release-*` export builds `compile-debug` too. *(09-30 release export without CabinSystem)*
 
 ## Tests
+* The game directory is changed only while nothing built from it is alive: saving it reloads the
+  game's data, and a vehicle rebuilds itself from the directory current then. *(10-03 a test's
+  vehicle was built twice)*
 * A test is checked against a build without the fix, and one that cannot fail is deleted.
   *(09-24 line breaker opened; 09-24 parser)*
 * Test the invariant, not the intermediate. *(09-21 no fog in release)*

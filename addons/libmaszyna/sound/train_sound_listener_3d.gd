@@ -5,7 +5,8 @@ signal context_changed
 
 const EXTERIOR_CONTEXT:int = 5
 
-var listener_vehicle:RailVehicle3D
+## The vehicle whose cab the listener is in (VehicleServer's), none outside
+var listener_vehicle:RID = RID()
 var listener_cabin:Cabin3D
 var listener_context:int = EXTERIOR_CONTEXT
 
@@ -30,14 +31,13 @@ func _process(_delta:float) -> void:
     _refresh_context()
 
 
-func is_inside_vehicle(vehicle:RailVehicle3D) -> bool:
+func is_inside_vehicle(vehicle:RID) -> bool:
     return not listener_cabin == null and listener_vehicle == vehicle
 
 
 func _refresh_context() -> void:
     var cabin:Cabin3D = _camera_cabin()
-    # a cab is a child of the node its vehicle is drawn at (CabinSystem.vehicle_show_cabin())
-    var vehicle:RailVehicle3D = cabin.get_parent() as RailVehicle3D if not cabin == null else null
+    var vehicle:RID = cabin.get_vehicle_rid() if not cabin == null else RID()
     var context:int = cabin.get_sound_listener_context() if not cabin == null else EXTERIOR_CONTEXT
     if listener_vehicle == vehicle and listener_cabin == cabin and listener_context == context:
         return

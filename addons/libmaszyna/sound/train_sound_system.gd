@@ -51,8 +51,9 @@ var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
 
 class BankRuntime extends RefCounted:
     var player:SfxPlayer3D
-    var vehicle:RailVehicle3D
-    ## The vehicle's handle, valid once its simulation is - the key of its entry in _vehicle_events
+    ## The vehicle the bank sounds for (VehicleServer's)
+    var vehicle:RID = RID()
+    ## The same handle, valid only once its simulation is - the key of its entry in _vehicle_events
     var vehicle_rid:RID = RID()
     var cabin_only:bool = false
     var enabled:bool = true
@@ -145,7 +146,7 @@ const _LOCAL_BRAKE_LABELS:Array[String] = ["localbrakesound", "localbrakesound2"
 
 var _banks:Dictionary = {}
 ## The bank of a vehicle, so looking one up does not mean scanning every bank in the scenery
-var _banks_by_vehicle:Dictionary[RailVehicle3D, BankRuntime] = {}
+var _banks_by_vehicle:Dictionary[RID, BankRuntime] = {}
 ## The banks within the culling distance - the only ones a frame visits
 var _active:Array[BankRuntime] = []
 ## Coupling and pantograph one-shots are events, not vehicle state: the vehicle reports each
@@ -161,9 +162,9 @@ var _accelerator_sources:Dictionary[RID, RailVehicleBrake] = {}
 var _listener_trainset:Array[RID] = []
 var _culling_distance:float = 1000.0
 ## Vehicles whose sound is built only once they are within the culling distance: what builds it
-var _bank_builders:Dictionary[RailVehicle3D, Callable] = {}
+var _bank_builders:Dictionary[RID, Callable] = {}
 ## Of those, the ones the sweep found within it, the nearest first - built a budget a frame
-var _bank_build_queue:Array[RailVehicle3D] = []
+var _bank_build_queue:Array[RID] = []
 var _sweep_timer:Timer
 var _listener:TrainSoundListener3D
 var _next_trigger_id:int = 1
@@ -183,6 +184,7 @@ func _ready() -> void:
     SimulationServer.simulation_speed_changed.connect(_mute_world)
     RailVehicleServer.vehicle_coupler_attached.connect(_on_coupler_attached)
     RailVehicleServer.vehicle_coupler_detached.connect(_on_coupler_detached)
+    VehicleServer.vehicle_controller_changed.connect(_on_vehicle_controller_changed)
     _on_simulation_current_speed_changed()
 
 
@@ -205,7 +207,7 @@ func clear_listener(listener:TrainSoundListener3D) -> void:
 ## The vehicle's sound is built by `builder` once the vehicle is within the culling distance of the
 ## listener - its banks register as they are built. An empty Callable takes it back: the vehicle is
 ## built anew or gone.
-func vehicle_set_bank_builder(vehicle:RailVehicle3D, builder:Callable) -> void:
+func vehicle_set_bank_builder(vehicle:RID, builder:Callable) -> void:
     if builder.is_valid():
         _bank_builders[vehicle] = builder
         return
@@ -225,7 +227,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
         runtime.player = player
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
-    _set_bank_vehicle(runtime, registration.get("vehicle") as RailVehicle3D)
+    _set_bank_vehicle(runtime, registration.get("vehicle", RID()))
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
     runtime.brakes = registration.get("brakes") as BrakeSoundModel
@@ -244,8 +246,8 @@ func register_trigger(player:SfxPlayer3D, descriptor:Dictionary) -> int:
     if not runtime:
         runtime = BankRuntime.new()
         runtime.player = player
-        _set_bank_vehicle(runtime, descriptor.get("vehicle") as RailVehicle3D)
-        runtime.vehicle_rid = descriptor.get("vehicle_rid", RID())
+        _set_bank_vehicle(runtime, descriptor.get("vehicle", RID()))
+        runtime.vehicle_rid = runtime.vehicle
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     var trigger_id:int = _add_trigger(runtime, descriptor)
@@ -314,8 +316,8 @@ func _refresh_active_banks() -> void:
         # their sound state entirely instead of paying full per-frame cost (soundproofing,
         # play()/set_parameters()) for a scenery's worth of parked, unheard rolling stock.
         var distance:float = (
-                runtime.vehicle.global_position.distance_to(listener_position)
-                if runtime.vehicle and _listener else 0.0)
+                RailVehicleRenderingServer.vehicle_get_transform(runtime.vehicle).origin.distance_to(listener_position)
+                if _listener else 0.0)
         if distance > _culling_distance:
             if not runtime.culled:
                 runtime.culled = true
@@ -332,13 +334,14 @@ func _refresh_active_banks() -> void:
     # the sound of a vehicle within earshot is built, the nearest first - and not before there is a
     # listener to be near; a queue still draining is refilled once it is empty
     if _listener and not _bank_build_queue:
-        for vehicle:RailVehicle3D in _bank_builders:
-            if vehicle.global_position.distance_to(listener_position) <= _culling_distance:
+        var distances:Dictionary[RID, float] = {}
+        for vehicle:RID in _bank_builders:
+            var distance:float = RailVehicleRenderingServer.vehicle_get_transform(vehicle).origin.distance_to(listener_position)
+            if distance <= _culling_distance:
+                distances[vehicle] = distance
                 _bank_build_queue.append(vehicle)
         if _bank_build_queue:
-            _bank_build_queue.sort_custom(func(a:RailVehicle3D, b:RailVehicle3D) -> bool:
-                return a.global_position.distance_squared_to(listener_position) \
-                        < b.global_position.distance_squared_to(listener_position))
+            _bank_build_queue.sort_custom(func(a:RID, b:RID) -> bool: return distances[a] < distances[b])
             get_tree().process_frame.connect(_on_bank_build_frame)
 
     if _active:
@@ -352,7 +355,7 @@ func _refresh_active_banks() -> void:
 func _on_bank_build_frame() -> void:
     var deadline:int = Time.get_ticks_msec() + BANK_BUILD_BUDGET_MSEC
     while _bank_build_queue and Time.get_ticks_msec() < deadline:
-        var vehicle:RailVehicle3D = _bank_build_queue.pop_front()
+        var vehicle:RID = _bank_build_queue.pop_front()
         var builder:Callable = _bank_builders[vehicle]
         _bank_builders.erase(vehicle)
         builder.call()
@@ -398,14 +401,9 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
 ## is an event the physics side reports once, and what a CHANGE trigger needs is a number that
 ## only ever goes up.
 func _resolve_vehicle(runtime:BankRuntime) -> void:
-    if not runtime.vehicle:
-        return
-    var vehicle_rid:RID = runtime.vehicle.get_rid()
-    if not VehicleServer.vehicle_is_simulation_ready(vehicle_rid):
-        vehicle_rid = RID()
+    var vehicle_rid:RID = runtime.vehicle if VehicleServer.vehicle_is_simulation_ready(runtime.vehicle) else RID()
     if not runtime.vehicle_rid == vehicle_rid:
-        # the vehicle took its controller's handle in place of its own
-        # (RailVehicle3D.set_vehicle()) - the counting moves to the new one
+        # the bank is another vehicle's now - the counting moves to the new one
         _stop_counting_events(runtime.vehicle_rid)
         _vehicle_events.erase(runtime.vehicle_rid)
     runtime.vehicle_rid = vehicle_rid
@@ -595,10 +593,10 @@ func _update_running_sounds(runtime:BankRuntime, elapsed:float, batch:Dictionary
 ## recoupled, so it is walked with the sweep and not per frame.
 func _refresh_listener_trainset() -> void:
     _listener_trainset.clear()
-    if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
+    if not _listener or not _listener.listener_cabin:
         return
     _listener_trainset.assign(RailVehicleServer.vehicle_get_coupled(
-            _listener.listener_vehicle.get_rid(), RailVehicleController.COUPLER_END_FRONT,
+            _listener.listener_vehicle, RailVehicleController.COUPLER_END_FRONT,
             RailVehicleController.COUPLING_FLAG_COUPLER))
 
 
@@ -683,7 +681,7 @@ func _silence_bank(runtime:BankRuntime) -> void:
     runtime.last_batch = {}
 
 
-func _inside_vehicle(vehicle:RailVehicle3D) -> bool:
+func _inside_vehicle(vehicle:RID) -> bool:
     return not _listener == null and not _listener.listener_cabin == null \
             and _listener.listener_vehicle == vehicle
 
@@ -704,7 +702,7 @@ func _placement_soundproofing(
     if placement == 0 and inside_source:
         return _source_profile_value(
                 source_profile, runtime.soundproofing, placement, _listener.listener_context)
-    if not _listener or not _listener.listener_vehicle:
+    if not _listener or not _listener.listener_vehicle.is_valid():
         return 0.0 if placement == 0 else _source_profile_value(
                 source_profile, runtime.soundproofing, placement, EXTERIOR_CONTEXT)
     var source_context:int = _listener.listener_context if inside_source else EXTERIOR_CONTEXT
@@ -734,7 +732,7 @@ func _profile_value(profile:Array[PackedFloat32Array], placement:int, context:in
 
 ## Looked up rather than searched: a scenery has hundreds of banks and this used to scan all of
 ## them on every call, several times per frame
-func _vehicle_profile(vehicle:RailVehicle3D) -> Array[PackedFloat32Array]:
+func _vehicle_profile(vehicle:RID) -> Array[PackedFloat32Array]:
     var runtime:BankRuntime = _banks_by_vehicle.get(vehicle)
     # a typed empty one: a bare [] is refused by the typed parameter it is handed to
     var none:Array[PackedFloat32Array] = []
@@ -754,7 +752,7 @@ func _update_spatial_anchors(runtime:BankRuntime) -> void:
     var cabin:Cabin3D = _listener.listener_cabin if _listener else null
     # Home/End rebuilds the controls inside the same cabin node, so the occupied cab is part of the key.
     var anchor_key:int = hash([cabin.get_instance_id(), cabin.cab_number]) if cabin else 0
-    if not cabin or not cabin.get_parent() == runtime.vehicle \
+    if not cabin or not cabin.get_vehicle_rid() == runtime.vehicle \
             or anchor_key == runtime.anchored_cabin_instance_id:
         return
     runtime.anchored_cabin_instance_id = anchor_key
@@ -791,7 +789,7 @@ func _apply_anchor(
         event.spatial_config.position = position
 
 
-func _cabin_anchor(vehicle:RailVehicle3D, cabin:Cabin3D, prefix:String) -> Vector3:
+func _cabin_anchor(vehicle:RID, cabin:Cabin3D, prefix:String) -> Vector3:
     var widget:Node = cabin.find_child("%s*" % prefix, true, false)
     if not widget:
         return Vector3.ZERO
@@ -799,7 +797,8 @@ func _cabin_anchor(vehicle:RailVehicle3D, cabin:Cabin3D, prefix:String) -> Vecto
     if mesh_path == null:
         mesh_path = widget.get("target_mesh_path")
     var mesh:Node3D = widget.get_node_or_null(mesh_path) as Node3D if mesh_path else null
-    return vehicle.to_local(mesh.global_position) if mesh else Vector3.ZERO
+    return (RailVehicleRenderingServer.vehicle_get_transform(vehicle).affine_inverse() * mesh.global_position
+            if mesh else Vector3.ZERO)
 
 
 func _parameter_value(raw:Variant) -> float:
@@ -808,45 +807,26 @@ func _parameter_value(raw:Variant) -> float:
     return float(raw) if raw else 0.0
 
 
-## The one writer of a bank's vehicle: the announcement the bank reacts to is wired with it, so
-## the two can never disagree about which vehicle the bank is listening to.
-func _set_bank_vehicle(runtime:BankRuntime, vehicle:RailVehicle3D) -> void:
+## The one writer of a bank's vehicle, and of the index of the banks by it
+func _set_bank_vehicle(runtime:BankRuntime, vehicle:RID) -> void:
     if runtime.vehicle == vehicle:
         return
-    var previous:RailVehicle3D = runtime.vehicle
+    var previous:RID = runtime.vehicle
     runtime.vehicle = vehicle
-    if previous and not _has_bank_of_vehicle_node(previous):
-        # a bank is unregistered from its player's tree_exiting, which is the vehicle being freed:
-        # by then the vehicle may already be gone, and it takes its connections with it
-        if is_instance_valid(previous):
-            previous.vehicle_changed.disconnect(_on_vehicle_controller_changed.bind(previous))
+    if previous.is_valid() and not _banks.values().any(
+            func(other:BankRuntime) -> bool: return other.vehicle == previous):
         _banks_by_vehicle.erase(previous)
-    if not vehicle:
-        return
-    # One connection per vehicle rather than per bank: a vehicle carries several banks (exterior,
-    # cabin), connections live on the emitter, and two banks binding the same method to the same
-    # vehicle count as one - the second would never hear the announcement.
-    if not _banks_by_vehicle.has(vehicle):
-        # a bank is registered while its vehicle is still being built, so its controller comes
-        # from the vehicle's own announcement rather than being looked for again later
-        vehicle.vehicle_changed.connect(_on_vehicle_controller_changed.bind(vehicle))
-    _banks_by_vehicle[vehicle] = runtime
+    if vehicle.is_valid():
+        _banks_by_vehicle[vehicle] = runtime
 
 
-## The vehicle has a different controller now - or its first one. Every bank it carries takes it.
-func _on_vehicle_controller_changed(vehicle:RailVehicle3D) -> void:
+## The vehicle has a different controller now - or its first one (a bank may be registered while
+## its vehicle is still being built). Every bank it carries takes it.
+func _on_vehicle_controller_changed(vehicle:RID) -> void:
     for runtime:BankRuntime in _banks.values():
         if runtime.vehicle == vehicle:
             _resolve_vehicle(runtime)
             _refresh_bank_context(runtime)
-
-
-## Whether any bank still points at this vehicle - the connection above lives as long as one does.
-func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
-    for runtime:BankRuntime in _banks.values():
-        if runtime.vehicle == vehicle:
-            return true
-    return false
 
 
 ## The world is paused (SimulationServer.simulation_pause()): the system stops updating the banks
@@ -879,7 +859,7 @@ func _unregister_bank(bank_id:int) -> void:
     var removed:BankRuntime = _banks.get(bank_id)
     if not removed:
         return
-    _set_bank_vehicle(removed, null)
+    _set_bank_vehicle(removed, RID())
     _banks.erase(bank_id)
     if removed.vehicle_rid.is_valid() and not _has_bank_of_vehicle(removed.vehicle_rid):
         _stop_counting_events(removed.vehicle_rid)

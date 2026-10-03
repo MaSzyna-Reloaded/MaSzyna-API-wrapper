@@ -33,7 +33,8 @@ const LOOK_AHEAD:float = 10.0
 ## The same speed with Shift held (m/s)
 @export var move_speed_fast:float = 20.0
 
-var vehicle:RailVehicle3D
+## The vehicle followed (VehicleServer's)
+var vehicle:RID
 var view:View = View.TRAINSET_FRONT:
     set(x):
         if not view == x:
@@ -43,8 +44,8 @@ var view:View = View.TRAINSET_FRONT:
 var velocity:Vector3 = Vector3.ZERO
 
 var _dirty:bool = false
-# the vehicle the view is attached to (null for the drive-by point) and its local offset
-var _view_vehicle:RailVehicle3D
+# the vehicle the view is attached to (none for the drive-by point) and its local offset
+var _view_vehicle:RID
 var _view_offset:Vector3 = Vector3.ZERO
 # the bogie view looks at the bogie of _view_vehicle instead of the vehicle center
 var _bogie_look_offset:Vector3 = Vector3.ZERO
@@ -58,13 +59,13 @@ var _view_distance:float = 1.0
 var _min_distance:float = ProjectSettings.get_setting(MIN_DISTANCE_SETTING, MIN_DISTANCE_DEFAULT)
 var _max_distance:float = ProjectSettings.get_setting(MAX_DISTANCE_SETTING, MAX_DISTANCE_DEFAULT)
 # the vehicle and the view the orbit, pan and zoom were set for
-var _offset_vehicle:RailVehicle3D
+var _offset_vehicle:RID
 var _offset_view:View = View.TRAINSET_FRONT
 
 
 ## Starts the flight from p_from to the selected view of the vehicle, the view applied in full. The
 ## selected view is kept between activations, like m_externalviewmode of the original.
-func activate(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
+func activate(p_vehicle:RID, p_from:Transform3D) -> void:
     vehicle = p_vehicle
     global_transform = p_from
     _look_target = p_from.origin - p_from.basis.z * LOOK_AHEAD
@@ -93,15 +94,16 @@ func _unhandled_input(event:InputEvent) -> void:
 
 
 func _process(delta:float) -> void:
-    if not current or not vehicle:
+    if not current or not vehicle.is_valid():
         return
     if _dirty:
         _dirty = false
         _process_dirty()
     _move_view(delta)
 
-    var look_target:Vector3 = _view_vehicle.global_transform * _bogie_look_offset if view == View.BOGIE else _get_vehicle_center(vehicle)
-    var view_position:Vector3 = _view_vehicle.global_transform * _view_offset if _view_vehicle else _view_offset
+    var view_transform:Transform3D = RailVehicleRenderingServer.vehicle_get_transform(_view_vehicle)
+    var look_target:Vector3 = view_transform * _bogie_look_offset if view == View.BOGIE else _get_vehicle_center(vehicle)
+    var view_position:Vector3 = view_transform * _view_offset if _view_vehicle.is_valid() else _view_offset
     var arm:Vector3 = (view_position - look_target).rotated(Vector3.UP, _orbit.x)
     var pitch_axis:Vector3 = Vector3.UP.cross(arm)
     if not pitch_axis.is_zero_approx():
@@ -134,19 +136,20 @@ func _process_dirty() -> void:
         _orbit = Vector2.ZERO
         _pan = Vector2.ZERO
         _zoom = 1.0
-    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle.get_rid()) as RailVehicleController
+    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController
     var cabin_occupied:int = controller.get_cabin_occupied()
     var direction:int = controller.get_direction()
     var cab:int = 1 if cabin_occupied == 0 else cabin_occupied
     # Godot vehicles face -Z; MaSzyna's vehicle frame is (left, up, front)
-    var front:Vector3 = -vehicle.global_basis.z.normalized()
-    var left:Vector3 = -vehicle.global_basis.x.normalized()
+    var body:Transform3D = RailVehicleRenderingServer.vehicle_get_transform(vehicle)
+    var front:Vector3 = -body.basis.z.normalized()
+    var left:Vector3 = -body.basis.x.normalized()
 
     if view == View.DRIVEBY:
         # driver_mode::DistantView(false) (drivermode.cpp:904-907) - a fixed point 50 m ahead of the cab
-        _view_vehicle = null
+        _view_vehicle = RID()
         _view_offset = (
-            vehicle.global_position
+            body.origin
             + front * cabin_occupied * 50.0
             + Vector3(-10.0 * left.x * cab, 1.6, -10.0 * left.z * cab))
         return
@@ -157,13 +160,10 @@ func _process_dirty() -> void:
         flip = -flip
 
     # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the trainset on that side
-    var trainset_end:RID = RailVehicleServer.vehicle_get_coupled(
-            vehicle.get_rid(), RailVehicleController.COUPLER_END_FRONT if flip > 0.0 else RailVehicleController.COUPLER_END_REAR,
+    _view_vehicle = RailVehicleServer.vehicle_get_coupled(
+            vehicle, RailVehicleController.COUPLER_END_FRONT if flip > 0.0 else RailVehicleController.COUPLER_END_REAR,
             RailVehicleController.COUPLING_FLAG_COUPLER)[0]
-    _view_vehicle = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(trainset_end)) as RailVehicle3D
-    if not _view_vehicle:
-        _view_vehicle = vehicle
-    var dimensions:Vector3 = VehicleServer.vehicle_get_dimensions(_view_vehicle.get_rid())
+    var dimensions:Vector3 = VehicleServer.vehicle_get_dimensions(_view_vehicle)
     var width:float = dimensions.x
     var height:float = dimensions.y
     var length:float = dimensions.z
@@ -203,6 +203,6 @@ func _zoom_by(p_factor:float) -> void:
     _zoom = clampf(_zoom * p_factor, _min_distance / _view_distance, _max_distance / _view_distance)
 
 
-func _get_vehicle_center(p_vehicle:RailVehicle3D) -> Vector3:
-    return (p_vehicle.global_position + p_vehicle.global_basis.y.normalized() * 0.5
-            * VehicleServer.vehicle_get_dimensions(p_vehicle.get_rid()).y)
+func _get_vehicle_center(p_vehicle:RID) -> Vector3:
+    var body:Transform3D = RailVehicleRenderingServer.vehicle_get_transform(p_vehicle)
+    return body.origin + body.basis.y.normalized() * 0.5 * VehicleServer.vehicle_get_dimensions(p_vehicle).y

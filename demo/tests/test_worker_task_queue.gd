@@ -68,6 +68,29 @@ func test_threaded_includes_match_in_place_parsing() -> void:
     assert_true(threaded.cacheable)
 
 
+## An include reached while a trainset is open is parsed in place, whatever its size: its vehicles
+## join the trainset where the include stands, with their own gaps and couplings
+func test_an_include_inside_a_trainset_keeps_its_place_in_it() -> void:
+    var queue := WorkerTaskQueue.new()
+    var context:MaszynaImporterContext = SceneryInstancer.parse_file_task(
+        "trainset/root.scn", {}, MaszynaImporterContext.new().get_state(), queue
+    )
+
+    assert_eq(context.trainsets.size(), 2, "the trainset, and the dynamic outside it as one of its own")
+    var trainset:MaszynaTrainsetData = context.trainsets[0]
+    assert_eq(trainset.track_name, "main_track")
+    assert_eq(trainset.name, "express")
+    assert_eq(trainset.timetable, "express", "its driver's timetable is named after it")
+    assert_eq(trainset.dynamics.map(func(dynamic:MaszynaDynamicData) -> String: return dynamic.name),
+            ["first", "middle", "last"])
+    assert_almost_eq(trainset.dynamics[1].gap, 0.25, 0.001, "the included vehicle keeps its gap")
+    assert_eq(trainset.dynamics[1].coupling, 7, "and its coupling")
+    var lone:MaszynaTrainsetData = context.trainsets[1]
+    assert_eq(lone.track_name, "side_track")
+    assert_eq(lone.timetable, "", "a dynamic outside a trainset has no timetable")
+    assert_eq(lone.dynamics.size(), 1)
+
+
 func _describe(models:Array[MaszynaModelData]) -> Array:
     return models.map(func(model:MaszynaModelData) -> Array: return [model.model_filename, model.position])
 

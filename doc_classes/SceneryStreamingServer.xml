@@ -9,7 +9,7 @@
 		Planning runs on a worker thread, together with whatever an owner wants prepared off the main thread (the [code]preload[/code] callable - loading a model, building a mesh). Building and clearing run on the main thread within a per-frame time budget, because they touch [RenderingServer] and GDScript.
 		Owners: [E3DRenderingServer] (scenery models, their lights and smoke), [code]MaszynaSceneryChunkRenderingServer[/code] (merged terrain meshes), [code]TrackRenderingServer[/code], [code]TractionRenderingServer[/code] and [code]ScenerySoundServer[/code].
 		[b]Providers.[/b] Content may also be supplied by chunk, the way a map tile server supplies tiles: a [SceneryStreamingProvider] registered with [method provider_register] is asked for the content of a cell ([method SceneryStreamingProvider.chunk_load]) as the camera comes within the draw distance of it, plus how far the cell's content reaches out of it ([method SceneryStreamingProvider.chunk_get_overhang]). What a cell gives is handed to the consumer of its kind ([method content_set_consumer]), which registers it as pieces like any other; once the camera has left, or the provider is freed with [method provider_free], the consumer releases it. Only presentation is supplied so - terrain, decoration models, ambient sounds; what the simulation needs whatever the camera does (tracks, traction) is never a provider's. A provider knows nothing of cameras or ranges: it supplies the cell it is asked for. The first provider is [MaszynaLegacySBTTerrainProvider], the original's binary region files.
-		[b]Ranges.[/b] A piece is built once the camera is within its range of its chunk, and cleared only one chunk (1[code] [/code]km) past it, so a train shunting into the next chunk and back finds what it left built. A piece up to 500[code] [/code]m past its range is built ahead, with at most 1[code] [/code]ms a frame and only while nothing in range waits; nothing waits for it ([method area_is_ready]). The chunk of the anchor ([method streaming_set_anchor] - the player's vehicle) is kept built wherever the camera is.
+		[b]Ranges.[/b] A piece is built once the camera is within its range of its chunk, and cleared only one chunk (1[code] [/code]km) past it, so a train shunting into the next chunk and back finds what it left built. A piece up to 500[code] [/code]m past its range is built ahead, with at most 1[code] [/code]ms a frame and only while nothing in range waits; nothing waits for it ([method area_is_ready]). The chunk of the anchor ([method streaming_set_anchor_position] - the player's vehicle) is kept built wherever the camera is.
 		[b]Budget.[/b] Building and clearing get 4[code] [/code]ms a frame. While an area fills - a camera set, or one that jumped farther than a chunk - and the backlog is long, they get 16[code] [/code]ms: the loading screen fills the world, a train driving through it keeps its frame rate. One build is never cut, so the content is bounded instead (a terrain chunk is at most [constant MaszynaTrianglesChunkGeometry.MAX_VERTICES] vertices), and whatever is computation - reading, decoding, mesh arrays - is a [code]preload[/code], run in batches on the streaming's own [WorkerTaskQueue], never on the [WorkerThreadPool]. A preload must not wait for the main thread: nothing in it reads back from the [RenderingServer] (a model read from its source is saved into the cache by the main thread, [code]E3DModelManager[/code]).
 	</description>
 	<tutorials>
@@ -82,6 +82,12 @@
 				Registers one piece of an owner, placed at [param position] and visible up to [param range_end] ([code]0[/code] - up to [method streaming_get_draw_distance]). [param rid] is the owner's own handle for the piece and is what the owner's callables receive. Returns the handle for [method stream_free].
 			</description>
 		</method>
+		<method name="streaming_clear_anchor">
+			<return type="void" />
+			<description>
+				No chunk is kept built for an anchor any more ([method streaming_set_anchor_position]).
+			</description>
+		</method>
 		<method name="streaming_drain">
 			<return type="void" />
 			<description>
@@ -131,11 +137,11 @@
 				Returns whether the streaming builds and clears content each frame ([method streaming_set_enabled]).
 			</description>
 		</method>
-		<method name="streaming_set_anchor">
+		<method name="streaming_set_anchor_position">
 			<return type="void" />
-			<param index="0" name="node_id" type="int" />
+			<param index="0" name="position" type="Vector3" />
 			<description>
-				The node, by its [method Object.get_instance_id] ([code]0[/code] for none), whose chunk is kept built wherever the camera is: its pieces and provider cells are never cleared, and those out of the camera's range are built with the prefetch budget. The node is followed every frame, so the kept chunk moves with it - a vehicle driven on by an AI while the camera looks elsewhere. [PlayerServer] sets the player's vehicle here, and none when the player leaves it.
+				Where the anchor is. Its chunk is kept built wherever the camera is: its pieces and provider cells are never cleared, and those out of the camera's range are built with the prefetch budget. Said again as the anchor moves, so the kept chunk moves with it - a vehicle driven on by an AI while the camera looks elsewhere. [PlayerServer] says where the player's vehicle is, and [method streaming_clear_anchor] when the player leaves it.
 			</description>
 		</method>
 		<method name="streaming_set_camera">

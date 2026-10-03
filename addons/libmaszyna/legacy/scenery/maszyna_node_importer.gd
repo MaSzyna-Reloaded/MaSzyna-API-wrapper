@@ -85,9 +85,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 context.tracks.append(track)
 
         "dynamic":
-            obj = dynamic_importer.import(p, context)
-            if obj:
-                (obj as MaszynaRailVehicle3D).vehicle_id = name
+            dynamic_importer.import(p, context).name = name
 
         "memcell":
             var memcell:MaszynaMemcellData = memcell_importer.import(p, context)
@@ -118,8 +116,5 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     #    obj.node_name = node_name
     #    obj.range_min = range_min
     #    obj.range_max = range_max
-    if obj is MaszynaRailVehicle3D and context.trainset_node:
-        context.trainset_node.add_child(obj)
-        return []
     # a node that is data (a model, a track, triangles...) leaves nothing among the objects
     return [obj] if obj else []

@@ -2,11 +2,12 @@
 extends Node3D
 class_name TrainSet3D
 
-## Trainset of a scenery "trainset:" block (simulationstateserializer.cpp:deserialize_trainset) - a
-## node over RailVehicleServer's trainset (get_rid()). Its RailVehicle3D children are the trainset's
-## vehicles, in order: the server stands them on the trainset's track one after another from its
-## front, each as long as it is, and couples each with the next as "endtrainset" does. Reordered,
-## they stand anew. A vehicle of a trainset has no start track of its own.
+## A trainset assembled by hand - a node over RailVehicleServer's trainset (get_rid()), as a loaded
+## scenery's "trainset:" block is one built by SceneryInstancer without a node. Its RailVehicle3D
+## children are the trainset's vehicles, in order: the server stands them on the trainset's track
+## one after another from its front, each as long as it is, and couples each with the next as
+## "endtrainset" does. Reordered, they stand anew. A vehicle of a trainset has no start track of
+## its own.
 
 ## Where the trainset's front stands - the track and the distance along it [m]
 @export var start_track_name:String = "":
@@ -62,6 +63,7 @@ func get_rid() -> RID:
 ## before it, so each is followed from its own entry to its own exit.
 func _enter_tree() -> void:
     _trainset = RailVehicleServer.trainset_create()
+    RailVehicleServer.trainset_set_name(_trainset, name)
     TrackServer.tracks_changed.connect(_on_tracks_changed)
     child_order_changed.connect(_on_child_order_changed)
     child_entered_tree.connect(_on_child_entered_tree)

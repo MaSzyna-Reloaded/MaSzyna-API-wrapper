@@ -17,10 +17,10 @@ namespace godot {
         SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
         if (p_what == NOTIFICATION_ENTER_TREE) {
-            runtime->runtime_attach(get_instance_id());
+            runtime->runtime_attach();
             return;
         }
-        runtime->runtime_detach(get_instance_id());
+        runtime->runtime_detach();
     }
 
 } // namespace godot

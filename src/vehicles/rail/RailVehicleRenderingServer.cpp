@@ -177,7 +177,19 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_detach", "vehicle"), &RailVehicleRenderingServer::vehicle_detach);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_attached", "vehicle"), &RailVehicleRenderingServer::vehicle_is_attached);
-        ClassDB::bind_method(D_METHOD("vehicle_get_node", "vehicle"), &RailVehicleRenderingServer::vehicle_get_node);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_transform", "vehicle", "transform"),
+                &RailVehicleRenderingServer::vehicle_set_transform);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleRenderingServer::vehicle_get_transform);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_mount_node", "vehicle", "node_id"), &RailVehicleRenderingServer::vehicle_mount_node);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_unmount_node", "vehicle", "node_id"),
+                &RailVehicleRenderingServer::vehicle_unmount_node);
+        ClassDB::bind_method(
+                D_METHOD("detection_area_get_vehicle", "area"),
+                &RailVehicleRenderingServer::detection_area_get_vehicle);
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_scenario", "vehicle", "scenario"),
                 &RailVehicleRenderingServer::vehicle_set_scenario);
@@ -218,6 +230,9 @@ namespace godot {
         }
         Visual &visual = vehicles[p_vehicle];
         visual.node = ObjectID(p_node_id);
+        if (const Node3D *node = _node(visual); node != nullptr && node->is_inside_tree()) {
+            visual.scenario = node->get_world_3d()->get_scenario();
+        }
         visit_order.push_back(p_vehicle);
         _set_processing(true);
         // a vehicle already standing on its track is drawn there at once
@@ -236,6 +251,10 @@ namespace godot {
         if (SceneryHUDMouseServer *mouse = SceneryHUDMouseServer::get_instance(); mouse != nullptr) {
             mouse->pickable_free(visual->pickable);
         }
+        if (Node *holder = Object::cast_to<Node>(ObjectDB::get_instance(visual->holder)); holder != nullptr) {
+            holder->queue_free();
+        }
+        area_vehicles.erase(visual->detection_area);
         if (PhysicsServer3D *physics = PhysicsServer3D::get_singleton(); physics != nullptr) {
             if (visual->detection_area.is_valid()) {
                 physics->free_rid(visual->detection_area);
@@ -254,29 +273,66 @@ namespace godot {
         return vehicles.has(p_vehicle);
     }
 
-    uint64_t RailVehicleRenderingServer::vehicle_get_node(const RID &p_vehicle) const {
+    void RailVehicleRenderingServer::vehicle_set_transform(const RID &p_vehicle, const Transform3D &p_transform) {
+        Visual *visual = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(visual);
+        visual->transform = p_transform;
+        _move(p_vehicle, *visual);
+    }
+
+    Transform3D RailVehicleRenderingServer::vehicle_get_transform(const RID &p_vehicle) const {
         const Visual *visual = vehicles.getptr(p_vehicle);
-        return visual != nullptr ? static_cast<uint64_t>(visual->node) : 0;
+        return visual != nullptr ? visual->transform : Transform3D();
+    }
+
+    void RailVehicleRenderingServer::vehicle_mount_node(const RID &p_vehicle, const uint64_t p_node_id) {
+        Visual *visual = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(visual);
+        visual->mounts.push_back(ObjectID(p_node_id));
+        if (Node3D *mount = Object::cast_to<Node3D>(ObjectDB::get_instance(ObjectID(p_node_id)));
+            visual->placed && mount != nullptr && mount->is_inside_tree()) {
+            mount->set_global_transform(visual->transform);
+        }
+    }
+
+    /* A vehicle freed takes its mounts' places with it: nothing to take off then */
+    void RailVehicleRenderingServer::vehicle_unmount_node(const RID &p_vehicle, const uint64_t p_node_id) {
+        if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
+            visual->mounts.erase(ObjectID(p_node_id));
+        }
+    }
+
+    RID RailVehicleRenderingServer::detection_area_get_vehicle(const RID &p_area) const {
+        const RID *vehicle = area_vehicles.getptr(p_area);
+        return vehicle != nullptr ? *vehicle : RID();
     }
 
     /* The models handed over are their owner's (E3DModelInstance), which moves them itself */
     void RailVehicleRenderingServer::vehicle_set_scenario(const RID &p_vehicle, const RID &p_scenario) {
-        const Visual *visual = vehicles.getptr(p_vehicle);
-        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        Visual *visual = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(visual);
+        visual->scenario = p_scenario;
+        if (visual->placed) {
+            _show_models(*visual, p_scenario);
+        }
+    }
+
+    /* The models this server built, and the cargo, drawn in p_scenario - in none for an empty one */
+    void RailVehicleRenderingServer::_show_models(const Visual &p_visual, const RID &p_scenario) const {
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
         ERR_FAIL_NULL(models);
-        if (visual->own_models) {
-            for (const RID &instance: {visual->model, visual->low_poly, visual->passengers}) {
+        if (p_visual.own_models) {
+            for (const RID &instance: {p_visual.model, p_visual.low_poly, p_visual.passengers}) {
                 if (instance.is_valid()) {
                     models->instance_set_scenario(instance, p_scenario);
                 }
             }
-            for (const RID &instance: visual->attachments) {
+            for (const RID &instance: p_visual.attachments) {
                 models->instance_set_scenario(instance, p_scenario);
             }
         }
-        if (visual->load.is_valid()) {
-            models->instance_set_scenario(visual->load, p_scenario);
+        if (p_visual.load.is_valid()) {
+            models->instance_set_scenario(p_visual.load, p_scenario);
         }
     }
 
@@ -307,6 +363,9 @@ namespace godot {
         visual->model = p_model;
         visual->low_poly = p_low_poly;
         visual->own_models = false;
+        // handed over, the models are their owner's nodes already - posed from the start, and
+        // drawn as instances only once the camera is known to be far (_update_detail())
+        visual->detailed = true;
         model_vehicles[p_model] = p_vehicle;
         _bind_parts(p_vehicle, *visual);
         // a model handed over is one built - by whoever owns it, before this server could hear it
@@ -333,17 +392,14 @@ namespace godot {
         visual->load_model_filename = p_model_filename;
         const Ref<E3DModel> model =
                 p_model_filename.is_empty() ? Ref<E3DModel>() : models->model_load(p_data_path, p_model_filename);
-        Node3D *node = _node(*visual);
-        if (model.is_null() || node == nullptr) {
+        if (model.is_null()) {
             return;
         }
         // nobody looks into the cargo, so it needs no node tree
         visual->load = models->instance_create(
                 model, E3DRenderingServer::INSTANCER_OPTIMIZED, E3DRenderingServer::INSTANCE_KIND_DYNAMIC);
         models->instance_set_options(visual->load, p_data_path, PackedStringArray(), Array(), false, {}, 0);
-        if (node->is_inside_tree()) {
-            models->instance_set_scenario(visual->load, node->get_world_3d()->get_scenario());
-        }
+        models->instance_set_scenario(visual->load, visual->placed ? visual->scenario : RID());
         models->instance_build(visual->load);
         _update_load(p_vehicle, *visual);
     }
@@ -419,12 +475,11 @@ namespace godot {
      * camera - their submodels are posed and hidden - the passengers and the attachments never are. */
     void RailVehicleRenderingServer::_create_models(const RID &p_vehicle, Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
-        Node3D *node = _node(p_visual);
         ERR_FAIL_NULL(models);
-        ERR_FAIL_NULL(node);
         const Ref<RailVehicleAppearance> &appearance = p_visual.appearance;
         const String data_path = appearance->get_data_path();
-        const bool drawn = node->is_inside_tree();
+        // models built again while the vehicle is drawn in detail go under the holder it has
+        Node3D *holder = Object::cast_to<Node3D>(ObjectDB::get_instance(p_visual.holder));
         const auto create = [&](const String &p_filename, const PackedStringArray &p_skins,
                                 const E3DRenderingServer::Instancer p_instancer) {
             const Ref<E3DModel> model =
@@ -434,13 +489,12 @@ namespace godot {
             }
             const RID instance = models->instance_create(model, p_instancer, E3DRenderingServer::INSTANCE_KIND_DYNAMIC);
             models->instance_set_options(instance, data_path, p_skins, Array(), false, {}, 0);
-            models->instance_attach_node(instance, node);
-            models->instance_set_node_transform(instance, appearance->get_model_transform());
-            if (drawn) {
-                models->instance_set_scenario(instance, node->get_world_3d()->get_scenario());
-                models->instance_set_transform(
-                        instance, node->get_global_transform() * appearance->get_model_transform());
+            if (p_instancer == E3DRenderingServer::INSTANCER_NODES) {
+                models->instance_attach_node(instance, holder);
             }
+            models->instance_set_node_transform(instance, appearance->get_model_transform());
+            models->instance_set_scenario(instance, p_visual.placed ? p_visual.scenario : RID());
+            models->instance_set_transform(instance, p_visual.transform * appearance->get_model_transform());
             models->instance_build(instance);
             return instance;
         };
@@ -532,7 +586,7 @@ namespace godot {
         _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleElectricEngine::PANTOGRAPH_FIRST);
         _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleElectricEngine::PANTOGRAPH_SECOND);
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
-        _update_detection_area(p_visual);
+        _update_detection_area(p_vehicle, p_visual);
         _update_low_poly_cabs(p_visual);
         // the interior is lit only by the lights of its cabs (vehicle_set_cab_light_level())
         if (p_visual.low_poly.is_valid()) {
@@ -580,18 +634,37 @@ namespace godot {
                 p_visual.appearance->get_pantograph_collector_width());
     }
 
-    /* The node goes where the vehicle is placed, and the models with it; the running gear follows
-     * where the vehicle is drawn in detail. The body's transform is RailVehicleServer's answer and
-     * nothing else - it composes it from the bogies. */
+    /* The vehicle stands on a track: it is drawn where RailVehicleServer placed it. The body's
+     * transform is RailVehicleServer's answer and nothing else - it composes it from the bogies. */
     void RailVehicleRenderingServer::_place(const RID &p_vehicle, Visual &p_visual) {
         RailVehicleServer *server = RailVehicleServer::get_instance();
-        Node3D *node = _node(p_visual);
         const Dictionary position = server != nullptr ? server->vehicle_get_track_position(p_vehicle) : Dictionary();
-        if (node == nullptr || !RID(position.get("track_rid", RID())).is_valid()) {
+        if (!RID(position.get("track_rid", RID())).is_valid()) {
             return;
         }
-        node->set_global_transform(server->vehicle_get_transform(p_vehicle));
-        const Transform3D model_transform = node->get_global_transform() * p_visual.model_transform;
+        p_visual.transform = server->vehicle_get_transform(p_vehicle);
+        _move(p_vehicle, p_visual);
+    }
+
+    /* Everything of the vehicle goes where it stands: the nodes mounted on it, its models - in
+     * their world from its first place on - its cargo and its detection area; the running gear
+     * follows where the vehicle is drawn in detail. */
+    void RailVehicleRenderingServer::_move(const RID &p_vehicle, Visual &p_visual) {
+        if (!p_visual.placed) {
+            p_visual.placed = true;
+            _show_models(p_visual, p_visual.scenario);
+            _update_detection_area(p_vehicle, p_visual);
+        }
+        for (const ObjectID &mount_id: p_visual.mounts) {
+            if (Node3D *mount = Object::cast_to<Node3D>(ObjectDB::get_instance(mount_id));
+                mount != nullptr && mount->is_inside_tree()) {
+                mount->set_global_transform(p_visual.transform);
+            }
+        }
+        if (Node3D *holder = Object::cast_to<Node3D>(ObjectDB::get_instance(p_visual.holder)); holder != nullptr) {
+            holder->set_global_transform(p_visual.transform);
+        }
+        const Transform3D model_transform = p_visual.transform * p_visual.model_transform;
         if (E3DRenderingServer *models = E3DRenderingServer::get_instance(); models != nullptr && p_visual.own_models) {
             for (const RID &instance: {p_visual.model, p_visual.low_poly, p_visual.passengers}) {
                 if (instance.is_valid()) {
@@ -977,14 +1050,15 @@ namespace godot {
     void RailVehicleRenderingServer::_update_detail(const RID &p_vehicle, Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
         const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-        const Node3D *node = _node(p_visual);
-        if (models == nullptr || streaming == nullptr || node == nullptr || !streaming->streaming_has_camera() ||
-            !p_visual.model.is_valid()) {
+        Node3D *node = _node(p_visual);
+        // the nodes of a vehicle drawn in detail are built under its scene node
+        if (models == nullptr || streaming == nullptr || node == nullptr || !node->is_inside_tree() ||
+            !streaming->streaming_has_camera() || !p_visual.model.is_valid() || !p_visual.placed) {
             return;
         }
         const float detail_distance =
                 ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
-        const double distance = node->get_global_position().distance_to(streaming->streaming_get_camera_position());
+        const double distance = p_visual.transform.origin.distance_to(streaming->streaming_get_camera_position());
         const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, detail_distance * DETAIL_HYSTERESIS);
         const bool detailed =
                 p_visual.detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
@@ -992,11 +1066,29 @@ namespace godot {
             return;
         }
         p_visual.detailed = detailed;
+        // the models this server built get a node of its own to be built under, there only while
+        // the vehicle is drawn in detail; the ones handed over have their owner's
+        if (detailed && p_visual.own_models) {
+            Node3D *holder = memnew(Node3D);
+            node->add_child(holder, false, Node::INTERNAL_MODE_BACK);
+            holder->set_global_transform(p_visual.transform);
+            p_visual.holder = ObjectID(holder->get_instance_id());
+            models->instance_attach_node(p_visual.model, holder);
+            if (p_visual.low_poly.is_valid()) {
+                models->instance_attach_node(p_visual.low_poly, holder);
+            }
+        }
         const E3DRenderingServer::Instancer instancer =
                 detailed ? E3DRenderingServer::INSTANCER_NODES : E3DRenderingServer::INSTANCER_OPTIMIZED;
         models->instance_set_instancer(p_visual.model, instancer);
         if (p_visual.low_poly.is_valid()) {
             models->instance_set_instancer(p_visual.low_poly, instancer);
+        }
+        if (Node *holder = Object::cast_to<Node>(ObjectDB::get_instance(p_visual.holder));
+            !detailed && holder != nullptr) {
+            // the nodes built under it went with the instancer that built them
+            holder->queue_free();
+            p_visual.holder = ObjectID();
         }
         _register_pickable(p_vehicle, p_visual);
         if (detailed) {
@@ -1030,9 +1122,8 @@ namespace godot {
      * configuration, so they are taken again when it changes. */
     void RailVehicleRenderingServer::_update_load(const RID &p_vehicle, Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
-        const Node3D *node = _node(p_visual);
         const VehicleServer *vehicle_server = VehicleServer::get_instance();
-        if (models == nullptr || node == nullptr || vehicle_server == nullptr || !p_visual.load.is_valid()) {
+        if (models == nullptr || vehicle_server == nullptr || !p_visual.load.is_valid()) {
             return;
         }
         const Ref<RailVehicleController> vehicle = vehicle_server->vehicle_get_controller(p_vehicle);
@@ -1053,18 +1144,18 @@ namespace godot {
         }
         models->instance_set_transform(
                 p_visual.load,
-                node->get_global_transform() * p_visual.model_transform *
+                p_visual.transform * p_visual.model_transform *
                         Transform3D(Basis(), Vector3(0.0, static_cast<real_t>(p_visual.load_height), 0.0)));
     }
 
-    /* The space the player finds the vehicle in - a box the size of the model, whose collider is
-     * the node the vehicle is drawn at */
-    void RailVehicleRenderingServer::_update_detection_area(Visual &p_visual) {
+    /* The space the player finds the vehicle in - a box the size of the model, in the space of its
+     * scene node's world; whose it is, detection_area_get_vehicle() says */
+    void RailVehicleRenderingServer::_update_detection_area(const RID &p_vehicle, Visual &p_visual) {
         PhysicsServer3D *physics = PhysicsServer3D::get_singleton();
         const E3DRenderingServer *models = E3DRenderingServer::get_instance();
         const Node3D *node = _node(p_visual);
         if (Engine::get_singleton()->is_editor_hint() || physics == nullptr || models == nullptr || node == nullptr ||
-            !node->is_inside_tree() || !p_visual.model.is_valid()) {
+            !node->is_inside_tree() || !p_visual.model.is_valid() || !p_visual.placed) {
             return;
         }
         const AABB aabb = models->instance_get_aabb(p_visual.model);
@@ -1076,12 +1167,12 @@ namespace godot {
             p_visual.detection_shape = physics->box_shape_create();
             physics->area_add_shape(p_visual.detection_area, p_visual.detection_shape);
             physics->area_set_monitorable(p_visual.detection_area, true);
-            physics->area_attach_object_instance_id(p_visual.detection_area, static_cast<uint64_t>(p_visual.node));
+            area_vehicles[p_visual.detection_area] = p_vehicle;
             physics->area_set_space(p_visual.detection_area, node->get_world_3d()->get_space());
         }
         physics->shape_set_data(p_visual.detection_shape, aabb.size * 0.5);
         physics->area_set_shape_transform(p_visual.detection_area, 0, Transform3D(Basis(), aabb.get_center()));
-        physics->area_set_transform(p_visual.detection_area, node->get_global_transform() * p_visual.model_transform);
+        physics->area_set_transform(p_visual.detection_area, p_visual.transform * p_visual.model_transform);
     }
 
     /// The model is clicked in free camera (SceneryHUDMouseServer) while it is detailed, so only

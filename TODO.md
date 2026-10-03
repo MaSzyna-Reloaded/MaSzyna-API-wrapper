@@ -45,14 +45,13 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   (`controller_configure`, `vehicle_bind_controller`), from its `controller` property or, given
   none, from `_build_controller()` (once, on entering the tree - `MaszynaRailVehiclePhysicsNode`
   asks `FizVehicleBuilder`); the live controller is `VehicleServer.vehicle_get_controller(rid)`.
-  `RailVehicle3D` creates no RID, it only takes the node's (`set_vehicle()`). Not done: the
-  construction still lives in the node - it belongs in `vehicle_create()`; registering the name and
+  `RailVehicle3D` creates no RID, it only takes the node's (`set_vehicle()`). A vehicle of MaSzyna
+  data needs no node at all: `MaszynaLegacyVehicleSystem.vehicle_create()` builds it through the
+  servers, a loaded scenery holds its vehicles and trainsets by their handles
+  (`MaszynaIncludeNode.get_vehicles()`, `get_trainsets()`), and `MaszynaRailVehicle3D` /
+  `TrainSet3D` are proxies for a vehicle or a trainset placed by hand. Not done: a vehicle
+  assembled by hand out of nodes is still built by `VehiclePhysicsNode`; registering the name and
   the commands still hangs off `attach_to_system()`.
-
-  **What the simulation already does without a node:** stepping keys off the placements, and the
-  step skips only a vehicle `RailVehicleServer` does not hold (`vehicle_is_attached()`). So a
-  vehicle can be simulated through the servers alone; the node is needed because the *code that
-  constructs the controller* lives in it, which is all this stage has left to move.
 * **E - not started.** Zero of the ~20 proxy nodes; no `VehicleControllerNode`.
 * **F - done**, what is left of the area:
   * The node's public API is the `.scn` `dynamic` line only: `data_path` + `file_name` + `skin`
@@ -458,12 +457,28 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `[a b c]` set (`random_choices`), each emitter's `pitch_variation` and the `start_fraction` of
   the bogie/traction motor copies - both fields of `SfxEvent`, so sharing needs them per player
   in the vendored gnd-sfx, and the random sample as variants of the event.
-* The vehicle build still exceeds `MaszynaRailVehicle3DManager.BUILD_BUDGET_MSEC` (~16 ms a
+* The vehicle build still exceeds `MaszynaLegacyVehicleSystem.BUILD_BUDGET_MSEC` (~16 ms a
   vehicle headless on Galicja), so a frame builds one vehicle.
 
-* `MaszynaRailVehicle3D` builds itself (`MaszynaRailVehicle3DManager.build_into()` in its own
-  `_process`), so vehicles appear a frame after the scenery (`SceneryInstancer._wait_for_vehicles()`
-  awaits `vehicle_built`). Building belongs in a `MaszynaRailVehicle3DFactory`.
+* Vehicles and the editor, after the scenery's vehicles lost their nodes (2026-10-03):
+  * "Edit FIZ" (`editable_in_editor` on `MaszynaRailVehicle3D`, `editor/fiz_toolbar/`) shows
+    nothing - a vehicle has no parts as child nodes any more. Operator's direction: Edit FIZ and
+    Edit SCN are to switch the kind of instancing (as `E3DModelInstance` has an instancer kind).
+    Edit SCN works with the scenery streaming's instancer: in the chunk the camera is in, every
+    instanced model is put into the editor (under a `SceneryChunkNode`, for orientation), and
+    removed automatically or on request. Losing changes is acceptable - it is an interface for
+    inspection and momentary samples; a future editor dumps to files, perhaps by sector.
+  * The editor's Trainsets tab: "Show" puts marker nodes where the vehicles stand and selects
+    those (the 3D view goes only to a selection); a direct way through the `EditorPlugin` API
+    would need no markers. A `TrainSet3D` assembled by hand lists only the vehicles it has handed
+    to the server - none right after its scene is opened, until the list is built again.
+  * The HUD's "remove trainset" frees only vehicles built from MaSzyna data
+    (`MaszynaLegacyVehicleSystem.vehicle_free()`); one assembled by hand out of nodes stays.
+  * A vehicle coming within detail distance is built twice: attaching the holder node rebuilds
+    its optimized instance before the instancer is switched to nodes
+    (`E3DRenderingServer.instance_attach_node()` then `instance_set_instancer()`).
+  * `E3DRenderingServer::instance_attach_node(RID, Node3D *)` takes a pointer in a public API.
+  * `compiled.nodes` (the scenery cache's PackedScene) still carries the Time/Config/Atmo nodes.
 * A distant vehicle's low-poly interior (`OPTIMIZED`,
   `RailVehicleRenderingServer::_update_detail()`) keeps its baked emission regardless of its cab
   lights until back within `maszyna/vehicles/detail_distance`:
@@ -853,7 +868,7 @@ ported, into a delegate.
    and the radio on.
 2. **Done: cab logic without the 3D cab** - `LegacyCabinLogic` (a `CabinLogic`) is the vehicle's,
    attached with `CabinSystem.vehicle_attach_cab_logic()` by `MaszynaDynamicTrainCabin` (player) and
-   `SceneryInstancer._build_drivers()` (AI), registered for the occupied cab and moved along when
+   `SceneryInstancer._build_trainsets()` (AI), registered for the occupied cab and moved along when
    the crew changes cabs. The cab's controls come from its MMD (`LegacyCabinControls`), not from the
    widgets. Left widget-side, so an AI caller must pass what a widget would have worked out: the
    knob and switch position limits and spring return, the horn's value. `LegacyCabinControls` parses
@@ -863,7 +878,7 @@ ported, into a delegate.
 3. **Orders taken; the engine and the turning carried out through the cab.** `DriverSystem` (C++,
    not `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
    `MaszynaLegacyAIDriver` (GDScript, acting through `CabinSystem`): a driver for every crewed
-   scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders ask for
+   scenery vehicle (`SceneryInstancer._build_trainsets()`), the order list and what the orders ask for
    (`get_state()`); Stary Jawor's SU46 gets its orders from the scenario. A driver acts one reaction
    time apart (`DriverSystem.driver_schedule_update()`, `DriverDelegate._update()`).
    `Prepare_engine`, `Release_engine` and `Change_direction` are carried out step by step through
@@ -1090,6 +1105,11 @@ ported, into a delegate.
   builds are dropped with the freed pieces.
 
 ## Tests
+
+* A headless GUT run sometimes does not exit after its tests have passed (seen 2026-10-03 on
+  `test_scenery_compiled_cache`, `test_cab_lights`, `test_maszyna_scenery_time`, once each; eight
+  runs in a row of the last one exited). Not caught with a backtrace yet: attach `gdb -p` to the
+  hung process (`thread apply all bt`) before killing it.
 
 * `test_train_electric_induction_engine.gd` fails 3 tests on a clean `46a51cd2` (checked
   2026-09-29 in a separate worktree): `_powered_up_eim()` never closes the line breaker, so

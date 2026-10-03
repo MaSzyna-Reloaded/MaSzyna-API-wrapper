@@ -4,6 +4,8 @@ extends MaszynaGutTest
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
 const LOAD_TIMEOUT_SEC:float = 120.0
+## How far from the middle of its vehicle the cab camera may be [m] - a vehicle's length at most
+const CAB_TO_VEHICLE_MAX_DISTANCE:float = 30.0
 
 var _previous_game_dir:String = ""
 
@@ -30,6 +32,15 @@ func test_demo_scenery_loading_scene_instantiates() -> void:
     # the player gets its vehicle once the scenery has loaded
     await wait_until(func() -> bool: return PlayerServer.player_get_vehicle().is_valid(), LOAD_TIMEOUT_SEC)
     assert_true(_has_tracks(), "at least one track should have registered with TrackServer")
+    # the loading screen goes only once the player sits in its vehicle and the scenery around it
+    # is streamed in - not while the view is still where the menu left it
+    var loading_screen:CanvasItem = instance.get_node("LoadingScreen")
+    await wait_until(func() -> bool: return not loading_screen.visible, LOAD_TIMEOUT_SEC)
+    var vehicle_position:Vector3 = RailVehicleRenderingServer.vehicle_get_transform(
+            PlayerServer.player_get_vehicle()).origin
+    assert_lt(SceneryStreamingServer.streaming_get_camera_position().distance_to(vehicle_position),
+            CAB_TO_VEHICLE_MAX_DISTANCE, "the scenery is streamed around the cab the player sits in")
+    assert_true(SceneryStreamingServer.area_is_ready(0), "the chunk the player is in is built")
 
     remove_child(instance)
     instance.free()

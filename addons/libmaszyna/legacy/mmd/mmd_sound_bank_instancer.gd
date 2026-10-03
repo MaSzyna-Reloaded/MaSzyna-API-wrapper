@@ -75,9 +75,10 @@ const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
 static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
 
 
-## The vehicle's sound players, built into `vehicle` as its internal children; returned
+## The sound players of the vehicle `vehicle_rid`, built into `parent` - a node riding on the
+## vehicle - as its internal children; returned
 static func build_into(
-        vehicle:Node3D, abs_mmd_path:String, parameters:Dictionary, random_choices:Dictionary,
+        parent:Node3D, vehicle_rid:RID, abs_mmd_path:String, parameters:Dictionary, random_choices:Dictionary,
         diagnostics:Array[Dictionary]) -> Array[Node]:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
@@ -119,19 +120,19 @@ static func build_into(
             routed_exterior.append(definition)
 
     var players:Array[Node] = [
-        _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false, locations),
-        _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true, locations),
+        _build_player(parent, vehicle_rid, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false, locations),
+        _build_player(parent, vehicle_rid, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true, locations),
     ]
     # own voice pool, so the looping running sounds never steal from (or lose to) the others
     if running_exterior:
         players.append(_build_player(
-                vehicle, "RunningSfxPlayer3D", running_exterior, soundproofing, context, abs_mmd_path, false, locations))
+                parent, vehicle_rid, "RunningSfxPlayer3D", running_exterior, soundproofing, context, abs_mmd_path, false, locations))
     diagnostics.append_array(context.diagnostics)
     return players
 
 
 static func _build_player(
-        vehicle:Node3D, player_name:String, definitions:Array[MmdSoundSourceDefinition],
+        parent:Node3D, vehicle_rid:RID, player_name:String, definitions:Array[MmdSoundSourceDefinition],
         soundproofing:Array[PackedFloat32Array], context:MmdImportContext,
         abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> SfxPlayer3D:
     var events:Array[SfxEvent] = []
@@ -187,7 +188,7 @@ static func _build_player(
     # without touching the calibration of the individual events. The running-sound player is
     # built with cabin_only false and lands on Exterior with the rest of the outside.
     player.bus = &"Cabin" if cabin_only else &"Exterior"
-    vehicle.add_child(player, false, Node.INTERNAL_MODE_BACK)
+    parent.add_child(player, false, Node.INTERNAL_MODE_BACK)
 
     var triggers:Array[Dictionary] = []
     for definition:MmdSoundSourceDefinition in regular_definitions:
@@ -203,7 +204,7 @@ static func _build_player(
         })
 
     TrainSoundSystem.register_bank(player, {
-        "vehicle": vehicle,
+        "vehicle": vehicle_rid,
         "cabin_only": cabin_only,
         "triggers": triggers,
         "brakes": brakes if brakes.sounds else null,

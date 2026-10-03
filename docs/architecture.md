@@ -54,8 +54,13 @@ answers commands. A vehicle is the reference case:
 * The vehicle - a `VehicleController` and the `VehicleComponent`s it is made of - is a `Resource`, not a node: its
   properties are its stored configuration. It is held through `VehicleServer`, stepped by its implementation once per
   rendered frame, and reached by its RID.
-* What draws the vehicle (`RailVehicle3D`), its cabin and its sounds read the vehicle's components; they do not own
-  them.
+* What draws the vehicle (`RailVehicleRenderingServer`), its cabin and its sounds read the vehicle's components; they
+  do not own them. The rendering server holds where the vehicle stands; a node of another layer - a cab interior, a
+  sound emitter, the node of a vehicle assembled by hand - rides on it (`vehicle_mount_node()`).
+* A vehicle needs no node at all. A scenery loaded from MaSzyna data builds its vehicles and trainsets through the
+  servers and holds them by their handles: `MaszynaLegacyVehicleSystem.vehicle_create()` makes a vehicle from a
+  `dynamic`, `RailVehicleServer.trainset_*` stands a trainset on its track and couples it. `MaszynaRailVehicle3D` and
+  `TrainSet3D` are for a vehicle or a trainset placed by hand in a scene - proxies over the same operations.
 
 The class diagrams are in [Wrapping the MOVER](wrapping-mover.html#class-diagrams).
 

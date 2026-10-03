@@ -357,6 +357,8 @@ namespace godot {
                     const Array &p_exclude_node_names, bool p_force_alpha,
                     const TypedArray<NodePath> &p_force_alpha_submodel_paths, int p_max_texture_size);
             void instance_attach_node(const RID &p_instance, Node3D *p_node);
+            /// The node attached, by its ObjectID - 0 for none, or for one that is gone
+            uint64_t instance_get_attached_node(const RID &p_instance) const;
             /// Where the model sits in the attached node - a node tree built under it is placed
             /// there; the instance's transform stays the model's own, in the world
             void instance_set_node_transform(const RID &p_instance, const Transform3D &p_transform);

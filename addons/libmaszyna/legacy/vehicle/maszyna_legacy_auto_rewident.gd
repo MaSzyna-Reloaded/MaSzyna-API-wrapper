@@ -1,11 +1,11 @@
 extends Node
-class_name MaszynaAutoRewidentNode
+class_name MaszynaLegacyAutoRewident
 
-## Automatic trainset inspection of the vehicle's driver - the original TController::AutoRewident()
-## (Driver.cpp:2147-2250). The wrapper has no driver (TController) layer, so this node carries that one
-## piece of it: a vehicle placed with a driver (headdriver/reardriver) prepares its train once its
-## engine is ready, and again after every trainset change, setting the brake delay (G/P/R) of every
-## vehicle for the kind of train and releasing their manual and spring brakes.
+## Automatic trainset inspection of a vehicle's driver - the original TController::AutoRewident()
+## (Driver.cpp:2147-2250), for every vehicle MaszynaLegacyVehicleSystem builds: a vehicle placed
+## with a driver (headdriver/reardriver) prepares its train once its engine is ready, and again
+## after every trainset change, setting the brake delay (G/P/R) of every vehicle for the kind of
+## train and releasing their manual and spring brakes.
 ##
 ## In the original that happens also with a human driver: the scenery gives the driver the
 ## Prepare_engine order and then Shunt/Obey_train (OrdersInit), PrepareEngine() completes once the
@@ -13,8 +13,6 @@ class_name MaszynaAutoRewidentNode
 ## trainset changes call CheckVehicles() as well (Train.cpp:6224, 6246). Vehicles placed without a
 ## speed start braked with a full manual brake (CheckLocomotiveParameters, Mover.cpp:8946), so
 ## without this the wagons of such a trainset never get released.
-##
-## Added to every vehicle by MaszynaRailVehicle3DInstancer; inactive without a driver aboard.
 
 ## bdelay_* brake delay flags (hamulce.h:49-51)
 const BDELAY_G:int = 1
@@ -24,74 +22,89 @@ const BDELAY_R:int = 4
 const PASSENGER_TRAIN:int = 16
 ## Main reservoir pipe pressure PrepareEngine() waits for (Driver.cpp, isready)
 const READY_FEED_PIPE_PRESSURE:float = 4.5
-
+## AutoRewident()'s limits of a train's length [m] and mass [kg], and the vehicles next to the
+## locomotive kept on G (Driver.cpp:2190-2230)
+const SHORT_TRAIN_LENGTH:float = 300.0
+const SHORT_TRAIN_MASS:float = 600000.0
+const MEDIUM_TRAIN_LENGTH:float = 500.0
+const MEDIUM_TRAIN_MASS:float = 1300000.0
+const VEHICLES_ON_G_NEXT_TO_LOCOMOTIVE:int = 5
+const MIXED_TRAIN_FREIGHT_LIMIT:int = 4
 
 ## In the original this is not polled at all: AutoRewident() runs inside CheckVehicles()
-## (Driver.cpp:2528) for the driving orders (Shunt / Loose_shunt / Obey_train / Bank), and
-## CheckVehicles() itself is called on events - an order change, PrepareEngine() completing
-## (Driver.cpp:2142), a direction change, a coupling change (Driver.cpp:2622).
+## (Driver.cpp:2528) for the driving orders, and CheckVehicles() itself is called on events - an
+## order change, PrepareEngine() completing (Driver.cpp:2142), a direction change, a coupling
+## change (Driver.cpp:2622).
 ##
-## The wrapper has no driver (TController) layer with orders to hook into, so the only event it can
-## use is RailVehicleServer's vehicle_trainset_changed. What is left to poll is the engine becoming ready,
-## which is a threshold the original's AI watches in its own update too - and this timer stops for
-## good as soon as that happens, so a prepared vehicle costs nothing until something couples to it.
+## The only event here is RailVehicleServer's vehicle_trainset_changed. What is left to watch is
+## the engine becoming ready, a threshold the original's AI watches in its own update too - one
+## timer for every vehicle still waiting for it, stopped as soon as none is.
 const CHECK_INTERVAL:float = 0.5
 
-
-var _timer:Timer
+## The vehicles followed, and of them the ones whose engine is still to become ready
+var _vehicles:Dictionary[RID, bool] = {}
+var _waiting:Array[RID] = []
+var _timer:Timer = Timer.new()
 
 
 func _ready() -> void:
-    if Engine.is_editor_hint():
-        return
-    _timer = Timer.new()
     _timer.wait_time = CHECK_INTERVAL
-    _timer.autostart = true
-    _timer.timeout.connect(_check_trainset)
+    _timer.timeout.connect(_check_waiting)
     add_child(_timer)
 
 
-## Subscribed while in the tree - "Edit FIZ" takes a vehicle out and puts it back, and _ready()
-## runs only the first time
+## Followed only in the tree, where the timer runs: a scenery freed on quitting (its
+## NOTIFICATION_PREDELETE, after the autoloads have left) uncouples its vehicles, and their
+## neighbours report a trainset change (MoverRailVehicleController::release())
 func _enter_tree() -> void:
-    if not Engine.is_editor_hint():
-        RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
+    RailVehicleServer.vehicle_trainset_changed.connect(_on_vehicle_trainset_changed)
 
 
-## Leaving the tree ends the subscription: a neighbour freed with the scenery uncouples
-## (MoverRailVehicleController::release()) after this node is already out of it
 func _exit_tree() -> void:
-    if not Engine.is_editor_hint():
-        RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
+    RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
 
 
-func _check_trainset() -> void:
-    var parent_vehicle:RailVehicle3D = get_parent() as RailVehicle3D
-    var vehicle:RID = parent_vehicle.get_rid() if parent_vehicle else RID()
-    if not VehicleServer.vehicle_is_simulation_ready(vehicle):
-        return
-    # a vehicle without a cab has no driver to inspect its trainset, and the driver_type comes from the
-    # FIZ - it will not become one later, so there is nothing left for this node to watch
-    if VehicleServer.vehicle_get_driver_type(vehicle) == VehicleController.DRIVER_NOBODY:
+## The vehicle's trainset is inspected once its engine is ready, and after every trainset change
+func vehicle_follow(vehicle:RID) -> void:
+    _vehicles[vehicle] = true
+    _on_vehicle_trainset_changed(vehicle)
+
+
+func vehicle_unfollow(vehicle:RID) -> void:
+    _vehicles.erase(vehicle)
+    _waiting.erase(vehicle)
+    if not _waiting:
         _timer.stop()
-        return
-
-    # PrepareEngine() completes once the engine reports ready, which is a threshold the original
-    # AI watches in its own update - the only thing left worth polling for
-    if not _is_engine_ready(vehicle):
-        return
-    _rewident(vehicle, _get_trainset(vehicle))
-    # from here the trainset can only change by coupling, and that arrives as a signal
-    _timer.stop()
 
 
 ## A vehicle joined or left the trainset (VehicleController::couple()/uncouple()), the case the
 ## original handles with CheckVehicles() (Driver.cpp:2622) - inspect it again once the engine of
 ## the new trainset reports ready.
 func _on_vehicle_trainset_changed(vehicle:RID) -> void:
-    var parent_vehicle:RailVehicle3D = get_parent() as RailVehicle3D
-    if parent_vehicle and parent_vehicle.get_rid() == vehicle:
+    if not _vehicles.has(vehicle) or _waiting.has(vehicle):
+        return
+    _waiting.append(vehicle)
+    if _waiting.size() == 1:
         _timer.start()
+
+
+func _check_waiting() -> void:
+    for vehicle:RID in _waiting.duplicate():
+        if not VehicleServer.vehicle_is_simulation_ready(vehicle):
+            continue
+        # a vehicle without a cab has no driver to inspect its trainset, and the driver_type comes
+        # from the FIZ - it will not become one later, so there is nothing left to watch
+        if VehicleServer.vehicle_get_driver_type(vehicle) == VehicleController.DRIVER_NOBODY:
+            _waiting.erase(vehicle)
+            continue
+        # PrepareEngine() completes once the engine reports ready
+        if not _is_engine_ready(vehicle):
+            continue
+        _rewident(vehicle, _get_trainset(vehicle))
+        # from here the trainset can only change by coupling, and that arrives as a signal
+        _waiting.erase(vehicle)
+    if not _waiting:
+        _timer.stop()
 
 
 ## The readiness condition of TController::PrepareEngine() (isready). Quirk: the converter and
@@ -102,13 +115,13 @@ func _is_engine_ready(vehicle:RID) -> bool:
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     var brake_handle_ready:bool = (
-            brake == null
+            not brake
             or not int(brake.get_controller_position())
                     == int(brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_CUTOFF)))
     return (
             not VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0
-            and engine != null and engine.get_main_switch_enabled()
-            and (brake == null or brake.get_feed_pipe_pressure() > READY_FEED_PIPE_PRESSURE
+            and engine and engine.get_main_switch_enabled()
+            and (not brake or brake.get_feed_pipe_pressure() > READY_FEED_PIPE_PRESSURE
                     or is_zero_approx(brake.tank_volume_main))
             and brake_handle_ready)
 
@@ -150,11 +163,11 @@ func _rewident(vehicle:RID, trainset:Array[RID]) -> void:
     var setting:int
     if express + freight + passenger == 0:
         setting = PASSENGER_TRAIN + BDELAY_R # light engine
-    elif freight < mini(4, express + passenger):
+    elif freight < mini(MIXED_TRAIN_FREIGHT_LIMIT, express + passenger):
         setting = PASSENGER_TRAIN + (BDELAY_P if freight and express < freight + passenger else BDELAY_R)
-    elif length < 300.0 and mass < 600000.0:
+    elif length < SHORT_TRAIN_LENGTH and mass < SHORT_TRAIN_MASS:
         setting = BDELAY_P
-    elif length < 500.0 and mass < 1300000.0:
+    elif length < MEDIUM_TRAIN_LENGTH and mass < MEDIUM_TRAIN_MASS:
         setting = BDELAY_R
     else:
         setting = BDELAY_G
@@ -174,13 +187,13 @@ func _rewident(vehicle:RID, trainset:Array[RID]) -> void:
                 # freight G - everything on G, P without it
                 brake_delay = BDELAY_G if delays & BDELAY_G else BDELAY_P
             BDELAY_R:
-                # freight GP - locomotive and 5 vehicles next to it on G, the rest on P
+                # freight GP - locomotive and the vehicles next to it on G, the rest on P
                 if is_locomotive:
                     brake_delay = BDELAY_G
                     near_locomotive = 0
                 else:
                     near_locomotive += 1
-                    brake_delay = BDELAY_G if near_locomotive <= 5 else BDELAY_P
+                    brake_delay = BDELAY_G if near_locomotive <= VEHICLES_ON_G_NEXT_TO_LOCOMOTIVE else BDELAY_P
             PASSENGER_TRAIN + BDELAY_R:
                 # passenger R - R, P without it
                 brake_delay = BDELAY_R if delays & BDELAY_R else BDELAY_P

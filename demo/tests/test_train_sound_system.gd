@@ -97,7 +97,7 @@ func _register_bank(trigger_mode:int) -> void:
     _vehicle.add_child(_sound)
     var soundproofing:Array[PackedFloat32Array] = []
     TrainSoundSystem.register_bank(_sound, {
-        "vehicle": _vehicle,
+        "vehicle": _vehicle_rid,
         "soundproofing": soundproofing,
         "triggers": [{
             "state_property": "battery_enabled",
@@ -107,8 +107,7 @@ func _register_bank(trigger_mode:int) -> void:
     })
 
 
-## The order of the game: the bank is registered while its vehicle is being built, before it has a
-## controller (MmdSoundBankInstancer) - the controller comes with the vehicle's own announcement
+## The bank registered before the vehicle is a rail one and drawn (RailVehicle3D takes it then)
 func _build(trigger_mode:int) -> void:
     _build_vehicle()
     _register_bank(trigger_mode)
@@ -188,7 +187,7 @@ func test_bank_is_built_once_its_vehicle_is_within_earshot() -> void:
     _build_vehicle()
     var built:Array[int] = [0]
     _camera.global_position = FAR
-    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, func() -> void: built[0] += 1)
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, func() -> void: built[0] += 1)
     await wait_seconds(SETTLE)
     assert_eq(built[0], 0, "not built while the camera is away")
 
@@ -202,8 +201,8 @@ func test_bank_builder_taken_back_is_never_called() -> void:
     _build_vehicle()
     var built:Array[int] = [0]
     _camera.global_position = FAR
-    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, func() -> void: built[0] += 1)
-    TrainSoundSystem.vehicle_set_bank_builder(_vehicle, Callable())
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, func() -> void: built[0] += 1)
+    TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, Callable())
     _camera.global_position = NEAR
     await wait_seconds(SETTLE)
 

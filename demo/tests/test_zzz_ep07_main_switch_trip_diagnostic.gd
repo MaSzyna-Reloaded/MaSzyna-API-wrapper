@@ -45,18 +45,9 @@ func after_each():
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController:
-    var rail_vehicle:RailVehicle3D = _find_rail_vehicle(root, vehicle_name)
-    if not rail_vehicle:
-        return null
-    return rail_vehicle.get_controller()
-
-
-func _find_rail_vehicle(root:Node, vehicle_name:String) -> RailVehicle3D:
-    var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
-    if not dynamic_vehicle:
-        return null
-    return dynamic_vehicle as RailVehicle3D
+func _find_train_controller(vehicle_name:String) -> VehicleController:
+    var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(vehicle_name)
+    return VehicleServer.vehicle_get_controller(vehicle) if VehicleServer.vehicle_is_simulation_ready(vehicle) else null
 
 
 func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:
@@ -83,7 +74,7 @@ func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:
 func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     var controller:VehicleController = null
     for i in range(10):
-        controller = _find_train_controller(scenery, "EP07-424")
+        controller = _find_train_controller("EP07-424")
         if controller:
             break
         await wait_seconds(0.5)
@@ -192,17 +183,13 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
 ## equilibrium speed). Not an assertion-first test - the printed dump across the whole hold is the
 ## point, same as the main-switch-trip diagnostic above.
 func test_ep07_controller_actual_position_diagnostic() -> void:
-    var rail_vehicle:RailVehicle3D = null
-    for i in range(10):
-        rail_vehicle = _find_rail_vehicle(scenery, "EP07-424")
-        if rail_vehicle:
+    var controller:VehicleController = null
+    for i in range(30):
+        controller = _find_train_controller("EP07-424")
+        if controller:
             break
         await wait_seconds(0.5)
-    assert_not_null(rail_vehicle, "EP07-424 should exist somewhere under the loaded scenery")
-    if not rail_vehicle:
-        return
-    var controller:VehicleController = rail_vehicle.get_controller()
-    assert_not_null(controller, "EP07-424's RailVehicle3D should have a controller")
+    assert_not_null(controller, "EP07-424 should be a vehicle of the loaded scenery")
     if not controller:
         return
 

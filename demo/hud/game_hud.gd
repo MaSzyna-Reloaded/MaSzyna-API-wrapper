@@ -218,10 +218,11 @@ func _remove_trainset(vehicle: RID) -> void:
             vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     if trainset.has(PlayerServer.player_get_vehicle()):
         PlayerServer.player_leave_vehicle()
+    # a vehicle built from MaSzyna data is freed where it was made; one assembled by hand goes
+    # with its nodes, and stays (TODO.md)
     for trainset_vehicle: RID in trainset:
-        var node: Node = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(trainset_vehicle)) as Node
-        if node:
-            node.queue_free()
+        if MaszynaLegacyVehicleSystem.vehicle_exists(trainset_vehicle):
+            MaszynaLegacyVehicleSystem.vehicle_free(trainset_vehicle)
 
 
 ## The script context of the scenario being played, for the Lua editor; an invalid RID while none is

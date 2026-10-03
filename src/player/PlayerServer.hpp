@@ -37,6 +37,7 @@ namespace godot {
 
             void _set_vehicle(const RID &p_vehicle);
             void _on_vehicle_freed(const RID &p_vehicle);
+            void _on_vehicle_placed(const RID &p_vehicle);
 
         protected:
             static void _bind_methods();

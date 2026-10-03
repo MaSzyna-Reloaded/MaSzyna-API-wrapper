@@ -6,6 +6,11 @@ const BUILT_TRACK_GAUGE:float = 1.435
 ## build_rail_vehicle()'s mass [kg]
 const RAIL_VEHICLE_MASS:float = 74000.0
 
+## How long a spawned vehicle may take to be drawn in detail [s] (RailVehicleRenderingServer looks
+## at every vehicle's detail a few times a second)
+const DETAIL_TIMEOUT:float = 5.0
+
+
 func wait_idle_frames(frames, message = ""):
     while frames > 0:
         await Engine.get_main_loop().process_frame
@@ -127,7 +132,9 @@ func build_model_instance(submodels:Dictionary, parents:Dictionary) -> E3DModelI
     return instance
 
 
-## A MaSzyna vehicle built from the game data, added to the test and built - awaited
+## A MaSzyna vehicle built from the game data, added to the test, built and drawn in detail - as
+## nodes, which the tests look into - awaited. A vehicle is drawn in detail only near the streaming
+## camera: one stands at it for as long as that takes, unless the test has its own.
 func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehicle_id:String) -> MaszynaRailVehicle3D:
     var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
     vehicle.data_path = data_path
@@ -139,4 +146,11 @@ func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehi
     # resumed inside the vehicle's own emission, the test would run on its stack - where the
     # vehicle is locked and cannot be freed; the test goes on from the next frame
     await wait_idle_frames(1)
+    if RailVehicleRenderingServer.vehicle_is_attached(vehicle.get_rid()):
+        var has_camera:bool = SceneryStreamingServer.streaming_has_camera()
+        if not has_camera:
+            SceneryStreamingServer.streaming_set_camera(add_child_autoqfree(Camera3D.new()))
+        await wait_until(RailVehicleRenderingServer.vehicle_is_detailed.bind(vehicle.get_rid()), DETAIL_TIMEOUT)
+        if not has_camera:
+            SceneryStreamingServer.streaming_set_camera(null)
     return vehicle

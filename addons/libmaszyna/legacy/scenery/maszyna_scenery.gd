@@ -65,7 +65,10 @@ func _clear_content(budget_msec:int = 0) -> void:
 
 func _load_content() -> void:
     await super._load_content()
-    first_train_id = _find_driver_train_id(find_children("", "MaszynaRailVehicle3D", true, false))
+    # the load was given up: nothing of it is announced
+    if is_load_given_up():
+        return
+    first_train_id = _find_driver_train_id()
     _read_environment_declarations()
     # a scenery loaded in the editor must not rewrite the environment saved with the edited scene
     if not Engine.is_editor_hint():
@@ -145,15 +148,15 @@ func _date_from_day_of_year(year_day:int, year:int) -> Dictionary:
 
 
 ## The player belongs in a vehicle with a driver, not in whatever vehicle the scenery declares
-## first (MaszynaRailVehicle3D.driver_type)
-func _find_driver_train_id(vehicles:Array[Node]) -> String:
+## first (MaszynaDynamicData.driver_type)
+func _find_driver_train_id() -> String:
     var reverse_driver_train_id:String = ""
-    for node:Node in vehicles:
-        var vehicle:MaszynaRailVehicle3D = node as MaszynaRailVehicle3D
-        if vehicle.driver_type == VehicleController.DRIVER_HEAD:
-            return vehicle.vehicle_id
-        if vehicle.driver_type == VehicleController.DRIVER_REAR and not reverse_driver_train_id:
-            reverse_driver_train_id = vehicle.vehicle_id
+    for vehicle:RID in get_vehicles():
+        var dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(vehicle)
+        if dynamic.driver_type == VehicleController.DRIVER_HEAD:
+            return dynamic.name
+        if dynamic.driver_type == VehicleController.DRIVER_REAR and not reverse_driver_train_id:
+            reverse_driver_train_id = dynamic.name
     if reverse_driver_train_id:
         return reverse_driver_train_id
-    return (vehicles[0] as MaszynaRailVehicle3D).vehicle_id if vehicles else ""
+    return MaszynaLegacyVehicleSystem.vehicle_get_dynamic(get_vehicles()[0]).name if get_vehicles() else ""

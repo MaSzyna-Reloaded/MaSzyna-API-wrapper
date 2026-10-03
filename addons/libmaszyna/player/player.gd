@@ -33,7 +33,7 @@ class_name MaszynaPlayer
 @onready var headlamp_glow:MeshInstance3D = $Camera3D/HeadlampGlow
 ## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
 @onready var sfx_player:SfxPlayer = $PlayerSfx
-## start_vehicle_id changed - its vehicle is looked for until the scenery has it
+## start_vehicle_id changed - its vehicle is taken, once (it is named when its scenery is loaded)
 var _dirty: bool = true
 var _auto_start_pending:bool = false
 var _released_vehicle:RID
@@ -74,6 +74,7 @@ func _ready() -> void:
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
+    VehicleServer.vehicle_configured.connect(_on_vehicle_configured)
     _show_camera(_mode_camera())
 
 
@@ -82,16 +83,23 @@ func _exit_tree() -> void:
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
+    VehicleServer.vehicle_configured.disconnect(_on_vehicle_configured)
     SceneryStreamingServer.streaming_set_camera(null)
 
 func _process(_delta:float) -> void:
     if _dirty:
         _dirty = false
-        var vehicle:RailVehicle3D = _find_start_vehicle()
-        if vehicle:
-            PlayerServer.player_take_over_vehicle(vehicle.get_rid())
-        elif start_vehicle_id or _auto_start_pending:
-            _dirty = true
+        var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(start_vehicle_id) if start_vehicle_id else RID()
+        # without one named, the first vehicle that has its simulation already - or the first to
+        # get it (_on_vehicle_configured())
+        if _auto_start_pending:
+            for candidate:RID in VehicleServer.vehicle_get_rids():
+                if VehicleServer.vehicle_is_simulation_ready(candidate):
+                    _auto_start_pending = false
+                    vehicle = candidate
+                    break
+        if vehicle.is_valid():
+            PlayerServer.player_take_over_vehicle(vehicle)
 
     var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
     if cabin:
@@ -123,10 +131,10 @@ func _input(event):
     var driven:RID = PlayerServer.player_get_vehicle()
     # on foot, F4 or change_vehicle takes the vehicle in front of the player; F4 only while the
     # player has no cab to go back to
-    var picked:RailVehicle3D = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle", false, true)
-            or (event.is_action_pressed("cabin_mode_toggle", false, true) and not driven.is_valid())) else null
-    if picked:
-        PlayerServer.player_take_over_vehicle(picked.get_rid())
+    var picked:RID = _picked_vehicle() if walking and (event.is_action_pressed("change_vehicle", false, true)
+            or (event.is_action_pressed("cabin_mode_toggle", false, true) and not driven.is_valid())) else RID()
+    if picked.is_valid():
+        PlayerServer.player_take_over_vehicle(picked)
     elif event.is_action_pressed("cabin_mode_toggle", false, true):
         PlayerCameraServer.camera_toggle_cabin()
 
@@ -198,37 +206,21 @@ func _find_nearest_vehicle() -> RID:
     return nearest
 
 
-## The vehicle with a cab in front of the free camera, or null
-func _picked_vehicle() -> RailVehicle3D:
+## The vehicle with a cab in front of the free camera, none when there is none
+func _picked_vehicle() -> RID:
     var detector:ShapeCast3D = free_camera.get_node("RailVehicleDetector")
     if not detector.is_colliding():
-        return null
-    var node:Node = detector.get_collider(0)
-    while node and not node is RailVehicle3D:
-        node = node.get_parent()
-    var vehicle:RailVehicle3D = node as RailVehicle3D
-    return vehicle if vehicle and CabinSystem.vehicle_get_cabin_scene(vehicle.get_rid()) else null
+        return RID()
+    var vehicle:RID = RailVehicleRenderingServer.detection_area_get_vehicle(detector.get_collider_rid(0))
+    return vehicle if vehicle.is_valid() and CabinSystem.vehicle_get_cabin_scene(vehicle) else RID()
 
 
-func _find_start_vehicle() -> RailVehicle3D:
-    var vehicles:Array[Node] = get_tree().get_root().find_children("", "RailVehicle3D", true, false)
-    if start_vehicle_id:
-        for node:Node in vehicles:
-            var vehicle:RailVehicle3D = node as RailVehicle3D
-            if vehicle and _get_vehicle_id(vehicle) == start_vehicle_id:
-                return vehicle
-        return null
-
+## Without a start vehicle named, the player takes the first vehicle that gets its simulation
+func _on_vehicle_configured(vehicle:RID) -> void:
     if _auto_start_pending:
-        for node:Node in vehicles:
-            var vehicle:RailVehicle3D = node as RailVehicle3D
-            if vehicle and VehicleServer.vehicle_is_simulation_ready(vehicle.get_rid()):
-                _auto_start_pending = false
-                return vehicle
-    return null
+        _auto_start_pending = false
+        PlayerServer.player_take_over_vehicle(vehicle)
 
-func _get_vehicle_id(vehicle:RailVehicle3D) -> String:
-    return VehicleServer.vehicle_get_name(vehicle.get_rid())
 
 ## The keys of the cab's controls act on the vehicle driven, whether the player looks from its cab
 ## or from outside - the cab logic is the vehicle's (CabinSystem), not the 3D cab's
@@ -256,7 +248,7 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
 
 ## The vehicle's cab interior shown, the cab camera in it, where the cab puts the driver
 func _show_cabin(vehicle:RID) -> void:
-    var cabin:Cabin3D = CabinSystem.vehicle_show_cabin(vehicle)
+    var cabin:Cabin3D = CabinSystem.vehicle_show_cabin(vehicle, self)
     if not cabin:
         return
     _cabin_vehicle = vehicle
@@ -313,15 +305,14 @@ func _on_camera_changed() -> void:
         free_camera.fov = external_camera.fov
         free_camera.glide(external_camera.velocity)
     elif camera == external_camera:
-        var target_rid:RID = PlayerCameraServer.camera_get_target()
-        var target:RailVehicle3D = instance_from_id(RailVehicleRenderingServer.vehicle_get_node(target_rid)) as RailVehicle3D
+        var target:RID = PlayerCameraServer.camera_get_target()
         external_camera.view = PlayerCameraServer.camera_get_follow_view() as ExternalCamera3D.View
         # another vehicle, or following anew: its view applied in full, flown to from where the view
         # is - or from beside the vehicle, when it is far; the same one keeps its view and offsets
         if not (previous == external_camera and external_camera.vehicle == target):
             var from:Transform3D = previous.global_transform
-            if from.origin.distance_to(target.global_position) > _follow_jump_distance:
-                from = PlayerCameraServer.camera_get_show_transform(target_rid)
+            if from.origin.distance_to(RailVehicleRenderingServer.vehicle_get_transform(target).origin) > _follow_jump_distance:
+                from = PlayerCameraServer.camera_get_show_transform(target)
             external_camera.activate(target, from)
     if not camera == previous:
         _show_camera(camera)

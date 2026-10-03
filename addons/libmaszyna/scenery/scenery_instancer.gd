@@ -22,7 +22,7 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const CACHE_FORMAT_VERSION:int = 37
+const CACHE_FORMAT_VERSION:int = 38
 ## The root the scenery's nodes are packed under (_pack_objects())
 const PACKED_ROOT_NAME:String = "Scenery"
 const CACHE_DIRECTORY:String = "scenery_compiled"
@@ -102,7 +102,9 @@ static func clear_cache() -> void:
 ## holding it. baltyk_skm1.scn alone places 8 487 models, 90 228 "triangles" nodes (41% of them
 ## with no range at all), 2 340 tracks and 1 163 traction spans.
 func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
-    var source_path:String = _get_source_path(root.filename)
+    # what is loaded is what the scenery was set to when the load began
+    var filename:String = root.filename
+    var source_path:String = _get_source_path(filename)
     var parameters_hash:String = _get_parameters_hash(parameters)
     var cache_path:String = _get_cache_path(source_path, parameters_hash)
     var world_3d:World3D = root.get_world_3d()
@@ -115,9 +117,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             root, _load_cached.bind(cache_path, source_path, parameters_hash), 0.0,
             MaszynaIncludeNode.LoadStage.FILES, "Reading cache"
         ) as MaszynaCompiledScenery
-        # the editor frees a scene it reopens, mid-load; its scenery drained the queue on leaving
-        # the tree (cancel_loading()) and there is nothing left to load into
-        if not is_instance_valid(root):
+        if _is_load_given_up(root):
             return
 
     if not compiled:
@@ -128,13 +128,14 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         var triangles_sink:SceneryTrianglesSink = SceneryTrianglesSink.create(
             _cache.get_file_path(cache_path.get_basename())
         )
-        var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters, triangles_sink)
+        var context:MaszynaImporterContext = await _parse_file_with_progress(
+                root, filename, parameters, triangles_sink)
         if not context:
             return
         SceneryLoadMeasurement.print_process(CONVERT_TAG, "parsed")
         await _run_on_worker(
             root, assign_signal_head_kinds.bind(context.models, context.events), PARSE_PROGRESS,
-            MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename
+            MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % filename
         )
         SceneryLoadMeasurement.print_process(CONVERT_TAG, "signal heads")
         var chunk_descriptors:Variant = await _run_on_worker(
@@ -169,6 +170,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             )
             SceneryLoadMeasurement.print_process(CONVERT_TAG, "saved")
 
+    if _is_load_given_up(root):
+        return
     await _report_progress(root, PARSE_PROGRESS, MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks and traction")
     await _instantiate_server_data(
         root,
@@ -185,8 +188,12 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         PARSE_PROGRESS,
         0.6,
     )
+    if _is_load_given_up(root):
+        return
     await _report_progress(root, 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain")
     await _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
+    if _is_load_given_up(root):
+        return
     # the terrain of a region file is supplied as the camera comes near; its sections are listed on
     # a worker - a file lists twenty thousand of them
     for region_file:String in compiled.region_files:
@@ -194,12 +201,19 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         var opened:bool = await _run_on_worker(
             root, provider.open.bind(region_file), 0.6, MaszynaIncludeNode.LoadStage.TERRAIN, "Registering terrain"
         )
+        if _is_load_given_up(root):
+            return
         if opened:
             root._provider_rids.append(SceneryStreamingServer.provider_register(provider, world_3d.scenario))
     await _report_progress(root, 0.7, MaszynaIncludeNode.LoadStage.OBJECTS, "Instancing objects")
     await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
-    await _wait_for_vehicles(root)
-    await _build_drivers(root)
+    if _is_load_given_up(root):
+        return
+    await _build_trainsets(root, compiled.trainsets)
+    if _is_load_given_up(root):
+        return
+    if Engine.is_editor_hint():
+        root.SceneryEditor.update_owners(root)
     root._scenario_scripts.assign(compiled.scripts)
     measurement.finish()
     SceneryLoadMeasurement.print_scenery(compiled)
@@ -207,6 +221,12 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     compiled = null
     ProcessMemory.release_unused()
     SceneryLoadMeasurement.print_process("SceneryMemory", "loaded")
+
+
+## The load is not to go on: its scenery is gone - the editor frees a scene it reopens, mid-load -
+## or was told to stop (MaszynaIncludeNode.stop_loading()). Asked after every wait of a load.
+static func _is_load_given_up(root:MaszynaIncludeNode) -> bool:
+    return not is_instance_valid(root) or root.is_load_given_up()
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
@@ -238,50 +258,83 @@ static func frame_budget_wait() -> void:
     _last_report_msec = Time.get_ticks_msec()
 
 
-## MaszynaRailVehicle3D builds its vehicle in its own _process, after being attached; built, it
-## stands on its track - every track is registered by now - and its trainset has coupled it
-## (TrainSet3D). A vehicle that failed to load has no simulation, a road car no track (roads are not
-## built yet, maszyna_node_track_importer.gd).
-static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
+## The scenery's trainsets and their vehicles, through the servers - no node for either
+## (MaszynaLegacyVehicleSystem, RailVehicleServer): every vehicle is built, then each trainset
+## stands its vehicles on its track and couples them (trainset_place(), "endtrainset"), and only
+## then the drivers are given their orders - what a driver does first is sent along the couplers
+## (simulationstateserializer.cpp:818-848). Every track is registered by now.
+static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTrainsetData]) -> void:
     await _report_progress(root, 0.9, MaszynaIncludeNode.LoadStage.VEHICLES, "Instancing vehicles")
-    for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
-        var vehicle:MaszynaRailVehicle3D = node
-        if not vehicle.is_built():
-            await vehicle.vehicle_built
-    root.load_progress.emit(1.0, MaszynaIncludeNode.LoadStage.VEHICLES, "")
-
-
-## Every vehicle with somebody aboard gets the original's driver - once the vehicles are built, as
-## their handles exist only then, and their trainsets coupled (TrainSet3D), as the original couples
-## them before the driver is given its orders (simulationstateserializer.cpp:818-840) - what the
-## driver does first is sent along the couplers. The vehicle goes first: the driver learns its cab
-## from it. Then every trainset's driver gets the trainset's timetable.
-static func _build_drivers(root:MaszynaIncludeNode) -> void:
-    for node:Node in root.find_children("", "MaszynaRailVehicle3D", true, false):
-        await frame_budget_wait()
-        var vehicle_node:MaszynaRailVehicle3D = node
-        var vehicle:RID = vehicle_node.get_rid()
-        if not VehicleServer.vehicle_is_simulation_ready(vehicle) or vehicle_node.driver_type == VehicleController.DRIVER_NOBODY:
+    # A trainset on a track that is not built - a road car, roads are not built yet
+    # (maszyna_node_track_importer.gd) - could never be placed, and still cost whole vehicles:
+    # their physics stepped, their drivers and cab logic run (docs/findings-archive.md, 2026-10-03
+    # hundreds of vehicles)
+    var placed:Array[MaszynaTrainsetData] = []
+    var tracks:Array[RID] = []
+    var vehicles:Array[Array] = []
+    for trainset_data:MaszynaTrainsetData in trainsets:
+        var track:RID = TrackServer.track_get_rid_by_name(trainset_data.track_name)
+        if not track.is_valid():
             continue
-        var driver:RID = DriverSystem.driver_create()
-        root._driver_rids.append(driver)
-        # the driver drives through the vehicle's cab logic, like the player, without the 3D cab
-        # (MaszynaRailVehicle3D attaches it once the vehicle is driven)
-        DriverSystem.driver_attach_vehicle(driver, vehicle)
-        DriverSystem.driver_attach_delegate(driver, _ai_driver)
-    # endtrainset (simulationstateserializer.cpp:818-848): the trainset's driver gets its timetable
-    # and the velocity it starts with; of several drivers, the one furthest along the trainset
-    for node:Node in root.find_children("", "TrainSet3D", true, false):
-        var trainset:TrainSet3D = node
+        var trainset_vehicles:Array[RID] = []
+        for dynamic:MaszynaDynamicData in trainset_data.dynamics:
+            var vehicle_dynamic:MaszynaDynamicData = dynamic
+            # the cache holds what the .scn declares; the skin chosen for this load is this
+            # vehicle's alone
+            if root.skin_overrides.has(dynamic.name):
+                vehicle_dynamic = dynamic.duplicate()
+                vehicle_dynamic.skin = root.skin_overrides[dynamic.name]
+            var vehicle:RID = MaszynaLegacyVehicleSystem.vehicle_create(vehicle_dynamic, root.get_instance_id())
+            root._vehicle_rids.append(vehicle)
+            trainset_vehicles.append(vehicle)
+        placed.append(trainset_data)
+        tracks.append(track)
+        vehicles.append(trainset_vehicles)
+    if placed.size() < trainsets.size():
+        print("[SceneryLoad] %d trainsets on tracks that are not built (roads) left out" % (trainsets.size() - placed.size()))
+
+    for index:int in placed.size():
+        await frame_budget_wait()
+        var trainset_data:MaszynaTrainsetData = placed[index]
+        var trainset_vehicles:Array[RID] = vehicles[index]
+        for vehicle:RID in trainset_vehicles:
+            while not MaszynaLegacyVehicleSystem.vehicle_is_built(vehicle):
+                await MaszynaLegacyVehicleSystem.vehicle_built
+                if _is_load_given_up(root):
+                    return
+        var trainset:RID = RailVehicleServer.trainset_create()
+        root._trainset_rids.append(trainset)
+        RailVehicleServer.trainset_set_name(trainset, trainset_data.name)
+        RailVehicleServer.trainset_set_track(trainset, tracks[index], trainset_data.offset)
+        # a vehicle that failed to load has no simulation, and the trainset stands without it
+        var members:Array[int] = []
+        for member:int in trainset_vehicles.size():
+            if not VehicleServer.vehicle_is_simulation_ready(trainset_vehicles[member]):
+                continue
+            var dynamic:MaszynaDynamicData = trainset_data.dynamics[member]
+            RailVehicleServer.trainset_add_vehicle(
+                    trainset, trainset_vehicles[member], dynamic.direction, dynamic.gap, dynamic.coupling)
+            members.append(member)
+        RailVehicleServer.trainset_place(trainset)
+        # every vehicle with somebody aboard gets the original's driver; the vehicle goes first -
+        # the driver learns its cab from it. The driver drives through the vehicle's cab logic,
+        # like the player, without the 3D cab (MaszynaLegacyVehicleSystem attaches it once the
+        # vehicle is driven)
         var trainset_driver:RID = RID()
-        for child:Node in trainset.get_children():
-            var vehicle_node:RailVehicle3D = child as RailVehicle3D
-            var driver:RID = DriverSystem.vehicle_get_driver(vehicle_node.get_rid()) if vehicle_node else RID()
-            if driver.is_valid():
-                trainset_driver = driver
-        if trainset_driver.is_valid():
+        for member:int in members:
+            if trainset_data.dynamics[member].driver_type == VehicleController.DRIVER_NOBODY:
+                continue
+            trainset_driver = DriverSystem.driver_create()
+            root._driver_rids.append(trainset_driver)
+            DriverSystem.driver_attach_vehicle(trainset_driver, trainset_vehicles[member])
+            DriverSystem.driver_attach_delegate(trainset_driver, _ai_driver)
+        # endtrainset (simulationstateserializer.cpp:839-848): the trainset's driver gets its
+        # timetable and the velocity it starts with; of several drivers, the one furthest along
+        if trainset_driver.is_valid() and trainset_data.timetable:
             DriverSystem.driver_send_command(
-                    trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset.timetable, trainset.velocity, 0.0)
+                    trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset_data.timetable,
+                    trainset_data.velocity, 0.0)
+    root.load_progress.emit(1.0, MaszynaIncludeNode.LoadStage.VEHICLES, "")
 
 
 static func _instantiate_server_data(
@@ -311,6 +364,8 @@ static func _instantiate_server_data(
         root._track_render_rids.append(built["track_render_rid"])
         built_count += 1
         await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering tracks")
+        if _is_load_given_up(root):
+            return
 
     for power_source_data:MaszynaPowerSourceData in power_sources:
         root._power_source_rids.append(_build_power_source(power_source_data))
@@ -321,6 +376,8 @@ static func _instantiate_server_data(
         root._wire_power_rids.append(_build_wire_power(traction_data))
         built_count += 1
         await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE, "Registering traction")
+        if _is_load_given_up(root):
+            return
     if root._wire_power_rids.size() > 0:
         TractionServer.network_build()
 
@@ -342,6 +399,8 @@ static func _instantiate_server_data(
             root, lerpf(progress_from, progress_to, built_count / total), MaszynaIncludeNode.LoadStage.INFRASTRUCTURE,
             TranslationServer.translate("Registering %s") % model_data.model_filename
         )
+        if _is_load_given_up(root):
+            return
     # the original's firstinit: everything the events are aimed at exists by now
     await MaszynaLegacyEventFactory.build(
         root, events, memcells, launchers, sounds, isolated_sections, tracks, track_rids, models, model_rids,
@@ -367,53 +426,15 @@ static func _build_triangle_chunks(
 static func _attach_objects(
     root:MaszynaIncludeNode, objects:Array, progress_from:float, progress_to:float
 ) -> void:
-    var left_out:int = 0
     for i:int in objects.size():
         var node:Node = objects[i] as Node
         if not node:
             continue
-        # A vehicle or a trainset on a track that is not built - a road car, roads are not built
-        # yet (maszyna_node_track_importer.gd) - could never be placed, and still cost a whole
-        # vehicle: its physics stepped, its driver and cab logic run (docs/findings-archive.md,
-        # 2026-10-03 hundreds of vehicles). Every track is registered by now; either may sit
-        # inside an include's node, and a trainset takes its vehicles with it.
-        var placed:Array[Node] = [node]
-        placed.append_array(node.find_children("", "TrainSet3D", true, false))
-        placed.append_array(node.find_children("", "MaszynaRailVehicle3D", true, false))
-        for candidate:Node in placed:
-            if not is_instance_valid(candidate):
-                continue
-            var track_name:String = (
-                (candidate as TrainSet3D).start_track_name if candidate is TrainSet3D
-                else (candidate as MaszynaRailVehicle3D).start_track_name if candidate is MaszynaRailVehicle3D
-                else "")
-            if track_name and not TrackServer.track_get_rid_by_name(track_name).is_valid():
-                candidate.free()
-                left_out += 1
-        if not is_instance_valid(node):
-            continue
-
-        _apply_skin_overrides(root, node)
         root.add_child(node)
         var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
         await _report_progress_throttled(root, progress, MaszynaIncludeNode.LoadStage.OBJECTS, TranslationServer.translate("Instancing %s") % node.name)
-    if left_out:
-        print("[SceneryLoad] %d vehicles and trainsets on tracks that are not built (roads) left out" % left_out)
-    if Engine.is_editor_hint():
-        root.SceneryEditor.update_owners(root)
-
-
-## Vehicles are built from their properties once they enter the tree, so an overridden skin has
-## to be set before that (a trainset holds its vehicles as children)
-static func _apply_skin_overrides(root:MaszynaIncludeNode, node:Node) -> void:
-    if not root.skin_overrides:
-        return
-    var vehicles:Array[Node] = [node]
-    vehicles.append_array(node.find_children("", "MaszynaRailVehicle3D", true, false))
-    for candidate:Node in vehicles:
-        var vehicle:MaszynaRailVehicle3D = candidate as MaszynaRailVehicle3D
-        if vehicle and root.skin_overrides.has(vehicle.vehicle_id):
-            vehicle.skin = root.skin_overrides[vehicle.vehicle_id]
+        if _is_load_given_up(root):
+            return
 
 
 static func _compile_scenery(
@@ -441,6 +462,7 @@ static func _compile_scenery(
     compiled.launchers = context.launchers
     compiled.sounds = context.sounds
     compiled.isolated_sections = context.isolated_sections
+    compiled.trainsets = context.trainsets
     compiled.scripts = context.scripts
     compiled.region_files = context.region_files
     return compiled
@@ -455,9 +477,6 @@ static func _pack_objects(objects:Array) -> PackedScene:
         if object is Node:
             scene_root.add_child(object)
             object.owner = scene_root
-            if object is TrainSet3D:
-                for vehicle:Node in object.get_children():
-                    vehicle.owner = scene_root
 
     var packed_scene := PackedScene.new()
     var result:Error = packed_scene.pack(scene_root)
@@ -619,6 +638,7 @@ func parse_subscene_task(
         cached.launchers.assign(compiled.launchers)
         cached.sounds.assign(compiled.sounds)
         cached.isolated_sections.assign(compiled.isolated_sections)
+        cached.trainsets.assign(compiled.trainsets)
         cached.region_files.assign(compiled.region_files)
         for chunk_path:String in compiled.triangle_chunk_paths:
             scenery_sink.add_geometry_file(chunk_path)
@@ -664,7 +684,7 @@ func parse_subscene_task(
 ## Parses root's scenery on WorkerTaskQueue workers (every include is a task), reporting
 ## progress every frame: finished tasks / tasks submitted so far.
 func _parse_file_with_progress(
-    root:MaszynaIncludeNode, parameters:Dictionary, triangles_sink:SceneryTrianglesSink
+    root:MaszynaIncludeNode, filename:String, parameters:Dictionary, triangles_sink:SceneryTrianglesSink
 ) -> MaszynaImporterContext:
     var root_context := MaszynaImporterContext.new()
     root_context.rotate = root.context_rotate
@@ -673,8 +693,8 @@ func _parse_file_with_progress(
     var queue := WorkerTaskQueue.new()
     _active_queues.append(queue)
     # the scenario's region file first: what is parsed after it depends on whether it is there
-    root_context.load_scenario_binary_terrain(root.filename)
-    var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
+    root_context.load_scenario_binary_terrain(filename)
+    var task_id:int = queue.submit(parse_file_task.bind(filename, parameters, root_context.get_state(), queue))
     # every include is a task submitted while parsing, so the total grows with the parse; the bar
     # does not go back when it does
     var parsed:float = 0.0
@@ -685,7 +705,7 @@ func _parse_file_with_progress(
         _file_in_parse_mutex.unlock()
         root.load_files_parsed.emit(queue.get_completed_count(), file_in_parse)
         await _report_progress(
-            root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % root.filename
+            root, PARSE_PROGRESS * parsed, MaszynaIncludeNode.LoadStage.FILES, tr("Parsing %s") % filename
         )
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
@@ -693,9 +713,9 @@ func _parse_file_with_progress(
     _include_buffers.clear()
     _include_buffers_mutex.unlock()
     if not context:
-        # a drained queue: the scenery left the tree mid-load (cancel_loading()), freed with it
-        if is_instance_valid(root):
-            push_error("Cannot parse scenery: " + root.filename)
+        # a drained queue (cancel_loading()) is a load given up, not one that failed
+        if not _is_load_given_up(root):
+            push_error("Cannot parse scenery: " + filename)
         return null
     # the scenario's region file is found before the parse, in the root's own context
     context.dependencies.merge(root_context.dependencies)

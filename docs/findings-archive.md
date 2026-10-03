@@ -3266,3 +3266,20 @@ lighting or the trainset.
   cache format version bumped.
 * **Rule:** a file named by the data is looked up where the original looks it up, in its order -
   not under the one root most of the data uses.
+
+## 2026-10-03 l107's factory turned by 80 degrees
+
+* **Symptom:** `linia_107_objazdy.scn`, sector -65,-20: the Agromet factory stands about 90 degrees
+  off (the scenery's author, through the operator).
+* **What proved it:** the node is `model -64789.1 302.559 -19760.6 0 przemysl/fabryka_agromet.t3d
+  none lights 4.5 angles 0 80 0 endmodel` (`l107/deko/107_deko.scm:4035`, no `rotate` around it);
+  the model's own matrices are identity (`fabryka_agromet.e3d`, read off the file). The importer
+  read every token after `lights` up to `endmodel` as a light mode, so `angles 0 80 0` became the
+  modes 0, 0, 80, 0 and the factory kept the node's angle 0. The original ends a `lights` or
+  `lightcolors` list at any of its keywords (`TAnimModel::is_keyword()`, `AnimModel.cpp:268-277`)
+  and reads that keyword next. 1654 nodes of the game data have `angles` after `lights`, 191 of
+  them in `l107/`.
+* **Fix:** `maszyna_node_model_importer.gd` ends the lists at the original's keywords; the scenery
+  cache format version bumped.
+* **Rule:** a list in the data ends where the original's loader ends it - at its keywords, not at
+  the end of the node.

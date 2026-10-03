@@ -6,6 +6,8 @@ extends RefCounted
 ## models/ ("bud\dombale.t3d") - TModelsManager::find_on_disk(), MdlMngr.cpp:146-150
 const MODEL_EXTENSIONS:Array[String] = ["e3d", "t3d"]
 const MODELS_DIRECTORY:String = "models"
+## What ends a `lights` or `lightcolors` list (TAnimModel::is_keyword(), AnimModel.cpp:268-277)
+const KEYWORDS:PackedStringArray = ["endmodel", "lights", "lightcolors", "angles", "scale", "notransition"]
 
 
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelData:
@@ -40,53 +42,38 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelDat
     if not skins.to_lower() == "none":
         obj.skins = skins.split("|")
 
-    var _endmodel = false
-
-    while not _endmodel:
-        if p.eof_reached():
-            break
-        var nt = p.next_token().to_lower()
-
-        match nt:
+    # `lights <mode> ...` and `lightcolors <hex> ...` run until the next keyword, which is then
+    # read as the node goes on (TAnimModel::Load(), AnimModel.cpp:335-371): `lights 4.5 angles 0 80
+    # 0 endmodel` is a light and a rotation. A mode is ls_Off/ls_On/ls_Blink/ls_Dark/ls_Home plus an
+    # optional fraction, one per light in Light_On00..07 order; a colour is an RGB hex literal, with
+    # -1 meaning "leave the model's own colour alone".
+    var token:String = p.next_token().to_lower()
+    while token and not token == "endmodel":
+        match token:
             "lights":
-                # `lights <mode> ... [lightcolors <hex> ...] [notransition]`, one value per light
-                # in Light_On00..07 order (TAnimModel::Load(), AnimModel.cpp:335-361). A mode is
-                # ls_Off/ls_On/ls_Blink/ls_Dark/ls_Home plus an optional fraction; a colour is an
-                # RGB hex literal, with -1 meaning "leave the model's own colour alone".
                 var modes:PackedFloat32Array = []
-                var colors:PackedColorArray = []
-                var reading_colors:bool = false
-
-                while true:
-                    var x:String = p.next_token()
-                    match x.to_lower():
-                        "lightcolors":
-                            reading_colors = true
-                        "notransition":
-                            pass
-                        "endmodel":
-                            _endmodel = true
-                            break
-                        _:
-                            if reading_colors:
-                                colors.append(_parse_light_color(x))
-                            else:
-                                modes.append(float(x))
+                token = p.next_token().to_lower()
+                while token and not KEYWORDS.has(token):
+                    modes.append(float(token))
+                    token = p.next_token().to_lower()
                 obj.lights = modes
+                continue
+            "lightcolors":
+                var colors:PackedColorArray = []
+                token = p.next_token().to_lower()
+                while token and not KEYWORDS.has(token):
+                    colors.append(_parse_light_color(token))
+                    token = p.next_token().to_lower()
                 obj.light_colors = colors
+                continue
             "angles":
-                var _rot = p.get_tokens(3)
-                if obj:
-                    obj.rotation = Vector3(
-                        deg_to_rad(float(_rot[0])),
-                        deg_to_rad(float(_rot[1])),
-                        deg_to_rad(float(_rot[2])),
-                    )
-            "endmodel":
-                _endmodel = true
-                break
-            _:
-                pass
+                var angles:Array = p.get_tokens(3)
+                obj.rotation = Vector3(
+                    deg_to_rad(float(angles[0])),
+                    deg_to_rad(float(angles[1])),
+                    deg_to_rad(float(angles[2])),
+                )
+        token = p.next_token().to_lower()
 
     return obj
 

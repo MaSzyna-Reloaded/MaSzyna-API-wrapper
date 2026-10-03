@@ -45,3 +45,25 @@ func test_model_path_is_looked_for_as_given_then_under_models() -> void:
     assert_eq(context.models.size(), 2)
     assert_eq(context.models[0].data_path, "models/t3d", "a path given from the game directory")
     assert_eq(context.models[1].data_path, "models/t3d", "a path under models/")
+
+
+## A `lights` list ends at the next keyword (AnimModel.cpp:268-277): l107's Agromet factory is
+## `lights 4.5 angles 0 80 0 endmodel` - a light, and the factory turned by 80 degrees
+func test_lights_end_at_the_next_keyword() -> void:
+    var parser: MaszynaParser = MaszynaParser.new()
+    parser.initialize((
+        "5000 0 factory model 0 0 0 0 przemysl/fabryka.t3d none lights 4.5 angles 0 80 0 endmodel "
+        + "1000 0 lamp model 0 0 0 0 lampa.t3d none lights 3 1 lightcolors ff0000 -1 notransition endmodel"
+    ).to_utf8_buffer())
+    var context: MaszynaImporterContext = MaszynaImporterContext.new()
+
+    NodeImporter.new().import(parser, context)
+    NodeImporter.new().import(parser, context)
+
+    assert_eq(context.models.size(), 2)
+    var factory: MaszynaModelData = context.models[0]
+    assert_eq(factory.lights, PackedFloat32Array([4.5]), "the angles read as lights")
+    assert_almost_eq(factory.rotation.y, deg_to_rad(80.0), 0.0001, "the angles lost")
+    var lamp: MaszynaModelData = context.models[1]
+    assert_eq(lamp.lights, PackedFloat32Array([3.0, 1.0]))
+    assert_eq(lamp.light_colors, PackedColorArray([Color8(0xff, 0, 0), Color(-1.0, -1.0, -1.0)]))

@@ -92,6 +92,8 @@ anything. Open work belongs in `TODO.md`.
   it. *(10-03 switch ballast at the origin)*
 * A file named by the data is looked up where the original looks it up, in its order - not under
   the one root most of the data uses. *(10-03 Sandomierz without its platform)*
+* A list in the data ends where the original's loader ends it - at its keywords, not at the end
+  of the node. *(10-03 l107's factory turned by 80 degrees)*
 * A workaround in a `Mover*` call is a sign that a FIZ key is not ported yet. Before keeping one,
   read the key's default in `LoadFIZ_*`. *(09-25 pantographs raised only with the master valve forced)*
 * A Mover field every engine type computes (EngineVoltage) is published by the part they all

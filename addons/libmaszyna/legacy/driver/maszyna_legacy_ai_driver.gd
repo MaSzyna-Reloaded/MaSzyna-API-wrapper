@@ -81,6 +81,9 @@ const EASY_REACTION_TIME:float = 0.5
 const ROLLING_START_SPEED:float = 5.0
 ## A vehicle slower than this [km/h] stands (EU07_AI_NOMOVEMENT, Driver.h:25)
 const NO_MOVEMENT_SPEED:float = 0.05
+## Coupling up, the way behind is not looked at while the vehicle to couple to is nearer than this
+## [m] or than the first signal (check_route_behind(), Driver.cpp:8247-8250)
+const CONNECT_SCAN_DISTANCE:float = 2000.0
 ## The main reservoir pressure the vehicle is ready to drive at (ScndPipePress, Driver.cpp:2894)
 const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
 ## Crew moves one cab at a time, 1 -> 0 -> -1 (TMoverParameters::ChangeCab(), Mover.cpp:784)
@@ -546,6 +549,21 @@ func _update(driver:RID) -> void:
             state.shunt_velocity, state.timetable.velocity,
             directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking)
     state.reaction_time = state.speed.reaction_time
+    # check_route_behind() (Driver.cpp:8238-8266, at the end of the speed's pick, Driver.cpp:7298):
+    # the way ahead closed, a shunting driver turns back to a signal behind that lets it go - a
+    # shunter facing the end of its siding never moved (docs/findings-archive.md, 2026-10-03
+    # scenarios that did not start)
+    var order:int = state.orders[state.order_position]
+    var coupling:bool = order & Order.CONNECT and state.route.obstacle \
+            and state.route.obstacle.distance < minf(CONNECT_SCAN_DISTANCE, state.route.get_first_semaphore_distance())
+    if state.route.velocity_next == 0.0 and not state.coupling_vehicle.is_valid() and not coupling:
+        var behind:MaszynaLegacyDriverRoute.BackwardCommand = state.route.backward_scan(order, state.trainset)
+        if not behind == MaszynaLegacyDriverRoute.BackwardCommand.NONE:
+            # a memory's command there is taken without moving (uncoupling at the end of a siding)
+            if behind == MaszynaLegacyDriverRoute.BackwardCommand.COMMAND:
+                state.stop_here = true
+            state.direction_order = -state.direction
+            state.orders[state.order_position] = order | Order.CHANGE_DIRECTION
     var cab:int = CabinSystem.occupied_cab(vehicle)
     # the engine it drives decides how (IncSpeed()'s switch on the engine type, Driver.cpp:3409)
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(

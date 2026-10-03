@@ -45,10 +45,18 @@ const SWITCHES:Dictionary = {
     Hint.CONVERTER_OFF: [&"converter_sw", false],
     Hint.COMPRESSOR_ON: [&"compressor_sw", true],
     Hint.COMPRESSOR_OFF: [&"compressor_sw", false],
-    Hint.FRONT_PANTOGRAPH_VALVE_ON: [&"pantfront_sw", true],
-    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [&"pantfront_sw", false],
-    Hint.REAR_PANTOGRAPH_VALVE_ON: [&"pantrear_sw", true],
-    Hint.REAR_PANTOGRAPH_VALVE_OFF: [&"pantrear_sw", false],
+}
+## The pantographs' valves are operated directly, as the original's driver does
+## (`mvOccupied->OperatePantographValve(end::front, operation_t::enable)`, driverhints.cpp:269-313):
+## through the cab they could not be - a cab with a pantograph selector (pantselect_sw: E186,
+## ES64F4) has no pantfront_sw/pantrear_sw, and its selector takes the valves over (Train.cpp:3154),
+## so its driver never raised them (docs/findings-archive.md, 2026-10-03 scenarios that did not
+## start). The valve and the operation of a hint; what the vehicle shows of it is read in cue()
+const PANTOGRAPH_VALVES:Dictionary = {
+    Hint.FRONT_PANTOGRAPH_VALVE_ON: [RailVehicleElectricEngine.PANTOGRAPH_FIRST, RailVehicleElectricEngine.VALVE_OPERATION_ENABLE, true],
+    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [RailVehicleElectricEngine.PANTOGRAPH_FIRST, RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, false],
+    Hint.REAR_PANTOGRAPH_VALVE_ON: [RailVehicleElectricEngine.PANTOGRAPH_SECOND, RailVehicleElectricEngine.VALVE_OPERATION_ENABLE, true],
+    Hint.REAR_PANTOGRAPH_VALVE_OFF: [RailVehicleElectricEngine.PANTOGRAPH_SECOND, RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, false],
 }
 const LINE_BREAKER_CLOSE:StringName = LegacyCabinMainSwitch.ON_BUTTON
 const LINE_BREAKER_OPEN:StringName = LegacyCabinMainSwitch.OFF_BUTTON
@@ -75,8 +83,8 @@ static func send(vehicle:RID, command:StringName, p1:Variant = null, p2:Variant 
 ## device the switch works, when it is another one of the unit - an EMU's pantographs are its
 ## motor car's (mvPantographUnit)
 static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
-    var control:StringName = SWITCHES[hint][0]
-    var wanted:bool = SWITCHES[hint][1]
+    var valve:Array = PANTOGRAPH_VALVES.get(hint, [])
+    var wanted:bool = valve[2] if valve else SWITCHES[hint][1]
     var device:RID = shown_by if shown_by.is_valid() else vehicle
     var controller:RailVehicleController = VehicleServer.vehicle_get_controller(device) as RailVehicleController
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
@@ -105,7 +113,10 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
             shown = electric.get_collector_pantograph_second_active() if electric else null
     if shown == null or bool(shown) == wanted:
         return true
-    CabinSystem.act(vehicle, cab, control, &"toggle", wanted)
+    if valve:
+        send(device, &"pantograph_valve_operate", valve[0], valve[1])
+        return false
+    CabinSystem.act(vehicle, cab, SWITCHES[hint][0], &"toggle", wanted)
     return false
 
 

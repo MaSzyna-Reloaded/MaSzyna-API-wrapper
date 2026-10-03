@@ -468,6 +468,12 @@ anything. Open work belongs in `TODO.md`.
   lives in its shown cab; an object that cannot be placed is not built. A headless load of a large
   scenery can crash in the dummy renderer's RIDs - measure under `gamescope --backend headless`.
   *(10-03 hundreds of vehicles)*
+* A scenario "not starting" is first an AI train that does not move: trace the driver's
+  `stop_reason`/`engine_missing` before the events. The original's driver sets the Mover directly
+  (`if( AIControllFlag ) mvOccupied->...`, driverhints.cpp) - a step ported through the cab fails
+  on a cab without that control. *(10-03 scenarios that did not start)*
+* A launcher's minute is `floor(t * 60)`, as the clock counts it; truncating `(t - hour) * 60`
+  lost the start minute of 622 of 1440 start times. *(10-03 scenarios that did not start)*
 * A streamed piece reads every file it needs (model, material, texture) on the preload thread;
   the main thread only creates what has to be created there. *(10-02 streaming hitches)*
 * A vehicle's sound bank is built when the vehicle comes within earshot, not at load; a sound's

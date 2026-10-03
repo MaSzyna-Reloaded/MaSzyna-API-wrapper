@@ -14,9 +14,9 @@ class_name MaszynaLegacyDriverRoute
 ## As the original, the table is kept between updates: traced once, moved as the trainset drives,
 ## traced on at its end as the reach needs, traced again from a switch thrown ahead, and the events
 ## the front reaches take effect once (TableCheck(), TableTraceRoute()). The passenger stops
-## (`PassengerStopPoint:`) are driven by the timetable (TableUpdateStopPoint()). Not ported yet: the section and road speeds, stopping at an
-## automatic block signal (spStopOnSBL), the crossings, the turn back at the end of shunting
-## (BackwardTraceRoute) - see TODO.md, "Drivers".
+## (`PassengerStopPoint:`) are driven by the timetable (TableUpdateStopPoint()). Behind the trainset
+## it looks only for a signal to turn back to (backward_scan()). Not ported yet: the section and road
+## speeds, stopping at an automatic block signal (spStopOnSBL), the crossings - see TODO.md, "Drivers".
 
 ## How far ahead it reads [m]: at least MIN_RANGE; moving, MOVING_RANGE past the braking distance;
 ## standing, STANDING_DRIVER_DISTANCES of its distance to keep (Driver.cpp:4984-4990, fDriverDist 50)
@@ -123,6 +123,16 @@ const HOLD_PARITY:int = 2
 ## The event lists of a track, by the way it is driven (CheckTrackEvent(), Driver.cpp:459-470)
 const EVENTS_TOWARD_END:int = ScenarioEventServer.TRACK_EVENT2
 const EVENTS_TOWARD_START:int = ScenarioEventServer.TRACK_EVENT1
+## How far behind the trainset a signal to turn back to is looked for [m] (check_route_behind( 1000 ),
+## Driver.cpp:7298 - "legacy scan range value")
+const BACKWARD_RANGE:float = 1000.0
+## What a signal behind the trainset asks of it (BackwardScan(), TCommandType, Driver.cpp:5407-5579)
+enum BackwardCommand { NONE, SET_VELOCITY, SHUNT_VELOCITY, COMMAND }
+## The orders a driver looks behind in - shunting, coupling up, or none at all (Driver.cpp:5413)
+const SHUNTING_ORDERS:int = MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT \
+        | MaszynaLegacyAIDriver.Order.CONNECT
+## A memory's text that is a speed, not a command for a standing driver (TMemCell::IsVelocity())
+const VELOCITY_COMMANDS:Array[String] = ["SetVelocity", "ShuntVelocity", "OutsideStation", "SetProximityVelocity"]
 
 ## What an entry means (TSpeedPosFlag, Driver.h:127-149)
 enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION, COMMAND, STOP_POINT, OTHER }
@@ -577,6 +587,62 @@ func _append(segments:Array[TrackRouteSegment], front_along:float) -> void:
         last_velocity = segment.velocity
     added.sort_custom(func(a:Entry, b:Entry) -> bool: return a.along < b.along)
     _table.append_array(added)
+
+
+## BackwardScan() with BackwardTraceRoute() (Driver.cpp:5313-5579): the first signal's memory read on
+## the tracks behind the trainset, from its front, the way it would drive turned back, as far as
+## BACKWARD_RANGE, the end of the line or a track of no speed - and whether it asks the driver to turn
+## back: a shunting driver (or one waiting for orders) to a shunting signal letting it go while the
+## way ahead is closed, a train's driver to a signal letting it go. A signal not yet behind the rear
+## (the original's dot product of the way and the memory, Driver.cpp:5453-5462) asks nothing.
+func backward_scan(order:int, trainset:MaszynaLegacyDriverTrainset) -> BackwardCommand:
+    if order & ~SHUNTING_ORDERS or not trainset.vehicles:
+        return BackwardCommand.NONE
+    var segments:Array[TrackRouteSegment] = RailVehicleServer.vehicle_trace_route(
+            trainset.vehicles[0], -trainset.front_direction, BACKWARD_RANGE)
+    # the front vehicle's middle is where the trace starts; the rear lies a trainset further on
+    var rear_along:float = trainset.length - VehicleServer.vehicle_get_dimensions(trainset.vehicles[0]).z / 2.0
+    for segment:TrackRouteSegment in segments:
+        if segment.velocity == 0.0:
+            return BackwardCommand.NONE
+        var slot:int = EVENTS_TOWARD_END if segment.toward_end else EVENTS_TOWARD_START
+        for event:RID in ScenarioEventServer.track_get_events(segment.track_rid, slot):
+            var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event) as MaszynaLegacyVehicleCommandAction
+            if not ScenarioEventServer.event_is_passive(event) or not action:
+                continue
+            # only a memory read (getvalues) - a putvalues says nothing behind (Driver.cpp:5441-5444)
+            if not action.source.is_valid():
+                return BackwardCommand.NONE
+            var curve:Curve3D = TrackServer.track_get_domain_curve(segment.track_rid)
+            var offset:float = curve.get_closest_offset(action.position) if curve else 0.0
+            if segment.distance + (offset if segment.toward_end else segment.length - offset) < rear_along:
+                return BackwardCommand.NONE
+            var command:String = ScenarioEventServer.memory_get_text(action.source)
+            var velocity:float = ScenarioEventServer.memory_get_value1(action.source)
+            # a stop signal pulls a shunting driver up to it (move, Driver.cpp:5468-5473)
+            var pull_up:bool = command == "SetVelocity" and bool(order & (SHUNTING_ORDERS if velocity == 0.0
+                    else MaszynaLegacyAIDriver.Order.CONNECT))
+            # a train signal letting it go: both of the original's branches answer the same
+            # (Driver.cpp:5476-5513)
+            if command == "SetVelocity" and not pull_up:
+                return BackwardCommand.SET_VELOCITY if velocity > 0.0 else BackwardCommand.NONE
+            # Driver.cpp:5516-5576 (it sees the shunting signals waiting for orders too): not while it
+            # can go on ahead, nor to a signal at stop
+            if pull_up or command == "ShuntVelocity":
+                return (BackwardCommand.SHUNT_VELOCITY if velocity_next == 0.0 and velocity > 0.0
+                        else BackwardCommand.NONE)
+            return BackwardCommand.COMMAND if command and not command in VELOCITY_COMMANDS else BackwardCommand.NONE
+        if segment.line_end:
+            break
+    return BackwardCommand.NONE
+
+
+## FirstSemaphorDist: how far ahead [m] the nearest signal is, NO_SIGNAL_DISTANCE for none
+func get_first_semaphore_distance() -> float:
+    for entry:Entry in _table:
+        if not entry.passed and (entry.kind == Kind.SEMAPHORE or entry.kind == Kind.SHUNT_SEMAPHORE):
+            return entry.distance
+    return NO_SIGNAL_DISTANCE
 
 
 ## The table emptied, to be traced afresh from the front on the next update (TableClear())

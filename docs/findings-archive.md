@@ -3069,3 +3069,31 @@ lighting or the trainset.
 * **Rule:** a per-step reader takes typed getters, never the dump; something every vehicle carries
   for the player alone (a rain volume, a cab) belongs to the player's vehicle; a scenery object
   that cannot be placed is not built.
+
+## 2026-10-03 scenarios that did not start
+
+* **Symptom:** signals stayed red past the departure: Wrzosy EIC (`wrzosy_eie2620.scn`, the
+  player's exit signal `Sandomierz_N`), L053 poranek (shunter SM42-1096 shown its signal, not
+  moving); "not always".
+* **What proved it:** a probe (gamescope headless, `--audio-driver Dummy`, simulation x4-x20)
+  logging every `event_launched` and, every 5 s, the AI driver's `driver_get_state()`, its route
+  table and the vehicle's state. The events ran; the AI trains stood:
+  * Wrzosy: the signal is opened by an AI freight passing `tor1451` (`tor1451:event1`,
+    `eic2620.ctr:219-232`). Its ES64F4 stood with `engine_missing` = line breaker + converter: the
+    pantographs never rose. The driver raised them through the cab's `pantfront_sw`, and a cab with
+    a pantograph selector (`pantselect_sw`: ES64F4, E186) has none - the selector takes the valves
+    over (Train.cpp:3154). The original's driver sets the valve directly (driverhints.cpp:269-313).
+  * L053 poranek: SM42-1096 faces the end of its siding (route table: `LINE_END` 90 m ahead),
+    its shunting signal (`szopa_tm11`) is behind it. `check_route_behind()`/`BackwardScan()`
+    (Driver.cpp:8238, 5407) - turning back to a signal behind - was not ported.
+  * Launchers (code review, then tests): the minute was `int((t - hour) * 60)`, which for a start
+    time like 21:05 gives 4 (21.0833... * 60 = 1264.99999...), so a launcher on the start minute
+    never fired (622 of 1440 start times); a timed launcher's condition was tried once and the
+    launcher spent even when it failed; a timed launcher's radius was ignored.
+* **Fix:** pantograph valves operated by the vehicle command (`MaszynaLegacyDriverHints.cue()`);
+  `backward_scan()` and the turn back in the driver's update; launchers: `floor(t * 60)`, spent only
+  once their condition passes, tried again when a memory changes and when the clock starts, a radius
+  >= 0 within reach of the camera. Wrzosy: the freight leaves 09:24:30, `Sandomierz_N` proceeds
+  09:29:50; L053 poranek: SM42-1096 turns back at 05:51 and shunts.
+* **Rule:** a scenario that does not run is first a driver that does not drive - trace it; a step
+  of the original's driver that sets the Mover is not ported through a cab control.

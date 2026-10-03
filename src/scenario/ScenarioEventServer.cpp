@@ -2,6 +2,7 @@
 #include "ScenarioEventServer.hpp"
 #include "driver/DriverSystem.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
+#include "scenery/SceneryStreamingServer.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "utils/Names.hpp"
 #include "vehicles/base/VehicleServer.hpp"
@@ -142,6 +143,11 @@ namespace godot {
         runtime->connect(
                 SimulationServer::time_of_day_changed_signal,
                 callable_mp(this, &ScenarioEventServer::_on_time_of_day_changed));
+        // ...and once the clock runs: a scenario's start minute is set before the camera is in
+        // place and before its onstart events have run
+        runtime->connect(
+                SimulationServer::simulation_unpaused_signal,
+                callable_mp(this, &ScenarioEventServer::_check_timed_launchers));
         // the track events hang on what the vehicles do on their tracks
         RailVehicleServer *vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
@@ -188,14 +194,24 @@ namespace godot {
         _set_processing(false);
     }
 
-    /// TEventLauncher::check_activation() (EvLaunch.cpp:197-211): a launcher fires when the clock
-    /// shows its HH:MM, once, and is armed again when the hour is another
     void ScenarioEventServer::_on_time_of_day_changed() {
+        _check_timed_launchers();
+    }
+
+    /// TEventLauncher::check_activation() (EvLaunch.cpp:197-211) under event_manager::update()
+    /// (Event.cpp:2293-2306): the original looks every frame - a launcher fires once while the
+    /// clock shows its HH:MM and its condition passes, and is armed again when the hour is another.
+    /// Its condition is a memory's (check_conditions(), EvLaunch.cpp:213-222), so here it is looked
+    /// at when the minute comes and again whenever a memory changes within it. The minute is the
+    /// clock's whole minutes, as SimulationServer counts them: a start set to 21:05 is
+    /// 21.08333..., which truncated to minutes was 21:04 (docs/findings-archive.md, 2026-10-03
+    /// scenarios that did not start).
+    void ScenarioEventServer::_check_timed_launchers() {
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        const double now = runtime->get_time_of_day();
-        const int hour = static_cast<int>(now);
-        const int minute = static_cast<int>((now - hour) * MINUTES_PER_HOUR);
+        const int minutes = static_cast<int>(Math::floor(runtime->get_time_of_day() * MINUTES_PER_HOUR));
+        const int hour = minutes / static_cast<int>(MINUTES_PER_HOUR);
+        const int minute = minutes % static_cast<int>(MINUTES_PER_HOUR);
         // copied: firing queues events, and a listener may create launchers
         const Vector<RID> timed = timed_launchers;
         for (const RID &rid: timed) {
@@ -207,12 +223,20 @@ namespace godot {
                 launcher->armed = true;
                 continue;
             }
-            if (!(launcher->minute == minute) || !launcher->armed) {
+            if (!(launcher->minute == minute) || !launcher->armed || !_in_reach(*launcher)) {
                 continue;
             }
-            launcher->armed = false;
-            _fire(launcher->condition, launcher->event);
+            launcher->armed = !_fire(launcher->condition, launcher->event);
         }
+    }
+
+    bool ScenarioEventServer::_in_reach(const LauncherData &p_launcher) {
+        if (p_launcher.radius < 0.0) {
+            return true;
+        }
+        const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        return streaming != nullptr && streaming->streaming_has_camera() &&
+               p_launcher.position.distance_to(streaming->streaming_get_camera_position()) < p_launcher.radius;
     }
 
     /// event_manager::queue_receivers() (Event.cpp:2255-2268): only a launcher's first event, and
@@ -426,14 +450,15 @@ namespace godot {
 
     /// TEventLauncher's condition is tested when it fires (EvLaunch.cpp:216-227). Both come by
     /// value: a script condition may create a launcher, which rehashes the table they came from.
-    void ScenarioEventServer::_fire(const Ref<ScenarioEventCondition> p_condition, const RID p_event) {
+    bool ScenarioEventServer::_fire(const Ref<ScenarioEventCondition> p_condition, const RID p_event) {
         if (!p_event.is_valid()) {
-            return;
+            return false;
         }
         if (p_condition.is_valid() && !p_condition->test(p_event, RID())) {
-            return;
+            return false;
         }
         event_queue(p_event);
+        return true;
     }
 
     // --- event ---
@@ -629,6 +654,8 @@ namespace godot {
         memory->value1 = p_value1;
         memory->value2 = p_value2;
         emit_signal(memory_values_changed_signal, p_memory);
+        // a launcher waiting within its minute for its memory's condition
+        _check_timed_launchers();
     }
 
     String ScenarioEventServer::memory_get_text(const RID &p_memory) const {

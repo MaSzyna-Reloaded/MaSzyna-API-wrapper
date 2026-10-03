@@ -268,6 +268,67 @@ func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
     SimulationServer.time_of_day = clock
 
 
+## 21 + 5/60 is 21.08333..., whose minutes truncated were 4 - a launcher on a scenario's start
+## minute never fired
+func test_a_launcher_fires_at_a_start_minute_the_clock_holds_inexactly() -> void:
+    var clock:float = SimulationServer.time_of_day
+    var event:RID = _create_event(RecordingAction.new(), NEVER)
+    var launcher:RID = ScenarioEventServer.launcher_create()
+    ScenarioEventServer.launcher_set_events(launcher, event, RID())
+    ScenarioEventServer.launcher_set_time_of_day(launcher, 21, 5)
+
+    SimulationServer.time_of_day = 21.0 + 5.0 / 60.0
+    assert_true(ScenarioEventServer.event_is_queued(event))
+
+    ScenarioEventServer.launcher_free(launcher)
+    _free_events([event])
+    SimulationServer.time_of_day = clock
+
+
+## The original looks at the condition all through the minute (Event.cpp:2293-2306)
+func test_a_launcher_waits_within_its_minute_for_its_condition() -> void:
+    var clock:float = SimulationServer.time_of_day
+    var event:RID = _create_event(RecordingAction.new(), NEVER)
+    var memory:RID = ScenarioEventServer.memory_create()
+    var condition:MaszynaLegacyEventCondition = MaszynaLegacyEventCondition.new()
+    var memories:Array[RID] = [memory]
+    condition.memories = memories
+    condition.value1 = 1.0
+    condition.mask = ScenarioEventServer.MEMORY_FIELD_VALUE1
+    var launcher:RID = ScenarioEventServer.launcher_create()
+    ScenarioEventServer.launcher_set_events(launcher, event, RID())
+    ScenarioEventServer.launcher_attach_condition(launcher, condition)
+    ScenarioEventServer.launcher_set_time_of_day(launcher, 10, 50)
+
+    SimulationServer.time_of_day = 10.0 + 50.25 / 60.0
+    assert_false(ScenarioEventServer.event_is_queued(event), "its condition does not pass yet")
+    ScenarioEventServer.memory_set_values(memory, "", 1.0, 0.0)
+    assert_true(ScenarioEventServer.event_is_queued(event), "it passes within the minute")
+
+    ScenarioEventServer.launcher_free(launcher)
+    ScenarioEventServer.memory_free(memory)
+    _free_events([event])
+    SimulationServer.time_of_day = clock
+
+
+## Only a launcher of a negative radius is global; the rest fire near the camera (scene.cpp:126-139)
+func test_a_timed_launcher_of_a_radius_fires_only_near_the_camera() -> void:
+    var clock:float = SimulationServer.time_of_day
+    var event:RID = _create_event(RecordingAction.new(), NEVER)
+    var launcher:RID = ScenarioEventServer.launcher_create()
+    ScenarioEventServer.launcher_set_events(launcher, event, RID())
+    ScenarioEventServer.launcher_set_radius(launcher, 10.0)
+    ScenarioEventServer.launcher_set_position(launcher, Vector3(0.0, 0.0, 1.0e6))
+    ScenarioEventServer.launcher_set_time_of_day(launcher, 10, 50)
+
+    SimulationServer.time_of_day = 10.0 + 50.5 / 60.0
+    assert_false(ScenarioEventServer.event_is_queued(event))
+
+    ScenarioEventServer.launcher_free(launcher)
+    _free_events([event])
+    SimulationServer.time_of_day = clock
+
+
 func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
     var models:Array[MaszynaModelData] = []
     await _build_scenery("event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models)

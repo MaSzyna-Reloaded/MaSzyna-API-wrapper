@@ -15,25 +15,21 @@ enum Mode {
     LOOP,
 }
 
-## The scenery sounds it plays (ScenerySoundServer)
-var sounds:Array[RID] = []
-## Each sound's range [m] (the scenery node's rmax): a radio message reaches only as far
-var reaches:PackedFloat64Array = []
-## Each sound's transcript, null for a sound with none, shown when the sound starts as heard
-## (sound_source::update_counter(), sound.cpp:950-960)
-var transcripts:Array[Transcript] = []
+## The scenery's sounds, and the names of those it plays
+var scenery_sounds:MaszynaLegacyScenerySounds = null
+var targets:PackedStringArray = []
 @export var mode:Mode = Mode.PLAY
 ## The radio channel the sound is a message on, 0 for none
 @export var radio_channel:int = 0
 
 
 func _run(_event:RID, _activator:RID) -> void:
-    for index:int in sounds.size():
-        var sound:RID = sounds[index]
+    for target:String in targets:
+        var sound:RID = scenery_sounds.get_sound(target)
         if mode == Mode.PLAY and radio_channel > 0:
             CabinSystem.send_radio_message(
-                    ScenerySoundServer.sound_get_play_event(sound), transcripts[index], radio_channel,
-                    ScenerySoundServer.sound_get_position(sound), reaches[index])
+                    ScenerySoundServer.sound_get_play_event(sound), scenery_sounds.get_transcript(target),
+                    radio_channel, ScenerySoundServer.sound_get_position(sound), scenery_sounds.get_reach(target))
             continue
         if mode == Mode.STOP:
             ScenerySoundServer.sound_stop(sound)
@@ -41,5 +37,6 @@ func _run(_event:RID, _activator:RID) -> void:
         # a sound already playing goes on as it is, and shows no transcript again
         var started:bool = ScenerySoundServer.sound_play(
                 sound, ScenerySoundServer.Playback.ONCE if mode == Mode.PLAY else ScenerySoundServer.Playback.LOOP)
-        if started and transcripts[index]:
-            TranscriptSystem.add(transcripts[index])
+        var transcript:Transcript = scenery_sounds.get_transcript(target)
+        if started and transcript:
+            TranscriptSystem.add(transcript)

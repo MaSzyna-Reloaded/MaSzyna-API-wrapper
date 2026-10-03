@@ -22,7 +22,9 @@ static var firstinit_importer = preload("res://addons/libmaszyna/legacy/scenery/
 static var isolated_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd").new()
 static var area_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_area_importer.gd").new()
 static var lua_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd").new()
-const CACHE_FORMAT_VERSION:int = 36
+const CACHE_FORMAT_VERSION:int = 37
+## The root the scenery's nodes are packed under (_pack_objects())
+const PACKED_ROOT_NAME:String = "Scenery"
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -113,6 +115,10 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             root, _load_cached.bind(cache_path, source_path, parameters_hash), 0.0,
             MaszynaIncludeNode.LoadStage.FILES, "Reading cache"
         ) as MaszynaCompiledScenery
+        # the editor frees a scene it reopens, mid-load; its scenery drained the queue on leaving
+        # the tree (cancel_loading()) and there is nothing left to load into
+        if not is_instance_valid(root):
+            return
 
     if not compiled:
         # The .scn is converted into what a cached scenery is read from, and the parse let go of:
@@ -123,6 +129,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             _cache.get_file_path(cache_path.get_basename())
         )
         var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters, triangles_sink)
+        if not context:
+            return
         SceneryLoadMeasurement.print_process(CONVERT_TAG, "parsed")
         await _run_on_worker(
             root, assign_signal_head_kinds.bind(context.models, context.events), PARSE_PROGRESS,
@@ -192,7 +200,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
     await _wait_for_vehicles(root)
     await _build_drivers(root)
-    _run_scripts(root, compiled.scripts)
+    root._scenario_scripts.assign(compiled.scripts)
     measurement.finish()
     SceneryLoadMeasurement.print_scenery(compiled)
     # what the load read and built from is let go of with the compiled scenery, and given back
@@ -274,19 +282,6 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         if trainset_driver.is_valid():
             DriverSystem.driver_send_command(
                     trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset.timetable, trainset.velocity, 0.0)
-
-
-## The scenery's script context, and its `lua` scripts run in it - last, when everything a script
-## may reach exists. The original runs them as it parses the file (simulationstateserializer.cpp:
-## 346-356); here the parsing runs on workers. Every scenery gets a context, so that a script can be
-## applied to it while it runs.
-static func _run_scripts(root:MaszynaIncludeNode, scripts:Array[String]) -> void:
-    var script_context:RID = ScenarioScriptServer.context_create(
-            UserSettings.get_maszyna_game_dir().path_join("scenery"))
-    root._script_context_rids.append(script_context)
-    ScenarioScriptServer.context_attach_cabin_delegate(script_context, CabinScriptDelegate.new())
-    for script_path:String in scripts:
-        ScenarioScriptServer.context_run_file(script_context, script_path)
 
 
 static func _instantiate_server_data(
@@ -453,6 +448,9 @@ static func _compile_scenery(
 
 static func _pack_objects(objects:Array) -> PackedScene:
     var scene_root := Node3D.new()
+    # a node that was never in a tree has no name, and an empty one cannot be set when the packed
+    # scene is instantiated (scene/main/node.cpp set_name)
+    scene_root.name = PACKED_ROOT_NAME
     for object:Variant in objects:
         if object is Node:
             scene_root.add_child(object)
@@ -695,8 +693,10 @@ func _parse_file_with_progress(
     _include_buffers.clear()
     _include_buffers_mutex.unlock()
     if not context:
-        push_error("Cannot parse scenery: " + root.filename)
-        return MaszynaImporterContext.new()
+        # a drained queue: the scenery left the tree mid-load (cancel_loading()), freed with it
+        if is_instance_valid(root):
+            push_error("Cannot parse scenery: " + root.filename)
+        return null
     # the scenario's region file is found before the parse, in the root's own context
     context.dependencies.merge(root_context.dependencies)
     context.region_files.assign(root_context.region_files + context.region_files)

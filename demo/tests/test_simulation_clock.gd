@@ -151,3 +151,16 @@ func test_a_speed_set_is_reached_over_the_speed_change_time() -> void:
 
     assert_eq(SimulationServer.simulation_get_current_speed(), DOUBLE_SPEED)
     assert_eq(SimulationServer.simulation_speed, DOUBLE_SPEED, "the speed set is the one set")
+
+
+## Without a SimulationRuntime in the tree - the editor, a scenery loaded without a game - the clock
+## stands, whoever holds it (the run's own comes from simulation_runtime_hook.gd)
+func test_the_clock_stands_without_a_runtime() -> void:
+    var runtime:Node = get_tree().root.find_children("", "SimulationRuntime", false, false)[0]
+    get_tree().root.remove_child(runtime)
+    var time_before:float = SimulationServer.simulation_get_time()
+    var before:float = _travelled()
+    await wait_idle_frames(2)
+    assert_eq(SimulationServer.simulation_get_time(), time_before)
+    assert_eq(_travelled(), before)
+    get_tree().root.add_child(runtime)

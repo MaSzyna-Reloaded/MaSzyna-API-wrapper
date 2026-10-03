@@ -3097,3 +3097,56 @@ lighting or the trainset.
   09:29:50; L053 poranek: SM42-1096 turns back at 05:51 and shunts.
 * **Rule:** a scenario that does not run is first a driver that does not drive - trace it; a step
   of the original's driver that sets the Mover is not ported through a cab control.
+
+## 2026-10-03 the editor ran the scenario
+
+* **Symptom:** a scenery opened in the editor (`demo/scenery_inspector.tscn`) flooded the log -
+  `Invalid access to property or key 'sound_free'` on `ScenerySoundServer`, `occupied_cab` and
+  `control_changed` on `CabinSystem`, `emit_signalp()` from `E3DModelManager` off the main thread,
+  `Unicode parsing error ... after f3` - loaded twice, left its tracks and models behind on unload
+  and took long in the Vehicles stage; another scenery (`zwierzyniec_osob.scn`) crashed the editor
+  while its models streamed.
+* **What proved it:**
+  * The loader started the simulation: `SceneryInstancer` built AI drivers and ran the Lua
+    scripts, the event factory queued the onstart events and made the scenery sounds, and the
+    clock ticked wherever something held it. `CabinSystem` and `ScenerySoundServer` are not
+    `@tool`, so in the editor every such call failed - and `_free_owned_rids()` built its list of
+    `[rids, free]` pairs reading `ScenerySoundServer.sound_free` first, so the error left every RID
+    unfreed.
+  * The editor freed the first instance of the scene mid-load (it reopens a scene changed on
+    disk); its `_exit_tree()` drained the parse queue, and the load went on reading
+    `root.filename` on the freed node.
+  * `E3DModelManager` emits `model_loaded_uncached` on a streaming preload worker: Godot's thread
+    guard rejects the emit itself, so no model loaded off the main thread was ever cached.
+  * The crashes: four backtraces, all faulting inside the Godot binary at the same two addresses -
+    `godot+0x180932a` three times, each while an extension object was destroyed (`E3DModel` in
+    `_drop_stale_work()` and at the end of `_plan()`), and `godot+0x18097a5` once, while an
+    `E3DSubModel` was constructed on a preload worker - called from two adjacent functions. The
+    core (`coredumpctl debug`, `thread apply all bt`) had no other thread in libmaszyna: the main
+    thread was swapping buffers, the preload workers idle. Godot's source names them
+    (`core/extension/gdextension.cpp:1086-1098`): `_track_instance()`/`_untrack_instance()` insert
+    into and erase from `HashSet<ObjectID> instances` with no lock, for every object of a
+    **reloadable** extension, in the editor only (`main.cpp:2224`, `object.cpp:190`). The
+    extension said `reloadable = true`, and the streaming creates and frees models on its workers.
+    Three guesses read off our own code came first and were wrong (the cache save, the
+    destructor's `clear()`, the reload without a drain); what settled it was laying the
+    backtraces side by side and looking at the other threads of the core.
+  * `node.cpp:1441 p_name.is_empty()`: the scenery's nodes were packed under a `Node3D.new()` that
+    never had a name (`_pack_objects()`), so every `instantiate()` of the packed scene tried to
+    set an empty one. The first guess (an unnamed E3D submodel) was wrong; the GDScript backtrace
+    of a later run named the line.
+  * The vehicles' models were created in `vehicle_set_appearance()` at the origin with
+    `detailed = true`: every vehicle built its exterior and interior as nodes.
+  * The FIZ line reader decoded cp1250 as UTF-8 (`dynamic/pkp/11xa_v2/111a_old.fiz`, "wagonów").
+* **Fix:** `SimulationRuntime` (the clock runs only with one in the tree; the game scenes and the
+  GUT pre-run hook place it), `MaszynaLegacyScenario` started by the game's world on
+  `scenery_loaded` and stopped on `MaszynaIncludeNode.unloading` (scripts, `MaszynaLegacyScenerySounds`);
+  the load ends when the drained queue returns nothing; vehicles born optimized, detailed on
+  placement by distance; `Windows1250.decode()`/`encode()` in the FIZ reader; `_clear_content()`
+  drains the streaming before it frees anything, as `_exit_tree()` does; `E3DModelManager` saves
+  by `_save_model.call_deferred()`; `reloadable = false` in `libmaszyna.gdextension`; the packed
+  root is named.
+* **Rule:** a loader builds, the game runs. A crash at changing places is one cause: lay the
+  backtraces side by side and find the frame they share, in the engine's binary too, before
+  reading our code. An extension with worker threads is not reloadable.
+

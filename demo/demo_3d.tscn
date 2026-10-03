@@ -98,6 +98,8 @@ metadata/_custom_type_script = "uid://dotmfqnin31lo"
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
 
+[node name="SimulationRuntime" type="SimulationRuntime" parent="."]
+
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
 [node name="GameHud" parent="." unique_id=194798435 instance=ExtResource("game_hud_scene")]

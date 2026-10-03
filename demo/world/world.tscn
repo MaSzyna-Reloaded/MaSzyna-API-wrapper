@@ -45,4 +45,5 @@ weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 [connection signal="load_progress" from="MaszynaSceneryNode" to="." method="_on_scenery_load_progress"]
 [connection signal="load_files_parsed" from="MaszynaSceneryNode" to="." method="_on_scenery_load_files_parsed"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
+[connection signal="unloading" from="MaszynaSceneryNode" to="." method="_on_scenery_unloading"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]

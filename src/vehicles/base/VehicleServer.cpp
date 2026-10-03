@@ -139,7 +139,7 @@ namespace godot {
 
     /// One frame of the clock, before any node has been processed (SceneTree's `process_frame`)
     void VehicleServer::_on_simulation_advanced(const double p_seconds) {
-        if (stepping && !Engine::get_singleton()->is_editor_hint()) {
+        if (stepping) {
             stepping_advance(p_seconds);
         }
     }

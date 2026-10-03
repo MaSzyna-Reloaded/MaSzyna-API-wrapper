@@ -81,6 +81,7 @@
 #include "signalling/SignallingServer.hpp"
 #include "signalling/SignallingSystemDelegate.hpp"
 #include "signalling/SignallingSystemNode.hpp"
+#include "simulation/SimulationRuntime.hpp"
 #include "simulation/SimulationServer.hpp"
 #include "station/StationServer.hpp"
 #include "tracks/SpatialIndex.hpp"
@@ -193,6 +194,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(UserSettings);
         GDREGISTER_CLASS(ProcessMemory);
         GDREGISTER_CLASS(SimulationServer);
+        GDREGISTER_CLASS(SimulationRuntime);
         GDREGISTER_CLASS(GameDataServer);
         GDREGISTER_CLASS(MaszynaTranslationServer);
         GDREGISTER_CLASS(ResourceCache);

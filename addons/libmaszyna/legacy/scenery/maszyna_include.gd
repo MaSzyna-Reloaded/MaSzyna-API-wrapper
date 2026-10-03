@@ -13,6 +13,9 @@ signal load_progress(progress:float, stage:LoadStage, message:String)
 ## Emitted by SceneryInstancer while the files are parsed: includes parsed so far and the file being
 ## parsed now - the progress of the files stage alone cannot tell a large include from a stall
 signal load_files_parsed(count:int, filename:String)
+## The content is about to be freed (a reload, an unload): whatever runs on it - its scenario,
+## MaszynaLegacyScenario - stops now, while everything it reaches still exists
+signal unloading
 
 ## Milliseconds spent freeing content per frame while reloading
 const CLEAR_BUDGET_MSEC:int = 8
@@ -67,12 +70,14 @@ var _launcher_rids:Array[RID] = []
 var _pickable_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
 var _memory_rids:Array[RID] = []
-var _sound_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
 var _driver_rids:Array[RID] = []
-var _script_context_rids:Array[RID] = []
+## What the scenario starts (MaszynaLegacyScenario) - loaded here, run only by the game: the
+## scenery's `lua` scripts and its sounds
+var _scenario_scripts:Array[String] = []
+var _scenery_sounds:MaszynaLegacyScenerySounds = null
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -91,6 +96,7 @@ func _on_data_reload_requested() -> void:
 
 
 func _exit_tree() -> void:
+    unloading.emit()
     GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
     # The planning thread calls back into GDScript (the owner's preload) and can be creating
     # rendering resources for the very RIDs freed below. It is stopped and joined here, while the
@@ -100,24 +106,26 @@ func _exit_tree() -> void:
     _free_owned_rids()
 
 
-## The ScenarioScriptServer context the scenery's scripts run in, invalid while nothing is loaded
-func get_script_context() -> RID:
-    return _script_context_rids[0] if _script_context_rids else RID()
+## The scenery's `lua` scripts, run by its scenario (MaszynaLegacyScenario)
+func get_scenario_scripts() -> Array[String]:
+    return _scenario_scripts
+
+
+## The scenery's sounds, made audible by its scenario (MaszynaLegacyScenario); null while nothing
+## is loaded
+func get_scenery_sounds() -> MaszynaLegacyScenerySounds:
+    return _scenery_sounds
 
 
 ## budget_msec > 0 spreads the freeing over frames, so whatever covers the screen (the loading
 ## spinner) keeps animating; 0 frees everything at once (leaving the tree)
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
-        # first, so no queued event runs against what is freed after them - the scripts' own
-        # events with them
-        [_script_context_rids, ScenarioScriptServer.context_free],
         [_driver_rids, DriverSystem.driver_free],
         [_pickable_rids, SceneryHUDMouseServer.pickable_free],
         [_launcher_rids, ScenarioEventServer.launcher_free],
         [_event_rids, ScenarioEventServer.event_free],
         [_memory_rids, ScenarioEventServer.memory_free],
-        [_sound_rids, ScenerySoundServer.sound_free],
         [_event_track_rids, ScenarioEventServer.track_clear_events],
         [_event_isolated_rids, ScenarioEventServer.isolated_clear_events],
         [_isolated_rids, TrackServer.isolated_free],
@@ -154,12 +162,18 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
 ## outside this subtree, so disabling the subtree alone leaves the heaviest part running until the
 ## last vehicle is freed - it is stopped here too and restored once the content is gone.
 func _clear_content(budget_msec:int = 0) -> void:
+    unloading.emit()
+    _scenario_scripts.clear()
+    _scenery_sounds = null
     process_mode = Node.PROCESS_MODE_DISABLED
     VehicleServer.stepping_set_enabled(false)
     # Streaming builds content on process_frame, and the freeing below yields a frame for its
     # budget - without this it streams new content into the very RIDs being freed, which the
     # RenderingServer reports as "Initializing already initialized RID" and then aborts.
     SceneryStreamingServer.streaming_set_enabled(false)
+    # the preloads in flight load the content freed below - they are stopped and joined first, as
+    # on leaving the tree (_exit_tree)
+    SceneryStreamingServer.streaming_drain()
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
@@ -200,6 +214,6 @@ func _process(delta: float) -> void:
         _editor_dirty = false
         if Engine.is_editor_hint():
             SceneryEditor.update_owners(self)
-        
+
 func _process_dirty(_delta: float) -> void:
     self.load()

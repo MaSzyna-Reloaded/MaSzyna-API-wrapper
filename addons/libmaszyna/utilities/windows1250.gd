@@ -39,6 +39,20 @@ static func decode(bytes:PackedByteArray) -> String:
     return text
 
 
+## The text back in cp1250 bytes - for a parser that reads cp1250 (MaszynaParser); a character
+## cp1250 has no byte for becomes "?"
+static func encode(text:String) -> PackedByteArray:
+    var bytes:PackedByteArray = []
+    for index:int in text.length():
+        var code:int = text.unicode_at(index)
+        if code < ASCII_END:
+            bytes.append(code)
+            continue
+        var high:int = HIGH_CODE_POINTS.find(code)
+        bytes.append(ASCII_END + high if high >= 0 else "?".unicode_at(0))
+    return bytes
+
+
 ## The Polish letters of the text made plain ASCII, as the original compares names
 static func to_ascii(text:String) -> String:
     var ascii:String = text

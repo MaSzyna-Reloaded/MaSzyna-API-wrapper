@@ -640,6 +640,9 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 
 ## Scenery loading
 
+* After a scenery has loaded, the editor prints `Unicode parsing error ... Invalid UTF-8 leading
+  byte (b0)` once (td.scn): something still decodes cp1250 as UTF-8. Not the FIZ reader (fixed) and
+  not a rail profile; source not found.
 * Air temperature (`MaszynaEnvironmentNode.temperature`) is consumed by nothing; the Mover uses it
   only in `dizel_heat.Te` (`Mover.cpp:8109`) and the vendored one has
   `#define Global_AirTemperature 15.f` - not feedable without touching `src/legacy/maszyna-mover/`.

@@ -1,13 +1,17 @@
+@tool
 extends VBoxContainer
 
 ## Live view of SceneryStreamingServer: what a scenery registered, what is actually built around
-## the camera right now, and how much of the plan is still waiting for the per-frame budget.
+## the camera right now, and how much of the plan is still waiting for the per-frame budget - and
+## what the process uses. Shown in the game's HUD and in the editor's bottom panel (the scenery
+## streaming plugin); refreshed only while it is visible.
 
 ## Seconds between refreshes - the numbers only change with a streaming pass
 const REFRESH_INTERVAL:float = 0.25
+const BYTES_PER_GB:float = 1024.0 * 1024.0 * 1024.0
 
 var _rows:Dictionary[String, Label] = {}
-var _elapsed:float = 0.0
+var _timer:Timer = Timer.new()
 
 
 func _ready() -> void:
@@ -16,17 +20,24 @@ func _ready() -> void:
         "Registered", "Streamed in", "Pending builds", "Built ahead", "Pending nearby", "Nearby ready",
         "Pending clears", "Planning", "Builds/s", "Budget", "Filling", "Last pass", "Owners",
         "Supplied cells", "Provides", "Withdraws", "Main thread", "Scenery lights",
+        "Resident memory", "Godot static", "Objects", "Lazy resources",
     ]:
         _rows[caption] = _add_row(caption)
+    _timer.wait_time = REFRESH_INTERVAL
+    _timer.timeout.connect(_refresh)
+    add_child(_timer)
     _refresh()
+    if is_visible_in_tree():
+        _timer.start()
 
 
-func _process(delta:float) -> void:
-    _elapsed += delta
-    if _elapsed < REFRESH_INTERVAL:
-        return
-    _elapsed = 0.0
-    _refresh()
+func _notification(what:int) -> void:
+    if what == NOTIFICATION_VISIBILITY_CHANGED and _timer.is_inside_tree():
+        if is_visible_in_tree():
+            _refresh()
+            _timer.start()
+            return
+        _timer.stop()
 
 
 func _refresh() -> void:
@@ -83,6 +94,19 @@ func _refresh() -> void:
     _rows["Scenery lights"].text = tr("%d lit / %d (%d spot, %d omni, %d synth)") % [
         lights["lit"], lights["spot"] + lights["omni"], lights["spot"], lights["omni"],
         lights["synthesized"],
+    ]
+
+    # what the process uses (SceneryLoadMeasurement.print_process())
+    _rows["Resident memory"].text = "%.2f GB" % (ProcessMemory.get_resident_bytes() / BYTES_PER_GB)
+    _rows["Godot static"].text = "%.2f GB" % (Performance.get_monitor(Performance.MEMORY_STATIC) / BYTES_PER_GB)
+    _rows["Objects"].text = tr("%d (%d resources, %d nodes)") % [
+        Performance.get_monitor(Performance.OBJECT_COUNT),
+        Performance.get_monitor(Performance.OBJECT_RESOURCE_COUNT),
+        Performance.get_monitor(Performance.OBJECT_NODE_COUNT),
+    ]
+    var lazy:Dictionary = ResourceLazyLoader.resource_get_statistics()
+    _rows["Lazy resources"].text = tr("%d resident / %d registered, %d loads") % [
+        lazy["resident"], lazy["registered"], lazy["loads"],
     ]
 
 

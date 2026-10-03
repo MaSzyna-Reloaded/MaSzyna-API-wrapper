@@ -12,6 +12,9 @@ signal load_files_parsed(count: int, filename: String)
 ## The scenery has loaded, with its first vehicle's train_id (MaszynaSceneryNode.scenery_loaded)
 signal scenery_loaded(first_train_id: String)
 
+## The scenery's scenario, running from its load until it unloads
+var _scenario: MaszynaLegacyScenario = null
+
 
 ## Loads scenery/<filename>, its vehicles with the skins overridden
 func load_scenery(filename: String, skin_overrides: Dictionary) -> void:
@@ -33,9 +36,9 @@ func start_player(train_id: String) -> void:
     %Player.start_vehicle_id = train_id
 
 
-## The ScenarioScriptServer context the scenery's scripts run in
+## The ScenarioScriptServer context the scenery's scripts run in, invalid without a scenario
 func get_script_context() -> RID:
-    return %MaszynaSceneryNode.get_script_context()
+    return _scenario.get_script_context() if _scenario else RID()
 
 
 func get_environment() -> MaszynaEnvironmentNode:
@@ -50,5 +53,14 @@ func _on_scenery_load_files_parsed(count: int, filename: String) -> void:
     load_files_parsed.emit(count, filename)
 
 
+## The game runs the scenario of a loaded scenery; the scenery only loads it
 func _on_scenery_loaded(first_train_id: String) -> void:
+    _scenario = MaszynaLegacyScenario.new()
+    await _scenario.start(%MaszynaSceneryNode)
     scenery_loaded.emit(first_train_id)
+
+
+func _on_scenery_unloading() -> void:
+    if _scenario:
+        _scenario.stop()
+        _scenario = null

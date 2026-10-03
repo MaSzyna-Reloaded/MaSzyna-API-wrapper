@@ -218,7 +218,8 @@ static func _read_fiz_line(p: MaszynaParser) -> String:
                     bytes.append(c2) # not a CRLF pair (lone CR); keep the byte we peeked
             break
         bytes.append(c)
-    return bytes.get_string_from_utf8()
+    # the data is cp1250 ("wagonów" in dynamic/pkp/11xa_v2/111a_old.fiz)
+    return Windows1250.decode(bytes)
 
 
 ## Reads the (possibly multi-line) `include <file> [params...] end` directive - real data (e.g.
@@ -239,7 +240,7 @@ static func _read_include_directive(p: MaszynaParser, first_line_parser: Maszyna
             if not next_line or next_line.find("#") != -1:
                 continue
             current_parser = MaszynaParser.new()
-            current_parser.initialize(next_line.to_utf8_buffer())
+            current_parser.initialize(Windows1250.encode(next_line))
             continue
         if token.to_lower() == _INCLUDE_END_KEYWORD:
             break
@@ -298,7 +299,7 @@ static func _parse_file(
             continue
 
         var line_parser := MaszynaParser.new()
-        line_parser.initialize(line.to_utf8_buffer())
+        line_parser.initialize(Windows1250.encode(line))
         var first_token: String = line_parser.next_token()
         if not first_token:
             continue # line was entirely a `//`/`/* */` comment
@@ -342,7 +343,7 @@ static func _parse_file(
 
         if table_state["parser"] != null:
             var row_parser := MaszynaParser.new()
-            row_parser.initialize(line.to_utf8_buffer())
+            row_parser.initialize(Windows1250.encode(line))
             table_state["parser"].parse_row(row_parser, context)
         # else: unrecognized line outside any table - ignored, matching original tolerance.
 
@@ -353,7 +354,7 @@ static func _dispatch_header(
         section: Dictionary, line: String, context: FizImportContext, table_state: Dictionary) -> void:
     var prefix: String = section["prefix"]
     var line_parser := MaszynaParser.new()
-    line_parser.initialize(line.substr(prefix.length()).to_utf8_buffer())
+    line_parser.initialize(Windows1250.encode(line.substr(prefix.length())))
 
     # A header ends whatever table is still open, also one that opens a table of its own - a
     # LightsList: without its endL runs straight into WiperList: (dynamic/pkp/e186_v2/p160dc.fiz),

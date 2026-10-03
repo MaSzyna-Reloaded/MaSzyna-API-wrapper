@@ -15,17 +15,6 @@ class_name MaszynaLegacyEventFactory
 ## events named `<track>:<slot>` (Track.cpp:970-983); the isolated sections with their own memory and
 ## `<section>:busy/:free/:inc/:dec` events. The other types get an event without an action (TODO.md).
 
-## A scenery sound's range of -1 is heard everywhere; under it, an ambient sound is 0.4 as loud,
-## fades out past its range to AMBIENT_FADE_END of it, and is not heard further than
-## AMBIENT_CUTOFF_RANGE [m] from its place (sound.cpp:364-371, 1021-1024,
-## audiorenderer.cpp:184-199: the fade reaches 0 at range + 0.75 range, squared - 1.25 range)
-const UNLIMITED_RANGE:float = -1.0
-## Where a scenery sound's file and its transcript are (AudioStreamManager.get_stream())
-const SOUNDS_DIRECTORY:String = "sounds"
-const AMBIENT_GAIN:float = 0.4
-const AMBIENT_FADE_END:float = 1.25
-const AMBIENT_CUTOFF_RANGE:float = 2750.0
-
 ## "Leave this field as it is" (Event.cpp:491-503)
 const FIELD_KEPT:String = "*"
 ## Splits a `multiple` event's list (Event.cpp:1266-1278)
@@ -148,41 +137,8 @@ static func build(
         memories[memcell.name.to_lower()] = memory
         memory_positions[memcell.name.to_lower()] = memcell.position
 
-    # a scenery sound is an event pair of ScenerySoundServer's one bank, played once or looped
-    var sounds_by_name:Dictionary[String, RID] = {}
-    var reaches_by_name:Dictionary[String, float] = {}
-    var transcripts_by_name:Dictionary[String, Transcript] = {}
-    for sound:MaszynaSoundData in sounds:
-        await SceneryInstancer.frame_budget_wait()
-        # heard as far as a vehicle's sound of the same range (sound_source::range(), sound.cpp:364-389)
-        var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
-        source.range = sound.range_max
-        var spatial_config:SfxSpatialConfig = MmdSoundEventBuilder._build_spatial_config(source)
-        # a range under -1 is an ambient sound: on the listener, as a negative range always is, but
-        # heard only within reach of its place and 0.4 as loud (sound.cpp:364-371, 1021-1024,
-        # audiorenderer.cpp:158-199); -1 is heard everywhere
-        var ambient:bool = sound.range_max < UNLIMITED_RANGE
-        if ambient:
-            spatial_config.max_distance = minf(absf(sound.range_max) * AMBIENT_FADE_END, AMBIENT_CUTOFF_RANGE)
-        # the voices of the one player at the origin stand at the sound's own place
-        spatial_config.position = sound.position
-        var bank_events:Array[SfxEvent] = [
-            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, false), spatial_config),
-            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, true), spatial_config),
-        ]
-        if ambient:
-            for sound_event:SfxEvent in bank_events:
-                sound_event.master_track.volume_db = linear_to_db(AMBIENT_GAIN)
-        # the once and the looped event are one sound source of the original
-        MmdSoundEventBuilder.shape_emitter(bank_events, null, 0.0)
-        # streamed as far as it is heard; heard everywhere (-1), it is never out of reach
-        var sound_rid:RID = ScenerySoundServer.sound_create(
-                bank_events[0], bank_events[1], sound.position, spatial_config.max_distance)
-        root._sound_rids.append(sound_rid)
-        sounds_by_name[sound.name.to_lower()] = sound_rid
-        reaches_by_name[sound.name.to_lower()] = sound.range_max
-        transcripts_by_name[sound.name.to_lower()] = MaszynaLegacySoundCaption.from_sound_file(
-                UserSettings.get_maszyna_game_dir().path_join(SOUNDS_DIRECTORY).path_join(sound.file))
+    # the scenery's sounds, made audible only while the scenario runs (MaszynaLegacyScenario)
+    root._scenery_sounds = MaszynaLegacyScenerySounds.new(sounds)
 
     # the isolated sections, named by a track's `isolated`, an `isolated` block or an `area`
     var sections:Dictionary[String, RID] = {}
@@ -348,18 +304,13 @@ static func build(
                 if not SOUND_MODES.has(sound_mode):
                     push_warning("Sound event %s: mode %d does nothing" % [event.name, sound_mode])
                     continue
-                var sound_rids:Array[RID] = []
-                var reaches:PackedFloat64Array = []
-                var transcripts:Array[Transcript] = []
+                var sound_names:PackedStringArray = []
                 for target:String in event.targets:
-                    if sounds_by_name.has(target):
-                        sound_rids.append(sounds_by_name[target])
-                        reaches.append(reaches_by_name[target])
-                        transcripts.append(transcripts_by_name[target])
+                    if root._scenery_sounds.has_sound(target):
+                        sound_names.append(target)
                 var action:MaszynaLegacySoundAction = MaszynaLegacySoundAction.new()
-                action.sounds = sound_rids
-                action.reaches = reaches
-                action.transcripts = transcripts
+                action.scenery_sounds = root._scenery_sounds
+                action.targets = sound_names
                 action.mode = SOUND_MODES[sound_mode]
                 # the optional radio channel it is a message on (Event.cpp:1382-1386)
                 if event.parameters.size() > 1 and event.parameters[1].is_valid_int():

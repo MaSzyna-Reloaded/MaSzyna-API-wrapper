@@ -303,6 +303,7 @@ layout_mode = 2
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
 [connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
+[connection signal="item_clicked" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
 [connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_vehicles"]
 [connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]

@@ -284,6 +284,7 @@ autostart = true
 [connection signal="pressed" from="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/EnterCabinButton" to="." method="_on_enter_cabin_button_pressed"]
 [connection signal="pressed" from="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/AIButton" to="." method="_on_ai_button_pressed"]
 [connection signal="activated" from="Content/Trainset" to="." method="_on_trainset_activated"]
+[connection signal="item_clicked" from="Content/Trainset" to="." method="_on_trainset_activated"]
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]
 [connection signal="toggled" from="Content/Header/TitleRow/FollowButton" to="." method="_on_follow_button_toggled"]
 [connection signal="pressed" from="Content/Header/TitleRow/ShowButton" to="." method="_on_show_button_pressed"]

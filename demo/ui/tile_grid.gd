@@ -10,6 +10,9 @@ extends FocusSection
 
 ## The selection moved, by key or by pointer - the listener asks get_selected()
 signal item_selected
+## A tile was clicked, and is selected now. What a click means is the owner's: the vehicles of a
+## trainset open on it, as on Enter (activated); a skin is only tried on
+signal item_clicked
 
 ## A single scrolling row (the vehicles of a trainset), or as many rows as the tiles need (skins)
 enum Layout { ROW, GRID }
@@ -351,7 +354,7 @@ func _on_tile_pressed(index: int) -> void:
     _ui_sounds.play(click_event)
     focus_requested.emit()
     _select(index)
-    activated.emit()
+    item_clicked.emit()
 
 
 func _on_tile_hovered(index: int) -> void:

@@ -167,6 +167,11 @@ namespace godot {
             bool processing = false;
 
             void _on_time_of_day_changed();
+            /* The launchers of the clock's HH:MM fire, those of another hour are armed again */
+            void _check_timed_launchers();
+            /* A launcher of a radius is in reach of the camera (basic_cell::update_events(),
+             * scene.cpp:126-139); a negative radius is everywhere */
+            static bool _in_reach(const LauncherData &p_launcher);
             void _on_vehicle_radio_called(
                     const RID &p_vehicle, RailVehicleRadio::RadioCall p_call, const Vector3 &p_position);
             void _on_vehicle_heading_to_track_start(const RID &p_vehicle, const RID &p_track);
@@ -189,7 +194,8 @@ namespace godot {
             void _process_queue(double p_seconds);
             /// Puts the owner (an event or a launcher) in the queue, returns the entry's sequence
             uint64_t _schedule(const RID &p_owner, double p_time, const RID &p_activator);
-            void _fire(Ref<ScenarioEventCondition> p_condition, RID p_event);
+            /* Queues the event when the condition passes; whether it did */
+            bool _fire(Ref<ScenarioEventCondition> p_condition, RID p_event);
 
         protected:
             static void _bind_methods();

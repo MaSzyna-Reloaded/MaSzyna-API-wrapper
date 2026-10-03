@@ -793,8 +793,9 @@ closes both level crossings). Left:
   and ignores the first (`Event.cpp:2296-2349`).
 * **Launchers**: numeric key codes,
   `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
-  train, not the camera). Timed launchers are global here; the original polls non-global ones only
-  near the camera.
+  train, not the camera). A timed launcher of a radius looks at the camera when its minute comes,
+  when a memory changes within it and when the clock starts - the original polls it every frame,
+  so a camera arriving within the minute without a memory change is not seen.
 * **A click on a scenery model** (`SceneryHUDMouseServer`) is not hidden by anything in front of
   the model: a lever behind a building is picked through it, where the original's pick buffer
   shows only what is seen. Picking also ignores the Alt picking toggle (`drivermode.cpp:493-500`).
@@ -966,7 +967,7 @@ ported, into a delegate.
       speed class keeps `AccPreferred`, `VelNext` and `ActualProximityDist` narrowed by it, and
       `ReactionTime` 0.1 close to a stop or a vehicle.
       Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL,
-      crossings, `BackwardTraceRoute`, the switch branch of an event on a switch, the cargo
+      crossings, the switch branch of an event on a switch, the cargo
       train's distances; of the vehicles ahead: the scan from the rear end while rolling against
       the way it drives (Driver.cpp:6642), a signal beyond a vehicle ahead being that vehicle's
       (`isforsomeoneelse`, Driver.cpp:1566, 1709), the coupler adapters in the gap, and the

@@ -206,6 +206,9 @@ namespace godot {
             bool vehicle_is_attached(const RID &p_vehicle) const;
             /* The node the vehicle is drawn at, 0 for none */
             uint64_t vehicle_get_node(const RID &p_vehicle) const;
+            /* The world the node is in, an empty RID out of it: the models this server built are
+             * drawn there - the node's NOTIFICATION_ENTER_WORLD/EXIT_WORLD, as VisualInstance3D's */
+            void vehicle_set_scenario(const RID &p_vehicle, const RID &p_scenario);
             /* What the vehicle looks like. With model files, this server builds the models itself;
              * without, it draws the ones vehicle_set_models() hands it. */
             void vehicle_set_appearance(const RID &p_vehicle, const Ref<RailVehicleAppearance> &p_appearance);

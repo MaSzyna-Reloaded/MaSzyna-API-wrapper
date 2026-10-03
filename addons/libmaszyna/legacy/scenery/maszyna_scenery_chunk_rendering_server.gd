@@ -119,6 +119,14 @@ func _stream_preload(rid:RID) -> Variant:
     return geometry.to_mesh_arrays()
 
 
+## The world the chunk is drawn in, an empty RID for none (its scenery out of the tree)
+func chunk_set_scenario(rid:RID, scenario:RID) -> void:
+    var state:ChunkState = _chunks.get(rid)
+    state.scenario = scenario
+    if state.mesh_instance.is_valid():
+        RenderingServer.instance_set_scenario(state.mesh_instance, scenario)
+
+
 func _stream_build(rid:RID, preloaded:Variant) -> void:
     var state:ChunkState = _chunks.get(rid)
     if not state or state.mesh_instance.is_valid() or not preloaded:

@@ -179,6 +179,9 @@ namespace godot {
                 D_METHOD("vehicle_is_attached", "vehicle"), &RailVehicleRenderingServer::vehicle_is_attached);
         ClassDB::bind_method(D_METHOD("vehicle_get_node", "vehicle"), &RailVehicleRenderingServer::vehicle_get_node);
         ClassDB::bind_method(
+                D_METHOD("vehicle_set_scenario", "vehicle", "scenario"),
+                &RailVehicleRenderingServer::vehicle_set_scenario);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_set_appearance", "vehicle", "appearance"),
                 &RailVehicleRenderingServer::vehicle_set_appearance);
         ClassDB::bind_method(
@@ -254,6 +257,27 @@ namespace godot {
     uint64_t RailVehicleRenderingServer::vehicle_get_node(const RID &p_vehicle) const {
         const Visual *visual = vehicles.getptr(p_vehicle);
         return visual != nullptr ? static_cast<uint64_t>(visual->node) : 0;
+    }
+
+    /* The models handed over are their owner's (E3DModelInstance), which moves them itself */
+    void RailVehicleRenderingServer::vehicle_set_scenario(const RID &p_vehicle, const RID &p_scenario) {
+        const Visual *visual = vehicles.getptr(p_vehicle);
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        ERR_FAIL_NULL(visual);
+        ERR_FAIL_NULL(models);
+        if (visual->own_models) {
+            for (const RID &instance: {visual->model, visual->low_poly, visual->passengers}) {
+                if (instance.is_valid()) {
+                    models->instance_set_scenario(instance, p_scenario);
+                }
+            }
+            for (const RID &instance: visual->attachments) {
+                models->instance_set_scenario(instance, p_scenario);
+            }
+        }
+        if (visual->load.is_valid()) {
+            models->instance_set_scenario(visual->load, p_scenario);
+        }
     }
 
     void RailVehicleRenderingServer::vehicle_set_appearance(

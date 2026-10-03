@@ -55,7 +55,7 @@ var _loaded:bool = false
 ## scenery_instancer.gd's instantiate()
 ## doc comment for why) - so unlike triangle children, they aren't cleaned up just by
 ## removing children from the tree. scenery_instancer.gd appends the RIDs it creates here;
-## _free_owned_rids() releases them all, called before every reload and on exiting the tree.
+## _free_owned_rids() releases them all, called before every reload and when the node is freed.
 var _track_rids:Array[RID] = []
 var _track_render_rids:Array[RID] = []
 var _traction_rids:Array[RID] = []
@@ -96,14 +96,37 @@ func _on_data_reload_requested() -> void:
 
 
 func _exit_tree() -> void:
-    unloading.emit()
     GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
-    # The planning thread calls back into GDScript (the owner's preload) and can be creating
-    # rendering resources for the very RIDs freed below. It is stopped and joined here, while the
-    # scripts still exist - the server's own destructor runs long after they are gone.
-    SceneryInstancer.cancel_loading()
-    SceneryStreamingServer.streaming_drain()
-    _free_owned_rids()
+    # a load awaits frames of the tree it has just left
+    if _loading:
+        SceneryInstancer.cancel_loading()
+
+
+## Out of the tree the content stays, out of the world: the editor takes a scene out of the tree
+## when another one's tab is shown, and all of them draw into one world. It goes with the node.
+func _notification(what:int) -> void:
+    match what:
+        NOTIFICATION_ENTER_WORLD, NOTIFICATION_EXIT_WORLD:
+            var scenario:RID = get_world_3d().scenario if what == NOTIFICATION_ENTER_WORLD else RID()
+            for rid:RID in _track_render_rids:
+                TrackRenderingServer.set_track_scenario(rid, scenario)
+            for rid:RID in _traction_rids:
+                TractionRenderingServer.set_traction_scenario(rid, scenario)
+            for rid:RID in _e3d_rids:
+                E3DRenderingServer.instance_set_scenario(rid, scenario)
+            for rid:RID in _triangle_chunk_rids:
+                MaszynaSceneryChunkRenderingServer.chunk_set_scenario(rid, scenario)
+            for rid:RID in _provider_rids:
+                SceneryStreamingServer.provider_set_scenario(rid, scenario)
+        NOTIFICATION_PREDELETE:
+            unloading.emit()
+            # The planning thread calls back into GDScript (the owner's preload) and can be
+            # creating rendering resources for the very RIDs freed below. It is stopped and joined
+            # here, while the scripts still exist - the server's own destructor runs long after
+            # they are gone.
+            SceneryInstancer.cancel_loading()
+            SceneryStreamingServer.streaming_drain()
+            _free_owned_rids()
 
 
 ## The scenery's `lua` scripts, run by its scenario (MaszynaLegacyScenario)
@@ -118,7 +141,7 @@ func get_scenery_sounds() -> MaszynaLegacyScenerySounds:
 
 
 ## budget_msec > 0 spreads the freeing over frames, so whatever covers the screen (the loading
-## spinner) keeps animating; 0 frees everything at once (leaving the tree)
+## spinner) keeps animating; 0 frees everything at once (the node freed)
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
         [_driver_rids, DriverSystem.driver_free],
@@ -145,8 +168,8 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         var rids:Array[RID] = group[0]
         var free_rid:Callable = group[1]
         # Taken off the list before it is freed, not after the whole loop: the budgeted path
-        # awaits a frame in the middle, and leaving the tree during that await runs this again
-        # from _exit_tree over the very same RIDs - a double free.
+        # awaits a frame in the middle, and freeing the node during that await runs this again
+        # when the node is freed over the very same RIDs - a double free.
         while rids.size() > 0:
             var rid:RID = rids.pop_back()
             if rid.is_valid():
@@ -172,7 +195,7 @@ func _clear_content(budget_msec:int = 0) -> void:
     # RenderingServer reports as "Initializing already initialized RID" and then aborts.
     SceneryStreamingServer.streaming_set_enabled(false)
     # the preloads in flight load the content freed below - they are stopped and joined first, as
-    # on leaving the tree (_exit_tree)
+    # when the node is freed (NOTIFICATION_PREDELETE)
     SceneryStreamingServer.streaming_drain()
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()

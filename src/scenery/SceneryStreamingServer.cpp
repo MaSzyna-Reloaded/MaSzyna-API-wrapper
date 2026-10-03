@@ -27,6 +27,9 @@ namespace godot {
                 D_METHOD("content_set_consumer", "kind", "adopt", "release"),
                 &SceneryStreamingServer::content_set_consumer);
         ClassDB::bind_method(
+                D_METHOD("provider_set_scenario", "provider", "scenario"),
+                &SceneryStreamingServer::provider_set_scenario);
+        ClassDB::bind_method(
                 D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
         ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
@@ -207,6 +210,27 @@ namespace godot {
             }
             providers.erase(p_provider);
             freed_pending = true;
+            content_dirty = true;
+        }
+        _release_content(released);
+    }
+
+    void SceneryStreamingServer::provider_set_scenario(const RID &p_provider, const RID &p_scenario) {
+        std::array<Vector<RID>, CONTENT_KIND_COUNT> released;
+        {
+            MutexLock lock(mutex);
+            Provider *provider = providers.getptr(p_provider);
+            ERR_FAIL_NULL(provider);
+            provider->scenario = p_scenario;
+            for (const Vector2i &cell: provider->adopted_cells) {
+                ProviderCell &state = provider->cells[cell];
+                for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
+                    released[kind].append_array(state.adopted_rids[kind]);
+                    state.adopted_rids[kind].clear();
+                }
+                state.adopted = false;
+            }
+            provider->adopted_cells.clear();
             content_dirty = true;
         }
         _release_content(released);
@@ -942,6 +966,9 @@ namespace godot {
             const Vector2i camera_key = _get_chunk_key(p_camera_position);
             for (KeyValue<RID, Provider> &item: providers) {
                 Provider &provider = item.value;
+                if (!provider.scenario.is_valid()) {
+                    continue;
+                }
                 // a cell in reach of the camera, or the anchor's wherever it is
                 const auto plan_cell = [&](const Vector2i &p_key, const bool p_anchored) {
                     ProviderCell *cell = provider.cells.getptr(p_key);

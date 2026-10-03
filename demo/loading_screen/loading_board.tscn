@@ -1,0 +1,149 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://loading_screen/loading_layout.gd" id="1_layout"]
+[ext_resource type="Shader" path="res://loading_screen/loading_ring.gdshader" id="2_ring"]
+[ext_resource type="Texture2D" path="res://loading_screen/logo.png" id="3_logo"]
+
+[sub_resource type="Gradient" id="Gradient_left"]
+offsets = PackedFloat32Array(0, 0.4, 0.75)
+colors = PackedColorArray(0.027, 0.043, 0.086, 0.92, 0.027, 0.043, 0.086, 0.72, 0.027, 0.043, 0.086, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_left"]
+gradient = SubResource("Gradient_left")
+fill_to = Vector2(1, 0)
+
+[sub_resource type="Gradient" id="Gradient_bottom"]
+colors = PackedColorArray(0.027, 0.043, 0.086, 0.85, 0.027, 0.043, 0.086, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_bottom"]
+gradient = SubResource("Gradient_bottom")
+fill_from = Vector2(0, 1)
+fill_to = Vector2(0, 0.55)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_ring"]
+shader = ExtResource("2_ring")
+
+[node name="LoadingBoard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("1_layout")
+
+[node name="ShadeLeft" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_left")
+expand_mode = 1
+
+[node name="ShadeBottom" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_bottom")
+expand_mode = 1
+
+[node name="Logo" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_left = 0.055
+anchor_top = 0.07
+anchor_right = 0.22
+anchor_bottom = 0.2
+mouse_filter = 2
+texture = ExtResource("3_logo")
+expand_mode = 1
+stretch_mode = 4
+
+[node name="Progress" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.055
+anchor_top = 0.4
+anchor_right = 0.57
+anchor_bottom = 0.91
+mouse_filter = 2
+theme_override_constants/separation = 14
+alignment = 2
+
+[node name="Eyebrow" type="Label" parent="Progress"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "Loading scenery"
+uppercase = true
+
+[node name="Scenery" type="Label" parent="Progress"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.93, 0.99, 1)
+theme_override_font_sizes/font_size = 88
+text_overrun_behavior = 3
+
+[node name="Scenario" type="Label" parent="Progress"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.7, 0.82, 1)
+theme_override_font_sizes/font_size = 30
+text_overrun_behavior = 3
+
+[node name="Stages" type="HBoxContainer" parent="Progress"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Status" type="HBoxContainer" parent="Progress"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Ring" type="ColorRect" parent="Progress/Status"]
+unique_name_in_owner = true
+material = SubResource("ShaderMaterial_ring")
+custom_minimum_size = Vector2(34, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="Percent" type="Label" parent="Progress/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.93, 0.99, 1)
+theme_override_font_sizes/font_size = 17
+text = "0%"
+
+[node name="Files" type="Label" parent="Progress/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.7, 0.82, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Elapsed" type="Label" parent="Progress/Status"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.62, 0.7, 0.82, 1)
+theme_override_font_sizes/font_size = 16
+
+[node name="Stalled" type="Label" parent="Progress/Status"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.71, 0.28, 1)
+theme_override_font_sizes/font_size = 16
+text = "Still working"
+
+[node name="Detail" type="Label" parent="Progress"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.37, 0.44, 0.56, 1)
+theme_override_font_sizes/font_size = 14
+text_overrun_behavior = 3

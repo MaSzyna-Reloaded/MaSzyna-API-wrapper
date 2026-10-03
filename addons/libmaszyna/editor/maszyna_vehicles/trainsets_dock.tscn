@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/libmaszyna/editor/maszyna_vehicles/trainsets_dock.gd" id="1_dock"]
+
+[node name="TrainsetsScroll" type="ScrollContainer"]
+custom_minimum_size = Vector2(0, 250)
+script = ExtResource("1_dock")
+
+[node name="Trainsets" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3

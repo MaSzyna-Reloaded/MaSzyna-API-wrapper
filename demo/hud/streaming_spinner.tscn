@@ -1,0 +1,22 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/streaming_spinner.gd" id="1_script"]
+[ext_resource type="Shader" path="res://hud/streaming_spinner.gdshader" id="2_shader"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="3_theme"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_spinner"]
+shader = ExtResource("2_shader")
+
+[node name="StreamingSpinner" type="PanelContainer"]
+visible = false
+modulate = Color(1, 1, 1, 0)
+mouse_filter = 2
+theme = ExtResource("3_theme")
+theme_type_variation = &"FloatingChip"
+script = ExtResource("1_script")
+
+[node name="Comet" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_spinner")
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2

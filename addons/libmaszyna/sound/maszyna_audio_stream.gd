@@ -14,13 +14,29 @@ class_name MaszynaAudioStream
             loop = x
             _real_stream = null
 
+## The file's duration [s], set when the stream is built: gnd-sfx places a voice's start in the
+## stream (a start fraction, a seek) before the first playback reads the file, and a length of 0
+## put every copy of a looping sound at its very start
+@export var length:float = 0.0
+
 var _real_stream:AudioStream
+
+
+## A resource has no tree to leave: the connection goes with the stream when it is freed
+func _init() -> void:
+    GameDataServer.data_unload_requested.connect(unload)
+
+
+## Lets the sound file go; it is read again, from the game directory set then, when the stream is
+## next played - the game's data read again, or a scenery sound out of reach (ScenerySoundServer)
+func unload() -> void:
+    _real_stream = null
 
 func _get_stream_name() -> String:
     return file_path
 
 func _get_length() -> float:
-    return _real_stream.get_length() if _real_stream else 0.0
+    return _real_stream.get_length() if _real_stream else length
 
 func _instantiate_playback() -> AudioStreamPlayback:
     if file_path and not _real_stream:

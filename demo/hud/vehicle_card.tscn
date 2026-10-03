@@ -1,0 +1,291 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/vehicle_card.gd" id="1_card"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://hud/window_move_handle.gd" id="3_move"]
+[ext_resource type="Script" path="res://hud/window_resize_corner.gd" id="4_resize"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="5_grid"]
+[ext_resource type="Texture2D" path="res://startup/eu07_parked_sketch.svg" id="7_sketch"]
+[ext_resource type="Texture2D" path="res://hud/icons/magnifier.svg" id="8_magnifier"]
+[ext_resource type="Texture2D" path="res://hud/icons/crosshair.svg" id="9_crosshair"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_actions_button.tscn" id="10_actions"]
+
+[node name="VehicleCard" type="PanelContainer"]
+custom_minimum_size = Vector2(440, 0)
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -72.0
+offset_right = 456.0
+offset_bottom = -72.0
+grow_vertical = 0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+theme_type_variation = &"TimetableCard"
+script = ExtResource("1_card")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TitleBar" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MoveHandle" type="Control" parent="Content/TitleBar" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 13
+script = ExtResource("3_move")
+window = NodePath("../../..")
+
+[node name="CloseButton" type="Button" parent="Content/TitleBar"]
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TimetableClose"
+text = "✕"
+flat = true
+
+[node name="Header" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="TitleRow" type="HBoxContainer" parent="Content/Header"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Title" type="Label" parent="Content/Header/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"TimetableTitle"
+
+[node name="FollowButton" type="Button" parent="Content/Header/TitleRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+tooltip_text = "Follow"
+theme_override_colors/icon_pressed_color = Color(0.45, 0.72, 1, 1)
+theme_override_colors/icon_hover_pressed_color = Color(0.45, 0.72, 1, 1)
+toggle_mode = true
+icon = ExtResource("8_magnifier")
+flat = true
+
+[node name="ShowButton" type="Button" parent="Content/Header/TitleRow"]
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+tooltip_text = "Show"
+icon = ExtResource("9_crosshair")
+flat = true
+
+[node name="ActionsButton" parent="Content/Header/TitleRow" instance=ExtResource("10_actions")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TypeName" type="Label" parent="Content/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"TimetableMuted"
+
+[node name="TrainLabel" type="Label" parent="Content/Header"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.85, 1, 1)
+
+[node name="Trainset" parent="Content" instance=ExtResource("5_grid")]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 76)
+layout_mode = 2
+theme_type_variation = &"TimetableRow"
+placeholder_silhouette = ExtResource("7_sketch")
+
+[node name="Separator" type="HSeparator" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"TimetableSeparator"
+
+[node name="SectionsScroll" type="ScrollContainer" parent="Content"]
+custom_minimum_size = Vector2(0, 210)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="Sections" type="VBoxContainer" parent="Content/SectionsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="BasicSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+layout_mode = 2
+title = "Basic data"
+
+[node name="BasicData" type="GridContainer" parent="Content/SectionsScroll/Sections/BasicSection"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="ParametersSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+layout_mode = 2
+title = "Current parameters"
+
+[node name="Parameters" type="VBoxContainer" parent="Content/SectionsScroll/Sections/ParametersSection"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MotionTitle" type="Label" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Motion"
+
+[node name="MotionData" type="GridContainer" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="BrakesTitle" type="Label" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Brakes and air"
+
+[node name="BrakeData" type="GridContainer" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="DriveTitle" type="Label" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Drive and electrics"
+
+[node name="DriveData" type="GridContainer" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="TrainsetTitle" type="Label" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.72, 1, 1)
+theme_override_font_sizes/font_size = 12
+text = "Trainset"
+
+[node name="TrainsetData" type="GridContainer" parent="Content/SectionsScroll/Sections/ParametersSection/Parameters"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="DriverSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+layout_mode = 2
+folded = true
+title = "Driver"
+
+[node name="DriverContent" type="VBoxContainer" parent="Content/SectionsScroll/Sections/DriverSection"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Control" type="HBoxContainer" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 10
+
+[node name="DriverPill" type="PanelContainer" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control"]
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"TimetablePill"
+
+[node name="Driver" type="Label" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/DriverPill"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="TakeOverButton" type="Button" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Take over"
+
+[node name="EnterCabinButton" type="Button" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+text = "Enter cabin"
+
+[node name="AIButton" type="Button" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+
+[node name="DriverData" type="GridContainer" parent="Content/SectionsScroll/Sections/DriverSection/DriverContent"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="TimetableSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+layout_mode = 2
+folded = true
+title = "Timetable"
+
+[node name="TimetableData" type="GridContainer" parent="Content/SectionsScroll/Sections/TimetableSection"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 2
+columns = 2
+
+[node name="ResizeCorner" type="Control" parent="Content" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_default_cursor_shape = 12
+script = ExtResource("4_resize")
+window = NodePath("../..")
+
+[node name="RefreshTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.1
+autostart = true
+
+[connection signal="pressed" from="Content/TitleBar/CloseButton" to="." method="_on_close_button_pressed"]
+[connection signal="pressed" from="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/TakeOverButton" to="." method="_on_take_over_button_pressed"]
+[connection signal="pressed" from="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/EnterCabinButton" to="." method="_on_enter_cabin_button_pressed"]
+[connection signal="pressed" from="Content/SectionsScroll/Sections/DriverSection/DriverContent/Control/AIButton" to="." method="_on_ai_button_pressed"]
+[connection signal="activated" from="Content/Trainset" to="." method="_on_trainset_activated"]
+[connection signal="item_clicked" from="Content/Trainset" to="." method="_on_trainset_activated"]
+[connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]
+[connection signal="toggled" from="Content/Header/TitleRow/FollowButton" to="." method="_on_follow_button_toggled"]
+[connection signal="pressed" from="Content/Header/TitleRow/ShowButton" to="." method="_on_show_button_pressed"]
+[connection signal="remove_confirmed" from="Content/Header/TitleRow/ActionsButton" to="." method="_on_actions_button_remove_confirmed"]

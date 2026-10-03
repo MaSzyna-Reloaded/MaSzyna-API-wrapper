@@ -1,0 +1,491 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_engine.tscn" id="4_engine"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_spring_brake.tscn" id="10_spring"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_lights.tscn" id="13_lights"]
+[ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_load.tscn" id="36_load"]
+[ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
+[ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
+[ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
+[ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
+[ext_resource type="PackedScene" uid="uid://pgf35en812s1" path="res://hud/help.tscn" id="12_help"]
+[ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_controller.tscn" id="20_5crau"]
+[ext_resource type="PackedScene" uid="uid://cs3n2ry5tr34m" path="res://addons/libmaszyna/scenery/scenery_streaming_panel.tscn" id="21_streaming"]
+[ext_resource type="PackedScene" path="res://hud/scenario_events_panel.tscn" id="23_scenario_events"]
+[ext_resource type="PackedScene" uid="uid://ctrktrct1on01" path="res://hud/track_traction_panel.tscn" id="22_tracktrac"]
+[ext_resource type="Script" path="res://hud/game_hud.gd" id="game_hud"]
+[ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/cabin/cabin_control_tooltip.tscn" id="23_cabin_tooltip"]
+[ext_resource type="PackedScene" path="res://hud/transcripts_panel.tscn" id="24_transcripts"]
+[ext_resource type="PackedScene" path="res://hud/timetable_panel.tscn" id="25_timetable"]
+[ext_resource type="PackedScene" path="res://hud/scenario_panel.tscn" id="26_scenario"]
+[ext_resource type="PackedScene" path="res://hud/script_editor_panel.tscn" id="27_script_editor"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_selector_panel.tscn" id="28_vehicle_selector"]
+[ext_resource type="PackedScene" path="res://hud/vehicle_chip.tscn" id="29_vehicle_chip"]
+[ext_resource type="PackedScene" path="res://hud/streaming_spinner.tscn" id="37_streaming_spinner"]
+[ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
+[ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
+[ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
+[ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
+[ext_resource type="Texture2D" path="res://hud/icons/eye_off.svg" id="34_eye_off"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="38_card_theme"]
+
+[sub_resource type="Theme" id="Theme_control_windows"]
+default_font_size = 12
+
+[node name="GameHud" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("game_hud")
+
+[node name="TopBar" type="PanelContainer" parent="." unique_id=702463713]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+theme = ExtResource("38_card_theme")
+theme_type_variation = &"MenuBrow"
+script = ExtResource("8_top_bar")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar" unique_id=1628639189]
+layout_mode = 2
+
+[node name="MenuBar" type="MenuBar" parent="TopBar/HBoxContainer" unique_id=524829392]
+layout_mode = 2
+focus_mode = 0
+prefer_global_menu = false
+
+[node name="PopupMenu" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
+title = "Controls"
+
+[node name="View" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar"]
+unique_name_in_owner = true
+title = "View"
+hide_on_checkable_item_selection = false
+item_count = 8
+item_0/text = "Transcripts"
+item_0/checkable = 1
+item_0/checked = true
+item_0/id = 0
+item_1/text = "Driving aid"
+item_1/checkable = 1
+item_1/checked = true
+item_1/id = 1
+item_2/text = "Timetable"
+item_2/checkable = 1
+item_2/id = 2
+item_3/text = "Scenario"
+item_3/checkable = 1
+item_3/id = 3
+item_4/text = "Toggle controls"
+item_4/checkable = 1
+item_4/id = 4
+item_5/text = "Lua scripts"
+item_5/checkable = 1
+item_5/id = 5
+item_6/text = "Trainset list"
+item_6/checkable = 1
+item_6/id = 6
+item_7/text = "Simulation speed"
+item_7/checkable = 1
+item_7/id = 7
+
+[node name="MenuActions" type="Control" parent="."]
+visible = false
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+
+[node name="ControlWindows" type="Control" parent="." unique_id=1707221364]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+theme = SubResource("Theme_control_windows")
+
+[node name="General" type="Container" parent="ControlWindows" unique_id=381149408]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 662.0
+offset_right = 236.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "General"
+
+[node name="GeneralScroll" type="ScrollContainer" parent="ControlWindows/General"]
+layout_mode = 2
+
+[node name="General" parent="ControlWindows/General/GeneralScroll" unique_id=897642042 instance=ExtResource("3_l04v0")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Engine" type="Container" parent="ControlWindows" unique_id=834001622]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 244.0
+offset_top = 594.0
+offset_right = 474.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Engine"
+
+[node name="EngineScroll" type="ScrollContainer" parent="ControlWindows/Engine"]
+layout_mode = 2
+
+[node name="Engine" parent="ControlWindows/Engine/EngineScroll" unique_id=442757379 instance=ExtResource("4_engine")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Brakes" type="Container" parent="ControlWindows" unique_id=701487849]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 482.0
+offset_top = 710.0
+offset_right = 670.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Brakes"
+
+[node name="BrakesScroll" type="ScrollContainer" parent="ControlWindows/Brakes"]
+layout_mode = 2
+
+[node name="Brakes" parent="ControlWindows/Brakes/BrakesScroll" unique_id=13421247 instance=ExtResource("6_lsqkb")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpringBrake" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 678.0
+offset_top = 710.0
+offset_right = 870.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Spring brake"
+
+[node name="SpringBrakeScroll" type="ScrollContainer" parent="ControlWindows/SpringBrake"]
+layout_mode = 2
+
+[node name="SpringBrake" parent="ControlWindows/SpringBrake/SpringBrakeScroll" instance=ExtResource("10_spring")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Lights" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1078.0
+offset_top = 738.0
+offset_right = 1418.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Lights"
+
+[node name="LightsScroll" type="ScrollContainer" parent="ControlWindows/Lights"]
+layout_mode = 2
+
+[node name="Lights" parent="ControlWindows/Lights/LightsScroll" instance=ExtResource("13_lights")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Doors" type="Container" parent="ControlWindows" unique_id=2062841507]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 878.0
+offset_top = 710.0
+offset_right = 1070.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Doors"
+
+[node name="DoorsScroll" type="ScrollContainer" parent="ControlWindows/Doors"]
+layout_mode = 2
+
+[node name="Doors" parent="ControlWindows/Doors/DoorsScroll" unique_id=1694193 instance=ExtResource("7_t705k")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Load" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 394.0
+offset_top = 318.0
+offset_right = 586.0
+offset_bottom = 580.0
+script = ExtResource("9_window")
+title = "Vehicle load"
+
+[node name="LoadScroll" type="ScrollContainer" parent="ControlWindows/Load"]
+layout_mode = 2
+
+[node name="Load" parent="ControlWindows/Load/LoadScroll" instance=ExtResource("36_load")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Security" type="Container" parent="ControlWindows" unique_id=483370992]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 482.0
+offset_top = 594.0
+offset_right = 670.0
+offset_bottom = 702.0
+script = ExtResource("9_window")
+title = "Security"
+
+[node name="SecurityScroll" type="ScrollContainer" parent="ControlWindows/Security"]
+layout_mode = 2
+
+[node name="Security" parent="ControlWindows/Security/SecurityScroll" unique_id=2147294606 instance=ExtResource("8_h5mje")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Controller" type="Container" parent="ControlWindows" unique_id=402961173]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 505.0
+offset_right = 236.0
+offset_bottom = 654.0
+script = ExtResource("9_window")
+vehicle_target = 1
+title = "Controller"
+
+[node name="ControllerScroll" type="ScrollContainer" parent="ControlWindows/Controller"]
+layout_mode = 2
+
+[node name="Controller" parent="ControlWindows/Controller/ControllerScroll" unique_id=1886735510 instance=ExtResource("20_5crau")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MiniMap" type="Container" parent="ControlWindows" unique_id=536285318]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1516.0
+offset_top = 738.0
+offset_right = 1912.0
+offset_bottom = 1072.0
+script = ExtResource("9_window")
+title = "Mini Map"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="MiniMapControl" parent="ControlWindows/MiniMap" unique_id=234941782 instance=ExtResource("11_minimap")]
+layout_mode = 2
+
+[node name="SceneryStreaming" type="Container" parent="ControlWindows" unique_id=609847832]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1252.0
+offset_top = 8.0
+offset_right = 1604.0
+offset_bottom = 441.0
+script = ExtResource("9_window")
+title = "Scenery Streaming"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="SceneryStreamingScroll" type="ScrollContainer" parent="ControlWindows/SceneryStreaming"]
+layout_mode = 2
+
+[node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming/SceneryStreamingScroll" unique_id=1011989969 instance=ExtResource("21_streaming")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TrackAndTraction" type="Container" parent="ControlWindows" unique_id=609847833]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 594.0
+offset_top = 318.0
+offset_right = 944.0
+offset_bottom = 598.0
+script = ExtResource("9_window")
+title = "Track & Traction"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="TrackTractionScroll" type="ScrollContainer" parent="ControlWindows/TrackAndTraction"]
+layout_mode = 2
+
+[node name="TrackTractionPanel" parent="ControlWindows/TrackAndTraction/TrackTractionScroll" unique_id=1011989970 instance=ExtResource("22_tracktrac")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScenarioAndEvents" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 950.0
+offset_top = 318.0
+offset_right = 1246.0
+offset_bottom = 638.0
+script = ExtResource("9_window")
+title = "Scenario and Events"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="ScenarioEventsScroll" type="ScrollContainer" parent="ControlWindows/ScenarioAndEvents"]
+layout_mode = 2
+
+[node name="ScenarioEventsPanel" parent="ControlWindows/ScenarioAndEvents/ScenarioEventsScroll" instance=ExtResource("23_scenario_events")]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="WeatherAndTime" type="Container" parent="ControlWindows" unique_id=1426730518]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 1244.0
+offset_bottom = 310.0
+script = ExtResource("9_window")
+title = "Weather and Time"
+
+[node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
+unique_name_in_owner = true
+clip_contents = true
+layout_mode = 2
+
+[node name="Help" type="Container" parent="ControlWindows" unique_id=1837402256]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 1612.0
+offset_top = 8.0
+offset_right = 1912.0
+offset_bottom = 730.0
+script = ExtResource("9_window")
+title = "Help"
+
+[node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]
+layout_mode = 2
+
+[node name="CabinControlTooltip" parent="." instance=ExtResource("23_cabin_tooltip")]
+layout_mode = 0
+
+[node name="TranscriptsPanel" parent="." instance=ExtResource("24_transcripts")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="TimetablePanel" parent="." instance=ExtResource("25_timetable")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="ScenarioPanel" parent="." instance=ExtResource("26_scenario")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="ScriptEditorPanel" parent="." instance=ExtResource("27_script_editor")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="VehicleSelectorPanel" parent="." instance=ExtResource("28_vehicle_selector")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="DrivingAid" parent="." instance=ExtResource("33_driving_aid")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="SimulationSpeedPanel" parent="." instance=ExtResource("35_simulation_speed")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+
+[node name="FloatingCorner" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="StreamingSpinner" parent="FloatingCorner" instance=ExtResource("37_streaming_spinner")]
+layout_mode = 2
+size_flags_horizontal = 8
+
+[node name="FloatingButtons" type="HBoxContainer" parent="FloatingCorner"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="FollowedVehicleChip" parent="FloatingCorner/FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Followed vehicle (click to open its card)"
+icon = ExtResource("30_eye")
+action_icon = ExtResource("34_eye_off")
+action_tooltip = "Stop following"
+
+[node name="PlayerVehicleChip" parent="FloatingCorner/FloatingButtons" instance=ExtResource("29_vehicle_chip")]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Your vehicle (click to enter the cab)"
+badge = 1
+action_icon = ExtResource("32_hand_over")
+action_tooltip = "Hand over to AI"
+
+[node name="VehicleCards" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]
+[connection signal="close_requested" from="TimetablePanel" to="." method="_on_timetable_panel_close_requested"]
+[connection signal="close_requested" from="ScenarioPanel" to="." method="_on_scenario_panel_close_requested"]
+[connection signal="close_requested" from="ScriptEditorPanel" to="." method="_on_script_editor_panel_close_requested"]
+[connection signal="close_requested" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_close_requested"]
+[connection signal="vehicle_activated" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_vehicle_activated"]
+[connection signal="remove_trainset_requested" from="VehicleSelectorPanel" to="." method="_remove_trainset"]
+[connection signal="pressed" from="FloatingCorner/FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_pressed"]
+[connection signal="action_pressed" from="FloatingCorner/FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_action_pressed"]
+[connection signal="pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_pressed"]
+[connection signal="action_pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_action_pressed"]
+[connection signal="driver_pressed" from="FloatingCorner/FloatingButtons/PlayerVehicleChip" to="." method="_on_player_vehicle_chip_driver_pressed"]

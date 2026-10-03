@@ -1,0 +1,382 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RailVehicleServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="emergency_signal_send">
+			<return type="void" />
+			<param index="0" name="position" type="Vector3" />
+			<description>
+			</description>
+		</method>
+		<method name="load_add">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="amount" type="float" />
+			<param index="2" name="side" type="int" enum="RailVehicleLoad.PlatformSide" />
+			<param index="3" name="load_name" type="String" default="&quot;&quot;" />
+			<description>
+				So much more to get on [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_add]); an empty vehicle takes [param load_name], or the first load it accepts. The vehicle's [code]load_add[/code] command (amount, side) comes here.
+			</description>
+		</method>
+		<method name="load_get_exchange_time" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The seconds the exchange of [param vehicle] still takes ([method RailVehicleLoad.get_load_exchange_time]); 0 for none, or for a vehicle that carries no load.
+			</description>
+		</method>
+		<method name="load_remove">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="amount" type="float" />
+			<param index="2" name="side" type="int" enum="RailVehicleLoad.PlatformSide" />
+			<description>
+				So much more to get off [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_remove]). The vehicle's [code]load_remove[/code] command (amount, side) comes here.
+			</description>
+		</method>
+		<method name="trainset_add_vehicle">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<param index="2" name="direction" type="int" enum="TrackServer.Direction" />
+			<param index="3" name="gap" type="float" />
+			<param index="4" name="coupling" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<description>
+				The next vehicle of the trainset: which way it stands, how far behind the one before it [m] (none when it stands reversed) and how it couples to the next one.
+			</description>
+		</method>
+		<method name="trainset_clear">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				The trainset has no vehicles.
+			</description>
+		</method>
+		<method name="trainset_create">
+			<return type="RID" />
+			<description>
+				A scenery's trainset: vehicles standing one after another on a track, coupled.
+			</description>
+		</method>
+		<method name="trainset_free">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				Frees the trainset; its vehicles stay.
+			</description>
+		</method>
+		<method name="trainset_get_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				The scenery's name of the trainset, empty for one that has none.
+			</description>
+		</method>
+		<method name="trainset_get_vehicles" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				The trainset's vehicles, in order.
+			</description>
+		</method>
+		<method name="trainset_move">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+				Moves the whole trainset coupled to [param vehicle] by [param distance] meters towards the vehicle's front, every vehicle whichever way round it stands ([code]TDynamicObject::move_set()[/code], [code]DynObj.cpp:4302[/code]).
+			</description>
+		</method>
+		<method name="trainset_place">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				Stands the vehicles on the track one after another, each as long as it is, and couples them - at once, or as soon as every vehicle of it has its simulation.
+			</description>
+		</method>
+		<method name="trainset_set_name">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<param index="1" name="name" type="String" />
+			<description>
+				The scenery's name of the trainset, only to show it - a trainset is held by its handle.
+			</description>
+		</method>
+		<method name="trainset_set_track">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<param index="2" name="offset" type="float" />
+			<description>
+				Where the trainset's front stands - the track and the distance along it [m].
+			</description>
+		</method>
+		<method name="vehicle_attach">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_component_get" qualifiers="const">
+			<return type="VehicleComponent" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="type" type="int" enum="RailVehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_couple">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="2" name="other" type="RID" />
+			<param index="3" name="other_end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="4" name="coupling" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_detach">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_emergency_signal_send">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_find_pantograph_carrier" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle whose pantographs a cab of [param vehicle] raises ([code]FindPantographCarrier()[/code]), or an invalid RID when there is none.
+			</description>
+		</method>
+		<method name="vehicle_find_powered" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle a cab of [param vehicle] drives ([code]FindPowered()[/code]): itself when powered, else the nearest powered vehicle joined to it - within its unit for an EMU or DMU, else by the control line; [param vehicle] when there is none.
+			</description>
+		</method>
+		<method name="vehicle_find_vehicle">
+			<return type="RailVehicleNeighbour" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="2" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_coupled" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<param index="2" name="flags" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_curve">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="bogie_pivot_spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_pantograph_position" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<description>
+				Returns where [param pantograph] stands on [param vehicle], in the vehicle's own space - where the overhead wire is sampled ([code]TAnimPant::vPos[/code]). Zero for a pantograph the model does not have.
+			</description>
+		</method>
+		<method name="vehicle_get_pantograph_raise" qualifiers="const">
+			<return type="Vector2" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<description>
+				Returns how far the lower ([code]x[/code]) and upper ([code]y[/code]) arm of [param pantograph] are raised over lowered, in radians - what is drawn.
+			</description>
+		</method>
+		<method name="vehicle_get_rids_in_rect" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="rect" type="Rect2" />
+			<description>
+				Returns the handles of the vehicles whose position (x, z) lies in [param rect].
+			</description>
+		</method>
+		<method name="vehicle_get_track_position" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform_at_distance">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_type_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_is_attached" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_move">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_process_movement">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_radio_call">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="call" type="int" enum="RailVehicleRadio.RadioCall" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_load">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="load_name" type="String" />
+			<param index="2" name="load_amount" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_pantograph_geometry">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<param index="2" name="position" type="Vector3" />
+			<param index="3" name="lower_length" type="float" />
+			<param index="4" name="upper_length" type="float" />
+			<param index="5" name="horizontal" type="float" />
+			<param index="6" name="lower_rest_angle" type="float" />
+			<param index="7" name="upper_rest_angle" type="float" />
+			<param index="8" name="collector_width" type="float" />
+			<description>
+				Sets [param pantograph] of [param vehicle] as its model builds it ([code]TAnimPant[/code]): where the lower arm stands in the vehicle's own space, the arms' lengths, the horizontal offset between their ends and their angles lowered, and the slider's width the model gives for a vehicle whose FIZ declares none. Measured by whoever draws the vehicle. The server raises the pantograph on its step; a model rebuilt sets it again and the raise is kept.
+			</description>
+		</method>
+		<method name="vehicle_set_track">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<param index="2" name="track_offset" type="float" />
+			<param index="3" name="track_direction" type="int" enum="TrackServer.Direction" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_type_name">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="type_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_trace_route">
+			<return type="TrackRouteSegment[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="direction" type="int" />
+			<param index="2" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="vehicle_coupler_attached">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_coupler_detached">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_emergency_signal_received">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_heading_to_track_end">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_heading_to_track_start">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_occupied_cab_changed">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="cab" type="int" />
+			<description>
+				The occupied cab of [param vehicle] changed to [param cab]: 1, 0 (machine room) or -1.
+			</description>
+		</signal>
+		<signal name="vehicle_placed">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle stands on a track now - it was put there.
+			</description>
+		</signal>
+		<signal name="vehicle_placement_changed">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The vehicle is somewhere else on the route - once a step it moved in, or once a deliberate move.
+			</description>
+		</signal>
+		<signal name="vehicle_radio_called">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="call" type="int" />
+			<param index="2" name="position" type="Vector3" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_stopped_on_track">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<description>
+			</description>
+		</signal>
+		<signal name="vehicle_trainset_changed">
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

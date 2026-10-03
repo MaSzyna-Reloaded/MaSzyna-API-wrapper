@@ -44,6 +44,10 @@ var _resize_handle: TextureRect
         allow_close = value
         queue_redraw()
 
+## Which vehicle of the player's the window shows - the one sat in, or the one its controls drive
+## (a unit's motor car), as the cab's controls pick theirs (CabinState.Target)
+@export var vehicle_target: CabinState.Target = CabinState.Target.OCCUPIED
+
 @export var title: String = "":
     set(value):
         title = value
@@ -80,6 +84,10 @@ func _notification(what: int) -> void:
     if what == NOTIFICATION_RESIZED:
         queue_redraw()
         _update_resize_handle_position()
+        return
+    # the title is drawn, not held by a Label, so it is translated here
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        queue_redraw()
 
 
 func _process(_delta: float) -> void:
@@ -112,7 +120,7 @@ func _draw() -> void:
             CLOSE_BUTTON_STROKE
         )
 
-    if title.is_empty():
+    if not title:
         return
 
     var font: Font = get_theme_default_font()
@@ -122,7 +130,7 @@ func _draw() -> void:
     draw_string(
         font,
         Vector2(TITLE_MARGIN_X, TITLE_BASELINE_OFFSET),
-        title,
+        atr(title),
         HORIZONTAL_ALIGNMENT_LEFT,
         -1.0,
         font_size
@@ -198,14 +206,16 @@ func _refresh_window_state() -> void:
     if not is_node_ready():
         return
 
-    var minimum_size: Vector2 = get_combined_minimum_size()
-    if size == Vector2.ZERO:
-        size = minimum_size
-    else:
-        size = Vector2(
-            maxf(size.x, minimum_size.x),
-            maxf(size.y, minimum_size.y)
-        )
+    # a window stretched by its anchors (the top bar) takes its size from them
+    if anchor_left == anchor_right and anchor_top == anchor_bottom:
+        var minimum_size: Vector2 = get_combined_minimum_size()
+        if size == Vector2.ZERO:
+            size = minimum_size
+        else:
+            size = Vector2(
+                maxf(size.x, minimum_size.x),
+                maxf(size.y, minimum_size.y)
+            )
 
     _update_resize_handle()
     queue_sort()

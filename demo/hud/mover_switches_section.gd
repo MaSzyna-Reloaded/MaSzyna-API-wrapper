@@ -1,30 +1,29 @@
-extends HFlowContainer
+extends VBoxContainer
 
 
-@export_node_path("TrainController") var train_controller:NodePath = NodePath(""):
+## The vehicle this panel shows, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:RID = RID():
     set(x):
-        if not train_controller == x:
-            train_controller = x
-            controller = null
+        if not vehicle == x:
+            vehicle = x
             _do_update()
 
-var controller:TrainController
+## Taken once per vehicle rather than looked up per frame - a component is a live view on the
+## vehicle, valid for as long as the vehicle is.
+var universal_controller:RailVehicleUniversalController
+
 
 func _ready() -> void:
     _do_update()
 
 func _do_update():
-    if train_controller:
-        controller = get_node(train_controller)
-    _propagate_train_controller(self, controller)
-    
-func _propagate_train_controller(p_node: Node, p_controller: TrainController):
-    for child in p_node.get_children():
-        _propagate_train_controller(child, p_controller)
-        if "controller" in child:
-            child.controller = child.get_path_to(p_controller) if p_controller else NodePath("")
+    universal_controller = _rail_component(RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-    pass
+func _component(type:VehicleComponentType.Type) -> VehicleComponent:
+    return VehicleServer.vehicle_component_get(vehicle, type)
+
+
+func _rail_component(type:RailVehicleComponentType.Type) -> VehicleComponent:
+    return RailVehicleServer.vehicle_component_get(vehicle, type)

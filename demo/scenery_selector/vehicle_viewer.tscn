@@ -1,0 +1,189 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenery_selector/vehicle_viewer.gd" id="1_viewer"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="2_grid"]
+[ext_resource type="Resource" path="res://startup/ui_sounds.tres" id="3_sounds"]
+[ext_resource type="Texture2D" path="res://startup/eu07_parked_sketch.svg" id="4_sketch"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0, 0, 0, 0.45)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_apply"]
+bg_color = Color(0.09, 0.31, 0.14, 0.9)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_apply_hover"]
+bg_color = Color(0.13, 0.39, 0.18, 1)
+corner_radius_top_left = 28
+corner_radius_top_right = 28
+corner_radius_bottom_right = 28
+corner_radius_bottom_left = 28
+
+[sub_resource type="SystemFont" id="SystemFont_name"]
+font_names = PackedStringArray("Oswald", "Anton", "Impact", "Haettenschweiler", "Sans-Serif")
+font_weight = 600
+
+[sub_resource type="Environment" id="Environment_viewer"]
+background_mode = 1
+background_color = Color(0.06, 0.09, 0.16, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.45, 0.55, 0.72, 1)
+ambient_light_energy = 0.7
+tonemap_mode = 3
+
+[node name="VehicleViewer" type="PanelContainer"]
+visible = false
+clip_contents = true
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+script = ExtResource("1_viewer")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="ModelArea" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 360)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ModelView" type="SubViewportContainer" parent="VBoxContainer/ModelArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch = true
+
+[node name="ApplyButton" type="Button" parent="VBoxContainer/ModelArea"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -56.0
+offset_top = -56.0
+grow_horizontal = 0
+grow_vertical = 0
+tooltip_text = "Apply skin"
+theme_override_colors/font_color = Color(0.95, 1, 0.96, 1)
+theme_override_font_sizes/font_size = 30
+theme_override_styles/normal = SubResource("StyleBoxFlat_apply")
+theme_override_styles/hover = SubResource("StyleBoxFlat_apply_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_apply_hover")
+text = "→"
+
+[node name="SubViewport" type="SubViewport" parent="VBoxContainer/ModelArea/ModelView"]
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(640, 360)
+render_target_update_mode = 4
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="VBoxContainer/ModelArea/ModelView/SubViewport"]
+environment = SubResource("Environment_viewer")
+
+[node name="KeyLight" type="DirectionalLight3D" parent="VBoxContainer/ModelArea/ModelView/SubViewport"]
+transform = Transform3D(0.7, -0.4, 0.6, 0, 0.83, 0.55, -0.71, -0.39, 0.58, 0, 6, 0)
+light_energy = 1.6
+
+[node name="FillLight" type="DirectionalLight3D" parent="VBoxContainer/ModelArea/ModelView/SubViewport"]
+transform = Transform3D(-0.75, 0.32, -0.58, 0, 0.87, 0.49, 0.66, 0.36, -0.66, 0, 4, 0)
+light_color = Color(0.72, 0.8, 1, 1)
+light_energy = 0.55
+
+[node name="ModelRoot" type="Node3D" parent="VBoxContainer/ModelArea/ModelView/SubViewport"]
+unique_name_in_owner = true
+
+[node name="Camera" type="Camera3D" parent="VBoxContainer/ModelArea/ModelView/SubViewport"]
+unique_name_in_owner = true
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 24)
+fov = 45.0
+
+[node name="Name" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_name")
+theme_override_font_sizes/font_size = 40
+horizontal_alignment = 1
+autowrap_mode = 3
+
+[node name="Subtitle" type="Label" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.65)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+
+[node name="SkinsGrid" parent="VBoxContainer" instance=ExtResource("2_grid")]
+placeholder_silhouette = ExtResource("4_sketch")
+sounds = ExtResource("3_sounds")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 240)
+layout_mode = 2
+layout = 1
+tile_padding = 1.8
+click_event = &"skin_click"
+hover_event = &"skin_hover"
+
+[node name="SkinPreviewViewport" type="SubViewport" parent="."]
+unique_name_in_owner = true
+own_world_3d = true
+transparent_bg = true
+handle_input_locally = false
+msaa_3d = 2
+size = Vector2i(360, 80)
+render_target_update_mode = 0
+
+[node name="PreviewEnvironment" type="WorldEnvironment" parent="SkinPreviewViewport"]
+environment = SubResource("Environment_viewer")
+
+[node name="PreviewLight" type="DirectionalLight3D" parent="SkinPreviewViewport"]
+transform = Transform3D(0.7, -0.4, 0.6, 0, 0.83, 0.55, -0.71, -0.39, 0.58, 0, 6, 0)
+light_energy = 1.6
+
+[node name="PreviewFillLight" type="DirectionalLight3D" parent="SkinPreviewViewport"]
+transform = Transform3D(-0.75, 0.32, -0.58, 0, 0.87, 0.49, 0.66, 0.36, -0.66, 0, 4, 0)
+light_color = Color(0.72, 0.8, 1, 1)
+light_energy = 0.6
+
+[node name="PreviewModelRoot" type="Node3D" parent="SkinPreviewViewport"]
+unique_name_in_owner = true
+
+[node name="PreviewCamera" type="Camera3D" parent="SkinPreviewViewport"]
+unique_name_in_owner = true
+projection = 1
+size = 20.0
+
+[node name="Overlay" type="Control" parent="."]
+mouse_filter = 2
+
+[node name="BackButton" type="Button" parent="Overlay"]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 44.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.85)
+theme_override_font_sizes/font_size = 34
+flat = true
+text = "←"
+
+[connection signal="pressed" from="Overlay/BackButton" to="." method="_on_back_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ModelArea/ApplyButton" to="." method="apply_selected_skin"]
+[connection signal="item_selected" from="VBoxContainer/SkinsGrid" to="." method="_on_skins_grid_item_selected"]
+[connection signal="activated" from="VBoxContainer/SkinsGrid" to="." method="apply_selected_skin"]
+[connection signal="cancelled" from="VBoxContainer/SkinsGrid" to="." method="close"]

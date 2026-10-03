@@ -1,0 +1,253 @@
+#pragma once
+#include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleComponentType.hpp"
+
+namespace godot {
+    /// A railway vehicle: what VehicleController says of every vehicle, plus the railway's own -
+    /// its cabs, couplers and trainset, the master controller and reverser, the relays, the low
+    /// voltage, the battery and the converter, and the stepping RailVehicleServer runs it by along
+    /// its track. Railway components (RailVehicleComponent) belong to one of these.
+    class RailVehicleController : public VehicleController {
+            GDCLASS(RailVehicleController, VehicleController)
+
+        private:
+            bool prev_is_powered = false;
+            int prev_cabin_occupied = 0;
+
+        protected:
+            static void _bind_methods();
+            void _register_commands() override;
+            void _unregister_commands() override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
+
+        public:
+            /* Live state, read straight from the backend - nothing is stored. Public because it
+             * is: every one of these is bound for GDScript, and a reader in C++ - the node that
+             * draws the vehicle, a component of another kind - has the same right to it as a
+             * script has. */
+            /* The battery as it actually is, which drains and recharges. The authored
+             * `battery_voltage` property next to it is the nominal one the vehicle is built with
+             * and that the simulation keeps as the nominal battery voltage - the two are only equal
+             * on a full battery. */
+            virtual double get_live_battery_voltage() const = 0;
+            virtual double get_tachometer_speed() const = 0;
+            virtual double get_tachometer_speed_jump() const = 0;
+            virtual double get_tachometer_clock_speed() const = 0;
+            virtual int get_direction_absolute() const = 0;
+            virtual int get_cabin() const = 0;
+            virtual bool get_cabin_controleable() const = 0;
+            virtual int get_cabin_occupied() const = 0;
+            virtual bool get_battery_enabled() const = 0;
+            /* ConverterFlag: the converter runs */
+            virtual bool get_converter_enabled() const = 0;
+            /* ConverterAllow: the converter's switch is on */
+            virtual bool get_converter_allowed() const = 0;
+            /* ConverterStartDelayTimer [s] */
+            virtual double get_converter_time_to_start() const = 0;
+            /* Metres since the distance counter was started, or -1 while it is off
+             * (TTrain::m_distancecounter, Train.h:904) */
+            virtual double get_distance_counter() const = 0;
+            virtual double get_power24_voltage() const = 0;
+            virtual bool get_power24_available() const = 0;
+            virtual bool get_power110_available() const = 0;
+            virtual double get_current0() const = 0;
+            virtual double get_current1() const = 0;
+            virtual double get_current2() const = 0;
+            virtual bool get_relay_novolt() const = 0;
+            virtual bool get_relay_overvoltage() const = 0;
+            virtual bool get_relay_ground() const = 0;
+            virtual int get_train_damage() const = 0;
+            virtual int get_controller_second_position() const = 0;
+            virtual int get_controller_main_position() const = 0;
+            virtual int get_controller_joint_position() const = 0;
+            virtual int get_controller_main_actual_position() const = 0;
+            /* The position the secondary controller has actually reached (ScndCtrlActualPos) */
+            virtual int get_controller_second_actual_position() const = 0;
+            /* The rotating masses' share of the vehicle's mass [kg] (Mred) - as the simulation
+             * holds it, which the wheels may have derived from their own inertia */
+            virtual double get_mass_reduced() const = 0;
+            /* DelayCtrlFlag: the master controller waits on its first position for the line
+             * contactors (Mover.cpp) */
+            virtual bool get_controller_main_delayed() const = 0;
+            /* A coupler pulled past its strength (stretch_duration > 0, Mover.cpp:5405) */
+            virtual bool get_coupler_stretched() const = 0;
+            /* The last master controller position that gives no power (MainCtrlNoPowerPos(),
+             * Mover.cpp:2694): 0, or the EIM controller's own */
+            virtual int get_controller_main_no_power_position() const = 0;
+            /* The Radio-Stop received and not yet acknowledged (RadioStopFlag) */
+            virtual bool get_radio_stop_active() const = 0;
+            virtual int get_circuit_rlist_size() const = 0;
+
+            /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section) */
+            enum StartMode {
+                START_MODE_DISABLED,
+                START_MODE_MANUAL,
+                START_MODE_AUTOMATIC,
+                START_MODE_MANUAL_WITH_AUTO_FALLBACK,
+                START_MODE_CONVERTER,
+                START_MODE_BATTERY,
+                START_MODE_DIRECTION,
+            };
+
+            /* The ends of a vehicle, as the original numbers them (end::front, end::rear, MOVER.h) */
+            enum CouplerEnd {
+                COUPLER_END_FRONT = 0,
+                COUPLER_END_REAR = 1,
+            };
+
+            /* What joins two coupled vehicles, as the original names it; the flags combine into a
+             * coupling (enum coupling, MOVER.h:162). Permanent marks the couplings inside one unit. */
+            enum CouplingFlags {
+                COUPLING_FLAG_COUPLER = 0x1,
+                COUPLING_FLAG_BRAKEHOSE = 0x2,
+                COUPLING_FLAG_CONTROL = 0x4,
+                COUPLING_FLAG_HIGHVOLTAGE = 0x8,
+                COUPLING_FLAG_GANGWAY = 0x10,
+                COUPLING_FLAG_MAINHOSE = 0x20,
+                COUPLING_FLAG_HEATING = 0x40,
+                COUPLING_FLAG_PERMANENT = 0x80,
+                COUPLING_FLAG_POWER_24V = 0x100,
+                COUPLING_FLAG_POWER_110V = 0x200,
+                COUPLING_FLAG_POWER_3X400V = 0x400,
+            };
+
+            /* The other end of the same vehicle - what a walk along a trainset leaves a vehicle by */
+            static CouplerEnd opposite_end(CouplerEnd p_end);
+
+            /* Type= : bitmask identifying a vehicle's special-cased behavior family */
+            enum TrainType {
+                TRAIN_TYPE_DEFAULT = 0,
+                TRAIN_TYPE_EZT = 1,
+                TRAIN_TYPE_ET41 = 2,
+                TRAIN_TYPE_ET42 = 4,
+                TRAIN_TYPE_PSEUDODIESEL = 8,
+                TRAIN_TYPE_ET22 = 0x10,
+                TRAIN_TYPE_SN61 = 0x20,
+                TRAIN_TYPE_EP05 = 0x40,
+                TRAIN_TYPE_ET40 = 0x80,
+                TRAIN_TYPE_181 = 0x100,
+                TRAIN_TYPE_DMU = 0x200,
+            };
+
+            enum TrainPowerSource {
+                POWER_SOURCE_NOT_DEFINED,
+                POWER_SOURCE_INTERNAL,
+                POWER_SOURCE_TRANSDUCER,
+                POWER_SOURCE_GENERATOR,
+                POWER_SOURCE_ACCUMULATOR,
+                POWER_SOURCE_CURRENTCOLLECTOR,
+                POWER_SOURCE_POWERCABLE,
+                POWER_SOURCE_HEATER,
+                POWER_SOURCE_MAIN
+            };
+
+            enum TrainPowerType {
+                POWER_TYPE_NONE,
+                POWER_TYPE_BIO,
+                POWER_TYPE_MECH,
+                POWER_TYPE_ELECTRIC,
+                POWER_TYPE_STEAM
+            };
+
+            static const char *power_changed_signal;
+            static const char *cabin_occupied_changed;
+            /// The trainset this vehicle belongs to gained or lost a vehicle
+            static const char *trainset_changed_signal;
+            /// One coupling flag attached / detached, once per event. Two signals rather than
+            /// one carrying a direction: every listener would have opened by branching on it.
+            static const char *coupler_attached_signal;
+            static const char *coupler_detached_signal;
+
+            virtual void battery(bool p_enabled) const = 0;
+            /* The converter switched (ConverterSwitch(), Mover.cpp:3702): the cab's own, sent along
+             * the control line to the vehicles that carry one */
+            virtual void converter(bool p_enabled) const = 0;
+            virtual void cab_activation(bool p_enabled) const = 0;
+            virtual void cab_activation_auto() const = 0;
+            virtual void cab_change(int p_direction) const = 0;
+            /* The main circuit's ground relay reset (maincircuitgroundreset, RelayReset(), Mover.cpp:6653) */
+            virtual void ground_relay_reset() const = 0;
+            /* The anti-slip brake pressed (antislip, AntiSlippingButton()) */
+            virtual void antislip() const = 0;
+            virtual void main_controller_increase(int p_step = 1) const = 0;
+            virtual void main_controller_decrease(int p_step = 1) const = 0;
+            virtual void second_controller_increase(int p_step = 1) const = 0;
+            virtual void second_controller_decrease(int p_step = 1) const = 0;
+            virtual void direction_increase() const = 0;
+            virtual void direction_decrease() const = 0;
+            /* distancecounter_sw: pressed starts the distance counter anew (Train.cpp:1552) */
+            virtual void distance_counter_activate(bool p_pressed) = 0;
+            virtual double process_movement(double p_delta) = 0;
+            virtual void update_location() = 0;
+            /* The vehicle nearest beyond p_end, p_track_distance [m] center to center along the
+             * track, facing it with p_other_end */
+            virtual void update_neighbour(
+                    CouplerEnd p_end, const Ref<RailVehicleController> &p_other, CouplerEnd p_other_end,
+                    double p_track_distance) = 0;
+            /* Nothing beyond p_end within the scan range */
+            virtual void clear_neighbour(CouplerEnd p_end) = 0;
+            virtual void compute_forces(double p_delta) = 0;
+            virtual void compute_movement(double p_delta) = 0;
+            virtual void compute_fast_movement(double p_delta) = 0;
+            virtual void
+            couple(const Ref<RailVehicleController> &p_other, CouplerEnd p_end, CouplerEnd p_other_end,
+                   BitField<CouplingFlags> p_coupling) = 0;
+            virtual void uncouple(CouplerEnd p_end) = 0;
+            virtual bool is_coupled(CouplerEnd p_end) const = 0;
+            /* Whether this end is joined by every one of p_flags (TestFlag(Couplers[end].CouplingFlag, ...)) */
+            virtual bool is_coupled_by(CouplerEnd p_end, BitField<CouplingFlags> p_flags) const = 0;
+            virtual void coupler_connect(const Variant &p_where) = 0;
+            virtual void coupler_disconnect(const Variant &p_where) = 0;
+            virtual Ref<RailVehicleController> get_coupled_controller(CouplerEnd p_end) const = 0;
+            /* Wakes the simulation the vehicle switched off while it stood with nothing to do -
+             * somebody took it (RailVehicleServer::vehicle_wake()) */
+            virtual void wake() = 0;
+            /* The end of the coupled vehicle facing this one (TCoupling::ConnectedNr); only while
+             * is_coupled(p_end) */
+            virtual CouplerEnd get_coupled_end(CouplerEnd p_end) const = 0;
+            /* The railway component of a kind, or null when this vehicle has none; every one of a
+             * kind - a vehicle has two couplers, one per end */
+            Ref<VehicleComponent> get_rail_component(RailVehicleComponentType::Type p_type) const;
+            TypedArray<VehicleComponent> find_rail_components(RailVehicleComponentType::Type p_type) const;
+            /* Answered from VehicleServer's per-vehicle cache, which is keyed on the state
+             * serial (a step or a command), so a reader per frame costs a lookup rather
+             * than a rebuild of the whole dictionary. A controller the server does not hold - the
+             * throwaway one the FIZ builder saves as a description - has no state to give
+             * and answers an empty dictionary. */
+            Dictionary get_state() override;
+            void update_state() override;
+            void initialize() override;
+
+            /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
+             * as TypeName (DynObj.cpp:2019) */
+            MAKE_MEMBER_GS(String, type_name, "");
+            /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
+             * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The
+             * simulation takes both at once, and it reads more than cargo out of them: `pantstate`
+             * is how a scenery starts a locomotive with its pantographs already up. */
+            MAKE_MEMBER_GS(String, load_name, "");
+            MAKE_MEMBER_GS(double, load_amount, 0.0);
+            MAKE_MEMBER_GS(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
+            MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
+            MAKE_MEMBER_GS(double, reduced_mass, 0.0);
+            MAKE_MEMBER_GS(double, sand_capacity, 0.0);
+            MAKE_MEMBER_GS(double, heating_power, 0.0);
+            MAKE_MEMBER_GS(double, light_power, 0.0);
+
+            /* Cntrl. (ogolne, bateria/przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_battery_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_converter_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS(double, cntrl_converter_start_delay, 0.0);
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_ground_relay_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_compartment_lights_start_mode, START_MODE_DISABLED);
+            MAKE_MEMBER_GS(bool, cntrl_automatic_cab_activation, true);
+            MAKE_MEMBER_GS(int, cntrl_inactive_cab_flag, 0);
+    };
+} // namespace godot
+
+VARIANT_ENUM_CAST(RailVehicleController::TrainPowerSource);
+VARIANT_ENUM_CAST(RailVehicleController::TrainPowerType);
+VARIANT_ENUM_CAST(RailVehicleController::CouplerEnd);
+VARIANT_BITFIELD_CAST(RailVehicleController::CouplingFlags);
+VARIANT_ENUM_CAST(RailVehicleController::TrainType);
+VARIANT_ENUM_CAST(RailVehicleController::StartMode);

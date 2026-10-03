@@ -1,0 +1,624 @@
+#include "RailVehicleCircuitUnit.hpp"
+#include "RailVehicleCurrentCollectorUnit.hpp"
+#include "RailVehicleElectricEngine.hpp"
+#include "macros.hpp"
+#include "vehicles/rail/RailVehicleController.hpp"
+
+#include <godot_cpp/classes/gd_extension.hpp>
+#include <godot_cpp/classes/node.hpp>
+
+#include <algorithm>
+#include <cmath>
+
+namespace godot {
+    const char *RailVehicleElectricEngine::pantograph_up_signal = "pantograph_up";
+    const char *RailVehicleElectricEngine::pantograph_down_signal = "pantograph_down";
+
+    // Original engine: sPantUp plays when a pantograph's voltage rises from zero - it has
+    // just touched the wire (DynObj.cpp:3881-3934) - and sPantDown when a raised pantograph
+    // stops being active (DynObj.cpp:4007-4036). Detected once per tick against this part's own
+    // members, never in a getter.
+    void RailVehicleElectricEngine::_do_process_component(const double p_delta) {
+        RailVehicleEngine::_do_process_component(p_delta);
+        const bool live[2] = {
+                get_collector_pantograph_first_voltage() > 0.0, get_collector_pantograph_second_voltage() > 0.0};
+        const bool active[2] = {get_collector_pantograph_first_active(), get_collector_pantograph_second_active()};
+        for (int selector = PANTOGRAPH_FIRST; selector <= PANTOGRAPH_SECOND; ++selector) {
+            if (live[selector] && !previous_pantograph_live[selector]) {
+                emit_signal(pantograph_up_signal, selector);
+            }
+            if (!active[selector] && previous_pantograph_active[selector]) {
+                emit_signal(pantograph_down_signal, selector);
+            }
+            previous_pantograph_live[selector] = live[selector];
+            previous_pantograph_active[selector] = active[selector];
+        }
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->meter_energy(p_delta);
+        }
+    }
+
+    double RailVehicleElectricEngine::get_collector_max_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_voltage() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_max_current() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_current() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_max_lifting() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_lifting() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_min_lifting() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_lifting() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_sliding_width() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_sliding_width() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_min_main_switch_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_main_switch_voltage() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_min_pantograph_tank_pressure() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_min_pantograph_tank_pressure() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_max_pantograph_tank_pressure() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_max_pantograph_tank_pressure() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_pantograph_tank_pressure() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_tank_pressure() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantograph_pressure_switch_armed() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_pressure_switch_armed()
+                                                 : false;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_compressor_valve() : false;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantograph_compressor_enabled() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_compressor_enabled() : false;
+    }
+    bool RailVehicleElectricEngine::get_collector_overvoltage_relay() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_overvoltage_relay() : false;
+    }
+    double RailVehicleElectricEngine::get_collector_required_main_switch_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_required_main_switch_voltage() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_collector_valve_active() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_valve_active() : false;
+    }
+
+    bool RailVehicleElectricEngine::get_collector_valve_enabled() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_valve_enabled() : false;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantographs_dropped() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantographs_dropped() : false;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantograph_first_valve_enabled() const {
+        return current_collector_unit != nullptr
+                       ? current_collector_unit->get_pantograph_valve_enabled(PANTOGRAPH_FIRST)
+                       : false;
+    }
+
+    bool RailVehicleElectricEngine::get_collector_pantograph_second_valve_enabled() const {
+        return current_collector_unit != nullptr
+                       ? current_collector_unit->get_pantograph_valve_enabled(PANTOGRAPH_SECOND)
+                       : false;
+    }
+
+    bool RailVehicleElectricEngine::get_collector_pantograph_first_active() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_first_active() : false;
+    }
+    double RailVehicleElectricEngine::get_collector_pantograph_first_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_first_voltage() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_collector_pantograph_second_active() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_second_active() : false;
+    }
+    double RailVehicleElectricEngine::get_collector_pantograph_second_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_pantograph_second_voltage() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_collector_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_voltage() : 0.0;
+    }
+    void RailVehicleElectricEngine::set_collector_voltage(const float p_voltage) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->set_voltage(p_voltage);
+        }
+    }
+    double RailVehicleElectricEngine::get_collector_trainset_high_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_trainset_high_voltage() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_energy_drawn() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_energy_drawn() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_energy_returned() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_energy_returned() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_contactors_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_contactors_active() : false;
+    }
+    bool RailVehicleElectricEngine::get_diff_relay_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_diff_relay_active() : false;
+    }
+    bool RailVehicleElectricEngine::get_resistors_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_resistors_active() : false;
+    }
+    bool RailVehicleElectricEngine::get_vent_overload_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_vent_overload_active() : false;
+    }
+    bool RailVehicleElectricEngine::get_highcurrent_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_highcurrent_active() : false;
+    }
+    bool RailVehicleElectricEngine::get_mainbreaker_active() const {
+        return circuit_unit != nullptr ? circuit_unit->get_mainbreaker_active() : false;
+    }
+    double RailVehicleElectricEngine::get_transducer_input_voltage() const {
+        return current_collector_unit != nullptr ? current_collector_unit->get_transducer_input_voltage() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_camshaft_available() const {
+        return circuit_unit != nullptr ? circuit_unit->get_camshaft_available() : false;
+    }
+    bool RailVehicleElectricEngine::get_converter_overload() const {
+        return circuit_unit != nullptr ? circuit_unit->get_converter_overload() : false;
+    }
+    double RailVehicleElectricEngine::get_line_breaker_delay() const {
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_delay() : 0.0;
+    }
+    double RailVehicleElectricEngine::get_line_breaker_initial_delay() const {
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_initial_delay() : 0.0;
+    }
+    bool RailVehicleElectricEngine::get_line_breaker_closes_at_no_power() const {
+        return circuit_unit != nullptr ? circuit_unit->get_line_breaker_closes_at_no_power() : false;
+    }
+    void RailVehicleElectricEngine::_apply_configuration() {
+        RailVehicleEngine::_apply_configuration();
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->apply_configuration(this);
+        }
+        if (circuit_unit != nullptr) {
+            circuit_unit->apply_configuration(this);
+        }
+    }
+
+    void RailVehicleElectricEngine::_bind_methods() {
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, power_source, "power", PROPERTY_HINT_ENUM,
+                "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::INT, power_current_collector_number_of_collectors,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_voltage,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_current,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_collector_lifting,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_min_collector_lifting,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_sliding_width,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_min_main_switch_voltage,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_min_pantograph_tank_pressure,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_max_pantograph_tank_pressure,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::BOOL, power_current_collector_overvoltage_relay,
+                "power/current_collector");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::FLOAT, power_current_collector_required_main_switch_voltage,
+                "power/current_collector");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, power_transducer_input_voltage, "power/transducer");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, power_accumulator_recharge_source, "power/accumulator",
+                PROPERTY_HINT_ENUM,
+                "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, power_cable_source, "power/power_cable", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"NoPower", RailVehicleController::POWER_TYPE_NONE},
+                         {"BioPower", RailVehicleController::POWER_TYPE_BIO},
+                         {"MechPower", RailVehicleController::POWER_TYPE_MECH},
+                         {"ElectricPower", RailVehicleController::POWER_TYPE_ELECTRIC},
+                         {"SteamPower", RailVehicleController::POWER_TYPE_STEAM}}));
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, power_cable_steam_pressure, "power/power_cable");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, power_current_collector_physical_layout,
+                "power/current_collector", PROPERTY_HINT_FLAGS, "Front,Rear");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_resistance, "circuit");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imax_low, "circuit");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imax_high, "circuit");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imin_low, "circuit");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_imin_high, "circuit");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_diff, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_min_current, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_max_current, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::INT, circuit_tuhex_stages, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum_1, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum_2, "circuit/tuhex");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum_3, "circuit/tuhex");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, cntrl_converter_overload_relay_start_mode, "cntrl",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(
+                RailVehicleElectricEngine, Variant::BOOL, cntrl_converter_overload_relay_off_when_main_is_off, "cntrl");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, cntrl_pantograph_compressor_start_mode, "cntrl",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantograph_auto_valve, "cntrl");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, cntrl_pantographs_valve_start_mode, "cntrl",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantographs_valve_spring, "cntrl");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, cntrl_pantograph_valve_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantograph_valve_spring, "cntrl");
+        BIND_PROPERTY(RailVehicleElectricEngine, Variant::BOOL, cntrl_pantograph_valve_solenoid, "cntrl");
+        BIND_PROPERTY_W_HINT(
+                RailVehicleElectricEngine, Variant::INT, cntrl_main_switch_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &RailVehicleElectricEngine::converter_fuse_reset);
+        ClassDB::bind_method(
+                D_METHOD("is_line_contactor_closed"), &RailVehicleElectricEngine::is_line_contactor_closed);
+        ClassDB::bind_method(
+                D_METHOD("is_pressure_switch_tripped"), &RailVehicleElectricEngine::is_pressure_switch_tripped);
+        ClassDB::bind_method(D_METHOD("fuse_reset"), &RailVehicleElectricEngine::fuse_reset);
+        ClassDB::bind_method(
+                D_METHOD("set_motor_connectors_open", "open"), &RailVehicleElectricEngine::set_motor_connectors_open);
+        ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &RailVehicleElectricEngine::pantographs_valve);
+        ClassDB::bind_method(
+                D_METHOD("pantographs_drop_all", "enabled"), &RailVehicleElectricEngine::pantographs_drop_all);
+        ClassDB::bind_method(
+                D_METHOD("pantograph_compressor", "enabled"), &RailVehicleElectricEngine::pantograph_compressor);
+        ClassDB::bind_method(
+                D_METHOD("pantograph_compressor_valve", "to_compressor"),
+                &RailVehicleElectricEngine::pantograph_compressor_valve);
+        ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &RailVehicleElectricEngine::pantograph);
+        ClassDB::bind_method(
+                D_METHOD("pantograph_valve_operate", "selector", "operation"),
+                &RailVehicleElectricEngine::pantograph_valve_operate);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_first_valve_enabled"),
+                &RailVehicleElectricEngine::get_collector_pantograph_first_valve_enabled);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_second_valve_enabled"),
+                &RailVehicleElectricEngine::get_collector_pantograph_second_valve_enabled);
+        ClassDB::bind_method(
+                D_METHOD("set_pantograph_wire_voltage", "selector", "voltage"),
+                &RailVehicleElectricEngine::set_pantograph_wire_voltage);
+
+        ADD_SIGNAL(MethodInfo(pantograph_up_signal, PropertyInfo(Variant::INT, "selector")));
+        ADD_SIGNAL(MethodInfo(pantograph_down_signal, PropertyInfo(Variant::INT, "selector")));
+
+        BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_NONE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE_ON);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE_OFF);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_ON);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_OFF);
+        ClassDB::bind_method(
+                D_METHOD("pantographs_valve_operate", "operation"),
+                &RailVehicleElectricEngine::pantographs_valve_operate);
+
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_voltage"), &RailVehicleElectricEngine::get_collector_max_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_current"), &RailVehicleElectricEngine::get_collector_max_current);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_lifting"), &RailVehicleElectricEngine::get_collector_max_lifting);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_min_lifting"), &RailVehicleElectricEngine::get_collector_min_lifting);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_sliding_width"), &RailVehicleElectricEngine::get_collector_sliding_width);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_min_main_switch_voltage"),
+                &RailVehicleElectricEngine::get_collector_min_main_switch_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_min_pantograph_tank_pressure"),
+                &RailVehicleElectricEngine::get_collector_min_pantograph_tank_pressure);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_max_pantograph_tank_pressure"),
+                &RailVehicleElectricEngine::get_collector_max_pantograph_tank_pressure);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_tank_pressure"),
+                &RailVehicleElectricEngine::get_collector_pantograph_tank_pressure);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_pressure_switch_armed"),
+                &RailVehicleElectricEngine::get_collector_pantograph_pressure_switch_armed);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_compressor_valve"),
+                &RailVehicleElectricEngine::get_collector_pantograph_compressor_valve);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_compressor_enabled"),
+                &RailVehicleElectricEngine::get_collector_pantograph_compressor_enabled);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_overvoltage_relay"),
+                &RailVehicleElectricEngine::get_collector_overvoltage_relay);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_required_main_switch_voltage"),
+                &RailVehicleElectricEngine::get_collector_required_main_switch_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_valve_active"), &RailVehicleElectricEngine::get_collector_valve_active);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_valve_enabled"), &RailVehicleElectricEngine::get_collector_valve_enabled);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantographs_dropped"),
+                &RailVehicleElectricEngine::get_collector_pantographs_dropped);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_first_active"),
+                &RailVehicleElectricEngine::get_collector_pantograph_first_active);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_first_voltage"),
+                &RailVehicleElectricEngine::get_collector_pantograph_first_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_second_active"),
+                &RailVehicleElectricEngine::get_collector_pantograph_second_active);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_second_voltage"),
+                &RailVehicleElectricEngine::get_collector_pantograph_second_voltage);
+        ClassDB::bind_method(D_METHOD("has_accumulator"), &RailVehicleElectricEngine::has_accumulator);
+        ClassDB::bind_method(D_METHOD("has_power_cable"), &RailVehicleElectricEngine::has_power_cable);
+        ClassDB::bind_method(D_METHOD("get_collector_voltage"), &RailVehicleElectricEngine::get_collector_voltage);
+        ClassDB::bind_method(
+                D_METHOD("set_collector_voltage", "voltage"), &RailVehicleElectricEngine::set_collector_voltage);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_trainset_high_voltage"),
+                &RailVehicleElectricEngine::get_collector_trainset_high_voltage);
+        ClassDB::bind_method(D_METHOD("get_contactors_active"), &RailVehicleElectricEngine::get_contactors_active);
+        ClassDB::bind_method(D_METHOD("get_diff_relay_active"), &RailVehicleElectricEngine::get_diff_relay_active);
+        ClassDB::bind_method(D_METHOD("get_resistors_active"), &RailVehicleElectricEngine::get_resistors_active);
+        ClassDB::bind_method(
+                D_METHOD("get_vent_overload_active"), &RailVehicleElectricEngine::get_vent_overload_active);
+        ClassDB::bind_method(D_METHOD("get_highcurrent_active"), &RailVehicleElectricEngine::get_highcurrent_active);
+        ClassDB::bind_method(D_METHOD("get_mainbreaker_active"), &RailVehicleElectricEngine::get_mainbreaker_active);
+        ClassDB::bind_method(
+                D_METHOD("get_transducer_input_voltage"), &RailVehicleElectricEngine::get_transducer_input_voltage);
+
+        ClassDB::bind_method(D_METHOD("get_camshaft_available"), &RailVehicleElectricEngine::get_camshaft_available);
+        ClassDB::bind_method(D_METHOD("get_converter_overload"), &RailVehicleElectricEngine::get_converter_overload);
+        ClassDB::bind_method(D_METHOD("get_line_breaker_delay"), &RailVehicleElectricEngine::get_line_breaker_delay);
+        ClassDB::bind_method(
+                D_METHOD("get_line_breaker_initial_delay"), &RailVehicleElectricEngine::get_line_breaker_initial_delay);
+        ClassDB::bind_method(
+                D_METHOD("get_line_breaker_closes_at_no_power"),
+                &RailVehicleElectricEngine::get_line_breaker_closes_at_no_power);
+        ClassDB::bind_method(D_METHOD("get_motor_current"), &RailVehicleElectricEngine::get_motor_current);
+        ClassDB::bind_method(D_METHOD("get_engine_voltage"), &RailVehicleElectricEngine::get_engine_voltage);
+        ClassDB::bind_method(D_METHOD("get_total_current"), &RailVehicleElectricEngine::get_total_current);
+        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &RailVehicleElectricEngine::get_circuit_imax);
+        ClassDB::bind_method(
+                D_METHOD("get_dynamic_brake_active"), &RailVehicleElectricEngine::get_dynamic_brake_active);
+        ClassDB::bind_method(D_METHOD("get_fuse_active"), &RailVehicleElectricEngine::get_fuse_active);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_connectors_open"), &RailVehicleElectricEngine::get_motor_connectors_open);
+    }
+
+
+    bool RailVehicleElectricEngine::has_accumulator() const {
+        return power_source == RailVehicleController::POWER_SOURCE_ACCUMULATOR;
+    }
+
+    bool RailVehicleElectricEngine::has_power_cable() const {
+        return power_source == RailVehicleController::POWER_SOURCE_POWERCABLE;
+    }
+
+    void RailVehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        p_state["camshaft_available"] = get_camshaft_available();
+        p_state["converter_overload"] = get_converter_overload();
+        p_state["line_breaker_delay"] = get_line_breaker_delay();
+        p_state["line_breaker_initial_delay"] = get_line_breaker_initial_delay();
+        p_state["line_breaker_closes_at_no_power"] = get_line_breaker_closes_at_no_power();
+        p_state["Im"] = get_motor_current();
+        p_state["engine_voltage"] = get_engine_voltage();
+        p_state["total_current"] = get_total_current();
+        p_state["circuit_imax"] = get_circuit_imax();
+        p_state["dynamic_brake_active"] = get_dynamic_brake_active();
+        p_state["fuse_active"] = get_fuse_active();
+        p_state["motor_connectors_open"] = get_motor_connectors_open();
+        p_state["line_contactor_closed"] = is_line_contactor_closed();
+        p_state["pressure_switch_tripped"] = is_pressure_switch_tripped();
+        RailVehicleEngine::_fill_state_dictionary(p_state);
+        if (!is_simulation_ready()) {
+            return;
+        }
+        p_state["power_source"] = get_power_source();
+        if (has_accumulator()) {
+            p_state["accumulator/recharge_source"] = get_power_accumulator_recharge_source();
+        }
+        p_state["current_collector/max_voltage"] = get_collector_max_voltage();
+        p_state["current_collector/max_current"] = get_collector_max_current();
+        p_state["current_collector/max_collector_lifting"] = get_collector_max_lifting();
+        p_state["current_collector/min_collector_lifting"] = get_collector_min_lifting();
+        p_state["current_collector/collector_sliding_width"] = get_collector_sliding_width();
+        p_state["current_collector/min_main_switch_voltage"] = get_collector_min_main_switch_voltage();
+        p_state["current_collector/min_pantograph_tank_pressure"] = get_collector_min_pantograph_tank_pressure();
+        p_state["current_collector/max_pantograph_tank_pressure"] = get_collector_max_pantograph_tank_pressure();
+        p_state["current_collector/pantograph_tank_pressure"] = get_collector_pantograph_tank_pressure();
+        p_state["current_collector/pantograph_pressure_switch_armed"] =
+                get_collector_pantograph_pressure_switch_armed();
+        p_state["current_collector/pantograph_compressor_valve"] = get_collector_pantograph_compressor_valve();
+        p_state["current_collector/pantograph_compressor_enabled"] = get_collector_pantograph_compressor_enabled();
+        p_state["current_collector/overvoltage_relay"] = get_collector_overvoltage_relay();
+        p_state["current_collector/required_main_switch_voltage"] = get_collector_required_main_switch_voltage();
+        p_state["current_collector/valve_active"] = get_collector_valve_active();
+        p_state["current_collector/valve_enabled"] = get_collector_valve_enabled();
+        p_state["current_collector/pantographs_dropped"] = get_collector_pantographs_dropped();
+        p_state["current_collector/pantograph_first_active"] = get_collector_pantograph_first_active();
+        p_state["current_collector/pantograph_first_valve_enabled"] = get_collector_pantograph_first_valve_enabled();
+        p_state["current_collector/pantograph_second_valve_enabled"] = get_collector_pantograph_second_valve_enabled();
+        p_state["current_collector/pantograph_first_voltage"] = get_collector_pantograph_first_voltage();
+        p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
+        p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();
+        p_state["current_collector/voltage"] = get_collector_voltage();
+        p_state["current_collector/trainset_high_voltage"] = get_collector_trainset_high_voltage();
+        // Train.cpp:810
+        p_state["power_drawn"] = get_energy_drawn();
+        p_state["power_returned"] = get_energy_returned();
+        p_state["indicators/contactors_active"] = get_contactors_active();
+        p_state["indicators/diff_relay_active"] = get_diff_relay_active();
+        p_state["indicators/resistors_active"] = get_resistors_active();
+        p_state["indicators/vent_overload_active"] = get_vent_overload_active();
+        p_state["indicators/highcurrent_active"] = get_highcurrent_active();
+        p_state["indicators/mainbreaker_active"] = get_mainbreaker_active();
+        p_state["transducer/input_voltage"] = get_transducer_input_voltage();
+        if (has_power_cable()) {
+            p_state["power_cable/source"] = get_power_cable_source();
+            p_state["power_cable/steam_pressure"] = get_power_cable_steam_pressure();
+        }
+    }
+
+
+    double RailVehicleElectricEngine::get_motor_current() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_motor_current() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_engine_voltage() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_engine_voltage() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_total_current() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_total_current() : 0.0;
+    }
+
+    double RailVehicleElectricEngine::get_circuit_imax() const {
+        return traction_motors_unit != nullptr ? traction_motors_unit->get_circuit_imax() : 0.0;
+    }
+
+    bool RailVehicleElectricEngine::get_dynamic_brake_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_dynamic_brake_active();
+    }
+
+    bool RailVehicleElectricEngine::get_fuse_active() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_fuse_active();
+    }
+
+    bool RailVehicleElectricEngine::get_motor_connectors_open() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->get_motor_connectors_open();
+    }
+
+    bool RailVehicleElectricEngine::is_line_contactor_closed() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_line_contactor_closed();
+    }
+
+    bool RailVehicleElectricEngine::is_pressure_switch_tripped() const {
+        return traction_motors_unit != nullptr && traction_motors_unit->is_pressure_switch_tripped();
+    }
+
+    void RailVehicleElectricEngine::fuse_reset() {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->fuse_reset();
+        }
+    }
+
+    void RailVehicleElectricEngine::set_motor_connectors_open(const bool p_open) {
+        if (traction_motors_unit != nullptr) {
+            traction_motors_unit->set_motor_connectors_open(p_open);
+        }
+    }
+
+    void RailVehicleElectricEngine::converter_fuse_reset() {
+        if (circuit_unit != nullptr) {
+            circuit_unit->converter_fuse_reset();
+        }
+    }
+
+    void RailVehicleElectricEngine::pantographs_valve(const bool p_enabled) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_valve(p_enabled);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantographs_valve_operate(const ValveOperation p_operation) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_valve_operate(p_operation);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantographs_drop_all(const bool p_enabled) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantographs_drop_all(p_enabled);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantograph_compressor(const bool p_enabled) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_compressor(p_enabled);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantograph_compressor_valve(const bool p_to_compressor) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_compressor_valve(p_to_compressor);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph(p_selector, p_enabled);
+        }
+    }
+
+    void RailVehicleElectricEngine::pantograph_valve_operate(
+            const PantographSelector p_selector, const ValveOperation p_operation) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->pantograph_valve_operate(p_selector, p_operation);
+        }
+    }
+
+    void
+    RailVehicleElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
+        if (current_collector_unit != nullptr) {
+            current_collector_unit->set_pantograph_wire_voltage(p_selector, p_voltage);
+        }
+    }
+
+    void RailVehicleElectricEngine::_register_commands() {
+        RailVehicleEngine::_register_commands();
+        register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
+        register_command("fuse_reset", Callable(this, "fuse_reset"));
+        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
+        register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
+        register_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
+        register_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
+        register_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
+        register_command("pantograph", Callable(this, "pantograph"));
+        register_command("pantograph_valve_operate", Callable(this, "pantograph_valve_operate"));
+    }
+
+    void RailVehicleElectricEngine::_unregister_commands() {
+        RailVehicleEngine::_unregister_commands();
+        unregister_command("converter_fuse_reset");
+        unregister_command("fuse_reset");
+        unregister_command("motor_connectors_open");
+        unregister_command("pantographs_valve");
+        unregister_command("pantographs_valve_operate");
+        unregister_command("pantographs_drop_all");
+        unregister_command("pantograph_compressor");
+        unregister_command("pantograph_compressor_valve");
+        unregister_command("pantograph");
+        unregister_command("pantograph_valve_operate");
+    }
+
+
+    void RailVehicleElectricEngine::set_power_source(const RailVehicleController::TrainPowerSource p_source) {
+        power_source = p_source;
+        dirty = true;
+    }
+
+    RailVehicleController::TrainPowerSource RailVehicleElectricEngine::get_power_source() const {
+        return power_source;
+    }
+} // namespace godot

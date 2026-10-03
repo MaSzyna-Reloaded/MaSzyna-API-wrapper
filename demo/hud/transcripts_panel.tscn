@@ -1,0 +1,44 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/transcripts_panel.gd" id="1_transcripts"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_transcripts"]
+content_margin_left = 10.0
+content_margin_top = 6.0
+content_margin_right = 10.0
+content_margin_bottom = 7.0
+bg_color = Color(0.07, 0.08, 0.1, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 0.85, 0.3, 0.45)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+shadow_color = Color(0, 0, 0, 0.12)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
+
+[node name="TranscriptsPanel" type="PanelContainer"]
+visible = false
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = -60.0
+offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_transcripts")
+script = ExtResource("1_transcripts")
+
+[node name="Lines" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.96, 0.96, 0.94, 1)
+theme_override_font_sizes/font_size = 15
+horizontal_alignment = 1

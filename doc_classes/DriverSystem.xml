@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="DriverSystem" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="driver_attach_delegate">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="delegate" type="DriverDelegate" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_attach_vehicle">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_create">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_free">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_get_delegate" qualifiers="const">
+			<return type="DriverDelegate" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_get_rids" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Every driver there is.
+			</description>
+		</method>
+		<method name="driver_get_state" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				What the driver keeps, from its delegate ([method DriverDelegate._get_state]); empty without a delegate.
+			</description>
+		</method>
+		<method name="driver_get_timetable_state" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The driver's timetable and its progress, from its delegate ([method DriverDelegate._get_timetable_state]); empty without a delegate.
+			</description>
+		</method>
+		<method name="driver_get_vehicle" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_report_timetable_changed">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				Called by the driver's delegate when its timetable, or how far it got through it, has changed; emits [signal driver_timetable_changed].
+			</description>
+		</method>
+		<method name="driver_schedule_update">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="seconds" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="driver_send_command">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="command" type="String" />
+			<param index="2" name="value1" type="float" />
+			<param index="3" name="value2" type="float" />
+			<param index="4" name="position" type="Vector3" default="Vector3(0, 0, 0)" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_driver" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_seconds_until_departure" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="hours" type="float" />
+			<description>
+				The seconds from [param hours] (the time of day) to the departure of the vehicle's train ([method DriverDelegate._get_seconds_until_departure]): by the timetable of its own driver, else of the first driver of its trainset with one ([code]Mechanik[/code], else [code]ctOwner[/code], [code]Event.cpp:2431-2435[/code]); 0 for a train without a timetable.
+			</description>
+		</method>
+		<method name="vehicle_is_control_active" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_control_active">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="active" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="driver_freed">
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The driver was freed ([method driver_free]).
+			</description>
+		</signal>
+		<signal name="driver_timetable_changed">
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The driver's timetable, or how far it got through it, has changed.
+			</description>
+		</signal>
+		<signal name="driver_vehicle_attached">
+			<param index="0" name="driver" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<description>
+				The driver drives another vehicle ([method driver_attach_vehicle]); an invalid [param vehicle] when it has none, also when its vehicle was freed.
+			</description>
+		</signal>
+	</signals>
+</class>

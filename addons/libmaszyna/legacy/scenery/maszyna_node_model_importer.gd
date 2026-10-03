@@ -1,6 +1,12 @@
 @tool
 extends RefCounted
 
+## Where a model's file is looked for, in this order for each extension: its path as given, from
+## the game directory ("models\linia053\peron_sandomierz.t3d", "dynamic\pkp\..."), then under
+## models/ ("bud\dombale.t3d") - TModelsManager::find_on_disk(), MdlMngr.cpp:146-150
+const MODEL_EXTENSIONS:Array[String] = ["e3d", "t3d"]
+const MODELS_DIRECTORY:String = "models"
+
 
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelData:
     var loc_x = p.next_token()
@@ -12,12 +18,20 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelDat
 
     var obj := MaszynaModelData.new()
     obj.model_filename = filename.get_file().get_basename()
-    var data_path_array = data_path.split("/")
-    if not data_path_array or not String(data_path_array[0]).to_lower() == "dynamic":
-        data_path_array.insert(0, "models")
-
-    obj.data_path = MaszynaDataPath.resolve(
-        UserSettings.get_maszyna_game_dir(), "/".join(data_path_array)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var lookups:Array[String] = []
+    for extension:String in MODEL_EXTENSIONS:
+        for directory:String in [data_path, MODELS_DIRECTORY.path_join(data_path)]:
+            lookups.append(directory.path_join(obj.model_filename + "." + extension))
+    var found:String = ""
+    for lookup:String in lookups:
+        var file:String = MaszynaDataPath.resolve(game_dir, lookup)
+        if FileAccess.file_exists(game_dir.path_join(file)):
+            found = file
+            break
+    # a model found nowhere keeps the models/ path, for the loader to report
+    obj.data_path = (
+        found.get_base_dir() if found else MaszynaDataPath.resolve(game_dir, MODELS_DIRECTORY.path_join(data_path))
     )
 
     obj.position = Vector3(float(loc_x), float(loc_y), float(loc_z))

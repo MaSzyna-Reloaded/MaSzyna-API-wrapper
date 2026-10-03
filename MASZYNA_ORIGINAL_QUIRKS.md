@@ -256,6 +256,14 @@ interface.
 
 ## Scenery data
 
+* **A model's path has two roots.** A `node ... model` names its file either from the game
+  directory (`models\linia053\peron_sandomierz.t3d` - Sandomierz's platform, `l053_tri.scm:59325`;
+  `dynamic\pkp\...` for a vehicle standing as scenery) or from `models/` (`bud\dombale.t3d`). The
+  original tries, for `.e3d` and then `.t3d`, the path as given and then `models/` + the path
+  (`TModelsManager::find_on_disk()`, `MdlMngr.cpp:146-150`), and its scenery export strips a
+  leading `models/` again (`AnimModel.cpp:760`). Wrapper: the same order
+  (`maszyna_node_model_importer.gd`); it used to put `models/` in front of everything but
+  `dynamic`, and lost every model named from the game directory.
 * **A W4's name carries a unique suffix after `#`** (`JAWOR#1` ... `JAWOR#5`) that the timetable
   does not; the original's `putvalues` parser cuts it (`Event.cpp:720`). Wrapper: the event
   factory cuts it.

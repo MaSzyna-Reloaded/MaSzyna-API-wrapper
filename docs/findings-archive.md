@@ -3249,3 +3249,20 @@ lighting or the trainset.
   version bumped.
 * **Rule:** a scenery's `origin` is a stack of sums, not of values - an `origin` inside an
   `origin` adds to it.
+
+## 2026-10-03 Sandomierz without its platform
+
+* **Symptom:** Wrzosy (`wrzosy_eie2620.scn`), Sandomierz station: the shelters stand on grass, no
+  platform under them, and no platform among the models of "Edit SCN"'s sector (operator).
+* **What proved it:** the shelter at (-18453.5, 0.5, 52440) is `wiata_san1`
+  (`linia053/scenariusz_os/l053_pozostale_dwschod.scm:748`); the platform beside it is one model,
+  `node -1 0 none model ... models\linia053\peron_sandomierz.t3d` (`l053_tri.scm:59325`).
+  `maszyna_node_model_importer.gd` put `models/` in front of every path but `dynamic`, so it looked
+  for `models/models/linia053/`. The original tries the path as given first, then `models/` + the
+  path (`TModelsManager::find_on_disk()`, `MdlMngr.cpp:146-150`). On the way: Wrzosy's own
+  platforms (`linia053_wrzosy/scm_wrzosy/6-teren.scm`, `triangles`) parse and reach the cache
+  whole, and no Wrzosy scenario has a region file.
+* **Fix:** the importer looks for `.e3d` then `.t3d`, as given then under `models/`; the scenery
+  cache format version bumped.
+* **Rule:** a file named by the data is looked up where the original looks it up, in its order -
+  not under the one root most of the data uses.

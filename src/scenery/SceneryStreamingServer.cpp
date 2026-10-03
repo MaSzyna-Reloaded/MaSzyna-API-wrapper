@@ -11,6 +11,8 @@
 namespace godot {
     const char *SceneryStreamingServer::streaming_builds_started_signal = "streaming_builds_started";
     const char *SceneryStreamingServer::streaming_builds_finished_signal = "streaming_builds_finished";
+    const char *SceneryStreamingServer::streaming_camera_chunk_changed_signal = "streaming_camera_chunk_changed";
+    const char *SceneryStreamingServer::chunk_cleared_signal = "chunk_cleared";
 
     void SceneryStreamingServer::_bind_methods() {
         ClassDB::bind_method(
@@ -43,6 +45,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("streaming_get_camera_position"), &SceneryStreamingServer::streaming_get_camera_position);
         ClassDB::bind_method(D_METHOD("streaming_has_camera"), &SceneryStreamingServer::streaming_has_camera);
+        ClassDB::bind_method(
+                D_METHOD("streaming_get_camera_chunk"), &SceneryStreamingServer::streaming_get_camera_chunk);
+        ClassDB::bind_method(D_METHOD("chunk_get_rids", "chunk"), &SceneryStreamingServer::chunk_get_rids);
         ClassDB::bind_method(D_METHOD("streaming_is_building"), &SceneryStreamingServer::streaming_is_building);
         ClassDB::bind_method(
                 D_METHOD("area_is_ready", "chunk_radius"), &SceneryStreamingServer::area_is_ready, DEFVAL(1));
@@ -52,6 +57,9 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(streaming_builds_started_signal));
         ADD_SIGNAL(MethodInfo(streaming_builds_finished_signal));
+        ADD_SIGNAL(MethodInfo(streaming_camera_chunk_changed_signal, PropertyInfo(Variant::VECTOR2I, "chunk")));
+        // the last built piece of the chunk cleared as the camera went away
+        ADD_SIGNAL(MethodInfo(chunk_cleared_signal, PropertyInfo(Variant::VECTOR2I, "chunk")));
     }
 
     SceneryStreamingServer::SceneryStreamingServer() {
@@ -500,6 +508,26 @@ namespace godot {
         return camera_id.is_valid();
     }
 
+    Vector2i SceneryStreamingServer::streaming_get_camera_chunk() const {
+        return camera_chunk;
+    }
+
+    TypedArray<RID> SceneryStreamingServer::chunk_get_rids(const Vector2i &p_chunk) const {
+        TypedArray<RID> rids;
+        MutexLock lock(mutex);
+        const Chunk *chunk = chunks.getptr(p_chunk);
+        if (chunk == nullptr) {
+            return rids;
+        }
+        for (const Entry &entry: chunk->entries) {
+            // a freed piece stays in its chunk until the chunk is sorted again
+            if (entry_chunks.has(entry.stream_rid)) {
+                rids.push_back(entry.user_rid);
+            }
+        }
+        return rids;
+    }
+
     bool SceneryStreamingServer::_is_area_ready_locked(const int p_chunk_radius) const {
         return camera_id.is_valid() && scanned_revision == target_revision &&
                _get_pending_nearby_locked(p_chunk_radius) == 0;
@@ -674,6 +702,11 @@ namespace godot {
             last_plan_msec = now;
             last_camera_position = position;
             _request_plan(position);
+            const Vector2i chunk = _get_chunk_key(position);
+            if (chunk != camera_chunk) {
+                camera_chunk = chunk;
+                emit_signal(streaming_camera_chunk_changed_signal, chunk);
+            }
         }
         _apply_plan();
         bool is_building;
@@ -747,13 +780,18 @@ namespace godot {
             const PendingClear pending = pending_clears[pending_clears.size() - 1];
             pending_clears.resize(pending_clears.size() - 1);
             bool apply = false;
+            bool chunk_cleared = false;
+            Vector2i key;
             {
                 MutexLock lock(mutex);
                 Entry *entry = _get_entry(pending.stream_rid);
                 if (pending.revision == target_revision && entry != nullptr && entry->built &&
                     entry->wanted_revision != target_revision) {
                     entry->built = false;
-                    chunks[entry_chunks[pending.stream_rid]].built_count--;
+                    key = entry_chunks[pending.stream_rid];
+                    Chunk &chunk = chunks[key];
+                    chunk.built_count--;
+                    chunk_cleared = chunk.built_count == 0;
                     apply = true;
                 }
             }
@@ -762,6 +800,9 @@ namespace godot {
                 pending.clear.call(pending.user_rid);
                 owner_times.write[pending.owner].add(time->get_ticks_usec() - started);
                 cleared_since_release++;
+            }
+            if (chunk_cleared) {
+                emit_signal(chunk_cleared_signal, key);
             }
             if (time->get_ticks_usec() >= deadline) {
                 return;

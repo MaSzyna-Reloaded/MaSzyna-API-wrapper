@@ -343,6 +343,14 @@ namespace godot {
             Transform3D instance_get_submodel_transform(const RID &p_instance, const String &p_submodel) const;
             /// The model the instance draws
             Ref<E3DModel> instance_get_model(const RID &p_instance) const;
+            /// Where the instance stands (instance_set_transform(), instance_register())
+            Transform3D instance_get_transform(const RID &p_instance) const;
+            /// The directory its model and textures are read from
+            String instance_get_data_path(const RID &p_instance) const;
+            /// The model file of a registered instance (instance_register()); empty for one created
+            /// from a model (instance_create())
+            String instance_get_model_filename(const RID &p_instance) const;
+            PackedStringArray instance_get_skins(const RID &p_instance) const;
             /// The bounds of every mesh of the model, in the model's space
             AABB instance_get_aabb(const RID &p_instance) const;
             /// Builds the instance again with another instancer, keeping the RID and everything set on

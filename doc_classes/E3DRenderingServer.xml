@@ -94,6 +94,13 @@
 				The bounds of every mesh of the model, in the model's space.
 			</description>
 		</method>
+		<method name="instance_get_data_path" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The directory the instance's model and textures are read from.
+			</description>
+		</method>
 		<method name="instance_get_light_count" qualifiers="const">
 			<return type="int" />
 			<param index="0" name="instance" type="RID" />
@@ -107,11 +114,25 @@
 				The model the instance draws.
 			</description>
 		</method>
+		<method name="instance_get_model_filename" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The model file of a registered instance ([method instance_register]); empty for one created from a model ([method instance_create]).
+			</description>
+		</method>
 		<method name="instance_get_opaque_meshes" qualifiers="const">
 			<return type="PackedInt64Array" />
 			<param index="0" name="instance" type="RID" />
 			<description>
 				The instance ids of the [MeshInstance3D] nodes of the instance's opaque submodels - what the original draws into its pick buffer; a translucent submodel is left out. Empty for an instance not built as nodes.
+			</description>
+		</method>
+		<method name="instance_get_skins" qualifiers="const">
+			<return type="PackedStringArray" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The skins the instance's model is drawn with.
 			</description>
 		</method>
 		<method name="instance_get_submodel_transform" qualifiers="const">
@@ -120,6 +141,13 @@
 			<param index="1" name="submodel" type="String" />
 			<description>
 				The submodel's transform in the model, through every parent, without any pose.
+			</description>
+		</method>
+		<method name="instance_get_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				Where the instance stands ([method instance_set_transform], [method instance_register]).
 			</description>
 		</method>
 		<method name="instance_has_submodel" qualifiers="const">

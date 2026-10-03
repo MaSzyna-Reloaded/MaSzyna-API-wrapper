@@ -730,8 +730,18 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   (`E3DRenderingServer._process_lights()`) snaps on and off; `notransition` is parsed and ignored.
 * `Overcast` is folded into the light level (`MaszynaSkyEnvironment.get_light_level()`) instead of
   subtracted at the threshold (`AnimModel.cpp:598`).
-* Scenery models have no nodes - not pickable in the editor, don't follow the
-  `MaszynaIncludeNode` transform/visibility.
+* Scenery models have no nodes - they don't follow the `MaszynaIncludeNode` transform/visibility.
+  In the editor "Edit SCN" shows the camera's chunk as a sector of `E3DModelInstance` proxies
+  (`editor/scenery_toolbar/scenery_sector_inspector.gd`). Not done yet:
+  * the scenery's vehicles in a sector: `MaszynaRailVehicle3D` always builds its own vehicle
+    (`_process`, `maszyna_rail_vehicle_3d.gd:124-149`); a proxy would stand on
+    `RailVehicle3D.set_vehicle()` for a vehicle of `MaszynaIncludeNode.get_vehicles()`
+  * a sector kept until the operator deletes it (now it goes with its chunk's clear, and before
+    every save)
+  * an edit written back to the scenery's files, and a moved model's stream entry moved to the
+    chunk it was moved to (`SceneryStreamingServer` keeps the chunk of its registration)
+  * the inspection restarted when the scene's tab is shown again (it stops when the scenery leaves
+    the tree; "Edit SCN" off and on starts it)
 * An `include` with no filename appears in the real data (`maszyna_include_importer.gd` reports it
   with the offset and skips it); source unknown - truncated file or tokenizer misread.
 * Unloading a scenery leaves its weather in `MaszynaEnvironmentNode` (the `atmo` precipitation,

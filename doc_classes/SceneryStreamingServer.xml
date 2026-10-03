@@ -22,6 +22,13 @@
 				Returns whether the current camera revision has been scanned and every wanted piece in the camera chunk plus [param chunk_radius] neighbouring chunks has been built. A radius of [code]1[/code] describes the 3×3 starting area used by the demo loading screen; work farther away may still be pending.
 			</description>
 		</method>
+		<method name="chunk_get_rids" qualifiers="const">
+			<return type="RID[]" />
+			<param index="0" name="chunk" type="Vector2i" />
+			<description>
+				What the owners registered in the chunk (the [code]rid[/code] of [method stream_register]), built or not.
+			</description>
+		</method>
 		<method name="content_set_consumer">
 			<return type="void" />
 			<param index="0" name="kind" type="int" enum="SceneryStreamingProvider.ContentKind" />
@@ -94,6 +101,12 @@
 				Stops the planning thread and waits for the pass it is in, leaving the server able to start a fresh one. Called while the scene tree is still alive: the worker calls owners' [code]preload[/code] and providers' [method SceneryStreamingProvider.chunk_load], which may be scripts, and they must not be creating rendering resources while the scenery frees them.
 			</description>
 		</method>
+		<method name="streaming_get_camera_chunk" qualifiers="const">
+			<return type="Vector2i" />
+			<description>
+				The chunk the streaming camera is in, as [signal streaming_camera_chunk_changed] last announced it.
+			</description>
+		</method>
 		<method name="streaming_get_camera_position" qualifiers="const">
 			<return type="Vector3" />
 			<description>
@@ -160,6 +173,12 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="chunk_cleared">
+			<param index="0" name="chunk" type="Vector2i" />
+			<description>
+				The last built piece of the chunk was cleared as the camera went away.
+			</description>
+		</signal>
 		<signal name="streaming_builds_finished">
 			<description>
 				Every piece in range of the camera is built, or the streaming has no camera any more.
@@ -168,6 +187,12 @@
 		<signal name="streaming_builds_started">
 			<description>
 				Pieces in range of the camera started waiting to be built.
+			</description>
+		</signal>
+		<signal name="streaming_camera_chunk_changed">
+			<param index="0" name="chunk" type="Vector2i" />
+			<description>
+				The streaming camera moved into another chunk.
 			</description>
 		</signal>
 	</signals>

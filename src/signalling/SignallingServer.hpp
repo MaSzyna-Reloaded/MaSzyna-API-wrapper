@@ -90,6 +90,9 @@ namespace godot {
             void signal_head_set_name(const RID &p_signal_head, const StringName &p_name);
             StringName signal_head_get_name(const RID &p_signal_head) const;
             RID signal_head_get_rid_by_name(const StringName &p_name) const;
+            TypedArray<RID> signal_head_get_rids() const;
+            /// The model instance (E3DRenderingServer) whose lights the signal head is
+            RID signal_head_get_instance(const RID &p_signal_head) const;
             RID signal_head_get_system(const RID &p_signal_head) const;
             void signal_head_light_enable(const RID &p_signal_head, int p_light);
             void signal_head_light_disable(const RID &p_signal_head, int p_light);

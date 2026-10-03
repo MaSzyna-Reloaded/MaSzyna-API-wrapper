@@ -190,6 +190,14 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 * The start vehicle is still looked for every frame until the scenery has it
   (`MaszynaPlayer._find_start_vehicle()`), instead of an event saying the trainset is built.
 
+### Problem reports (`demo/bug_report/`, 2026-10-04)
+* The reporting endpoint (`maszyna/bugtracking/endpoint`) is the Cloudflare Worker in the
+  `MaSzyna-Reloaded/reports` repository (`worker/`), deployed on a personal `workers.dev`
+  account; moving it to the project's own account or domain changes that address.
+* A command carries no sender (`VehicleServer.vehicle_command_received`), so the report's command
+  audit cannot tell the player's commands to the driven vehicle from the scenario's or the
+  console's.
+
 ## Cabins
 
 ### Controls whose original handler branches on the kind of switch

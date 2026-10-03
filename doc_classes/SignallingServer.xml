@@ -41,6 +41,13 @@
 				Returns the names of the aspects the signal head's kind can show, in their declared order; empty without a kind.
 			</description>
 		</method>
+		<method name="signal_head_get_instance" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="signal_head" type="RID" />
+			<description>
+				Returns the model instance (E3DRenderingServer) whose lights the signal head is.
+			</description>
+		</method>
 		<method name="signal_head_get_kind" qualifiers="const">
 			<return type="SignalHeadKind" />
 			<param index="0" name="signal_head" type="RID" />
@@ -75,6 +82,12 @@
 			<param index="0" name="name" type="StringName" />
 			<description>
 				Returns the signal head registered under [param name], or an empty RID.
+			</description>
+		</method>
+		<method name="signal_head_get_rids" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Returns every signal head.
 			</description>
 		</method>
 		<method name="signal_head_get_system" qualifiers="const">

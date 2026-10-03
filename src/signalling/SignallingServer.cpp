@@ -22,6 +22,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("signal_head_set_name", "signal_head", "name"), &SignallingServer::signal_head_set_name);
         ClassDB::bind_method(D_METHOD("signal_head_get_name", "signal_head"), &SignallingServer::signal_head_get_name);
+        ClassDB::bind_method(D_METHOD("signal_head_get_rids"), &SignallingServer::signal_head_get_rids);
+        ClassDB::bind_method(
+                D_METHOD("signal_head_get_instance", "signal_head"), &SignallingServer::signal_head_get_instance);
         ClassDB::bind_method(
                 D_METHOD("signal_head_get_rid_by_name", "name"), &SignallingServer::signal_head_get_rid_by_name);
         ClassDB::bind_method(
@@ -214,6 +217,20 @@ namespace godot {
     RID SignallingServer::signal_head_get_rid_by_name(const StringName &p_name) const {
         const RID *rid = signal_heads_by_name.getptr(p_name);
         return rid != nullptr ? *rid : RID();
+    }
+
+    TypedArray<RID> SignallingServer::signal_head_get_rids() const {
+        TypedArray<RID> result;
+        for (const KeyValue<RID, SignalHeadData> &signal_head: signal_heads) {
+            result.push_back(signal_head.key);
+        }
+        return result;
+    }
+
+    RID SignallingServer::signal_head_get_instance(const RID &p_signal_head) const {
+        const SignalHeadData *data = signal_heads.getptr(p_signal_head);
+        ERR_FAIL_NULL_V(data, RID());
+        return data->instance;
     }
 
     RID SignallingServer::signal_head_get_system(const RID &p_signal_head) const {

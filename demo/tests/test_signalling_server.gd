@@ -1,6 +1,8 @@
 extends MaszynaGutTest
 
 const EventImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd")
+## Where a listed signal head's model stands
+const SIGNAL_HEAD_POSITION: Vector3 = Vector3(5.0, 0.0, 0.0)
 
 
 class RecordingDelegate extends SignallingSystemDelegate:
@@ -224,8 +226,21 @@ func _create_model_data(model_name: String, lights: PackedFloat32Array) -> Maszy
     return model_data
 
 
-func _create_model_instance() -> E3DModelInstance:
+func test_signal_heads_are_listed_with_the_instance_they_light() -> void:
+    var model: E3DModelInstance = _create_model_instance(SIGNAL_HEAD_POSITION)
+    _create_signal_head_node(&"test_listed", model)
+
+    var signal_head: RID = SignallingServer.signal_head_get_rid_by_name(&"test_listed")
+    assert_has(SignallingServer.signal_head_get_rids(), signal_head)
+    var instance: RID = SignallingServer.signal_head_get_instance(signal_head)
+    assert_true(instance.is_valid(), "the signal head should give the instance it was made of")
+    assert_eq(E3DRenderingServer.instance_get_transform(instance).origin, SIGNAL_HEAD_POSITION)
+
+
+## The model stands at position from the start - a NODES instance does not follow a node moved later
+func _create_model_instance(position: Vector3 = Vector3.ZERO) -> E3DModelInstance:
     var instance: E3DModelInstance = E3DModelInstance.new()
+    instance.position = position
     var model: E3DModel = E3DModel.new()
     var submodels: Array[E3DSubModel] = []
     for light_name: String in ["00", "01"]:

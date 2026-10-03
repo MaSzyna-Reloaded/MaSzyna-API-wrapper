@@ -99,6 +99,10 @@ item_7/text = "Simulation speed"
 item_7/checkable = 1
 item_7/id = 7
 
+[node name="TopBarActions" type="HBoxContainer" parent="TopBar/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
 [node name="MenuActions" type="Control" parent="."]
 visible = false
 layout_mode = 3

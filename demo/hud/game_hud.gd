@@ -5,6 +5,8 @@ extends Control
 ## like demo_scenery_loading.tscn does with "Exit to menu": the button is never shown, its text
 ## becomes an entry at the end of the menu, its shortcut the entry's, and picking the entry emits
 ## its pressed signal.
+## A button that belongs in the top bar itself, beside the menus, is added to TopBarActions the
+## same way and shown there as it is.
 
 ## The entries of the "View" menu
 enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }

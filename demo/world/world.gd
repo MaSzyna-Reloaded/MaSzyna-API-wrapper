@@ -47,6 +47,11 @@ func get_environment() -> MaszynaEnvironmentNode:
     return %MaszynaEnvironmentNode
 
 
+## The scenery node: its file, title and start time
+func get_scenery() -> MaszynaSceneryNode:
+    return %MaszynaSceneryNode
+
+
 func _on_scenery_load_progress(progress: float, stage: MaszynaIncludeNode.LoadStage, message: String) -> void:
     load_progress.emit(progress, stage, message)
 

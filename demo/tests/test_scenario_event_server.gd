@@ -624,6 +624,26 @@ func test_memcompareex_and_track_tests() -> void:
     ScenarioEventServer.memory_free(memory)
 
 
+func test_the_queue_lists_the_queued_events_in_the_order_they_run() -> void:
+    var action:RecordingAction = RecordingAction.new()
+    var late:RID = _create_event(action, NEVER)
+    var early:RID = _create_event(action, NEVER / 2.0)
+    var never_queued:RID = _create_event(action, 0.0)
+    ScenarioEventServer.event_queue(late)
+    ScenarioEventServer.event_queue(early)
+
+    var queued:Array[RID] = []
+    for event:RID in ScenarioEventServer.queue_get_events():
+        if event in [late, early, never_queued]:
+            queued.append(event)
+    var in_run_order:Array[RID] = [early, late]
+    assert_eq(queued, in_run_order)
+    ScenarioEventServer.event_free(early)
+    assert_does_not_have(ScenarioEventServer.queue_get_events(), early, "a freed event is not queued")
+    var rest:Array[RID] = [late, never_queued]
+    _free_events(rest)
+
+
 func _create_event(action:ScenarioEventAction, delay:float) -> RID:
     var event:RID = ScenarioEventServer.event_create()
     ScenarioEventServer.event_set_delay(event, delay)

@@ -1137,3 +1137,66 @@ msgstr "时间 %d:%02d"
 
 msgid "Still working"
 msgstr "仍在处理"
+
+msgid "Development version"
+msgstr "开发版本"
+
+msgid "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+msgstr "这是 MaSzyna 模拟器替代移植版的开发版本。它可能包含错误，场景可能无法运行，车辆可能无法完全正常工作，图形可能不完整。"
+
+msgid "I understand"
+msgstr "我明白了"
+
+msgid "Report a problem or suggestion"
+msgstr "报告问题或建议"
+
+msgid "Describe the problem or the suggestion"
+msgstr "描述问题或建议"
+
+msgid "What happened, what did you expect, and how can it be repeated?"
+msgstr "发生了什么？你预期的是什么？如何重现？"
+
+msgid "Attach a screenshot"
+msgstr "附加屏幕截图"
+
+msgid "Drag to mark what the report is about in red; right-click removes the last mark."
+msgstr "拖动以红色标出报告涉及的区域；右键单击删除最后一个标记。"
+
+msgid "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+msgstr "我同意提供硬件信息和报告内容，并同意将其发布在 GitHub 上"
+
+msgid "Close"
+msgstr "关闭"
+
+msgid "Send report"
+msgstr "发送报告"
+
+msgid "Sending..."
+msgstr "正在发送..."
+
+msgid "Sending failed: %s"
+msgstr "发送失败：%s"
+
+msgid "Reporting unavailable"
+msgstr "报告不可用"
+
+msgid "Reporting problems is not available in this version of the game."
+msgstr "此版本的游戏不提供问题报告功能。"
+
+msgid "The report could not be sent (error %d)"
+msgstr "无法发送报告（错误 %d）"
+
+msgid "The report was refused (HTTP %d)"
+msgstr "报告被拒绝（HTTP %d）"
+
+msgid "Report sent"
+msgstr "报告已发送"
+
+msgid "Thank you, the report has been sent."
+msgstr "谢谢，报告已发送。"
+
+msgid "Open the report"
+msgstr "打开报告"
+
+msgid "OK"
+msgstr "确定"

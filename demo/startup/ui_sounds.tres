@@ -189,7 +189,24 @@ master_track = SubResource("Resource_cfoct")
 name = &"change_focus"
 metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
 
+[sub_resource type="Resource" id="Resource_nackc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("4_j33e7")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_nackt"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+volume_db = -6.0
+
+[sub_resource type="Resource" id="Resource_nacke"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_nackc")])
+master_track = SubResource("Resource_nackt")
+name = &"notice_acknowledged"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
 [resource]
 script = ExtResource("2_6jor3")
-events = Array[ExtResource("1_0cwnu")]([SubResource("Resource_03dbj"), SubResource("Resource_y5u82"), SubResource("Resource_oaw4f"), SubResource("Resource_1iwg4"), SubResource("Resource_vclke"), SubResource("Resource_sclke"), SubResource("Resource_vhove"), SubResource("Resource_shove"), SubResource("Resource_ldsce"), SubResource("Resource_kstre"), SubResource("Resource_cfoce")])
+events = Array[ExtResource("1_0cwnu")]([SubResource("Resource_03dbj"), SubResource("Resource_y5u82"), SubResource("Resource_oaw4f"), SubResource("Resource_1iwg4"), SubResource("Resource_vclke"), SubResource("Resource_sclke"), SubResource("Resource_vhove"), SubResource("Resource_shove"), SubResource("Resource_ldsce"), SubResource("Resource_kstre"), SubResource("Resource_cfoce"), SubResource("Resource_nacke")])
 metadata/_custom_type_script = "uid://bbamgfxaoiofj"

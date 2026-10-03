@@ -46,6 +46,7 @@ namespace godot {
                 DEFVAL(RID()), DEFVAL(0.0));
         ClassDB::bind_method(D_METHOD("event_is_queued", "event"), &ScenarioEventServer::event_is_queued);
         ClassDB::bind_method(D_METHOD("event_get_run_time", "event"), &ScenarioEventServer::event_get_run_time);
+        ClassDB::bind_method(D_METHOD("queue_get_events"), &ScenarioEventServer::queue_get_events);
 
         ClassDB::bind_method(D_METHOD("memory_create"), &ScenarioEventServer::memory_create);
         ClassDB::bind_method(D_METHOD("memory_free", "memory"), &ScenarioEventServer::memory_free);
@@ -610,6 +611,22 @@ namespace godot {
         const EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL_V(event, -1.0);
         return event->queued_sequence > 0 ? event->run_time : -1.0;
+    }
+
+    TypedArray<RID> ScenarioEventServer::queue_get_events() const {
+        TypedArray<RID> result;
+        // a copy popped in order; an entry of an event queued again since, or of a launcher, is
+        // not the event's (as _process_queue() skips it)
+        std::priority_queue<QueueEntry, std::vector<QueueEntry>, std::greater<QueueEntry>> pending = queue;
+        while (!pending.empty()) {
+            const QueueEntry entry = pending.top();
+            pending.pop();
+            const EventData *event = events.getptr(entry.owner);
+            if (event != nullptr && event->queued_sequence == entry.sequence) {
+                result.push_back(entry.owner);
+            }
+        }
+        return result;
     }
 
     // --- memory ---

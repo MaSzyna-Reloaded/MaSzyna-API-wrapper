@@ -1137,3 +1137,66 @@ msgstr "Idő: %d:%02d"
 
 msgid "Still working"
 msgstr "Feldolgozás folyamatban"
+
+msgid "Development version"
+msgstr "Fejlesztői változat"
+
+msgid "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+msgstr "Ez a MaSzyna szimulátor egy alternatív portjának fejlesztői változata. Hibákat tartalmazhat, a forgatókönyvek nem feltétlenül futnak le, a járművek nem feltétlenül működnek teljesen, és a grafika hiányos lehet."
+
+msgid "I understand"
+msgstr "Megértettem"
+
+msgid "Report a problem or suggestion"
+msgstr "Hiba vagy javaslat bejelentése"
+
+msgid "Describe the problem or the suggestion"
+msgstr "Írd le a hibát vagy a javaslatot"
+
+msgid "What happened, what did you expect, and how can it be repeated?"
+msgstr "Mi történt, mire számítottál, és hogyan lehet megismételni?"
+
+msgid "Attach a screenshot"
+msgstr "Képernyőkép csatolása"
+
+msgid "Drag to mark what the report is about in red; right-click removes the last mark."
+msgstr "Húzással jelöld pirossal, mire vonatkozik a bejelentés; a jobb gomb törli az utolsó jelölést."
+
+msgid "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+msgstr "Hozzájárulok a hardverinformációk és a bejelentés továbbításához, valamint a GitHubon való közzétételükhöz"
+
+msgid "Close"
+msgstr "Bezárás"
+
+msgid "Send report"
+msgstr "Bejelentés küldése"
+
+msgid "Sending..."
+msgstr "Küldés..."
+
+msgid "Sending failed: %s"
+msgstr "A küldés sikertelen: %s"
+
+msgid "Reporting unavailable"
+msgstr "A bejelentés nem érhető el"
+
+msgid "Reporting problems is not available in this version of the game."
+msgstr "A problémák bejelentése nem érhető el a játék ezen verziójában."
+
+msgid "The report could not be sent (error %d)"
+msgstr "A bejelentést nem sikerült elküldeni (hiba: %d)"
+
+msgid "The report was refused (HTTP %d)"
+msgstr "A bejelentést elutasították (HTTP %d)"
+
+msgid "Report sent"
+msgstr "Bejelentés elküldve"
+
+msgid "Thank you, the report has been sent."
+msgstr "Köszönjük, a bejelentést elküldtük."
+
+msgid "Open the report"
+msgstr "Bejelentés megnyitása"
+
+msgid "OK"
+msgstr "OK"

@@ -395,3 +395,8 @@ static func _get_trainset_name(trainset: MaszynaSceneryInfo.Trainset) -> String:
 
 static func _format_trainset_note(trainset: MaszynaSceneryInfo.Trainset) -> String:
     return "%d POJAZDÓW" % trainset.vehicles.size()
+
+
+## The development notice shown over the screen on every launch is acknowledged
+func _on_development_notice_acknowledged() -> void:
+    _ui_sounds.play(&"notice_acknowledged")

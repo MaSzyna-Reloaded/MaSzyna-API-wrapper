@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="card_theme"]
+[ext_resource type="PackedScene" path="res://bug_report/bug_report.tscn" id="bug_report_scene"]
 
 [sub_resource type="InputEventAction" id="exit_to_menu_event"]
 action = &"ui_cancel"
@@ -34,10 +35,18 @@ layout_mode = 0
 shortcut = SubResource("exit_to_menu_shortcut")
 text = "Exit to menu"
 
+[node name="ReportProblem" type="Button" parent="GameHud/TopBar/HBoxContainer/TopBarActions"]
+layout_mode = 2
+focus_mode = 0
+text = "Report a problem or suggestion"
+flat = true
+
 [node name="ExitConfirmation" type="ConfirmationDialog" parent="."]
 theme = ExtResource("card_theme")
 title = "Exit to menu"
 dialog_text = "Leave the scenery and go back to the menu?"
+
+[node name="BugReport" parent="." instance=ExtResource("bug_report_scene")]
 
 [node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
 
@@ -64,5 +73,6 @@ color = Color(0, 0, 0, 1)
 [connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="start_scenery"]
 [connection signal="pressed" from="GameHud/MenuActions/ExitToMenu" to="." method="_on_exit_to_menu_pressed"]
 [connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
+[connection signal="pressed" from="GameHud/TopBar/HBoxContainer/TopBarActions/ReportProblem" to="BugReport" method="open_report"]
 
 [editable path="GameHud"]

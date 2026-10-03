@@ -12,6 +12,7 @@
 [ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="10_sounds"]
 [ext_resource type="Texture2D" uid="uid://b7dxj0otp70ih" path="res://startup/eu07_parked_sketch.svg" id="11_sketch"]
 [ext_resource type="PackedScene" path="res://scenery_selector/language_switcher.tscn" id="12_language"]
+[ext_resource type="PackedScene" path="res://scenery_selector/development_notice.tscn" id="13_notice"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -256,6 +257,9 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_load_disabled")
 disabled = true
 text = "Load"
 
+[node name="DevelopmentNotice" parent="." instance=ExtResource("13_notice")]
+layout_mode = 1
+
 [node name="Footer" type="HBoxContainer" parent="." unique_id=116949608]
 layout_mode = 1
 anchors_preset = 2
@@ -315,3 +319,4 @@ layout_mode = 2
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
 [connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]
+[connection signal="acknowledged" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]

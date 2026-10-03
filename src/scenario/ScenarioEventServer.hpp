@@ -235,6 +235,8 @@ namespace godot {
             /// The simulation time (SimulationServer.simulation_get_time()) a queued event runs at,
             /// negative when it is not queued
             double event_get_run_time(const RID &p_event) const;
+            /// The queued events, in the order they run
+            TypedArray<RID> queue_get_events() const;
 
             RID memory_create();
             void memory_free(const RID &p_memory);

@@ -1137,3 +1137,66 @@ msgstr ""
 
 msgid "Still working"
 msgstr ""
+
+msgid "Development version"
+msgstr ""
+
+msgid "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+msgstr ""
+
+msgid "I understand"
+msgstr ""
+
+msgid "Report a problem or suggestion"
+msgstr ""
+
+msgid "Describe the problem or the suggestion"
+msgstr ""
+
+msgid "What happened, what did you expect, and how can it be repeated?"
+msgstr ""
+
+msgid "Attach a screenshot"
+msgstr ""
+
+msgid "Drag to mark what the report is about in red; right-click removes the last mark."
+msgstr ""
+
+msgid "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+msgstr ""
+
+msgid "Close"
+msgstr ""
+
+msgid "Send report"
+msgstr ""
+
+msgid "Sending..."
+msgstr ""
+
+msgid "Sending failed: %s"
+msgstr ""
+
+msgid "Reporting unavailable"
+msgstr ""
+
+msgid "Reporting problems is not available in this version of the game."
+msgstr ""
+
+msgid "The report could not be sent (error %d)"
+msgstr ""
+
+msgid "The report was refused (HTTP %d)"
+msgstr ""
+
+msgid "Report sent"
+msgstr ""
+
+msgid "Thank you, the report has been sent."
+msgstr ""
+
+msgid "Open the report"
+msgstr ""
+
+msgid "OK"
+msgstr ""

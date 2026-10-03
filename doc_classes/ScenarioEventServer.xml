@@ -376,6 +376,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="queue_get_events" qualifiers="const">
+			<return type="RID[]" />
+			<description>
+				Returns the queued events in the order they run.
+			</description>
+		</method>
 		<method name="track_add_event">
 			<return type="void" />
 			<param index="0" name="track" type="RID" />

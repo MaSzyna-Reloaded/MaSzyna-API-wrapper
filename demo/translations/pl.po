@@ -1137,3 +1137,66 @@ msgstr "Czas %d:%02d"
 
 msgid "Still working"
 msgstr "Nadal przetwarzam"
+
+msgid "Development version"
+msgstr "Wersja rozwojowa"
+
+msgid "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+msgstr "To jest wersja rozwojowa alternatywnego portu symulatora MaSzyna. Może zawierać błędy, scenariusze mogą się nie wykonywać, pojazdy mogą nie działać w pełni, grafika może być niekompletna."
+
+msgid "I understand"
+msgstr "Rozumiem"
+
+msgid "Report a problem or suggestion"
+msgstr "Zgłoś problem lub sugestię"
+
+msgid "Describe the problem or the suggestion"
+msgstr "Opisz problem lub sugestię"
+
+msgid "What happened, what did you expect, and how can it be repeated?"
+msgstr "Co się stało, czego się spodziewałeś i jak to powtórzyć?"
+
+msgid "Attach a screenshot"
+msgstr "Dołącz zrzut ekranu"
+
+msgid "Drag to mark what the report is about in red; right-click removes the last mark."
+msgstr "Przeciągnij, aby zaznaczyć na czerwono, czego dotyczy zgłoszenie; prawy przycisk usuwa ostatnie zaznaczenie."
+
+msgid "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+msgstr "Zgadzam się na przekazanie informacji o sprzęcie i zgłoszeniu, i na opublikowanie ich w serwisie GitHub"
+
+msgid "Close"
+msgstr "Zamknij"
+
+msgid "Send report"
+msgstr "Wyślij zgłoszenie"
+
+msgid "Sending..."
+msgstr "Wysyłanie..."
+
+msgid "Sending failed: %s"
+msgstr "Wysyłanie nie powiodło się: %s"
+
+msgid "Reporting unavailable"
+msgstr "Zgłaszanie niedostępne"
+
+msgid "Reporting problems is not available in this version of the game."
+msgstr "Zgłaszanie problemów nie jest dostępne w tej wersji gry."
+
+msgid "The report could not be sent (error %d)"
+msgstr "Nie udało się wysłać zgłoszenia (błąd %d)"
+
+msgid "The report was refused (HTTP %d)"
+msgstr "Zgłoszenie zostało odrzucone (HTTP %d)"
+
+msgid "Report sent"
+msgstr "Zgłoszenie wysłane"
+
+msgid "Thank you, the report has been sent."
+msgstr "Dziękujemy, zgłoszenie zostało wysłane."
+
+msgid "Open the report"
+msgstr "Otwórz zgłoszenie"
+
+msgid "OK"
+msgstr "OK"

@@ -1137,3 +1137,66 @@ msgstr "Čas %d:%02d"
 
 msgid "Still working"
 msgstr "Stále se zpracovává"
+
+msgid "Development version"
+msgstr "Vývojová verze"
+
+msgid "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+msgstr "Toto je vývojová verze alternativního portu simulátoru MaSzyna. Může obsahovat chyby, scénáře se nemusí spustit, vozidla nemusí plně fungovat a grafika může být neúplná."
+
+msgid "I understand"
+msgstr "Rozumím"
+
+msgid "Report a problem or suggestion"
+msgstr "Nahlásit problém nebo návrh"
+
+msgid "Describe the problem or the suggestion"
+msgstr "Popište problém nebo návrh"
+
+msgid "What happened, what did you expect, and how can it be repeated?"
+msgstr "Co se stalo, co jste očekávali a jak to zopakovat?"
+
+msgid "Attach a screenshot"
+msgstr "Přiložit snímek obrazovky"
+
+msgid "Drag to mark what the report is about in red; right-click removes the last mark."
+msgstr "Tažením červeně označte, čeho se hlášení týká; pravé tlačítko odstraní poslední označení."
+
+msgid "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+msgstr "Souhlasím s předáním informací o hardwaru a hlášení a s jejich zveřejněním na GitHubu"
+
+msgid "Close"
+msgstr "Zavřít"
+
+msgid "Send report"
+msgstr "Odeslat hlášení"
+
+msgid "Sending..."
+msgstr "Odesílání..."
+
+msgid "Sending failed: %s"
+msgstr "Odeslání se nezdařilo: %s"
+
+msgid "Reporting unavailable"
+msgstr "Hlášení není k dispozici"
+
+msgid "Reporting problems is not available in this version of the game."
+msgstr "Hlášení problémů není v této verzi hry k dispozici."
+
+msgid "The report could not be sent (error %d)"
+msgstr "Hlášení se nepodařilo odeslat (chyba %d)"
+
+msgid "The report was refused (HTTP %d)"
+msgstr "Hlášení bylo odmítnuto (HTTP %d)"
+
+msgid "Report sent"
+msgstr "Hlášení odesláno"
+
+msgid "Thank you, the report has been sent."
+msgstr "Děkujeme, hlášení bylo odesláno."
+
+msgid "Open the report"
+msgstr "Otevřít hlášení"
+
+msgid "OK"
+msgstr "OK"

@@ -75,6 +75,7 @@ func _ready() -> void:
         start_scenery(scenery, "", {})
     else:
         $ScenerySelectorScreen.open()
+        $BugReport.show_edge_button()
 
 
 ## Loads scenery/<filename> and puts the player in train_id (none: the scenery's own driver) -
@@ -86,6 +87,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     SimulationServer.simulation_pause()
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
+    $BugReport.hide_edge_button()
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
     SceneryStreamingServer.streaming_set_camera(null)
@@ -104,6 +106,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     _world.scenery_loaded.connect(_on_scenery_loaded)
     add_child(_world)
     $GameHud.attach_environment(_world.get_environment())
+    $BugReport.attach_world(_world)
     _chosen_train_id = train_id
     await _world.load_scenery(filename, skin_overrides)
     await _wait_for_cabin()
@@ -116,6 +119,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     $LoadingScreen.visible = false
     $LoadingScreen.modulate.a = 1.0
     HUDServer.hud_set_visible(true)
+    $BugReport.show_edge_button()
 
 
 ## The player gets its vehicle a few frames after the scenery is loaded, and the cabin is built
@@ -166,10 +170,12 @@ func _exit_to_menu() -> void:
     SimulationServer.simulation_pause()
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
+    $BugReport.hide_edge_button()
     SceneryStreamingServer.streaming_set_camera(null)
     # the scenery's script context and environment go with the world
     $GameHud.attach_script_context(RID())
     $GameHud.attach_environment(null)
+    $BugReport.attach_world(null)
     await _world.unload_scenery()
     _world.queue_free()
     _world = null
@@ -179,6 +185,7 @@ func _exit_to_menu() -> void:
     SceneryLoadMeasurement.print_process("SceneryMemory", "menu")
     await get_tree().create_timer(EXIT_SPINNER_HOLD_TIME).timeout
     $ScenerySelectorScreen.open()
+    $BugReport.show_edge_button()
     await $SpinnerOverlay.fade_out(EXIT_FADE_TIME)
 
 

@@ -20,7 +20,6 @@ var _trigger_id:int = 0
 
 func _ready() -> void:
     _sfxplayer = get_parent() as SfxPlayer3D
-    var vehicle:RailVehicle3D = _find_vehicle()
     var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path) if controller_path else null
     var vehicle_rid:RID = physics_node.get_vehicle_rid() if physics_node else RID()
     if not sound_placement == &"general":
@@ -29,8 +28,7 @@ func _ready() -> void:
             MmdSoundEventBuilder.add_soundproofing_modulations(event)
     _trigger_id = TrainSoundSystem.register_trigger(_sfxplayer, {
         "id": get_instance_id(),
-        "vehicle": vehicle,
-        "vehicle_rid": vehicle_rid,
+        "vehicle": vehicle_rid,
         "state_property": state_property,
         "trigger_mode": trigger_mode,
         "trigger_threshold_min": trigger_threshold_min,
@@ -45,11 +43,3 @@ func _exit_tree() -> void:
     if _sfxplayer and _trigger_id:
         TrainSoundSystem.unregister_trigger(_sfxplayer, _trigger_id)
 
-
-func _find_vehicle() -> RailVehicle3D:
-    var node:Node = get_parent()
-    while node:
-        if node is RailVehicle3D:
-            return node as RailVehicle3D
-        node = node.get_parent()
-    return null

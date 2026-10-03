@@ -87,15 +87,14 @@ namespace godot {
         _refresh_clock();
     }
 
-    void SimulationServer::runtime_attach(const uint64_t p_id) {
-        ERR_FAIL_COND_MSG(runtime_id.is_valid(), "A SimulationRuntime is already attached.");
-        runtime_id = ObjectID(p_id);
+    void SimulationServer::runtime_attach() {
+        ++runtimes;
         _refresh_clock();
     }
 
-    void SimulationServer::runtime_detach(const uint64_t p_id) {
-        ERR_FAIL_COND(!(runtime_id == ObjectID(p_id)));
-        runtime_id = ObjectID();
+    void SimulationServer::runtime_detach() {
+        ERR_FAIL_COND(runtimes <= 0);
+        --runtimes;
         _refresh_clock();
     }
 
@@ -114,7 +113,7 @@ namespace godot {
     /// of its own: one created on the first hold was added to the root while the root was adding
     /// the main scene, and never ticked (FINDINGS.md 2026-09-30)
     void SimulationServer::_refresh_clock() {
-        const bool running = clock_holders > 0 && runtime_id.is_valid() && !paused;
+        const bool running = clock_holders > 0 && runtimes > 0 && !paused;
         SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
         if (running == clock_running || tree == nullptr) {
             return;

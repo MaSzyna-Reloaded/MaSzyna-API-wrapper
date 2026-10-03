@@ -13,6 +13,8 @@ signal load_progress(progress:float, stage:LoadStage, message:String)
 ## Emitted by SceneryInstancer while the files are parsed: includes parsed so far and the file being
 ## parsed now - the progress of the files stage alone cannot tell a large include from a stall
 signal load_files_parsed(count:int, filename:String)
+## A load() has ended, whatever came of it: loaded, given up, or nothing to load
+signal load_ended
 ## The content is about to be freed (a reload, an unload): whatever runs on it - its scenario,
 ## MaszynaLegacyScenario - stops now, while everything it reaches still exists
 signal unloading
@@ -47,6 +49,8 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
             _editor_dirty = true
 
 var _loading:bool = false
+## The load under way was given up (stop_loading())
+var _load_given_up:bool = false
 ## The content of the file is here - the game's data read again loads it again
 var _loaded:bool = false
 
@@ -74,6 +78,9 @@ var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
 var _driver_rids:Array[RID] = []
+var _trainset_rids:Array[RID] = []
+## The scenery's vehicles (MaszynaLegacyVehicleSystem), in the order of its file
+var _vehicle_rids:Array[RID] = []
 ## What the scenario starts (MaszynaLegacyScenario) - loaded here, run only by the game: the
 ## scenery's `lua` scripts and its sounds
 var _scenario_scripts:Array[String] = []
@@ -86,6 +93,13 @@ func _ready() -> void:
 
 func _enter_tree() -> void:
     GameDataServer.data_reload_requested.connect(_on_data_reload_requested)
+    VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
+
+
+## A vehicle of the scenery freed by somebody else (the HUD removes a trainset) is not the
+## scenery's to free any more
+func _on_vehicle_freed(vehicle:RID) -> void:
+    _vehicle_rids.erase(vehicle)
 
 
 ## A loaded scenery is the game's data - its tracks, events, drivers and vehicles are loaded again,
@@ -97,6 +111,7 @@ func _on_data_reload_requested() -> void:
 
 func _exit_tree() -> void:
     GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
+    VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
     # a load awaits frames of the tree it has just left
     if _loading:
         SceneryInstancer.cancel_loading()
@@ -118,6 +133,10 @@ func _notification(what:int) -> void:
                 MaszynaSceneryChunkRenderingServer.chunk_set_scenario(rid, scenario)
             for rid:RID in _provider_rids:
                 SceneryStreamingServer.provider_set_scenario(rid, scenario)
+            # a vehicle still waiting for its build is not drawn yet
+            for rid:RID in _vehicle_rids:
+                if RailVehicleRenderingServer.vehicle_is_attached(rid):
+                    RailVehicleRenderingServer.vehicle_set_scenario(rid, scenario)
         NOTIFICATION_PREDELETE:
             unloading.emit()
             # The planning thread calls back into GDScript (the owner's preload) and can be
@@ -127,6 +146,16 @@ func _notification(what:int) -> void:
             SceneryInstancer.cancel_loading()
             SceneryStreamingServer.streaming_drain()
             _free_owned_rids()
+
+
+## The scenery's trainsets (RailVehicleServer), in the order of its file
+func get_trainsets() -> Array[RID]:
+    return _trainset_rids
+
+
+## The scenery's vehicles (MaszynaLegacyVehicleSystem), in the order of its file
+func get_vehicles() -> Array[RID]:
+    return _vehicle_rids
 
 
 ## The scenery's `lua` scripts, run by its scenario (MaszynaLegacyScenario)
@@ -145,6 +174,8 @@ func get_scenery_sounds() -> MaszynaLegacyScenerySounds:
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
         [_driver_rids, DriverSystem.driver_free],
+        [_trainset_rids, RailVehicleServer.trainset_free],
+        [_vehicle_rids, MaszynaLegacyVehicleSystem.vehicle_free],
         [_pickable_rids, SceneryHUDMouseServer.pickable_free],
         [_launcher_rids, ScenarioEventServer.launcher_free],
         [_event_rids, ScenarioEventServer.event_free],
@@ -209,20 +240,54 @@ func _clear_content(budget_msec:int = 0) -> void:
     process_mode = Node.PROCESS_MODE_INHERIT
 
 
+## Loads what the node is set to. Asked for while a load is under way, it stops that one
+## (stop_loading()) and the scenery is loaded again once it has stopped.
 func load() -> void:
     if _loading:
+        stop_loading()
+        _dirty = true
         return
 
     _dirty = false
     _loading = true
+    _load_given_up = false
     await _clear_content(CLEAR_BUDGET_MSEC)
     _loaded = false
     if filename:
         await _load_content()
-        _loaded = true
+        _loaded = not _load_given_up
+        # half a scenery is none: what the load given up had built goes
+        if _load_given_up:
+            await _clear_content(CLEAR_BUDGET_MSEC)
     _loading = false
-    if filename:
+    load_ended.emit()
+    if _loaded:
         loaded.emit()
+
+
+## Frees what is loaded; the scenery stays set to its file. A load under way is stopped instead
+## (stop_loading()), which frees what it had built.
+func clear() -> void:
+    if _loading:
+        stop_loading()
+        return
+    _loading = true
+    await _clear_content(CLEAR_BUDGET_MSEC)
+    _loaded = false
+    _loading = false
+
+
+## Gives the load under way up: it stops at its next step (SceneryInstancer), and what it had
+## built is freed. Nothing happens while nothing loads.
+func stop_loading() -> void:
+    if _loading:
+        _load_given_up = true
+        SceneryInstancer.cancel_loading()
+
+
+## Whether the load under way was given up (stop_loading())
+func is_load_given_up() -> bool:
+    return _load_given_up
 
 
 func _load_content() -> void:

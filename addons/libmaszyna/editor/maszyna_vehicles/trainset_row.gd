@@ -4,19 +4,19 @@ extends HBoxContainer
 ## One trainset of the edited scene: its name, "Show" and the side views of its vehicles in the
 ## order they stand
 
-## "Show" was pressed: the 3D view is to go to the trainset
-signal show_requested(trainset_id:int)
+## "Show" was pressed: the 3D view is to go to the trainset's vehicles (RailVehicleServer's)
+signal show_requested(vehicles:Array[RID])
 
 ## Height of a vehicle's side view [px]
 const PROFILE_HEIGHT:float = 32.0
 
-## The trainset's instance id - a scenery loaded again frees it
-var _trainset_id:int = 0
+## The trainset's vehicles, in the order they stand
+var _vehicles:Array[RID] = []
 
 
-func set_trainset(trainset:TrainSet3D) -> void:
-    _trainset_id = trainset.get_instance_id()
-    %Name.text = trainset.name
+func set_trainset(trainset_name:String, vehicles:Array[RID]) -> void:
+    %Name.text = trainset_name
+    _vehicles = vehicles
 
 
 ## The place of the next vehicle's side view, empty until the view is rendered
@@ -38,4 +38,4 @@ static func show_profile(profile:TextureRect, texture:Texture2D) -> void:
 
 
 func _on_show_pressed() -> void:
-    show_requested.emit(_trainset_id)
+    show_requested.emit(_vehicles)

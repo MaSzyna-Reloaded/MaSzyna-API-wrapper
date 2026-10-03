@@ -224,8 +224,10 @@ namespace godot {
             float draw_distance = DEFAULT_DRAW_DISTANCE_M;
 
             ObjectID camera_id;
-            /// The node whose chunk is kept built wherever the camera is, none when invalid
-            ObjectID anchor_id;
+            /// Where the anchor is - its chunk is kept built wherever the camera is - and whether
+            /// there is one
+            Vector3 anchor_position;
+            bool anchored = false;
             /// Its chunk as the last frame saw it - main thread writes, the planner reads
             bool has_anchor_chunk = false;
             Vector2i anchor_chunk;
@@ -326,10 +328,11 @@ namespace godot {
             bool streaming_is_enabled() const;
 
             void streaming_set_camera(Camera3D *p_camera);
-            /* The node (its ObjectID; 0 for none) whose chunk is kept built - never cleared, its
-             * pieces built with the prefetch budget while out of the camera's range - wherever the
-             * camera goes and however far it is */
-            void streaming_set_anchor(uint64_t p_node_id);
+            /* Where the anchor is: its chunk is kept built - never cleared, its pieces built with
+             * the prefetch budget while out of the camera's range - wherever the camera goes and
+             * however far it is. Said again as the anchor moves; none after streaming_clear_anchor() */
+            void streaming_set_anchor_position(const Vector3 &p_position);
+            void streaming_clear_anchor();
             float streaming_get_draw_distance() const;
             /// Where the streaming camera is, for anything else that has to know what is near
             Vector3 streaming_get_camera_position() const;

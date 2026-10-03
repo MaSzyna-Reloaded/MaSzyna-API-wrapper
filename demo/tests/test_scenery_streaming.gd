@@ -159,25 +159,22 @@ func test_a_piece_just_past_its_range_is_built_ahead_without_holding_the_area() 
 ## The anchor's chunk (the player's vehicle) is kept built wherever the camera is, follows the anchor
 ## into another chunk, and is let go with it
 func test_the_anchor_chunk_is_kept_built_wherever_the_camera_is() -> void:
-    var anchor:Node3D = Node3D.new()
-    add_child_autoqfree(anchor)
     _register(Vector3(10.0, 0, 10.0), 200.0)
     await _move_camera(Vector3(20.0 * CHUNK_SIZE_M, 0, 0))
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0)
 
-    anchor.global_position = Vector3(500.0, 0, 500.0)
-    SceneryStreamingServer.streaming_set_anchor(anchor.get_instance_id())
+    SceneryStreamingServer.streaming_set_anchor_position(Vector3(500.0, 0, 500.0))
     await wait_idle_frames(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "the anchor's chunk was not built")
 
     # driven on by an AI into the next chunk: the one it left is no longer kept
-    anchor.global_position = Vector3(1500.0, 0, 500.0)
+    SceneryStreamingServer.streaming_set_anchor_position(Vector3(1500.0, 0, 500.0))
     await wait_idle_frames(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "the chunk left is still kept")
 
-    anchor.global_position = Vector3(500.0, 0, 500.0)
+    SceneryStreamingServer.streaming_set_anchor_position(Vector3(500.0, 0, 500.0))
     await wait_idle_frames(STREAMING_FRAMES)
-    SceneryStreamingServer.streaming_set_anchor(0)
+    SceneryStreamingServer.streaming_clear_anchor()
     await wait_idle_frames(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "kept after the anchor went")
 

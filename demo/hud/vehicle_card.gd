@@ -74,13 +74,14 @@ func _show_trainset() -> void:
     _coupled.assign(RailVehicleServer.vehicle_get_coupled(
             vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER))
     for trainset_vehicle:RID in _coupled:
-        var trainset_node:MaszynaRailVehicle3D = legacy_vehicle(trainset_vehicle)
-        if not trainset_node:
+        # a vehicle of MaszynaLegacyVehicleSystem keeps the data path, file and skin it was made of
+        if not MaszynaLegacyVehicleSystem.vehicle_exists(trainset_vehicle):
             continue
+        var dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(trainset_vehicle)
         _trainset.append(trainset_vehicle)
         var vehicle_name:String = VehicleServer.vehicle_get_name(trainset_vehicle)
-        tiles.append(TileGrid.Tile.new(trainset_node.data_path, trainset_node.file_name, trainset_node.skin,
-                vehicle_name, "%s (%s)" % [vehicle_name, trainset_node.data_path.get_file()]))
+        tiles.append(TileGrid.Tile.new(dynamic.data_path, dynamic.file_name, dynamic.skin,
+                vehicle_name, "%s (%s)" % [vehicle_name, dynamic.data_path.get_file()]))
     %Trainset.set_tiles(tiles)
 
 
@@ -99,12 +100,12 @@ func _show_trainset_vehicle(p_vehicle:RID) -> void:
     var config:Dictionary = VehicleServer.vehicle_dump_config(_shown)
     %Title.text = VehicleServer.vehicle_get_name(_shown)
     %TypeName.text = RailVehicleServer.vehicle_get_type_name(_shown)
-    var node:MaszynaRailVehicle3D = legacy_vehicle(_shown)
     var brake:Object = RailVehicleServer.vehicle_component_get(_shown, RailVehicleComponentType.COMPONENT_BRAKES)
     var data:Dictionary[String, String] = {}
-    if node:
-        data[tr("File")] = "%s/%s" % [node.data_path, node.file_name]
-        data[tr("Skin")] = node.skin
+    if MaszynaLegacyVehicleSystem.vehicle_exists(_shown):
+        var dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(_shown)
+        data[tr("File")] = "%s/%s" % [dynamic.data_path, dynamic.file_name]
+        data[tr("Skin")] = dynamic.skin
     data[tr("Length")] = "%.2f m" % config.get("length", 0.0)
     data[tr("Mass")] = "%.1f t" % (state.get("mass_total", 0.0) / KILOGRAMS_PER_TONNE)
     data[tr("Axle arrangement")] = config.get("axle_arrangement", "")
@@ -135,12 +136,6 @@ func _exit_tree() -> void:
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     RailVehicleServer.vehicle_trainset_changed.disconnect(_on_vehicle_trainset_changed)
-
-
-## The MaszynaRailVehicle3D a vehicle is drawn at (RailVehicleRenderingServer.vehicle_get_node()) -
-## it keeps the data path, file and skin; null for any other vehicle
-static func legacy_vehicle(vehicle:RID) -> MaszynaRailVehicle3D:
-    return instance_from_id(RailVehicleRenderingServer.vehicle_get_node(vehicle)) as MaszynaRailVehicle3D
 
 
 ## The label of an enum property's value, from the property's own hint ("Name" or "Name:value")

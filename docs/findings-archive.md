@@ -3175,3 +3175,63 @@ lighting or the trainset.
 * **Rule:** whatever is made in a world's scenario leaves it with its node and comes back with
   it, the RIDs unchanged, as Godot's own nodes do; it is freed with the node. The editor's tabs
   make "left the tree" an everyday event, not a teardown.
+
+## 2026-10-03 hand-assembled vehicles stopped animating
+
+* **Symptom:** `test_rail_vehicle_track_movement.gd` - "bogies should follow different tangents on
+  a curved track", the powered wheel at its rest angle - on a vehicle assembled by hand
+  (`RailVehicle3D` with an `E3DModelInstance`).
+* **What proved it:** the test had passed before the same day's commit that made
+  `RailVehicleRenderingServer`'s vehicles "born optimized" (`Visual::detailed = false`), and was
+  not among the scripts run for that commit. The running gear is posed only while a vehicle is
+  `detailed`, and `_update_detail()` flips the flag only with a streaming camera - a scene or a
+  test without one never got there. The default had been changed for the vehicles this server
+  builds models for; the models handed over by their owner are nodes from the start.
+* **Fix:** `vehicle_set_models()` sets `detailed` - a model handed over is its owner's nodes
+  already; only the server's own models are born optimized.
+* **Rule:** a default changed for one owner of a field is checked against every other writer of
+  it, and the tests of all of them are run - not only those of the case in hand.
+
+## 2026-10-03 a test's vehicle was built twice, from another game directory
+
+* **Symptom:** a test that set the fixtures' game directory, spawned a `MaszynaRailVehicle3D` and
+  set the directory back at once logged `Cannot open FIZ file: <the real game dir>/...` and found
+  no vehicle.
+* **What proved it:** the path in the error was the restored directory's. `UserSettings` saving the
+  game directory makes `GameDataServer` reload the game's data, and a vehicle built from that data
+  frees itself and is built anew from the directory current then.
+* **Fix:** the test frees its vehicle before it restores the directory (as the tests that restore
+  it in `after_each()` do).
+* **Rule:** the game directory is changed only while nothing built from it is alive.
+
+## 2026-10-03 the loading screen faded onto a world not streamed yet
+
+* **Symptom:** after a scenery loaded, the loading screen dissolved onto the world before the
+  chunk around the cab was built (operator's report, in the game).
+* **What proved it:** read off the order of the calls. `demo_scenery_loading.gd` awaits
+  `world.load_scenery()`, then waits a bounded number of frames for the player's vehicle
+  (`_wait_for_cabin()`), then for `area_is_ready(0)` around the current camera. Since the scenario
+  is started by the game, `world.gd` started it in its `scenery_loaded` handler and relayed the
+  signal only after that start (the scenery's sounds are built over frames) - while
+  `load_scenery()` had long returned. The player got its vehicle after the bounded wait had run
+  out, the camera was still where the menu left it, and that empty area was "ready" at once.
+* **Fix:** `SceneryWorld.load_scenery()` returns only once the world has emitted `scenery_loaded`
+  (its scenario runs, the player has been given its train). `test_zzz_scenery_scene_smoke.gd`
+  checks that the streaming camera is at the player's vehicle and its chunk built when the
+  loading screen goes.
+* **Rule:** an operation somebody awaits is done only when everything its waiter goes on to rely
+  on is; a signal relayed after an `await` arrives after the call that caused it has returned.
+
+## 2026-10-03 a scenery's vehicles drawn at the origin until their trainset stood
+
+* **Symptom:** in the editor and in the game, a loading scenery showed its vehicles piled at
+  (0, 0, 0), then moved to their tracks (operator's report, twice).
+* **What proved it:** the order of the calls. A vehicle's models were created when its appearance
+  was set, in the world of its scene node and at that node's transform - the scenery's root, the
+  origin - and a trainset stands its vehicles only after every one of them is built.
+* **Fix:** `RailVehicleRenderingServer` gives a vehicle's models their world only once the
+  vehicle has a place: `RailVehicleServer` placed it on a track, or `vehicle_set_transform()`
+  told where a vehicle on no track stands (`RailVehicle3D`, at its node).
+* **Rule:** what is drawn before it has a place is drawn in the wrong one - a thing enters the
+  world with its first position, not with its construction.
+

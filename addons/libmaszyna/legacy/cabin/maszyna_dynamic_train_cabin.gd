@@ -14,7 +14,7 @@ class_name MaszynaDynamicTrainCabin
 ## within the same add_child() call that creates this node.
 ##
 ## A view of the vehicle's cab only: the cab logic it shows is the vehicle's
-## (MaszynaRailVehicle3D attaches it while the vehicle is driven), and the player's keys reach it
+## (MaszynaLegacyVehicleSystem attaches it while the vehicle is driven), and the player's keys reach it
 ## without this node (MaszynaPlayer).
 
 @export var data_path:String = ""

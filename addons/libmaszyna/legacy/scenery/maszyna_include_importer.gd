@@ -29,11 +29,15 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         # size - is parsed in place, as is a small part: a task of its own kept a whole context
         # until its parent's merge, gigabytes for a large scenery. A larger part without parameters
         # is parsed by a queue worker and merged at the end of the current file; at least
-        # SUBSCENE_MIN_SIZE, it is a (cached) subscene.
-        if context.queue and not parameters and file.get_length() >= SceneryInstancer.INLINE_INCLUDE_MAX_SIZE:
+        # SUBSCENE_MIN_SIZE, it is a (cached) subscene. Inside an open trainset every include is
+        # parsed in place, as the original's parser reads it: its vehicles join the trainset where
+        # the include stands.
+        if (
+            context.queue and not parameters and not context.trainset
+            and file.get_length() >= SceneryInstancer.INLINE_INCLUDE_MAX_SIZE
+        ):
             if (
                 file.get_length() >= SceneryInstancer.SUBSCENE_MIN_SIZE
-                and not context.trainset_open
                 and context.subscene_depth < SceneryInstancer.SUBSCENE_MAX_DEPTH
             ):
                 return [context.submit_include(SceneryInstancer.parse_subscene_task, filename, parameters)]

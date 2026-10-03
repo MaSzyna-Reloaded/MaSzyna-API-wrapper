@@ -169,7 +169,14 @@ namespace godot {
             // the vehicle and its handle are the VehiclePhysicsNode's; this node makes it a rail
             // one - a place on the route, stepped there - and draws it
             rail_vehicles->vehicle_attach(rid);
-            drawing->vehicle_attach(rid, get_instance_id());
+            // drawn in this node's world - unless whoever built the vehicle from data draws it
+            // already - and the node rides on the vehicle wherever it is placed
+            if (!drawing->vehicle_is_attached(rid)) {
+                drawing->vehicle_attach(rid, get_instance_id());
+            }
+            // it stands where this node does until it is placed on a track
+            drawing->vehicle_set_transform(rid, get_global_transform());
+            drawing->vehicle_mount_node(rid, get_instance_id());
             _hand_over_assembly();
             if (head_display_material.is_valid()) {
                 drawing->vehicle_set_head_display_material(rid, head_display_material);

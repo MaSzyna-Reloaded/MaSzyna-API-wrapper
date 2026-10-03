@@ -182,6 +182,8 @@ namespace godot {
                     BitField<RailVehicleController::CouplingFlags> coupling = 0;
             };
             struct Trainset {
+                    /* The scenery's name of it (`trainset <name>`); empty for one that has none */
+                    String name;
                     RID track;
                     double offset = 0.0;
                     Vector<TrainsetMember> members;
@@ -332,6 +334,9 @@ namespace godot {
              * handle of what a `trainset:` block places (TrainSet3D) */
             RID trainset_create();
             void trainset_free(const RID &p_trainset);
+            /* The scenery's name of the trainset, only to show it - it is held by its handle */
+            void trainset_set_name(const RID &p_trainset, const String &p_name);
+            String trainset_get_name(const RID &p_trainset) const;
             /* Where the trainset's front stands - the track and the distance along it [m] */
             void trainset_set_track(const RID &p_trainset, const RID &p_track, double p_offset);
             void trainset_clear(const RID &p_trainset);

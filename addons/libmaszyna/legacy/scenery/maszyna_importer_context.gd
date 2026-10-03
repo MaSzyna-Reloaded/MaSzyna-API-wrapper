@@ -6,14 +6,10 @@ class PendingInclude:
     var task_id:int = -1
     ## Sizes of the result lists when the include was reached
     var sizes:Dictionary[String, int] = {}
-    ## Task-local trainset for vehicles of a trainset open across the include - its vehicles
-    ## are moved into parent_trainset on merge (no node shared between threads)
-    var trainset_proxy:TrainSet3D = null
-    var parent_trainset:TrainSet3D = null
 
 const RESULT_LISTS:Array[String] = [
     "tracks", "traction", "power_sources", "models", "events", "memcells", "launchers", "sounds", "isolated_sections", "terrains",
-    "scripts", "region_files"
+    "scripts", "region_files", "trainsets"
 ]
 
 ## The region file's extension (EU07_FILEEXTENSION_REGION, scene.cpp:27)
@@ -37,6 +33,8 @@ var memcells:Array[MaszynaMemcellData] = []
 var launchers:Array[MaszynaEventLauncherData] = []
 var sounds:Array[MaszynaSoundData] = []
 var isolated_sections:Array[MaszynaIsolatedData] = []
+## The trainsets, each `dynamic` outside one a trainset of its own, in the order of the file
+var trainsets:Array[MaszynaTrainsetData] = []
 ## The `lua` scripts, relative to the scenery directory
 var scripts:Array[String] = []
 ## The region files (.sbt) whose terrain the scenery is drawn with (MaszynaLegacySBTTerrainProvider)
@@ -61,16 +59,11 @@ var objects:Array = []
 ## (see submit_include()/merge_pending_includes())
 var queue:WorkerTaskQueue = null
 
-## Set by "trainset:"/"endtrainset:" (maszyna_trainset_importer.gd/maszyna_endtrainset_importer.gd)
-## and consumed by maszyna_node_dynamic_importer.gd - mirrors scene::scratch_data::trainset_data
-## in the original engine (simulationstateserializer.h).
-var trainset_open: bool = false
-var trainset_name: String = ""
-var trainset_track: String = ""
-var trainset_offset: float = 0.0
-var trainset_velocity: float = 0.0
-## Trainset node created by "trainset:" - vehicles of the open trainset become its children
-var trainset_node: TrainSet3D = null
+## The trainset "trainset:" opened and "endtrainset:" has not closed yet - the `dynamic`s read
+## meanwhile are its vehicles (scene::scratch_data::trainset_data, simulationstateserializer.h).
+## An include reached meanwhile is parsed in place (maszyna_include_importer.gd), so its vehicles
+## join the trainset where the include stands.
+var trainset:MaszynaTrainsetData = null
 
 var _rotates = []
 var _origins = []
@@ -154,12 +147,6 @@ func get_state() -> Dictionary:
         "subscene_depth": subscene_depth,
         "rotate": rotate,
         "origin": origin,
-        "trainset_open": trainset_open,
-        "trainset_name": trainset_name,
-        "trainset_track": trainset_track,
-        "trainset_offset": trainset_offset,
-        "trainset_velocity": trainset_velocity,
-        "trainset_node": trainset_node,
         "triangles_sink": triangles_sink,
         "binary_terrain": binary_terrain,
         "binary_terrain_state": binary_terrain_state,
@@ -173,12 +160,6 @@ static func from_state(state:Dictionary) -> MaszynaImporterContext:
     context.subscene_depth = state["subscene_depth"]
     context.rotate = state["rotate"]
     context.origin = state["origin"]
-    context.trainset_open = state["trainset_open"]
-    context.trainset_name = state["trainset_name"]
-    context.trainset_track = state["trainset_track"]
-    context.trainset_offset = state["trainset_offset"]
-    context.trainset_velocity = state["trainset_velocity"]
-    context.trainset_node = state["trainset_node"]
     context.triangles_sink = state["triangles_sink"]
     context.binary_terrain = state["binary_terrain"]
     context.binary_terrain_state = state["binary_terrain_state"]
@@ -194,10 +175,6 @@ func submit_include(task:Callable, filename:String, parameters:Dictionary) -> Pe
         pending.sizes[list_name] = (get(list_name) as Array).size()
     var state:Dictionary = get_state()
     state["include_depth"] = include_depth + 1
-    if trainset_node:
-        pending.parent_trainset = trainset_node
-        pending.trainset_proxy = TrainSet3D.new()
-        state["trainset_node"] = pending.trainset_proxy
     # one bind() - chained binds prepend the later arguments
     pending.task_id = queue.submit(task.bind(filename, parameters, state, queue))
     return pending
@@ -226,11 +203,6 @@ func merge_pending_includes() -> void:
             continue
         dependencies.merge(child.dependencies)
         cacheable = cacheable and child.cacheable
-        if pending.trainset_proxy:
-            for vehicle:Node in pending.trainset_proxy.get_children():
-                pending.trainset_proxy.remove_child(vehicle)
-                pending.parent_trainset.add_child(vehicle)
-            pending.trainset_proxy.free()
 
     objects = _merge_list(own_objects, object_sizes, children, "objects")
     for list_name:String in RESULT_LISTS:
@@ -262,12 +234,7 @@ func push_state() -> void:
         "origin": origin,
         "rotates_size": _rotates.size(),
         "origins_size": _origins.size(),
-        "trainset_open": trainset_open,
-        "trainset_name": trainset_name,
-        "trainset_track": trainset_track,
-        "trainset_offset": trainset_offset,
-        "trainset_velocity": trainset_velocity,
-        "trainset_node": trainset_node,
+        "trainset": trainset,
     })
 
 
@@ -279,12 +246,7 @@ func pop_state() -> void:
     include_depth = state["include_depth"]
     rotate = state["rotate"]
     origin = state["origin"]
-    trainset_open = state["trainset_open"]
-    trainset_name = state["trainset_name"]
-    trainset_track = state["trainset_track"]
-    trainset_offset = state["trainset_offset"]
-    trainset_velocity = state["trainset_velocity"]
-    trainset_node = state["trainset_node"]
+    trainset = state["trainset"]
 
     while _rotates.size() > state["rotates_size"]:
         _rotates.pop_front()

@@ -24,20 +24,13 @@ func before_each():
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    for i in range(20):
-        if scenery.get_child_count() > 0:
+    for i in range(30):
+        vehicle_rid = VehicleServer.vehicle_get_rid_by_name("EP07-424")
+        if VehicleServer.vehicle_is_simulation_ready(vehicle_rid):
             break
         await wait_seconds(0.5)
-    for i in range(10):
-        var dynamic_vehicle:Node = scenery.find_child("EP07-424", true, false)
-        var rail_vehicle:RailVehicle3D = (
-                dynamic_vehicle as RailVehicle3D if dynamic_vehicle else null)
-        controller = rail_vehicle.get_controller() if rail_vehicle else null
-        if controller:
-            break
-        await wait_seconds(0.5)
+    controller = VehicleServer.vehicle_get_controller(vehicle_rid)
     train_id = controller.vehicle_id if controller else ""
-    vehicle_rid = controller.get_rid() if controller else RID()
     player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
     player.start_vehicle_id = train_id
     add_child(player)
@@ -128,7 +121,7 @@ func test_cabin_controls_are_registered_and_forwarded() -> void:
 
     PlayerServer.player_leave_vehicle()
     await wait_idle_frames(5)
-    # the cab logic is the vehicle's: a crewed vehicle keeps it for its driver (SceneryInstancer._build_drivers())
+    # the cab logic is the vehicle's: a crewed vehicle keeps it for its driver (SceneryInstancer._build_trainsets())
     var crewed:bool = DriverSystem.vehicle_get_driver(vehicle_rid).is_valid()
     assert_eq(CabinSystem.has_control(vehicle_rid, cab, &"battery_sw"), crewed,
             "leaving the cab unregisters the callbacks, unless a driver is aboard")

@@ -70,6 +70,13 @@
 				Frees the trainset; its vehicles stay.
 			</description>
 		</method>
+		<method name="trainset_get_name" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="trainset" type="RID" />
+			<description>
+				The scenery's name of the trainset, empty for one that has none.
+			</description>
+		</method>
 		<method name="trainset_get_vehicles" qualifiers="const">
 			<return type="RID[]" />
 			<param index="0" name="trainset" type="RID" />
@@ -90,6 +97,14 @@
 			<param index="0" name="trainset" type="RID" />
 			<description>
 				Stands the vehicles on the track one after another, each as long as it is, and couples them - at once, or as soon as every vehicle of it has its simulation.
+			</description>
+		</method>
+		<method name="trainset_set_name">
+			<return type="void" />
+			<param index="0" name="trainset" type="RID" />
+			<param index="1" name="name" type="String" />
+			<description>
+				The scenery's name of the trainset, only to show it - a trainset is held by its handle.
 			</description>
 		</method>
 		<method name="trainset_set_track">

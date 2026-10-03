@@ -1,8 +1,8 @@
 extends MaszynaGutTest
 
-## RailVehicleRenderingServer draws a rail vehicle at the node it is attached to: it moves the node
-## wherever RailVehicleServer places the vehicle, poses and hides the submodels of its models, and
-## lets go of it with the vehicle.
+## RailVehicleRenderingServer draws a rail vehicle wherever RailVehicleServer places it - the nodes
+## mounted on it ride along - poses and hides the submodels of its models, and lets go of it with
+## the vehicle.
 
 const TRACK_NAME:String = "rendering_track"
 const TRACK_LENGTH:float = 100.0
@@ -17,6 +17,11 @@ const COUPLING_WITH_BRAKE_HOSE:int = (RailVehicleController.COUPLING_FLAG_COUPLE
 const LOW_POLY_CABS:Array[String] = ["cab0", "cab1", "cab2"]
 
 enum HoseGeometry { HANGING_ONLY, CONNECTED }
+
+## How far a test moves its vehicle along the track [m]
+const MOVE_DISTANCE:float = 5.0
+## The fabricated vehicle with models (demo/tests/fixtures/dynamic/test/synthetic_v1)
+const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 
 var _track:RID
 var _vehicle:RailVehicle3D
@@ -74,13 +79,63 @@ func test_the_node_stands_where_the_vehicle_is_placed() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
 
     var rid:RID = _vehicle.get_rid()
-    assert_eq(RailVehicleRenderingServer.vehicle_get_node(rid), _vehicle.get_instance_id(), "the vehicle is drawn at its node")
+    assert_true(RailVehicleRenderingServer.vehicle_get_transform(rid).is_equal_approx(
+            RailVehicleServer.vehicle_get_transform(rid)), "the vehicle is drawn where it is placed")
     assert_true(_vehicle.global_transform.is_equal_approx(RailVehicleServer.vehicle_get_transform(rid)),
-            "the node stands where the vehicle is placed")
+            "the node of a vehicle assembled by hand rides on it")
 
-    RailVehicleServer.vehicle_move(rid, 5.0)
+    RailVehicleServer.vehicle_move(rid, MOVE_DISTANCE)
     assert_true(_vehicle.global_transform.is_equal_approx(RailVehicleServer.vehicle_get_transform(rid)),
             "and follows it at once when it moves")
+
+
+## A node of another layer - a cab, a sound emitter - rides on the vehicle while it is mounted
+func test_a_mounted_node_rides_on_the_vehicle() -> void:
+    _vehicle = build_rail_vehicle("RenderingMount", TRACK_NAME, OFFSET)
+    await wait_idle_frames(SETTLE_FRAMES)
+    var rid:RID = _vehicle.get_rid()
+    var mount:Node3D = add_child_autofree(Node3D.new())
+
+    RailVehicleRenderingServer.vehicle_mount_node(rid, mount.get_instance_id())
+    assert_true(mount.global_transform.is_equal_approx(RailVehicleServer.vehicle_get_transform(rid)),
+            "it is put where the vehicle stands")
+
+    RailVehicleServer.vehicle_move(rid, MOVE_DISTANCE)
+    assert_true(mount.global_transform.is_equal_approx(RailVehicleServer.vehicle_get_transform(rid)),
+            "and follows the vehicle when it moves")
+
+    RailVehicleRenderingServer.vehicle_unmount_node(rid, mount.get_instance_id())
+    var left_at:Transform3D = mount.global_transform
+    RailVehicleServer.vehicle_move(rid, MOVE_DISTANCE)
+    assert_true(mount.global_transform.is_equal_approx(left_at), "unmounted, it stays where it was")
+
+
+## The player finds a vehicle by the area around its model, which names the vehicle - there is no
+## node of it to find
+func test_the_detection_area_names_its_vehicle() -> void:
+    var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    var vehicle:MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
+            "dynamic/test/synthetic_v1", "synthetic", "", "rendering_detection")
+    await wait_physics_frames(SETTLE_FRAMES)
+
+    # the area is a box the size of the model, where the model is drawn
+    var rid:RID = vehicle.get_rid()
+    var query:PhysicsPointQueryParameters3D = PhysicsPointQueryParameters3D.new()
+    query.position = (RailVehicleRenderingServer.vehicle_get_transform(rid)
+            * RailVehicleRenderingServer.vehicle_get_appearance(rid).model_transform
+            * E3DRenderingServer.instance_get_aabb(RailVehicleRenderingServer.vehicle_get_model(rid)).get_center())
+    query.collide_with_areas = true
+    query.collide_with_bodies = false
+    var hits:Array[Dictionary] = get_viewport().world_3d.direct_space_state.intersect_point(query)
+
+    assert_eq(hits.size(), 1, "the vehicle's detection area is found where the vehicle stands")
+    if hits:
+        assert_eq(RailVehicleRenderingServer.detection_area_get_vehicle(hits[0]["rid"]), rid)
+    # the vehicle goes before the game directory it was read from: the game's data read again
+    # would build it anew
+    vehicle.free()
+    UserSettings.save_maszyna_game_dir(previous_game_dir)
 
 
 func test_a_rebuilt_model_is_announced() -> void:

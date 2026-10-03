@@ -199,7 +199,7 @@ namespace godot {
         p_config["brake_handle_type"] = get_cntrl_brake_handle_type();
         p_config["brake_local_handle_type"] = get_cntrl_local_brake_handle_type();
         p_config["brake_valve_type"] = get_valve_type();
-        // available brake delay settings (bdelay_* flags) and main reservoir, used by MaszynaAutoRewidentNode
+        // available brake delay settings (bdelay_* flags) and main reservoir, used by MaszynaLegacyAutoRewident
         p_config["brake_delays"] = mover->BrakeDelays;
         // brakeopmode_sw's last position: the highest mode the vehicle has
         p_config["brake_operation_mode_position_max"] =

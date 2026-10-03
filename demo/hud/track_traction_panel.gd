@@ -21,7 +21,7 @@ var _elapsed:float = 0.0
 ## Taken once per vehicle rather than looked up per refresh; null for anything that is not
 ## electric, and then the traction rows have nothing to say.
 var _engine:RailVehicleElectricEngine = null
-var _engine_vehicle:RailVehicle3D = null
+var _engine_vehicle:RID = RID()
 
 
 func _ready() -> void:
@@ -49,15 +49,13 @@ func _process(delta:float) -> void:
 
 
 func _refresh() -> void:
-    var vehicle:RailVehicle3D = instance_from_id(
-            RailVehicleRenderingServer.vehicle_get_node(PlayerServer.player_get_vehicle())) as RailVehicle3D
-    if not vehicle:
+    var rid:RID = PlayerServer.player_get_vehicle()
+    if not rid.is_valid():
         _rows["Vehicle"].text = "none"
         _engine = null
-        _engine_vehicle = null
+        _engine_vehicle = RID()
         return
 
-    var rid:RID = vehicle.get_rid()
     var train_id:String = VehicleServer.vehicle_get_name(rid)
     _rows["Vehicle"].text = train_id if train_id else "(no train id)"
 
@@ -81,13 +79,13 @@ func _refresh() -> void:
         _rows["Track length"].text = "-"
         _rows["Switch"].text = "-"
 
-    var origin:Vector3 = vehicle.global_position
+    var origin:Vector3 = RailVehicleRenderingServer.vehicle_get_transform(rid).origin
     _rows["Position"].text = "%.1f, %.1f, %.1f" % [origin.x, origin.y, origin.z]
 
     # the pantographs are the carrier's - a unit's motor car, not the driving car the player sits in
     var carrier:RID = CabinState.vehicle_of(rid, CabinState.Target.PANTOGRAPH_UNIT)
-    if not _engine_vehicle == vehicle:
-        _engine_vehicle = vehicle
+    if not _engine_vehicle == rid:
+        _engine_vehicle = rid
         _engine = VehicleServer.vehicle_component_get(
                 carrier, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
     if not _engine:

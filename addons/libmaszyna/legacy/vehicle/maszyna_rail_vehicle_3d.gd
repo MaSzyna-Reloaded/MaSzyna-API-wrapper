@@ -2,15 +2,14 @@
 extends RailVehicle3D
 class_name MaszynaRailVehicle3D
 
-## A complete, driveable MaSzyna vehicle from nothing but a data_path/file_name/skin triple, as a
-## scenery's `dynamic` places it. It builds itself (MaszynaRailVehicle3DManager.build_into()): its
-## physics, sounds and the like as internal children, its appearance, cargo and cab handed to the
-## servers by its handle - RailVehicleRenderingServer draws and moves it, CabinSystem keeps its cab.
-## Everything it stores is its own data below and what RailVehicle3D has of a vehicle's place
-## (start_track_*, head_display_material); what it builds is never saved with the scene.
+## A complete, driveable MaSzyna vehicle from nothing but a data_path/file_name/skin triple, placed
+## by hand - a node over a vehicle of MaszynaLegacyVehicleSystem, which builds it through the
+## servers as it builds a scenery's `dynamic`s (those have no node). The node rides on its vehicle
+## (RailVehicleRenderingServer moves it). Everything it stores is its own data below and what
+## RailVehicle3D has of a vehicle's place (start_track_*, head_display_material); the vehicle is
+## never saved with the scene.
 
-## The vehicle has been (re)built: it has its handle and parts now, or none when its data cannot
-## be read
+## The vehicle has been (re)built: it has its handle now - or none when its data cannot be read
 signal vehicle_built
 
 @export var data_path:String = "":
@@ -84,120 +83,87 @@ signal vehicle_built
             _dirty = true
             set_process(true)
 
-## Toggled by the "Edit FIZ" 3D-viewport toolbar button (addons/libmaszyna/editor/fiz_toolbar/) when
-## the vehicle's parts need to be visible and selectable in the Scene dock for inspection - they are
-## internal children, which the Scene dock skips.
-var editable_in_editor:bool = false:
-    set(x):
-        if not editable_in_editor == x:
-            editable_in_editor = x
-            _apply_editable_in_editor()
+## Toggled by the "Edit FIZ" 3D-viewport toolbar button (addons/libmaszyna/editor/fiz_toolbar/).
+## It shows nothing now: the vehicle is built in the servers, not as children of this node
+## (TODO.md - "Edit FIZ" is to switch the kind of instancing)
+var editable_in_editor:bool = false
 
 ## A change of the data rebuilds the vehicle once, whatever else changes in the same frame; the node
 ## processes only while a rebuild is pending
 var _dirty:bool = true
-## What the last build put into this node
-var _parts:Array[Node] = []
+## The vehicle this node made (MaszynaLegacyVehicleSystem), none before its first build
+var _vehicle:RID = RID()
 
 
 func _enter_tree() -> void:
-    RailVehicleRenderingServer.vehicle_model_built.connect(_on_vehicle_model_built)
+    MaszynaLegacyVehicleSystem.vehicle_built.connect(_on_vehicle_built)
+    VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
     GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
-    # the editor drives no vehicle, and has no CabinSystem
-    if not Engine.is_editor_hint():
-        DriverSystem.vehicle_driven_changed.connect(_on_vehicle_driven_changed)
 
 
 func _exit_tree() -> void:
-    MaszynaRailVehicle3DManager.build_cancel(self)
-    if not Engine.is_editor_hint():
-        TrainSoundSystem.vehicle_set_bank_builder(self, Callable())
-    RailVehicleRenderingServer.vehicle_model_built.disconnect(_on_vehicle_model_built)
+    MaszynaLegacyVehicleSystem.vehicle_built.disconnect(_on_vehicle_built)
+    VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
     GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
-    if not Engine.is_editor_hint():
-        DriverSystem.vehicle_driven_changed.disconnect(_on_vehicle_driven_changed)
+
+
+## Out of the tree the vehicle stays (the editor takes a scene out of the tree when another one's
+## tab is shown); it goes with the node
+func _notification(what:int) -> void:
+    if what == NOTIFICATION_PREDELETE and _vehicle.is_valid():
+        MaszynaLegacyVehicleSystem.vehicle_free(_vehicle)
 
 
 ## false while a rebuild is pending - true once it ran, even when the vehicle failed to load
 func is_built() -> bool:
-    return not _dirty
+    return not _dirty and (not _vehicle.is_valid() or MaszynaLegacyVehicleSystem.vehicle_is_built(_vehicle))
 
 
-## A change asks for a build; MaszynaRailVehicle3DManager runs it, spreading the vehicles of a
-## scenery over frames
+## A change makes the vehicle anew from what the node is set to; MaszynaLegacyVehicleSystem builds
+## it in its turn
 func _process(_delta:float) -> void:
     set_process(false)
-    if _dirty:
-        MaszynaRailVehicle3DManager.build_request(self)
-
-
-## Builds the vehicle anew from what it is set to. Called by MaszynaRailVehicle3DManager in its turn.
-func build() -> void:
     if not _dirty:
         return
     _dirty = false
-    _free_parts()
-    _parts = MaszynaRailVehicle3DManager.build_into(
-            self, data_path, file_name, skin, vehicle_id, initial_velocity, driver_type, load_name, load_amount)
-    # the editor plays no sound: TrainSoundSystem is not there (a placeholder)
-    if not Engine.is_editor_hint() and _parts:
-        TrainSoundSystem.vehicle_set_bank_builder(self, build_sounds)
-    # built as internal children; shown in the Scene dock only while "Edit FIZ" is on
-    if editable_in_editor:
-        _apply_editable_in_editor()
+    _free_vehicle()
+    var dynamic:MaszynaDynamicData = MaszynaDynamicData.new()
+    dynamic.name = vehicle_id
+    dynamic.data_path = data_path
+    dynamic.file_name = file_name
+    dynamic.skin = skin
+    dynamic.velocity = initial_velocity
+    dynamic.driver_type = driver_type
+    dynamic.load_name = load_name
+    dynamic.load_amount = load_amount
+    _vehicle = MaszynaLegacyVehicleSystem.vehicle_create(dynamic, get_instance_id())
+
+
+## Built, the vehicle is this node's: the node rides on it and places it on its start track
+func _on_vehicle_built(vehicle:RID) -> void:
+    if not vehicle == _vehicle:
+        return
+    if VehicleServer.vehicle_is_simulation_ready(vehicle):
+        set_vehicle(vehicle)
     vehicle_built.emit()
 
 
-## Its sound players, built when TrainSoundSystem finds the vehicle within earshot - they are parts
-## like the others, and go with them
-func build_sounds() -> void:
-    _parts.append_array(MaszynaRailVehicle3DInstancer.build_sounds(self, data_path, file_name, skin, vehicle_id))
+## The vehicle freed by somebody else (the HUD removes a trainset) is not this node's any more
+func _on_vehicle_freed(vehicle:RID) -> void:
+    if vehicle == _vehicle:
+        _vehicle = RID()
+        set_vehicle(RID())
 
 
 ## The vehicle goes at once with the data it was built of - nothing of it is built again from the new
 ## data before it is itself - and is built anew in the next frame
 func _on_data_unload_requested() -> void:
-    _free_parts()
+    _free_vehicle()
     _dirty = true
     set_process(true)
 
 
-## The old vehicle goes with its parts - its physics frees its handle - and with the sound it has
-## not built yet
-func _free_parts() -> void:
-    if not Engine.is_editor_hint():
-        TrainSoundSystem.vehicle_set_bank_builder(self, Callable())
-    for part:Node in _parts:
-        remove_child(part)
-        part.free()
-    _parts.clear()
-
-
-## The cab logic is the vehicle's while somebody drives it - its driver or the player - whether a
-## 3D cab is shown or not: the AI and the player act on the same controls (CabinSystem). The original
-## keeps a TTrain only for a driven train; a cab of every vehicle at work costs every frame.
-func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
-    if not get_rid() == vehicle:
-        return
-    CabinSystem.vehicle_attach_cab_logic(vehicle, LegacyCabinLogic.from_mmd(data_path, file_name, skin, vehicle_id) if driven else null)
-
-
-func _on_vehicle_model_built(vehicle:RID) -> void:
-    if get_rid() == vehicle:
-        MaszynaRailVehicle3DInstancer.add_mirrors(self)
-
-
-## Internal mode can only be chosen at add_child() time, so showing the parts in the Scene dock means
-## removing and re-adding them with the other mode.
-func _apply_editable_in_editor() -> void:
-    var mode:InternalMode = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
-    for part:Node in _parts:
-        remove_child(part)
-        add_child(part, false, mode)
-        _set_owner_recursive(part, owner if editable_in_editor else null)
-
-
-func _set_owner_recursive(node:Node, target_owner:Node) -> void:
-    node.owner = target_owner
-    for child:Node in node.get_children(true):
-        _set_owner_recursive(child, target_owner)
+## The node hears of it as of any other freeing of its vehicle (_on_vehicle_freed())
+func _free_vehicle() -> void:
+    if _vehicle.is_valid():
+        MaszynaLegacyVehicleSystem.vehicle_free(_vehicle)

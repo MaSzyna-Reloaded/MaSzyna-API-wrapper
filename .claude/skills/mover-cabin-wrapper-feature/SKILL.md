@@ -114,7 +114,7 @@ where the composition already holds that controller (e.g. `VehicleComponent`s).
 `MmdCabinInstancer._build_widget()`. What a manipulation does is decided by handlers registered in
 `CabinSystem` by `LegacyCabinLogic` (`addons/libmaszyna/legacy/cabin/cabin_logic.gd`), the
 vehicle's cab logic - attached with `CabinSystem.vehicle_attach_cab_logic()` by `MaszynaDynamicTrainCabin`
-for the player and by `SceneryInstancer._build_drivers()` for the AI, and registered for the
+for the player and by `SceneryInstancer._build_trainsets()` for the AI, and registered for the
 occupied cab. It needs no widget: the cab's controls are read from its MMD (`LegacyCabinControls`):
 - `forward_commands.gd` wires every remaining control straight to its vehicle command (the
   `command`/`controller_mode`/`command_set`/... of its `MmdSemanticCatalog` entry);

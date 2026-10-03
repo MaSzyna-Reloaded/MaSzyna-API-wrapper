@@ -32,20 +32,15 @@ func after_each():
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController:
-    var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
-    if not dynamic_vehicle:
-        return null
-    var rail_vehicle:RailVehicle3D = dynamic_vehicle as RailVehicle3D
-    if not rail_vehicle:
-        return null
-    return rail_vehicle.get_controller()
+func _find_train_controller(vehicle_name:String) -> VehicleController:
+    var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(vehicle_name)
+    return VehicleServer.vehicle_get_controller(vehicle) if VehicleServer.vehicle_is_simulation_ready(vehicle) else null
 
 
 func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
     var controller:VehicleController = null
     for i in range(10):
-        controller = _find_train_controller(scenery, "EP07-424")
+        controller = _find_train_controller("EP07-424")
         if controller:
             break
         await wait_seconds(0.5)

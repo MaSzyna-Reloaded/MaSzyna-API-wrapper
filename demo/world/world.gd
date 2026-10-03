@@ -16,12 +16,14 @@ signal scenery_loaded(first_train_id: String)
 var _scenario: MaszynaLegacyScenario = null
 
 
-## Loads scenery/<filename>, its vehicles with the skins overridden
+## Loads scenery/<filename>, its vehicles with the skins overridden, and starts its scenario -
+## done once `scenery_loaded` has been emitted
 func load_scenery(filename: String, skin_overrides: Dictionary) -> void:
     %MaszynaSceneryNode.filename = filename
     %MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
     %Player.clear_start_train()
-    await %MaszynaSceneryNode.load()
+    %MaszynaSceneryNode.load()
+    await scenery_loaded
 
 
 ## Frees what the scenery holds, spread over frames - the world itself goes with queue_free()

@@ -38,6 +38,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("instance_attach_node", "instance", "node"), &E3DRenderingServer::instance_attach_node);
         ClassDB::bind_method(
+                D_METHOD("instance_get_attached_node", "instance"), &E3DRenderingServer::instance_get_attached_node);
+        ClassDB::bind_method(
                 D_METHOD("instance_set_scenario", "instance", "scenario"), &E3DRenderingServer::instance_set_scenario);
         ClassDB::bind_method(
                 D_METHOD("instance_set_transform", "instance", "transform"),
@@ -374,6 +376,12 @@ namespace godot {
         ERR_FAIL_NULL(instance);
         instance->node_id = p_node != nullptr ? ObjectID(p_node->get_instance_id()) : ObjectID();
         _rebuild_if_built(*instance);
+    }
+
+    uint64_t E3DRenderingServer::instance_get_attached_node(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, 0);
+        return ObjectDB::get_instance(instance->node_id) != nullptr ? static_cast<uint64_t>(instance->node_id) : 0;
     }
 
     void E3DRenderingServer::instance_set_node_transform(const RID &p_instance, const Transform3D &p_transform) {

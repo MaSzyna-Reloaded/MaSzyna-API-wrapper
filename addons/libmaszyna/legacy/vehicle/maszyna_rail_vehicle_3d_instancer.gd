@@ -2,11 +2,10 @@
 extends RefCounted
 class_name MaszynaRailVehicle3DInstancer
 
-## Builds a complete, driveable vehicle into a RailVehicle3D from nothing but a
-## data_path/file_name/skin triple: its FIZ physics, its appearance (the models and the submodels
-## that move, drawn by RailVehicleRenderingServer), its interactive MMD-driven cabin (CabinSystem)
-## and its sound bank. Used by MaszynaRailVehicle3D, which owns only the dirty-flag lifecycle.
-## It writes no property of the vehicle: what it builds goes to the servers by the vehicle's handle.
+## Reads what a vehicle's MMD says it is built from, out of nothing but a
+## data_path/file_name/skin triple: its appearance (the models and the submodels that move, drawn
+## by RailVehicleRenderingServer), the models of its cargo and its interactive MMD-driven cabin
+## (CabinSystem). Used by MaszynaLegacyVehicleSystem, which builds the vehicle from it.
 
 ## Fixed original-engine submodel naming convention for bogies/wheel axles (DynObj.cpp:2341-2346
 ## for bogies, DynObj.cpp:5132-5176 for wheel axles) - confirmed against real game data (e.g.
@@ -32,9 +31,6 @@ const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
 ## Whether the mirror glass reflects the scene (PlanarMirror3D)
 const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
 
-## The vehicle's physics among its parts
-const PHYSICS_NODE_NAME:StringName = &"PhysicsNode"
-
 ## lower arm 1, upper arm 1 and the slider
 const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [0, 2, 4]
 const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
@@ -51,7 +47,7 @@ const MASZYNA_VEHICLE_FRAME:Transform3D = Transform3D(Basis(Vector3.UP, PI), Vec
 
 ## Reads what the vehicle's MMD says it is built from. This is the expensive half - every call
 ## opens and re-parses the MMD and loads the exterior model - and its result is what
-## MaszynaRailVehicle3DManager caches.
+## MaszynaLegacyVehicleSystem caches.
 static func read_structure(
         data_path:String, file_name:String, skin:String, vehicle_name:String) -> MaszynaVehicleStructure:
     if not data_path or not file_name:
@@ -106,69 +102,12 @@ static func read_structure(
     return structure
 
 
-## Builds the vehicle a structure describes into `vehicle`, which is in the tree. Cheap - it reads no
-## file - so every vehicle gets its own parts; its sound comes later (build_sounds()).
-##
-## Its physics is configured before it enters the tree, so it is configured once and nothing sees
-## an empty vehicle first; the vehicle's handle exists as soon as it has entered. Returns the parts
-## built, all internal children of `vehicle`.
-static func build_into(
-        vehicle:RailVehicle3D, structure:MaszynaVehicleStructure, skin:String, vehicle_id:String,
-        initial_velocity:float, driver_type:VehicleController.DriverType, load_name:String,
-        load_amount:float) -> Array[Node]:
-    var physics := RailVehiclePhysicsNode.new()
-    physics.name = PHYSICS_NODE_NAME
-    physics.controller = FizVehicleBuilder.build_description(structure.data_path, structure.file_name)
-    physics.vehicle_id = vehicle_id
-    # the original's TypeName is the CHK/MMD name (DynObj.cpp:2019)
-    physics.type_name = structure.file_name
-    physics.initial_velocity = initial_velocity
-    physics.driver_type = driver_type
-    physics.load_name = load_name
-    physics.load_amount = load_amount
-
-    var auto_rewident := MaszynaAutoRewidentNode.new()
-    auto_rewident.name = "AutoRewident"
-
-    var parts:Array[Node] = [physics, auto_rewident]
-    for part:Node in parts:
-        vehicle.add_child(part, false, Node.INTERNAL_MODE_BACK)
-    var rid:RID = physics.get_vehicle_rid()
-    vehicle.set_vehicle(rid)
-    RailVehicleRenderingServer.vehicle_set_appearance(rid, structure.appearance)
-    RailVehicleRenderingServer.vehicle_set_load_model(
-            rid, structure.data_path, _load_model_filename(structure, load_name))
-    _apply_wiper_count(rid, structure.appearance)
-    # the editor drives no vehicle: CabinSystem is not there (a placeholder)
-    if not Engine.is_editor_hint():
-        CabinSystem.vehicle_set_cabin_scene(rid, structure.cabin_scene)
-    return parts
-
-
-## The vehicle's sound players, built into `vehicle` as its internal children and returned. Not part
-## of build_into(): a vehicle's sound is built only once it is within earshot
-## (TrainSoundSystem.vehicle_set_bank_builder()) - a scenery's vehicles all built at once spent
-## most of their loading on banks nobody hears.
-static func build_sounds(
-        vehicle:RailVehicle3D, data_path:String, file_name:String, skin:String, vehicle_id:String) -> Array[Node]:
-    var game_dir:String = UserSettings.get_maszyna_game_dir()
-    var relative_mmd_path:String = data_path.trim_prefix("/").path_join(file_name + ".mmd")
-    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_mmd_path))
-    var sound_diagnostics:Array[Dictionary] = []
-    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_id, file_name, skin)
-    var players:Array[Node] = MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, parameters, {}, sound_diagnostics)
-    for diagnostic:Dictionary in sound_diagnostics:
-        if not diagnostic["severity"] == "info":
-            push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
-    return players
-
-
 ## Which model a cargo is drawn as, in the order the original tries them
 ## (TDynamicObject::LoadMMediaFile_mdload(), DynObj.cpp:7195): the vehicle's own override for that
 ## cargo, then a model named for this vehicle and the cargo together, then one named after the
 ## cargo alone. Empty when the cargo has no model anywhere, which is not an error - plenty of
 ## loads are only mass.
-static func _load_model_filename(structure:MaszynaVehicleStructure, load_name:String) -> String:
+static func load_model_filename(structure:MaszynaVehicleStructure, load_name:String) -> String:
     if not load_name:
         return ""
     var override:String = structure.load_models.get(load_name.to_lower(), "")
@@ -195,11 +134,12 @@ static func _model_exists(data_path:String, relpath:String) -> bool:
 
 ## The mirrors' glass reflects the scene (maszyna/rendering/real_mirrors): a submodel with nothing
 ## under it, named after a mirror, gets a PlanarMirror3D - put on the nodes the exterior is built
-## as near the camera, so again every time it is built (RailVehicleRenderingServer.vehicle_model_built)
-static func add_mirrors(vehicle:RailVehicle3D) -> void:
+## as near the camera (under `model_root`), so again every time it is built
+## (RailVehicleRenderingServer.vehicle_model_built)
+static func add_mirrors(model_root:Node) -> void:
     if not ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true):
         return
-    for node:Node in vehicle.find_children("*", "MeshInstance3D", true, false):
+    for node:Node in model_root.find_children("*", "MeshInstance3D", true, false):
         var glass:MeshInstance3D = node as MeshInstance3D
         var submodel_name:String = glass.name.to_lower()
         if glass.get_child_count(true) == 0 \
@@ -270,7 +210,7 @@ static func _find_pantograph_arms(names:Dictionary[String, bool], pantograph_num
 
 ## RailVehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
-static func _apply_wiper_count(vehicle:RID, appearance:RailVehicleAppearance) -> void:
+static func apply_wiper_count(vehicle:RID, appearance:RailVehicleAppearance) -> void:
     var wipers:RailVehicleWipers = VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_WIPERS) as RailVehicleWipers
     if wipers:

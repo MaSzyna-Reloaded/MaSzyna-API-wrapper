@@ -47,24 +47,17 @@ func after_each():
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _find_rail_vehicle(root:Node, vehicle_name:String) -> RailVehicle3D:
-    var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
-    if not dynamic_vehicle:
-        return null
-    return dynamic_vehicle as RailVehicle3D
+## The way the vehicle is drawn facing (RailVehicleRenderingServer)
+func _forward(vehicle:RID) -> Vector3:
+    return -RailVehicleRenderingServer.vehicle_get_transform(vehicle).basis.z.normalized()
 
 
-func _forward(vehicle:RailVehicle3D) -> Vector3:
-    return -vehicle.global_basis.z.normalized()
-
-
-func _dump_orientation(label:String, vehicle:RailVehicle3D, controller:VehicleController) -> void:
+func _dump_orientation(label:String, vehicle:RID, controller:VehicleController) -> void:
     print(
-        "[%s] forward=%s pos=%s start_direction=%s velocity=%s main_switch_enabled=%s" % [
+        "[%s] forward=%s pos=%s velocity=%s main_switch_enabled=%s" % [
             label,
             _forward(vehicle),
-            vehicle.global_position,
-            vehicle.start_direction,
+            RailVehicleRenderingServer.vehicle_get_transform(vehicle).origin,
             controller.get_state().get("velocity", null),
             controller.get_state().get("main_switch_enabled", null),
         ]
@@ -72,29 +65,16 @@ func _dump_orientation(label:String, vehicle:RailVehicle3D, controller:VehicleCo
 
 
 func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void:
-    var rail_vehicle:RailVehicle3D = null
-    for i in range(10):
-        rail_vehicle = _find_rail_vehicle(scenery, "EP07-424")
-        if rail_vehicle:
+    var rail_vehicle:RID = RID()
+    for i in range(30):
+        rail_vehicle = VehicleServer.vehicle_get_rid_by_name("EP07-424")
+        if VehicleServer.vehicle_is_simulation_ready(rail_vehicle):
             break
         await wait_seconds(0.5)
-    assert_not_null(rail_vehicle, "EP07-424 should exist somewhere under the loaded scenery")
-    if not rail_vehicle:
+    assert_true(VehicleServer.vehicle_is_simulation_ready(rail_vehicle), "EP07-424 should be a vehicle of the loaded scenery")
+    if not VehicleServer.vehicle_is_simulation_ready(rail_vehicle):
         return
-    var controller:VehicleController = rail_vehicle.get_controller()
-    assert_not_null(controller, "EP07-424's RailVehicle3D should have a controller")
-    if not controller:
-        return
-
-    print(
-        "placement: start_track_name=%s start_track_offset=%s start_direction=%s front_bogie_path=%s rear_bogie_path=%s" % [
-            rail_vehicle.start_track_name,
-            rail_vehicle.start_track_offset,
-            rail_vehicle.start_direction,
-            rail_vehicle.front_bogie_path,
-            rail_vehicle.rear_bogie_path,
-        ]
-    )
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(rail_vehicle)
 
     # Sit parked for a while right after spawn, exactly as a player would see before boarding.
     for i in range(10):

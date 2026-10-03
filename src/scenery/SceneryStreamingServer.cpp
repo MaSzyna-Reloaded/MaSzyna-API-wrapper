@@ -34,7 +34,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
         ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
         ClassDB::bind_method(
-                D_METHOD("streaming_set_anchor", "node_id"), &SceneryStreamingServer::streaming_set_anchor);
+                D_METHOD("streaming_set_anchor_position", "position"),
+                &SceneryStreamingServer::streaming_set_anchor_position);
+        ClassDB::bind_method(D_METHOD("streaming_clear_anchor"), &SceneryStreamingServer::streaming_clear_anchor);
         ClassDB::bind_method(D_METHOD("streaming_drain"), &SceneryStreamingServer::streaming_drain);
         ClassDB::bind_method(
                 D_METHOD("streaming_get_draw_distance"), &SceneryStreamingServer::streaming_get_draw_distance);
@@ -468,9 +470,15 @@ namespace godot {
         tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
     }
 
-    void SceneryStreamingServer::streaming_set_anchor(const uint64_t p_node_id) {
+    void SceneryStreamingServer::streaming_set_anchor_position(const Vector3 &p_position) {
         MutexLock lock(mutex);
-        anchor_id = ObjectID(p_node_id);
+        anchor_position = p_position;
+        anchored = true;
+    }
+
+    void SceneryStreamingServer::streaming_clear_anchor() {
+        MutexLock lock(mutex);
+        anchored = false;
     }
 
     float SceneryStreamingServer::streaming_get_draw_distance() const {
@@ -641,19 +649,12 @@ namespace godot {
             return;
         }
         ObjectID current_camera_id;
-        ObjectID current_anchor_id;
-        {
-            MutexLock lock(mutex);
-            current_camera_id = camera_id;
-            current_anchor_id = anchor_id;
-        }
-        // the anchor moving into another chunk, or going, is a change of what is kept
-        const Node3D *anchor = Object::cast_to<Node3D>(ObjectDB::get_instance(current_anchor_id));
-        const bool anchored = anchor != nullptr && anchor->is_inside_tree();
-        const Vector2i anchor_key = anchored ? _get_chunk_key(anchor->get_global_position()) : Vector2i();
         bool requested;
         {
             MutexLock lock(mutex);
+            current_camera_id = camera_id;
+            // the anchor moving into another chunk, or going, is a change of what is kept
+            const Vector2i anchor_key = anchored ? _get_chunk_key(anchor_position) : Vector2i();
             if (anchored != has_anchor_chunk || anchor_key != anchor_chunk) {
                 has_anchor_chunk = anchored;
                 anchor_chunk = anchor_key;

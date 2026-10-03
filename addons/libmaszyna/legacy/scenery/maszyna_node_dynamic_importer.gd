@@ -1,39 +1,41 @@
 @tool
 extends RefCounted
 
-const MAX_FIZ_INCLUDE_DEPTH:int = 4
 ## The furthest a vehicle may stand from the previous one and still be coupled to it [m]
 ## (simulationstateserializer.cpp:1028)
 const MAX_COUPLING_OFFSET:float = 0.5
+## The coupling of a `dynamic` outside a `trainset`, which has no couplingdata
+const LONE_COUPLING:String = "3"
 
-## Ports deserialize_dynamic()'s placement math (simulationstateserializer.cpp) onto
-## MaszynaRailVehicle3D. Field order: datafolder, skinfile, mmdfile, [pathname - only when not
-## inside a trainset, see below], offset, drivertype, [couplingdata - only inside a trainset],
-## [velocity - only when not inside a trainset], loadcount, [loadtype if loadcount != 0],
-## optional trailing destination, "enddynamic".
+## Reads a `dynamic` (deserialize_dynamic(), simulationstateserializer.cpp) into the trainset it
+## is a vehicle of. Field order: datafolder, skinfile, mmdfile, [pathname - only when not inside a
+## trainset], offset, drivertype, [couplingdata - only inside a trainset], [velocity - only when
+## not inside a trainset], loadcount, [loadtype if loadcount != 0], optional trailing destination,
+## "enddynamic".
 ##
 ## Inside a trainset the vehicle stands where the trainset puts it: the original computes
-## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements trainset.offset by
-## the vehicle's own length for the NEXT vehicle - TrainSet3D does that, with the vehicle's `offset`
-## as its gap. Outside one it stands at `-offset` itself, its length read from its .fiz
-## Dimensions (L=) to put its centre there.
+## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements trainset.offset
+## by the vehicle's own length for the next vehicle (RailVehicleServer.trainset_place()), with the
+## vehicle's `offset` as its gap. Outside one it is a trainset of its own on `pathname`, its front
+## at `-offset`: the same sum from an offset of 0.
 ##
-## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle
-## reversed in the trainset" - confirmed against simulationstateserializer.cpp:983
-## (`vehicle->Init(..., ( offset == -1.0 ), params)`) and DynObj.cpp:1807
-## (`iDirection = (Reversed ? 0 : 1)`). Previously only used here for the offset-math branch,
-## never for direction - a real vehicle placed with offset: -1.0 (e.g. a reversed EZT member)
-## silently always imported as DIRECTION_NORMAL.
-func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehicle3D:
+## offset == -1.0 is also the original's sentinel for "place this vehicle reversed"
+## (simulationstateserializer.cpp:983, `vehicle->Init(..., ( offset == -1.0 ), params)`, and
+## DynObj.cpp:1807, `iDirection = (Reversed ? 0 : 1)`).
+func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaDynamicData:
     var data_folder:String = _resolve_data_path(p.next_token().replace("\\", "/"))
     data_folder = MaszynaDataPath.resolve(UserSettings.get_maszyna_game_dir(), data_folder)
     var skin_file:String = p.next_token()
     var mmd_file:String = p.next_token()
-    var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
+    var trainset:MaszynaTrainsetData = context.trainset
+    if not trainset:
+        trainset = MaszynaTrainsetData.new()
+        trainset.track_name = p.next_token()
+        context.trainsets.append(trainset)
     var offset:float = float(p.next_token())
     var driver_type:String = p.next_token()
-    var coupling_data:String = p.next_token() if context.trainset_open else "3"
-    var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
+    var coupling_data:String = p.next_token() if context.trainset else LONE_COUPLING
+    var velocity:float = trainset.velocity if context.trainset else float(p.next_token())
     var load_count:int = int(p.next_token())
     # a load with no type named is not a load (simulationstateserializer.cpp:1031)
     var load_type:String = p.next_token() if load_count != 0 else ""
@@ -43,40 +45,30 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaRailVehi
 
     var reversed:bool = is_equal_approx(offset, -1.0)
 
-    var vehicle := MaszynaRailVehicle3D.new()
-    vehicle.data_path = data_folder
-    vehicle.file_name = mmd_file
-    vehicle.skin = skin_file
-    # a vehicle of a trainset stands where the trainset puts it (TrainSet3D)
-    if not context.trainset_open:
-        vehicle.start_track_name = path_name
-        # the front at -offset (none reversed); start_track_offset is its center, which the
-        # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
-        var start_offset:float = 0.0 if reversed else -offset
-        vehicle.start_track_offset = start_offset - 0.5 * _read_vehicle_length(data_folder, mmd_file, context)
-    vehicle.start_direction = (
-        TrackServer.DIRECTION_REVERSED if reversed else TrackServer.DIRECTION_NORMAL
-    )
-    vehicle.initial_velocity = velocity
+    var dynamic:MaszynaDynamicData = MaszynaDynamicData.new()
+    dynamic.data_path = data_folder
+    dynamic.file_name = mmd_file
+    dynamic.skin = skin_file
+    dynamic.direction = TrackServer.DIRECTION_REVERSED if reversed else TrackServer.DIRECTION_NORMAL
+    dynamic.gap = 0.0 if reversed else offset
+    dynamic.coupling = _parse_coupling(coupling_data, offset, reversed)
+    dynamic.velocity = velocity
     # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.
-    vehicle.driver_type = (
+    dynamic.driver_type = (
         VehicleController.DRIVER_HEAD if driver_type == "headdriver"
         else VehicleController.DRIVER_REAR if driver_type == "reardriver"
         else VehicleController.DRIVER_NOBODY
     )
-    vehicle.load_name = load_type
-    vehicle.load_amount = float(load_count)
-
-    if context.trainset_open:
-        context.trainset_node.vehicle_gaps.append(0.0 if reversed else offset)
-        context.trainset_node.couplings.append(_parse_coupling(coupling_data, offset, reversed))
+    dynamic.load_name = load_type
+    dynamic.load_amount = float(load_count)
+    trainset.dynamics.append(dynamic)
 
     var next_token:String = p.next_token()
     if not next_token == "enddynamic":
         # optional trailing destination parameter, not used yet
         p.get_tokens_until("enddynamic")
 
-    return vehicle
+    return dynamic
 
 
 ## Coupling type with the next vehicle of the trainset (simulationstateserializer.cpp:921-934):
@@ -99,64 +91,3 @@ func _resolve_data_path(data_folder:String) -> String:
     if not data_path_array or not String(data_path_array[0]).to_lower() == "dynamic":
         data_path_array.insert(0, "dynamic")
     return "/".join(data_path_array)
-
-
-## Reads just the "Dimensions: L=..." value out of a vehicle's .fiz file - not the full FIZ
-## import pipeline, just enough for trainset offset chaining. Uses MaszynaParser (the same
-## whitespace-agnostic tokenizer every other .fiz/.scn reader in this addon uses) rather than
-## splitting by line: some .fiz files (e.g. 303e-ep-tv.fiz) spell "include" across three separate
-## lines ("include" / "303e-ep.fiz" / "end"), which a line-oriented reader silently misses
-## entirely - the token itself doesn't care where the line breaks fall.
-func _read_vehicle_length(data_path:String, file_name:String, context:MaszynaImporterContext) -> float:
-    var game_dir:String = UserSettings.get_maszyna_game_dir()
-    var relative_path:String = data_path.path_join(file_name + ".fiz")
-    var abs_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
-    return _read_length_from_fiz_file(abs_path, 0, context)
-
-
-func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImporterContext) -> float:
-    if depth > MAX_FIZ_INCLUDE_DEPTH:
-        return 0.0
-    var file := FileAccess.open(abs_path, FileAccess.READ)
-    if not file:
-        context.cacheable = false
-        return 0.0
-    context.register_dependency(abs_path, file.get_length())
-
-    var base_dir:String = abs_path.get_base_dir()
-    var parser := MaszynaParser.new()
-    parser.initialize(file.get_buffer(file.get_length()), [])
-
-    while not parser.eof_reached():
-        var token:String = parser.next_token()
-        if not token:
-            break
-
-        var lower_token:String = token.to_lower()
-        if lower_token == "include":
-            var include_filename:String = parser.next_token()
-            include_filename = MaszynaDataPath.resolve(base_dir, include_filename)
-            var included_length:float = _read_length_from_fiz_file(
-                base_dir.path_join(include_filename), depth + 1, context
-            )
-            if included_length > 0.0:
-                return included_length
-        elif lower_token == "dimensions:":
-            var length:float = _read_dimensions_length(parser)
-            if length > 0.0:
-                return length
-
-    return 0.0
-
-
-## "Dimensions:" is followed by space-separated key=value tokens (L=, H=, W=, Cx=, ...) with no
-## explicit terminator - stop at the first token that isn't itself a key=value pair, which marks
-## the start of the next statement.
-func _read_dimensions_length(parser:MaszynaParser) -> float:
-    while not parser.eof_reached():
-        var token:String = parser.next_token()
-        if not token or not token.contains("="):
-            break
-        if token.to_lower().begins_with("l="):
-            return token.substr(2).to_float()
-    return 0.0

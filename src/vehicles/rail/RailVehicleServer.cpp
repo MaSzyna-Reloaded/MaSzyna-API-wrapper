@@ -51,6 +51,8 @@ namespace godot {
     void RailVehicleServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("trainset_create"), &RailVehicleServer::trainset_create);
         ClassDB::bind_method(D_METHOD("trainset_free", "trainset"), &RailVehicleServer::trainset_free);
+        ClassDB::bind_method(D_METHOD("trainset_set_name", "trainset", "name"), &RailVehicleServer::trainset_set_name);
+        ClassDB::bind_method(D_METHOD("trainset_get_name", "trainset"), &RailVehicleServer::trainset_get_name);
         ClassDB::bind_method(
                 D_METHOD("trainset_set_track", "trainset", "track", "offset"), &RailVehicleServer::trainset_set_track);
         ClassDB::bind_method(D_METHOD("trainset_clear", "trainset"), &RailVehicleServer::trainset_clear);
@@ -389,6 +391,18 @@ namespace godot {
 
     void RailVehicleServer::trainset_free(const RID &p_trainset) {
         trainsets.erase(p_trainset);
+    }
+
+    void RailVehicleServer::trainset_set_name(const RID &p_trainset, const String &p_name) {
+        Trainset *trainset = trainsets.getptr(p_trainset);
+        ERR_FAIL_NULL(trainset);
+        trainset->name = p_name;
+    }
+
+    String RailVehicleServer::trainset_get_name(const RID &p_trainset) const {
+        const Trainset *trainset = trainsets.getptr(p_trainset);
+        ERR_FAIL_NULL_V(trainset, String());
+        return trainset->name;
     }
 
     void RailVehicleServer::trainset_set_track(const RID &p_trainset, const RID &p_track, const double p_offset) {

@@ -12,6 +12,9 @@ const SCENERY:String = "ep07.scn"
 ## The listener a vehicle's sound is built for once it is within earshot (TrainSoundSystem)
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 
+## How near its vehicle the node the vehicle's sound players are built under stands [m]
+const MOUNT_TOLERANCE:float = 1.0
+
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 
@@ -33,7 +36,7 @@ func test_ep07_mmd_builds_positioned_running_sound_events() -> void:
     add_child_autofree(vehicle)
     var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, UserSettings.get_maszyna_game_dir().path_join(EP07_MMD), {}, {}, diagnostics)
+            vehicle, RID(), UserSettings.get_maszyna_game_dir().path_join(EP07_MMD), {}, {}, diagnostics)
 
     var running:SfxPlayer3D = vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
     assert_not_null(running, "EP07 should get its own running sound player")
@@ -66,19 +69,20 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    var template:MaszynaRailVehicle3D = null
+    var template:RID = RID()
     for i in range(40):
-        template = scenery.find_child("EP07-424", true, false) as MaszynaRailVehicle3D
-        if template:
+        template = VehicleServer.vehicle_get_rid_by_name("EP07-424")
+        if template.is_valid():
             break
         await wait_seconds(0.5)
-    assert_not_null(template, "EP07-424 should exist under the loaded scenery")
-    if not template:
+    assert_true(template.is_valid(), "EP07-424 should be a vehicle of the loaded scenery")
+    if not template.is_valid():
         return
+    var template_dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(template)
     var vehicle := MaszynaRailVehicle3D.new()
-    vehicle.data_path = template.data_path
-    vehicle.file_name = template.file_name
-    vehicle.skin = template.skin
+    vehicle.data_path = template_dynamic.data_path
+    vehicle.file_name = template_dynamic.file_name
+    vehicle.skin = template_dynamic.skin
     vehicle.vehicle_id = "running_sounds_ep07"
     vehicle.initial_velocity = 40.0
     vehicle.start_track_name = "tdo_n25"
@@ -101,8 +105,11 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     add_child_autofree(player)
     player.free_camera.global_position = rail_vehicle.global_position
     var running:SfxPlayer3D = null
+    # the vehicle's sound players are built under a node riding on it, of the system that built it
     for i in range(40):
-        running = rail_vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
+        for node:Node in MaszynaLegacyVehicleSystem.find_children("RunningSfxPlayer3D", "SfxPlayer3D", true, false):
+            if (node.get_parent() as Node3D).global_position.distance_to(rail_vehicle.global_position) < MOUNT_TOLERANCE:
+                running = node as SfxPlayer3D
         if running:
             break
         await wait_seconds(0.25)

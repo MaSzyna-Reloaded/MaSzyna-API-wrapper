@@ -62,7 +62,22 @@ namespace godot {
             };
 
             struct Visual {
+                    /* The scene node whose world the vehicle is drawn in - its space, and the parent
+                     * of the holder; this server never moves it */
                     ObjectID node;
+                    /* The world it is drawn in, none while its scene node is out of one */
+                    RID scenario;
+                    /* Where the vehicle stands, once it has a place: RailVehicleServer placed it on
+                     * a track, or it was told (vehicle_set_transform()). Until then its models are
+                     * in no world - a scenery's vehicles are built before their trainset stands
+                     * them on its track, and were drawn at the origin meanwhile */
+                    Transform3D transform;
+                    bool placed = false;
+                    /* The node the models of a vehicle drawn in detail are built under - this
+                     * server's own, there only while the vehicle is detailed */
+                    ObjectID holder;
+                    /* Nodes of other layers riding on the vehicle (vehicle_mount_node()) */
+                    Vector<ObjectID> mounts;
                     Ref<RailVehicleAppearance> appearance;
                     /* The exterior and the low-poly interior - this server's own when it built them
                      * from the appearance, else whoever handed them over owns them */
@@ -141,6 +156,8 @@ namespace godot {
             HashMap<RID, Visual> vehicles;
             /* The vehicle each exterior model draws */
             HashMap<RID, RID> model_vehicles;
+            /* The vehicle each detection area finds */
+            HashMap<RID, RID> area_vehicles;
             /* The vehicles in the order the frame visits them, and where each visit left off */
             Vector<RID> visit_order;
             int slow_cursor = 0;
@@ -163,6 +180,8 @@ namespace godot {
                     const RID &p_vehicle, const Visual &p_visual,
                     RailVehicleElectricEngine::PantographSelector p_pantograph) const;
             void _place(const RID &p_vehicle, Visual &p_visual);
+            void _move(const RID &p_vehicle, Visual &p_visual);
+            void _show_models(const Visual &p_visual, const RID &p_scenario) const;
             void _pose(Visual &p_visual, const Part &p_part, const Basis &p_pose);
             void _pose_running_gear(const RID &p_vehicle, Visual &p_visual);
             void _pose_pantographs(const RID &p_vehicle, Visual &p_visual);
@@ -181,7 +200,7 @@ namespace godot {
             void _update_detail(const RID &p_vehicle, Visual &p_visual);
             void _update_low_poly_cabs(const Visual &p_visual) const;
             void _update_load(const RID &p_vehicle, Visual &p_visual);
-            void _update_detection_area(Visual &p_visual);
+            void _update_detection_area(const RID &p_vehicle, Visual &p_visual);
             void _register_pickable(const RID &p_vehicle, Visual &p_visual);
             void _on_vehicle_placed(const RID &p_vehicle);
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
@@ -199,15 +218,29 @@ namespace godot {
             RailVehicleRenderingServer();
             ~RailVehicleRenderingServer() override;
 
-            /* The vehicle is drawn at the node p_node_id - moved there wherever the vehicle is
-             * placed. Freed with the vehicle (VehicleServer.vehicle_freed). */
+            /* The vehicle is drawn in the world of the scene node p_node_id, once it has a place:
+             * where RailVehicleServer places it on a track, or where vehicle_set_transform() says.
+             * The node itself is never moved (a node that is to follow the vehicle is mounted,
+             * vehicle_mount_node()). Freed with the vehicle (VehicleServer.vehicle_freed). */
             void vehicle_attach(const RID &p_vehicle, uint64_t p_node_id);
             void vehicle_detach(const RID &p_vehicle);
             bool vehicle_is_attached(const RID &p_vehicle) const;
-            /* The node the vehicle is drawn at, 0 for none */
-            uint64_t vehicle_get_node(const RID &p_vehicle) const;
-            /* The world the node is in, an empty RID out of it: the models this server built are
-             * drawn there - the node's NOTIFICATION_ENTER_WORLD/EXIT_WORLD, as VisualInstance3D's */
+            /* Where a vehicle that stands on no track is drawn - one assembled by hand, where its
+             * node stands. RailVehicleServer's placement takes over once the vehicle is on a track. */
+            void vehicle_set_transform(const RID &p_vehicle, const Transform3D &p_transform);
+            /* Where the vehicle is drawn; the identity for a vehicle not drawn, or without a place */
+            Transform3D vehicle_get_transform(const RID &p_vehicle) const;
+            /* A Node3D of another layer rides on the vehicle - a cab, a sound emitter, the node of
+             * a vehicle assembled by hand: it is put where the vehicle stands, now and wherever
+             * the vehicle is placed, until it is unmounted or the vehicle is freed */
+            void vehicle_mount_node(const RID &p_vehicle, uint64_t p_node_id);
+            void vehicle_unmount_node(const RID &p_vehicle, uint64_t p_node_id);
+            /* The vehicle a detection area (PhysicsServer3D) finds - what the player's shape cast
+             * hits; an empty RID for an area that is no vehicle's */
+            RID detection_area_get_vehicle(const RID &p_area) const;
+            /* The world the scene node is in, an empty RID out of it: the models this server built
+             * are drawn there - the node's NOTIFICATION_ENTER_WORLD/EXIT_WORLD, as
+             * VisualInstance3D's */
             void vehicle_set_scenario(const RID &p_vehicle, const RID &p_scenario);
             /* What the vehicle looks like. With model files, this server builds the models itself;
              * without, it draws the ones vehicle_set_models() hands it. */

@@ -2,9 +2,8 @@
 extends RefCounted
 
 ## Closes whatever "trainset:" opened (deserialize_endtrainset(), simulationstateserializer.cpp).
-## The trainset couples its vehicles as they stand on their tracks (TrainSet3D) and the timetable
-## reaches the trainset's driver when the drivers are built (SceneryInstancer._build_drivers()).
+## Its vehicles are stood on the track and coupled, and its timetable reaches its driver, when the
+## scenery is built (SceneryInstancer).
 func import(_p:MaszynaParser, context: MaszynaImporterContext) -> Array:
-    context.trainset_open = false
-    context.trainset_node = null
+    context.trainset = null
     return []

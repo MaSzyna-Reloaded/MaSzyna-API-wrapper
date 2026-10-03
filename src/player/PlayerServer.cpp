@@ -42,6 +42,26 @@ namespace godot {
         VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         vehicles->connect(VehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerServer::_on_vehicle_freed));
+        RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+        ERR_FAIL_NULL(rail_vehicles);
+        rail_vehicles->connect(
+                RailVehicleServer::vehicle_placed_signal, callable_mp(this, &PlayerServer::_on_vehicle_placed));
+        rail_vehicles->connect(
+                RailVehicleServer::vehicle_placement_changed_signal,
+                callable_mp(this, &PlayerServer::_on_vehicle_placed));
+    }
+
+    /// The player's vehicle is kept streamed in where it stands - an AI may drive it on while the
+    /// camera looks elsewhere
+    void PlayerServer::_on_vehicle_placed(const RID &p_vehicle) {
+        if (p_vehicle != vehicle) {
+            return;
+        }
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+        ERR_FAIL_NULL(streaming);
+        ERR_FAIL_NULL(rail_vehicles);
+        streaming->streaming_set_anchor_position(rail_vehicles->vehicle_get_transform(vehicle).origin);
     }
 
     void PlayerServer::_on_vehicle_freed(const RID &p_vehicle) {
@@ -53,13 +73,11 @@ namespace godot {
     void PlayerServer::_set_vehicle(const RID &p_vehicle) {
         const RID previous = vehicle;
         vehicle = p_vehicle;
-        // the player's vehicle is kept streamed in where it stands - an AI may drive it on while the
-        // camera looks elsewhere - and nothing is kept for a player without one
-        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-        const RailVehicleRenderingServer *rendering = RailVehicleRenderingServer::get_instance();
-        if (streaming != nullptr) {
-            streaming->streaming_set_anchor(
-                    vehicle.is_valid() && rendering != nullptr ? rendering->vehicle_get_node(vehicle) : 0);
+        // nothing is kept streamed in for a player without a vehicle
+        if (vehicle.is_valid()) {
+            _on_vehicle_placed(vehicle);
+        } else if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance(); streaming != nullptr) {
+            streaming->streaming_clear_anchor();
         }
         emit_signal(player_vehicle_changed_signal, vehicle, previous);
     }

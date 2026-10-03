@@ -3,7 +3,6 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {
@@ -48,9 +47,9 @@ namespace godot {
             /// which comes before any node's `_process`, so every reader sees this frame's step
             int clock_holders = 0;
             bool clock_running = false;
-            /// The SimulationRuntime node the clock runs under; none (the editor, a viewer) - it
-            /// stands, whoever holds it
-            ObjectID runtime_id;
+            /// The SimulationRuntime nodes in the tree: the clock runs under at least one; with
+            /// none (the editor, a viewer) it stands, whoever holds it
+            int runtimes = 0;
             double light_level = 1.0;
             double air_temperature = 0.0;
             bool paused = false;
@@ -90,10 +89,10 @@ namespace godot {
             /// time to pass holds it while it does, and lets it go
             void clock_hold();
             void clock_release();
-            /// The game's SimulationRuntime node entering and leaving the tree: the clock runs only
-            /// while one is attached
-            void runtime_attach(uint64_t p_id);
-            void runtime_detach(uint64_t p_id);
+            /// A SimulationRuntime node entering and leaving the tree: the clock runs only while
+            /// one is attached
+            void runtime_attach();
+            void runtime_detach();
             /// Holds the clock and receives every `simulation_advanced` slice until unsubscribed
             void clock_subscribe(const Callable &p_on_advanced);
             void clock_unsubscribe(const Callable &p_on_advanced);

@@ -6,7 +6,7 @@ class_name LegacyCabinLogic
 ## (vehicle_rid, cab); the cabin state itself stays in CabinSystem.
 ##
 ## It is no part of the 3D cab. CabinSystem holds it for a vehicle somebody drives - the player or
-## the AI (DriverSystem.vehicle_is_driven(), attached by MaszynaRailVehicle3D) - and registers it
+## the AI (DriverSystem.vehicle_is_driven(), attached by MaszynaLegacyVehicleSystem) - and registers it
 ## for the occupied cab, so the AI's CabinSystem.act() does exactly what the player's controls do,
 ## without a single widget. What the cab has comes from its MMD (LegacyCabinControls), never from
 ## the widgets built of it.

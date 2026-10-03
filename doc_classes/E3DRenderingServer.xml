@@ -48,6 +48,13 @@
 				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
 			</description>
 		</method>
+		<method name="instance_get_attached_node" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The instance id of the node attached with [method instance_attach_node] - the one a node tree is built under - or [code]0[/code] for none, or for one that is gone.
+			</description>
+		</method>
 		<method name="instance_attach_node">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />

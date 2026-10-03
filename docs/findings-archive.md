@@ -3235,3 +3235,17 @@ lighting or the trainset.
 * **Rule:** what is drawn before it has a place is drawn in the wrong one - a thing enters the
   world with its first position, not with its construction.
 
+
+## 2026-10-03 switch ballast at the origin
+
+* **Symptom:** in Drawinowo, pieces of track infrastructure lay around the scenery's (0, 0, 0),
+  turned each its own way (operator's screenshot).
+* **What proved it:** nothing in Drawinowo's files is placed near the origin. The switches'
+  includes (`2-5-13/l34000_r.inc`, `rainsted/r-eea5_l.inc`) open `origin (p2) (p3) (p4)` and,
+  inside it, `origin 0 -0.2 0` for the ballast; the original sums the offsets
+  (`simulationstateserializer.cpp:651`), `MaszynaImporterContext.push_origin()` replaced the outer
+  one - the ballast kept the switch's rotation and lost its position.
+* **Fix:** `push_origin()` adds the offset to the current origin; the scenery cache format
+  version bumped.
+* **Rule:** a scenery's `origin` is a stack of sums, not of values - an `origin` inside an
+  `origin` adds to it.

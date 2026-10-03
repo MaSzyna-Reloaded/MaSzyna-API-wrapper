@@ -29,3 +29,17 @@ func test_backslash_include_paths_resolve() -> void:
     assert_eq(filenames, ["bs1", "bs2"])
     # an unresolved include would have made the scenery uncacheable
     assert_true(context.cacheable)
+
+
+## An origin inside an origin adds to it, as in the original (simulationstateserializer.cpp:651);
+## replacing it put every switch's ballast and sleepers at the scenery's (0, 0, 0)
+func test_nested_origin_adds_to_the_enclosing_one() -> void:
+    var context := MaszynaImporterContext.new()
+    SceneryInstancer.parse_file("nested_origin.scn", {}, context)
+
+    var positions:Dictionary[String, Vector3] = {}
+    for model:MaszynaModelData in context.models:
+        positions[model.model_filename] = model.position
+    assert_almost_eq(positions["inner"], Vector3(100.0, -0.2, 51.0), Vector3.ONE * 0.001)
+    assert_almost_eq(positions["outer"], Vector3(100.0, 0.0, 50.0), Vector3.ONE * 0.001)
+    assert_almost_eq(positions["after"], Vector3(1.0, 0.0, 0.0), Vector3.ONE * 0.001)

@@ -151,8 +151,8 @@ main_position_count = 11
 
 [resource]
 battery_voltage = 110.0
-components = Array[VehicleComponent]([SubResource("MoverRailVehicleBrake_22ebc"), SubResource("MoverRailVehicleDieselElectricEngine_wuw0x"), SubResource("MoverRailVehicleSecuritySystem_ehgw0"), SubResource("MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"), SubResource("MoverRailVehicleSpringBrake_ny5ic"), SubResource("MoverRailVehicleMasterController_l2wri")])
 type_name = "6d"
+components = Array[VehicleComponent]([SubResource("MoverRailVehicleBrake_22ebc"), SubResource("MoverRailVehicleDieselElectricEngine_wuw0x"), SubResource("MoverRailVehicleSecuritySystem_ehgw0"), SubResource("MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"), SubResource("MoverRailVehicleSpringBrake_ny5ic"), SubResource("MoverRailVehicleMasterController_l2wri")])
 mass = 74000.0
 power = 590.0
 max_velocity = 90.0

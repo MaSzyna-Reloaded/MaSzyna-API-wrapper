@@ -131,9 +131,10 @@ func push_rotate(new_rotate: Vector3):
 func pop_rotate():
     rotate = _rotates.pop_front()
 
-func push_origin(new_origin: Vector3):
+## An origin inside an origin adds to it (simulationstateserializer.cpp:651)
+func push_origin(offset: Vector3):
     _origins.push_front(origin)
-    origin = new_origin
+    origin += offset
     
 func pop_origin():
     if _origins.size() > 0:

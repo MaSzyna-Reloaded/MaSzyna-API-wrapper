@@ -98,6 +98,13 @@ namespace godot {
                 &E3DRenderingServer::instance_get_submodel_transform);
         ClassDB::bind_method(D_METHOD("instance_get_aabb", "instance"), &E3DRenderingServer::instance_get_aabb);
         ClassDB::bind_method(D_METHOD("instance_get_model", "instance"), &E3DRenderingServer::instance_get_model);
+        ClassDB::bind_method(
+                D_METHOD("instance_get_transform", "instance"), &E3DRenderingServer::instance_get_transform);
+        ClassDB::bind_method(
+                D_METHOD("instance_get_data_path", "instance"), &E3DRenderingServer::instance_get_data_path);
+        ClassDB::bind_method(
+                D_METHOD("instance_get_model_filename", "instance"), &E3DRenderingServer::instance_get_model_filename);
+        ClassDB::bind_method(D_METHOD("instance_get_skins", "instance"), &E3DRenderingServer::instance_get_skins);
         ClassDB::bind_method(D_METHOD("model_load", "data_path", "model_filename"), &E3DRenderingServer::model_load);
         ClassDB::bind_method(
                 D_METHOD("instance_set_node_transform", "instance", "transform"),
@@ -1498,6 +1505,30 @@ namespace godot {
         const E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL_V(instance, Ref<E3DModel>());
         return instance->model;
+    }
+
+    Transform3D E3DRenderingServer::instance_get_transform(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, Transform3D());
+        return instance->transform;
+    }
+
+    String E3DRenderingServer::instance_get_data_path(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, String());
+        return instance->data_path;
+    }
+
+    String E3DRenderingServer::instance_get_model_filename(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, String());
+        return instance->model_filename;
+    }
+
+    PackedStringArray E3DRenderingServer::instance_get_skins(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, PackedStringArray());
+        return instance->skins;
     }
 
     AABB E3DRenderingServer::instance_get_aabb(const RID &p_instance) const {

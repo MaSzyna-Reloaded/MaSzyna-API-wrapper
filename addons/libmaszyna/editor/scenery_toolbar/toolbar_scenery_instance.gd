@@ -1,6 +1,11 @@
 @tool
 extends HBoxContainer
 
+## "Edit SCN" switched on for the scenery - its sectors are shown (scenery_sector_inspector.gd)
+signal editing_started(scenery:MaszynaIncludeNode)
+## "Edit SCN" switched off
+signal editing_stopped
+
 var _selected_scenery:MaszynaIncludeNode
 
 @onready var btn = $Editable
@@ -29,15 +34,19 @@ func _on_selection_changed():
     var nodes = sel.get_selected_nodes()
 
     _selected_scenery = null
-    btn.button_pressed = false
 
     if nodes.size() == 1:
         var n:Node = nodes[0]
         _selected_scenery = _find_parent_scenery(n)
 
     btn.disabled = false if _selected_scenery else true
-    btn.button_pressed = _selected_scenery and _selected_scenery.editable_in_editor
+    # shown, not switched: a selection - a proxy of a sector among them - must not toggle it
+    btn.set_pressed_no_signal(_selected_scenery and _selected_scenery.editable_in_editor)
 
 func _on_editable_toggled(toggled_on):
     if _selected_scenery:
         _selected_scenery.editable_in_editor = toggled_on
+        if toggled_on:
+            editing_started.emit(_selected_scenery)
+        else:
+            editing_stopped.emit()

@@ -158,6 +158,11 @@ func get_vehicles() -> Array[RID]:
     return _vehicle_rids
 
 
+## The scenery's models (E3DRenderingServer instances)
+func get_models() -> Array[RID]:
+    return _e3d_rids
+
+
 ## The scenery's `lua` scripts, run by its scenario (MaszynaLegacyScenario)
 func get_scenario_scripts() -> Array[String]:
     return _scenario_scripts

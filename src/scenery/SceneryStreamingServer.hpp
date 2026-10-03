@@ -14,6 +14,7 @@
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 
 #include <array>
 
@@ -76,6 +77,8 @@ namespace godot {
             static const char *streaming_builds_started_signal;
             /// ...and every one of them is built
             static const char *streaming_builds_finished_signal;
+            static const char *streaming_camera_chunk_changed_signal;
+            static const char *chunk_cleared_signal;
 
             static SceneryStreamingServer *get_instance() {
                 return Object::cast_to<SceneryStreamingServer>(
@@ -232,6 +235,7 @@ namespace godot {
             bool has_anchor_chunk = false;
             Vector2i anchor_chunk;
             Vector3 last_camera_position;
+            Vector2i camera_chunk; // main thread only: the camera's chunk, as last announced
             uint64_t last_plan_msec = 0;
             uint64_t target_revision = 0;
             uint64_t scanned_revision = 0;
@@ -337,6 +341,10 @@ namespace godot {
             /// Where the streaming camera is, for anything else that has to know what is near
             Vector3 streaming_get_camera_position() const;
             bool streaming_has_camera() const;
+            /// The chunk the streaming camera is in (streaming_camera_chunk_changed)
+            Vector2i streaming_get_camera_chunk() const;
+            /// What the owners registered in the chunk (stream_register()'s rid), built or not
+            TypedArray<RID> chunk_get_rids(const Vector2i &p_chunk) const;
             /// Pieces in range are still waiting to be built (streaming_builds_started/finished)
             bool streaming_is_building() const;
             bool area_is_ready(int p_chunk_radius = 1) const;

@@ -186,6 +186,61 @@ func test_detached_camera_uses_the_last_valid_position() -> void:
     add_child(_camera)
 
 
+func test_a_chunk_lists_what_was_registered_in_it() -> void:
+    var near:RID = _register(Vector3(CHUNK_SIZE_M * 0.5, 0, 0), 200.0)
+    var far:RID = _register(Vector3(4.5 * CHUNK_SIZE_M, 0, 0), 200.0)
+
+    var rids:Array[RID] = SceneryStreamingServer.chunk_get_rids(Vector2i.ZERO)
+    assert_has(rids, near, "a placement missing from its chunk")
+    assert_does_not_have(rids, far, "a placement listed in another chunk")
+    assert_has(SceneryStreamingServer.chunk_get_rids(Vector2i(4, 0)), far)
+
+
+func test_the_camera_moving_into_another_chunk_is_announced() -> void:
+    watch_signals(SceneryStreamingServer)
+
+    await _move_camera(Vector3(2.5 * CHUNK_SIZE_M, 0, 3.5 * CHUNK_SIZE_M))
+
+    assert_signal_emitted_with_parameters(
+        SceneryStreamingServer, "streaming_camera_chunk_changed", [Vector2i(2, 3)]
+    )
+    assert_eq(SceneryStreamingServer.streaming_get_camera_chunk(), Vector2i(2, 3))
+
+
+func test_a_chunk_whose_last_piece_is_cleared_is_announced() -> void:
+    _register(Vector3(CHUNK_SIZE_M * 0.5, 0, 0), 200.0)
+    await _move_camera(Vector3(CHUNK_SIZE_M * 0.5, 0, 0))
+    watch_signals(SceneryStreamingServer)
+
+    await _move_camera(Vector3(4.5 * CHUNK_SIZE_M, 0, 0))
+
+    assert_signal_emitted_with_parameters(SceneryStreamingServer, "chunk_cleared", [Vector2i.ZERO])
+
+
+## E3DModelInstance.set_e3d_instance(): the node stands for an instance it does not own - a
+## scenery's model ("Edit SCN" sectors)
+func test_a_proxy_moves_the_instance_and_leaves_it_alive() -> void:
+    var position := Vector3(CHUNK_SIZE_M * 0.5, 0, 0)
+    var rid:RID = _register(position, 200.0)
+    await _move_camera(position)
+    var proxy := E3DModelInstance.new()
+    proxy.set_e3d_instance(rid)
+    add_child(proxy)
+
+    assert_eq(proxy.transform.origin, position, "the proxy does not stand where its instance does")
+    assert_eq(proxy.model_filename, "streamed")
+    assert_true(proxy.submodels_aabb.has_volume(), "the proxy has no bounds of the built model")
+
+    var moved := Vector3(CHUNK_SIZE_M * 0.5, 0, 10.0)
+    proxy.global_position = moved
+    await wait_idle_frames(1)
+    assert_eq(E3DRenderingServer.instance_get_transform(rid).origin, moved, "the instance did not move")
+
+    proxy.free()
+    assert_eq(E3DRenderingServer.instance_get_data_path(rid), "models/test", "the instance went with its proxy")
+    assert_eq(E3DRenderingServer.instance_get_transform(rid).origin, moved)
+
+
 func _register(position:Vector3, range_max:float) -> RID:
     var rid:RID = E3DRenderingServer.instance_register(
         "models/test", "streamed", PackedStringArray(),

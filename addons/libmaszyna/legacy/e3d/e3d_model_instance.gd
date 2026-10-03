@@ -10,6 +10,7 @@ class_name E3DModelInstance
 ## [code]OPTIMIZED[/code] renders through [code]RenderingServer[/code] and does not create child nodes.
 ## If [member model] is set, it will be used to instnatiate. Otherwise the
 ## [member data_path] and [member model_filename] will be used to load with [E3DModelManager].
+## With [method set_e3d_instance] the node stands for an instance somebody else owns instead.
 
 
 ## Emitted after the current model instance has been created.
@@ -30,6 +31,8 @@ var _model: E3DModel
 var _dirty: bool = false
 var _e3d_loaded: bool = false
 var _rid: RID = RID()
+## _rid is somebody else's (set_e3d_instance()): attached and switched here, never created or freed
+var _proxy: bool = false
 
 @export var lights_state: Dictionary[String, bool] = {}:
     set(x):
@@ -158,6 +161,14 @@ func _process_dirty(_delta: float) -> void:
 
 ## Reloads the configured E3D model and recreates the server instance using the selected instancer.
 func reload() -> void:
+    if _proxy:
+        _dirty = false
+        # null while the owner has not built it (a scenery model out of the streaming's range)
+        _model = E3DRenderingServer.instance_get_model(_rid)
+        submodels_aabb = E3DModelTool.get_aabb(_model) if _model else AABB()
+        update_gizmos()
+        E3DRenderingServer.instance_set_instancer(_rid, _get_server_instancer())
+        return
     if is_inside_tree() and (model or model_filename):
         _dirty = false
         _free_instance()
@@ -182,7 +193,7 @@ func _enter_tree() -> void:
     # the model file and its materials are read again - a model handed over as `model` keeps
     # itself, its materials do not
     GameDataServer.data_reload_requested.connect(reload)
-    if _model:
+    if _model or _proxy:
         _create_instance()
 
 
@@ -206,6 +217,20 @@ func get_e3d_instance() -> RID:
     return _rid
 
 
+## Makes the node stand for an instance somebody else owns - a scenery's model: the node stands
+## where the instance does, moving, hiding or showing it as nodes ("Edit E3D") changes that
+## instance, and the node neither creates nor frees it. [member data_path], [member model_filename]
+## and [member skins] show what it is drawn of. Called before the node enters the tree.
+func set_e3d_instance(instance: RID) -> void:
+    _proxy = true
+    _rid = instance
+    top_level = true
+    transform = E3DRenderingServer.instance_get_transform(instance)
+    data_path = E3DRenderingServer.instance_get_data_path(instance)
+    model_filename = E3DRenderingServer.instance_get_model_filename(instance)
+    skins = Array(E3DRenderingServer.instance_get_skins(instance))
+
+
 func is_e3d_loaded() -> bool:
     return _e3d_loaded
 
@@ -217,10 +242,23 @@ func set_smoke_intensity(intensity:float) -> void:
         E3DRenderingServer.instance_set_smoke_intensity(_rid, intensity)
 
 
+## "Edit E3D" shows a proxy's instance as nodes whatever it is drawn with - its owner draws it OPTIMIZED
+func _get_server_instancer() -> int:
+    if editable_in_editor and (_proxy or instancer == Instancer.NODES):
+        return Instancer.EDITABLE_NODES
+    return instancer
+
+
 func _create_instance() -> void:
-    var server_instancer: int = (
-        Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
-    )
+    var server_instancer: int = _get_server_instancer()
+    if _proxy:
+        E3DRenderingServer.instance_attach_node(_rid, self)
+        E3DRenderingServer.instance_set_instancer(_rid, server_instancer)
+        # the node moved is the instance moved
+        set_notify_transform(true)
+        _e3d_loaded = true
+        e3d_loaded.emit()
+        return
     _rid = E3DRenderingServer.instance_create(_model, server_instancer, instance_kind)
     E3DRenderingServer.instance_set_options(
         _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths,
@@ -250,6 +288,11 @@ func _free_instance() -> void:
     if _rid.is_valid():
         _e3d_loaded = false
         e3d_loading.emit()
+        if _proxy:
+            # drawn by its owner as its owner draws it - where the node left it
+            E3DRenderingServer.instance_set_instancer(_rid, E3DRenderingServer.INSTANCER_OPTIMIZED)
+            E3DRenderingServer.instance_attach_node(_rid, null)
+            return
         E3DRenderingServer.instance_free(_rid)
         _rid = RID()
 

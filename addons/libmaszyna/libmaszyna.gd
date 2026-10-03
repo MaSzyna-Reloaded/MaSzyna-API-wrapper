@@ -80,6 +80,7 @@ func _enable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", true)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/maszyna_vehicles", true)
 
 func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", false)
@@ -88,6 +89,7 @@ func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", false)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/maszyna_vehicles", false)
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")

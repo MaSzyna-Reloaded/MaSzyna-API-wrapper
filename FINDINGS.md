@@ -90,6 +90,8 @@ anything. Open work belongs in `TODO.md`.
   section header close the open table. *(09-25 E186 cab half built)*
 * A scenery's `origin` is a stack of sums, not of values: an `origin` inside an `origin` adds to
   it. *(10-03 switch ballast at the origin)*
+* A file named by the data is looked up where the original looks it up, in its order - not under
+  the one root most of the data uses. *(10-03 Sandomierz without its platform)*
 * A workaround in a `Mover*` call is a sign that a FIZ key is not ported yet. Before keeping one,
   read the key's default in `LoadFIZ_*`. *(09-25 pantographs raised only with the master valve forced)*
 * A Mover field every engine type computes (EngineVoltage) is published by the part they all

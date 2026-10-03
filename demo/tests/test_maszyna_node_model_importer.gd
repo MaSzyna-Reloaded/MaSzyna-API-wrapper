@@ -24,3 +24,24 @@ func test_model_node_is_imported_as_data_with_context_transform() -> void:
     assert_almost_eq(model.rotation.y, deg_to_rad(90.0), 0.0001)
     assert_eq(model.range_min, 10.0)
     assert_eq(model.range_max, 500.0)
+
+
+## A model is looked for as its path is given, from the game directory, then under models/
+## (MdlMngr.cpp:146-150): Sandomierz's platform is "models\linia053\peron_sandomierz.t3d"
+func test_model_path_is_looked_for_as_given_then_under_models() -> void:
+    var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir("res://tests/fixtures")
+    var parser: MaszynaParser = MaszynaParser.new()
+    parser.initialize((
+        "-1 0 given model 0 0 0 0 models\\t3d\\legacy.t3d none endmodel "
+        + "-1 0 under_models model 0 0 0 0 t3d\\legacy.t3d none endmodel"
+    ).to_utf8_buffer())
+    var context: MaszynaImporterContext = MaszynaImporterContext.new()
+
+    NodeImporter.new().import(parser, context)
+    NodeImporter.new().import(parser, context)
+    UserSettings.save_maszyna_game_dir(previous_game_dir)
+
+    assert_eq(context.models.size(), 2)
+    assert_eq(context.models[0].data_path, "models/t3d", "a path given from the game directory")
+    assert_eq(context.models[1].data_path, "models/t3d", "a path under models/")

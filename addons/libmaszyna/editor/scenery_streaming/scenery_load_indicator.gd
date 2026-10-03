@@ -9,6 +9,8 @@ extends PanelContainer
 
 ## Shown while the load says nothing of what it is doing
 const CAPTION:String = "Loading scenery"
+## Shown while the content loaded before is freed - "Load" of a loaded scenery, or "Clear"
+const CLEAR_CAPTION:String = "Unloading scenery"
 
 ## The sceneries of the edited scene, by instance id - a closed scene frees them
 var _include_ids:Array[int] = []
@@ -21,6 +23,8 @@ func set_scene_root(root:Node) -> void:
         if include:
             include.load_progress.disconnect(_on_load_progress)
             include.load_ended.disconnect(_on_load_ended)
+            include.clear_progress.disconnect(_on_clear_progress)
+            include.cleared.disconnect(_on_load_ended)
     _include_ids.clear()
     visible = false
     if not root:
@@ -33,6 +37,9 @@ func set_scene_root(root:Node) -> void:
         var include:MaszynaIncludeNode = node as MaszynaIncludeNode
         include.load_progress.connect(_on_load_progress)
         include.load_ended.connect(_on_load_ended)
+        include.clear_progress.connect(_on_clear_progress)
+        # "Clear" ends with no load after it; a load shows itself again with its first step
+        include.cleared.connect(_on_load_ended)
         _include_ids.append(include.get_instance_id())
 
 
@@ -40,6 +47,12 @@ func _on_load_progress(progress:float, _stage:MaszynaIncludeNode.LoadStage, mess
     visible = true
     %Progress.value = progress
     %Message.text = tr(message) if message else CAPTION
+
+
+func _on_clear_progress(progress:float) -> void:
+    visible = true
+    %Progress.value = progress
+    %Message.text = tr(CLEAR_CAPTION)
 
 
 func _on_load_ended() -> void:

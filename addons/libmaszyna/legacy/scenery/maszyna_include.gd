@@ -18,6 +18,10 @@ signal load_ended
 ## The content is about to be freed (a reload, an unload): whatever runs on it - its scenario,
 ## MaszynaLegacyScenario - stops now, while everything it reaches still exists
 signal unloading
+## Emitted as the content is freed over frames (load(), clear()): the share of it freed so far
+signal clear_progress(progress:float)
+## The content freed over frames is gone - a load() goes on loading
+signal cleared
 
 ## Milliseconds spent freeing content per frame while reloading
 const CLEAR_BUDGET_MSEC:int = 8
@@ -199,6 +203,10 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_provider_rids, SceneryStreamingServer.provider_free],
         [_triangle_chunk_rids, MaszynaSceneryChunkRenderingServer.free_chunk],
     ]
+    var total:int = 0
+    for group:Array in groups:
+        total += (group[0] as Array[RID]).size()
+    var freed:int = 0
     var frame_start:int = Time.get_ticks_msec()
     for group:Array in groups:
         var rids:Array[RID] = group[0]
@@ -210,7 +218,9 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
             var rid:RID = rids.pop_back()
             if rid.is_valid():
                 free_rid.call(rid)
+            freed += 1
             if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
+                clear_progress.emit(float(freed) / float(total))
                 await get_tree().process_frame
                 frame_start = Time.get_ticks_msec()
 
@@ -243,6 +253,7 @@ func _clear_content(budget_msec:int = 0) -> void:
     SceneryStreamingServer.streaming_set_enabled(true)
     VehicleServer.stepping_set_enabled(true)
     process_mode = Node.PROCESS_MODE_INHERIT
+    cleared.emit()
 
 
 ## Loads what the node is set to. Asked for while a load is under way, it stops that one

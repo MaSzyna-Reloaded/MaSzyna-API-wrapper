@@ -47,7 +47,9 @@ func drag_end() -> void:
     var undo_redo: EditorUndoRedoManager = get_undo_redo()
     undo_redo.create_action("Add nodebank E3D model")
     undo_redo.add_do_method(parent, "add_child", instance, true)
-    undo_redo.add_do_method(instance, "propagate_call", "set_owner", [scene_root])
+    # the dropped node alone: the model it builds is generated, and owned it would be saved into
+    # the scene - every mesh, material and texture of it
+    undo_redo.add_do_property(instance, "owner", scene_root)
     undo_redo.add_undo_method(parent, "remove_child", instance)
     undo_redo.add_do_reference(instance)
     undo_redo.commit_action()

@@ -742,6 +742,10 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
     chunk it was moved to (`SceneryStreamingServer` keeps the chunk of its registration)
   * the inspection restarted when the scene's tab is shown again (it stops when the scenery leaves
     the tree; "Edit SCN" off and on starts it)
+* A model's `angles` replace its whole rotation in the original, the enclosing `rotate` included
+  (`simulationstateserializer.cpp:956`, then `AnimModel.cpp:365`); the node importer still adds the
+  context's rotation to them. The position keeps the context transform in both. `scale` (a node's
+  own and a `scale` block, `AnimModel.cpp:373`) is not read at all.
 * An `include` with no filename appears in the real data (`maszyna_include_importer.gd` reports it
   with the offset and skips it); source unknown - truncated file or tokenizer misread.
 * Unloading a scenery leaves its weather in `MaszynaEnvironmentNode` (the `atmo` precipitation,

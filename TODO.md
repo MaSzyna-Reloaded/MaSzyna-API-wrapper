@@ -606,6 +606,9 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
 
 ### Other
 
+* A vehicle's detection area (`RailVehicleRenderingServer`, game only) stays in the physics space
+  while its node is out of the tree - `vehicle_set_scenario()` moves only what is drawn; the
+  space follows the same NOTIFICATION_ENTER_WORLD/EXIT_WORLD.
 * E3D: VNT1 (packed vertices), vertices with userdata (VNT4+) and TRA1 (double matrices) are not
   read - no file in the game data uses them today (`Model3d.cpp:1977`, `:2135`). 57 scenery and
   31 vehicle submodels are wound CW or mixed in the data itself (e.g. cabs of ET21, ET22, EU05,

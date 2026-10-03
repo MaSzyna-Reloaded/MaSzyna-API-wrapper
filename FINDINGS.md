@@ -333,6 +333,11 @@ anything. Open work belongs in `TODO.md`.
 * A node-typed property written into a `.tscn` by hand needs `node_paths=PackedStringArray(...)`
   in the node's header; without it the `NodePath` is not resolved, the property stays empty and
   the next save from the editor drops it. *(09-26 semaphore lost its model)*
+* The editor's scene tabs share one `World3D` and switching a tab takes the scene out of the
+  tree: what a node made in the world's scenario stays drawn on every tab. Out of the world it
+  is moved out (scenario `RID()`), as `VisualInstance3D` does - never freed and made again, its
+  RIDs are held elsewhere - and freed with the node. *(10-03 a scenery's vehicles drawn on every
+  editor tab)*
 * A new catalogue in the same locale re-translates nothing: `set_locale()` of an unchanged locale
   and `add_translation()`/`remove_translation()` send no `NOTIFICATION_TRANSLATION_CHANGED`.
   The code that swaps it notifies the main loop. *(09-25 catalogue swapped, UI unchanged)*

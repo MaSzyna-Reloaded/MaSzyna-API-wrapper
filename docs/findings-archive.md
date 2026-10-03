@@ -3150,3 +3150,28 @@ lighting or the trainset.
   backtraces side by side and find the frame they share, in the engine's binary too, before
   reading our code. An extension with worker threads is not reloadable.
 
+
+## 2026-10-03 a scenery's vehicles drawn on every editor tab
+
+* **Symptom:** with `demo/scenery_inspector.tscn` loaded in the editor, its trains stayed in the
+  viewport of every other scene tab; back on its own tab the scenery was gone - only the vehicles
+  were there, and flying over it streamed no terrain chunks.
+* **What proved it:** the editor removes the edited scene from the tree when another tab is
+  shown, and every edited scene renders into the same `World3D`. `RailVehicleRenderingServer`
+  built a vehicle's models in the node's scenario and freed them only with the vehicle.
+  `MaszynaIncludeNode._exit_tree()` freed every RID of the scenery (tracks, traction, models,
+  chunks, the region files' providers) while its nodes stayed, so nothing was there to draw or
+  stream on return. A first fix freed the vehicle's models on leaving the tree and built them
+  again on entering: `E3DRenderingServer.cpp:1371 Parameter "instance" is null` - the couplers
+  and the rest of the server still held the freed model's RID.
+* **Fix:** out of the world, moved out of it: `RailVehicle3D` on `NOTIFICATION_ENTER_WORLD`/
+  `EXIT_WORLD` calls `RailVehicleRenderingServer.vehicle_set_scenario()`;
+  `MaszynaIncludeNode` sets the scenario of its tracks, traction, models, chunks
+  (`chunk_set_scenario()`) and providers (`SceneryStreamingServer.provider_set_scenario()`,
+  which lets go of what was supplied and supplies it again into the new scenario) and frees
+  them on `NOTIFICATION_PREDELETE`. `E3DRenderingServer.instance_set_scenario()` moves the
+  RenderingServer instances of a built model (submodels, lights, smoke) instead of building it
+  again.
+* **Rule:** whatever is made in a world's scenario leaves it with its node and comes back with
+  it, the RIDs unchanged, as Godot's own nodes do; it is freed with the node. The editor's tabs
+  make "left the tree" an everyday event, not a teardown.

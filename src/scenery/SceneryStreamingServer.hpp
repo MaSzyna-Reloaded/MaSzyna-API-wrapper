@@ -311,6 +311,9 @@ namespace godot {
              * near them; freeing it lets go of everything it supplied */
             RID provider_register(const Ref<SceneryStreamingProvider> &p_provider, const RID &p_scenario);
             void provider_free(const RID &p_provider);
+            /* What the provider supplied goes, and is supplied again into the new scenario as the
+             * camera comes near; an empty RID supplies nothing (its node out of the world) */
+            void provider_set_scenario(const RID &p_provider, const RID &p_scenario);
             /* The server taking a kind of supplied content: adopt(item, scenario) -> RID makes it
              * (registering its pieces), release(RID) frees it */
             void content_set_consumer(

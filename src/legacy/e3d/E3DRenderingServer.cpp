@@ -387,7 +387,28 @@ namespace godot {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         instance->scenario = p_scenario;
-        _rebuild_if_built(*instance);
+        if (!instance->built) {
+            return;
+        }
+        // the RenderingServer instances are moved, not built again - a node leaving its world
+        // (another scene's tab in the editor) and entering it again keeps its model, as
+        // VisualInstance3D does; a NODES tree follows its node by itself
+        RenderingServer *rs = RenderingServer::get_singleton();
+        for (const RID &rid: instance->rids) {
+            rs->instance_set_scenario(rid, p_scenario);
+        }
+        for (const RID &light_rid: instance->light_objects) {
+            if (const LightObject *light = lights.getptr(light_rid);
+                light != nullptr && light->light_instance.is_valid()) {
+                rs->instance_set_scenario(light->light_instance, p_scenario);
+            }
+        }
+        for (const RID &smoke_rid: instance->smoke_objects) {
+            if (const SmokeObject *smoke = smoke_objects.getptr(smoke_rid);
+                smoke != nullptr && smoke->particles_instance.is_valid()) {
+                rs->instance_set_scenario(smoke->particles_instance, p_scenario);
+            }
+        }
     }
 
     /// Global transform of an OPTIMIZED instance (a NODES tree follows its attached node)

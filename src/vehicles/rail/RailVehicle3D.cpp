@@ -4,6 +4,7 @@
 #include "vehicles/rail/RailVehicleRenderingServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 
+#include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 namespace godot {
@@ -85,6 +86,16 @@ namespace godot {
                             TrackServer::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_tracks_changed));
                 }
                 _connect_scene_parts(false);
+            } break;
+            // the editor takes a scene out of the tree when another one's tab is shown, and all of
+            // them draw into one world - the vehicle is drawn only while its node is in it
+            case NOTIFICATION_ENTER_WORLD:
+            case NOTIFICATION_EXIT_WORLD: {
+                RailVehicleRenderingServer *drawing = RailVehicleRenderingServer::get_instance();
+                if (drawing != nullptr && drawing->vehicle_is_attached(rid)) {
+                    drawing->vehicle_set_scenario(
+                            rid, p_what == NOTIFICATION_ENTER_WORLD ? get_world_3d()->get_scenario() : RID());
+                }
             } break;
             default:
                 break;

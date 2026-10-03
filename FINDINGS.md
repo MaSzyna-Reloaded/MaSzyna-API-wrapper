@@ -26,6 +26,9 @@ anything. Open work belongs in `TODO.md`.
   invalidation. *(09-23 game dir ".")*
 * "One action late" means a read of a snapshot taken before the write. Look for the cache
   between them. *(09-23 cab one keypress late)*
+* Crashes at changing places are one cause: lay the backtraces side by side and find the frame
+  they share - in the engine's binary too - and look at the core's other threads, before reading
+  our code. *(10-03 the editor ran the scenario)*
 * An **abort**: read the engine's error lines first. "Already initialized RID" means concurrency,
   "invalid RID" means a double free. Use `coredumpctl debug`, not Godot's dump, and
   `addr2line -f -C -e <.so>` on the extension's hex frames. *(09-22 RID allocator; 09-22
@@ -217,6 +220,10 @@ anything. Open work belongs in `TODO.md`.
   each step)*
 
 ## Godot / GDExtension
+* An extension that creates or frees objects off the main thread is not `reloadable`: Godot
+  tracks a reloadable extension's instances in a set it does not lock (`_track_instance()`), in
+  the editor only - the editor crashed in the engine at ever different places of ours, the game
+  never. *(10-03 the editor ran the scenario)*
 * A key is the project's input action, matched exactly (`is_action_pressed(a, echo, true)`): a
   loose match takes Alt+Enter for Enter. *(10-01 Alt+Enter loaded a scenery)*
 * Memory that grows with a flat object count and no leak reported at exit is a referenced
@@ -364,6 +371,9 @@ anything. Open work belongs in `TODO.md`.
   Read a worker `Callable` all the way down. *(09-24 parser; 09-22 RID allocator)*
 * The scene tree is not thread safe; global-scope servers are. Work the tick redoes anyway does
   not also belong in the synchronous API. *(09-22 sfx tick off main thread)*
+* An async load checks its root after every await that a drain can end: the editor frees a scene
+  it reopens mid-load. A worker cannot even emit a signal of a node in the tree; it hands work
+  over by `call_deferred()`. *(10-03 the editor ran the scenario)*
 
 ## Build, release, export
 * No C++ iostreams in the extension: libstdc++ is linked statically (`GODOTCPP_USE_STATIC_CPP`) and
@@ -482,3 +492,10 @@ anything. Open work belongs in `TODO.md`.
 * Code that runs in the editor calls no autoload that is not `@tool` (`TrainSoundSystem`,
   `CabinSystem`): the call is a script error returning null into the caller's data - a null part
   of a vehicle crashed the editor on its first rebuild. *(09-30 editor crash on a game dir change)*
+* A loaded scenery runs nothing: `SimulationServer`'s clock ticks only under a `SimulationRuntime`
+  the game places, and the scenario's scripts and sounds are started by the game
+  (`MaszynaLegacyScenario`). A loader that starts the simulation runs it in the editor too.
+  *(10-03 the editor ran the scenario)*
+* A vehicle's models are made before it stands on its track: its detail is decided where it is
+  placed, never assumed - born detailed, every vehicle of a scenery built its whole node hierarchy
+  at the origin. *(10-03 the editor ran the scenario)*

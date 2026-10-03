@@ -173,6 +173,20 @@ const MARKER: Shader = preload("selection_marker.gdshader")
 @export var sounds: SfxBank = null
 ```
 
+A scene another component needs is attached the normal way: the consumer has a `.tscn` of its own
+(a plugin's dock, a HUD window) that instances it as an `ext_resource`, and the code preloads only
+that own scene, relative to itself. A `preload("../../other/thing.tscn")` that climbs out of the
+component's folder is the same offence as an absolute path, and a UI built in code to avoid it
+(`ScrollContainer.new()` around `Thing.new()`) is no fix either - UI is a scene:
+
+```gdscript
+# not this - a path out of the plugin's folder, the dock assembled in code
+const PANEL: PackedScene = preload("../../scenery/scenery_streaming_panel.tscn")
+
+# this - the plugin's own dock scene instances the panel scene; code preloads only its own file
+const STREAMING_DOCK: PackedScene = preload("./scenery_streaming_dock.tscn")
+```
+
 A relative `preload` survives the component being renamed, moved or lifted into another project; an
 absolute `res://` does not. And whatever belongs to the user rather than to the component - a sound
 bank, a theme, a texture, a scene to spawn - is an `@export` its scene fills in, the same rule the

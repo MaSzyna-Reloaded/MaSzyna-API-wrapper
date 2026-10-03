@@ -1076,9 +1076,11 @@ namespace godot {
         }
     }
 
+    /// Placed - on loading, its first place on a track - its detail is decided where it stands
     void RailVehicleRenderingServer::_on_vehicle_placed(const RID &p_vehicle) {
         if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
             _place(p_vehicle, *visual);
+            _update_detail(p_vehicle, *visual);
         }
     }
 

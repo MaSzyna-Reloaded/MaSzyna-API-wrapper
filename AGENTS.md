@@ -55,7 +55,9 @@ Code generation:
   declare the typed variable and pass it (the call is silently refused, see `FINDINGS.md`)
 * do not use set/get/has_meta for accessing/saving/loading node state
 * a reusable component names no path outside itself: own files preloaded relative to it, the
-  user's assets as `@export` slots; no absolute `res://` - see `CODE_STYLE.md`
+  user's assets as `@export` slots; no absolute `res://` and no `preload("../..")` out of its
+  folder; another component's scene is instanced in the consumer's own `.tscn`, never assembled
+  in code - see `CODE_STYLE.md`
 * no long node paths in code (`get_node("A/B/C")`, `$A/B/C`, `../..`): `%Name` inside the scene,
   the scene root's signals and methods outside it. No layout-only wrapper containers; node names
   say what the node is - see `CODE_STYLE.md`

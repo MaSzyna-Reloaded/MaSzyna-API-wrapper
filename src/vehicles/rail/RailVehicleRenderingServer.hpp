@@ -95,7 +95,10 @@ namespace godot {
                     TypedDictionary<String, bool> lights;
                     bool headlights_dimmed = false;
                     Ref<Material> head_display_material;
-                    bool detailed = true;
+                    /* Born optimized: the models are made before the vehicle stands on its track, at
+                     * the origin, and a scenery's hundreds of vehicles all built as node hierarchies
+                     * (cars, interiors) filled the load; _update_detail() details the near ones */
+                    bool detailed = false;
                     RID pickable;
                     RID detection_area;
                     RID detection_shape;

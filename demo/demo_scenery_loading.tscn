@@ -18,6 +18,8 @@ events = [SubResource("exit_to_menu_event")]
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 script = ExtResource("7_demo")
 
+[node name="SimulationRuntime" type="SimulationRuntime" parent="."]
+
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
 [node name="Music" type="AudioStreamPlayer" parent="." unique_id=168087480]

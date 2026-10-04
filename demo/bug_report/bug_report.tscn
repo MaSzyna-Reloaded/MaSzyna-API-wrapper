@@ -7,9 +7,11 @@
 [ext_resource type="Texture2D" path="res://bug_report/bug_icon.svg" id="5_icon"]
 [ext_resource type="Script" path="res://bug_report/report_dialog.gd" id="6_dialog"]
 [ext_resource type="Script" path="res://bug_report/screenshot_annotator.gd" id="7_annotator"]
-[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="8_theme"]
-[ext_resource type="Texture2D" path="res://bug_report/checkbox_checked.svg" id="9_checked"]
-[ext_resource type="Texture2D" path="res://bug_report/checkbox_unchecked.svg" id="10_unchecked"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="11_ui_dialog"]
+[ext_resource type="PackedScene" path="res://ui/ui_window.tscn" id="12_ui_window"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="13_action_buttons"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="14_button"]
+[ext_resource type="Script" path="res://ui/ui_switch.gd" id="ui_switch"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_edge"]
 content_margin_left = 8.0
@@ -32,27 +34,6 @@ corner_radius_top_left = 8
 corner_radius_bottom_left = 8
 shadow_color = Color(0, 0, 0, 0.4)
 shadow_size = 6
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_form"]
-content_margin_left = 20.0
-content_margin_top = 16.0
-content_margin_right = 20.0
-content_margin_bottom = 16.0
-bg_color = Color(0.08, 0.1, 0.14, 0.97)
-
-[sub_resource type="Theme" id="Theme_form"]
-CheckBox/colors/font_color = Color(0.95, 0.97, 1, 1)
-CheckBox/colors/font_hover_color = Color(1, 1, 1, 1)
-CheckBox/colors/font_pressed_color = Color(1, 1, 1, 1)
-CheckBox/colors/font_hover_pressed_color = Color(1, 1, 1, 1)
-CheckBox/colors/font_focus_color = Color(1, 1, 1, 1)
-CheckBox/colors/font_disabled_color = Color(0.6, 0.63, 0.68, 1)
-CheckBox/constants/h_separation = 10
-CheckBox/font_sizes/font_size = 16
-CheckBox/icons/checked = ExtResource("9_checked")
-CheckBox/icons/checked_disabled = ExtResource("9_checked")
-CheckBox/icons/unchecked = ExtResource("10_unchecked")
-CheckBox/icons/unchecked_disabled = ExtResource("10_unchecked")
 
 [node name="BugReport" type="CanvasLayer"]
 layer = 100
@@ -89,52 +70,55 @@ icon_alignment = 1
 expand_icon = true
 script = ExtResource("4_edge")
 
-[node name="ReportDialog" type="Window" parent="."]
+[node name="ReportDialog" parent="." instance=ExtResource("12_ui_window")]
 unique_name_in_owner = true
 title = "Report a problem or suggestion"
-visible = false
-transient = true
-exclusive = true
-theme = ExtResource("8_theme")
 script = ExtResource("6_dialog")
 
-[node name="Form" type="PanelContainer" parent="ReportDialog"]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme = SubResource("Theme_form")
-theme_override_styles/panel = SubResource("StyleBoxFlat_form")
+[node name="Backdrop" parent="ReportDialog" index="0"]
+color = Color(0, 0, 0, 0)
 
-[node name="Rows" type="VBoxContainer" parent="ReportDialog/Form"]
+[node name="Rows" type="VBoxContainer" parent="ReportDialog/Frame/Layout/Body"]
 layout_mode = 2
+size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="DescriptionLabel" type="Label" parent="ReportDialog/Form/Rows"]
+[node name="DescriptionLabel" type="Label" parent="ReportDialog/Frame/Layout/Body/Rows"]
 layout_mode = 2
 text = "Describe the problem or the suggestion"
 
-[node name="Description" type="TextEdit" parent="ReportDialog/Form/Rows"]
+[node name="Description" type="TextEdit" parent="ReportDialog/Frame/Layout/Body/Rows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 placeholder_text = "What happened, what did you expect, and how can it be repeated?"
 wrap_mode = 1
 
-[node name="AttachScreenshot" type="CheckBox" parent="ReportDialog/Form/Rows"]
+[node name="AttachScreenshotRow" type="HBoxContainer" parent="ReportDialog/Frame/Layout/Body/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AttachScreenshot" type="CheckButton" parent="ReportDialog/Frame/Layout/Body/Rows/AttachScreenshotRow"]
+script = ExtResource("ui_switch")
 unique_name_in_owner = true
 layout_mode = 2
+size_flags_vertical = 4
 button_pressed = true
+
+[node name="AttachScreenshotLabel" type="Label" parent="ReportDialog/Frame/Layout/Body/Rows/AttachScreenshotRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
 text = "Attach a screenshot"
 
-[node name="AnnotationHint" type="Label" parent="ReportDialog/Form/Rows"]
+
+[node name="AnnotationHint" type="Label" parent="ReportDialog/Frame/Layout/Body/Rows"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
 text = "Drag to mark what the report is about in red; right-click removes the last mark."
 
-[node name="ScreenshotAnnotator" type="Control" parent="ReportDialog/Form/Rows"]
+[node name="ScreenshotAnnotator" type="Control" parent="ReportDialog/Frame/Layout/Body/Rows"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
@@ -142,57 +126,58 @@ size_flags_vertical = 3
 mouse_default_cursor_shape = 3
 script = ExtResource("7_annotator")
 
-[node name="Consent" type="CheckBox" parent="ReportDialog/Form/Rows"]
+[node name="ConsentRow" type="HBoxContainer" parent="ReportDialog/Frame/Layout/Body/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Consent" type="CheckButton" parent="ReportDialog/Frame/Layout/Body/Rows/ConsentRow"]
+script = ExtResource("ui_switch")
 unique_name_in_owner = true
 layout_mode = 2
-text = "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+size_flags_vertical = 4
 
-[node name="Buttons" type="HBoxContainer" parent="ReportDialog/Form/Rows"]
+[node name="ConsentLabel" type="Label" parent="ReportDialog/Frame/Layout/Body/Rows/ConsentRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+text = "I agree to sharing the hardware information and the report, and to publishing them on GitHub"
+autowrap_mode = 3
+
+
+[node name="Buttons" type="HBoxContainer" parent="ReportDialog/Frame/Layout/Body/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 12
+script = ExtResource("13_action_buttons")
 
-[node name="Status" type="Label" parent="ReportDialog/Form/Rows/Buttons"]
+[node name="Status" type="Label" parent="ReportDialog/Frame/Layout/Body/Rows/Buttons"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
 
-[node name="CloseButton" type="Button" parent="ReportDialog/Form/Rows/Buttons"]
-custom_minimum_size = Vector2(120, 40)
+[node name="CloseButton" type="Button" parent="ReportDialog/Frame/Layout/Body/Rows/Buttons"]
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
-theme_type_variation = &"CardButton"
+mouse_default_cursor_shape = 2
+script = ExtResource("14_button")
 text = "Close"
 
-[node name="SendButton" type="Button" parent="ReportDialog/Form/Rows/Buttons"]
+[node name="SendButton" type="Button" parent="ReportDialog/Frame/Layout/Body/Rows/Buttons"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(160, 40)
+custom_minimum_size = Vector2(160, 44)
 layout_mode = 2
-theme_type_variation = &"CardButtonDefault"
+mouse_default_cursor_shape = 2
 disabled = true
+script = ExtResource("14_button")
+intent = 1
 text = "Send report"
 
-[node name="SentDialog" type="AcceptDialog" parent="."]
+[node name="SentDialog" parent="." instance=ExtResource("11_ui_dialog")]
 unique_name_in_owner = true
 title = "Report sent"
-theme = ExtResource("8_theme")
-ok_button_text = "OK"
-
-[node name="Rows" type="VBoxContainer" parent="SentDialog"]
-offset_left = 8.0
-offset_top = 8.0
-offset_right = 352.0
-offset_bottom = 80.0
-theme_override_constants/separation = 12
-
-[node name="Thanks" type="Label" parent="SentDialog/Rows"]
-layout_mode = 2
-text = "Thank you, the report has been sent."
-
-[node name="IssueLink" type="LinkButton" parent="SentDialog/Rows"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 0
-text = "Open the report"
+message = "Thank you, the report has been sent."
+confirm_text = "OK"
+alternative_text = "Open the report"
 
 [node name="UnavailableDialog" parent="." instance=ExtResource("11_ui_dialog")]
 unique_name_in_owner = true
@@ -203,13 +188,16 @@ confirm_text = "OK"
 [connection signal="report_failed" from="Sender" to="ReportDialog" method="show_failed"]
 [connection signal="report_saved" from="Sender" to="." method="close_report" unbinds=1]
 [connection signal="report_sent" from="Sender" to="." method="_on_report_sent"]
-[connection signal="canceled" from="SentDialog" to="." method="close_report"]
 [connection signal="confirmed" from="SentDialog" to="." method="close_report"]
+[connection signal="dismissed" from="SentDialog" to="." method="close_report"]
+[connection signal="alternative_chosen" from="SentDialog" to="." method="_on_sent_dialog_alternative_chosen"]
 [connection signal="request_completed" from="Sender" to="Sender" method="_on_request_completed"]
 [connection signal="pressed" from="EdgeButton" to="." method="open_report"]
 [connection signal="close_requested" from="ReportDialog" to="." method="close_report"]
-[connection signal="text_changed" from="ReportDialog/Form/Rows/Description" to="ReportDialog" method="_update_send_button"]
-[connection signal="toggled" from="ReportDialog/Form/Rows/AttachScreenshot" to="ReportDialog" method="_on_attach_screenshot_toggled"]
-[connection signal="toggled" from="ReportDialog/Form/Rows/Consent" to="ReportDialog" method="_update_send_button" unbinds=1]
-[connection signal="pressed" from="ReportDialog/Form/Rows/Buttons/CloseButton" to="." method="close_report"]
-[connection signal="pressed" from="ReportDialog/Form/Rows/Buttons/SendButton" to="." method="send_report"]
+[connection signal="text_changed" from="ReportDialog/Frame/Layout/Body/Rows/Description" to="ReportDialog" method="_update_send_button"]
+[connection signal="toggled" from="ReportDialog/Frame/Layout/Body/Rows/AttachScreenshotRow/AttachScreenshot" to="ReportDialog" method="_on_attach_screenshot_toggled"]
+[connection signal="toggled" from="ReportDialog/Frame/Layout/Body/Rows/ConsentRow/Consent" to="ReportDialog" method="_update_send_button" unbinds=1]
+[connection signal="pressed" from="ReportDialog/Frame/Layout/Body/Rows/Buttons/CloseButton" to="." method="close_report"]
+[connection signal="pressed" from="ReportDialog/Frame/Layout/Body/Rows/Buttons/SendButton" to="." method="send_report"]
+
+[editable path="ReportDialog"]

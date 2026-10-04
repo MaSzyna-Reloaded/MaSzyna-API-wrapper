@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://hud/vehicle_actions_button.gd" id="1_actions"]
 [ext_resource type="Texture2D" path="res://hud/icons/cog.svg" id="2_cog"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="3_ui_dialog"]
 
 [node name="VehicleActionsButton" type="Button"]
 size_flags_vertical = 4
@@ -103,10 +104,12 @@ alignment = 0
 theme_override_colors/font_color = Color(1, 0.4, 0.38, 1)
 theme_override_colors/font_hover_color = Color(1, 0.55, 0.52, 1)
 
-[node name="RemoveDialog" type="ConfirmationDialog" parent="."]
+[node name="RemoveDialog" parent="." instance=ExtResource("3_ui_dialog")]
 unique_name_in_owner = true
 title = "Remove trainset"
-ok_button_text = "Remove"
+confirm_text = "Remove"
+back_text = "Back"
+confirm_intent = 3
 
 [connection signal="pressed" from="." to="." method="_on_pressed"]
 [connection signal="pressed" from="ActionsPopup/Actions/ReleaseBrakes" to="." method="_on_release_brakes_pressed"]

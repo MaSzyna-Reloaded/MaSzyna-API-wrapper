@@ -32,7 +32,23 @@ namespace godot {
         spatial_index.instantiate();
         spatial_index->set_cell_size(GRID_CELL_SIZE);
         curve_bake_interval =
-                ProjectSettings::get_singleton()->get_setting("maszyna/scenery/track_curve_bake_interval", 10.0);
+                ProjectSettings::get_singleton()->get_setting(CURVE_BAKE_INTERVAL_SETTING, DEFAULT_CURVE_BAKE_INTERVAL);
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &TrackServer::_on_project_settings_changed));
+    }
+
+    /// The control points stay, so do the endpoints and the topology - only the baked curves and
+    /// the lengths measured on them change
+    void TrackServer::_on_project_settings_changed() {
+        const double interval =
+                ProjectSettings::get_singleton()->get_setting(CURVE_BAKE_INTERVAL_SETTING, DEFAULT_CURVE_BAKE_INTERVAL);
+        if (interval == curve_bake_interval) {
+            return;
+        }
+        curve_bake_interval = interval;
+        for (KeyValue<RID, TrackSegment> &item: tracks) {
+            _set_curves(item.value, item.value.curve1, item.value.curve2);
+        }
     }
 
     TrackServer::~TrackServer() {

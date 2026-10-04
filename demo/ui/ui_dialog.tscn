@@ -1,0 +1,107 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/ui_dialog.gd" id="1_dialog"]
+[ext_resource type="Theme" path="res://ui/ui_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="3_action_buttons"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="4_button"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 40.0
+content_margin_top = 32.0
+content_margin_right = 40.0
+content_margin_bottom = 32.0
+bg_color = Color(0.07, 0.1, 0.17, 0.96)
+border_width_top = 4
+border_color = Color(0.95, 0.65, 0.15, 1)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
+shadow_color = Color(0, 0, 0, 0.5)
+shadow_size = 24
+
+[node name="UIDialog" type="Control"]
+visible = false
+top_level = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_dialog")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="DialogPanel" type="PanelContainer" parent="."]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -100.0
+offset_right = 240.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Rows" type="VBoxContainer" parent="DialogPanel"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="Title" type="Label" parent="DialogPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.65, 0.15, 1)
+theme_override_font_sizes/font_size = 26
+
+[node name="Message" type="Label" parent="DialogPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.93, 1, 1)
+theme_override_font_sizes/font_size = 18
+autowrap_mode = 3
+
+[node name="Buttons" type="HBoxContainer" parent="DialogPanel/Rows"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_constants/separation = 12
+script = ExtResource("3_action_buttons")
+
+[node name="BackButton" type="Button" parent="DialogPanel/Rows/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_button")
+
+[node name="AlternativeButton" type="Button" parent="DialogPanel/Rows/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_button")
+
+[node name="ConfirmButton" type="Button" parent="DialogPanel/Rows/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("4_button")
+
+[connection signal="pressed" from="DialogPanel/Rows/Buttons/AlternativeButton" to="." method="choose_alternative"]
+[connection signal="pressed" from="DialogPanel/Rows/Buttons/ConfirmButton" to="." method="confirm"]
+[connection signal="pressed" from="DialogPanel/Rows/Buttons/BackButton" to="." method="dismiss"]

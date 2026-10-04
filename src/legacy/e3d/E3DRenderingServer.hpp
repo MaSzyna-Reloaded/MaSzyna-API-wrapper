@@ -252,6 +252,13 @@ namespace godot {
             void _update_if_built(E3DInstanceData &p_instance);
             void _on_data_unload_requested();
             void _on_data_reload_requested();
+            /// What the lights and the emitters were built with, by the settings that shape them -
+            /// the placements of the scenery lights, their RenderingServer lights, the emitters: a
+            /// change of one of them builds that again (_on_project_settings_changed())
+            Array light_placement_settings;
+            Array light_build_settings;
+            Array smoke_settings;
+            void _on_project_settings_changed();
             /// A model a SceneryStreamingProvider supplies: a scenery placement named by nothing
             RID _adopt_model(const Ref<SceneryModelPlacement> &p_placement, const RID &p_scenario);
             RID _get_stream_model(const RID &p_instance);
@@ -373,6 +380,8 @@ namespace godot {
             /// shaders' emission_energy) - a low-poly interior lit by the roof light
             void instance_set_emission_energy(const RID &p_instance, float p_energy);
             void instance_build(const RID &p_instance);
+            /// Every instance's emitters are built again - what they are made of has changed
+            void smoke_rebuild();
             void instance_set_options(
                     const RID &p_instance, const String &p_data_path, const PackedStringArray &p_skins,
                     const Array &p_exclude_node_names, bool p_force_alpha,

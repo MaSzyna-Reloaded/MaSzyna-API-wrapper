@@ -1,0 +1,62 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/ui_search_input.gd" id="1_search"]
+[ext_resource type="Texture2D" uid="uid://dgvryp8oiphb8" path="res://ui/search_icon.svg" id="2_icon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_search"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35, 0.55, 0.9, 0.07)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.65, 1, 0.18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_search_field"]
+
+[node name="UISearchInput" type="PanelContainer"]
+theme_override_styles/panel = SubResource("StyleBoxFlat_search")
+script = ExtResource("1_search")
+
+[node name="Row" type="HBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="Row"]
+modulate = Color(0.7, 0.82, 1, 0.75)
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("2_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Field" type="LineEdit" parent="Row"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92, 0.95, 1, 1)
+theme_override_colors/font_placeholder_color = Color(0.7, 0.8, 1, 0.4)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxEmpty_search_field")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_search_field")
+caret_blink = true
+
+[node name="ClearButton" type="Button" parent="Row"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.82, 1, 0.75)
+theme_override_font_sizes/font_size = 16
+text = "✕"
+flat = true
+
+[connection signal="text_changed" from="Row/Field" to="." method="_on_field_text_changed"]
+[connection signal="pressed" from="Row/ClearButton" to="." method="_on_clear_button_pressed"]

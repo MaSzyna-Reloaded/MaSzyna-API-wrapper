@@ -2,6 +2,7 @@
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
@@ -36,6 +37,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("load_config"), &UserSettings::load_config);
 
         ClassDB::bind_method(D_METHOD("save_setting", "section", "key", "value"), &UserSettings::save_setting);
+        ClassDB::bind_method(D_METHOD("set_setting", "section", "key", "value"), &UserSettings::set_setting);
+        ClassDB::bind_method(D_METHOD("save_config"), &UserSettings::save_config);
+        ClassDB::bind_method(D_METHOD("erase_setting", "section", "key"), &UserSettings::erase_setting);
 
         ClassDB::bind_method(
                 D_METHOD("get_setting", "section", "key", "default_value"), &UserSettings::get_setting,
@@ -72,8 +76,16 @@ namespace godot {
     void UserSettings::load_config() {
         ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
 
-        // ConfigFile::load() does not clear: the file overrides the defaults, keys it lacks keep them
+        /* What was set and not saved is dropped: the configuration is the file again, over the
+         * defaults, and every project setting the player changed is the project's own until the
+         * file sets it again. */
+        config->clear();
         _apply_defaults();
+        ProjectSettings *project_settings = ProjectSettings::get_singleton();
+        for (const Variant &name: project_values.keys()) {
+            project_settings->set_setting(name, project_values[name]);
+        }
+        project_values.clear();
 
         Error err = config->load(config_file_path);
 
@@ -82,29 +94,85 @@ namespace godot {
             ERR_FAIL_COND_MSG(save_err != OK, "Cannot save default user settings.");
         }
 
+        /* The player's own values of the project's settings, keyed by their full name. The
+         * constructor runs before every server's, so each server reads them at its own init. */
+        if (config->has_section(PROJECT_SETTINGS_SECTION)) {
+            for (const String &key: config->get_section_keys(PROJECT_SETTINGS_SECTION)) {
+                _set_project_setting(key, config->get_value(PROJECT_SETTINGS_SECTION, key));
+            }
+        }
+
         emit_signal("config_changed");
     }
 
-    void UserSettings::save_setting(const String &p_section, const String &p_key, const Variant &p_value) {
+    void UserSettings::set_setting(const String &p_section, const String &p_key, const Variant &p_value) {
         ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
 
         // an empty Variant is no default to ConfigFile: a key not saved yet is looked up only if it is there
         const Variant old_value =
                 config->has_section_key(p_section, p_key) ? config->get_value(p_section, p_key) : Variant();
-
+        if (old_value == p_value) {
+            return;
+        }
         config->set_value(p_section, p_key, p_value);
+
+        // what is created from now on takes it; what read it at its init keeps the old value
+        if (p_section == PROJECT_SETTINGS_SECTION) {
+            _set_project_setting(p_key, p_value);
+        }
+        emit_signal("setting_changed", p_section, p_key);
+        emit_signal("config_changed");
+
+        if (p_section == MASZYNA_GAMEDIR_SECTION && p_key == MASZYNA_GAMEDIR_KEY) {
+            emit_signal("game_dir_changed");
+        }
+    }
+
+    void UserSettings::erase_setting(const String &p_section, const String &p_key) {
+        ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
+        if (!config->has_section_key(p_section, p_key)) {
+            return;
+        }
+        const Dictionary section_defaults = defaults.get(p_section, Dictionary());
+        if (section_defaults.has(p_key)) {
+            set_setting(p_section, p_key, section_defaults[p_key]);
+            return;
+        }
+        config->erase_section_key(p_section, p_key);
+        if (p_section == PROJECT_SETTINGS_SECTION && project_values.has(p_key)) {
+            ProjectSettings::get_singleton()->set_setting(p_key, project_values[p_key]);
+            project_values.erase(p_key);
+        }
+        emit_signal("setting_changed", p_section, p_key);
+        emit_signal("config_changed");
+        if (p_section == MASZYNA_GAMEDIR_SECTION && p_key == MASZYNA_GAMEDIR_KEY) {
+            emit_signal("game_dir_changed");
+        }
+    }
+
+    void UserSettings::save_config() {
+        ERR_FAIL_COND_MSG(config.is_null(), "UserSettings config is null.");
 
         Error err = config->save(config_file_path);
         ERR_FAIL_COND_MSG(err != OK, "Cannot save user settings.");
+    }
 
-        if (old_value != p_value) {
-            emit_signal("setting_changed", p_section, p_key);
-            emit_signal("config_changed");
+    void UserSettings::save_setting(const String &p_section, const String &p_key, const Variant &p_value) {
+        set_setting(p_section, p_key, p_value);
+        save_config();
+    }
 
-            if (p_section == MASZYNA_GAMEDIR_SECTION && p_key == MASZYNA_GAMEDIR_KEY) {
-                emit_signal("game_dir_changed");
-            }
+    /* The editor keeps the project's values: one set there would be saved into project.godot. The
+     * project's own value is kept the first time, so load_config() can put it back. */
+    void UserSettings::_set_project_setting(const String &p_name, const Variant &p_value) {
+        if (Engine::get_singleton()->is_editor_hint()) {
+            return;
         }
+        ProjectSettings *project_settings = ProjectSettings::get_singleton();
+        if (!project_values.has(p_name)) {
+            project_values[p_name] = project_settings->get_setting(p_name);
+        }
+        project_settings->set_setting(p_name, p_value);
     }
 
     Variant

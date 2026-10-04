@@ -39,6 +39,8 @@ namespace godot {
              * vehicle position. */
             void _check_velocity_jumps(double p_delta);
             void _on_vehicle_freed(const RID &p_vehicle);
+            /// The diagnostics follow their setting; switched on, they start from the next step
+            void _on_project_settings_changed();
 
         protected:
             static void _bind_methods() {}

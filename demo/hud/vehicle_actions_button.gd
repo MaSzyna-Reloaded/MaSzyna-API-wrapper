@@ -45,8 +45,8 @@ func _on_move_pressed(distance:float) -> void:
 
 func _on_remove_pressed() -> void:
     %ActionsPopup.hide()
-    %RemoveDialog.dialog_text = tr("Remove the trainset of %s?") % VehicleServer.vehicle_get_name(vehicle)
-    %RemoveDialog.popup_centered()
+    %RemoveDialog.message = tr("Remove the trainset of %s?") % VehicleServer.vehicle_get_name(vehicle)
+    %RemoveDialog.ask()
 
 
 func _on_remove_dialog_confirmed() -> void:

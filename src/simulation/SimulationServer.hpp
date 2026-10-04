@@ -57,10 +57,14 @@ namespace godot {
             void _refresh_clock();
             void _on_process_frame();
 
+            /// The speed's change time follows its setting
+            void _on_project_settings_changed();
+
         protected:
             static void _bind_methods();
 
         public:
+            SimulationServer();
             static const char *simulation_advanced_signal;
             static const char *language_changed_signal;
             static const char *simulation_paused_signal;

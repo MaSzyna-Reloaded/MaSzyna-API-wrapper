@@ -1,0 +1,73 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/setting_slider.gd" id="1_slider"]
+[ext_resource type="Script" path="res://ui/ui_slider.gd" id="ui_slider"]
+[ext_resource type="Script" path="res://ui/ui_text_field.gd" id="ui_text_field"]
+[ext_resource type="Script" path="res://ui/ui_icon_button.gd" id="ui_icon_button"]
+[ext_resource type="Texture2D" path="res://ui/reset_icon.svg" id="reset_icon"]
+
+[node name="SettingSlider" type="PanelContainer"]
+mouse_filter = 1
+theme_type_variation = &"SettingItem"
+script = ExtResource("1_slider")
+
+[node name="Lines" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+
+[node name="Title" type="Label" parent="Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="Line" type="HBoxContainer" parent="Lines"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Slider" type="HSlider" parent="Lines/Line"]
+script = ExtResource("ui_slider")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
+scrollable = false
+
+[node name="ValueField" type="LineEdit" parent="Lines/Line"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 1
+script = ExtResource("ui_text_field")
+alignment = 2
+select_all_on_focus = true
+
+[node name="Unit" type="Label" parent="Lines/Line"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.8)
+theme_override_font_sizes/font_size = 14
+
+[node name="ResetButton" type="Button" parent="Lines/Line"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Reset to default"
+mouse_default_cursor_shape = 2
+script = ExtResource("ui_icon_button")
+icon = ExtResource("reset_icon")
+icon_alignment = 1
+
+[connection signal="value_changed" from="Lines/Line/Slider" to="." method="_on_slider_value_changed"]
+[connection signal="text_submitted" from="Lines/Line/ValueField" to="." method="_on_value_field_text_submitted"]
+[connection signal="focus_exited" from="Lines/Line/ValueField" to="." method="_on_value_field_focus_exited"]
+[connection signal="pressed" from="Lines/Line/ResetButton" to="." method="restore_default"]

@@ -50,11 +50,11 @@ var style := Style.HIDDEN:
             Style.VISIBLE_COMPACT, Style.VISIBLE_DETAILED:
                 visible = true
                 frame_number.visible = style == Style.VISIBLE_DETAILED
-                $DebugMenu/VBoxContainer/FrameTimeHistory.visible = style == Style.VISIBLE_DETAILED
-                $DebugMenu/VBoxContainer/FPSGraph.visible = style == Style.VISIBLE_DETAILED
-                $DebugMenu/VBoxContainer/TotalGraph.visible = style == Style.VISIBLE_DETAILED
-                $DebugMenu/VBoxContainer/CPUGraph.visible = style == Style.VISIBLE_DETAILED
-                $DebugMenu/VBoxContainer/GPUGraph.visible = style == Style.VISIBLE_DETAILED
+                $DebugMenu/Chip/VBoxContainer/FrameTimeHistory.visible = style == Style.VISIBLE_DETAILED
+                $DebugMenu/Chip/VBoxContainer/FPSGraph.visible = style == Style.VISIBLE_DETAILED
+                $DebugMenu/Chip/VBoxContainer/TotalGraph.visible = style == Style.VISIBLE_DETAILED
+                $DebugMenu/Chip/VBoxContainer/CPUGraph.visible = style == Style.VISIBLE_DETAILED
+                $DebugMenu/Chip/VBoxContainer/GPUGraph.visible = style == Style.VISIBLE_DETAILED
                 information.visible = style == Style.VISIBLE_DETAILED
                 settings.visible = style == Style.VISIBLE_DETAILED
 

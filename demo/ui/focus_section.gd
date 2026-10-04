@@ -95,12 +95,15 @@ func _process_dirty() -> void:
 
 ## Scroll of a section's list, set from the item's own place in it: to the item's near edge when it
 ## is above the view, to its far edge when it is below, and left alone when it is already inside.
+## The item may stand deeper in the content (a row inside a folding group): its place is taken
+## against the content's own.
 static func scroll_to_item(scroll: ScrollContainer, item: Control) -> void:
     var offset: int = scroll.scroll_vertical
-    if item.position.y < float(offset):
-        scroll.scroll_vertical = int(item.position.y)
-    elif item.position.y + item.size.y > float(offset) + scroll.size.y:
-        scroll.scroll_vertical = int(item.position.y + item.size.y - scroll.size.y)
+    var top: float = item.global_position.y - (scroll.get_child(0) as Control).global_position.y
+    if top < float(offset):
+        scroll.scroll_vertical = int(top)
+    elif top + item.size.y > float(offset) + scroll.size.y:
+        scroll.scroll_vertical = int(top + item.size.y - scroll.size.y)
 
 
 ## The same for a section whose items stand in a row - the vehicles of a trainset

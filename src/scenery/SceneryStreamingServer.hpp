@@ -72,6 +72,7 @@ namespace godot {
             /// Fallback for maszyna/scenery/draw_distance, also the range of the pieces
             /// that declare none of their own
             static constexpr float DEFAULT_DRAW_DISTANCE_M = 3000.0;
+            static constexpr const char *DRAW_DISTANCE_SETTING = "maszyna/scenery/draw_distance";
 
             /// Pieces in range started waiting to be built...
             static const char *streaming_builds_started_signal;
@@ -116,6 +117,8 @@ namespace godot {
                     int owner = 0;
                     RID stream_rid;
                     RID user_rid;
+                    /// The range the piece declared, 0 for none - range_end follows the draw distance
+                    float declared_range = 0.0;
                     float range_end = 0.0;
                     bool built = false;
                     /// Wanted only ahead of its range (PREFETCH_M): nothing waits for it
@@ -296,6 +299,11 @@ namespace godot {
 
         protected:
             static void _bind_methods();
+
+        private:
+            /// The draw distance follows its setting while the scenery streams
+            void _on_project_settings_changed();
+            float _get_range_end(float p_declared_range) const;
 
         public:
             SceneryStreamingServer();

@@ -56,8 +56,9 @@ var _pan:Vector2 = Vector2.ZERO
 var _zoom:float = 1.0
 # the view's own distance from its target before the zoom, for the zoom to keep within the limits
 var _view_distance:float = 1.0
-var _min_distance:float = ProjectSettings.get_setting(MIN_DISTANCE_SETTING, MIN_DISTANCE_DEFAULT)
-var _max_distance:float = ProjectSettings.get_setting(MAX_DISTANCE_SETTING, MAX_DISTANCE_DEFAULT)
+## The zoom's limits, as their settings are now
+var _min_distance:float = MIN_DISTANCE_DEFAULT
+var _max_distance:float = MAX_DISTANCE_DEFAULT
 # the vehicle and the view the orbit, pan and zoom were set for
 var _offset_vehicle:RID
 var _offset_view:View = View.TRAINSET_FRONT
@@ -65,6 +66,20 @@ var _offset_view:View = View.TRAINSET_FRONT
 
 ## Starts the flight from p_from to the selected view of the vehicle, the view applied in full. The
 ## selected view is kept between activations, like m_externalviewmode of the original.
+func _enter_tree() -> void:
+    ProjectSettings.settings_changed.connect(_on_project_settings_changed)
+    _on_project_settings_changed()
+
+
+func _exit_tree() -> void:
+    ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
+
+
+func _on_project_settings_changed() -> void:
+    _min_distance = ProjectSettings.get_setting(MIN_DISTANCE_SETTING, MIN_DISTANCE_DEFAULT)
+    _max_distance = ProjectSettings.get_setting(MAX_DISTANCE_SETTING, MAX_DISTANCE_DEFAULT)
+
+
 func activate(p_vehicle:RID, p_from:Transform3D) -> void:
     vehicle = p_vehicle
     global_transform = p_from

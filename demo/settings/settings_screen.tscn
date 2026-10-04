@@ -1,0 +1,132 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/settings_screen.gd" id="1_screen"]
+[ext_resource type="Theme" uid="uid://dydlldjr6yrr2" path="res://scenery_selector/selector_theme.tres" id="2_theme"]
+[ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="3_sounds"]
+[ext_resource type="PackedScene" uid="uid://5f6cnr8et0l6" path="res://ui/selector_list.tscn" id="4_list"]
+[ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="5_focus"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="6_dialog"]
+[ext_resource type="PackedScene" path="res://ui/ui_window.tscn" id="7_window"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="8_button"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="9_action_buttons"]
+
+[node name="SettingsScreen" type="Control" node_paths=PackedStringArray("window")]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_screen")
+sounds = ExtResource("3_sounds")
+window = NodePath("SettingsWindow")
+
+[node name="SettingsWindow" parent="." instance=ExtResource("7_window")]
+unique_name_in_owner = true
+title = "Settings"
+
+[node name="Content" type="HBoxContainer" parent="SettingsWindow/Frame/Layout/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 24
+
+[node name="SectionList" parent="SettingsWindow/Frame/Layout/Body/Content" instance=ExtResource("4_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(320, 0)
+layout_mode = 2
+sounds = ExtResource("3_sounds")
+
+[node name="Note" type="Label" parent="SettingsWindow/Frame/Layout/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+visible = false
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+text = "Restart the game to apply the changes."
+autowrap_mode = 3
+
+[node name="ActionsSection" type="PanelContainer" parent="SettingsWindow/Frame/Layout/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"FocusSection"
+script = ExtResource("5_focus")
+
+[node name="ActionButtons" type="HBoxContainer" parent="SettingsWindow/Frame/Layout/Body/ActionsSection"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 12
+script = ExtResource("9_action_buttons")
+tab_walks_buttons = false
+
+[node name="DefaultsButton" type="Button" parent="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+size_flags_horizontal = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("8_button")
+text = "Reset to defaults"
+
+[node name="DiscardButton" type="Button" parent="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("8_button")
+intent = 3
+text = "Discard changes"
+
+[node name="SaveButton" type="Button" parent="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("8_button")
+intent = 1
+text = "Save"
+
+[node name="DiscardDialog" parent="SettingsWindow" instance=ExtResource("6_dialog")]
+unique_name_in_owner = true
+title = "Discard changes"
+message = "Discard the changes?"
+confirm_text = "Discard changes"
+back_text = "Back"
+confirm_intent = 3
+
+[node name="CloseDialog" parent="SettingsWindow" instance=ExtResource("6_dialog")]
+unique_name_in_owner = true
+title = "Settings"
+message = "Save the changes?"
+confirm_text = "Save"
+alternative_text = "Discard changes"
+alternative_intent = 3
+back_text = "Back"
+
+[node name="RestartDialog" parent="SettingsWindow" instance=ExtResource("6_dialog")]
+unique_name_in_owner = true
+title = "Restart required"
+message = "Some of the changes take effect after the game is restarted. Restart it now?"
+confirm_text = "Restart"
+back_text = "Later"
+confirm_intent = 2
+
+[connection signal="close_requested" from="SettingsWindow" to="." method="ask_save_or_discard"]
+[connection signal="window_input" from="SettingsWindow" to="." method="_on_settings_window_window_input"]
+[connection signal="activated" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="focus_page"]
+[connection signal="cancelled" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="ask_save_or_discard"]
+[connection signal="focus_requested" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="focus_section_list"]
+[connection signal="item_selected" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="_on_section_list_item_selected"]
+[connection signal="navigate_down" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="focus_actions"]
+[connection signal="navigate_right" from="SettingsWindow/Frame/Layout/Body/Content/SectionList" to="." method="focus_page"]
+[connection signal="cancelled" from="SettingsWindow/Frame/Layout/Body/ActionsSection" to="." method="ask_save_or_discard"]
+[connection signal="navigate_up" from="SettingsWindow/Frame/Layout/Body/ActionsSection" to="." method="focus_page"]
+[connection signal="pressed" from="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons/DefaultsButton" to="." method="restore_defaults"]
+[connection signal="pressed" from="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons/DiscardButton" to="." method="cancel"]
+[connection signal="pressed" from="SettingsWindow/Frame/Layout/Body/ActionsSection/ActionButtons/SaveButton" to="." method="save"]
+[connection signal="confirmed" from="SettingsWindow/DiscardDialog" to="." method="discard"]
+[connection signal="confirmed" from="SettingsWindow/CloseDialog" to="." method="save"]
+[connection signal="alternative_chosen" from="SettingsWindow/CloseDialog" to="." method="discard"]
+
+[editable path="SettingsWindow"]
+[connection signal="confirmed" from="SettingsWindow/RestartDialog" to="." method="restart"]
+[connection signal="dismissed" from="SettingsWindow/RestartDialog" to="." method="_close"]

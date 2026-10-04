@@ -41,9 +41,6 @@ msgstr "Opustit scenérii a vrátit se do menu?"
 msgid "MaSzyna game folder data is not set or invalid."
 msgstr "Složka s daty hry MaSzyna není nastavena nebo je neplatná."
 
-msgid "Controls"
-msgstr "Ovládání"
-
 msgid "View"
 msgstr "Zobrazení"
 
@@ -935,6 +932,9 @@ msgstr ""
 msgid "Brake handle"
 msgstr ""
 
+msgid "None"
+msgstr "Žádné"
+
 msgid "Disabled"
 msgstr ""
 
@@ -1200,3 +1200,454 @@ msgstr "Otevřít hlášení"
 
 msgid "OK"
 msgstr "OK"
+
+msgid "Scenery"
+msgstr "Scenérie"
+
+
+msgid "Improved railway lights visibility"
+msgstr "Lepší viditelnost železničních světel"
+
+msgid "Railway lights point size multiplier"
+msgstr "Násobič velikosti bodu železničních světel"
+
+msgid "Railway lights glare intensity"
+msgstr "Intenzita záře železničních světel"
+
+msgid "Railway lights glare fade start"
+msgstr "Začátek slábnutí záře železničních světel"
+
+msgid "Railway lights glare rotation ratio"
+msgstr "Poměr rotace záře železničních světel"
+
+msgid "Railway lights glare edge size"
+msgstr "Velikost okraje záře železničních světel"
+
+msgid "Railway lights glare minimum screen size"
+msgstr "Minimální velikost záře železničních světel na obrazovce"
+
+msgid "Shadows"
+msgstr "Stíny"
+
+msgid "Shadow mode"
+msgstr "Režim stínů"
+
+msgid "Orthogonal"
+msgstr "Ortogonální"
+
+msgid "PSSM 2 Splits"
+msgstr "PSSM, 2 dělení"
+
+msgid "PSSM 4 Splits"
+msgstr "PSSM, 4 dělení"
+
+msgid "Shadow distance"
+msgstr "Dosah stínů"
+
+msgid "Shadow blur"
+msgstr "Rozostření stínů"
+
+msgid "Shadow opacity"
+msgstr "Krytí stínů"
+
+msgid "Shadow bias"
+msgstr "Posun stínů"
+
+msgid "Shadow normal bias"
+msgstr "Posun stínů podél normály"
+
+msgid "Blend shadow splits"
+msgstr "Plynulé přechody mezi děleními stínů"
+
+msgid "Shadow split 1"
+msgstr "Dělení stínů 1"
+
+msgid "Shadow split 2"
+msgstr "Dělení stínů 2"
+
+msgid "Shadow split 3"
+msgstr "Dělení stínů 3"
+
+msgid "Lights off"
+msgstr "Světla vypnuta"
+
+msgid "Economy"
+msgstr "Úsporná"
+
+msgid "High quality"
+msgstr "Vysoká kvalita"
+
+msgid "Scenery lights distance"
+msgstr "Dosah světel scenérie"
+
+msgid "Scenery lights cast shadows"
+msgstr "Světla scenérie vrhají stíny"
+
+msgid "Economy light height offset"
+msgstr "Výškový posun světel v úsporném režimu"
+
+msgid "Economy light cone scale"
+msgstr "Měřítko kužele světel v úsporném režimu"
+
+msgid "Light size"
+msgstr "Velikost světla"
+
+msgid "Light energy"
+msgstr "Energie světla"
+
+msgid "Light tint"
+msgstr "Zabarvení světla"
+
+msgid "Light volumetric fog energy"
+msgstr "Energie světla v objemové mlze"
+
+msgid "Lamp height offset"
+msgstr "Výškový posun lamp"
+
+msgid "Lamp cone scale"
+msgstr "Měřítko kužele lamp"
+
+msgid "Lamp attenuation"
+msgstr "Útlum světla lamp"
+
+msgid "Sun altitude of full night"
+msgstr "Výška slunce za plné noci"
+
+msgid "Sun altitude of full day"
+msgstr "Výška slunce za plného dne"
+
+msgid "Cabin"
+msgstr "Kabina"
+
+msgid "Improved cabin shadows"
+msgstr "Lepší stíny v kabině"
+
+msgid "Indicator glow"
+msgstr "Záře kontrolek"
+
+msgid "Indicator glow energy"
+msgstr "Energie záře kontrolek"
+
+msgid "Indicator glow range"
+msgstr "Dosah záře kontrolek"
+
+msgid "Real instrument lights"
+msgstr "Skutečné podsvícení přístrojů"
+
+msgid "Instrument glow energy"
+msgstr "Energie podsvícení přístrojů"
+
+msgid "Instrument glow range"
+msgstr "Dosah podsvícení přístrojů"
+
+msgid "Cab display glow"
+msgstr "Záře displejů v kabině"
+
+msgid "Cab display glow energy"
+msgstr "Energie záře displejů v kabině"
+
+msgid "Cab display glow range"
+msgstr "Dosah záře displejů v kabině"
+
+msgid "Vehicle detail distance"
+msgstr "Vzdálenost detailů vozidel"
+
+msgid "Real mirrors"
+msgstr "Skutečná zrcátka"
+
+msgid "Smoke"
+msgstr "Kouř"
+
+msgid "Smoke enabled"
+msgstr "Zapnout kouř"
+
+msgid "Smoke generator"
+msgstr "Generátor kouře"
+
+msgid "Original"
+msgstr "Původní"
+
+msgid "Modern"
+msgstr "Moderní"
+
+msgid "Vehicle smoke distance"
+msgstr "Dosah kouře vozidel"
+
+msgid "Vehicle smoke density"
+msgstr "Hustota kouře vozidel"
+
+msgid "Vehicle smoke lifetime"
+msgstr "Životnost kouře vozidel"
+
+msgid "Vehicle smoke particles"
+msgstr "Částice kouře vozidel"
+
+msgid "Scenery smoke distance"
+msgstr "Dosah kouře scenérie"
+
+msgid "Scenery smoke density"
+msgstr "Hustota kouře scenérie"
+
+msgid "Scenery smoke lifetime"
+msgstr "Životnost kouře scenérie"
+
+msgid "Scenery smoke particles"
+msgstr "Částice kouře scenérie"
+
+msgid "Wind turbulence"
+msgstr "Turbulence větru"
+
+msgid "Fog curve"
+msgstr "Křivka mlhy"
+
+msgid "Fog sky height"
+msgstr "Výška mlhy na obloze"
+
+msgid "Aerial perspective"
+msgstr "Vzdušná perspektiva"
+
+msgid "Fog scenery distance factor"
+msgstr "Činitel vzdálenosti mlhy ve scenérii"
+
+msgid "Fog day distance factor"
+msgstr "Činitel vzdálenosti mlhy ve dne"
+
+msgid "Fog night distance factor"
+msgstr "Činitel vzdálenosti mlhy v noci"
+
+msgid "Volumetric fog energy"
+msgstr "Energie objemové mlhy"
+
+msgid "Volumetric fog length scale"
+msgstr "Délkové měřítko objemové mlhy"
+
+msgid "Volumetric fog minimum"
+msgstr "Minimum objemové mlhy"
+
+msgid "Volumetric fog far falloff"
+msgstr "Útlum objemové mlhy v dálce"
+
+msgid "Rain fog distance"
+msgstr "Dosah mlhy za deště"
+
+msgid "Rain fog density"
+msgstr "Hustota mlhy za deště"
+
+msgid "Rain density"
+msgstr "Hustota deště"
+
+msgid "Rain streak visibility"
+msgstr "Viditelnost dešťových čar"
+
+msgid "Rain height above camera"
+msgstr "Výška deště nad kamerou"
+
+msgid "Rain wind boost"
+msgstr "Zesílení větru za deště"
+
+msgid "Rain tilt by wind"
+msgstr "Sklon deště větrem"
+
+msgid "Near rain speed multiplier"
+msgstr "Násobič rychlosti blízkého deště"
+
+msgid "Near rain blur"
+msgstr "Rozostření blízkého deště"
+
+msgid "Near rain glow"
+msgstr "Záře blízkého deště"
+
+msgid "Distant rain blur"
+msgstr "Rozostření vzdáleného deště"
+
+msgid "Rain roughness"
+msgstr "Drsnost dešťových kapek"
+
+msgid "Rain specular fade start"
+msgstr "Začátek slábnutí lesku deště"
+
+msgid "Rain specular fade end"
+msgstr "Konec slábnutí lesku deště"
+
+msgid "Rain probe count"
+msgstr "Počet sond deště"
+
+msgid "Rain probe distance"
+msgstr "Dosah sond deště"
+
+msgid "Sound"
+msgstr "Zvuk"
+
+msgid "Sound culling distance"
+msgstr "Dosah slyšitelnosti zvuků"
+
+msgid "External view minimum distance"
+msgstr "Minimální vzdálenost vnějšího pohledu"
+
+msgid "External view maximum distance"
+msgstr "Maximální vzdálenost vnějšího pohledu"
+
+msgid "Follow jump distance"
+msgstr "Vzdálenost skoku při sledování"
+
+msgid "Simulation"
+msgstr "Simulace"
+
+msgid "Simulation speed change time"
+msgstr "Doba změny rychlosti simulace"
+
+msgid "Graphics"
+msgstr "Grafika"
+
+msgid "Multisample anti-aliasing"
+msgstr "Vyhlazování hran MSAA"
+
+msgid "Screen-space anti-aliasing"
+msgstr "Vyhlazování hran v prostoru obrazovky"
+
+msgid "Temporal anti-aliasing (TAA)"
+msgstr "Časové vyhlazování (TAA)"
+
+msgid "Ambient occlusion (SSAO)"
+msgstr "Okolní zastínění (SSAO)"
+
+msgid "Indirect lighting (SSIL)"
+msgstr "Nepřímé osvětlení (SSIL)"
+
+msgid "Reflections (SSR)"
+msgstr "Odrazy (SSR)"
+
+msgid "Global illumination (SDFGI)"
+msgstr "Globální osvětlení (SDFGI)"
+
+msgid "Volumetric fog"
+msgstr "Objemová mlha"
+
+msgid "Glow"
+msgstr "Záře (glow)"
+
+msgid "Glow intensity"
+msgstr "Intenzita záře"
+
+msgid "Bloom intensity"
+msgstr "Intenzita rozptylu světla (bloom)"
+
+msgid "Gamma"
+msgstr "Gama"
+
+msgid "Vertical sync"
+msgstr "Vertikální synchronizace"
+
+msgid "Cancel"
+msgstr "Zrušit"
+
+msgid "Apply"
+msgstr "Použít"
+
+msgid "Save"
+msgstr "Uložit"
+
+msgid "Simulator"
+msgstr "Simulátor"
+
+msgid "Reset to defaults"
+msgstr "Obnovit výchozí"
+
+msgid "Discard changes"
+msgstr "Zahodit změny"
+
+msgid "Back"
+msgstr "Zpět"
+
+msgid "Discard the changes?"
+msgstr "Zahodit změny?"
+
+msgid "Save the changes?"
+msgstr "Uložit změny?"
+
+msgid "Advanced"
+msgstr "Pokročilé"
+
+msgid "Reset to default"
+msgstr "Obnovit výchozí"
+
+msgid "Display"
+msgstr "Zobrazení"
+
+msgid "Mode"
+msgstr "Režim"
+
+msgid "Windowed"
+msgstr "V okně"
+
+msgid "Fullscreen"
+msgstr "Celá obrazovka"
+
+msgid "Resolution"
+msgstr "Rozlišení"
+
+msgid "HDR output (experimental)"
+msgstr "Výstup HDR (experimentální)"
+
+msgid "Debug"
+msgstr "Ladění"
+
+msgid "Enable file logging"
+msgstr "Zapisovat log do souboru"
+
+msgid "Log folder"
+msgstr "Složka logů"
+
+msgid "Show in file manager"
+msgstr "Zobrazit ve správci souborů"
+
+msgid "Restart required"
+msgstr "Vyžadován restart"
+
+msgid "Some of the changes take effect after the game is restarted. Restart it now?"
+msgstr "Některé změny se projeví po restartu hry. Restartovat ji nyní?"
+
+msgid "Restart"
+msgstr "Restartovat"
+
+msgid "Later"
+msgstr "Později"
+
+msgid "Restart the game to apply the changes."
+msgstr "Restartujte hru, aby se změny projevily."
+
+msgid "Sunshafts"
+msgstr "Sluneční paprsky"
+
+msgid "Sunshaft intensity"
+msgstr "Intenzita slunečních paprsků"
+
+msgid "Sunshaft density"
+msgstr "Hustota slunečních paprsků"
+
+msgid "Sunshaft brightness threshold"
+msgstr "Práh jasu slunečních paprsků"
+
+msgid "Sunshaft sample weight"
+msgstr "Váha vzorku slunečních paprsků"
+
+msgid "Sunshaft decay"
+msgstr "Útlum slunečních paprsků"
+
+msgid "Sunshaft exposure"
+msgstr "Expozice slunečních paprsků"
+
+msgid "Sunshaft reach"
+msgstr "Dosah slunečních paprsků"
+
+msgid "Sunshaft cloud occlusion"
+msgstr "Zakrytí paprsků mraky"
+
+msgid "Sunshaft cloud falloff"
+msgstr "Průběh zakrytí mraky"
+
+msgid "Sunshaft sample count"
+msgstr "Počet vzorků slunečních paprsků"
+
+msgid "Diagnostics"
+msgstr "Diagnostika"

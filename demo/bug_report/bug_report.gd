@@ -23,6 +23,8 @@ var _started_msec: int = 0
 var _paused_by_report: bool = false
 ## The state read when the report opened
 var _snapshot: Dictionary = {}
+## The issue the last sent report became, opened from the confirmation
+var _issue_url: String = ""
 
 
 ## The scenery being started, null when it is left; its recorder runs in between
@@ -95,15 +97,15 @@ func send_report() -> void:
     )
 
 
-## Sent: the issue's link in a confirmation, and the simulation stays paused until it is closed;
+## Sent: a confirmation that can open the issue, and the simulation stays paused until it is closed;
 ## an endpoint that gives no link just closes the form
 func _on_report_sent(issue_url: String) -> void:
     if not issue_url:
         close_report()
         return
     %ReportDialog.hide()
-    %IssueLink.uri = issue_url
-    %SentDialog.popup_centered()
+    _issue_url = issue_url
+    %SentDialog.ask()
 
 
 ## The button at the right edge, in the selector and in a running scenery
@@ -115,3 +117,8 @@ func show_edge_button() -> void:
 func hide_edge_button() -> void:
     %EdgeButton.retract()
     %EdgeButton.visible = false
+
+
+func _on_sent_dialog_alternative_chosen() -> void:
+    OS.shell_open(_issue_url)
+    close_report()

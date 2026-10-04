@@ -193,6 +193,8 @@ namespace godot {
             HashMap<RID, Trainset> trainsets;
             void _on_vehicle_configured(const RID &p_vehicle);
             bool diagnostics = false;
+            /// The diagnostics follow their setting
+            void _on_project_settings_changed();
             /* The rail vehicles on each track, rebuilt once a step (neighbour_index_rebuild()),
              * kept as a member so the step allocates nothing per frame */
             HashMap<RID, Vector<RID>> track_vehicles;

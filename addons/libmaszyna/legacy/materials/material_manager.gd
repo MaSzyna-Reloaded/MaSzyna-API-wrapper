@@ -32,7 +32,8 @@ const RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT: float = 0.4
 const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING: StringName = &"maszyna/scenery/railway_lights_glare_min_screen_size"
 const RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT: float = 0.03
 
-## The point with its glare, built in _ready() when RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is on
+## The point with its glare, shared by every free spotlight; drawn at no size while
+## RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING is off
 var _free_spotlight_material: ShaderMaterial = null
 var _managed_materials: Dictionary = {}
 ## Weak, like _managed_materials: a texture goes, from RAM and VRAM, with the last material using it
@@ -78,23 +79,12 @@ class MaterialOptions:
 
 
 func _ready() -> void:
-    if ProjectSettings.get_setting(RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING, true):
-        var glare: ShaderMaterial = FREE_SPOTLIGHT_GLARE_MATERIAL.duplicate()
-        glare.set_shader_parameter("glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
-        glare.set_shader_parameter("glare_intensity", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_GLARE_INTENSITY_SETTING, RAILWAY_LIGHTS_GLARE_INTENSITY_DEFAULT)))
-        glare.set_shader_parameter("glare_fade_start", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_GLARE_FADE_START_SETTING, RAILWAY_LIGHTS_GLARE_FADE_START_DEFAULT)))
-        glare.set_shader_parameter("glare_rotation_ratio", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_SETTING, RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_DEFAULT)))
-        glare.set_shader_parameter("glare_edge_size", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_GLARE_EDGE_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT)))
-        glare.set_shader_parameter("glare_min_screen_size", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT)))
-        _free_spotlight_material = FREE_SPOTLIGHT_MATERIAL.duplicate()
-        _free_spotlight_material.set_shader_parameter("point_size_multiplier", float(ProjectSettings.get_setting(
-            RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)))
-        _free_spotlight_material.next_pass = glare
+    var glare: ShaderMaterial = FREE_SPOTLIGHT_GLARE_MATERIAL.duplicate()
+    glare.set_shader_parameter("glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
+    _free_spotlight_material = FREE_SPOTLIGHT_MATERIAL.duplicate()
+    _free_spotlight_material.next_pass = glare
+    _apply_railway_lights_settings()
+    ProjectSettings.settings_changed.connect(_apply_railway_lights_settings)
     E3DRenderingServer.material_set_resolver(get_submodel_material)
     GameDataServer.cache_clear_requested.connect(clear_cache)
     GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
@@ -102,6 +92,7 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+    ProjectSettings.settings_changed.disconnect(_apply_railway_lights_settings)
     GameDataServer.cache_clear_requested.disconnect(clear_cache)
     GameDataServer.data_unload_requested.disconnect(_on_data_unload_requested)
     GameDataServer.data_reload_requested.disconnect(_on_data_reload_requested)
@@ -115,9 +106,27 @@ func _on_data_unload_requested() -> void:
 
 
 func _on_data_reload_requested() -> void:
-    if _free_spotlight_material:
-        _free_spotlight_material.next_pass.set_shader_parameter(
-            "glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
+    _free_spotlight_material.next_pass.set_shader_parameter(
+        "glare_texture", load_texture("", FREE_SPOTLIGHT_GLARE_TEXTURE))
+
+
+## The shared material follows its settings, so every free spotlight changes at once; off, the
+## point and its glare have no size and no alpha
+func _apply_railway_lights_settings() -> void:
+    var improved: bool = ProjectSettings.get_setting(RAILWAY_LIGHTS_VISIBILITY_IMPROVED_SETTING, true)
+    _free_spotlight_material.set_shader_parameter("point_size_multiplier", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_SETTING, RAILWAY_LIGHTS_POINT_SIZE_MULTIPLIER_DEFAULT)) if improved else 0.0)
+    var glare: ShaderMaterial = _free_spotlight_material.next_pass
+    glare.set_shader_parameter("glare_intensity", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_GLARE_INTENSITY_SETTING, RAILWAY_LIGHTS_GLARE_INTENSITY_DEFAULT)) if improved else 0.0)
+    glare.set_shader_parameter("glare_fade_start", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_GLARE_FADE_START_SETTING, RAILWAY_LIGHTS_GLARE_FADE_START_DEFAULT)))
+    glare.set_shader_parameter("glare_rotation_ratio", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_SETTING, RAILWAY_LIGHTS_GLARE_ROTATION_RATIO_DEFAULT)))
+    glare.set_shader_parameter("glare_edge_size", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_GLARE_EDGE_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_EDGE_SIZE_DEFAULT)))
+    glare.set_shader_parameter("glare_min_screen_size", float(ProjectSettings.get_setting(
+        RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_SETTING, RAILWAY_LIGHTS_GLARE_MIN_SCREEN_SIZE_DEFAULT)))
 
 
 func clear_cache() -> void:

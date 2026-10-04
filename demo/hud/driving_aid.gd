@@ -14,10 +14,6 @@ extends Control
 enum Style { CARDS, TEXT }
 ## Project Setting choosing the Style
 const STYLE_SETTING:String = "hud/driving_aid/style"
-## Laid over each tile for Style.TEXT: no frame, a faint black background
-const TEXT_THEME:Theme = preload("driving_aid_text_theme.tres")
-## ... and its background: darker over a bright scene
-const CONTRAST_SHADER:Shader = preload("driving_aid_contrast.gdshader")
 ## A dark lamp greyed out over a dark scene
 const LAMP_SHADER:Shader = preload("driving_aid_lamp.gdshader")
 const METRES_PER_KILOMETRE:float = 1000.0
@@ -55,15 +51,12 @@ func _ready() -> void:
         apply_style(tile)
 
 
-## A tile laid out in the Style the project chooses - Style.TEXT: the text theme, over a background
-## darker where the scene behind is bright. For every tile of the HUD alike (SimulationSpeedPanel).
-static func apply_style(tile:Control) -> void:
+## A tile laid out in the Style the project chooses - Style.TEXT: the chip's text look (UIChip).
+## For every tile of the HUD alike (SimulationSpeedPanel, the streaming spinner).
+static func apply_style(tile:UIChip) -> void:
     if not ProjectSettings.get_setting(STYLE_SETTING, Style.CARDS) == Style.TEXT:
         return
-    var contrast:ShaderMaterial = ShaderMaterial.new()
-    contrast.shader = CONTRAST_SHADER
-    tile.theme = TEXT_THEME
-    tile.material = contrast
+    tile.set_look(UIChip.Look.TEXT)
 
 
 ## The vehicle whose aid is shown; an invalid RID hides the tiles

@@ -8,7 +8,6 @@ visible = false
 custom_minimum_size = Vector2(200, 0)
 mouse_default_cursor_shape = 2
 theme = ExtResource("2_theme")
-theme_type_variation = &"FloatingChip"
 script = ExtResource("1_chip")
 
 [node name="Layout" type="HBoxContainer" parent="."]

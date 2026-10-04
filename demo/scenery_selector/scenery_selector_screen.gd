@@ -7,6 +7,8 @@ extends Control
 signal scenery_selected(filename: String, train_id: String, skin_overrides: Dictionary)
 ## Escape - the game fades out and quits
 signal quit_requested
+## The gear - the settings are the game's, not this screen's
+signal settings_requested
 
 const DISSOLVE_TIME: float = 1.0
 ## Project Setting: sceneries listed in folded groups by the first part of their title
@@ -54,6 +56,8 @@ func _ready() -> void:
     _ui_sounds = SfxPlayer.new()
     _ui_sounds.bank = UI_SOUNDS
     add_child(_ui_sounds)
+    # shown over the screen on every launch, until the player acknowledges it
+    %DevelopmentNotice.ask()
     _sections.assign([
         %SceneryList, %TrainsetList, %TrainsetGrid, %VehicleViewer.get_skins_section(),
         %ActionsSection
@@ -120,11 +124,18 @@ func request_quit() -> void:
     quit_requested.emit()
 
 
-## Tab alone: every section takes its own keys, Escape included, while it has the focus.
+func request_settings() -> void:
+    settings_requested.emit()
+
+
+## Tab alone: every section takes its own keys, Escape included, while it has the focus. F11 opens
+## the settings, as the gear does.
 func _input(event: InputEvent) -> void:
     if not visible or not %Content.visible:
         return
-    if event.is_action_pressed("menu_next_section", false, true):
+    if event.is_action_pressed("settings_open", false, true):
+        request_settings()
+    elif event.is_action_pressed("menu_next_section", false, true):
         _change_section(1)
     elif event.is_action_pressed("menu_previous_section", false, true):
         _change_section(-1)
@@ -269,7 +280,7 @@ func _show_details(index: int) -> void:
         %FileName.text = ""
         %Description.text = ""
         %TrainsetsHeader.visible = false
-        %AllTrainsetsCheckBox.visible = false
+        %AllTrainsetsSwitch.visible = false
         %TrainsetList.visible = false
         _listed_trainsets.clear()
         # an empty list reports no selection, which takes the vehicles and "Load" down with it
@@ -286,7 +297,7 @@ func _show_details(index: int) -> void:
             %Image.visible = true
     var has_trainsets: bool = _info.trainsets.size() > 0
     %TrainsetsHeader.visible = has_trainsets
-    %AllTrainsetsCheckBox.visible = has_trainsets
+    %AllTrainsetsSwitch.visible = has_trainsets
     _list_trainsets()
 
 
@@ -298,7 +309,7 @@ func _list_trainsets() -> void:
     var names: PackedStringArray = []
     var notes: PackedStringArray = []
     for trainset: MaszynaSceneryInfo.Trainset in _info.trainsets:
-        if not (trainset.is_occupied() and trainset.is_offered()) and not %AllTrainsetsCheckBox.button_pressed:
+        if not (trainset.is_occupied() and trainset.is_offered()) and not %AllTrainsetsSwitch.button_pressed:
             continue
         _listed_trainsets.append(trainset)
         names.append(_get_trainset_name(trainset))
@@ -308,7 +319,7 @@ func _list_trainsets() -> void:
     %TrainsetList.set_rows(names, notes)
 
 
-func _on_all_trainsets_check_box_toggled(_toggled_on: bool) -> void:
+func _on_all_trainsets_switch_toggled(_toggled_on: bool) -> void:
     _list_trainsets()
 
 
@@ -398,6 +409,6 @@ static func _format_trainset_note(trainset: MaszynaSceneryInfo.Trainset) -> Stri
     return "%d POJAZDÓW" % trainset.vehicles.size()
 
 
-## The development notice shown over the screen on every launch is acknowledged
+## The development notice is acknowledged - its button, Enter or Escape
 func _on_development_notice_acknowledged() -> void:
     _ui_sounds.play(&"notice_acknowledged")

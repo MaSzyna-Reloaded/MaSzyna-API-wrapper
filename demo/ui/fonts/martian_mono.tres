@@ -1,0 +1,10 @@
+[gd_resource type="FontVariation" format=3]
+
+[ext_resource type="FontFile" path="res://ui/fonts/MartianMono.ttf" id="1_martian"]
+
+[resource]
+base_font = ExtResource("1_martian")
+variation_opentype = {
+2003265652: 500,
+2003072104: 87.5
+}

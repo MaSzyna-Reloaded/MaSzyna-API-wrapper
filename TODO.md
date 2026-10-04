@@ -198,6 +198,24 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
   audit cannot tell the player's commands to the driven vehicle from the scenario's or the
   console's.
 
+### Settings screen (`demo/settings/`, 2026-10-04)
+* Every reader follows `ProjectSettings.settings_changed`, in the game and in the editor alike
+  (a scenery's own fog only in the game - the editor keeps the environment saved with the scene).
+  Left: a light a caller makes by hand (`E3DRenderingServer.spot_light_create()`/
+  `omni_light_create()`) keeps the `scenery/lights/size` it was made with.
+* In a scenery the panel pauses nothing, and the world (added under the root after it) takes keys
+  before the panel swallows them - the cab may react to keys meant for the settings.
+* Not on the screen, editor-only: `import/*`, `python/home`, `locale/translations`,
+  `smoke/modern/atlas`, `smoke/modern/atlas_frames`.
+* `settings.json` repeats the readers' defaults: the registration in `libmaszyna.gd` runs only in
+  the editor, so a key missing from `project.godot` has no value at run time. One registrar that
+  runs in the game too would let the screen take hints and defaults from `ProjectSettings`.
+* A drop-down's popup is mouse-only; the keyboard walks its choices with left and right.
+* Weather > Advanced has the rain look of `gnd_weather/*` but its two colours
+  (`near_rain_color`, `mid_rain_color`): the screen has no row for a `Color`.
+* `demo/hud/user_settings_panel.gd` (demo_3d) and the editor dock keep their own widgets; the
+  dock's `render/fxaa_enabled` is read by nothing (the game reads `render/screen_space_aa`).
+
 ## Cabins
 
 * **`CabinSystem` still drives the vehicle's drawing in two places** (`docs/findings-archive.md`,

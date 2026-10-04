@@ -63,6 +63,7 @@ func _ready() -> void:
     CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
     # the MMD and the models are the game directory's
     GameDataServer.data_reload_requested.connect(reload)
+    ProjectSettings.settings_changed.connect(_apply_reverse_cull_face)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
     # placed in a scene rather than built by CabinSystem.vehicle_show_cabin(), which names it itself.
     if controller_path:
@@ -85,6 +86,7 @@ func _exit_tree() -> void:
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
     GameDataServer.data_reload_requested.disconnect(reload)
+    ProjectSettings.settings_changed.disconnect(_apply_reverse_cull_face)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_vehicle_rid(RID())
     _free_occluders()
@@ -216,11 +218,22 @@ func _rebuild_generated() -> void:
     windscreen_wipers.vehicle_rid = get_vehicle_rid()
     _generated.add_child(windscreen_wipers)
     camera_configuration_changed.emit()
+    _apply_reverse_cull_face()
 
     print("MaszynaDynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
         _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
     for d:Dictionary in _diagnostics:
         print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
+
+
+## Every light of the cab draws its shadow map with the faces the setting says
+## (opengl33renderer.cpp:1758) - once the cab is built, and again when the setting changes
+func _apply_reverse_cull_face() -> void:
+    if not _generated:
+        return
+    var reverse:bool = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
+    for light:Node in _generated.find_children("*", "Light3D", true, false):
+        (light as Light3D).shadow_reverse_cull_face = reverse
 
 
 ## Every opaque mesh of the cab model hides the controls behind it from the mouse, as the cab is
@@ -266,7 +279,6 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.name = "CabLight"
     light.light_color = Color(0.9, 0.9 * 216.0 / 255.0, 0.9 * 176.0 / 255.0)
     light.shadow_enabled = true
-    light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     # without a cab model: the top of the camera bounds
     light.position = (definition.bounds_min + definition.bounds_max) * 0.5
     light.position.y = definition.bounds_max.y

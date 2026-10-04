@@ -38,17 +38,26 @@ class Vehicle:
     ## is built
     var sound_mount:Node3D = null
 
+## A mirror's glass is a submodel with nothing under it, named after a mirror - the data marks
+## mirrors by name only: dynamic/pkp/elf_v1 "zwierciadlo", dynamic/pkp/impuls_v1 "szybka_lusterko_l"
+const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
+## Whether the mirror glass reflects the scene (PlanarMirror3D)
+const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
+
 var _cache = ResourceCache.create("rail_vehicle")
 var _vehicles:Dictionary[RID, Vehicle] = {}
 ## Vehicles waiting for their build, in the order they were created; processed while it is not empty
 var _build_queue:Array[RID] = []
 var _auto_rewident:MaszynaLegacyAutoRewident = null
+## REAL_MIRRORS_SETTING as the vehicles' mirrors show it
+var _real_mirrors:bool = ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true)
 
 
 ## The editor drives no vehicle and plays no sound: CabinSystem, TrainSoundSystem and DriverSystem's
 ## drivers are the game's
 func _ready() -> void:
     RailVehicleRenderingServer.vehicle_model_built.connect(_on_vehicle_model_built)
+    ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     if not Engine.is_editor_hint():
         DriverSystem.vehicle_driven_changed.connect(_on_vehicle_driven_changed)
         _auto_rewident = MaszynaLegacyAutoRewident.new()
@@ -214,11 +223,42 @@ func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
             LegacyCabinLogic.from_mmd(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name) if driven else null)
 
 
+## The mirrors come and go with their setting on every exterior built as nodes now; the glass of a
+## mirror taken away gets its own look back (PlanarMirror3D leaving the tree)
+func _on_project_settings_changed() -> void:
+    var real_mirrors:bool = ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true)
+    if real_mirrors == _real_mirrors:
+        return
+    _real_mirrors = real_mirrors
+    for vehicle:RID in _vehicles:
+        var model_root:Node = instance_from_id(E3DRenderingServer.instance_get_attached_node(
+                RailVehicleRenderingServer.vehicle_get_model(vehicle))) as Node
+        if not model_root:
+            continue
+        if real_mirrors:
+            _add_mirrors(model_root)
+            continue
+        for mirror:Node in model_root.find_children("*", "PlanarMirror3D", true, false):
+            mirror.queue_free()
+
+
 ## The exterior built as nodes - near the camera - gets its mirrors, again every time it is built
 func _on_vehicle_model_built(vehicle:RID) -> void:
-    if not _vehicles.has(vehicle):
+    if not _vehicles.has(vehicle) or not _real_mirrors:
         return
     var model_root:Node = instance_from_id(E3DRenderingServer.instance_get_attached_node(
             RailVehicleRenderingServer.vehicle_get_model(vehicle))) as Node
     if model_root:
-        MaszynaRailVehicle3DInstancer.add_mirrors(model_root)
+        _add_mirrors(model_root)
+
+
+## The mirrors' glass reflects the scene: a submodel with nothing under it, named after a mirror,
+## gets a PlanarMirror3D - put on the nodes the exterior is built as near the camera (under
+## `model_root`)
+func _add_mirrors(model_root:Node) -> void:
+    for node:Node in model_root.find_children("*", "MeshInstance3D", true, false):
+        var glass:MeshInstance3D = node as MeshInstance3D
+        var submodel_name:String = glass.name.to_lower()
+        if glass.get_child_count(true) == 0 \
+                and MIRROR_GLASS_NAME_PARTS.any(func(part:String) -> bool: return submodel_name.contains(part)):
+            glass.add_child(PlanarMirror3D.new())

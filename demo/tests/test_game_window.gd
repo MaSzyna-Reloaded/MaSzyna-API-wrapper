@@ -1,9 +1,11 @@
 extends MaszynaGutTest
 
-## The game's window (game_window.gd): it opens fullscreen on the primary screen, Alt+Enter and
-## nothing else switches fullscreen and windowed, and Alt+Enter is never taken for Enter by the
-## menus. Headless, the root window has no screen and its mode never changes, so the switching is
-## run on an embedded Window, which keeps its own mode.
+## The game's window (game_window.gd): it opens fullscreen on the primary screen, takes the mode of
+## the player's Display settings, Alt+Enter and nothing else switches fullscreen and windowed - by
+## changing that setting - and Alt+Enter is never taken for Enter by the menus. Headless, the root
+## window has no screen and its mode never changes, so the switching is run on an embedded Window,
+## which keeps its own mode. The player's settings are set here and loaded back after each test,
+## never saved.
 
 const GAME_WINDOW: GDScript = preload("res://game_window.gd")
 const FOCUS_SECTION: GDScript = preload("res://ui/focus_section.gd")
@@ -13,18 +15,28 @@ const DISPLAY_MODE_SETTING: String = "display/window/size/mode"
 const INITIAL_POSITION_SETTING: String = "display/window/size/initial_position_type"
 ## ProjectSettings' "Center of Primary Screen"
 const INITIAL_POSITION_PRIMARY_SCREEN: int = 1
+## game_window.gd's settings and its Mode values
+const SETTINGS_SECTION: String = "window"
+const MODE_WINDOWED: int = 0
+const MODE_FULLSCREEN: int = 1
 
 var _window: Window = null
 var _game_window: Node = null
 
 
 func before_each() -> void:
+    UserSettings.set_setting(SETTINGS_SECTION, "mode", MODE_FULLSCREEN)
     get_tree().root.gui_embed_subwindows = true
     _window = Window.new()
     _window.mode = Window.MODE_FULLSCREEN
     _game_window = GAME_WINDOW.new()
     _window.add_child(_game_window)
     add_child_autofree(_window)
+
+
+## What the player has saved, back - nothing a test set stays
+func after_each() -> void:
+    UserSettings.load_config()
 
 
 func test_the_game_opens_fullscreen_on_the_primary_screen() -> void:
@@ -52,7 +64,16 @@ func test_alt_enter_is_not_enter_and_enter_is_not_alt_enter() -> void:
 func test_alt_enter_switches_fullscreen_and_windowed() -> void:
     _window.push_input(_key(KEY_ENTER, true))
     assert_eq(_window.mode, Window.MODE_WINDOWED)
+    assert_eq(UserSettings.get_setting(SETTINGS_SECTION, "mode", -1), MODE_WINDOWED)
     _window.push_input(_key(KEY_ENTER, true))
+    assert_eq(_window.mode, Window.MODE_FULLSCREEN)
+    assert_eq(UserSettings.get_setting(SETTINGS_SECTION, "mode", -1), MODE_FULLSCREEN)
+
+
+func test_the_window_takes_the_mode_setting() -> void:
+    UserSettings.set_setting(SETTINGS_SECTION, "mode", MODE_WINDOWED)
+    assert_eq(_window.mode, Window.MODE_WINDOWED)
+    UserSettings.set_setting(SETTINGS_SECTION, "mode", MODE_FULLSCREEN)
     assert_eq(_window.mode, Window.MODE_FULLSCREEN)
 
 

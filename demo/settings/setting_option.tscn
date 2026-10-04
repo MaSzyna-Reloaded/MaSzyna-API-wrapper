@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/setting_option.gd" id="1_option"]
+[ext_resource type="Script" path="res://ui/ui_select.gd" id="ui_select"]
+
+[node name="SettingOption" type="PanelContainer"]
+mouse_filter = 1
+theme_type_variation = &"SettingItem"
+script = ExtResource("1_option")
+
+[node name="Line" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Line"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="Options" type="OptionButton" parent="Line"]
+script = ExtResource("ui_select")
+unique_name_in_owner = true
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+size_flags_vertical = 4
+focus_mode = 0
+mouse_default_cursor_shape = 2
+
+[node name="UnitColumn" type="Control" parent="Line"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ResetColumn" type="Control" parent="Line"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[connection signal="item_selected" from="Line/Options" to="." method="_on_options_item_selected"]

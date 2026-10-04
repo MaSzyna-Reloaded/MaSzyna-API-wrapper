@@ -41,9 +41,6 @@ msgstr "Kilépsz a pályáról és visszatérsz a menübe?"
 msgid "MaSzyna game folder data is not set or invalid."
 msgstr "A MaSzyna játékmappa nincs beállítva vagy érvénytelen."
 
-msgid "Controls"
-msgstr "Kezelőszervek"
-
 msgid "View"
 msgstr "Nézet"
 
@@ -414,7 +411,7 @@ msgid "Owners"
 msgstr "Tulajdonosok"
 
 msgid "Scenery lights"
-msgstr "Pálya fényei"
+msgstr "Tájfények"
 
 msgid "none - nothing is streamed"
 msgstr "nincs - semmi sem töltődik"
@@ -935,6 +932,9 @@ msgstr ""
 msgid "Brake handle"
 msgstr ""
 
+msgid "None"
+msgstr "Nincs"
+
 msgid "Disabled"
 msgstr ""
 
@@ -1200,3 +1200,454 @@ msgstr "Bejelentés megnyitása"
 
 msgid "OK"
 msgstr "OK"
+
+msgid "Scenery"
+msgstr "Táj"
+
+
+msgid "Improved railway lights visibility"
+msgstr "Jobb vasúti fényláthatóság"
+
+msgid "Railway lights point size multiplier"
+msgstr "Vasúti fények pontméret-szorzója"
+
+msgid "Railway lights glare intensity"
+msgstr "Vasúti fények csillogásának erőssége"
+
+msgid "Railway lights glare fade start"
+msgstr "Vasúti fények csillogásának halványulási kezdete"
+
+msgid "Railway lights glare rotation ratio"
+msgstr "Vasúti fények csillogásának forgási aránya"
+
+msgid "Railway lights glare edge size"
+msgstr "Vasúti fények csillogásának szélmérete"
+
+msgid "Railway lights glare minimum screen size"
+msgstr "Vasúti fények csillogásának legkisebb képernyőmérete"
+
+msgid "Shadows"
+msgstr "Árnyékok"
+
+msgid "Shadow mode"
+msgstr "Árnyékmód"
+
+msgid "Orthogonal"
+msgstr "Ortogonális"
+
+msgid "PSSM 2 Splits"
+msgstr "PSSM, 2 felosztás"
+
+msgid "PSSM 4 Splits"
+msgstr "PSSM, 4 felosztás"
+
+msgid "Shadow distance"
+msgstr "Árnyéktávolság"
+
+msgid "Shadow blur"
+msgstr "Árnyékelmosás"
+
+msgid "Shadow opacity"
+msgstr "Árnyék átlátszatlansága"
+
+msgid "Shadow bias"
+msgstr "Árnyékeltolás"
+
+msgid "Shadow normal bias"
+msgstr "Árnyék normál menti eltolása"
+
+msgid "Blend shadow splits"
+msgstr "Árnyékfelosztások összemosása"
+
+msgid "Shadow split 1"
+msgstr "Árnyékfelosztás 1"
+
+msgid "Shadow split 2"
+msgstr "Árnyékfelosztás 2"
+
+msgid "Shadow split 3"
+msgstr "Árnyékfelosztás 3"
+
+msgid "Lights off"
+msgstr "Fények kikapcsolva"
+
+msgid "Economy"
+msgstr "Takarékos"
+
+msgid "High quality"
+msgstr "Magas minőség"
+
+msgid "Scenery lights distance"
+msgstr "Tájfények távolsága"
+
+msgid "Scenery lights cast shadows"
+msgstr "A tájfények árnyékot vetnek"
+
+msgid "Economy light height offset"
+msgstr "Fények magassági eltolása takarékos módban"
+
+msgid "Economy light cone scale"
+msgstr "Fények kúpméretezése takarékos módban"
+
+msgid "Light size"
+msgstr "Fényméret"
+
+msgid "Light energy"
+msgstr "Fényenergia"
+
+msgid "Light tint"
+msgstr "Fény színezése"
+
+msgid "Light volumetric fog energy"
+msgstr "Fény energiája a térfogati ködben"
+
+msgid "Lamp height offset"
+msgstr "Lámpák magassági eltolása"
+
+msgid "Lamp cone scale"
+msgstr "Lámpák kúpméretezése"
+
+msgid "Lamp attenuation"
+msgstr "Lámpafény csillapítása"
+
+msgid "Sun altitude of full night"
+msgstr "Napmagasság teljes éjszakánál"
+
+msgid "Sun altitude of full day"
+msgstr "Napmagasság teljes nappalnál"
+
+msgid "Cabin"
+msgstr "Vezetőfülke"
+
+msgid "Improved cabin shadows"
+msgstr "Jobb árnyékok a vezetőfülkében"
+
+msgid "Indicator glow"
+msgstr "Jelzőlámpák fénye"
+
+msgid "Indicator glow energy"
+msgstr "Jelzőlámpák fényének energiája"
+
+msgid "Indicator glow range"
+msgstr "Jelzőlámpák fényének hatótávja"
+
+msgid "Real instrument lights"
+msgstr "Valódi műszervilágítás"
+
+msgid "Instrument glow energy"
+msgstr "Műszervilágítás energiája"
+
+msgid "Instrument glow range"
+msgstr "Műszervilágítás hatótávja"
+
+msgid "Cab display glow"
+msgstr "Vezetőfülke kijelzőinek fénye"
+
+msgid "Cab display glow energy"
+msgstr "Vezetőfülke kijelzői fényének energiája"
+
+msgid "Cab display glow range"
+msgstr "Vezetőfülke kijelzői fényének hatótávja"
+
+msgid "Vehicle detail distance"
+msgstr "Járműrészletek távolsága"
+
+msgid "Real mirrors"
+msgstr "Valódi tükrök"
+
+msgid "Smoke"
+msgstr "Füst"
+
+msgid "Smoke enabled"
+msgstr "Füst bekapcsolása"
+
+msgid "Smoke generator"
+msgstr "Füstgenerátor"
+
+msgid "Original"
+msgstr "Eredeti"
+
+msgid "Modern"
+msgstr "Modern"
+
+msgid "Vehicle smoke distance"
+msgstr "Járműfüst távolsága"
+
+msgid "Vehicle smoke density"
+msgstr "Járműfüst sűrűsége"
+
+msgid "Vehicle smoke lifetime"
+msgstr "Járműfüst élettartama"
+
+msgid "Vehicle smoke particles"
+msgstr "Járműfüst részecskéi"
+
+msgid "Scenery smoke distance"
+msgstr "Tájfüst távolsága"
+
+msgid "Scenery smoke density"
+msgstr "Tájfüst sűrűsége"
+
+msgid "Scenery smoke lifetime"
+msgstr "Tájfüst élettartama"
+
+msgid "Scenery smoke particles"
+msgstr "Tájfüst részecskéi"
+
+msgid "Wind turbulence"
+msgstr "Szélturbulencia"
+
+msgid "Fog curve"
+msgstr "Ködgörbe"
+
+msgid "Fog sky height"
+msgstr "Köd magassága az égen"
+
+msgid "Aerial perspective"
+msgstr "Légperspektíva"
+
+msgid "Fog scenery distance factor"
+msgstr "Köd tájtávolsági tényezője"
+
+msgid "Fog day distance factor"
+msgstr "Köd nappali távolsági tényezője"
+
+msgid "Fog night distance factor"
+msgstr "Köd éjszakai távolsági tényezője"
+
+msgid "Volumetric fog energy"
+msgstr "Térfogati köd energiája"
+
+msgid "Volumetric fog length scale"
+msgstr "Térfogati köd hosszléptéke"
+
+msgid "Volumetric fog minimum"
+msgstr "Térfogati köd minimuma"
+
+msgid "Volumetric fog far falloff"
+msgstr "Térfogati köd távoli lecsengése"
+
+msgid "Rain fog distance"
+msgstr "Esős köd távolsága"
+
+msgid "Rain fog density"
+msgstr "Esős köd sűrűsége"
+
+msgid "Rain density"
+msgstr "Eső sűrűsége"
+
+msgid "Rain streak visibility"
+msgstr "Esőcsíkok láthatósága"
+
+msgid "Rain height above camera"
+msgstr "Eső magassága a kamera felett"
+
+msgid "Rain wind boost"
+msgstr "Szél erősödése esőben"
+
+msgid "Rain tilt by wind"
+msgstr "Eső dőlése a széltől"
+
+msgid "Near rain speed multiplier"
+msgstr "Közeli eső sebességszorzója"
+
+msgid "Near rain blur"
+msgstr "Közeli eső elmosása"
+
+msgid "Near rain glow"
+msgstr "Közeli eső ragyogása"
+
+msgid "Distant rain blur"
+msgstr "Távoli eső elmosása"
+
+msgid "Rain roughness"
+msgstr "Esőcseppek érdessége"
+
+msgid "Rain specular fade start"
+msgstr "Eső csillanásának halványulási kezdete"
+
+msgid "Rain specular fade end"
+msgstr "Eső csillanásának halványulási vége"
+
+msgid "Rain probe count"
+msgstr "Esőszondák száma"
+
+msgid "Rain probe distance"
+msgstr "Esőszondák hatótávja"
+
+msgid "Sound"
+msgstr "Hang"
+
+msgid "Sound culling distance"
+msgstr "Hangok hallótávolsága"
+
+msgid "External view minimum distance"
+msgstr "Külső nézet legkisebb távolsága"
+
+msgid "External view maximum distance"
+msgstr "Külső nézet legnagyobb távolsága"
+
+msgid "Follow jump distance"
+msgstr "Követési ugrás távolsága"
+
+msgid "Simulation"
+msgstr "Szimuláció"
+
+msgid "Simulation speed change time"
+msgstr "Szimulációs sebesség váltási ideje"
+
+msgid "Graphics"
+msgstr "Grafika"
+
+msgid "Multisample anti-aliasing"
+msgstr "MSAA élsimítás"
+
+msgid "Screen-space anti-aliasing"
+msgstr "Képernyőtéri élsimítás"
+
+msgid "Temporal anti-aliasing (TAA)"
+msgstr "Időbeli élsimítás (TAA)"
+
+msgid "Ambient occlusion (SSAO)"
+msgstr "Környezeti takarás (SSAO)"
+
+msgid "Indirect lighting (SSIL)"
+msgstr "Közvetett megvilágítás (SSIL)"
+
+msgid "Reflections (SSR)"
+msgstr "Tükröződések (SSR)"
+
+msgid "Global illumination (SDFGI)"
+msgstr "Globális megvilágítás (SDFGI)"
+
+msgid "Volumetric fog"
+msgstr "Térfogati köd"
+
+msgid "Glow"
+msgstr "Ragyogás (glow)"
+
+msgid "Glow intensity"
+msgstr "Ragyogás erőssége"
+
+msgid "Bloom intensity"
+msgstr "Fényszóródás erőssége (bloom)"
+
+msgid "Gamma"
+msgstr "Gamma"
+
+msgid "Vertical sync"
+msgstr "Függőleges szinkronizálás"
+
+msgid "Cancel"
+msgstr "Mégse"
+
+msgid "Apply"
+msgstr "Alkalmaz"
+
+msgid "Save"
+msgstr "Mentés"
+
+msgid "Simulator"
+msgstr "Szimulátor"
+
+msgid "Reset to defaults"
+msgstr "Alapértelmezések visszaállítása"
+
+msgid "Discard changes"
+msgstr "Módosítások elvetése"
+
+msgid "Back"
+msgstr "Vissza"
+
+msgid "Discard the changes?"
+msgstr "Elveti a módosításokat?"
+
+msgid "Save the changes?"
+msgstr "Menti a módosításokat?"
+
+msgid "Advanced"
+msgstr "Speciális"
+
+msgid "Reset to default"
+msgstr "Alapértelmezés visszaállítása"
+
+msgid "Display"
+msgstr "Megjelenítés"
+
+msgid "Mode"
+msgstr "Mód"
+
+msgid "Windowed"
+msgstr "Ablakos"
+
+msgid "Fullscreen"
+msgstr "Teljes képernyő"
+
+msgid "Resolution"
+msgstr "Felbontás"
+
+msgid "HDR output (experimental)"
+msgstr "HDR-kimenet (kísérleti)"
+
+msgid "Debug"
+msgstr "Hibakeresés"
+
+msgid "Enable file logging"
+msgstr "Napló fájlba írása"
+
+msgid "Log folder"
+msgstr "Naplómappa"
+
+msgid "Show in file manager"
+msgstr "Megjelenítés a fájlkezelőben"
+
+msgid "Restart required"
+msgstr "Újraindítás szükséges"
+
+msgid "Some of the changes take effect after the game is restarted. Restart it now?"
+msgstr "Egyes változások a játék újraindítása után lépnek életbe. Újraindítja most?"
+
+msgid "Restart"
+msgstr "Újraindítás"
+
+msgid "Later"
+msgstr "Később"
+
+msgid "Restart the game to apply the changes."
+msgstr "Indítsa újra a játékot a változások alkalmazásához."
+
+msgid "Sunshafts"
+msgstr "Napsugarak"
+
+msgid "Sunshaft intensity"
+msgstr "Napsugarak erőssége"
+
+msgid "Sunshaft density"
+msgstr "Napsugarak sűrűsége"
+
+msgid "Sunshaft brightness threshold"
+msgstr "Napsugarak fényességi küszöbe"
+
+msgid "Sunshaft sample weight"
+msgstr "Napsugár-minták súlya"
+
+msgid "Sunshaft decay"
+msgstr "Napsugarak lecsengése"
+
+msgid "Sunshaft exposure"
+msgstr "Napsugarak expozíciója"
+
+msgid "Sunshaft reach"
+msgstr "Napsugarak kiterjedése"
+
+msgid "Sunshaft cloud occlusion"
+msgstr "Napsugarak felhő általi takarása"
+
+msgid "Sunshaft cloud falloff"
+msgstr "Felhőtakarás görbéje"
+
+msgid "Sunshaft sample count"
+msgstr "Napsugarak mintaszáma"
+
+msgid "Diagnostics"
+msgstr "Diagnosztika"

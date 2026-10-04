@@ -41,9 +41,6 @@ msgstr "离开场景并返回菜单？"
 msgid "MaSzyna game folder data is not set or invalid."
 msgstr "未设置 MaSzyna 游戏数据文件夹或其无效。"
 
-msgid "Controls"
-msgstr "控制"
-
 msgid "View"
 msgstr "视图"
 
@@ -935,6 +932,9 @@ msgstr ""
 msgid "Brake handle"
 msgstr ""
 
+msgid "None"
+msgstr "无"
+
 msgid "Disabled"
 msgstr ""
 
@@ -1200,3 +1200,454 @@ msgstr "打开报告"
 
 msgid "OK"
 msgstr "确定"
+
+msgid "Scenery"
+msgstr "场景"
+
+
+msgid "Improved railway lights visibility"
+msgstr "增强铁路灯光可见度"
+
+msgid "Railway lights point size multiplier"
+msgstr "铁路灯光点大小倍数"
+
+msgid "Railway lights glare intensity"
+msgstr "铁路灯光眩光强度"
+
+msgid "Railway lights glare fade start"
+msgstr "铁路灯光眩光渐隐起点"
+
+msgid "Railway lights glare rotation ratio"
+msgstr "铁路灯光眩光旋转比例"
+
+msgid "Railway lights glare edge size"
+msgstr "铁路灯光眩光边缘大小"
+
+msgid "Railway lights glare minimum screen size"
+msgstr "铁路灯光眩光最小屏幕尺寸"
+
+msgid "Shadows"
+msgstr "阴影"
+
+msgid "Shadow mode"
+msgstr "阴影模式"
+
+msgid "Orthogonal"
+msgstr "正交"
+
+msgid "PSSM 2 Splits"
+msgstr "PSSM 2 分割"
+
+msgid "PSSM 4 Splits"
+msgstr "PSSM 4 分割"
+
+msgid "Shadow distance"
+msgstr "阴影距离"
+
+msgid "Shadow blur"
+msgstr "阴影模糊"
+
+msgid "Shadow opacity"
+msgstr "阴影不透明度"
+
+msgid "Shadow bias"
+msgstr "阴影偏移"
+
+msgid "Shadow normal bias"
+msgstr "阴影法线偏移"
+
+msgid "Blend shadow splits"
+msgstr "混合阴影分割"
+
+msgid "Shadow split 1"
+msgstr "阴影分割 1"
+
+msgid "Shadow split 2"
+msgstr "阴影分割 2"
+
+msgid "Shadow split 3"
+msgstr "阴影分割 3"
+
+msgid "Lights off"
+msgstr "关闭灯光"
+
+msgid "Economy"
+msgstr "经济"
+
+msgid "High quality"
+msgstr "高质量"
+
+msgid "Scenery lights distance"
+msgstr "场景灯光距离"
+
+msgid "Scenery lights cast shadows"
+msgstr "场景灯光投射阴影"
+
+msgid "Economy light height offset"
+msgstr "经济模式灯光高度偏移"
+
+msgid "Economy light cone scale"
+msgstr "经济模式灯光锥体缩放"
+
+msgid "Light size"
+msgstr "灯光大小"
+
+msgid "Light energy"
+msgstr "灯光能量"
+
+msgid "Light tint"
+msgstr "灯光色调"
+
+msgid "Light volumetric fog energy"
+msgstr "灯光体积雾能量"
+
+msgid "Lamp height offset"
+msgstr "路灯高度偏移"
+
+msgid "Lamp cone scale"
+msgstr "路灯锥体缩放"
+
+msgid "Lamp attenuation"
+msgstr "路灯衰减"
+
+msgid "Sun altitude of full night"
+msgstr "完全入夜时的太阳高度"
+
+msgid "Sun altitude of full day"
+msgstr "完全白昼时的太阳高度"
+
+msgid "Cabin"
+msgstr "驾驶室"
+
+msgid "Improved cabin shadows"
+msgstr "增强驾驶室阴影"
+
+msgid "Indicator glow"
+msgstr "指示灯辉光"
+
+msgid "Indicator glow energy"
+msgstr "指示灯辉光能量"
+
+msgid "Indicator glow range"
+msgstr "指示灯辉光范围"
+
+msgid "Real instrument lights"
+msgstr "真实仪表灯光"
+
+msgid "Instrument glow energy"
+msgstr "仪表辉光能量"
+
+msgid "Instrument glow range"
+msgstr "仪表辉光范围"
+
+msgid "Cab display glow"
+msgstr "驾驶室显示屏辉光"
+
+msgid "Cab display glow energy"
+msgstr "驾驶室显示屏辉光能量"
+
+msgid "Cab display glow range"
+msgstr "驾驶室显示屏辉光范围"
+
+msgid "Vehicle detail distance"
+msgstr "车辆细节距离"
+
+msgid "Real mirrors"
+msgstr "真实后视镜"
+
+msgid "Smoke"
+msgstr "烟雾"
+
+msgid "Smoke enabled"
+msgstr "启用烟雾"
+
+msgid "Smoke generator"
+msgstr "烟雾生成器"
+
+msgid "Original"
+msgstr "原版"
+
+msgid "Modern"
+msgstr "现代"
+
+msgid "Vehicle smoke distance"
+msgstr "车辆烟雾距离"
+
+msgid "Vehicle smoke density"
+msgstr "车辆烟雾密度"
+
+msgid "Vehicle smoke lifetime"
+msgstr "车辆烟雾寿命"
+
+msgid "Vehicle smoke particles"
+msgstr "车辆烟雾粒子数"
+
+msgid "Scenery smoke distance"
+msgstr "场景烟雾距离"
+
+msgid "Scenery smoke density"
+msgstr "场景烟雾密度"
+
+msgid "Scenery smoke lifetime"
+msgstr "场景烟雾寿命"
+
+msgid "Scenery smoke particles"
+msgstr "场景烟雾粒子数"
+
+msgid "Wind turbulence"
+msgstr "风湍流"
+
+msgid "Fog curve"
+msgstr "雾曲线"
+
+msgid "Fog sky height"
+msgstr "雾的天空高度"
+
+msgid "Aerial perspective"
+msgstr "空气透视"
+
+msgid "Fog scenery distance factor"
+msgstr "场景雾距离系数"
+
+msgid "Fog day distance factor"
+msgstr "白天雾距离系数"
+
+msgid "Fog night distance factor"
+msgstr "夜间雾距离系数"
+
+msgid "Volumetric fog energy"
+msgstr "体积雾能量"
+
+msgid "Volumetric fog length scale"
+msgstr "体积雾长度缩放"
+
+msgid "Volumetric fog minimum"
+msgstr "体积雾最小值"
+
+msgid "Volumetric fog far falloff"
+msgstr "体积雾远处衰减"
+
+msgid "Rain fog distance"
+msgstr "雨雾距离"
+
+msgid "Rain fog density"
+msgstr "雨雾密度"
+
+msgid "Rain density"
+msgstr "雨密度"
+
+msgid "Rain streak visibility"
+msgstr "雨丝可见度"
+
+msgid "Rain height above camera"
+msgstr "雨在摄像机上方的高度"
+
+msgid "Rain wind boost"
+msgstr "雨中风力增强"
+
+msgid "Rain tilt by wind"
+msgstr "风致雨倾斜"
+
+msgid "Near rain speed multiplier"
+msgstr "近处雨速度倍数"
+
+msgid "Near rain blur"
+msgstr "近处雨模糊"
+
+msgid "Near rain glow"
+msgstr "近处雨辉光"
+
+msgid "Distant rain blur"
+msgstr "远处雨模糊"
+
+msgid "Rain roughness"
+msgstr "雨滴粗糙度"
+
+msgid "Rain specular fade start"
+msgstr "雨高光渐隐起点"
+
+msgid "Rain specular fade end"
+msgstr "雨高光渐隐终点"
+
+msgid "Rain probe count"
+msgstr "雨探针数量"
+
+msgid "Rain probe distance"
+msgstr "雨探针距离"
+
+msgid "Sound"
+msgstr "声音"
+
+msgid "Sound culling distance"
+msgstr "声音剔除距离"
+
+msgid "External view minimum distance"
+msgstr "外部视角最小距离"
+
+msgid "External view maximum distance"
+msgstr "外部视角最大距离"
+
+msgid "Follow jump distance"
+msgstr "跟随跳转距离"
+
+msgid "Simulation"
+msgstr "模拟"
+
+msgid "Simulation speed change time"
+msgstr "模拟速度变化时间"
+
+msgid "Graphics"
+msgstr "图形"
+
+msgid "Multisample anti-aliasing"
+msgstr "多重采样抗锯齿"
+
+msgid "Screen-space anti-aliasing"
+msgstr "屏幕空间抗锯齿"
+
+msgid "Temporal anti-aliasing (TAA)"
+msgstr "时间抗锯齿 (TAA)"
+
+msgid "Ambient occlusion (SSAO)"
+msgstr "环境光遮蔽 (SSAO)"
+
+msgid "Indirect lighting (SSIL)"
+msgstr "间接光照 (SSIL)"
+
+msgid "Reflections (SSR)"
+msgstr "反射 (SSR)"
+
+msgid "Global illumination (SDFGI)"
+msgstr "全局光照 (SDFGI)"
+
+msgid "Volumetric fog"
+msgstr "体积雾"
+
+msgid "Glow"
+msgstr "辉光"
+
+msgid "Glow intensity"
+msgstr "辉光强度"
+
+msgid "Bloom intensity"
+msgstr "泛光强度"
+
+msgid "Gamma"
+msgstr "伽马"
+
+msgid "Vertical sync"
+msgstr "垂直同步"
+
+msgid "Cancel"
+msgstr "取消"
+
+msgid "Apply"
+msgstr "应用"
+
+msgid "Save"
+msgstr "保存"
+
+msgid "Simulator"
+msgstr "模拟器"
+
+msgid "Reset to defaults"
+msgstr "恢复默认"
+
+msgid "Discard changes"
+msgstr "放弃更改"
+
+msgid "Back"
+msgstr "返回"
+
+msgid "Discard the changes?"
+msgstr "放弃更改？"
+
+msgid "Save the changes?"
+msgstr "保存更改？"
+
+msgid "Advanced"
+msgstr "高级"
+
+msgid "Reset to default"
+msgstr "恢复默认值"
+
+msgid "Display"
+msgstr "显示"
+
+msgid "Mode"
+msgstr "模式"
+
+msgid "Windowed"
+msgstr "窗口"
+
+msgid "Fullscreen"
+msgstr "全屏"
+
+msgid "Resolution"
+msgstr "分辨率"
+
+msgid "HDR output (experimental)"
+msgstr "HDR 输出（实验性）"
+
+msgid "Debug"
+msgstr "调试"
+
+msgid "Enable file logging"
+msgstr "将日志写入文件"
+
+msgid "Log folder"
+msgstr "日志文件夹"
+
+msgid "Show in file manager"
+msgstr "在文件管理器中显示"
+
+msgid "Restart required"
+msgstr "需要重启"
+
+msgid "Some of the changes take effect after the game is restarted. Restart it now?"
+msgstr "部分更改将在游戏重启后生效。现在重启吗？"
+
+msgid "Restart"
+msgstr "重启"
+
+msgid "Later"
+msgstr "稍后"
+
+msgid "Restart the game to apply the changes."
+msgstr "重启游戏以应用更改。"
+
+msgid "Sunshafts"
+msgstr "太阳光束"
+
+msgid "Sunshaft intensity"
+msgstr "太阳光束强度"
+
+msgid "Sunshaft density"
+msgstr "太阳光束密度"
+
+msgid "Sunshaft brightness threshold"
+msgstr "太阳光束亮度阈值"
+
+msgid "Sunshaft sample weight"
+msgstr "太阳光束采样权重"
+
+msgid "Sunshaft decay"
+msgstr "太阳光束衰减"
+
+msgid "Sunshaft exposure"
+msgstr "太阳光束曝光"
+
+msgid "Sunshaft reach"
+msgstr "太阳光束范围"
+
+msgid "Sunshaft cloud occlusion"
+msgstr "云层遮挡太阳光束"
+
+msgid "Sunshaft cloud falloff"
+msgstr "云层遮挡曲线"
+
+msgid "Sunshaft sample count"
+msgstr "太阳光束采样数"
+
+msgid "Diagnostics"
+msgstr "诊断"

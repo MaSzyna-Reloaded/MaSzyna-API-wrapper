@@ -52,9 +52,6 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
-    # the dialog's own buttons, like the card it is drawn as (timetable_theme.tres)
-    $ExitConfirmation.get_ok_button().theme_type_variation = &"CardButtonDefault"
-    $ExitConfirmation.get_cancel_button().theme_type_variation = &"CardButton"
     var exported: bool = OS.has_feature("template")
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if exported:
@@ -157,9 +154,8 @@ func _on_scenery_selector_quit_requested() -> void:
 ## Unloading a scenery stalls the main thread (thousands of nodes), so it happens behind the
 ## spinner: the game fades into it, and it fades into the scenario selector
 func _on_exit_to_menu_pressed() -> void:
-    $ExitConfirmation.popup_centered()
-    # the vigilance button is on space, which must not confirm leaving the scenery
-    $ExitConfirmation.get_cancel_button().grab_focus()
+    # it takes every key while shown, so the vigilance button's space does not reach the cab
+    %ExitConfirmation.ask()
 
 
 func _exit_to_menu() -> void:

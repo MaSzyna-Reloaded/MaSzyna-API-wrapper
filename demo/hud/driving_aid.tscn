@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://hud/driving_aid.gd" id="1_aid"]
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/ui_chip.gd" id="ui_chip"]
 
 [node name="DrivingAid" type="Control"]
 anchors_preset = 15
@@ -23,10 +24,10 @@ mouse_filter = 2
 theme_override_constants/separation = 8
 
 [node name="ControllerTile" type="PanelContainer" parent="Tiles"]
+script = ExtResource("ui_chip")
 visible = false
 layout_mode = 2
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Layout" type="VBoxContainer" parent="Tiles/ControllerTile"]
 layout_mode = 2
@@ -56,10 +57,10 @@ theme_type_variation = &"DrivingAidValue"
 text = "0 + 0"
 
 [node name="BrakesTile" type="PanelContainer" parent="Tiles"]
+script = ExtResource("ui_chip")
 visible = false
 layout_mode = 2
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Layout" type="VBoxContainer" parent="Tiles/BrakesTile"]
 layout_mode = 2
@@ -79,10 +80,10 @@ theme_type_variation = &"DrivingAidValue"
 text = "0.0 + 0"
 
 [node name="BrakePipeTile" type="PanelContainer" parent="Tiles"]
+script = ExtResource("ui_chip")
 visible = false
 layout_mode = 2
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Layout" type="VBoxContainer" parent="Tiles/BrakePipeTile"]
 layout_mode = 2
@@ -113,10 +114,10 @@ theme_type_variation = &"DrivingAidCaption"
 text = "bar"
 
 [node name="SpeedTile" type="PanelContainer" parent="Tiles"]
+script = ExtResource("ui_chip")
 visible = false
 layout_mode = 2
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Reading" type="HBoxContainer" parent="Tiles/SpeedTile"]
 layout_mode = 2
@@ -139,10 +140,10 @@ theme_type_variation = &"DrivingAidCaption"
 text = "km/h"
 
 [node name="SecurityTile" type="PanelContainer" parent="Tiles"]
+script = ExtResource("ui_chip")
 visible = false
 layout_mode = 2
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Lamps" type="VBoxContainer" parent="Tiles/SecurityTile"]
 layout_mode = 2
@@ -179,6 +180,7 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="LimitTile" type="PanelContainer" parent="."]
+script = ExtResource("ui_chip")
 unique_name_in_owner = true
 visible = false
 layout_mode = 1
@@ -190,7 +192,6 @@ offset_top = 16.0
 offset_right = -16.0
 grow_horizontal = 0
 mouse_filter = 2
-theme_type_variation = &"FloatingChip"
 
 [node name="Layout" type="HBoxContainer" parent="LimitTile"]
 layout_mode = 2

@@ -437,6 +437,12 @@
 				Number of particle emitters the server owns ([code]total[/code]) and how many of them are currently built ([code]built[/code]). A scenery emitter is built only while it is streamed in.
 			</description>
 		</method>
+		<method name="smoke_rebuild">
+			<return type="void" />
+			<description>
+				Builds every instance's particle emitters again - what the source resolver makes them of has changed. The server does it itself when [code]maszyna/smoke/enabled[/code] or a smoke distance changes.
+			</description>
+		</method>
 		<method name="smoke_set_source_resolver">
 			<return type="void" />
 			<param index="0" name="smoke_source_resolver" type="Callable" />

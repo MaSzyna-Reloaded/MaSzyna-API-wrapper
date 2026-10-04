@@ -19,7 +19,7 @@
 
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_movement) */
-    constexpr const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
+    constexpr const char *DIAGNOSTICS_SETTING = "maszyna/debug/physics_diagnostics";
     const char *RailVehicleServer::vehicle_placed_signal = "vehicle_placed";
     const char *RailVehicleServer::vehicle_placement_changed_signal = "vehicle_placement_changed";
     const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
@@ -35,6 +35,7 @@ namespace godot {
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
         diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
+        settings->connect("settings_changed", callable_mp(this, &RailVehicleServer::_on_project_settings_changed));
         // the vehicle is VehicleServer's: freed there, it leaves the route; driven by another
         // controller, that one is stepped
         VehicleServer *vehicle_server = VehicleServer::get_instance();
@@ -500,6 +501,10 @@ namespace godot {
     }
 
     /* A trainset asked to stand before all its vehicles had their simulation stands now */
+    void RailVehicleServer::_on_project_settings_changed() {
+        diagnostics = ProjectSettings::get_singleton()->get_setting(DIAGNOSTICS_SETTING, false);
+    }
+
     void RailVehicleServer::_on_vehicle_configured(const RID &p_vehicle) {
         Vector<RID> pending;
         for (const KeyValue<RID, Trainset> &trainset: trainsets) {

@@ -41,9 +41,6 @@ msgstr ""
 msgid "MaSzyna game folder data is not set or invalid."
 msgstr ""
 
-msgid "Controls"
-msgstr ""
-
 msgid "View"
 msgstr ""
 
@@ -935,6 +932,9 @@ msgstr ""
 msgid "Brake handle"
 msgstr ""
 
+msgid "None"
+msgstr ""
+
 msgid "Disabled"
 msgstr ""
 
@@ -1199,4 +1199,455 @@ msgid "Open the report"
 msgstr ""
 
 msgid "OK"
+msgstr ""
+
+msgid "Scenery"
+msgstr ""
+
+
+msgid "Improved railway lights visibility"
+msgstr ""
+
+msgid "Railway lights point size multiplier"
+msgstr ""
+
+msgid "Railway lights glare intensity"
+msgstr ""
+
+msgid "Railway lights glare fade start"
+msgstr ""
+
+msgid "Railway lights glare rotation ratio"
+msgstr ""
+
+msgid "Railway lights glare edge size"
+msgstr ""
+
+msgid "Railway lights glare minimum screen size"
+msgstr ""
+
+msgid "Shadows"
+msgstr ""
+
+msgid "Shadow mode"
+msgstr ""
+
+msgid "Orthogonal"
+msgstr ""
+
+msgid "PSSM 2 Splits"
+msgstr ""
+
+msgid "PSSM 4 Splits"
+msgstr ""
+
+msgid "Shadow distance"
+msgstr ""
+
+msgid "Shadow blur"
+msgstr ""
+
+msgid "Shadow opacity"
+msgstr ""
+
+msgid "Shadow bias"
+msgstr ""
+
+msgid "Shadow normal bias"
+msgstr ""
+
+msgid "Blend shadow splits"
+msgstr ""
+
+msgid "Shadow split 1"
+msgstr ""
+
+msgid "Shadow split 2"
+msgstr ""
+
+msgid "Shadow split 3"
+msgstr ""
+
+msgid "Lights off"
+msgstr ""
+
+msgid "Economy"
+msgstr ""
+
+msgid "High quality"
+msgstr ""
+
+msgid "Scenery lights distance"
+msgstr ""
+
+msgid "Scenery lights cast shadows"
+msgstr ""
+
+msgid "Economy light height offset"
+msgstr ""
+
+msgid "Economy light cone scale"
+msgstr ""
+
+msgid "Light size"
+msgstr ""
+
+msgid "Light energy"
+msgstr ""
+
+msgid "Light tint"
+msgstr ""
+
+msgid "Light volumetric fog energy"
+msgstr ""
+
+msgid "Lamp height offset"
+msgstr ""
+
+msgid "Lamp cone scale"
+msgstr ""
+
+msgid "Lamp attenuation"
+msgstr ""
+
+msgid "Sun altitude of full night"
+msgstr ""
+
+msgid "Sun altitude of full day"
+msgstr ""
+
+msgid "Cabin"
+msgstr ""
+
+msgid "Improved cabin shadows"
+msgstr ""
+
+msgid "Indicator glow"
+msgstr ""
+
+msgid "Indicator glow energy"
+msgstr ""
+
+msgid "Indicator glow range"
+msgstr ""
+
+msgid "Real instrument lights"
+msgstr ""
+
+msgid "Instrument glow energy"
+msgstr ""
+
+msgid "Instrument glow range"
+msgstr ""
+
+msgid "Cab display glow"
+msgstr ""
+
+msgid "Cab display glow energy"
+msgstr ""
+
+msgid "Cab display glow range"
+msgstr ""
+
+msgid "Vehicle detail distance"
+msgstr ""
+
+msgid "Real mirrors"
+msgstr ""
+
+msgid "Smoke"
+msgstr ""
+
+msgid "Smoke enabled"
+msgstr ""
+
+msgid "Smoke generator"
+msgstr ""
+
+msgid "Original"
+msgstr ""
+
+msgid "Modern"
+msgstr ""
+
+msgid "Vehicle smoke distance"
+msgstr ""
+
+msgid "Vehicle smoke density"
+msgstr ""
+
+msgid "Vehicle smoke lifetime"
+msgstr ""
+
+msgid "Vehicle smoke particles"
+msgstr ""
+
+msgid "Scenery smoke distance"
+msgstr ""
+
+msgid "Scenery smoke density"
+msgstr ""
+
+msgid "Scenery smoke lifetime"
+msgstr ""
+
+msgid "Scenery smoke particles"
+msgstr ""
+
+msgid "Wind turbulence"
+msgstr ""
+
+msgid "Fog curve"
+msgstr ""
+
+msgid "Fog sky height"
+msgstr ""
+
+msgid "Aerial perspective"
+msgstr ""
+
+msgid "Fog scenery distance factor"
+msgstr ""
+
+msgid "Fog day distance factor"
+msgstr ""
+
+msgid "Fog night distance factor"
+msgstr ""
+
+msgid "Volumetric fog energy"
+msgstr ""
+
+msgid "Volumetric fog length scale"
+msgstr ""
+
+msgid "Volumetric fog minimum"
+msgstr ""
+
+msgid "Volumetric fog far falloff"
+msgstr ""
+
+msgid "Rain fog distance"
+msgstr ""
+
+msgid "Rain fog density"
+msgstr ""
+
+msgid "Rain density"
+msgstr ""
+
+msgid "Rain streak visibility"
+msgstr ""
+
+msgid "Rain height above camera"
+msgstr ""
+
+msgid "Rain wind boost"
+msgstr ""
+
+msgid "Rain tilt by wind"
+msgstr ""
+
+msgid "Near rain speed multiplier"
+msgstr ""
+
+msgid "Near rain blur"
+msgstr ""
+
+msgid "Near rain glow"
+msgstr ""
+
+msgid "Distant rain blur"
+msgstr ""
+
+msgid "Rain roughness"
+msgstr ""
+
+msgid "Rain specular fade start"
+msgstr ""
+
+msgid "Rain specular fade end"
+msgstr ""
+
+msgid "Rain probe count"
+msgstr ""
+
+msgid "Rain probe distance"
+msgstr ""
+
+msgid "Sound"
+msgstr ""
+
+msgid "Sound culling distance"
+msgstr ""
+
+msgid "External view minimum distance"
+msgstr ""
+
+msgid "External view maximum distance"
+msgstr ""
+
+msgid "Follow jump distance"
+msgstr ""
+
+msgid "Simulation"
+msgstr ""
+
+msgid "Simulation speed change time"
+msgstr ""
+
+msgid "Graphics"
+msgstr ""
+
+msgid "Multisample anti-aliasing"
+msgstr ""
+
+msgid "Screen-space anti-aliasing"
+msgstr ""
+
+msgid "Temporal anti-aliasing (TAA)"
+msgstr ""
+
+msgid "Ambient occlusion (SSAO)"
+msgstr ""
+
+msgid "Indirect lighting (SSIL)"
+msgstr ""
+
+msgid "Reflections (SSR)"
+msgstr ""
+
+msgid "Global illumination (SDFGI)"
+msgstr ""
+
+msgid "Volumetric fog"
+msgstr ""
+
+msgid "Glow"
+msgstr ""
+
+msgid "Glow intensity"
+msgstr ""
+
+msgid "Bloom intensity"
+msgstr ""
+
+msgid "Gamma"
+msgstr ""
+
+msgid "Vertical sync"
+msgstr ""
+
+msgid "Cancel"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+msgid "Save"
+msgstr ""
+
+msgid "Simulator"
+msgstr ""
+
+msgid "Reset to defaults"
+msgstr ""
+
+msgid "Discard changes"
+msgstr ""
+
+msgid "Back"
+msgstr ""
+
+msgid "Discard the changes?"
+msgstr ""
+
+msgid "Save the changes?"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Reset to default"
+msgstr ""
+
+msgid "Display"
+msgstr ""
+
+msgid "Mode"
+msgstr ""
+
+msgid "Windowed"
+msgstr ""
+
+msgid "Fullscreen"
+msgstr ""
+
+msgid "Resolution"
+msgstr ""
+
+msgid "HDR output (experimental)"
+msgstr ""
+
+msgid "Debug"
+msgstr ""
+
+msgid "Enable file logging"
+msgstr ""
+
+msgid "Log folder"
+msgstr ""
+
+msgid "Show in file manager"
+msgstr ""
+
+msgid "Restart required"
+msgstr ""
+
+msgid "Some of the changes take effect after the game is restarted. Restart it now?"
+msgstr ""
+
+msgid "Restart"
+msgstr ""
+
+msgid "Later"
+msgstr ""
+
+msgid "Restart the game to apply the changes."
+msgstr ""
+
+msgid "Sunshafts"
+msgstr ""
+
+msgid "Sunshaft intensity"
+msgstr ""
+
+msgid "Sunshaft density"
+msgstr ""
+
+msgid "Sunshaft brightness threshold"
+msgstr ""
+
+msgid "Sunshaft sample weight"
+msgstr ""
+
+msgid "Sunshaft decay"
+msgstr ""
+
+msgid "Sunshaft exposure"
+msgstr ""
+
+msgid "Sunshaft reach"
+msgstr ""
+
+msgid "Sunshaft cloud occlusion"
+msgstr ""
+
+msgid "Sunshaft cloud falloff"
+msgstr ""
+
+msgid "Sunshaft sample count"
+msgstr ""
+
+msgid "Diagnostics"
 msgstr ""

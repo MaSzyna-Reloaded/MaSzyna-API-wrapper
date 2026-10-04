@@ -1,6 +1,6 @@
-[gd_resource type="Theme" format=3 uid="uid://co7hfx0eyikh6"]
+[gd_resource type="StyleBoxFlat" format=3]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_tile"]
+[resource]
 content_margin_left = 12.0
 content_margin_top = 8.0
 content_margin_right = 12.0
@@ -10,7 +10,3 @@ corner_radius_top_left = 10
 corner_radius_top_right = 10
 corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
-
-[resource]
-FloatingChip/base_type = &"PanelContainer"
-FloatingChip/styles/panel = SubResource("StyleBoxFlat_tile")

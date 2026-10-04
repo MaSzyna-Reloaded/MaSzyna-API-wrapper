@@ -3,6 +3,14 @@ extends MaszynaSkyEnvironment
 class_name GndSkydomeMaszynaEnvironment
 
 const SKYDOME_NAME: StringName = &"Skydome"
+## Skydome's sunshafts, set by the player's Graphics settings (gnd_skydome/<property>) and taken
+## whenever they change - Skydome reads its project settings only once, and only two of these
+const SUNSHAFT_PROPERTIES: Array[StringName] = [
+    &"sunshafts_enabled", &"sunshafts_intensity", &"sunshafts_density",
+    &"sunshafts_bright_threshold", &"sunshafts_weight", &"sunshafts_decay", &"sunshafts_exposure",
+    &"sunshafts_max_radius", &"sunshafts_cloud_occlusion", &"sunshafts_cloud_falloff",
+    &"sunshafts_perf_sample_count",
+]
 const SUN_LIGHT_NAME: StringName = &"SunLight"
 const WEATHER_NAME: StringName = &"Weather"
 const WIND_TURBULENCE_SETTING: StringName = &"maszyna/weather/wind_turbulence"
@@ -77,9 +85,7 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
     # Skydome switches this single light between sun and moon by itself.
     sun_light = DirectionalLight3D.new()
     sun_light.name = SUN_LIGHT_NAME
-    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
     world_environment.add_child(sun_light, false, Node.INTERNAL_MODE_BACK)
-    _create_cabin_light(sun_light)
 
     skydome = Skydome.new()
     skydome.name = SKYDOME_NAME
@@ -131,6 +137,17 @@ func _skydome_value(property: StringName) -> float:
 func apply_visual_configuration() -> void:
     if not skydome:
         return
+    # only what differs: each of them makes Skydome set its effect up again
+    for property: StringName in SUNSHAFT_PROPERTIES:
+        var value: Variant = SkydomeSettings.get_value(property, skydome.get(property))
+        if not value == skydome.get(property):
+            skydome.set(property, value)
+    # the rain look of the player's Weather settings (gnd_weather/<property>) - WeatherNode reads its
+    # project settings only on ready
+    for property: StringName in WeatherSettings.PROPERTIES:
+        var value: Variant = WeatherSettings.get_value(property, weather.get(property))
+        if not value == weather.get(property):
+            weather.set(property, value)
 
     var precipitation: float = environment_node.precipitation
     weather.cloud_density = environment_node.cloudiness

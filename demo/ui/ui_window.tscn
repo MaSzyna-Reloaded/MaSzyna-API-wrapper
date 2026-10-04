@@ -1,0 +1,60 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://ui/ui_window.gd" id="1_window"]
+[ext_resource type="Theme" path="res://ui/ui_theme.tres" id="2_theme"]
+
+[node name="UIWindow" type="Window"]
+transparent_bg = true
+visible = false
+transient = true
+unresizable = true
+borderless = true
+transparent = true
+theme = ExtResource("2_theme")
+script = ExtResource("1_window")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="Frame" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"UIWindow"
+
+[node name="Layout" type="VBoxContainer" parent="Frame"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Header" type="HBoxContainer" parent="Frame/Layout"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Frame/Layout/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"UIWindowTitle"
+text_overrun_behavior = 3
+
+[node name="CloseButton" type="Button" parent="Frame/Layout/Header"]
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_type_variation = &"UIWindowClose"
+text = "×"
+flat = true
+
+[node name="Body" type="VBoxContainer" parent="Frame/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+
+[connection signal="pressed" from="Frame/Layout/Header/CloseButton" to="." method="_on_close_button_pressed"]

@@ -53,6 +53,19 @@ var fog_end_defined:bool = false
 var fog_end:float = 0.0
 
 
+func _enter_tree() -> void:
+    super()
+    # the editor keeps the environment saved with the edited scene (_load_content())
+    if not Engine.is_editor_hint():
+        ProjectSettings.settings_changed.connect(_apply_fog)
+
+
+func _exit_tree() -> void:
+    if not Engine.is_editor_hint():
+        ProjectSettings.settings_changed.disconnect(_apply_fog)
+    super()
+
+
 func _clear_content(budget_msec:int = 0) -> void:
     await super._clear_content(budget_msec)
     first_train_id = ""
@@ -120,18 +133,26 @@ func _apply_environment_declarations() -> void:
         environment_node.month = date["month"]
     if temperature_defined:
         environment_node.temperature = temperature
-    if fog_end_defined:
-        # Original engine: the fog has no density of its own, its range is
-        # fFogEnd / max(1, Overcast * 2) (opengl33renderer.cpp:4685); see FOG_CURVE_SETTING for how
-        # that range becomes the distance of a complete fog
-        var fog_range:float = fog_end / maxf(1.0, overcast * 2.0 if overcast_defined else 0.0)
-        environment_node.fog_distance = fog_range * float(ProjectSettings.get_setting(
-            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
-            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
-        environment_node.fog_density = 1.0
+    _apply_fog()
     if overcast_defined:
         environment_node.cloudiness = clampf(overcast, 0.0, 1.0)
         environment_node.precipitation = _precipitation_from_overcast(overcast)
+
+
+## The scenery's fog, with FOG_SCENERY_DISTANCE_FACTOR_SETTING as it is now - applied again when the
+## setting changes while the scenery stands
+func _apply_fog() -> void:
+    var environment_node:MaszynaEnvironmentNode = get_node_or_null(environment_node_path) as MaszynaEnvironmentNode
+    if not fog_end_defined or not environment_node:
+        return
+    # Original engine: the fog has no density of its own, its range is
+    # fFogEnd / max(1, Overcast * 2) (opengl33renderer.cpp:4685); see FOG_CURVE_SETTING for how
+    # that range becomes the distance of a complete fog
+    var fog_range:float = fog_end / maxf(1.0, overcast * 2.0 if overcast_defined else 0.0)
+    environment_node.fog_distance = fog_range * float(ProjectSettings.get_setting(
+        MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
+        MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
+    environment_node.fog_density = 1.0
 
 
 func _precipitation_from_overcast(value:float) -> float:

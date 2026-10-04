@@ -86,6 +86,8 @@ namespace godot {
             }
 
         private:
+            static constexpr const char *CURVE_BAKE_INTERVAL_SETTING = "maszyna/scenery/track_curve_bake_interval";
+            static constexpr double DEFAULT_CURVE_BAKE_INTERVAL = 10.0;
             /* Maximum switch blade offset (MaSzyna Track.cpp:35 fMaxOffset). */
             static constexpr double SWITCH_MAX_OFFSET = 0.1;
             /* Delay applied before switch blade movement starts. */
@@ -223,7 +225,7 @@ namespace godot {
             /* Timestamp of the previous blade step, the way E3DRenderingServer's smoke tick
              * measures its own delta - a SceneTree gives none. */
             uint64_t last_switch_step_usec = 0;
-            double curve_bake_interval = 10.0;
+            double curve_bake_interval = DEFAULT_CURVE_BAKE_INTERVAL;
             bool topology_changed_flag = false;
 
             static bool _endpoints_equal(const Vector3 &p_first, const Vector3 &p_second);
@@ -232,6 +234,8 @@ namespace godot {
             void _read_curve_points(const Ref<Resource> &p_curve, CurvePoints &p_points) const;
             Ref<Curve3D> _build_domain_curve(const CurvePoints &p_points) const;
             void _set_curves(TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2);
+            /// The tracks' curves are baked again at the interval the setting says now
+            void _on_project_settings_changed();
             void _update_switch_blade_boundary_offsets(TrackSegment &p_track) const;
             double _switch_blade_boundary_offset(const Ref<Curve3D> &p_branch_curve, double p_frog_distance) const;
             void _append_common_switch_endpoint(

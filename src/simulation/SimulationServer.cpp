@@ -23,6 +23,17 @@ namespace godot {
         constexpr const char *LANGUAGE_KEY = "language";
     } // namespace
 
+    SimulationServer::SimulationServer() {
+        _on_project_settings_changed();
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &SimulationServer::_on_project_settings_changed));
+    }
+
+    void SimulationServer::_on_project_settings_changed() {
+        speed_change_time =
+                ProjectSettings::get_singleton()->get_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME_DEFAULT);
+    }
+
     void SimulationServer::_bind_methods() {
 
         ClassDB::bind_method(D_METHOD("set_time_of_day", "hours"), &SimulationServer::set_time_of_day);
@@ -168,8 +179,6 @@ namespace godot {
             return;
         }
         simulation_speed = p_speed;
-        speed_change_time =
-                ProjectSettings::get_singleton()->get_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME_DEFAULT);
         emit_signal(simulation_speed_changed_signal);
     }
 

@@ -1,0 +1,1277 @@
+{
+    "sections": [
+        {
+            "title": "Display",
+            "settings": [
+                {
+                    "title": "Mode",
+                    "store": "user",
+                    "section": "window",
+                    "key": "mode",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "Windowed:0,Fullscreen:1",
+                    "default": 1
+                },
+                {
+                    "title": "Resolution",
+                    "store": "user",
+                    "section": "window",
+                    "key": "resolution",
+                    "type": "Vector2i",
+                    "hint": "resolution",
+                    "default": "",
+                    "disabled_by": "mode"
+                },
+                {
+                    "title": "Vertical sync",
+                    "store": "user",
+                    "section": "window",
+                    "key": "vsync_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "HDR output (experimental)",
+                    "store": "user",
+                    "section": "window",
+                    "key": "hdr_output",
+                    "type": "bool",
+                    "default": false
+                }
+            ]
+        },
+        {
+            "title": "Graphics",
+            "settings": [
+                {
+                    "title": "Temporal anti-aliasing (TAA)",
+                    "store": "user",
+                    "section": "render",
+                    "key": "use_taa",
+                    "type": "bool",
+                    "default": true,
+                    "excludes": [
+                        "msaa_3d",
+                        "screen_space_aa"
+                    ]
+                },
+                {
+                    "title": "Multisample anti-aliasing",
+                    "store": "user",
+                    "section": "render",
+                    "key": "msaa_3d",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "None:0,2×:1,4×:2,8×:3",
+                    "default": 0,
+                    "excludes": [
+                        "use_taa"
+                    ]
+                },
+                {
+                    "title": "Screen-space anti-aliasing",
+                    "store": "user",
+                    "section": "render",
+                    "key": "screen_space_aa",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "None:0,FXAA:1,SMAA:2",
+                    "default": 0,
+                    "excludes": [
+                        "use_taa"
+                    ]
+                },
+                {
+                    "title": "Global illumination (SDFGI)",
+                    "store": "user",
+                    "section": "render",
+                    "key": "sdfgi_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Ambient occlusion (SSAO)",
+                    "store": "user",
+                    "section": "render",
+                    "key": "ssao_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Indirect lighting (SSIL)",
+                    "store": "user",
+                    "section": "render",
+                    "key": "ssil_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Reflections (SSR)",
+                    "store": "user",
+                    "section": "render",
+                    "key": "ssr_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Volumetric fog",
+                    "store": "user",
+                    "section": "render",
+                    "key": "volumetric_fog_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Sunshafts",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Sunshaft intensity",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_intensity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,4,0.01,or_greater",
+                    "default": 0.45,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft density",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_density",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,2,0.005",
+                    "default": 0.485,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft brightness threshold",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_bright_threshold",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.182,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft sample weight",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_weight",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,0.2,0.0005",
+                    "default": 0.0355,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft decay",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_decay",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.5,1,0.001",
+                    "default": 0.93,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft exposure",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_exposure",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,5,0.01",
+                    "default": 1.59,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft reach",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_max_radius",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,4,0.001",
+                    "default": 1.377,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft cloud occlusion",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_cloud_occlusion",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.35,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft cloud falloff",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_cloud_falloff",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,4,0.01",
+                    "default": 0.45,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Sunshaft sample count",
+                    "store": "project",
+                    "key": "gnd_skydome/sunshafts_perf_sample_count",
+                    "type": "int",
+                    "hint": "range",
+                    "hint_string": "4,100,1",
+                    "default": 8,
+                    "advanced": true,
+                    "depends_on": "gnd_skydome/sunshafts_enabled"
+                },
+                {
+                    "title": "Glow",
+                    "store": "user",
+                    "section": "render",
+                    "key": "glow_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Glow intensity",
+                    "store": "user",
+                    "section": "render",
+                    "key": "glow_intensity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,8,0.01",
+                    "default": 1.37,
+                    "depends_on": "glow_enabled"
+                },
+                {
+                    "title": "Bloom intensity",
+                    "store": "user",
+                    "section": "render",
+                    "key": "bloom_intensity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.3,
+                    "depends_on": "glow_enabled"
+                },
+                {
+                    "title": "Gamma",
+                    "store": "user",
+                    "section": "render",
+                    "key": "gamma",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.5,2,0.01",
+                    "default": 1.0
+                }
+            ]
+        },
+        {
+            "title": "Scenery",
+            "settings": [
+                {
+                    "title": "Draw distance",
+                    "store": "project",
+                    "key": "maszyna/scenery/draw_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "100,20000,10,suffix:m",
+                    "default": 3000.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Improved railway lights visibility",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_visibility_improved",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Railway lights point size multiplier",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_point_size_multiplier",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.5,8,0.1",
+                    "default": 2.0
+                },
+                {
+                    "title": "Railway lights glare intensity",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_glare_intensity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.05",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Railway lights glare fade start",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_glare_fade_start",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.05",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Railway lights glare rotation ratio",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_glare_rotation_ratio",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,4,0.1",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Railway lights glare edge size",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_glare_edge_size",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.05",
+                    "default": 0.4,
+                    "advanced": true
+                },
+                {
+                    "title": "Railway lights glare minimum screen size",
+                    "store": "project",
+                    "key": "maszyna/scenery/railway_lights_glare_min_screen_size",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,0.2,0.005",
+                    "default": 0.03,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadows",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Shadow mode",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/mode",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "Orthogonal:0,PSSM 2 Splits:1,PSSM 4 Splits:2",
+                    "default": 2
+                },
+                {
+                    "title": "Shadow distance",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/max_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10000,1,suffix:m",
+                    "default": 250.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow blur",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/blur",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10,0.01,or_greater",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow opacity",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/opacity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow bias",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/bias",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10,0.001,or_greater",
+                    "default": 0.1,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow normal bias",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/normal_bias",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,32,0.001,or_greater",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Blend shadow splits",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/blend_splits",
+                    "type": "bool",
+                    "default": true,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 1",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/split_1",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.03125,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 2",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/split_2",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.125,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 3",
+                    "store": "project",
+                    "key": "maszyna/scenery/shadows/split_3",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Scenery lights",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/mode",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "Lights off:0,Economy:1,High quality:2",
+                    "default": 1
+                },
+                {
+                    "title": "Scenery lights distance",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "10,1000,5,suffix:m",
+                    "default": 400.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Scenery lights cast shadows",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/cast_shadows",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Economy light height offset",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/economy_height_offset",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "-2,5,0.1,suffix:m",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Economy light cone scale",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/economy_cone_scale",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.5,3,0.05",
+                    "default": 1.2,
+                    "advanced": true
+                },
+                {
+                    "title": "Light size",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/size",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,3,0.05,suffix:m",
+                    "default": 0.25,
+                    "advanced": true
+                },
+                {
+                    "title": "Light energy",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10,0.05",
+                    "default": 1.0
+                },
+                {
+                    "title": "Light tint",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/tint",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.05",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Light volumetric fog energy",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/volumetric_fog_energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,16,0.1",
+                    "default": 4.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Lamp height offset",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/lamp_height_offset",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "-2,5,0.1,suffix:m",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Lamp cone scale",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/lamp_cone_scale",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.5,4,0.05",
+                    "default": 1.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Lamp attenuation",
+                    "store": "project",
+                    "key": "maszyna/scenery/lights/lamp_attenuation",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,8,0.01",
+                    "default": 0.5,
+                    "advanced": true
+                }
+            ]
+        },
+        {
+            "title": "Cabin",
+            "settings": [
+                {
+                    "title": "Improved cabin shadows",
+                    "store": "project",
+                    "key": "maszyna/cabin/improve_shadows_quality",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Indicator glow",
+                    "store": "project",
+                    "key": "maszyna/cabin/indicator_glow_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Indicator glow energy",
+                    "store": "project",
+                    "key": "maszyna/cabin/indicator_glow_energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,2,0.005",
+                    "default": 0.05,
+                    "advanced": true
+                },
+                {
+                    "title": "Indicator glow range",
+                    "store": "project",
+                    "key": "maszyna/cabin/indicator_glow_range",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,2,0.01,suffix:m",
+                    "default": 0.1,
+                    "advanced": true
+                },
+                {
+                    "title": "Real instrument lights",
+                    "store": "project",
+                    "key": "maszyna/cabin/real_instruments_lights",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Instrument glow energy",
+                    "store": "project",
+                    "key": "maszyna/cabin/instrument_glow_energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.002,
+                    "advanced": true
+                },
+                {
+                    "title": "Instrument glow range",
+                    "store": "project",
+                    "key": "maszyna/cabin/instrument_glow_range",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,2,0.01,suffix:m",
+                    "default": 0.564628,
+                    "advanced": true
+                },
+                {
+                    "title": "Cab display glow",
+                    "store": "project",
+                    "key": "maszyna/cabin/screen_glow_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Cab display glow energy",
+                    "store": "project",
+                    "key": "maszyna/cabin/screen_glow_energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,2,0.005",
+                    "default": 0.05,
+                    "advanced": true
+                },
+                {
+                    "title": "Cab display glow range",
+                    "store": "project",
+                    "key": "maszyna/cabin/screen_glow_range",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.05,4,0.05,suffix:m",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadows",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/enabled",
+                    "type": "bool",
+                    "default": true,
+                    "depends_on": "maszyna/cabin/improve_shadows_quality"
+                },
+                {
+                    "title": "Shadow mode",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/mode",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "Orthogonal:0,PSSM 2 Splits:1,PSSM 4 Splits:2",
+                    "default": 1,
+                    "depends_on": "maszyna/cabin/improve_shadows_quality"
+                },
+                {
+                    "title": "Shadow distance",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/max_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10000,1,suffix:m",
+                    "default": 8.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow blur",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/blur",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10,0.01,or_greater",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow opacity",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/opacity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow bias",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/bias",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,10,0.001,or_greater",
+                    "default": 0.1,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow normal bias",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/normal_bias",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,32,0.001,or_greater",
+                    "default": 5.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Blend shadow splits",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/blend_splits",
+                    "type": "bool",
+                    "default": true,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 1",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/split_1",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.25,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 2",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/split_2",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Shadow split 3",
+                    "store": "project",
+                    "key": "maszyna/cabin/shadows/split_3",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.001",
+                    "default": 0.75,
+                    "advanced": true
+                }
+            ]
+        },
+        {
+            "title": "Vehicles",
+            "settings": [
+                {
+                    "title": "Vehicle detail distance",
+                    "store": "project",
+                    "key": "maszyna/vehicles/detail_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "50,10000,10,suffix:m",
+                    "default": 350.0
+                },
+                {
+                    "title": "Real mirrors",
+                    "store": "project",
+                    "key": "maszyna/rendering/real_mirrors",
+                    "type": "bool",
+                    "default": true
+                }
+            ]
+        },
+        {
+            "title": "Smoke",
+            "settings": [
+                {
+                    "title": "Smoke enabled",
+                    "store": "project",
+                    "key": "maszyna/smoke/enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Smoke generator",
+                    "store": "project",
+                    "key": "maszyna/smoke/generator_mode",
+                    "type": "int",
+                    "hint": "enum",
+                    "hint_string": "Original:0,Modern:1",
+                    "default": 0
+                },
+                {
+                    "title": "Vehicle smoke distance",
+                    "store": "project",
+                    "key": "maszyna/smoke/dynamic/distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "100,10000,10,suffix:m",
+                    "default": 1500.0
+                },
+                {
+                    "title": "Vehicle smoke density",
+                    "store": "project",
+                    "key": "maszyna/smoke/dynamic/density",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.25,8,0.25",
+                    "default": 1.0
+                },
+                {
+                    "title": "Vehicle smoke lifetime",
+                    "store": "project",
+                    "key": "maszyna/smoke/dynamic/lifetime",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,4,0.05",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Vehicle smoke particles",
+                    "store": "project",
+                    "key": "maszyna/smoke/dynamic/max_particles",
+                    "type": "int",
+                    "hint": "range",
+                    "hint_string": "16,8000,1",
+                    "default": 2000,
+                    "advanced": true
+                },
+                {
+                    "title": "Scenery smoke distance",
+                    "store": "project",
+                    "key": "maszyna/smoke/static/distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "100,10000,10,suffix:m",
+                    "default": 1500.0
+                },
+                {
+                    "title": "Scenery smoke density",
+                    "store": "project",
+                    "key": "maszyna/smoke/static/density",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.25,8,0.25",
+                    "default": 1.0
+                },
+                {
+                    "title": "Scenery smoke lifetime",
+                    "store": "project",
+                    "key": "maszyna/smoke/static/lifetime",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,4,0.05",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Scenery smoke particles",
+                    "store": "project",
+                    "key": "maszyna/smoke/static/max_particles",
+                    "type": "int",
+                    "hint": "range",
+                    "hint_string": "16,8000,1",
+                    "default": 500,
+                    "advanced": true
+                }
+            ]
+        },
+        {
+            "title": "Weather",
+            "settings": [
+                {
+                    "title": "Wind turbulence",
+                    "store": "project",
+                    "key": "maszyna/weather/wind_turbulence",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,4,0.01,or_greater",
+                    "default": 1.0
+                },
+                {
+                    "title": "Fog curve",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/curve",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,8,0.01",
+                    "default": 1.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Fog sky height",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/sky_height",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "10,5000,10,or_greater,suffix:m",
+                    "default": 1000.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Aerial perspective",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/aerial_perspective",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Fog scenery distance factor",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/scenery_distance_factor",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,4,0.01,or_greater",
+                    "default": 1.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Fog day distance factor",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/day_distance_factor",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,4,0.0001,or_greater",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Fog night distance factor",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/night_distance_factor",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.01,4,0.0001,or_greater",
+                    "default": 0.4255,
+                    "advanced": true
+                },
+                {
+                    "title": "Volumetric fog energy",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/volumetric_energy",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,16,0.001,or_greater",
+                    "default": 1.0
+                },
+                {
+                    "title": "Volumetric fog length scale",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/volumetric_length_scale",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "1,64,0.5",
+                    "default": 24.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Volumetric fog minimum",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/volumetric_minimum",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.25,
+                    "advanced": true
+                },
+                {
+                    "title": "Volumetric fog far falloff",
+                    "store": "project",
+                    "key": "maszyna/weather/fog/volumetric_far_falloff",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "1,4,0.05",
+                    "default": 2.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain fog distance",
+                    "store": "project",
+                    "key": "maszyna/weather/rain/fog_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "10,5000,10,or_greater,suffix:m",
+                    "default": 800.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain fog density",
+                    "store": "project",
+                    "key": "maszyna/weather/rain/fog_density",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.6,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain density",
+                    "store": "project",
+                    "key": "gnd_weather/rain_mesh_density",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,8,0.01",
+                    "default": 2.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain streak visibility",
+                    "store": "project",
+                    "key": "gnd_weather/visual_intensity",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain height above camera",
+                    "store": "project",
+                    "key": "gnd_weather/follow_height",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,20,0.005,suffix:m",
+                    "default": 0.855,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain wind boost",
+                    "store": "project",
+                    "key": "gnd_weather/precipitation_wind_strength",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,16,0.01",
+                    "default": 10.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain tilt by wind",
+                    "store": "project",
+                    "key": "gnd_weather/wind_influence",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Near rain speed multiplier",
+                    "store": "project",
+                    "key": "gnd_weather/near_layer_speed_multiplier",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,4,0.01",
+                    "default": 2.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Near rain blur",
+                    "store": "project",
+                    "key": "gnd_weather/near_rain_blur",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.7,
+                    "advanced": true
+                },
+                {
+                    "title": "Near rain glow",
+                    "store": "project",
+                    "key": "gnd_weather/near_rain_glow",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 1.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Distant rain blur",
+                    "store": "project",
+                    "key": "gnd_weather/mid_rain_blur",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.38,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain roughness",
+                    "store": "project",
+                    "key": "gnd_weather/rain_roughness",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,1,0.01",
+                    "default": 0.5,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain specular fade start",
+                    "store": "project",
+                    "key": "gnd_weather/rain_specular_fade_start",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,50,0.1,suffix:m",
+                    "default": 0.1,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain specular fade end",
+                    "store": "project",
+                    "key": "gnd_weather/rain_specular_fade_end",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,100,0.1,suffix:m",
+                    "default": 3.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain probe count",
+                    "store": "project",
+                    "key": "gnd_weather/rain_probe_max_count",
+                    "type": "int",
+                    "hint": "range",
+                    "hint_string": "1,256,1",
+                    "default": 64,
+                    "advanced": true
+                },
+                {
+                    "title": "Rain probe distance",
+                    "store": "project",
+                    "key": "gnd_weather/rain_probe_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,100,0.1,suffix:m",
+                    "default": 4.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Sun altitude of full night",
+                    "store": "project",
+                    "key": "maszyna/lights/night_altitude",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "-18,0,0.5,suffix:°",
+                    "default": -6.0,
+                    "advanced": true
+                },
+                {
+                    "title": "Sun altitude of full day",
+                    "store": "project",
+                    "key": "maszyna/lights/day_altitude",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,15,0.5,suffix:°",
+                    "default": 6.0,
+                    "advanced": true
+                }
+            ]
+        },
+        {
+            "title": "Sound",
+            "settings": [
+                {
+                    "title": "Sound culling distance",
+                    "store": "project",
+                    "key": "maszyna/sound/culling_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,5000,10,or_greater,suffix:m",
+                    "default": 1000.0
+                }
+            ]
+        },
+        {
+            "title": "Camera",
+            "settings": [
+                {
+                    "title": "External view minimum distance",
+                    "store": "project",
+                    "key": "maszyna/camera/external_view_min_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0.1,20,0.1,suffix:m",
+                    "default": 1.0
+                },
+                {
+                    "title": "External view maximum distance",
+                    "store": "project",
+                    "key": "maszyna/camera/external_view_max_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "10,2000,10,suffix:m",
+                    "default": 200.0
+                },
+                {
+                    "title": "Follow jump distance",
+                    "store": "project",
+                    "key": "maszyna/camera/follow_jump_distance",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "100,100000,100,suffix:m",
+                    "default": 10000.0
+                }
+            ]
+        },
+        {
+            "title": "Simulation",
+            "settings": [
+                {
+                    "title": "Simulation speed change time",
+                    "store": "project",
+                    "key": "maszyna/simulation/speed_change_time",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,5,0.05,suffix:s",
+                    "default": 0.4
+                }
+            ]
+        },
+        {
+            "title": "Debug",
+            "settings": [
+                {
+                    "title": "Enable file logging",
+                    "store": "user",
+                    "section": "debug",
+                    "key": "file_logging",
+                    "type": "bool",
+                    "default": true,
+                    "restart_required": true
+                },
+                {
+                    "title": "Log folder",
+                    "store": "project",
+                    "key": "debug/file_logging/log_path",
+                    "type": "String",
+                    "hint": "folder",
+                    "default": "user://logs/app.log"
+                }
+            ]
+        }
+    ]
+}

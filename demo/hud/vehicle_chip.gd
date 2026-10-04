@@ -1,5 +1,5 @@
 class_name VehicleChip
-extends PanelContainer
+extends UIChip
 
 ## A floating button of one vehicle, in the HUD's bottom right corner: its icon, the vehicle's name
 ## and, under it, how it is going and how fast. The whole chip is the button; an action icon, when
@@ -35,6 +35,7 @@ var vehicle:RID = RID()
 
 
 func _ready() -> void:
+    super()
     %Icon.texture = icon
     %Icon.visible = badge == Badge.ICON
     %DriverButton.visible = badge == Badge.DRIVER
@@ -78,11 +79,11 @@ func _on_gui_input(event:InputEvent) -> void:
 
 
 func _on_mouse_entered() -> void:
-    theme_type_variation = &"FloatingChipHover"
+    set_hovered(true)
 
 
 func _on_mouse_exited() -> void:
-    theme_type_variation = &"FloatingChip"
+    set_hovered(false)
 
 
 func _on_action_button_pressed() -> void:

@@ -1,0 +1,7 @@
+[gd_scene format=3]
+
+[ext_resource type="PackedScene" path="res://settings/setting_option.tscn" id="1_option"]
+[ext_resource type="Script" path="res://settings/setting_resolution.gd" id="2_resolution"]
+
+[node name="SettingResolution" instance=ExtResource("1_option")]
+script = ExtResource("2_resolution")

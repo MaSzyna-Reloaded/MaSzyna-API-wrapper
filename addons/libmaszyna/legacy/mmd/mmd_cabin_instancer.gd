@@ -1191,8 +1191,6 @@ static func _build_indicator_lights(
         widget.name = "%s_%s_%d" % [descriptor.label, descriptor.submodel_name, i]
         for field_name:String in entry["fixed_fields"]:
             widget.set(field_name, entry["fixed_fields"][field_name])
-        if widget is Light3D:
-            (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
         generated_root.add_child(widget)
 
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
@@ -1216,65 +1214,67 @@ static func _build_indicator_lights(
             widget.set("off_target_path", widget.get_path_to(off_node))
         widget.set_vehicle_rid(vehicle_rid)
 
-        # a lamp whose "_on" mesh is several pieces gets a light at each (MmdSemanticCatalog.IslandLights)
-        if (entry.has("island_lights") and on_node
-                and ProjectSettings.get_setting(REAL_INSTRUMENTS_LIGHTS_SETTING, true)):
+        # a lamp whose "_on" mesh is several pieces gets a light at each (MmdSemanticCatalog.IslandLights),
+        # shining while REAL_INSTRUMENTS_LIGHTS_SETTING is on - the lights follow it themselves
+        if entry.has("island_lights") and on_node:
             var island_lights:MmdSemanticCatalog.IslandLights = entry["island_lights"]
             var spot_widget:CabinSpotLight3D = widget as CabinSpotLight3D
             var lit_changed:Signal = (
                     spot_widget.lit_changed if spot_widget else (widget as CabinIndicator3D).lit_changed)
             var lit:bool = spot_widget.enabled if spot_widget else (widget as CabinIndicator3D).enabled
-            if island_lights == MmdSemanticCatalog.IslandLights.WIDGET_LIGHT:
-                # the copies light the lamps, the widget only switches the meshes, blinks and sounds
-                spot_widget.light_enabled = false
             for island:Dictionary in _submodel_islands(on_node):
                 var island_light:Light3D
                 if island_lights == MmdSemanticCatalog.IslandLights.GLOW:
-                    var glow_light:OmniLight3D = OmniLight3D.new()
+                    var glow_light:CabinGlow = CabinGlow.new()
+                    glow_light.enabled_setting = REAL_INSTRUMENTS_LIGHTS_SETTING
+                    glow_light.energy_setting = INSTRUMENT_GLOW_ENERGY_SETTING
+                    glow_light.energy_default = INSTRUMENT_GLOW_ENERGY_DEFAULT
+                    glow_light.range_setting = INSTRUMENT_GLOW_RANGE_SETTING
+                    glow_light.range_default = INSTRUMENT_GLOW_RANGE_DEFAULT
                     glow_light.light_color = island["color"]
-                    glow_light.light_energy = float(ProjectSettings.get_setting(
-                            INSTRUMENT_GLOW_ENERGY_SETTING, INSTRUMENT_GLOW_ENERGY_DEFAULT))
-                    glow_light.omni_range = float(ProjectSettings.get_setting(
-                            INSTRUMENT_GLOW_RANGE_SETTING, INSTRUMENT_GLOW_RANGE_DEFAULT))
                     glow_light.omni_attenuation = INSTRUMENT_GLOW_ATTENUATION
                     glow_light.light_size = INSTRUMENT_GLOW_SIZE
                     glow_light.light_indirect_energy = INSTRUMENT_GLOW_INDIRECT_ENERGY
+                    glow_light.set_lit(lit)
+                    lit_changed.connect(glow_light.set_lit)
                     island_light = glow_light
                 else:
-                    var spot_light:SpotLight3D = SpotLight3D.new()
+                    # the copies light the lamps, the widget only switches the meshes, blinks and sounds
+                    var spot_light:CabinIslandSpotLight = CabinIslandSpotLight.new()
+                    spot_light.enabled_setting = REAL_INSTRUMENTS_LIGHTS_SETTING
+                    spot_light.widget = spot_widget
                     for property:StringName in WIDGET_LIGHT_PROPERTIES:
                         spot_light.set(property, spot_widget.get(property))
                     spot_light.light_energy = spot_widget.light_energy_on
+                    spot_light.set_lit(lit)
+                    lit_changed.connect(spot_light.set_lit)
                     island_light = spot_light
                 island_light.name = "%s_%s_%d_island" % [descriptor.label, descriptor.submodel_name, i]
-                island_light.shadow_reverse_cull_face = ProjectSettings.get_setting(
-                        "maszyna/lights/reverse_cull_face", false)
-                island_light.visible = lit
                 generated_root.add_child(island_light)
                 island_light.global_position = island["position"]
                 if island_light is SpotLight3D:
                     _aim_spotlight_at_driver(island_light as SpotLight3D, generated_root, driver_position)
-                lit_changed.connect(island_light.set_visible)
 
         # a lamp that is only its "_on" mesh also glows into the cab while it is lit, in its own
         # colour (the diffuse that tints the greyscale lamp texture, Model3d.cpp:1918); entries with
         # a light of their own (i-cablight, i-radio) or with island lights keep those instead
-        if (widget is CabinIndicator3D and not entry.has("light_widget_class") and not entry.has("island_lights")
-                and ProjectSettings.get_setting(INDICATOR_GLOW_ENABLED_SETTING, true)):
-            var glow:OmniLight3D = OmniLight3D.new()
+        # (shining while INDICATOR_GLOW_ENABLED_SETTING is on - the glow follows it itself)
+        if widget is CabinIndicator3D and not entry.has("light_widget_class") and not entry.has("island_lights"):
+            var glow:CabinGlow = CabinGlow.new()
             glow.name = "%s_%s_%d_glow" % [descriptor.label, descriptor.submodel_name, i]
+            glow.enabled_setting = INDICATOR_GLOW_ENABLED_SETTING
+            glow.energy_setting = INDICATOR_GLOW_ENERGY_SETTING
+            glow.energy_default = INDICATOR_GLOW_ENERGY_DEFAULT
+            glow.range_setting = INDICATOR_GLOW_RANGE_SETTING
+            glow.range_default = INDICATOR_GLOW_RANGE_DEFAULT
             var glow_submodel:E3DSubModel = cab_model.model.get_node_or_null(cab_model.get_path_to(submodel))
             if glow_submodel:
                 glow.light_color = glow_submodel.diffuse_color
-            glow.light_energy = float(ProjectSettings.get_setting(
-                    INDICATOR_GLOW_ENERGY_SETTING, INDICATOR_GLOW_ENERGY_DEFAULT))
-            glow.omni_range = float(ProjectSettings.get_setting(
-                    INDICATOR_GLOW_RANGE_SETTING, INDICATOR_GLOW_RANGE_DEFAULT))
             glow.shadow_enabled = false
-            glow.visible = (widget as CabinIndicator3D).enabled
+            glow.set_lit((widget as CabinIndicator3D).enabled)
             generated_root.add_child(glow)
             _position_at_submodel_instance(glow, submodel)
-            (widget as CabinIndicator3D).lit_changed.connect(glow.set_visible)
+            (widget as CabinIndicator3D).lit_changed.connect(glow.set_lit)
 
         if entry.has("light_widget_class"):
             var light_points:Array[Vector3] = []
@@ -1293,7 +1293,6 @@ static func _build_indicator_lights(
                     light.set(field_name, entry["light_fixed_fields"][field_name])
                 if lamp_submodel:
                     light.light_color = lamp_submodel.diffuse_color
-                light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
                 generated_root.add_child(light)
                 _position_at_submodel_instance(light, submodel)
                 if light_points:

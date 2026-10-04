@@ -19,6 +19,15 @@ const OVERCAST_FULL_PRECIPITATION: float = 0.4
 ## The original's fog range with the fog switched off - the longest a scenery may declare
 ## (simulationstateserializer.cpp:216)
 const FOG_RANGE_MAX: float = 25000.0
+## Glow as tuned in forest-test-scene materials/environment_filmic.tres - what the player's Graphics
+## settings (render/glow_intensity, render/bloom_intensity) fall back to
+const GLOW_INTENSITY_DEFAULT: float = 1.37
+const BLOOM_INTENSITY_DEFAULT: float = 0.3
+## The player's gamma (render/gamma): the picture's mid-tones as x^(1/gamma) - above 1 brighter,
+## below darker, black and white staying put - through the environment's colour correction, a
+## curve of this many steps; at 1 there is no correction at all
+const GAMMA_DEFAULT: float = 1.0
+const GAMMA_CURVE_STEPS: int = 256
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
@@ -195,6 +204,10 @@ var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
 var _dirty_lights: bool = false
 var _light_state_elapsed: float = 0.0
+## The gamma the colour correction curve was made for - it is made again only when that changes -
+## and the curve itself, none at the default
+var _gamma: float = GAMMA_DEFAULT
+var _gamma_curve: ImageTexture = null
 
 ## Cabin view (the player in a cab) - the cab light casts its shadows then
 var cabin_view: bool = false:
@@ -217,6 +230,7 @@ func _enter_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_hold()
     UserSettings.config_changed.connect(_on_user_settings_changed)
+    ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     SimulationServer.simulation_paused.connect(_on_runtime_paused)
     SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.connect(_publish_animation_speed)
@@ -228,6 +242,7 @@ func _exit_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_release()
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
+    ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
     SimulationServer.simulation_paused.disconnect(_on_runtime_paused)
     SimulationServer.simulation_unpaused.disconnect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.disconnect(_publish_animation_speed)
@@ -335,12 +350,11 @@ func _create_environment() -> Environment:
     environment.fog_sun_scatter = 0.07
     environment.volumetric_fog_anisotropy = 0.0
     environment.volumetric_fog_detail_spread = 1.0
-    # Glow tuned as in forest-test-scene materials/environment_filmic.tres; the luminance cap keeps
-    # small specular highlights (e.g. rain streaks) from blooming into large blobs.
+    # Glow tuned as in forest-test-scene materials/environment_filmic.tres (its intensity and bloom
+    # are the player's, _apply_visual_configuration()); the luminance cap keeps small specular
+    # highlights (e.g. rain streaks) from blooming into large blobs.
     environment.glow_normalized = true
-    environment.glow_intensity = 1.37
     environment.glow_strength = 0.8
-    environment.glow_bloom = 0.3
     environment.glow_hdr_threshold = 1.37
     environment.glow_hdr_luminance_cap = 0.18
     return environment
@@ -392,8 +406,24 @@ func _apply_visual_configuration() -> void:
     _environment.ssao_enabled = bool(UserSettings.get_setting("render", "ssao_enabled", true))
     _environment.ssil_enabled = bool(UserSettings.get_setting("render", "ssil_enabled", true))
     _environment.sdfgi_enabled = bool(UserSettings.get_setting("render", "sdfgi_enabled", true))
-    _environment.glow_enabled = true
+    _environment.glow_enabled = bool(UserSettings.get_setting("render", "glow_enabled", true))
+    _environment.glow_intensity = float(
+        UserSettings.get_setting("render", "glow_intensity", GLOW_INTENSITY_DEFAULT))
+    _environment.glow_bloom = float(
+        UserSettings.get_setting("render", "bloom_intensity", BLOOM_INTENSITY_DEFAULT))
     _environment.adjustment_enabled = adjustment_enabled
+    var gamma: float = float(UserSettings.get_setting("render", "gamma", GAMMA_DEFAULT))
+    if not is_equal_approx(gamma, _gamma):
+        _gamma = gamma
+        _gamma_curve = null
+        if not is_equal_approx(gamma, GAMMA_DEFAULT):
+            # one row, the input along it, the output in every channel
+            var curve: Image = Image.create(GAMMA_CURVE_STEPS, 1, false, Image.FORMAT_RGB8)
+            for step: int in GAMMA_CURVE_STEPS:
+                var value: float = pow(float(step) / float(GAMMA_CURVE_STEPS - 1), 1.0 / gamma)
+                curve.set_pixel(step, 0, Color(value, value, value))
+            _gamma_curve = ImageTexture.create_from_image(curve)
+    _environment.adjustment_color_correction = _gamma_curve
     _environment.fog_enabled = fog_active
     # the sky backends leave these two alone
     _environment.fog_aerial_perspective = float(ProjectSettings.get_setting(
@@ -409,6 +439,12 @@ func _apply_visual_configuration() -> void:
 
 func _on_user_settings_changed() -> void:
     _dirty_visuals = true
+
+
+## The fog, the shadows and the lights follow their project settings while the scenery runs
+func _on_project_settings_changed() -> void:
+    _dirty_visuals = true
+    _dirty_lights = true
 
 
 func _on_runtime_paused() -> void:

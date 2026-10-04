@@ -3337,3 +3337,17 @@ lighting or the trainset.
   never uses the alpha pass; what is drawn for a view is told to the drawing by the owner of the
   view, never by the cab layer.
 
+## 2026-10-04 settings saved their minimums
+
+* **Symptom:** opening the new settings screen once changed the game: draw distance 100 m, smoke
+  at its least, the external view stuck close (operator: "dziwne wartości, pojebane min/max").
+* **What proved it:** `user://settings.cfg` held a `[project_settings]` section with every slider
+  at its minimum (`draw_distance=100.0`, `lights/distance=10.0`, ...). A headless probe printed the
+  slider at its minimum before any step: building the row set `min_value` while the value was 0,
+  `Range` clamped it and emitted `value_changed`, and the row's handler saved it.
+* **Fix:** the controls only hold what the player chose; "Apply" saves, "Cancel" forgets, and a row
+  saves only when its control differs from what it showed after the stored value was put on it -
+  the control rounds and clamps (0.564628 at step 0.01), so comparing with the stored value saved
+  untouched settings too.
+* **Rule:** a control is only shown a value; saving is an explicit operation, of what differs from
+  what was shown.

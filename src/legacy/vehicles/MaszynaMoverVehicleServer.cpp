@@ -8,12 +8,14 @@
 
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_velocity_jumps) */
-    constexpr const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
+    constexpr const char *DIAGNOSTICS_SETTING = "maszyna/debug/physics_diagnostics";
 
     /* A freed vehicle's last velocity goes with it. No explicit disconnect: callable_mp reports
      * this instance as the callable's object, so the engine drops the connection when it dies. */
     MaszynaMoverVehicleServer::MaszynaMoverVehicleServer() {
         diagnostics = ProjectSettings::get_singleton()->get_setting(DIAGNOSTICS_SETTING, false);
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &MaszynaMoverVehicleServer::_on_project_settings_changed));
         VehicleServer *vehicle_server = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicle_server);
         vehicle_server->connect(
@@ -56,6 +58,15 @@ namespace godot {
     RID MaszynaMoverVehicleServer::mover_get_vehicle(const TMoverParameters *p_mover) const {
         const RID *vehicle = vehicles_by_mover.getptr(p_mover);
         return vehicle != nullptr ? *vehicle : RID();
+    }
+
+    /// The velocities kept from before the diagnostics went off are no previous step to compare with
+    void MaszynaMoverVehicleServer::_on_project_settings_changed() {
+        const bool enabled = ProjectSettings::get_singleton()->get_setting(DIAGNOSTICS_SETTING, false);
+        if (enabled && !diagnostics) {
+            diagnostics_velocity.clear();
+        }
+        diagnostics = enabled;
     }
 
     void MaszynaMoverVehicleServer::_on_vehicle_freed(const RID &p_vehicle) {

@@ -65,8 +65,32 @@ namespace godot {
     SceneryStreamingServer::SceneryStreamingServer() {
         semaphore.instantiate();
         preload_queue.instantiate();
-        draw_distance =
-                ProjectSettings::get_singleton()->get_setting("maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
+        draw_distance = ProjectSettings::get_singleton()->get_setting(DRAW_DISTANCE_SETTING, DEFAULT_DRAW_DISTANCE_M);
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &SceneryStreamingServer::_on_project_settings_changed));
+    }
+
+    /// Every piece is ranged anew - the next pass builds what came into range and clears what left it
+    void SceneryStreamingServer::_on_project_settings_changed() {
+        const float distance =
+                ProjectSettings::get_singleton()->get_setting(DRAW_DISTANCE_SETTING, DEFAULT_DRAW_DISTANCE_M);
+        MutexLock lock(mutex);
+        if (distance == draw_distance) {
+            return;
+        }
+        draw_distance = distance;
+        for (KeyValue<Vector2i, Chunk> &item: chunks) {
+            for (Entry &entry: item.value.entries) {
+                entry.range_end = _get_range_end(entry.declared_range);
+            }
+            item.value.dirty = true;
+        }
+        content_dirty = true;
+    }
+
+    /// A piece's own range, never past the draw distance; none of its own is the draw distance
+    float SceneryStreamingServer::_get_range_end(const float p_declared_range) const {
+        return p_declared_range > 0.0 && p_declared_range < draw_distance ? p_declared_range : draw_distance;
     }
 
     /// The worker finishes the pass it is in before it is joined
@@ -280,7 +304,8 @@ namespace godot {
         entry.owner = p_owner;
         entry.stream_rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
         entry.user_rid = p_user_rid;
-        entry.range_end = p_range_end > 0.0 && p_range_end < draw_distance ? p_range_end : draw_distance;
+        entry.declared_range = p_range_end;
+        entry.range_end = _get_range_end(p_range_end);
         const Vector2i key = _get_chunk_key(p_position);
         Chunk &chunk = chunks[key];
         chunk.entries.push_back(entry);

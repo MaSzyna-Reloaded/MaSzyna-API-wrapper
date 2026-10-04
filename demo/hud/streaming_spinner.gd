@@ -1,4 +1,4 @@
-extends PanelContainer
+extends UIChip
 
 ## A spinner on a HUD tile, looking like the others (DrivingAid.apply_style()), while
 ## SceneryStreamingServer builds the pieces around the camera: it fades in when the builds start
@@ -12,6 +12,7 @@ var _fade:Tween = null
 
 
 func _ready() -> void:
+    super()
     DrivingAid.apply_style(self)
 
 

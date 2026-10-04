@@ -1,0 +1,39 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/settings_page.gd" id="1_page"]
+[ext_resource type="Script" path="res://ui/ui_foldable.gd" id="2_foldable"]
+
+[node name="SettingsPage" type="PanelContainer"]
+size_flags_horizontal = 3
+theme_type_variation = &"FocusSection"
+script = ExtResource("1_page")
+
+[node name="Scroll" type="ScrollContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+horizontal_scroll_mode = 0
+
+[node name="Content" type="VBoxContainer" parent="Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="Rows" type="VBoxContainer" parent="Scroll/Content"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Advanced" type="FoldableContainer" parent="Scroll/Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+folded = true
+title = "Advanced"
+script = ExtResource("2_foldable")
+
+[node name="AdvancedRows" type="VBoxContainer" parent="Scroll/Content/Advanced"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[connection signal="folding_changed" from="Scroll/Content/Advanced" to="." method="_on_advanced_folding_changed"]

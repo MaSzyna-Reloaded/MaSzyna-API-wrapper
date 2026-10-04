@@ -31,8 +31,9 @@ var update_time_msec:int = 0
 var mesh:MeshInstance3D = null
 
 var _screen:RID = RID()
-## Lit in the average colour of each frame the script draws; null without a mesh or the setting
-var _glow:OmniLight3D = null
+## Lit in the average colour of each frame the script draws, while SCREEN_GLOW_ENABLED_SETTING is
+## on - the glow follows it itself; null without a shining mesh
+var _glow:CabinGlow = null
 ## Script commands with no wrapper equivalent yet, reported once each
 var _unsupported_commands:Dictionary[String, bool] = {}
 
@@ -46,14 +47,18 @@ func _enter_tree() -> void:
         mesh.material_override = material
     # only a screen that shines - a self-illuminated submodel; E186's log book "okladka" is paper
     # the script only draws on
-    if (mesh and mesh.mesh and ProjectSettings.get_setting(SCREEN_GLOW_ENABLED_SETTING, true)
+    if (mesh and mesh.mesh
             and (mesh.material_override as ShaderMaterial).get_shader_parameter(SELF_ILLUMINATION_PARAMETER)):
-        _glow = OmniLight3D.new()
+        _glow = CabinGlow.new()
         _glow.name = "Glow"
+        _glow.enabled_setting = SCREEN_GLOW_ENABLED_SETTING
+        _glow.energy_setting = SCREEN_GLOW_ENERGY_SETTING
+        _glow.energy_default = SCREEN_GLOW_ENERGY_DEFAULT
+        _glow.range_setting = SCREEN_GLOW_RANGE_SETTING
+        _glow.range_default = SCREEN_GLOW_RANGE_DEFAULT
         _glow.light_color = Color.BLACK
-        _glow.light_energy = float(ProjectSettings.get_setting(SCREEN_GLOW_ENERGY_SETTING, SCREEN_GLOW_ENERGY_DEFAULT))
-        _glow.omni_range = float(ProjectSettings.get_setting(SCREEN_GLOW_RANGE_SETTING, SCREEN_GLOW_RANGE_DEFAULT))
         _glow.shadow_enabled = false
+        _glow.set_lit(true)
         add_child(_glow)
         # in front of the screen: its centre, moved along the way its face looks
         var normal_sum:Vector3 = Vector3.ZERO

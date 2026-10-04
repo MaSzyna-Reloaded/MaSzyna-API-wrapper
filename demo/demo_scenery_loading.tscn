@@ -7,14 +7,10 @@
 [ext_resource type="PackedScene" path="res://scenery_selector/scenery_selector_screen.tscn" id="10_scenery_selector"]
 [ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
-[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="card_theme"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="ui_dialog_scene"]
 [ext_resource type="PackedScene" path="res://bug_report/bug_report.tscn" id="bug_report_scene"]
-
-[sub_resource type="InputEventAction" id="exit_to_menu_event"]
-action = &"ui_cancel"
-
-[sub_resource type="Shortcut" id="exit_to_menu_shortcut"]
-events = [SubResource("exit_to_menu_event")]
+[ext_resource type="PackedScene" path="res://settings/settings_screen.tscn" id="settings_screen_scene"]
+[ext_resource type="PackedScene" path="res://settings/settings_panel.tscn" id="settings_panel_scene"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 script = ExtResource("7_demo")
@@ -30,21 +26,13 @@ autoplay = true
 
 [node name="GameHud" parent="." instance=ExtResource("game_hud_scene")]
 
-[node name="ExitToMenu" type="Button" parent="GameHud/MenuActions"]
-layout_mode = 0
-shortcut = SubResource("exit_to_menu_shortcut")
-text = "Exit to menu"
-
-[node name="ReportProblem" type="Button" parent="GameHud/TopBar/HBoxContainer/TopBarActions"]
-layout_mode = 2
-focus_mode = 0
-text = "Report a problem or suggestion"
-flat = true
-
-[node name="ExitConfirmation" type="ConfirmationDialog" parent="."]
-theme = ExtResource("card_theme")
+[node name="ExitConfirmation" parent="." instance=ExtResource("ui_dialog_scene")]
+unique_name_in_owner = true
 title = "Exit to menu"
-dialog_text = "Leave the scenery and go back to the menu?"
+message = "Leave the scenery and go back to the menu?"
+confirm_text = "Exit to menu"
+back_text = "Back"
+confirm_intent = 3
 
 [node name="BugReport" parent="." instance=ExtResource("bug_report_scene")]
 
@@ -52,6 +40,10 @@ dialog_text = "Leave the scenery and go back to the menu?"
 
 [node name="ScenerySelectorScreen" parent="." unique_id=969482359 instance=ExtResource("10_scenery_selector")]
 visible = false
+
+[node name="SettingsScreen" parent="." instance=ExtResource("settings_screen_scene")]
+
+[node name="SettingsPanel" parent="." instance=ExtResource("settings_panel_scene")]
 
 [node name="SpinnerOverlay" parent="." unique_id=1959235682 instance=ExtResource("14_spinner")]
 visible = false
@@ -71,8 +63,8 @@ color = Color(0, 0, 0, 1)
 
 [connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
 [connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="start_scenery"]
-[connection signal="pressed" from="GameHud/MenuActions/ExitToMenu" to="." method="_on_exit_to_menu_pressed"]
+[connection signal="exit_to_menu_requested" from="GameHud" to="." method="_on_exit_to_menu_pressed"]
 [connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
-[connection signal="pressed" from="GameHud/TopBar/HBoxContainer/TopBarActions/ReportProblem" to="BugReport" method="open_report"]
-
-[editable path="GameHud"]
+[connection signal="problem_report_requested" from="GameHud" to="BugReport" method="open_report"]
+[connection signal="settings_requested" from="GameHud" to="SettingsPanel" method="open"]
+[connection signal="settings_requested" from="ScenerySelectorScreen" to="SettingsScreen" method="open"]

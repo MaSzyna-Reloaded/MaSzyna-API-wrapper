@@ -367,6 +367,9 @@ anything. Open work belongs in `TODO.md`.
 * The Mover's train brake handle has three positions and only `BrakeLevelSet()` moves them
   together, comparing with `fBrakeCtrlPos`: a second setup leaves `BrakeCtrlPosR` at lap. A pipe
   that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
+* Setting a `Range`'s `min_value`/`max_value`/`step` clamps its value and emits `value_changed`: a
+  control is only shown a value, and saving happens on an explicit apply of what differs from what
+  was shown. *(10-04 settings saved their minimums)*
 
 ## Threads and teardown
 * Every sink of parsed geometry - a subscene's too - writes to a directory with a limit, and hands

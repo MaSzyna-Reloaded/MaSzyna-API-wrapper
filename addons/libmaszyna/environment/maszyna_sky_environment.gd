@@ -48,6 +48,8 @@ const SHADOW_CABIN_NORMAL_BIAS: float = 5.0
 ## The cab gets a sun of its own that lights only MaszynaEnvironmentNode.CABIN_RENDER_LAYER, with
 ## the cabin/shadows settings, while the world's sun keeps the scenery ones in the cab view too
 const CABIN_SHADOWS_IMPROVED_SETTING: StringName = &"maszyna/cabin/improve_shadows_quality"
+## Shadow maps drawn with front faces culled (opengl33renderer.cpp:1758)
+const REVERSE_CULL_FACE_SETTING: StringName = &"maszyna/lights/reverse_cull_face"
 ## Two shadowed directional lights halve the directional shadow atlas (Godot's
 ## light_storage.cpp _get_directional_shadow_rect) - twice the default keeps the world's cascades
 ## as sharp as with one light
@@ -234,19 +236,16 @@ func sync_cabin_lights() -> void:
         cabin_light.light_angular_distance = world_light.light_angular_distance
 
 
-## Gives a world light a cab light of its own when CABIN_SHADOWS_IMPROVED_SETTING is on: it lights
-## only the cab layer and the world light no longer does. Shadow casters stay on every layer, so a
-## station roof or the vehicle's body still shades the cab.
+## Gives a world light a cab light of its own: it lights only the cab layer and the world light no
+## longer does. Shadow casters stay on every layer, so a station roof or the vehicle's body still
+## shades the cab.
 func _create_cabin_light(world_light: DirectionalLight3D) -> void:
-    if not bool(ProjectSettings.get_setting(CABIN_SHADOWS_IMPROVED_SETTING, true)):
-        return
     var cabin_light: DirectionalLight3D = DirectionalLight3D.new()
     cabin_light.name = CABIN_LIGHT_NAME
     cabin_light.light_cull_mask = MaszynaEnvironmentNode.CABIN_RENDER_LAYER
     # the world light already draws the sun in the sky and scatters in the fog
     cabin_light.sky_mode = DirectionalLight3D.SKY_MODE_LIGHT_ONLY
     cabin_light.light_volumetric_fog_energy = 0.0
-    cabin_light.shadow_reverse_cull_face = world_light.shadow_reverse_cull_face
     world_light.add_child(cabin_light, false, Node.INTERNAL_MODE_BACK)
     world_light.light_cull_mask &= ~MaszynaEnvironmentNode.CABIN_RENDER_LAYER
     _cabin_lights[world_light] = cabin_light
@@ -261,8 +260,21 @@ func _bind_cabin_light(world_light: DirectionalLight3D) -> void:
         _cabin_lights[world_light] = cabin_light
 
 
-## A world light takes the scenery settings, its cab light (if any) the cabin ones
+## The world light gives the cab light back the cab layer it took
+func _free_cabin_light(world_light: DirectionalLight3D) -> void:
+    world_light.light_cull_mask |= MaszynaEnvironmentNode.CABIN_RENDER_LAYER
+    _cabin_lights[world_light].queue_free()
+    _cabin_lights.erase(world_light)
+
+
+## A world light takes the scenery settings, its cab light the cabin ones; the cab light is there
+## while CABIN_SHADOWS_IMPROVED_SETTING is on, and comes and goes with it
 func _apply_sun_settings(world_light: DirectionalLight3D) -> void:
+    var improved: bool = bool(ProjectSettings.get_setting(CABIN_SHADOWS_IMPROVED_SETTING, true))
+    if improved and not _cabin_lights.has(world_light):
+        _create_cabin_light(world_light)
+    elif not improved and _cabin_lights.has(world_light):
+        _free_cabin_light(world_light)
     _apply_directional_light_settings(world_light, ShadowView.SCENERY)
     if _cabin_lights.has(world_light):
         _apply_directional_light_settings(_cabin_lights[world_light], ShadowView.CABIN)
@@ -270,6 +282,7 @@ func _apply_sun_settings(world_light: DirectionalLight3D) -> void:
 
 func _apply_directional_light_settings(light: DirectionalLight3D, view: ShadowView) -> void:
     var cabin: bool = view == ShadowView.CABIN
+    light.shadow_reverse_cull_face = bool(ProjectSettings.get_setting(REVERSE_CULL_FACE_SETTING, false))
     # the cab light casts shadows only while there is a cab to look at; it keeps lighting the cab
     # seen from outside
     light.shadow_enabled = (

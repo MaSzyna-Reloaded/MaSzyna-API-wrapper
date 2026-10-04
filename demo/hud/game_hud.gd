@@ -1,13 +1,18 @@
 extends Control
 
-## HUD shared by the demo scenes: the top bar with its "Controls" menu and the windows it opens.
-## A scene that needs a menu entry of its own adds a Button to MenuActions (editable children),
-## like demo_scenery_loading.tscn does with "Exit to menu": the button is never shown, its text
-## becomes an entry at the end of the menu, its shortcut the entry's, and picking the entry emits
-## its pressed signal.
-## A button that belongs in the top bar itself, beside the menus, is added to TopBarActions the
-## same way and shown there as it is.
+## HUD shared by the demo scenes: the top bar with its menus - "Simulator", "View" and
+## "Diagnostics", whose windows this node opens - and the cards. The "Simulator" menu's entries
+## are the scene's business, each one a signal of its own - but "Help", a card of this HUD.
 
+## "Simulator" > "Settings"
+signal settings_requested
+## "Simulator" > "Report a problem or suggestion"
+signal problem_report_requested
+## "Simulator" > "Exit to menu"
+signal exit_to_menu_requested
+
+## The entries of the "Simulator" menu, by their ids - a separator (id 3) stands before EXIT_TO_MENU
+enum SimulatorItem { SETTINGS = 0, PROBLEM_REPORT = 1, EXIT_TO_MENU = 2, HELP = 4 }
 ## The entries of the "View" menu
 enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
 
@@ -19,6 +24,7 @@ const PANEL_SCENARIO:StringName = &"scenario"
 const PANEL_SCRIPTS:StringName = &"scripts"
 const PANEL_TRAINSETS:StringName = &"trainsets"
 const PANEL_SIMULATION_SPEED:StringName = &"simulation_speed"
+const PANEL_HELP:StringName = &"help"
 ## The View menu's entries of HUD elements; CONTROLS is not one - the control windows are this
 ## node's own
 const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
@@ -35,7 +41,6 @@ const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 
 ## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
 var _windows: Array[HUDWindow] = []
-var _menu_actions: Array[Button] = []
 ## The vehicle card, while HUDServer has one open
 var _card: VehicleCard = null
 ## Where the card was when it was last closed; it opens there again (no area until then)
@@ -50,18 +55,20 @@ func _ready() -> void:
     PlayerCameraServer.camera_changed.connect(_show_chips)
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
     SceneryHUDMouseServer.vehicle_pressed.connect(HUDServer.card_open)
-    var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
+    var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/Diagnostics as PopupMenu
     for child: Node in $ControlWindows.get_children():
         var win: HUDWindow = child as HUDWindow
         win.visible = false
         menu.add_item(win.title)
         _windows.append(win)
-    for child: Node in $MenuActions.get_children():
-        var action: Button = child as Button
-        menu.add_item(action.text)
-        menu.set_item_shortcut(menu.item_count - 1, action.shortcut)
-        _menu_actions.append(action)
     # the menus show their keys and handle them: a key picks its entry as a click would
+    %Simulator.set_item_shortcut(
+        %Simulator.get_item_index(SimulatorItem.EXIT_TO_MENU), _action_shortcut(&"menu_back")
+    )
+    # F11 - free in the original
+    %Simulator.set_item_shortcut(
+        %Simulator.get_item_index(SimulatorItem.SETTINGS), _action_shortcut(&"settings_open")
+    )
     menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))
     # Tab, as the original's map panel (driveruilayer.cpp:136)
     menu.set_item_shortcut(_windows.find($ControlWindows/MiniMap), _action_shortcut(&"minimap_toggle"))
@@ -97,13 +104,22 @@ static func _action_shortcut(action: StringName) -> Shortcut:
     return shortcut
 
 
-func _on_popup_menu_index_pressed(index: int) -> void:
-    if index >= _windows.size():
-        _menu_actions[index - _windows.size()].pressed.emit()
-        return
+func _on_diagnostics_menu_index_pressed(index: int) -> void:
     var win: HUDWindow = _windows[index]
     win.visible = not win.visible
     _bind_vehicle(win)
+
+
+func _on_simulator_menu_id_pressed(id: int) -> void:
+    match id:
+        SimulatorItem.SETTINGS:
+            settings_requested.emit()
+        SimulatorItem.PROBLEM_REPORT:
+            problem_report_requested.emit()
+        SimulatorItem.HELP:
+            HUDServer.panel_toggle(PANEL_HELP)
+        SimulatorItem.EXIT_TO_MENU:
+            exit_to_menu_requested.emit()
 
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the timetable, the
@@ -141,6 +157,8 @@ func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
             %VehicleSelectorPanel.visible = shown
         PANEL_SIMULATION_SPEED:
             %SimulationSpeedPanel.visible = shown
+        PANEL_HELP:
+            %HelpPanel.visible = shown
 
 
 func _on_hud_visibility_changed(shown: bool) -> void:
@@ -153,6 +171,10 @@ func _on_timetable_panel_close_requested() -> void:
 
 func _on_scenario_panel_close_requested() -> void:
     HUDServer.panel_set_visible(PANEL_SCENARIO, false)
+
+
+func _on_help_panel_close_requested() -> void:
+    HUDServer.panel_set_visible(PANEL_HELP, false)
 
 
 func _on_script_editor_panel_close_requested() -> void:

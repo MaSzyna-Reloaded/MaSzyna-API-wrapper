@@ -12,7 +12,6 @@ visible = false
 modulate = Color(1, 1, 1, 0)
 mouse_filter = 2
 theme = ExtResource("3_theme")
-theme_type_variation = &"FloatingChip"
 script = ExtResource("1_script")
 
 [node name="Comet" type="ColorRect" parent="."]

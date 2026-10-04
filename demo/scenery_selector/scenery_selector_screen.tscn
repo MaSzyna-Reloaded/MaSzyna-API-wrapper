@@ -12,7 +12,9 @@
 [ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="10_sounds"]
 [ext_resource type="Texture2D" uid="uid://b7dxj0otp70ih" path="res://startup/eu07_parked_sketch.svg" id="11_sketch"]
 [ext_resource type="PackedScene" path="res://scenery_selector/language_switcher.tscn" id="12_language"]
-[ext_resource type="PackedScene" path="res://scenery_selector/development_notice.tscn" id="13_notice"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="13_notice"]
+[ext_resource type="Texture2D" path="res://settings/gear_icon.svg" id="14_gear"]
+[ext_resource type="Script" path="res://ui/ui_switch.gd" id="ui_switch"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -68,6 +70,40 @@ corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gear"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0, 0, 0, 0.35)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.12)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_gear_hover"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(1, 1, 1, 0.12)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.81, 0.88, 1, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_gear_focus"]
 
 [node name="ScenerySelectorScreen" type="Control" unique_id=743980636]
 layout_mode = 3
@@ -196,7 +232,8 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Trainset"
 
-[node name="AllTrainsetsCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=820972816]
+[node name="AllTrainsetsSwitch" type="CheckButton" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=820972816]
+script = ExtResource("ui_switch")
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
@@ -257,8 +294,35 @@ theme_override_styles/disabled = SubResource("StyleBoxFlat_load_disabled")
 disabled = true
 text = "Load"
 
-[node name="DevelopmentNotice" parent="." instance=ExtResource("13_notice")]
+[node name="SettingsButton" type="Button" parent="."]
 layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -44.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = 42.0
+grow_horizontal = 0
+tooltip_text = "Settings"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_colors/icon_normal_color = Color(0.81, 0.88, 1, 0.8)
+theme_override_colors/icon_hover_color = Color(1, 1, 1, 1)
+theme_override_styles/focus = SubResource("StyleBoxEmpty_gear_focus")
+theme_override_styles/hover = SubResource("StyleBoxFlat_gear_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_gear_hover")
+theme_override_styles/normal = SubResource("StyleBoxFlat_gear")
+icon = ExtResource("14_gear")
+icon_alignment = 1
+expand_icon = true
+
+[node name="DevelopmentNotice" parent="." instance=ExtResource("13_notice")]
+unique_name_in_owner = true
+layout_mode = 1
+title = "Development version"
+message = "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
+confirm_text = "I understand"
 
 [node name="Footer" type="HBoxContainer" parent="." unique_id=116949608]
 layout_mode = 1
@@ -298,7 +362,7 @@ layout_mode = 2
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
-[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/AllTrainsetsCheckBox" to="." method="_on_all_trainsets_check_box_toggled"]
+[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/AllTrainsetsSwitch" to="." method="_on_all_trainsets_switch_toggled"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_actions"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
 [connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]
@@ -319,4 +383,6 @@ layout_mode = 2
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
 [connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]
-[connection signal="acknowledged" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]
+[connection signal="confirmed" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]
+[connection signal="dismissed" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]
+[connection signal="pressed" from="SettingsButton" to="." method="request_settings"]

@@ -41,7 +41,8 @@ var _released_vehicle:RID
 ## the cab's widgets take the keys (CabinButton, CabinSwitch), so it stands while the player looks
 ## from outside too
 var _cabin_vehicle:RID = RID()
-var _follow_jump_distance:float = ProjectSettings.get_setting(FOLLOW_JUMP_DISTANCE_SETTING, FOLLOW_JUMP_DISTANCE_DEFAULT)
+## A vehicle to follow farther than this is not flown to (FOLLOW_JUMP_DISTANCE_SETTING as it is now)
+var _follow_jump_distance:float = FOLLOW_JUMP_DISTANCE_DEFAULT
 ## Stepping out of the cab, driver_mode::DistantView(true) (drivermode.cpp:1060): beside the vehicle
 ## on the side of the occupied cab, this far beyond its width and this high above it [m]
 const DISTANT_VIEW_SIDE_MARGIN:float = 1.25
@@ -63,7 +64,7 @@ const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 1000.0
 func _ready() -> void:
     _auto_start_pending = auto_start and not start_vehicle_id
     sfx_player.bank = sfx_bank
-    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
+    _on_project_settings_changed()
     # the glow follows the spot: both are children of the camera, so their transform is view space
     var glow_material:ShaderMaterial = (headlamp_glow.mesh as QuadMesh).material as ShaderMaterial
     glow_material.set_shader_parameter(&"light_position", headlamp.position)
@@ -75,6 +76,7 @@ func _ready() -> void:
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
     VehicleServer.vehicle_configured.connect(_on_vehicle_configured)
+    ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     _show_camera(_mode_camera())
 
 
@@ -84,7 +86,14 @@ func _exit_tree() -> void:
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
     VehicleServer.vehicle_configured.disconnect(_on_vehicle_configured)
+    ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
     SceneryStreamingServer.streaming_set_camera(null)
+
+
+## The headlamp's shadow (opengl33renderer.cpp:1758) and the follow jump follow their settings
+func _on_project_settings_changed() -> void:
+    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", false)
+    _follow_jump_distance = ProjectSettings.get_setting(FOLLOW_JUMP_DISTANCE_SETTING, FOLLOW_JUMP_DISTANCE_DEFAULT)
 
 func _process(_delta:float) -> void:
     if _dirty:

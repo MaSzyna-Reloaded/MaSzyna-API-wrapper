@@ -1,0 +1,50 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/setting_folder.gd" id="1_folder"]
+[ext_resource type="Script" path="res://ui/ui_icon_button.gd" id="ui_icon_button"]
+[ext_resource type="Texture2D" path="res://ui/folder_icon.svg" id="folder_icon"]
+
+[node name="SettingFolder" type="PanelContainer"]
+mouse_filter = 1
+theme_type_variation = &"SettingItem"
+script = ExtResource("1_folder")
+
+[node name="Line" type="HBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Line"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="Path" type="Label" parent="Line"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 1
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.8)
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 2
+text_overrun_behavior = 3
+
+[node name="UnitColumn" type="Control" parent="Line"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="FolderButton" type="Button" parent="Line"]
+custom_minimum_size = Vector2(24, 0)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Show in file manager"
+mouse_default_cursor_shape = 2
+script = ExtResource("ui_icon_button")
+icon = ExtResource("folder_icon")
+icon_alignment = 1
+expand_icon = true
+
+[connection signal="pressed" from="Line/FolderButton" to="." method="reveal"]

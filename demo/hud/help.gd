@@ -51,7 +51,7 @@ func _ready() -> void:
         if not actions:
             continue
         actions.sort()
-        var foldable: FoldableContainer = FoldableContainer.new()
+        var foldable: UIFoldable = UIFoldable.new()
         foldable.title = group
         # Tab and Space belong to the game, not to the focus of a HUD widget
         foldable.focus_mode = Control.FOCUS_NONE

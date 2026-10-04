@@ -25,11 +25,6 @@ const WIPER_ELEMENT_SUFFIXES:Array[String] = ["_p1", "_p2", "_p3"]
 ## std::vector<bool>(8, false) wiperDirection of the original (DynObj.h:328)
 const MAX_WIPERS:int = 8
 const MAX_WHEEL_AXLES:int = 20
-## A mirror's glass is a submodel with nothing under it, named after a mirror - the data marks
-## mirrors by name only: dynamic/pkp/elf_v1 "zwierciadlo", dynamic/pkp/impuls_v1 "szybka_lusterko_l"
-const MIRROR_GLASS_NAME_PARTS:Array[String] = ["zwierciad", "luster", "lustr"]
-## Whether the mirror glass reflects the scene (PlanarMirror3D)
-const REAL_MIRRORS_SETTING:StringName = &"maszyna/rendering/real_mirrors"
 
 ## lower arm 1, upper arm 1 and the slider
 const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [0, 2, 4]
@@ -130,21 +125,6 @@ static func _model_exists(data_path:String, relpath:String) -> bool:
         return true
     var t3d_path:String = MaszynaDataPath.resolve(game_dir, relative_base_path + ".t3d")
     return FileAccess.file_exists(game_dir.path_join(t3d_path))
-
-
-## The mirrors' glass reflects the scene (maszyna/rendering/real_mirrors): a submodel with nothing
-## under it, named after a mirror, gets a PlanarMirror3D - put on the nodes the exterior is built
-## as near the camera (under `model_root`), so again every time it is built
-## (RailVehicleRenderingServer.vehicle_model_built)
-static func add_mirrors(model_root:Node) -> void:
-    if not ProjectSettings.get_setting(REAL_MIRRORS_SETTING, true):
-        return
-    for node:Node in model_root.find_children("*", "MeshInstance3D", true, false):
-        var glass:MeshInstance3D = node as MeshInstance3D
-        var submodel_name:String = glass.name.to_lower()
-        if glass.get_child_count(true) == 0 \
-                and MIRROR_GLASS_NAME_PARTS.any(func(part:String) -> bool: return submodel_name.contains(part)):
-            glass.add_child(PlanarMirror3D.new())
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by

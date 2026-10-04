@@ -25,6 +25,15 @@ Code generation:
   for what is rail (track, couplers, rail component kinds). Its scenery name (`train_id`) may be
   empty or repeated and is only for finding it (`vehicle_get_rid_by_name`). Call a
   `VehicleController` directly only where the composition already holds it (e.g. `VehicleComponent`s)
+* REQUIRED, ABSOLUTE: **whoever introduces something generic moves everything onto it - no
+  leftovers, no second road to the same goal.** A generic component, operation or class (a
+  `UIDialog`, a server method, a shared scene) is not done when it works in the one place it was
+  written for: in the same work, search the codebase for everything that already does the same job
+  by other means (hand-made copies, Godot's built-ins used for it, older variants) and refactor it
+  onto the generic one, deleting the old code - not leaving it beside the new. What cannot be moved
+  in the same work is named to the operator, with the reason, before the work counts as done.
+  Moving something onto the generic one never changes how it looks: a place with a style of its
+  own (the old HUD windows) is named to the operator and left as it is until they decide
 * PROHIBITED: **programming by chains of private `_underscore` methods and many paths to one
   effect.** An effect has one public operation of its owner and happens only there; every caller -
   a key, a button, a signal, another object - calls that operation, not a private helper chain

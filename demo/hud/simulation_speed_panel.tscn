@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://hud/simulation_speed_panel.gd" id="1_script"]
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/ui_chip.gd" id="ui_chip"]
 
 [node name="SimulationSpeedPanel" type="Control"]
 layout_mode = 3
@@ -15,6 +16,7 @@ theme = ExtResource("2_theme")
 script = ExtResource("1_script")
 
 [node name="Tile" type="PanelContainer" parent="."]
+script = ExtResource("ui_chip")
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 2
@@ -25,7 +27,6 @@ offset_top = -16.0
 offset_right = 16.0
 offset_bottom = -16.0
 grow_vertical = 0
-theme_type_variation = &"FloatingChip"
 
 [node name="Buttons" type="HBoxContainer" parent="Tile"]
 unique_name_in_owner = true

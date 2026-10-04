@@ -1,5 +1,8 @@
 [gd_resource type="Theme" format=3 uid="uid://dhqm8g8dixeql"]
 
+[ext_resource type="FontVariation" path="res://ui/fonts/martian_mono.tres" id="digits_font"]
+[ext_resource type="FontVariation" path="res://ui/fonts/vend_sans_medium.tres" id="game_font"]
+[ext_resource type="StyleBox" path="res://ui/ui_tooltip.tres" id="game_tooltip"]
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ai_pill"]
 content_margin_left = 9.0
 content_margin_top = 2.0
@@ -108,9 +111,6 @@ corner_radius_top_right = 3
 corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 
-[sub_resource type="SystemFont" id="SystemFont_digits"]
-font_names = PackedStringArray("JetBrains Mono", "DejaVu Sans Mono", "Consolas", "Monospace")
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_lamp_lit"]
 content_margin_left = 10.0
 content_margin_top = 2.0
@@ -128,38 +128,6 @@ corner_radius_bottom_right = 3
 corner_radius_bottom_left = 3
 shadow_color = Color(1, 0.15, 0.1, 0.55)
 shadow_size = 8
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip"]
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
-bg_color = Color(0.06, 0.075, 0.1, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.45, 0.72, 1, 0.28)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_floating_chip_hover"]
-content_margin_left = 12.0
-content_margin_top = 8.0
-content_margin_right = 12.0
-content_margin_bottom = 8.0
-bg_color = Color(0.06, 0.075, 0.1, 0.9)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.45, 0.72, 1, 0.8)
-corner_radius_top_left = 10
-corner_radius_top_right = 10
-corner_radius_bottom_right = 10
-corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_menu_item"]
 content_margin_left = 8.0
@@ -337,6 +305,7 @@ shadow_size = 12
 shadow_offset = Vector2(0, 4)
 
 [resource]
+default_font = ExtResource("game_font")
 default_font_size = 14
 AIBadge/base_type = &"Label"
 AIBadge/colors/font_color = Color(0.62, 0.92, 0.7, 1)
@@ -374,36 +343,32 @@ DrivingAidLamp/styles/panel = SubResource("StyleBoxFlat_lamp")
 DrivingAidLampLabel/base_type = &"Label"
 DrivingAidLampLabel/colors/font_color = Color(0.55, 0.55, 0.55, 1)
 DrivingAidLampLabel/font_sizes/font_size = 13
-DrivingAidLampLabel/fonts/font = SubResource("SystemFont_digits")
+DrivingAidLampLabel/fonts/font = ExtResource("digits_font")
 DrivingAidLampLabelLit/base_type = &"Label"
 DrivingAidLampLabelLit/colors/font_color = Color(1, 1, 1, 1)
 DrivingAidLampLabelLit/font_sizes/font_size = 13
-DrivingAidLampLabelLit/fonts/font = SubResource("SystemFont_digits")
+DrivingAidLampLabelLit/fonts/font = ExtResource("digits_font")
 DrivingAidLampLit/base_type = &"PanelContainer"
 DrivingAidLampLit/styles/panel = SubResource("StyleBoxFlat_lamp_lit")
 DrivingAidMuted/base_type = &"Label"
 DrivingAidMuted/colors/font_color = Color(0.78, 0.78, 0.78, 1)
 DrivingAidMuted/font_sizes/font_size = 12
-DrivingAidMuted/fonts/font = SubResource("SystemFont_digits")
+DrivingAidMuted/fonts/font = ExtResource("digits_font")
 DrivingAidNextLimit/base_type = &"Label"
 DrivingAidNextLimit/colors/font_color = Color(1, 0.78, 0.35, 1)
 DrivingAidNextLimit/font_sizes/font_size = 16
-DrivingAidNextLimit/fonts/font = SubResource("SystemFont_digits")
+DrivingAidNextLimit/fonts/font = ExtResource("digits_font")
 DrivingAidSpeed/base_type = &"Label"
 DrivingAidSpeed/colors/font_color = Color(1, 1, 1, 1)
 DrivingAidSpeed/font_sizes/font_size = 38
-DrivingAidSpeed/fonts/font = SubResource("SystemFont_digits")
+DrivingAidSpeed/fonts/font = ExtResource("digits_font")
 DrivingAidStopReason/base_type = &"Label"
 DrivingAidStopReason/colors/font_color = Color(1, 1, 1, 1)
 DrivingAidStopReason/font_sizes/font_size = 15
 DrivingAidValue/base_type = &"Label"
 DrivingAidValue/colors/font_color = Color(1, 1, 1, 1)
 DrivingAidValue/font_sizes/font_size = 24
-DrivingAidValue/fonts/font = SubResource("SystemFont_digits")
-FloatingChip/base_type = &"PanelContainer"
-FloatingChip/styles/panel = SubResource("StyleBoxFlat_floating_chip")
-FloatingChipHover/base_type = &"PanelContainer"
-FloatingChipHover/styles/panel = SubResource("StyleBoxFlat_floating_chip_hover")
+DrivingAidValue/fonts/font = ExtResource("digits_font")
 Label/colors/font_color = Color(0.9, 0.93, 0.97, 1)
 MenuBar/colors/font_color = Color(0.9, 0.93, 0.97, 1)
 MenuBar/colors/font_hover_color = Color(1, 1, 1, 1)
@@ -433,19 +398,19 @@ SimulationSpeedButton/colors/font_hover_color = Color(1, 1, 1, 1)
 SimulationSpeedButton/colors/font_hover_pressed_color = Color(0.45, 0.72, 1, 1)
 SimulationSpeedButton/colors/font_pressed_color = Color(0.45, 0.72, 1, 1)
 SimulationSpeedButton/font_sizes/font_size = 14
-SimulationSpeedButton/fonts/font = SubResource("SystemFont_digits")
+SimulationSpeedButton/fonts/font = ExtResource("digits_font")
 SpeedLimitSign/base_type = &"PanelContainer"
 SpeedLimitSign/styles/panel = SubResource("StyleBoxFlat_speed_limit_sign")
 SpeedLimitSignDigits/base_type = &"Label"
 SpeedLimitSignDigits/colors/font_color = Color(0.08, 0.08, 0.1, 1)
 SpeedLimitSignDigits/font_sizes/font_size = 20
-SpeedLimitSignDigits/fonts/font = SubResource("SystemFont_digits")
+SpeedLimitSignDigits/fonts/font = ExtResource("digits_font")
 SpeedStopSign/base_type = &"PanelContainer"
 SpeedStopSign/styles/panel = SubResource("StyleBoxFlat_stop_sign")
 SpeedStopSignText/base_type = &"Label"
 SpeedStopSignText/colors/font_color = Color(1, 1, 1, 1)
 SpeedStopSignText/font_sizes/font_size = 13
-SpeedStopSignText/fonts/font = SubResource("SystemFont_digits")
+SpeedStopSignText/fonts/font = ExtResource("digits_font")
 TimetableCard/base_type = &"PanelContainer"
 TimetableCard/styles/panel = SubResource("StyleBoxFlat_card")
 TimetableChip/base_type = &"PanelContainer"
@@ -453,7 +418,7 @@ TimetableChip/styles/panel = SubResource("StyleBoxFlat_chip")
 TimetableClock/base_type = &"Label"
 TimetableClock/colors/font_color = Color(0.72, 0.85, 1, 1)
 TimetableClock/font_sizes/font_size = 20
-TimetableClock/fonts/font = SubResource("SystemFont_digits")
+TimetableClock/fonts/font = ExtResource("digits_font")
 TimetableClose/base_type = &"Button"
 TimetableClose/colors/font_color = Color(0.6, 0.66, 0.75, 1)
 TimetableClose/colors/font_hover_color = Color(1, 1, 1, 1)
@@ -461,7 +426,7 @@ TimetableClose/colors/font_pressed_color = Color(0.45, 0.72, 1, 1)
 TimetableClose/font_sizes/font_size = 14
 TimetableDigits/base_type = &"Label"
 TimetableDigits/font_sizes/font_size = 14
-TimetableDigits/fonts/font = SubResource("SystemFont_digits")
+TimetableDigits/fonts/font = ExtResource("digits_font")
 TimetableMuted/base_type = &"Label"
 TimetableMuted/colors/font_color = Color(0.6, 0.66, 0.75, 1)
 TimetableMuted/font_sizes/font_size = 12
@@ -487,3 +452,6 @@ Window/constants/title_height = 36
 Window/font_sizes/title_font_size = 18
 Window/styles/embedded_border = SubResource("StyleBoxFlat_dialog")
 Window/styles/embedded_unfocused_border = SubResource("StyleBoxFlat_dialog")
+TooltipLabel/colors/font_color = Color(0.92, 0.95, 1, 1)
+TooltipLabel/font_sizes/font_size = 14
+TooltipPanel/styles/panel = ExtResource("game_tooltip")

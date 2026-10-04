@@ -1,10 +1,10 @@
-extends Window
+extends UIWindow
 
-## The form of a problem report: what happened, the screenshot with its marks, and the consent to
-## publish it, without which nothing is sent. Its Send and Close buttons and its close request are
-## wired to the report (bug_report.tscn), which decides what they do; a report sent or saved
-## closes it, a failure stays on it with what was written. A window of its own, so no key typed
-## in it reaches the cab.
+## The form of a problem report in a window of the game (UIWindow): what happened, the screenshot
+## with its marks, and the consent to publish it, without which nothing is sent. Its Send and Close
+## buttons and its close request (the close button, Escape) are wired to the report
+## (bug_report.tscn), which decides what they do; a report sent or saved closes it, a failure stays
+## on it with what was written.
 
 ## Part of the screen the form takes
 const SIZE_RATIO: float = 0.85
@@ -20,7 +20,7 @@ func begin(screenshot: Image) -> void:
     %Status.text = ""
     %ScreenshotAnnotator.set_image(screenshot)
     _set_form_locked(false)
-    popup_centered_ratio(SIZE_RATIO)
+    show_part(SIZE_RATIO)
     %Description.grab_focus()
 
 

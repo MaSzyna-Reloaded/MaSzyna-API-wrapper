@@ -87,7 +87,7 @@ func _ready() -> void:
     _ui_sounds.bank = sounds
     add_child(_ui_sounds)
     focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
-    %SearchPanel.visible = searchable
+    %SearchInput.visible = searchable
 
 
 ## The ring and the marker are the same change seen twice: the marker belongs to the selected row of
@@ -103,16 +103,12 @@ func _process_dirty() -> void:
 func grab_section_focus() -> void:
     super()
     if focused and searchable:
-        %Search.grab_focus()
-        %Search.grab_click_focus()
+        %SearchInput.grab_typing_focus()
 
 
-## Only a field that holds the focus gives it up: release_focus() clears the whole viewport's focus,
-## so an unconditional one would take away what the section activated a line earlier just grabbed.
 func release_section_focus() -> void:
     super()
-    if %Search.has_focus():
-        %Search.release_focus()
+    %SearchInput.release_typing_focus()
 
 
 ## Rows of the list, given as what they show: a title and the smaller grey note beside it, and
@@ -173,8 +169,7 @@ func set_rows(
             _add_slot(_create_line(row_titles[member], _notes[index], _create_folder()), index, group)
 
     if searchable:
-        %Search.text = ""
-        %ClearSearch.visible = false
+        %SearchInput.reset()
     _filter("")
     %Scroll.scroll_vertical = 0
     _select(_next_visible_slot(-1, 1))
@@ -269,7 +264,7 @@ func _select(slot: int) -> void:
 ## result stands unfolded whatever it was - the fold shows again once the search is cleared.
 func _toggle_group(group: int) -> void:
     _group_unfolded[group] = not _group_unfolded[group]
-    _filter(%Search.text if searchable else "")
+    _filter(%SearchInput.get_text() if searchable else "")
 
 
 func _add_slot(slot: PanelContainer, row: int, group: int) -> void:
@@ -449,14 +444,17 @@ func _on_slot_hovered(slot: int, hovered: bool) -> void:
     _slots[slot].theme_type_variation = ITEM_HOVERED if hovered else ITEM_IDLE
 
 
-func _on_search_text_changed(text: String) -> void:
+func _on_search_input_typed(_text: String) -> void:
     _ui_sounds.play(&"keystroke")
-    %ClearSearch.visible = not text.is_empty()
+    %SearchDebounce.start()
+
+
+func _on_search_input_cleared() -> void:
     %SearchDebounce.start()
 
 
 func _on_search_debounce_timeout() -> void:
-    _filter(%Search.text)
+    _filter(%SearchInput.get_text())
     # the first result takes over the selection; nothing found is the one case with none at all
     var slot: int = _next_visible_slot(-1, 1)
     # a group a search unfolded leads with its header, and the result is the row under it
@@ -467,14 +465,6 @@ func _on_search_debounce_timeout() -> void:
         _select(slot)
     # the filtered-out rows take no room, so the first result sits at the top of the list
     %Scroll.scroll_vertical = 0
-
-
-func _on_clear_search_pressed() -> void:
-    %Search.text = ""
-    %ClearSearch.visible = false
-    %SearchDebounce.start()
-    %Search.grab_focus()
-    %Search.grab_click_focus()
 
 
 ## Rows that carry every token of the search, and carry each one as a fragment: "krak tarn" finds

@@ -41,9 +41,6 @@ msgstr "Opuścić scenerię i wrócić do menu?"
 msgid "MaSzyna game folder data is not set or invalid."
 msgstr "Katalog z danymi gry MaSzyna nie jest ustawiony lub jest nieprawidłowy."
 
-msgid "Controls"
-msgstr "Sterowanie"
-
 msgid "View"
 msgstr "Widok"
 
@@ -935,6 +932,9 @@ msgstr "Przewód zasilający"
 msgid "Brake handle"
 msgstr "Nastawnik hamulca"
 
+msgid "None"
+msgstr "Brak"
+
 msgid "Disabled"
 msgstr "Wyłączony"
 
@@ -1200,3 +1200,454 @@ msgstr "Otwórz zgłoszenie"
 
 msgid "OK"
 msgstr "OK"
+
+msgid "Scenery"
+msgstr "Sceneria"
+
+
+msgid "Improved railway lights visibility"
+msgstr "Lepsza widoczność świateł kolejowych"
+
+msgid "Railway lights point size multiplier"
+msgstr "Mnożnik wielkości punktu świateł kolejowych"
+
+msgid "Railway lights glare intensity"
+msgstr "Intensywność blasku świateł kolejowych"
+
+msgid "Railway lights glare fade start"
+msgstr "Początek zanikania blasku świateł kolejowych"
+
+msgid "Railway lights glare rotation ratio"
+msgstr "Współczynnik obrotu blasku świateł kolejowych"
+
+msgid "Railway lights glare edge size"
+msgstr "Szerokość krawędzi blasku świateł kolejowych"
+
+msgid "Railway lights glare minimum screen size"
+msgstr "Minimalny rozmiar blasku świateł kolejowych na ekranie"
+
+msgid "Shadows"
+msgstr "Cienie"
+
+msgid "Shadow mode"
+msgstr "Tryb cieni"
+
+msgid "Orthogonal"
+msgstr "Ortogonalne"
+
+msgid "PSSM 2 Splits"
+msgstr "PSSM, 2 podziały"
+
+msgid "PSSM 4 Splits"
+msgstr "PSSM, 4 podziały"
+
+msgid "Shadow distance"
+msgstr "Zasięg cieni"
+
+msgid "Shadow blur"
+msgstr "Rozmycie cieni"
+
+msgid "Shadow opacity"
+msgstr "Krycie cieni"
+
+msgid "Shadow bias"
+msgstr "Przesunięcie cieni"
+
+msgid "Shadow normal bias"
+msgstr "Przesunięcie cieni wzdłuż normalnej"
+
+msgid "Blend shadow splits"
+msgstr "Łagodne przejścia między podziałami cieni"
+
+msgid "Shadow split 1"
+msgstr "Podział cieni 1"
+
+msgid "Shadow split 2"
+msgstr "Podział cieni 2"
+
+msgid "Shadow split 3"
+msgstr "Podział cieni 3"
+
+msgid "Lights off"
+msgstr "Światła wyłączone"
+
+msgid "Economy"
+msgstr "Ekonomiczne"
+
+msgid "High quality"
+msgstr "Wysoka jakość"
+
+msgid "Scenery lights distance"
+msgstr "Zasięg świateł scenerii"
+
+msgid "Scenery lights cast shadows"
+msgstr "Światła scenerii rzucają cienie"
+
+msgid "Economy light height offset"
+msgstr "Przesunięcie wysokości świateł w trybie ekonomicznym"
+
+msgid "Economy light cone scale"
+msgstr "Skala stożka świateł w trybie ekonomicznym"
+
+msgid "Light size"
+msgstr "Rozmiar światła"
+
+msgid "Light energy"
+msgstr "Energia światła"
+
+msgid "Light tint"
+msgstr "Zabarwienie światła"
+
+msgid "Light volumetric fog energy"
+msgstr "Energia światła we mgle wolumetrycznej"
+
+msgid "Lamp height offset"
+msgstr "Przesunięcie wysokości latarni"
+
+msgid "Lamp cone scale"
+msgstr "Skala stożka latarni"
+
+msgid "Lamp attenuation"
+msgstr "Tłumienie światła latarni"
+
+msgid "Sun altitude of full night"
+msgstr "Wysokość słońca przy pełnej nocy"
+
+msgid "Sun altitude of full day"
+msgstr "Wysokość słońca przy pełnym dniu"
+
+msgid "Cabin"
+msgstr "Kabina"
+
+msgid "Improved cabin shadows"
+msgstr "Lepsze cienie w kabinie"
+
+msgid "Indicator glow"
+msgstr "Poświata kontrolek"
+
+msgid "Indicator glow energy"
+msgstr "Energia poświaty kontrolek"
+
+msgid "Indicator glow range"
+msgstr "Zasięg poświaty kontrolek"
+
+msgid "Real instrument lights"
+msgstr "Prawdziwe podświetlenie przyrządów"
+
+msgid "Instrument glow energy"
+msgstr "Energia podświetlenia przyrządów"
+
+msgid "Instrument glow range"
+msgstr "Zasięg podświetlenia przyrządów"
+
+msgid "Cab display glow"
+msgstr "Poświata wyświetlaczy w kabinie"
+
+msgid "Cab display glow energy"
+msgstr "Energia poświaty wyświetlaczy w kabinie"
+
+msgid "Cab display glow range"
+msgstr "Zasięg poświaty wyświetlaczy w kabinie"
+
+msgid "Vehicle detail distance"
+msgstr "Zasięg szczegółów pojazdów"
+
+msgid "Real mirrors"
+msgstr "Prawdziwe lusterka"
+
+msgid "Smoke"
+msgstr "Dym"
+
+msgid "Smoke enabled"
+msgstr "Włącz dym"
+
+msgid "Smoke generator"
+msgstr "Generator dymu"
+
+msgid "Original"
+msgstr "Oryginalny"
+
+msgid "Modern"
+msgstr "Nowoczesny"
+
+msgid "Vehicle smoke distance"
+msgstr "Zasięg dymu pojazdów"
+
+msgid "Vehicle smoke density"
+msgstr "Gęstość dymu pojazdów"
+
+msgid "Vehicle smoke lifetime"
+msgstr "Czas życia dymu pojazdów"
+
+msgid "Vehicle smoke particles"
+msgstr "Cząsteczki dymu pojazdów"
+
+msgid "Scenery smoke distance"
+msgstr "Zasięg dymu scenerii"
+
+msgid "Scenery smoke density"
+msgstr "Gęstość dymu scenerii"
+
+msgid "Scenery smoke lifetime"
+msgstr "Czas życia dymu scenerii"
+
+msgid "Scenery smoke particles"
+msgstr "Cząsteczki dymu scenerii"
+
+msgid "Wind turbulence"
+msgstr "Turbulencja wiatru"
+
+msgid "Fog curve"
+msgstr "Krzywa mgły"
+
+msgid "Fog sky height"
+msgstr "Wysokość mgły na niebie"
+
+msgid "Aerial perspective"
+msgstr "Perspektywa powietrzna"
+
+msgid "Fog scenery distance factor"
+msgstr "Współczynnik odległości mgły w scenerii"
+
+msgid "Fog day distance factor"
+msgstr "Współczynnik odległości mgły w dzień"
+
+msgid "Fog night distance factor"
+msgstr "Współczynnik odległości mgły nocą"
+
+msgid "Volumetric fog energy"
+msgstr "Energia mgły wolumetrycznej"
+
+msgid "Volumetric fog length scale"
+msgstr "Skala długości mgły wolumetrycznej"
+
+msgid "Volumetric fog minimum"
+msgstr "Minimum mgły wolumetrycznej"
+
+msgid "Volumetric fog far falloff"
+msgstr "Zanikanie mgły wolumetrycznej w dali"
+
+msgid "Rain fog distance"
+msgstr "Zasięg mgły w deszczu"
+
+msgid "Rain fog density"
+msgstr "Gęstość mgły w deszczu"
+
+msgid "Rain density"
+msgstr "Gęstość deszczu"
+
+msgid "Rain streak visibility"
+msgstr "Widoczność smug deszczu"
+
+msgid "Rain height above camera"
+msgstr "Wysokość deszczu nad kamerą"
+
+msgid "Rain wind boost"
+msgstr "Wzmocnienie wiatru w deszczu"
+
+msgid "Rain tilt by wind"
+msgstr "Pochylenie deszczu przez wiatr"
+
+msgid "Near rain speed multiplier"
+msgstr "Mnożnik prędkości bliskiego deszczu"
+
+msgid "Near rain blur"
+msgstr "Rozmycie bliskiego deszczu"
+
+msgid "Near rain glow"
+msgstr "Poświata bliskiego deszczu"
+
+msgid "Distant rain blur"
+msgstr "Rozmycie dalekiego deszczu"
+
+msgid "Rain roughness"
+msgstr "Chropowatość kropli deszczu"
+
+msgid "Rain specular fade start"
+msgstr "Początek zanikania połysku deszczu"
+
+msgid "Rain specular fade end"
+msgstr "Koniec zanikania połysku deszczu"
+
+msgid "Rain probe count"
+msgstr "Liczba sond deszczu"
+
+msgid "Rain probe distance"
+msgstr "Zasięg sond deszczu"
+
+msgid "Sound"
+msgstr "Dźwięk"
+
+msgid "Sound culling distance"
+msgstr "Zasięg słyszalności dźwięków"
+
+msgid "External view minimum distance"
+msgstr "Minimalna odległość widoku zewnętrznego"
+
+msgid "External view maximum distance"
+msgstr "Maksymalna odległość widoku zewnętrznego"
+
+msgid "Follow jump distance"
+msgstr "Odległość przeskoku przy śledzeniu"
+
+msgid "Simulation"
+msgstr "Symulacja"
+
+msgid "Simulation speed change time"
+msgstr "Czas zmiany prędkości symulacji"
+
+msgid "Graphics"
+msgstr "Grafika"
+
+msgid "Multisample anti-aliasing"
+msgstr "Wygładzanie krawędzi MSAA"
+
+msgid "Screen-space anti-aliasing"
+msgstr "Wygładzanie krawędzi w przestrzeni ekranu"
+
+msgid "Temporal anti-aliasing (TAA)"
+msgstr "Wygładzanie czasowe (TAA)"
+
+msgid "Ambient occlusion (SSAO)"
+msgstr "Okluzja otoczenia (SSAO)"
+
+msgid "Indirect lighting (SSIL)"
+msgstr "Oświetlenie pośrednie (SSIL)"
+
+msgid "Reflections (SSR)"
+msgstr "Odbicia (SSR)"
+
+msgid "Global illumination (SDFGI)"
+msgstr "Oświetlenie globalne (SDFGI)"
+
+msgid "Volumetric fog"
+msgstr "Mgła wolumetryczna"
+
+msgid "Glow"
+msgstr "Poświata (glow)"
+
+msgid "Glow intensity"
+msgstr "Intensywność poświaty"
+
+msgid "Bloom intensity"
+msgstr "Intensywność rozbłysku (bloom)"
+
+msgid "Gamma"
+msgstr "Gamma"
+
+msgid "Vertical sync"
+msgstr "Synchronizacja pionowa"
+
+msgid "Cancel"
+msgstr "Anuluj"
+
+msgid "Apply"
+msgstr "Zastosuj"
+
+msgid "Save"
+msgstr "Zapisz"
+
+msgid "Simulator"
+msgstr "Symulator"
+
+msgid "Reset to defaults"
+msgstr "Przywróć domyślne"
+
+msgid "Discard changes"
+msgstr "Odrzuć zmiany"
+
+msgid "Back"
+msgstr "Wróć"
+
+msgid "Discard the changes?"
+msgstr "Odrzucić zmiany?"
+
+msgid "Save the changes?"
+msgstr "Zapisać zmiany?"
+
+msgid "Advanced"
+msgstr "Zaawansowane"
+
+msgid "Reset to default"
+msgstr "Przywróć domyślną"
+
+msgid "Display"
+msgstr "Ekran"
+
+msgid "Mode"
+msgstr "Tryb"
+
+msgid "Windowed"
+msgstr "W oknie"
+
+msgid "Fullscreen"
+msgstr "Pełny ekran"
+
+msgid "Resolution"
+msgstr "Rozdzielczość"
+
+msgid "HDR output (experimental)"
+msgstr "Wyjście HDR (eksperymentalne)"
+
+msgid "Debug"
+msgstr "Debugowanie"
+
+msgid "Enable file logging"
+msgstr "Zapisuj log do pliku"
+
+msgid "Log folder"
+msgstr "Folder logów"
+
+msgid "Show in file manager"
+msgstr "Pokaż w menedżerze plików"
+
+msgid "Restart required"
+msgstr "Wymagany restart"
+
+msgid "Some of the changes take effect after the game is restarted. Restart it now?"
+msgstr "Część zmian zadziała po ponownym uruchomieniu gry. Uruchomić ją ponownie teraz?"
+
+msgid "Restart"
+msgstr "Uruchom ponownie"
+
+msgid "Later"
+msgstr "Później"
+
+msgid "Restart the game to apply the changes."
+msgstr "Uruchom grę ponownie, aby zastosować zmiany."
+
+msgid "Sunshafts"
+msgstr "Promienie słońca"
+
+msgid "Sunshaft intensity"
+msgstr "Intensywność promieni słońca"
+
+msgid "Sunshaft density"
+msgstr "Gęstość promieni słońca"
+
+msgid "Sunshaft brightness threshold"
+msgstr "Próg jasności promieni słońca"
+
+msgid "Sunshaft sample weight"
+msgstr "Waga próbki promieni słońca"
+
+msgid "Sunshaft decay"
+msgstr "Zanik promieni słońca"
+
+msgid "Sunshaft exposure"
+msgstr "Ekspozycja promieni słońca"
+
+msgid "Sunshaft reach"
+msgstr "Zasięg promieni słońca"
+
+msgid "Sunshaft cloud occlusion"
+msgstr "Przesłanianie promieni przez chmury"
+
+msgid "Sunshaft cloud falloff"
+msgstr "Krzywa przesłaniania przez chmury"
+
+msgid "Sunshaft sample count"
+msgstr "Liczba próbek promieni słońca"
+
+msgid "Diagnostics"
+msgstr "Diagnostyka"

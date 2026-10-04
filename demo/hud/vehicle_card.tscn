@@ -9,6 +9,7 @@
 [ext_resource type="Texture2D" path="res://hud/icons/magnifier.svg" id="8_magnifier"]
 [ext_resource type="Texture2D" path="res://hud/icons/crosshair.svg" id="9_crosshair"]
 [ext_resource type="PackedScene" path="res://hud/vehicle_actions_button.tscn" id="10_actions"]
+[ext_resource type="Script" path="res://ui/ui_foldable.gd" id="ui_foldable"]
 
 [node name="VehicleCard" type="PanelContainer"]
 custom_minimum_size = Vector2(440, 0)
@@ -125,6 +126,7 @@ size_flags_horizontal = 3
 theme_override_constants/separation = 8
 
 [node name="BasicSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+script = ExtResource("ui_foldable")
 layout_mode = 2
 title = "Basic data"
 
@@ -137,6 +139,7 @@ theme_override_constants/v_separation = 2
 columns = 2
 
 [node name="ParametersSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+script = ExtResource("ui_foldable")
 layout_mode = 2
 title = "Current parameters"
 
@@ -205,6 +208,7 @@ theme_override_constants/v_separation = 2
 columns = 2
 
 [node name="DriverSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+script = ExtResource("ui_foldable")
 layout_mode = 2
 folded = true
 title = "Driver"
@@ -254,6 +258,7 @@ theme_override_constants/v_separation = 2
 columns = 2
 
 [node name="TimetableSection" type="FoldableContainer" parent="Content/SectionsScroll/Sections"]
+script = ExtResource("ui_foldable")
 layout_mode = 2
 folded = true
 title = "Timetable"

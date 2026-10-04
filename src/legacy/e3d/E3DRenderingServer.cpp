@@ -8,6 +8,7 @@
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/spot_light3d.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
@@ -39,6 +40,7 @@ namespace godot {
                 D_METHOD("instance_attach_node", "instance", "node"), &E3DRenderingServer::instance_attach_node);
         ClassDB::bind_method(
                 D_METHOD("instance_get_attached_node", "instance"), &E3DRenderingServer::instance_get_attached_node);
+        ClassDB::bind_method(D_METHOD("smoke_rebuild"), &E3DRenderingServer::smoke_rebuild);
         ClassDB::bind_method(
                 D_METHOD("instance_set_scenario", "instance", "scenario"), &E3DRenderingServer::instance_set_scenario);
         ClassDB::bind_method(
@@ -175,8 +177,51 @@ namespace godot {
                 PropertyInfo(Variant::STRING, "submodel")));
     }
 
-    /// What is read from the game's data is read again when the data is (GameDataServer)
+    /// The settings a scenery light's placement is made of (E3DLightFactory::discover()) and the
+    /// range it streams with
+    static const char *const LIGHT_PLACEMENT_SETTING_NAMES[] = {
+            E3DLightFactory::LIGHT_MODE_SETTING,
+            E3DLightFactory::ECONOMY_HEIGHT_OFFSET_SETTING,
+            E3DLightFactory::ECONOMY_CONE_SCALE_SETTING,
+            E3DLightFactory::LIGHT_SIZE_SETTING,
+            E3DLightFactory::LAMP_LIGHT_HEIGHT_OFFSET_SETTING,
+            E3DLightFactory::LAMP_LIGHT_CONE_SCALE_SETTING,
+            E3DLightFactory::LAMP_LIGHT_ATTENUATION_SETTING,
+            E3DRenderingServer::SCENERY_LIGHT_DISTANCE_SETTING,
+    };
+    /// ...and the settings its RenderingServer light is built with (_light_build())
+    static const char *const LIGHT_BUILD_SETTING_NAMES[] = {
+            E3DRenderingServer::SCENERY_LIGHT_ENERGY_SETTING,
+            E3DRenderingServer::SCENERY_LIGHT_SHADOWS_SETTING,
+            E3DRenderingServer::SCENERY_LIGHT_TINT_SETTING,
+            E3DRenderingServer::SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY_SETTING,
+            E3DLightFactory::LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING,
+    };
+    /// The settings of the emitters this server reads itself (_build_instance_smoke_sources())
+    static const char *const SMOKE_SETTING_NAMES[] = {
+            E3DRenderingServer::SMOKE_ENABLED_SETTING,
+            E3DRenderingServer::SMOKE_DYNAMIC_DISTANCE_SETTING,
+            E3DRenderingServer::SMOKE_STATIC_DISTANCE_SETTING,
+    };
+
+    template<size_t COUNT>
+    Array read_settings(const char *const (&p_names)[COUNT]) {
+        const ProjectSettings *settings = ProjectSettings::get_singleton();
+        Array values;
+        for (const char *name: p_names) {
+            values.push_back(settings->get_setting(name));
+        }
+        return values;
+    }
+
+    /// What is read from the game's data is read again when the data is (GameDataServer), and what
+    /// the settings shape is built again when they change
     E3DRenderingServer::E3DRenderingServer() {
+        light_placement_settings = read_settings(LIGHT_PLACEMENT_SETTING_NAMES);
+        light_build_settings = read_settings(LIGHT_BUILD_SETTING_NAMES);
+        smoke_settings = read_settings(SMOKE_SETTING_NAMES);
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &E3DRenderingServer::_on_project_settings_changed));
         GameDataServer *game_data = GameDataServer::get_instance();
         ERR_FAIL_NULL(game_data);
         game_data->connect(
@@ -190,6 +235,64 @@ namespace godot {
         streaming->content_set_consumer(
                 SceneryStreamingProvider::CONTENT_MODELS, callable_mp(this, &E3DRenderingServer::_adopt_model),
                 callable_mp(this, &E3DRenderingServer::instance_free));
+    }
+
+    /// A change of a placement setting places the scenery lights anew - the lit submodels the
+    /// backends switch stay as they are, only the real lights are made again; a change of a build
+    /// setting makes again the RenderingServer lights there are now
+    void E3DRenderingServer::_on_project_settings_changed() {
+        const Array placement = read_settings(LIGHT_PLACEMENT_SETTING_NAMES);
+        const Array build = read_settings(LIGHT_BUILD_SETTING_NAMES);
+        if (placement != light_placement_settings) {
+            light_placement_settings = placement;
+            light_build_settings = build;
+            for (KeyValue<RID, E3DInstanceData> &item: instances) {
+                E3DInstanceData &instance = item.value;
+                // the instances _build_instance_lights() gives lights to
+                if (!instance.built || instance.instancer != INSTANCER_OPTIMIZED || !instance.stream_rid.is_valid()) {
+                    continue;
+                }
+                _clear_instance_lights(instance);
+                instance.model_lights.placements =
+                        E3DLightFactory::discover(instance.model, instance.model_filename).placements;
+                _build_instance_lights(item.key, instance);
+            }
+        } else if (build != light_build_settings) {
+            light_build_settings = build;
+            for (KeyValue<RID, LightObject> &item: lights) {
+                if (item.value.light.is_valid()) {
+                    _light_clear(item.key);
+                    _light_build(item.key);
+                }
+            }
+            // the spotlights the NODES backend made of a vehicle's free spotlights (E3DNodesBackend)
+            const bool reverse_cull_face = ProjectSettings::get_singleton()->get_setting(
+                    E3DLightFactory::LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, false);
+            for (const KeyValue<RID, E3DInstanceData> &item: instances) {
+                Node *root = Object::cast_to<Node>(ObjectDB::get_instance(item.value.node_id));
+                if (!item.value.built || item.value.instancer != INSTANCER_NODES || root == nullptr) {
+                    continue;
+                }
+                const TypedArray<Node> spotlights = root->find_children("*", "SpotLight3D", true, false);
+                for (int64_t index = 0; index < spotlights.size(); index++) {
+                    Object::cast_to<SpotLight3D>(spotlights[index])->set_shadow_reverse_cull_face(reverse_cull_face);
+                }
+            }
+        }
+        const Array smoke = read_settings(SMOKE_SETTING_NAMES);
+        if (smoke != smoke_settings) {
+            smoke_settings = smoke;
+            smoke_rebuild();
+        }
+    }
+
+    void E3DRenderingServer::smoke_rebuild() {
+        for (KeyValue<RID, E3DInstanceData> &item: instances) {
+            if (item.value.built) {
+                _clear_instance_smoke_sources(item.value);
+                _build_instance_smoke_sources(item.key, item.value);
+            }
+        }
     }
 
     RID E3DRenderingServer::_adopt_model(const Ref<SceneryModelPlacement> &p_placement, const RID &p_scenario) {

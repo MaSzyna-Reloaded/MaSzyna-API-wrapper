@@ -85,12 +85,41 @@ var _render_data:Dictionary[int, Dictionary] = {
     E3DRenderingServer.INSTANCE_KIND_STATIC: {},
     E3DRenderingServer.INSTANCE_KIND_DYNAMIC: {},
 }
+## The settings the memos were built with, in the order of RENDER_SETTINGS
+var _render_settings:Array = []
+
+## Every setting an emitter is made of here
+const RENDER_SETTINGS:Array[String] = [
+    DENSITY_DYNAMIC_SETTING, DENSITY_STATIC_SETTING, LIFETIME_DYNAMIC_SETTING, LIFETIME_STATIC_SETTING,
+    MAX_PARTICLES_DYNAMIC_SETTING, MAX_PARTICLES_STATIC_SETTING, GENERATOR_MODE_SETTING, ATLAS_SETTING,
+    ATLAS_FRAMES_SETTING,
+]
 
 
 ## E3DRenderingServer builds the emitters of an instance through this
 func _ready() -> void:
     E3DRenderingServer.smoke_set_source_resolver(build_render_data)
     GameDataServer.data_unload_requested.connect(_on_data_unload_requested)
+    _render_settings = _read_render_settings()
+    ProjectSettings.settings_changed.connect(_on_project_settings_changed)
+
+
+## A change of what the emitters are made of: the memos go and every emitter is built again
+func _on_project_settings_changed() -> void:
+    var settings:Array = _read_render_settings()
+    if settings == _render_settings:
+        return
+    _render_settings = settings
+    for memo:Dictionary in _render_data.values():
+        memo.clear()
+    E3DRenderingServer.smoke_rebuild()
+
+
+func _read_render_settings() -> Array:
+    var settings:Array = []
+    for setting:String in RENDER_SETTINGS:
+        settings.append(ProjectSettings.get_setting(setting))
+    return settings
 
 
 ## Everything E3DRenderingServer needs for one emitter: process_material, mesh, amount, lifetime,

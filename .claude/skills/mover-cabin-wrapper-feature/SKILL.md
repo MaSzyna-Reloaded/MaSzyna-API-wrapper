@@ -165,6 +165,25 @@ our `RailVehicleElectricEngine.ValveOperation`, and only `MoverCurrentCollectorU
 `operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
 `LoadFIZ_Cntrl`.
 
+**A FIZ that leans on a quirk is fixed in the data, never in the wrapper - ABSOLUTE.** A vehicle may
+work in the original only because the Mover has a field whether or not its FIZ declares the
+section (every `TMoverParameters` has `PantsPreset` "0132", so `en57akl_v1` and `et40_v1` cabs
+walk a pantograph selector their FIZ never defines). The wrapper has a component only where the
+FIZ has its section, and it does not invent one: no component pushed into vehicles without the
+section (pantograph switches into wagons), no default fallback in the cab, no static "default"
+method. When the diagnosis shows such a vehicle, the outcome is a correction of the original's
+FIZ (report it to the operator and list it in `TODO.md`), and the behaviour stays inert until
+then. 2026-10-04: all three of those workarounds were written for `PantographPresets=` and thrown
+away.
+
+**A value with named cases is always an enum - ABSOLUTE.** Whatever the original keeps as a digit,
+a char, a bit or a string standing for a case (`PantographPresets=0|1|3|2`, a switch type, a start
+mode) becomes an enum of the interface, bound and documented as `docs/wrapping-mover.md` "Enums"
+requires. The FIZ parser maps each token to it (a `const` dictionary token -> enum), the
+component's default is written in it, and the cab logic compares and combines its constants -
+never a bare number or a `const` of its own for the same case (`RailVehicleSwitches.PantographPreset`,
+2026-10-04: the presets first went in as raw bits with private `PRESET_*` constants in the cab).
+
 A control of the cab alone, with no vehicle behind it (`universal0..9`, `generictoggle`,
 `Train.cpp:6720`), is a catalog entry without a `command`: `forward_commands.gd` then only keeps
 its position in `CabinState`, where `python_screen_state.gd` reads it.

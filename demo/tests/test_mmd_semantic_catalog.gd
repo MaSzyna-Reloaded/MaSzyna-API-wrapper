@@ -208,3 +208,14 @@ func test_speed_control_buttons_are_lit_while_it_is_active():
         assert_eq(MmdSemanticCatalog.get_entry(label)["state_light"]["state_property"], "speed_control/active", label)
     assert_eq(MmdSemanticCatalog.get_entry("speedbutton9")["fixed_fields"]["command_param"], 9)
 
+
+# drivermode.cpp:352 - a control the hand reaches says what it is; the original misses some
+# (cabactivation_sw, mirrors_sw, radiocall1_sw), MmdCabControlCaptions has them all
+func test_every_operable_control_has_a_caption():
+    var uncaptioned:Array[String] = []
+    for label:String in MmdSemanticCatalog.get_labels():
+        var widget_class:Variant = MmdSemanticCatalog.get_entry(label)["widget_class"]
+        if (widget_class == CabinButton or widget_class == CabinSwitch or widget_class == CabinKnob) \
+                and not MmdCabControlCaptions.caption(StringName(label)):
+            uncaptioned.append(label)
+    assert_eq(uncaptioned, [] as Array[String])

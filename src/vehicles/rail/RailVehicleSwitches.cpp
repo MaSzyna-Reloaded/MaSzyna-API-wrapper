@@ -2,6 +2,10 @@
 
 namespace godot {
     void RailVehicleSwitches::_bind_methods() {
+        BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_NONE);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_OWN_END);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_OTHER_END);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_BOTH);
         BIND_PROPERTY(RailVehicleSwitches, Variant::BOOL, pantograph_impulse);
         BIND_PROPERTY(RailVehicleSwitches, Variant::BOOL, converter_impulse);
         BIND_PROPERTY(RailVehicleSwitches, Variant::BOOL, motor_connectors_impulse);
@@ -26,6 +30,13 @@ namespace godot {
                 RailVehicleSwitches, Variant::ARRAY, dimmer_list_positions, "dimmer_list_positions",
                 PROPERTY_HINT_TYPE_STRING, "RailVehicleDimmerListItem");
         ClassDB::bind_method(D_METHOD("sand", "active"), &RailVehicleSwitches::sand);
+        ClassDB::bind_method(D_METHOD("next_pantograph_preset", "end"), &RailVehicleSwitches::next_pantograph_preset);
+        ClassDB::bind_method(
+                D_METHOD("previous_pantograph_preset", "end"), &RailVehicleSwitches::previous_pantograph_preset);
+        ClassDB::bind_method(
+                D_METHOD("get_pantograph_preset_position", "end"),
+                &RailVehicleSwitches::get_pantograph_preset_position);
+        ClassDB::bind_method(D_METHOD("get_pantograph_preset", "end"), &RailVehicleSwitches::get_pantograph_preset);
 
         ClassDB::bind_method(D_METHOD("get_sand_active"), &RailVehicleSwitches::get_sand_active);
     }
@@ -33,11 +44,15 @@ namespace godot {
     void RailVehicleSwitches::_register_commands() {
         VehicleComponent::_register_commands();
         register_command("sand", Callable(this, "sand"));
+        register_command("pantograph_next_preset", Callable(this, "next_pantograph_preset"));
+        register_command("pantograph_previous_preset", Callable(this, "previous_pantograph_preset"));
     }
 
     void RailVehicleSwitches::_unregister_commands() {
         VehicleComponent::_unregister_commands();
         unregister_command("sand");
+        unregister_command("pantograph_next_preset");
+        unregister_command("pantograph_previous_preset");
     }
     // how the cab operates the pantographs (PantSwitchType, Train.cpp:3175, 3285)
     void RailVehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {

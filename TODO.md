@@ -255,12 +255,10 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 * The E186 screen's pantograph page (`traxx_renderer.py`, the game's own script) toggles its
   "odbiornik prądu" 1 / 2 / 1+2 without OP1/OP2 being pressed (seen 2026-09-29, left as it is -
   the script's own selector, not checked against the original).
-* `pantselect_sw` / `PantsPreset` (choosing which pantographs the master valve raises,
-  Train.cpp:3529 change_pantograph_selection, update_pantograph_valves) is not ported.
 * `MoverCurrentCollectorUnit::pantograph()` still opens the master valve itself when a pantograph
   is raised (added in 1c0c044 when no cab could reach the valve). The original opens it only from
-  pantselected_sw / pantvalves_sw, so with it a pantograph rises from its own key alone. Remove it
-  once every cab has a way to the master valve (pantvalves_sw is not in the catalog either).
+  pantselected_sw or by its start mode (`PantEPValveStart`), so with it a pantograph rises from
+  its own command alone. Remove it once every cab has a way to the master valve.
 * Light presets: `SetLights` is run on a preset change only - the original also runs it on cab
   (de)activation, battery and direction changes (Train.cpp:2924-3137). The model's lamp inventory
   (iInventory) is not known, so a rear end that could show red markers or plates shows the markers
@@ -270,6 +268,8 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
   switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
 * The radio plays the scenery's radio messages (`MaszynaDynamicTrainCabin`), non-positional - not yet
   at `m_radiosound`'s own place in the cab.
+* The cab's Radio-Stop alarm (MMD `radiostop:`, `m_radiostop`, looping while the radio is on and
+  `RadioStopFlag` is set, Train.cpp:10245-10256) is not played.
 
 ### Gauge lamps (`<name>_on`)
 

@@ -107,7 +107,9 @@ func _update_state() -> void:
                 value = float(state) == 0.0
             LitCondition.NEGATIVE:
                 value = float(state) < 0.0
-        var lit:bool = not value if invert_value else value
+        # a lamp of the vehicle's state is dark without the low voltage (Button.cpp:126)
+        var lit:bool = (not value if invert_value else value) \
+                and (not cab_light == CabinState.Light.NONE or CabinSystem.vehicle_has_low_voltage(_vehicle_rid))
         if not lit == enabled:
             enabled = lit
             lit_changed.emit(lit)

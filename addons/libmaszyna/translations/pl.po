@@ -144,3 +144,12 @@ msgstr "Tworzenie %s"
 
 msgid "Instancing vehicles"
 msgstr "Tworzenie pojazdów"
+
+msgid "cab activation"
+msgstr "aktywacja kabiny"
+
+msgid "mirrors"
+msgstr "lusterka"
+
+msgid "radio call 1"
+msgstr "zew 1"

@@ -1717,6 +1717,50 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # The pantograph selector, showing the cab's PantsPreset selection (Train.cpp:12063) ->
+        # OnCommand_pantographselectnext/previous (Train.cpp:3375-3402), Shift+P / Shift+O.
+        # LegacyCabinPantographPresets owns it
+        "pantselect_sw": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "action_increase": "pantograph_select_next",
+                "action_decrease": "pantograph_select_previous",
+            },
+            "config_max_property": "pantograph_preset_max",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11895 ggPantValvesButton -> OnCommand_pantographvalvesupdate/off (Train.cpp:3551-3620),
+        # no key (driverkeyboardinput.cpp:213). A lever resting midway: up sets the pantographs'
+        # valves to the selection, down closes them. Its gauge shows 1 / 0.5 / 0, so its three
+        # positions are half the MMD scale apart. LegacyCabinPantographPresets owns it
+        "pantvalves_sw": {
+            "widget_class": CabinSwitch,
+            "mmd_scale_multiplier": 0.5,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "switch_max_position": 2,
+                "switch_reset_position": 1,
+                "switch_position": 1,
+                "automatic_reset": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The same two operations as separate buttons (Train.cpp:11983-11984), owned by
+        # LegacyCabinPantographPresets
+        "pantvalvesupdate_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "pantvalvesoff_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Train.cpp:11868 ggLightsButton -> OnCommand_lightspresetactivatenext/previous (Train.cpp:5193-5265),
         # Shift+T / T; it shows LightsPos - 1
         "lights_sw": {

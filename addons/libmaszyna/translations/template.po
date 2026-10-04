@@ -144,3 +144,12 @@ msgstr ""
 
 msgid "Instancing vehicles"
 msgstr ""
+
+msgid "cab activation"
+msgstr ""
+
+msgid "mirrors"
+msgstr ""
+
+msgid "radio call 1"
+msgstr ""

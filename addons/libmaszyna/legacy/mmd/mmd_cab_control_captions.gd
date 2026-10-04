@@ -151,6 +151,11 @@ const CAPTIONS:Dictionary[StringName, String] = {
     &"universalbrake2_bt": "train brake",
     &"universalbrake3_bt": "train brake",
     &"wipers_sw": "wipers mode selector",
+    # not in the original's list, which leaves them without a tooltip; captioned here, with the
+    # wrapper's own translations (addons/libmaszyna/translations)
+    &"cabactivation_sw": "cab activation",
+    &"mirrors_sw": "mirrors",
+    &"radiocall1_sw": "radio call 1",
 }
 
 

@@ -144,3 +144,12 @@ msgstr "正在实例化 %s"
 
 msgid "Instancing vehicles"
 msgstr "正在实例化车辆"
+
+msgid "cab activation"
+msgstr "驾驶室激活"
+
+msgid "mirrors"
+msgstr "后视镜"
+
+msgid "radio call 1"
+msgstr "无线电1号频道呼叫"

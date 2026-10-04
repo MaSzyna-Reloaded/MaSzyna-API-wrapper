@@ -144,3 +144,12 @@ msgstr "Vytváření %s"
 
 msgid "Instancing vehicles"
 msgstr "Vytváření vozidel"
+
+msgid "cab activation"
+msgstr "aktivace kabiny"
+
+msgid "mirrors"
+msgstr "zrcátka"
+
+msgid "radio call 1"
+msgstr "volání 1"

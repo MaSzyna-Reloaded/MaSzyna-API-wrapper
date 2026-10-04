@@ -9,7 +9,7 @@ class_name LegacyCabinPantographSelected
 ## them otherwise. How the valve is operated depends on the kind of switch - a two-state one sets
 ## it (ENABLE/DISABLE), an impulse one presses one side of it (ENABLE_ON/DISABLE_ON) and lets go
 ## on release (NONE). With pantselectedoff_sw the two buttons raise and lower each on their own.
-## Selecting which pantographs (pantselect_sw, PantsPreset) is not ported.
+## Which pantographs are selected is LegacyCabinPantographPresets'.
 
 ## The pantographs' master valve is their carrier's (OperatePantographsValve() sent along the couplers)
 const TARGET:CabinState.Target = CabinState.Target.PANTOGRAPH_UNIT
@@ -25,15 +25,17 @@ var _raise_button_type:CabinButton.ButtonType
 var _lower_button_type:CabinButton.ButtonType
 ## Train.cpp:3429 - m_controlmapper.contains("pantselectedoff_sw:")
 var _has_lower_button:bool
+var _presets:LegacyCabinPantographPresets
 var _vehicle_rid:RID
 var _cab:int
 
 
 func _init(raise_button_type:CabinButton.ButtonType, lower_button_type:CabinButton.ButtonType,
-        has_lower_button:bool) -> void:
+        has_lower_button:bool, presets:LegacyCabinPantographPresets) -> void:
     _raise_button_type = raise_button_type
     _lower_button_type = lower_button_type
     _has_lower_button = has_lower_button
+    _presets = presets
 
 
 func control_ids() -> Array[StringName]:
@@ -55,6 +57,9 @@ func unregister() -> void:
 # Train.cpp:3403 OnCommand_pantographtoggleselected
 func _raise(state:CabinState, action:StringName, value:Variant) -> Variant:
     if state.is_pressed(RAISE, action, value) or action == &"toggle":
+        # Train.cpp:3415 - the selection is moved there and back, which sets the valves to it
+        _presets.select_next(state)
+        _presets.select_previous(state)
         state.set_value(RAISE, LEVER_UP)
         if not _has_lower_button and (state.vehicle_state_value("current_collector/valve_enabled", false, TARGET)
                 or state.vehicle_state_value("current_collector/valve_active", false, TARGET)):

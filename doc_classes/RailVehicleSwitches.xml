@@ -7,15 +7,44 @@
 		[RailVehicleSwitches] wraps the FIZ [code]Switches:[/code] and [code]DimmerList:[/code] sections.
 		[member pantograph_impulse], [member converter_impulse] and [member motor_connectors_impulse] map to switch types
 		the simulation keeps but never reads - setting them currently has no observable effect on it. [member relay_reset_button_1]/2/3,
-		[member pantograph_presets], [member pantograph_preset_default], [member modern_dimmer] and
-		[member dimmer_list_positions] have no backing field at all and are only stored on this node.
+		[member pantograph_preset_default], [member modern_dimmer] and [member dimmer_list_positions] have no backing
+		field at all and are only stored on this node. [member pantograph_presets] is what the cab's pantograph
+		selector offers.
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_pantograph_preset" qualifiers="const">
+			<return type="int" enum="RailVehicleSwitches.PantographPreset" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The preset the pantograph selector of the cab at [param end] selects.
+			</description>
+		</method>
+		<method name="get_pantograph_preset_position" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The position of the pantograph selector of the cab at [param end].
+			</description>
+		</method>
 		<method name="get_sand_active" qualifiers="const">
 			<return type="bool" />
 			<description>
+			</description>
+		</method>
+		<method name="next_pantograph_preset">
+			<return type="void" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				Moves the pantograph selector of the cab at [param end] one position on, within [member pantograph_presets].
+			</description>
+		</method>
+		<method name="previous_pantograph_preset">
+			<return type="void" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				Moves the pantograph selector of the cab at [param end] one position back.
 			</description>
 		</method>
 		<method name="sand">
@@ -60,10 +89,9 @@
 			[code]Switches:PantographPresetDefault[/code]
 			Default index into [member pantograph_presets].
 		</member>
-		<member name="pantograph_presets" type="PackedInt32Array" setter="set_pantograph_presets" getter="get_pantograph_presets" default="PackedInt32Array()">
+		<member name="pantograph_presets" type="PackedInt32Array" setter="set_pantograph_presets" getter="get_pantograph_presets" default="PackedInt32Array(0, 1, 3, 2)">
 			[code]Switches:PantographPresets[/code]
-			Pantograph selector switch presets; each value is a bitmask (1 = pantograph over the active cab, 2 =
-			pantograph over the opposite cab).
+			What each position of the cab's pantograph selector raises, a [enum PantographPreset] each.
 		</member>
 		<member name="relay_reset_button_1" type="int" setter="set_relay_reset_button_1" getter="get_relay_reset_button_1" default="0">
 			[code]Switches:RelayResetButton1[/code]
@@ -78,4 +106,18 @@
 			Bitmask of relays reset by button 3.
 		</member>
 	</members>
+	<constants>
+		<constant name="PANTOGRAPH_PRESET_NONE" value="0" enum="PantographPreset">
+			No pantograph.
+		</constant>
+		<constant name="PANTOGRAPH_PRESET_OWN_END" value="1" enum="PantographPreset">
+			The pantograph over the end of the cab the driver sits in.
+		</constant>
+		<constant name="PANTOGRAPH_PRESET_OTHER_END" value="2" enum="PantographPreset">
+			The pantograph over the other end.
+		</constant>
+		<constant name="PANTOGRAPH_PRESET_BOTH" value="3" enum="PantographPreset">
+			Both pantographs.
+		</constant>
+	</constants>
 </class>

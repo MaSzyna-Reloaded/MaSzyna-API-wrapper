@@ -14,6 +14,52 @@ namespace godot {
         p_mover->PantSwitchType = get_pantograph_impulse() ? "impulse" : "";
         p_mover->ConvSwitchType = get_converter_impulse() ? "impulse" : "";
         p_mover->StLinSwitchType = get_motor_connectors_impulse() ? "impulse" : "toggle";
+        // LoadFIZ_Switches (Mover.cpp:11399-11403) keeps the presets as their digits
+        p_mover->PantsPreset.first.clear();
+        for (const int preset: get_pantograph_presets()) {
+            p_mover->PantsPreset.first.push_back(static_cast<char>('0' + preset));
+        }
+    }
+
+    // the selector has one position per preset (Train.cpp:3537)
+    void MoverRailVehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {
+        RailVehicleSwitches::_fill_config_dictionary(p_config);
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["pantograph_preset_max"] = std::max(0, static_cast<int>(mover->PantsPreset.first.size()) - 1);
+    }
+
+    int MoverRailVehicleSwitches::get_pantograph_preset_position(const RailVehicleController::CouplerEnd p_end) const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantsPreset.second[p_end] : 0;
+    }
+
+    // Train.cpp:3522 - a preset is its digit
+    RailVehicleSwitches::PantographPreset
+    MoverRailVehicleSwitches::get_pantograph_preset(const RailVehicleController::CouplerEnd p_end) const {
+        const TMoverParameters *mover = get_mover();
+        // a selection past the presets reconfigured since is none
+        if (mover == nullptr || mover->PantsPreset.second[p_end] >= static_cast<int>(mover->PantsPreset.first.size())) {
+            return PANTOGRAPH_PRESET_NONE;
+        }
+        return static_cast<PantographPreset>(mover->PantsPreset.first[mover->PantsPreset.second[p_end]] - '0');
+    }
+
+    // Train.cpp:3532 change_pantograph_selection - within the presets
+    void MoverRailVehicleSwitches::next_pantograph_preset(const RailVehicleController::CouplerEnd p_end) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        int &selection = mover->PantsPreset.second[p_end];
+        selection = std::clamp(selection + 1, 0, std::max(static_cast<int>(mover->PantsPreset.first.size()) - 1, 0));
+    }
+
+    void MoverRailVehicleSwitches::previous_pantograph_preset(const RailVehicleController::CouplerEnd p_end) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        int &selection = mover->PantsPreset.second[p_end];
+        selection = std::clamp(selection - 1, 0, std::max(static_cast<int>(mover->PantsPreset.first.size()) - 1, 0));
     }
 
 
@@ -28,6 +74,12 @@ namespace godot {
             return;
         }
         p_state["sand_active"] = get_sand_active();
+        p_state["pantograph_preset_position_front"] =
+                get_pantograph_preset_position(RailVehicleController::COUPLER_END_FRONT);
+        p_state["pantograph_preset_position_rear"] =
+                get_pantograph_preset_position(RailVehicleController::COUPLER_END_REAR);
+        p_state["pantograph_preset_front"] = get_pantograph_preset(RailVehicleController::COUPLER_END_FRONT);
+        p_state["pantograph_preset_rear"] = get_pantograph_preset(RailVehicleController::COUPLER_END_REAR);
     }
 
     void MoverRailVehicleSwitches::sand(const bool p_active) {

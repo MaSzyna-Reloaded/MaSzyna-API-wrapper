@@ -8,13 +8,22 @@ class_name FizTrainSwitchesParser
 ## `Pantograph=`/`Converter=`/`MotorConnectors=` are string switch-type values, not Yes/No -
 ## confirmed against RailVehicleSwitches::_do_update_internal_mover: "Impulse" (case-insensitive)
 ## maps to true, anything else (including absent) to false ("impulse"/"" or "impulse"/"toggle"
-## on the mover side). `RelayResetButtonX=`/`PantographPresets=`/`PantographPresetDefault=`/
-## `ModernDimmer=`/`DimmerList:` have no effect on the simulation in this vendored Mover (see
-## RailVehicleSwitches.hpp's class doc) but are still parsed and stored on the node faithfully.
+## on the mover side). `RelayResetButtonX=`/`PantographPresetDefault=`/`ModernDimmer=`/
+## `DimmerList:` have no effect on the simulation in this vendored Mover (see
+## RailVehicleSwitches.hpp's class doc) but are still parsed and stored on the node faithfully;
+## `PantographPresets=` is what the cab's pantograph selector offers.
 ##
 ## DimmerList: row format has no real example in the operator's ~1300-file corpus (0
 ## occurrences) - the 3-column mapping to RailVehicleDimmerListItem's high_beam/dimmed/off booleans is a
 ## best-effort guess from the field names alone, not confirmed against any real file.
+
+## The digits of PantographPresets= (Train.cpp:3522 reads each as `preset - '0'`)
+const PANTOGRAPH_PRESETS: Dictionary[String, RailVehicleSwitches.PantographPreset] = {
+    "0": RailVehicleSwitches.PANTOGRAPH_PRESET_NONE,
+    "1": RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END,
+    "2": RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END,
+    "3": RailVehicleSwitches.PANTOGRAPH_PRESET_BOTH,
+}
 
 var _dimmer_rows: Array[RailVehicleDimmerListItem] = []
 
@@ -55,8 +64,8 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         var tokens: PackedStringArray = FizLineUtil.get_string(kv, "PantographPresets").split("|")
         var presets := PackedInt32Array()
         for token: String in tokens:
-            if token.strip_edges().is_valid_int():
-                presets.append(token.strip_edges().to_int())
+            if PANTOGRAPH_PRESETS.has(token.strip_edges()):
+                presets.append(PANTOGRAPH_PRESETS[token.strip_edges()])
         node.pantograph_presets = presets
     if kv.has("PantographPresetDefault"):
         node.pantograph_preset_default = FizLineUtil.get_int(kv, "PantographPresetDefault")

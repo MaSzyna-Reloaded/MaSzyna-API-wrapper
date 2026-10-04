@@ -144,3 +144,12 @@ msgstr "%s létrehozása"
 
 msgid "Instancing vehicles"
 msgstr "Járművek létrehozása"
+
+msgid "cab activation"
+msgstr "vezetőállás aktiválása"
+
+msgid "mirrors"
+msgstr "visszapillantó tükrök"
+
+msgid "radio call 1"
+msgstr "hívójel 1"

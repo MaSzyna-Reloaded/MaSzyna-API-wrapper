@@ -47,3 +47,22 @@ func test_round_trip_and_update_without_crashing():
     var dimmer_list: Array = switches.dimmer_list_positions
     assert_eq(dimmer_list.size(), 2)
     assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring RailVehicleSwitches")
+
+
+# Mover.cpp:11402 - PantsPreset "0|1|3|2" when the FIZ declares none
+func test_default_pantograph_presets_are_the_originals():
+    assert_eq(switches.pantograph_presets, PackedInt32Array([
+            RailVehicleSwitches.PANTOGRAPH_PRESET_NONE, RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END,
+            RailVehicleSwitches.PANTOGRAPH_PRESET_BOTH, RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END]))
+
+
+# Train.cpp:3522 - each digit of PantographPresets= is a preset
+func test_fiz_pantograph_presets_map_to_the_enum():
+    var parser:MaszynaParser = MaszynaParser.new()
+    parser.initialize("PantographPresets=0|3|1".to_utf8_buffer())
+    var context:FizImportContext = FizImportContext.new()
+    FizTrainSwitchesParser.new().parse(parser, context, "Switches:")
+    var parsed:RailVehicleSwitches = context.get_part("RailVehicleSwitches")
+    assert_eq(parsed.pantograph_presets, PackedInt32Array([
+            RailVehicleSwitches.PANTOGRAPH_PRESET_NONE, RailVehicleSwitches.PANTOGRAPH_PRESET_BOTH,
+            RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END]))

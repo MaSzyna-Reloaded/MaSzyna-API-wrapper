@@ -22,9 +22,15 @@ namespace godot {
         protected:
             void _apply_configuration() override;
 
+            void _fill_config_dictionary(Dictionary &p_config) const override;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_sand_active() const override;
+            int get_pantograph_preset_position(RailVehicleController::CouplerEnd p_end) const override;
+            PantographPreset get_pantograph_preset(RailVehicleController::CouplerEnd p_end) const override;
             void sand(bool p_active) override;
+            void next_pantograph_preset(RailVehicleController::CouplerEnd p_end) override;
+            void previous_pantograph_preset(RailVehicleController::CouplerEnd p_end) override;
     };
 } // namespace godot

@@ -122,7 +122,8 @@ func _update_state():
         enabled = level > 0.0
     elif _vehicle_rid and state_property:
         level = float(CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false))
-        enabled = level > 0.0
+        # dark without the low voltage (Button.cpp:126)
+        enabled = level > 0.0 and CabinSystem.vehicle_has_low_voltage(_vehicle_rid)
 
     var active_now:bool
     if blink_time <= 0.0:

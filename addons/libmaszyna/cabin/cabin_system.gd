@@ -93,6 +93,13 @@ func vehicle_state_value(vehicle_rid:RID, key:String, default_value:Variant = nu
     return vehicle_state(vehicle_rid).get(key, default_value)
 
 
+## Whether the vehicle has its low voltage, without which every lamp of its cab is dark -
+## lowvoltagepower (Train.cpp:8843), handed to every lamp (TButton::Update(Power), Button.cpp:126)
+func vehicle_has_low_voltage(vehicle_rid:RID) -> bool:
+    var state:Dictionary = vehicle_state(vehicle_rid)
+    return state.get("power24_available", false) or state.get("power110_available", false)
+
+
 func vehicle_config(vehicle_rid:RID) -> Dictionary:
     return VehicleServer.vehicle_dump_config(vehicle_rid) if vehicle_rid.is_valid() else {}
 

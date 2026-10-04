@@ -49,16 +49,21 @@ func register(vehicle_rid:RID, cab:int) -> void:
     _behaviours = [main_switch]
     # controls whose original handler branches on the kind of switch (TGaugeType, CabinButton.ButtonType) - each gets the
     # type of its own control, as TTrain reads ggX.type()
+    var pantograph_presets:LegacyCabinPantographPresets = LegacyCabinPantographPresets.new(
+            controls.has_control(LegacyCabinPantographPresets.SELECTOR),
+            controls.has_control(LegacyCabinPantographPresets.VALVES_LEVER))
+    claimed.append_array(pantograph_presets.control_ids())
+    _behaviours.append(pantograph_presets)
     var pantograph_selected:LegacyCabinPantographSelected = LegacyCabinPantographSelected.new(
             controls.button_type(LegacyCabinPantographSelected.RAISE),
             controls.button_type(LegacyCabinPantographSelected.LOWER),
-            controls.has_control(LegacyCabinPantographSelected.LOWER))
+            controls.has_control(LegacyCabinPantographSelected.LOWER), pantograph_presets)
     claimed.append_array(pantograph_selected.control_ids())
     _behaviours.append(pantograph_selected)
     var present:Dictionary[StringName, bool] = {}
     for control_id:StringName in LegacyCabinPantographs.SWITCHES:
         present[control_id] = controls.has_control(control_id)
-    var pantographs:LegacyCabinPantographs = LegacyCabinPantographs.new(present, controls.has_control(&"pantselect_sw"))
+    var pantographs:LegacyCabinPantographs = LegacyCabinPantographs.new(present, controls.has_control(LegacyCabinPantographPresets.SELECTOR))
     claimed.append_array(pantographs.control_ids())
     _behaviours.append(pantographs)
     var switch_behaviours:Array[RefCounted] = [

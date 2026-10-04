@@ -116,11 +116,13 @@ namespace godot {
         return result;
     }
 
-    bool E3DInstanceBackend::_is_force_alpha(
+    int E3DInstanceBackend::_submodel_translucency(
             const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
-            const Vector<E3DSubModel *> &p_force_alpha_submodels, const bool p_parent_force_alpha) {
-        return p_parent_force_alpha || p_force_alpha_submodels.has(p_submodel) ||
-               (p_instance.force_alpha && p_submodel->get_material_transparent());
+            const Vector<E3DSubModel *> &p_force_alpha_submodels, const int p_parent_translucency, const int p_forced) {
+        const bool translucent = p_submodel->get_material_transparent() || p_submodel->get_skin_translucent();
+        const bool forced = p_parent_translucency != E3DRenderingServer::TRANSLUCENCY_CUTOUT ||
+                            p_force_alpha_submodels.has(p_submodel) || (p_instance.force_alpha && translucent);
+        return forced ? p_forced : E3DRenderingServer::TRANSLUCENCY_CUTOUT;
     }
 
     bool E3DInstanceBackend::_requires_alpha_depth_prepass_sorting(const Ref<Material> &p_material) {

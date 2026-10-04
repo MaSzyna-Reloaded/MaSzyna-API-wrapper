@@ -1,5 +1,6 @@
 #include "E3DLightFactory.hpp"
 #include "E3DNodesBackend.hpp"
+#include "E3DRenderingServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -29,7 +30,7 @@ namespace godot {
 
         _add_submodels(
                 p_instance, target, target, p_instance.model->get_submodels(), light_roles, String(),
-                _get_force_alpha_submodels(p_instance), false, p_material_resolver);
+                _get_force_alpha_submodels(p_instance), E3DRenderingServer::TRANSLUCENCY_CUTOUT, p_material_resolver);
         update(p_instance);
     }
 
@@ -141,7 +142,7 @@ namespace godot {
     void E3DNodesBackend::_add_submodels(
             E3DInstanceData &p_instance, Node3D *p_target, Node3D *p_parent, const TypedArray<E3DSubModel> &p_submodels,
             const HashMap<E3DSubModel *, LightRole> &p_light_roles, const String &p_parent_light_name,
-            const Vector<E3DSubModel *> &p_force_alpha_submodels, const bool p_force_alpha,
+            const Vector<E3DSubModel *> &p_force_alpha_submodels, const int p_parent_translucency,
             E3DMaterialResolver &p_material_resolver) {
         const bool is_editor = Engine::get_singleton()->is_editor_hint();
 
@@ -178,10 +179,11 @@ namespace godot {
                 }
             }
 
-            const bool force_alpha =
-                    _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
+            const int translucency = _submodel_translucency(
+                    p_instance, submodel.ptr(), p_force_alpha_submodels, p_parent_translucency,
+                    E3DRenderingServer::TRANSLUCENCY_BLENDED);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
-                Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
+                Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), translucency);
                 // the instance drives its self-illumination (instance_set_emission_energy(),
                 // instance_set_submodel_emission_energy()), so it draws with copies of its own
                 // rather than the materials every instance shares
@@ -227,7 +229,8 @@ namespace godot {
                 }
                 // the point (and the glare) the original draws where the light is
                 // (opengl33renderer.cpp:4375-4500); it goes on and off with the spotlight node
-                const Ref<Material> point_material = p_material_resolver.resolve(p_instance, submodel.ptr(), false);
+                const Ref<Material> point_material = p_material_resolver.resolve(
+                        p_instance, submodel.ptr(), E3DRenderingServer::TRANSLUCENCY_CUTOUT);
                 if (point_material.is_valid()) {
                     MeshInstance3D *point = memnew(MeshInstance3D);
                     point->set_mesh(point_mesh);
@@ -253,7 +256,7 @@ namespace godot {
 
             _add_submodels(
                     p_instance, p_target, child, submodel->get_submodels(), p_light_roles, light_name,
-                    p_force_alpha_submodels, force_alpha, p_material_resolver);
+                    p_force_alpha_submodels, translucency, p_material_resolver);
         }
     }
 

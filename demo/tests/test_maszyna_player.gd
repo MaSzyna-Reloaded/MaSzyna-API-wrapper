@@ -72,16 +72,19 @@ func test_the_cab_interior_stands_while_the_vehicle_is_driven() -> void:
     assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_CABIN)
     assert_not_null(CabinSystem.vehicle_get_cabin(vehicle), "taken over, the cab interior is shown")
     assert_eq(cabin_camera.get_parent(), CabinSystem.vehicle_get_cabin(vehicle), "the cab camera sits in it")
+    assert_true(CabinSystem.vehicle_get_cabin(vehicle).visible, "and is drawn in the view from the cab")
 
     var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(vehicle)
     PlayerCameraServer.camera_toggle_cabin()
     assert_eq(get_viewport().get_camera_3d(), _player.free_camera, "F4 steps out to the free camera")
     assert_eq(CabinSystem.vehicle_get_cabin(vehicle), cabin, "outside, the cab stands with its controls")
+    assert_false(cabin.visible, "but is not drawn - the vehicle's low-poly interior is (DynObj.cpp:1389-1397)")
     assert_eq(PlayerServer.player_get_vehicle(), vehicle, "outside, the player still drives the vehicle")
 
     PlayerCameraServer.camera_toggle_cabin()
     assert_eq(get_viewport().get_camera_3d(), cabin_camera, "F4 again, back in the cab")
     assert_eq(cabin_camera.get_parent(), cabin)
+    assert_true(cabin.visible, "and the cab is drawn again")
 
     PlayerServer.player_leave_vehicle()
     assert_null(CabinSystem.vehicle_get_cabin(vehicle), "let go, the player steps out of the cab")

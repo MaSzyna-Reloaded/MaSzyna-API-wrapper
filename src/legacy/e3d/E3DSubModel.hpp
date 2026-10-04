@@ -72,6 +72,9 @@ namespace godot {
             MAKE_MEMBER_GS_NR(bool, dynamic_material, false)
             MAKE_MEMBER_GS_NR(int, dynamic_material_index, 0)
             MAKE_MEMBER_GS_NR(bool, material_transparent, false)
+            /* A replaceable skin drawn in the translucent phase - its own bit, 1 << skin index,
+             * instead of 0x20 (Model3d.cpp:421-441); the skin's texture decides how much of it is */
+            MAKE_MEMBER_GS_NR(bool, skin_translucent, false)
             MAKE_MEMBER_GS_NR(String, material_name, "")
             MAKE_MEMBER_GS_NR(Transform3D, transform, Transform3D())
             MAKE_MEMBER_GS_NR(Transform3D, material_transform, Transform3D())

@@ -101,6 +101,7 @@ namespace godot {
         BIND_PROPERTY(E3DSubModel, Variant::BOOL, dynamic_material);
         BIND_PROPERTY(E3DSubModel, Variant::INT, dynamic_material_index);
         BIND_PROPERTY(E3DSubModel, Variant::BOOL, material_transparent);
+        BIND_PROPERTY(E3DSubModel, Variant::BOOL, skin_translucent);
         BIND_PROPERTY(E3DSubModel, Variant::STRING, material_name);
 
         BIND_PROPERTY(E3DSubModel, Variant::TRANSFORM3D, transform);

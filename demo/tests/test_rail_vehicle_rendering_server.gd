@@ -153,7 +153,7 @@ func test_a_rebuilt_model_is_announced() -> void:
     assert_signal_emitted_with_parameters(RailVehicleRenderingServer, "vehicle_model_built", [_vehicle.get_rid()])
 
 
-func test_the_low_poly_interior_hides_the_cab_the_player_sits_in() -> void:
+func test_the_low_poly_interior_hides_the_cab_whose_interior_is_drawn() -> void:
     _vehicle = build_rail_vehicle("RenderingCabs", TRACK_NAME, OFFSET)
     var exterior_submodels:Dictionary = {"body": Transform3D()}
     var cab_submodels:Dictionary = {}
@@ -169,14 +169,20 @@ func test_the_low_poly_interior_hides_the_cab_the_player_sits_in() -> void:
     _vehicle.low_poly_cabin_path = NodePath("LowPoly")
     await wait_idle_frames(SETTLE_FRAMES)
 
-    RailVehicleRenderingServer.vehicle_set_cab(_vehicle.get_rid(), 1, true)
+    RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_vehicle.get_rid(), false)
 
     assert_true((low_poly.get_node("cab0") as Node3D).visible, "the machine room stays")
-    assert_false((low_poly.get_node("cab1") as Node3D).visible, "the cab sat in is hidden under its modelled cab")
+    assert_false((low_poly.get_node("cab1") as Node3D).visible, "the occupied cab, whose interior is drawn in its place, is hidden")
     assert_true((low_poly.get_node("cab2") as Node3D).visible, "the other cab stays")
 
-    RailVehicleRenderingServer.vehicle_set_cab(_vehicle.get_rid(), 0, false)
-    assert_true((low_poly.get_node("cab1") as Node3D).visible, "without a modelled cab every low-poly one is shown")
+    # the hidden cab follows the occupied one (Train.cpp:8516 CabChange: 1 -> 0, the machine room)
+    VehicleServer.vehicle_send_command(_vehicle.get_rid(), "cab_change", -1)
+    VehicleServer.vehicle_get_controller(_vehicle.get_rid()).update_state()
+    assert_false((low_poly.get_node("cab0") as Node3D).visible, "the cab moved to is hidden")
+    assert_true((low_poly.get_node("cab1") as Node3D).visible, "and the one left is shown again")
+
+    RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_vehicle.get_rid(), true)
+    assert_true((low_poly.get_node("cab0") as Node3D).visible, "with no interior drawn every low-poly cab is shown")
 
 
 func test_coupling_shows_the_owned_submodel_and_keeps_missing_hose_geometry_off() -> void:

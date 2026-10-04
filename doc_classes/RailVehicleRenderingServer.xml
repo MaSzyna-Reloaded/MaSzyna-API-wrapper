@@ -82,15 +82,6 @@
 				What the vehicle looks like. With model files this server builds the models itself; without, it draws the ones [method vehicle_set_models] hands it.
 			</description>
 		</method>
-		<method name="vehicle_set_cab">
-			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<param index="2" name="has_cab_model" type="bool" />
-			<description>
-				The cab the player looks from (0 for none) and whether it is modelled: the low-poly interior hides that cab, or all of them with jointcabs:.
-			</description>
-		</method>
 		<method name="vehicle_set_cab_light_level">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -132,6 +123,14 @@
 			<param index="1" name="transform" type="Transform3D" />
 			<description>
 				Where a vehicle that stands on no track is drawn - one assembled by hand, where its node stands. [RailVehicleServer]'s placement takes over once the vehicle is on a track. A vehicle's models are in no world until it has a place.
+			</description>
+		</method>
+		<method name="vehicle_set_visible_low_poly_cabins">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="visible" type="bool" />
+			<description>
+				Whether the low-poly interior shows every cab. Not visible - the interior of the occupied cab is drawn in its place by whoever shows it - the low-poly cab of the occupied cab is hidden, or all of them with jointcabs:.
 			</description>
 		</method>
 		<method name="vehicle_unmount_node">

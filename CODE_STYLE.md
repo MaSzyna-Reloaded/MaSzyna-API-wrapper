@@ -573,6 +573,39 @@ Before changing any sound constant, dump the built bank first - every event, eve
 `track.volume_db`, `unit_size` and `max_distance` - and look for the value that stands out. An
 anomaly is visible in one listing; guessing at multipliers is not.
 
+### A shader variant is a file
+
+**Never build shader code at run time.** No `code.replace()` on a shader's source, no string put
+together and assigned to `Shader.code`:
+
+```gdscript
+# not this - a new Shader object whose code exists nowhere on disk
+var code: String = source_shader.code
+code = code.replace("shader_type spatial;", "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND")
+code = code.replace("cull_back", "cull_disabled")
+variant_shader.code = code
+
+# this - the variant is a file, picked by the factory
+const BLEND_SHADER: Shader = preload("types/normalmap_blend.gdshader")
+```
+
+* **It cannot be precompiled.** A shader that exists only as a string made at run time is
+  compiled when the first object using it is drawn - in the middle of the game. Every vehicle
+  instanced with such a material is a stall: the FPS drops while its pipelines compile. A shader
+  that is a file is known before the game starts and can be compiled ahead.
+* **Nothing shows it.** The editor has no file to open, a search for the define finds only the
+  place that pastes it in, and one changed word in the source shader silently stops the
+  replacement from matching.
+
+A variant that needs another compilation - a shader that writes `ALPHA`, another cull or specular
+mode - is a small `.gdshader` of its own: its `render_mode`, a `#define`, and an `#include` of the
+shared code (`.gdshaderinc`). What a uniform can switch is a uniform, not a variant.
+
+`MaszynaMaterialFactory._get_shader_variant()` still does the forbidden thing, and the blended
+variant a vehicle's glass is drawn with comes out of it - so the first vehicle drawn near the
+camera compiles it in the game. Replacing it with files is in `TODO.md`; nothing more is added to
+it.
+
 ### Input is the project's actions, matched exactly
 
 **Every key the game reacts to is an input action of the project, and every test of it is an

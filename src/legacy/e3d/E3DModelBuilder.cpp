@@ -155,6 +155,10 @@ namespace godot {
 
                 submodel->set_material_name(mat_name);
                 submodel->set_material_transparent((p_submodel.flags & (1 << 5)) != 0);
+                // the translucent skins' bits 1, 2, 4, 8 (Model3d.cpp:421-441)
+                static constexpr uint32_t TRANSLUCENT_SKIN_FLAGS = 0x0F;
+                submodel->set_skin_translucent(
+                        p_submodel.material_idx < 0 && (p_submodel.flags & TRANSLUCENT_SKIN_FLAGS) != 0);
                 submodel->set_material_colored(p_submodel.is_material_colored);
                 submodel->set_visibility_range_begin(std::sqrt(p_submodel.lod_min_distance));
                 submodel->set_visibility_range_end(std::sqrt(p_submodel.lod_max_distance));

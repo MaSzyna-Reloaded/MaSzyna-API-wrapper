@@ -271,16 +271,30 @@ func _apply(
             target_shader_material.set(property_name, source_shader_material.get(property_name))
 
     shader_meta.factory.call(mmat, variant, material, texture_map, model_path, options)
+    # The original's opaque pass keeps the texels at the material's "opacity:" and above
+    # (opengl33renderer.cpp:2247-2258): a material that gives one is cut out there - a vehicle's
+    # skin with its glass painted in, which a translucent submodel then draws
+    var has_opacity: bool = mmat.opacity > 0.0 and mmat.opacity < 1.0
     var transparency: MaterialManager.Transparency = MaterialManager.Transparency.Disabled
     if options.force_transparent:
         transparency = MaterialManager.Transparency.Alpha
-    elif mmat.transparent:
+    elif (mmat.transparent or has_opacity) and not options.force_opaque:
         transparency = MaterialManager.Transparency.AlphaScissor
     target_shader_material.set_shader_parameter("transparency", transparency)
-    target_shader_material.set_shader_parameter("alpha_scissor_threshold", 0.5)
+    target_shader_material.set_shader_parameter(
+        "alpha_scissor_threshold", mmat.opacity if has_opacity else options.alpha_scissor_threshold)
     target_shader_material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
     target_shader_material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     target_shader_material.set_shader_parameter("emission_energy", options.selfillum_energy)
+    if options.force_transparent:
+        # mat_default has no reflection unless its .mat gives one; the shaders with a normal map
+        # or a reflmap reflect in full ("#param (reflection, 1, 2, 1, zero)" against "one")
+        var masked: bool = (
+            not _texture_path(variant, texture_map, texture_map.normalmap) == ""
+            or not _texture_path(variant, texture_map, texture_map.reflmap) == "")
+        var default_reflection: float = 1.0 if masked else 0.0
+        target_shader_material.set_shader_parameter(
+            "blended_reflection", variant.get_parameter("reflection", default_reflection))
 
 
 func _get_shader_variant(source_shader: Shader, options: MaterialManager.MaterialOptions, specgloss: bool) -> Shader:
@@ -294,6 +308,9 @@ func _get_shader_variant(source_shader: Shader, options: MaterialManager.Materia
     var code: String = source_shader.code
     if options.force_transparent:
         code = code.replace("shader_type spatial;", "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND")
+        # a blended surface mirrors the sky (types/blended_reflection.gdshaderinc), which
+        # specular_disabled would take away with the lights' highlights
+        code = code.replace("specular_disabled", "specular_schlick_ggx")
     if options.cull_disabled:
         code = code.replace("cull_back", "cull_disabled")
     if specgloss:

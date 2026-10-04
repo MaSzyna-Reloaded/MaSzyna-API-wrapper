@@ -108,6 +108,11 @@ Code generation:
   Alt+Enter for Enter: the starter's sections ran their Enter on the fullscreen shortcut. The
   `ui_*` actions belong to Godot's controls, which consume them in their own `gui_input` - see
   `CODE_STYLE.md`
+* PROHIBITED: **never build shader code at run time** - no `code.replace()`, no string put
+  together and assigned to `Shader.code`. A shader made that way cannot be precompiled: it compiles
+  when the first object using it is drawn, which is an FPS drop every time a vehicle is instanced
+  in the game. A variant is a `.gdshader` file; what a uniform can switch is a uniform - see
+  `CODE_STYLE.md`
 * PROHIBITED: **never wire anything up in a hot path** - no `connect`, `get_node`, path resolution
   or subscription in `_process`/`_physics_process`/a tick, not even behind `_dirty`; wire once in
   `_enter_tree()`, `_ready()` or an owner's init - see `CODE_STYLE.md`

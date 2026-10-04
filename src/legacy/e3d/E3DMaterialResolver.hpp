@@ -8,7 +8,7 @@ namespace godot {
     struct E3DInstanceData;
     class E3DSubModel;
 
-    /// Calls the material resolver callable once per submodel, data path, skins, force alpha and
+    /// Calls the material resolver callable once per submodel, data path, skins, translucency and
     /// max texture size; later calls return the same material while it is alive (a scenery
     /// instances the same models thousands of times).
     class E3DMaterialResolver {
@@ -20,6 +20,7 @@ namespace godot {
             void set_callable(const Callable &p_callable);
             /* Every material is resolved again */
             void clear();
-            Ref<Material> resolve(const E3DInstanceData &p_instance, E3DSubModel *p_submodel, bool p_force_alpha);
+            /* p_translucency: E3DRenderingServer::Translucency */
+            Ref<Material> resolve(const E3DInstanceData &p_instance, E3DSubModel *p_submodel, int p_translucency);
     };
 } // namespace godot

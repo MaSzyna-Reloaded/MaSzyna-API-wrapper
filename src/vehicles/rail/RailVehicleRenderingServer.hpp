@@ -117,9 +117,8 @@ namespace godot {
                     RID pickable;
                     RID detection_area;
                     RID detection_shape;
-                    /* The cab the player sees from, 0 for none, and whether it is a modelled one */
-                    int cab = 0;
-                    bool has_cab_model = false;
+                    /* vehicle_set_visible_low_poly_cabins() */
+                    bool low_poly_cabs_visible = true;
                     /* The level of each low-poly cab's light (vehicle_set_cab_light_level()), and the
                      * self-illumination the cab is drawn with, following it */
                     double cab_light_levels[LOW_POLY_CABS.size()] = {};
@@ -198,7 +197,8 @@ namespace godot {
             void _update_lights(const RID &p_vehicle, Visual &p_visual);
             void _update_smoke(const RID &p_vehicle, const Visual &p_visual) const;
             void _update_detail(const RID &p_vehicle, Visual &p_visual);
-            void _update_low_poly_cabs(const Visual &p_visual) const;
+            void _update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const;
+            void _on_vehicle_occupied_cab_changed(const RID &p_vehicle, int p_cab);
             void _update_load(const RID &p_vehicle, Visual &p_visual);
             void _update_detection_area(const RID &p_vehicle, Visual &p_visual);
             void _register_pickable(const RID &p_vehicle, Visual &p_visual);
@@ -256,9 +256,10 @@ namespace godot {
             void
             vehicle_set_load_model(const RID &p_vehicle, const String &p_data_path, const String &p_model_filename);
             void vehicle_set_head_display_material(const RID &p_vehicle, const Ref<Material> &p_material);
-            /* The cab the player looks from (0 for none) and whether it is modelled: the low-poly
-             * interior hides that cab, or all of them with jointcabs: (DynObj.cpp:1335-1340) */
-            void vehicle_set_cab(const RID &p_vehicle, int p_cab, bool p_has_cab_model);
+            /* Whether the low-poly interior shows every cab. Not visible - the interior of the
+             * occupied cab is drawn in its place by whoever shows it - the low-poly cab of the
+             * occupied cab is hidden, or all of them with jointcabs: (DynObj.cpp:1389-1397) */
+            void vehicle_set_visible_low_poly_cabins(const RID &p_vehicle, bool p_visible);
             /* The level (0..1) of the light of a cab - 1, 0 or -1, as the cab layer counts them -
              * that its low-poly cab is lit at (TDynamicObject::set_cab_lights(), DynObj.cpp:841-853);
              * with jointcabs: every cab at the brightest */

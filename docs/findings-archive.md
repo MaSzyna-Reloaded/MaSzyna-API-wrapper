@@ -3307,3 +3307,33 @@ lighting or the trainset.
   ammeters read the powered vehicle, as TTrain's `mvControlled` (`Train.cpp:8638, 10856`).
 * **Rule:** a component exists only when the FIZ describes it, and the controller fills only its
   own state.
+
+## 2026-10-04 SM42's windows missing
+
+* **Symptom:** vehicles had holes for windows; SM42 and ST45 in `stary_jawor_osobowy1.scn` kept
+  them after the first fix (operator).
+* **What proved it:** printed off the data and rendered with the real renderer (headless `sway`).
+  The original draws a submodel in exactly one pass: flag 0x10 in the opaque one, alpha-tested at
+  the material's `opacity:` (0.5 without one, `opengl33renderer.cpp:2247-2258, 3422`); 0x20 in the
+  alpha one (`:4313`); a replaceable skin with Opacity < 1 - bits 1, 2, 4, 8, not 0x20
+  (`Model3d.cpp:421-441`) - in the alpha one when the skin has alpha (`DynObj.cpp:331-346`). The
+  wrapper cut every vehicle submodel out, and `E3DModelBuilder` read 0x20 only: SM42's and EU07's
+  glass is the skin-painted `szyby` of the low-poly interior. `szyby` hangs under `cab1`, and
+  `CabinSystem` hid the occupied low-poly cab (`vehicle_set_cab()`) while the player's cab stood -
+  from outside too, where the original shows it (`DynObj.cpp:1389-1397`).
+* **Fix:** `E3DSubModel.skin_translucent`; a vehicle's models force alpha
+  (`RailVehicleRenderingServer::_create_models()`), and a forced submodel is blended by the nodes
+  backend and opaque in the optimized one (`E3DRenderingServer.Translucency`,
+  `MaterialOptions.force_opaque`); a material with `opacity:` is cut out at it (EP09's skin: 0.92,
+  glass at 0.79). A blended surface mirrors the sky by the material's reflectivity and takes the
+  lights' diffuse part only (`types/blended_reflection.gdshaderinc`): with the lights' highlights
+  a pane as smooth as glass burnt out white (SU46). The player hides the cab's interior in a view
+  from outside and tells the drawing (`vehicle_set_visible_low_poly_cabins()`); `CabinSystem` no
+  longer does.
+* **What went wrong on the way:** a per-texel split of one submodel into an opaque and a blended
+  pass, distance logic in the shaders, a darkening setting and a rewrite of the shader variants -
+  none of it asked for, each breaking something (ST44's glass opaque, torn frames). All removed.
+* **Rule:** a submodel is drawn in one pass, as the original's flags say; the optimized instancer
+  never uses the alpha pass; what is drawn for a view is told to the drawing by the owner of the
+  view, never by the cab layer.
+

@@ -8,7 +8,7 @@ namespace godot {
             void _add_submodels(
                     E3DInstanceData &p_instance, const TypedArray<E3DSubModel> &p_submodels,
                     const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,
-                    const Vector<E3DSubModel *> &p_force_alpha_submodels, bool p_force_alpha,
+                    const Vector<E3DSubModel *> &p_force_alpha_submodels, int p_parent_translucency,
                     E3DMaterialResolver &p_material_resolver);
             RID _add_submodel(
                     E3DInstanceData &p_instance, E3DSubModel *p_submodel, const RID &p_mesh,

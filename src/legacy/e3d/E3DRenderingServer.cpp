@@ -158,6 +158,9 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(INSTANCE_KIND_STATIC);
         BIND_ENUM_CONSTANT(INSTANCE_KIND_DYNAMIC);
+        BIND_ENUM_CONSTANT(TRANSLUCENCY_CUTOUT);
+        BIND_ENUM_CONSTANT(TRANSLUCENCY_BLENDED);
+        BIND_ENUM_CONSTANT(TRANSLUCENCY_OPAQUE);
 
         BIND_ENUM_CONSTANT(LIGHT_MODE_OFF);
         BIND_ENUM_CONSTANT(LIGHT_MODE_ON);
@@ -615,7 +618,7 @@ namespace godot {
     }
 
     /// `material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray,
-    /// force_alpha: bool) -> Material`, used by instance_build()
+    /// translucency: Translucency) -> Material`, used by instance_build()
     void E3DRenderingServer::material_set_resolver(const Callable &p_material_resolver) {
         material_resolver.set_callable(p_material_resolver);
     }

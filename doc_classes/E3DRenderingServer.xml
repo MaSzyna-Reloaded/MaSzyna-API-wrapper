@@ -48,13 +48,6 @@
 				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
 			</description>
 		</method>
-		<method name="instance_get_attached_node" qualifiers="const">
-			<return type="int" />
-			<param index="0" name="instance" type="RID" />
-			<description>
-				The instance id of the node attached with [method instance_attach_node] - the one a node tree is built under - or [code]0[/code] for none, or for one that is gone.
-			</description>
-		</method>
 		<method name="instance_attach_node">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -92,6 +85,13 @@
 			<param index="0" name="instance" type="RID" />
 			<description>
 				The bounds of every mesh of the model, in the model's space.
+			</description>
+		</method>
+		<method name="instance_get_attached_node" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				The instance id of the node attached with [method instance_attach_node] - the one a node tree is built under - or [code]0[/code] for none, or for one that is gone.
 			</description>
 		</method>
 		<method name="instance_get_data_path" qualifiers="const">
@@ -405,7 +405,7 @@
 			<return type="void" />
 			<param index="0" name="material_resolver" type="Callable" />
 			<description>
-				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, force_alpha: bool) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
+				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, translucency: Translucency, max_texture_size: int) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
 			</description>
 		</method>
 		<method name="model_load">
@@ -486,6 +486,15 @@
 		</constant>
 		<constant name="INSTANCE_KIND_DYNAMIC" value="1" enum="InstanceKind">
 			Part of a [code]dynamic[/code], which is a vehicle. Its smoke follows [code]maszyna/rendering/smoke_density_dynamic[/code].
+		</constant>
+		<constant name="TRANSLUCENCY_CUTOUT" value="0" enum="Translucency">
+			The submodel is drawn as its material says: opaque, or cut out at the alpha threshold.
+		</constant>
+		<constant name="TRANSLUCENCY_BLENDED" value="1" enum="Translucency">
+			Alpha-blended - a forced submodel drawn as nodes.
+		</constant>
+		<constant name="TRANSLUCENCY_OPAQUE" value="2" enum="Translucency">
+			Opaque whatever its texture's alpha - a forced submodel of the optimized instancer, which never draws in the alpha pass.
 		</constant>
 		<constant name="LIGHT_MODE_OFF" value="0" enum="LightMode">
 		</constant>

@@ -1,4 +1,5 @@
 #include "E3DOptimizedBackend.hpp"
+#include "E3DRenderingServer.hpp"
 #include <godot_cpp/classes/rendering_server.hpp>
 
 namespace godot {
@@ -14,7 +15,7 @@ namespace godot {
 
         _add_submodels(
                 p_instance, p_instance.model->get_submodels(), Transform3D(), Vector<E3DSubModel *>(),
-                _get_force_alpha_submodels(p_instance), false, p_material_resolver);
+                _get_force_alpha_submodels(p_instance), E3DRenderingServer::TRANSLUCENCY_CUTOUT, p_material_resolver);
         update(p_instance);
     }
 
@@ -121,7 +122,7 @@ namespace godot {
     void E3DOptimizedBackend::_add_submodels(
             E3DInstanceData &p_instance, const TypedArray<E3DSubModel> &p_submodels,
             const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,
-            const Vector<E3DSubModel *> &p_force_alpha_submodels, const bool p_force_alpha,
+            const Vector<E3DSubModel *> &p_force_alpha_submodels, const int p_parent_translucency,
             E3DMaterialResolver &p_material_resolver) {
         for (int i = 0; i < p_submodels.size(); i++) {
             const Ref<E3DSubModel> submodel = p_submodels[i];
@@ -132,20 +133,22 @@ namespace godot {
             const Transform3D local_transform = p_parent_transform * submodel->get_transform();
             Vector<E3DSubModel *> chain = p_parent_chain;
             chain.push_back(submodel.ptr());
-            const bool force_alpha =
-                    _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
+            const int translucency = _submodel_translucency(
+                    p_instance, submodel.ptr(), p_force_alpha_submodels, p_parent_translucency,
+                    E3DRenderingServer::TRANSLUCENCY_OPAQUE);
 
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
                 submodel->get_mesh().is_valid()) {
                 _add_submodel(
                         p_instance, submodel.ptr(), submodel->get_mesh()->get_rid(),
-                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha), local_transform, chain);
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), translucency), local_transform, chain);
             }
             // A free spotlight's light is E3DRenderingServer's (streamed with a range of its own);
             // here it is only the point (and the glare) the original draws where the light is
             // (opengl33renderer.cpp:4375-4500), when the resolver gives it a material
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
-                const Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), false);
+                const Ref<Material> material = p_material_resolver.resolve(
+                        p_instance, submodel.ptr(), E3DRenderingServer::TRANSLUCENCY_CUTOUT);
                 if (material.is_valid()) {
                     const RID rid = _add_submodel(
                             p_instance, submodel.ptr(), point_mesh->get_rid(), material, local_transform, chain);
@@ -173,8 +176,8 @@ namespace godot {
             }
 
             _add_submodels(
-                    p_instance, submodel->get_submodels(), local_transform, chain, p_force_alpha_submodels, force_alpha,
-                    p_material_resolver);
+                    p_instance, submodel->get_submodels(), local_transform, chain, p_force_alpha_submodels,
+                    translucency, p_material_resolver);
         }
     }
 

@@ -3,6 +3,11 @@
 shader_type spatial;
 render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_disabled;
 
+#ifdef MASZYNA_ALPHA_BLEND
+// absolute: the variants MaszynaMaterialFactory builds from this code have no path of their own
+#include "res://addons/libmaszyna/legacy/materials/types/blended_reflection.gdshaderinc"
+#endif
+
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform int transparency = 0;
@@ -62,4 +67,9 @@ void fragment() {
         EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;
     }
 
+#ifdef MASZYNA_ALPHA_BLEND
+	// the mask is the reflmap's alpha (mat_reflmap.frag:43), white without one
+	SPECULAR = blended_specular(texture(texture_metallic, base_uv).a);
+	ROUGHNESS = BLENDED_ROUGHNESS;
+#endif
 }

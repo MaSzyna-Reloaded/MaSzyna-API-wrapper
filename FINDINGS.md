@@ -231,6 +231,12 @@ anything. Open work belongs in `TODO.md`.
 * A component exists only when the FIZ describes it, and the controller fills only its own state:
   what a vehicle may or may not have - the master controller, the engine, the low voltage, the
   radio - fills its keys from its component. *(10-04 a wagon's dump with a locomotive's state)*
+* A submodel is drawn in one pass, the one its flags say - 0x20, or a translucent replaceable
+  skin (bits 1, 2, 4, 8), in the alpha pass - and the optimized E3D instancer never uses the alpha
+  pass. Port the original's rule before inventing a mechanism. *(10-04 SM42's windows missing)*
+* What is drawn for a view is told to the drawing by the owner of the view (the player), never by
+  the cab layer: `CabinSystem` knows no view, and hid the low-poly cab from outside too. *(10-04
+  SM42's windows missing)*
 * A cab (the original's TTrain) is at work only for a driven vehicle: its logic is attached on
   `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
   each step)*

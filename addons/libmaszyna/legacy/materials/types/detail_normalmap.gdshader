@@ -8,6 +8,13 @@ render_mode depth_draw_opaque, cull_back, diffuse_burley, specular_disabled;
 #include "res://addons/libmaszyna/legacy/materials/types/specgloss.gdshaderinc"
 #endif
 
+#ifdef MASZYNA_ALPHA_BLEND
+#ifndef MASZYNA_SPECGLOSS
+// absolute: the variants MaszynaMaterialFactory builds from this code have no path of their own
+#include "res://addons/libmaszyna/legacy/materials/types/blended_reflection.gdshaderinc"
+#endif
+#endif
+
 uniform vec4 albedo : source_color;
 uniform sampler2D texture_albedo : source_color, filter_linear_mipmap, repeat_enable;
 uniform int transparency = 0;
@@ -90,5 +97,12 @@ void fragment() {
 	SPECULAR = specgloss_specular;
 	METALLIC = specgloss_metallic;
 	ROUGHNESS = specgloss_roughness;
+#endif
+
+#ifdef MASZYNA_ALPHA_BLEND
+#ifndef MASZYNA_SPECGLOSS
+	SPECULAR = blended_specular(texture(texture_normal, base_uv).a);
+	ROUGHNESS = BLENDED_ROUGHNESS;
+#endif
 #endif
 }

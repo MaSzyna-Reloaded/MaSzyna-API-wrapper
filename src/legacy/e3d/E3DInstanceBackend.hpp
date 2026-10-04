@@ -210,9 +210,13 @@ namespace godot {
             /// only in a dynamic (vehicle) model (Model3d.cpp:275, 2221)
             static bool _is_submodel_shown(const E3DInstanceData &p_instance, const E3DSubModel *p_submodel);
             static Vector<E3DSubModel *> _get_force_alpha_submodels(const E3DInstanceData &p_instance);
-            static bool _is_force_alpha(
+            /* How the submodel is drawn (E3DRenderingServer::Translucency): p_forced for a forced
+             * one - its parent is, it is one of p_force_alpha_submodels, or the instance forces
+             * its translucent submodels (flag 0x20, or a translucent replaceable skin) - else
+             * the cutout */
+            static int _submodel_translucency(
                     const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
-                    const Vector<E3DSubModel *> &p_force_alpha_submodels, bool p_parent_force_alpha);
+                    const Vector<E3DSubModel *> &p_force_alpha_submodels, int p_parent_translucency, int p_forced);
             static bool _requires_alpha_depth_prepass_sorting(const Ref<Material> &p_material);
     };
 } // namespace godot

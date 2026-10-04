@@ -116,6 +116,9 @@ namespace godot {
                     RailVehicleServer::vehicle_placement_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_placed));
             rail_vehicles->connect(
+                    RailVehicleServer::vehicle_occupied_cab_changed_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_occupied_cab_changed));
+            rail_vehicles->connect(
                     RailVehicleServer::vehicle_trainset_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_trainset_changed));
             rail_vehicles->connect(
@@ -209,8 +212,8 @@ namespace godot {
                 D_METHOD("vehicle_set_head_display_material", "vehicle", "material"),
                 &RailVehicleRenderingServer::vehicle_set_head_display_material);
         ClassDB::bind_method(
-                D_METHOD("vehicle_set_cab", "vehicle", "cab", "has_cab_model"),
-                &RailVehicleRenderingServer::vehicle_set_cab);
+                D_METHOD("vehicle_set_visible_low_poly_cabins", "vehicle", "visible"),
+                &RailVehicleRenderingServer::vehicle_set_visible_low_poly_cabins);
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_cab_light_level", "vehicle", "cab", "level"),
                 &RailVehicleRenderingServer::vehicle_set_cab_light_level);
@@ -419,13 +422,18 @@ namespace godot {
         }
     }
 
-    void
-    RailVehicleRenderingServer::vehicle_set_cab(const RID &p_vehicle, const int p_cab, const bool p_has_cab_model) {
+    void RailVehicleRenderingServer::vehicle_set_visible_low_poly_cabins(const RID &p_vehicle, const bool p_visible) {
         Visual *visual = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(visual);
-        visual->cab = p_cab;
-        visual->has_cab_model = p_has_cab_model;
-        _update_low_poly_cabs(*visual);
+        visual->low_poly_cabs_visible = p_visible;
+        _update_low_poly_cabs(p_vehicle, *visual);
+    }
+
+    /* Another cab hidden while the low-poly cabs are not all visible */
+    void RailVehicleRenderingServer::_on_vehicle_occupied_cab_changed(const RID &p_vehicle, const int p_cab) {
+        if (const Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
+            _update_low_poly_cabs(p_vehicle, *visual);
+        }
     }
 
     void RailVehicleRenderingServer::vehicle_set_cab_light_level(
@@ -488,7 +496,11 @@ namespace godot {
                 return RID();
             }
             const RID instance = models->instance_create(model, p_instancer, E3DRenderingServer::INSTANCE_KIND_DYNAMIC);
-            models->instance_set_options(instance, data_path, p_skins, Array(), false, {}, 0);
+            // a vehicle's translucent submodels - its windows - are drawn as the original's alpha
+            // pass draws them: blended near the camera, opaque by the optimized instancer far away;
+            // a cutout leaves holes in the glass
+            constexpr bool FORCE_ALPHA = true;
+            models->instance_set_options(instance, data_path, p_skins, Array(), FORCE_ALPHA, {}, 0);
             if (p_instancer == E3DRenderingServer::INSTANCER_NODES) {
                 models->instance_attach_node(instance, holder);
             }
@@ -587,7 +599,7 @@ namespace godot {
         _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleElectricEngine::PANTOGRAPH_SECOND);
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
         _update_detection_area(p_vehicle, p_visual);
-        _update_low_poly_cabs(p_visual);
+        _update_low_poly_cabs(p_vehicle, p_visual);
         // the interior is lit only by the lights of its cabs (vehicle_set_cab_light_level())
         if (p_visual.low_poly.is_valid()) {
             models->instance_set_emission_energy(p_visual.low_poly, 0.0);
@@ -1096,22 +1108,26 @@ namespace godot {
         }
     }
 
-    // Original engine: the low-poly interior stays rendered from inside the cab (Render_interior(),
-    // opengl33renderer.cpp:1123); only its occupied "cabN" submodel is hidden - or all of them
-    // with jointcabs: - so the hi-fi cab doesn't overlap it (DynObj.cpp:1335-1340, 2383-2391).
-    // A cab without a hi-fi model keeps every low-poly cab visible.
-    void RailVehicleRenderingServer::_update_low_poly_cabs(const Visual &p_visual) const {
+    // Original engine: every low-poly cab is drawn, but in the view from inside the player's
+    // vehicle, where the "cabN" of the occupied cab is hidden - or all of them with jointcabs: -
+    // so the hi-fi cab doesn't overlap it; a cab without a hi-fi model hides none
+    // (DynObj.cpp:1389-1397). Which view that is belongs to whoever shows the cab's interior
+    // (vehicle_set_visible_low_poly_cabins()).
+    void RailVehicleRenderingServer::_update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
-        if (models == nullptr || !p_visual.low_poly.is_valid() || p_visual.appearance.is_null()) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        if (models == nullptr || vehicle_server == nullptr || !p_visual.low_poly.is_valid() ||
+            p_visual.appearance.is_null()) {
             return;
         }
-        const int occupied = low_poly_cab(p_visual.cab);
+        const Ref<RailVehicleController> vehicle = vehicle_server->vehicle_get_controller(p_vehicle);
+        const int hidden = low_poly_cab(vehicle.is_valid() ? vehicle->get_cabin_occupied() : 0);
         const bool joint_cabs = p_visual.appearance->get_joint_cabs();
         for (int cab = 0; cab < static_cast<int>(LOW_POLY_CABS.size()); ++cab) {
             const String name = LOW_POLY_CABS[cab];
             if (models->instance_has_submodel(p_visual.low_poly, name)) {
                 models->instance_set_submodel_visible(
-                        p_visual.low_poly, name, !p_visual.has_cab_model || (!joint_cabs && cab != occupied));
+                        p_visual.low_poly, name, p_visual.low_poly_cabs_visible || (!joint_cabs && cab != hidden));
             }
         }
     }

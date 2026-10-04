@@ -98,6 +98,47 @@ func test_opaque_meshes_leave_out_translucent_submodels() -> void:
     E3DRenderingServer.instance_free(rid)
 
 
+## A vehicle's glass - a translucent submodel of an instance that forces alpha - is blended while
+## drawn as nodes and opaque in the optimized instancer, which never uses the alpha pass; the
+## original draws it in its alpha pass (opengl33renderer.cpp:4313). The rest stays as it is.
+func test_forced_translucent_submodel_is_blended_as_nodes_and_opaque_optimized() -> void:
+    var parent: Node3D = Node3D.new()
+    add_child_autoqfree(parent)
+    var model: E3DModel = _create_model()
+    var mesh_submodel: E3DSubModel = model.submodels[0].submodels[0]
+    mesh_submodel.material_name = "body"
+    var glass: E3DSubModel = E3DSubModel.new()
+    glass.resource_name = "glass"
+    glass.submodel_type = E3DSubModel.SUBMODEL_GL_TRIANGLES
+    glass.mesh = mesh_submodel.mesh
+    glass.material_name = "glass"
+    glass.skin_translucent = true
+    var mesh_children: Array[E3DSubModel] = [glass]
+    mesh_submodel.submodels = mesh_children
+    var resolved: Dictionary[String, int] = {}
+    E3DRenderingServer.material_set_resolver(
+        func(submodel: E3DSubModel, _data_path: String, _skins: PackedStringArray,
+                translucency: E3DRenderingServer.Translucency, _max_texture_size: int) -> Material:
+            resolved[submodel.resource_name] = translucency
+            return null)
+
+    for instancer: E3DRenderingServer.Instancer in [E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCER_OPTIMIZED]:
+        resolved.clear()
+        var rid: RID = E3DRenderingServer.instance_create(model, instancer, E3DRenderingServer.INSTANCE_KIND_DYNAMIC)
+        E3DRenderingServer.instance_set_options(rid, "", [], [], true, [], 0)
+        E3DRenderingServer.instance_attach_node(rid, parent)
+        E3DRenderingServer.instance_set_scenario(rid, parent.get_world_3d().scenario)
+        E3DRenderingServer.instance_build(rid)
+        var forced: E3DRenderingServer.Translucency = (
+                E3DRenderingServer.TRANSLUCENCY_BLENDED if instancer == E3DRenderingServer.INSTANCER_NODES
+                else E3DRenderingServer.TRANSLUCENCY_OPAQUE)
+        assert_eq(resolved.get("glass", -1), forced, "the glass, instancer %d" % instancer)
+        assert_eq(resolved.get("mesh", -1), E3DRenderingServer.TRANSLUCENCY_CUTOUT, "the body, instancer %d" % instancer)
+        E3DRenderingServer.instance_free(rid)
+
+    E3DRenderingServer.material_set_resolver(MaterialManager.get_submodel_material)
+
+
 func test_dark_light_follows_the_light_level() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)

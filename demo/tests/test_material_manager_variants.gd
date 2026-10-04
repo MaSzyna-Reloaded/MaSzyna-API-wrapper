@@ -138,6 +138,34 @@ func test_create_sets_alpha_blending_for_e3d_translucent_submodel() -> void:
     assert_true(material.shader.code.contains("#define MASZYNA_ALPHA_BLEND"))
 
 
+## A forced submodel of the optimized E3D instancer is drawn opaque, not even cut out - that
+## instancer never uses the alpha pass (E3DRenderingServer.TRANSLUCENCY_OPAQUE)
+func test_create_draws_a_transparent_material_opaque_for_the_optimized_instancer() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.force_opaque = true
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(
+        mmat,
+        "",
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options,
+    ) as ShaderMaterial
+
+    assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.Disabled)
+
+
+## The original's opaque pass keeps the texels at the material's "opacity:" and above
+## (opengl33renderer.cpp:2247-2258) - EP09's skin gives 0.92 and has its glass at 0.79
+func test_create_cuts_out_at_the_opacity_of_the_material() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", "opacity_manager")
+    var material: ShaderMaterial = MaszynaMaterialFactory.create(mmat) as ShaderMaterial
+
+    assert_false(mmat.transparent, "no texture of it asks for transparency")
+    assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.AlphaScissor)
+    assert_almost_eq(float(material.get_shader_parameter("alpha_scissor_threshold")), 0.92, 0.0001)
+
+
 func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void:
     var mmat: MaszynaMaterial = MaszynaMaterial.new()
     var diffuse_color: Color = Color(0.25, 0.5, 0.75, 1.0)

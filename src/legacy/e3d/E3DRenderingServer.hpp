@@ -39,6 +39,19 @@ namespace godot {
                 INSTANCE_KIND_DYNAMIC,
             };
 
+            /// How a submodel is drawn, as the backends tell the material resolver. The original
+            /// draws a submodel in one pass, the opaque or the alpha one, by its flags
+            /// (opengl33renderer.cpp:3422, 4313).
+            enum Translucency {
+                /// As its material says: opaque, or cut out at the alpha threshold
+                TRANSLUCENCY_CUTOUT,
+                /// Alpha-blended - a forced submodel drawn as nodes (near the camera)
+                TRANSLUCENCY_BLENDED,
+                /// Opaque whatever its texture's alpha - a forced submodel of the optimized
+                /// instancer, which never draws in the alpha pass
+                TRANSLUCENCY_OPAQUE,
+            };
+
             /// Light state of a scenery model node (TLightState, AnimModel.h:27-33)
             enum LightMode {
                 LIGHT_MODE_OFF = 0,
@@ -437,3 +450,4 @@ namespace godot {
 VARIANT_ENUM_CAST(E3DRenderingServer::Instancer)
 VARIANT_ENUM_CAST(E3DRenderingServer::LightMode)
 VARIANT_ENUM_CAST(E3DRenderingServer::InstanceKind)
+VARIANT_ENUM_CAST(E3DRenderingServer::Translucency)

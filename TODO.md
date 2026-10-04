@@ -200,6 +200,23 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 
 ## Cabins
 
+* **`CabinSystem` still drives the vehicle's drawing in two places** (`docs/findings-archive.md`,
+  2026-10-04 SM42's windows missing): it mounts the cab's node on the vehicle
+  (`RailVehicleRenderingServer.vehicle_mount_node()` in `vehicle_show_cabin()`) and lights the
+  low-poly cab (`vehicle_set_cab_light_level()` in `cab_set_light_level()`). Who shows the cab's
+  interior mounts it (the player), and the low-poly cab's light follows `cab_light_level_changed`
+  from the drawing's side - to decide with the operator.
+* **`MaszynaMaterialFactory._get_shader_variant()` builds its shader variants with
+  `code.replace()`** (alpha blend, cull disabled, specgloss; since 2026-09-28): to be static
+  variant files with the render modes they have now - no change of any render mode, checked with
+  the real renderer (operator, 2026-10-04). Forbidden by `CODE_STYLE.md` ("A shader variant is a
+  file"): such a shader cannot be precompiled, and a vehicle's glass uses the blended variant, so
+  the first vehicle near the camera compiles it in the game - an FPS drop.
+* **A translucent skin submodel is forced whether or not the skin has an alpha channel**
+  (`E3DInstanceBackend::_submodel_translucency()`); the original draws it in the alpha pass only
+  when it has one (`DynObj.cpp:331-346`, `textures_alpha`). It looks the same - a texture without
+  alpha blends opaque - but goes through the alpha pass.
+
 ### Controls whose original handler branches on the kind of switch
 
 The MMD factory gives every widget its `gauge_type`, and the catalog entries with

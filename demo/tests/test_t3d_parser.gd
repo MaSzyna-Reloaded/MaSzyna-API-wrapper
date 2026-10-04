@@ -140,3 +140,15 @@ func test_indexed_geometry_with_animation_keeps_its_vertices() -> void:
     _assert_vectors(_vertices(grass), PackedVector3Array([
         Vector3(0, 0, 0), Vector3(1, 0, 0), Vector3(0, 0, 2), Vector3(1, 0, 2),
     ]), "Grass vertices")
+
+
+## A translucent replaceable skin has its own phase bit, not 0x20 (Model3d.cpp:421-441) - a vehicle's
+## windows painted on its skin; an opaque one has none
+func test_a_translucent_skin_is_told_apart_from_a_translucent_texture() -> void:
+    var glass:E3DSubModel = E3DModelManager.load_model(DATA_PATH, "skin_glass").get_node(NodePath("Grass"))
+    var opaque:E3DSubModel = E3DModelManager.load_model(DATA_PATH, "indexed").get_node(NodePath("Grass"))
+
+    assert_true(glass.skin_translucent, "opacity 0 on a replaceable skin")
+    assert_false(glass.material_transparent, "which is not flag 0x20")
+    assert_false(opaque.skin_translucent, "opacity 1 is the opaque phase")
+

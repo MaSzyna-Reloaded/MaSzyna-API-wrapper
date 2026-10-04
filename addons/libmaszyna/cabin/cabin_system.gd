@@ -151,7 +151,6 @@ func vehicle_show_cabin(vehicle_rid:RID, parent:Node) -> Cabin3D:
         push_error("CabinSystem: the root of a cabin scene must be a Cabin3D")
         return null
     _cabins[vehicle_rid] = cabin.get_instance_id()
-    cabin.camera_configuration_changed.connect(_on_cabin_camera_configuration_changed.bind(vehicle_rid))
     var mount:Node3D = Node3D.new()
     parent.add_child(mount)
     RailVehicleRenderingServer.vehicle_mount_node(vehicle_rid, mount.get_instance_id())
@@ -159,7 +158,6 @@ func vehicle_show_cabin(vehicle_rid:RID, parent:Node) -> Cabin3D:
     # a cabin holds the handle of the vehicle it sits in and takes everything else from here -
     # told once it is in the tree, because building its interior puts nodes there
     cabin.set_vehicle_rid(vehicle_rid)
-    _on_cabin_camera_configuration_changed(vehicle_rid)
     return cabin
 
 
@@ -169,23 +167,15 @@ func vehicle_hide_cabin(vehicle_rid:RID) -> void:
     _cabins.erase(vehicle_rid)
     if not cabin:
         return
-    cabin.camera_configuration_changed.disconnect(_on_cabin_camera_configuration_changed.bind(vehicle_rid))
     var mount:Node = cabin.get_parent()
     RailVehicleRenderingServer.vehicle_unmount_node(vehicle_rid, mount.get_instance_id())
     mount.get_parent().remove_child(mount)
     mount.queue_free()
-    RailVehicleRenderingServer.vehicle_set_cab(vehicle_rid, 0, false)
 
 
 ## The cab interior while it is shown, else null
 func vehicle_get_cabin(vehicle_rid:RID) -> Cabin3D:
     return instance_from_id(_cabins.get(vehicle_rid, 0)) as Cabin3D
-
-
-## The low-poly interior hides the cab the player sits in (RailVehicleRenderingServer.vehicle_set_cab())
-func _on_cabin_camera_configuration_changed(vehicle_rid:RID) -> void:
-    var cabin:Cabin3D = vehicle_get_cabin(vehicle_rid)
-    RailVehicleRenderingServer.vehicle_set_cab(vehicle_rid, cabin.get_cab_number(), cabin.get_has_cab_model())
 
 
 static func _key(vehicle_rid:RID, cab:int) -> String:

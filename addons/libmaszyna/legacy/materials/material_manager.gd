@@ -51,6 +51,9 @@ class MaterialOptions:
     var selfillum_enabled: bool = false
     # E3D translucent submodels are rendered in a separate alpha-blended pass.
     var force_transparent: bool = false
+    # A submodel of the optimized E3D instancer, which never draws in the alpha pass: opaque
+    # whatever its texture's alpha, not even cut out (E3DRenderingServer.TRANSLUCENCY_OPAQUE)
+    var force_opaque: bool = false
     var alpha_scissor_threshold: float = 0.5
     # Tracks draw both faces - the original disables culling for them in the shadow pass, "roads-based
     # platforms tend to miss parts of shadows" (opengl33renderer.cpp:3609), and an open rail profile
@@ -159,7 +162,7 @@ func get_submodel_material(
     submodel: E3DSubModel,
     data_path: String,
     skins: PackedStringArray,
-    force_alpha: bool,
+    translucency: E3DRenderingServer.Translucency,
     max_texture_size: int,
 ) -> Material:
     # E3DOptimizedBackend draws a free spotlight only when it gets a material for it
@@ -170,7 +173,8 @@ func get_submodel_material(
     var options: MaterialOptions = MaterialOptions.new()
 
     # TODO: handle more material options here (selfillum, etc)
-    options.force_transparent = force_alpha
+    options.force_transparent = translucency == E3DRenderingServer.TRANSLUCENCY_BLENDED
+    options.force_opaque = translucency == E3DRenderingServer.TRANSLUCENCY_OPAQUE
     options.max_texture_size = max_texture_size
     options.diffuse_color = submodel.diffuse_color
     options.selfillum_color = (
@@ -270,6 +274,7 @@ func _material_key(
     var options_hash = ":".join([
         UserSettings.get_maszyna_game_dir(),
         options.force_transparent,
+        options.force_opaque,
         options.diffuse_color.to_html(true),
         options.alpha_scissor_threshold,
         options.selfillum_enabled,

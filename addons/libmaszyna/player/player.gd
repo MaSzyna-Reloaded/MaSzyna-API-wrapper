@@ -262,6 +262,7 @@ func _hide_cabin() -> void:
     var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(_cabin_vehicle)
     cabin.camera_configuration_changed.disconnect(_on_cabin_camera_configuration_changed)
     _cabin_camera.reparent(self)
+    RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_cabin_vehicle, true)
     CabinSystem.vehicle_hide_cabin(_cabin_vehicle)
     _cabin_vehicle = RID()
 
@@ -277,6 +278,20 @@ func _on_cabin_camera_configuration_changed() -> void:
     _cabin_camera.global_transform = cabin.get_camera_transform()
     var basis:Basis = cabin.global_basis
     _cabin_camera.global_basis = basis if cabin.get_cab_number() < 0 else basis.rotated(Vector3.UP, PI)
+    _draw_cab_interior()
+
+
+## The cab interior of the vehicle driven is drawn only in the view from its cab, where the
+## vehicle's low-poly cab gives way to it if it is a modelled one; from outside the low-poly
+## interior is whole - its cab, the crew and the windows (DynObj.cpp:1389-1397: bDisplayCab,
+## mdKabina). The view is the player's, so the player tells the vehicle's drawing.
+func _draw_cab_interior() -> void:
+    var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(_cabin_vehicle)
+    if not cabin:
+        return
+    cabin.visible = PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN
+    RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(
+            _cabin_vehicle, not (cabin.visible and cabin.get_has_cab_model()))
 
 
 ## The camera of the view: from the cab camera the free camera steps out beside the vehicle
@@ -349,3 +364,4 @@ func _show_camera(camera:Camera3D) -> void:
     get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", cabin_view)
     SceneryHUDMouseServer.mouse_set_camera(camera.get_instance_id())
     SceneryHUDMouseServer.mouse_set_active(not cabin_view)
+    _draw_cab_interior()

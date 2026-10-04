@@ -269,7 +269,7 @@ func _show_details(index: int) -> void:
         %FileName.text = ""
         %Description.text = ""
         %TrainsetsHeader.visible = false
-        %UndrivableCheckBox.visible = false
+        %AllTrainsetsCheckBox.visible = false
         %TrainsetList.visible = false
         _listed_trainsets.clear()
         # an empty list reports no selection, which takes the vehicles and "Load" down with it
@@ -286,18 +286,19 @@ func _show_details(index: int) -> void:
             %Image.visible = true
     var has_trainsets: bool = _info.trainsets.size() > 0
     %TrainsetsHeader.visible = has_trainsets
-    %UndrivableCheckBox.visible = has_trainsets
+    %AllTrainsetsCheckBox.visible = has_trainsets
     _list_trainsets()
 
 
-## The trainsets of the scenery on the list: the occupied ones, and those that cannot be driven as
-## well while the check box is on - they can be looked at and reskinned, not loaded
+## The trainsets of the scenery on the list: the occupied ones the scenario offers, and while the
+## check box is on all the others - its AI and decoration trainsets, and those that cannot be
+## driven, which can be looked at and reskinned, not loaded
 func _list_trainsets() -> void:
     _listed_trainsets.clear()
     var names: PackedStringArray = []
     var notes: PackedStringArray = []
     for trainset: MaszynaSceneryInfo.Trainset in _info.trainsets:
-        if not trainset.is_occupied() and not %UndrivableCheckBox.button_pressed:
+        if not (trainset.is_occupied() and trainset.is_offered()) and not %AllTrainsetsCheckBox.button_pressed:
             continue
         _listed_trainsets.append(trainset)
         names.append(_get_trainset_name(trainset))
@@ -307,7 +308,7 @@ func _list_trainsets() -> void:
     %TrainsetList.set_rows(names, notes)
 
 
-func _on_undrivable_check_box_toggled(_toggled_on: bool) -> void:
+func _on_all_trainsets_check_box_toggled(_toggled_on: bool) -> void:
     _list_trainsets()
 
 

@@ -196,12 +196,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Trainset"
 
-[node name="UndrivableCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=820972816]
+[node name="AllTrainsetsCheckBox" type="CheckBox" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=820972816]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 focus_mode = 0
-text = "Show trainsets that cannot be driven"
+text = "Show all trainsets of the scenario"
 
 [node name="TrainsetList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=219649123 instance=ExtResource("6_list")]
 unique_name_in_owner = true
@@ -298,7 +298,7 @@ layout_mode = 2
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
-[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/UndrivableCheckBox" to="." method="_on_undrivable_check_box_toggled"]
+[connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/AllTrainsetsCheckBox" to="." method="_on_all_trainsets_check_box_toggled"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_actions"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
 [connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]

@@ -41,6 +41,12 @@ class Trainset:
                 return true
         return false
 
+    ## The scenario offers the trainset to the player: one whose mission description begins with
+    ## "-" is an AI train or a decoration, which the original's Starter does not list (a
+    ## convention of the data, MASZYNA_ORIGINAL_QUIRKS.md)
+    func is_offered() -> bool:
+        return not description.begins_with("-")
+
     ## Vehicle the player starts in: the one with a headdriver, else any with a driver
     func get_driver_train_id() -> String:
         for vehicle:Vehicle in vehicles:

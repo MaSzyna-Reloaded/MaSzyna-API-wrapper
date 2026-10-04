@@ -268,6 +268,15 @@ interface.
 
 ## Scenery data
 
+* **A trainset for the player is told apart only by a dash.** Every trainset of a scenario is
+  loaded, AI trains and decorations alike, and an AI train has a `headdriver` like the player's;
+  what the original's Starter offers is the trainsets whose mission description `//$o` does not
+  begin with "-" - a convention of the data, written down nowhere in it and not followed by the
+  original's own launcher, which lists every trainset (`launcher/scenery_list.cpp`). 1467 of the
+  data's 1938 trainsets are marked so; `calkowo_tartak2.scn` declares 19 and offers one,
+  6Dg-1248, as the Starter shows it, and every scenario offers at least one. Wrapper: the scenery
+  selector lists the offered occupied trainsets (`MaszynaSceneryInfo.Trainset.is_offered()`), and
+  every other one under its "all trainsets" check box.
 * **A model's path has two roots.** A `node ... model` names its file either from the game
   directory (`models\linia053\peron_sandomierz.t3d` - Sandomierz's platform, `l053_tri.scm:59325`;
   `dynamic\pkp\...` for a vehicle standing as scenery) or from `models/` (`bud\dombale.t3d`). The

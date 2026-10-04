@@ -11,8 +11,8 @@ msgstr ""
 msgid "Trainset"
 msgstr "Skład"
 
-msgid "Show trainsets that cannot be driven"
-msgstr "Pokaż składy, których nie można prowadzić"
+msgid "Show all trainsets of the scenario"
+msgstr "Pokaż wszystkie składy scenariusza"
 
 msgid "Load"
 msgstr "Wczytaj"

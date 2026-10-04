@@ -11,7 +11,7 @@ msgstr ""
 msgid "Trainset"
 msgstr "Szerelvény"
 
-msgid "Show trainsets that cannot be driven"
+msgid "Show all trainsets of the scenario"
 msgstr ""
 
 msgid "Load"

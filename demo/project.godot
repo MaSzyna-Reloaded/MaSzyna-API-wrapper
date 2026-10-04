@@ -22,12 +22,12 @@ run/print_header=false
 config/use_custom_user_dir=true
 config/custom_user_dir_name="MaSzyna-Reloaded"
 config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")
+run/flush_stdout_on_print=true
 boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/show_image=false
 boot_splash/image="res://splash.png"
 config/icon="res://icon.svg"
 run/print_header.release=true
-run/flush_stdout_on_print=true
 
 [audio]
 
@@ -122,7 +122,6 @@ rain_specular_fade_start=0.1
 rain_specular_fade_end=3.0
 rain_probe_max_count=64
 rain_probe_distance=4.0
-
 
 [hud]
 

@@ -8,7 +8,7 @@ var wipers: RailVehicleWipers
 
 
 func before_each():
-    train = build_vehicle("TestTrainWipers")
+    train = build_vehicle("TestTrainWipers", null, 0.0, VehicleController.DRIVER_HEAD)
     train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     wipers = MoverRailVehicleWipers.new()

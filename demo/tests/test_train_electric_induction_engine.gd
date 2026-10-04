@@ -10,8 +10,10 @@ func before_each():
     train = build_vehicle("TestTrain")
 
     engine = MoverRailVehicleElectricInductionEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
+    var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    train.add_component(power_source)
     await wait_idle_frames(2)
 
 func _make_point(x: float, y: float) -> VehicleCurvePointItem:
@@ -69,30 +71,32 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # the breaker is checked against the voltage in TractionForce(), run only with Power > 0
     driven.power = 5600.0
     var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
-    eim.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)
-    eim.power_current_collector_max_voltage = 3900.0
-    eim.power_current_collector_min_main_switch_voltage = 1900.0
-    eim.power_current_collector_physical_layout = 3
-    eim.power_current_collector_number_of_collectors = 2
+    power_source.current_collector_max_voltage = 3900.0
+    power_source.current_collector_min_main_switch_voltage = 1900.0
+    power_source.current_collector_physical_layout = 3
+    power_source.current_collector_number_of_collectors = 2
     driven.add_component(eim)
+    driven.add_component(power_source)
     driven.apply_configuration()
     await wait_idle_frames(2)
     driven.send_command("battery", true)
     await wait_idle_frames(2)
-    driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    driven.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     for i in 10:
-        _feed_wire(eim)
+        _feed_wire(power_source)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
-    _feed_wire(eim)
+    _feed_wire(power_source)
     assert_true(driven.get_state()["main_switch_closable"], "the line breaker should be closable at 3000 V")
 
     driven.send_command("main_switch", true)
     for i in 5:
-        _feed_wire(eim)
+        _feed_wire(power_source)
         await wait_idle_frames(1)
 
     assert_true(driven.get_state()["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
@@ -114,7 +118,8 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     wheels.axle_arrangement = "Bo'Bo'"
     driven.add_component(wheels)
     var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
-    eim.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
     driven.add_component(master_controller)
@@ -125,25 +130,26 @@ func _powered_up_eim(train_id: String) -> VehicleController:
             + " I0=20 fcfu=43.7 F0=300 a1=0.4 Pmax=5600 Fh=150 Ph=2600 Vh0=5 Vh1=10 Imax=1950 abed=1"
             + " Flat=Yes").to_utf8_buffer())
     FizTrainElectricInductionEngineParser.new().apply_engine_fields(FizLineUtil.read_key_values(line), eim)
-    eim.power_current_collector_max_voltage = 3900.0
-    eim.power_current_collector_min_main_switch_voltage = 1900.0
-    eim.power_current_collector_physical_layout = 3
-    eim.power_current_collector_number_of_collectors = 2
+    power_source.current_collector_max_voltage = 3900.0
+    power_source.current_collector_min_main_switch_voltage = 1900.0
+    power_source.current_collector_physical_layout = 3
+    power_source.current_collector_number_of_collectors = 2
     driven.add_component(eim)
+    driven.add_component(power_source)
     driven.apply_configuration()
     await wait_idle_frames(2)
     driven.send_command("battery", true)
     # the crew switches its cab on - no cab is active before (CabActive = 0, MOVER.h:2090)
     driven.send_command("cab_activation", true)
-    driven.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    driven.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     for i in 10:
-        _feed_wire(eim)
+        _feed_wire(power_source)
         await wait_idle_frames(1)
     await wait_seconds(1.0)
     driven.send_command("main_switch", true)
     driven.send_command("direction_increase")
     for i in 5:
-        _feed_wire(eim)
+        _feed_wire(power_source)
         await wait_idle_frames(1)
     return driven
 
@@ -175,10 +181,11 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
     # Regression: the setpoint of an integrated controller is computed by DynObj.cpp:3246-3283
     # (CheckEIMIC), which the wrapper did not call - the controller moved and Ft stayed 0
     var driven: VehicleController = await _powered_up_eim("TestEimTraction")
-    var engine: RailVehicleElectricEngine = driven.get_component(VehicleComponentType.COMPONENT_ENGINE)
+    var power_source: RailVehicleEnginePowerSource = driven.get_rail_component(
+            RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE)
     driven.send_command("main_controller_increase")
     for i in 30:
-        _feed_wire(engine)
+        _feed_wire(power_source)
         await wait_idle_frames(1)
 
     assert_gt(float(driven.get_state()["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
@@ -186,13 +193,15 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
 
 func test_apply_power_uses_canonical_current_collector_properties():
     var line: MaszynaParser = MaszynaParser.new()
-    line.initialize("CollectorsNo=2 MaxVoltage=3000.0 MaxCurrent=800.0".to_utf8_buffer())
-    var power_kv: Dictionary = FizLineUtil.read_key_values(line)
-    FizTrainEngineCommon.apply_power(engine, power_kv)
+    line.initialize("EnginePower=CurrentCollector CollectorsNo=2 MaxVoltage=3000.0 MaxCurrent=800.0".to_utf8_buffer())
+    var context: FizImportContext = FizImportContext.new()
+    context.power_kv = FizLineUtil.read_key_values(line)
+    var power_source: RailVehicleEnginePowerSource = FizTrainPowerParser.create_node(context)
 
-    assert_eq(engine.power_current_collector_number_of_collectors, 2)
-    assert_eq(engine.power_current_collector_max_voltage, 3000.0)
-    assert_eq(engine.power_current_collector_max_current, 800.0)
+    assert_eq(power_source.source_type, RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR)
+    assert_eq(power_source.current_collector_number_of_collectors, 2)
+    assert_eq(power_source.current_collector_max_voltage, 3000.0)
+    assert_eq(power_source.current_collector_max_current, 800.0)
 
 
 func test_the_engine_publishes_its_voltage_and_the_line_current():
@@ -227,6 +236,6 @@ func test_main_init_time_reaches_the_config():
 
 ## What the vehicles' step does for a vehicle standing under a live wire, for one standing on
 ## no track: the wire's voltage on the first pantograph and the vehicle fed with it
-func _feed_wire(engine:RailVehicleElectricEngine) -> void:
-    engine.set_pantograph_wire_voltage(RailVehicleElectricEngine.PANTOGRAPH_FIRST, WIRE_VOLTAGE)
-    engine.set_collector_voltage(WIRE_VOLTAGE)
+func _feed_wire(power_source:RailVehicleEnginePowerSource) -> void:
+    power_source.set_pantograph_wire_voltage(RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, WIRE_VOLTAGE)
+    power_source.set_collector_voltage(WIRE_VOLTAGE)

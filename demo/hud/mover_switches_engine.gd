@@ -1,7 +1,8 @@
 extends "res://hud/mover_switches_section.gd"
 
-## The revolutions and the oil pressure belong to a diesel, the current and the pantographs to an
-## electric engine; each group is shown only for the engine that has it.
+## The revolutions and the oil pressure belong to a diesel, the current to an electric engine; each
+## group is shown only for the engine that has it. The pantographs are the power source's
+## (mover_switches_power_source).
 var _diesel_engine:RailVehicleDieselEngine
 var _electric_engine:RailVehicleElectricEngine
 
@@ -36,4 +37,3 @@ func _on_refresh_timer_timeout() -> void:
         %OilPressure.value = _diesel_engine.get_oil_pump_pressure()
     if _electric_engine:
         %EngineCurrent.value = _electric_engine.get_motor_current()
-        %PantographTankPressure.value = _electric_engine.get_collector_pantograph_tank_pressure()

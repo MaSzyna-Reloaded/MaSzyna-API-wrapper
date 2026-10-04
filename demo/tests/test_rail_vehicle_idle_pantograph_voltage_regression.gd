@@ -79,14 +79,16 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     controller = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
 
     engine = MoverRailVehicleElectricSeriesEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    engine.power_current_collector_physical_layout = 1
-    engine.power_current_collector_max_voltage = 3600.0
-    engine.power_current_collector_number_of_collectors = 1
+    var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    power_source.current_collector_physical_layout = 1
+    power_source.current_collector_max_voltage = 3600.0
+    power_source.current_collector_number_of_collectors = 1
     var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 6
     controller.add_component(master_controller)
     controller.add_component(engine)
+    controller.add_component(power_source)
 
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
@@ -97,7 +99,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     await wait_idle_frames(2)
 
     controller.send_command("battery", true)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     var voltage_reached:bool = false
     for i in range(60):
         await wait_idle_frames(1)

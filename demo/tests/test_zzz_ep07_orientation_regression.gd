@@ -102,7 +102,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     # player took it over (Driver.cpp:8166-8180) - released, as the player does
     controller.send_command("local_brake_set", 0.0)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:

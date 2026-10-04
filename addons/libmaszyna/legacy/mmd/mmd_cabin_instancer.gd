@@ -490,7 +490,6 @@ static func build_into(
     generated_root.add_child(sound_player)
     var sound_events:Array[SfxEvent] = []
 
-    var built_labels:Dictionary = {}
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if not MmdSemanticCatalog.has_label(descriptor.label):
             diagnostics.append(_diag("info", "MMD_BINDING_UNSUPPORTED", "MMD label '%s' is not in the supported catalog" % descriptor.label, definition.cab_number, descriptor.label, descriptor.submodel_name))
@@ -506,16 +505,10 @@ static func build_into(
                     descriptor, entry, vehicle_rid, submodel_index, model, generated_root,
                     definition.cab_number, definition.driver_pos, sound_player, sound_events, diagnostics)
             continue
+        # a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control with
+        # one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237): its
+        # key is the cab logic's, once, and every widget of it follows the cabin state
         var widget:Node = _build_widget(descriptor, vehicle_rid, definition.cab_number, diagnostics)
-        # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
-        # with one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237) -
-        # only its first widget takes the key, the others just follow the cabin state; every widget
-        # taking it toggled the control once per widget, cancelling itself out.
-        if built_labels.has(descriptor.label):
-            for field:String in ["action", "action_increase", "action_decrease"]:
-                if field in widget:
-                    widget.set(field, "")
-        built_labels[descriptor.label] = true
         generated_root.add_child(widget)
         # mesh_path must be resolved AFTER the widget has a place in the tree - the widget shares
         # no common ancestor with `model`'s submodels until it's actually parented under the same
@@ -905,8 +898,18 @@ static func _build_widget(
     if "control_id" in widget:
         widget.control_id = StringName(descriptor.label)
 
-    for field_name:String in entry["fixed_fields"]:
-        widget.set(field_name, entry["fixed_fields"][field_name])
+    var button_type:CabinButton.ButtonType = BUTTON_TYPES.get(descriptor.button_type, CabinButton.ButtonType.TOGGLE)
+    var fields:Dictionary = MmdSemanticCatalog.resolve_fields(
+            descriptor.label, button_type, CabinSystem.vehicle_config(vehicle_rid))
+    for field_name:String in fields:
+        widget.set(field_name, fields[field_name])
+    # the keys are the cab logic's (LegacyCabinLogic); the widget only names them under its caption
+    if "hint_actions" in widget:
+        var hint_actions:PackedStringArray = []
+        for field_name:String in LegacyCabinControls.ACTION_FIELDS:
+            if fields.get(field_name, ""):
+                hint_actions.append(fields[field_name])
+        widget.hint_actions = hint_actions
     if "target" in widget:
         widget.target = entry.get("target", CabinState.Target.OCCUPIED)
 
@@ -921,32 +924,7 @@ static func _build_widget(
         widget.set("position_names", names)
 
     if widget is CabinButton:
-        var button_type:CabinButton.ButtonType = BUTTON_TYPES.get(
-                descriptor.button_type, CabinButton.ButtonType.TOGGLE)
         widget.button_type = button_type
-        # A control whose original handler branches on its type (the catalog entry says which
-        # line) is shaped by it: a push springs back, and shows no state while at rest - the
-        # original returns it to neutral on release rather than to the vehicle's state
-        # (Train.cpp:2929, 11342). Every other control keeps the fixed shape of its entry.
-        if entry.get("shape_from_button_type", false):
-            var push:bool = bool(button_type & CabinButton.ButtonType.PUSH)
-            widget.monostable = push
-            if push:
-                widget.state_property = ""
-                widget.value_rest = entry.get("push_value_rest", 0.0)
-
-    # A switch whose kind is the vehicle's rather than the gauge's: the pantograph switches spring
-    # back when the vehicle's pantograph switches are impulse ones (PantSwitchType, Train.cpp:3170)
-    var monostable_property:String = entry.get("monostable_from_config", "")
-    if monostable_property and widget is CabinButton:
-        widget.monostable = bool(CabinSystem.vehicle_config(vehicle_rid).get(monostable_property, widget.monostable))
-
-    var config_max_property:String = entry.get("config_max_property", "")
-    if config_max_property:
-        var fallback:Variant = widget.get("switch_max_position")
-        # the widget's class comes from the MMD descriptor and is not known here, which is the
-        # one case CODE_STYLE.md allows a property to be reached by name
-        widget.set("switch_max_position", int(CabinSystem.vehicle_config(vehicle_rid).get(config_max_property, fallback)))
 
     # "i-*:" indicator descriptors (see _parse_indicator()) never set animation_type - they have
     # no "rot"/"mov" shape at all, so there's nothing for _apply_animation_shape() to compute.

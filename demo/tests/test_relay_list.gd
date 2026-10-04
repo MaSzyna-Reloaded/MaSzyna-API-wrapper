@@ -7,12 +7,11 @@ func before_each():
     train = build_vehicle("TestTrain")
 
     engine = MoverRailVehicleElectricSeriesEngine.new()
-    # NOTE: engine_power_source must be set explicitly here - a freshly created engine without
-    # a configured power source hits a pre-existing bug in RailVehicleElectricEngine's state fetch
-    # (RAccumulator.RechargeSource is read uninitialized), unrelated to relay_list itself.
-    # The canonical property name is power_source; the Inspector grouping is independent.
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
+    # the engine fed as a pantograph-powered locomotive's is
+    var power_source := MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    train.add_component(power_source)
     await wait_idle_frames(2)
 
 func _make_row(relay_position: int, resistance: float, auto_switch: bool) -> RailVehicleRelayListItem:

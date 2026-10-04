@@ -18,10 +18,10 @@ const HORN_WIDTH:float = 0.381
 
 var _rows:Dictionary[String, Label] = {}
 var _elapsed:float = 0.0
-## Taken once per vehicle rather than looked up per refresh; null for anything that is not
-## electric, and then the traction rows have nothing to say.
-var _engine:RailVehicleElectricEngine = null
-var _engine_vehicle:RID = RID()
+## Taken once per vehicle rather than looked up per refresh; null for anything without one, and
+## then the traction rows have nothing to say.
+var _power_source:RailVehicleEnginePowerSource = null
+var _power_source_vehicle:RID = RID()
 
 
 func _ready() -> void:
@@ -52,8 +52,8 @@ func _refresh() -> void:
     var rid:RID = PlayerServer.player_get_vehicle()
     if not rid.is_valid():
         _rows["Vehicle"].text = "none"
-        _engine = null
-        _engine_vehicle = RID()
+        _power_source = null
+        _power_source_vehicle = RID()
         return
 
     var train_id:String = VehicleServer.vehicle_get_name(rid)
@@ -84,11 +84,11 @@ func _refresh() -> void:
 
     # the pantographs are the carrier's - a unit's motor car, not the driving car the player sits in
     var carrier:RID = CabinState.vehicle_of(rid, CabinState.Target.PANTOGRAPH_UNIT)
-    if not _engine_vehicle == rid:
-        _engine_vehicle = rid
-        _engine = VehicleServer.vehicle_component_get(
-                carrier, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    if not _engine:
+    if not _power_source_vehicle == rid:
+        _power_source_vehicle = rid
+        _power_source = RailVehicleServer.vehicle_component_get(
+                carrier, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    if not _power_source:
         _rows["Slider"].text = "-"
         for number:int in [1, 2]:
             _rows["Pantograph %d" % number].text = "not an electric vehicle"
@@ -96,7 +96,7 @@ func _refresh() -> void:
         return
 
     var half_width:float = FALLBACK_SLIDER_HALF_WIDTH
-    var sliding_width:float = _engine.power_current_collector_sliding_width
+    var sliding_width:float = _power_source.current_collector_sliding_width
     if sliding_width > 0.0:
         half_width = 0.5 * sliding_width
     _rows["Slider"].text = tr("%.3f m half width + %.3f m horn") % [half_width, HORN_WIDTH]
@@ -104,14 +104,14 @@ func _refresh() -> void:
     var carrier_transform:Transform3D = RailVehicleServer.vehicle_get_transform(carrier)
     _report_pantograph(
             carrier_transform, 1,
-            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleElectricEngine.PANTOGRAPH_FIRST), half_width,
-            _engine.get_collector_pantograph_first_active(),
-            _engine.get_collector_pantograph_first_voltage())
+            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleEnginePowerSource.PANTOGRAPH_FIRST), half_width,
+            _power_source.get_collector_pantograph_first_active(),
+            _power_source.get_collector_pantograph_first_voltage())
     _report_pantograph(
             carrier_transform, 2,
-            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleElectricEngine.PANTOGRAPH_SECOND), half_width,
-            _engine.get_collector_pantograph_second_active(),
-            _engine.get_collector_pantograph_second_voltage())
+            RailVehicleServer.vehicle_get_pantograph_position(carrier, RailVehicleEnginePowerSource.PANTOGRAPH_SECOND), half_width,
+            _power_source.get_collector_pantograph_second_active(),
+            _power_source.get_collector_pantograph_second_voltage())
 
 
 func _report_pantograph(

@@ -200,7 +200,6 @@ func _rebuild_generated() -> void:
         else:
             cab_model.e3d_loaded.connect(_create_occluders.bind(cab_model), CONNECT_ONE_SHOT)
 
-    _build_driver_aid_commands()
     # a cab with an i-cablight lamp already has its own ceiling light (MmdSemanticCatalog)
     if not definition.instruments.any(
             func(instrument:MmdInstrumentDescriptor) -> bool: return instrument.label == "i-cablight"):
@@ -249,25 +248,6 @@ func _free_occluders() -> void:
     for occluder:RID in _occluders:
         CabinHUDMouseSystem.occluder_free(occluder)
     _occluders.clear()
-
-
-## Keyboard-only driver aids that have no cabin lever/MMD instrument of their own (nothing to
-## parse, nothing to animate) - demo/vehicles/sm42/sm_42_cabin.tscn wires the same thing by hand
-## via a plain "Commands/" CabinCommand node. brake_level_set_position (RailVehicleBrake.cpp) is
-## already generic across handle types - it resolves a NAMED position ("drive" -> Maszyna::bh_RP,
-## the original engine's own "running position" handle-position constant, McZapkie/hamulce.h) per
-## vehicle rather than a hardcoded value, so this "jump the brake handle to driving/release
-## position" shortcut is safe to attach unconditionally on every dynamically-built cabin, not just
-## SM42 - a vehicle whose handle type has no equivalent named position just gets no visible effect.
-func _build_driver_aid_commands() -> void:
-    var release_to_drive := CabinCommand.new()
-    release_to_drive.name = "BrakeLevelSet_Drive"
-    release_to_drive.action_name = "brake_level_drive"
-    release_to_drive.control_id = &"brake_level_drive"
-    release_to_drive.command = "brake_level_set_position"
-    release_to_drive.command_param = "drive"
-    _generated.add_child(release_to_drive)
-    release_to_drive.set_vehicle_rid(get_vehicle_rid())
 
 
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term

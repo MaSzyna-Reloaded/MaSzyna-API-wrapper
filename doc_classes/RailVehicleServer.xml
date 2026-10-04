@@ -191,7 +191,7 @@
 		<method name="vehicle_get_pantograph_position" qualifiers="const">
 			<return type="Vector3" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleEnginePowerSource.PantographSelector" />
 			<description>
 				Returns where [param pantograph] stands on [param vehicle], in the vehicle's own space - where the overhead wire is sampled ([code]TAnimPant::vPos[/code]). Zero for a pantograph the model does not have.
 			</description>
@@ -199,7 +199,7 @@
 		<method name="vehicle_get_pantograph_raise" qualifiers="const">
 			<return type="Vector2" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleEnginePowerSource.PantographSelector" />
 			<description>
 				Returns how far the lower ([code]x[/code]) and upper ([code]y[/code]) arm of [param pantograph] are raised over lowered, in radians - what is drawn.
 			</description>
@@ -274,7 +274,7 @@
 		<method name="vehicle_set_pantograph_geometry">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="pantograph" type="int" enum="RailVehicleElectricEngine.PantographSelector" />
+			<param index="1" name="pantograph" type="int" enum="RailVehicleEnginePowerSource.PantographSelector" />
 			<param index="2" name="position" type="Vector3" />
 			<param index="3" name="lower_length" type="float" />
 			<param index="4" name="upper_length" type="float" />

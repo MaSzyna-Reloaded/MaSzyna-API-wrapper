@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="2_6ijjf"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="3_slxh6"]
 [ext_resource type="PackedScene" path="res://hud/mover_switches_engine.tscn" id="4_engine"]
+[ext_resource type="PackedScene" path="res://hud/mover_switches_power_source.tscn" id="10_power_source"]
 [ext_resource type="PackedScene" path="res://hud/mover_switches_spring_brake.tscn" id="8_spring"]
 [ext_resource type="PackedScene" path="res://hud/mover_switches_lights.tscn" id="9_lights"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="5_fofk8"]
@@ -21,6 +22,9 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Engine" parent="." unique_id=1618493965 instance=ExtResource("4_engine")]
+layout_mode = 2
+
+[node name="PowerSource" parent="." instance=ExtResource("10_power_source")]
 layout_mode = 2
 
 [node name="Brakes" parent="." unique_id=207886123 instance=ExtResource("5_fofk8")]

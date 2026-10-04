@@ -1,7 +1,8 @@
 #include "RailVehicleServer.hpp"
 #include "vehicles/base/VehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
-#include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleEngine.hpp"
+#include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 #include "vehicles/rail/RailVehiclePowerSupply.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleWheels.hpp"
@@ -157,7 +158,7 @@ namespace godot {
 
 
     void RailVehicleServer::vehicle_set_pantograph_geometry(
-            const RID &p_vehicle, const RailVehicleElectricEngine::PantographSelector p_pantograph,
+            const RID &p_vehicle, const RailVehicleEnginePowerSource::PantographSelector p_pantograph,
             const Vector3 &p_position, const double p_lower_length, const double p_upper_length,
             const double p_horizontal, const double p_lower_rest_angle, const double p_upper_rest_angle,
             const double p_collector_width) {
@@ -184,7 +185,7 @@ namespace godot {
     }
 
     Vector3 RailVehicleServer::vehicle_get_pantograph_position(
-            const RID &p_vehicle, const RailVehicleElectricEngine::PantographSelector p_pantograph) const {
+            const RID &p_vehicle, const RailVehicleEnginePowerSource::PantographSelector p_pantograph) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(placement, Vector3());
         ERR_FAIL_INDEX_V(static_cast<int>(p_pantograph), 2, Vector3());
@@ -192,7 +193,7 @@ namespace godot {
     }
 
     Vector2 RailVehicleServer::vehicle_get_pantograph_raise(
-            const RID &p_vehicle, const RailVehicleElectricEngine::PantographSelector p_pantograph) const {
+            const RID &p_vehicle, const RailVehicleEnginePowerSource::PantographSelector p_pantograph) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL_V(placement, Vector2());
         ERR_FAIL_INDEX_V(static_cast<int>(p_pantograph), 2, Vector2());
@@ -637,11 +638,11 @@ namespace godot {
             return RID();
         }
         const auto carries = [](const RailVehicleController *p_vehicle) {
-            const Ref<RailVehicleElectricEngine> engine =
-                    p_vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE);
-            return engine.is_valid() &&
-                   engine->get_power_source() == RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
-                   engine->get_power_current_collector_number_of_collectors() > 0;
+            const Ref<RailVehicleEnginePowerSource> source =
+                    p_vehicle->get_rail_component(RailVehicleComponentType::COMPONENT_ENGINE_POWER_SOURCE);
+            return source.is_valid() &&
+                   source->get_source_type() == RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR &&
+                   source->get_current_collector_number_of_collectors() > 0;
         };
         for (const RailVehicleController::CouplingFlags flag:
              {RailVehicleController::COUPLING_FLAG_PERMANENT, RailVehicleController::COUPLING_FLAG_CONTROL}) {
@@ -1314,19 +1315,19 @@ namespace godot {
         // the pantographs at the wire the vehicle now stands under, before its circuits run on
         // what they collect (DynObj.cpp:3714-3920)
         // only a vehicle standing on a track is under a wire, as every one of the original's is
-        if (const Ref<RailVehicleElectricEngine> electric_engine =
-                    controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
-            electric_engine.is_valid() && placement->track.is_valid()) {
+        if (const Ref<RailVehicleEnginePowerSource> power_source =
+                    controller->get_rail_component(RailVehicleComponentType::COMPONENT_ENGINE_POWER_SOURCE);
+            power_source.is_valid() && placement->track.is_valid()) {
             const VehicleServer *vehicle_server = VehicleServer::get_instance();
             ERR_FAIL_NULL(vehicle_server);
             const Transform3D frame = vehicle_get_transform(p_vehicle);
             VehiclePlacement *powered = vehicles.getptr(p_vehicle);
             // the FIZ's slider, halved as the original does (DynObj.cpp:5718); else the model's
-            const double sliding_width = electric_engine->get_power_current_collector_sliding_width();
+            const double sliding_width = power_source->get_current_collector_sliding_width();
             const double half_width = sliding_width > 0.0 ? 0.5 * sliding_width : powered->pantograph_collector_width;
             const bool emu = (controller->get_train_type() & RailVehicleController::TRAIN_TYPE_EZT) ==
                              RailVehicleController::TRAIN_TYPE_EZT;
-            const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
+            const double pressure = power_source->get_collector_pantograph_tank_pressure();
             double speed_factor = 0.0;
             const Ref<RailVehiclePowerSupply> power_supply =
                     controller->get_rail_component(RailVehicleComponentType::COMPONENT_POWER_SUPPLY);
@@ -1336,8 +1337,8 @@ namespace godot {
                 speed_factor = MAX(0.0, PANTOGRAPH_RAISE_RATE * pressure * p_delta);
             }
             const bool active[2] = {
-                    electric_engine->get_collector_pantograph_first_active(),
-                    electric_engine->get_collector_pantograph_second_active()};
+                    power_source->get_collector_pantograph_first_active(),
+                    power_source->get_collector_pantograph_second_active()};
             for (int pantograph = 0; pantograph < 2; ++pantograph) {
                 Pantograph &collector = powered->pantographs[pantograph];
                 // a model without the arms samples the wire where it stands, reaching it
@@ -1353,11 +1354,13 @@ namespace godot {
                 collector.raise(gap, active[pantograph], speed_factor, p_delta);
             }
             const double assumed_voltage =
-                    MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
-                        Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
+                    MAX(Math::abs(power_source->get_collector_pantograph_first_voltage()),
+                        Math::abs(power_source->get_collector_pantograph_second_voltage()));
             const int collecting = int(active[0] && powered->pantographs[0].reaches_wire) +
                                    int(active[1] && powered->pantographs[1].reaches_wire);
-            const double current = collecting > 0 ? electric_engine->get_current0() / collecting : 0.0;
+            // a car with no engine of its own (31WE B and C) draws nothing through its own pantographs
+            const Ref<RailVehicleEngine> engine = controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
+            const double current = collecting > 0 && engine.is_valid() ? engine->get_current0() / collecting : 0.0;
             double fed = 0.0;
             for (int pantograph = 0; pantograph < 2; ++pantograph) {
                 Pantograph &collector = powered->pantographs[pantograph];
@@ -1390,8 +1393,8 @@ namespace godot {
                     }
                     collector.powered = !Math::is_zero_approx(voltage);
                 }
-                electric_engine->set_pantograph_wire_voltage(
-                        static_cast<RailVehicleElectricEngine::PantographSelector>(pantograph),
+                power_source->set_pantograph_wire_voltage(
+                        static_cast<RailVehicleEnginePowerSource::PantographSelector>(pantograph),
                         static_cast<float>(voltage));
                 fed = MAX(fed, Math::abs(voltage));
             }
@@ -1401,10 +1404,10 @@ namespace godot {
             } else {
                 powered->no_voltage_time += p_delta;
                 if (powered->no_voltage_time <= NO_VOLTAGE_HOLD) {
-                    fed = electric_engine->get_collector_voltage();
+                    fed = power_source->get_collector_voltage();
                 }
             }
-            electric_engine->set_collector_voltage(static_cast<float>(fed));
+            power_source->set_collector_voltage(static_cast<float>(fed));
         }
     }
 

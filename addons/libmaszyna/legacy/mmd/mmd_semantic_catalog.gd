@@ -2103,3 +2103,32 @@ static func has_label(label:String) -> bool:
 static func get_entry(label:String) -> Dictionary:
     _ensure_built()
     return _catalog.get(label, {})
+
+
+## The fields of a control as a cab has it: its entry's fixed fields shaped by the MMD `type:` and by
+## the vehicle's configuration - what the widget built of it shows (MmdCabinInstancer._build_widget)
+## and what the cab logic's keys do (LegacyCabinLogic), with or without the widget
+static func resolve_fields(label:String, button_type:CabinButton.ButtonType, vehicle_config:Dictionary) -> Dictionary:
+    var entry:Dictionary = get_entry(label)
+    var fields:Dictionary = entry.get("fixed_fields", {}).duplicate()
+    if entry.get("widget_class") == CabinButton:
+        # A control whose original handler branches on its type (the entry says which line) is
+        # shaped by it: a push springs back, and shows no state while at rest - the original
+        # returns it to neutral on release rather than to the vehicle's state (Train.cpp:2929,
+        # 11342). Every other control keeps the fixed shape of its entry.
+        if entry.get("shape_from_button_type", false):
+            var push:bool = bool(button_type & CabinButton.ButtonType.PUSH)
+            fields["monostable"] = push
+            if push:
+                fields["state_property"] = ""
+                fields["value_rest"] = entry.get("push_value_rest", 0.0)
+        # A switch whose kind is the vehicle's rather than the gauge's: the pantograph switches
+        # spring back when the vehicle's pantograph switches are impulse ones (PantSwitchType,
+        # Train.cpp:3170)
+        var monostable_property:String = entry.get("monostable_from_config", "")
+        if monostable_property:
+            fields["monostable"] = bool(vehicle_config.get(monostable_property, fields.get("monostable", false)))
+    var config_max_property:String = entry.get("config_max_property", "")
+    if config_max_property and entry.get("widget_class") == CabinSwitch and vehicle_config.has(config_max_property):
+        fields["switch_max_position"] = int(vehicle_config[config_max_property])
+    return fields

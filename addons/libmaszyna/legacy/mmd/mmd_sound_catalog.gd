@@ -127,7 +127,7 @@ static func _ensure_built() -> void:
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
         # A pantograph touching the wire and dropping (DynObj.cpp:3881-3934, 4007-4036),
-        # reported by RailVehicleElectricEngine.pantograph_up / pantograph_down and counted by
+        # reported by RailVehicleEnginePowerSource.pantograph_up / pantograph_down and counted by
         # TrainSoundSystem like the coupler events
         "pantographup": {
             "event_name": &"pantograph_up",

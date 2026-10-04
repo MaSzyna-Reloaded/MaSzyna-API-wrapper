@@ -93,20 +93,20 @@ func _update_valves(state:CabinState) -> Variant:
             if state.cab == REAR_CAB else RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END
     var rear_end:RailVehicleSwitches.PantographPreset = RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END \
             if state.cab == REAR_CAB else RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END
-    state.send_vehicle_command("pantograph_valve_operate", RailVehicleElectricEngine.PANTOGRAPH_FIRST,
-            RailVehicleElectricEngine.VALVE_OPERATION_ENABLE if preset & front_end
-            else RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
-    return state.send_vehicle_command("pantograph_valve_operate", RailVehicleElectricEngine.PANTOGRAPH_SECOND,
-            RailVehicleElectricEngine.VALVE_OPERATION_ENABLE if preset & rear_end
-            else RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
+    state.send_vehicle_command("pantograph_valve_operate", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST,
+            RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE if preset & front_end
+            else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
+    return state.send_vehicle_command("pantograph_valve_operate", RailVehicleEnginePowerSource.PANTOGRAPH_SECOND,
+            RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE if preset & rear_end
+            else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
 
 
 # Train.cpp:3605 OnCommand_pantographvalvesoff
 func _close_valves(state:CabinState) -> Variant:
-    state.send_vehicle_command("pantograph_valve_operate", RailVehicleElectricEngine.PANTOGRAPH_FIRST,
-            RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
-    return state.send_vehicle_command("pantograph_valve_operate", RailVehicleElectricEngine.PANTOGRAPH_SECOND,
-            RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
+    state.send_vehicle_command("pantograph_valve_operate", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST,
+            RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
+    return state.send_vehicle_command("pantograph_valve_operate", RailVehicleEnginePowerSource.PANTOGRAPH_SECOND,
+            RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
 
 
 # Train.cpp:3375-3402 OnCommand_pantographselectnext/previous - only a cab with the selector

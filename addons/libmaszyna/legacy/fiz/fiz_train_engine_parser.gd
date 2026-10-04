@@ -14,9 +14,17 @@ var electric_series_parser: FizTrainElectricSeriesEngineParser = FizTrainElectri
 var diesel_electric_parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
 var electric_induction_parser: FizTrainElectricInductionEngineParser = FizTrainElectricInductionEngineParser.new()
 var diesel_parser: FizTrainDieselEngineParser = FizTrainDieselEngineParser.new()
+## The parser of the MotorParamTable: being read - its rows' layout is the engine type's (readMPT,
+## Mover.cpp:9120): a series motor's own, a diesel-electric's or a plain diesel's gears
+var _motor_param_parser: RefCounted = null
 
 
-func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
+func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
+    if prefix == "MotorParamTable:":
+        _motor_param_parser = electric_series_parser \
+                if context.engine_type == RailVehicleEngine.ELECTRIC_SERIES_MOTOR else diesel_electric_parser
+        _motor_param_parser.parse(p, context, prefix)
+        return
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var engine_type: int = FizTrainEngineCommon.parse_engine_type(FizLineUtil.get_string(kv, "EngineType"))
     context.engine_type = engine_type
@@ -28,8 +36,6 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             context.add_part("RailVehicleEngine", node)
             FizTrainEngineCommon.apply_engine_common(node, kv, context)
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
-            FizTrainEngineCommon.apply_cntrl_electric_subset(node as RailVehicleElectricEngine, context.cntrl_kv)
-            FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_series_parser.apply_engine_fields(kv, node)
         RailVehicleEngine.DIESEL_ELECTRIC:
             node = diesel_electric_parser.create_node()
@@ -43,8 +49,6 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             context.add_part("RailVehicleEngine", node)
             FizTrainEngineCommon.apply_engine_common(node, kv, context)
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
-            FizTrainEngineCommon.apply_cntrl_electric_subset(node as RailVehicleElectricEngine, context.cntrl_kv)
-            FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_induction_parser.apply_engine_fields(kv, node)
         RailVehicleEngine.DIESEL:
             node = MoverRailVehicleDieselEngine.new()
@@ -58,3 +62,11 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
                     "FIZ Engine:EngineType=%s: no engine class for it yet." % FizLineUtil.get_string(kv, "EngineType"))
         _:
             push_warning("FIZ Engine:EngineType=%s: unrecognized or unsupported." % FizLineUtil.get_string(kv, "EngineType"))
+
+
+func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
+    _motor_param_parser.parse_row(p, context)
+
+
+func end_table(context: FizImportContext) -> void:
+    _motor_param_parser.end_table(context)

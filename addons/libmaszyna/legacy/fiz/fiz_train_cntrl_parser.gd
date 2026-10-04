@@ -56,8 +56,6 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     var engine: RailVehicleEngine = context.get_part("RailVehicleEngine") as RailVehicleEngine
     if engine:
         FizTrainEngineCommon.apply_cntrl_engine_subset(engine, kv)
-        if engine is RailVehicleElectricEngine:
-            FizTrainEngineCommon.apply_cntrl_electric_subset(engine as RailVehicleElectricEngine, kv)
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:

@@ -8,7 +8,6 @@ class_name BaseCabinTool3D
 
 var _vehicle_rid:RID
 var _dirty:bool = false
-var _applying_control_value:bool = false
 ## This control as CabinHUDMouseSystem knows it, once its mesh is found
 var _mouse_control:RID = RID()
 
@@ -26,6 +25,8 @@ signal vehicle_rid_changing
 ## The vehicle of the cab this element reads - the one it is in, the one its controls drive, or the
 ## pantographs' (MmdSemanticCatalog's `target`)
 @export var target:CabinState.Target = CabinState.Target.OCCUPIED
+## The keys of this control, named under its caption - the cab logic takes them (CabinLogic.input())
+@export var hint_actions:PackedStringArray = []
 
 
 ## The vehicle this element sits in, as the cabin root hands it down.
@@ -58,11 +59,31 @@ func _vehicle_config() -> Dictionary:
     return CabinSystem.vehicle_config(_vehicle_rid)
 
 
-## Reports a manipulation of this control to CabinSystem, for the occupied cab of its vehicle.
-func _act(action:StringName, value:Variant = null) -> Variant:
-    if _applying_control_value or not _vehicle_rid or not control_id:
-        return null
-    return CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, action, value)
+## The driver's hand on this control - a click, a drag by one position: the cab logic decides what it
+## does, the same as for its key (CabinLogic.press()). The widget only shows what follows.
+func press() -> void:
+    if _cab_logic():
+        _cab_logic().press(control_id)
+
+
+func release() -> void:
+    if _cab_logic():
+        _cab_logic().release(control_id)
+
+
+func increase() -> void:
+    if _cab_logic():
+        _cab_logic().increase(control_id)
+
+
+func decrease() -> void:
+    if _cab_logic():
+        _cab_logic().decrease(control_id)
+
+
+## The logic of the cab this control is in, when it has one and the control reports
+func _cab_logic() -> CabinLogic:
+    return CabinSystem.vehicle_get_cab_logic(_vehicle_rid) if _vehicle_rid and control_id else null
 
 
 # _notification runs on every class of the hierarchy, unlike _ready/_enter_tree overridden below.
@@ -80,9 +101,7 @@ func _notification(what:int) -> void:
 func _on_cabin_control_changed(vehicle_rid:RID, _cab:int, p_control_id:StringName, value:Variant) -> void:
     if not p_control_id == control_id or not _vehicle_rid or not vehicle_rid == _vehicle_rid:
         return
-    _applying_control_value = true
     _apply_control_value(value)
-    _applying_control_value = false
 
 
 func _apply_control_value(_value:Variant) -> void:

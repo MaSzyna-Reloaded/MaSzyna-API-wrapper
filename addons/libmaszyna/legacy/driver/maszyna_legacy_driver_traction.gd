@@ -126,10 +126,12 @@ func hold(seconds:float) -> void:
 ## 6232-6240): the time it waits runs on, and the line's voltage
 func read(situation:Situation, elapsed:float) -> void:
     action_time += elapsed
-    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    voltage = VOLTAGE_SMOOTHING * (voltage + (engine.get_collector_voltage() if engine else 0.0))
-    if voltage < (engine.get_collector_min_main_switch_voltage() if engine else 0.0) \
+    var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    # the line's voltage, from the vehicle's own pantographs or over the trainset's line (Driver.cpp:6141)
+    voltage = VOLTAGE_SMOOTHING * (voltage + (maxf(power_source.get_collector_trainset_high_voltage(),
+            power_source.get_collector_voltage()) if power_source else 0.0))
+    if voltage < (power_source.get_collector_min_main_switch_voltage() if power_source else 0.0) \
             and action_time >= MaszynaLegacyAIDriver.PREPARE_TIME:
         action_time = -LOW_VOLTAGE_WAIT_MIN - randf() * LOW_VOLTAGE_WAIT_SPREAD
 
@@ -430,11 +432,11 @@ func decrease_eim(situation:Situation) -> bool:
 
 ## The voltage under which a series motor's controls keep to series mode (Driver.cpp:3456-3461)
 func series_voltage(situation:Situation) -> float:
-    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    if engine == null:
+    var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    if power_source == null:
         return 0.0
-    return lerpf(engine.get_collector_min_main_switch_voltage(), engine.get_collector_max_voltage(),
+    return lerpf(power_source.get_collector_min_main_switch_voltage(), power_source.get_collector_max_voltage(),
             HEAVY_SERIES_VOLTAGE_SHARE if situation.braking.heavy_cargo else SERIES_VOLTAGE_SHARE)
 
 

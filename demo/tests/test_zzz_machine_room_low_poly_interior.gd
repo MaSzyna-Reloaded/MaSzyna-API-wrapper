@@ -42,7 +42,8 @@ func _low_poly_cab_visible(cab_index:int) -> bool:
 
 
 func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
-    vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_machine_room")
+    vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_machine_room",
+            VehicleController.DRIVER_HEAD)
     var controller:VehicleController = vehicle.get_controller()
     assert_not_null(controller, "the vehicle's FIZ controller should be built")
     if not controller:

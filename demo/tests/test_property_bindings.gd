@@ -24,6 +24,7 @@ const BOUND_CLASSES: Array[StringName] = [
     &"RailVehicleElectricSeriesEngine",
     &"RailVehicleElectroPneumaticDynamicBrake",
     &"RailVehicleEngine",
+    &"RailVehicleEnginePowerSource",
     &"RailVehicleHeating",
     &"RailVehicleHorns",
     &"RailVehicleLighting",
@@ -88,9 +89,9 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     brake.brake_force_max = 85.0
     assert_eq(brake.brake_force_max, 85.0)
 
-    var electric_engine: RailVehicleElectricEngine = MoverRailVehicleElectricSeriesEngine.new()
-    electric_engine.power_cable_source = RailVehicleController.POWER_TYPE_STEAM
-    assert_eq(electric_engine.power_cable_source, RailVehicleController.POWER_TYPE_STEAM)
+    var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.power_cable_source = RailVehicleController.POWER_TYPE_STEAM
+    assert_eq(power_source.power_cable_source, RailVehicleController.POWER_TYPE_STEAM)
 
     var lights: RailVehicleLightListItem = RailVehicleLightListItem.new()
     lights.cabin_a_left_white_signal = false
@@ -102,7 +103,7 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
 func test_group_paths_do_not_change_public_property_names() -> void:
     var current_group: String = ""
     var current_subgroup: String = ""
-    var properties: Array[Dictionary] = ClassDB.class_get_property_list(&"RailVehicleElectricEngine", true)
+    var properties: Array[Dictionary] = ClassDB.class_get_property_list(&"RailVehicleEnginePowerSource", true)
     for property in properties:
         var usage: int = int(property["usage"])
         if bool(usage & PROPERTY_USAGE_GROUP):
@@ -111,8 +112,8 @@ func test_group_paths_do_not_change_public_property_names() -> void:
         elif bool(usage & PROPERTY_USAGE_SUBGROUP):
             current_subgroup = property["name"]
         elif property["name"] == &"power_cable_source":
-            assert_eq(current_group, "Power")
-            assert_eq(current_subgroup, "Power Cable")
+            assert_eq(current_group, "Power Cable")
+            assert_eq(current_subgroup, "")
             return
 
     fail_test("power_cable_source was not found")

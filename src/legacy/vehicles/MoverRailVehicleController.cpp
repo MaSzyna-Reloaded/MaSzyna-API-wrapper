@@ -131,11 +131,9 @@ namespace godot {
         // compiled-zero defaults.
         mover->ComputeConstans();
 
-        // Original engine: the scenery's driver type picks the cab (DynObj.cpp:1812-1825).
-        // FIXME: a vehicle without a driver stays in cab 0 there; here it still starts in cab 1.
-        if (mover->CabOccupied == 0) {
-            mover->CabOccupied = 1;
-        }
+        // the cab a driver sits in is the scenery's driver type's, and nobody's is 0 - mover_create()
+        // above took it (DynObj.cpp:1948-1964): an unmanned car of a unit is driven over its couplers
+        // and its own brake valve leaves the pipe alone (bom_PS, Mover.cpp:4548)
         // no cab is active yet (CabActive = 0, MOVER.h:2090): the driver switches it on once the
         // trainset is coupled - the AI by its hint (driverhints.cpp:108), the player on entering
         // (Train.cpp:9147) - so the activation reaches every cab of the unit (SendCtrlToNext)

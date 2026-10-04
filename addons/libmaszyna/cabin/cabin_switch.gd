@@ -31,12 +31,6 @@ enum ControllerMode { OnOff, On, Off }
         switch_max_position = x
         _dirty = true
 
-@export var switch_reset_position:int = 0:
-    set(x):
-        switch_reset_position = x
-        _dirty = true
-
-@export var automatic_reset:bool = false
 @export_node_path("MeshInstance3D") var mesh_path:NodePath = "":
     set(x):
         mesh_path = x
@@ -92,13 +86,6 @@ enum ControllerMode { OnOff, On, Off }
 @export var sound_override_events:Array[StringName]
 @export var sound_override_negative_events:Array[StringName]
 
-@export var action_increase = ""
-@export var action_decrease = ""
-@export var action_toggle = ""
-## Holding action_increase/action_decrease keeps stepping at the keyboard repeat rate, like the
-## original's key-repeat-driven controllers (e.g. OnCommand_mastercontrollerincrease).
-@export var repeat_on_hold:bool = false
-
 var _mesh:Node3D
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
@@ -107,15 +94,12 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 
-var _handle_actions:bool = true
 var _t:float = 0.0
 var _setup_phase:bool = true
 
 func _ready():
     self.switch_position_changed.connect(self._on_switch_position_changed)
 
-    if not Engine.is_editor_hint() and Console:
-        Console.console_toggled.connect(_on_console_toggle)
     vehicle_rid_changed.connect(_on_vehicle_rid_changed)
     vehicle_rid_changing.connect(_on_vehicle_rid_changing)
 
@@ -138,7 +122,8 @@ func _update_mesh_target() -> void:
     _target_mesh_rotation = mesh_rotation_offset + (switch_position - value_offset) * mesh_rotation
 
 func _on_command_received(vehicle_rid:RID, p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
-    if not vehicle_rid == _vehicle_rid:
+    # the command goes to the vehicle the control drives - an EMU's master controller to its motor car
+    if not _vehicle_rid or not vehicle_rid == CabinState.vehicle_of(_vehicle_rid, target):
         return
     if command_set and p_command == command_set:
         switch_position = int(p_p1) if p_p1 else 0
@@ -148,52 +133,6 @@ func _on_command_received(vehicle_rid:RID, p_command:String, p_p1:Variant, _p_p2
 func _enter_tree():
     _setup_phase = true
 
-func _on_console_toggle(console_visible):
-    _handle_actions = not console_visible
-
-func _input(event):
-    if not _handle_actions:
-        return
-
-    if action_increase:
-        if event.is_action_pressed(action_increase, repeat_on_hold, true):
-            increase()
-        if event.is_action_released(action_increase, true):
-            release()
-    if action_decrease:
-        if event.is_action_pressed(action_decrease, repeat_on_hold, true):
-            decrease()
-        if event.is_action_released(action_decrease, true):
-            release()
-    if action_toggle:
-        if event.is_action_pressed(action_toggle, false, true):
-            toggle()
-        if event.is_action_released(action_toggle, true):
-            release()
-
-## The driver's hand on the switch (key or mouse), one position at a time.
-func increase() -> void:
-    _set_position_from_input(switch_position + 1)
-
-func decrease() -> void:
-    _set_position_from_input(switch_position - 1)
-
-func toggle() -> void:
-    if switch_position == switch_max_position:
-        _set_position_from_input(switch_min_position)
-    else:
-        _set_position_from_input(switch_max_position)
-
-## A spring-loaded switch returns to its rest position when let go.
-func release() -> void:
-    if automatic_reset:
-        _set_position_from_input(switch_reset_position)
-
-## A mouse click: a two-position switch flips, one with more positions is moved by dragging.
-func press() -> void:
-    if switch_max_position - switch_min_position == 1:
-        toggle()
-
 func _process_dirty(delta):
     if not _mesh and mesh_path:
         _mesh = get_node_or_null(mesh_path)
@@ -201,7 +140,7 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-            _set_mouse_control(_mesh, [action_increase, action_decrease, action_toggle], press, release,
+            _set_mouse_control(_mesh, hint_actions, press, release,
                     increase, decrease, mesh_rotation, mesh_position)
             _set_mouse_state(_mouse_state())
 
@@ -255,12 +194,3 @@ func _on_switch_position_changed(previous, current):
 
     if sound_player and event:
         sound_player.play(event)
-
-func _set_position_from_input(p_position:int) -> void:
-    var previous_position:int = switch_position
-    switch_position = p_position
-
-    if previous_position == switch_position:
-        return
-
-    _act(&"increase" if switch_position > previous_position else &"decrease", switch_position)

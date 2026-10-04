@@ -9,7 +9,7 @@ var logic: LegacyCabinLogic
 
 
 func before_each():
-    train = build_vehicle("TestCabActivation")
+    train = build_vehicle("TestCabActivation", null, 0.0, VehicleController.DRIVER_HEAD)
     train.add_component(build_power_supply(110.0))
     # the active cab is the master controller's - a vehicle with a cab has one
     train.add_component(MoverRailVehicleMasterController.new())

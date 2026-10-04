@@ -22,8 +22,8 @@ var _announced:Array = []
 func before_each() -> void:
     _announced.clear()
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
-    _first = build_rail_vehicle("PlayerServerFirst", TRACK_NAME, FIRST_OFFSET)
-    _second = build_rail_vehicle("PlayerServerSecond", TRACK_NAME, SECOND_OFFSET)
+    _first = build_rail_vehicle("PlayerServerFirst", TRACK_NAME, FIRST_OFFSET, VehicleController.DRIVER_HEAD)
+    _second = build_rail_vehicle("PlayerServerSecond", TRACK_NAME, SECOND_OFFSET, VehicleController.DRIVER_HEAD)
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
 
 
@@ -89,7 +89,6 @@ func test_entering_the_cab_leaves_the_driver_driving() -> void:
 ## cab to look from
 func test_taking_over_activates_the_cab() -> void:
     var physics_node:VehiclePhysicsNode = _first.get_node(_first.controller_path) as VehiclePhysicsNode
-    physics_node.driver_type = VehicleController.DRIVER_HEAD
     var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     # the active cab is the master controller's - a vehicle with a cab has one
     controller.add_component(MoverRailVehicleMasterController.new())

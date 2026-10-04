@@ -57,9 +57,6 @@ static func wiring(
                 "position_commands": fields.get("position_commands", {}), "target": target}
     if widget_class == CabinKnob:
         return {"kind": &"knob", "command": fields.get("command", ""), "target": target}
-    if widget_class == CabinCommand:
-        return {"kind": &"command", "command": fields.get("command", ""),
-                "command_param": fields.get("command_param"), "target": target}
     return {}
 
 
@@ -73,9 +70,6 @@ static func _handle(state:CabinState, action:StringName, value:Variant, wiring:D
             state.set_value(wiring["control_id"], value)
             if wiring["command"]:
                 return state.send_vehicle_command(wiring["command"], value, null, wiring["target"])
-        &"command":
-            if wiring["command"]:
-                return state.send_vehicle_command(wiring["command"], wiring["command_param"], null, wiring["target"])
     return null
 
 

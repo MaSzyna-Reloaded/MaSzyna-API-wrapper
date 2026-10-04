@@ -1,6 +1,5 @@
 #pragma once
 #include "MoverCircuitUnit.hpp"
-#include "MoverCurrentCollectorUnit.hpp"
 #include "MoverDriveUnit.hpp"
 #include "MoverTractionMotorsUnit.hpp"
 #include "legacy/maszyna-mover/McZapkie/MOVER.h"
@@ -25,7 +24,6 @@ namespace godot {
         private:
             static void _bind_methods();
             MoverDriveUnit drive_unit_impl{*this};
-            MoverCurrentCollectorUnit current_collector_unit_impl{*this};
             MoverCircuitUnit circuit_unit_impl{*this};
             MoverTractionMotorsUnit traction_motors_unit_impl{*this};
 
@@ -34,7 +32,6 @@ namespace godot {
             MoverRailVehicleElectricInductionEngine() {
                 traction_motors_unit = &traction_motors_unit_impl;
                 drive_unit = &drive_unit_impl;
-                current_collector_unit = &current_collector_unit_impl;
                 circuit_unit = &circuit_unit_impl;
             }
 

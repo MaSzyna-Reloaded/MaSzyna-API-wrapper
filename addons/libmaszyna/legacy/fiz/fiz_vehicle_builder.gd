@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 31
+const FIZ_PARSER_FORMAT_VERSION := 35
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -93,11 +93,10 @@ static func _static_init() -> void:
         {"prefix": "UCList:", "parser": universal_controller_parser, "table_end": "END-UCL"},
         # engine family
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
-        # MotorParamTable0: is what ElectricSeriesMotor vehicles use; MotorParamTable: (no "0")
-        # is the same row shape for DieselElectric vehicles' traction motors - both populate
-        # RailVehicleEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
+        # MotorParamTable0: has the initial constants of a series motor (readMPT0); MotorParamTable:
+        # is read by the engine type (readMPT, Mover.cpp:9120) - FizTrainEngineParser picks the parser
         {"prefix": "MotorParamTable0:", "parser": electric_series_parser, "table_end": "END-MPT"},
-        {"prefix": "MotorParamTable:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-MPT"},
+        {"prefix": "MotorParamTable:", "parser": engine_parser, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
         {"prefix": "RList:", "parser": electric_series_parser, "table_end": "END-RL"},
         {"prefix": "DList:", "parser": diesel_engine_parser, "table_end": "END-DL"},
@@ -137,12 +136,22 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     if table_state["parser"] != null:
         table_state["parser"].end_table(context)
 
+    # a diesel's legacy "main" compressor runs off its engine (CheckLocomotiveParameters, Mover.cpp:11738)
+    var brake: RailVehicleBrake = context.get_part("RailVehicleBrake") as RailVehicleBrake
+    if brake and brake.compressor_power == RailVehicleBrake.COMPRESSOR_POWER_MAIN \
+            and context.engine_type in [RailVehicleEngine.DIESEL, RailVehicleEngine.DIESEL_ELECTRIC]:
+        brake.compressor_power = RailVehicleBrake.COMPRESSOR_POWER_ENGINE
+
     for part_name: String in context.parts:
         target.add_component(context.parts[part_name])
 
     var power_supply: RailVehiclePowerSupply = FizTrainPowerSupplyParser.create_node(context)
     if power_supply:
         target.add_component(power_supply)
+
+    var engine_power_source: RailVehicleEnginePowerSource = FizTrainPowerParser.create_node(context)
+    if engine_power_source:
+        target.add_component(engine_power_source)
 
     # The horns and the train radio have no FIZ section to trigger on: the horns are implied by the
     # MMD's horn buttons and sounds (RailVehicleHorns.hpp), the radio is the cab's (TTrain's channel

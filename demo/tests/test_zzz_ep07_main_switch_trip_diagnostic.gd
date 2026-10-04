@@ -94,7 +94,7 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
     # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
     # voltage instead of a fixed short wait, same as test_ep07_controller_actual_position_diagnostic
@@ -107,6 +107,12 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
         if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     _dump_diagnostic_state(controller, "after pantograph")
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            controller.get_rid(), RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    assert_not_null(power_supply, "the EP07's FIZ (Light: LMaxVoltage) gives it a power supply")
+    if not power_supply:
+        return
+    assert_true(power_supply.get_power24_available(), "the battery gives the low voltage")
     controller.send_command("direction_increase")
     await wait_idle_frames(2)
     _dump_diagnostic_state(controller, "after direction_increase")
@@ -133,6 +139,8 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     assert_true(
             controller.get_state().get("main_switch_enabled", false),
             "main switch should be closed before advancing the controller")
+    assert_true(power_supply.get_converter_enabled(), "the converter runs")
+    assert_true(power_supply.get_power110_available(), "and gives the 110 V circuits")
 
     var tripped:bool = false
     for notch in range(1, 6):
@@ -205,7 +213,7 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (valve/lift delay) - poll for real wire voltage instead of a
     # fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd, so main_switch below isn't
     # sent before EnginePowerSourceVoltage() has anything to report (MainSwitchCheck's

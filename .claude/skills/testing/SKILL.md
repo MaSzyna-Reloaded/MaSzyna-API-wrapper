@@ -86,3 +86,40 @@ voltage fed by hand does not reach the cab's own tick. For a regression with no 
 build the commit before it in a copy in the scratchpad (`git archive <rev>^ | tar -x`, symlink
 `godot-cpp` and `vendor/*`, its own `build-debug`) and run the same probe on both: the first step
 that differs is the regression.
+
+## Start-up test of a vehicle
+
+Every locomotive and unit of the game data has a test that starts it from cold and moves it off
+**by the player's keys** (`demo/tests/maszyna_startup_test.gd`, `MaszynaStartupTest`): the keys
+go through `MaszynaPlayer._unhandled_input` to the cab logic, every step is checked on the car it
+acts on through component getters, and the first step that does not come about fails the test
+with what the cars show (`start-up stopped at <step> after <n> s: ...`). The steps and the
+original's conditions behind them are in `.claude/skills/driving-the-maszyna-vehicle/SKILL.md` -
+read it before reading a red step as a bug.
+
+- **Cut the vehicle into a fixture** (no models, sounds or textures; the FIZ, the MMD, every
+  include and every member of a random include list, the skins' `.mat`):
+  `scripts/cut-vehicle-fixture --game-dir ~/Games/Maszyna --dynamic pkp/<directory>` takes the
+  directory's first vehicle with an engine and a cab - a multiple unit with all its cars, from the
+  first scenery whose trainset it leads; `--scenery <file.scn> --vehicle <name>` takes a named
+  vehicle's trainset. It writes `fixtures/scenery/startup_<name>.scn` on the start-up line
+  (`startup_line.inc`, ep07.scn's kilometre of td.scn). Then `godot-double --headless --path demo
+  --import` and commit the fixture with its `.fiz.import`.
+- **One script per vehicle**, `demo/tests/test_zzz_startup_<directory>.gd`:
+
+  ```gdscript
+  extends MaszynaStartupTest
+
+  func test_starts_and_moves_off() -> void:
+      await run_startup("startup_<directory>.scn", "<vehicle name>", Kind.ELECTRIC_LOCOMOTIVE)
+  ```
+
+  `Kind` is how it starts (electric locomotive, electric or diesel unit, diesel-electric, diesel
+  mechanical); the test fails when the powered car's engine or the unit type says otherwise.
+  One script, one vehicle: `-gselect=test_zzz_startup_ep09_v1` runs it, `-gselect=test_zzz_startup`
+  the whole batch (in the background, one script at a time).
+- The clock runs at x100 (`SimulationServer.simulation_speed`, restored after): a fixture has no
+  world to stream. The security system is acknowledged every frame, as a driver's reflex - a few
+  frames are seconds of simulated time.
+- A red step is checked against the original (mover-parity-check) before anything is changed:
+  either the driving is wrong (then the lesson goes to the driving skill) or the port is.

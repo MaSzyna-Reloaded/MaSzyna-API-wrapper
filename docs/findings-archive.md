@@ -3414,6 +3414,36 @@ lighting or the trainset.
   turns red is a suspected regression, never fixed by removing its setup or assertion; physics
   tests assert only on components' getters and the state dump.
 
+## 2026-10-04 Test audit - what the suite does not guard and why
+
+* **Symptom:** after the tester's report (the entry above) the suite was green on CI (83a941e3:
+  156 scripts, 925 tests), and nothing in it would have turned red had the low voltage gone.
+* **What proved it:** a read of all 157 scripts against the start sequence; CI logs of
+  2026-10-04; a GUT run on a scratch directory with a script that does not parse. Causes, each
+  with its offenders listed in `TODO.md` "Tests":
+  * the test hands in what it is about - `build_power_supply(110.0)`, `_feed_wire()`, vehicles put
+    together with `MoverRailVehicleController.new()` + `add_component()` (46 scripts) - so the way
+    the game builds a vehicle (FIZ factory, `apply_configuration` order) never runs in it;
+  * it asserts what it set or that a key exists - 97 setter/getter round trips in 25 scripts,
+    `has("key")` in 20, `assert_true(true)` in a benchmark;
+  * physics without simulated time - 43 of 60 physics scripts read state right after a command or
+    after `wait_idle_frames(2)`; a headless frame has no FPS cap, "300 frames = 5 s" is not;
+  * the assertion stops before what the player sees - the AI's `Prepare_engine` is checked up to
+    `battery_enabled`; nothing asserted `power24_available`, `converter_enabled`,
+    `power110_available`;
+  * fixtures build broken vehicles unnoticed - `test_vehicle.fiz`, `test_wagon.fiz`,
+    `synthetic.fiz` get a 0 V battery; the only real electric vehicle is the EP07;
+  * a test broken by a change got setup instead of suspicion (60ae3923), and four
+    `test_driver_system` tests lost their battery without changing their result;
+  * private members (113 uses in 17 scripts) and hand-written state dictionaries tie tests to the
+    implementation;
+  * GUT skips a script that does not parse with only a warning ("does not extend GutTest") and
+    does not count it - its tests vanish from a green run; CI runs on pull requests and tags,
+    not on a push to `main`; 18 red runs in a row on 10-04 made red the norm.
+* **Fix:** the start sequence asserted to its end (`TODO.md` "Tests"); the rest listed there.
+* **Rule:** a test cannot guard what it hands in itself; it asserts the end of the sequence the
+  player sees, after simulated time.
+
 ## 2026-10-04 segfault in the streaming's preload
 
 * **Symptom:** the Linux release build 20261004-1932 crashed with SIGSEGV on Wrzosy, with a 36WE;
@@ -3433,3 +3463,94 @@ lighting or the trainset.
   held. Two preloads of one model before it is built load it twice (`TODO.md`).
 * **Rule:** never take an object back from its `ObjectID` on a thread other than the one that may
   drop its last reference; share a copy across threads only through a `Ref` its owner keeps.
+
+## 2026-10-04 Keys of modelled controls needed the cab model
+
+* **Symptom:** a start-up test by the player's keys on the EP07 fixture stopped at the battery:
+  `battery_toggle` did nothing. The tester's 36WEa-014A took no direction, no master controller
+  step from the keyboard.
+* **What proved it:** `test_zzz_startup_ep07` red at "battery: low voltage" with no 3D cab built.
+  A control the cab's MMD models (`battery_sw`, `cabactivation_sw`, `main_on_bt`, `jointctrl`,
+  `brakectrl`) took its key only in its widget (`CabinButton/CabinSwitch._input`, polling in
+  `CabinKnob`); `LegacyCabinUnmodelledControls` skipped every modelled control. No widget - the
+  fixture has no models, a game install whose cab model fails to load - no key.
+* **Fix:** the keys of every control - modelled, unmodelled, keyboard-only - are mapped by
+  `LegacyCabinLogic` from the MMD and the catalog (`MmdSemanticCatalog.resolve_fields()`, also used
+  by the widget build) and go through its `press/release/increase/decrease`, which a click on a
+  widget calls too. Widgets lost `_input`, key polling and `CabinCommand`.
+* **Rule:** a key is the cab logic's, never a widget's.
+
+## 2026-10-04 Every car sat a driver - the brake pipe of a two-unit EMU stuck at 3.3 bar
+
+* **Symptom:** a cold 36WEa-014+015 (wrzosy_roj66582) charged its brake pipe to about 3.3 bar
+  and no further, the handle in running and 5.3 bar in the main reservoir; the original charged it
+  to 4.98 (operator, td_36wea.scn).
+* **What proved it:** a probe of all six cars - every one had `cabin_occupied=1`; the inactive
+  cabs' MHZ_K5P handles stood at bh_NP (1, "odcięcie"), which still regulates the pipe to its CP
+  (hamulce.cpp TMHZ_K5P::GetPF), and CP was the cold start's LowPipePress (Mover.cpp:12029).
+  Moving those handles to running filled the pipe to 4.98. `BrakeOpModes=PN` is bom_PS + bom_PN
+  (Mover.cpp:10757), so the original lets only a car whose cab is occupied work its handle
+  (`CabOccupied != 0`, Mover.cpp:4548) - and the wrapper overrode every unmanned car's cab 0 with
+  1 (MoverRailVehicleController, a known FIXME).
+* **Fix:** the cab a driver sits in is the scenery's driver type's (DynObj.cpp:1948-1964), 0 for
+  nobody; the override is gone. Tests that drive a hand-built vehicle's cab give it a driver
+  (`build_vehicle(..., VehicleController.DRIVER_HEAD)`).
+* **Rule:** a car nobody sits in has no occupied cab - its own brake valve and controllers do
+  nothing, it is driven over the couplers.
+
+## 2026-10-05 Cars without an engine had no pantographs, and a battery locomotive read the collector
+
+* **Symptom:** the ED78 (31WE) start-up stopped at the pantographs: its B and C cars carry them
+  (`Power: EnginePower=CurrentCollector CollectorsNo=1`) but have no `Engine:`. EL16's dump showed a
+  pantograph tank pressure of 5e-14 and its start-up waited on a pantograph compressor.
+* **What proved it:** the collector lived inside `RailVehicleElectricEngine`, so a FIZ without
+  `Engine:` built none - the B car had no pantograph commands at all. `TPowerParameters` keeps the
+  collector in a union with the accumulator, the generator and the rest (MOVER.h:599): EL16
+  (`EnginePower=Accumulator`) read its accumulator's bytes as collector parameters. The original
+  zeroes the collector before reading it (`TCurrentCollector{0, ...}`, Mover.cpp:11547); the
+  wrapper did not, so `FakePower` (never written) kept whatever the memory held.
+* **Fix:** `RailVehicleEnginePowerSource` (`MoverRailVehicleEnginePowerSource`) is a component of
+  its own, built from `Power:` whether there is an engine or not (`FizTrainPowerParser`); it zeroes
+  the collector, reads `FakePower`, the defaults of `LoadFIZ_PowerParamsDecode` and `Power == 0`
+  making the source NotDefined (`LoadFIZ_Power`), and returns its collector values only for a
+  current collector. The DebugWindow "Power source" shows the pantograph carrier.
+* **Rule:** a value in a Mover union is read only under the tag that says it is there.
+
+## 2026-10-05 A series motor's MotorParamTable: was read as a diesel-electric's
+
+* **Symptom:** EP03 and EL16 had NaN tractive force, speed and engine revolutions from the moment
+  they had a direction; the line contactors never closed.
+* **What proved it:** both FIZ have `MotorParamTable:` (no `0`) with five columns - `idx mfi mIsat
+  fi Isat`. The builder sent that section to the diesel-electric parser, which wants seven and
+  drops shorter rows, and which stores nothing on a series motor anyway: the series engine had an
+  empty motor table. The original reads the section by the engine type (`readMPT`,
+  Mover.cpp:9120; `readMPTElectricSeries`, Mover.cpp:9147).
+* **Fix:** `FizTrainEngineParser` picks the table's parser by `context.engine_type`; the series
+  parser reads the five-column rows.
+* **Rule:** a FIZ table's layout is the original reader's for that engine type, never the
+  section's name alone.
+
+## 2026-10-05 A compressor without CompressorPower= ran off the main circuit
+
+* **Symptom:** EN57KM's main reservoir stayed at 3.2 bar: the compressors of its control cars
+  (`CompressorStart=Automatic`, 110 V present) never ran.
+* **What proved it:** the control cars' FIZ have no `CompressorPower=`; the original takes 1 -
+  converter-fed, switched by hand (Mover.cpp:10509-10519). The wrapper's default was MAIN (0),
+  which runs only with the car's own line breaker closed (`Mains`, Mover.cpp:4383) - a control car
+  has none. The value 1 was even named `COMPRESSOR_POWER_UNUSED`.
+* **Fix:** `COMPRESSOR_POWER_CONVERTER_MANUAL` (1) is the default; a diesel's "Main" becomes
+  "Engine" as in the original (Mover.cpp:11738). A TEM2 (no `CompressorPower=`) now needs its
+  converter on for air, as in the original (110 V only with `ConverterFlag`, Mover.cpp:1805): the
+  start-up test switches the converter on after the engine as the original's AI does for every
+  vehicle (Driver.cpp:2799-2806).
+* **Rule:** a property's default is the original's value for an absent key - check the
+  `extract_value`/lookup fallback, not only the parsed values.
+
+## 2026-10-05 A UTF-8 BOM hid an MMD include from the fixture cutter
+
+* **Symptom:** EN57KM's cab had no definition in the test ("No cab1definition"), its pantographs
+  could not be raised.
+* **What proved it:** `akm_ex_czoper_ra_1562.mmd` starts with a BOM before `include`; read as
+  cp1250 it glued to the keyword, so `scripts/cut-vehicle-fixture` never copied `*_ra_base.mmd`.
+* **Fix:** the cutter drops a leading BOM before tokenising; EN57KM re-cut.
+* **Rule:** a tool that reads the game's text files skips a BOM as the game's parser does.

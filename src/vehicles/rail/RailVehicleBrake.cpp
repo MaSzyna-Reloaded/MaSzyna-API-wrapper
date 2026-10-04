@@ -42,7 +42,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, compressor_speed, "compressor");
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, compressor_power, "compressor", PROPERTY_HINT_ENUM,
-                "Main,Unused,Converter,Engine,Coupler1,Coupler2");
+                "Main,ConverterManual,Converter,Engine,Coupler1,Coupler2");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, rig_effectiveness);
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, brake_method, "brake", PROPERTY_HINT_ENUM,
@@ -190,7 +190,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_SYSTEM_ELECTRO_PNEUMATIC);
 
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
-        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_CONVERTER_MANUAL);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_CONVERTER);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_ENGINE);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER1);

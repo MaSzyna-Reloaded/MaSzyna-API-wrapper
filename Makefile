@@ -337,5 +337,5 @@ docker-run-tests: docker-build-tests
 	docker run --rm godot-tests
 
 
-run-tests: compile
-	godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit
+run-tests: compile-debug
+	godot-double --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit

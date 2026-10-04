@@ -33,7 +33,8 @@ func after_each() -> void:
 
 
 func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
-    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change")
+    vehicle = await spawn_maszyna_vehicle("dynamic/pkp/303e_v1", "303e-ep-tv", "303e-ep-tv-424-hist", "test_ep07_cab_change",
+            VehicleController.DRIVER_HEAD)
     var bound:bool = vehicle.get_rid().is_valid()
     assert_true(bound, "EP07's FIZ controller should be built")
     if not bound:

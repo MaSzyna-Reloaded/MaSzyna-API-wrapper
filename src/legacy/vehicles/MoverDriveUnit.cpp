@@ -1,8 +1,10 @@
 #include "MoverDriveUnit.hpp"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 #include <algorithm>
 
 namespace godot {
@@ -216,6 +218,22 @@ namespace godot {
                             p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
         const bool induction = p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor;
         if (induction || (diesel && p_mover->EIMCtrlType > 0)) {
+            // DynObj.cpp:3196-3201 - a driven car without power of its own (a control car) sets its
+            // controller as the vehicle it controls stands; the cab's controller moves that one
+            if (induction && p_mover->Power < 1.0) {
+                const RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+                const MaszynaMoverVehicleServer *movers = MaszynaMoverVehicleServer::get_instance();
+                const TMoverParameters *controlling =
+                        rail_vehicles != nullptr && movers != nullptr
+                                ? movers->mover_get(rail_vehicles->vehicle_find_powered(controller->get_rid()))
+                                : nullptr;
+                if (controlling != nullptr && controlling != p_mover) {
+                    p_mover->MainCtrlPos =
+                            controlling->MainCtrlPos * p_mover->MainCtrlPosNo / std::max(1, controlling->MainCtrlPosNo);
+                    p_mover->SpeedCtrlValue = controlling->SpeedCtrlValue;
+                    p_mover->SpeedCtrlUnit.IsActive = controlling->SpeedCtrlUnit.IsActive;
+                }
+            }
             p_mover->CheckEIMIC(p_delta);
             if (induction || p_mover->SpeedCtrl) {
                 p_mover->CheckSpeedCtrl(p_delta);

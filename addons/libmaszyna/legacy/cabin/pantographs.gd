@@ -18,16 +18,16 @@ class_name LegacyCabinPantographs
 ## sends them along its couplers unswapped (RunCommand("PantValve") noswap for dt_EZT, Mover.cpp:9433)
 const TARGET:CabinState.Target = CabinState.Target.PANTOGRAPH_UNIT
 const SWITCHES:Dictionary[StringName, Array] = {
-    &"pantfront_sw": [RailVehicleElectricEngine.PANTOGRAPH_FIRST, false],
-    &"pantrear_sw": [RailVehicleElectricEngine.PANTOGRAPH_SECOND, false],
-    &"pantfrontoff_sw": [RailVehicleElectricEngine.PANTOGRAPH_FIRST, true],
-    &"pantrearoff_sw": [RailVehicleElectricEngine.PANTOGRAPH_SECOND, true],
+    &"pantfront_sw": [RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, false],
+    &"pantrear_sw": [RailVehicleEnginePowerSource.PANTOGRAPH_SECOND, false],
+    &"pantfrontoff_sw": [RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true],
+    &"pantrearoff_sw": [RailVehicleEnginePowerSource.PANTOGRAPH_SECOND, true],
 }
 ## pantograph -> its switch, its lowering button and its state keys
-const PANTOGRAPHS:Dictionary[RailVehicleElectricEngine.PantographSelector, Array] = {
-    RailVehicleElectricEngine.PANTOGRAPH_FIRST: [&"pantfront_sw", &"pantfrontoff_sw",
+const PANTOGRAPHS:Dictionary[RailVehicleEnginePowerSource.PantographSelector, Array] = {
+    RailVehicleEnginePowerSource.PANTOGRAPH_FIRST: [&"pantfront_sw", &"pantfrontoff_sw",
             "current_collector/pantograph_first_valve_enabled", "current_collector/pantograph_first_active"],
-    RailVehicleElectricEngine.PANTOGRAPH_SECOND: [&"pantrear_sw", &"pantrearoff_sw",
+    RailVehicleEnginePowerSource.PANTOGRAPH_SECOND: [&"pantrear_sw", &"pantrearoff_sw",
             "current_collector/pantograph_second_valve_enabled", "current_collector/pantograph_second_active"],
 }
 ## the machine room, where levers are moved by hand whatever the cab models (Train.cpp:3228)
@@ -68,7 +68,7 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
     # Train.cpp:3154 - a pantograph selector takes the individual valves over
     if _has_selector:
         return null
-    var selector:RailVehicleElectricEngine.PantographSelector = SWITCHES[control_id][0]
+    var selector:RailVehicleEnginePowerSource.PantographSelector = SWITCHES[control_id][0]
     var lowering_button:bool = SWITCHES[control_id][1]
     var impulse:bool = CabinSystem.vehicle_config(state.vehicle_rid).get("pantograph_switch_impulse", false)
     var pressed:bool = state.is_pressed(control_id, action, value) or action == &"toggle"
@@ -77,7 +77,7 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
         # Train.cpp:3170 - impulse switches return to neutral, and so does the valve
         if impulse:
             return state.send_vehicle_command("pantograph_valve_operate", selector,
-                    RailVehicleElectricEngine.VALVE_OPERATION_NONE, TARGET)
+                    RailVehicleEnginePowerSource.VALVE_OPERATION_NONE, TARGET)
         return null
     var pantograph:Array = PANTOGRAPHS[selector]
     # Train.cpp:3161 - the switch lowers a pantograph whose valve is open or which is up
@@ -88,11 +88,11 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
         if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[1] if impulse else pantograph[0], false):
             return null
         return state.send_vehicle_command("pantograph_valve_operate", selector,
-                RailVehicleElectricEngine.VALVE_OPERATION_DISABLE_ON if impulse
-                else RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, TARGET)
+                RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE_ON if impulse
+                else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
     # Train.cpp:3228 - raising needs the switch
     if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[0], false):
         return null
     return state.send_vehicle_command("pantograph_valve_operate", selector,
-            RailVehicleElectricEngine.VALVE_OPERATION_ENABLE_ON if impulse
-            else RailVehicleElectricEngine.VALVE_OPERATION_ENABLE, TARGET)
+            RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE_ON if impulse
+            else RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE, TARGET)

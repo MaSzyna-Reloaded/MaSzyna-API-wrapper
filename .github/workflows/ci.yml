@@ -28,6 +28,10 @@ jobs:
   run-tests:
     needs: godot-engine
     runs-on: ubuntu-24.04
+    # the start-up report is a comment of the pull request
+    permissions:
+      contents: read
+      pull-requests: write
     env:
       CMAKE_CXX_COMPILER_LAUNCHER: ccache
     steps:
@@ -59,16 +63,42 @@ jobs:
       - name: Import the project
         run: godot-double --headless --path demo --import
 
+      # GUT skips a test script that does not parse with only a warning and does not count it, so
+      # the run fails on the engine's own message for it
       - name: Run the tests
-        run: >
-          godot-double --headless --path demo -s addons/gut/gut_cmdln.gd
-          -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml
+        run: |
+          godot-double --headless --path demo -s addons/gut/gut_cmdln.gd \
+            -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml 2>&1 | tee gut.log
+          ! grep "Failed to load script" gut.log
 
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: gut-test-results
           path: demo/test_results.xml
+
+      # vehicle -> OK / FAIL of its start-up test, in the run's summary (linked from the failure
+      # e-mail) and in one comment of the pull request, updated by every run
+      - name: Start-up report
+        if: always()
+        run: |
+          scripts/startup-report demo/test_results.xml > startup-report.md
+          cat startup-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      # a pull request from a fork has a read-only token and gets the summary only
+      - name: Start-up report on the pull request
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          comment=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- startup-report -->")) | .id' | head -1)
+          if [ -n "$comment" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$comment" -F body=@startup-report.md
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" -F body=@startup-report.md
+          fi
 
   build:
     needs: godot-engine

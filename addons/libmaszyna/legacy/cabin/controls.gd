@@ -11,9 +11,14 @@ class_name LegacyCabinControls
 
 ## The key fields of a catalog entry
 const ACTION_FIELDS:Array[String] = ["action", "action_increase", "action_decrease"]
-## Jumps the brake handle to its driving position - no MMD label, every dynamically built cab has it
-## (MaszynaDynamicTrainCabin takes its key)
+## Jumps the brake handle to its driving position - no MMD label, every cab has it: a push button
+## sending the named position (brake_level_set_position resolves "drive" per handle type,
+## RailVehicleBrake.cpp), whose key is brake_level_drive
 const BRAKE_LEVEL_DRIVE:StringName = &"brake_level_drive"
+const BRAKE_LEVEL_DRIVE_FIELDS:Dictionary = {
+    "command": "brake_level_set_position", "command_param": "drive",
+    "controller_mode": CabinButton.ControllerMode.On, "monostable": true, "action": "brake_level_drive",
+}
 
 ## control_id -> the widget class of its catalog entry
 var _classes:Dictionary[StringName, Variant] = {}
@@ -48,8 +53,7 @@ static func from_definition(definition:MmdCabinDefinition) -> LegacyCabinControl
                 control_id, entry["widget_class"], entry["fixed_fields"],
                 MmdCabinInstancer.BUTTON_TYPES.get(descriptor.button_type, CabinButton.ButtonType.TOGGLE),
                 entry.get("target", CabinState.Target.OCCUPIED))
-    controls.add_control(
-            BRAKE_LEVEL_DRIVE, CabinCommand, {"command": "brake_level_set_position", "command_param": "drive"})
+    controls.add_control(BRAKE_LEVEL_DRIVE, CabinButton, BRAKE_LEVEL_DRIVE_FIELDS)
     return controls
 
 
@@ -79,6 +83,19 @@ func wiring(control_id:StringName) -> Dictionary:
     if not has_control(control_id):
         return {}
     return LegacyCabinForwardCommands.wiring(_classes[control_id], _fields[control_id], _targets[control_id])
+
+
+## The fields of the control as this cab has it (MmdSemanticCatalog.resolve_fields()); one with no
+## MMD label (brake_level_drive) keeps its own
+func resolved_fields(control_id:StringName, vehicle_config:Dictionary) -> Dictionary:
+    if not MmdSemanticCatalog.has_label(control_id):
+        return _fields.get(control_id, {})
+    return MmdSemanticCatalog.resolve_fields(control_id, button_type(control_id), vehicle_config)
+
+
+## The vehicle of the cab the control's commands go to
+func target(control_id:StringName) -> CabinState.Target:
+    return _targets.get(control_id, CabinState.Target.OCCUPIED)
 
 
 func get_control_ids() -> Array[StringName]:

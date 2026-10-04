@@ -152,7 +152,7 @@ func test_a_scheduled_update_reaches_the_delegate() -> void:
 
 func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-    var train:VehicleController = build_vehicle("AIDriverCabTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverCabTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var vehicle:RID = train.get_rid()
     # a cab with no controls of its own: every catalog control is there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()
@@ -177,7 +177,7 @@ func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
 ## FINDINGS.md 2026-09-29: EP07-329's line breaker tripped at a switch and the driver, taking the
 ## engine for ready still, rolled on without power - the consist's state is what takes it away
 func test_the_trainset_shows_a_powered_vehicles_line_breaker_open() -> void:
-    var train:VehicleController = build_vehicle("AIDriverBreakerTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverBreakerTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
 
     trainset.update(train.get_rid(), 1, true)
@@ -188,7 +188,7 @@ func test_the_trainset_shows_a_powered_vehicles_line_breaker_open() -> void:
 
 func test_a_driver_not_in_control_touches_nothing() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-    var train:VehicleController = build_vehicle("AIDriverControlTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverControlTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var vehicle:RID = train.get_rid()
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     CabinSystem.vehicle_attach_cab_logic(
@@ -214,7 +214,7 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
 
 func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-    var train:VehicleController = build_vehicle("AIDriverLateDriverTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverLateDriverTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var vehicle:RID = train.get_rid()
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     CabinSystem.vehicle_attach_cab_logic(
@@ -239,7 +239,7 @@ func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> vo
 
 func test_the_driver_reads_its_trainset() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-    var train:VehicleController = build_vehicle("AIDriverTrainsetTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverTrainsetTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var vehicle:RID = train.get_rid()
     var driver:RID = DriverSystem.driver_create()
     DriverSystem.driver_attach_vehicle(driver, vehicle)
@@ -267,7 +267,7 @@ func test_a_new_driver_is_told_to_drive_the_way_it_faces() -> void:
 
 func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
-    var train:VehicleController = build_vehicle("AIDriverTakeoverTest", SM42)
+    var train:VehicleController = build_vehicle("AIDriverTakeoverTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     var vehicle:RID = train.get_rid()
     # a cab with no controls of its own: every catalog control is there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()
@@ -295,7 +295,7 @@ func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
 
 
 func test_a_turn_forgets_the_stop_of_a_signal_passed() -> void:
-    var vehicle:RID = build_vehicle("RouteTurnTest", SM42).get_rid()
+    var vehicle:RID = build_vehicle("RouteTurnTest", SM42, 0.0, VehicleController.DRIVER_HEAD).get_rid()
     var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
     var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
     var timetable:MaszynaLegacyDriverTimetable = MaszynaLegacyDriverTimetable.new()

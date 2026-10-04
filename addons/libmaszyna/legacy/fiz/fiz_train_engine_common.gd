@@ -55,30 +55,6 @@ static func apply_engine_common(node: RailVehicleEngine, kv: Dictionary, context
 
 ## The controller-position-count subset of Cntrl. (stashed on context.cntrl_kv by
 ## FizTrainCntrlParser, since Cntrl. conventionally precedes Engine: in real files).
-## The pantographs of an electric engine - LoadFIZ_Cntrl (Mover.cpp:10919-10946): the pantograph
-## compressor, its automatic valve, the master valve and each pantograph's own. The defaults are
-## the properties' own: the master valve automatic, each pantograph's valve manual. PantAutoValve
-## defaults to true for an EZT in the original (Mover.cpp:10925) - not ported with the train type.
-static func apply_cntrl_electric_subset(node: RailVehicleElectricEngine, cntrl_kv: Dictionary) -> void:
-    if cntrl_kv.has("PantCompressorStart"):
-        node.cntrl_pantograph_compressor_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), RailVehicleController.START_MODE_MANUAL)
-    if cntrl_kv.has("PantAutoValve"):
-        node.cntrl_pantograph_auto_valve = FizLineUtil.get_bool(cntrl_kv, "PantAutoValve")
-    if cntrl_kv.has("PantEPValveStart"):
-        node.cntrl_pantographs_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), RailVehicleController.START_MODE_AUTOMATIC)
-    if cntrl_kv.has("PantEPValveSpring"):
-        node.cntrl_pantographs_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantEPValveSpring")
-    if cntrl_kv.has("PantValveStart"):
-        node.cntrl_pantograph_valve_start_mode = FizTrainControllerParser.parse_start_mode(
-                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), RailVehicleController.START_MODE_MANUAL)
-    if cntrl_kv.has("PantValveSpring"):
-        node.cntrl_pantograph_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantValveSpring")
-    if cntrl_kv.has("PantValveSolenoid"):
-        node.cntrl_pantograph_valve_solenoid = FizLineUtil.get_bool(cntrl_kv, "PantValveSolenoid")
-
-
 static func apply_cntrl_engine_subset(node: RailVehicleEngine, cntrl_kv: Dictionary) -> void:
     if not cntrl_kv:
         return
@@ -179,41 +155,3 @@ static func parse_diesel_gear_row(p: MaszynaParser) -> RailVehicleMotorParameter
     return item
 
 
-## Power:'s fields, common to the whole RailVehicleElectricEngine family (Series + Induction).
-## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
-## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.
-static func apply_power(node: RailVehicleElectricEngine, power_kv: Dictionary) -> void:
-    if not power_kv:
-        return
-    if power_kv.has("EnginePower"):
-        node.power_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(power_kv, "EnginePower"))
-    if power_kv.has("CollectorsNo"):
-        node.power_current_collector_number_of_collectors = FizLineUtil.get_int(power_kv, "CollectorsNo")
-    if power_kv.has("MinH"):
-        node.power_current_collector_min_collector_lifting = FizLineUtil.get_float(power_kv, "MinH")
-    if power_kv.has("MaxH"):
-        node.power_current_collector_max_collector_lifting = FizLineUtil.get_float(power_kv, "MaxH")
-    if power_kv.has("CSW"):
-        node.power_current_collector_sliding_width = FizLineUtil.get_float(power_kv, "CSW")
-    if power_kv.has("PhysicalLayout"):
-        node.power_current_collector_physical_layout = FizLineUtil.get_int(power_kv, "PhysicalLayout", 3)
-    if power_kv.has("OverVoltProt"):
-        node.power_current_collector_overvoltage_relay = FizLineUtil.get_bool(power_kv, "OverVoltProt")
-    if power_kv.has("TransducerInputV"):
-        node.power_transducer_input_voltage = FizLineUtil.get_float(power_kv, "TransducerInputV")
-    if power_kv.has("PowerTrans"):
-        node.power_cable_source = FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(power_kv, "PowerTrans"))
-    if power_kv.has("SteamPress"):
-        node.power_cable_steam_pressure = FizLineUtil.get_float(power_kv, "SteamPress")
-
-    var max_voltage: float = FizLineUtil.get_float(power_kv, "MaxVoltage")
-    if power_kv.has("MaxVoltage"):
-        node.power_current_collector_max_voltage = max_voltage
-    if power_kv.has("MaxCurrent"):
-        node.power_current_collector_max_current = FizLineUtil.get_float(power_kv, "MaxCurrent")
-    # MinV/InsetV's absent-key defaults (fractions of MaxVoltage) differ from the compiled
-    # defaults (0.0) whenever MaxVoltage is set.
-    node.power_current_collector_min_main_switch_voltage = FizLineUtil.get_float(power_kv, "MinV", 0.5 * max_voltage)
-    node.power_current_collector_required_main_switch_voltage = FizLineUtil.get_float(power_kv, "InsetV", 0.6 * max_voltage)
-    node.power_current_collector_min_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MinPress", 3.5)
-    node.power_current_collector_max_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MaxPress", 5.0)

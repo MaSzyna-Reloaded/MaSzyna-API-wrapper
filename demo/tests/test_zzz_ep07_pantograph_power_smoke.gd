@@ -56,12 +56,12 @@ func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
     # master pantograph-valve command - this vehicle's cabin has no such switch (confirmed against
     # its .mmd) and nothing in this wrapper sends one via keybind either. If this ever needs a
     # fourth command again, that's a real regression, not a missing test setup step - see
-    # RailVehicleElectricEngine::pantograph()'s own comment for why it's otherwise self-contained.
+    # RailVehicleEnginePowerSource::pantograph()'s own comment for why it's otherwise self-contained.
     controller.send_command("battery", true)
     await wait_seconds(0.5)
     controller.send_command("compressor", true)
     await wait_seconds(0.5)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
 
     var voltage:float = 0.0
     var active:bool = false

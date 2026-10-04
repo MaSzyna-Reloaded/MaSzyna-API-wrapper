@@ -29,5 +29,8 @@
 		</constant>
 		<constant name="COMPONENT_POWER_SUPPLY" value="21" enum="Type">
 		</constant>
+		<constant name="COMPONENT_ENGINE_POWER_SOURCE" value="22" enum="Type">
+			[RailVehicleEnginePowerSource] - what the traction is fed from, and the pantographs.
+		</constant>
 	</constants>
 </class>

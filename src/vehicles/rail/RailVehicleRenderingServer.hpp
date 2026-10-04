@@ -1,6 +1,6 @@
 #pragma once
 #include "vehicles/rail/RailVehicleAppearance.hpp"
-#include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -96,7 +96,7 @@ namespace godot {
                     Part bogies[2];
                     /* front rolling, powered, rear rolling */
                     Vector<Part> wheels[3];
-                    /* RailVehicleElectricEngine::PantographSelector: lower arm, its pair, upper arm,
+                    /* RailVehicleEnginePowerSource::PantographSelector: lower arm, its pair, upper arm,
                      * its pair, slider */
                     Vector<Part> pantograph_arms[2];
                     Vector<Part> wiper_arms;
@@ -177,7 +177,7 @@ namespace godot {
             Vector<Part> _parts(const Visual &p_visual, const PackedStringArray &p_submodels) const;
             void _publish_pantograph_geometry(
                     const RID &p_vehicle, const Visual &p_visual,
-                    RailVehicleElectricEngine::PantographSelector p_pantograph) const;
+                    RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
             void _place(const RID &p_vehicle, Visual &p_visual);
             void _move(const RID &p_vehicle, Visual &p_visual);
             void _show_models(const Visual &p_visual, const RID &p_scenario) const;

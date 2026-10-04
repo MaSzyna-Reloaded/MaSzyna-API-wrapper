@@ -50,7 +50,7 @@ enum ButtonType {
 
 @export var command = ""
 ## Fixed leading argument sent before `pushed`, for commands that take a selector as their first
-## parameter (e.g. RailVehicleElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
+## parameter (e.g. RailVehicleEnginePowerSource::pantograph(PantographSelector, bool)) - unset (null) for
 ## every single-argument command, which keeps existing widgets (fuelpump_sw, battery_sw, ...)
 ## sending exactly the same single-argument call as before.
 @export var command_param:Variant
@@ -82,8 +82,6 @@ enum ButtonType {
 @export var sound_on_event:StringName
 @export var sound_off_event:StringName
 
-@export var action = ""
-
 ## A push button's state under its caption (a toggle shows STATE_ON/STATE_OFF)
 const STATE_PUSHED:String = "pressed"
 const STATE_RELEASED:String = "released"
@@ -96,20 +94,14 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 var _t:float = 0.0
-
-var _enabled:bool = true
 var _setup_phase:bool = true
 
 func _ready():
     connect("pushed_changed", self._on_pushed_changed)
     vehicle_rid_changed.connect(_update_state)
-    Console.console_toggled.connect(_on_console_toggled)
 
 func _enter_tree():
     _setup_phase = true
-
-func _on_console_toggled(visible:bool):
-    _enabled = not visible
 
 func _update_state():
     if state_property and _vehicle_rid:
@@ -125,30 +117,6 @@ func _update_state():
         return
     _apply_control_value(held)
 
-func _input(event):
-    if _enabled and action:
-        if event.is_action_pressed(action, false, true):
-            press()
-        elif event.is_action_released(action, true):
-            release()
-
-## The driver's hand on the button (key or mouse): a monostable one is held, any other toggles.
-## Only the hand acts on the vehicle; `pushed` set to show the vehicle's state - the cab built, the
-## cabin logic's own pose - moves nothing (a cab built on a running vehicle lowered its pantograph
-## and opened its line breaker, FINDINGS.md 2026-09-29)
-func press() -> void:
-    if monostable:
-        pushed = true
-        _act(&"hold")
-    else:
-        pushed = not pushed
-        _act(&"toggle", pushed)
-
-func release() -> void:
-    if monostable:
-        pushed = false
-        _act(&"release")
-
 func _update_mesh_target() -> void:
     _target_mesh_position = mesh_position_offset + mesh_position * value
     _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * value
@@ -160,7 +128,7 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-            _set_mouse_control(_mesh, [action], press, release, Callable(), Callable(), Vector3.ZERO, Vector3.ZERO)
+            _set_mouse_control(_mesh, hint_actions, press, release, Callable(), Callable(), Vector3.ZERO, Vector3.ZERO)
             _set_mouse_state(_mouse_state())
     _update_state()
 

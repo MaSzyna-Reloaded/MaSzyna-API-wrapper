@@ -114,6 +114,7 @@ classDiagram
     RailVehicleComponent <|-- RailVehicleBrake
     RailVehicleComponent <|-- RailVehicleBuffCoupl
     RailVehicleComponent <|-- RailVehicleDoors
+    RailVehicleComponent <|-- RailVehicleEnginePowerSource
     RailVehicleComponent <|-- RailVehicleElectroPneumaticDynamicBrake
     RailVehicleComponent <|-- RailVehicleEngine
     RailVehicleComponent <|-- RailVehicleHeating
@@ -150,6 +151,7 @@ classDiagram
     RailVehicleSpeedControl <|-- MoverRailVehicleSpeedControl
     RailVehicleSpringBrake <|-- MoverRailVehicleSpringBrake
     RailVehicleSwitches <|-- MoverRailVehicleSwitches
+    RailVehicleEnginePowerSource <|-- MoverRailVehicleEnginePowerSource
     RailVehicleUniversalController <|-- MoverRailVehicleUniversalController
     RailVehicleWheels <|-- MoverRailVehicleWheels
     RailVehicleWipers <|-- MoverRailVehicleWipers
@@ -162,12 +164,10 @@ classDiagram
     RailVehicleDieselEngine --> RailVehicleDieselEngineUnit
     RailVehicleDieselElectricEngine --> RailVehicleTractionMotorsUnit
     RailVehicleElectricEngine --> RailVehicleTractionMotorsUnit
-    RailVehicleElectricEngine --> RailVehicleCurrentCollectorUnit
     RailVehicleElectricEngine --> RailVehicleCircuitUnit
     RailVehicleDriveUnit <|-- MoverDriveUnit
     RailVehicleDieselEngineUnit <|-- MoverDieselEngineUnit
     RailVehicleTractionMotorsUnit <|-- MoverTractionMotorsUnit
-    RailVehicleCurrentCollectorUnit <|-- MoverCurrentCollectorUnit
     RailVehicleCircuitUnit <|-- MoverCircuitUnit
 ```
 

@@ -17,6 +17,8 @@ class_name FizTrainElectricSeriesEngineParser
 ## unsuffixed "MotorParamTable:" header) - rather than the wiki's own "?"-marked column names.
 
 var _relay_rows: Array[RailVehicleRelayListItem] = []
+## A MotorParamTable: row's tokens before the optional AutoSwitch (readMPTElectricSeries, Mover.cpp:9151)
+const MOTOR_PARAM_ROW_TOKENS: int = 5
 var _motor_param_rows: Array[RailVehicleMotorParameter] = []
 var _active_table: String = ""
 
@@ -44,7 +46,8 @@ func apply_engine_fields(kv: Dictionary, node: RailVehicleElectricSeriesEngine) 
         node.max_rpm = FizLineUtil.get_float(kv, "nmax")
 
 
-## Standard section-parser interface, used for "Circuit:", "RList:" and "MotorParamTable0:"
+## Standard section-parser interface, used for "Circuit:", "RList:", "MotorParamTable0:" and a series
+## motor's "MotorParamTable:" (FizTrainEngineParser picks it by the engine type)
 ## (registered directly against this instance in FizVehicleBuilder's section table).
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     if prefix == "Circuit:":
@@ -55,6 +58,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _parse_rlist_header(FizLineUtil.read_key_values(p), context)
     elif prefix == "MotorParamTable0:":
         _active_table = "MotorParamTable0"
+        _motor_param_rows = []
+    elif prefix == "MotorParamTable:":
+        _active_table = "MotorParamTable"
         _motor_param_rows = []
 
 
@@ -124,6 +130,7 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     match _active_table:
         "RList": _parse_rlist_row(p)
         "MotorParamTable0": _parse_motor_param_row(p)
+        "MotorParamTable": _parse_series_motor_param_row(p)
 
 
 func _parse_rlist_row(p: MaszynaParser) -> void:
@@ -145,6 +152,22 @@ func _parse_motor_param_row(p: MaszynaParser) -> void:
     var item := FizTrainEngineCommon.parse_motor_param_row(p)
     if item:
         _motor_param_rows.append(item)
+
+
+## A row of a series motor's MotorParamTable: (readMPTElectricSeries, Mover.cpp:9147): idx, mfi,
+## mIsat, fi, Isat, then an optional AutoSwitch - without the initial constants of MotorParamTable0:
+func _parse_series_motor_param_row(p: MaszynaParser) -> void:
+    var tokens: Array = p.get_tokens(MOTOR_PARAM_ROW_TOKENS + 1)
+    if tokens.size() < MOTOR_PARAM_ROW_TOKENS:
+        return
+    var item := RailVehicleMotorParameter.new()
+    item.voltage_constant_multiplier = float(tokens[1])    # mfi
+    item.saturation_current_multiplier = float(tokens[2])  # mIsat
+    item.voltage_constant = float(tokens[3])               # fi
+    item.saturation_current = float(tokens[4])             # Isat
+    if tokens.size() > MOTOR_PARAM_ROW_TOKENS:
+        item.auto_switch = int(tokens[MOTOR_PARAM_ROW_TOKENS]) == 1
+    _motor_param_rows.append(item)
 
 
 func end_table(context: FizImportContext) -> void:

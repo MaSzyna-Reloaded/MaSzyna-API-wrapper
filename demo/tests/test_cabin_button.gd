@@ -1,45 +1,20 @@
 extends MaszynaGutTest
 
-## Regression coverage for radiochannelnext_sw/radiochannelprev_sw not reacting to their bound
-## InputMap action while otherwise-identical monostable=false buttons (compressor_sw etc.) work
-## fine - the only difference is monostable=true + controller_mode=ControllerMode.On, so this
-## isolates that exact combination with a simulated real key event (not a direct method call),
-## the same path a physical keypress takes.
+## A cab button is a view of its control: it shows the vehicle's state and its mouse is the cab
+## logic's (the keys are tested in test_legacy_cabin_keys.gd).
 
-const TEST_ACTION := "test_cabin_button_action"
 const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const SHOWN_CONTROL:StringName = &"test_shown_control"
 
-func before_all():
-    InputMap.add_action(TEST_ACTION)
-    InputMap.action_add_event(TEST_ACTION, _make_key_event())
 
-func after_all():
-    InputMap.erase_action(TEST_ACTION)
+## The vehicle's cab logic with one cab-only button, wired as LegacyCabinForwardCommands wires one -
+## the widget's hand is the logic's press()
+func _attach_logic(vehicle:RID) -> void:
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    controls.add_control(SHOWN_CONTROL, CabinButton, {})
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return controls))
 
-func _make_key_event(pressed:bool = true) -> InputEventKey:
-    var event := InputEventKey.new()
-    event.physical_keycode = KEY_EQUAL
-    event.pressed = pressed
-    return event
-
-func test_monostable_on_mode_fires_command_once_on_press_via_real_input_event():
-    var widget := CabinButton.new()
-    widget.monostable = true
-    widget.controller_mode = CabinButton.ControllerMode.On
-    widget.action = TEST_ACTION
-    add_child_autofree(widget)
-    await wait_idle_frames(1)
-
-    Input.parse_input_event(_make_key_event(true))
-    await wait_idle_frames(1)
-
-    assert_true(widget.pushed, "pressing the bound key should set pushed=true")
-
-    Input.parse_input_event(_make_key_event(false))
-    await wait_idle_frames(1)
-
-    assert_false(widget.pushed, "releasing the bound key should set pushed=false")
 
 ## E186's vigilance pedal (pedal_sifa rot 0.008 -0.008) is modelled pushed: released it rests at
 ## the MMD offset, pushed it returns to the model's own pose.
@@ -76,12 +51,8 @@ func test_showing_the_vehicle_state_does_not_act():
     vehicle_node.controller_path = vehicle_node.get_path_to(physics_node)
     await wait_idle_frames(2)
     var vehicle:RID = vehicle_node.get_rid()
-    var acted:Array[StringName] = []
-    var handler:Callable = func(_state:CabinState, action:StringName, _value:Variant) -> Variant:
-        acted.append(action)
-        return null
+    _attach_logic(vehicle)
     var cab:int = CabinSystem.occupied_cab(vehicle)
-    CabinSystem.register_control(vehicle, cab, SHOWN_CONTROL, handler)
     var widget:CabinButton = CabinButton.new()
     widget.control_id = SHOWN_CONTROL
     widget.state_property = "main_switch_enabled"
@@ -93,10 +64,10 @@ func test_showing_the_vehicle_state_does_not_act():
     await wait_idle_frames(2)
 
     assert_false(widget.pushed, "the button shows the open line breaker")
-    assert_eq(acted.size(), 0, "and acts on nothing to show it")
+    assert_null(CabinSystem.get_control(vehicle, cab, SHOWN_CONTROL), "and acts on nothing to show it")
     widget.press()
-    assert_eq(acted.size(), 1, "the hand acts")
-    CabinSystem.unregister_control(vehicle, cab, SHOWN_CONTROL, handler)
+    assert_not_null(CabinSystem.get_control(vehicle, cab, SHOWN_CONTROL), "the hand acts")
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
     remove_child(vehicle_node)
     vehicle_node.queue_free()
 
@@ -110,12 +81,8 @@ func test_rebuilt_button_shows_what_the_cab_holds():
     vehicle_node.controller_path = vehicle_node.get_path_to(physics_node)
     await wait_idle_frames(2)
     var vehicle:RID = vehicle_node.get_rid()
+    _attach_logic(vehicle)
     var cab:int = CabinSystem.occupied_cab(vehicle)
-    # what LegacyCabinForwardCommands does for a cab-only control
-    var handler:Callable = func(state:CabinState, _action:StringName, value:Variant) -> Variant:
-        state.set_value(SHOWN_CONTROL, value)
-        return null
-    CabinSystem.register_control(vehicle, cab, SHOWN_CONTROL, handler)
     var first:CabinButton = CabinButton.new()
     first.control_id = SHOWN_CONTROL
     add_child_autofree(first)
@@ -133,6 +100,6 @@ func test_rebuilt_button_shows_what_the_cab_holds():
     assert_true(rebuilt.pushed, "the rebuilt button shows the control on")
     rebuilt.press()
     assert_false(CabinSystem.get_control(vehicle, cab, SHOWN_CONTROL), "and the first press turns it off")
-    CabinSystem.unregister_control(vehicle, cab, SHOWN_CONTROL, handler)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
     remove_child(vehicle_node)
     vehicle_node.queue_free()

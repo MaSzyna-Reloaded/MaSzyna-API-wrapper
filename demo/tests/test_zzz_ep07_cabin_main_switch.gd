@@ -48,11 +48,12 @@ func _cab() -> int:
 
 
 func _power_up() -> void:
-    VehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
+    # the player's battery switch, not the vehicle's command (Train.cpp:2891-3070)
+    CabinSystem.act(vehicle_rid, _cab(), &"battery_sw", &"set", true)
     await wait_idle_frames(2)
     VehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", true)
     VehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", false)
-    VehicleServer.vehicle_send_command(vehicle_rid, "pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    VehicleServer.vehicle_send_command(vehicle_rid, "pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
@@ -69,6 +70,9 @@ func test_main_switch_needs_hold_and_release() -> void:
     if not controller:
         return
     await _power_up()
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    assert_true(power_supply and power_supply.get_power24_available(), "the cab's battery switch gives the low voltage")
     assert_true(controller.get_state().get("main_switch_closable", false), "main switch should be closable once powered")
 
     CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"hold")
@@ -116,6 +120,9 @@ func test_cabin_controls_are_registered_and_forwarded() -> void:
     CabinSystem.act(vehicle_rid, cab, &"battery_sw", &"toggle", true)
     await wait_idle_frames(2)
     assert_true(controller.get_state().get("battery_enabled", false), "battery_sw through CabinSystem switches the battery")
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    assert_true(power_supply and power_supply.get_power24_available(), "and the battery gives the low voltage")
     assert_eq(CabinSystem.get_control(vehicle_rid, cab, &"battery_sw"), true)
     assert_null(CabinSystem.act(vehicle_rid, cab, &"no_such_control", &"hold"), "unknown control returns null")
 

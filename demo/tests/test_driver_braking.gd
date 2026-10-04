@@ -19,7 +19,7 @@ var route:MaszynaLegacyDriverRoute
 
 
 func before_each():
-    train = build_vehicle("DriverBrakingTest", SM42)
+    train = build_vehicle("DriverBrakingTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
     vehicle = train.get_rid()
     # a cab with no controls of its own: the knobs are there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()

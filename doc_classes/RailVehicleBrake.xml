@@ -449,7 +449,7 @@
 		<member name="compressor_lower_emergency_closing_pressure" type="float" setter="set_compressor_lower_emergency_closing_pressure" getter="get_compressor_lower_emergency_closing_pressure" default="-1.0">
 			Main tank safety valve opening pressure
 		</member>
-		<member name="compressor_power" type="int" setter="set_compressor_power" getter="get_compressor_power" enum="RailVehicleBrake.CompressorPower" default="0">
+		<member name="compressor_power" type="int" setter="set_compressor_power" getter="get_compressor_power" enum="RailVehicleBrake.CompressorPower" default="1">
 			Compressor power source.
 		</member>
 		<member name="compressor_speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed" default="0.0">
@@ -723,8 +723,8 @@
 		<constant name="COMPRESSOR_POWER_MAIN" value="0" enum="CompressorPower">
 			Supplied directly from the vehicle's high-voltage traction circuit ("mains"). Available whenever the HV circuit is live (for example, pantograph up and main contactors closed). Does not require the auxiliary converter.
 		</constant>
-		<constant name="COMPRESSOR_POWER_UNUSED" value="1" enum="CompressorPower">
-			Reserved/unused. Kept for backward compatibility; do not use in new content.
+		<constant name="COMPRESSOR_POWER_CONVERTER_MANUAL" value="1" enum="CompressorPower">
+			Powered from the auxiliary converter (110 V) and switched by hand - what a FIZ without [code]CompressorPower=[/code] has (Mover.cpp:10512).
 		</constant>
 		<constant name="COMPRESSOR_POWER_CONVERTER" value="2" enum="CompressorPower">
 			Powered from the low-voltage auxiliary converter. The compressor becomes available automatically after the converter is switched on and stops when the converter is off.

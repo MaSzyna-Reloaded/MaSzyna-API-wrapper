@@ -7,7 +7,7 @@ var train:VehicleController
 
 
 func before_each():
-    train = build_vehicle("TestCabChangeTrain")
+    train = build_vehicle("TestCabChangeTrain", null, 0.0, VehicleController.DRIVER_HEAD)
     # the active cab is the master controller's - a vehicle with a cab has one
     train.add_component(MoverRailVehicleMasterController.new())
 

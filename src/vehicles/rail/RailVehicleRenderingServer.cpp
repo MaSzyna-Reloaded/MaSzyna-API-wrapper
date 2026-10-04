@@ -9,6 +9,7 @@
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
 #include "vehicles/rail/RailVehicleDoors.hpp"
+#include "vehicles/rail/RailVehicleElectricEngine.hpp"
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -570,9 +571,9 @@ namespace godot {
         p_visual.wheels[0] = _parts(p_visual, appearance->get_front_rolling_wheels());
         p_visual.wheels[1] = _parts(p_visual, appearance->get_powered_wheels());
         p_visual.wheels[2] = _parts(p_visual, appearance->get_rear_rolling_wheels());
-        p_visual.pantograph_arms[RailVehicleElectricEngine::PANTOGRAPH_FIRST] =
+        p_visual.pantograph_arms[RailVehicleEnginePowerSource::PANTOGRAPH_FIRST] =
                 _parts(p_visual, appearance->get_pantograph_front_arms());
-        p_visual.pantograph_arms[RailVehicleElectricEngine::PANTOGRAPH_SECOND] =
+        p_visual.pantograph_arms[RailVehicleEnginePowerSource::PANTOGRAPH_SECOND] =
                 _parts(p_visual, appearance->get_pantograph_rear_arms());
         p_visual.wiper_arms = _parts(p_visual, appearance->get_wiper_arms());
         p_visual.mirrors = _parts(p_visual, appearance->get_mirrors());
@@ -595,8 +596,8 @@ namespace godot {
         }
         p_visual.headlights_dimmed = false;
         models->instance_set_lights_state(p_visual.model, p_visual.lights);
-        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleElectricEngine::PANTOGRAPH_FIRST);
-        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleElectricEngine::PANTOGRAPH_SECOND);
+        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleEnginePowerSource::PANTOGRAPH_FIRST);
+        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleEnginePowerSource::PANTOGRAPH_SECOND);
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
         _update_detection_area(p_vehicle, p_visual);
         _update_low_poly_cabs(p_vehicle, p_visual);
@@ -618,7 +619,7 @@ namespace godot {
      * both pantographs of a vehicle sampled the wire at the vehicle's origin. */
     void RailVehicleRenderingServer::_publish_pantograph_geometry(
             const RID &p_vehicle, const Visual &p_visual,
-            const RailVehicleElectricEngine::PantographSelector p_pantograph) const {
+            const RailVehicleEnginePowerSource::PantographSelector p_pantograph) const {
         RailVehicleServer *server = RailVehicleServer::get_instance();
         const Vector<Part> &arms = p_visual.pantograph_arms[p_pantograph];
         if (server == nullptr || arms.size() != PANTOGRAPH_ELEMENTS) {
@@ -753,8 +754,8 @@ namespace godot {
         if (server == nullptr) {
             return;
         }
-        for (const RailVehicleElectricEngine::PantographSelector pantograph:
-             {RailVehicleElectricEngine::PANTOGRAPH_FIRST, RailVehicleElectricEngine::PANTOGRAPH_SECOND}) {
+        for (const RailVehicleEnginePowerSource::PantographSelector pantograph:
+             {RailVehicleEnginePowerSource::PANTOGRAPH_FIRST, RailVehicleEnginePowerSource::PANTOGRAPH_SECOND}) {
             const Vector<Part> &arms = p_visual.pantograph_arms[pantograph];
             if (arms.size() != PANTOGRAPH_ELEMENTS) {
                 continue;

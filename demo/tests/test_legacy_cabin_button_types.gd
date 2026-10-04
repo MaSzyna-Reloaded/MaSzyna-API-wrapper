@@ -93,7 +93,9 @@ func test_the_closing_key_moves_an_impulse_main_switch():
 func test_an_impulse_pantograph_lever_goes_up_and_back_to_rest():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"pantselected_sw": CabinButton.ButtonType.PUSH}
-    var components:Array[VehicleComponent] = [MoverRailVehicleElectricSeriesEngine.new()]
+    # the pantographs' valve the lever works is the power source's
+    var components:Array[VehicleComponent] = [
+        MoverRailVehicleElectricSeriesEngine.new(), MoverRailVehicleEnginePowerSource.new()]
     await _build_cab(controls, null, components)
     CabinSystem.act(train.get_rid(), 1, &"pantselected_sw", &"hold")
     assert_eq(CabinSystem.get_control(train.get_rid(), 1, &"pantselected_sw"), LegacyCabinPantographSelected.LEVER_UP)
@@ -103,11 +105,12 @@ func test_an_impulse_pantograph_lever_goes_up_and_back_to_rest():
 
 func _electric_components(impulse:bool) -> Array[VehicleComponent]:
     var engine := MoverRailVehicleElectricSeriesEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    engine.power_current_collector_number_of_collectors = 2
+    var power_source := MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    power_source.current_collector_number_of_collectors = 2
     var switches := MoverRailVehicleSwitches.new()
     switches.pantograph_impulse = impulse
-    var components:Array[VehicleComponent] = [engine, switches]
+    var components:Array[VehicleComponent] = [engine, power_source, switches]
     return components
 
 

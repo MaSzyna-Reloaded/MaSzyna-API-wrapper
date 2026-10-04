@@ -81,38 +81,6 @@ label = "Converter"
 state_property = "converter_enabled"
 command = "converter"
 
-[node name="PantographsValve" parent="Electric" instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Pantographs valve"
-state_property = "current_collector/valve_enabled"
-command = "pantographs_valve"
-
-[node name="PantographFirst" parent="Electric" instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "First pantograph"
-state_property = "current_collector/pantograph_first_active"
-command = "pantograph"
-command_argument = 0
-
-[node name="PantographSecond" parent="Electric" instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Second pantograph"
-state_property = "current_collector/pantograph_second_active"
-command = "pantograph"
-command_argument = 1
-
-[node name="PantographCompressor" parent="Electric" instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Pantograph compressor"
-state_property = "current_collector/pantograph_compressor_enabled"
-command = "pantograph_compressor"
-
-[node name="PantographsDropAll" parent="Electric" instance=ExtResource("2_switch")]
-layout_mode = 2
-label = "Drop all pantographs"
-type = 0
-command = "pantographs_drop_all"
-
 [node name="ConverterFuseReset" parent="Electric" instance=ExtResource("3_button")]
 layout_mode = 2
 text = "Converter fuse reset"
@@ -129,15 +97,6 @@ max_value = 1500.0
 unit = "A"
 decimals = 0
 label = "Current"
-
-[node name="PantographTankPressure" parent="Electric/Gauges" instance=ExtResource("9_vgauge")]
-unique_name_in_owner = true
-layout_mode = 2
-value = 0.0
-max_value = 10.0
-unit = "bar"
-decimals = 2
-label = "Pantograph tank"
 
 [node name="RefreshTimer" type="Timer" parent="."]
 wait_time = 0.1

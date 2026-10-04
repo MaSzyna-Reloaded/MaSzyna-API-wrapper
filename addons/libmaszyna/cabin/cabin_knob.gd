@@ -48,10 +48,6 @@ enum ControllerMode { OnOff, On, Off }
         _dirty = true
 
 @export var speed = 10.0
-@export var step = 1.0
-
-@export var action_increase = ""
-@export var action_decrease = ""
 
 ## The positions the value range spans - Handle->GetPos(bh_MIN)..GetPos(bh_MAX) for a brake valve,
 ## whose whole positions are the rows of its brake pressure table (BCPN). Equal, the default, for
@@ -101,7 +97,6 @@ var _detent_pull_time:int = 0
 var _held:bool = false
 var _t = 0.0
 var _value_normalized = 0.0
-var _handle_actions:bool = true
 var _setup_phase:bool = true
 
 func _enter_tree():
@@ -121,22 +116,9 @@ func _update_state():
 
 func _ready():
     value_changed.connect(_on_value_changed)
-    if not Engine.is_editor_hint() and Console:
-        Console.console_toggled.connect(_on_console_toggle)
     vehicle_rid_changed.connect(_update_state)
 
-func _on_console_toggle(console_visible):
-    _handle_actions = not console_visible
-
 func _process_tool(delta):
-    if _handle_actions and action_increase:
-        if Input.is_action_pressed(action_increase, true):
-            _set_value_from_input(value + step * delta)
-
-    if _handle_actions and action_decrease:
-        if Input.is_action_pressed(action_decrease, true):
-            _set_value_from_input(value - step * delta)
-
     _t += delta
     if _t > 0.05:
         _t = 0.0
@@ -183,12 +165,12 @@ func _on_value_changed() -> void:
     else:
         _set_mouse_state("%d%%" % roundi((value - value_min) / (value_max - value_min) * 100.0))
 
-## The hand takes the knob (mouse button down on it) and lets it go.
-func press() -> void:
+## The hand takes the knob (mouse button down on it) and lets it go; its key is the cab logic's
+func grab() -> void:
     _held = true
     _detent_pull = 0.0
 
-func release() -> void:
+func let_go() -> void:
     _held = false
 
 ## The knob dragged by `travel` pixels of mouse movement: smoothly, up to the next whole position,
@@ -244,8 +226,9 @@ func _play_sound(previous_value:float) -> void:
 
 func _set_value_from_input(p_value:float) -> void:
     var new_value:float = clampf(p_value, value_min, value_max)
-    if not new_value == value:
-        _act(&"set", new_value)
+    # a drag sets the value itself, the pixels-to-value step being the widget's
+    if not new_value == value and _vehicle_rid and control_id:
+        CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, &"set", new_value)
     value = new_value
 
 func _process_dirty(delta):
@@ -256,7 +239,7 @@ func _process_dirty(delta):
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
             # the drag's direction is that of a one-pixel move
-            _set_mouse_control(_mesh, [action_increase, action_decrease], press, release, Callable(),
+            _set_mouse_control(_mesh, hint_actions, grab, let_go, Callable(),
                     Callable(), mesh_rotation / MOUSE_PIXELS_PER_RANGE, mesh_position / MOUSE_PIXELS_PER_RANGE,
                     drag)
             _on_value_changed()

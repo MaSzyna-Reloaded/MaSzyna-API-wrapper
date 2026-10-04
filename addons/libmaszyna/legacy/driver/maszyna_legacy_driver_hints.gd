@@ -53,10 +53,10 @@ const SWITCHES:Dictionary = {
 ## so its driver never raised them (docs/findings-archive.md, 2026-10-03 scenarios that did not
 ## start). The valve and the operation of a hint; what the vehicle shows of it is read in cue()
 const PANTOGRAPH_VALVES:Dictionary = {
-    Hint.FRONT_PANTOGRAPH_VALVE_ON: [RailVehicleElectricEngine.PANTOGRAPH_FIRST, RailVehicleElectricEngine.VALVE_OPERATION_ENABLE, true],
-    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [RailVehicleElectricEngine.PANTOGRAPH_FIRST, RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, false],
-    Hint.REAR_PANTOGRAPH_VALVE_ON: [RailVehicleElectricEngine.PANTOGRAPH_SECOND, RailVehicleElectricEngine.VALVE_OPERATION_ENABLE, true],
-    Hint.REAR_PANTOGRAPH_VALVE_OFF: [RailVehicleElectricEngine.PANTOGRAPH_SECOND, RailVehicleElectricEngine.VALVE_OPERATION_DISABLE, false],
+    Hint.FRONT_PANTOGRAPH_VALVE_ON: [RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE, true],
+    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, false],
+    Hint.REAR_PANTOGRAPH_VALVE_ON: [RailVehicleEnginePowerSource.PANTOGRAPH_SECOND, RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE, true],
+    Hint.REAR_PANTOGRAPH_VALVE_OFF: [RailVehicleEnginePowerSource.PANTOGRAPH_SECOND, RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, false],
 }
 const LINE_BREAKER_CLOSE:StringName = LegacyCabinMainSwitch.ON_BUTTON
 const LINE_BREAKER_OPEN:StringName = LegacyCabinMainSwitch.OFF_BUTTON
@@ -93,7 +93,8 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             device, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     var diesel:RailVehicleDieselEngine = engine as RailVehicleDieselEngine
-    var electric:RailVehicleElectricEngine = engine as RailVehicleElectricEngine
+    var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            device, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
     var radio:RailVehicleRadio = VehicleServer.vehicle_component_get(
             device, VehicleComponentType.COMPONENT_RADIO) as RailVehicleRadio
     var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
@@ -111,9 +112,9 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
         Hint.FUEL_PUMP_ON, Hint.FUEL_PUMP_OFF: shown = diesel.get_fuel_pump_enabled() if diesel else null
         Hint.COMPRESSOR_ON, Hint.COMPRESSOR_OFF: shown = brake.get_compressor_enabled() if brake else null
         Hint.FRONT_PANTOGRAPH_VALVE_ON, Hint.FRONT_PANTOGRAPH_VALVE_OFF:
-            shown = electric.get_collector_pantograph_first_active() if electric else null
+            shown = power_source.get_collector_pantograph_first_active() if power_source else null
         Hint.REAR_PANTOGRAPH_VALVE_ON, Hint.REAR_PANTOGRAPH_VALVE_OFF:
-            shown = electric.get_collector_pantograph_second_active() if electric else null
+            shown = power_source.get_collector_pantograph_second_active() if power_source else null
     if shown == null or bool(shown) == wanted:
         return true
     if valve:

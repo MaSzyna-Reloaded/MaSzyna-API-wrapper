@@ -154,7 +154,7 @@ func test_a_rebuilt_model_is_announced() -> void:
 
 
 func test_the_low_poly_interior_hides_the_cab_whose_interior_is_drawn() -> void:
-    _vehicle = build_rail_vehicle("RenderingCabs", TRACK_NAME, OFFSET)
+    _vehicle = build_rail_vehicle("RenderingCabs", TRACK_NAME, OFFSET, VehicleController.DRIVER_HEAD)
     var exterior_submodels:Dictionary = {"body": Transform3D()}
     var cab_submodels:Dictionary = {}
     for cab:String in LOW_POLY_CABS:

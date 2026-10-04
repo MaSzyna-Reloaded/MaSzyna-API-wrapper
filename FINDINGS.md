@@ -478,6 +478,15 @@ anything. Open work belongs in `TODO.md`.
   (components' getters, the state dump). A headless probe proves nothing unless the vehicle stands
   on a track, a `SimulationRuntime` runs the clock and somebody drives it. *(10-04 EU07, ED78 and
   36WE reported unstartable, no test guarding the start)*
+* A car nobody sits in has no occupied cab (CabOccupied 0, the scenery's driver type): with
+  bom_PS its brake valve leaves the pipe alone. *(10-04 every car sat a driver)*
+* A key is the cab logic's, never a widget's: a control's key that only its 3D widget takes is dead
+  wherever the cab model is not built (a fixture, a model that failed to load). *(10-04 keys of
+  modelled controls needed the cab model)*
+* A test cannot guard what it hands in itself: a battery given by `build_power_supply()`, a wire
+  voltage fed by hand, a vehicle assembled with `add_component()` - the game's way of building it
+  is then never run. A test asserts the end of the sequence the player sees, after simulated time,
+  never only the flag it switched or a key's presence. *(10-04 test audit)*
 
 * Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
   every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less
@@ -549,3 +558,11 @@ anything. Open work belongs in `TODO.md`.
 * A vehicle's models are made before it stands on its track: its detail is decided where it is
   placed, never assumed - born detailed, every vehicle of a scenery built its whole node hierarchy
   at the origin. *(10-03 the editor ran the scenario)*
+* A value in a Mover union (`TPowerParameters`) is read only under the tag that says it is
+  there; a collector is a component of its own, built from `Power:` whether there is an engine or
+  not. *(10-05 ED78 and EL16 start-up)*
+* A FIZ table's layout is the original reader's for the engine type (`readMPT`), never the
+  section's name alone. *(10-05 EP03 and EL16 NaN force)*
+* A property's default is the original's value for an absent key - read the lookup's fallback,
+  not only the parsed values (`CompressorPower` falls back to 1). *(10-05 EN57KM compressor)*
+* A tool reading the game's text files skips a UTF-8 BOM as the game does. *(10-05 EN57KM cab)*

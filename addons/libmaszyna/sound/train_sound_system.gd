@@ -155,7 +155,7 @@ var _active:Array[BankRuntime] = []
 var _vehicle_events:Dictionary[RID, PackedInt32Array] = {}
 ## The electric engine each counted vehicle's pantograph events come from - a vehicle without one
 ## has no entry
-var _pantograph_sources:Dictionary[RID, RailVehicleElectricEngine] = {}
+var _pantograph_sources:Dictionary[RID, RailVehicleEnginePowerSource] = {}
 ## The brake each counted vehicle's accelerator events come from
 var _accelerator_sources:Dictionary[RID, RailVehicleBrake] = {}
 ## Vehicles of the listener's own trainset, refreshed with the sweep and on a context change
@@ -417,18 +417,18 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
         runtime.running.attach_vehicle(vehicle_rid)
     if runtime.brakes:
         runtime.brakes.attach_vehicle(vehicle_rid)
-    # the vehicle was built again: its engine is another component now
+    # the vehicle was built again: its components are other ones now
     _stop_counting_events(vehicle_rid)
     if not _vehicle_events.has(vehicle_rid):
         var counts:PackedInt32Array = PackedInt32Array()
         counts.resize(VEHICLE_EVENT_COUNT)
         _vehicle_events[vehicle_rid] = counts
-    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
-            vehicle_rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    if engine:
-        _pantograph_sources[vehicle_rid] = engine
-        engine.pantograph_up.connect(_on_pantograph_up.bind(vehicle_rid))
-        engine.pantograph_down.connect(_on_pantograph_down.bind(vehicle_rid))
+    var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    if power_source:
+        _pantograph_sources[vehicle_rid] = power_source
+        power_source.pantograph_up.connect(_on_pantograph_up.bind(vehicle_rid))
+        power_source.pantograph_down.connect(_on_pantograph_down.bind(vehicle_rid))
     var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
             vehicle_rid, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
     if brake:
@@ -439,10 +439,10 @@ func _resolve_vehicle(runtime:BankRuntime) -> void:
 ## Disconnects a vehicle's pantograph and accelerator events; its counts stay, the caller decides
 ## about them.
 func _stop_counting_events(vehicle_rid:RID) -> void:
-    var engine:RailVehicleElectricEngine = _pantograph_sources.get(vehicle_rid)
-    if is_instance_valid(engine):
-        engine.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
-        engine.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
+    var power_source:RailVehicleEnginePowerSource = _pantograph_sources.get(vehicle_rid)
+    if is_instance_valid(power_source):
+        power_source.pantograph_up.disconnect(_on_pantograph_up.bind(vehicle_rid))
+        power_source.pantograph_down.disconnect(_on_pantograph_down.bind(vehicle_rid))
     _pantograph_sources.erase(vehicle_rid)
     var brake:RailVehicleBrake = _accelerator_sources.get(vehicle_rid)
     if is_instance_valid(brake):

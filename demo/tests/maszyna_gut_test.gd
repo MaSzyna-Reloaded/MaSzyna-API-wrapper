@@ -21,19 +21,25 @@ func wait_idle_frames(frames, message = ""):
 ## not a node, so a test cannot put one in the tree. VehiclePhysicsNode is what brings a vehicle
 ## into being; autofree owns the node, so the vehicle goes away with the test.
 ## `description` is an authored vehicle (demo/tests/fixtures/*.tres); without one the vehicle comes
-## up empty and the test adds the components it cares about.
+## up empty and the test adds the components it cares about. `driver_type` is the scenery's: the
+## cab a driver sits in (DRIVER_HEAD the front one) - nobody's vehicle has no occupied cab, so its
+## cab cannot be activated (DynObj.cpp:1948-1964).
 func build_vehicle(train_id:String = "TestTrain", description:VehicleController = null,
-        initial_velocity:float = 0.0) -> VehicleController:
-    return VehicleServer.vehicle_get_controller(build_vehicle_node(train_id, description, initial_velocity).get_vehicle_rid())
+        initial_velocity:float = 0.0,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY) -> VehicleController:
+    return VehicleServer.vehicle_get_controller(
+            build_vehicle_node(train_id, description, initial_velocity, driver_type).get_vehicle_rid())
 
 
 ## The node itself, for a test that needs a NodePath to the vehicle (RailVehicle3D.controller_path).
 func build_vehicle_node(train_id:String = "TestTrain", description:VehicleController = null,
-        initial_velocity:float = 0.0) -> VehiclePhysicsNode:
+        initial_velocity:float = 0.0,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY) -> VehiclePhysicsNode:
     var physics_node: RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
     physics_node.controller = description
     physics_node.vehicle_id = train_id
     physics_node.initial_velocity = initial_velocity
+    physics_node.driver_type = driver_type
     # a rail vehicle, stepped by RailVehicleServer whether or not a RailVehicle3D places it
     add_child_autofree(physics_node)
     return physics_node
@@ -62,12 +68,13 @@ func build_track(track_name:String, length:float) -> RID:
 ## A RailVehicle3D standing on the track at the offset, with a mass - a vehicle with none integrates
 ## to NaN (test_rail_vehicle_at_rest.gd). It takes its controller within a few frames; the test frees
 ## it, before its physics node goes with autofree.
-func build_rail_vehicle(train_id:String, track_name:String, offset:float) -> RailVehicle3D:
+func build_rail_vehicle(train_id:String, track_name:String, offset:float,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY) -> RailVehicle3D:
     var model:RailVehicleController = MoverRailVehicleController.new()
     model.vehicle_id = train_id
     model.mass = RAIL_VEHICLE_MASS
     model.type_name = "test"
-    var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model)
+    var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model, 0.0, driver_type)
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name
     vehicle.start_track_offset = offset
@@ -143,8 +150,10 @@ func build_model_instance(submodels:Dictionary, parents:Dictionary) -> E3DModelI
 ## A MaSzyna vehicle built from the game data, added to the test, built and drawn in detail - as
 ## nodes, which the tests look into - awaited. A vehicle is drawn in detail only near the streaming
 ## camera: one stands at it for as long as that takes, unless the test has its own.
-func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehicle_id:String) -> MaszynaRailVehicle3D:
+func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehicle_id:String,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY) -> MaszynaRailVehicle3D:
     var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    vehicle.driver_type = driver_type
     vehicle.data_path = data_path
     vehicle.file_name = file_name
     vehicle.skin = skin

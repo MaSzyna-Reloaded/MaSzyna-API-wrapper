@@ -255,7 +255,7 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 * The E186 screen's pantograph page (`traxx_renderer.py`, the game's own script) toggles its
   "odbiornik prądu" 1 / 2 / 1+2 without OP1/OP2 being pressed (seen 2026-09-29, left as it is -
   the script's own selector, not checked against the original).
-* `MoverCurrentCollectorUnit::pantograph()` still opens the master valve itself when a pantograph
+* `MoverRailVehicleEnginePowerSource::pantograph()` still opens the master valve itself when a pantograph
   is raised (added in 1c0c044 when no cab could reach the valve). The original opens it only from
   pantselected_sw or by its start mode (`PantEPValveStart`), so with it a pantograph rises from
   its own command alone. Remove it once every cab has a way to the master valve.
@@ -575,7 +575,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `TNESt3::SetSize()` builds every ESt distributor as an ESt4: `TRapid` instead of `TRura` and no
   `Podskok` for ESt3, and `AL2`, `PZZ`, `HBG300`, `3d`/`4d` and `-ED` are dropped. That covers
   about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
-* The energy meter (`MoverCurrentCollectorUnit::meter_energy()`, DynObj.cpp:3798-3832) ports the
+* The energy meter (`MoverRailVehicleEnginePowerSource::_do_process_component()`, DynObj.cpp:3798-3832) ports the
   original's per-pantograph current (`fPantCurrent`), but the current sent to the wire is still
   `get_current0() / collecting` (`RailVehicleServer::vehicle_collect_current()`) - whether it
   should take the ported one is open. The meter has no test: it needs an electric fixture drawing
@@ -1187,12 +1187,73 @@ ported, into a delegate.
   reported unstartable"): an electric locomotive from a fixture FIZ through battery ->
   `power24_available` -> pantographs -> relay reset -> `main_switch_enabled` -> converter ->
   traction, by commands and through the cab (`LegacyCabinLogic`, `CabinSystem.act`); an ED78/36WE
-  fixture whose control car's cab starts the motor car. `test_train_battery.gd` asserts
+  fixture whose control car's cab starts the motor car. Done for the EP07 (2026-10-04): the
+  command path and the AI's `Prepare_engine` to the converter and 110 V
+  (`test_zzz_ep07_main_switch_trip_diagnostic.gd`, `test_zzz_ep07_driver_prepare_engine.gd`), the
+  cab's battery switch to the low voltage (`test_zzz_ep07_cabin_main_switch.gd`); still open: the
+  converter and the master controller through the cab, an EP09 and an ED78/36WE fixture
+  (`~/Games/Maszyna/dynamic/pkp/ep09_v1/104e-039.fiz`, `impuls_v1/ed78-028-a..d_zachpom.fiz`:
+  `LMaxVoltage=24`, a control car `a`/`d` and motor cars `b`/`c`). `test_train_battery.gd` asserts
   `power24_available` too. The five tests b5e744f1 took `battery_voltage` from
   (`test_driver_system.gd`, `test_driver_braking.gd`, `test_train_controller_radio_channel.gd`,
   `test_train_ep_fuse_switch.gd`, `test_train_sound_system.gd`) get `build_power_supply()` back
   where they relied on the low voltage. The tester's report itself is not reproduced yet: needs
   the build number, `godot.log` and the step that stops, and a probe of an ED78/36WE trainset.
+
+* **Start-up tests not cut** (2026-10-04): EN57AKL, EN57AKM 2013, EN71AKS and EW58 lead no
+  trainset of any scenery, so their unit (cars, couplings) is unknown to
+  `scripts/cut-vehicle-fixture`; the draisine dr2 (EngineType=WheelsDriven) has nothing to start;
+  the generator x_401z has no master controller; EU44's cab (es64u4.mmd) models only its horns, so
+  its pantographs cannot be raised from the cab (Train.cpp:3228) - a start-up test needs its cab
+  data first. EP03 (`ep03.fiz`, `ep03_oryg.fiz`, used by no scenery) gives its pressures in MPa
+  (`HiPP=0.5`, `MaxCP=0.8`): the brake pipe never passes 3.6 bar and the pressure switch keeps the
+  line contactors open (Mover.cpp:7189) in the original too - its FIZ needs bar first.
+
+* **Test audit 2026-10-04** (`docs/findings-archive.md` "Test audit"). What the suite does not
+  guard, by cause; each listed script is rewritten or deleted:
+  * *The test hands in what it is about* - battery, wire voltage or the vehicle assembled by hand,
+    so the FIZ factory and the game's `apply_configuration` order never run:
+    `test_traction_power_pantograph.gd`, `test_train_electric_induction_engine.gd` (`_feed_wire`),
+    `test_rail_vehicle_idle_pantograph_voltage_regression.gd`,
+    `test_rail_vehicle_pantograph_geometry.gd`, `test_cab_lights.gd`, `test_train_wipers.gd`,
+    `test_train_battery.gd`, `test_legacy_cabin_button_types.gd`,
+    `test_legacy_cabin_cab_activation.gd`, `test_legacy_cabin_unmodelled_controls.gd`,
+    `test_scenario_script_server.gd` - move them onto fixture FIZ vehicles.
+  * *Asserts what it set* (setter/getter round trips, assertions per script):
+    `test_train_controller_param_dimensions.gd` 11, `test_train_universal_controller.gd` 9,
+    `test_property_bindings.gd` 6, `test_train_ep_dynamic_brake_blending.gd` 5,
+    `test_train_electric_engine_circuit.gd`, `test_train_engine_common.gd`,
+    `test_train_brake_cntrl.gd`, `test_train_diesel_engine_mechanical.gd` 4 each,
+    `test_train_controller_cntrl.gd`, `test_relay_list.gd` 3, `test_train_ai_hints.gd`,
+    `test_train_engine_cntrl.gd`, `test_brake_pressure_table.gd` 2 - a round trip of a bound
+    property is not behaviour; keep only what a parser or `apply_config` turns into an effect.
+  * *A key's presence* (`assert_true(x.has("key"))`) instead of its value: `test_fiz_import.gd`,
+    `test_fiz_train_controller.gd`, `test_train_electric_engine_cntrl.gd`,
+    `test_train_speed_control.gd`, `test_train_heating.gd`, `test_train_brake_cntrl.gd`,
+    `test_train_diesel_engine_mechanical.gd`, `test_train_electric_engine_power_source.gd`,
+    `test_compressor_list.gd`, `test_cab_lights.gd`; `test_vehicle_state_bench.gd:158,173`
+    assert `true` and belong outside CI.
+  * *Physics without simulated time* (only `wait_idle_frames`, no time wait): `test_train_*`
+    (brake, engine, controller, switches, spring brake, speed control, EP fuse, heating, lighting
+    presets), `test_traction_power_pantograph.gd`, `test_traction_power_sections.gd`,
+    `test_rail_vehicle_track_movement.gd`, `test_rail_vehicle_at_rest.gd`,
+    `test_rail_vehicle_start_track.gd`, `test_rail_vehicle_idle_*_regression.gd` ("300 frames =
+    5 s" at `test_rail_vehicle_idle_pantograph_voltage_regression.gd:132`).
+  * *Stops before what the player sees*: `test_driver_system.gd` checks the AI's
+    `Prepare_engine` only to `battery_enabled`, its `:185` asserts an open main switch (true
+    without power too).
+  * *Fixtures that build a 0 V vehicle unnoticed*: `test_vehicle.fiz`, `test_wagon.fiz`,
+    `dynamic/test/synthetic_v1/synthetic.fiz`. No EMU (ED78/36WE a+b), no EP09 fixture.
+  * *Private members* (uses): `test_maszyna_environment_node.gd` 26,
+    `test_scenery_compiled_cache.gd` 17, `test_track_rendering_server.gd` 11,
+    `test_cabin_switch.gd` 11, `test_weather_controls.gd` 10, `test_mmd_cabin_instancer.gd` 9,
+    `test_cabin_spot_light_3d.gd` 9, `test_mmd_sound_bank_instancer.gd` 5,
+    `test_train_sound_system.gd` 4, and single uses in 8 more; hand-written state dictionaries in
+    `test_brake_sound_model.gd:107,120,184`.
+  * *Harness*: a test script that fails to parse is skipped with only a warning ("Ignoring script
+    ... because it does not extend GutTest", measured 2026-10-04) and is not counted - its tests
+    vanish while the run stays green (CI now fails on `Failed to load script`). CI runs on pull
+    requests and tags, not on a push to `main`.
 
 * A headless GUT run sometimes does not exit after its tests have passed (seen 2026-10-03 on
   `test_scenery_compiled_cache`, `test_cab_lights`, `test_maszyna_scenery_time`, once each; eight

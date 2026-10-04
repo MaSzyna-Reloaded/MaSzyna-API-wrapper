@@ -1,7 +1,7 @@
 #pragma once
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
-#include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 
@@ -388,15 +388,15 @@ namespace godot {
              * lowered; with the slider's width the model gives. Measured by whoever draws the
              * vehicle; a model rebuilt hands it again and the raise is kept. */
             void vehicle_set_pantograph_geometry(
-                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph,
+                    const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph,
                     const Vector3 &p_position, double p_lower_length, double p_upper_length, double p_horizontal,
                     double p_lower_rest_angle, double p_upper_rest_angle, double p_collector_width);
             /* Where the pantograph stands in the vehicle's own space; zero for one the model lacks */
             Vector3 vehicle_get_pantograph_position(
-                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph) const;
+                    const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
             /* How far the lower (x) and upper (y) arm are raised over lowered [rad] - what is drawn */
             Vector2 vehicle_get_pantograph_raise(
-                    const RID &p_vehicle, RailVehicleElectricEngine::PantographSelector p_pantograph) const;
+                    const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;

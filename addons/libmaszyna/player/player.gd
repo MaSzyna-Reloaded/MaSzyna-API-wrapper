@@ -38,8 +38,8 @@ var _dirty: bool = true
 var _auto_start_pending:bool = false
 var _released_vehicle:RID
 ## The vehicle whose cab interior is shown with the cab camera in it - the one the player drives;
-## the cab's widgets take the keys (CabinButton, CabinSwitch), so it stands while the player looks
-## from outside too
+## it stands while the player looks from outside too (the keys are the cab logic's,
+## _unhandled_input())
 var _cabin_vehicle:RID = RID()
 ## A vehicle to follow farther than this is not flown to (FOLLOW_JUMP_DISTANCE_SETTING as it is now)
 var _follow_jump_distance:float = FOLLOW_JUMP_DISTANCE_DEFAULT

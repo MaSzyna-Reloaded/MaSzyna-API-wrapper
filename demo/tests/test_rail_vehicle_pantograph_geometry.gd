@@ -99,9 +99,12 @@ func _build_electric_vehicle() -> void:
     model.type_name = "test"
     physics_node = build_vehicle_node("test_pantograph_geometry", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    engine.power_current_collector_number_of_collectors = 2
-    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).add_component(engine)
+    var power_source:RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    power_source.current_collector_number_of_collectors = 2
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
+    controller.add_component(engine)
+    controller.add_component(power_source)
 
     vehicle = RailVehicle3D.new()
     var alongs:Array[float] = [FRONT_ALONG, REAR_ALONG]
@@ -116,12 +119,12 @@ func test_each_pantograph_publishes_its_own_position_to_the_vehicle() -> void:
     _build_electric_vehicle()
 
     assert_almost_eq(
-            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST),
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_FIRST),
             Vector3(0.0, LOWER_HEIGHT, FRONT_ALONG),
             Vector3(TOLERANCE, TOLERANCE, TOLERANCE),
             "the front pantograph's position is where its lower arm stands on the vehicle")
     assert_almost_eq(
-            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_SECOND),
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_SECOND),
             Vector3(0.0, LOWER_HEIGHT, REAR_ALONG),
             Vector3(TOLERANCE, TOLERANCE, TOLERANCE),
             "the rear pantograph's position is where its lower arm stands on the vehicle")
@@ -130,8 +133,8 @@ func test_each_pantograph_publishes_its_own_position_to_the_vehicle() -> void:
 func test_the_two_pantographs_do_not_share_one_sampling_point() -> void:
     _build_electric_vehicle()
 
-    var front:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST)
-    var rear:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_SECOND)
+    var front:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_FIRST)
+    var rear:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_SECOND)
     assert_almost_eq(
             rear.z - front.z, REAR_ALONG - FRONT_ALONG, TOLERANCE,
             "the two pantographs are as far apart along the vehicle as the model puts them")
@@ -145,15 +148,18 @@ func test_a_vehicle_without_pantograph_arms_publishes_no_position() -> void:
     model.type_name = "test"
     physics_node = build_vehicle_node("test_pantograph_geometry_bare", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).add_component(engine)
+    var power_source:RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
+    controller.add_component(engine)
+    controller.add_component(power_source)
 
     vehicle = RailVehicle3D.new()
     vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
 
     assert_eq(
-            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleElectricEngine.PANTOGRAPH_FIRST), Vector3(),
+            RailVehicleServer.vehicle_get_pantograph_position(vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_FIRST), Vector3(),
             "a vehicle whose model carries no pantograph has nothing to publish")
 
 
@@ -185,15 +191,17 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     model.type_name = "test"
     model.add_component(build_power_supply(110.0))
     model.power = ENGINE_POWER
-    physics_node = build_vehicle_node("test_pantograph_rebuilt", model)
+    physics_node = build_vehicle_node("test_pantograph_rebuilt", model, 0.0, VehicleController.DRIVER_HEAD)
     engine = MoverRailVehicleElectricSeriesEngine.new()
-    engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    engine.power_current_collector_physical_layout = 1
-    engine.power_current_collector_max_voltage = 3600.0
-    engine.power_current_collector_number_of_collectors = 1
-    engine.power_current_collector_max_pantograph_tank_pressure = PANTOGRAPH_TANK_PRESSURE
+    var power_source:RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
+    power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    power_source.current_collector_physical_layout = 1
+    power_source.current_collector_max_voltage = 3600.0
+    power_source.current_collector_number_of_collectors = 1
+    power_source.current_collector_max_pantograph_tank_pressure = PANTOGRAPH_TANK_PRESSURE
     var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
     controller.add_component(engine)
+    controller.add_component(power_source)
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
@@ -208,7 +216,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     # only a vehicle with its cab switched on is simulated (FINDINGS.md, 09-23)
     controller.send_command("cab_activation", true)
     controller.send_command("pantograph_compressor_valve", true)
-    controller.send_command("pantograph", RailVehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     for step:int in MAX_RAISE_STEPS:
         # held, as the driver holds it (Train.cpp:2912): it starts once the battery feeds 24 V
         controller.send_command("pantograph_compressor", true)

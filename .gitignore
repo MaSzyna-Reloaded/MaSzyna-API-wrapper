@@ -70,3 +70,5 @@ build-*/
 
 # GIMP writes a sidecar next to an edited image; it is not project data
 .comments/
+
+__pycache__/

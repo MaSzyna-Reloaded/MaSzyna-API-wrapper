@@ -22,6 +22,12 @@ extends VBoxContainer
         label = x
         _dirty = true
         set_process(true)
+## The bar's and the caption's width; a window with many gauges side by side makes them narrower
+@export var bar_width:float = 64.0:
+    set(x):
+        bar_width = x
+        _dirty = true
+        set_process(true)
 
 var _dirty:bool = true
 
@@ -35,3 +41,5 @@ func _process(_delta:float) -> void:
     %Bar.value = value
     %Value.text = "%.*f %s" % [decimals, value, unit]
     %Caption.text = label
+    %Bar.custom_minimum_size.x = bar_width
+    %Caption.custom_minimum_size.x = bar_width

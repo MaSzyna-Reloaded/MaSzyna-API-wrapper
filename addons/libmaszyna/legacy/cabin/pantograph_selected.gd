@@ -66,9 +66,9 @@ func _raise(state:CabinState, action:StringName, value:Variant) -> Variant:
             return _lower_selected(state)
         # Train.cpp:3472 - raise selected
         return state.send_vehicle_command("pantographs_valve_operate",
-                RailVehicleElectricEngine.VALVE_OPERATION_ENABLE
+                RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE
                 if _raise_button_type == CabinButton.ButtonType.TOGGLE
-                else RailVehicleElectricEngine.VALVE_OPERATION_ENABLE_ON, null, TARGET)
+                else RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE_ON, null, TARGET)
     return _release(state)
 
 
@@ -85,9 +85,9 @@ func _lower_selected(state:CabinState) -> Variant:
     if not _has_lower_button:
         state.set_value(RAISE, LEVER_DOWN)
     return state.send_vehicle_command("pantographs_valve_operate",
-            RailVehicleElectricEngine.VALVE_OPERATION_DISABLE
+            RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE
             if _lower_button_type == CabinButton.ButtonType.TOGGLE
-            else RailVehicleElectricEngine.VALVE_OPERATION_DISABLE_ON, null, TARGET)
+            else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE_ON, null, TARGET)
 
 
 # Train.cpp:3427-3457 - only impulse buttons react to a release
@@ -97,15 +97,15 @@ func _release(state:CabinState) -> Variant:
         if not _raise_button_type == CabinButton.ButtonType.TOGGLE:
             state.set_value(RAISE, LEVER_DOWN)
             result = state.send_vehicle_command(
-                    "pantographs_valve_operate", RailVehicleElectricEngine.VALVE_OPERATION_ENABLE_OFF, null, TARGET)
+                    "pantographs_valve_operate", RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE_OFF, null, TARGET)
         if not _lower_button_type == CabinButton.ButtonType.TOGGLE:
             state.set_value(LOWER, LEVER_DOWN)
             result = state.send_vehicle_command(
-                    "pantographs_valve_operate", RailVehicleElectricEngine.VALVE_OPERATION_DISABLE_OFF, null, TARGET)
+                    "pantographs_valve_operate", RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE_OFF, null, TARGET)
         return result
     if not _raise_button_type == CabinButton.ButtonType.TOGGLE:
         # one impulse switch doing both, with its neutral position midway
         state.set_value(RAISE, LEVER_REST)
         result = state.send_vehicle_command(
-                "pantographs_valve_operate", RailVehicleElectricEngine.VALVE_OPERATION_NONE, null, TARGET)
+                "pantographs_valve_operate", RailVehicleEnginePowerSource.VALVE_OPERATION_NONE, null, TARGET)
     return result

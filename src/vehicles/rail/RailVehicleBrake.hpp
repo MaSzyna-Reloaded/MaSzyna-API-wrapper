@@ -96,7 +96,8 @@ namespace godot {
             };
             enum CompressorPower {
                 COMPRESSOR_POWER_MAIN = 0,
-                COMPRESSOR_POWER_UNUSED = 1,
+                /* the original's default (Mover.cpp:10512): from the converter, switched by hand */
+                COMPRESSOR_POWER_CONVERTER_MANUAL = 1,
                 COMPRESSOR_POWER_CONVERTER = 2,
                 COMPRESSOR_POWER_ENGINE,
                 COMPRESSOR_POWER_COUPLER1,
@@ -256,7 +257,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, compressor_speed, 0.0);
             MAKE_MEMBER_GS(double, rapid_transfer, 1.0);
             MAKE_MEMBER_GS(double, rapid_switching_speed, 55.0);
-            MAKE_MEMBER_GS_NR(CompressorPower, compressor_power, COMPRESSOR_POWER_MAIN);
+            MAKE_MEMBER_GS_NR(CompressorPower, compressor_power, COMPRESSOR_POWER_CONVERTER_MANUAL);
             MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_P10_BGU);
             MAKE_MEMBER_GS(double, rig_effectiveness, 0.0);
             MAKE_MEMBER_GS(double, air_leak_multiplier, 1.0);

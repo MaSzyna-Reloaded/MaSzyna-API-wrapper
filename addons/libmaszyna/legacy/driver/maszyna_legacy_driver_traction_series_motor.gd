@@ -54,7 +54,9 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
     var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
             situation.controlling, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
-    if engine.power_source == RailVehicleController.POWER_SOURCE_ACCUMULATOR and power_supply:
+    var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    if power_source and power_source.source_type == RailVehicleController.POWER_SOURCE_ACCUMULATOR and power_supply:
         voltage = power_supply.get_live_battery_voltage()
     if situation.trainset.motor_overload_relay_open or engine.is_pressure_switch_tripped():
         return false
@@ -93,9 +95,13 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var branches:int = (relays[main] as RailVehicleRelayListItem).branch_count
     var series_shunting:bool = second > 0 and branches == 1
     var parallel_shunting:bool = second > 0 and branches > 1
-    var collector:bool = engine.power_source == RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    var min_voltage:float = engine.get_collector_min_main_switch_voltage() if collector else 0.0
-    var max_voltage:float = engine.get_collector_max_voltage() if collector else 0.0
+    # the limits of the vehicle carrying the pantographs (mvPantographUnit, Driver.cpp:3399-3400)
+    var collecting:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+            trainset.pantograph_unit, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    var collector:bool = collecting != null \
+            and collecting.source_type == RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    var min_voltage:float = collecting.get_collector_min_main_switch_voltage() if collector else 0.0
+    var max_voltage:float = collecting.get_collector_max_voltage() if collector else 0.0
     var series_mode_voltage:float = lerpf(min_voltage, max_voltage, HEAVY_SERIES_VOLTAGE_SHARE if heavy else SERIES_VOLTAGE_SHARE)
     var use_series:bool = imax > engine.circuit_imax_low or use_high_threshold or voltage < series_mode_voltage \
             or (sufficient_acceleration and sufficient_force

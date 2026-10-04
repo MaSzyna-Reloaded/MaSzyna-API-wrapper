@@ -55,6 +55,20 @@ func test_cntrl_general_subset():
     assert_eq(power_supply.cntrl_battery_start_mode, RailVehicleController.START_MODE_MANUAL)
     assert_eq(power_supply.cntrl_converter_start_mode, RailVehicleController.START_MODE_AUTOMATIC)
     assert_eq(power_supply.cntrl_converter_start_delay, 10.0)
+    assert_eq(power_supply.battery_voltage, 0.0, "no Light: LMaxVoltage - a battery without voltage")
+
+
+## The battery's voltage is Light: LMaxVoltage (LoadFIZ_Light, Mover.cpp:11035) - without it the
+## low voltage never comes and nothing of the vehicle starts
+func test_the_battery_voltage_comes_from_light() -> void:
+    var description: VehicleController = FizVehicleBuilder.build_description_at(
+            "res://tests/fixtures/dynamic/pkp/303e_v1/303e-ep.fiz")
+    var power_supply: RailVehiclePowerSupply = description.get_rail_component(
+            RailVehicleComponentType.COMPONENT_POWER_SUPPLY)
+    assert_not_null(power_supply, "the EP07's Light: describes its battery")
+    if not power_supply:
+        return
+    assert_eq(power_supply.battery_voltage, 110.0, "LMaxVoltage=110")
 
 
 ## A vehicle with a cab - a master controller - has the cab's horns and radio, and fills the state

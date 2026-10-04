@@ -5,8 +5,18 @@ name: ci
 # for, and after a GODOT_VERSION bump built, once. Only the Linux release needs a container
 # (ci/docker/linux-sdk, for an old glibc); the Windows and Android libraries are cross-compiled on
 # the runner.
+#
+# The exported builds are published as a GitHub release: a pull request keeps one prerelease per
+# branch (maszyna-reloaded-<branch>, "/" as "-") on the branch's own commit, whose files every push
+# replaces, so its download links stay the same; a pushed tag on main gets a release of its own.
+# The tags godot-*-double and maszyna-reloaded-* are made by CI itself.
 on:
   pull_request:
+  push:
+    tags:
+      - '**'
+      - '!godot-*-double'
+      - '!maszyna-reloaded-*'
   workflow_dispatch:
 
 jobs:
@@ -79,9 +89,11 @@ jobs:
     env:
       CMAKE_CXX_COMPILER_LAUNCHER: ccache
     steps:
+      # a pull request is built from its branch's own commit, not from GitHub's merge with main
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           submodules: recursive
 
       - name: Fetch the double precision Godot
@@ -134,3 +146,65 @@ jobs:
           name: maszyna-reloaded-${{ matrix.platform }}
           path: ${{ matrix.output }}
           if-no-files-found: error
+
+  publish:
+    needs: build
+    # a pull request from a fork gets a read-only token, so it keeps only the artifacts
+    if: >
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-${{ github.ref }}
+    steps:
+      # one directory per artifact, maszyna-reloaded-<platform>
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: maszyna-reloaded-*
+          path: artifacts
+
+      # each file is published as maszyna-reloaded-<tag or branch>-<platform>.<ext>
+      - name: Name the files
+        env:
+          NAME: ${{ github.head_ref || github.ref_name }}
+        run: |
+          mkdir release
+          for file in artifacts/maszyna-reloaded-*/*; do
+            platform=${file#artifacts/maszyna-reloaded-}
+            mv "$file" "release/maszyna-reloaded-${NAME//\//-}-${platform%%/*}.${file##*.}"
+          done
+
+      - name: Publish the branch prerelease
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          BRANCH: ${{ github.head_ref }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          tag="maszyna-reloaded-${BRANCH//\//-}"
+          # the tag is moved to the commit just built: the old release goes with its tag
+          gh release delete "$tag" --cleanup-tag --yes || true
+          gh release create "$tag" release/* --prerelease --target "$HEAD_SHA" \
+            --title "$tag" --notes "Build of $HEAD_SHA (#${{ github.event.number }})"
+
+      - name: Publish the tag release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          # only a tag on main is released: main has to contain the tagged commit
+          status=$(gh api "repos/$GH_REPO/compare/main...$GITHUB_SHA" --jq .status)
+          if [ "$status" != identical ] && [ "$status" != behind ]; then
+            echo "::error::$TAG is not on main" >&2
+            exit 1
+          fi
+          # a rerun finds the release already there and only replaces its files
+          gh release create "$TAG" --verify-tag --title "maszyna-reloaded-$TAG" --generate-notes \
+            || gh release view "$TAG" > /dev/null
+          gh release upload "$TAG" release/* --clobber

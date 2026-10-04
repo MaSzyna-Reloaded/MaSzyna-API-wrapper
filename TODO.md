@@ -1266,3 +1266,6 @@ ported, into a delegate.
 * The engine is built without Swappy (Android frame pacing, `install_swappy_android.py`) and without
   AccessKit (`install_accesskit.py`), both of which the official builds carry.
 * Android: only `arm64` is built and exported; the `android_x86_64` preset has no template.
+* The `maszyna-reloaded-<branch>` prerelease of a pull request stays after the PR is merged or
+  closed; nothing deletes it yet. A pull request from a fork publishes none (read-only token),
+  only artifacts.

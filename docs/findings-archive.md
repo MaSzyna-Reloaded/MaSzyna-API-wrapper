@@ -3351,3 +3351,20 @@ lighting or the trainset.
   untouched settings too.
 * **Rule:** a control is only shown a value; saving is an explicit operation, of what differs from
   what was shown.
+
+## 2026-10-04 CI red on a setting the server took a frame late
+
+* **Symptom:** every CI run on `dev/integrate-track-rendering` failed the same three tests:
+  `test_simulation_clock` (the running speed already at x2 after one short frame),
+  `test_maszyna_environment_node` (an hour at x100 ended at 0.492 h, not 0.5) and
+  `test_scenario_script_server` (`LuaTestTrain: Unknown command: battery`).
+* **What proved it:** all three reproduced locally, one script at a time. Since `e4ce54b4`
+  `SimulationServer` takes `maszyna/simulation/speed_change_time` on ProjectSettings'
+  `settings_changed`, which Godot emits deferred; the tests set the setting and advanced the
+  clock in the same frame, so the old value (0.0, or the default 0.4) ran. `76136f44` moved
+  `battery` to `RailVehiclePowerSupply`, which a bare test vehicle no longer has.
+* **Fix:** a test that changes the setting awaits `ProjectSettings.settings_changed` before it
+  advances the clock; the Lua test's vehicle gets `build_power_supply()`.
+* **Rule:** a value a server takes on `settings_changed` lands only after that signal; whoever
+  sets a Project Setting and reads its effect awaits it. A change that moves a command to a
+  component greps the tests for the command.

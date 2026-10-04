@@ -38,6 +38,7 @@ func before_each() -> void:
     # the clock is measured at the speed set, not on its way to it
     _speed_change_time = ProjectSettings.get_setting(SPEED_CHANGE_TIME_SETTING)
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, 0.0)
+    await ProjectSettings.settings_changed
     var curve:TrackCurve = TrackCurve.new()
     curve.p1 = Vector3.ZERO
     curve.p2 = Vector3(TRACK_LENGTH_M, 0.0, 0.0)
@@ -141,6 +142,8 @@ func test_the_clock_stands_while_paused() -> void:
 ## Like a tape's motor, the running speed gets to the one set over a while, not at once
 func test_a_speed_set_is_reached_over_the_speed_change_time() -> void:
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, SPEED_CHANGE_TIME)
+    # SimulationServer takes the setting on settings_changed, which Godot emits deferred
+    await ProjectSettings.settings_changed
     SimulationServer.simulation_speed = DOUBLE_SPEED
 
     SimulationServer.simulation_advance(SHORT_FRAME)

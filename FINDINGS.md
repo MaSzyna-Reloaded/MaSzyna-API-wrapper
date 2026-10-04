@@ -453,6 +453,9 @@ anything. Open work belongs in `TODO.md`.
   script: a test that changes a server's state (`SimulationServer.simulation_speed`, a Project
   Setting) restores it in `after_each`. Reproduce with `-gpre_run_script` setting that state.
   *(09-30 EP07 tests driven at x20)*
+* `ProjectSettings.settings_changed` is emitted deferred: a test that sets a Project Setting a
+  server takes on that signal awaits it before reading the effect. A command moved to a component
+  is grepped for in the tests. *(10-04 CI red on a setting the server took a frame late)*
 * A scenery vehicle has a driver from the start: taken over after it has stood, it may be held
   by its independent brake (Driver.cpp:8166-8180). A test that drives it sets every control it
   needs, the independent brake too. *(09-30 the EP07 orientation test braked by its driver)*

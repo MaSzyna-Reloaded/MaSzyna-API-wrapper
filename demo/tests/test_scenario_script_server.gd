@@ -9,6 +9,8 @@ const SETTLE_FRAMES:int = 5
 ## The track the player's vehicle stands on
 const PLAYER_TRACK:String = "lua_player_test"
 const PLAYER_TRACK_LENGTH:float = 200.0
+## The power supply's battery [V] - the `battery` command the script sends belongs to it
+const BATTERY_VOLTAGE:float = 110.0
 
 
 class RecordingCabin extends ScenarioScriptCabinDelegate:
@@ -174,6 +176,7 @@ func test_a_subscription_runs_through_the_queue_until_cancelled() -> void:
 
 func test_a_vehicle_takes_commands_and_reports_them() -> void:
     var controller:VehicleController = build_vehicle("LuaTestTrain")
+    controller.add_component(build_power_supply(BATTERY_VOLTAGE))
     var driver:RID = DriverSystem.driver_create()
     var recording:RecordingDriver = RecordingDriver.new()
     DriverSystem.driver_attach_vehicle(driver, controller.get_rid())

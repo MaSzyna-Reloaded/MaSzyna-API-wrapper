@@ -18,6 +18,8 @@ func before_each() -> void:
     # the clock runs at the speed set, not on its way to it
     _speed_change_time = ProjectSettings.get_setting(SPEED_CHANGE_TIME_SETTING)
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, 0.0)
+    # SimulationServer takes the setting on settings_changed, which Godot emits deferred
+    await ProjectSettings.settings_changed
 
 
 func after_each() -> void:

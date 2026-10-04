@@ -47,6 +47,8 @@ var _section: int = -1
 ## Section the focus came from, so a jump to another column can be stepped out of the way it was
 ## entered: left from the vehicles and right from the sceneries land back on each other
 var _previous_section: int = DEFAULT_PREVIOUS_SECTION
+## The development notice was asked this launch - it comes once, after the game directory problem
+var _development_notice_shown: bool = false
 ## The four sections in the order of Section, so one takes the focus and the rest give it up
 var _sections: Array[FocusSection] = []
 
@@ -56,8 +58,6 @@ func _ready() -> void:
     _ui_sounds = SfxPlayer.new()
     _ui_sounds.bank = UI_SOUNDS
     add_child(_ui_sounds)
-    # shown over the screen on every launch, until the player acknowledges it
-    %DevelopmentNotice.ask()
     _sections.assign([
         %SceneryList, %TrainsetList, %TrainsetGrid, %VehicleViewer.get_skins_section(),
         %ActionsSection
@@ -66,6 +66,21 @@ func _ready() -> void:
     # has no player of its own to play its focus with
     %VehicleViewer.get_skins_section().focus_requested.connect(focus_skins)
     %ActionsSection.focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
+    UserSettings.game_dir_changed.connect(list_sceneries)
+    UserSettings.game_dir_changed.connect(update_game_dir_warning)
+    list_sceneries()
+    update_game_dir_warning()
+    # without the game's data the development notice says nothing yet - the problem goes first
+    if UserSettings.is_maszyna_game_dir_valid():
+        show_development_notice()
+    else:
+        %GameDirProblem.ask()
+
+
+## The sceneries of the game directory - read again whenever it changes
+func list_sceneries() -> void:
+    _files.clear()
+    _titles.clear()
     var files: PackedStringArray = DirAccess.get_files_at(UserSettings.get_maszyna_game_dir().path_join("scenery"))
     files.sort()
     for file: String in files:
@@ -407,6 +422,34 @@ static func _get_trainset_name(trainset: MaszynaSceneryInfo.Trainset) -> String:
 
 static func _format_trainset_note(trainset: MaszynaSceneryInfo.Trainset) -> String:
     return "%d POJAZDÓW" % trainset.vehicles.size()
+
+
+## The warning stays over the screen while the game directory holds no game data
+func update_game_dir_warning() -> void:
+    %GameDirWarning.visible = not UserSettings.is_maszyna_game_dir_valid()
+    %WarningDir.text = UserSettings.get_maszyna_game_dir()
+
+
+## The directory was changed in a game, which ended for it - the data is the new one's now
+func show_game_dir_changed() -> void:
+    %GameDirChangedNotice.message = (
+        tr("The game's data is now read from %s.") % UserSettings.get_maszyna_game_dir()
+    )
+    %GameDirChangedNotice.ask()
+
+
+## Chosen here, the directory is the game's at once - saved, as the settings' "Save" would
+func _on_game_dir_window_game_dir_chosen(path: String) -> void:
+    UserSettings.save_maszyna_game_dir(path)
+
+
+## Shown over the screen once on every launch, until the player acknowledges it - after the game
+## directory problem, when there is one
+func show_development_notice() -> void:
+    if _development_notice_shown:
+        return
+    _development_notice_shown = true
+    %DevelopmentNotice.ask()
 
 
 ## The development notice is acknowledged - its button, Enter or Escape

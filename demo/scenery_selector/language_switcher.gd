@@ -2,8 +2,8 @@ extends MarginContainer
 class_name LanguageSwitcher
 
 ## The language of the game's strings (SimulationServer.language): one flag for every catalogue
-## MaszynaTranslationServer finds in the game's lang/, English alone when there is none. Its left
-## margin keeps it clear of what stands before it in a row.
+## MaszynaTranslationServer finds in the game's lang/, English alone when there is none - built again
+## when the game directory changes. Its left margin keeps it clear of what stands before it in a row.
 
 ## How large a flag is drawn
 const FLAG_SIZE:Vector2 = Vector2(36.0, 24.0)
@@ -22,6 +22,17 @@ const LANGUAGE_NAMES:Dictionary[String, String] = {
 
 
 func _ready() -> void:
+    MaszynaTranslationServer.translation_languages_changed.connect(_on_translation_languages_changed)
+    _on_translation_languages_changed()
+
+
+func _exit_tree() -> void:
+    MaszynaTranslationServer.translation_languages_changed.disconnect(_on_translation_languages_changed)
+
+
+func _on_translation_languages_changed() -> void:
+    for button:Node in %Flags.get_children():
+        button.free()
     var group:ButtonGroup = ButtonGroup.new()
     for language:String in MaszynaTranslationServer.translation_get_languages():
         var button:Button = Button.new()

@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/packed_string_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
@@ -19,6 +20,9 @@ namespace godot {
             Dictionary defaults;
             /// The project's own value of each project setting the player's value replaced
             Dictionary project_values;
+            /// The game directory in use, absolute - resolved where the configuration or the
+            /// game_dir setting changes
+            String game_dir;
 
             static constexpr const char *MASZYNA_GAMEDIR_SECTION = "maszyna";
             static constexpr const char *MASZYNA_GAMEDIR_KEY = "game_dir";
@@ -28,6 +32,7 @@ namespace godot {
 
             void _apply_defaults();
             void _set_project_setting(const String &p_name, const Variant &p_value);
+            void _update_game_dir();
 
         protected:
             static void _bind_methods();
@@ -53,6 +58,12 @@ namespace godot {
 
             String get_maszyna_game_dir() const;
             void save_maszyna_game_dir(const String &p_path);
+            /// The directory holds the original's data (scenery/, dynamic/, textures/)
+            bool is_maszyna_game_dir(const String &p_path) const;
+            bool is_maszyna_game_dir_valid() const;
+            /// Game directories found in the places an installation is usually kept: the game's
+            /// own directory first, then the one above it, Steam libraries, drives and home
+            PackedStringArray find_maszyna_game_dirs() const;
     };
 
 } // namespace godot

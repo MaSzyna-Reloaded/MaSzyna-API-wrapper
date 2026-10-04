@@ -15,6 +15,10 @@
 [ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="13_notice"]
 [ext_resource type="Texture2D" path="res://settings/gear_icon.svg" id="14_gear"]
 [ext_resource type="Script" path="res://ui/ui_switch.gd" id="ui_switch"]
+[ext_resource type="PackedScene" path="res://scenery_selector/game_dir_window.tscn" id="15_game_dir_window"]
+[ext_resource type="Script" path="res://ui/ui_chip.gd" id="16_chip"]
+[ext_resource type="Texture2D" path="res://ui/warning_icon.svg" id="17_warning_icon"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="18_button"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -317,12 +321,68 @@ icon = ExtResource("14_gear")
 icon_alignment = 1
 expand_icon = true
 
+[node name="GameDirWarning" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 6.0
+grow_horizontal = 2
+script = ExtResource("16_chip")
+
+[node name="Columns" type="HBoxContainer" parent="GameDirWarning"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="WarningIcon" type="TextureRect" parent="GameDirWarning/Columns"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("17_warning_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Texts" type="VBoxContainer" parent="GameDirWarning/Columns"]
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="WarningTitle" type="Label" parent="GameDirWarning/Columns/Texts"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+text = "Invalid game directory"
+
+[node name="WarningDir" type="Label" parent="GameDirWarning/Columns/Texts"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.8)
+theme_override_font_sizes/font_size = 14
+
+[node name="ConfigureButton" type="Button" parent="GameDirWarning/Columns"]
+custom_minimum_size = Vector2(140, 40)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_default_cursor_shape = 2
+script = ExtResource("18_button")
+intent = 2
+text = "Configure"
+
 [node name="DevelopmentNotice" parent="." instance=ExtResource("13_notice")]
 unique_name_in_owner = true
 layout_mode = 1
 title = "Development version"
 message = "This is a development version of an alternative port of the MaSzyna simulator. It may contain bugs, scenarios may not run, vehicles may not work fully, graphics may be incomplete."
 confirm_text = "I understand"
+
+[node name="GameDirProblem" parent="." instance=ExtResource("13_notice")]
+unique_name_in_owner = true
+layout_mode = 1
+title = "Invalid game directory"
+message = "MaSzyna Reloaded cannot find the data of the original MaSzyna - the game directory has no scenery, dynamic and textures folders. Without them no scenery can be started."
+confirm_text = "Configure"
+back_text = "Back"
+confirm_intent = 2
 
 [node name="Footer" type="HBoxContainer" parent="." unique_id=116949608]
 layout_mode = 1
@@ -355,6 +415,16 @@ uri = "https://maszyna-reloaded.pl"
 [node name="LanguageSwitcher" parent="Footer" unique_id=1119282794 instance=ExtResource("12_language")]
 layout_mode = 2
 
+[node name="GameDirChangedNotice" parent="." instance=ExtResource("13_notice")]
+unique_name_in_owner = true
+layout_mode = 1
+title = "Game directory changed"
+confirm_text = "OK"
+
+[node name="GameDirWindow" parent="." instance=ExtResource("15_game_dir_window")]
+unique_name_in_owner = true
+layout_mode = 1
+
 [connection signal="activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_trainset_list"]
 [connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]
 [connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_scenery_list"]
@@ -386,3 +456,8 @@ layout_mode = 2
 [connection signal="confirmed" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]
 [connection signal="dismissed" from="DevelopmentNotice" to="." method="_on_development_notice_acknowledged"]
 [connection signal="pressed" from="SettingsButton" to="." method="request_settings"]
+[connection signal="pressed" from="GameDirWarning/Columns/ConfigureButton" to="GameDirWindow" method="open"]
+[connection signal="confirmed" from="GameDirProblem" to="GameDirWindow" method="open"]
+[connection signal="dismissed" from="GameDirProblem" to="." method="show_development_notice"]
+[connection signal="closed" from="GameDirWindow" to="." method="show_development_notice"]
+[connection signal="game_dir_chosen" from="GameDirWindow" to="." method="_on_game_dir_window_game_dir_chosen"]

@@ -23,6 +23,12 @@ func _ready() -> void:
     get_parent().get_viewport().size_changed.connect(_fit)
 
 
+## A window inside another window (a settings row's) outlives none of it: the outer one's size
+## changes while it is freed, after this one's parent has left it
+func _exit_tree() -> void:
+    get_parent().get_viewport().size_changed.disconnect(_fit)
+
+
 ## The frame shown in the middle of the game's window, taking that part of it each way
 func show_part(part: float) -> void:
     %Frame.anchor_left = (1.0 - part) / 2.0

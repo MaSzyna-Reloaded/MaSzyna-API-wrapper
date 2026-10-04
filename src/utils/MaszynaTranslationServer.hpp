@@ -24,6 +24,9 @@ namespace godot {
 
             /// The wrapper's own .po files, merged under the game's catalogue
             static constexpr const char *TRANSLATIONS_SETTING = "maszyna/locale/translations";
+            /// The game's data was read again (another game directory): translation_get_languages()
+            /// lists what it has now
+            static constexpr const char *TRANSLATION_LANGUAGES_CHANGED_SIGNAL = "translation_languages_changed";
 
         private:
             /// The merged catalogue registered in TranslationServer

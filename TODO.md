@@ -216,6 +216,10 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 * `demo/hud/user_settings_panel.gd` (demo_3d) and the editor dock keep their own widgets; the
   dock's `render/fxaa_enabled` is read by nothing (the game reads `render/screen_space_aa`).
 
+### Game directory (`GameDirWindow`, 2026-10-04)
+* The warning chip's "Configure" is mouse-only; from the keyboard the window is reached only
+  through the dialog shown at launch.
+
 ## Cabins
 
 * **`CabinSystem` still drives the vehicle's drawing in two places** (`docs/findings-archive.md`,

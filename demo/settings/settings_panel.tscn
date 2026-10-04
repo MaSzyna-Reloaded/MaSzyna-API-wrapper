@@ -175,6 +175,14 @@ confirm_text = "Restart"
 back_text = "Later"
 confirm_intent = 2
 
+[node name="GameDirQuestion" parent="." instance=ExtResource("6_dialog")]
+unique_name_in_owner = true
+title = "Change the game directory"
+message = "Changing the game directory ends the current game and goes back to the main menu."
+confirm_text = "End the game and change the directory"
+back_text = "Back"
+confirm_intent = 3
+
 [connection signal="pressed" from="Window/Layout/Header/CloseButton" to="." method="ask_save_or_discard"]
 [connection signal="pressed" from="Window/Layout/Header/BackButton" to="." method="focus_section_list"]
 [connection signal="activated" from="Window/Layout/Content/SectionList" to="." method="focus_page"]
@@ -193,3 +201,4 @@ confirm_intent = 2
 [connection signal="alternative_chosen" from="CloseDialog" to="." method="discard"]
 [connection signal="confirmed" from="RestartDialog" to="." method="restart"]
 [connection signal="dismissed" from="RestartDialog" to="." method="_close"]
+[connection signal="confirmed" from="GameDirQuestion" to="." method="change_game_dir"]

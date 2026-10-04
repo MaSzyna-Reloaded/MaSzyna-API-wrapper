@@ -1,0 +1,123 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenery_selector/game_dir_panel.gd" id="1_panel"]
+[ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="2_sounds"]
+[ext_resource type="PackedScene" uid="uid://5f6cnr8et0l6" path="res://ui/selector_list.tscn" id="3_list"]
+[ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="4_focus"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="5_button"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="6_action_buttons"]
+[ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="7_dialog"]
+
+[node name="GameDirPanel" type="VBoxContainer"]
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+script = ExtResource("1_panel")
+sounds = ExtResource("2_sounds")
+
+[node name="Problem" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+text = "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
+autowrap_mode = 3
+
+[node name="CurrentDir" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.3, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="InstallationList" parent="." instance=ExtResource("3_list")]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 3
+sounds = ExtResource("2_sounds")
+
+[node name="NoneFound" type="Label" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+size_flags_vertical = 3
+text = "No installation of MaSzyna was found on this computer."
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="Status" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.45, 0.4, 1)
+theme_override_font_sizes/font_size = 14
+autowrap_mode = 3
+
+[node name="ActionsSection" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"FocusSection"
+script = ExtResource("4_focus")
+
+[node name="ActionButtons" type="HBoxContainer" parent="ActionsSection"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+script = ExtResource("6_action_buttons")
+tab_walks_buttons = false
+
+[node name="ScanButton" type="Button" parent="ActionsSection/ActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("5_button")
+text = "Scan"
+
+[node name="ChooseFolderButton" type="Button" parent="ActionsSection/ActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("5_button")
+text = "Choose folder..."
+
+[node name="SetButton" type="Button" parent="ActionsSection/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("5_button")
+intent = 1
+text = "Set game directory"
+
+[node name="Instructions" type="Label" parent="."]
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "MaSzyna Reloaded runs on the data of the original MaSzyna simulator (e.g. from Steam). Unpack the whole Reloaded archive into the directory of the original MaSzyna - the one with the scenery, dynamic and textures folders - and start reloaded.exe from there, not from inside the ZIP file."
+autowrap_mode = 3
+
+[node name="FolderDialog" type="FileDialog" parent="."]
+unique_name_in_owner = true
+title = "Choose the MaSzyna game directory"
+file_mode = 2
+access = 2
+use_native_dialog = true
+
+[node name="ChangedNotice" parent="." instance=ExtResource("7_dialog")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Game directory changed"
+confirm_text = "OK"
+
+[connection signal="activated" from="InstallationList" to="." method="focus_actions"]
+[connection signal="cancelled" from="InstallationList" to="." method="cancel"]
+[connection signal="focus_requested" from="InstallationList" to="." method="focus_installation_list"]
+[connection signal="navigate_down" from="InstallationList" to="." method="focus_actions"]
+[connection signal="cancelled" from="ActionsSection" to="." method="cancel"]
+[connection signal="focus_requested" from="ActionsSection" to="." method="focus_actions"]
+[connection signal="navigate_up" from="ActionsSection" to="." method="focus_installation_list"]
+[connection signal="pressed" from="ActionsSection/ActionButtons/ScanButton" to="." method="rescan"]
+[connection signal="pressed" from="ActionsSection/ActionButtons/ChooseFolderButton" to="." method="choose_folder"]
+[connection signal="pressed" from="ActionsSection/ActionButtons/SetButton" to="." method="choose_selected_game_dir"]
+[connection signal="dir_selected" from="FolderDialog" to="." method="_on_folder_dialog_dir_selected"]
+[connection signal="confirmed" from="ChangedNotice" to="." method="acknowledge_game_dir_change"]
+[connection signal="dismissed" from="ChangedNotice" to="." method="acknowledge_game_dir_change"]

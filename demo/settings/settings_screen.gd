@@ -15,7 +15,8 @@ extends Control
 ## with its "hint_string" as a property hint of that kind has it: "range" "min,max,step,suffix:m",
 ## "enum" "Name:value,Name:value"; "hint": "resolution" is the window's size, its choices made from
 ## the screen, and "folder" a project setting naming a file, shown as its folder with a button that
-## opens it in the file manager. Titles and choice names are msgids. "advanced": true puts a setting
+## opens it in the file manager, and "game_dir" the game directory (a "user" String), changed in the
+## GameDirWindow. Titles and choice names are msgids. "advanced": true puts a setting
 ## under the section's folded "Advanced". "excludes" names the keys of the section's settings that
 ## cannot be switched on while this one is on (TAA or MSAA and FXAA); "depends_on" the key of the
 ## one that has to be on for this one to be changed; "disabled_by" the key of the one that keeps it
@@ -30,6 +31,7 @@ const SLIDER: PackedScene = preload("setting_slider.tscn")
 const OPTION: PackedScene = preload("setting_option.tscn")
 const RESOLUTION: PackedScene = preload("setting_resolution.tscn")
 const FOLDER: PackedScene = preload("setting_folder.tscn")
+const GAME_DIR: PackedScene = preload("setting_game_dir.tscn")
 const STORES: Dictionary[String, SettingRow.Store] = {
     "project": SettingRow.Store.PROJECT,
     "user": SettingRow.Store.USER,
@@ -76,6 +78,7 @@ func _ready() -> void:
                 else SLIDER if setting.get("hint") == "range"
                 else RESOLUTION if setting.get("hint") == "resolution"
                 else FOLDER if setting.get("hint") == "folder"
+                else GAME_DIR if setting.get("hint") == "game_dir"
                 else OPTION
             ).instantiate()
             row.title = setting["title"]
@@ -90,6 +93,8 @@ func _ready() -> void:
             else:
                 page.add_row(row)
             rows[row.key] = row
+            if row is SettingGameDir:
+                row.game_dir_chosen.connect(choose_game_dir.bind(row))
         for setting: Dictionary in settings:
             var row: SettingRow = rows[setting["key"]]
             for excluded: String in setting.get("excludes", []):
@@ -177,6 +182,11 @@ func discard() -> void:
     for page: SettingsPage in _pages:
         page.revert()
     _close()
+
+
+## In the menu the directory chosen on its page is set at once, like any other setting
+func choose_game_dir(path: String, row: SettingGameDir) -> void:
+    row.set_game_dir(path)
 
 
 ## The sidebar, the page and the buttons are exclusive; every way between them ends here

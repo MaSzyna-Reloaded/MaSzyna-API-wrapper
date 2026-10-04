@@ -32,6 +32,8 @@ const QUIT_FADE_TIME: float = 0.5
 ## arguments are never read and the two come after Godot's "--" (OS.get_cmdline_user_args()).
 const ARG_SCENERY: String = "-s"
 const ARG_VEHICLE: String = "-v"
+## Exit code of a scenery started from the command line without a valid game directory
+const EXIT_INVALID_GAME_DIR: int = 1
 ## The 3D world of a scenery - made when one is chosen, freed in the menu, which renders nothing
 ## behind it
 const WORLD_SCENE: PackedScene = preload("world/world.tscn")
@@ -58,6 +60,15 @@ func _ready() -> void:
         args = OS.get_cmdline_args() + args
     var scenery_at: int = args.find(ARG_SCENERY)
     if scenery_at >= 0 and scenery_at + 1 < args.size():
+        # started from the command line, the selector screen is skipped - so is its warning
+        if not UserSettings.is_maszyna_game_dir_valid():
+            print((
+                "Invalid game directory: %s - it has no scenery, dynamic and textures folders. "
+                + "Unpack MaSzyna Reloaded into the directory of the original MaSzyna, or start "
+                + "the game without -s and set the directory there."
+            ) % UserSettings.get_maszyna_game_dir())
+            get_tree().quit(EXIT_INVALID_GAME_DIR)
+            return
         var train_id: String = ""
         var vehicle_at: int = args.find(ARG_VEHICLE)
         if vehicle_at >= 0 and vehicle_at + 1 < args.size():
@@ -158,7 +169,9 @@ func _on_exit_to_menu_pressed() -> void:
     %ExitConfirmation.ask()
 
 
-func _exit_to_menu() -> void:
+## "Exit to menu", and another game directory chosen in a game: set once the scenery read from the
+## old one is gone, before the menu lists the sceneries of the new one
+func _exit_to_menu(game_dir: String = "") -> void:
     _play_music(MUSIC_MENU_VOLUME_DB)
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     # the world stops once the spinner covers it, and stays stopped until the next scenery shows;
@@ -179,10 +192,14 @@ func _exit_to_menu() -> void:
     await get_tree().process_frame
     ProcessMemory.release_unused()
     SceneryLoadMeasurement.print_process("SceneryMemory", "menu")
+    if game_dir:
+        UserSettings.save_maszyna_game_dir(game_dir)
     await get_tree().create_timer(EXIT_SPINNER_HOLD_TIME).timeout
     $ScenerySelectorScreen.open()
     $BugReport.show_edge_button()
     await $SpinnerOverlay.fade_out(EXIT_FADE_TIME)
+    if game_dir:
+        $ScenerySelectorScreen.show_game_dir_changed()
 
 
 ## Music plays while no scenery is loaded (autoplay) and while a scenery loads, at the level the

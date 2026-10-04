@@ -24,4 +24,11 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="translation_languages_changed">
+			<description>
+				The game's data was read again (another game directory): [method translation_get_languages] lists the languages it has now.
+			</description>
+		</signal>
+	</signals>
 </class>

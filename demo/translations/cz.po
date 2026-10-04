@@ -1651,3 +1651,60 @@ msgstr "Počet vzorků slunečních paprsků"
 
 msgid "Diagnostics"
 msgstr "Diagnostika"
+
+msgid "Game directory"
+msgstr "Adresář hry"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
+msgstr "MaSzyna Reloaded nemůže najít data původní MaSzyny. Vyberte jednu z instalací nalezených v tomto počítači, nebo vlastní složku."
+
+msgid "Current game directory: %s"
+msgstr "Současný adresář hry: %s"
+
+msgid "No installation of MaSzyna was found on this computer."
+msgstr "V tomto počítači nebyla nalezena žádná instalace MaSzyny."
+
+msgid "Choose folder..."
+msgstr "Vybrat složku..."
+
+msgid "Set game directory"
+msgstr "Nastavit adresář hry"
+
+msgid "MaSzyna Reloaded runs on the data of the original MaSzyna simulator (e.g. from Steam). Unpack the whole Reloaded archive into the directory of the original MaSzyna - the one with the scenery, dynamic and textures folders - and start reloaded.exe from there, not from inside the ZIP file."
+msgstr "MaSzyna Reloaded používá data původního simulátoru MaSzyna (např. ze Steamu). Rozbalte celý archiv Reloaded do adresáře původní MaSzyny - toho se složkami scenery, dynamic a textures - a spusťte odtud reloaded.exe, ne zevnitř souboru ZIP."
+
+msgid "Choose the MaSzyna game directory"
+msgstr "Vyberte adresář hry MaSzyna"
+
+msgid "%s is not a MaSzyna game directory - it has no scenery, dynamic and textures folders."
+msgstr "%s není adresář hry MaSzyna - chybí v něm složky scenery, dynamic a textures."
+
+msgid "Invalid game directory"
+msgstr "Neplatný adresář hry"
+
+msgid "Configure"
+msgstr "Nastavit"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna - the game directory has no scenery, dynamic and textures folders. Without them no scenery can be started."
+msgstr "MaSzyna Reloaded nemůže najít data původní MaSzyny - v adresáři hry chybí složky scenery, dynamic a textures. Bez nich nelze spustit žádnou scenérii."
+
+msgid "MaSzyna installation"
+msgstr "Instalace MaSzyny"
+
+msgid "Scan"
+msgstr "Prohledat"
+
+msgid "Game directory changed"
+msgstr "Adresář hry byl změněn"
+
+msgid "The game's data is now read from %s."
+msgstr "Data hry se nyní načítají z %s."
+
+msgid "Change the game directory"
+msgstr "Změna adresáře hry"
+
+msgid "Changing the game directory ends the current game and goes back to the main menu."
+msgstr "Změna adresáře hry ukončí aktuální hru a vrátí se do hlavní nabídky."
+
+msgid "End the game and change the directory"
+msgstr "Ukončit hru a změnit adresář"

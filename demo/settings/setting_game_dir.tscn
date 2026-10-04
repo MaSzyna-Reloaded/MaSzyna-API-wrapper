@@ -1,0 +1,42 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://settings/setting_game_dir.gd" id="1_game_dir"]
+[ext_resource type="Texture2D" path="res://ui/warning_icon.svg" id="2_warning_icon"]
+[ext_resource type="PackedScene" path="res://scenery_selector/game_dir_panel.tscn" id="3_panel"]
+
+[node name="SettingGameDir" type="PanelContainer"]
+mouse_filter = 1
+theme_type_variation = &"SettingItem"
+script = ExtResource("1_game_dir")
+
+[node name="Rows" type="VBoxContainer" parent="."]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Line" type="HBoxContainer" parent="Rows"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Rows/Line"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 16
+autowrap_mode = 3
+
+[node name="WarningIcon" type="TextureRect" parent="Rows/Line"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(18, 18)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Invalid game directory"
+texture = ExtResource("2_warning_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GameDirPanel" parent="Rows" instance=ExtResource("3_panel")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[connection signal="game_dir_chosen" from="Rows/GameDirPanel" to="." method="_on_game_dir_panel_game_dir_chosen"]

@@ -36,6 +36,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("translation_load", "po_path"), &MaszynaTranslationServer::translation_load);
         ClassDB::bind_method(
                 D_METHOD("translation_get_languages"), &MaszynaTranslationServer::translation_get_languages);
+        ADD_SIGNAL(MethodInfo(TRANSLATION_LANGUAGES_CHANGED_SIGNAL));
     }
 
     void MaszynaTranslationServer::_on_data_reload_requested() {
@@ -52,6 +53,7 @@ namespace godot {
             }
         }
         _on_language_changed();
+        emit_signal(TRANSLATION_LANGUAGES_CHANGED_SIGNAL);
     }
 
     void MaszynaTranslationServer::_on_language_changed() {

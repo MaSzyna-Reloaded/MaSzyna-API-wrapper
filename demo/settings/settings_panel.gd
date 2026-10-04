@@ -6,11 +6,17 @@ extends "settings_screen.gd"
 ## none of its sections takes the keyboard. Escape alone is its while it is open - it asks about the
 ## settings, as the close button does, instead of reaching the game (exit to menu).
 
+## Another game directory, confirmed in a game - the game ends and the directory is set in the
+## menu, once the scenery read from the old one is gone
+signal game_dir_change_requested(path: String)
+
 ## The sections' own title, shown while no section is open
 const SECTIONS_TITLE: String = "Settings"
 
 ## A section's settings stand in the place of the sections
 var _page_open: bool = false
+## The directory chosen on its page, waiting for the player to confirm the game ends
+var _chosen_game_dir: String = ""
 
 
 func focus_section_list() -> void:
@@ -49,3 +55,15 @@ func _on_section_list_item_selected(index: int) -> void:
     if index < 0:
         return
     _page = index
+
+
+## In a game another directory ends it: the scenery was read from the old one. The player is asked.
+func choose_game_dir(path: String, _row: SettingGameDir) -> void:
+    _chosen_game_dir = path
+    %GameDirQuestion.ask()
+
+
+## The panel goes and the game ends; the directory is set in the menu (demo_scenery_loading.gd)
+func change_game_dir() -> void:
+    _close()
+    game_dir_change_requested.emit(_chosen_game_dir)

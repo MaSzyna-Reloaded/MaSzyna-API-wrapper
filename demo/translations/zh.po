@@ -1651,3 +1651,60 @@ msgstr "太阳光束采样数"
 
 msgid "Diagnostics"
 msgstr "诊断"
+
+msgid "Game directory"
+msgstr "游戏目录"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
+msgstr "MaSzyna Reloaded 找不到原版 MaSzyna 的数据。请选择在此电脑上找到的某个安装，或自行选择文件夹。"
+
+msgid "Current game directory: %s"
+msgstr "当前游戏目录：%s"
+
+msgid "No installation of MaSzyna was found on this computer."
+msgstr "在此电脑上未找到 MaSzyna 的安装。"
+
+msgid "Choose folder..."
+msgstr "选择文件夹..."
+
+msgid "Set game directory"
+msgstr "设置游戏目录"
+
+msgid "MaSzyna Reloaded runs on the data of the original MaSzyna simulator (e.g. from Steam). Unpack the whole Reloaded archive into the directory of the original MaSzyna - the one with the scenery, dynamic and textures folders - and start reloaded.exe from there, not from inside the ZIP file."
+msgstr "MaSzyna Reloaded 使用原版 MaSzyna 模拟器的数据（例如来自 Steam）。请将 Reloaded 压缩包完整解压到原版 MaSzyna 的目录——即包含 scenery、dynamic 和 textures 文件夹的目录——并从那里启动 reloaded.exe，而不是在 ZIP 文件内部启动。"
+
+msgid "Choose the MaSzyna game directory"
+msgstr "选择 MaSzyna 游戏目录"
+
+msgid "%s is not a MaSzyna game directory - it has no scenery, dynamic and textures folders."
+msgstr "%s 不是 MaSzyna 游戏目录——其中缺少 scenery、dynamic 和 textures 文件夹。"
+
+msgid "Invalid game directory"
+msgstr "游戏目录无效"
+
+msgid "Configure"
+msgstr "配置"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna - the game directory has no scenery, dynamic and textures folders. Without them no scenery can be started."
+msgstr "MaSzyna Reloaded 找不到原版 MaSzyna 的数据——游戏目录中缺少 scenery、dynamic 和 textures 文件夹。没有它们就无法启动任何场景。"
+
+msgid "MaSzyna installation"
+msgstr "MaSzyna 安装"
+
+msgid "Scan"
+msgstr "扫描"
+
+msgid "Game directory changed"
+msgstr "游戏目录已更改"
+
+msgid "The game's data is now read from %s."
+msgstr "游戏数据现在从 %s 读取。"
+
+msgid "Change the game directory"
+msgstr "更改游戏目录"
+
+msgid "Changing the game directory ends the current game and goes back to the main menu."
+msgstr "更改游戏目录将结束当前游戏并返回主菜单。"
+
+msgid "End the game and change the directory"
+msgstr "结束游戏并更改目录"

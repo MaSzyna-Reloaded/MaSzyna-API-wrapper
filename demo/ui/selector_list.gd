@@ -175,6 +175,20 @@ func set_rows(
     _select(_next_visible_slot(-1, 1))
 
 
+## The selection put on that row - its group unfolded, the list scrolled to it - as the screen's
+## own choice of what is selected (the game directory in use); a row not on the list changes nothing
+func select_row(row: int) -> void:
+    # a group header's slot carries -1 as its row
+    if row < 0:
+        return
+    var slot: int = _slot_rows.find(row)
+    var group: int = _slot_groups[slot]
+    if group >= 0 and not _group_unfolded[group]:
+        _toggle_group(group)
+    _select(slot)
+    scroll_to_item(%Scroll, _slots[slot])
+
+
 ## Row the selection is on, or -1 when it is on a group header or the search matched nothing
 func get_selected() -> int:
     return _slot_rows[_selected] if _selected >= 0 else -1

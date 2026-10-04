@@ -1252,6 +1252,20 @@
             ]
         },
         {
+            "title": "Game directory",
+            "settings": [
+                {
+                    "title": "MaSzyna installation",
+                    "store": "user",
+                    "section": "maszyna",
+                    "key": "game_dir",
+                    "type": "String",
+                    "hint": "game_dir",
+                    "default": "."
+                }
+            ]
+        },
+        {
             "title": "Debug",
             "settings": [
                 {

@@ -1651,3 +1651,60 @@ msgstr "Napsugarak mintaszáma"
 
 msgid "Diagnostics"
 msgstr "Diagnosztika"
+
+msgid "Game directory"
+msgstr "Játékkönyvtár"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
+msgstr "A MaSzyna Reloaded nem találja az eredeti MaSzyna adatait. Válasszon egyet a számítógépen talált telepítések közül, vagy egy saját mappát."
+
+msgid "Current game directory: %s"
+msgstr "Jelenlegi játékkönyvtár: %s"
+
+msgid "No installation of MaSzyna was found on this computer."
+msgstr "Ezen a számítógépen nem található MaSzyna-telepítés."
+
+msgid "Choose folder..."
+msgstr "Mappa kiválasztása..."
+
+msgid "Set game directory"
+msgstr "Játékkönyvtár beállítása"
+
+msgid "MaSzyna Reloaded runs on the data of the original MaSzyna simulator (e.g. from Steam). Unpack the whole Reloaded archive into the directory of the original MaSzyna - the one with the scenery, dynamic and textures folders - and start reloaded.exe from there, not from inside the ZIP file."
+msgstr "A MaSzyna Reloaded az eredeti MaSzyna szimulátor adatait használja (pl. Steamről). Csomagolja ki a teljes Reloaded archívumot az eredeti MaSzyna könyvtárába - abba, amelyben a scenery, dynamic és textures mappák vannak -, és onnan indítsa a reloaded.exe-t, ne a ZIP fájlon belülről."
+
+msgid "Choose the MaSzyna game directory"
+msgstr "Válassza ki a MaSzyna játékkönyvtárát"
+
+msgid "%s is not a MaSzyna game directory - it has no scenery, dynamic and textures folders."
+msgstr "%s nem MaSzyna játékkönyvtár - hiányoznak belőle a scenery, dynamic és textures mappák."
+
+msgid "Invalid game directory"
+msgstr "Érvénytelen játékkönyvtár"
+
+msgid "Configure"
+msgstr "Beállítás"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna - the game directory has no scenery, dynamic and textures folders. Without them no scenery can be started."
+msgstr "A MaSzyna Reloaded nem találja az eredeti MaSzyna adatait - a játékkönyvtárból hiányoznak a scenery, dynamic és textures mappák. Nélkülük egyetlen pálya sem indítható."
+
+msgid "MaSzyna installation"
+msgstr "MaSzyna-telepítés"
+
+msgid "Scan"
+msgstr "Keresés"
+
+msgid "Game directory changed"
+msgstr "A játékkönyvtár megváltozott"
+
+msgid "The game's data is now read from %s."
+msgstr "A játék adatai mostantól innen töltődnek be: %s."
+
+msgid "Change the game directory"
+msgstr "A játékkönyvtár módosítása"
+
+msgid "Changing the game directory ends the current game and goes back to the main menu."
+msgstr "A játékkönyvtár módosítása befejezi a jelenlegi játékot, és visszatér a főmenübe."
+
+msgid "End the game and change the directory"
+msgstr "Játék befejezése és könyvtár módosítása"

@@ -1,0 +1,34 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenery_selector/game_dir_window.gd" id="1_window"]
+[ext_resource type="Theme" uid="uid://dydlldjr6yrr2" path="res://scenery_selector/selector_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/ui_window.tscn" id="3_ui_window"]
+[ext_resource type="PackedScene" path="res://scenery_selector/game_dir_panel.tscn" id="4_panel"]
+
+[node name="GameDirWindow" type="Control"]
+visible = false
+top_level = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_window")
+
+[node name="Window" parent="." instance=ExtResource("3_ui_window")]
+unique_name_in_owner = true
+title = "Game directory"
+
+[node name="GameDirPanel" parent="Window/Frame/Layout/Body" instance=ExtResource("4_panel")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[connection signal="close_requested" from="Window" to="." method="close"]
+[connection signal="window_input" from="Window" to="." method="_on_window_window_input"]
+[connection signal="game_dir_chosen" from="Window/Frame/Layout/Body/GameDirPanel" to="." method="_on_game_dir_panel_game_dir_chosen"]
+[connection signal="cancelled" from="Window/Frame/Layout/Body/GameDirPanel" to="." method="close"]
+[connection signal="game_dir_change_acknowledged" from="Window/Frame/Layout/Body/GameDirPanel" to="." method="close"]
+
+[editable path="Window"]

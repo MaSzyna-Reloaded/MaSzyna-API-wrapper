@@ -1651,3 +1651,60 @@ msgstr "Liczba próbek promieni słońca"
 
 msgid "Diagnostics"
 msgstr "Diagnostyka"
+
+msgid "Game directory"
+msgstr "Katalog gry"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
+msgstr "MaSzyna Reloaded nie może znaleźć danych oryginalnej MaSzyny. Wybierz jedną z instalacji znalezionych na tym komputerze albo własny folder."
+
+msgid "Current game directory: %s"
+msgstr "Obecny katalog gry: %s"
+
+msgid "No installation of MaSzyna was found on this computer."
+msgstr "Nie znaleziono na tym komputerze żadnej instalacji MaSzyny."
+
+msgid "Choose folder..."
+msgstr "Wybierz folder..."
+
+msgid "Set game directory"
+msgstr "Ustaw katalog z grą"
+
+msgid "MaSzyna Reloaded runs on the data of the original MaSzyna simulator (e.g. from Steam). Unpack the whole Reloaded archive into the directory of the original MaSzyna - the one with the scenery, dynamic and textures folders - and start reloaded.exe from there, not from inside the ZIP file."
+msgstr "MaSzyna Reloaded korzysta z danych oryginalnego symulatora MaSzyna (np. ze Steam). Rozpakuj całe archiwum Reloaded do katalogu oryginalnej MaSzyny - tego z folderami scenery, dynamic i textures - i uruchom stamtąd reloaded.exe, a nie z wnętrza pliku ZIP."
+
+msgid "Choose the MaSzyna game directory"
+msgstr "Wybierz katalog gry MaSzyna"
+
+msgid "%s is not a MaSzyna game directory - it has no scenery, dynamic and textures folders."
+msgstr "%s nie jest katalogiem gry MaSzyna - brak w nim folderów scenery, dynamic i textures."
+
+msgid "Invalid game directory"
+msgstr "Nieprawidłowy katalog gry"
+
+msgid "Configure"
+msgstr "Konfiguruj"
+
+msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna - the game directory has no scenery, dynamic and textures folders. Without them no scenery can be started."
+msgstr "MaSzyna Reloaded nie może znaleźć danych oryginalnej MaSzyny - w katalogu gry brak folderów scenery, dynamic i textures. Bez nich nie da się uruchomić żadnej scenerii."
+
+msgid "MaSzyna installation"
+msgstr "Instalacja MaSzyny"
+
+msgid "Scan"
+msgstr "Przeskanuj"
+
+msgid "Game directory changed"
+msgstr "Zmieniono katalog gry"
+
+msgid "The game's data is now read from %s."
+msgstr "Dane gry są teraz wczytywane z %s."
+
+msgid "Change the game directory"
+msgstr "Zmiana katalogu gry"
+
+msgid "Changing the game directory ends the current game and goes back to the main menu."
+msgstr "Zmiana katalogu gry zakończy bieżącą grę i wróci do menu głównego."
+
+msgid "End the game and change the directory"
+msgstr "Zakończ grę i zmień katalog"

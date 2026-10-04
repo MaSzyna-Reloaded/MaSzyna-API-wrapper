@@ -21,8 +21,7 @@ func _on_gamedir_changed():
 
 
 func _auto_user_settings_visibility():
-    var game_dir = UserSettings.get_maszyna_game_dir()
-    visible = not game_dir or FileAccess.file_exists(game_dir)
+    visible = not UserSettings.is_maszyna_game_dir_valid()
 
 
 func _update_render_settings():
@@ -50,5 +49,4 @@ func _reload_all_models():
 
 
 func _on_visibility_changed() -> void:
-    var game_dir = UserSettings.get_maszyna_game_dir()
-    $VBoxContainer/GameDirNotSet.visible = not game_dir or FileAccess.file_exists(game_dir)
+    $VBoxContainer/GameDirNotSet.visible = not UserSettings.is_maszyna_game_dir_valid()

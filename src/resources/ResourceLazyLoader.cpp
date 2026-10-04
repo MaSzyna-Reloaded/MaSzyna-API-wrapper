@@ -32,34 +32,20 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("resource_register", "key", "loader"), &ResourceLazyLoader::resource_register);
         ClassDB::bind_method(D_METHOD("resource_free", "resource"), &ResourceLazyLoader::resource_free);
         ClassDB::bind_method(D_METHOD("resource_load", "resource"), &ResourceLazyLoader::resource_load);
-        ClassDB::bind_method(D_METHOD("resource_fetch", "resource"), &ResourceLazyLoader::resource_fetch);
+        ClassDB::bind_method(D_METHOD("resource_hold", "resource", "loaded"), &ResourceLazyLoader::resource_hold);
         ClassDB::bind_method(D_METHOD("resource_release", "resource"), &ResourceLazyLoader::resource_release);
         ClassDB::bind_method(D_METHOD("resource_is_resident", "resource"), &ResourceLazyLoader::resource_is_resident);
         ClassDB::bind_method(D_METHOD("resource_get_statistics"), &ResourceLazyLoader::resource_get_statistics);
     }
 
-    /// The held resource, or the one loaded last if anything still keeps it alive. Under the mutex.
-    Ref<Resource> ResourceLazyLoader::_get_loaded(const Entry &p_entry) const {
-        if (p_entry.resource.is_valid()) {
-            return p_entry.resource;
-        }
-        if (!p_entry.loaded.is_valid()) {
-            return {};
-        }
-        // a resource whose last reference is being dropped right now is not taken again: the Ref
-        // stays empty when its reference count has already reached zero
-        return Ref<Resource>(Object::cast_to<Resource>(ObjectDB::get_instance(p_entry.loaded)));
-    }
-
     /// The new data is loaded anew; whoever holds a resource keeps holding it and gets the new one
-    /// with its next fetch
+    /// with its next load
     void ResourceLazyLoader::_on_data_unload_requested() {
         Vector<Ref<Resource>> dropped; // freed once the mutex is let go
         MutexLock lock(mutex);
         for (KeyValue<RID, Entry> &entry: entries) {
             dropped.push_back(entry.value.resource);
             entry.value.resource.unref();
-            entry.value.loaded = ObjectID();
         }
     }
 
@@ -92,50 +78,40 @@ namespace godot {
         entries.erase(p_resource);
     }
 
-    /// Two threads loading one resource at once both call the loader; the first result is kept, so
-    /// both hand out the same resource
+    /// A copy not held is not shared: each load of it loads it anew. It used to be handed out again
+    /// from its ObjectID, but another thread may be dropping its last reference at that moment - the
+    /// object is then still in ObjectDB while it is destroyed, and taking it crashed (a segfault in
+    /// Object::is_class under _stream_preload, while _drop_stale_work freed the E3DModel). Two
+    /// workers preloading one model before it is built therefore load it twice; resource_hold()
+    /// keeps one copy and the other is freed with its build.
     Ref<Resource> ResourceLazyLoader::resource_load(const RID &p_resource) {
         Callable loader;
         {
             MutexLock lock(mutex);
             const Entry *entry = entries.getptr(p_resource);
             ERR_FAIL_NULL_V(entry, Ref<Resource>());
-            if (const Ref<Resource> loaded = _get_loaded(*entry); loaded.is_valid()) {
-                return loaded;
+            if (entry->resource.is_valid()) {
+                return entry->resource;
             }
             loader = entry->loader;
         }
         Ref<Resource> resource = loader.call();
         MutexLock lock(mutex);
-        Entry *entry = entries.getptr(p_resource);
-        if (entry == nullptr) {
-            return resource; // freed while it loaded
-        }
-        if (const Ref<Resource> loaded = _get_loaded(*entry); loaded.is_valid()) {
-            return loaded;
-        }
         load_count++;
-        if (resource.is_valid()) {
-            entry->loaded = ObjectID(resource->get_instance_id());
-            if (entry->holders > 0) {
-                entry->resource = resource;
-            }
-        }
         return resource;
     }
 
-    /// Nothing is held when the resource cannot be loaded
-    Ref<Resource> ResourceLazyLoader::resource_fetch(const RID &p_resource) {
-        Ref<Resource> resource = resource_load(p_resource);
-        if (resource.is_null()) {
-            return resource;
-        }
+    /// The first copy held is the one everybody gets; the given one goes when its caller lets it go
+    Ref<Resource> ResourceLazyLoader::resource_hold(const RID &p_resource, const Ref<Resource> &p_loaded) {
+        ERR_FAIL_COND_V(p_loaded.is_null(), p_loaded);
         MutexLock lock(mutex);
         Entry *entry = entries.getptr(p_resource);
-        ERR_FAIL_NULL_V(entry, resource);
+        ERR_FAIL_NULL_V(entry, p_loaded);
         entry->holders++;
-        entry->resource = resource;
-        return resource;
+        if (entry->resource.is_null()) {
+            entry->resource = p_loaded;
+        }
+        return entry->resource;
     }
 
     void ResourceLazyLoader::resource_release(const RID &p_resource) {

@@ -3413,3 +3413,23 @@ lighting or the trainset.
 * **Rule:** a change to a physics component is tested through the whole start sequence; a test it
   turns red is a suspected regression, never fixed by removing its setup or assertion; physics
   tests assert only on components' getters and the state dump.
+
+## 2026-10-04 segfault in the streaming's preload
+
+* **Symptom:** the Linux release build 20261004-1932 crashed with SIGSEGV on Wrzosy, with a 36WE;
+  its log was already rotated away.
+* **What proved it:** `coredumpctl info` of the crash, the stripped `libmaszyna.64.so` relinked
+  from the same objects without `-s` in the SDK container (its `.text` identical to the shipped
+  one) and the frames resolved with `addr2line`. A `WorkerTaskQueue` thread:
+  `E3DRenderingServer::_stream_preload` -> `ResourceLazyLoader::resource_load` -> `_get_loaded`
+  -> `Object::is_class`; the main thread at the same moment:
+  `SceneryStreamingServer::_drop_stale_work` -> `PendingBuild` freed -> `E3DModel::~E3DModel`.
+  `_get_loaded` took a loaded but not held model back from its `ObjectID`
+  (`ObjectDB::get_instance` + `cast_to`) to share it with a second preload; the main thread was
+  dropping that model's last reference, and an object being destroyed is still in `ObjectDB`
+  until `~Object` - the worker called into a half-destroyed object.
+* **Fix:** the `ObjectID` is gone; a copy not held is not shared. `resource_fetch(rid)` became
+  `resource_hold(rid, loaded)`: the build holds the copy its preload loaded, or the one already
+  held. Two preloads of one model before it is built load it twice (`TODO.md`).
+* **Rule:** never take an object back from its `ObjectID` on a thread other than the one that may
+  drop its last reference; share a copy across threads only through a `Ref` its owner keeps.

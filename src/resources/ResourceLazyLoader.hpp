@@ -3,7 +3,6 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/mutex.hpp>
 #include <godot_cpp/variant/callable.hpp>
@@ -17,13 +16,12 @@ namespace godot {
     /// memory, RAM and the VRAM of a mesh or a texture, goes back.
     ///
     /// A resource is registered under a key with the Callable that loads it; one key is one
-    /// resource, shared by everybody who registers it. resource_fetch() holds it, resource_release()
-    /// lets it go, and once nobody holds it the loader keeps no reference of its own. A copy still
-    /// alive elsewhere (a resource loaded on a worker on its way to be built) is handed out again
-    /// rather than loaded twice.
+    /// resource, shared by everybody who registers it. resource_hold() holds a loaded copy,
+    /// resource_release() lets it go, and once nobody holds it the loader keeps no reference of its
+    /// own.
     ///
-    /// Thread-safe: the streaming loads on its worker thread (resource_load()) and builds on the
-    /// main thread (resource_fetch()).
+    /// Thread-safe: the streaming loads on its worker threads (resource_load()) and holds what it
+    /// builds on the main thread (resource_hold()).
     class ResourceLazyLoader : public Object {
             GDCLASS(ResourceLazyLoader, Object)
 
@@ -34,7 +32,6 @@ namespace godot {
                     int registrations = 0;
                     int holders = 0;
                     Ref<Resource> resource; // while held
-                    ObjectID loaded;        // the last one loaded, while anything keeps it alive
             };
 
             static ResourceLazyLoader *singleton;
@@ -44,7 +41,6 @@ namespace godot {
             HashMap<String, RID> keys;
             int load_count = 0;
 
-            Ref<Resource> _get_loaded(const Entry &p_entry) const;
             void _on_data_unload_requested();
 
         protected:
@@ -59,10 +55,11 @@ namespace godot {
             /* The same key gives the same RID; each registration is freed by its own resource_free() */
             RID resource_register(const String &p_key, const Callable &p_loader);
             void resource_free(const RID &p_resource);
-            /* Loads the resource unless it is in memory, without holding it */
+            /* The held resource, or a new copy loaded without holding it */
             Ref<Resource> resource_load(const RID &p_resource);
-            /* resource_load(), and holds the resource until the matching resource_release() */
-            Ref<Resource> resource_fetch(const RID &p_resource);
+            /* Holds the resource until the matching resource_release(): the copy already held, or
+               else the given one, loaded by resource_load() */
+            Ref<Resource> resource_hold(const RID &p_resource, const Ref<Resource> &p_loaded);
             void resource_release(const RID &p_resource);
             /* Somebody holds the resource */
             bool resource_is_resident(const RID &p_resource) const;

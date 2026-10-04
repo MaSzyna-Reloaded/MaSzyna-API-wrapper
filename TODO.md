@@ -726,6 +726,12 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   to world space. Idea: classify includes as `instanced` (only `origin`/`rotate` + `triangles`, no
   nested includes; key = path + hash of non-placement params; MultiMesh per chunk/texture/range) or
   `full` (key = path + hash of all params); cache in local space, invalidate by dependency list.
+* `ResourceLazyLoader` shares only a held copy (`docs/findings-archive.md`, 2026-10-04 segfault in
+  the streaming's preload): workers preloading one model before its first build load it once
+  each, and all but one copy are dropped by `resource_hold()`. A per-model load lock would let
+  loads that overlap in time wait for one result; a load that starts after another has finished
+  but before its build still loads anew - sharing it needs the loader to hold the copy, with a
+  release for a preload whose build `SceneryStreamingServer` drops.
 * The subscene cache (`SceneryInstancer.parse_subscene_task()`) is used only by queued parsing;
   `parse_file()` reparses every include.
 * Streaming keeps the six `TrackRenderingServer` and two `TractionRenderingServer` instances of

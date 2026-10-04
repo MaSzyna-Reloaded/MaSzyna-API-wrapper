@@ -4,18 +4,11 @@
 		Resources loaded when they are wanted and let go when nobody wants them.
 	</brief_description>
 	<description>
-		Holds the resources needed only while something near the camera uses them - a scenery's models, its terrain - so their memory, RAM and the VRAM of a mesh or a texture, goes back once nothing holds them. A resource is registered under a key with the [Callable] that loads it; one key is one resource, shared by everybody who registers it. [method resource_fetch] holds it, [method resource_release] lets it go. A copy still alive elsewhere is handed out again rather than loaded twice. Everything held is let go when the game's data is unloaded ([signal GameDataServer.data_unload_requested]). Thread-safe.
+		Holds the resources needed only while something near the camera uses them - a scenery's models, its terrain - so their memory, RAM and the VRAM of a mesh or a texture, goes back once nothing holds them. A resource is registered under a key with the [Callable] that loads it; one key is one resource, shared by everybody who registers it. [method resource_load] loads a copy, [method resource_hold] holds it, [method resource_release] lets it go. A copy not held is not shared: each load loads it anew. Everything held is let go when the game's data is unloaded ([signal GameDataServer.data_unload_requested]). Thread-safe.
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="resource_fetch">
-			<return type="Resource" />
-			<param index="0" name="resource" type="RID" />
-			<description>
-				Loads the resource unless it is in memory, and holds it until the matching [method resource_release]. Nothing is held when it cannot be loaded.
-			</description>
-		</method>
 		<method name="resource_free">
 			<return type="void" />
 			<param index="0" name="resource" type="RID" />
@@ -29,6 +22,14 @@
 				[code]registered[/code], [code]resident[/code] (held now) and [code]loads[/code] (loader calls so far).
 			</description>
 		</method>
+		<method name="resource_hold">
+			<return type="Resource" />
+			<param index="0" name="resource" type="RID" />
+			<param index="1" name="loaded" type="Resource" />
+			<description>
+				Holds the resource until the matching [method resource_release] and returns the copy held: the one somebody already holds, or else [param loaded], a copy from [method resource_load].
+			</description>
+		</method>
 		<method name="resource_is_resident" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="resource" type="RID" />
@@ -40,7 +41,7 @@
 			<return type="Resource" />
 			<param index="0" name="resource" type="RID" />
 			<description>
-				Loads the resource unless it is in memory, without holding it - for a worker preparing what the main thread then fetches.
+				Returns the held resource, or loads a new copy without holding it - for a worker preparing what the main thread then holds with [method resource_hold].
 			</description>
 		</method>
 		<method name="resource_register">
@@ -55,7 +56,7 @@
 			<return type="void" />
 			<param index="0" name="resource" type="RID" />
 			<description>
-				Lets go of a resource held by [method resource_fetch]; once nobody holds it, the loader keeps no reference of its own.
+				Lets go of a resource held by [method resource_hold]; once nobody holds it, the loader keeps no reference of its own.
 			</description>
 		</method>
 	</methods>

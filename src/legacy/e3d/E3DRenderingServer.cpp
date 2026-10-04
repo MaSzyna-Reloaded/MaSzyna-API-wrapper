@@ -815,16 +815,12 @@ namespace godot {
             return;
         }
         ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
-        if (Ref<E3DModel>(p_preloaded).is_null() || lazy_loader == nullptr) {
+        const Ref<E3DModel> preloaded = p_preloaded;
+        if (preloaded.is_null() || lazy_loader == nullptr) {
             return; // the loader already reported why
         }
-        // the preloaded model is the one handed out, as it is alive; fetched to be held while built
-        // (nothing is held when the fetch has nothing)
-        const Ref<E3DModel> model = lazy_loader->resource_fetch(_get_stream_model(p_instance));
-        if (model.is_null()) {
-            return;
-        }
-        instance->model = model;
+        // held while built; the copy another instance already holds, if there is one
+        instance->model = lazy_loader->resource_hold(_get_stream_model(p_instance), preloaded);
         instance_build(p_instance);
     }
 

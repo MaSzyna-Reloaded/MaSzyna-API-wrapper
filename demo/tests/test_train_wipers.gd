@@ -9,7 +9,7 @@ var wipers: RailVehicleWipers
 
 func before_each():
     train = build_vehicle("TestTrainWipers")
-    train.battery_voltage = 110.0
+    train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     wipers = MoverRailVehicleWipers.new()
     # WiperList: of ep09_v2/104e-mod-dod-zal.fiz - mask, sweep time, interval, delay at the far end

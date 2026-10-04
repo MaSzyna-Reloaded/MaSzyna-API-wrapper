@@ -4,14 +4,14 @@
 
 namespace godot {
     /// A railway vehicle: what VehicleController says of every vehicle, plus the railway's own -
-    /// its cabs, couplers and trainset, the master controller and reverser, the relays, the low
-    /// voltage, the battery and the converter, and the stepping RailVehicleServer runs it by along
-    /// its track. Railway components (RailVehicleComponent) belong to one of these.
+    /// its couplers and trainset, the occupied cab and the reverser, and the stepping
+    /// RailVehicleServer runs it by along its track. Everything a vehicle may or may not have - the
+    /// master controller, the engine, the low voltage, the radio - is a railway component
+    /// (RailVehicleComponent), and fills its own state.
     class RailVehicleController : public VehicleController {
             GDCLASS(RailVehicleController, VehicleController)
 
         private:
-            bool prev_is_powered = false;
             int prev_cabin_occupied = 0;
 
         protected:
@@ -25,58 +25,14 @@ namespace godot {
              * is: every one of these is bound for GDScript, and a reader in C++ - the node that
              * draws the vehicle, a component of another kind - has the same right to it as a
              * script has. */
-            /* The battery as it actually is, which drains and recharges. The authored
-             * `battery_voltage` property next to it is the nominal one the vehicle is built with
-             * and that the simulation keeps as the nominal battery voltage - the two are only equal
-             * on a full battery. */
-            virtual double get_live_battery_voltage() const = 0;
-            virtual double get_tachometer_speed() const = 0;
-            virtual double get_tachometer_speed_jump() const = 0;
-            virtual double get_tachometer_clock_speed() const = 0;
             virtual int get_direction_absolute() const = 0;
-            virtual int get_cabin() const = 0;
-            virtual bool get_cabin_controleable() const = 0;
             virtual int get_cabin_occupied() const = 0;
-            virtual bool get_battery_enabled() const = 0;
-            /* ConverterFlag: the converter runs */
-            virtual bool get_converter_enabled() const = 0;
-            /* ConverterAllow: the converter's switch is on */
-            virtual bool get_converter_allowed() const = 0;
-            /* ConverterStartDelayTimer [s] */
-            virtual double get_converter_time_to_start() const = 0;
-            /* Metres since the distance counter was started, or -1 while it is off
-             * (TTrain::m_distancecounter, Train.h:904) */
-            virtual double get_distance_counter() const = 0;
-            virtual double get_power24_voltage() const = 0;
-            virtual bool get_power24_available() const = 0;
-            virtual bool get_power110_available() const = 0;
-            virtual double get_current0() const = 0;
-            virtual double get_current1() const = 0;
-            virtual double get_current2() const = 0;
-            virtual bool get_relay_novolt() const = 0;
-            virtual bool get_relay_overvoltage() const = 0;
-            virtual bool get_relay_ground() const = 0;
             virtual int get_train_damage() const = 0;
-            virtual int get_controller_second_position() const = 0;
-            virtual int get_controller_main_position() const = 0;
-            virtual int get_controller_joint_position() const = 0;
-            virtual int get_controller_main_actual_position() const = 0;
-            /* The position the secondary controller has actually reached (ScndCtrlActualPos) */
-            virtual int get_controller_second_actual_position() const = 0;
             /* The rotating masses' share of the vehicle's mass [kg] (Mred) - as the simulation
              * holds it, which the wheels may have derived from their own inertia */
             virtual double get_mass_reduced() const = 0;
-            /* DelayCtrlFlag: the master controller waits on its first position for the line
-             * contactors (Mover.cpp) */
-            virtual bool get_controller_main_delayed() const = 0;
             /* A coupler pulled past its strength (stretch_duration > 0, Mover.cpp:5405) */
             virtual bool get_coupler_stretched() const = 0;
-            /* The last master controller position that gives no power (MainCtrlNoPowerPos(),
-             * Mover.cpp:2694): 0, or the EIM controller's own */
-            virtual int get_controller_main_no_power_position() const = 0;
-            /* The Radio-Stop received and not yet acknowledged (RadioStopFlag) */
-            virtual bool get_radio_stop_active() const = 0;
-            virtual int get_circuit_rlist_size() const = 0;
 
             /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section) */
             enum StartMode {
@@ -149,7 +105,6 @@ namespace godot {
                 POWER_TYPE_STEAM
             };
 
-            static const char *power_changed_signal;
             static const char *cabin_occupied_changed;
             /// The trainset this vehicle belongs to gained or lost a vehicle
             static const char *trainset_changed_signal;
@@ -158,10 +113,6 @@ namespace godot {
             static const char *coupler_attached_signal;
             static const char *coupler_detached_signal;
 
-            virtual void battery(bool p_enabled) const = 0;
-            /* The converter switched (ConverterSwitch(), Mover.cpp:3702): the cab's own, sent along
-             * the control line to the vehicles that carry one */
-            virtual void converter(bool p_enabled) const = 0;
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
             virtual void cab_change(int p_direction) const = 0;
@@ -175,8 +126,6 @@ namespace godot {
             virtual void second_controller_decrease(int p_step = 1) const = 0;
             virtual void direction_increase() const = 0;
             virtual void direction_decrease() const = 0;
-            /* distancecounter_sw: pressed starts the distance counter anew (Train.cpp:1552) */
-            virtual void distance_counter_activate(bool p_pressed) = 0;
             virtual double process_movement(double p_delta) = 0;
             virtual void update_location() = 0;
             /* The vehicle nearest beyond p_end, p_track_distance [m] center to center along the
@@ -216,7 +165,6 @@ namespace godot {
              * and answers an empty dictionary. */
             Dictionary get_state() override;
             void update_state() override;
-            void initialize() override;
 
             /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
              * as TypeName (DynObj.cpp:2019) */
@@ -227,17 +175,13 @@ namespace godot {
              * is how a scenery starts a locomotive with its pantographs already up. */
             MAKE_MEMBER_GS(String, load_name, "");
             MAKE_MEMBER_GS(double, load_amount, 0.0);
-            MAKE_MEMBER_GS(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
             MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
             MAKE_MEMBER_GS(double, reduced_mass, 0.0);
             MAKE_MEMBER_GS(double, sand_capacity, 0.0);
             MAKE_MEMBER_GS(double, heating_power, 0.0);
             MAKE_MEMBER_GS(double, light_power, 0.0);
 
-            /* Cntrl. (ogolne, bateria/przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
-            MAKE_MEMBER_GS_NR(StartMode, cntrl_battery_start_mode, START_MODE_MANUAL);
-            MAKE_MEMBER_GS_NR(StartMode, cntrl_converter_start_mode, START_MODE_MANUAL);
-            MAKE_MEMBER_GS(double, cntrl_converter_start_delay, 0.0);
+            /* Cntrl. (ogolne, przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
             MAKE_MEMBER_GS_NR(StartMode, cntrl_ground_relay_start_mode, START_MODE_MANUAL);
             MAKE_MEMBER_GS_NR(StartMode, cntrl_compartment_lights_start_mode, START_MODE_DISABLED);
             MAKE_MEMBER_GS(bool, cntrl_automatic_cab_activation, true);

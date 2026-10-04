@@ -3283,3 +3283,27 @@ lighting or the trainset.
   cache format version bumped.
 * **Rule:** a list in the data ends where the original's loader ends it - at its keywords, not at
   the end of the node.
+
+## 2026-10-04 a wagon's dump with a locomotive's state
+
+* **Symptom:** a problem report's snapshot (`stary_jawor_eszelon.scn`) dumped a passenger car,
+  `b16mnopux` (`pkp/bdhpumn_v3/bdhpumn.fiz`, sections `Param. Load: Dimensions: Wheels: Brake:
+  Doors: BuffCoupl. Cntrl. Light: Clima:`), with `controller_main_position`,
+  `master_controller_position`, `current0..2`, `relay_*`, `converter_*`, `circuit_rlist_size`, the
+  horns and the radio (operator).
+* **What proved it:** two sources. `RailVehicleController::_fill_state_dictionary()` wrote the
+  master controller's, the engine's, the low voltage's and the radio's state for every vehicle
+  from the controller's own getters; and the FIZ factory made a `MoverRailVehicleMasterController`
+  on every `Cntrl.` line (`fiz_train_cntrl_parser.gd`, "every vehicle's") and attached
+  `MoverRailVehicleHorns`/`MoverRailVehicleRadio` to every vehicle (`fiz_vehicle_builder.gd`). A
+  wagon's `Cntrl.` carries its brake keys, and 239 wagons write `MCPN=1` there (counted over the
+  data's `Category=train` files, includes resolved).
+* **Fix:** the state moved to its owners - the master controller (positions, the active cab, the
+  Hasler recorder, the distance counter), the engine (relays, `RlistSize`, the ammeters), the
+  radio (Radio-Stop) and a new `RailVehiclePowerSupply` (battery, converter, 24 V / 110 V, made
+  from `Light:LMaxVoltage` or `Cntrl.`'s battery and converter keys); the controller keeps the
+  direction, the occupied cab, the damage, `Mred` and the coupler stretch. The factory makes a
+  master controller only for `MCPN > 1`, the horns and the radio only with it. The cab's
+  ammeters read the powered vehicle, as TTrain's `mvControlled` (`Train.cpp:8638, 10856`).
+* **Rule:** a component exists only when the FIZ describes it, and the controller fills only its
+  own state.

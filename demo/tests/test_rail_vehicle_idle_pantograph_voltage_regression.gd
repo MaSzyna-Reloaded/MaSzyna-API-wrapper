@@ -74,7 +74,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     # the vehicle is built does not reach the backend until apply_configuration()
     var model:RailVehicleController = MoverRailVehicleController.new()
     model.type_name = "test"
-    model.battery_voltage = 110.0
+    model.add_component(build_power_supply(110.0))
     physics_node = build_vehicle_node("test_idle_pantograph_train", model)
     controller = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
 

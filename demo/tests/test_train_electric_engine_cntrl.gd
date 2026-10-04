@@ -29,7 +29,7 @@ func test_round_trip_and_update_without_crashing():
 
 func _pantograph_vehicle(master_valve_start:RailVehicleController.StartMode) -> VehicleController:
     var vehicle:VehicleController = build_vehicle("TestPantographValves")
-    vehicle.battery_voltage = 110.0
+    vehicle.add_component(build_power_supply(110.0))
     var electric := MoverRailVehicleElectricSeriesEngine.new()
     electric.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     electric.power_current_collector_number_of_collectors = 1

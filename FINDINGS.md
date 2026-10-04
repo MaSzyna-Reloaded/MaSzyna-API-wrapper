@@ -228,6 +228,9 @@ anything. Open work belongs in `TODO.md`.
   configuration)*
 * A trainset placed again in another order lets go of its old pairs first, or it closes into a ring
   and every walk along it never ends. *(09-30 reordering a trainset hung the editor)*
+* A component exists only when the FIZ describes it, and the controller fills only its own state:
+  what a vehicle may or may not have - the master controller, the engine, the low voltage, the
+  radio - fills its keys from its component. *(10-04 a wagon's dump with a locomotive's state)*
 * A cab (the original's TTrain) is at work only for a driven vehicle: its logic is attached on
   `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
   each step)*

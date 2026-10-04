@@ -183,7 +183,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     var model:RailVehicleController = MoverRailVehicleController.new()
     # a vehicle with no power has no pantographs' tank to fill (Mover.cpp:1530)
     model.type_name = "test"
-    model.battery_voltage = 110.0
+    model.add_component(build_power_supply(110.0))
     model.power = ENGINE_POWER
     physics_node = build_vehicle_node("test_pantograph_rebuilt", model)
     engine = MoverRailVehicleElectricSeriesEngine.new()

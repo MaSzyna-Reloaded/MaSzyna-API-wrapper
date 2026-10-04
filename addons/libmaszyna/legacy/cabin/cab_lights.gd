@@ -56,9 +56,10 @@ func _process(state:CabinState, _delta:float) -> void:
 ## The cab's lights as its switches and the vehicle's power leave them - lit only while 24 V or
 ## 110 V is there, the cab light at half without the 110 V converter (Train.cpp:8436-8453)
 func _light(state:CabinState) -> void:
-    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(state.vehicle_rid) as RailVehicleController
-    var power110:bool = controller and controller.get_power110_available()
-    var powered:bool = power110 or (controller and controller.get_power24_available())
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            state.vehicle_rid, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    var power110:bool = power_supply and power_supply.get_power110_available()
+    var powered:bool = power110 or (power_supply and power_supply.get_power24_available())
     var level:float = 0.0
     if powered and bool(state.get_value(CAB_LIGHT, false)):
         level = ((DIMMED_LEVEL if state.get_value(CAB_LIGHT_DIM, false) else 1.0)

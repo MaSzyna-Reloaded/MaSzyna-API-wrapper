@@ -28,6 +28,11 @@ namespace godot {
             bool get_main_no_power_pos() const override;
             bool get_motor_overload_relay_high_threshold() const override;
             double get_eimic_real() const override;
+            bool get_relay_novolt() const override;
+            bool get_relay_overvoltage() const override;
+            bool get_relay_ground() const override;
+            int get_circuit_rlist_size() const override;
+            double get_current(int p_ammeter) const override;
             void apply_configuration(const RailVehicleEngine *p_engine) const override;
             bool main_switch(bool p_enabled) const override;
             bool motor_overload_relay_threshold(bool p_high) const override;

@@ -14,13 +14,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="battery" qualifiers="const">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Turn on/off train battery
-			</description>
-		</method>
 		<method name="cab_activation" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -57,13 +50,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="converter" qualifiers="const">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Switches the converter ([code]ConverterSwitch()[/code]); the command is sent along the control line to the vehicles that carry one.
-			</description>
-		</method>
 		<method name="couple">
 			<return type="void" />
 			<param index="0" name="other" type="RailVehicleController" />
@@ -97,90 +83,14 @@
 				Decrease direction by one step
 			</description>
 		</method>
-		<method name="distance_counter_activate">
-			<return type="void" />
-			<param index="0" name="pressed" type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="find_rail_components" qualifiers="const">
 			<return type="VehicleComponent[]" />
 			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
 			<description>
 			</description>
 		</method>
-		<method name="get_battery_enabled" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_cabin" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_cabin_controleable" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="get_cabin_occupied" qualifiers="const">
 			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_circuit_rlist_size" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_joint_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_main_actual_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_main_delayed" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_main_no_power_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_main_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_second_actual_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_controller_second_position" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_converter_allowed" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_converter_enabled" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_converter_time_to_start" qualifiers="const">
-			<return type="float" />
 			<description>
 			</description>
 		</method>
@@ -201,33 +111,8 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_current0" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_current1" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_current2" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
 		<method name="get_direction_absolute" qualifiers="const">
 			<return type="int" />
-			<description>
-			</description>
-		</method>
-		<method name="get_distance_counter" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_live_battery_voltage" qualifiers="const">
-			<return type="float" />
 			<description>
 			</description>
 		</method>
@@ -236,59 +121,9 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_power24_available" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_power24_voltage" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_power110_available" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_radio_stop_active" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="get_rail_component" qualifiers="const">
 			<return type="VehicleComponent" />
 			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
-			<description>
-			</description>
-		</method>
-		<method name="get_relay_ground" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_relay_novolt" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_relay_overvoltage" qualifiers="const">
-			<return type="bool" />
-			<description>
-			</description>
-		</method>
-		<method name="get_tachometer_clock_speed" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_tachometer_speed" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="get_tachometer_speed_jump" qualifiers="const">
-			<return type="float" />
 			<description>
 			</description>
 		</method>
@@ -367,23 +202,11 @@
 		</method>
 	</methods>
 	<members>
-		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
-			[code]Light:LMaxVoltage[/code]
-		</member>
 		<member name="cntrl_automatic_cab_activation" type="bool" setter="set_cntrl_automatic_cab_activation" getter="get_cntrl_automatic_cab_activation" default="true">
 			[code]Cntrl.AutomaticCabActivation[/code]
 		</member>
-		<member name="cntrl_battery_start_mode" type="int" setter="set_cntrl_battery_start_mode" getter="get_cntrl_battery_start_mode" enum="RailVehicleController.StartMode" default="1">
-			[code]Cntrl.BatteryStart[/code]
-		</member>
 		<member name="cntrl_compartment_lights_start_mode" type="int" setter="set_cntrl_compartment_lights_start_mode" getter="get_cntrl_compartment_lights_start_mode" enum="RailVehicleController.StartMode" default="0">
 			[code]Cntrl.CompartmentLightsStart[/code]
-		</member>
-		<member name="cntrl_converter_start_delay" type="float" setter="set_cntrl_converter_start_delay" getter="get_cntrl_converter_start_delay" default="0.0">
-			[code]Cntrl.ConverterStartDelay[/code]
-		</member>
-		<member name="cntrl_converter_start_mode" type="int" setter="set_cntrl_converter_start_mode" getter="get_cntrl_converter_start_mode" enum="RailVehicleController.StartMode" default="1">
-			[code]Cntrl.ConverterStart[/code]
 		</member>
 		<member name="cntrl_ground_relay_start_mode" type="int" setter="set_cntrl_ground_relay_start_mode" getter="get_cntrl_ground_relay_start_mode" enum="RailVehicleController.StartMode" default="1">
 			[code]Cntrl.GroundRelayStart[/code]
@@ -436,12 +259,6 @@
 		<signal name="coupler_detached">
 			<param index="0" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
-			</description>
-		</signal>
-		<signal name="power_changed">
-			<param index="0" name="is_powered" type="bool" />
-			<description>
-				Train power state changed
 			</description>
 		</signal>
 		<signal name="trainset_changed">

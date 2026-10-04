@@ -82,6 +82,31 @@ namespace godot {
         return p_mover != nullptr ? p_mover->eimic_real : 0.0;
     }
 
+    bool MoverDriveUnit::get_relay_novolt() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->NoVoltRelay : false;
+    }
+
+    bool MoverDriveUnit::get_relay_overvoltage() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->OvervoltageRelay : false;
+    }
+
+    bool MoverDriveUnit::get_relay_ground() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->GroundRelay : false;
+    }
+
+    int MoverDriveUnit::get_circuit_rlist_size() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->RlistSize : 0;
+    }
+
+    double MoverDriveUnit::get_current(const int p_ammeter) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->ShowCurrent(p_ammeter) : 0.0;
+    }
+
     void MoverDriveUnit::apply_configuration(const RailVehicleEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
         p_mover->EngineType = mover_engine_type(p_engine->get_type());

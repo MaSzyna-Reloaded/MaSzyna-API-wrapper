@@ -40,6 +40,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_radio_stop_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="get_volume" qualifiers="const">
 			<return type="float" />
 			<description>

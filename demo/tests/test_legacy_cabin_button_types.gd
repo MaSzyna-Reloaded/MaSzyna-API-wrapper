@@ -15,7 +15,9 @@ func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
     train = build_vehicle("TestButtonTypes", model)
     for component:VehicleComponent in components:
         train.add_component(component)
-    train.battery_voltage = 110.0
+    # SM42 brings its own power supply, a bare vehicle needs one for the cab's low voltage
+    if model == null:
+        train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     var cab_controls: LegacyCabinControls = LegacyCabinControls.new()
     for control_id:StringName in controls:

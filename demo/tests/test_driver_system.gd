@@ -153,8 +153,6 @@ func test_a_scheduled_update_reaches_the_delegate() -> void:
 func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverCabTest", SM42)
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     var vehicle:RID = train.get_rid()
     # a cab with no controls of its own: every catalog control is there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()
@@ -191,8 +189,6 @@ func test_the_trainset_shows_a_powered_vehicles_line_breaker_open() -> void:
 func test_a_driver_not_in_control_touches_nothing() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverControlTest", SM42)
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     var vehicle:RID = train.get_rid()
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     CabinSystem.vehicle_attach_cab_logic(
@@ -219,8 +215,6 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
 func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverLateDriverTest", SM42)
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     var vehicle:RID = train.get_rid()
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     CabinSystem.vehicle_attach_cab_logic(
@@ -274,8 +268,6 @@ func test_a_new_driver_is_told_to_drive_the_way_it_faces() -> void:
 func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
     var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
     var train:VehicleController = build_vehicle("AIDriverTakeoverTest", SM42)
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     var vehicle:RID = train.get_rid()
     # a cab with no controls of its own: every catalog control is there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()

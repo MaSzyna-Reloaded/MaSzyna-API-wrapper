@@ -21,6 +21,7 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_enabled"), &RailVehicleRadio::get_enabled);
         ClassDB::bind_method(D_METHOD("get_powered"), &RailVehicleRadio::get_powered);
+        ClassDB::bind_method(D_METHOD("get_radio_stop_active"), &RailVehicleRadio::get_radio_stop_active);
         ClassDB::bind_method(D_METHOD("get_channel"), &RailVehicleRadio::get_channel);
         ClassDB::bind_method(D_METHOD("get_volume"), &RailVehicleRadio::get_volume);
 
@@ -68,6 +69,7 @@ namespace godot {
         p_state["radio_powered"] = get_powered();
         p_state["radio_channel"] = get_channel();
         p_state["radio_volume"] = get_volume();
+        p_state["radio_stop_active"] = get_radio_stop_active();
     }
 
     void RailVehicleRadio::_register_commands() {

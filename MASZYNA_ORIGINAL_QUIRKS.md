@@ -221,6 +221,18 @@ interface.
   and the NaN then stays in `V`, `Vel`, the brakes and the wheels for good. Wrapper:
   `FizLineUtil.read_key_values()` keeps a key's first value too; it used to keep the last, and
   that was the BR285's NaN speed (`docs/findings-archive.md`, 2026-09-30).
+* **A FIZ declares no cab, no horns and no radio.** The horns a vehicle has are implied only by its
+  MMD's buttons and sounds (`horn_bt:`/`hornlow_bt:`/`hornhigh_bt:`/`whistle_bt:`, `horn1:`-`horn3:`;
+  `Train.cpp` `OnCommand_horn*activate`, `DynObj.cpp` `WarningSignal`), the radio is the cab's
+  (TTrain's channel and volume), and only an MMD makes a cab. What a FIZ has is `Cntrl.` - on every
+  vehicle, a wagon too, because it carries the brake keys (`BrakeSystem=`, `BrakeDelays=`,
+  `MaxBPMass=`) - and 239 wagons of the data, pedestrians and a bicycle among the "vehicles", write
+  `MCPN=1` there (`zssk/lgs_v1/lgs.fiz`, `road/men/man.fiz`). The original takes any
+  `MainCtrlPosNo > 0` for "has steering" (`Mover.cpp:712, 2380, 3258`; `Driver.cpp:3412`), yet one
+  position is nothing to turn and `IncMainCtrl()` needs an active cab (`Mover.cpp:2380`) that only
+  an MMD gives. Wrapper: the FIZ factory makes a master controller only for `MCPN > 1`
+  (`FizTrainCntrlParser.MASTER_CONTROLLER_MIN_POSITIONS`), and the horns and the radio only for a
+  vehicle that has one; a wagon gets none of the three (`docs/findings-archive.md`, 2026-10-04).
 
 ## Cab definitions (MMD data)
 

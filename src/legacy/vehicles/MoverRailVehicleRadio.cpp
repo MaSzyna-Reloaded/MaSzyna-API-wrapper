@@ -16,6 +16,11 @@ namespace godot {
         return mover != nullptr ? mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable) : false;
     }
 
+    bool MoverRailVehicleRadio::get_radio_stop_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->RadioStopFlag;
+    }
+
     void MoverRailVehicleRadio::_do_process_component(const double p_delta) {
         if (const bool powered = get_powered(); powered != previous_powered) {
             previous_powered = powered;

@@ -39,6 +39,16 @@ namespace godot {
             bool get_main_no_power_pos() const;
             bool get_motor_overload_relay_high_threshold() const;
             double get_eimic_real() const;
+            bool get_relay_novolt() const;
+            bool get_relay_overvoltage() const;
+            bool get_relay_ground() const;
+            int get_circuit_rlist_size() const;
+            /* The engine's ammeters [A]: the total and the two motor branches. A vehicle without
+             * an engine has none - its cab reads the powered vehicle's (TTrain::mvControlled,
+             * Train.cpp:8638). */
+            double get_current0() const;
+            double get_current1() const;
+            double get_current2() const;
 
             enum EngineType {
                 NONE,

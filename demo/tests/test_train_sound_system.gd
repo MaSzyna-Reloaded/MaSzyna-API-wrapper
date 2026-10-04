@@ -34,7 +34,6 @@ const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.
 ## Where the camera stands to hear the vehicle at the origin, and where it cannot
 const NEAR:Vector3 = Vector3(0.0, 0.0, 10.0)
 const FAR:Vector3 = Vector3(0.0, 0.0, 10000.0)
-const BATTERY_VOLTAGE:float = 110.0
 const BOOKEND_LENGTH:float = 1.0
 const MIX_RATE:int = 8000
 const MAX_WAIT:float = 2.0
@@ -61,8 +60,6 @@ func after_each() -> void:
 func _build_vehicle() -> void:
     _physics_node = build_vehicle_node("SoundCullingTest", SM42)
     var controller:VehicleController = VehicleServer.vehicle_get_controller(_physics_node.get_vehicle_rid())
-    controller.battery_voltage = BATTERY_VOLTAGE
-    controller.apply_configuration()
     _vehicle_rid = controller.get_rid()
     _vehicle = RailVehicle3D.new()
     add_child(_vehicle)

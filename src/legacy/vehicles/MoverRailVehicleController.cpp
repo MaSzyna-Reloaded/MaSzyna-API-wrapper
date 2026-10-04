@@ -281,9 +281,6 @@ namespace godot {
 
     void MoverRailVehicleController::compute_movement(const double p_delta) {
         _integrate(p_delta, Integration::FULL);
-        // the Hasler recorder is vehicle state, not integration - it stays here until the state
-        // registry takes it over
-        _update_tachometer(p_delta);
     }
 
     /// The cheap movement of the intermediate physics iterations: the original runs UpdateForce +
@@ -310,13 +307,6 @@ namespace godot {
         }
         // the vehicle is moved by this distance (DynObj.cpp:2439), front-relative
         mover->dMoveLen += mover->V * p_delta;
-        // TTrain::add_distance (Train.cpp:10309) - counted towards the occupied cab, and switched
-        // off for good whenever the low voltage goes
-        if (distance_counter >= 0.0 && (mover->Power24vIsAvailable || mover->Power110vIsAvailable)) {
-            distance_counter += mover->V * p_delta * mover->CabOccupied;
-        } else {
-            distance_counter = DISTANCE_COUNTER_OFF;
-        }
     }
 
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
@@ -424,36 +414,6 @@ namespace godot {
         uncouple(side);
     }
 
-    // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
-    // sound gate (Train.cpp:8323-8335).
-    void MoverRailVehicleController::_update_tachometer(const double p_delta) {
-        const double max_tachometer = 3.0;
-        tachometer_velocity = std::min(std::abs(11.31 * mover->WheelDiameter * mover->nrot), mover->Vmax * 1.05);
-
-        // the needle jumps once per simulation second, with a small random error
-        const double previous_second = std::floor(tachometer_time);
-        tachometer_time += p_delta;
-        if (std::floor(tachometer_time) != previous_second) {
-            tachometer_velocity_jump = tachometer_velocity > 1.0
-                                               ? tachometer_velocity + ((2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                                         UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                        0.5)
-                                               : 0.0;
-        }
-
-        // ticking starts ~1 s after moving off and fades out slowly after stopping
-        if (tachometer_velocity > 1.0) {
-            tachometer_count = std::min(max_tachometer, tachometer_count + (p_delta * 3.0));
-        } else if (tachometer_count > 0.0) {
-            tachometer_count = std::max(0.0, tachometer_count - (p_delta * 0.66));
-        }
-        if (tachometer_count >= 3.0) {
-            tachometer_clock_active = true;
-        } else if (tachometer_count < 1.0) {
-            tachometer_clock_active = false;
-        }
-    }
-
     /* The coupler events are consumed first, then the vehicle compares what it announces. */
     void MoverRailVehicleController::update_state() {
         if (mover != nullptr) {
@@ -532,20 +492,10 @@ namespace godot {
         mover->Cx = get_dimensions_drag_coefficient();
         mover->Floor = static_cast<float>(get_dimensions_floor_height());
 
-        mover->BatteryStart = mover_start_mode(get_cntrl_battery_start_mode());
-        // a Cntrl. key of every vehicle, not of an electric engine (Mover.cpp:10909 LoadFIZ_Cntrl) -
-        // a diesel-electric's compressor runs off the converter too (CompressorPower=Converter)
-        mover->ConverterStart = mover_start_mode(get_cntrl_converter_start_mode());
-        mover->ConverterStartDelay = static_cast<float>(get_cntrl_converter_start_delay());
         mover->GroundRelayStart = mover_start_mode(get_cntrl_ground_relay_start_mode());
         mover->CompartmentLights.start_type = mover_start_mode(get_cntrl_compartment_lights_start_mode());
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();
         mover->InactiveCabFlag = get_cntrl_inactive_cab_flag();
-
-        // FIXME: move to TrainPower
-        mover->BatteryVoltage = get_battery_voltage();
-        // the nominal voltage, which BatteryVoltage then drains from (Mover.cpp:946)
-        mover->NominalBatteryVoltage = static_cast<float>(get_battery_voltage()); // LoadFIZ_Light
         emit_config_changed();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
@@ -565,146 +515,25 @@ namespace godot {
         p_config["train_type"] = get_train_type();
     }
 
-    double MoverRailVehicleController::get_tachometer_speed() const {
-        return mover != nullptr ? tachometer_velocity : 0.0;
-    }
-
-    double MoverRailVehicleController::get_tachometer_speed_jump() const {
-        return mover != nullptr ? tachometer_velocity_jump : 0.0;
-    }
-
-    double MoverRailVehicleController::get_tachometer_clock_speed() const {
-        if (mover == nullptr || !tachometer_clock_active) {
-            return 0.0;
-        }
-        return tachometer_velocity;
-    }
-
     int MoverRailVehicleController::get_direction_absolute() const {
         return mover != nullptr ? mover->DirAbsolute : 0;
-    }
-
-    int MoverRailVehicleController::get_cabin() const {
-        return mover != nullptr ? mover->CabActive : 0;
-    }
-
-    bool MoverRailVehicleController::get_cabin_controleable() const {
-        return mover != nullptr ? mover->IsCabMaster() : false;
     }
 
     int MoverRailVehicleController::get_cabin_occupied() const {
         return mover != nullptr ? mover->CabOccupied : 0;
     }
 
-    double MoverRailVehicleController::get_live_battery_voltage() const {
-        return mover != nullptr ? mover->BatteryVoltage : 0.0;
-    }
-
-    bool MoverRailVehicleController::get_battery_enabled() const {
-        return mover != nullptr ? mover->Battery : false;
-    }
-
-    bool MoverRailVehicleController::get_converter_enabled() const {
-        return mover != nullptr ? mover->ConverterFlag : false;
-    }
-
-    bool MoverRailVehicleController::get_converter_allowed() const {
-        return mover != nullptr ? mover->ConverterAllow : false;
-    }
-
-    double MoverRailVehicleController::get_converter_time_to_start() const {
-        return mover != nullptr ? mover->ConverterStartDelayTimer : 0.0;
-    }
-
-    double MoverRailVehicleController::get_power24_voltage() const {
-        return mover != nullptr ? mover->Power24vVoltage : 0.0;
-    }
-
-    bool MoverRailVehicleController::get_power24_available() const {
-        return mover != nullptr ? mover->Power24vIsAvailable : false;
-    }
-
-    bool MoverRailVehicleController::get_power110_available() const {
-        return mover != nullptr ? mover->Power110vIsAvailable : false;
-    }
-
-    double MoverRailVehicleController::get_current0() const {
-        return mover != nullptr ? mover->ShowCurrent(0) : 0.0;
-    }
-
-    double MoverRailVehicleController::get_current1() const {
-        return mover != nullptr ? mover->ShowCurrent(1) : 0.0;
-    }
-
-    double MoverRailVehicleController::get_current2() const {
-        return mover != nullptr ? mover->ShowCurrent(2) : 0.0;
-    }
-
-    bool MoverRailVehicleController::get_relay_novolt() const {
-        return mover != nullptr ? mover->NoVoltRelay : false;
-    }
-
-    bool MoverRailVehicleController::get_relay_overvoltage() const {
-        return mover != nullptr ? mover->OvervoltageRelay : false;
-    }
-
-    bool MoverRailVehicleController::get_relay_ground() const {
-        return mover != nullptr ? mover->GroundRelay : false;
-    }
-
     int MoverRailVehicleController::get_train_damage() const {
         return mover != nullptr ? mover->DamageFlag : 0;
-    }
-
-    int MoverRailVehicleController::get_controller_second_position() const {
-        return mover != nullptr ? mover->ScndCtrlPos : 0;
-    }
-
-    int MoverRailVehicleController::get_controller_main_position() const {
-        return mover != nullptr ? mover->MainCtrlPos : 0;
-    }
-
-    int MoverRailVehicleController::get_controller_joint_position() const {
-        if (mover == nullptr) {
-            return 0;
-        }
-        if (mover->LocalBrakePosA > 0.0) {
-            return static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo));
-        }
-        return mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos;
-    }
-
-    int MoverRailVehicleController::get_controller_main_actual_position() const {
-        return mover != nullptr ? mover->MainCtrlActualPos : 0;
-    }
-
-    int MoverRailVehicleController::get_controller_second_actual_position() const {
-        return mover != nullptr ? mover->ScndCtrlActualPos : 0;
     }
 
     double MoverRailVehicleController::get_mass_reduced() const {
         return mover != nullptr ? mover->Mred : 0.0;
     }
 
-    bool MoverRailVehicleController::get_controller_main_delayed() const {
-        return mover != nullptr ? mover->DelayCtrlFlag : false;
-    }
-
     bool MoverRailVehicleController::get_coupler_stretched() const {
         return mover != nullptr && (mover->Couplers[end::front].stretch_duration > 0.0f ||
                                     mover->Couplers[end::rear].stretch_duration > 0.0f);
-    }
-
-    int MoverRailVehicleController::get_controller_main_no_power_position() const {
-        return mover != nullptr ? mover->MainCtrlNoPowerPos() : 0;
-    }
-
-    bool MoverRailVehicleController::get_radio_stop_active() const {
-        return mover != nullptr && mover->RadioStopFlag;
-    }
-
-    int MoverRailVehicleController::get_circuit_rlist_size() const {
-        return mover != nullptr ? mover->RlistSize : 0;
     }
 
     double MoverRailVehicleController::get_velocity() const {
@@ -729,14 +558,6 @@ namespace godot {
 
     int MoverRailVehicleController::get_direction() const {
         return mover != nullptr ? mover->DirActive : 0;
-    }
-
-    void MoverRailVehicleController::battery(const bool p_enabled) const {
-        mover->BatterySwitch(p_enabled);
-    }
-
-    void MoverRailVehicleController::converter(const bool p_enabled) const {
-        mover->ConverterSwitch(p_enabled);
     }
 
     // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
@@ -796,16 +617,5 @@ namespace godot {
 
     void MoverRailVehicleController::direction_decrease() const {
         mover->DirectionBackward();
-    }
-
-    // Original engine: TTrain::OnCommand_distancecounteractivate (Train.cpp:1552), single-press form
-    void MoverRailVehicleController::distance_counter_activate(const bool p_pressed) {
-        if (p_pressed) {
-            distance_counter = 0.0;
-        }
-    }
-
-    double MoverRailVehicleController::get_distance_counter() const {
-        return distance_counter;
     }
 } // namespace godot

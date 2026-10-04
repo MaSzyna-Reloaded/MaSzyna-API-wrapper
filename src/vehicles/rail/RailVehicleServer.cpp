@@ -2,6 +2,7 @@
 #include "vehicles/base/VehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehiclePowerSupply.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleWheels.hpp"
 
@@ -1322,8 +1323,11 @@ namespace godot {
                              RailVehicleController::TRAIN_TYPE_EZT;
             const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
             double speed_factor = 0.0;
+            const Ref<RailVehiclePowerSupply> power_supply =
+                    controller->get_rail_component(RailVehicleComponentType::COMPONENT_POWER_SUPPLY);
             if (pressure > (emu ? PANTOGRAPH_EMU_RAISING_PRESSURE : PANTOGRAPH_RAISING_PRESSURE) &&
-                (controller->get_power24_available() || controller->get_power110_available())) {
+                power_supply.is_valid() &&
+                (power_supply->get_power24_available() || power_supply->get_power110_available())) {
                 speed_factor = MAX(0.0, PANTOGRAPH_RAISE_RATE * pressure * p_delta);
             }
             const bool active[2] = {
@@ -1348,7 +1352,7 @@ namespace godot {
                         Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
             const int collecting = int(active[0] && powered->pantographs[0].reaches_wire) +
                                    int(active[1] && powered->pantographs[1].reaches_wire);
-            const double current = collecting > 0 ? controller->get_current0() / collecting : 0.0;
+            const double current = collecting > 0 ? electric_engine->get_current0() / collecting : 0.0;
             double fed = 0.0;
             for (int pantograph = 0; pantograph < 2; ++pantograph) {
                 Pantograph &collector = powered->pantographs[pantograph];

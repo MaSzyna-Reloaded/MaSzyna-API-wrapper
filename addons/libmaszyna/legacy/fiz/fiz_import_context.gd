@@ -24,6 +24,10 @@ var brake_system: int = RailVehicleBrake.BRAKE_SYSTEM_INDIVIDUAL
 ## once it creates the RailVehicleEngine-family node (Cntrl. conventionally precedes Engine:).
 var cntrl_kv: Dictionary = {}
 
+## Light: LMaxVoltage - the battery's nominal voltage, for FizTrainPowerSupplyParser once the
+## whole file is read (Light: and Cntrl. describe the low voltage between them, in either order).
+var battery_voltage: float = 0.0
+
 ## Full Power: key/value set, stashed by FizTrainPowerParser for the concrete engine parser to
 ## consume once it creates the RailVehicleElectricEngine-family node (Power: conventionally precedes
 ## Engine: in real files).

@@ -1196,8 +1196,8 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
-        # Confirmed against VehicleController.cpp:443 - internal_state["current1"] =
-        # p_mover->ShowCurrent(1), matching the original engine's own hvcurrent1: gauge
+        # The engine's current1 (RailVehicleEngine, ShowCurrent(1)) of the controlled vehicle,
+        # matching the original engine's own hvcurrent1: gauge
         # (vehicle/Train.cpp:12137-12142, gauge.AssignFloat(fHCurrent + 1)) in its default path
         # (vehicle/Train.cpp:8638-8641, fHCurrent[1] = mvControlled->ShowCurrent(1) - a plain,
         # unmultiplied passthrough). The one case NOT reproduced: when the vehicle is a
@@ -1206,6 +1206,8 @@ static func _ensure_built() -> void:
         # next unit's ammeter" feature this wrapper has no command/state for at all, out of scope
         # here.
         "hvcurrent1": {
+            # mvControlled's ammeter - a control car's cab shows its motor car's
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinGauge,
             "fixed_fields": {
                 "state_property": "current1",
@@ -1215,9 +1217,9 @@ static func _ensure_built() -> void:
             "mesh_path_field": "target_mesh_path",
         },
         # Same source/shape as hvcurrent1 above, one motor circuit over (Train.cpp:10317
-        # "hvcurrent2:"/"hvcurrent2b:", ShowCurrent(2) - internal_state["current2"] already exposed
-        # by VehicleController.cpp identically to current1).
+        # "hvcurrent2:"/"hvcurrent2b:", ShowCurrent(2)).
         "hvcurrent2": {
+            "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinGauge,
             "fixed_fields": {
                 "state_property": "current2",

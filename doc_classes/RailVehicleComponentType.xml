@@ -27,5 +27,7 @@
 		</constant>
 		<constant name="COMPONENT_MASTER_CONTROLLER" value="20" enum="Type">
 		</constant>
+		<constant name="COMPONENT_POWER_SUPPLY" value="21" enum="Type">
+		</constant>
 	</constants>
 </class>

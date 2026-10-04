@@ -61,8 +61,8 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
         # the line contactors open: to zero, and wait for the camshaft to turn back
         for _step:int in 2:
             step_main(situation, -1)
-    elif not (main == 0 and (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController)
-            .get_controller_main_actual_position() > 0):
+    # set_speed() runs on a master controller only (main_position_count() above)
+    elif not (main == 0 and master_controller(situation.controlling).get_main_actual_position() > 0):
         # from the position it stands at on, every one the speed wanted takes
         for position:int in range(main, POSITION_VELOCITIES.size()):
             if situation.speed.velocity_desired >= POSITION_VELOCITIES[position]:

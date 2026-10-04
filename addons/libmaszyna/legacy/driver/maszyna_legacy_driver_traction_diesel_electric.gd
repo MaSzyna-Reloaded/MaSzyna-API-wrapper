@@ -42,8 +42,8 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, _force:bool = fal
 func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var engine:RailVehicleDieselElectricEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselElectricEngine
-    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
-    if not (engine and engine.is_line_contactor_closed()) and not controlling.get_controller_main_delayed() \
+    var master:RailVehicleMasterController = master_controller(situation.controlling)
+    if not (engine and engine.is_line_contactor_closed()) and not (master and master.get_main_delayed()) \
             and main_powercontroller_position(situation) > 1:
         zero(situation)
     if not situation.trainset.ready and main_powercontroller_position(situation) > 1:

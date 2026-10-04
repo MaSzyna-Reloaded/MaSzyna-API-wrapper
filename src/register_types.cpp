@@ -46,6 +46,7 @@
 #include "legacy/vehicles/MoverRailVehicleLighting.hpp"
 #include "legacy/vehicles/MoverRailVehicleLoad.hpp"
 #include "legacy/vehicles/MoverRailVehicleMasterController.hpp"
+#include "legacy/vehicles/MoverRailVehiclePowerSupply.hpp"
 #include "legacy/vehicles/MoverRailVehicleRadio.hpp"
 #include "legacy/vehicles/MoverRailVehicleSecuritySystem.hpp"
 #include "legacy/vehicles/MoverRailVehicleSpeedControl.hpp"
@@ -130,6 +131,7 @@
 #include "vehicles/rail/RailVehicleMotorParameter.hpp"
 #include "vehicles/rail/RailVehicleNeighbour.hpp"
 #include "vehicles/rail/RailVehiclePhysicsNode.hpp"
+#include "vehicles/rail/RailVehiclePowerSupply.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
 #include "vehicles/rail/RailVehicleRelayListItem.hpp"
 #include "vehicles/rail/RailVehicleRenderingServer.hpp"
@@ -332,6 +334,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(RailVehicleUniversalControllerListItem);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleMasterController);
         GDREGISTER_CLASS(MoverRailVehicleMasterController);
+        GDREGISTER_ABSTRACT_CLASS(RailVehiclePowerSupply);
+        GDREGISTER_CLASS(MoverRailVehiclePowerSupply);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleWipers);
         GDREGISTER_CLASS(MoverRailVehicleWipers);
         GDREGISTER_CLASS(RailVehicleWiperListItem);

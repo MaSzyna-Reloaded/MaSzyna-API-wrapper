@@ -138,21 +138,25 @@ func read(situation:Situation, elapsed:float) -> void:
 ## control_relays(), control_motor_connectors(), control_wheelslip(), Driver.cpp:7925-7952,
 ## 7967-7993, 6200-6217); false when the power and the brakes are to be left alone
 func prepare(situation:Situation) -> bool:
-    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     if action_time >= 0.0:
         if situation.trainset.motor_overload_relay_open:
             zero(situation)
             # tractionnmotoroverloadreset: a press of the relay's reset button
             CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"hold")
             CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"release")
-        if not controlling.get_relay_ground():
+        # an engine without one has no ground relay to reset
+        if engine and not engine.get_relay_ground():
             zero(situation)
             MaszynaLegacyDriverHints.send(situation.vehicle, "ground_relay_reset")
     if retry:
         zero(situation)
         retry = false
     # after a Radio-Stop the power only comes off, nothing else is touched
-    if (VehicleServer.vehicle_get_controller(situation.vehicle) as RailVehicleController).get_radio_stop_active() \
+    var radio:RailVehicleRadio = VehicleServer.vehicle_component_get(
+            situation.vehicle, VehicleComponentType.COMPONENT_RADIO) as RailVehicleRadio
+    if radio and radio.get_radio_stop_active() \
             and VehicleServer.vehicle_get_speed(situation.vehicle) > MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
         zero(situation)
         return false
@@ -162,10 +166,9 @@ func prepare(situation:Situation) -> bool:
     var switches:RailVehicleSwitches = RailVehicleServer.vehicle_component_get(
             situation.controlling, RailVehicleComponentType.COMPONENT_SWITCHES) as RailVehicleSwitches
     var sanding:bool = switches != null and switches.get_sand_active()
-    var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
-            situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    var high_current:bool = engine != null \
-            and absf(engine.get_motor_current()) > SANDING_CURRENT_SHARE * engine.circuit_imax_high
+    var electric:RailVehicleElectricEngine = engine as RailVehicleElectricEngine
+    var high_current:bool = electric != null \
+            and absf(electric.get_motor_current()) > SANDING_CURRENT_SHARE * electric.circuit_imax_high
     if slipping or high_current:
         if not sanding:
             MaszynaLegacyDriverHints.send(situation.controlling, "sand", true)
@@ -315,14 +318,20 @@ func cruise(situation:Situation) -> void:
 ## The master controller's position of the engine the controls drive (mvControlling->MainCtrlPos)
 ## - the cab's controllers act on it (CabinState.CONTROLLED_COMMANDS)
 static func main_controller_position(situation:Situation) -> int:
-    return (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
-            .get_controller_main_position()
+    var master:RailVehicleMasterController = master_controller(situation.controlling)
+    return master.get_main_position() if master else 0
 
 
 ## The second controller's position of the engine the controls drive (ScndCtrlPos)
 static func second_controller_position(situation:Situation) -> int:
-    return (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
-            .get_controller_second_position()
+    var master:RailVehicleMasterController = master_controller(situation.controlling)
+    return master.get_second_position() if master else 0
+
+
+## The master controller of a vehicle, null on one without
+static func master_controller(vehicle:RID) -> RailVehicleMasterController:
+    return RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
 
 
 ## A step of a controller; true when its `position` (one of the two above) moved
@@ -434,9 +443,9 @@ func series_voltage(situation:Situation) -> float:
 func control_series_motor_handles(situation:Situation) -> void:
     var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine
-    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
+    var master:RailVehicleMasterController = master_controller(situation.controlling)
     # the line contactors dropped out: back to zero
-    if not (engine and engine.is_line_contactor_closed()) and not controlling.get_controller_main_delayed() \
+    if not (engine and engine.is_line_contactor_closed()) and not (master and master.get_main_delayed()) \
             and main_powercontroller_position(situation) > 1:
         zero(situation)
     # a heavily burdened substation: series mode, to lessen the load
@@ -464,6 +473,5 @@ func set_series_mode(situation:Situation) -> void:
 
 ## MainCtrlPowerPos(): the master controller's position past the last without power
 static func main_powercontroller_position(situation:Situation) -> int:
-    return main_controller_position(situation) \
-            - (VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController) \
-            .get_controller_main_no_power_position()
+    var master:RailVehicleMasterController = master_controller(situation.controlling)
+    return main_controller_position(situation) - (master.get_main_no_power_position() if master else 0)

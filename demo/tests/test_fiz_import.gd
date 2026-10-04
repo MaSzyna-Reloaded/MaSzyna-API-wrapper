@@ -48,10 +48,45 @@ func test_param_and_dimensions():
 
 func test_cntrl_general_subset():
     assert_true(controller.cntrl_automatic_cab_activation)
-    assert_eq(controller.cntrl_battery_start_mode, RailVehicleController.START_MODE_MANUAL)
     assert_eq(controller.cntrl_ground_relay_start_mode, RailVehicleController.START_MODE_MANUAL)
-    assert_eq(controller.cntrl_converter_start_mode, RailVehicleController.START_MODE_AUTOMATIC)
-    assert_eq(controller.cntrl_converter_start_delay, 10.0)
+    var power_supply: RailVehiclePowerSupply = controller.get_rail_component(
+            RailVehicleComponentType.COMPONENT_POWER_SUPPLY)
+    assert_not_null(power_supply, "Cntrl.'s battery and converter keys describe a power supply")
+    assert_eq(power_supply.cntrl_battery_start_mode, RailVehicleController.START_MODE_MANUAL)
+    assert_eq(power_supply.cntrl_converter_start_mode, RailVehicleController.START_MODE_AUTOMATIC)
+    assert_eq(power_supply.cntrl_converter_start_delay, 10.0)
+
+
+## A vehicle with a cab - a master controller - has the cab's horns and radio, and fills the state
+## of every one of them
+func test_a_vehicle_with_a_cab_has_its_components() -> void:
+    assert_not_null(controller.get_rail_component(RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_HORNS))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_RADIO))
+    var state: Dictionary = controller.get_state()
+    for key: String in ["controller_main_position", "cabin", "tachometer_speed", "distance_counter",
+            "horn_low_active", "radio_enabled", "radio_stop_active", "battery_enabled"]:
+        assert_true(state.has(key), "the dump has %s" % key)
+
+
+## A wagon's FIZ describes no master controller - its Cntrl. carries the brake keys and the MCPN=1
+## real wagons write - no engine, so neither they nor their state are there
+func test_a_wagon_has_no_cab_and_no_engine() -> void:
+    var wagon := RailVehiclePhysicsNode.new()
+    add_child_autofree(wagon)
+    wagon.set_controller(FizVehicleBuilder.build_description_at("res://tests/fixtures/test_wagon.fiz"))
+    var wagon_controller: VehicleController = VehicleServer.vehicle_get_controller(wagon.get_vehicle_rid())
+    await wait_idle_frames(2)
+    assert_null(wagon_controller.get_rail_component(RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER))
+    assert_null(wagon_controller.get_component(VehicleComponentType.COMPONENT_HORNS))
+    assert_null(wagon_controller.get_component(VehicleComponentType.COMPONENT_RADIO))
+    assert_null(wagon_controller.get_component(VehicleComponentType.COMPONENT_ENGINE))
+    var state: Dictionary = wagon_controller.get_state()
+    assert_true(state.has("mass_total"), "the wagon publishes its own state")
+    for key: String in ["controller_main_position", "master_controller_position", "cabin",
+            "tachometer_speed", "horn_low_active", "radio_enabled", "radio_stop_active",
+            "relay_novolt", "circuit_rlist_size", "current0"]:
+        assert_false(state.has(key), "and no %s" % key)
 
 
 func test_wheels():

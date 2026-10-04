@@ -24,6 +24,7 @@ namespace godot {
                 COMPONENT_SECURITY,
                 COMPONENT_UNIVERSAL_CONTROLLER,
                 COMPONENT_MASTER_CONTROLLER,
+                COMPONENT_POWER_SUPPLY,
             };
     };
 } // namespace godot

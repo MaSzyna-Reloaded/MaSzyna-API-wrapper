@@ -30,6 +30,16 @@ namespace godot {
             virtual bool get_motor_overload_relay_high_threshold() const = 0;
             /* The power the EIM controller actually asks for, 0..1, braking below (eimic_real) */
             virtual double get_eimic_real() const = 0;
+            /* The main circuit's no-voltage, overvoltage and ground relays (NoVoltRelay,
+             * OvervoltageRelay, GroundRelay) - what the main switch waits on (Mover.cpp:3361) */
+            virtual bool get_relay_novolt() const = 0;
+            virtual bool get_relay_overvoltage() const = 0;
+            virtual bool get_relay_ground() const = 0;
+            /* The rows of the starting resistor list (RlistSize, RList:/DList:/ffList:) */
+            virtual int get_circuit_rlist_size() const = 0;
+            /* What an ammeter of the engine shows [A]: 0 the total, 1 and 2 a motor branch
+             * (ShowCurrent(), Mover.cpp:2345) */
+            virtual double get_current(int p_ammeter) const = 0;
             virtual void apply_configuration(const RailVehicleEngine *p_engine) const = 0;
             virtual bool main_switch(bool p_enabled) const = 0;
             /* The motor overload relay's high threshold, or the shunting mode of an engine that has

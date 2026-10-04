@@ -65,7 +65,7 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
-    driven.battery_voltage = 110.0
+    driven.add_component(build_power_supply(110.0))
     # the breaker is checked against the voltage in TractionForce(), run only with Power > 0
     driven.power = 5600.0
     var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
@@ -106,7 +106,7 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
-    driven.battery_voltage = 110.0
+    driven.add_component(build_power_supply(110.0))
     driven.power = 5600.0
     driven.mass = 81000.0
     var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()

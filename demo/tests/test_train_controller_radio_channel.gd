@@ -15,8 +15,6 @@ func before_each():
     train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
     radio = MoverRailVehicleRadio.new()
     train.add_component(radio)
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     await wait_idle_frames(2)
 
 func test_defaults_match_the_original_engines_universal_1_to_10_range():

@@ -13,7 +13,7 @@ var engine: RailVehicleElectricSeriesEngine
 
 func before_each():
     train = build_vehicle("TestPantographTrain")
-    train.battery_voltage = 110.0
+    train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     engine = MoverRailVehicleElectricSeriesEngine.new()
     engine.power_source = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR

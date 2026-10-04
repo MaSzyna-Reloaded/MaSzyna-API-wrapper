@@ -4,8 +4,6 @@ var train: VehicleController
 
 func before_each():
     train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
-    train.battery_voltage = 110.0
-    train.apply_configuration()
     await wait_idle_frames(2)
 
 func test_successful_ep_fuse_enabling():

@@ -428,6 +428,16 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 
 ## Vehicles
 
+* **What is left of the 2026-10-04 move of the state to its owners** (`docs/findings-archive.md`):
+  `MoverRailVehicleBrake` fills the driver's brake valve (`brake_controller_position*`,
+  `brake_handle_*`) and the compressor (`compressor_*`) for a wagon too, which has neither; the
+  master controller's, the reverser's and the cab's commands (`main/second_controller_*`,
+  `direction_*`, `cab_activation*`, `cab_change`) and the cab activation config
+  (`cntrl_automatic_cab_activation`, `cntrl_inactive_cab_flag`) are still the controller's while
+  the state is the master controller's; `ground_relay_reset` and `cntrl_ground_relay_start_mode`
+  are the controller's while the relays are the engine's; `RailVehiclePowerSupply.power_changed`
+  has no listener; the driver's code looks a component up per call instead of taking it once.
+
 * **The body of a vehicle built only within the streaming's range** (operator's proposal,
   2026-10-02; `docs/findings-archive.md`, 2026-10-02 Vehicles stage): today
   `RailVehicleRenderingServer.vehicle_set_appearance()` builds every vehicle's models at load

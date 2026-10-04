@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 30
+const FIZ_PARSER_FORMAT_VERSION := 31
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -140,16 +140,17 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     for part_name: String in context.parts:
         target.add_component(context.parts[part_name])
 
-    # RailVehicleHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
-    # mover-level horn count config - see RailVehicleHorns.hpp's header comment: a vehicle's 0-3 horn
-    # complement is implied entirely by which MMD cabin-button/sound labels it declares), so
-    # unlike every other VehicleComponent above it's attached unconditionally here rather than only when
-    # a matching section is found - every VehicleController gets one, same as a hand-authored scene
-    # (e.g. sm_42v_1.tscn's own "Horns" node) would.
-    target.add_component(MoverRailVehicleHorns.new())
-    # The train radio has no FIZ section either - in the original it is the cab's (TTrain's
-    # channel and volume) and the Mover's Radio flag, present on every vehicle
-    target.add_component(MoverRailVehicleRadio.new())
+    var power_supply: RailVehiclePowerSupply = FizTrainPowerSupplyParser.create_node(context)
+    if power_supply:
+        target.add_component(power_supply)
+
+    # The horns and the train radio have no FIZ section to trigger on: the horns are implied by the
+    # MMD's horn buttons and sounds (RailVehicleHorns.hpp), the radio is the cab's (TTrain's channel
+    # and volume). Both belong to a vehicle with a cab - one with a master controller
+    # (FizTrainCntrlParser.MASTER_CONTROLLER_MIN_POSITIONS, MASZYNA_ORIGINAL_QUIRKS.md).
+    if context.get_part("RailVehicleMasterController"):
+        target.add_component(MoverRailVehicleHorns.new())
+        target.add_component(MoverRailVehicleRadio.new())
 
 ## Same on-disk cache used by E3DModelManager for parsed E3D models (addons/libmaszyna/legacy/e3d/
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an

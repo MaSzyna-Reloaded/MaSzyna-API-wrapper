@@ -14,7 +14,7 @@ var lights:LegacyCabinCabLights
 
 func before_each():
     train = build_vehicle("TestCabLights")
-    train.battery_voltage = 110.0
+    train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     await wait_idle_frames(2)
     train.send_command("battery", true)

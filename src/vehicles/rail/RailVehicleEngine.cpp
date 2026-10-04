@@ -54,6 +54,34 @@ namespace godot {
         return drive_unit != nullptr ? drive_unit->get_eimic_real() : 0.0;
     }
 
+    bool RailVehicleEngine::get_relay_novolt() const {
+        return drive_unit != nullptr ? drive_unit->get_relay_novolt() : false;
+    }
+
+    bool RailVehicleEngine::get_relay_overvoltage() const {
+        return drive_unit != nullptr ? drive_unit->get_relay_overvoltage() : false;
+    }
+
+    bool RailVehicleEngine::get_relay_ground() const {
+        return drive_unit != nullptr ? drive_unit->get_relay_ground() : false;
+    }
+
+    int RailVehicleEngine::get_circuit_rlist_size() const {
+        return drive_unit != nullptr ? drive_unit->get_circuit_rlist_size() : 0;
+    }
+
+    double RailVehicleEngine::get_current0() const {
+        return drive_unit != nullptr ? drive_unit->get_current(0) : 0.0;
+    }
+
+    double RailVehicleEngine::get_current1() const {
+        return drive_unit != nullptr ? drive_unit->get_current(1) : 0.0;
+    }
+
+    double RailVehicleEngine::get_current2() const {
+        return drive_unit != nullptr ? drive_unit->get_current(2) : 0.0;
+    }
+
     bool RailVehicleEngine::get_motor_overload_relay_high_threshold() const {
         return drive_unit != nullptr ? drive_unit->get_motor_overload_relay_high_threshold() : false;
     }
@@ -149,6 +177,13 @@ namespace godot {
                 D_METHOD("get_motor_overload_relay_high_threshold"),
                 &RailVehicleEngine::get_motor_overload_relay_high_threshold);
         ClassDB::bind_method(D_METHOD("get_eimic_real"), &RailVehicleEngine::get_eimic_real);
+        ClassDB::bind_method(D_METHOD("get_relay_novolt"), &RailVehicleEngine::get_relay_novolt);
+        ClassDB::bind_method(D_METHOD("get_relay_overvoltage"), &RailVehicleEngine::get_relay_overvoltage);
+        ClassDB::bind_method(D_METHOD("get_relay_ground"), &RailVehicleEngine::get_relay_ground);
+        ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &RailVehicleEngine::get_circuit_rlist_size);
+        ClassDB::bind_method(D_METHOD("get_current0"), &RailVehicleEngine::get_current0);
+        ClassDB::bind_method(D_METHOD("get_current1"), &RailVehicleEngine::get_current1);
+        ClassDB::bind_method(D_METHOD("get_current2"), &RailVehicleEngine::get_current2);
     }
 
     // Original engine: the main switch closing and opening is what "the engine started/stopped"
@@ -188,6 +223,13 @@ namespace godot {
         p_state["main_no_power_pos"] = get_main_no_power_pos();
         p_state["motor_overload_relay_high_threshold"] = get_motor_overload_relay_high_threshold();
         p_state["eimic_real"] = get_eimic_real();
+        p_state["relay_novolt"] = get_relay_novolt();
+        p_state["relay_overvoltage"] = get_relay_overvoltage();
+        p_state["relay_ground"] = get_relay_ground();
+        p_state["circuit_rlist_size"] = get_circuit_rlist_size();
+        p_state["current0"] = get_current0();
+        p_state["current1"] = get_current1();
+        p_state["current2"] = get_current2();
     }
 
     bool RailVehicleEngine::main_switch(const bool p_enabled) {

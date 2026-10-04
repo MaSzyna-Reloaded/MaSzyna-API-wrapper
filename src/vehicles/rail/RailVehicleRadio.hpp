@@ -52,6 +52,8 @@ namespace godot {
             /* Live state */
             virtual bool get_enabled() const = 0;
             virtual bool get_powered() const = 0;
+            /* The Radio-Stop received and not yet acknowledged (RadioStopFlag) */
+            virtual bool get_radio_stop_active() const = 0;
             int get_channel() const;
             double get_volume() const;
 

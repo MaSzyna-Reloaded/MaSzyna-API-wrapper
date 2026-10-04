@@ -8,6 +8,8 @@ var train:VehicleController
 
 func before_each():
     train = build_vehicle("TestCabChangeTrain")
+    # the active cab is the master controller's - a vehicle with a cab has one
+    train.add_component(MoverRailVehicleMasterController.new())
 
 
 ## No cab is active until the crew switches it on (CabActive = 0, MOVER.h:2090; Train.cpp:2430).
@@ -63,6 +65,7 @@ func test_starts_in_cab_two_for_rear_driver():
     physics_node.driver_type = VehicleController.DRIVER_REAR
     add_child_autofree(physics_node)
     var rear_train: VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
+    rear_train.add_component(MoverRailVehicleMasterController.new())
 
     assert_eq(rear_train.get_state()["cabin_occupied"], -1)
     assert_eq(rear_train.get_state()["cabin"], 0)

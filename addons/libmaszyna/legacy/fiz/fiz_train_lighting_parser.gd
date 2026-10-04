@@ -52,10 +52,10 @@ func _parse_light(kv: Dictionary, context: FizImportContext) -> void:
     if kv.has("AlterLMaxVoltage"):
         node.light_alternative_max_voltage = FizLineUtil.get_float(kv, "AlterLMaxVoltage")
 
-    # LMaxVoltage feeds VehicleController.battery_voltage, not a RailVehicleLighting property - see
-    # doc_classes/VehicleController.xml ([code]Light:LMaxVoltage[/code]).
+    # LMaxVoltage is the battery's nominal voltage, RailVehiclePowerSupply's - not a
+    # RailVehicleLighting property (FizTrainPowerSupplyParser)
     if kv.has("LMaxVoltage"):
-        context.controller.battery_voltage = FizLineUtil.get_float(kv, "LMaxVoltage")
+        context.battery_voltage = FizLineUtil.get_float(kv, "LMaxVoltage")
 
 
 func _parse_headlights(kv: Dictionary, context: FizImportContext) -> void:

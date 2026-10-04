@@ -10,7 +10,7 @@ var logic: LegacyCabinLogic
 
 func before_each():
     train = build_vehicle("TestUnmodelledControls")
-    train.battery_voltage = 110.0
+    train.add_component(build_power_supply(110.0))
     train.apply_configuration()
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
     var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()

@@ -52,8 +52,10 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
         return false
     # an engine running off its battery reckons with the battery's voltage (Driver.cpp:3424-3426)
     var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(situation.controlling) as RailVehicleController
-    if engine.power_source == RailVehicleController.POWER_SOURCE_ACCUMULATOR:
-        voltage = controlling.get_live_battery_voltage()
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            situation.controlling, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    if engine.power_source == RailVehicleController.POWER_SOURCE_ACCUMULATOR and power_supply:
+        voltage = power_supply.get_live_battery_voltage()
     if situation.trainset.motor_overload_relay_open or engine.is_pressure_switch_tripped():
         return false
     # past the first position only once the line contactors closed
@@ -142,7 +144,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var next_branches:int = (relays[mini(main + 1, main_max)] as RailVehicleRelayListItem).branch_count
     var moved:bool = true
     if voltage - (min_voltage if next_branches == 1 else series_mode_voltage) > margin \
-            and not (VehicleServer.vehicle_get_controller(situation.vehicle) as RailVehicleController).get_controller_main_delayed():
+            and not master_controller(situation.vehicle).get_main_delayed():
         moved = step_main(situation, 1)
     # no current on the further positions: the relay tripped or the engine is not on
     if engine.get_motor_current() == 0.0 and main_powercontroller_position(situation) > 1:

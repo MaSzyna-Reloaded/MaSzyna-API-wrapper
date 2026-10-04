@@ -86,7 +86,10 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     var valve:Array = PANTOGRAPH_VALVES.get(hint, [])
     var wanted:bool = valve[2] if valve else SWITCHES[hint][1]
     var device:RID = shown_by if shown_by.is_valid() else vehicle
-    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(device) as RailVehicleController
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            device, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            device, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             device, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     var diesel:RailVehicleDieselEngine = engine as RailVehicleDieselEngine
@@ -99,10 +102,10 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     match hint:
         # on once the low voltage is there - a car without a battery of its own takes it from the
         # unit's (batteryon's check, driverhints.cpp:88-91)
-        Hint.BATTERY_ON: shown = controller.get_power24_available()
-        Hint.BATTERY_OFF: shown = controller.get_battery_enabled()
-        Hint.CAB_ACTIVATION: shown = controller.get_cabin_controleable()
-        Hint.CONVERTER_ON, Hint.CONVERTER_OFF: shown = controller.get_converter_enabled()
+        Hint.BATTERY_ON: shown = power_supply.get_power24_available() if power_supply else null
+        Hint.BATTERY_OFF: shown = power_supply.get_battery_enabled() if power_supply else null
+        Hint.CAB_ACTIVATION: shown = master.get_cabin_controleable() if master else null
+        Hint.CONVERTER_ON, Hint.CONVERTER_OFF: shown = power_supply.get_converter_enabled() if power_supply else null
         Hint.RADIO_ON, Hint.RADIO_OFF: shown = radio.get_enabled() if radio else null
         Hint.OIL_PUMP_ON, Hint.OIL_PUMP_OFF: shown = diesel.get_oil_pump_enabled() if diesel else null
         Hint.FUEL_PUMP_ON, Hint.FUEL_PUMP_OFF: shown = diesel.get_fuel_pump_enabled() if diesel else null
@@ -145,12 +148,15 @@ static func open_line_breaker(vehicle:RID, cab:int) -> void:
 ## controller brakes (SM42 6Dg, UCList with IntegratedLocBrake).
 static func set_zero_speed(vehicle:RID, cab:int) -> void:
     # the controllers are the driven engine's (mvControlling)
-    var controlled:RailVehicleController = VehicleServer.vehicle_get_controller(
-            RailVehicleServer.vehicle_find_powered(vehicle)) as RailVehicleController
-    for _step:int in controlled.get_controller_second_position():
+    var controlled:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            RailVehicleServer.vehicle_find_powered(vehicle), RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER
+    ) as RailVehicleMasterController
+    if controlled == null:
+        return
+    for _step:int in controlled.get_second_position():
         CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
     var controller:StringName = master_controller(vehicle, cab)
-    for _step:int in controlled.get_controller_main_position() - controlled.get_controller_main_no_power_position():
+    for _step:int in controlled.get_main_position() - controlled.get_main_no_power_position():
         CabinSystem.act(vehicle, cab, controller, &"decrease")
 
 
@@ -160,15 +166,16 @@ static func set_idle(vehicle:RID, cab:int) -> void:
     var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
     var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
             controlled, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
-    if engine == null:
+    var controlled_controller:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            controlled, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    if engine == null or controlled_controller == null:
         return
     var positions:Array = engine.throttle_table_positions
     var controller:StringName = master_controller(vehicle, cab)
-    var controlled_controller:RailVehicleController = VehicleServer.vehicle_get_controller(controlled) as RailVehicleController
-    var position:int = controlled_controller.get_controller_main_position()
+    var position:int = controlled_controller.get_main_position()
     while position < positions.size() and (positions[position] as RailVehicleThrottlePositionItem).clutch_behavior == 0:
         CabinSystem.act(vehicle, cab, controller, &"increase")
-        var stepped:int = controlled_controller.get_controller_main_position()
+        var stepped:int = controlled_controller.get_main_position()
         if stepped == position:
             return
         position = stepped
@@ -181,9 +188,10 @@ static func master_controller(vehicle:RID, cab:int) -> StringName:
 
 
 static func is_zero_speed(vehicle:RID) -> bool:
-    var controlled:RailVehicleController = VehicleServer.vehicle_get_controller(
-            RailVehicleServer.vehicle_find_powered(vehicle)) as RailVehicleController
-    return controlled.get_controller_main_position() == 0 and controlled.get_controller_second_position() == 0
+    var controlled:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            RailVehicleServer.vehicle_find_powered(vehicle), RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER
+    ) as RailVehicleMasterController
+    return controlled == null or (controlled.get_main_position() == 0 and controlled.get_second_position() == 0)
 
 
 ## directionforward/directionbackward/directionnone (DirectionForward(), ZeroDirection(),

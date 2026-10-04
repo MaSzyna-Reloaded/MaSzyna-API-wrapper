@@ -39,6 +39,14 @@ func build_vehicle_node(train_id:String = "TestTrain", description:VehicleContro
     return physics_node
 
 
+## A power supply whose battery is `battery_voltage` [V] nominal - the low voltage a test's vehicle
+## needs for its cab, which a bare vehicle has none of
+func build_power_supply(battery_voltage:float) -> MoverRailVehiclePowerSupply:
+    var power_supply:MoverRailVehiclePowerSupply = MoverRailVehiclePowerSupply.new()
+    power_supply.battery_voltage = battery_voltage
+    return power_supply
+
+
 ## A straight track along +X to stand vehicles on; the test frees it (TrackServer.track_free(), then
 ## topology_rebuild())
 func build_track(track_name:String, length:float) -> RID:

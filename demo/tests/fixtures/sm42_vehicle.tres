@@ -149,10 +149,12 @@ ca_max_hold_time = 1.0
 [sub_resource type="MoverRailVehicleMasterController" id="MoverRailVehicleMasterController_l2wri"]
 main_position_count = 11
 
-[resource]
+[sub_resource type="MoverRailVehiclePowerSupply" id="MoverRailVehiclePowerSupply_sm42b"]
 battery_voltage = 110.0
+
+[resource]
 type_name = "6d"
-components = Array[VehicleComponent]([SubResource("MoverRailVehicleBrake_22ebc"), SubResource("MoverRailVehicleDieselElectricEngine_wuw0x"), SubResource("MoverRailVehicleSecuritySystem_ehgw0"), SubResource("MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"), SubResource("MoverRailVehicleSpringBrake_ny5ic"), SubResource("MoverRailVehicleMasterController_l2wri")])
+components = Array[VehicleComponent]([SubResource("MoverRailVehicleBrake_22ebc"), SubResource("MoverRailVehicleDieselElectricEngine_wuw0x"), SubResource("MoverRailVehicleSecuritySystem_ehgw0"), SubResource("MoverRailVehicleElectroPneumaticDynamicBrake_1qjyp"), SubResource("MoverRailVehicleSpringBrake_ny5ic"), SubResource("MoverRailVehicleMasterController_l2wri"), SubResource("MoverRailVehiclePowerSupply_sm42b")])
 mass = 74000.0
 power = 590.0
 max_velocity = 90.0

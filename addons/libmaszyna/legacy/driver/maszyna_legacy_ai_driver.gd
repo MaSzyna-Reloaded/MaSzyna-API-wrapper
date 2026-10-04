@@ -222,7 +222,7 @@ func _control_taken(driver:RID) -> void:
     MaszynaLegacyDriverHints.cue(vehicle, CabinSystem.occupied_cab(vehicle), MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
     if VehicleServer.vehicle_get_speed(vehicle) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
         # the active cab, else the one the crew sits in; a vehicle with neither keeps its way
-        var cab:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
+        var cab:int = _active_cab(vehicle)
         if cab == 0:
             cab = CabinSystem.occupied_cab(vehicle)
         if not cab == 0:
@@ -241,7 +241,7 @@ func _control_taken(driver:RID) -> void:
 ## way the driver drives, relative to the cab
 func _prepare_direction(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
-    var cab_active:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
+    var cab_active:int = _active_cab(vehicle)
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction * cab_active)
 
 
@@ -474,10 +474,8 @@ func _update(driver:RID) -> void:
     # what happened to the trainset from outside - a line breaker tripped by a loss of voltage, a
     # relay a player opened - takes the engine's readiness away, and handle_engine() gets it ready
     # again (determine_consist_state(), Driver.cpp:6100-6104)
-    var controlling:RailVehicleController = VehicleServer.vehicle_get_controller(
-            state.trainset.controlling) as RailVehicleController
     if state.trainset.line_breaker_open or state.trainset.converter_overload_relay_open \
-            or not controlling.get_converter_enabled():
+            or not _converter_enabled(state.trainset.controlling):
         state.engine_active = false
     # what its brakes can do - the table again when the trainset or the kind of order changed
     state.braking.read_trainset(
@@ -630,7 +628,7 @@ func _update(driver:RID) -> void:
 func _handle_engine(state:DriverState, vehicle:RID, cab:int) -> void:
     # the original's HACK (Driver.cpp:7226-7231)
     if state.orders[state.order_position] == Order.WAIT_FOR_ORDERS and not state.engine_active \
-            and (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_power24_available():
+            and _power24_available(vehicle):
         _order_next(state, Order.PREPARE_ENGINE)
     if state.orders[state.order_position] == Order.PREPARE_ENGINE:
         if _prepare_engine(state, vehicle, cab):
@@ -690,7 +688,7 @@ func _prepare_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
         missing |= EngineCheck.LINE_BREAKER
     if VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0:
         missing |= EngineCheck.DIRECTION
-    if not (VehicleServer.vehicle_get_controller(controlling) as RailVehicleController).get_converter_enabled():
+    if not _converter_enabled(controlling):
         missing |= EngineCheck.CONVERTER
     var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
             controlling, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
@@ -724,7 +722,7 @@ func _release_engine(state:DriverState, vehicle:RID, cab:int) -> bool:
         MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.BATTERY_OFF)
     var released:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0 \
             and not (engine and engine.get_main_switch_enabled()) \
-            and not (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_power24_available()
+            and not _power24_available(vehicle)
     if released:
         state.engine_active = false
         _order_next(state, Order.WAIT_FOR_ORDERS)
@@ -839,7 +837,7 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
 ## master controller at zero first; the driver's direction follows once the reverser has moved
 func _reverse(state:DriverState, vehicle:RID, cab:int) -> void:
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
-    var cab_active:int = (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin()
+    var cab_active:int = _active_cab(vehicle)
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction_order * cab_active)
     if VehicleServer.vehicle_get_controller(vehicle).get_direction() == state.direction_order * cab_active:
         state.direction = state.direction_order
@@ -857,7 +855,7 @@ func _control_security_system(vehicle:RID, cab:int) -> void:
     var cabsignal:bool = security.get_cabsignal_blinking() and security.get_separate_acknowledge()
     var blinking:bool = security.get_blinking()
     if (cabsignal or blinking) and VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0:
-        MaszynaLegacyDriverHints.set_direction(vehicle, cab, (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_cabin())
+        MaszynaLegacyDriverHints.set_direction(vehicle, cab, _active_cab(vehicle))
     if cabsignal:
         MaszynaLegacyDriverHints.reset_security_system(vehicle, cab, MaszynaLegacyDriverHints.CABSIGNAL_RESET)
     if blinking:
@@ -867,6 +865,27 @@ func _control_security_system(vehicle:RID, cab:int) -> void:
 static func _has_diesel_engine(vehicle:RID) -> bool:
     return VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_ENGINE) is RailVehicleDieselEngine
+
+
+## The vehicle's active cab (CabActive) - none on a vehicle without a master controller
+static func _active_cab(vehicle:RID) -> int:
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    return master.get_cabin() if master else 0
+
+
+## The vehicle's low voltage there - none on a vehicle without a power supply
+static func _power24_available(vehicle:RID) -> bool:
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    return power_supply != null and power_supply.get_power24_available()
+
+
+## The vehicle's converter running - none on a vehicle without a power supply
+static func _converter_enabled(vehicle:RID) -> bool:
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    return power_supply != null and power_supply.get_converter_enabled()
 
 
 ## `Timetable:<name> <velocity> <minutes>` (Driver.cpp:4494-4576): the timetable, the first station

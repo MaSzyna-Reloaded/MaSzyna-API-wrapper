@@ -90,7 +90,10 @@ func test_entering_the_cab_leaves_the_driver_driving() -> void:
 func test_taking_over_activates_the_cab() -> void:
     var physics_node:VehiclePhysicsNode = _first.get_node(_first.controller_path) as VehiclePhysicsNode
     physics_node.driver_type = VehicleController.DRIVER_HEAD
-    VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()).apply_configuration()
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid())
+    # the active cab is the master controller's - a vehicle with a cab has one
+    controller.add_component(MoverRailVehicleMasterController.new())
+    controller.apply_configuration()
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
     assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 0), HEAD_CAB)

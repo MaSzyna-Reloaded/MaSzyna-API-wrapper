@@ -139,9 +139,11 @@ namespace godot {
 
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
                 submodel->get_mesh().is_valid()) {
-                _add_submodel(
+                const RID rid = _add_submodel(
                         p_instance, submodel.ptr(), submodel->get_mesh()->get_rid(),
                         p_material_resolver.resolve(p_instance, submodel.ptr(), translucency), local_transform, chain);
+                RenderingServer::get_singleton()->instance_set_custom_aabb(
+                        rid, _visibility_aabb(submodel->get_mesh()->get_aabb(), local_transform));
             }
             // A free spotlight's light is E3DRenderingServer's (streamed with a range of its own);
             // here it is only the point (and the glare) the original draws where the light is

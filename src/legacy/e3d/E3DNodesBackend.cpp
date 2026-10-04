@@ -29,7 +29,7 @@ namespace godot {
         }
 
         _add_submodels(
-                p_instance, target, target, p_instance.model->get_submodels(), light_roles, String(),
+                p_instance, target, target, p_instance.model->get_submodels(), Transform3D(), light_roles, String(),
                 _get_force_alpha_submodels(p_instance), E3DRenderingServer::TRANSLUCENCY_CUTOUT, p_material_resolver);
         update(p_instance);
     }
@@ -141,9 +141,9 @@ namespace godot {
 
     void E3DNodesBackend::_add_submodels(
             E3DInstanceData &p_instance, Node3D *p_target, Node3D *p_parent, const TypedArray<E3DSubModel> &p_submodels,
-            const HashMap<E3DSubModel *, LightRole> &p_light_roles, const String &p_parent_light_name,
-            const Vector<E3DSubModel *> &p_force_alpha_submodels, const int p_parent_translucency,
-            E3DMaterialResolver &p_material_resolver) {
+            const Transform3D &p_parent_transform, const HashMap<E3DSubModel *, LightRole> &p_light_roles,
+            const String &p_parent_light_name, const Vector<E3DSubModel *> &p_force_alpha_submodels,
+            const int p_parent_translucency, E3DMaterialResolver &p_material_resolver) {
         const bool is_editor = Engine::get_singleton()->is_editor_hint();
 
         for (int i = 0; i < p_submodels.size(); i++) {
@@ -179,6 +179,7 @@ namespace godot {
                 }
             }
 
+            const Transform3D model_transform = p_parent_transform * submodel->get_transform();
             const int translucency = _submodel_translucency(
                     p_instance, submodel.ptr(), p_force_alpha_submodels, p_parent_translucency,
                     E3DRenderingServer::TRANSLUCENCY_BLENDED);
@@ -203,6 +204,9 @@ namespace godot {
                 if (Object::cast_to<MeshInstance3D>(child) != nullptr &&
                     _requires_alpha_depth_prepass_sorting(material)) {
                     geometry->set_sorting_offset(-1.0);
+                }
+                if (submodel->get_mesh().is_valid()) {
+                    geometry->set_custom_aabb(_visibility_aabb(submodel->get_mesh()->get_aabb(), model_transform));
                 }
             }
 
@@ -255,7 +259,7 @@ namespace godot {
             }
 
             _add_submodels(
-                    p_instance, p_target, child, submodel->get_submodels(), p_light_roles, light_name,
+                    p_instance, p_target, child, submodel->get_submodels(), model_transform, p_light_roles, light_name,
                     p_force_alpha_submodels, translucency, p_material_resolver);
         }
     }

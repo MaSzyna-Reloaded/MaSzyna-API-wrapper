@@ -139,6 +139,28 @@ func test_forced_translucent_submodel_is_blended_as_nodes_and_opaque_optimized()
     E3DRenderingServer.material_set_resolver(MaterialManager.get_submodel_material)
 
 
+## A submodel's visibility range is measured from the model's origin, as the original measures one
+## distance for every submodel (opengl33renderer.cpp:3388, 3654); Godot measures it to the centre
+## of the box, which is therefore centred there - two LODs of one part with meshes of their own
+## centres left a gap around their common bound (34WE's body at 80 m).
+func test_submodel_box_is_centred_on_the_model_origin() -> void:
+    var parent: Node3D = Node3D.new()
+    add_child_autoqfree(parent)
+    var model: E3DModel = _create_model()
+    var offset: Vector3 = Vector3(0.0, 2.0, 5.0)
+    model.submodels[0].transform = Transform3D(Basis(), offset)
+    model.submodels[0].submodels[0].transform = Transform3D(Basis(), offset)
+
+    var rid: RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
+    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_build(rid)
+
+    var mesh: MeshInstance3D = parent.get_node(NodePath("light_on00/mesh"))
+    assert_almost_eq(mesh.transform * mesh.custom_aabb.get_center() + offset, Vector3.ZERO, Vector3.ONE * 0.001)
+    assert_true(mesh.custom_aabb.encloses(mesh.get_aabb()), "the box still holds the mesh")
+    E3DRenderingServer.instance_free(rid)
+
+
 func test_dark_light_follows_the_light_level() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)

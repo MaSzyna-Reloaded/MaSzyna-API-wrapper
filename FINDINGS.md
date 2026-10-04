@@ -242,6 +242,10 @@ anything. Open work belongs in `TODO.md`.
   each step)*
 
 ## Godot / GDExtension
+* Godot measures a visibility range to the centre of the instance's box, the original from the
+  model's origin for every submodel: an E3D submodel's box is centred on the model's origin
+  (`E3DInstanceBackend::_visibility_aabb()`), or two LODs with meshes of their own centres leave a
+  gap around their common bound. *(10-04 34WE's body missing at 80 m)*
 * An extension that creates or frees objects off the main thread is not `reloadable`: Godot
   tracks a reloadable extension's instances in a set it does not lock (`_track_instance()`), in
   the editor only - the editor crashed in the engine at ever different places of ours, the game

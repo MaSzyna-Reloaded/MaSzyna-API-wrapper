@@ -218,5 +218,12 @@ namespace godot {
                     const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
                     const Vector<E3DSubModel *> &p_force_alpha_submodels, int p_parent_translucency, int p_forced);
             static bool _requires_alpha_depth_prepass_sorting(const Ref<Material> &p_material);
+            /* The box a submodel is drawn with, in its own space: the mesh's, widened to be centred
+             * on the model's origin. Godot measures a visibility range to the centre of the box
+             * (renderer_scene_cull.cpp:1471), the original from the model's origin, one distance
+             * for every submodel (opengl33renderer.cpp:3388, 3654) - with the mesh's own centre
+             * two LODs of one part leave a gap, or overlap, around their common bound.
+             * p_model_transform: the submodel in the model, as built (an animation moves it on) */
+            static AABB _visibility_aabb(const AABB &p_mesh_aabb, const Transform3D &p_model_transform);
     };
 } // namespace godot

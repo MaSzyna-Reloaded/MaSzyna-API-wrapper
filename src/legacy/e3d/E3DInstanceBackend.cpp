@@ -130,4 +130,10 @@ namespace godot {
         return base_material.is_valid() &&
                base_material->get_transparency() == BaseMaterial3D::TRANSPARENCY_ALPHA_DEPTH_PRE_PASS;
     }
+
+    AABB E3DInstanceBackend::_visibility_aabb(const AABB &p_mesh_aabb, const Transform3D &p_model_transform) {
+        const Vector3 origin = p_model_transform.affine_inverse().xform(Vector3());
+        const Vector3 extent = (p_mesh_aabb.position - origin).abs().max((p_mesh_aabb.get_end() - origin).abs());
+        return {origin - extent, extent * 2.0};
+    }
 } // namespace godot

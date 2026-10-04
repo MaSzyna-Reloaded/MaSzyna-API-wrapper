@@ -3368,3 +3368,21 @@ lighting or the trainset.
 * **Rule:** a value a server takes on `settings_changed` lands only after that signal; whoever
   sets a Project Setting and reads its effect awaits it. A change that moves a command to a
   component greps the tests for the command.
+
+## 2026-10-04 34WE's body missing at 80 m
+
+* **Symptom:** at one distance from the camera a 34WE (Elf) car had no side walls - its interior
+  stood in the open while the nose, the roof and the cars around it were whole (operator's
+  screenshot, taken after the window glass commit, so it looked like the glass).
+* **What proved it:** a headless dump of `34we-b.e3d` and the skins: the body (`pudlo3`) is opaque,
+  the skin's alpha is 255 at every mip level - not the glass. The body has LODs `pudlo3` 0-80 m and
+  `pudlo3_lod1` 80-200 m whose meshes are centred 2 m apart along the car (z 0.17 against 2.17);
+  the nose's LODs share their centre. Godot measures a visibility range to the centre of the
+  instance's box (`renderer_scene_cull.cpp:1471`), the original one distance from the vehicle's
+  origin for every submodel (`opengl33renderer.cpp:3388`, `3654`) - around 80 m one LOD had left
+  and the other not come yet (or, from the other end, both were drawn).
+* **Fix:** both E3D backends give every mesh submodel a custom box: its mesh's, widened to be
+  centred on the model's origin (`E3DInstanceBackend::_visibility_aabb()`). `MeshInstance3D.get_aabb()`
+  still returns the mesh's own box, so picking and cab code are unchanged.
+* **Rule:** a distance the original takes once per model is measured from the model's origin in
+  Godot too; a per-instance box centre is not the same point.

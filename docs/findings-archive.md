@@ -3386,3 +3386,30 @@ lighting or the trainset.
   still returns the mesh's own box, so picking and cab code are unchanged.
 * **Rule:** a distance the original takes once per model is measured from the model's origin in
   Godot too; a per-instance box centre is not the same point.
+
+## 2026-10-04 EU07, ED78 and 36WE reported unstartable, no test guarding the start
+
+* **Symptom:** a tester (build with b5e744f1) could not start an EU07, nor the ED78 and 36WE
+  units: "an interlock does not work after the battery is switched on".
+* **What proved it (so far):** headless probes from the scratchpad, A/B against b5e744f1^ built
+  in a copy (`git archive`, own `build-debug`). 4E, EP07, 36WE and ED78 built from their FIZ get
+  `MoverRailVehiclePowerSupply`; battery -> `power24_available`, pantographs, relay reset, main
+  switch, converter work on HEAD and on the parent alike - through commands, through the cab logic
+  of `4e.mmd` and through the FIZ cache. On l053_poludnie.scn EU06-17, taken over by the player,
+  starts through its cab and runs (122 A, 32 km/h at position 6) - identical on both builds. The
+  state the player takes over: battery on, pantographs up, 3400 V, **ground relay not reset**, main
+  switch open (the original's ReadyFlag leaves the main switch to the driver, Mover.cpp:8915-8921):
+  the main switch closes only after the reverser and the relay reset (`fuse_bt`). Not reproduced
+  yet: an ED78/36WE trainset (a motor car started from a control car's cab), the keyboard path.
+  What did show: no test asserts the low voltage or the start sequence - `test_train_battery.gd`
+  checks only `battery_enabled` (the flag `BatterySwitch()` sets), and b5e744f1 removed
+  `battery_voltage = 110` from five tests without a replacement while they stayed green.
+* **Probe traps on the way:** a vehicle not on a track is not stepped; without a
+  `SimulationRuntime` the clock stands at 0; a standing vehicle nobody drives switches its physics
+  off; headless frames are microseconds (wait in time); a `-s` script does not compile against
+  autoloads (run a scene); a hand-fed wire voltage is zeroed by the step before the cab's tick.
+* **Fix:** not found yet - waiting for the tester's log and the exact step. Rules written into
+  `.claude/skills/testing/SKILL.md` and `mover-parity-check`.
+* **Rule:** a change to a physics component is tested through the whole start sequence; a test it
+  turns red is a suspected regression, never fixed by removing its setup or assertion; physics
+  tests assert only on components' getters and the state dump.

@@ -239,6 +239,13 @@ continuous, as FV4a is in the original (`Train.cpp:1960`).
 
 ## Verifying
 
+- **ABSOLUTE - testing a change to physics** ([[mover-parity-check]], "Testing a change to
+  physics"): a change to a physics component is tested end to end (battery -> low voltage ->
+  pantographs -> main switch -> converter -> traction); a test turned red by it is distrusted -
+  prove it is not a regression before touching it, never strip its setup or assertion; physics
+  tests are blackbox - components' getters and the state dump only, never Mover internals.
+  Breaking this breaks the project's rules.
+
 - After any C++ change, rebuild with `make compile-debug` and check the result.
 - Parse-check each changed or added GDScript first:
   `godot-double --headless --path demo --check-only -s res://<path>.gd`.

@@ -134,6 +134,31 @@ wrapper behavior (e.g. a relay staying latched off until a specific button
 press) is faithful reproduction of real prototype electrical design, not a
 bug.
 
+## Testing a change to physics - ABSOLUTE
+
+Breaking any point below breaks the project's rules. It applies to every change of a physics
+component: the Mover wrapper (`src/legacy/vehicles/`), a vehicle component (`src/vehicles/`), the
+FIZ factory (`addons/libmaszyna/legacy/fiz/`), and the cab logic that commands them.
+
+- **Test it thoroughly, end to end** - not only the field that moved. An electric vehicle is
+  started from cold the way a player does it: battery -> low voltage (`power24_available`) ->
+  pantographs -> relay reset -> main switch -> converter (`power110_available`) -> controller ->
+  traction, through the commands and through the cab. A flag that is set (`battery_enabled`) is no
+  proof that whatever depends on it works.
+- **A test that went red after such a change is distrusted, not fixed.** First prove that it is
+  not a regression - what the test guarded, and why that changed on purpose - and only then change
+  the test. Removing its setup or its assertion until it passes is forbidden. 2026-10-04: b5e744f1
+  took the power supply out of five tests (`battery_voltage = 110` gone, nothing in its place), they
+  stayed green, and the tester could not start an EU07, ED78 or 36WE.
+- **Physics tests are blackbox.** They assert on what the components return - their typed
+  getters (`RailVehiclePowerSupply.get_power24_available()`,
+  `RailVehicleEngine.get_main_switch_enabled()`, ...) - and/or on the state built into the dump
+  (`get_state()`, `VehicleServer.vehicle_dump_state()`). Never on Mover internals, never on a
+  private member, never on how the component got there.
+
+How to write such a test and how to probe a vehicle headless without reading frozen values:
+[[testing]] (`.claude/skills/testing/SKILL.md`).
+
 ## Hard constraints
 
 - **Never edit `src/legacy/maszyna-mover/` (vendored Mover).** All integration lives in

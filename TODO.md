@@ -1177,6 +1177,17 @@ ported, into a delegate.
 
 ## Tests
 
+* **The start sequence has no test** (2026-10-04, `docs/findings-archive.md` "EU07, ED78 and 36WE
+  reported unstartable"): an electric locomotive from a fixture FIZ through battery ->
+  `power24_available` -> pantographs -> relay reset -> `main_switch_enabled` -> converter ->
+  traction, by commands and through the cab (`LegacyCabinLogic`, `CabinSystem.act`); an ED78/36WE
+  fixture whose control car's cab starts the motor car. `test_train_battery.gd` asserts
+  `power24_available` too. The five tests b5e744f1 took `battery_voltage` from
+  (`test_driver_system.gd`, `test_driver_braking.gd`, `test_train_controller_radio_channel.gd`,
+  `test_train_ep_fuse_switch.gd`, `test_train_sound_system.gd`) get `build_power_supply()` back
+  where they relied on the low voltage. The tester's report itself is not reproduced yet: needs
+  the build number, `godot.log` and the step that stops, and a probe of an ED78/36WE trainset.
+
 * A headless GUT run sometimes does not exit after its tests have passed (seen 2026-10-03 on
   `test_scenery_compiled_cache`, `test_cab_lights`, `test_maszyna_scenery_time`, once each; eight
   runs in a row of the last one exited). Not caught with a backtrace yet: attach `gdb -p` to the

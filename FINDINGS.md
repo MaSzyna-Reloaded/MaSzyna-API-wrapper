@@ -468,6 +468,12 @@ anything. Open work belongs in `TODO.md`.
   track and takes the component by `VehicleServer.vehicle_component_get()`. After an operation,
   read the component's getters - the state dump is cached until the next step. *(09-30 the load
   exchange that never ran)*
+* A change to a physics component is tested through the whole start sequence (battery, low
+  voltage, pantographs, main switch, converter, traction); a test it turns red is a suspected
+  regression, never fixed by removing its setup or assertion; physics tests are blackbox
+  (components' getters, the state dump). A headless probe proves nothing unless the vehicle stands
+  on a track, a `SimulationRuntime` runs the clock and somebody drives it. *(10-04 EU07, ED78 and
+  36WE reported unstartable, no test guarding the start)*
 
 * Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
   every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less

@@ -1179,6 +1179,11 @@ ported, into a delegate.
   the original reads the feed pipe (`ScndPipePress`).
 * `VelLimitLastDist` is ported, `SwitchClearDist` only as far as it extends it; the original's
   `moveSwitchFound`/`moveStopPointFound` in the reset of `VelSignalLast` (Driver.cpp:1043) are not.
+* **`movePrimary` - which driver leads a trainset with several crewed vehicles - is not ported**
+  (`TController::primary()`, Driver.h:226-231): the others defer to it (`CheckVehicles()`,
+  Driver.cpp:2410-2430), only it runs e.g. the dynamic brake test (Driver.cpp:7856), and a driver
+  moving into a vehicle through a gangway takes it over from the one there (`MoveTo()`,
+  Driver.cpp:5870; here the one there gets out, `PlayerServer`).
 
 ## Game data (GameDataServer)
 
@@ -1358,11 +1363,8 @@ data-driven"); what it found is fixed except these:
   controls are only the cab model's. It needs the cab logic to drive the vehicle's low-poly and
   exterior instances.
 * **Cab occupancy (persons, cabins, roles) - what is left** (2026-10-05):
-  * The cab change (`RailVehicleServer.person_change_cabin()`): a cab change while the AI drives
-    and the player rides along moves only the player - the original shifts the AI's
-    `CabOccupied` (Train.cpp:10326-10333). The driver of the vehicle entered through a gangway
-    gets out without handing over its `primary()` duties (TController::MoveTo(), Driver.cpp:5868).
-    The AI's `DirectionChange()` after a change (Driver.cpp:2624) follows only from its cabin's kind.
+  * The AI's `DirectionChange()` after a cab change (Driver.cpp:2624) follows only from its
+    cabin's kind.
 * **The departure signal sounds at the vehicle**: the original plays `departuresignal:` from each
   door speaker at its offset (`m_doorspeakers`, DynObj.cpp:6359-6364); door speaker locations are
   not parsed, so `MmdSoundCatalog`'s `departuresignal` is one source per vehicle.

@@ -308,6 +308,12 @@ interface.
   sits in a cabin - a position without one is passed by, and through the gangways the person
   goes on to the nearest vehicle that has a cabin, entering it from the side it came from. The two
   hacks are not ported.
+* **A cab change while the AI drives moves the AI's cab with the player's view.** The player and
+  the AI driver share one `TTrain`: with the AI at the controls Home/End only shifts the vehicle's
+  `CabOccupied` by one (`TTrain::CabChange()`, Train.cpp:10326-10333), so the vehicle counts its
+  driver in whichever cab the player looks from. Wrapper: the player and the driver are persons of
+  their own - only the player's person goes over (`RailVehicleServer.person_change_cabin()`), the
+  AI keeps its cabin and the vehicle answers to it.
 
 ## Scenery data
 

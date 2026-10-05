@@ -920,11 +920,16 @@ namespace godot {
         _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
     }
 
-    void RailVehicleServer::_on_cabin_person_moved(
-            const RID & /* p_person */, const RID &p_cabin, const RID & /* p_previous */) {
+    void
+    RailVehicleServer::_on_cabin_person_moved(const RID & /* p_person */, const RID &p_cabin, const RID &p_previous) {
         const VehicleServer *vehicle_server = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicle_server);
-        _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
+        const RID vehicle = vehicle_server->cabin_get_vehicle(p_cabin);
+        const RID previous_vehicle = vehicle_server->cabin_get_vehicle(p_previous);
+        _update_driver_cabin(vehicle);
+        if (previous_vehicle != vehicle) {
+            _update_driver_cabin(previous_vehicle);
+        }
     }
 
     /* A cabin taken off the vehicle is no cabin of its kind any more */
@@ -941,7 +946,10 @@ namespace godot {
         if (placement == nullptr) {
             return;
         }
-        const RID cabin = _find_driver_cabin(p_vehicle);
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        placement->driver = _find_driver(p_vehicle);
+        const RID cabin = placement->driver.is_valid() ? vehicle_server->person_get_cabin(placement->driver) : RID();
         if (placement->driver_cabin == cabin) {
             return;
         }
@@ -1925,16 +1933,35 @@ namespace godot {
 
     /* Decided again on every change of the occupancy (_update_driver_cabin()), and answered from
      * what was decided */
-    RID RailVehicleServer::_find_driver_cabin(const RID &p_vehicle) const {
+    /* The original has one driver to a vehicle; with more, the vehicle keeps answering to the one
+     * it has while that one drives it - a driver sitting down in another cab takes nothing over -
+     * and when it is gone, to the driver of the cab switched on, else the first of its cabins */
+    RID RailVehicleServer::_find_driver(const RID &p_vehicle) const {
         const VehicleServer *vehicle_server = VehicleServer::get_instance();
         ERR_FAIL_NULL_V(vehicle_server, RID());
-        const TypedArray<RID> cabins = vehicle_server->vehicle_get_cabins(p_vehicle);
-        for (int index = 0; index < cabins.size(); ++index) {
-            if (vehicle_server->cabin_has_person_role(cabins[index], VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER)) {
-                return cabins[index];
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(placement, RID());
+        if (placement->driver.is_valid() && vehicle_server->person_get_vehicle(placement->driver) == p_vehicle &&
+            vehicle_server->person_get_role(placement->driver) == VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER) {
+            return placement->driver;
+        }
+        const TypedArray<VehiclePerson> drivers =
+                vehicle_server->vehicle_list_persons(p_vehicle, VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER);
+        if (drivers.is_empty()) {
+            return RID();
+        }
+        const RailVehicleController *controller = _get_controller(*placement);
+        const RailVehicleCabinKind::Kind active = controller != nullptr ? controller->get_active_cabin_kind()
+                                                                        : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
+        if (active != RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE) {
+            for (int index = 0; index < drivers.size(); ++index) {
+                const Ref<VehiclePerson> driver = drivers[index];
+                if (cabin_get_kind(driver->get_cabin()) == active) {
+                    return driver->get_person();
+                }
             }
         }
-        return RID();
+        return Ref<VehiclePerson>(drivers[0])->get_person();
     }
 
     RID RailVehicleServer::vehicle_get_driver_cabin(const RID &p_vehicle) const {

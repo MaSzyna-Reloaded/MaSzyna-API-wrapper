@@ -74,6 +74,7 @@ namespace godot {
             void cab_deactivation_auto() const override;
             void cab_controls_reset() const override;
             void set_driver_cabin_kind(RailVehicleCabinKind::Kind p_kind) override;
+            RailVehicleCabinKind::Kind get_active_cabin_kind() const override;
             void ground_relay_reset() const override;
             void antislip() const override;
             void main_controller_increase(int p_step = 1) const override;

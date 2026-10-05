@@ -131,16 +131,51 @@ func test_the_driver_cabin_is_where_somebody_drives() -> void:
     assert_signal_emitted_with_parameters(RailVehicleServer, "vehicle_driver_cabin_changed", [vehicle, RID()], 2)
 
 
-func test_the_driver_cabin_is_the_first_cabin_with_a_driver() -> void:
-    var vehicle:RID = await _build_vehicle("DriverCabinFirstTest")
-    var cabins:Array[RID] = VehicleServer.vehicle_get_cabins(vehicle)
+func test_a_driver_sitting_down_in_another_cab_takes_nothing_over() -> void:
+    var vehicle:RID = await _build_vehicle("DriverCabinKeptTest")
+    var front:RID = RailVehicleServer.vehicle_get_front_cabin(vehicle)
+    var rear:RID = RailVehicleServer.vehicle_get_rear_cabin(vehicle)
     var first_driver:RID = _create_person()
     var second_driver:RID = _create_person()
 
-    assert_eq(VehicleServer.cabin_person_enter(cabins[cabins.size() - 1], first_driver, DRIVER), OK)
-    assert_eq(VehicleServer.cabin_person_enter(cabins[0], second_driver, DRIVER), OK)
+    assert_eq(VehicleServer.cabin_person_enter(rear, first_driver, DRIVER), OK)
+    assert_eq(VehicleServer.cabin_person_enter(front, second_driver, DRIVER), OK)
 
-    assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), cabins[0])
+    assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), rear, "the first driver keeps it")
+    VehicleServer.cabin_person_leave(rear, first_driver)
+    assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), front, "until it is gone")
+
+
+func test_a_driver_keeps_the_vehicle_going_over_to_another_cabin() -> void:
+    var vehicle:RID = await _build_vehicle("DriverCabinMovesTest")
+    var machine_room:RID = RailVehicleServer.vehicle_add_machine_room(vehicle)
+    var first_driver:RID = _create_person()
+    var second_driver:RID = _create_person()
+    assert_eq(RailVehicleServer.person_enter_front_cabin(first_driver, vehicle, DRIVER), OK)
+    assert_eq(RailVehicleServer.person_enter_rear_cabin(second_driver, vehicle, DRIVER), OK)
+
+    assert_eq(VehicleServer.cabin_person_move(first_driver, machine_room), OK)
+
+    assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), machine_room, "the driver, not the rear cab")
+
+
+func test_with_its_driver_gone_the_vehicle_answers_to_the_driver_of_the_cab_switched_on() -> void:
+    var vehicle:RID = await _build_vehicle("DriverCabinActiveTest")
+    var machine_room:RID = RailVehicleServer.vehicle_add_machine_room(vehicle)
+    var first_driver:RID = _create_person()
+    var rear_driver:RID = _create_person()
+    var front_driver:RID = _create_person()
+    assert_eq(RailVehicleServer.person_enter_rear_cabin(first_driver, vehicle, DRIVER), OK)
+    VehicleServer.vehicle_send_command(vehicle, "cab_activation", true)
+    assert_eq(VehicleServer.cabin_person_move(first_driver, machine_room), OK)
+    assert_eq(RailVehicleServer.person_enter_rear_cabin(rear_driver, vehicle, DRIVER), OK)
+    assert_eq(RailVehicleServer.person_enter_front_cabin(front_driver, vehicle, DRIVER), OK)
+    assert_eq(int(VehicleServer.vehicle_dump_state(vehicle)["cabin"]), -1, "the rear cab is switched on")
+
+    VehicleServer.cabin_person_leave(machine_room, first_driver)
+
+    assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), RailVehicleServer.vehicle_get_rear_cabin(vehicle),
+            "the rear cab's driver, not the front one's")
 
 
 func test_the_leading_cabin_is_the_way_the_reverser_points() -> void:

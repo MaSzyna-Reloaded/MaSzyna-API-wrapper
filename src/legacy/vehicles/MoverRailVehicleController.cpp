@@ -691,6 +691,21 @@ namespace godot {
         }
     }
 
+    /* CabActive counts as CabOccupied does: +1 the front cab, -1 the rear one, 0 none (Mover.cpp:2654) */
+    RailVehicleCabinKind::Kind MoverRailVehicleController::get_active_cabin_kind() const {
+        if (mover == nullptr) {
+            return RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
+        }
+        switch (mover->CabActive) {
+            case 1:
+                return RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT;
+            case -1:
+                return RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR;
+            default:
+                return RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
+        }
+    }
+
     void MoverRailVehicleController::ground_relay_reset() const {
         mover->RelayReset(Maszyna::maincircuitground);
     }

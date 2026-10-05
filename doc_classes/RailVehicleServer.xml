@@ -320,6 +320,7 @@
 			<return type="RID" />
 			<param index="0" name="vehicle" type="RID" />
 			<description>
+				The cabin whose driver the vehicle answers to - the original's occupied cab; an invalid RID when nobody drives it. With more drivers than one the vehicle keeps the driver it has, whoever else sits down to drive; when that one is gone it takes the driver of the cab switched on, else the first of its cabins with a driver.
 			</description>
 		</method>
 		<method name="vehicle_get_front_cabin" qualifiers="const">

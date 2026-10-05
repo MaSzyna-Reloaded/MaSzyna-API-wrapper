@@ -138,6 +138,9 @@ namespace godot {
              * changes - C++ only and unbound: who sits where is VehicleServer's to tell */
             virtual void set_driver_cabin_kind(RailVehicleCabinKind::Kind p_kind);
             RailVehicleCabinKind::Kind get_driver_cabin_kind() const;
+            /* The kind of cabin whose cab is switched on (CabActive), NONE with none - C++ only:
+             * RailVehicleServer reads it to choose between the drivers of one vehicle */
+            virtual RailVehicleCabinKind::Kind get_active_cabin_kind() const = 0;
             /* The main circuit's ground relay reset (maincircuitgroundreset, RelayReset(), Mover.cpp:6653) */
             virtual void ground_relay_reset() const = 0;
             /* The anti-slip brake pressed (antislip, AntiSlippingButton()) */

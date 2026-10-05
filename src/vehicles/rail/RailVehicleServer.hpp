@@ -172,7 +172,10 @@ namespace godot {
                     double no_voltage_time = 0.0;
                     /* What each of its VehicleServer cabins is, in the railway's words */
                     HashMap<RID, RailVehicleCabinKind::Kind> cabin_kinds;
-                    /* The cabin whose driver the vehicle answers to, last announced */
+                    /* The person the vehicle answers to - kept while it drives it, whoever else
+                     * sits down to drive */
+                    RID driver;
+                    /* That person's cabin, last announced */
                     RID driver_cabin;
             };
 
@@ -229,7 +232,7 @@ namespace godot {
              * controller and announced when it is another one */
             void _update_driver_cabin(const RID &p_vehicle);
             void _hand_driver_cabin_kind(const RID &p_vehicle);
-            RID _find_driver_cabin(const RID &p_vehicle) const;
+            RID _find_driver(const RID &p_vehicle) const;
             RID _vehicle_add_cabin(const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind);
             RID _vehicle_get_cabin(const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind) const;
             Error _person_enter_cabin(
@@ -341,8 +344,9 @@ namespace godot {
             RID vehicle_get_machine_room(const RID &p_vehicle) const;
             RailVehicleCabinKind::Kind cabin_get_kind(const RID &p_cabin) const;
             /* The cabin whose driver the vehicle answers to - the original's occupied cab
-             * (CabOccupied): of the cabins with a driver, the first one the vehicle got; RID() when
-             * nobody drives it */
+             * (CabOccupied); RID() when nobody drives it. With more drivers than one the vehicle
+             * keeps the driver it has; when that one is gone it takes the driver of the cab switched
+             * on (CabActive), else the first of its cabins with a driver */
             RID vehicle_get_driver_cabin(const RID &p_vehicle) const;
             /* The cabin to take a vehicle nobody drives over in: the one facing the way it moves,
              * standing the way its reverser points, else the front one - the other end when it

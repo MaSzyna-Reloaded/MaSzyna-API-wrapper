@@ -114,8 +114,8 @@ cannot gate anything. It also loads `scenery/td.scn` from the game dir - needs a
 
 **`test_zzz_ep07_main_switch_trip_diagnostic` is red** (four assertions: no acceleration past
 2 m/s over five notches, the Hasler never sees a speed), verified at `76ebf3d` without the #184
-work. Check the occupant (`DriverType`)/`CabActive` first - `test_sm42_startup_sequence` was an
-unoccupied cab (`FINDINGS.md`, 2026-09-23).
+work. Check the driver's cabin (`RailVehicleServer.vehicle_get_driver_cabin()`)/`CabActive` first -
+`test_sm42_startup_sequence` was an unoccupied cab (`FINDINGS.md`, 2026-09-23).
 
 **`test_zzz_startup_sr61_v2` is flaky - red in the full run, green alone** (2026-10-05). The engine
 idles at ~431 rpm, below `nmin=660`; in a failing run it reaches ~740 rpm and stalls to 0 within
@@ -605,8 +605,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Tests still take the controller (`RailVehicle3D.get_controller()`,
   `VehicleServer.vehicle_get_controller()`) and call it directly; the plan's "tests go by RID"
   (`VehicleServer`/`RailVehicleServer` calls, a helper returning the RID) is not done.
-* `driver_type` (which end is manned - headdriver/reardriver) stays on the generic
-  `VehicleController`/`VehicleServer`; whether it is a rail value like the type and the load is open.
 * `demo/examples/mover_demo.*` and the `custom_*_train_part` examples still assume components
   as nodes (`$SM42/Brake`) and do not run.
 * `README.md`, "No simulation time is ever dropped": describes `step_frame()`, owed time and
@@ -873,7 +871,8 @@ closes both level crossings). Left:
   direction (`eventfilter`, `TrkFoll.cpp:117-121`) - here the actual direction of travel decides;
   the vehicle's one placement point stands for the primary axle; events with a delay <= -1 queued
   on every move along the same track (`TrkFoll.cpp:249-260`); a crewed vehicle is one with a
-  `driver_type`, the original's `Mechanik->primary()` is one per trainset.
+  DRIVER (`VehicleServer.vehicle_has_person_role()`), the original's `Mechanik->primary()` is one
+  per trainset.
 * **Occupancy counts vehicles, not axles**: a vehicle is on the one track its placement point is
   on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
   occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
@@ -942,9 +941,6 @@ HUD's View > Lua scripts checks and applies code to the running scenario. Left:
 * **`dynobj_putvalues` on a vehicle nobody drives**: the original hands the command to the Mover
   (`MoverParameters->PutCommand`, `lua.cpp:293-294`); here it goes to the driver only, as
   `MaszynaLegacyVehicleCommandAction` does - without a driver it is dropped.
-* **Typing in the Lua editor drives the cab**: cab controls read their keys in `_input`
-  (`cabin_command.gd`, `cabin_button.gd`, `cabin_switch.gd`), before the GUI, so a key bound to a
-  control acts while the editor has the focus - the console has the same problem.
 
 ## Drivers (plan, #297)
 
@@ -962,11 +958,12 @@ ported, into a delegate.
    and the radio on.
 2. **Done: cab logic without the 3D cab** - `LegacyCabinLogic` (a `CabinLogic`) is the vehicle's,
    attached with `CabinSystem.vehicle_attach_cab_logic()` by `MaszynaDynamicTrainCabin` (player) and
-   `SceneryInstancer._build_trainsets()` (AI), registered for the occupied cab and moved along when
-   the crew changes cabs. The cab's controls come from its MMD (`LegacyCabinControls`), not from the
-   widgets. Left widget-side, so an AI caller must pass what a widget would have worked out: the
-   knob and switch position limits and spring return, the horn's value. `LegacyCabinControls` parses
-   the MMD with no random choices - a cab with random includes may differ from the player's widgets.
+   `SceneryInstancer._build_trainsets()` (AI), registered for the driver's cabin (by its RID) and
+   moved along by `CabinSystem.person_change_cabin()`. The cab's controls come from its MMD
+   (`LegacyCabinControls`), not from the widgets. Left widget-side, so an AI caller must pass what
+   a widget would have worked out: the knob and switch position limits and spring return, the
+   horn's value. `LegacyCabinControls` parses the MMD with no random choices - a cab with random
+   includes may differ from the player's widgets.
    The `brake_level_drive` `CabinCommand` node still carries its `command`/`command_param`, now only
    as the guard of its key (the wiring is `LegacyCabinControls.BRAKE_LEVEL_DRIVE`).
 3. **Orders taken; the engine and the turning carried out through the cab.** `DriverSystem` (C++,

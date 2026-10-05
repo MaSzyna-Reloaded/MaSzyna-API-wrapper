@@ -7,6 +7,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="cabin_get_kind" qualifiers="const">
+			<return type="int" enum="RailVehicleCabinKind.Kind" />
+			<param index="0" name="cabin" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="emergency_signal_send">
 			<return type="void" />
 			<param index="0" name="position" type="Vector3" />
@@ -37,6 +43,48 @@
 			<param index="2" name="side" type="int" enum="RailVehicleLoad.PlatformSide" />
 			<description>
 				So much more to get off [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_remove]). The vehicle's [code]load_remove[/code] command (amount, side) comes here.
+			</description>
+		</method>
+		<method name="person_enter_front_cabin">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<param index="2" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="person_enter_machine_room">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<param index="2" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="person_enter_rear_cabin">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<param index="1" name="vehicle" type="RID" />
+			<param index="2" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="person_move_to_front_cabin">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="person_move_to_machine_room">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="person_move_to_rear_cabin">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<description>
 			</description>
 		</method>
 		<method name="trainset_add_vehicle">
@@ -116,6 +164,24 @@
 				Where the trainset's front stands - the track and the distance along it [m].
 			</description>
 		</method>
+		<method name="vehicle_add_front_cabin">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_add_machine_room">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_add_rear_cabin">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_attach">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -173,6 +239,20 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_front_cabin_has_person_role" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_front_cabin_list_persons" qualifiers="const">
+			<return type="VehiclePerson[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_get_coupled" qualifiers="const">
 			<return type="RID[]" />
 			<param index="0" name="vehicle" type="RID" />
@@ -212,6 +292,30 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_driver_cabin" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_front_cabin" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_leading_cabin">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_machine_room" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_get_pantograph_position" qualifiers="const">
 			<return type="Vector3" />
 			<param index="0" name="vehicle" type="RID" />
@@ -226,6 +330,12 @@
 			<param index="1" name="pantograph" type="int" enum="RailVehicleEnginePowerSource.PantographSelector" />
 			<description>
 				Returns how far the lower ([code]x[/code]) and upper ([code]y[/code]) arm of [param pantograph] are raised over lowered, in radians - what is drawn.
+			</description>
+		</method>
+		<method name="vehicle_get_rear_cabin" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
 			</description>
 		</method>
 		<method name="vehicle_get_rids_in_rect" qualifiers="const">
@@ -274,6 +384,20 @@
 				Whether an end of [param vehicle] couples as an automatic coupler, its adapter's or its own.
 			</description>
 		</method>
+		<method name="vehicle_machine_room_has_person_role" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_machine_room_list_persons" qualifiers="const">
+			<return type="VehiclePerson[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_move">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -292,6 +416,20 @@
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="call" type="int" enum="RailVehicleRadio.RadioCall" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_rear_cabin_has_person_role" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_rear_cabin_list_persons" qualifiers="const">
+			<return type="VehiclePerson[]" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="role" type="int" enum="VehiclePersonRole.Role" />
 			<description>
 			</description>
 		</method>
@@ -370,6 +508,12 @@
 			<description>
 			</description>
 		</signal>
+		<signal name="vehicle_driver_cabin_changed">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="cabin" type="RID" />
+			<description>
+			</description>
+		</signal>
 		<signal name="vehicle_emergency_signal_received">
 			<param index="0" name="vehicle" type="RID" />
 			<description>
@@ -385,13 +529,6 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="track" type="RID" />
 			<description>
-			</description>
-		</signal>
-		<signal name="vehicle_occupied_cab_changed">
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<description>
-				The occupied cab of [param vehicle] changed to [param cab]: 1, 0 (machine room) or -1.
 			</description>
 		</signal>
 		<signal name="vehicle_placed">

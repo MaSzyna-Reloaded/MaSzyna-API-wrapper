@@ -40,8 +40,7 @@ var _instrument_light:Callable = _switch.bind(INSTRUMENT_LIGHT)
 var _dashboard_light:Callable = _switch.bind(DASHBOARD_LIGHT)
 var _timetable_light:Callable = _switch.bind(TIMETABLE_LIGHT)
 var _instrument_light_type:InstrumentLightType
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func _init(instrument_light_type:InstrumentLightType) -> void:
@@ -52,24 +51,23 @@ func control_ids() -> Array[StringName]:
     return [CAB_LIGHT, CAB_LIGHT_DIM, INSTRUMENT_LIGHT, DASHBOARD_LIGHT, TIMETABLE_LIGHT]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, CAB_LIGHT, _cab_light)
-    CabinSystem.register_control(vehicle_rid, cab, CAB_LIGHT_DIM, _cab_light_dim)
-    CabinSystem.register_control(vehicle_rid, cab, INSTRUMENT_LIGHT, _instrument_light)
-    CabinSystem.register_control(vehicle_rid, cab, DASHBOARD_LIGHT, _dashboard_light)
-    CabinSystem.register_control(vehicle_rid, cab, TIMETABLE_LIGHT, _timetable_light)
-    CabinSystem.register_process(vehicle_rid, cab, _process)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, CAB_LIGHT, _cab_light)
+    CabinSystem.register_control(cabin, CAB_LIGHT_DIM, _cab_light_dim)
+    CabinSystem.register_control(cabin, INSTRUMENT_LIGHT, _instrument_light)
+    CabinSystem.register_control(cabin, DASHBOARD_LIGHT, _dashboard_light)
+    CabinSystem.register_control(cabin, TIMETABLE_LIGHT, _timetable_light)
+    CabinSystem.register_process(cabin, _process)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CAB_LIGHT, _cab_light)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CAB_LIGHT_DIM, _cab_light_dim)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, INSTRUMENT_LIGHT, _instrument_light)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, DASHBOARD_LIGHT, _dashboard_light)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, TIMETABLE_LIGHT, _timetable_light)
-    CabinSystem.unregister_process(_vehicle_rid, _cab, _process)
+    CabinSystem.unregister_control(_cabin, CAB_LIGHT, _cab_light)
+    CabinSystem.unregister_control(_cabin, CAB_LIGHT_DIM, _cab_light_dim)
+    CabinSystem.unregister_control(_cabin, INSTRUMENT_LIGHT, _instrument_light)
+    CabinSystem.unregister_control(_cabin, DASHBOARD_LIGHT, _dashboard_light)
+    CabinSystem.unregister_control(_cabin, TIMETABLE_LIGHT, _timetable_light)
+    CabinSystem.unregister_process(_cabin, _process)
 
 
 func _switch(state:CabinState, action:StringName, value:Variant, control:StringName) -> Variant:
@@ -93,7 +91,7 @@ func _light(state:CabinState) -> void:
     if powered and bool(state.get_value(CAB_LIGHT, false)):
         level = ((DIMMED_LEVEL if state.get_value(CAB_LIGHT_DIM, false) else 1.0)
                 * (1.0 if power110 else LOW_VOLTAGE_LEVEL))
-    CabinSystem.cab_set_light_level(_vehicle_rid, _cab, level)
+    CabinSystem.cabin_set_light_level(_cabin, level)
     # the instrument, dashboard and timetable lights share the instrument light's power (Train.cpp:9562-9574)
     var light_power:bool = powered
     var instrument_light:bool = bool(state.get_value(INSTRUMENT_LIGHT, false))
@@ -109,8 +107,8 @@ func _light(state:CabinState) -> void:
         InstrumentLightType.HEAD_LIGHTS:
             var lighting:RailVehicleLighting = state.vehicle_component(VehicleComponentType.COMPONENT_LIGHTING) as RailVehicleLighting
             instrument_light = lighting != null and lighting.get_any_light_enabled()
-    CabinSystem.cab_set_instrument_light_enabled(_vehicle_rid, _cab, light_power and instrument_light)
-    CabinSystem.cab_set_dashboard_light_enabled(
-            _vehicle_rid, _cab, light_power and bool(state.get_value(DASHBOARD_LIGHT, false)))
-    CabinSystem.cab_set_timetable_light_enabled(
-            _vehicle_rid, _cab, light_power and bool(state.get_value(TIMETABLE_LIGHT, false)))
+    CabinSystem.cabin_set_instrument_light_enabled(_cabin, light_power and instrument_light)
+    CabinSystem.cabin_set_dashboard_light_enabled(
+            _cabin, light_power and bool(state.get_value(DASHBOARD_LIGHT, false)))
+    CabinSystem.cabin_set_timetable_light_enabled(
+            _cabin, light_power and bool(state.get_value(TIMETABLE_LIGHT, false)))

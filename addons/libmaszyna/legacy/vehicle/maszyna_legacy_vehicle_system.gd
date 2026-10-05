@@ -37,6 +37,9 @@ class Vehicle:
     ## The node its sound players are built under, riding on the vehicle - there once its sound
     ## is built
     var sound_mount:Node3D = null
+    ## The person the scenery seats at the controls (MaszynaDynamicData.driver_type), freed with
+    ## the vehicle; RID() for nobody
+    var driver:RID = RID()
 
 ## A mirror's glass is a submodel with nothing under it, named after a mirror - the data marks
 ## mirrors by name only: dynamic/pkp/elf_v1 "zwierciadlo", dynamic/pkp/impuls_v1 "szybka_lusterko_l"
@@ -59,7 +62,6 @@ func _ready() -> void:
     RailVehicleRenderingServer.vehicle_model_built.connect(_on_vehicle_model_built)
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     if not Engine.is_editor_hint():
-        DriverSystem.vehicle_driven_changed.connect(_on_vehicle_driven_changed)
         _auto_rewident = MaszynaLegacyAutoRewident.new()
         add_child(_auto_rewident)
 
@@ -78,7 +80,7 @@ func vehicle_create(dynamic:MaszynaDynamicData, scene_node_id:int) -> RID:
     return vehicle
 
 
-## The vehicle goes: its handle, its controller, its sound, its cab logic
+## The vehicle goes: its handle, its controller, its sound, its cab logic, its driver
 func vehicle_free(vehicle:RID) -> void:
     var record:Vehicle = _vehicles[vehicle]
     _vehicles.erase(vehicle)
@@ -94,11 +96,19 @@ func vehicle_free(vehicle:RID) -> void:
         record.sound_mount.queue_free()
     VehicleServer.vehicle_free(vehicle)
     VehicleServer.controller_free(record.controller)
+    if record.driver.is_valid():
+        PersonServer.person_free(record.driver)
 
 
 ## false until the vehicle's turn to be built has come - true then even when it failed to load
 func vehicle_is_built(vehicle:RID) -> bool:
     return _vehicles[vehicle].built
+
+
+## The person the scenery seats at the vehicle's controls (MaszynaDynamicData.driver_type) -
+## whatever role it has now; RID() for nobody
+func vehicle_get_driver(vehicle:RID) -> RID:
+    return _vehicles[vehicle].driver
 
 
 ## What the vehicle was created from
@@ -136,8 +146,29 @@ func _build(vehicle:RID, record:Vehicle) -> void:
         return
     VehicleServer.vehicle_set_name(vehicle, dynamic.name)
     VehicleServer.vehicle_set_initial_velocity(vehicle, dynamic.velocity)
-    VehicleServer.vehicle_set_driver_type(vehicle, dynamic.driver_type)
     RailVehicleServer.vehicle_attach(vehicle)
+    # the cabins its MMD defines a cab for, and the scenery's driver at the controls of the front or
+    # the rear one - before its simulation starts, which takes the occupied cab with it
+    # (DynObj.cpp:1940-1963)
+    for kind:RailVehicleCabinKind.Kind in structure.cabin_kinds:
+        match kind:
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
+                RailVehicleServer.vehicle_add_front_cabin(vehicle)
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR:
+                RailVehicleServer.vehicle_add_rear_cabin(vehicle)
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE:
+                RailVehicleServer.vehicle_add_machine_room(vehicle)
+    if not dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_NOBODY:
+        record.driver = PersonServer.person_create()
+        var seated:Error = (
+                RailVehicleServer.person_enter_front_cabin(
+                        record.driver, vehicle, VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER)
+                if dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_HEAD
+                else RailVehicleServer.person_enter_rear_cabin(
+                        record.driver, vehicle, VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER))
+        if not seated == OK:
+            push_warning("MaszynaLegacyVehicleSystem: %s has a driver but no cab to seat it in (%s)" % [
+                    dynamic.name, error_string(seated)])
     # the original's TypeName is the CHK/MMD name (DynObj.cpp:2019)
     RailVehicleServer.vehicle_set_type_name(vehicle, structure.file_name)
     RailVehicleServer.vehicle_set_load(vehicle, dynamic.load_name, dynamic.load_amount)
@@ -159,6 +190,9 @@ func _build(vehicle:RID, record:Vehicle) -> void:
     if Engine.is_editor_hint():
         return
     CabinSystem.vehicle_set_cabin_scene(vehicle, structure.cabin_scene)
+    if structure.cabin_kinds:
+        CabinSystem.vehicle_attach_cab_logic(
+                vehicle, LegacyCabinLogic.from_mmd(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name))
     # its sound is built only once it is within earshot - a scenery's vehicles all built at once
     # spent most of their loading on banks nobody hears
     TrainSoundSystem.vehicle_set_bank_builder(vehicle, _build_sounds.bind(vehicle))
@@ -182,8 +216,8 @@ func _get_structure(dynamic:MaszynaDynamicData) -> MaszynaVehicleStructure:
     # Only the .mmd's own mtime is checked - not every .e3d/.fiz file it transitively references -
     # matching FizVehicleBuilder._make_cache_hash()'s same simplification for FIZ `include`s.
     # The hash cannot see changes to MaszynaRailVehicle3DInstancer's own code - bump this tag
-    # whenever that code changes the cached structure. v31: coupleradapter:; v30 pantfactors:, a pantograph needs only its slider; v29 pendulums; v28 doors and door steps; v27 rolling wheels by the axle arrangement.
-    var cache_hash:String = ("structure-v31:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # whenever that code changes the cached structure. v32: the cabins the MMD defines; v31: coupleradapter:; v30 pantfactors:, a pantograph needs only its slider; v29 pendulums; v28 doors and door steps; v27 rolling wheels by the axle arrangement.
+    var cache_hash:String = ("structure-v32:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
     var structure:MaszynaVehicleStructure = _cache.get(cache_path, cache_hash) as MaszynaVehicleStructure
     if not structure:
         structure = MaszynaRailVehicle3DInstancer.read_structure(
@@ -213,19 +247,6 @@ func _build_sounds(vehicle:RID) -> void:
     for diagnostic:Dictionary in diagnostics:
         if not diagnostic["severity"] == "info":
             push_warning("MaszynaLegacyVehicleSystem: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
-
-
-## The cab logic is the vehicle's while somebody drives it - its driver or the player - whether a
-## 3D cab is shown or not: the AI and the player act on the same controls (CabinSystem). The original
-## keeps a TTrain only for a driven train; a cab of every vehicle at work costs every frame.
-func _on_vehicle_driven_changed(vehicle:RID, driven:bool) -> void:
-    var record:Vehicle = _vehicles.get(vehicle)
-    if not record:
-        return
-    var dynamic:MaszynaDynamicData = record.dynamic
-    CabinSystem.vehicle_attach_cab_logic(
-            vehicle,
-            LegacyCabinLogic.from_mmd(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name) if driven else null)
 
 
 ## The mirrors come and go with their setting on every exterior built as nodes now; the glass of a

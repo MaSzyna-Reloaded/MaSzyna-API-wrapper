@@ -441,13 +441,16 @@ namespace godot {
         _deliver(SIGNAL_MEMORY_VALUES_CHANGED, p_memory, Vector<ScriptArgument>(), RID());
     }
 
+    /* Subscribed to by the cabin's vehicle (maszyna.cabin.on_control_changed(v, fn)) */
     void ScenarioScriptServer::_on_cabin_control_changed(
-            const RID &p_vehicle, const int p_cab, const StringName &p_control_id, const Variant &p_value,
-            const RID &p_context) {
+            const RID &p_cabin, const StringName &p_control_id, const Variant &p_value, const RID &p_context) {
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicles);
+        const RID vehicle = vehicles->cabin_get_vehicle(p_cabin);
         Vector<ScriptArgument> arguments;
-        arguments.push_back({p_cab});
+        arguments.push_back({p_cabin, ScriptHandleKind::CABIN});
         arguments.push_back({p_control_id});
         arguments.push_back({p_value});
-        _deliver(SIGNAL_CABIN_CONTROL_CHANGED, p_vehicle, arguments, p_vehicle, p_context);
+        _deliver(SIGNAL_CABIN_CONTROL_CHANGED, vehicle, arguments, vehicle, p_context);
     }
 } // namespace godot

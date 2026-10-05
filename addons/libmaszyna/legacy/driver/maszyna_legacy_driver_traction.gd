@@ -82,7 +82,7 @@ var retry:bool = false
 ## situation on this update
 class Situation:
     var vehicle:RID
-    var cab:int
+    var cabin:RID
     var controlling:RID
     var order:int
     var speed:MaszynaLegacyDriverSpeed
@@ -146,8 +146,8 @@ func prepare(situation:Situation) -> bool:
         if situation.trainset.motor_overload_relay_open:
             zero(situation)
             # tractionnmotoroverloadreset: a press of the relay's reset button
-            CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"hold")
-            CabinSystem.act(situation.vehicle, situation.cab, MOTOR_OVERLOAD_RESET, &"release")
+            CabinSystem.act(situation.cabin, MOTOR_OVERLOAD_RESET, &"hold")
+            CabinSystem.act(situation.cabin, MOTOR_OVERLOAD_RESET, &"release")
         # an engine without one has no ground relay to reset
         if engine and not engine.get_relay_ground():
             zero(situation)
@@ -339,13 +339,13 @@ static func master_controller(vehicle:RID) -> RailVehicleMasterController:
 ## A step of a controller; true when its `position` (one of the two above) moved
 static func step(situation:Situation, control:StringName, action:StringName, position:Callable) -> bool:
     var before:int = position.call(situation)
-    CabinSystem.act(situation.vehicle, situation.cab, control, action)
+    CabinSystem.act(situation.cabin, control, action)
     return not position.call(situation) == before
 
 
 ## A step of the master controller up (+1) or down (-1); true when it moved
 static func step_main(situation:Situation, direction:int) -> bool:
-    return step(situation, MaszynaLegacyDriverHints.master_controller(situation.vehicle, situation.cab),
+    return step(situation, MaszynaLegacyDriverHints.master_controller(situation.cabin),
             &"increase" if direction > 0 else &"decrease", main_controller_position)
 
 

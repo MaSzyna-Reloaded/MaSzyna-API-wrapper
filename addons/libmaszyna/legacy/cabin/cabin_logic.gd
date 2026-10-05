@@ -2,12 +2,12 @@ extends CabinLogic
 class_name LegacyCabinLogic
 
 ## Cabin logic of the original engine (TTrain, Train.cpp) for one vehicle's cab. It composes the
-## legacy behaviours for the cab and registers their callbacks in CabinSystem for its
-## (vehicle_rid, cab); the cabin state itself stays in CabinSystem.
+## legacy behaviours for the cab and registers their callbacks in CabinSystem for its cabin; the
+## cabin state itself stays in CabinSystem.
 ##
-## It is no part of the 3D cab. CabinSystem holds it for a vehicle somebody drives - the player or
-## the AI (DriverSystem.vehicle_is_driven(), attached by MaszynaLegacyVehicleSystem) - and registers it
-## for the occupied cab, so the AI's CabinSystem.act() does exactly what the player's controls do,
+## It is no part of the 3D cab. CabinSystem holds it for the vehicle (attached by
+## MaszynaLegacyVehicleSystem) and registers it for the cabin its driver sits in - the player or the
+## AI (RailVehicleServer.vehicle_get_driver_cabin()) - so the AI's CabinSystem.act() does exactly what the player's controls do,
 ## without a single widget. What the cab has comes from its MMD (LegacyCabinControls), never from
 ## the widgets built of it.
 ##
@@ -29,12 +29,12 @@ const KEYBOARD_ONLY:Dictionary[StringName, StringName] = {
     LegacyCabinBrakeCharging.CONTROL: LegacyCabinBrakeCharging.ACTION,
 }
 
-## (cab:int) -> LegacyCabinControls - the controls of the cab it is registered for
-var _controls_for_cab:Callable
+## (cabin:RID) -> LegacyCabinControls - the controls of the cabin it is registered for
+var _controls_for_cabin:Callable
 var _behaviours:Array = []
 var _unmodelled_controls:LegacyCabinUnmodelledControls
 var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 ## action -> the control taking the key; the first control naming it keeps it
 var _keys:Dictionary[String, StringName] = {}
 ## control_id -> {kind, target, fields} of the control as the cab has it
@@ -43,8 +43,8 @@ var _bindings:Dictionary[StringName, Dictionary] = {}
 var _held_knobs:Dictionary[StringName, Dictionary] = {}
 
 
-func _init(controls_for_cab:Callable) -> void:
-    _controls_for_cab = controls_for_cab
+func _init(controls_for_cabin:Callable) -> void:
+    _controls_for_cabin = controls_for_cabin
 
 
 ## The logic of the cabs a vehicle's MMD defines
@@ -56,10 +56,10 @@ static func from_mmd(data_path:String, mmd_filename:String, skin:String, vehicle
     return LegacyCabinLogic.new(LegacyCabinControls.from_mmd.bind(abs_mmd_path, parameters))
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
+func register(vehicle_rid:RID, cabin:RID) -> void:
     _vehicle_rid = vehicle_rid
-    _cab = cab
-    var controls:LegacyCabinControls = _controls_for_cab.call(cab)
+    _cabin = cabin
+    var controls:LegacyCabinControls = _controls_for_cabin.call(cabin)
     var main_switch:LegacyCabinMainSwitch = LegacyCabinMainSwitch.new(
             controls.button_type(LegacyCabinMainSwitch.TOGGLE_SWITCH),
             controls.has_control(LegacyCabinMainSwitch.ON_BUTTON),
@@ -129,10 +129,10 @@ func register(vehicle_rid:RID, cab:int) -> void:
     _behaviours.append(LegacyCabinOccupiedCouplerDisconnect.new())
     _behaviours.append(LegacyCabinSpringBrakeShutOff.new())
     for behaviour:RefCounted in _behaviours:
-        behaviour.register(vehicle_rid, cab)
+        behaviour.register(vehicle_rid, cabin)
     # last: whatever is registered by now is taken care of
     _unmodelled_controls = LegacyCabinUnmodelledControls.new(controls)
-    _unmodelled_controls.register(vehicle_rid, cab)
+    _unmodelled_controls.register(vehicle_rid, cabin)
     _behaviours.append(_unmodelled_controls)
     for control_id:StringName in controls.get_control_ids():
         _bind(control_id, controls.wiring(control_id).get("kind", &""), controls.target(control_id),
@@ -194,10 +194,10 @@ func press(control_id:StringName) -> void:
     match binding.get("kind", &""):
         &"button":
             if fields.get("monostable", false):
-                CabinSystem.act(_vehicle_rid, _cab, control_id, &"hold")
+                CabinSystem.act(_cabin, control_id, &"hold")
                 return
             var state_property:String = fields.get("state_property", "")
-            CabinSystem.act(_vehicle_rid, _cab, control_id, &"toggle",
+            CabinSystem.act(_cabin, control_id, &"toggle",
                     not bool(CabinSystem.vehicle_state_value(
                             CabinState.vehicle_of(_vehicle_rid, binding["target"]), state_property, false))
                     if state_property else null)
@@ -216,7 +216,7 @@ func release(control_id:StringName) -> void:
     match binding.get("kind", &""):
         &"button":
             if fields.get("monostable", false):
-                CabinSystem.act(_vehicle_rid, _cab, control_id, &"release")
+                CabinSystem.act(_cabin, control_id, &"release")
         &"switch":
             if fields.get("automatic_reset", false):
                 _move_switch(control_id, binding, fields.get("switch_reset_position", 0))
@@ -245,7 +245,7 @@ func decrease(control_id:StringName) -> void:
 ## Where the switch stands: the vehicle's state behind it, else the position the cab holds for it
 func _switch_position(control_id:StringName, binding:Dictionary) -> int:
     var fields:Dictionary = binding["fields"]
-    var held:Variant = CabinSystem.get_control(_vehicle_rid, _cab, control_id)
+    var held:Variant = CabinSystem.get_control(_cabin, control_id)
     var position:Variant = fields.get("switch_position", 0) if held == null else held
     var state_property:String = fields.get("state_property", "")
     if state_property:
@@ -261,7 +261,7 @@ func _move_switch(control_id:StringName, binding:Dictionary, position:int) -> vo
     var moved:int = clampi(position, fields.get("switch_min_position", 0), fields.get("switch_max_position", 1))
     if moved == current:
         return
-    CabinSystem.act(_vehicle_rid, _cab, control_id, &"increase" if moved > current else &"decrease", moved)
+    CabinSystem.act(_cabin, control_id, &"increase" if moved > current else &"decrease", moved)
 
 
 ## The key holds the knob: it moves `rate` of its range a second while held, from where the vehicle
@@ -271,7 +271,7 @@ func _hold_knob(control_id:StringName, binding:Dictionary, rate:float) -> void:
         _held_knobs[control_id]["rate"] = rate
         return
     var fields:Dictionary = binding["fields"]
-    var value:Variant = CabinSystem.get_control(_vehicle_rid, _cab, control_id)
+    var value:Variant = CabinSystem.get_control(_cabin, control_id)
     var state_property:String = fields.get("state_property", "")
     if state_property:
         value = CabinSystem.vehicle_state_value(CabinState.vehicle_of(_vehicle_rid, binding["target"]), state_property, value)
@@ -296,4 +296,4 @@ func _on_knobs_held() -> void:
         if value == held["value"]:
             continue
         held["value"] = value
-        CabinSystem.act(_vehicle_rid, _cab, control_id, &"set", value)
+        CabinSystem.act(_cabin, control_id, &"set", value)

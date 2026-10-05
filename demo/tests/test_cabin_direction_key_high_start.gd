@@ -20,12 +20,12 @@ func after_each() -> void:
 
 func _drive(fiz_path:String) -> RID:
     var train:VehicleController = build_vehicle("TestDirectionKey", FizVehicleBuilder.build_description_at(fiz_path),
-            0.0, VehicleController.DRIVER_HEAD)
+            0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var vehicle_rid:RID = train.get_rid()
     await wait_idle_frames(2)
     var controls:LegacyCabinControls = LegacyCabinControls.new()
-    logic = LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return controls)
-    logic.register(vehicle_rid, 1)
+    logic = LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls)
+    logic.register(vehicle_rid, RailVehicleServer.vehicle_get_front_cabin(vehicle_rid))
     VehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
     VehicleServer.vehicle_send_command(vehicle_rid, "cab_activation", true)
     await wait_idle_frames(2)

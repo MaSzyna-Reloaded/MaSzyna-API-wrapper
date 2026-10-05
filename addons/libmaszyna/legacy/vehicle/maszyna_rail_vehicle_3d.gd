@@ -57,10 +57,8 @@ signal vehicle_built
             _dirty = true
             set_process(true)
 
-## Who is aboard, in the words the `.scn` uses for it - `headdriver`, `reardriver` or `nobody`
-## (DynObj.cpp:1812-1825). Not the number of a cab: it says which cab is occupied, and a vehicle
-## nobody occupies is not simulated at all (Driver.cpp:2126).
-@export var driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY:
+## Who is aboard, in the words the `.scn` uses for it (MaszynaDynamicData.DriverType)
+@export var driver_type:MaszynaDynamicData.DriverType = MaszynaDynamicData.DriverType.DRIVER_NOBODY:
     set(x):
         if not x == driver_type:
             driver_type = x

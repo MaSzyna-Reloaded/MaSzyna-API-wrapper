@@ -35,3 +35,7 @@ class_name MaszynaVehicleStructure
 
 ## The cab is genuinely a tree of widgets, so it stays a scene of its own.
 @export var cabin_scene:PackedScene = null
+
+## The cabins the MMD defines a cab for (MmdCabinInstancer.parse_cabin_kinds()) - the ones the
+## vehicle gets, and can be entered by
+@export var cabin_kinds:Array[RailVehicleCabinKind.Kind] = []

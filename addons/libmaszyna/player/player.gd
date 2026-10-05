@@ -72,6 +72,7 @@ func _ready() -> void:
     glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
     CabinHUDMouseSystem.mouse_set_camera(_cabin_camera.get_instance_id())
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
+    VehicleServer.cabin_person_moved.connect(_on_cabin_person_moved)
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
@@ -82,6 +83,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
+    VehicleServer.cabin_person_moved.disconnect(_on_cabin_person_moved)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
@@ -149,9 +151,11 @@ func _input(event):
 
     # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
     if driven.is_valid() and event.is_action_pressed("cabin_previous", false, true):
-        VehicleServer.vehicle_send_command(driven, "cab_change", 1)
+        CabinSystem.person_change_cabin(
+                PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
     if driven.is_valid() and event.is_action_pressed("cabin_next", false, true):
-        VehicleServer.vehicle_send_command(driven, "cab_change", -1)
+        CabinSystem.person_change_cabin(
+                PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
 
     if walking:
         _walk_mode_input(event)
@@ -159,11 +163,9 @@ func _input(event):
     # Train.cpp:1088-1118 - Shift+Q hands the player's train to its driver, Q takes it back
     if driven.is_valid():
         if event.is_action_pressed("ai_driver_enable", false, true):
-            # switched off first, as the original does, so that a driver already driving starts over
-            DriverSystem.vehicle_set_control_active(driven, false)
-            DriverSystem.vehicle_set_control_active(driven, true)
+            PlayerServer.player_hand_over_vehicle()
         elif event.is_action_pressed("ai_driver_disable", false, true):
-            DriverSystem.vehicle_set_control_active(driven, false)
+            PlayerServer.player_take_back_vehicle()
 
     # drivermode.cpp:803-804 - Shift+F4 follows the player's train and cycles its views
     if event.is_action_pressed("external_view_cycle", false, true):
@@ -261,9 +263,16 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
         _show_cabin(vehicle)
 
 
-## The vehicle's cab interior shown, the cab camera in it, where the cab puts the driver
+## The player went over to another cabin of the vehicle: its interior is shown instead
+func _on_cabin_person_moved(person:RID, cabin:RID, _previous:RID) -> void:
+    if person == PlayerServer.player_get_person() and _cabin_vehicle.is_valid():
+        CabinSystem.cabin_show(cabin, self)
+
+
+## The interior of the player's cabin of the vehicle shown, the cab camera in it, where the cab puts
+## the driver
 func _show_cabin(vehicle:RID) -> void:
-    var cabin:Cabin3D = CabinSystem.vehicle_show_cabin(vehicle, self)
+    var cabin:Cabin3D = CabinSystem.cabin_show(VehicleServer.person_get_cabin(PlayerServer.player_get_person()), self)
     if not cabin:
         return
     _cabin_vehicle = vehicle
@@ -282,8 +291,8 @@ func _hide_cabin() -> void:
     _cabin_vehicle = RID()
 
 
-## The cab camera at the driver's place of the cab, within its bounds, looking the way the occupied
-## cab faces (drivermode.cpp:1071 VectorFront * CabOccupied - the cab carries the vehicle's turn
+## The cab camera at the driver's place of the cab, within its bounds, looking the way the cab
+## faces (drivermode.cpp:1071 VectorFront * CabOccupied - the cab carries the vehicle's turn
 ## already, so cab 1 turns back from it)
 func _on_cabin_camera_configuration_changed() -> void:
     var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
@@ -292,7 +301,8 @@ func _on_cabin_camera_configuration_changed() -> void:
     _cabin_camera.bound_max = cabin.get_camera_bound_max() + Vector3.UP * CABIN_BOUND_CEILING_RAISE
     _cabin_camera.global_transform = cabin.get_camera_transform()
     var basis:Basis = cabin.global_basis
-    var facing:Basis = basis if cabin.get_cab_number() < 0 else basis.rotated(Vector3.UP, PI)
+    var rear:bool = RailVehicleServer.cabin_get_kind(cabin.get_cabin()) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
+    var facing:Basis = basis if rear else basis.rotated(Vector3.UP, PI)
     # turned by the MMD's driverNangle: from that facing, yaw then pitch - the original's frame is
     # Godot's turned about the vertical, not mirrored, so the signs carry over (Camera.cpp:205-216)
     var view_angle:Vector2 = cabin.get_driver_view_angle()
@@ -323,10 +333,11 @@ func _on_camera_changed() -> void:
     var camera:Camera3D = _mode_camera()
     if camera == free_camera and previous == _cabin_camera and _cabin_vehicle.is_valid():
         var body:Transform3D = RailVehicleServer.vehicle_get_transform(_cabin_vehicle)
-        var cabin_occupied:int = (
-                VehicleServer.vehicle_get_controller(_cabin_vehicle) as RailVehicleController).get_cabin_occupied()
-        # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z
-        var side:Vector3 = -body.basis.x.normalized() * (1 if cabin_occupied == 0 else cabin_occupied)
+        var rear:bool = RailVehicleServer.cabin_get_kind(VehicleServer.person_get_cabin(
+                PlayerServer.player_get_person())) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
+        # MaSzyna's vehicle frame is (left, up, front), Godot vehicles face -Z; the side of the
+        # cab the player sits in (CabOccupied, the machine room's as the front one's)
+        var side:Vector3 = -body.basis.x.normalized() * (-1 if rear else 1)
         var width:float = VehicleServer.vehicle_get_dimensions(_cabin_vehicle).x
         var head:Vector3 = _cabin_camera.global_position
         var position:Vector3 = Vector3(head.x, body.origin.y, head.z) \

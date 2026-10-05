@@ -7,6 +7,11 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_cabin" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="get_camera_shake_offset" qualifiers="const">
 			<return type="Vector3" />
 			<description>
@@ -37,6 +42,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="set_cabin">
+			<return type="void" />
+			<param index="0" name="cabin" type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="set_vehicle_rid">
 			<return type="void" />
 			<param index="0" name="vehicle_rid" type="RID" />
@@ -45,8 +56,6 @@
 		</method>
 	</methods>
 	<members>
-		<member name="cab_number" type="int" setter="set_cab_number" getter="get_cab_number" default="1">
-		</member>
 		<member name="cab_window_open" type="bool" setter="set_cab_window_open" getter="get_cab_window_open" default="false">
 		</member>
 		<member name="camera_bound_enabled" type="bool" setter="set_camera_bound_enabled" getter="get_camera_bound_enabled" default="false">
@@ -87,6 +96,11 @@
 		</member>
 	</members>
 	<signals>
+		<signal name="cabin_changed">
+			<param index="0" name="cabin" type="RID" />
+			<description>
+			</description>
+		</signal>
 		<signal name="cabin_ready">
 			<description>
 			</description>

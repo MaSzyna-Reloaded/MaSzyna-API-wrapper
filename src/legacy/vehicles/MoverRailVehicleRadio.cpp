@@ -1,6 +1,7 @@
 #include "MoverRailVehicleRadio.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 
 namespace godot {
@@ -63,8 +64,9 @@ namespace godot {
     bool MoverRailVehicleRadio::radio_stop_receive() {
         TMoverParameters *mover = get_mover();
         const VehicleController *controller = train_controller_node;
-        if (mover == nullptr || controller == nullptr ||
-            controller->get_driver_type() == VehicleController::DRIVER_NOBODY ||
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        if (mover == nullptr || controller == nullptr || vehicles == nullptr ||
+            !vehicles->vehicle_has_person_role(controller->get_rid(), VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER) ||
             !mover->SecuritySystem.radiostop_available() || !mover->Radio) {
             return false;
         }

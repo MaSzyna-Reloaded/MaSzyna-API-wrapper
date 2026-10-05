@@ -72,9 +72,9 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if not engine.get_main_switch_enabled():
         set_cruise_control(situation, 0.0)
         set_second_controller(situation, 0)
-        MaszynaLegacyDriverHints.close_line_breaker(situation.vehicle, situation.cab)
-        MaszynaLegacyDriverHints.cue(situation.vehicle, situation.cab, MaszynaLegacyDriverHints.Hint.CONVERTER_ON)
-        MaszynaLegacyDriverHints.cue(situation.vehicle, situation.cab, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON)
+        MaszynaLegacyDriverHints.close_line_breaker(situation.vehicle, situation.cabin)
+        MaszynaLegacyDriverHints.cue(situation.vehicle, situation.cabin, MaszynaLegacyDriverHints.Hint.CONVERTER_ON)
+        MaszynaLegacyDriverHints.cue(situation.vehicle, situation.cabin, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON)
     return moved
 
 

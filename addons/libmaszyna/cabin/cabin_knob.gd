@@ -231,8 +231,8 @@ func _play_sound(previous_value:float) -> void:
 func _set_value_from_input(p_value:float) -> void:
     var new_value:float = clampf(p_value, value_min, value_max)
     # a drag sets the value itself, the pixels-to-value step being the widget's
-    if not new_value == value and _vehicle_rid and control_id:
-        CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, &"set", new_value)
+    if not new_value == value and _cabin and control_id:
+        CabinSystem.act(_cabin, control_id, &"set", new_value)
     value = new_value
 
 func _process_dirty(delta):

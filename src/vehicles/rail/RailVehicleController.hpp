@@ -1,5 +1,6 @@
 #pragma once
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleComponentType.hpp"
 
 namespace godot {
@@ -19,7 +20,7 @@ namespace godot {
             static constexpr double DEFAULT_COUPLER_ADAPTER_HEIGHT = 0.95;
 
         private:
-            int prev_cabin_occupied = 0;
+            RailVehicleCabinKind::Kind driver_cabin_kind = RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
             String coupler_adapter_model = DEFAULT_COUPLER_ADAPTER_MODEL;
             double coupler_adapter_length = DEFAULT_COUPLER_ADAPTER_LENGTH;
             double coupler_adapter_height = DEFAULT_COUPLER_ADAPTER_HEIGHT;
@@ -36,7 +37,6 @@ namespace godot {
              * draws the vehicle, a component of another kind - has the same right to it as a
              * script has. */
             virtual int get_direction_absolute() const = 0;
-            virtual int get_cabin_occupied() const = 0;
             virtual int get_train_damage() const = 0;
             /* The rotating masses' share of the vehicle's mass [kg] (Mred) - as the simulation
              * holds it, which the wheels may have derived from their own inertia */
@@ -115,7 +115,6 @@ namespace godot {
                 POWER_TYPE_STEAM
             };
 
-            static const char *cabin_occupied_changed;
             /// The trainset this vehicle belongs to gained or lost a vehicle
             static const char *trainset_changed_signal;
             /// One coupling flag attached / detached, once per event. Two signals rather than
@@ -129,7 +128,16 @@ namespace godot {
 
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
-            virtual void cab_change(int p_direction) const = 0;
+            /* The cab switched off as the vehicle switches it off by itself, when the FIZ lets it
+             * (CabDeactivisationAuto(), Train.cpp:10336) */
+            virtual void cab_deactivation_auto() const = 0;
+            /* The controls a cab change leaves at rest - the brake handle at its neutral, the
+             * controllers at zero (TMoverParameters::ChangeCab(), Mover.cpp:735-749) */
+            virtual void cab_controls_reset() const = 0;
+            /* The kind of cabin its driver sits in, handed down by RailVehicleServer whenever it
+             * changes - C++ only and unbound: who sits where is VehicleServer's to tell */
+            virtual void set_driver_cabin_kind(RailVehicleCabinKind::Kind p_kind);
+            RailVehicleCabinKind::Kind get_driver_cabin_kind() const;
             /* The main circuit's ground relay reset (maincircuitgroundreset, RelayReset(), Mover.cpp:6653) */
             virtual void ground_relay_reset() const = 0;
             /* The anti-slip brake pressed (antislip, AntiSlippingButton()) */
@@ -205,7 +213,6 @@ namespace godot {
              * throwaway one the FIZ builder saves as a description - has no state to give
              * and answers an empty dictionary. */
             Dictionary get_state() override;
-            void update_state() override;
 
             /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
              * as TypeName (DynObj.cpp:2019) */

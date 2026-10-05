@@ -101,11 +101,12 @@ The command and state names are the vehicle's own - the ones the console and the
 
 | Function | Returns / does |
 |---|---|
-| `act(v, cab, control_id, action, value)` | manipulates a control; `action` is `"increase"`, `"decrease"`, `"hold"`, `"release"`, `"toggle"` or `"set"` |
-| `control(v, cab, control_id)` | where the control stands |
-| `controls(v, cab)` | the ids of the cab's controls |
-| `occupied_cab(v)` | `1`, `0` (machine room) or `-1` |
-| `on_control_changed(v, fn)` | `fn(cab, control_id, value)` when a control of the vehicle changes |
+| `act(cabin, control_id, action, value)` | manipulates a control; `action` is `"increase"`, `"decrease"`, `"hold"`, `"release"`, `"toggle"` or `"set"` |
+| `control(cabin, control_id)` | where the control stands |
+| `controls(cabin)` | the ids of the cabin's controls |
+| `driver_cabin(v)` | the cabin the vehicle's driver sits in, `nil` when nobody drives it |
+| `front_cabin(v)`, `rear_cabin(v)`, `machine_room(v)` | the vehicle's cabin of that kind, `nil` when it has none |
+| `on_control_changed(v, fn)` | `fn(cabin, control_id, value)` when a control of the vehicle's cabins changes |
 
 ### `maszyna.driver` - the vehicle's driver
 

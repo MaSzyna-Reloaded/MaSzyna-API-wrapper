@@ -16,12 +16,9 @@ const BATTERY_VOLTAGE:float = 110.0
 class RecordingCabin extends ScenarioScriptCabinDelegate:
     var acts:Array = []
 
-    func _act(vehicle:RID, cab:int, control_id:StringName, action:StringName, value:Variant) -> Variant:
-        acts.append([vehicle, cab, control_id, action, value])
+    func _act(cabin:RID, control_id:StringName, action:StringName, value:Variant) -> Variant:
+        acts.append([cabin, control_id, action, value])
         return true
-
-    func _get_occupied_cab(_vehicle:RID) -> int:
-        return -1
 
 
 class RecordingDriver extends DriverDelegate:
@@ -175,12 +172,11 @@ func test_a_subscription_runs_through_the_queue_until_cancelled() -> void:
 
 
 func test_a_vehicle_takes_commands_and_reports_them() -> void:
-    var controller:VehicleController = build_vehicle("LuaTestTrain")
+    var controller:VehicleController = build_vehicle(
+            "LuaTestTrain", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     controller.add_component(build_power_supply(BATTERY_VOLTAGE))
-    var driver:RID = DriverSystem.driver_create()
     var recording:RecordingDriver = RecordingDriver.new()
-    DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
-    DriverSystem.driver_attach_delegate(driver, recording)
+    DriverSystem.driver_attach_delegate(get_vehicle_driver(controller.get_rid()), recording)
     var source:String = (
         "local output = maszyna.memory.find('lua_test_output')\n"
         + "local v = maszyna.vehicle.find('LuaTestTrain')\n"
@@ -197,7 +193,6 @@ func test_a_vehicle_takes_commands_and_reports_them() -> void:
 
     assert_eq(ScenarioEventServer.memory_get_value1(_output), 1.0)
     assert_eq(recording.commands, [["SetVelocity", 40.0, 30.0]])
-    DriverSystem.driver_free(driver)
 
 
 func test_a_signalling_system_gets_the_script_event() -> void:
@@ -220,15 +215,20 @@ func test_a_signalling_system_gets_the_script_event() -> void:
 func test_the_cabs_are_reached_through_the_delegate() -> void:
     var cabin:RecordingCabin = RecordingCabin.new()
     ScenarioScriptServer.context_attach_cabin_delegate(_context, cabin)
-    var controller:VehicleController = build_vehicle("LuaTestCab")
+    var controller:VehicleController = build_vehicle(
+            "LuaTestCab", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_REAR)
     var source:String = (
         "local v = maszyna.vehicle.find('LuaTestCab')\n"
-        + "assert(maszyna.cabin.occupied_cab(v) == -1)\n"
-        + "assert(maszyna.cabin.act(v, 1, 'main_switch', 'toggle') == true)"
+        + "local cabin = maszyna.cabin.driver_cabin(v)\n"
+        + "assert(cabin == maszyna.cabin.rear_cabin(v))\n"
+        + "assert(not (cabin == maszyna.cabin.front_cabin(v)))\n"
+        + "assert(maszyna.cabin.machine_room(v) == nil)\n"
+        + "assert(maszyna.cabin.act(cabin, 'main_switch', 'toggle') == true)"
     )
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"cabin", source))
 
-    assert_eq(cabin.acts, [[controller.get_rid(), 1, &"main_switch", &"toggle", null]])
+    var rear_cabin:RID = RailVehicleServer.vehicle_get_rear_cabin(controller.get_rid())
+    assert_eq(cabin.acts, [[rear_cabin, &"main_switch", &"toggle", null]])
 
 
 ## maszyna.player, maszyna.camera and maszyna.hud reach PlayerServer, PlayerCameraServer and

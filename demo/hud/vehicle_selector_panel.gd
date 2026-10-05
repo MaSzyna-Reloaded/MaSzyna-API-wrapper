@@ -2,8 +2,9 @@ extends PanelContainer
 
 ## The vehicle selector: every vehicle with a driver, AI or player, as the original's vehicle list
 ## (vehiclelist.cpp:28-44), and the player's own vehicle when it has none. Each row shows how its
-## train is going and opens its card and the operator's actions. The rows follow the drivers as
-## they come and go; what they show is refreshed by one Timer while the panel is open.
+## train is going and opens its card and the operator's actions. The rows follow the persons
+## getting on and off and the drivers freed; what they show is refreshed by one Timer while the
+## panel is open.
 
 ## The close button asks the owner of the View menu to hide the panel and untick its entry
 signal close_requested
@@ -16,8 +17,6 @@ const ROW:PackedScene = preload("vehicle_selector_row.tscn")
 
 ## The rows, by the vehicle each shows
 var _rows:Dictionary[RID, VehicleSelectorRow] = {}
-## The vehicle each driver drives, to find the row a driver leaves
-var _driver_vehicles:Dictionary[RID, RID] = {}
 ## The vehicle the player drives or last drove, listed with or without a driver
 var _player_vehicle:RID = RID()
 ## The vehicle of the active row, whose card the selector has open; lit
@@ -25,16 +24,20 @@ var _active_vehicle:RID = RID()
 
 
 func _ready() -> void:
-    DriverSystem.driver_vehicle_attached.connect(_on_driver_vehicle_attached)
-    DriverSystem.driver_freed.connect(_on_driver_freed)
+    VehicleServer.cabin_person_entered.connect(_on_cabin_person_entered)
+    VehicleServer.cabin_person_left.connect(_on_cabin_person_left)
+    DriverSystem.driver_attached.connect(_on_driver_changed)
+    DriverSystem.driver_freed.connect(_on_driver_changed)
     VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
     for driver:RID in DriverSystem.driver_get_rids():
-        _on_driver_vehicle_attached(driver, DriverSystem.driver_get_vehicle(driver))
+        _update_row(VehicleServer.person_get_vehicle(driver))
 
 
 func _exit_tree() -> void:
-    DriverSystem.driver_vehicle_attached.disconnect(_on_driver_vehicle_attached)
-    DriverSystem.driver_freed.disconnect(_on_driver_freed)
+    VehicleServer.cabin_person_entered.disconnect(_on_cabin_person_entered)
+    VehicleServer.cabin_person_left.disconnect(_on_cabin_person_left)
+    DriverSystem.driver_attached.disconnect(_on_driver_changed)
+    DriverSystem.driver_freed.disconnect(_on_driver_changed)
     VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
 
 
@@ -53,17 +56,19 @@ func follow_player_vehicle(vehicle:RID) -> void:
     _update_row(vehicle)
 
 
-func _on_driver_vehicle_attached(driver:RID, vehicle:RID) -> void:
-    var previous:RID = _driver_vehicles.get(driver, RID())
-    _driver_vehicles[driver] = vehicle
-    _update_row(previous)
-    _update_row(vehicle)
+## Whoever gets on may be a driver; the row decides from the vehicle (_update_row())
+func _on_cabin_person_entered(cabin:RID, _person:RID, _role:VehiclePersonRole.Role) -> void:
+    _update_row(VehicleServer.cabin_get_vehicle(cabin))
 
 
-func _on_driver_freed(driver:RID) -> void:
-    var vehicle:RID = _driver_vehicles.get(driver, RID())
-    _driver_vehicles.erase(driver)
-    _update_row(vehicle)
+func _on_cabin_person_left(cabin:RID, _person:RID) -> void:
+    _update_row(VehicleServer.cabin_get_vehicle(cabin))
+
+
+## A person aboard became a driver, or a driver was freed while still aboard - one freed off the
+## vehicle has left it already
+func _on_driver_changed(driver:RID) -> void:
+    _update_row(VehicleServer.person_get_vehicle(driver))
 
 
 func _on_vehicle_freed(vehicle:RID) -> void:

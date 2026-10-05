@@ -19,7 +19,7 @@ func _direction_after(vehicle_rid:RID, command:String) -> int:
 
 func test_the_cab_car_reverser_goes_back_to_reverse() -> void:
     var train:VehicleController = build_vehicle("TestEn57CabCar", FizVehicleBuilder.build_description_at(CAB_CAR_PATH),
-            0.0, VehicleController.DRIVER_HEAD)
+            0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var vehicle_rid:RID = train.get_rid()
     await wait_idle_frames(2)
     VehicleServer.vehicle_send_command(vehicle_rid, "cab_activation", true)

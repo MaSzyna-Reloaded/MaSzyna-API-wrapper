@@ -34,11 +34,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
-        ClassDB::bind_method(D_METHOD("set_driver_type", "driver_type"), &VehiclePhysicsNode::set_driver_type);
-        ClassDB::bind_method(D_METHOD("get_driver_type"), &VehiclePhysicsNode::get_driver_type);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "driver_type", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver"),
-                "set_driver_type", "get_driver_type");
 
         ClassDB::bind_method(D_METHOD("get_vehicle_rid"), &VehiclePhysicsNode::get_vehicle_rid);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehiclePhysicsNode::add_component);
@@ -97,7 +92,6 @@ namespace godot {
         // the scenery's values first: the controller takes them when its simulation starts
         server->vehicle_set_name(vehicle_rid, vehicle_id);
         server->vehicle_set_initial_velocity(vehicle_rid, initial_velocity);
-        server->vehicle_set_driver_type(vehicle_rid, driver_type);
         _prepare_vehicle(vehicle_rid);
         // configuring a bound controller restarts the vehicle on it; the first time it is bound
         server->controller_configure(controller_rid, configuration);
@@ -145,17 +139,6 @@ namespace godot {
 
     double VehiclePhysicsNode::get_initial_velocity() const {
         return initial_velocity;
-    }
-
-    void VehiclePhysicsNode::set_driver_type(const VehicleController::DriverType p_driver_type) {
-        driver_type = p_driver_type;
-        if (VehicleServer *server = VehicleServer::get_instance(); server != nullptr && vehicle_rid.is_valid()) {
-            server->vehicle_set_driver_type(vehicle_rid, driver_type);
-        }
-    }
-
-    VehicleController::DriverType VehiclePhysicsNode::get_driver_type() const {
-        return driver_type;
     }
 
 

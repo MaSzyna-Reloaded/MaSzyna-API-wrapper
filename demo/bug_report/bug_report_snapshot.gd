@@ -69,7 +69,8 @@ static func scenario(world: SceneryWorld) -> Dictionary:
     var vehicle: RID = PlayerServer.player_get_vehicle()
     var result: Dictionary = {
         "vehicle": VehicleServer.vehicle_get_name(vehicle),
-        "occupied_cab": VehicleServer.vehicle_get_occupied_cab(vehicle) if vehicle.is_valid() else 0,
+        "driver_cabin": enum_name(&"RailVehicleCabinKind", &"Kind",
+                RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle))),
     }
     if world:
         var scenery: MaszynaSceneryNode = world.get_scenery()

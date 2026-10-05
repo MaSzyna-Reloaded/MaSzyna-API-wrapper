@@ -40,10 +40,10 @@ const INSTRUMENT_LIGHT_LABELS:Dictionary[String, LegacyCabinCabLights.Instrument
 }
 
 
-## The controls of the cab the MMD defines as `cab` (1, 0, or -1 for the rear one)
-static func from_mmd(cab:int, abs_mmd_path:String, parameters:Dictionary) -> LegacyCabinControls:
-    # Train.cpp:8684 (InitializeCab) - the rear cab is cab2definition:
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(abs_mmd_path, parameters, 2 if cab < 0 else cab, {})
+## The controls of the cabin as the MMD defines a cab of its kind
+static func from_mmd(cabin:RID, abs_mmd_path:String, parameters:Dictionary) -> LegacyCabinControls:
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(
+            abs_mmd_path, parameters, MmdCabinInstancer.cab_definition(RailVehicleServer.cabin_get_kind(cabin)), {})
     return from_definition(definition)
 
 

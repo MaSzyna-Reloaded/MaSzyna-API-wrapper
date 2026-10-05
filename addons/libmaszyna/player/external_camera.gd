@@ -152,7 +152,14 @@ func _process_dirty() -> void:
         _pan = Vector2.ZERO
         _zoom = 1.0
     var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController
-    var cabin_occupied:int = controller.get_cabin_occupied()
+    # the cab driven from, as the original numbers it (CabOccupied): the front 1, the rear -1, the
+    # machine room or none 0 (Train.cpp:8684)
+    var cabin_occupied:int = 0
+    match RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle)):
+        RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
+            cabin_occupied = 1
+        RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR:
+            cabin_occupied = -1
     var direction:int = controller.get_direction()
     var cab:int = 1 if cabin_occupied == 0 else cabin_occupied
     # Godot vehicles face -Z; MaSzyna's vehicle frame is (left, up, front)

@@ -82,7 +82,7 @@ static func send(vehicle:RID, command:StringName, p1:Variant = null, p2:Variant 
 ## the device does not report its state, and has nothing to do. `shown_by`: the vehicle whose
 ## device the switch works, when it is another one of the unit - an EMU's pantographs are its
 ## motor car's (mvPantographUnit)
-static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
+static func cue(vehicle:RID, cabin:RID, hint:Hint, shown_by:RID = RID()) -> bool:
     var valve:Array = PANTOGRAPH_VALVES.get(hint, [])
     var wanted:bool = valve[2] if valve else SWITCHES[hint][1]
     var device:RID = shown_by if shown_by.is_valid() else vehicle
@@ -120,7 +120,7 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
     if valve:
         send(device, &"pantograph_valve_operate", valve[0], valve[1])
         return false
-    CabinSystem.act(vehicle, cab, SWITCHES[hint][0], &"toggle", wanted)
+    CabinSystem.act(cabin, SWITCHES[hint][0], &"toggle", wanted)
     return false
 
 
@@ -128,26 +128,26 @@ static func cue(vehicle:RID, cab:int, hint:Hint, shown_by:RID = RID()) -> bool:
 ## breaker after InitialCtrlDelay of holding, or on the release (LegacyCabinMainSwitch), and a
 ## driver's update comes after its reaction time, longer than the delay (PrepareTime,
 ## Driver.cpp:158)
-static func close_line_breaker(vehicle:RID, cab:int) -> void:
-    if CabinSystem.get_control(vehicle, cab, LINE_BREAKER_CLOSE):
-        CabinSystem.act(vehicle, cab, LINE_BREAKER_CLOSE, &"release")
+static func close_line_breaker(vehicle:RID, cabin:RID) -> void:
+    if CabinSystem.get_control(cabin, LINE_BREAKER_CLOSE):
+        CabinSystem.act(cabin, LINE_BREAKER_CLOSE, &"release")
         return
     if not _main_switch_enabled(vehicle):
-        CabinSystem.act(vehicle, cab, LINE_BREAKER_CLOSE, &"hold")
+        CabinSystem.act(cabin, LINE_BREAKER_CLOSE, &"hold")
 
 
-static func open_line_breaker(vehicle:RID, cab:int) -> void:
+static func open_line_breaker(vehicle:RID, cabin:RID) -> void:
     if not _main_switch_enabled(vehicle):
         return
-    CabinSystem.act(vehicle, cab, LINE_BREAKER_OPEN, &"hold")
-    CabinSystem.act(vehicle, cab, LINE_BREAKER_OPEN, &"release")
+    CabinSystem.act(cabin, LINE_BREAKER_OPEN, &"hold")
+    CabinSystem.act(cabin, LINE_BREAKER_OPEN, &"release")
 
 
 ## mastercontrollersetzerospeed (ZeroSpeed(), Driver.cpp:3683): both controllers back to no power,
 ## a step at a time as the handle goes; the positions bound the steps. The master controller stops
 ## at its no-power position (DecMainCtrl(MainCtrlPowerPos()), Driver.cpp:3712): below it a universal
 ## controller brakes (SM42 6Dg, UCList with IntegratedLocBrake).
-static func set_zero_speed(vehicle:RID, cab:int) -> void:
+static func set_zero_speed(vehicle:RID, cabin:RID) -> void:
     # the controllers are the driven engine's (mvControlling)
     var controlled:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
             RailVehicleServer.vehicle_find_powered(vehicle), RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER
@@ -155,15 +155,15 @@ static func set_zero_speed(vehicle:RID, cab:int) -> void:
     if controlled == null:
         return
     for _step:int in controlled.get_second_position():
-        CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
-    var controller:StringName = master_controller(vehicle, cab)
+        CabinSystem.act(cabin, SECOND_CONTROLLER, &"decrease")
+    var controller:StringName = master_controller(cabin)
     for _step:int in controlled.get_main_position() - controlled.get_main_no_power_position():
-        CabinSystem.act(vehicle, cab, controller, &"decrease")
+        CabinSystem.act(cabin, controller, &"decrease")
 
 
 ## mastercontrollersetidle (driverhints.cpp:489-501): a diesel's master controller up to its first
 ## position with the clutch in (RList[].Mn), so that it does not stall - SN61's idle
-static func set_idle(vehicle:RID, cab:int) -> void:
+static func set_idle(vehicle:RID, cabin:RID) -> void:
     var controlled:RID = RailVehicleServer.vehicle_find_powered(vehicle)
     var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
             controlled, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
@@ -172,10 +172,10 @@ static func set_idle(vehicle:RID, cab:int) -> void:
     if engine == null or controlled_controller == null:
         return
     var positions:Array = engine.throttle_table_positions
-    var controller:StringName = master_controller(vehicle, cab)
+    var controller:StringName = master_controller(cabin)
     var position:int = controlled_controller.get_main_position()
     while position < positions.size() and (positions[position] as RailVehicleThrottlePositionItem).clutch_behavior == 0:
-        CabinSystem.act(vehicle, cab, controller, &"increase")
+        CabinSystem.act(cabin, controller, &"increase")
         var stepped:int = controlled_controller.get_main_position()
         if stepped == position:
             return
@@ -183,8 +183,8 @@ static func set_idle(vehicle:RID, cab:int) -> void:
 
 
 ## The cab's master controller - a joint controller where the cab has one in its place (SM42's)
-static func master_controller(vehicle:RID, cab:int) -> StringName:
-    return (MASTER_CONTROLLER if CabinSystem.has_control(vehicle, cab, MASTER_CONTROLLER)
+static func master_controller(cabin:RID) -> StringName:
+    return (MASTER_CONTROLLER if CabinSystem.has_control(cabin, MASTER_CONTROLLER)
             else LegacyCabinJointController.CONTROL)
 
 
@@ -198,11 +198,11 @@ static func is_zero_speed(vehicle:RID) -> bool:
 ## directionforward/directionbackward/directionnone (DirectionForward(), ZeroDirection(),
 ## Driver.cpp:5756-5791): the reverser, relative to the cab, stepped until it stands at `direction`
 ## (+1, -1 or 0); a step is refused when the vehicle does not allow it, which ends the stepping
-static func set_direction(vehicle:RID, cab:int, direction:int) -> void:
+static func set_direction(vehicle:RID, cabin:RID, direction:int) -> void:
     var controller:VehicleController = VehicleServer.vehicle_get_controller(vehicle)
     var current:int = controller.get_direction()
     while not current == direction:
-        CabinSystem.act(vehicle, cab, REVERSER, &"increase" if direction > current else &"decrease")
+        CabinSystem.act(cabin, REVERSER, &"increase" if direction > current else &"decrease")
         var stepped:int = controller.get_direction()
         if stepped == current:
             return
@@ -218,12 +218,12 @@ static func _main_switch_enabled(vehicle:RID) -> bool:
 
 ## securitysystemreset / shpsystemreset (driverhints.cpp): a press of the vigilance button, or of the
 ## cab signal's own when the vehicle has one, while it flashes
-static func reset_security_system(vehicle:RID, cab:int, control:StringName) -> void:
-    CabinSystem.act(vehicle, cab, control, &"hold")
-    CabinSystem.act(vehicle, cab, control, &"release")
+static func reset_security_system(cabin:RID, control:StringName) -> void:
+    CabinSystem.act(cabin, control, &"hold")
+    CabinSystem.act(cabin, control, &"release")
 
 
 ## trainbrakerelease: the handle to its driving position; the state does not tell that position,
 ## so it is cued, not checked (TODO.md)
-static func release_train_brake(vehicle:RID, cab:int) -> void:
-    CabinSystem.act(vehicle, cab, TRAIN_BRAKE_RELEASE, &"hold")
+static func release_train_brake(cabin:RID) -> void:
+    CabinSystem.act(cabin, TRAIN_BRAKE_RELEASE, &"hold")

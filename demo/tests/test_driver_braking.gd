@@ -19,12 +19,12 @@ var route:MaszynaLegacyDriverRoute
 
 
 func before_each():
-    train = build_vehicle("DriverBrakingTest", SM42, 0.0, VehicleController.DRIVER_HEAD)
+    train = build_vehicle("DriverBrakingTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     vehicle = train.get_rid()
     # a cab with no controls of its own: the knobs are there unmodelled
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     CabinSystem.vehicle_attach_cab_logic(
-            vehicle, LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return controls))
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
     braking = MaszynaLegacyDriverBraking.new()
     speed = MaszynaLegacyDriverSpeed.new()
     trainset = MaszynaLegacyDriverTrainset.new()
@@ -41,7 +41,7 @@ func after_each():
 func _decide() -> void:
     var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
     situation.vehicle = vehicle
-    situation.cab = 1
+    situation.cabin = RailVehicleServer.vehicle_get_front_cabin(vehicle)
     situation.controlling = vehicle
     situation.order = Order.SHUNT
     situation.speed = speed

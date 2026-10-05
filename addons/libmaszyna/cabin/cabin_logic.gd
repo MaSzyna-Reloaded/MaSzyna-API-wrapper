@@ -2,16 +2,17 @@ extends RefCounted
 class_name CabinLogic
 
 ## The logic of a vehicle's cabs, attached to the vehicle in CabinSystem
-## (vehicle_attach_cab_logic()). It registers the control handlers of one cab in CabinSystem;
-## CabinSystem registers it for the occupied cab and moves it along when the crew changes cabs.
+## (vehicle_attach_cab_logic()). It registers the control handlers of one cabin in CabinSystem;
+## CabinSystem registers it for the cabin the vehicle's driver sits in and moves it along when the
+## driver changes cabins.
 ## It needs no 3D cab: whoever drives - the player by keys and mouse, the AI - reports
 ## manipulations with CabinSystem.act(). The player's hand on a control - a key, a click on its
 ## widget - is one of press(), release(), increase(), decrease(), which decide what the control
 ## does with it as the cab has it. The original's is LegacyCabinLogic.
 
 
-## Registers the handlers of `cab` (1, 0 or -1, as CabinState)
-func register(_vehicle_rid:RID, _cab:int) -> void:
+## Registers the handlers of the vehicle's `cabin` (a VehicleServer cabin)
+func register(_vehicle_rid:RID, _cabin:RID) -> void:
     pass
 
 

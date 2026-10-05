@@ -12,21 +12,17 @@ func _init() -> void:
     CabinSystem.control_changed.connect(_on_control_changed)
 
 
-func _on_control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Variant) -> void:
-    control_changed.emit(vehicle_rid, cab, control_id, value)
+func _on_control_changed(cabin:RID, control_id:StringName, value:Variant) -> void:
+    control_changed.emit(cabin, control_id, value)
 
 
-func _act(vehicle:RID, cab:int, control_id:StringName, action:StringName, value:Variant) -> Variant:
-    return CabinSystem.act(vehicle, cab, control_id, action, value)
+func _act(cabin:RID, control_id:StringName, action:StringName, value:Variant) -> Variant:
+    return CabinSystem.act(cabin, control_id, action, value)
 
 
-func _get_control(vehicle:RID, cab:int, control_id:StringName) -> Variant:
-    return CabinSystem.get_control(vehicle, cab, control_id)
+func _get_control(cabin:RID, control_id:StringName) -> Variant:
+    return CabinSystem.get_control(cabin, control_id)
 
 
-func _get_controls(vehicle:RID, cab:int) -> Array:
-    return CabinSystem.get_controls(vehicle, cab)
-
-
-func _get_occupied_cab(vehicle:RID) -> int:
-    return CabinSystem.occupied_cab(vehicle)
+func _get_controls(cabin:RID) -> Array:
+    return CabinSystem.get_controls(cabin)

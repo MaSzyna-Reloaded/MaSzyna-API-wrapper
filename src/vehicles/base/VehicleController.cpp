@@ -60,7 +60,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_world_position"), &VehicleController::get_world_position);
         ClassDB::bind_method(
                 D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
-        ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);
 
         ClassDB::bind_method(D_METHOD("set_implementation", "implementation"), &VehicleController::set_implementation);
@@ -83,11 +82,6 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_drag_coefficient, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_floor_height, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, initial_velocity);
-        BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, driver_type, "", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver");
-        BIND_ENUM_CONSTANT(DRIVER_NOBODY);
-        BIND_ENUM_CONSTANT(DRIVER_HEAD);
-        BIND_ENUM_CONSTANT(DRIVER_REAR);
 
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
@@ -397,26 +391,5 @@ namespace godot {
         return result;
     }
 
-    void VehicleController::set_driver_type(const DriverType p_value) {
-        driver_type = p_value;
-    }
-
-    VehicleController::DriverType VehicleController::get_driver_type() const {
-        return driver_type;
-    }
-
-    /* The backend counts the occupied cab as +1 for the front one and -1 for the rear
-     * (DynObj.cpp:1812-1825); nobody aboard is 0, and that is what keeps an unmanned vehicle out
-     * of the physics. */
-    int VehicleController::get_occupied_cab() const {
-        switch (driver_type) {
-            case DRIVER_HEAD:
-                return 1;
-            case DRIVER_REAR:
-                return -1;
-            default:
-                return 0;
-        }
-    }
 
 } // namespace godot

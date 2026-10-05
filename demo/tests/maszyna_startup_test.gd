@@ -345,9 +345,10 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
 
 ## The player goes to the next or the previous cab of the vehicle (the machine room lies between)
 func _change_cab(action:StringName) -> void:
-    var left:Variant = CabinSystem.occupied_cab(occupied)
+    var left:RID = RailVehicleServer.vehicle_get_driver_cabin(occupied)
     await key_tap(action)
-    await _until("%s taken" % action, func() -> bool: return not CabinSystem.occupied_cab(occupied) == left)
+    await _until("%s taken" % action, func() -> bool:
+            return not RailVehicleServer.vehicle_get_driver_cabin(occupied) == left)
 
 
 func _direction_forward() -> bool:

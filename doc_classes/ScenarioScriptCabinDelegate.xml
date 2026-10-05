@@ -11,46 +11,35 @@
 	<methods>
 		<method name="_act" qualifiers="virtual">
 			<return type="Variant" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<param index="2" name="control_id" type="StringName" />
-			<param index="3" name="action" type="StringName" />
-			<param index="4" name="value" type="Variant" />
+			<param index="0" name="cabin" type="RID" />
+			<param index="1" name="control_id" type="StringName" />
+			<param index="2" name="action" type="StringName" />
+			<param index="3" name="value" type="Variant" />
 			<description>
 				Manipulates a control of the vehicle's cab - [param action] is [code]increase[/code], [code]decrease[/code], [code]hold[/code], [code]release[/code], [code]toggle[/code] or [code]set[/code]. Returns what the control answered.
 			</description>
 		</method>
 		<method name="_get_control" qualifiers="virtual const">
 			<return type="Variant" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<param index="2" name="control_id" type="StringName" />
+			<param index="0" name="cabin" type="RID" />
+			<param index="1" name="control_id" type="StringName" />
 			<description>
 				Where the control stands.
 			</description>
 		</method>
 		<method name="_get_controls" qualifiers="virtual const">
 			<return type="Array" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
+			<param index="0" name="cabin" type="RID" />
 			<description>
 				The ids of the cab's controls.
-			</description>
-		</method>
-		<method name="_get_occupied_cab" qualifiers="virtual const">
-			<return type="int" />
-			<param index="0" name="vehicle" type="RID" />
-			<description>
-				Which cab of the vehicle is occupied: 1, 0 (machine room) or -1.
 			</description>
 		</method>
 	</methods>
 	<signals>
 		<signal name="control_changed">
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<param index="2" name="control_id" type="StringName" />
-			<param index="3" name="value" type="Variant" />
+			<param index="0" name="cabin" type="RID" />
+			<param index="1" name="control_id" type="StringName" />
+			<param index="2" name="value" type="Variant" />
 			<description>
 				Emitted by the implementation when a control of a cab changed; the scripts subscribed to the vehicle hear of it.
 			</description>

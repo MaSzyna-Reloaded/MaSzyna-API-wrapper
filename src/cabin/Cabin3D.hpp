@@ -20,6 +20,8 @@ namespace godot {
             static const char *cabin_ready_signal;
             static const char *camera_configuration_changed_signal;
             static const char *vehicle_rid_changed_signal;
+            /* The interior is of another cabin of its vehicle now (cabin: RID) */
+            static const char *cabin_changed_signal;
 
         private:
             static void _bind_methods();
@@ -37,7 +39,7 @@ namespace godot {
             Vector3 shake_offset;
             double shake_accumulator = 0.0;
 
-            int cab_number = 1;
+            RID cabin;
             bool has_cab_model = true;
             bool cab_window_open = false;
             NodePath controller_path;
@@ -86,8 +88,9 @@ namespace godot {
              * cab2 = 0, machine room = 1, cab1 = 2 - and an open window is 3. */
             int get_sound_listener_context() const;
 
-            void set_cab_number(int p_cab_number);
-            int get_cab_number() const;
+            /* The VehicleServer cabin this interior is of - set by whoever builds it */
+            void set_cabin(const RID &p_cabin);
+            RID get_cabin() const;
             void set_has_cab_model(bool p_has_cab_model);
             bool get_has_cab_model() const;
             void set_cab_window_open(bool p_open);

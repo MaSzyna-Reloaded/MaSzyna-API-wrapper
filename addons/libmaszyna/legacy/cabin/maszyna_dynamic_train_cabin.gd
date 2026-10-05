@@ -2,19 +2,20 @@ extends Cabin3D
 class_name MaszynaDynamicTrainCabin
 
 ## MMD-driven cabin builder, analogous to E3DModelInstance/MaszynaRailVehiclePhysicsNode: given
-## data_path/mmd_filename/skin it parses the vehicle's MMD file, resolves cab0/cab1/cab2 from the
-## controller's cabin_occupied state, and builds a real, interactive cabin (Etap A+B scope -
-## see mmd_cabin_instancer.gd) instead of requiring a hand-authored cabin_scene.
+## data_path/mmd_filename/skin it parses the vehicle's MMD file, reads the cab definition of the kind
+## of its cabin (Cabin3D.cabin - cab1 the front cab, cab2 the rear one, cab0 the machine room), and
+## builds a real, interactive cabin (Etap A+B scope - see mmd_cabin_instancer.gd) instead of
+## requiring a hand-authored cabin_scene.
 ##
 ## Deliberately overrides _ready() and does not call super(): the base Cabin3D._ready() emits
 ## cabin_ready immediately, before this class's own children (cab model, widgets) exist -
 ## readiness here must wait until the whole MMD-derived "Generated" subtree is actually built.
 ## Everything below runs synchronously within one _ready() call (MMD parsing and E3D loading
-## are both synchronous), so CabinSystem.vehicle_show_cabin()'s wait on cabin_ready still resolves
+## are both synchronous), so CabinSystem.cabin_show()'s wait on cabin_ready still resolves
 ## within the same add_child() call that creates this node.
 ##
 ## A view of the vehicle's cab only: the cab logic it shows is the vehicle's
-## (MaszynaLegacyVehicleSystem attaches it while the vehicle is driven), and the player's keys reach it
+## (MaszynaLegacyVehicleSystem attaches it, CabinSystem registers it for the driver's cabin), and the player's keys reach it
 ## without this node (MaszynaPlayer).
 
 @export var data_path:String = ""
@@ -44,29 +45,35 @@ const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
 var _generated:Node3D
 var _diagnostics:Array[Dictionary] = []
 var _random_choices:Dictionary = {}
-var _last_cab_number:int = 0
 ## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
 var _occluders:Array[RID] = []
 
 
 func _ready() -> void:
     vehicle_rid_changed.connect(_on_vehicle_rid_changed)
+    cabin_changed.connect(_on_cabin_changed)
     # the MMD and the models are the game directory's
     GameDataServer.data_reload_requested.connect(reload)
     ProjectSettings.settings_changed.connect(_apply_reverse_cull_face)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
-    # placed in a scene rather than built by CabinSystem.vehicle_show_cabin(), which names it itself.
+    # placed in a scene rather than built by CabinSystem.cabin_show(), which names it itself.
+    # It is the vehicle's front cab then, as the original's cab 1.
     if controller_path:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
-        set_vehicle_rid(physics_node.vehicle_rid if physics_node else "")
+        var vehicle:RID = physics_node.get_vehicle_rid() if physics_node else RID()
+        set_cabin(RailVehicleServer.vehicle_get_front_cabin(vehicle))
+        set_vehicle_rid(vehicle)
     # Cabin3D's own _ready() emits cabin_ready; the engine calls it beside this one.
 
 
 ## Cabin3D announces the vehicle rather than letting a subclass override set_vehicle_rid(): the
 ## vehicle calls that method typed, so a script method of the same name would never run.
 func _on_vehicle_rid_changed(_vehicle_rid:RID) -> void:
-    if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
-        CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
+    _rebuild_generated()
+
+
+## Rebuilt for another cabin of the vehicle (cab0 = machine room, cab1, cab2)
+func _on_cabin_changed(_cabin:RID) -> void:
     _rebuild_generated()
 
 
@@ -74,9 +81,9 @@ func _exit_tree() -> void:
     # the announcement goes first: clearing the vehicle would otherwise rebuild the cab on its
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
+    cabin_changed.disconnect(_on_cabin_changed)
     GameDataServer.data_reload_requested.disconnect(reload)
     ProjectSettings.settings_changed.disconnect(_apply_reverse_cull_face)
-    CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_vehicle_rid(RID())
     _free_occluders()
 
@@ -89,22 +96,6 @@ func reload() -> void:
     _rebuild_generated()
 
 
-## Rebuilds when the crew moves to another cab (cab0 = machine room, cab1, cab2).
-func _on_cabin_occupied_changed(vehicle_rid:RID, _cabin_occupied:int) -> void:
-    if not vehicle_rid == get_vehicle_rid():
-        return
-    if not _select_cab_number() == _last_cab_number:
-        _rebuild_generated()
-
-
-func _select_cab_number() -> int:
-    if not get_vehicle_rid():
-        return 1
-    # Train.cpp:8684 (InitializeCab) - CabOccupied -1 loads cab2definition:, 0 cab0, 1 cab1.
-    var cabin_occupied:int = CabinSystem.vehicle_state(get_vehicle_rid()).get("cabin_occupied", 0)
-    return 2 if cabin_occupied < 0 else cabin_occupied
-
-
 func _rebuild_generated() -> void:
     _free_occluders()
     if _generated:
@@ -113,11 +104,10 @@ func _rebuild_generated() -> void:
         _generated = null
 
     _diagnostics.clear()
-    if not mmd_filename or not get_vehicle_rid():
+    if not mmd_filename or not get_vehicle_rid() or not get_cabin().is_valid():
         return
 
-    _last_cab_number = _select_cab_number()
-    cab_number = -1 if _last_cab_number == 2 else _last_cab_number
+    var cab_definition:int = MmdCabinInstancer.cab_definition(RailVehicleServer.cabin_get_kind(get_cabin()))
 
     var game_dir:String = UserSettings.get_maszyna_game_dir()
     var relative_path:String = data_path.trim_prefix("/").path_join(mmd_filename + ".mmd")
@@ -125,7 +115,7 @@ func _rebuild_generated() -> void:
     var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(
             VehicleServer.vehicle_get_name(get_vehicle_rid()), mmd_filename, skin)
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(
-            abs_mmd_path, parameters, _last_cab_number, _random_choices)
+            abs_mmd_path, parameters, cab_definition, _random_choices)
     _diagnostics.append_array(definition.diagnostics)
 
     camera_bound_min = definition.bounds_min
@@ -181,7 +171,7 @@ func _rebuild_generated() -> void:
     _apply_reverse_cull_face()
 
     print("MaszynaDynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
-        _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
+        cab_definition, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
     for d:Dictionary in _diagnostics:
         print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
 
@@ -214,7 +204,7 @@ func _free_occluders() -> void:
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term
 ## InteriorLight * InteriorLightLevel (DynObj.h:240, openglrenderer.cpp:3684-3692); here a shadow
 ## casting light at the cab ceiling lamp, driven by the same level - the cab light of this cab
-## (CabinSystem.cab_light_level_changed, Train.cpp:8436-8453).
+## (CabinSystem.cabin_light_level_changed, Train.cpp:8436-8453).
 func _build_cab_light(definition:MmdCabinDefinition) -> void:
     var light := CabinOmniLight3D.new()
     light.name = "CabLight"

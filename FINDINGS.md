@@ -568,3 +568,5 @@ anything. Open work belongs in `TODO.md`.
 * A tool reading the game's text files skips a UTF-8 BOM as the game does. *(10-05 EN57KM cab)*
 * A default the original sets in one FIZ section for another section's keys reaches the vehicle
   even without that section's component (`LoadFIZ_Param`'s EZT `IminLo/Hi`). *(10-05 EN57 cab car reverser)*
+* A delegate, a role or a seat goes to the person its owner created, never to whoever holds the
+  role at that moment - the player takes a vehicle over while the scenery still loads. *(10-05 player as the AI driver)*

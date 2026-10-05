@@ -112,8 +112,8 @@ func _update_state():
     # A control with no vehicle state behind it (universalN) shows what the cab holds for it: a cab
     # rebuilt with it left on shows it on, and the next press turns it off
     var held:Variant = null
-    if _vehicle_rid and control_id:
-        held = CabinSystem.get_control(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id)
+    if _cabin and control_id:
+        held = CabinSystem.get_control(_cabin, control_id)
     if held == null:
         pushed = false
         return

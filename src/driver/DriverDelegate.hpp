@@ -40,8 +40,8 @@ namespace godot {
                     const Vector3 &p_position);
             /// The time the driver asked for has come (DriverSystem.driver_schedule_update())
             virtual void update(const RID &p_driver);
-            /// The driver drives its vehicle again - a player left the cab
-            /// (DriverSystem.vehicle_set_control_active()); the vehicle is as the player left it
+            /// The driver drives its vehicle again - it sits at the controls (VehicleServer's
+            /// driver's role) after a player left them; the vehicle is as the player left it
             virtual void control_taken(const RID &p_driver);
             /// The driver's timetable and how far it got through it: "timetable" (Timetable or
             /// null), "station_index" (the entry it drives to next), "station_start" (the entry

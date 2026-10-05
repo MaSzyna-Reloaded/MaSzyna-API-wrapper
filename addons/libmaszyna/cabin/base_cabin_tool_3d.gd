@@ -7,6 +7,9 @@ class_name BaseCabinTool3D
 ## cabin root is told which vehicle it belongs to and passes that down.
 
 var _vehicle_rid:RID
+## The cabin of the Cabin3D this element sits in, taken when it enters the tree - a cab is rebuilt
+## for another cabin (MaszynaDynamicTrainCabin)
+var _cabin:RID
 var _dirty:bool = false
 ## This control as CabinHUDMouseSystem knows it, once its mesh is found
 var _mouse_control:RID = RID()
@@ -75,6 +78,14 @@ func get_vehicle_rid() -> RID:
     return _vehicle_rid
 
 
+## The cabin of the Cabin3D `node` sits in, RID() outside one
+static func cabin_of(node:Node) -> RID:
+    var ancestor:Node = node.get_parent()
+    while ancestor and not ancestor is Cabin3D:
+        ancestor = ancestor.get_parent()
+    return (ancestor as Cabin3D).get_cabin() if ancestor else RID()
+
+
 ## One named value of the vehicle's state - what a control reads, being driven by a property name
 ## out of the MMD. The dump behind it is built once a frame for the whole cab.
 func _vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
@@ -120,6 +131,7 @@ func _cab_logic() -> CabinLogic:
 # _notification runs on every class of the hierarchy, unlike _ready/_enter_tree overridden below.
 func _notification(what:int) -> void:
     if what == NOTIFICATION_ENTER_TREE:
+        _cabin = cabin_of(self)
         CabinSystem.control_changed.connect(_on_cabin_control_changed)
     elif what == NOTIFICATION_EXIT_TREE:
         CabinSystem.control_changed.disconnect(_on_cabin_control_changed)
@@ -129,8 +141,8 @@ func _notification(what:int) -> void:
 
 
 ## Shows a control value set in CabinSystem (e.g. from the console) without reporting it back.
-func _on_cabin_control_changed(vehicle_rid:RID, _cab:int, p_control_id:StringName, value:Variant) -> void:
-    if not p_control_id == control_id or not _vehicle_rid or not vehicle_rid == _vehicle_rid:
+func _on_cabin_control_changed(cabin:RID, p_control_id:StringName, value:Variant) -> void:
+    if not p_control_id == control_id or not _cabin or not cabin == _cabin:
         return
     _apply_control_value(value)
 

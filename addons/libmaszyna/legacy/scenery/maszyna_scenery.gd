@@ -174,9 +174,9 @@ func _find_driver_train_id() -> String:
     var reverse_driver_train_id:String = ""
     for vehicle:RID in get_vehicles():
         var dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(vehicle)
-        if dynamic.driver_type == VehicleController.DRIVER_HEAD:
+        if dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_HEAD:
             return dynamic.name
-        if dynamic.driver_type == VehicleController.DRIVER_REAR and not reverse_driver_train_id:
+        if dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_REAR and not reverse_driver_train_id:
             reverse_driver_train_id = dynamic.name
     if reverse_driver_train_id:
         return reverse_driver_train_id

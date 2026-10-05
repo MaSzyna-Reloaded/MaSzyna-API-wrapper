@@ -35,8 +35,7 @@ var _toggle_button_type:CabinButton.ButtonType
 var _has_on_button:bool
 var _has_off_button:bool
 var _has_toggle_switch:bool
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func _init(toggle_button_type:CabinButton.ButtonType, has_on_button:bool, has_off_button:bool,
@@ -51,20 +50,19 @@ func control_ids() -> Array[StringName]:
     return [ON_BUTTON, OFF_BUTTON, TOGGLE_SWITCH]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, ON_BUTTON, _on_button)
-    CabinSystem.register_control(vehicle_rid, cab, OFF_BUTTON, _off_button)
-    CabinSystem.register_control(vehicle_rid, cab, TOGGLE_SWITCH, _toggle_switch)
-    CabinSystem.register_process(vehicle_rid, cab, _process)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, ON_BUTTON, _on_button)
+    CabinSystem.register_control(cabin, OFF_BUTTON, _off_button)
+    CabinSystem.register_control(cabin, TOGGLE_SWITCH, _toggle_switch)
+    CabinSystem.register_process(cabin, _process)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, ON_BUTTON, _on_button)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, OFF_BUTTON, _off_button)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, TOGGLE_SWITCH, _toggle_switch)
-    CabinSystem.unregister_process(_vehicle_rid, _cab, _process)
+    CabinSystem.unregister_control(_cabin, ON_BUTTON, _on_button)
+    CabinSystem.unregister_control(_cabin, OFF_BUTTON, _off_button)
+    CabinSystem.unregister_control(_cabin, TOGGLE_SWITCH, _toggle_switch)
+    CabinSystem.unregister_process(_cabin, _process)
 
 
 # Train.cpp:3809 OnCommand_linebreakerclose - pressing only holds the control down, closing happens

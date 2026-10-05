@@ -191,7 +191,7 @@ func test_a_model_rebuilt_keeps_the_pantograph_at_the_wire() -> void:
     model.type_name = "test"
     model.add_component(build_power_supply(110.0))
     model.power = ENGINE_POWER
-    physics_node = build_vehicle_node("test_pantograph_rebuilt", model, 0.0, VehicleController.DRIVER_HEAD)
+    physics_node = build_vehicle_node("test_pantograph_rebuilt", model, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     engine = MoverRailVehicleElectricSeriesEngine.new()
     var power_source:RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
     power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR

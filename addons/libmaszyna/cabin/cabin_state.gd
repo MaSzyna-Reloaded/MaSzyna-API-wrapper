@@ -1,9 +1,8 @@
 extends RefCounted
 class_name CabinState
 
-## State of one cabin of one vehicle - (vehicle_rid, cab), where cab is 1 (cab 1), 0 (machine room)
-## or -1 (cab 2), matching VehicleServer.vehicle_dump_state()["cabin_occupied"]. Owned by CabinSystem and
-## handed to every registered cabin control handler, which may read and modify it.
+## State of one cabin - a VehicleServer cabin, of the vehicle it is attached to. Owned by
+## CabinSystem and handed to every registered cabin control handler, which may read and modify it.
 ##
 ## The vehicle is reached only by its VehicleServer handle (commands and state), never through
 ## the Mover directly.
@@ -25,39 +24,39 @@ enum Target {
 ## A light of the cab itself, as a cab element follows it
 enum Light {
     NONE,
-    ## the cab light, at its level (CabinSystem.cab_light_level_changed)
+    ## the cab light, at its level (CabinSystem.cabin_light_level_changed)
     CAB,
-    ## the instrument light (CabinSystem.cab_instrument_light_changed)
+    ## the instrument light (CabinSystem.cabin_instrument_light_changed)
     INSTRUMENT,
-    ## the dashboard light (CabinSystem.cab_dashboard_light_changed)
+    ## the dashboard light (CabinSystem.cabin_dashboard_light_changed)
     DASHBOARD,
-    ## the timetable light (CabinSystem.cab_timetable_light_changed)
+    ## the timetable light (CabinSystem.cabin_timetable_light_changed)
     TIMETABLE,
 }
 
 var vehicle_rid:RID
-var cab:int = 1
+var cabin:RID
 ## control_id -> current value of the physical control (button pressed, switch position, ...)
 var values:Dictionary = {}
 ## Private state of the cabin logic behaviours (timers, state machines, ...)
 var data:Dictionary = {}
 ## The level (0..1) the cab light shines at - TTrain::Cabine[].LightLevel (Train.cpp:8436-8453).
-## Written only by CabinSystem.cab_set_light_level().
+## Written only by CabinSystem.cabin_set_light_level().
 var light_level:float = 0.0
 ## Whether the instrument light is lit - TTrain::InstrumentLightActive. Written only by
-## CabinSystem.cab_set_instrument_light_enabled().
+## CabinSystem.cabin_set_instrument_light_enabled().
 var instrument_light_enabled:bool = false
 ## Whether the dashboard light is lit - TTrain::DashboardLightActive. Written only by
-## CabinSystem.cab_set_dashboard_light_enabled().
+## CabinSystem.cabin_set_dashboard_light_enabled().
 var dashboard_light_enabled:bool = false
 ## Whether the timetable light is lit - TTrain::TimetableLightActive. Written only by
-## CabinSystem.cab_set_timetable_light_enabled().
+## CabinSystem.cabin_set_timetable_light_enabled().
 var timetable_light_enabled:bool = false
 
 
-func _init(p_vehicle_rid:RID, p_cab:int) -> void:
-    vehicle_rid = p_vehicle_rid
-    cab = p_cab
+func _init(p_cabin:RID) -> void:
+    cabin = p_cabin
+    vehicle_rid = VehicleServer.cabin_get_vehicle(p_cabin)
 
 
 func get_value(control_id:StringName, default:Variant = null) -> Variant:
@@ -68,7 +67,7 @@ func set_value(control_id:StringName, value:Variant) -> void:
     if values.has(control_id) and values[control_id] == value:
         return
     values[control_id] = value
-    CabinSystem.control_changed.emit(vehicle_rid, cab, control_id, value)
+    CabinSystem.control_changed.emit(cabin, control_id, value)
 
 
 ## Whether a push control ends up pressed by the manipulation: held, or toggled to the given value -

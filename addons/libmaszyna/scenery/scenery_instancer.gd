@@ -316,18 +316,16 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
                     trainset, trainset_vehicles[member], dynamic.direction, dynamic.gap, dynamic.coupling)
             members.append(member)
         RailVehicleServer.trainset_place(trainset)
-        # every vehicle with somebody aboard gets the original's driver; the vehicle goes first -
-        # the driver learns its cab from it. The driver drives through the vehicle's cab logic,
-        # like the player, without the 3D cab (MaszynaLegacyVehicleSystem attaches it once the
-        # vehicle is driven)
+        # the person the scenery seats at the controls of a vehicle (MaszynaLegacyVehicleSystem)
+        # thinks as the original's driver - that person, whatever role it has by now: a player who
+        # took the vehicle over first sits at the controls and stays the player. It drives through
+        # the vehicle's cab logic, like the player, without the 3D cab
         var trainset_driver:RID = RID()
         for member:int in members:
-            if trainset_data.dynamics[member].driver_type == VehicleController.DRIVER_NOBODY:
-                continue
-            trainset_driver = DriverSystem.driver_create()
-            root._driver_rids.append(trainset_driver)
-            DriverSystem.driver_attach_vehicle(trainset_driver, trainset_vehicles[member])
-            DriverSystem.driver_attach_delegate(trainset_driver, _ai_driver)
+            var driver:RID = MaszynaLegacyVehicleSystem.vehicle_get_driver(trainset_vehicles[member])
+            if driver.is_valid():
+                trainset_driver = driver
+                DriverSystem.driver_attach_delegate(trainset_driver, _ai_driver)
         # endtrainset (simulationstateserializer.cpp:839-848): the trainset's driver gets its
         # timetable and the velocity it starts with; of several drivers, the one furthest along
         if trainset_driver.is_valid() and trainset_data.timetable:

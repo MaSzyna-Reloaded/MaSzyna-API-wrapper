@@ -27,7 +27,7 @@ func test_shown_cab_excludes_rain_over_the_vehicle_body() -> void:
             "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain")
     autofree(vehicle)
 
-    var cabin: Cabin3D = CabinSystem.vehicle_show_cabin(vehicle.get_rid(), self)
+    var cabin: Cabin3D = CabinSystem.cabin_show(RailVehicleServer.vehicle_get_front_cabin(vehicle.get_rid()), self)
     var volumes: Array[RainVolume] = _rain_volumes(cabin)
     var controller: VehicleController = vehicle.get_controller()
     CabinSystem.vehicle_hide_cabin(vehicle.get_rid())

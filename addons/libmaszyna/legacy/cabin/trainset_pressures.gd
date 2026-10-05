@@ -37,7 +37,9 @@ func _exit_tree() -> void:
 
 func _pressure(car:int, pressure:int) -> float:
     var cab_end:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_REAR
-            if CabinSystem.occupied_cab(_vehicle_rid) < 0 else RailVehicleController.COUPLER_END_FRONT)
+            if RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(_vehicle_rid))
+                    == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
+            else RailVehicleController.COUPLER_END_FRONT)
     var cars:Array = RailVehicleServer.vehicle_get_coupled(_vehicle_rid, cab_end, RailVehicleController.COUPLING_FLAG_CONTROL)
     if car > cars.size():
         return 0.0

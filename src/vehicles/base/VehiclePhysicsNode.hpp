@@ -29,7 +29,6 @@ namespace godot {
             void _build();
             String vehicle_id;
             double initial_velocity = 0.0;
-            VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
 
         protected:
             static void _bind_methods();
@@ -67,7 +66,5 @@ namespace godot {
             String get_vehicle_id() const;
             void set_initial_velocity(double p_velocity);
             double get_initial_velocity() const;
-            void set_driver_type(VehicleController::DriverType p_driver_type);
-            VehicleController::DriverType get_driver_type() const;
     };
 } // namespace godot

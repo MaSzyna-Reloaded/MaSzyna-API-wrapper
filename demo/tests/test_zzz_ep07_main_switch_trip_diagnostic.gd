@@ -41,6 +41,8 @@ func before_each():
 
 
 func after_each():
+    # out of the cab before the vehicle goes
+    PlayerServer.player_leave_vehicle()
     scenery.free()
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
@@ -63,7 +65,7 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
 
     # the scenery gives EP07-424 its driver (headdriver); the test drives it as a player does, who
     # takes the controls from the driver (MaszynaPlayer, drivermode.cpp:266)
-    DriverSystem.vehicle_set_control_active(controller.get_rid(), false)
+    PlayerServer.player_take_over_vehicle(controller.get_rid())
     # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
     controller.send_command("battery", true)
     await wait_idle_frames(2)

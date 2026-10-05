@@ -43,7 +43,7 @@ func _low_poly_cab_visible(cab_index:int) -> bool:
 
 func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
     vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_machine_room",
-            VehicleController.DRIVER_HEAD)
+            MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var controller:VehicleController = vehicle.get_controller()
     assert_not_null(controller, "the vehicle's FIZ controller should be built")
     if not controller:
@@ -56,14 +56,14 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
     await wait_idle_frames(3)
     assert_false(_low_poly_cab_visible(1), "hi-fi cab 1 hides its low-poly counterpart")
 
-    VehicleServer.vehicle_send_command(vehicle.get_rid(), "cab_change", -1)
+    CabinSystem.person_change_cabin(PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
     await wait_idle_frames(3)
 
     var cabin:Cabin3D = get_viewport().get_camera_3d().get_parent() as Cabin3D
     assert_not_null(cabin, "camera should stay in the cabin in the machine room")
     if not cabin:
         return
-    assert_eq(cabin.cab_number, 0)
+    assert_eq(RailVehicleServer.cabin_get_kind(cabin.get_cabin()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE)
     assert_false(cabin.has_cab_model, "cab0definition: has no cab0model:")
     for cab_index:int in range(LOW_POLY_CABS):
         assert_true(_low_poly_cab_visible(cab_index), "low-poly cab%d should be visible in the machine room" % cab_index)

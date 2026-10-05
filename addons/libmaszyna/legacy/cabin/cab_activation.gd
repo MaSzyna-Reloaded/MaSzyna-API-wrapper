@@ -12,22 +12,20 @@ const SWITCH_OFF:float = 0.0
 const SWITCH_ON:float = 1.0
 const SWITCH_REST:float = 0.5
 
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func control_ids() -> Array[StringName]:
     return [CONTROL]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _cab_activation)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, CONTROL, _cab_activation)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _cab_activation)
+    CabinSystem.unregister_control(_cabin, CONTROL, _cab_activation)
 
 
 func _cab_activation(state:CabinState, action:StringName, value:Variant) -> Variant:

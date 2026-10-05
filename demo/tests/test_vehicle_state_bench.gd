@@ -44,7 +44,7 @@ const MICROSECONDS_PER_MILLISECOND: float = 1000.0
 ## mmd_sound_catalog.gd, and what RunningSoundModel reads. Kept as the strings the sound system
 ## itself uses, because the point of the measurement is what a by-name read costs today.
 const SOUND_KEYS: PackedStringArray = [
-    "speed", "velocity", "mass_total", "direction", "cabin_occupied",
+    "speed", "velocity", "mass_total", "direction",
     "brake_force_ratio", "brake_emergency_valve_flow", "brake_air_pressure",
     "brake_releaser_active", "brake_loco_pressure", "brake_main_valve_flow", "pipe_pressure",
     "brake_control_pressure", "brake_unit_force", "brake_local_aeim_position",

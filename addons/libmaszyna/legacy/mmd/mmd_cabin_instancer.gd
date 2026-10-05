@@ -28,6 +28,14 @@ const COUPLER_ADAPTER_TOKENS:int = 3
 const MODELS_DIRECTORY:String = "models/"
 ## The pendulums a vehicle model has at most (DynObj.cpp:5706)
 const PENDULUM_COUNT:int = 4
+## The cabNdefinition: each kind of cabin is read from (TTrain::InitializeCab(), Train.cpp:8684):
+## the front cab is cab1definition:, the rear one cab2definition:, the machine room cab0definition: -
+## in the order a vehicle gets its cabins
+const CAB_DEFINITIONS:Dictionary[RailVehicleCabinKind.Kind, int] = {
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT: 1,
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR: 2,
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE: 0,
+}
 ## The labels with a car's number and a value's number before their shape (Train.cpp:12147-12166)
 const LEADING_NUMBER_LABELS:Array[String] = ["brakes", "eimscreen"]
 const LEADING_NUMBER_COUNT:int = 2
@@ -532,6 +540,23 @@ static func parse_joint_cabs(abs_mmd_path:String, parameters:Dictionary) -> bool
     if index == -1 or index + 1 >= tokens.size():
         return false
     return tokens[index + 1].to_lower() in ["true", "yes", "1"]
+
+
+## The cabNdefinition: of a kind of cabin (CAB_DEFINITIONS); -1 for a kind the MMD has none for
+static func cab_definition(kind:RailVehicleCabinKind.Kind) -> int:
+    return CAB_DEFINITIONS.get(kind, -1)
+
+
+## The kinds of cabin the MMD defines a cab for - its cabNdefinition: labels, in CAB_DEFINITIONS'
+## order
+static func parse_cabin_kinds(abs_mmd_path:String, parameters:Dictionary) -> Array[RailVehicleCabinKind.Kind]:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
+    var kinds:Array[RailVehicleCabinKind.Kind] = []
+    for kind:RailVehicleCabinKind.Kind in CAB_DEFINITIONS:
+        if not _find_label_index(tokens, "cab%ddefinition:" % CAB_DEFINITIONS[kind]) == -1:
+            kinds.append(kind)
+    return kinds
 
 
 ## The MMD's top-level `loads:` block, as the cargo names it maps to their own models. A vehicle

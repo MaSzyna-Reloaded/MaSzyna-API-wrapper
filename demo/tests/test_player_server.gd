@@ -9,7 +9,8 @@ const FIRST_OFFSET:float = 50.0
 const SECOND_OFFSET:float = 150.0
 ## Enough frames for the vehicles to take their controllers and stand on their track
 const SETTLE_FRAMES:int = 4
-## The cab the crew of a head-driven vehicle sits in (VehicleController.get_occupied_cab())
+## The master controller's active cab with its driver in the front cabin (CabActive follows
+## CabOccupied 1, Train.cpp:9147)
 const HEAD_CAB:int = 1
 
 var _track:RID
@@ -19,11 +20,16 @@ var _second:RailVehicle3D
 var _announced:Array = []
 
 
+## An AI driver that does nothing of its own: only who sits at the controls is tested
+class IdleDriver extends DriverDelegate:
+    pass
+
+
 func before_each() -> void:
     _announced.clear()
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
-    _first = build_rail_vehicle("PlayerServerFirst", TRACK_NAME, FIRST_OFFSET, VehicleController.DRIVER_HEAD)
-    _second = build_rail_vehicle("PlayerServerSecond", TRACK_NAME, SECOND_OFFSET, VehicleController.DRIVER_HEAD)
+    _first = build_rail_vehicle("PlayerServerFirst", TRACK_NAME, FIRST_OFFSET, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    _second = build_rail_vehicle("PlayerServerSecond", TRACK_NAME, SECOND_OFFSET, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
 
 
@@ -61,28 +67,28 @@ func test_taking_over_and_letting_go_are_announced_with_the_vehicle_before() -> 
 func test_the_driver_steps_back_while_the_player_drives() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
-    var driver:RID = DriverSystem.driver_create()
-    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, IdleDriver.new())
 
     PlayerServer.player_take_over_vehicle(vehicle)
     assert_false(DriverSystem.vehicle_is_control_active(vehicle), "the player drives")
     PlayerServer.player_leave_vehicle()
     assert_true(DriverSystem.vehicle_is_control_active(vehicle), "the driver drives again")
-    DriverSystem.driver_free(driver)
+    DriverSystem.driver_attach_delegate(driver, null)
 
 
 func test_entering_the_cab_leaves_the_driver_driving() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
-    var driver:RID = DriverSystem.driver_create()
-    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, IdleDriver.new())
 
     PlayerServer.player_enter_vehicle(vehicle)
     assert_eq(PlayerServer.player_get_vehicle(), vehicle, "the player sits in its cab")
     assert_true(DriverSystem.vehicle_is_control_active(vehicle), "the driver drives on")
     PlayerServer.player_enter_vehicle(vehicle)
     assert_true(DriverSystem.vehicle_is_control_active(vehicle), "entered again, still the driver's")
-    DriverSystem.driver_free(driver)
+    DriverSystem.driver_attach_delegate(driver, null)
 
 
 ## Train.cpp:9147 - taking a vehicle over activates the cab its crew sits in, with or without a 3D
@@ -95,7 +101,8 @@ func test_taking_over_activates_the_cab() -> void:
     controller.apply_configuration()
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
-    assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 0), HEAD_CAB)
+    assert_eq(RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle)),
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT, "the crew sits in the front cabin")
     assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin", -1), 0, "no cab active before")
 
     PlayerServer.player_take_over_vehicle(vehicle)
@@ -104,13 +111,15 @@ func test_taking_over_activates_the_cab() -> void:
     assert_eq(VehicleServer.vehicle_dump_state(vehicle).get("cabin", 0), HEAD_CAB)
 
 
-func test_a_vehicle_without_a_node_is_refused() -> void:
-    var controller:VehicleController = build_vehicle("PlayerServerBare")
+func test_a_vehicle_without_a_cabin_is_refused() -> void:
+    var vehicle:RID = build_vehicle("PlayerServerBare").get_rid()
+    for cabin:RID in VehicleServer.vehicle_get_cabins(vehicle):
+        VehicleServer.cabin_free(cabin)
     await wait_idle_frames(SETTLE_FRAMES)
 
-    PlayerServer.player_take_over_vehicle(controller.get_rid())
+    PlayerServer.player_take_over_vehicle(vehicle)
 
-    assert_engine_error("The vehicle has no cab to sit in")
+    assert_engine_error("The vehicle has no cabin to sit in")
     assert_eq(PlayerServer.player_get_vehicle(), RID())
     assert_eq(_announced, [])
 

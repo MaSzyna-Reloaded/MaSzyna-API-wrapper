@@ -147,8 +147,7 @@ namespace godot {
             void _on_event_launched(const RID &p_event, const RID &p_activator);
             void _on_memory_values_changed(const RID &p_memory);
             void _on_cabin_control_changed(
-                    const RID &p_vehicle, int p_cab, const StringName &p_control_id, const Variant &p_value,
-                    const RID &p_context);
+                    const RID &p_cabin, const StringName &p_control_id, const Variant &p_value, const RID &p_context);
 
         protected:
             static void _bind_methods();

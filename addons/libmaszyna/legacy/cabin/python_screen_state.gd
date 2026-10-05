@@ -26,7 +26,6 @@ const PRESSURE_FIELDS:Array[String] = ["bc", "bp", "sp", "cp", "rp", "mass", "sp
 ## Original key -> key of the occupied vehicle's state holding the same Mover field
 ## (Train.cpp:711-805; every pair checked against the getter behind the state key)
 const STATE_KEYS:Dictionary[String, String] = {
-    "cab": "cabin_occupied",                        # CabOccupied
     "cabactive": "cabin",                           # CabActive
     "battery": "power24_available",                 # Power24vIsAvailable
     "converter": "power110_available",              # Power110vIsAvailable
@@ -121,12 +120,17 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
         if CONTROLLED_STATE_KEYS[key] in controlled:
             result[key] = controlled[CONTROLLED_STATE_KEYS[key]]
     result["master"] = state.get("cabin_controleable", false)
+    var driver_cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
+    var cabin_kind:RailVehicleCabinKind.Kind = RailVehicleServer.cabin_get_kind(driver_cabin)
+    # Train.cpp:8684 - CabOccupied: 1 the front cab, -1 the rear one, 0 the machine room or nobody driving
+    result["cab"] = (1 if cabin_kind == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT
+            else -1 if cabin_kind == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR else 0)
     # Train.cpp:783-790 - the cab's generic toggles, with universal3 standing for the instrument light
-    var cab:int = CabinSystem.occupied_cab(vehicle)
-    var cab_state:CabinState = CabinSystem.get_cabin_state(vehicle, cab)
-    for index:int in UNIVERSAL_COUNT:
-        result["universal%d" % index] = bool(cab_state.get_value(StringName("universal%d" % index), false))
-    result["universal3"] = CabinSystem.cab_get_instrument_light_enabled(vehicle, cab)   # InstrumentLightActive
+    if driver_cabin.is_valid():
+        var cab_state:CabinState = CabinSystem.get_cabin_state(driver_cabin)
+        for index:int in UNIVERSAL_COUNT:
+            result["universal%d" % index] = bool(cab_state.get_value(StringName("universal%d" % index), false))
+    result["universal3"] = CabinSystem.cabin_get_instrument_light_enabled(driver_cabin)   # InstrumentLightActive
     result["mainctrl_pos_count"] = config.get("main_controller_position_max", 0)   # MainCtrlPosNo
     result["velocity"] = absf(state.get("speed", 0.0))   # abs(Vel), km/h
     result["manual_brake"] = state.get("brake_manual_position", 0) > 0
@@ -166,7 +170,7 @@ static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     # TTrain::Update(), Train.cpp:8644-8768 - the cars under control, from the end the occupied
     # cab faces (GetFirstDynamic(CabOccupied < 0 ? rear : front, control))
     var cab_end:RailVehicleController.CouplerEnd = (RailVehicleController.COUPLER_END_REAR
-            if state.get("cabin_occupied", 1) < 0 else RailVehicleController.COUPLER_END_FRONT)
+            if cabin_kind == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR else RailVehicleController.COUPLER_END_FRONT)
     # Train.cpp:727-745 - the lamps at the outer ends of the train, its front the way the cab faces
     var trainset:Array = RailVehicleServer.vehicle_get_coupled(vehicle, cab_end, RailVehicleController.COUPLING_FLAG_COUPLER)
     result["lights_train_front"] = _outer_light_bits(trainset.front())

@@ -58,6 +58,7 @@
 #include "legacy/vehicles/MoverRailVehicleWipers.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "logging/GameLog.hpp"
+#include "person/PersonServer.hpp"
 #include "player/PlayerCameraServer.hpp"
 #include "player/PlayerServer.hpp"
 #include "register_types.h"
@@ -101,6 +102,8 @@
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleCurvePointItem.hpp"
 #include "vehicles/base/VehicleImplementationServer.hpp"
+#include "vehicles/base/VehiclePerson.hpp"
+#include "vehicles/base/VehiclePersonRole.hpp"
 #include "vehicles/base/VehiclePhysicsNode.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicle3D.hpp"
@@ -109,6 +112,7 @@
 #include "vehicles/rail/RailVehicleBrake.hpp"
 #include "vehicles/rail/RailVehicleBrakePressureTableItem.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
+#include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleComponent.hpp"
 #include "vehicles/rail/RailVehicleComponentType.hpp"
 #include "vehicles/rail/RailVehicleCompressorListItem.hpp"
@@ -166,6 +170,7 @@ GameDataServer *game_data_server_singleton = nullptr;
 ResourceLazyLoader *resource_lazy_loader_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackServer *track_server_singleton = nullptr;
+PersonServer *person_server_singleton = nullptr;
 VehicleServer *vehicle_server_singleton = nullptr;
 MaszynaMoverVehicleServer *maszyna_mover_vehicle_server_singleton = nullptr;
 RailVehicleServer *rail_vehicle_server_singleton = nullptr;
@@ -212,7 +217,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(PlanarMirror3D);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
+        GDREGISTER_CLASS(PersonServer);
         GDREGISTER_CLASS(VehicleServer);
+        GDREGISTER_CLASS(VehiclePerson);
         GDREGISTER_ABSTRACT_CLASS(VehicleImplementationServer);
         GDREGISTER_CLASS(MaszynaMoverVehicleServer);
         GDREGISTER_CLASS(RailVehicleServer);
@@ -273,6 +280,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);
+        GDREGISTER_ABSTRACT_CLASS(VehiclePersonRole);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleCabinKind);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_CLASS(RailVehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
@@ -380,6 +389,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);      // 7
         Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                // 8
         // after SimulationServer is registered: the constructor follows its clock
+        person_server_singleton = memnew(PersonServer);
+        Engine::get_singleton()->register_singleton("PersonServer", person_server_singleton); // 8b
+        // after PersonServer is registered: the constructor follows its freed persons
         vehicle_server_singleton = memnew(VehicleServer);
         Engine::get_singleton()->register_singleton("VehicleServer", vehicle_server_singleton); // 9
         // after VehicleServer is registered: the constructor follows the vehicles' lifetime
@@ -578,6 +590,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("VehicleServer"); // 9
     }
 
+    if (Engine::get_singleton()->has_singleton("PersonServer")) {
+        Engine::get_singleton()->unregister_singleton("PersonServer"); // 8b
+    }
+
     if (Engine::get_singleton()->has_singleton("TrackServer")) {
         Engine::get_singleton()->unregister_singleton("TrackServer"); // 8
     }
@@ -630,6 +646,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (vehicle_server_singleton != nullptr) { // 9
         memdelete(vehicle_server_singleton);
         vehicle_server_singleton = nullptr;
+    }
+
+    if (person_server_singleton != nullptr) { // 8b
+        memdelete(person_server_singleton);
+        person_server_singleton = nullptr;
     }
 
     if (track_server_singleton != nullptr) { // 8

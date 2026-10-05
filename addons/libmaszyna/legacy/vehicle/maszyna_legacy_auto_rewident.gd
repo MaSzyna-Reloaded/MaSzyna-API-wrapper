@@ -92,9 +92,9 @@ func _check_waiting() -> void:
     for vehicle:RID in _waiting.duplicate():
         if not VehicleServer.vehicle_is_simulation_ready(vehicle):
             continue
-        # a vehicle without a cab has no driver to inspect its trainset, and the driver_type comes
-        # from the FIZ - it will not become one later, so there is nothing left to watch
-        if VehicleServer.vehicle_get_driver_type(vehicle) == VehicleController.DRIVER_NOBODY:
+        # a vehicle nobody drives has no driver to inspect its trainset, and the scenery seats its
+        # driver before the simulation is ready - so there is nothing left to watch
+        if not VehicleServer.vehicle_has_person_role(vehicle, VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER):
             _waiting.erase(vehicle)
             continue
         # PrepareEngine() completes once the engine reports ready
@@ -128,8 +128,15 @@ func _is_engine_ready(vehicle:RID) -> bool:
 
 ## Coupled vehicles from the head of the train (in the driving direction, CheckVehicles()) to its tail.
 func _get_trainset(vehicle:RID) -> Array[RID]:
-    var driving_sign:int = (VehicleServer.vehicle_get_occupied_cab(vehicle)
-            * VehicleServer.vehicle_get_controller(vehicle).get_direction())
+    # the cab driven from, as the original numbers it (CabOccupied): the front 1, the rear -1, the
+    # machine room or none 0 (Train.cpp:8684)
+    var cab:int = 0
+    match RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle)):
+        RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
+            cab = 1
+        RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR:
+            cab = -1
+    var driving_sign:int = cab * VehicleServer.vehicle_get_controller(vehicle).get_direction()
     var trainset:Array[RID] = []
     trainset.assign(RailVehicleServer.vehicle_get_coupled(
             vehicle, RailVehicleController.COUPLER_END_FRONT if driving_sign >= 0 else RailVehicleController.COUPLER_END_REAR,

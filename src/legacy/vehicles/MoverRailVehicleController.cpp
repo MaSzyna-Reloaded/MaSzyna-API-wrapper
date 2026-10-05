@@ -91,7 +91,10 @@ namespace godot {
         // the position unchanged and leave the handle at lap (FINDINGS.md, 2026-09-26)
         mover->fBrakeCtrlPos = mover->BrakeCtrlPosR;
         mover->BrakeLevelSet(
-                std::floor(mover->Handle->GetPos(driver_active && get_driver_type() != DRIVER_NOBODY ? bh_RP : bh_NP)));
+                std::floor(mover->Handle->GetPos(
+                        driver_active && get_driver_cabin_kind() != RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE
+                                ? bh_RP
+                                : bh_NP)));
     }
 
     void MoverRailVehicleController::_initialize_simulation() {
@@ -102,7 +105,7 @@ namespace godot {
         mover_implementation = ObjectID(implementation->get_instance_id());
         mover = implementation->mover_create(
                 mover_vehicle, get_initial_velocity(), get_type_name(), get_vehicle_id(),
-                get_occupied_cab()); // the cab as TMoverParameters::CabActivisation counts it
+                cab_occupied(get_driver_cabin_kind())); // the cab as TMoverParameters::CabActivisation counts it
         ERR_FAIL_NULL(mover);
         // every component takes the Mover before the configuration is written into it
         _attach_implementation(mover_implementation);
@@ -131,8 +134,8 @@ namespace godot {
         // compiled-zero defaults.
         mover->ComputeConstans();
 
-        // the cab a driver sits in is the scenery's driver type's, and nobody's is 0 - mover_create()
-        // above took it (DynObj.cpp:1948-1964): an unmanned car of a unit is driven over its couplers
+        // the cab a driver sits in is the one RailVehicleServer handed down, and nobody's is 0 -
+        // mover_create() above took it (DynObj.cpp:1948-1964): an unmanned car of a unit is driven over its couplers
         // and its own brake valve leaves the pipe alone (bom_PS, Mover.cpp:4548)
         // no cab is active yet (CabActive = 0, MOVER.h:2090): the driver switches it on once the
         // trainset is coupled - the AI by its hint (driverhints.cpp:108), the player on entering
@@ -483,12 +486,10 @@ namespace godot {
         uncouple(side);
     }
 
-    /* The coupler events are consumed first, then the vehicle compares what it announces. */
     void MoverRailVehicleController::update_state() {
         if (mover != nullptr) {
             _consume_coupler_events();
         }
-        RailVehicleController::update_state();
     }
 
     // The flags are the original's coupling:: flags (Mover.cpp:590).
@@ -596,10 +597,6 @@ namespace godot {
         return mover != nullptr ? mover->DirAbsolute : 0;
     }
 
-    int MoverRailVehicleController::get_cabin_occupied() const {
-        return mover != nullptr ? mover->CabOccupied : 0;
-    }
-
     int MoverRailVehicleController::get_train_damage() const {
         return mover != nullptr ? mover->DamageFlag : 0;
     }
@@ -652,11 +649,46 @@ namespace godot {
         mover->CabActivisationAuto(true);
     }
 
-    // Original engine: TTrain::CabChange() (Train.cpp:8516) - steps 1 -> 0 (machine room) -> -1.
-    void MoverRailVehicleController::cab_change(const int p_direction) const {
+    // Original engine: TTrain::CabChange() (Train.cpp:10336) switches the cab off before the change
+    void MoverRailVehicleController::cab_deactivation_auto() const {
         mover->CabDeactivisationAuto();
-        mover->ChangeCab(p_direction);
-        mover->CabActivisationAuto();
+    }
+
+    // Original engine: what TMoverParameters::ChangeCab() resets besides the cab (Mover.cpp:735-749);
+    // the cab itself is the driver's, handed down by set_driver_cabin_kind()
+    void MoverRailVehicleController::cab_controls_reset() const {
+        if ((mover->BrakeCtrlPosNo > 0) && ((mover->BrakeSystem == TBrakeSystem::Pneumatic) ||
+                                            (mover->BrakeSystem == TBrakeSystem::ElectroPneumatic))) {
+            mover->BrakeLevelSet(mover->Handle->GetPos(bh_NP));
+            mover->LimPipePress = mover->PipePress;
+            mover->ActFlowSpeed = 0;
+        } else {
+            mover->BrakeLevelSet(mover->Handle->GetPos(bh_NP));
+        }
+        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
+        mover->ScndCtrlPos = 0;
+    }
+
+    /* The Mover counts the cab its driver sits in as +1 for the front one and -1 for the rear,
+     * nobody or the machine room 0 (TTrain::InitializeCab(), Train.cpp:8684; DynObj.cpp:1948-1964) */
+    int MoverRailVehicleController::cab_occupied(const RailVehicleCabinKind::Kind p_kind) {
+        switch (p_kind) {
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT:
+                return 1;
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR:
+                return -1;
+            default:
+                return 0;
+        }
+    }
+
+    /* Entering, leaving and changing the cab write CabOccupied as they are, with nothing reset
+     * (Train.cpp:8305, 10894; Driver.cpp:2124) - the resets of a cab change are cab_controls_reset() */
+    void MoverRailVehicleController::set_driver_cabin_kind(const RailVehicleCabinKind::Kind p_kind) {
+        RailVehicleController::set_driver_cabin_kind(p_kind);
+        if (mover != nullptr) {
+            mover->CabOccupied = cab_occupied(p_kind);
+        }
     }
 
     void MoverRailVehicleController::ground_relay_reset() const {

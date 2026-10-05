@@ -3569,3 +3569,19 @@ lighting or the trainset.
   the FIZ factory gives an EZT's electric engine the same defaults before `Circuit:`.
 * **Rule:** a default the original sets in one section for keys another section owns is carried
   over to the vehicle even when the other section's component is absent.
+
+## 2026-10-05 The player became the AI driver of the vehicle it took over while loading
+
+* **Symptom:** td.scn, EP07-424: handed to the AI and taken back, the line breaker and the converter
+  dropped.
+* **What proved it:** a headless probe on td.scn tracing the roles - at the hand-over and the
+  take-back only the player's own role changed, and after the take-back the player was DRIVER while
+  `DriverSystem.vehicle_is_control_active()` was true. The player (`MaszynaPlayer.auto_start`) takes
+  the first vehicle on `vehicle_configured`, inside its build, while the scenery is still loading;
+  the scenery's driver goes to OBSERVER. `SceneryInstancer` then gave the AI delegate to whoever sat
+  in the DRIVER role - the player's person - so the AI drove with the player, as the player.
+* **Fix:** the AI delegate goes to the person `MaszynaLegacyVehicleSystem` seated for the scenery
+  (`vehicle_get_driver()`), whatever role it has by then
+  (`test_zzz_ep07_ai_hand_over.gd`).
+* **Rule:** a role, a delegate or a seat is given to the person its owner created, never to
+  "whoever holds the role now" - the occupancy changes while a scenery loads.

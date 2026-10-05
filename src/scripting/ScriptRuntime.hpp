@@ -9,6 +9,7 @@ namespace godot {
     enum class ScriptHandleKind {
         NONE,
         VEHICLE,
+        CABIN,
         EVENT,
         MEMORY,
         TRACK,

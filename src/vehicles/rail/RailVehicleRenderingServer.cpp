@@ -66,6 +66,8 @@ namespace godot {
         constexpr std::array<const char *, 3> COUPLER_SUFFIXES = {"_on", "_off", "_xon"};
         constexpr int COUPLER_PART_COUNT = 3;
         /* The rear cab's low-poly cab, cab2 (LowPolyIntCabs[2], DynObj.cpp:2391) */
+        constexpr int LOW_POLY_MACHINE_ROOM = 0;
+        constexpr int LOW_POLY_FRONT_CAB = 1;
         constexpr int LOW_POLY_REAR_CAB = 2;
         /* Wiper elements: arm 1, arm 2, blade (DynObj.cpp:5838-5870) */
         constexpr int WIPER_ELEMENTS = 3;
@@ -99,9 +101,23 @@ namespace godot {
 
     } // namespace
 
-    /* The low-poly cab of a cab as the cab layer counts them - 1, 0 or -1 */
-    static int low_poly_cab(const int p_cab) {
-        return p_cab < 0 ? LOW_POLY_REAR_CAB : p_cab;
+    /* The low-poly cab of a kind of cabin: cab1 the front one, cab2 the rear one, cab0 the machine
+     * room - and nobody's, as the original's CabOccupied 0 is (DynObj.cpp:1389-1397) */
+    static int low_poly_cab(const RailVehicleCabinKind::Kind p_kind) {
+        switch (p_kind) {
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT:
+                return LOW_POLY_FRONT_CAB;
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR:
+                return LOW_POLY_REAR_CAB;
+            default:
+                return LOW_POLY_MACHINE_ROOM;
+        }
+    }
+
+    static RailVehicleCabinKind::Kind driver_cabin_kind(const RID &p_vehicle) {
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        return server != nullptr ? server->cabin_get_kind(server->vehicle_get_driver_cabin(p_vehicle))
+                                 : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
     }
 
     template<typename T>
@@ -139,8 +155,8 @@ namespace godot {
                     RailVehicleServer::vehicle_placement_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_placed));
             rail_vehicles->connect(
-                    RailVehicleServer::vehicle_occupied_cab_changed_signal,
-                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_occupied_cab_changed));
+                    RailVehicleServer::vehicle_driver_cabin_changed_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_driver_cabin_changed));
             rail_vehicles->connect(
                     RailVehicleServer::vehicle_trainset_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_trainset_changed));
@@ -244,8 +260,8 @@ namespace godot {
                 D_METHOD("vehicle_set_visible_low_poly_cabins", "vehicle", "visible"),
                 &RailVehicleRenderingServer::vehicle_set_visible_low_poly_cabins);
         ClassDB::bind_method(
-                D_METHOD("vehicle_set_cab_light_level", "vehicle", "cab", "level"),
-                &RailVehicleRenderingServer::vehicle_set_cab_light_level);
+                D_METHOD("cabin_set_light_level", "cabin", "level"),
+                &RailVehicleRenderingServer::cabin_set_light_level);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_detailed", "vehicle"), &RailVehicleRenderingServer::vehicle_is_detailed);
         ADD_SIGNAL(MethodInfo(vehicle_model_built_signal, PropertyInfo(Variant::RID, "vehicle")));
@@ -464,24 +480,26 @@ namespace godot {
     }
 
     /* Another cab hidden while the low-poly cabs are not all visible */
-    void RailVehicleRenderingServer::_on_vehicle_occupied_cab_changed(const RID &p_vehicle, const int p_cab) {
+    void RailVehicleRenderingServer::_on_vehicle_driver_cabin_changed(const RID &p_vehicle, const RID & /* p_cabin */) {
         if (const Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
             _update_low_poly_cabs(p_vehicle, *visual);
         }
     }
 
-    void RailVehicleRenderingServer::vehicle_set_cab_light_level(
-            const RID &p_vehicle, const int p_cab, const double p_level) {
+    void RailVehicleRenderingServer::cabin_set_light_level(const RID &p_cabin, const double p_level) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        const RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        ERR_FAIL_NULL(rail_vehicles);
+        const RID vehicle = vehicle_server->cabin_get_vehicle(p_cabin);
         // a vehicle not drawn (never attached) has no low-poly cab to light
-        Visual *visual = vehicles.getptr(p_vehicle);
+        Visual *visual = vehicles.getptr(vehicle);
         if (visual == nullptr) {
             return;
         }
-        const int cab = low_poly_cab(p_cab);
-        ERR_FAIL_INDEX(cab, static_cast<int>(LOW_POLY_CABS.size()));
-        visual->cab_light_levels[cab] = p_level;
-        if (!fading.has(p_vehicle)) {
-            fading.push_back(p_vehicle);
+        visual->cab_light_levels[low_poly_cab(rail_vehicles->cabin_get_kind(p_cabin))] = p_level;
+        if (!fading.has(vehicle)) {
+            fading.push_back(vehicle);
         }
     }
 
@@ -700,7 +718,7 @@ namespace godot {
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
         _update_detection_area(p_vehicle, p_visual);
         _update_low_poly_cabs(p_vehicle, p_visual);
-        // the interior is lit only by the lights of its cabs (vehicle_set_cab_light_level())
+        // the interior is lit only by the lights of its cabs (cabin_set_light_level())
         if (p_visual.low_poly.is_valid()) {
             models->instance_set_emission_energy(p_visual.low_poly, 0.0);
             if (!fading.has(p_vehicle)) {
@@ -1000,25 +1018,25 @@ namespace godot {
     void RailVehicleRenderingServer::_pose_mirrors(const RID &p_vehicle, Visual &p_visual) {
         const Ref<RailVehicleDoors> doors =
                 component<RailVehicleDoors>(p_vehicle, VehicleComponentType::COMPONENT_DOORS);
-        const VehicleServer *vehicle_server = VehicleServer::get_instance();
-        if (p_visual.mirrors.is_empty() || doors.is_null() || vehicle_server == nullptr) {
+        if (p_visual.mirrors.is_empty() || doors.is_null()) {
             return;
         }
         const double left = doors->get_mirror_left_position();
         const double right = doors->get_mirror_right_position();
-        const int occupied_cab = vehicle_server->vehicle_get_occupied_cab(p_vehicle);
-        if (left == p_visual.mirror_left && right == p_visual.mirror_right && occupied_cab == p_visual.mirror_cab) {
+        const RailVehicleCabinKind::Kind driver_cabin = driver_cabin_kind(p_vehicle);
+        if (left == p_visual.mirror_left && right == p_visual.mirror_right && driver_cabin == p_visual.mirror_cabin) {
             return;
         }
         p_visual.mirror_left = left;
         p_visual.mirror_right = right;
-        p_visual.mirror_cab = occupied_cab;
+        p_visual.mirror_cabin = driver_cabin;
         const double max_shift = Math::deg_to_rad(doors->get_mirror_max_shift());
         const Transform3D model_frame = p_visual.model_transform.affine_inverse();
         for (int index = 0; index < p_visual.mirrors.size(); ++index) {
             const Part &mirror = p_visual.mirrors[index];
             const bool front = model_frame.xform(mirror.rest.origin).z > 0.0;
-            const bool active = front ? occupied_cab > 0 : occupied_cab < 0;
+            const bool active = driver_cabin == (front ? RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT
+                                                       : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR);
             const double angle = active ? max_shift * (index % 2 == 1 ? right : left) : 0.0;
             _pose(p_visual, mirror, Basis(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(angle)));
         }
@@ -1387,13 +1405,10 @@ namespace godot {
     // (vehicle_set_visible_low_poly_cabins()).
     void RailVehicleRenderingServer::_update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
-        const VehicleServer *vehicle_server = VehicleServer::get_instance();
-        if (models == nullptr || vehicle_server == nullptr || !p_visual.low_poly.is_valid() ||
-            p_visual.appearance.is_null()) {
+        if (models == nullptr || !p_visual.low_poly.is_valid() || p_visual.appearance.is_null()) {
             return;
         }
-        const Ref<RailVehicleController> vehicle = vehicle_server->vehicle_get_controller(p_vehicle);
-        const int hidden = low_poly_cab(vehicle.is_valid() ? vehicle->get_cabin_occupied() : 0);
+        const int hidden = low_poly_cab(driver_cabin_kind(p_vehicle));
         const bool joint_cabs = p_visual.appearance->get_joint_cabs();
         for (int cab = 0; cab < static_cast<int>(LOW_POLY_CABS.size()); ++cab) {
             const String name = LOW_POLY_CABS[cab];

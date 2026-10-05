@@ -11,22 +11,20 @@ class_name LegacyCabinJointController
 const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 const CONTROL:StringName = &"jointctrl"
 
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func control_ids() -> Array[StringName]:
     return [CONTROL]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _joint_controller)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, CONTROL, _joint_controller)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _joint_controller)
+    CabinSystem.unregister_control(_cabin, CONTROL, _joint_controller)
 
 
 func _joint_controller(state:CabinState, action:StringName, _value:Variant) -> Variant:

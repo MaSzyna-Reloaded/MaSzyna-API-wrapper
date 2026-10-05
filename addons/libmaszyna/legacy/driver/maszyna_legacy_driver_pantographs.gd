@@ -27,7 +27,7 @@ const SETUP_SPEED:float = 5.0
 
 ## PrepareEngine()'s pantographs: the small compressor while the tank is short of air, then off;
 ## both raised
-static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, emu:bool) -> void:
+static func prepare(vehicle:RID, cabin:RID, trainset:MaszynaLegacyDriverTrainset, emu:bool) -> void:
     var unit:RID = trainset.pantograph_unit
     if not unit.is_valid():
         return
@@ -49,15 +49,15 @@ static func prepare(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, 
     # pantographsvalveon: the pantographs' master valve (OperatePantographsValve(), no cab control)
     if not power_source.get_collector_valve_active():
         MaszynaLegacyDriverHints.send(unit, "pantographs_valve", true)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
-    MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
+    MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
+    MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON, unit)
 
 
 ## control_pantographs() (Driver.cpp:6219-6345), on every update the driver acts on: the main
 ## reservoir to the pantographs once it holds enough; on the move the rear one up, the front one
 ## down when both carry the current, or the vehicle's suggested setup
 static func control(
-    vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, direction:int, emu:bool, waiting:bool
+    vehicle:RID, cabin:RID, trainset:MaszynaLegacyDriverTrainset, direction:int, emu:bool, waiting:bool
 ) -> void:
     var unit:RID = trainset.pantograph_unit
     if not unit.is_valid():
@@ -78,9 +78,9 @@ static func control(
     var setup:RailVehicleAIHints.PantographState = hints.pantograph_state if hints else RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC
     if not setup == RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC:
         if speed > SETUP_SPEED:
-            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON
+            MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON
                     if setup & RailVehicleAIHints.PANTOGRAPH_STATE_FRONT else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF, unit)
-            MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
+            MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
                     if setup & RailVehicleAIHints.PANTOGRAPH_STATE_REAR else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)
         return
     # the regular layout: a lone vehicle, an EMU, an ET41 (Driver.cpp:6243-6246)
@@ -97,9 +97,9 @@ static func control(
     # the one at the rear up, unless another one works and it is the only one
     var raised_voltage:float = rear_voltage if on_rear else front_voltage
     if raised_voltage == 0.0 and (voltage == 0.0 or collectors > 1):
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
+        MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON
                 if on_rear else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON, unit)
     # having gathered speed, the other one down once the first carries the current
     if speed > SETUP_SPEED and collectors > 1 and not front_voltage == 0.0 and not rear_voltage == 0.0:
-        MaszynaLegacyDriverHints.cue(vehicle, cab, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF
+        MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF
                 if on_rear else MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_OFF, unit)

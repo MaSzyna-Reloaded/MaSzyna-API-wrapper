@@ -79,7 +79,7 @@ own `_implementation_changed()` - no `dynamic_cast`, one lifetime (from the simu
 stay inside one class. What a consumer would have wanted the controller for comes out under the
 handle instead - the controller's moves and commands are relayed by `VehicleServer`
 (`vehicle_moved`, `vehicle_command_received`), its rail events by `RailVehicleServer`
-(`vehicle_occupied_cab_changed`, `vehicle_trainset_changed`, `vehicle_coupler_*`).
+(`vehicle_driver_cabin_changed`, `vehicle_trainset_changed`, `vehicle_coupler_*`).
 
 **3. State has one owner and one writer, and a getter only reads.** A value reaches other layers
 as a typed getter of the component that owns it, and configuration as that component's (or the

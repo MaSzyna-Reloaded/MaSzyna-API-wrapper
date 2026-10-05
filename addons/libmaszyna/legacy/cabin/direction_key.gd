@@ -12,7 +12,7 @@ var _vehicle_rid:RID
 var _engine:RailVehicleElectricSeriesEngine
 
 
-func register(vehicle_rid:RID, _cab:int) -> void:
+func register(vehicle_rid:RID, _cabin:RID) -> void:
     _vehicle_rid = vehicle_rid
     _engine = CabinSystem.vehicle_component(vehicle_rid, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine
     CabinSystem.state_computed_value_register(vehicle_rid, STATE_KEY, _direction)

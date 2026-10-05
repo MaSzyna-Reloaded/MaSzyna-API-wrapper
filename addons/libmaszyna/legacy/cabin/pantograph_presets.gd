@@ -20,15 +20,12 @@ const OFF_BUTTON:StringName = &"pantvalvesoff_bt"
 ## pantvalves_sw: down closes the valves, up sets them, at rest midway (Train.cpp:3575, 3587, 3610)
 const LEVER_OFF:int = 0
 const LEVER_UPDATE:int = 2
-## The rear cab, whose own end is the vehicle's rear (cab_to_end(), Train.h:220)
-const REAR_CAB:int = -1
 
 ## Train.cpp:3384 - m_controlmapper.contains("pantselect_sw:")
 var _has_selector:bool
 ## Train.cpp:3545 - m_controlmapper.contains("pantvalves_sw:")
 var _has_valves_lever:bool
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func _init(has_selector:bool, has_valves_lever:bool) -> void:
@@ -40,20 +37,19 @@ func control_ids() -> Array[StringName]:
     return [SELECTOR, VALVES_LEVER, UPDATE_BUTTON, OFF_BUTTON]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, SELECTOR, _selector)
-    CabinSystem.register_control(vehicle_rid, cab, VALVES_LEVER, _valves_lever)
-    CabinSystem.register_control(vehicle_rid, cab, UPDATE_BUTTON, _update_button)
-    CabinSystem.register_control(vehicle_rid, cab, OFF_BUTTON, _off_button)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, SELECTOR, _selector)
+    CabinSystem.register_control(cabin, VALVES_LEVER, _valves_lever)
+    CabinSystem.register_control(cabin, UPDATE_BUTTON, _update_button)
+    CabinSystem.register_control(cabin, OFF_BUTTON, _off_button)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, SELECTOR, _selector)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, VALVES_LEVER, _valves_lever)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, UPDATE_BUTTON, _update_button)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, OFF_BUTTON, _off_button)
+    CabinSystem.unregister_control(_cabin, SELECTOR, _selector)
+    CabinSystem.unregister_control(_cabin, VALVES_LEVER, _valves_lever)
+    CabinSystem.unregister_control(_cabin, UPDATE_BUTTON, _update_button)
+    CabinSystem.unregister_control(_cabin, OFF_BUTTON, _off_button)
 
 
 ## The selector of the cab one position on, and back (Train.cpp:3532 change_pantograph_selection)
@@ -66,14 +62,16 @@ func select_previous(state:CabinState) -> Variant:
 
 
 func _select(state:CabinState, command:String) -> Variant:
-    var position_key:String = "pantograph_preset_position_rear" if state.cab == REAR_CAB \
+    # the rear cab, whose own end is the vehicle's rear (cab_to_end(), Train.h:220)
+    var rear:bool = RailVehicleServer.cabin_get_kind(state.cabin) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
+    var position_key:String = "pantograph_preset_position_rear" if rear \
             else "pantograph_preset_position_front"
     var position:Variant = state.vehicle_state_value(position_key)
     # a vehicle without RailVehicleSwitches has no presets to select
     if position == null:
         return null
     state.send_vehicle_command(command,
-            RailVehicleController.COUPLER_END_REAR if state.cab == REAR_CAB
+            RailVehicleController.COUPLER_END_REAR if rear
             else RailVehicleController.COUPLER_END_FRONT)
     var selected:int = state.vehicle_state_value(position_key, 0)
     state.set_value(SELECTOR, selected)
@@ -85,14 +83,15 @@ func _select(state:CabinState, command:String) -> Variant:
 
 # Train.cpp:3517 update_pantograph_valves
 func _update_valves(state:CabinState) -> Variant:
+    var rear:bool = RailVehicleServer.cabin_get_kind(state.cabin) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
     var preset:RailVehicleSwitches.PantographPreset = state.vehicle_state_value(
-            "pantograph_preset_rear" if state.cab == REAR_CAB else "pantograph_preset_front",
+            "pantograph_preset_rear" if rear else "pantograph_preset_front",
             RailVehicleSwitches.PANTOGRAPH_PRESET_NONE)
     # Train.cpp:3523-3526 - the rear cab's own end is the vehicle's rear
     var front_end:RailVehicleSwitches.PantographPreset = RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END \
-            if state.cab == REAR_CAB else RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END
+            if rear else RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END
     var rear_end:RailVehicleSwitches.PantographPreset = RailVehicleSwitches.PANTOGRAPH_PRESET_OWN_END \
-            if state.cab == REAR_CAB else RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END
+            if rear else RailVehicleSwitches.PANTOGRAPH_PRESET_OTHER_END
     state.send_vehicle_command("pantograph_valve_operate", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST,
             RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE if preset & front_end
             else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)

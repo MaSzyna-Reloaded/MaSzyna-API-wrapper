@@ -284,12 +284,14 @@ func _on_player_vehicle_chip_action_pressed() -> void:
     PlayerServer.player_leave_vehicle()
 
 
-## The driver of the player's vehicle switched, as by the vehicle card's AI button: the AI's to the
-## player, the player's to the AI, nobody's to the player
+## The driver of the player's vehicle switched, as by the vehicle card's AI button: the player's to
+## the AI, the AI's and nobody's to the player
 func _on_player_vehicle_chip_driver_pressed() -> void:
     var vehicle: RID = %PlayerVehicleChip.vehicle
-    DriverSystem.vehicle_set_control_active(vehicle,
-            VehicleSelectorRow.driver_of(vehicle, true) == VehicleSelectorRow.Driver.PLAYER)
+    if VehicleSelectorRow.driver_of(vehicle, true) == VehicleSelectorRow.Driver.PLAYER:
+        PlayerServer.player_hand_over_vehicle()
+    else:
+        PlayerServer.player_take_back_vehicle()
 
 
 ## The vehicle the player is driving, handed to every widget that shows something about it. The

@@ -11,6 +11,9 @@ func set_vehicle_rid(vehicle_rid:RID) -> void:
 
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
 var _vehicle_rid:RID
+## The cabin of the Cabin3D it sits in, taken when it enters the tree - a cab is rebuilt for
+## another cabin (MaszynaDynamicTrainCabin)
+var _cabin:RID
 
 var _dirty:bool = false
 var _t = 0.0
@@ -32,29 +35,30 @@ func _ready():
     pass
 
 func _enter_tree() -> void:
+    _cabin = BaseCabinTool3D.cabin_of(self)
     match cab_light:
         CabinState.Light.CAB:
-            CabinSystem.cab_light_level_changed.connect(_on_cab_light_changed)
+            CabinSystem.cabin_light_level_changed.connect(_on_cab_light_changed)
         CabinState.Light.INSTRUMENT:
-            CabinSystem.cab_instrument_light_changed.connect(_on_cab_light_changed)
+            CabinSystem.cabin_instrument_light_changed.connect(_on_cab_light_changed)
         CabinState.Light.DASHBOARD:
-            CabinSystem.cab_dashboard_light_changed.connect(_on_cab_light_changed)
+            CabinSystem.cabin_dashboard_light_changed.connect(_on_cab_light_changed)
         CabinState.Light.TIMETABLE:
-            CabinSystem.cab_timetable_light_changed.connect(_on_cab_light_changed)
+            CabinSystem.cabin_timetable_light_changed.connect(_on_cab_light_changed)
 
 func _exit_tree() -> void:
     match cab_light:
         CabinState.Light.CAB:
-            CabinSystem.cab_light_level_changed.disconnect(_on_cab_light_changed)
+            CabinSystem.cabin_light_level_changed.disconnect(_on_cab_light_changed)
         CabinState.Light.INSTRUMENT:
-            CabinSystem.cab_instrument_light_changed.disconnect(_on_cab_light_changed)
+            CabinSystem.cabin_instrument_light_changed.disconnect(_on_cab_light_changed)
         CabinState.Light.DASHBOARD:
-            CabinSystem.cab_dashboard_light_changed.disconnect(_on_cab_light_changed)
+            CabinSystem.cabin_dashboard_light_changed.disconnect(_on_cab_light_changed)
         CabinState.Light.TIMETABLE:
-            CabinSystem.cab_timetable_light_changed.disconnect(_on_cab_light_changed)
+            CabinSystem.cabin_timetable_light_changed.disconnect(_on_cab_light_changed)
 
-func _on_cab_light_changed(vehicle_rid:RID, cab:int, value:Variant) -> void:
-    if vehicle_rid == _vehicle_rid and cab == CabinSystem.occupied_cab(_vehicle_rid):
+func _on_cab_light_changed(cabin:RID, value:Variant) -> void:
+    if cabin == _cabin:
         _cab_light_level = float(value)
         _update_state()
 
@@ -75,16 +79,15 @@ func _process(delta):
         _dirty = false
         if _vehicle_rid:
             # the light of the cab this element sits in, as the cab holds it now
-            var cab:int = CabinSystem.occupied_cab(_vehicle_rid)
             match cab_light:
                 CabinState.Light.CAB:
-                    _cab_light_level = CabinSystem.cab_get_light_level(_vehicle_rid, cab)
+                    _cab_light_level = CabinSystem.cabin_get_light_level(_cabin)
                 CabinState.Light.INSTRUMENT:
-                    _cab_light_level = float(CabinSystem.cab_get_instrument_light_enabled(_vehicle_rid, cab))
+                    _cab_light_level = float(CabinSystem.cabin_get_instrument_light_enabled(_cabin))
                 CabinState.Light.DASHBOARD:
-                    _cab_light_level = float(CabinSystem.cab_get_dashboard_light_enabled(_vehicle_rid, cab))
+                    _cab_light_level = float(CabinSystem.cabin_get_dashboard_light_enabled(_cabin))
                 CabinState.Light.TIMETABLE:
-                    _cab_light_level = float(CabinSystem.cab_get_timetable_light_enabled(_vehicle_rid, cab))
+                    _cab_light_level = float(CabinSystem.cabin_get_timetable_light_enabled(_cabin))
             _setup_phase = true
             _update_state()
 

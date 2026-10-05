@@ -45,6 +45,7 @@ namespace godot {
             };
 
             void initialize_mover_state();
+            static int cab_occupied(RailVehicleCabinKind::Kind p_kind);
             void _integrate(double p_delta, Integration p_integration);
             CouplerEnd _resolve_coupler_end(const Variant &p_where) const;
             /* The coupled vehicle as this end's neighbour; false when the end is not coupled */
@@ -57,7 +58,6 @@ namespace godot {
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
             int get_direction_absolute() const override;
-            int get_cabin_occupied() const override;
             int get_train_damage() const override;
             double get_mass_reduced() const override;
             bool get_coupler_stretched() const override;
@@ -71,7 +71,9 @@ namespace godot {
 
             void cab_activation(bool p_enabled) const override;
             void cab_activation_auto() const override;
-            void cab_change(int p_direction) const override;
+            void cab_deactivation_auto() const override;
+            void cab_controls_reset() const override;
+            void set_driver_cabin_kind(RailVehicleCabinKind::Kind p_kind) override;
             void ground_relay_reset() const override;
             void antislip() const override;
             void main_controller_increase(int p_step = 1) const override;

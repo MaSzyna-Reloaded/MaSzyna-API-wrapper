@@ -81,7 +81,6 @@ var _memory_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
 var _isolated_rids:Array[RID] = []
 var _event_isolated_rids:Array[RID] = []
-var _driver_rids:Array[RID] = []
 var _trainset_rids:Array[RID] = []
 ## The scenery's vehicles (MaszynaLegacyVehicleSystem), in the order of its file
 var _vehicle_rids:Array[RID] = []
@@ -182,7 +181,6 @@ func get_scenery_sounds() -> MaszynaLegacyScenerySounds:
 ## spinner) keeps animating; 0 frees everything at once (the node freed)
 func _free_owned_rids(budget_msec:int = 0) -> void:
     var groups:Array = [
-        [_driver_rids, DriverSystem.driver_free],
         [_trainset_rids, RailVehicleServer.trainset_free],
         [_vehicle_rids, MaszynaLegacyVehicleSystem.vehicle_free],
         [_pickable_rids, SceneryHUDMouseServer.pickable_free],

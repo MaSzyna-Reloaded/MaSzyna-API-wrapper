@@ -495,7 +495,7 @@ takes the component **once**, where it resolves its vehicle (`VehicleServer.vehi
 controller, and calls the component's typed getters. Configuration is the component's (or the
 controller's) **properties** - `wheels.track_width`, `controller.max_velocity` - not a key of the
 config dump. The hot values have their own server getters (`VehicleServer.vehicle_get_speed()`,
-`vehicle_get_velocity()`, `vehicle_get_occupied_cab()`).
+`vehicle_get_velocity()`, `RailVehicleServer.vehicle_get_driver_cabin()`).
 
 ```gdscript
 # not this - a 300-key dictionary built for one number, every frame

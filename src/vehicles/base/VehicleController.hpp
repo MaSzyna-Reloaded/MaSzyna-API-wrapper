@@ -29,19 +29,7 @@ namespace godot {
     class VehicleController : public Resource {
             GDCLASS(VehicleController, Resource)
         public:
-            /* Who drives the vehicle, in the words the `.scn` uses for it - a `dynamic` names
-             * `headdriver`, `reardriver` or `nobody` as its drivertype (DynObj.cpp:1812-1825). It
-             * says which cab is manned, not how many cabs there are, and a vehicle nobody drives
-             * is not simulated at all (Driver.cpp:2126). */
-            enum DriverType {
-                DRIVER_NOBODY,
-                DRIVER_HEAD,
-                DRIVER_REAR,
-            };
-
-
         private:
-            DriverType driver_type = DRIVER_NOBODY;
             StringName implementation;
             /// Bumped by every step (process_components()) and every command (command_executed());
             /// what tells a cached state dump that it is stale.
@@ -142,11 +130,6 @@ namespace godot {
             virtual int get_direction() const = 0;
             virtual void apply_config() = 0;
             virtual bool is_physics_active() const = 0;
-            void set_driver_type(DriverType p_value);
-            DriverType get_driver_type() const;
-            /* The cab the driver_type sits in, as the simulation counts it: 1 for the front cab, -1
-             * for the rear one, 0 for nobody. */
-            int get_occupied_cab() const;
             static void _bind_methods();
             /* This vehicle's handle in VehicleServer, set when the server attaches it - what
              * Resource.get_rid() answers, as a Mesh answers its RenderingServer handle. */
@@ -222,5 +205,4 @@ namespace godot {
     };
 } // namespace godot
 
-VARIANT_ENUM_CAST(VehicleController::DriverType);
 VARIANT_ENUM_CAST(VehicleController::Category);

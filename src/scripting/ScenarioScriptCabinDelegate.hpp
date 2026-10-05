@@ -15,21 +15,18 @@ namespace godot {
         protected:
             static void _bind_methods();
 
-            GDVIRTUAL5R(Variant, _act, RID, int, StringName, StringName, Variant)
-            GDVIRTUAL3RC(Variant, _get_control, RID, int, StringName)
-            GDVIRTUAL2RC(Array, _get_controls, RID, int)
-            GDVIRTUAL1RC(int, _get_occupied_cab, RID)
+            GDVIRTUAL4R(Variant, _act, RID, StringName, StringName, Variant)
+            GDVIRTUAL2RC(Variant, _get_control, RID, StringName)
+            GDVIRTUAL1RC(Array, _get_controls, RID)
 
         public:
-            /// A control of a cab changed (vehicle: RID, cab: int, control_id: StringName, value)
+            /// A control of a cab changed (cabin: RID, control_id: StringName, value)
             static const char *control_changed_signal;
 
-            /// Manipulates a control of the vehicle's cab; returns what the control answered
+            /// Manipulates a control of the VehicleServer cabin; returns what the control answered
             Variant
-            act(const RID &p_vehicle, int p_cab, const StringName &p_control_id, const StringName &p_action,
-                const Variant &p_value);
-            Variant get_control(const RID &p_vehicle, int p_cab, const StringName &p_control_id) const;
-            Array get_controls(const RID &p_vehicle, int p_cab) const;
-            int get_occupied_cab(const RID &p_vehicle) const;
+            act(const RID &p_cabin, const StringName &p_control_id, const StringName &p_action, const Variant &p_value);
+            Variant get_control(const RID &p_cabin, const StringName &p_control_id) const;
+            Array get_controls(const RID &p_cabin) const;
     };
 } // namespace godot

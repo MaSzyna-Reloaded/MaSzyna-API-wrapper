@@ -43,6 +43,8 @@ func before_each():
 
 
 func after_each():
+    # out of the cab before the vehicle goes
+    PlayerServer.player_leave_vehicle()
     scenery.free()
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
@@ -92,7 +94,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("battery", true)
     # the player takes the vehicle over from its driver, as entering the cab does
     # (RailVehicle3D.cpp:185-188), and switches the cab on - none is active before (MOVER.h:2090)
-    DriverSystem.vehicle_set_control_active(controller.get_rid(), false)
+    PlayerServer.player_take_over_vehicle(controller.get_rid())
     controller.send_command("cab_activation", true)
     await wait_idle_frames(2)
     controller.send_command("security_acknowledge", true)

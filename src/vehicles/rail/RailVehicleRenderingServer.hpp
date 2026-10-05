@@ -1,6 +1,7 @@
 #pragma once
 #include "legacy/e3d/E3DSubModel.hpp"
 #include "vehicles/rail/RailVehicleAppearance.hpp"
+#include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 
 #include <godot_cpp/classes/material.hpp>
@@ -129,14 +130,14 @@ namespace godot {
                     RID detection_shape;
                     /* vehicle_set_visible_low_poly_cabins() */
                     bool low_poly_cabs_visible = true;
-                    /* The level of each low-poly cab's light (vehicle_set_cab_light_level()), and the
+                    /* The level of each low-poly cab's light (cabin_set_light_level()), and the
                      * self-illumination the cab is drawn with, following it */
                     double cab_light_levels[LOW_POLY_CABS.size()] = {};
                     double cab_light_energies[LOW_POLY_CABS.size()] = {};
                     PackedFloat64Array wiper_positions;
                     double mirror_left = -1.0;
                     double mirror_right = -1.0;
-                    int mirror_cab = 0;
+                    RailVehicleCabinKind::Kind mirror_cabin = RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
                     /* The door and step positions last posed, left and right */
                     double door_positions[2] = {-1.0, -1.0};
                     double door_step_positions[2] = {-1.0, -1.0};
@@ -216,7 +217,7 @@ namespace godot {
             void _update_smoke(const RID &p_vehicle, const Visual &p_visual) const;
             void _update_detail(const RID &p_vehicle, Visual &p_visual);
             void _update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const;
-            void _on_vehicle_occupied_cab_changed(const RID &p_vehicle, int p_cab);
+            void _on_vehicle_driver_cabin_changed(const RID &p_vehicle, const RID &p_cabin);
             void _update_load(const RID &p_vehicle, Visual &p_visual);
             void _update_detection_area(const RID &p_vehicle, Visual &p_visual);
             void _register_pickable(const RID &p_vehicle, Visual &p_visual);
@@ -283,10 +284,10 @@ namespace godot {
              * occupied cab is drawn in its place by whoever shows it - the low-poly cab of the
              * occupied cab is hidden, or all of them with jointcabs: (DynObj.cpp:1389-1397) */
             void vehicle_set_visible_low_poly_cabins(const RID &p_vehicle, bool p_visible);
-            /* The level (0..1) of the light of a cab - 1, 0 or -1, as the cab layer counts them -
-             * that its low-poly cab is lit at (TDynamicObject::set_cab_lights(), DynObj.cpp:841-853);
-             * with jointcabs: every cab at the brightest */
-            void vehicle_set_cab_light_level(const RID &p_vehicle, int p_cab, double p_level);
+            /* The level (0..1) of the light of a VehicleServer cabin that its low-poly cab - of
+             * the cabin's kind (RailVehicleServer) - is lit at (TDynamicObject::set_cab_lights(),
+             * DynObj.cpp:841-853); with jointcabs: every cab at the brightest */
+            void cabin_set_light_level(const RID &p_cabin, double p_level);
             /* Whether the vehicle is drawn in detail - as nodes, animated */
             bool vehicle_is_detailed(const RID &p_vehicle) const;
     };

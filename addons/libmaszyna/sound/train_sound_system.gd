@@ -768,8 +768,8 @@ func _placement_index(placement:StringName) -> int:
 
 func _update_spatial_anchors(runtime:BankRuntime) -> void:
     var cabin:Cabin3D = _listener.listener_cabin if _listener else null
-    # Home/End rebuilds the controls inside the same cabin node, so the occupied cab is part of the key.
-    var anchor_key:int = hash([cabin.get_instance_id(), cabin.cab_number]) if cabin else 0
+    # Home/End rebuilds the controls inside the same cabin node, so the shown cabin is part of the key.
+    var anchor_key:int = hash([cabin.get_instance_id(), cabin.get_cabin()]) if cabin else 0
     if not cabin or not cabin.get_vehicle_rid() == runtime.vehicle \
             or anchor_key == runtime.anchored_cabin_instance_id:
         return

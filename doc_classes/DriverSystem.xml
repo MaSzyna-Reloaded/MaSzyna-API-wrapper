@@ -14,24 +14,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="driver_attach_vehicle">
-			<return type="void" />
-			<param index="0" name="driver" type="RID" />
-			<param index="1" name="vehicle" type="RID" />
-			<description>
-			</description>
-		</method>
-		<method name="driver_create">
-			<return type="RID" />
-			<description>
-			</description>
-		</method>
-		<method name="driver_free">
-			<return type="void" />
-			<param index="0" name="driver" type="RID" />
-			<description>
-			</description>
-		</method>
 		<method name="driver_get_delegate" qualifiers="const">
 			<return type="DriverDelegate" />
 			<param index="0" name="driver" type="RID" />
@@ -56,12 +38,6 @@
 			<param index="0" name="driver" type="RID" />
 			<description>
 				The driver's timetable and its progress, from its delegate ([method DriverDelegate._get_timetable_state]); empty without a delegate.
-			</description>
-		</method>
-		<method name="driver_get_vehicle" qualifiers="const">
-			<return type="RID" />
-			<param index="0" name="driver" type="RID" />
-			<description>
 			</description>
 		</method>
 		<method name="driver_report_timetable_changed">
@@ -108,32 +84,24 @@
 			<description>
 			</description>
 		</method>
-		<method name="vehicle_set_control_active">
-			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="active" type="bool" />
-			<description>
-			</description>
-		</method>
 	</methods>
 	<signals>
+		<signal name="driver_attached">
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The person is a driver now: it was given its first delegate ([method driver_attach_delegate]).
+			</description>
+		</signal>
 		<signal name="driver_freed">
 			<param index="0" name="driver" type="RID" />
 			<description>
-				The driver was freed ([method driver_free]).
+				The person is no driver any more: its delegate was taken ([method driver_attach_delegate] with null), or the person was freed (PersonServer).
 			</description>
 		</signal>
 		<signal name="driver_timetable_changed">
 			<param index="0" name="driver" type="RID" />
 			<description>
 				The driver's timetable, or how far it got through it, has changed.
-			</description>
-		</signal>
-		<signal name="driver_vehicle_attached">
-			<param index="0" name="driver" type="RID" />
-			<param index="1" name="vehicle" type="RID" />
-			<description>
-				The driver drives another vehicle ([method driver_attach_vehicle]); an invalid [param vehicle] when it has none, also when its vehicle was freed.
 			</description>
 		</signal>
 	</signals>

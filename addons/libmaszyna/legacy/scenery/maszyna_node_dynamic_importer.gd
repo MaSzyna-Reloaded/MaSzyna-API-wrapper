@@ -55,9 +55,9 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaDynamicD
     dynamic.velocity = velocity
     # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.
     dynamic.driver_type = (
-        VehicleController.DRIVER_HEAD if driver_type == "headdriver"
-        else VehicleController.DRIVER_REAR if driver_type == "reardriver"
-        else VehicleController.DRIVER_NOBODY
+        MaszynaDynamicData.DriverType.DRIVER_HEAD if driver_type == "headdriver"
+        else MaszynaDynamicData.DriverType.DRIVER_REAR if driver_type == "reardriver"
+        else MaszynaDynamicData.DriverType.DRIVER_NOBODY
     )
     dynamic.load_name = load_type
     dynamic.load_amount = float(load_count)

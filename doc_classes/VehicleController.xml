@@ -85,11 +85,6 @@
 			<description>
 			</description>
 		</method>
-		<method name="get_occupied_cab" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
 		<method name="get_speed" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -211,8 +206,6 @@
 			[code]Dimensions:W[/code]
 			Vehicle width, in meters.
 		</member>
-		<member name="driver_type" type="int" setter="set_driver_type" getter="get_driver_type" enum="VehicleController.DriverType">
-		</member>
 		<member name="implementation" type="StringName" setter="set_implementation" getter="get_implementation">
 		</member>
 		<member name="initial_velocity" type="float" setter="set_initial_velocity" getter="get_initial_velocity">
@@ -260,12 +253,6 @@
 		</signal>
 	</signals>
 	<constants>
-		<constant name="DRIVER_NOBODY" value="0" enum="DriverType">
-		</constant>
-		<constant name="DRIVER_HEAD" value="1" enum="DriverType">
-		</constant>
-		<constant name="DRIVER_REAR" value="2" enum="DriverType">
-		</constant>
 		<constant name="CATEGORY_TRAIN" value="1" enum="Category">
 		</constant>
 		<constant name="CATEGORY_ROAD" value="2" enum="Category">

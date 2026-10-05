@@ -95,16 +95,16 @@ func test_vehicle_file_and_skin_keep_the_spelling_from_the_scenery() -> void:
 
 
 
-## DynObj.cpp:1812-1825 - the driver type picks the occupied cab.
-func test_driver_type_selects_occupied_cab() -> void:
+## DynObj.cpp:1812-1825 - the driver type picks the cabin the driver sits in.
+func test_driver_type_selects_driver_cabin() -> void:
     var context:MaszynaImporterContext = _trainset_context(20.0)
     var head:MaszynaDynamicData = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
     var rear:MaszynaDynamicData = _import(context, "fixtures skin short 0 reardriver 3 0 enddynamic")
     var nobody:MaszynaDynamicData = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
 
-    assert_eq(head.driver_type, VehicleController.DRIVER_HEAD)
-    assert_eq(rear.driver_type, VehicleController.DRIVER_REAR)
-    assert_eq(nobody.driver_type, VehicleController.DRIVER_NOBODY)
+    assert_eq(head.driver_type, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    assert_eq(rear.driver_type, MaszynaDynamicData.DriverType.DRIVER_REAR)
+    assert_eq(nobody.driver_type, MaszynaDynamicData.DriverType.DRIVER_NOBODY)
 
 
 ## What the scenery loaded the vehicle with. The count comes first and the cargo's name only

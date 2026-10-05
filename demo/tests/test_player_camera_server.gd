@@ -20,6 +20,11 @@ var _announced:Array[StringName] = []
 var _placed:Transform3D
 
 
+## An AI driver that does nothing of its own: only who sits at the controls is tested
+class IdleDriver extends DriverDelegate:
+    pass
+
+
 func before_each() -> void:
     _announced.clear()
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
@@ -85,17 +90,48 @@ func test_a_vehicle_taken_over_is_looked_at_from_its_cab_and_f4_steps_out_and_in
 ## the vehicle back from its driver
 func test_taking_over_the_vehicle_driven_goes_back_into_its_cab() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
+    # the vehicle's driver rides in its rear cabin
+    var driver:RID = PersonServer.person_create()
+    RailVehicleServer.person_enter_rear_cabin(driver, _vehicle.get_rid(), VehiclePersonRole.VEHICLE_PERSON_ROLE_OBSERVER)
+    DriverSystem.driver_attach_delegate(driver, IdleDriver.new())
     PlayerServer.player_take_over_vehicle(_vehicle.get_rid())
     PlayerCameraServer.camera_toggle_cabin()
-    # Shift+Q: handed to its driver (it has none here, so nobody drives it)
-    DriverSystem.vehicle_set_control_active(_vehicle.get_rid(), true)
-    assert_false(DriverSystem.vehicle_is_driven(_vehicle.get_rid()))
+    # Shift+Q: handed to its driver
+    PlayerServer.player_hand_over_vehicle()
+    assert_eq(VehicleServer.person_get_role(PlayerServer.player_get_person()),
+            VehiclePersonRole.VEHICLE_PERSON_ROLE_OBSERVER, "handed over, the player rides along")
 
     PlayerServer.player_take_over_vehicle(_vehicle.get_rid())
 
     assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_CABIN)
     assert_eq(PlayerServer.player_get_vehicle(), _vehicle.get_rid())
-    assert_true(DriverSystem.vehicle_is_driven(_vehicle.get_rid()), "taken back by the player")
+    assert_eq(VehicleServer.person_get_role(PlayerServer.player_get_person()),
+            VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER, "taken back by the player")
+    assert_false(DriverSystem.vehicle_is_control_active(_vehicle.get_rid()), "the driver only rides along")
+    PersonServer.person_free(driver)
+
+
+## Train.cpp:1088-1118 - Q (aidriverdisable) takes the controls back from the driver and only that:
+## the player looking from outside goes on looking from outside (report 2026-10-05: the view jumped
+## into the cab)
+func test_q_takes_the_controls_back_and_the_view_stays_outside() -> void:
+    await wait_idle_frames(SETTLE_FRAMES)
+    var driver:RID = PersonServer.person_create()
+    RailVehicleServer.person_enter_rear_cabin(driver, _vehicle.get_rid(), VehiclePersonRole.VEHICLE_PERSON_ROLE_OBSERVER)
+    DriverSystem.driver_attach_delegate(driver, IdleDriver.new())
+    PlayerServer.player_take_over_vehicle(_vehicle.get_rid())
+    PlayerServer.player_hand_over_vehicle()
+    # Shift+F4: looking at the vehicle from outside
+    PlayerCameraServer.camera_cycle_follow_view()
+    assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_FOLLOW)
+
+    PlayerServer.player_take_back_vehicle()
+
+    assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_FOLLOW, "the view stays outside")
+    assert_eq(VehicleServer.person_get_role(PlayerServer.player_get_person()),
+            VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER, "the player drives again")
+    assert_false(DriverSystem.vehicle_is_control_active(_vehicle.get_rid()), "the driver only rides along")
+    PersonServer.person_free(driver)
 
 
 ## drivermode.cpp:803-804 - Shift+F4 follows the player's vehicle, then steps through the views

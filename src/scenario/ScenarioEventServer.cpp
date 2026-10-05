@@ -424,7 +424,7 @@ namespace godot {
         // copied: queueing emits event_queued, and a listener may bind events to a track
         const Vector<RID> all_events = bound->events[p_all_slot];
         const bool crewed = !bound->events[p_crew_slot].is_empty() &&
-                            !(vehicles->vehicle_get_driver_type(p_vehicle) == VehicleController::DRIVER_NOBODY);
+                            vehicles->vehicle_has_person_role(p_vehicle, VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER);
         const Vector<RID> crew_events = crewed ? bound->events[p_crew_slot] : Vector<RID>();
         for (const RID &event: crew_events) {
             if (events.has(event)) {

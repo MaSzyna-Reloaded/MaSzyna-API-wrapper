@@ -4,26 +4,26 @@ extends Node
 ## from vehicle commands (VehicleServer.vehicle_send_command), which execute on the vehicle
 ## immediately.
 ##
-## Holds a CabinState per (vehicle, cab) and a registry of cabin control handlers. A vehicle is
-## its VehicleServer handle - never its scenery name, which two vehicles may share and one may
-## lack. Cabin controls only report manipulations through act(); the handlers are registered by
-## the CabinLogic attached to the vehicle (e.g. LegacyCabinLogic) and translate them into vehicle
-## commands. CabinSystem itself has no cabin logic and forwards nothing by default.
+## Holds a CabinState per cabin and a registry of cabin control handlers. A cabin is its
+## VehicleServer handle (RailVehicleServer knows which of the vehicle's cabs it is), a vehicle its
+## VehicleServer handle - never its scenery name, which two vehicles may share and one may lack.
+## Cabin controls only report manipulations through act(); the handlers are registered by the
+## CabinLogic attached to the vehicle (e.g. LegacyCabinLogic) - for the cabin its driver sits in -
+## and translate them into vehicle commands. CabinSystem itself has no cabin logic and forwards
+## nothing by default.
 
-signal control_changed(vehicle_rid:RID, cab:int, control_id:StringName, value:Variant)
+signal control_changed(cabin:RID, control_id:StringName, value:Variant)
 ## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
 ## here so a cabin element can react without ever holding the vehicle itself.
 signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant)
-## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
-signal vehicle_cabin_occupied_changed(vehicle_rid:RID, cabin_occupied:int)
-## The light of a cab shines at another level (cab_set_light_level())
-signal cab_light_level_changed(vehicle_rid:RID, cab:int, level:float)
-## The instrument light of a cab came on or went out (cab_set_instrument_light_enabled())
-signal cab_instrument_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
-## The dashboard light of a cab came on or went out (cab_set_dashboard_light_enabled())
-signal cab_dashboard_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
-## The timetable light of a cab came on or went out (cab_set_timetable_light_enabled())
-signal cab_timetable_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
+## The light of a cabin shines at another level (cabin_set_light_level())
+signal cabin_light_level_changed(cabin:RID, level:float)
+## The instrument light of a cabin came on or went out (cabin_set_instrument_light_enabled())
+signal cabin_instrument_light_changed(cabin:RID, enabled:bool)
+## The dashboard light of a cabin came on or went out (cabin_set_dashboard_light_enabled())
+signal cabin_dashboard_light_changed(cabin:RID, enabled:bool)
+## The timetable light of a cabin came on or went out (cabin_set_timetable_light_enabled())
+signal cabin_timetable_light_changed(cabin:RID, enabled:bool)
 ## A radio message sent from `position`: heard on the radio of the player's cab tuned to
 ## `channel`, within `reach` [m] of it when that is positive (simulation::radio_message(),
 ## simulation.cpp:506); `transcript` is what it says, null when unknown
@@ -31,10 +31,24 @@ signal radio_message_sent(message:SfxEvent, transcript:Transcript, channel:int, 
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
+## The cabins of a rail vehicle from its rear to its front - a cab change forward goes towards the
+## front (cabchangeforward, CabOccupied 1 -> 0 -> -1 backwards, Train.cpp:10324)
+const CABINS_REAR_TO_FRONT:Array[RailVehicleCabinKind.Kind] = [
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR,
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE,
+    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT,
+]
 
-var _states:Dictionary = {}
-var _controls:Dictionary = {}
-var _processes:Dictionary = {}
+## Which way a cab change goes along the vehicle
+enum CabinChangeDirection {
+    CABIN_CHANGE_FORWARD,
+    CABIN_CHANGE_BACKWARD,
+}
+
+## By cabin: its state, its control handlers by id, the callables run with the simulation
+var _states:Dictionary[RID, CabinState] = {}
+var _controls:Dictionary[RID, Dictionary] = {}
+var _processes:Dictionary[RID, Array] = {}
 var _cab_logics:Dictionary[RID, CabinLogic] = {}
 ## The cab interior each vehicle's crew sits in, and the one shown, by instance id
 var _cabin_scenes:Dictionary[RID, PackedScene] = {}
@@ -46,18 +60,18 @@ var _state_computed_values:Dictionary[RID, Dictionary] = {}
 func _ready() -> void:
     SimulationServer.simulation_advanced.connect(_on_simulation_advanced)
     VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
-    RailVehicleServer.vehicle_occupied_cab_changed.connect(_on_vehicle_occupied_cab_changed)
+    RailVehicleServer.vehicle_driver_cabin_changed.connect(_on_vehicle_driver_cabin_changed)
     VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
 
 
 func _exit_tree() -> void:
     SimulationServer.simulation_advanced.disconnect(_on_simulation_advanced)
     VehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
-    RailVehicleServer.vehicle_occupied_cab_changed.disconnect(_on_vehicle_occupied_cab_changed)
+    RailVehicleServer.vehicle_driver_cabin_changed.disconnect(_on_vehicle_driver_cabin_changed)
     VehicleServer.vehicle_freed.disconnect(_on_vehicle_freed)
 
 
-## A freed vehicle takes its cabins along - a handle is never reused for another vehicle.
+## A freed vehicle takes its cabins along - a handle is never reused for another one.
 func _on_vehicle_freed(vehicle_rid:RID) -> void:
     if _cab_logics.has(vehicle_rid):
         _cab_logics[vehicle_rid].unregister()
@@ -65,24 +79,27 @@ func _on_vehicle_freed(vehicle_rid:RID) -> void:
     _cabin_scenes.erase(vehicle_rid)
     _cabins.erase(vehicle_rid)
     _state_computed_values.erase(vehicle_rid)
-    for cab:int in [1, 0, -1]:
-        var key:String = _key(vehicle_rid, cab)
-        _states.erase(key)
-        _controls.erase(key)
-        _processes.erase(key)
+    for cabin:RID in _states.keys():
+        if _states[cabin].vehicle_rid == vehicle_rid:
+            _states.erase(cabin)
+            _controls.erase(cabin)
+            _processes.erase(cabin)
 
 
 func _on_vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant) -> void:
     vehicle_command_received.emit(vehicle_rid, command, p1, p2)
 
 
-func _on_vehicle_occupied_cab_changed(vehicle_rid:RID, cabin_occupied:int) -> void:
-    # the crew moved: the controls are those of the other cab now, before anybody hears of the move
-    # (MaszynaDynamicTrainCabin rebuilds its widgets on the relayed signal)
-    if _cab_logics.has(vehicle_rid):
-        _cab_logics[vehicle_rid].unregister()
-        _cab_logics[vehicle_rid].register(vehicle_rid, cabin_occupied)
-    vehicle_cabin_occupied_changed.emit(vehicle_rid, cabin_occupied)
+## The driver moved, sat down or got up: the controls are those of the driver's cabin now, none
+## while nobody drives - the original keeps a TTrain only for a driven train, and a cab of every
+## vehicle at work costs every frame
+func _on_vehicle_driver_cabin_changed(vehicle_rid:RID, cabin:RID) -> void:
+    var logic:CabinLogic = _cab_logics.get(vehicle_rid)
+    if not logic:
+        return
+    logic.unregister()
+    if cabin.is_valid():
+        logic.register(vehicle_rid, cabin)
 
 
 ## The whole vehicle's state, by name. VehicleServer builds it once per step and keeps it until
@@ -134,13 +151,9 @@ func vehicle_component(vehicle_rid:RID, type:VehicleComponentType.Type) -> Vehic
     return VehicleServer.vehicle_component_get(vehicle_rid, type) if vehicle_rid.is_valid() else null
 
 
-## Which cab of this vehicle is occupied - 1, 0 (machine room) or -1, as CabinState keys on.
-func occupied_cab(vehicle_rid:RID) -> int:
-    return int(vehicle_state(vehicle_rid).get("cabin_occupied", 1))
-
-
-## The cab logic of a driven vehicle, registered for its occupied cab; null detaches it. One per
-## vehicle, whoever drives it - the player's cab and the AI act on the same controls.
+## The cab logic of a vehicle; null detaches it. One per vehicle, whoever drives it - the player's
+## cab and the AI act on the same controls - registered for the cabin its driver sits in
+## (RailVehicleServer.vehicle_get_driver_cabin()) while somebody drives it.
 func vehicle_attach_cab_logic(vehicle_rid:RID, logic:CabinLogic) -> void:
     if _cab_logics.has(vehicle_rid):
         _cab_logics[vehicle_rid].unregister()
@@ -148,14 +161,16 @@ func vehicle_attach_cab_logic(vehicle_rid:RID, logic:CabinLogic) -> void:
     if not logic:
         return
     _cab_logics[vehicle_rid] = logic
-    logic.register(vehicle_rid, occupied_cab(vehicle_rid))
+    var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle_rid)
+    if cabin.is_valid():
+        logic.register(vehicle_rid, cabin)
 
 
 func vehicle_get_cab_logic(vehicle_rid:RID) -> CabinLogic:
     return _cab_logics.get(vehicle_rid)
 
 
-## The cab interior of a vehicle, a scene rooted in a Cabin3D - what vehicle_show_cabin() builds.
+## The cab interior of a vehicle, a scene rooted in a Cabin3D - what cabin_show() builds.
 ## Only a view: the cab logic is the vehicle's (vehicle_attach_cab_logic()).
 func vehicle_set_cabin_scene(vehicle_rid:RID, scene:PackedScene) -> void:
     _cabin_scenes[vehicle_rid] = scene
@@ -165,13 +180,16 @@ func vehicle_get_cabin_scene(vehicle_rid:RID) -> PackedScene:
     return _cabin_scenes.get(vehicle_rid)
 
 
-## The cab interior built under `parent`, in a node riding on the vehicle from then on
+## The interior of the cabin built under `parent`, in a node riding on its vehicle from then on
 ## (RailVehicleRenderingServer.vehicle_mount_node()) - the cab keeps its own place in the vehicle's
 ## frame; it is built within add_child() (Cabin3D's cabin_ready comes from its NOTIFICATION_READY),
-## so it returns built. Null for a vehicle without a cab.
-func vehicle_show_cabin(vehicle_rid:RID, parent:Node) -> Cabin3D:
+## so it returns built. One interior a vehicle is shown: the one of another of its cabins is rebuilt
+## for this one. Null for a vehicle without a cab.
+func cabin_show(cabin_rid:RID, parent:Node) -> Cabin3D:
+    var vehicle_rid:RID = VehicleServer.cabin_get_vehicle(cabin_rid)
     var shown:Cabin3D = vehicle_get_cabin(vehicle_rid)
     if shown:
+        shown.set_cabin(cabin_rid)
         return shown
     var scene:PackedScene = _cabin_scenes.get(vehicle_rid)
     if not scene:
@@ -186,8 +204,9 @@ func vehicle_show_cabin(vehicle_rid:RID, parent:Node) -> Cabin3D:
     parent.add_child(mount)
     RailVehicleRenderingServer.vehicle_mount_node(vehicle_rid, mount.get_instance_id())
     mount.add_child(cabin)
-    # a cabin holds the handle of the vehicle it sits in and takes everything else from here -
-    # told once it is in the tree, because building its interior puts nodes there
+    # a cabin holds the handles of its cabin and of the vehicle it sits in and takes everything else
+    # from here - told once it is in the tree, because building its interior puts nodes there
+    cabin.set_cabin(cabin_rid)
     cabin.set_vehicle_rid(vehicle_rid)
     return cabin
 
@@ -209,129 +228,152 @@ func vehicle_get_cabin(vehicle_rid:RID) -> Cabin3D:
     return instance_from_id(_cabins.get(vehicle_rid, 0)) as Cabin3D
 
 
-static func _key(vehicle_rid:RID, cab:int) -> String:
-    return "%d:%d" % [vehicle_rid.get_id(), cab]
-
-
-## The cab light of a cab at `level` (0..1): its low-poly cab is lit at it as well
-## (RailVehicleRenderingServer.vehicle_set_cab_light_level())
-func cab_set_light_level(vehicle_rid:RID, cab:int, level:float) -> void:
-    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+## The cab light of a cabin at `level` (0..1): its low-poly cab is lit at it as well
+## (RailVehicleRenderingServer.cabin_set_light_level())
+func cabin_set_light_level(cabin:RID, level:float) -> void:
+    var state:CabinState = get_cabin_state(cabin)
     if state.light_level == level:
         return
     state.light_level = level
-    RailVehicleRenderingServer.vehicle_set_cab_light_level(vehicle_rid, cab, level)
-    cab_light_level_changed.emit(vehicle_rid, cab, level)
+    RailVehicleRenderingServer.cabin_set_light_level(cabin, level)
+    cabin_light_level_changed.emit(cabin, level)
 
 
-func cab_get_light_level(vehicle_rid:RID, cab:int) -> float:
-    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+func cabin_get_light_level(cabin:RID) -> float:
+    var state:CabinState = _states.get(cabin)
     return state.light_level if state else 0.0
 
 
-func cab_set_instrument_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
-    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+func cabin_set_instrument_light_enabled(cabin:RID, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(cabin)
     if state.instrument_light_enabled == enabled:
         return
     state.instrument_light_enabled = enabled
-    cab_instrument_light_changed.emit(vehicle_rid, cab, enabled)
+    cabin_instrument_light_changed.emit(cabin, enabled)
 
 
-func cab_get_instrument_light_enabled(vehicle_rid:RID, cab:int) -> bool:
-    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+func cabin_get_instrument_light_enabled(cabin:RID) -> bool:
+    var state:CabinState = _states.get(cabin)
     return state.instrument_light_enabled if state else false
 
 
-func cab_set_dashboard_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
-    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+func cabin_set_dashboard_light_enabled(cabin:RID, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(cabin)
     if state.dashboard_light_enabled == enabled:
         return
     state.dashboard_light_enabled = enabled
-    cab_dashboard_light_changed.emit(vehicle_rid, cab, enabled)
+    cabin_dashboard_light_changed.emit(cabin, enabled)
 
 
-func cab_get_dashboard_light_enabled(vehicle_rid:RID, cab:int) -> bool:
-    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+func cabin_get_dashboard_light_enabled(cabin:RID) -> bool:
+    var state:CabinState = _states.get(cabin)
     return state.dashboard_light_enabled if state else false
 
 
-func cab_set_timetable_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
-    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+func cabin_set_timetable_light_enabled(cabin:RID, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(cabin)
     if state.timetable_light_enabled == enabled:
         return
     state.timetable_light_enabled = enabled
-    cab_timetable_light_changed.emit(vehicle_rid, cab, enabled)
+    cabin_timetable_light_changed.emit(cabin, enabled)
 
 
-func cab_get_timetable_light_enabled(vehicle_rid:RID, cab:int) -> bool:
-    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+func cabin_get_timetable_light_enabled(cabin:RID) -> bool:
+    var state:CabinState = _states.get(cabin)
     return state.timetable_light_enabled if state else false
 
 
-func get_cabin_state(vehicle_rid:RID, cab:int) -> CabinState:
-    var key:String = _key(vehicle_rid, cab)
-    if not _states.has(key):
-        _states[key] = CabinState.new(vehicle_rid, cab)
-    return _states[key]
+func get_cabin_state(cabin:RID) -> CabinState:
+    if not _states.has(cabin):
+        _states[cabin] = CabinState.new(cabin)
+    return _states[cabin]
 
 
 ## handler(state:CabinState, action:StringName, value:Variant) -> Variant
-# FIXME(#184, #28): imperative, per-vehicle registration mirroring VehicleController.register_command;
+# FIXME(#184, #28): imperative, per-cabin registration mirroring VehicleController.register_command;
 # cabin behaviours should rather declare the control ids/actions they handle.
-func register_control(vehicle_rid:RID, cab:int, control_id:StringName, handler:Callable) -> void:
-    var key:String = _key(vehicle_rid, cab)
-    if not _controls.has(key):
-        _controls[key] = {}
-    _controls[key][control_id] = handler
+func register_control(cabin:RID, control_id:StringName, handler:Callable) -> void:
+    if not _controls.has(cabin):
+        _controls[cabin] = {}
+    _controls[cabin][control_id] = handler
 
 
-func unregister_control(vehicle_rid:RID, cab:int, control_id:StringName, handler:Callable) -> void:
-    var controls:Dictionary = _controls.get(_key(vehicle_rid, cab), {})
+func unregister_control(cabin:RID, control_id:StringName, handler:Callable) -> void:
+    var controls:Dictionary = _controls.get(cabin, {})
     if controls.get(control_id) == handler:
         controls.erase(control_id)
 
 
-func has_control(vehicle_rid:RID, cab:int, control_id:StringName) -> bool:
-    return _controls.get(_key(vehicle_rid, cab), {}).has(control_id)
+func has_control(cabin:RID, control_id:StringName) -> bool:
+    return _controls.get(cabin, {}).has(control_id)
 
 
-## Control ids with a registered handler in the given cab, sorted.
-func get_controls(vehicle_rid:RID, cab:int) -> Array:
-    var controls:Array = _controls.get(_key(vehicle_rid, cab), {}).keys()
+## Control ids with a registered handler in the cabin, sorted.
+func get_controls(cabin:RID) -> Array:
+    var controls:Array = _controls.get(cabin, {}).keys()
     controls.sort()
     return controls
 
 
 ## callable(state:CabinState, delta:float) - called every frame while registered
-func register_process(vehicle_rid:RID, cab:int, callable:Callable) -> void:
-    var key:String = _key(vehicle_rid, cab)
-    get_cabin_state(vehicle_rid, cab)
-    if not _processes.has(key):
-        _processes[key] = []
-    _processes[key].append(callable)
+func register_process(cabin:RID, callable:Callable) -> void:
+    get_cabin_state(cabin)
+    if not _processes.has(cabin):
+        _processes[cabin] = []
+    _processes[cabin].append(callable)
 
 
-func unregister_process(vehicle_rid:RID, cab:int, callable:Callable) -> void:
-    var processes:Array = _processes.get(_key(vehicle_rid, cab), [])
+func unregister_process(cabin:RID, callable:Callable) -> void:
+    var processes:Array = _processes.get(cabin, [])
     processes.erase(callable)
 
 
 ## Reports a manipulation of a cabin control; returns the handler's result (#43), or null when
 ## no handler is registered for the control.
-func act(vehicle_rid:RID, cab:int, control_id:StringName, action:StringName, value:Variant = null) -> Variant:
+func act(cabin:RID, control_id:StringName, action:StringName, value:Variant = null) -> Variant:
+    var vehicle_name:String = VehicleServer.vehicle_get_name(VehicleServer.cabin_get_vehicle(cabin))
     if not action in ACTIONS:
-        GameLog.error("%s: Unknown cabin action: %s" % [VehicleServer.vehicle_get_name(vehicle_rid), action])
+        GameLog.error("%s: Unknown cabin action: %s" % [vehicle_name, action])
         return null
-    var handler:Callable = _controls.get(_key(vehicle_rid, cab), {}).get(control_id, Callable())
+    var handler:Callable = _controls.get(cabin, {}).get(control_id, Callable())
     if not handler.is_valid():
-        GameLog.error("%s: Unknown cabin control: %s (cab %d)" % [
-            VehicleServer.vehicle_get_name(vehicle_rid), control_id, cab])
+        GameLog.error("%s: Unknown cabin control: %s" % [vehicle_name, control_id])
         return null
-    return handler.call(get_cabin_state(vehicle_rid, cab), action, value)
+    return handler.call(get_cabin_state(cabin), action, value)
 
 
-func get_control(vehicle_rid:RID, cab:int, control_id:StringName) -> Variant:
-    return get_cabin_state(vehicle_rid, cab).get_value(control_id)
+## The person over to the next cabin of its vehicle that way - one the vehicle has a cab for
+## (TTrain::CabChange(), Train.cpp:10324-10351); nothing at the end of the vehicle. A driver
+## switches its cab off, leaves the controls at rest and switches the new one on, as the original's
+## does; whoever only rides along just goes over.
+func person_change_cabin(person:RID, direction:CabinChangeDirection) -> void:
+    var cabin:RID = VehicleServer.person_get_cabin(person)
+    var vehicle_rid:RID = VehicleServer.cabin_get_vehicle(cabin)
+    var step:int = 1 if direction == CabinChangeDirection.CABIN_CHANGE_FORWARD else -1
+    var index:int = CABINS_REAR_TO_FRONT.find(RailVehicleServer.cabin_get_kind(cabin)) + step
+    var target:RID = RID()
+    while index >= 0 and index < CABINS_REAR_TO_FRONT.size() and not target.is_valid():
+        match CABINS_REAR_TO_FRONT[index]:
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR:
+                target = RailVehicleServer.vehicle_get_rear_cabin(vehicle_rid)
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE:
+                target = RailVehicleServer.vehicle_get_machine_room(vehicle_rid)
+            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
+                target = RailVehicleServer.vehicle_get_front_cabin(vehicle_rid)
+        index += step
+    if not target.is_valid():
+        return
+    if not VehicleServer.person_get_role(person) == VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER:
+        VehicleServer.cabin_person_move(person, target)
+        return
+    VehicleServer.vehicle_send_command(vehicle_rid, "cab_deactivation_auto")
+    VehicleServer.cabin_person_move(person, target)
+    VehicleServer.vehicle_send_command(vehicle_rid, "cab_controls_reset")
+    VehicleServer.vehicle_send_command(vehicle_rid, "cab_activation_auto")
+
+
+func get_control(cabin:RID, control_id:StringName) -> Variant:
+    return get_cabin_state(cabin).get_value(control_id)
 
 
 ## A scenery's radio message, to the cab radio of whoever listens (radio_message_sent)
@@ -341,15 +383,15 @@ func send_radio_message(
     radio_message_sent.emit(message, transcript, channel, position, reach)
 
 
-func get_state(vehicle_rid:RID, cab:int) -> Dictionary:
-    return get_cabin_state(vehicle_rid, cab).values.duplicate()
+func get_state(cabin:RID) -> Dictionary:
+    return get_cabin_state(cabin).values.duplicate()
 
 
 ## The cabs' own timing runs on the simulation's clock, as the original's TTrain::Update(dt) does
 ## with the scaled time (Train.cpp:8436-8474): a relay held for its delay at x10 closes in a tenth
 ## of the real time, and nothing runs while paused
 func _on_simulation_advanced(seconds:float) -> void:
-    for key:String in _processes:
-        var state:CabinState = _states.get(key)
-        for callable:Callable in _processes[key].duplicate():
+    for cabin:RID in _processes:
+        var state:CabinState = _states.get(cabin)
+        for callable:Callable in _processes[cabin].duplicate():
             callable.call(state, seconds)

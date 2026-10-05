@@ -23,8 +23,8 @@ namespace godot {
     constexpr const char *DIAGNOSTICS_SETTING = "maszyna/debug/physics_diagnostics";
     const char *RailVehicleServer::vehicle_placed_signal = "vehicle_placed";
     const char *RailVehicleServer::vehicle_placement_changed_signal = "vehicle_placement_changed";
-    const char *RailVehicleServer::vehicle_occupied_cab_changed_signal = "vehicle_occupied_cab_changed";
     const char *RailVehicleServer::vehicle_trainset_changed_signal = "vehicle_trainset_changed";
+    const char *RailVehicleServer::vehicle_driver_cabin_changed_signal = "vehicle_driver_cabin_changed";
     const char *RailVehicleServer::vehicle_coupler_attached_signal = "vehicle_coupler_attached";
     const char *RailVehicleServer::vehicle_coupler_detached_signal = "vehicle_coupler_detached";
     const char *RailVehicleServer::vehicle_coupler_adapter_attached_signal = "vehicle_coupler_adapter_attached";
@@ -51,6 +51,21 @@ namespace godot {
         vehicle_server->connect(
                 VehicleServer::vehicle_configured_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_configured));
+        // who drives from which cabin is the controller's occupied cab
+        vehicle_server->connect(
+                VehicleServer::cabin_person_entered_signal,
+                callable_mp(this, &RailVehicleServer::_on_cabin_person_entered));
+        vehicle_server->connect(
+                VehicleServer::cabin_person_left_signal, callable_mp(this, &RailVehicleServer::_on_cabin_person_left));
+        vehicle_server->connect(
+                VehicleServer::cabin_person_role_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_cabin_person_role_changed));
+        vehicle_server->connect(
+                VehicleServer::cabin_person_moved_signal,
+                callable_mp(this, &RailVehicleServer::_on_cabin_person_moved));
+        vehicle_server->connect(
+                VehicleServer::vehicle_cabin_detached_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_detached));
     }
 
     void RailVehicleServer::_bind_methods() {
@@ -67,6 +82,54 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("trainset_get_vehicles", "trainset"), &RailVehicleServer::trainset_get_vehicles);
         ClassDB::bind_method(D_METHOD("trainset_place", "trainset"), &RailVehicleServer::trainset_place);
         ClassDB::bind_method(D_METHOD("vehicle_attach", "vehicle"), &RailVehicleServer::vehicle_attach);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_add_front_cabin", "vehicle"), &RailVehicleServer::vehicle_add_front_cabin);
+        ClassDB::bind_method(D_METHOD("vehicle_add_rear_cabin", "vehicle"), &RailVehicleServer::vehicle_add_rear_cabin);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_add_machine_room", "vehicle"), &RailVehicleServer::vehicle_add_machine_room);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_front_cabin", "vehicle"), &RailVehicleServer::vehicle_get_front_cabin);
+        ClassDB::bind_method(D_METHOD("vehicle_get_rear_cabin", "vehicle"), &RailVehicleServer::vehicle_get_rear_cabin);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_machine_room", "vehicle"), &RailVehicleServer::vehicle_get_machine_room);
+        ClassDB::bind_method(D_METHOD("cabin_get_kind", "cabin"), &RailVehicleServer::cabin_get_kind);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_driver_cabin", "vehicle"), &RailVehicleServer::vehicle_get_driver_cabin);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_leading_cabin", "vehicle"), &RailVehicleServer::vehicle_get_leading_cabin);
+        ClassDB::bind_method(
+                D_METHOD("person_enter_front_cabin", "person", "vehicle", "role"),
+                &RailVehicleServer::person_enter_front_cabin);
+        ClassDB::bind_method(
+                D_METHOD("person_enter_rear_cabin", "person", "vehicle", "role"),
+                &RailVehicleServer::person_enter_rear_cabin);
+        ClassDB::bind_method(
+                D_METHOD("person_enter_machine_room", "person", "vehicle", "role"),
+                &RailVehicleServer::person_enter_machine_room);
+        ClassDB::bind_method(
+                D_METHOD("person_move_to_front_cabin", "person"), &RailVehicleServer::person_move_to_front_cabin);
+        ClassDB::bind_method(
+                D_METHOD("person_move_to_rear_cabin", "person"), &RailVehicleServer::person_move_to_rear_cabin);
+        ClassDB::bind_method(
+                D_METHOD("person_move_to_machine_room", "person"), &RailVehicleServer::person_move_to_machine_room);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_front_cabin_has_person_role", "vehicle", "role"),
+                &RailVehicleServer::vehicle_front_cabin_has_person_role);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_rear_cabin_has_person_role", "vehicle", "role"),
+                &RailVehicleServer::vehicle_rear_cabin_has_person_role);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_machine_room_has_person_role", "vehicle", "role"),
+                &RailVehicleServer::vehicle_machine_room_has_person_role);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_front_cabin_list_persons", "vehicle", "role"),
+                &RailVehicleServer::vehicle_front_cabin_list_persons);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_rear_cabin_list_persons", "vehicle", "role"),
+                &RailVehicleServer::vehicle_rear_cabin_list_persons);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_machine_room_list_persons", "vehicle", "role"),
+                &RailVehicleServer::vehicle_machine_room_list_persons);
         ClassDB::bind_method(D_METHOD("vehicle_detach", "vehicle"), &RailVehicleServer::vehicle_detach);
         ClassDB::bind_method(D_METHOD("vehicle_is_attached", "vehicle"), &RailVehicleServer::vehicle_is_attached);
         ClassDB::bind_method(
@@ -148,10 +211,10 @@ namespace godot {
                 D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
 
         ADD_SIGNAL(MethodInfo(vehicle_emergency_signal_received_signal, PropertyInfo(Variant::RID, "vehicle")));
-        ADD_SIGNAL(MethodInfo(
-                vehicle_occupied_cab_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
-                PropertyInfo(Variant::INT, "cab")));
         ADD_SIGNAL(MethodInfo(vehicle_trainset_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_driver_cabin_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::RID, "cabin")));
         ADD_SIGNAL(MethodInfo(vehicle_placed_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(vehicle_placement_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
         const PropertyInfo coupling_flag(
@@ -324,6 +387,7 @@ namespace godot {
         VehiclePlacement &placement = vehicles.insert(p_vehicle, VehiclePlacement())->value;
         placement.controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
         _connect_relays(p_vehicle, placement);
+        _update_driver_cabin(p_vehicle);
     }
 
     bool RailVehicleServer::vehicle_is_attached(const RID &p_vehicle) const {
@@ -775,6 +839,7 @@ namespace godot {
             controller->set_load_amount(placement->load_amount);
             controller->emit_position_changed_if_needed();
         }
+        _hand_driver_cabin_kind(p_vehicle);
     }
 
     void RailVehicleServer::_connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
@@ -782,9 +847,6 @@ namespace godot {
         if (controller == nullptr) {
             return;
         }
-        controller->connect(
-                RailVehicleController::cabin_occupied_changed,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
         controller->connect(
                 RailVehicleController::trainset_changed_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_trainset_changed).bind(p_vehicle));
@@ -813,9 +875,6 @@ namespace godot {
             return;
         }
         controller->disconnect(
-                RailVehicleController::cabin_occupied_changed,
-                callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_occupied_changed).bind(p_vehicle));
-        controller->disconnect(
                 RailVehicleController::trainset_changed_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_trainset_changed).bind(p_vehicle));
         controller->disconnect(
@@ -834,8 +893,68 @@ namespace godot {
         controller->unregister_command("load_remove");
     }
 
-    void RailVehicleServer::_on_vehicle_cabin_occupied_changed(const int p_cab, const RID &p_vehicle) {
-        emit_signal(vehicle_occupied_cab_changed_signal, p_vehicle, p_cab);
+    void RailVehicleServer::_on_cabin_person_entered(
+            const RID &p_cabin, const RID & /* p_person */, VehiclePersonRole::Role /* p_role */) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
+    }
+
+    void RailVehicleServer::_on_cabin_person_left(const RID &p_cabin, const RID & /* p_person */) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
+    }
+
+    void RailVehicleServer::_on_cabin_person_role_changed(
+            const RID &p_cabin, const RID & /* p_person */, VehiclePersonRole::Role /* p_role */) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
+    }
+
+    void RailVehicleServer::_on_cabin_person_moved(
+            const RID & /* p_person */, const RID &p_cabin, const RID & /* p_previous */) {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL(vehicle_server);
+        _update_driver_cabin(vehicle_server->cabin_get_vehicle(p_cabin));
+    }
+
+    /* A cabin taken off the vehicle is no cabin of its kind any more */
+    void RailVehicleServer::_on_vehicle_cabin_detached(const RID &p_vehicle, const RID &p_cabin) {
+        if (VehiclePlacement *placement = vehicles.getptr(p_vehicle); placement != nullptr) {
+            placement->cabin_kinds.erase(p_cabin);
+        }
+    }
+
+    /* A vehicle left standing has switched its simulation off, and whoever sits down to drive it
+     * wakes it */
+    void RailVehicleServer::_update_driver_cabin(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return;
+        }
+        const RID cabin = _find_driver_cabin(p_vehicle);
+        if (placement->driver_cabin == cabin) {
+            return;
+        }
+        placement->driver_cabin = cabin;
+        _hand_driver_cabin_kind(p_vehicle);
+        if (RailVehicleController *controller = _get_controller(*placement);
+            controller != nullptr && cabin.is_valid()) {
+            controller->wake();
+        }
+        emit_signal(vehicle_driver_cabin_changed_signal, p_vehicle, cabin);
+    }
+
+    /* The controller holds what its occupied cab is (CabOccupied), and only this server tells it -
+     * again to every controller the vehicle gets */
+    void RailVehicleServer::_hand_driver_cabin_kind(const RID &p_vehicle) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (controller != nullptr) {
+            controller->set_driver_cabin_kind(cabin_get_kind(placement->driver_cabin));
+        }
     }
 
     void RailVehicleServer::_on_vehicle_trainset_changed(const RID &p_vehicle) {
@@ -1668,5 +1787,189 @@ namespace godot {
             min_along = -SCAN_ENDPOINT_EPSILON;
         }
         return false;
+    }
+
+    RID RailVehicleServer::_vehicle_add_cabin(const RID &p_vehicle, const RailVehicleCabinKind::Kind p_kind) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(placement, RID());
+        ERR_FAIL_NULL_V(vehicle_server, RID());
+        ERR_FAIL_COND_V_MSG(
+                _vehicle_get_cabin(p_vehicle, p_kind).is_valid(), RID(), "The vehicle has that cabin already");
+        const RID cabin = vehicle_server->cabin_create();
+        vehicle_server->vehicle_cabin_attach(p_vehicle, cabin);
+        placement->cabin_kinds.insert(cabin, p_kind);
+        return cabin;
+    }
+
+    RID RailVehicleServer::_vehicle_get_cabin(const RID &p_vehicle, const RailVehicleCabinKind::Kind p_kind) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return RID();
+        }
+        for (const KeyValue<RID, RailVehicleCabinKind::Kind> &entry: placement->cabin_kinds) {
+            if (entry.value == p_kind) {
+                return entry.key;
+            }
+        }
+        return RID();
+    }
+
+    RID RailVehicleServer::vehicle_add_front_cabin(const RID &p_vehicle) {
+        return _vehicle_add_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT);
+    }
+
+    RID RailVehicleServer::vehicle_add_rear_cabin(const RID &p_vehicle) {
+        return _vehicle_add_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR);
+    }
+
+    RID RailVehicleServer::vehicle_add_machine_room(const RID &p_vehicle) {
+        return _vehicle_add_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE);
+    }
+
+    RID RailVehicleServer::vehicle_get_front_cabin(const RID &p_vehicle) const {
+        return _vehicle_get_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT);
+    }
+
+    RID RailVehicleServer::vehicle_get_rear_cabin(const RID &p_vehicle) const {
+        return _vehicle_get_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR);
+    }
+
+    RID RailVehicleServer::vehicle_get_machine_room(const RID &p_vehicle) const {
+        return _vehicle_get_cabin(p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE);
+    }
+
+    RailVehicleCabinKind::Kind RailVehicleServer::cabin_get_kind(const RID &p_cabin) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE);
+        const VehiclePlacement *placement = vehicles.getptr(vehicle_server->cabin_get_vehicle(p_cabin));
+        const RailVehicleCabinKind::Kind *kind =
+                placement != nullptr ? placement->cabin_kinds.getptr(p_cabin) : nullptr;
+        return kind != nullptr ? *kind : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE;
+    }
+
+    /* Decided again on every change of the occupancy (_update_driver_cabin()), and answered from
+     * what was decided */
+    RID RailVehicleServer::_find_driver_cabin(const RID &p_vehicle) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, RID());
+        const TypedArray<RID> cabins = vehicle_server->vehicle_get_cabins(p_vehicle);
+        for (int index = 0; index < cabins.size(); ++index) {
+            if (vehicle_server->cabin_has_person_role(cabins[index], VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER)) {
+                return cabins[index];
+            }
+        }
+        return RID();
+    }
+
+    RID RailVehicleServer::vehicle_get_driver_cabin(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? placement->driver_cabin : RID();
+    }
+
+    RID RailVehicleServer::vehicle_get_leading_cabin(const RID &p_vehicle) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        const double velocity = controller != nullptr ? controller->get_velocity() : 0.0;
+        const int direction = controller != nullptr ? controller->get_direction() : 0;
+        // the mover's V > 0 moves the vehicle towards its front; standing, the reverser says where to
+        const bool rearwards = velocity < 0.0 || (velocity == 0.0 && direction < 0);
+        const RID front = vehicle_get_front_cabin(p_vehicle);
+        const RID rear = vehicle_get_rear_cabin(p_vehicle);
+        RID facing = rearwards ? rear : front;
+        if (facing.is_valid()) {
+            return facing;
+        }
+        const RID other_end = rearwards ? front : rear;
+        return other_end.is_valid() ? other_end : vehicle_get_machine_room(p_vehicle);
+    }
+
+    Error RailVehicleServer::_person_enter_cabin(
+            const RID &p_person, const RID &p_vehicle, const RailVehicleCabinKind::Kind p_kind,
+            const VehiclePersonRole::Role p_role) {
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, ERR_UNCONFIGURED);
+        const RID cabin = _vehicle_get_cabin(p_vehicle, p_kind);
+        return cabin.is_valid() ? vehicle_server->cabin_person_enter(cabin, p_person, p_role) : ERR_DOES_NOT_EXIST;
+    }
+
+    Error RailVehicleServer::_person_move_to_cabin(const RID &p_person, const RailVehicleCabinKind::Kind p_kind) {
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, ERR_UNCONFIGURED);
+        const RID cabin = _vehicle_get_cabin(
+                vehicle_server->cabin_get_vehicle(vehicle_server->person_get_cabin(p_person)), p_kind);
+        return cabin.is_valid() ? vehicle_server->cabin_person_move(p_person, cabin) : ERR_DOES_NOT_EXIST;
+    }
+
+    Error RailVehicleServer::person_enter_front_cabin(
+            const RID &p_person, const RID &p_vehicle, const VehiclePersonRole::Role p_role) {
+        return _person_enter_cabin(p_person, p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT, p_role);
+    }
+
+    Error RailVehicleServer::person_enter_rear_cabin(
+            const RID &p_person, const RID &p_vehicle, const VehiclePersonRole::Role p_role) {
+        return _person_enter_cabin(p_person, p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR, p_role);
+    }
+
+    Error RailVehicleServer::person_enter_machine_room(
+            const RID &p_person, const RID &p_vehicle, const VehiclePersonRole::Role p_role) {
+        return _person_enter_cabin(p_person, p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE, p_role);
+    }
+
+    Error RailVehicleServer::person_move_to_front_cabin(const RID &p_person) {
+        return _person_move_to_cabin(p_person, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT);
+    }
+
+    Error RailVehicleServer::person_move_to_rear_cabin(const RID &p_person) {
+        return _person_move_to_cabin(p_person, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR);
+    }
+
+    Error RailVehicleServer::person_move_to_machine_room(const RID &p_person) {
+        return _person_move_to_cabin(p_person, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE);
+    }
+
+    bool RailVehicleServer::vehicle_front_cabin_has_person_role(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, false);
+        return vehicle_server->cabin_has_person_role(vehicle_get_front_cabin(p_vehicle), p_role);
+    }
+
+    bool RailVehicleServer::vehicle_rear_cabin_has_person_role(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, false);
+        return vehicle_server->cabin_has_person_role(vehicle_get_rear_cabin(p_vehicle), p_role);
+    }
+
+    bool RailVehicleServer::vehicle_machine_room_has_person_role(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, false);
+        return vehicle_server->cabin_has_person_role(vehicle_get_machine_room(p_vehicle), p_role);
+    }
+
+    TypedArray<VehiclePerson> RailVehicleServer::vehicle_front_cabin_list_persons(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        const RID cabin = vehicle_get_front_cabin(p_vehicle);
+        return vehicle_server != nullptr && cabin.is_valid() ? vehicle_server->cabin_list_persons(cabin, p_role)
+                                                             : TypedArray<VehiclePerson>();
+    }
+
+    TypedArray<VehiclePerson> RailVehicleServer::vehicle_rear_cabin_list_persons(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        const RID cabin = vehicle_get_rear_cabin(p_vehicle);
+        return vehicle_server != nullptr && cabin.is_valid() ? vehicle_server->cabin_list_persons(cabin, p_role)
+                                                             : TypedArray<VehiclePerson>();
+    }
+
+    TypedArray<VehiclePerson> RailVehicleServer::vehicle_machine_room_list_persons(
+            const RID &p_vehicle, const VehiclePersonRole::Role p_role) const {
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        const RID cabin = vehicle_get_machine_room(p_vehicle);
+        return vehicle_server != nullptr && cabin.is_valid() ? vehicle_server->cabin_list_persons(cabin, p_role)
+                                                             : TypedArray<VehiclePerson>();
     }
 } // namespace godot

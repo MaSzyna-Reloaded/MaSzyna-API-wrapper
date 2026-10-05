@@ -2,13 +2,23 @@
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
+#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 namespace godot {
+    namespace {
+        /* The soundproofing columns (sound.cpp:981-1008): CabOccupied + 1, and an open window */
+        constexpr int SOUND_LISTENER_REAR_CAB = 0;
+        constexpr int SOUND_LISTENER_MACHINE_ROOM = 1;
+        constexpr int SOUND_LISTENER_FRONT_CAB = 2;
+        constexpr int SOUND_LISTENER_OPEN_WINDOW = 3;
+    } // namespace
+
     const char *Cabin3D::cabin_ready_signal = "cabin_ready";
     const char *Cabin3D::camera_configuration_changed_signal = "camera_configuration_changed";
     const char *Cabin3D::vehicle_rid_changed_signal = "vehicle_rid_changed";
+    const char *Cabin3D::cabin_changed_signal = "cabin_changed";
 
     void Cabin3D::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle_rid"), &Cabin3D::set_vehicle_rid);
@@ -19,9 +29,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_cabin_ready"), &Cabin3D::is_cabin_ready);
         ClassDB::bind_method(D_METHOD("get_sound_listener_context"), &Cabin3D::get_sound_listener_context);
 
-        ClassDB::bind_method(D_METHOD("set_cab_number", "cab_number"), &Cabin3D::set_cab_number);
-        ClassDB::bind_method(D_METHOD("get_cab_number"), &Cabin3D::get_cab_number);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "cab_number"), "set_cab_number", "get_cab_number");
+        ClassDB::bind_method(D_METHOD("set_cabin", "cabin"), &Cabin3D::set_cabin);
+        ClassDB::bind_method(D_METHOD("get_cabin"), &Cabin3D::get_cabin);
 
         ClassDB::bind_method(D_METHOD("set_has_cab_model", "has_cab_model"), &Cabin3D::set_has_cab_model);
         ClassDB::bind_method(D_METHOD("get_has_cab_model"), &Cabin3D::get_has_cab_model);
@@ -117,6 +126,7 @@ namespace godot {
          * overriding set_vehicle_rid(): a typed call from C++ reaches the native method, and a
          * script's method of the same name would simply be skipped. */
         ADD_SIGNAL(MethodInfo(vehicle_rid_changed_signal, PropertyInfo(Variant::RID, "vehicle_rid")));
+        ADD_SIGNAL(MethodInfo(cabin_changed_signal, PropertyInfo(Variant::RID, "cabin")));
         /// Emitted after rebuilding the cabin's driver position and camera bounds.
         ADD_SIGNAL(MethodInfo(camera_configuration_changed_signal));
     }
@@ -221,14 +231,31 @@ namespace godot {
     }
 
     int Cabin3D::get_sound_listener_context() const {
-        return cab_window_open ? 3 : cab_number + 1;
+        if (cab_window_open) {
+            return SOUND_LISTENER_OPEN_WINDOW;
+        }
+        const RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+        switch (rail_vehicles != nullptr ? rail_vehicles->cabin_get_kind(cabin)
+                                         : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_NONE) {
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR:
+                return SOUND_LISTENER_REAR_CAB;
+            case RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT:
+                return SOUND_LISTENER_FRONT_CAB;
+            default:
+                return SOUND_LISTENER_MACHINE_ROOM;
+        }
     }
 
-    void Cabin3D::set_cab_number(const int p_cab_number) {
-        cab_number = p_cab_number;
+    void Cabin3D::set_cabin(const RID &p_cabin) {
+        if (cabin == p_cabin) {
+            return;
+        }
+        cabin = p_cabin;
+        emit_signal(cabin_changed_signal, cabin);
     }
-    int Cabin3D::get_cab_number() const {
-        return cab_number;
+
+    RID Cabin3D::get_cabin() const {
+        return cabin;
     }
     void Cabin3D::set_has_cab_model(const bool p_has_cab_model) {
         has_cab_model = p_has_cab_model;

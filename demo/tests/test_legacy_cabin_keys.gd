@@ -11,17 +11,20 @@ const KNOB_HOLD_FRAMES:int = 10
 
 var train:VehicleController
 var logic:LegacyCabinLogic
+## The front cabin, whose controls the logic registers
+var cabin:RID
 
 
 func before_each() -> void:
-    train = build_vehicle("TestCabinKeys", SM42, 0.0, VehicleController.DRIVER_HEAD)
+    train = build_vehicle("TestCabinKeys", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var cab_controls:LegacyCabinControls = LegacyCabinControls.new()
     for label:String in ["battery_sw", "mainctrl", "dirkey", "security_reset_bt", "brakectrl"]:
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
         cab_controls.add_control(StringName(label), entry["widget_class"], entry["fixed_fields"],
                 CabinButton.ButtonType.TOGGLE, entry.get("target", CabinState.Target.OCCUPIED))
-    logic = LegacyCabinLogic.new(func(_cab:int) -> LegacyCabinControls: return cab_controls)
-    logic.register(train.get_rid(), 1)
+    logic = LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return cab_controls)
+    cabin = RailVehicleServer.vehicle_get_front_cabin(train.get_rid())
+    logic.register(train.get_rid(), cabin)
     await wait_idle_frames(2)
 
 
@@ -61,9 +64,9 @@ func test_a_modelled_switch_takes_its_key_without_a_widget() -> void:
 ## A monostable button (the vigilance reset) is held by its key and let go on the key's release
 func test_a_monostable_button_is_held_while_its_key_is() -> void:
     logic.input(_action(&"security_acknowledge", true))
-    assert_true(CabinSystem.get_control(train.get_rid(), 1, &"security_reset_bt"), "pressing the key holds it")
+    assert_true(CabinSystem.get_control(cabin, &"security_reset_bt"), "pressing the key holds it")
     logic.input(_action(&"security_acknowledge", false))
-    assert_false(CabinSystem.get_control(train.get_rid(), 1, &"security_reset_bt"), "releasing it lets it go")
+    assert_false(CabinSystem.get_control(cabin, &"security_reset_bt"), "releasing it lets it go")
 
 
 ## OnCommand_mastercontrollerincrease acts on key repeat too (Train.cpp:1096) - holding + keeps

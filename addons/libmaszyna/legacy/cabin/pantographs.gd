@@ -30,14 +30,10 @@ const PANTOGRAPHS:Dictionary[RailVehicleEnginePowerSource.PantographSelector, Ar
     RailVehicleEnginePowerSource.PANTOGRAPH_SECOND: [&"pantrear_sw", &"pantrearoff_sw",
             "current_collector/pantograph_second_valve_enabled", "current_collector/pantograph_second_active"],
 }
-## the machine room, where levers are moved by hand whatever the cab models (Train.cpp:3228)
-const MACHINE_ROOM_CAB:int = 0
-
 ## control -> whether the cab models it (m_controlmapper.contains)
 var _present:Dictionary[StringName, bool] = {}
 var _has_selector:bool
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 var _handlers:Dictionary[StringName, Callable] = {}
 
 
@@ -50,17 +46,16 @@ func control_ids() -> Array[StringName]:
     return SWITCHES.keys()
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
     for control_id:StringName in SWITCHES:
         _handlers[control_id] = _switch.bind(control_id)
-        CabinSystem.register_control(vehicle_rid, cab, control_id, _handlers[control_id])
+        CabinSystem.register_control(cabin, control_id, _handlers[control_id])
 
 
 func unregister() -> void:
     for control_id:StringName in _handlers:
-        CabinSystem.unregister_control(_vehicle_rid, _cab, control_id, _handlers[control_id])
+        CabinSystem.unregister_control(_cabin, control_id, _handlers[control_id])
     _handlers.clear()
 
 
@@ -80,18 +75,20 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
                     RailVehicleEnginePowerSource.VALVE_OPERATION_NONE, TARGET)
         return null
     var pantograph:Array = PANTOGRAPHS[selector]
+    # the machine room, where levers are moved by hand whatever the cab models (Train.cpp:3228)
+    var machine_room:bool = RailVehicleServer.cabin_get_kind(state.cabin) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE
     # Train.cpp:3161 - the switch lowers a pantograph whose valve is open or which is up
     var lower:bool = lowering_button or state.vehicle_state_value(pantograph[2], false, TARGET) \
             or state.vehicle_state_value(pantograph[3], false, TARGET)
     if lower:
         # Train.cpp:3285 - lowering needs the switch, or the lowering button for an impulse type
-        if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[1] if impulse else pantograph[0], false):
+        if not machine_room and not _present.get(pantograph[1] if impulse else pantograph[0], false):
             return null
         return state.send_vehicle_command("pantograph_valve_operate", selector,
                 RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE_ON if impulse
                 else RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE, TARGET)
     # Train.cpp:3228 - raising needs the switch
-    if not state.cab == MACHINE_ROOM_CAB and not _present.get(pantograph[0], false):
+    if not machine_room and not _present.get(pantograph[0], false):
         return null
     return state.send_vehicle_command("pantograph_valve_operate", selector,
             RailVehicleEnginePowerSource.VALVE_OPERATION_ENABLE_ON if impulse

@@ -1,11 +1,14 @@
 #pragma once
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehiclePerson.hpp"
+#include "vehicles/base/VehiclePersonRole.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
@@ -14,9 +17,10 @@ namespace godot {
     class VehicleComponent;
 
     /* The vehicles, whatever they run on: their handles, the controller behind each, the names a
-     * scenery gives them, their commands, components and dumps. What a kind of vehicle adds - a
-     * rail vehicle's track, stepping and couplers - is a server of its own (RailVehicleServer),
-     * which takes a vehicle created here and knows it by the same handle. */
+     * scenery gives them, their cabins and who sits in them, their commands, components and dumps.
+     * What a kind of vehicle adds - a rail vehicle's track, stepping, couplers and the kinds of its
+     * cabins - is a server of its own (RailVehicleServer), which takes a vehicle created here and
+     * knows it by the same handle. */
     class VehicleServer : public Object {
             GDCLASS(VehicleServer, Object)
 
@@ -39,7 +43,8 @@ namespace godot {
                     /* What the scenery placed the vehicle with, handed to every controller bound
                      * to it before its simulation starts (the `.scn` `dynamic` entry) */
                     double initial_velocity = 0.0;
-                    VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
+                    /* Its cabins, in the order they were attached */
+                    Vector<RID> cabins;
                     /* The implementation that steps it, as its controller names it */
                     StringName implementation;
                     /* What a scenery calls this vehicle. Only the things that know a vehicle by
@@ -54,7 +59,17 @@ namespace godot {
                     bool state_dump_valid = false;
             };
 
+            /* A place in a vehicle people sit in (cabin_create()): the vehicle it is attached to
+             * and who is in it, in what role */
+            struct Cabin {
+                    RID vehicle;
+                    HashMap<RID, VehiclePersonRole::Role> persons;
+            };
+
             HashMap<RID, Vehicle> vehicles;
+            HashMap<RID, Cabin> cabins;
+            /* The cabin each person aboard sits in - a person is in one cabin at a time */
+            HashMap<RID, RID> person_cabins;
             HashMap<String, RID> vehicles_by_name;
             int64_t next_vehicle_id = 0;
             HashMap<RID, Controller> controllers;
@@ -81,6 +96,9 @@ namespace godot {
                     const String &p_command, const Variant &p_p1, const Variant &p_p2, const RID &p_vehicle);
             void _on_vehicle_configured(const RID &p_vehicle);
             void _on_vehicle_config_changed(const RID &p_vehicle);
+            void _on_person_freed(const RID &p_person);
+            /* Whether a cabin other than p_person's own seat has its driver */
+            bool _cabin_has_other_driver(const Cabin &p_cabin, const RID &p_person) const;
 
         protected:
             static void _bind_methods();
@@ -95,6 +113,18 @@ namespace godot {
             static const char *vehicle_configured_signal;
             /* A component of the vehicle (re)applied its configuration */
             static const char *vehicle_config_changed_signal;
+            /* The cabin is no part of the vehicle any more - detached or freed, everybody out first
+             * (vehicle: RID, cabin: RID) */
+            static const char *vehicle_cabin_detached_signal;
+            /* Somebody sat down in a cabin (cabin: RID, person: RID, role: VehiclePersonRole.Role) */
+            static const char *cabin_person_entered_signal;
+            /* Somebody left a cabin (cabin: RID, person: RID) */
+            static const char *cabin_person_left_signal;
+            /* Somebody took another role in the cabin (cabin: RID, person: RID, role) */
+            static const char *cabin_person_role_changed_signal;
+            /* Somebody went over to another cabin of the vehicle, in the role it had (person: RID,
+             * cabin: RID, previous: RID) */
+            static const char *cabin_person_moved_signal;
 
             VehicleServer();
             ~VehicleServer() override;
@@ -134,10 +164,9 @@ namespace godot {
             /* The controller the vehicle runs on - the copy its simulation was built from, null
              * without one */
             Ref<VehicleController> vehicle_get_controller(const RID &p_vehicle) const;
-            /* What the scenery placed the vehicle with - the velocity it starts with and who drives
-             * it. Handed to its controller when it is bound. */
+            /* What the scenery placed the vehicle with - the velocity it starts with. Handed to its
+             * controller when it is bound. */
             void vehicle_set_initial_velocity(const RID &p_vehicle, double p_velocity);
-            void vehicle_set_driver_type(const RID &p_vehicle, VehicleController::DriverType p_driver_type);
             /* The scenery's name for this vehicle, and the way back from one. A name is what a
              * `.scn`, an event or the console has; everything that holds the vehicle uses its
              * handle and never comes through here (TrackServer::track_get_rid_by_name() is the
@@ -146,13 +175,42 @@ namespace godot {
             String vehicle_get_name(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
             TypedArray<RID> vehicle_get_rids() const;
-            /* Who is aboard - a vehicle with nobody fires no crew events (Owner->Mechanik, TrkFoll.cpp:125) */
-            VehicleController::DriverType vehicle_get_driver_type(const RID &p_vehicle) const;
             /* Whether the simulation behind the vehicle exists yet - nothing can be read off a
              * vehicle before it does */
             bool vehicle_is_simulation_ready(const RID &p_vehicle) const;
-            /* The cab the driver sits in: 1 the front one, -1 the rear one, 0 nobody */
-            int vehicle_get_occupied_cab(const RID &p_vehicle) const;
+
+            /* A place people sit in, of nothing yet; attached to a vehicle it can be entered. A
+             * vehicle without a cabin cannot be entered at all. A freed vehicle frees its cabins. */
+            RID cabin_create();
+            void cabin_free(const RID &p_cabin);
+            void vehicle_cabin_attach(const RID &p_vehicle, const RID &p_cabin);
+            /* Whoever sits in the cabin leaves it first */
+            void vehicle_cabin_detach(const RID &p_vehicle, const RID &p_cabin);
+            TypedArray<RID> vehicle_get_cabins(const RID &p_vehicle) const;
+            int vehicle_get_cabin_count(const RID &p_vehicle) const;
+            RID cabin_get_vehicle(const RID &p_cabin) const;
+
+            /* Who sits where, in what role. Refused - with the reason, and nothing changed - for a
+             * person aboard already (ERR_ALREADY_IN_USE), a cabin of no vehicle or a role that is
+             * no role (ERR_INVALID_PARAMETER), and the driver's seat of a cabin somebody else
+             * drives from (ERR_UNAVAILABLE): one driver a cabin, and taking it over is that one's
+             * change of role first. */
+            Error cabin_person_enter(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
+            void cabin_person_leave(const RID &p_cabin, const RID &p_person);
+            Error cabin_person_change_role(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
+            /* Over to another cabin of the same vehicle, in the role the person has */
+            Error cabin_person_move(const RID &p_person, const RID &p_cabin);
+            /* Who sits in the cabin, or in any cabin of the vehicle, in p_role -
+             * VEHICLE_PERSON_ROLE_ANY for everybody */
+            TypedArray<VehiclePerson> cabin_list_persons(const RID &p_cabin, VehiclePersonRole::Role p_role) const;
+            bool cabin_has_person_role(const RID &p_cabin, VehiclePersonRole::Role p_role) const;
+            TypedArray<VehiclePerson> vehicle_list_persons(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            bool vehicle_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            /* The cabin the person sits in, and its vehicle - RID() for a person on foot */
+            RID person_get_cabin(const RID &p_person) const;
+            RID person_get_vehicle(const RID &p_person) const;
+            /* The role the person has where it sits, VEHICLE_PERSON_ROLE_ANY for a person on foot */
+            VehiclePersonRole::Role person_get_role(const RID &p_person) const;
             /* Width (x), height (y) and length (z) of the body [m], in the vehicle's own frame */
             Vector3 vehicle_get_dimensions(const RID &p_vehicle) const;
 

@@ -1,5 +1,8 @@
 #pragma once
 #include "vehicles/base/VehicleComponentType.hpp"
+#include "vehicles/base/VehiclePerson.hpp"
+#include "vehicles/base/VehiclePersonRole.hpp"
+#include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
@@ -166,6 +169,10 @@ namespace godot {
                     Pantograph pantographs[2];
                     /* How long the pantographs have fed no voltage [s] (NoVoltTime) */
                     double no_voltage_time = 0.0;
+                    /* What each of its VehicleServer cabins is, in the railway's words */
+                    HashMap<RID, RailVehicleCabinKind::Kind> cabin_kinds;
+                    /* The cabin whose driver the vehicle answers to, last announced */
+                    RID driver_cabin;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
@@ -205,7 +212,24 @@ namespace godot {
             void _connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
             void _disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
             void _on_vehicle_controller_changed(const RID &p_vehicle);
-            void _on_vehicle_cabin_occupied_changed(int p_cab, const RID &p_vehicle);
+            /* Who sits where changed in a cabin: the vehicle's controller is handed the kind of
+             * cabin its driver sits in, and a vehicle somebody now drives wakes */
+            void _on_cabin_person_entered(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
+            void _on_cabin_person_left(const RID &p_cabin, const RID &p_person);
+            void _on_cabin_person_role_changed(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
+            void _on_cabin_person_moved(const RID &p_person, const RID &p_cabin, const RID &p_previous);
+            void _on_vehicle_cabin_detached(const RID &p_vehicle, const RID &p_cabin);
+            /* The driver's cabin decided again after the occupancy changed: kept, handed to the
+             * controller and announced when it is another one */
+            void _update_driver_cabin(const RID &p_vehicle);
+            void _hand_driver_cabin_kind(const RID &p_vehicle);
+            RID _find_driver_cabin(const RID &p_vehicle) const;
+            RID _vehicle_add_cabin(const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind);
+            RID _vehicle_get_cabin(const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind) const;
+            Error _person_enter_cabin(
+                    const RID &p_person, const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind,
+                    VehiclePersonRole::Role p_role);
+            Error _person_move_to_cabin(const RID &p_person, RailVehicleCabinKind::Kind p_kind);
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_attached(int64_t p_flag, const RID &p_vehicle);
             void _on_vehicle_coupler_detached(int64_t p_flag, const RID &p_vehicle);
@@ -249,9 +273,11 @@ namespace godot {
             /* The vehicle is somewhere else on the route - once a step it moved in, or once a
              * deliberate move (vehicle_move()); what draws it follows */
             static const char *vehicle_placement_changed_signal;
-            static const char *vehicle_occupied_cab_changed_signal;
             /* The vehicles coupled to this one are others now (RailVehicleController::trainset_changed) */
             static const char *vehicle_trainset_changed_signal;
+            /* The vehicle answers to the driver of another cabin now (vehicle: RID, cabin: RID,
+             * RID() when nobody drives it) - vehicle_get_driver_cabin() */
+            static const char *vehicle_driver_cabin_changed_signal;
             static const char *vehicle_coupler_attached_signal;
             static const char *vehicle_coupler_detached_signal;
             /* A coupler adapter fitted to / taken off an end of the vehicle (its controller's) */
@@ -294,8 +320,46 @@ namespace godot {
             /* The seconds the vehicle's exchange still takes, 0 for none or a vehicle without a load */
             double load_get_exchange_time(const RID &p_vehicle) const;
             /* Wakes the vehicle's simulation, switched off while it stood with nothing to do -
-             * somebody took it (DriverSystem) */
+             * somebody sat down to drive it */
             void vehicle_wake(const RID &p_vehicle);
+
+            /* The rail vehicle's cabins, by what they are: the front cab (the MMD's
+             * cab1definition:), the rear one (cab2definition:) and the machine room
+             * (cab0definition:) - VehicleServer cabins this server knows the kind of. One of each
+             * kind; RID() for a kind the vehicle lacks. */
+            RID vehicle_add_front_cabin(const RID &p_vehicle);
+            RID vehicle_add_rear_cabin(const RID &p_vehicle);
+            RID vehicle_add_machine_room(const RID &p_vehicle);
+            RID vehicle_get_front_cabin(const RID &p_vehicle) const;
+            RID vehicle_get_rear_cabin(const RID &p_vehicle) const;
+            RID vehicle_get_machine_room(const RID &p_vehicle) const;
+            RailVehicleCabinKind::Kind cabin_get_kind(const RID &p_cabin) const;
+            /* The cabin whose driver the vehicle answers to - the original's occupied cab
+             * (CabOccupied): of the cabins with a driver, the first one the vehicle got; RID() when
+             * nobody drives it */
+            RID vehicle_get_driver_cabin(const RID &p_vehicle) const;
+            /* The cabin to take a vehicle nobody drives over in: the one facing the way it moves,
+             * standing the way its reverser points, else the front one - the other end when it
+             * lacks that one, then the machine room; RID() for a vehicle without cabins */
+            RID vehicle_get_leading_cabin(const RID &p_vehicle);
+            /* VehicleServer's occupancy in the railway's words - cabin_person_enter(),
+             * cabin_person_move(), cabin_has_person_role() and cabin_list_persons() of the cabin of
+             * that kind; ERR_DOES_NOT_EXIST for a kind the vehicle lacks */
+            Error person_enter_front_cabin(const RID &p_person, const RID &p_vehicle, VehiclePersonRole::Role p_role);
+            Error person_enter_rear_cabin(const RID &p_person, const RID &p_vehicle, VehiclePersonRole::Role p_role);
+            Error person_enter_machine_room(const RID &p_person, const RID &p_vehicle, VehiclePersonRole::Role p_role);
+            Error person_move_to_front_cabin(const RID &p_person);
+            Error person_move_to_rear_cabin(const RID &p_person);
+            Error person_move_to_machine_room(const RID &p_person);
+            bool vehicle_front_cabin_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            bool vehicle_rear_cabin_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            bool vehicle_machine_room_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            TypedArray<VehiclePerson>
+            vehicle_front_cabin_list_persons(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            TypedArray<VehiclePerson>
+            vehicle_rear_cabin_list_persons(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
+            TypedArray<VehiclePerson>
+            vehicle_machine_room_list_persons(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
             /* The rail vehicles whose position falls in p_rect (x, z) */
             TypedArray<RID> vehicle_get_rids_in_rect(const Rect2 &p_rect) const;
             /* The railway component of a kind, as VehicleServer::vehicle_component_get() answers

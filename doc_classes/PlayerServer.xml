@@ -16,16 +16,31 @@
 				The player sits in the vehicle's cab and its driver, if it has one, drives on; the trainset left - when another one - is driven by its drivers again. Refused for a vehicle without a node, whose cab there is nothing to sit in. Emits [signal player_vehicle_entered].
 			</description>
 		</method>
+		<method name="player_get_person" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
 		<method name="player_get_vehicle" qualifiers="const">
 			<return type="RID" />
 			<description>
 				The vehicle the player drives, an invalid [RID] for none.
 			</description>
 		</method>
+		<method name="player_hand_over_vehicle">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="player_leave_vehicle">
 			<return type="void" />
 			<description>
 				The player lets the trainset go: its drivers drive it again (simulation.cpp:257-270).
+			</description>
+		</method>
+		<method name="player_take_back_vehicle">
+			<return type="void" />
+			<description>
 			</description>
 		</method>
 		<method name="player_take_over_vehicle">

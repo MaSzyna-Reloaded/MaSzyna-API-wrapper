@@ -109,6 +109,7 @@ static func read_structure(
     structure.appearance = appearance
     structure.coupler_adapter = MmdCabinInstancer.parse_coupler_adapter(abs_mmd_path, parameters)
     structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
+    structure.cabin_kinds = MmdCabinInstancer.parse_cabin_kinds(abs_mmd_path, parameters)
     return structure
 
 
@@ -143,7 +144,7 @@ static func _model_exists(data_path:String, relpath:String) -> bool:
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by
-## FizVehicleBuilder.build_scene() - CabinSystem.vehicle_show_cabin() instantiates a correctly
+## FizVehicleBuilder.build_scene() - CabinSystem.cabin_show() instantiates a correctly
 ## pre-configured MaszynaDynamicTrainCabin every time. The cab is drawn in the MaSzyna vehicle frame
 ## like the models (MASZYNA_VEHICLE_FRAME).
 static func _build_cabin_scene(normalized_data_path:String, file_name:String, skin:String) -> PackedScene:

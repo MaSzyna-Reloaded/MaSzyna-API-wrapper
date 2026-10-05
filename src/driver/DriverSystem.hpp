@@ -1,5 +1,6 @@
 #pragma once
 #include "DriverDelegate.hpp"
+#include "vehicles/base/VehiclePersonRole.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -9,9 +10,10 @@
 #include <vector>
 
 namespace godot {
-    /// RID based registry of drivers - who drives a vehicle. A driver takes the orders a scenario
-    /// gives (driver_send_command()) and, through its DriverDelegate, what they mean; it drives the
-    /// vehicle as a player does, through the cab. A player at the controls needs no driver.
+    /// The AI drivers - PersonServer persons given a DriverDelegate - by the person's handle. A
+    /// driver takes the orders a scenario gives (driver_send_command()) and, through its delegate,
+    /// what they mean; it drives the vehicle it sits in (VehicleServer) as a player does, through
+    /// the cab, while it sits there in the driver's role. A player at the controls needs no driver.
     ///
     /// A driver acts in moments, as the original's does after its reaction time (TController::
     /// ReactionTime, Driver.cpp:150-158): its delegate asks for the next one
@@ -28,7 +30,6 @@ namespace godot {
         private:
             struct DriverData {
                     Ref<DriverDelegate> delegate;
-                    RID vehicle;
                     /// The sequence of its scheduled update in the queue, 0 while none is
                     uint64_t update_sequence = 0;
             };
@@ -46,17 +47,14 @@ namespace godot {
             };
 
             HashMap<RID, DriverData> drivers;
-            HashMap<RID, RID> drivers_by_vehicle;
-            /// Vehicles a player drives - kept by the vehicle, not by its driver: a player may take
-            /// the cab before the vehicle's driver is created, and that driver starts not driving
-            HashSet<RID> player_controlled_vehicles;
             std::priority_queue<UpdateEntry, std::vector<UpdateEntry>, std::greater<UpdateEntry>> updates;
             uint64_t next_sequence = 1;
             /// While something is scheduled it holds the runtime's clock and runs as it advances
             bool processing = false;
 
-            void _on_vehicle_freed(const RID &p_vehicle);
-            void _report_driven(const RID &p_vehicle, bool p_was_driven);
+            void _on_person_freed(const RID &p_person);
+            void _on_cabin_person_role_changed(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
+            void _detach(const RID &p_driver);
             void _set_processing(bool p_processing);
             void _process_updates(double p_seconds);
 
@@ -65,22 +63,21 @@ namespace godot {
 
         public:
             static const char *driver_timetable_changed_signal;
-            static const char *driver_vehicle_attached_signal;
+            /// The person is no driver any more (driver: RID) - its delegate was taken, or the
+            /// person freed
             static const char *driver_freed_signal;
-            static const char *vehicle_driven_changed_signal;
+            /// The person is a driver now (driver: RID) - it was given its first delegate
+            static const char *driver_attached_signal;
 
             DriverSystem();
             ~DriverSystem() override;
 
-            RID driver_create();
             /// Every driver there is
             TypedArray<RID> driver_get_rids() const;
-            void driver_free(const RID &p_driver);
+            /// The person becomes a driver thinking with p_delegate; null makes it none
             void driver_attach_delegate(const RID &p_driver, const Ref<DriverDelegate> &p_delegate);
             Ref<DriverDelegate> driver_get_delegate(const RID &p_driver) const;
-            /// The RailVehicleServer vehicle the driver drives; one driver a vehicle
-            void driver_attach_vehicle(const RID &p_driver, const RID &p_vehicle);
-            RID driver_get_vehicle(const RID &p_driver) const;
+            /// The driver aboard the vehicle, in whatever role (the original's Mechanik); RID() for none
             RID vehicle_get_driver(const RID &p_vehicle) const;
             /// An order for the driver - a scenario's command with its two values, and where what
             /// sent it stands
@@ -90,16 +87,10 @@ namespace godot {
             /// The driver's delegate is updated in p_seconds of simulated time; a later call
             /// replaces the one pending
             void driver_schedule_update(const RID &p_driver, double p_seconds);
-            /// Whether the vehicle's driver drives it - off while a player drives it
-            /// (MaszynaPlayer), also when it gets its driver only later; the driver
-            /// still takes its orders then, but touches no control. False for a vehicle without a
-            /// driver.
-            void vehicle_set_control_active(const RID &p_vehicle, bool p_active);
+            /// Whether the vehicle's driver sits at its controls (AIControllFlag) - not while it
+            /// rides along in a cab a player drives from; it still takes its orders then, but
+            /// touches no control. False for a vehicle without a driver.
             bool vehicle_is_control_active(const RID &p_vehicle) const;
-            /// Whether somebody drives the vehicle - its driver or a player - announced as
-            /// vehicle_driven_changed when it changes. Only a driven vehicle has a cab at work, as
-            /// the original keeps a TTrain only for a driven train.
-            bool vehicle_is_driven(const RID &p_vehicle) const;
             /// The driver's timetable and its progress (DriverDelegate::get_timetable_state()); empty
             /// without a delegate
             Dictionary driver_get_timetable_state(const RID &p_driver) const;

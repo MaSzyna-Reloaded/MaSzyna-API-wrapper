@@ -189,7 +189,7 @@ func _tick() -> void:
     var entry:TimetableEntry = _timetable.entries[_current]
     var row:TimetableRow = _rows[_current]
     # the train's dispatch at the stop, kept under the vehicle its driver drives
-    var vehicle:RID = DriverSystem.driver_get_vehicle(_driver)
+    var vehicle:RID = VehicleServer.person_get_vehicle(_driver)
     var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(vehicle)
     if not is_standing(_state) or not entry.is_stop():
         row.show_status(tr("Next station"), TimetableRow.Tone.NEUTRAL)

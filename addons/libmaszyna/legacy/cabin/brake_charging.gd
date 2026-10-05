@@ -8,18 +8,16 @@ class_name LegacyCabinBrakeCharging
 const CONTROL:StringName = &"brake_charging"
 const ACTION:StringName = &"brake_level_charging"
 
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _brake_charging)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, CONTROL, _brake_charging)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _brake_charging)
+    CabinSystem.unregister_control(_cabin, CONTROL, _brake_charging)
 
 
 func _brake_charging(state:CabinState, action:StringName, _value:Variant) -> Variant:

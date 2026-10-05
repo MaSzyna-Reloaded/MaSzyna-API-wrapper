@@ -9,6 +9,13 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="cabin_set_light_level">
+			<return type="void" />
+			<param index="0" name="cabin" type="RID" />
+			<param index="1" name="level" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="detection_area_get_vehicle" qualifiers="const">
 			<return type="RID" />
 			<param index="0" name="area" type="RID" />
@@ -82,15 +89,6 @@
 				What the vehicle looks like. With model files this server builds the models itself; without, it draws the ones [method vehicle_set_models] hands it.
 			</description>
 		</method>
-		<method name="vehicle_set_cab_light_level">
-			<return type="void" />
-			<param index="0" name="vehicle" type="RID" />
-			<param index="1" name="cab" type="int" />
-			<param index="2" name="level" type="float" />
-			<description>
-				The level (0..1) of the light of a cab - 1, 0 or -1, as the cab layer counts them - that its low-poly cab is lit at (original [code]DynObj.cpp:841-853[/code]); with jointcabs: every cab at the brightest.
-			</description>
-		</method>
 		<method name="vehicle_set_head_display_material">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -115,6 +113,13 @@
 			<param index="2" name="low_poly" type="RID" />
 			<description>
 				The exterior and the low-poly interior as [E3DRenderingServer] instances somebody else owns - a vehicle assembled by hand. Announced by [signal vehicle_model_built].
+			</description>
+		</method>
+		<method name="vehicle_set_scenario">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="scenario" type="RID" />
+			<description>
 			</description>
 		</method>
 		<method name="vehicle_set_transform">

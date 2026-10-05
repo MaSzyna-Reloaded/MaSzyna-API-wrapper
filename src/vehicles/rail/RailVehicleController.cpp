@@ -3,7 +3,6 @@
 #include "vehicles/base/VehicleServer.hpp"
 
 namespace godot {
-    const char *RailVehicleController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *RailVehicleController::trainset_changed_signal = "trainset_changed";
     const char *RailVehicleController::coupler_attached_signal = "coupler_attached";
     const char *RailVehicleController::coupler_adapter_attached_signal = "coupler_adapter_attached";
@@ -38,7 +37,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("find_rail_components", "type"), &RailVehicleController::find_rail_components);
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &RailVehicleController::cab_activation);
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &RailVehicleController::cab_activation_auto);
-        ClassDB::bind_method(D_METHOD("cab_change", "direction"), &RailVehicleController::cab_change);
+        ClassDB::bind_method(D_METHOD("cab_deactivation_auto"), &RailVehicleController::cab_deactivation_auto);
+        ClassDB::bind_method(D_METHOD("cab_controls_reset"), &RailVehicleController::cab_controls_reset);
         ClassDB::bind_method(D_METHOD("ground_relay_reset"), &RailVehicleController::ground_relay_reset);
         ClassDB::bind_method(D_METHOD("antislip"), &RailVehicleController::antislip);
         ClassDB::bind_method(
@@ -139,7 +139,6 @@ namespace godot {
                 "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
                 "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
-        ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(trainset_changed_signal));
         const PropertyInfo coupling_flag(
                 Variant::INT, "flag", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_CLASS_IS_BITFIELD,
@@ -201,14 +200,14 @@ namespace godot {
         BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
 
         ClassDB::bind_method(D_METHOD("get_direction_absolute"), &RailVehicleController::get_direction_absolute);
-        ClassDB::bind_method(D_METHOD("get_cabin_occupied"), &RailVehicleController::get_cabin_occupied);
         ClassDB::bind_method(D_METHOD("get_train_damage"), &RailVehicleController::get_train_damage);
         ClassDB::bind_method(D_METHOD("get_mass_reduced"), &RailVehicleController::get_mass_reduced);
         ClassDB::bind_method(D_METHOD("get_coupler_stretched"), &RailVehicleController::get_coupler_stretched);
     }
 
     void RailVehicleController::_register_commands() {
-        register_command("cab_change", Callable(this, "cab_change"));
+        register_command("cab_deactivation_auto", Callable(this, "cab_deactivation_auto"));
+        register_command("cab_controls_reset", Callable(this, "cab_controls_reset"));
         register_command("ground_relay_reset", Callable(this, "ground_relay_reset"));
         register_command("antislip", Callable(this, "antislip"));
         register_command("cab_activation", Callable(this, "cab_activation"));
@@ -226,7 +225,8 @@ namespace godot {
     }
 
     void RailVehicleController::_unregister_commands() {
-        unregister_command("cab_change");
+        unregister_command("cab_deactivation_auto");
+        unregister_command("cab_controls_reset");
         unregister_command("ground_relay_reset");
         unregister_command("antislip");
         unregister_command("cab_activation");
@@ -243,19 +243,6 @@ namespace godot {
         unregister_command("coupler_adapter_remove");
     }
 
-    /* The occupied cab is decided every step, from the live getter, as the vehicle's own signals
-     * are (VehicleController::update_state()). */
-    void RailVehicleController::update_state() {
-        if (!is_simulation_ready()) {
-            return;
-        }
-        VehicleController::update_state();
-        if (const int new_cabin_occupied = get_cabin_occupied(); prev_cabin_occupied != new_cabin_occupied) {
-            prev_cabin_occupied = new_cabin_occupied;
-            emit_signal(cabin_occupied_changed, new_cabin_occupied);
-        }
-    }
-
     /* The vehicle's own state only - what it may or may not have, each component fills itself
      * (VehicleController::compose_state()). */
     void RailVehicleController::_fill_state_dictionary(Dictionary &p_state) const {
@@ -264,7 +251,6 @@ namespace godot {
             return;
         }
         p_state["direction_absolute"] = get_direction_absolute();
-        p_state["cabin_occupied"] = get_cabin_occupied();
         p_state["train_damage"] = get_train_damage();
         p_state["mass_reduced"] = get_mass_reduced();
         p_state["coupler_stretched"] = get_coupler_stretched();
@@ -292,5 +278,13 @@ namespace godot {
 
     double RailVehicleController::get_coupler_adapter_height() const {
         return coupler_adapter_height;
+    }
+
+    void RailVehicleController::set_driver_cabin_kind(const RailVehicleCabinKind::Kind p_kind) {
+        driver_cabin_kind = p_kind;
+    }
+
+    RailVehicleCabinKind::Kind RailVehicleController::get_driver_cabin_kind() const {
+        return driver_cabin_kind;
     }
 } // namespace godot

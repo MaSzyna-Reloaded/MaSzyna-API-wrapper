@@ -17,8 +17,7 @@ const ACTION_FIELDS:Array[String] = LegacyCabinControls.ACTION_FIELDS
 const KEY_WIRED_KINDS:Array[StringName] = [&"button", &"switch", &"knob"]
 
 var _cab_controls:LegacyCabinControls
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 var _handlers:Dictionary[StringName, Callable] = {}
 ## The controls whose keys the cab logic takes
 var _key_control_ids:Array[StringName] = []
@@ -28,9 +27,8 @@ func _init(cab_controls:LegacyCabinControls) -> void:
     _cab_controls = cab_controls
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
     var taken_actions:Dictionary[String, bool] = _cab_controls.get_actions()
 
     for label:String in MmdSemanticCatalog.get_labels():
@@ -45,7 +43,7 @@ func register(vehicle_rid:RID, cab:int) -> void:
         actions = actions.filter(func(action:String) -> bool: return not action == "")
         if not actions or actions.any(func(action:String) -> bool: return taken_actions.has(action)):
             continue
-        var registered:bool = CabinSystem.has_control(vehicle_rid, cab, control_id)
+        var registered:bool = CabinSystem.has_control(cabin, control_id)
         if not registered and not wiring:
             continue
         for action:String in actions:
@@ -56,12 +54,12 @@ func register(vehicle_rid:RID, cab:int) -> void:
             continue
         wiring["control_id"] = control_id
         _handlers[control_id] = LegacyCabinForwardCommands._handle.bind(wiring)
-        CabinSystem.register_control(vehicle_rid, cab, control_id, _handlers[control_id])
+        CabinSystem.register_control(cabin, control_id, _handlers[control_id])
 
 
 func unregister() -> void:
     for control_id:StringName in _handlers:
-        CabinSystem.unregister_control(_vehicle_rid, _cab, control_id, _handlers[control_id])
+        CabinSystem.unregister_control(_cabin, control_id, _handlers[control_id])
     _handlers.clear()
     _key_control_ids.clear()
 

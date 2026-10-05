@@ -12,8 +12,7 @@ const CONTROL:StringName = &"pantalloff_sw"
 
 var _button_type:CabinButton.ButtonType
 var _has_gauge:bool
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 func _init(button_type:CabinButton.ButtonType, has_gauge:bool) -> void:
@@ -25,14 +24,13 @@ func control_ids() -> Array[StringName]:
     return [CONTROL]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _drop_all)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, CONTROL, _drop_all)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _drop_all)
+    CabinSystem.unregister_control(_cabin, CONTROL, _drop_all)
 
 
 func _drop_all(state:CabinState, action:StringName, value:Variant) -> Variant:

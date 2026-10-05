@@ -11,8 +11,7 @@ const BUTTONS:Dictionary[StringName, int] = {
     &"dirbackward_bt": -1,
 }
 
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 var _handlers:Dictionary[StringName, Callable] = {}
 
 
@@ -20,17 +19,16 @@ func control_ids() -> Array[StringName]:
     return BUTTONS.keys()
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
     for button:StringName in BUTTONS:
         _handlers[button] = _button.bind(button)
-        CabinSystem.register_control(vehicle_rid, cab, button, _handlers[button])
+        CabinSystem.register_control(cabin, button, _handlers[button])
 
 
 func unregister() -> void:
     for button:StringName in _handlers:
-        CabinSystem.unregister_control(_vehicle_rid, _cab, button, _handlers[button])
+        CabinSystem.unregister_control(_cabin, button, _handlers[button])
     _handlers.clear()
 
 

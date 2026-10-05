@@ -1352,19 +1352,49 @@ data-driven"); what it found is fixed except these:
   `Button.cpp:59`): the original animates them on those models, seen from outside; here the cab's
   controls are only the cab model's. It needs the cab logic to drive the vehicle's low-poly and
   exterior instances.
-* **The cab's door controls** (`OnCommand_doorlocktoggle`, `doortoggleleft/right`,
-  `dooropenleft/right`, `doorcloseleft/right`, `dooropenall`, `doorcloseall`, `doormodetoggle`,
-  Train.cpp:7091-7740): the MMD labels `door_left/right_sw`, `doorleft/righton_sw`,
-  `doorleft/rightoff_sw`, `doorallon_sw`, `dooralloff_sw` (45 files, its lamp `m_doors` = any door
-  of the train open), `door_signalling_sw`, `doormode_sw` (drivermouseinput.cpp:672-710) and their
-  keys (driverkeyboardinput.cpp:180-196) are not ported. Needs: a `LegacyCabinDoors` behaviour,
-  catalog entries, input actions (Comma/Period with Shift and Ctrl+Shift are taken by the permit
-  actions - pick free bindings), the departure signal on close (`signal_departure`, a command and a
-  state of the doors component) and tests. `RailVehicleDoors.get_left/right_door_closed()`
-  (`is_door_closed`) is added for it.
+* **Cab occupancy (persons, cabins, roles) - what is left** (2026-10-05):
+  * Two DRIVERs of one vehicle (cab1 and cab2, multiplayer): the vehicle answers to the first cabin
+    with a driver (`RailVehicleServer.vehicle_get_driver_cabin()`); the original has one human -
+    decide by the cab activation when it matters.
+  * A cab change (`CabinSystem.person_change_cabin()`) goes to the next cabin the MMD defines; the
+    original changes `CabOccupied` first and fails on a missing definition (two presses past a
+    missing cab0), and moves to the next vehicle when there is no further cab
+    (`OnCommand_cabchangeforward/backward`, Train.cpp:6644-6720) - the move between vehicles (gangway,
+    Train.cpp:8305/8337) is not ported. The AI's `DirectionChange()` after its cab change
+    (Driver.cpp:2624) follows only from its cabin's kind.
+  * A driver the scenery names for a vehicle whose MMD has no cab of that end is not seated (a
+    warning, MaszynaLegacyVehicleSystem) - the original keeps a Mechanik without a cab.
+  * `test_legacy_cabin_keys::test_a_knob_moves_while_its_key_is_held` is red: the SM42 fixture's
+    brake has no handle type, so `brake_level_set` moves nothing (min == max) whoever sits where -
+    not checked whether it was red before this work.
+* **The cab's door controls** - the next work after the cab occupancy (persons, cabins, roles;
+  `CABIN_REFACTOR.md`), on the cabin's kind (`RailVehicleServer.cabin_get_kind()`): the original's
+  side is `cab_to_end(iCabn)` (Train.h:220), swapped only for the rear cab.
+  * Vehicle: a command and a state `doors_departure_signal` (`signal_departure`, Mover.cpp:7899,
+    `DepartureSignal`), a getter of `Doors.remote_only` (for `doormodetoggle`).
+  * `LegacyCabinDoors` (as `door_permits.gd`, created in `legacy/cabin/cabin_logic.gd` with the
+    controls' presence from `controls.has_control()` - the original's `SubModel == nullptr`):
+    `door_left/right_sw` (toggle), `doorleft/righton_sw`, `doorleft/rightoff_sw`, `doorallon_sw`,
+    `dooralloff_sw` (push_delayed), `doormode_sw`, `door_signalling_sw` (lock), `departure_signal_bt`
+    (`OnCommand_departureannounce`) - as Train.cpp:7087-7724, 7899-7930: remote open/close control,
+    `has_autowarning` holds the departure signal until the release, a two-button cab without a
+    dedicated close button does nothing (45 MMD files).
+  * Lamps: `dooralloff_sw` and `i-doors:` are `m_doors` (any door of the train open, Train.cpp:8509,
+    11753, 12035); `i-departure_signal:` is `DepartureSignal` (Train.cpp:9172, 11684). The walk over
+    the trainset shared with `LegacyCabinDoorPermits._lamp()`, not copied.
+  * Catalog entries and the original's keys (driverkeyboardinput.cpp:180-196, all free here):
+    Comma `doortoggleleft`, Period `doortoggleright`, / `departureannounce`, Shift+/ `dooropenall`,
+    Ctrl+/ `doorcloseall`, Ctrl+Shift+/ `doormodetoggle`, Ctrl+S `doorlocktoggle`; captions to every
+    `.po`.
+  * The departure signal's sound `departuresignal:` (DynObj.cpp:6357, 4768-4787 - looped while
+    `DepartureSignal` and the low voltage, for a vehicle with `close_warning`) in `MmdSoundCatalog`.
+  * Tests: each control and kind of switch, the rear cab's swapped sides, `has_autowarning`, the
+    lamps.
+  `RailVehicleDoors.get_left/right_door_closed()` (`is_door_closed`) is there for it.
 * **The door permit switches' lamps** (`door_permit_lamp_left/right`, `LegacyCabinDoorPermits`,
   Train.cpp:8514-8520) are written - permit on the cab's side, blinking by the simulation's second
-  or the trainset's doors - but have no test yet.
+  or the trainset's doors - but have no test yet: steady, blinking by the second, the rear cab's
+  sides (with the door controls above).
 * **The radio message lamp's sound**: its soundinc/sounddec gain does not follow the radio's
   volume (Train.cpp:10258-10261).
 * **EN57-702ra drives without the battery and the main switch** (report 2026-10-05): not

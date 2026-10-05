@@ -6,6 +6,16 @@ class_name MaszynaDynamicData
 ## (deserialize_dynamic(), simulationstateserializer.cpp:960-1076) - a vehicle of a trainset
 ## (MaszynaTrainsetData), built by SceneryInstancer through the servers
 
+## Who is aboard, in the words the `.scn` uses for it - a `dynamic` names `headdriver`,
+## `reardriver` or `nobody` as its drivertype (DynObj.cpp:1812-1825): the driver sits down in the
+## front or the rear cab (DynObj.cpp:1940-1963), nobody's vehicle is not simulated at all
+## (Driver.cpp:2126)
+enum DriverType {
+    DRIVER_NOBODY,
+    DRIVER_HEAD,
+    DRIVER_REAR,
+}
+
 ## The scenery's name of the vehicle; may be empty or repeated
 @export var name:String = ""
 ## Where its files are, under the game directory (`dynamic/pkp/303e_v1`)
@@ -23,6 +33,6 @@ class_name MaszynaDynamicData
 @export var coupling:int = 0
 ## The velocity it starts with [km/h]
 @export var velocity:float = 0.0
-@export var driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY
+@export var driver_type:DriverType = DriverType.DRIVER_NOBODY
 @export var load_name:String = ""
 @export var load_amount:float = 0.0

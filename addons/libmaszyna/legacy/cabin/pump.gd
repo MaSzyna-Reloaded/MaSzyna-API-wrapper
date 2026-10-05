@@ -15,8 +15,7 @@ var _command:String
 var _switch_off_command:String
 var _enabled_state:String
 var _button_type:CabinButton.ButtonType
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 
 
 ## control: the MMD label; command/switch_off_command: the pump's vehicle commands;
@@ -34,14 +33,13 @@ func control_ids() -> Array[StringName]:
     return [_control]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, _control, _pump)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, _control, _pump)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, _control, _pump)
+    CabinSystem.unregister_control(_cabin, _control, _pump)
 
 
 func _pump(state:CabinState, action:StringName, value:Variant) -> Variant:

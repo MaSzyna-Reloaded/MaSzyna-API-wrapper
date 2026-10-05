@@ -3,6 +3,7 @@
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/base/VehicleController.hpp"
+#include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <algorithm>
@@ -211,8 +212,10 @@ namespace godot {
     void MoverDriveUnit::process(const RailVehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = owner.get_mover();
         const Ref<VehicleController> controller = p_engine->get_controller();
-        if (p_mover == nullptr || controller == nullptr ||
-            controller->get_driver_type() == VehicleController::DRIVER_NOBODY) {
+        const VehicleServer *vehicles = VehicleServer::get_instance();
+        // only a vehicle somebody drives (Mechanik, DynObj.cpp:3246)
+        if (p_mover == nullptr || controller == nullptr || vehicles == nullptr ||
+            !vehicles->vehicle_has_person_role(controller->get_rid(), VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER)) {
             return;
         }
         // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its

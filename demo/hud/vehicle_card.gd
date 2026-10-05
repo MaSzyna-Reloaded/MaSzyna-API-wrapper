@@ -251,7 +251,9 @@ func _on_refresh_timer_timeout() -> void:
     %TakeOverButton.visible = not driver_kind == VehicleSelectorRow.Driver.PLAYER
     %EnterCabinButton.visible = not (_shown == PlayerServer.player_get_vehicle()
             and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN)
-    %AIButton.visible = driver.is_valid()
+    # the AI is switched only on the player's own vehicle - the player gives it the driver's role or
+    # takes it back
+    %AIButton.visible = driver.is_valid() and _shown == PlayerServer.player_get_vehicle()
     %AIButton.text = tr("Disable AI") if driving else tr("Enable AI")
     var driver_state:Dictionary = DriverSystem.driver_get_state(driver) if driver.is_valid() else {}
     var driver_data:Dictionary[String, String] = {}
@@ -271,7 +273,7 @@ func _on_refresh_timer_timeout() -> void:
             driver_data[tr("At the platform")] = tr("Yes")
         if driver_state.get("stop_time", 0.0) > 0.0:
             driver_data[tr("Stop time")] = "%d s" % driver_state["stop_time"]
-        var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(DriverSystem.driver_get_vehicle(driver))
+        var dispatch_step:StationServer.DispatchStep = StationServer.dispatch_get_step(VehicleServer.person_get_vehicle(driver))
         if DISPATCH_STEP_NAMES.has(dispatch_step):
             driver_data[tr("Dispatch")] = tr(DISPATCH_STEP_NAMES[dispatch_step])
     _show_values(%DriverData, driver_data)
@@ -318,9 +320,13 @@ func _on_enter_cabin_button_pressed() -> void:
     PlayerServer.player_enter_vehicle(_shown)
 
 
-## Q / Shift+Q for this _shown (Train.cpp:1088-1118): its driver stops driving it, or drives it again
+## Q / Shift+Q for the player's vehicle (Train.cpp:1088-1118): the player takes it over from its AI,
+## or hands it over to the AI
 func _on_ai_button_pressed() -> void:
-    DriverSystem.vehicle_set_control_active(_shown, not DriverSystem.vehicle_is_control_active(_shown))
+    if DriverSystem.vehicle_is_control_active(_shown):
+        PlayerServer.player_take_back_vehicle()
+    else:
+        PlayerServer.player_hand_over_vehicle()
     _on_refresh_timer_timeout()
 
 

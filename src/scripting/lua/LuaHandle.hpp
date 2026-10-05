@@ -11,8 +11,9 @@ namespace godot {
         public:
             /// The type names, in the order of ScriptHandleKind
             static constexpr const char *TYPE_NAMES[] = {
-                    "maszyna.RID",          "maszyna.Vehicle",  "maszyna.Event",      "maszyna.Memory",
-                    "maszyna.Track",        "maszyna.Isolated", "maszyna.SignalHead", "maszyna.SignallingSystem",
+                    "maszyna.RID",          "maszyna.Vehicle",    "maszyna.Cabin",
+                    "maszyna.Event",        "maszyna.Memory",     "maszyna.Track",
+                    "maszyna.Isolated",     "maszyna.SignalHead", "maszyna.SignallingSystem",
                     "maszyna.Subscription",
             };
 

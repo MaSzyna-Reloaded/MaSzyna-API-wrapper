@@ -16,14 +16,9 @@ var spot_light:CabinSpotLight3D
 
 
 func before_each() -> void:
-    var node:RailVehiclePhysicsNode = RailVehiclePhysicsNode.new()
-    node.vehicle_id = "TestLampsLowVoltage"
-    # a driven vehicle is simulated (FINDINGS, 09-23); the test drives it, not the AI
-    node.driver_type = VehicleController.DRIVER_HEAD
-    node.set_controller(FizVehicleBuilder.build_description_at(EP07_PATH))
-    add_child_autofree(node)
-    train = VehicleServer.vehicle_get_controller(node.get_vehicle_rid())
-    DriverSystem.vehicle_set_control_active(train.get_rid(), false)
+    # a driven vehicle is simulated (FINDINGS, 09-23); the test drives it, no AI sits aboard
+    train = build_vehicle("TestLampsLowVoltage", FizVehicleBuilder.build_description_at(EP07_PATH), 0.0,
+            MaszynaDynamicData.DriverType.DRIVER_HEAD)
     indicator = CabinIndicator3D.new()
     indicator.state_property = "radio_enabled"
     add_child_autofree(indicator)

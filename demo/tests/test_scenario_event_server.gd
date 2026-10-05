@@ -220,12 +220,11 @@ func test_putvalues_cab_signal_reaches_the_security_system() -> void:
 ## Event.cpp:2431-2444 - `departuredelay`: queued by a train, the event runs that long from its
 ## departure by its timetable; queued by nothing, after its delay alone
 func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
-    var vehicle:RID = build_vehicle("DepartureDelayTest").get_rid()
+    var vehicle:RID = build_vehicle(
+            "DepartureDelayTest", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD).get_rid()
     var departing:DepartingDriver = DepartingDriver.new()
     departing.seconds = UNTIL_DEPARTURE
-    var driver:RID = DriverSystem.driver_create()
-    DriverSystem.driver_attach_vehicle(driver, vehicle)
-    DriverSystem.driver_attach_delegate(driver, departing)
+    DriverSystem.driver_attach_delegate(get_vehicle_driver(vehicle), departing)
     var event:RID = _create_event(RecordingAction.new(), EVENT_DELAY)
     ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
     var now:float = SimulationServer.simulation_get_time()
@@ -248,7 +247,6 @@ func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
     ScenarioEventServer.event_queue(event, vehicle)
     assert_almost_eq(ScenarioEventServer.event_get_run_time(event), now, RUN_TIME_EPSILON, "departed long ago: at once")
     ScenarioEventServer.event_free(event)
-    DriverSystem.driver_free(driver)
 
 
 func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:

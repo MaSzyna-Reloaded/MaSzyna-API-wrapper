@@ -82,20 +82,24 @@ func console_cabin(train, operation, control=null, value=null):
     var vehicle:RID = _vehicle(train)
     if not vehicle.is_valid():
         return
-    var cab:int = int(VehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 1))
+    # the cabin the vehicle is driven from
+    var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
+    if not cabin.is_valid():
+        GameLog.error("%s: Nobody drives it, no cabin to operate" % [train])
+        return
     if operation == "controls":
-        Console.print_line("cab %d controls:\n%s\nactions: %s" % [
-            cab, "\n".join(CabinSystem.get_controls(vehicle, cab)), ", ".join(CabinSystem.ACTIONS)])
+        Console.print_line("controls:\n%s\nactions: %s" % [
+            "\n".join(CabinSystem.get_controls(cabin)), ", ".join(CabinSystem.ACTIONS)])
     elif operation == "state" or (operation == "get" and not control):
-        Console.print_line("%s" % [CabinSystem.get_state(vehicle, cab)])
+        Console.print_line("%s" % [CabinSystem.get_state(cabin)])
     elif operation == "get":
-        Console.print_line("%s" % [CabinSystem.get_control(vehicle, cab, control)])
+        Console.print_line("%s" % [CabinSystem.get_control(cabin, control)])
     elif not StringName(operation) in CabinSystem.ACTIONS:
         GameLog.error("%s: Unknown cabin operation: %s" % [train, operation])
     elif not control:
         GameLog.error("%s: Cabin operation %s needs a control id" % [train, operation])
     else:
-        Console.print_line("%s" % [CabinSystem.act(vehicle, cab, control, operation, value)])
+        Console.print_line("%s" % [CabinSystem.act(cabin, control, operation, value)])
 
 func console_get_train_state(train, key=null):
     var vehicle:RID = _vehicle(train)

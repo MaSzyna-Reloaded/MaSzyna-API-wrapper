@@ -48,9 +48,8 @@ func before_each() -> void:
     TrackServer.topology_rebuild()
     # a real vehicle, because the dynamics need a mass - an empty Mover integrates to NaN
     var model:VehicleController = load("res://tests/fixtures/sm42_vehicle.tres") as VehicleController
-    _controller = build_vehicle("clock_test", model, VELOCITY_MS * 3.6)
     # an unmanned vehicle is not simulated at all (Mover.cpp:4485) - see FINDINGS.md, 2026-09-23
-    _controller.driver_type = VehicleController.DRIVER_HEAD
+    _controller = build_vehicle("clock_test", model, VELOCITY_MS * 3.6, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     _vehicle = _controller.get_rid()
     RailVehicleServer.vehicle_set_track(_vehicle, _track, 100.0, TrackServer.DIRECTION_NORMAL)
     await wait_idle_frames(1)

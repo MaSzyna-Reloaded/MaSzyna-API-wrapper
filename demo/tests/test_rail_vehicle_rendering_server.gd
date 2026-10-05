@@ -154,7 +154,7 @@ func test_a_rebuilt_model_is_announced() -> void:
 
 
 func test_the_low_poly_interior_hides_the_cab_whose_interior_is_drawn() -> void:
-    _vehicle = build_rail_vehicle("RenderingCabs", TRACK_NAME, OFFSET, VehicleController.DRIVER_HEAD)
+    _vehicle = build_rail_vehicle("RenderingCabs", TRACK_NAME, OFFSET, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var exterior_submodels:Dictionary = {"body": Transform3D()}
     var cab_submodels:Dictionary = {}
     for cab:String in LOW_POLY_CABS:
@@ -168,16 +168,17 @@ func test_the_low_poly_interior_hides_the_cab_whose_interior_is_drawn() -> void:
     _vehicle.model_instance_path = NodePath("Model")
     _vehicle.low_poly_cabin_path = NodePath("LowPoly")
     await wait_idle_frames(SETTLE_FRAMES)
+    RailVehicleServer.vehicle_add_machine_room(_vehicle.get_rid())
 
     RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_vehicle.get_rid(), false)
 
     assert_true((low_poly.get_node("cab0") as Node3D).visible, "the machine room stays")
-    assert_false((low_poly.get_node("cab1") as Node3D).visible, "the occupied cab, whose interior is drawn in its place, is hidden")
+    assert_false((low_poly.get_node("cab1") as Node3D).visible, "the driver's cab, whose interior is drawn in its place, is hidden")
     assert_true((low_poly.get_node("cab2") as Node3D).visible, "the other cab stays")
 
-    # the hidden cab follows the occupied one (Train.cpp:8516 CabChange: 1 -> 0, the machine room)
-    VehicleServer.vehicle_send_command(_vehicle.get_rid(), "cab_change", -1)
-    VehicleServer.vehicle_get_controller(_vehicle.get_rid()).update_state()
+    # the hidden cab follows the driver's (Train.cpp:8516 CabChange: 1 -> 0, the machine room)
+    CabinSystem.person_change_cabin(get_vehicle_driver(_vehicle.get_rid()),
+            CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
     assert_false((low_poly.get_node("cab0") as Node3D).visible, "the cab moved to is hidden")
     assert_true((low_poly.get_node("cab1") as Node3D).visible, "and the one left is shown again")
 

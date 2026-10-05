@@ -12,8 +12,7 @@ const OFF_SWITCH:StringName = &"converteroff_sw"
 
 var _impulse:bool
 var _has_off_switch:bool
-var _vehicle_rid:RID
-var _cab:int
+var _cabin:RID
 var _toggle_handler:Callable = _toggle
 var _off_handler:Callable = _off
 
@@ -27,16 +26,15 @@ func control_ids() -> Array[StringName]:
     return [SWITCH, OFF_SWITCH]
 
 
-func register(vehicle_rid:RID, cab:int) -> void:
-    _vehicle_rid = vehicle_rid
-    _cab = cab
-    CabinSystem.register_control(vehicle_rid, cab, SWITCH, _toggle_handler)
-    CabinSystem.register_control(vehicle_rid, cab, OFF_SWITCH, _off_handler)
+func register(_vehicle_rid:RID, cabin:RID) -> void:
+    _cabin = cabin
+    CabinSystem.register_control(cabin, SWITCH, _toggle_handler)
+    CabinSystem.register_control(cabin, OFF_SWITCH, _off_handler)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_vehicle_rid, _cab, SWITCH, _toggle_handler)
-    CabinSystem.unregister_control(_vehicle_rid, _cab, OFF_SWITCH, _off_handler)
+    CabinSystem.unregister_control(_cabin, SWITCH, _toggle_handler)
+    CabinSystem.unregister_control(_cabin, OFF_SWITCH, _off_handler)
 
 
 ## OnCommand_convertertoggle (Train.cpp:4382-4409)

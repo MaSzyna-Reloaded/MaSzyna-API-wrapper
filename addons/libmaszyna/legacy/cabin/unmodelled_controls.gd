@@ -1,10 +1,12 @@
 extends RefCounted
 class_name LegacyCabinUnmodelledControls
 
-## Controls of MmdSemanticCatalog the cab does not model. Every OnCommand_* of the original works
-## without its gauge - the keys reach TTrain, which only updates a gauge that may be missing - so
+## Controls of MmdSemanticCatalog the cab does not model. Most OnCommand_* of the original work
+## without their gauge - the keys reach TTrain, which only updates a gauge that may be missing - so
 ## a cab with no main_on_bt (dynamic/pkp/e186_v2 has one main_sw instead), no dirkey, no
-## shp_reset_bt, ... still takes their keys. Each of these controls is registered in CabinSystem
+## shp_reset_bt, ... still takes their keys. The ones the catalog marks `requires_gauge` (the horns,
+## sanding, ...) refuse the command without it, so such a cab takes neither their key nor their
+## wiring. Each of the other controls is registered in CabinSystem
 ## with the wiring of its catalog entry (LegacyCabinForwardCommands) unless a cabin behaviour has
 ## registered it already; the cab logic takes the keys of those get_key_control_ids() names.
 ##
@@ -36,6 +38,8 @@ func register(_vehicle_rid:RID, cabin:RID) -> void:
         if _cab_controls.has_control(control_id):
             continue
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
+        if entry.get("requires_gauge", false):
+            continue
         var fields:Dictionary = entry["fixed_fields"]
         var wiring:Dictionary = LegacyCabinForwardCommands.wiring(
                 entry["widget_class"], fields, entry.get("target", CabinState.Target.OCCUPIED))

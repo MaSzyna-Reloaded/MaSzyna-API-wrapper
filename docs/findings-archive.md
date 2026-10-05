@@ -1747,6 +1747,12 @@ lighting or the trainset.
   `LegacyCabinBattery`.
 * **Rule:** every `OnCommand_*` works without its gauge. A control mapped only in
   `MmdSemanticCatalog` is dead in a cab that does not model it.
+* **Correction (2026-10-05):** not every one - about thirty handlers return early when the cab has
+  no gauge for them (`ggX.SubModel == nullptr`: the horns, sanding, the cab light dimmer, the
+  instrument/dashboard/timetable lights, train heating, lowering all pantographs, line contactors,
+  doors; Train.cpp:2284, 7934, ...), and a few only log it with the `return` commented out
+  (`fuse_bt` 5154, `converterfuse_bt` 4523). Such entries are `requires_gauge` in the catalog; a cab
+  without the gauge takes no key for them.
 
 ### Main tank empty within a minute and a half
 

@@ -102,8 +102,9 @@ anything. Open work belongs in `TODO.md`.
   section ported. *(09-29 MainInitTime was never loaded)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
   for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
-* Every `OnCommand_*` works without its gauge. A control only in `MmdSemanticCatalog` is dead in a
-  cab that does not model it. *(09-20 E186 Ctrl+J)*
+* Most `OnCommand_*` work without their gauge; those that refuse (`ggX.SubModel == nullptr`) are
+  `requires_gauge` in `MmdSemanticCatalog`. A control only in the catalog is dead in a cab that does
+  not model it. *(09-20 E186 Ctrl+J, 10-05)*
 * A pantograph at 0 V has three causes (no wire in reach, dead wire, no contact). Report them
   separately. *(09-24 pantograph)*
 * A wire chain that shares no end with a powered one is fed across the overlap by the section-ends

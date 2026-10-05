@@ -1,8 +1,8 @@
 extends MaszynaGutTest
 
 ## Cab logic of a cab that models none of the catalog controls (dynamic/pkp/e186_v2 lacks
-## main_on_bt, dirkey, shp_reset_bt, cabactivation_sw, ...): the original runs every OnCommand_*
-## without its gauge, here LegacyCabinUnmodelledControls registers them in CabinSystem.
+## main_on_bt, dirkey, shp_reset_bt, cabactivation_sw, ...): the original runs most OnCommand_*
+## without their gauge, here LegacyCabinUnmodelledControls registers them in CabinSystem.
 
 var train: VehicleController
 var logic: LegacyCabinLogic
@@ -32,6 +32,13 @@ func after_each():
 func test_catalog_controls_with_keys_are_registered_without_widgets():
     for control: StringName in [&"dirkey", &"main_on_bt", &"main_off_bt", &"shp_reset_bt", &"battery_sw"]:
         assert_true(CabinSystem.has_control(cabin, control), "%s should be registered" % control)
+
+
+# Train.cpp:7934, 7978, 8022, 2284 - the horns and the sanding refuse the command in a cab without
+# their gauge, so the cab takes neither their keys nor their wiring
+func test_controls_refused_without_their_gauge_are_not_registered():
+    for control: StringName in [&"horn_bt", &"hornlow_bt", &"hornhigh_bt", &"whistle_bt", &"sand_bt"]:
+        assert_false(CabinSystem.has_control(cabin, control), "%s should not be registered" % control)
 
 
 func test_knobs_are_registered_for_their_value():

@@ -95,10 +95,8 @@ func register(vehicle_rid:RID, cabin:RID) -> void:
                 controls.button_type(&"fuelpump_sw")),
         LegacyCabinPump.new(&"oilpump_sw", "oil_pump", "oil_pump_switch_off", "oil_pump_enabled",
                 controls.button_type(&"oilpump_sw")),
-        LegacyCabinTrainHeating.new(controls.has_control(LegacyCabinTrainHeating.CONTROL)),
-        LegacyCabinPantographsDropAll.new(
-                controls.button_type(LegacyCabinPantographsDropAll.CONTROL),
-                controls.has_control(LegacyCabinPantographsDropAll.CONTROL)),
+        LegacyCabinTrainHeating.new(),
+        LegacyCabinPantographsDropAll.new(controls.button_type(LegacyCabinPantographsDropAll.CONTROL)),
         LegacyCabinConverter.new(bool(config.get("converter_switch_impulse", false)),
                 controls.has_control(LegacyCabinConverter.OFF_SWITCH)),
         LegacyCabinTempomat.new(controls.button_type(LegacyCabinTempomat.SWITCH),

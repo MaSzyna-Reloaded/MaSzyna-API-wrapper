@@ -117,7 +117,7 @@ cannot gate anything. It also loads `scenery/td.scn` from the game dir - needs a
 work. Check the occupant (`DriverType`)/`CabActive` first - `test_sm42_startup_sequence` was an
 unoccupied cab (`FINDINGS.md`, 2026-09-23).
 
-**`test_zzz_startup_sr61_v2` is red in the full run** (CABIN_REFACTOR.md, 2026-10-05) - not
+**`test_zzz_startup_sr61_v2` is red in the full run** (2026-10-05) - not
 investigated; with `pipefail` in CI it now fails the build.
 
 **The `.fiz` path has not been run in the game** since the components stopped being nodes - only
@@ -166,6 +166,27 @@ components now (`CODE_STYLE.md`, "A hot path reads a component, never a dump"). 
   the config dump once per vehicle, at build - not a hot path, but the brake handle positions it
   reads have getters now (`RailVehicleBrake.get_handle_position()`).
 
+### What still reaches the vehicle's controller (2026-10-05)
+
+Typed server getters: `VehicleServer` - `vehicle_get_direction`, `vehicle_get_power`,
+`vehicle_get_max_velocity`, `vehicle_get_mass_total` (beside the existing `vehicle_get_dimensions`,
+`vehicle_get_name`); `RailVehicleServer` - `vehicle_get_train_type`, `vehicle_get_coupler_stretched`,
+`vehicle_get_train_damage`; the load through its component. Moved onto them: the AI
+(`maszyna_legacy_driver_*`, `ai_driver`, `auto_rewident`, `station`), sound (`train_sound_system`,
+`brake_sound_model`, `running_sound_model`), `external_camera.gd`, `RailVehicleRenderingServer.cpp`
+(smoke, load), the start-up tests' helper. Only assembling a vehicle keeps the controller.
+`CODE_STYLE.md`/`AGENTS.md`: configuration and state only through the server (`CODE_STYLE.md`
+still allows `controller.max_velocity`). Check: no `vehicle_get_controller(` outside assembly.
+* The AI's fallbacks and copies of the Mover's defaults -> typed server getters, no invented
+  values: `driver_braking.gd:799, 975, 982`, `driver_pantographs.gd:46, 70, 78`,
+  `driver_traction.gd:133-134, 324, 330, 380-393, 479`, `ai_driver.gd:695, 874`.
+* Where the original's AI bypasses the cab (`driverhints.cpp`: `mvOccupied->RelayReset()`, ...),
+  the AI sends `VehicleServer.vehicle_send_command()`, not `CabinSystem.act()`: the relay resets
+  `fuse_bt` (`maszyna_legacy_driver_traction.gd:149`) and `converterfuse_bt`
+  (`maszyna_legacy_ai_driver.gd:670`).
+* `LegacyCabinDirectionKey` (`legacy/cabin/direction_key.gd`) reads `direction` from the dump
+  until there is `vehicle_get_direction()`.
+
 ### Source layout - the GDScript side (deferred 2026-09-27)
 
 `src/` is split into generic layers and the MaSzyna adapter (`src/legacy/`: `maszyna-mover`
@@ -178,18 +199,6 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 
 * The HUD keeps copies of the player's state: `DrivingAid.vehicle`, `FollowedVehicleChip.vehicle`,
   `PlayerVehicleChip.vehicle` (set from `PlayerServer`/`PlayerCameraServer` signals).
-* **The cab's keys live in the 3D cab's widgets (a view) - SoC breach.** `CabinButton._input`
-  (cabin_button.gd:120), `CabinSwitch._input` (cabin_switch.gd:154) and `CabinCommand._input`
-  (cabin_command.gd:21) catch their input actions and call `CabinSystem.act()` themselves;
-  `CabinLogic.input()` takes only the controls no widget has. So the 3D cab has to stand the whole
-  time the player drives (`MaszynaPlayer._show_cabin()` on taking over), also while looking from
-  outside - hidden there (2026-09-29), the keys stopped working. The original hides it
-  (`vehicle->bDisplayCab = false`, drivermode.cpp:1265). To do: the action -> control binding
-  (increase/decrease/toggle/hold, repeat, monostable) goes to the cab logic, built from the same
-  MMD/catalog as the widgets (`MmdCabinInstancer`, `LegacyCabinControls`); the player's keys reach
-  it through `CabinSystem.act()`; the widgets only draw and take the mouse. Then the 3D cab can
-  exist only in the CABIN view (`CabinSystem.vehicle_show_cabin()`/`vehicle_hide_cabin()` are
-  ready for it).
 * The start vehicle is still looked for every frame until the scenery has it
   (`MaszynaPlayer._find_start_vehicle()`), instead of an event saying the trainset is built.
 
@@ -225,6 +234,16 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
 
 ## Cabins
 
+* **A control the original refuses without its gauge is judged from the MMD only**
+  (`MmdSemanticCatalog` `requires_gauge`, 2026-10-05): TTrain's `ggX.SubModel == nullptr` is also
+  true when the MMD names a submodel the cab's model does not have; the cab logic does not see the
+  model, so such a cab takes the key here. Decided with the operator to keep the logic off the model.
+* **Gauges that gate their command but have no catalog entry yet** - when ported, they get
+  `requires_gauge` (Train.cpp line in brackets): `antislip_bt` (2232), `nextcurrent_sw` (1584),
+  `signalling_sw` (2602), `converterlocal_sw` (4463), `compressorlocal_sw` (4629),
+  `door_signalling_sw` (7090), `doorlefton_sw`/`door_left_sw` (7330), `doorleftoff_sw` (7372),
+  `doorrighton_sw`/`door_right_sw` (7505), `doorrightoff_sw` (7548), `doorallon_sw` (7605),
+  `dooralloff_sw` (7640), `departure_signal_bt` (7902).
 * **`CabinSystem` still drives the vehicle's drawing in two places** (`docs/findings-archive.md`,
   2026-10-04 SM42's windows missing): it mounts the cab's node on the vehicle
   (`RailVehicleRenderingServer.vehicle_mount_node()` in `vehicle_show_cabin()`) and lights the
@@ -368,11 +387,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `cab0definition:`) - input and command translation only. The original keeps such a cab
   enterable with the low-poly interior (`Train.cpp:8692`, `DynObj.cpp:1214`). Hook:
   `MaszynaDynamicTrainCabin` builds an empty cabin with `has_cab_model = false`.
-* Keyboard input per control, not per widget: each `CabinButton`/`CabinSwitch`/`CabinKnob` handles
-  `action*` itself, so a repeated label (EP07 cab0 has two `cablight_sw:`) toggled itself back.
-  The original maps a key to one command (`Cabine[].bLight`, `Train.cpp:10237`). Move key handling
-  to `CabinSystem`/`LegacyCabinLogic` (once per `control_id`), then drop the workaround in
-  `MmdCabinInstancer.build_into()` clearing `action*` on repeated labels.
 * Diesel-electric shunt mode on the second controller: with `ShuntModeAllow`/`ShuntMode` the
   original moves `AnPos` by 0.025 per step, clamped 0..1 (`Train.cpp:1190-1197`, `1351-1357`);
   only `IncScndCtrl`/`DecScndCtrl` are ported, `shuntmodepower:` (`Train.cpp:10542`) unmapped.
@@ -394,12 +408,6 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * EIM `Imaxrpc` and `BRVto` (Mover.cpp:11304-11305) not ported - the vendored Mover lacks them.
 * Spring brake: `springbrakerelease` (`Train.cpp:6874`) and the `springbrakepress:` gauge
   (`Train.cpp:12221`) have no cab control or key (`eu07_input-keyboard.ini` binds `none` too).
-* Intermittent (2026-09-24): after the first cab entry, num4 (`releaser_bt`) and num6
-  (`brake_level_drive`) sometimes do nothing until the handle is moved. A headless probe with real
-  key events in every cab of `td.scn` worked every time. `CabinKnob` polls `Input` every frame,
-  `CabinButton`/`CabinCommand` react only in `_input` - suspect a lost event or a wrong
-  `occupied_cab()`. Next time check the log for `Unknown cabin control: ... (cab N)`: present =
-  wrong cab, absent = lost event.
 * E186 (`dynamic/pkp/e186_v2`) labels outside `MmdSemanticCatalog`: `pantselected_sw:`
   (`PantsPreset`, `OnCommand_pantographtoggleselected`, `pantographselectnext/previous`,
   `Train.cpp:3405-3549`), `pantfrontoff_sw:`, `pantrearoff_sw:`, `lights_sw:`
@@ -1366,9 +1374,9 @@ data-driven"); what it found is fixed except these:
     warning, MaszynaLegacyVehicleSystem) - the original keeps a Mechanik without a cab.
   * `test_legacy_cabin_keys::test_a_knob_moves_while_its_key_is_held` is red: the SM42 fixture's
     brake has no handle type, so `brake_level_set` moves nothing (min == max) whoever sits where -
-    not checked whether it was red before this work.
+    red at `a6b0cb063` already (2026-10-05).
 * **The cab's door controls** - the next work after the cab occupancy (persons, cabins, roles;
-  `CABIN_REFACTOR.md`), on the cabin's kind (`RailVehicleServer.cabin_get_kind()`): the original's
+  `a6b0cb063`), on the cabin's kind (`RailVehicleServer.cabin_get_kind()`): the original's
   side is `cab_to_end(iCabn)` (Train.h:220), swapped only for the rear cab.
   * Vehicle: a command and a state `doors_departure_signal` (`signal_departure`, Mover.cpp:7899,
     `DepartureSignal`), a getter of `Doors.remote_only` (for `doormodetoggle`).

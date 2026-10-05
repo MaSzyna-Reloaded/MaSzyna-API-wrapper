@@ -31,6 +31,10 @@ enum IslandLights { GLOW, WIDGET_LIGHT }
 ## Any MMD label not listed here gets no widget and no animation (see
 ## MmdImportContext.warn_unsupported_label) - there is no correct state source to guess from,
 ## so nothing is built rather than something wrong.
+##
+## `requires_gauge` marks a control whose original handler refuses the command when the cab has no
+## gauge for it (TTrain::OnCommand_*: `ggX.SubModel == nullptr`) - such a cab takes no key for it
+## (LegacyCabinUnmodelledControls).
 
 static var _catalog:Dictionary = {}
 static var _built:bool = false
@@ -227,6 +231,8 @@ static func _ensure_built() -> void:
         # ("sand_bt:" -> ggSandButton) - momentary, matching the original's press/release shape
         # (sand only while held), same as fuse_bt/converterfuse_bt above.
         "sand_bt": {
+            # OnCommand_sandboxactivate refuses it without the gauge (Train.cpp:2284)
+            "requires_gauge": true,
             # the original's handler acts on mvControlled
             "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
@@ -242,6 +248,8 @@ static func _ensure_built() -> void:
         # Train.cpp:10116 ("trainheating_sw:" -> ggTrainHeatingButton) - "_sw" (switch), persistent
         # toggle like compressor_sw/converter_sw.
         "trainheating_sw": {
+            # OnCommand_heatingtoggle refuses it without the gauge (Train.cpp:6661)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             # its original handler branches on the kind of switch (ggTrainHeatingButton.type(), Train.cpp:6687)
             "shape_from_button_type": true,
@@ -272,6 +280,8 @@ static func _ensure_built() -> void:
         # compressor_sw/converter_sw's monostable:false shape, sending the CabinButton's own
         # flipped `pushed` state as the command's bool argument).
         "stlinoff_bt": {
+            # OnCommand_motorconnectorsopen/close refuse it without the gauge (Train.cpp:5015, 5062)
+            "requires_gauge": true,
             # the original's handler acts on mvControlled
             "target": CabinState.Target.CONTROLLED,
             "widget_class": CabinButton,
@@ -330,6 +340,8 @@ static func _ensure_built() -> void:
         # rather than CabinButton, which can only carry one command and would leave one of the
         # two keys permanently dead whenever only horn_bt: exists.
         "horn_bt": {
+            # OnCommand_hornlow/hornhighactivate refuse it without horn_bt or their own button (Train.cpp:7934, 7978)
+            "requires_gauge": true,
             "widget_class": CabinSwitch,
             "fixed_fields": {
                 "switch_min_position": -1,
@@ -345,6 +357,8 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         "hornlow_bt": {
+            # OnCommand_hornlowactivate refuses it without horn_bt or hornlow_bt (Train.cpp:7934)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -356,6 +370,8 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         "hornhigh_bt": {
+            # OnCommand_hornhighactivate refuses it without horn_bt or hornhigh_bt (Train.cpp:7978)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -367,6 +383,8 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         "whistle_bt": {
+            # OnCommand_whistleactivate refuses it without the gauge (Train.cpp:8022)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
@@ -490,6 +508,8 @@ static func _ensure_built() -> void:
         # pantalloff_sw: drops every pantograph (drivermouseinput.cpp:834 -> pantographlowerall,
         # Train.cpp:3336, Ctrl+P).
         "pantalloff_sw": {
+            # OnCommand_pantographlowerall refuses it without the gauge (Train.cpp:3342)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             # its original handler branches on the kind of switch (ggPantAllDownButton.type(), Train.cpp:3352)
             "shape_from_button_type": true,
@@ -531,6 +551,8 @@ static func _ensure_built() -> void:
         # The cab's own lights (LegacyCabinCabLights): each cab keeps its switches, and the
         # button shows what its cab holds - no vehicle command, no vehicle state
         "instrumentlight_sw": {
+            # OnCommand_instrumentlightenable/disable refuse it without the gauge (Train.cpp:6491, 6515)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
@@ -541,6 +563,8 @@ static func _ensure_built() -> void:
         },
         # the dashboard and timetable light switches (Train.cpp:11903-11904) - LegacyCabinCabLights
         "dashboardlight_sw": {
+            # OnCommand_dashboardlightenable/disable refuse it without the gauge (Train.cpp:6553, 6577)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
@@ -549,6 +573,8 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         "timetablelight_sw": {
+            # OnCommand_timetablelightenable/disable refuse it without the gauge (Train.cpp:6619, 6643)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
@@ -568,6 +594,8 @@ static func _ensure_built() -> void:
         # Train.cpp:11923 ggCabLightDimButton -> OnCommand_interiorlightdimtoggle (Train.cpp:6274):
         # the cab light at 0.4 of its level (Train.cpp:9745), Ctrl+'
         "cablightdim_sw": {
+            # OnCommand_interiorlightdimenable/disable refuse it without the gauge (Train.cpp:6301, 6332)
+            "requires_gauge": true,
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,

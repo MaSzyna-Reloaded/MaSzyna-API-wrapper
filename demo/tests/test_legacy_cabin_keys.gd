@@ -1,7 +1,7 @@
 extends MaszynaGutTest
 
 ## The keys of a cab are its logic's (LegacyCabinLogic.input()), as TTrain::OnCommand_* take them
-## whether a gauge is there or not (Train.cpp:3156): a control the cab's MMD models takes its key
+## (Train.cpp:3156) - a few only with their gauge in the cab's MMD (`requires_gauge`): a control the cab's MMD models takes its key
 ## with no 3D cab built - the widgets only show. Before, only a widget took the key of a modelled
 ## control, so a cab without its model (a fixture, a model that failed to load) had dead keys.
 
@@ -17,8 +17,11 @@ var cabin:RID
 
 func before_each() -> void:
     train = build_vehicle("TestCabinKeys", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    # the horn lever's commands (horn_low/horn_high), which the fixture has no horns for
+    train.add_component(MoverRailVehicleHorns.new())
+    train.apply_configuration()
     var cab_controls:LegacyCabinControls = LegacyCabinControls.new()
-    for label:String in ["battery_sw", "mainctrl", "dirkey", "security_reset_bt", "brakectrl"]:
+    for label:String in ["battery_sw", "mainctrl", "dirkey", "security_reset_bt", "brakectrl", "horn_bt"]:
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
         cab_controls.add_control(StringName(label), entry["widget_class"], entry["fixed_fields"],
                 CabinButton.ButtonType.TOGGLE, entry.get("target", CabinState.Target.OCCUPIED))
@@ -127,3 +130,14 @@ func test_a_widget_does_not_take_the_key_a_second_time() -> void:
     await wait_idle_frames(2)
     assert_false(_power24(), "a click is the logic's press")
     CabinSystem.vehicle_attach_cab_logic(train.get_rid(), null)
+
+
+# Train.cpp:7934, 7978 - a cab with only horn_bt takes both horn keys on it, as the original's
+# low and high horn commands accept ggHornButton in place of their own button
+func test_a_shared_horn_lever_takes_both_horn_keys() -> void:
+    logic.input(_action(&"horn_low", true))
+    assert_eq(CabinSystem.get_control(cabin, &"horn_bt"), 1, "low tone")
+    logic.input(_action(&"horn_low", false))
+    logic.input(_action(&"horn_high", true))
+    assert_eq(CabinSystem.get_control(cabin, &"horn_bt"), -1, "high tone")
+    logic.input(_action(&"horn_high", false))

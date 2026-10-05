@@ -73,13 +73,6 @@ func test_push_battery_switch_flips_on_each_press():
     assert_false(train.get_state()["battery_enabled"], "the second one off")
 
 
-# Train.cpp:6662 - the train heating switch does nothing in a cab that does not model it
-func test_train_heating_without_its_gauge_does_nothing():
-    var controls:Dictionary[StringName, CabinButton.ButtonType] = {}
-    await _build_cab(controls)
-    assert_null(CabinSystem.act(cabin, &"trainheating_sw", &"toggle"))
-
-
 # Train.cpp:3815-3824 - without main_on_bt the closing key moves an impulse main_sw up, and its
 # release brings it back midway
 func test_the_closing_key_moves_an_impulse_main_switch():

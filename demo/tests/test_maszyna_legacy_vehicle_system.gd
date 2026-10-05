@@ -6,6 +6,8 @@ extends MaszynaGutTest
 const TEST_GAME_DIR:String = "user://gut/vehicle_template"
 const DATA_PATH:String = "fixtures"
 const FILE_NAME:String = "test_vehicle"
+## test_vehicle with a one-position master controller - a wagon (FizTrainCntrlParser)
+const WAGON_FILE_NAME:String = "test_wagon"
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
 const BUILD_TIMEOUT:float = 10.0
 ## Long enough for TrainSoundSystem's sweep to find the vehicle within earshot and build its sound
@@ -27,6 +29,12 @@ func before_each() -> void:
     var fiz:FileAccess = FileAccess.open(fixture_dir.path_join(FILE_NAME + ".fiz"), FileAccess.WRITE)
     fiz.store_string(FileAccess.get_file_as_string("res://tests/fixtures/test_vehicle.fiz"))
     fiz.close()
+    var wagon_mmd:FileAccess = FileAccess.open(fixture_dir.path_join(WAGON_FILE_NAME + ".mmd"), FileAccess.WRITE)
+    wagon_mmd.store_string("models: test_vehicle.t3d\n")
+    wagon_mmd.close()
+    var wagon_fiz:FileAccess = FileAccess.open(fixture_dir.path_join(WAGON_FILE_NAME + ".fiz"), FileAccess.WRITE)
+    wagon_fiz.store_string(FileAccess.get_file_as_string("res://tests/fixtures/test_vehicle.fiz").replace("MCPN=11", "MCPN=1"))
+    wagon_fiz.close()
     UserSettings.save_maszyna_game_dir(TEST_GAME_DIR)
 
 
@@ -38,11 +46,13 @@ func after_each() -> void:
     await wait_idle_frames(2)
 
 
-func _create(vehicle_name:String, file_name:String = FILE_NAME) -> RID:
+func _create(vehicle_name:String, file_name:String = FILE_NAME,
+        driver:MaszynaDynamicData.DriverType = MaszynaDynamicData.DriverType.DRIVER_NOBODY) -> RID:
     var dynamic:MaszynaDynamicData = MaszynaDynamicData.new()
     dynamic.name = vehicle_name
     dynamic.data_path = DATA_PATH
     dynamic.file_name = file_name
+    dynamic.driver_type = driver
     var vehicle:RID = MaszynaLegacyVehicleSystem.vehicle_create(dynamic, get_instance_id())
     _vehicles.append(vehicle)
     await wait_until(MaszynaLegacyVehicleSystem.vehicle_is_built.bind(vehicle), BUILD_TIMEOUT)
@@ -66,6 +76,25 @@ func test_a_vehicle_without_a_file_is_built_without_a_simulation() -> void:
 
     assert_true(MaszynaLegacyVehicleSystem.vehicle_is_built(vehicle), "its turn came")
     assert_false(VehicleServer.vehicle_is_simulation_ready(vehicle))
+
+
+## The fixture's MMD defines no cab: a locomotive's scenery driver gets the cabin of its end all
+## the same (MASZYNA_ORIGINAL_QUIRKS.md, "Every vehicle has three cab positions")
+func test_a_driver_of_an_end_without_a_cab_definition_is_seated_in_a_locomotive() -> void:
+    var vehicle:RID = await _create("system_test_rear_driver", FILE_NAME, MaszynaDynamicData.DriverType.DRIVER_REAR)
+
+    var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
+    assert_true(cabin.is_valid(), "the driver sits in a cabin")
+    assert_eq(RailVehicleServer.cabin_get_kind(cabin), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR, "of the rear end")
+    assert_false(RailVehicleServer.vehicle_get_front_cabin(vehicle).is_valid(), "no other cabin is made up")
+    assert_not_null(CabinSystem.vehicle_get_cab_logic(vehicle), "and drives through the cab logic")
+
+
+func test_a_wagon_given_a_driver_has_no_cabin_for_it() -> void:
+    var vehicle:RID = await _create("system_test_wagon_driver", WAGON_FILE_NAME, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+
+    assert_false(RailVehicleServer.vehicle_get_driver_cabin(vehicle).is_valid())
+    assert_null(CabinSystem.vehicle_get_cab_logic(vehicle))
 
 
 func test_a_freed_vehicle_is_gone_from_the_servers() -> void:

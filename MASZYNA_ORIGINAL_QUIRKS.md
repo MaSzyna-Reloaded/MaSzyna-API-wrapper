@@ -284,6 +284,20 @@ interface.
   remembers the miss (`TModelsManager::GetModel()`, `MdlMngr.cpp`). Wrapper: the same miss, warned
   by `E3DModelManager.load_model()` for every vehicle.
 
+* **Every vehicle has three cab positions, whatever its MMD defines.** The Mover's `CabOccupied`
+  is -1, 0 or 1 for any vehicle: a scenery `headdriver`/`reardriver` sets it to ±1 straight from
+  the `.scn` (`DynObj.cpp:1994-2019`), and `create_controller()` makes the driver (`TController`)
+  whether or not the MMD has a `cab1definition:`/`cab2definition:` (`DynObj.cpp:2604-2627`) - the
+  cab definition matters only to the player's `TTrain` (`InitializeCab()`, `Train.cpp:10481`).
+  A cab change steps through all three positions the same way and fails only after moving onto a
+  missing one (`TTrain::CabChange()`, `Train.cpp:10324-10351`). Wrapper: a rail vehicle has the
+  cabins its MMD defines a cab for (`MaszynaVehicleStructure.cabin_kinds`), no more. For the data
+  that puts a driver at an end without a cab definition, `MaszynaLegacyVehicleSystem._build()`
+  adds that end's cabin - only for a vehicle that can have a cab, one with a master controller
+  (`FizTrainCntrlParser`, `MCPN` > 1). A wagon given a driver stays without one (a warning): the
+  original's AI only moves to vehicles under its control (`FirstFind(dir, coupling::control)`,
+  `Driver.cpp:2079`) and works a wagon's doors and lights through the trainset, never from a cab.
+
 ## Scenery data
 
 * **A trainset for the player is told apart only by a dash.** Every trainset of a scenario is

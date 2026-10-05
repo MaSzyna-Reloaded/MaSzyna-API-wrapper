@@ -1367,8 +1367,6 @@ data-driven"); what it found is fixed except these:
     (`OnCommand_cabchangeforward/backward`, Train.cpp:6644-6720) - the move between vehicles (gangway,
     Train.cpp:8305/8337) is not ported. The AI's `DirectionChange()` after its cab change
     (Driver.cpp:2624) follows only from its cabin's kind.
-  * A driver the scenery names for a vehicle whose MMD has no cab of that end is not seated (a
-    warning, MaszynaLegacyVehicleSystem) - the original keeps a Mechanik without a cab.
 * **The departure signal sounds at the vehicle**: the original plays `departuresignal:` from each
   door speaker at its offset (`m_doorspeakers`, DynObj.cpp:6359-6364); door speaker locations are
   not parsed, so `MmdSoundCatalog`'s `departuresignal` is one source per vehicle.

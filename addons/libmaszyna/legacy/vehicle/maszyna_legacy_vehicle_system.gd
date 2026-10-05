@@ -149,10 +149,29 @@ func _build(vehicle:RID, record:Vehicle) -> void:
     VehicleServer.vehicle_set_name(vehicle, dynamic.name)
     VehicleServer.vehicle_set_initial_velocity(vehicle, dynamic.velocity)
     RailVehicleServer.vehicle_attach(vehicle)
+    var description:VehicleController = FizVehicleBuilder.build_description(structure.data_path, structure.file_name)
     # the cabins its MMD defines a cab for, and the scenery's driver at the controls of the front or
     # the rear one - before its simulation starts, which takes the occupied cab with it
     # (DynObj.cpp:1940-1963)
-    for kind:RailVehicleCabinKind.Kind in structure.cabin_kinds:
+    var cabin_kinds:Array[RailVehicleCabinKind.Kind] = structure.cabin_kinds.duplicate()
+    var driver_kind:RailVehicleCabinKind.Kind = (RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT
+            if dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_HEAD
+            else RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR)
+    # The original's quirk (MASZYNA_ORIGINAL_QUIRKS.md, "Every vehicle has three cab positions"): a
+    # scenery driver drives from an end its MMD defines no cab for - the Mover's CabOccupied comes
+    # from the scenery alone (DynObj.cpp:1994-2019) and the driver is made whatever the MMD says
+    # (create_controller, DynObj.cpp:2604-2627). Kept here, in the legacy layer, only for a vehicle
+    # that can have a cab - one with a master controller (FizTrainCntrlParser, MCPN > 1): its driver
+    # gets the cabin of that end, with no cab interior or controls of the MMD's (the catalog's
+    # unmodelled controls stand in, LegacyCabinUnmodelledControls). A wagon given a driver is not
+    # seated - the original's AI never drives from one (FirstFind(dir, coupling::control),
+    # Driver.cpp:2079).
+    var rail_description:RailVehicleController = description as RailVehicleController
+    if not dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_NOBODY and not driver_kind in cabin_kinds \
+            and rail_description \
+            and rail_description.get_rail_component(RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER):
+        cabin_kinds.append(driver_kind)
+    for kind:RailVehicleCabinKind.Kind in cabin_kinds:
         match kind:
             RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
                 RailVehicleServer.vehicle_add_front_cabin(vehicle)
@@ -174,8 +193,7 @@ func _build(vehicle:RID, record:Vehicle) -> void:
     # the original's TypeName is the CHK/MMD name (DynObj.cpp:2019)
     RailVehicleServer.vehicle_set_type_name(vehicle, structure.file_name)
     RailVehicleServer.vehicle_set_load(vehicle, dynamic.load_name, dynamic.load_amount)
-    VehicleServer.controller_configure(
-            record.controller, FizVehicleBuilder.build_description(structure.data_path, structure.file_name))
+    VehicleServer.controller_configure(record.controller, description)
     VehicleServer.vehicle_bind_controller(vehicle, record.controller)
     # the adapter it hands a neighbour of another coupler type, the original's own without one
     if structure.coupler_adapter:
@@ -192,7 +210,7 @@ func _build(vehicle:RID, record:Vehicle) -> void:
     if Engine.is_editor_hint():
         return
     CabinSystem.vehicle_set_cabin_scene(vehicle, structure.cabin_scene)
-    if structure.cabin_kinds:
+    if cabin_kinds:
         CabinSystem.vehicle_attach_cab_logic(
                 vehicle, LegacyCabinLogic.from_mmd(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name))
     # its sound is built only once it is within earshot - a scenery's vehicles all built at once

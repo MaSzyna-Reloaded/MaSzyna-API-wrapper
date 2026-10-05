@@ -117,6 +117,9 @@ cannot gate anything. It also loads `scenery/td.scn` from the game dir - needs a
 work. Check the occupant (`DriverType`)/`CabActive` first - `test_sm42_startup_sequence` was an
 unoccupied cab (`FINDINGS.md`, 2026-09-23).
 
+**`test_zzz_startup_sr61_v2` is red in the full run** (CABIN_REFACTOR.md, 2026-10-05) - not
+investigated; with `pipefail` in CI it now fails the build.
+
 **The `.fiz` path has not been run in the game** since the components stopped being nodes - only
 in tests.
 

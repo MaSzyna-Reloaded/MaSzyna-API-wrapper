@@ -64,9 +64,11 @@ jobs:
         run: godot-double --headless --path demo --import
 
       # GUT skips a test script that does not parse with only a warning and does not count it, so
-      # the run fails on the engine's own message for it
+      # the run fails on the engine's own message for it; pipefail keeps GUT's own exit code, which
+      # tee would otherwise replace with its own success
       - name: Run the tests
         run: |
+          set -o pipefail
           godot-double --headless --path demo -s addons/gut/gut_cmdln.gd \
             -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml 2>&1 | tee gut.log
           ! grep "Failed to load script" gut.log

@@ -50,27 +50,6 @@ func _find_train_controller(vehicle_name:String) -> VehicleController:
     return VehicleServer.vehicle_get_controller(vehicle) if VehicleServer.vehicle_is_simulation_ready(vehicle) else null
 
 
-func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:
-    var keys:Array[String] = [
-        "main_switch_enabled", "relay_novolt", "relay_overvoltage", "relay_ground",
-        "current_collector/voltage", "current_collector/pantograph_first_active",
-        "current_collector/pantograph_first_voltage", "compressor_pressure",
-        "current_collector/pantograph_tank_pressure",
-        "current_collector/pantograph_pressure_switch_armed", "feed_pipe_pressure",
-        "battery_enabled", "pipe_pressure", "brake_pipe_pressure",
-        "brake_air_pressure", "converter_enabled", "engine_current", "Im", "Mm", "Ft",
-        "controller_main_position", "controller_main_actual_position", "circuit_rlist_size",
-        "main_no_power_pos", "main_switch_time",
-        "line_breaker_delay", "line_breaker_initial_delay", "converter_overload", "fuse_active",
-        "train_damage", "engine_damage", "velocity", "speed", "engine_rpm_count",
-        "circuit_imax", "circuit_nmax_rpm",
-    ]
-    var line:String = "[%s] " % label
-    for key in keys:
-        line += "%s=%s " % [key, controller.get_state().get(key, null)]
-    print(line)
-
-
 func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     var controller:VehicleController = null
     for i in range(10):
@@ -97,16 +76,15 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
     # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
-    # voltage instead of a fixed short wait, same as test_ep07_controller_actual_position_diagnostic
-    # below and test_zzz_ep07_pantograph_power_smoke.gd - main_switch must not be sent before
-    # EnginePowerSourceVoltage() has anything to report, since MainSwitchCheck's powerisavailable
-    # check is evaluated once at the moment of the command and silently refuses the close
-    # otherwise (it isn't retried later just because voltage shows up afterward).
+    # voltage instead of a fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd -
+    # main_switch must not be sent before EnginePowerSourceVoltage() has anything to report, since
+    # MainSwitchCheck's powerisavailable check is evaluated once at the moment of the command and
+    # silently refuses the close otherwise (it isn't retried later just because voltage shows up
+    # afterward).
     for i in range(20):
         await wait_seconds(0.5)
         if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
-    _dump_diagnostic_state(controller, "after pantograph")
     var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
             controller.get_rid(), RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
     assert_not_null(power_supply, "the EP07's FIZ (Light: LMaxVoltage) gives it a power supply")
@@ -115,27 +93,16 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     assert_true(power_supply.get_power24_available(), "the battery gives the low voltage")
     controller.send_command("direction_increase")
     await wait_idle_frames(2)
-    _dump_diagnostic_state(controller, "after direction_increase")
     controller.send_command("converter_fuse_reset")
     controller.send_command("fuse_reset")
     await wait_idle_frames(2)
-    _dump_diagnostic_state(controller, "after fuse resets")
     controller.send_command("main_switch", true)
-    await wait_idle_frames(1)
-    _dump_diagnostic_state(controller, "1 frame after main_switch true")
-    await wait_idle_frames(4)
-    _dump_diagnostic_state(controller, "5 frames after main_switch true")
+    await wait_idle_frames(5)
     controller.send_command("converter", true)
-    await wait_seconds(0.5)
-    _dump_diagnostic_state(controller, "0.5s after converter true")
-    await wait_seconds(4.5)
-    _dump_diagnostic_state(controller, "5s after converter true")
+    await wait_seconds(5.0)
     controller.send_command("compressor", true)
-    await wait_seconds(0.5)
-    _dump_diagnostic_state(controller, "0.5s after compressor true")
-    await wait_seconds(4.5)
+    await wait_seconds(5.0)
 
-    _dump_diagnostic_state(controller, "before any notch")
     assert_true(
             controller.get_state().get("main_switch_enabled", false),
             "main switch should be closed before advancing the controller")
@@ -145,30 +112,19 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     var tripped:bool = false
     for notch in range(1, 6):
         controller.send_command("main_controller_increase")
-        print("-- sent main_controller_increase #%d (controller_main_position now %s) --" % [
-                notch, controller.get_state().get("controller_main_position", null)])
         # Poll every single idle frame (not just every 0.5s) so the exact frame Mains flips is
         # caught, instead of a coarser 0.5s snapshot that could miss a one-frame relay blip that
         # already self-recovered by the next sample.
-        var prev_damage:int = controller.get_state().get("train_damage", 0)
         for i in range(180): # ~3s at 60fps
             var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
             await wait_idle_frames(1)
             var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-            var now_damage:int = controller.get_state().get("train_damage", 0)
-            if now_damage != prev_damage:
-                _dump_diagnostic_state(
-                        controller, "DAMAGE CHANGE notch %d, frame %d (%d -> %d)" % [
-                                notch, i, prev_damage, now_damage])
-                prev_damage = now_damage
             if was_enabled and not now_enabled:
-                _dump_diagnostic_state(controller, "TRIP FRAME notch %d, frame %d" % [notch, i])
                 tripped = true
                 break
         if tripped:
             break
 
-    _dump_diagnostic_state(controller, "final (tripped=%s)" % tripped)
     assert_false(tripped, "main switch should not self-trip while advancing the controller")
     assert_eq(
             controller.get_state().get("train_damage", 0), 0,
@@ -181,82 +137,3 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     assert_gt(float(controller.get_state().get("tachometer_speed", 0.0)), 1.0, "Hasler should see the speed")
     assert_gt(float(controller.get_state().get("tachometer_speed_jump", 0.0)), 0.0, "Hasler needle should move")
     assert_gt(float(controller.get_state().get("tachometer_clock_speed", 0.0)), 1.0, "Hasler should be ticking")
-
-
-## Diagnostic for the reported "rozpedza sie do 140+ km/h nawet na main_controller_position=5/6"
-## bug: holds the controller at a fixed low notch for a long time and watches whether
-## controller_main_actual_position (the auto-relay/resistor-stepping shadow of MainCtrlPos that
-## RList[] lookups actually key off, Mover.cpp's TractionForce()) stays pinned near the commanded
-## notch, or races past it into unpopulated RList[] table slots (zero resistance -> unbounded
-## equilibrium speed). Not an assertion-first test - the printed dump across the whole hold is the
-## point, same as the main-switch-trip diagnostic above.
-func test_ep07_controller_actual_position_diagnostic() -> void:
-    var controller:VehicleController = null
-    for i in range(30):
-        controller = _find_train_controller("EP07-424")
-        if controller:
-            break
-        await wait_seconds(0.5)
-    assert_not_null(controller, "EP07-424 should be a vehicle of the loaded scenery")
-    if not controller:
-        return
-
-    # the scenery gives EP07-424 its driver (headdriver); the test drives it as a player does, who
-    # takes the controls from the driver (MaszynaPlayer, drivermode.cpp:266)
-    DriverSystem.vehicle_set_control_active(controller.get_rid(), false)
-    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
-    controller.send_command("battery", true)
-    await wait_idle_frames(2)
-    # the controllers answer only from an active cab (IncMainCtrl, Mover.cpp:2226)
-    controller.send_command("cab_activation", true)
-    controller.send_command("security_acknowledge", true)
-    controller.send_command("security_acknowledge", false)
-    controller.send_command("brake_level_set", 0.25)
-    controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    # Pantograph raise is not instant (valve/lift delay) - poll for real wire voltage instead of a
-    # fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd, so main_switch below isn't
-    # sent before EnginePowerSourceVoltage() has anything to report (MainSwitchCheck's
-    # powerisavailable would silently refuse the close otherwise).
-    for i in range(20):
-        await wait_seconds(0.5)
-        if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
-            break
-    controller.send_command("direction_increase")
-    controller.send_command("converter_fuse_reset")
-    controller.send_command("fuse_reset")
-    controller.send_command("main_switch", true)
-    await wait_idle_frames(1)
-    _dump_diagnostic_state(controller, "1 frame after main_switch true")
-    controller.send_command("converter", true)
-    await wait_seconds(5.0)
-    controller.send_command("compressor", true)
-    await wait_seconds(5.0)
-    _dump_diagnostic_state(controller, "before any notch")
-
-    const TARGET_NOTCH := 6
-    var tripped:bool = false
-    for notch in range(TARGET_NOTCH):
-        controller.send_command("main_controller_increase")
-        for i in range(150): # ~2.5s at 60fps, frame-exact instead of a blind wait
-            var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-            await wait_idle_frames(1)
-            var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-            if was_enabled and not now_enabled:
-                _dump_diagnostic_state(controller, "TRIP FRAME notch %d, frame %d" % [notch + 1, i])
-                tripped = true
-                break
-        _dump_diagnostic_state(controller, "after notch %d" % (notch + 1))
-        if tripped:
-            break
-
-    _dump_diagnostic_state(controller, "notch %d reached" % TARGET_NOTCH)
-    for i in range(1800): # hold for up to 30s, frame-exact so the trip frame is caught precisely
-        var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-        await wait_idle_frames(1)
-        var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-        if was_enabled and not now_enabled:
-            _dump_diagnostic_state(controller, "HOLD TRIP FRAME notch %d, frame %d" % [TARGET_NOTCH, i])
-            break
-        if i % 150 == 0: # still print a coarse progress trace every 2.5s
-            _dump_diagnostic_state(controller, "held notch %d, t=%.1fs" % [TARGET_NOTCH, i / 60.0])

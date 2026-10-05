@@ -158,10 +158,12 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
     })
 
 
-## Offsets along the vehicle of `tractionmotors:` and `bogies:` from the `locations:` section
-## (DynObj.cpp:6289-6326), as MMD values - negative means ahead of the centre.
+## Offsets along the vehicle of `tractionmotors:`, `bogies:` and `doors:` from the `locations:`
+## section (DynObj.cpp:6289-6326, 6594-6639), as MMD values - negative means ahead of the centre.
+## A door is a pair, its offset and its sides; the offset is kept - one door speaker each.
 static func parse_locations(abs_mmd_path:String, context:MmdImportContext) -> Dictionary:
-    var locations:Dictionary = {"tractionmotors": PackedFloat32Array(), "bogies": PackedFloat32Array()}
+    var locations:Dictionary = {
+        "tractionmotors": PackedFloat32Array(), "bogies": PackedFloat32Array(), "doors": PackedFloat32Array()}
     var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context, context.parameters)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "locations:")
     if start_index == -1:
@@ -176,9 +178,11 @@ static func parse_locations(abs_mmd_path:String, context:MmdImportContext) -> Di
         if not locations.has(key):
             continue
         var offsets:PackedFloat32Array = locations[key]
+        # a door's offset is followed by its sides (right, left, both)
+        var step:int = 2 if key == "doors" else 1
         while i < end_index and not tokens[i].to_lower() == "end":
             offsets.append(float(tokens[i]))
-            i += 1
+            i += step
         locations[key] = offsets
     return locations
 

@@ -1,6 +1,11 @@
 extends MaszynaGutTest
 
 const FIXTURE_PATH := "res://tests/fixtures/test_sound.mmd"
+## An EN57 middle car: `doors: -3.71 both 2.94 both end` and a departuresignal: sound
+const EN57_CAR_PATH:String = "res://tests/fixtures/dynamic/pkp/en57-2000_v1/6ba.mmd"
+const EN57_CAR_DOORS:Array[float] = [-3.71, 2.94]
+## The door offsets are read as 32-bit floats
+const FLOAT32_TOLERANCE:Vector3 = Vector3(0.000001, 0.000001, 0.000001)
 
 
 func test_ignition_merges_into_empty_engine_sound_begin_but_explicit_soundend_wins_over_shutdown():
@@ -140,3 +145,38 @@ func test_brake_sounds_are_built_with_their_bookends_chunks_and_fallbacks() -> v
     assert_not_null(exterior.bank.get_event(&"brake_cylinder_increase_0"))
     assert_not_null(exterior.bank.get_event(&"brake_cylinder_increase_1"))
     assert_null(exterior.bank.get_event(&"brake_cylinder_increase"))
+
+
+## DynObj.cpp:6359-6364, 6594-6639 - the departure signal sounds from a speaker at every door
+## location, none of them at the sound's own offset
+func test_the_departure_signal_is_built_at_every_door_speaker() -> void:
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    add_child(vehicle)
+    var diagnostics:Array[Dictionary] = []
+    MmdSoundBankInstancer.build_into(
+            vehicle, RID(), ProjectSettings.globalize_path(EN57_CAR_PATH), {}, {}, diagnostics)
+
+    var exterior:SfxPlayer3D = vehicle.get_node("ExteriorSfxPlayer3D") as SfxPlayer3D
+    assert_null(exterior.bank.get_event(&"departure_signal"), "no copy at the sound's own place")
+    var front:SfxEvent = exterior.bank.get_event(&"departure_signal_0")
+    var rear:SfxEvent = exterior.bank.get_event(&"departure_signal_1")
+    assert_not_null(front)
+    assert_not_null(rear)
+    assert_almost_eq(front.spatial_config.position,
+            Vector3(0.0, MmdSoundBankInstancer.DOOR_SPEAKER_HEIGHT, EN57_CAR_DOORS[0]), FLOAT32_TOLERANCE)
+    assert_almost_eq(rear.spatial_config.position,
+            Vector3(0.0, MmdSoundBankInstancer.DOOR_SPEAKER_HEIGHT, EN57_CAR_DOORS[1]), FLOAT32_TOLERANCE)
+    assert_null(exterior.bank.get_event(&"departure_signal_2"), "two doors, two speakers")
+
+    vehicle.queue_free()
+    await wait_idle_frames(2)
+
+
+func test_a_door_location_is_its_offset_whatever_its_sides() -> void:
+    var context:MmdImportContext = MmdImportContext.new()
+    context.base_dir = EN57_CAR_PATH.get_base_dir()
+
+    var locations:Dictionary = MmdSoundSourceParser.parse_locations(ProjectSettings.globalize_path(EN57_CAR_PATH), context)
+
+    assert_eq(locations["doors"], PackedFloat32Array(EN57_CAR_DOORS))
+    assert_eq(locations["bogies"], PackedFloat32Array([-7.59, 7.27]), "the next list read as before")

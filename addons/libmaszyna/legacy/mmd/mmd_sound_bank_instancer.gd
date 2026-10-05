@@ -39,6 +39,8 @@ const _BOGIE_NOISE_EVEN_START_MIN:float = 0.5
 const _BOGIE_NOISE_EVEN_START_MAX:float = 0.8
 const _BOGIE_NOISE_ODD_START_MIN:float = 0.0
 const _BOGIE_NOISE_ODD_START_MAX:float = 0.3
+## How high a door speaker stands over the rail [m] (DynObj.cpp:6636)
+const DOOR_SPEAKER_HEIGHT:float = 3.0
 const _RUNNING_RANGES:Dictionary = {
     "curve": 200.0,
     "outernoise": 200.0,
@@ -142,7 +144,8 @@ static func _build_player(
         soundproofing:Array[PackedFloat32Array], context:MmdImportContext,
         abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> SfxPlayer3D:
     var events:Array[SfxEvent] = []
-    var regular_definitions:Array[MmdSoundSourceDefinition] = []
+    # {definition, event_name} of every event a trigger starts
+    var regular:Array[Dictionary] = []
     var brake_definitions:Dictionary[String, MmdSoundSourceDefinition] = {}
     var running := RunningSoundModel.new()
     for definition:MmdSoundSourceDefinition in definitions:
@@ -157,18 +160,29 @@ static func _build_player(
         if entry.get("controller", &"") == &"running":
             _build_running_events(definition, entry["event_name"], locations, events, running)
             continue
-        # CHANGE triggers only start their event - a one-shot sample, never stopped
-        var event:SfxEvent = MmdSoundEventBuilder.build(
-                definition, entry["event_name"], entry.get("sound_parameter", &""), false, true,
-                not entry["trigger_mode"] == TrainSoundTrigger.TriggerMode.CHANGE)
-        if definition.label in _HORN_LABELS:
-            _apply_horn_spatial_config(event, definition)
-        elif _CABIN_SPATIAL.has(definition.label) and not definition.range_defined:
-            _apply_cabin_spatial_config(event, definition.label)
-        var emitter:Array[SfxEvent] = [event]
-        MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
-        events.append(event)
-        regular_definitions.append(definition)
+        # one copy at every door speaker, at its offset in place of the sound's own (DynObj.cpp:6362),
+        # none without door locations; MMD offsets turned into the vehicle's -Z forward frame
+        var positions:Array = [null]
+        if entry.get("at_door_speakers", false):
+            positions = Array(locations["doors"]).map(func(offset:float) -> Vector3:
+                return Vector3(0.0, DOOR_SPEAKER_HEIGHT, offset))
+        for index:int in range(positions.size()):
+            var event_name:StringName = (entry["event_name"] if not positions[index] is Vector3
+                    else StringName("%s_%d" % [entry["event_name"], index]))
+            # CHANGE triggers only start their event - a one-shot sample, never stopped
+            var event:SfxEvent = MmdSoundEventBuilder.build(
+                    definition, event_name, entry.get("sound_parameter", &""), false, true,
+                    not entry["trigger_mode"] == TrainSoundTrigger.TriggerMode.CHANGE)
+            if definition.label in _HORN_LABELS:
+                _apply_horn_spatial_config(event, definition)
+            elif _CABIN_SPATIAL.has(definition.label) and not definition.range_defined:
+                _apply_cabin_spatial_config(event, definition.label)
+            if positions[index] is Vector3:
+                event.spatial_config.position = positions[index]
+            var emitter:Array[SfxEvent] = [event]
+            MmdSoundEventBuilder.shape_emitter(emitter, definition, definition.start_offset)
+            events.append(event)
+            regular.append({"definition": definition, "event_name": event_name})
 
     for label:String in _LOCAL_BRAKE_FALLBACKS:
         var fallback:MmdSoundSourceDefinition = brake_definitions.get(_LOCAL_BRAKE_FALLBACKS[label])
@@ -185,7 +199,7 @@ static func _build_player(
     player.bank = bank
     # a running sound (or a clatter axle) crossfades at most two chunks at once
     player.max_tracks = (
-            2 * running.sources.size() if running.sources and not (regular_definitions or brake_definitions)
+            2 * running.sources.size() if running.sources and not (regular or brake_definitions)
             else _VEHICLE_PLAYER_VOICE_COUNT)
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
@@ -197,12 +211,13 @@ static func _build_player(
     parent.add_child(player, false, Node.INTERNAL_MODE_BACK)
 
     var triggers:Array[Dictionary] = []
-    for definition:MmdSoundSourceDefinition in regular_definitions:
+    for source:Dictionary in regular:
+        var definition:MmdSoundSourceDefinition = source["definition"]
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
         triggers.append({
             "state_property": entry["state_property"],
             "trigger_mode": entry["trigger_mode"],
-            "sound_event": entry["event_name"],
+            "sound_event": source["event_name"],
             "sound_parameter": entry.get("sound_parameter", &""),
             "trigger_threshold_min": entry.get("trigger_threshold_min", 0.0),
             "trigger_threshold_max": entry.get("trigger_threshold_max", 1.0),

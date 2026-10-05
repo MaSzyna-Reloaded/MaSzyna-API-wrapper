@@ -1365,9 +1365,6 @@ data-driven"); what it found is fixed except these:
 * **Cab occupancy (persons, cabins, roles) - what is left** (2026-10-05):
   * The AI's `DirectionChange()` after a cab change (Driver.cpp:2624) follows only from its
     cabin's kind.
-* **The departure signal sounds at the vehicle**: the original plays `departuresignal:` from each
-  door speaker at its offset (`m_doorspeakers`, DynObj.cpp:6359-6364); door speaker locations are
-  not parsed, so `MmdSoundCatalog`'s `departuresignal` is one source per vehicle.
 * **The radio message lamp's sound**: its soundinc/sounddec gain does not follow the radio's
   volume (Train.cpp:10258-10261).
 * **EN57-702ra drives without the battery and the main switch** (report 2026-10-05): not

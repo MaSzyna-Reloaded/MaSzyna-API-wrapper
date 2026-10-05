@@ -740,6 +740,33 @@ msgstr "Povolení dveří: další"
 msgid "Doors Permit Preset Previous"
 msgstr "Povolení dveří: předchozí"
 
+msgid "Doors Left Permit"
+msgstr "Povolení levých dveří"
+
+msgid "Doors Right Permit"
+msgstr "Povolení pravých dveří"
+
+msgid "Doors Left Toggle"
+msgstr "Levé dveře: otevřít/zavřít"
+
+msgid "Doors Right Toggle"
+msgstr "Pravé dveře: otevřít/zavřít"
+
+msgid "Doors Open All"
+msgstr "Otevřít všechny dveře"
+
+msgid "Doors Close All"
+msgstr "Zavřít všechny dveře"
+
+msgid "Doors Remote Mode Toggle"
+msgstr "Režim dálkového ovládání dveří"
+
+msgid "Doors Lock Toggle"
+msgstr "Blokování dveří"
+
+msgid "Departure Announce"
+msgstr "Návěst k odjezdu"
+
 msgid "Headlights Dim Toggle"
 msgstr "Tlumení světlometů"
 

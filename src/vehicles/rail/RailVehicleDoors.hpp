@@ -56,6 +56,13 @@ namespace godot {
             virtual bool get_right_operating() const = 0;
             virtual double get_right_step_position() const = 0;
             virtual bool get_right_step_operating() const = 0;
+            /* The departure signal is given (DepartureSignal, Mover.cpp:7899) */
+            virtual bool get_departure_signal() const = 0;
+            /* The vehicle's door warning sounds: it has one, the signal is given and the low
+             * voltage is there (DynObj.cpp:4768-4787) */
+            virtual bool get_departure_signal_sounding() const = 0;
+            /* The doors are worked only from the cab (Doors.remote_only, ChangeDoorControlMode) */
+            virtual bool get_remote_only() const = 0;
             enum PermitLight {
                 PERMIT_LIGHT_CONTINUOUS,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,
@@ -93,6 +100,8 @@ namespace godot {
             virtual void operate_doors_locally(bool p_state, Side p_side) = 0;
             virtual void door_lock(bool p_state) = 0;
             virtual void door_remote_control(bool p_state) = 0;
+            /* The departure signal given or taken back, along the trainset (signal_departure) */
+            virtual void signal_departure(bool p_state) = 0;
             virtual void next_permit_preset() = 0;
             virtual void previous_permit_preset() = 0;
             /* The cab mirrors (DynObj.cpp:4207-4236): how far each side is unfolded, 0 folded .. 1 out */

@@ -121,6 +121,15 @@ static func _ensure_built() -> void:
             "state_property": "coupler_sound/detach_heating",
             "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
         },
+        # the departure signal loops on each door speaker while the vehicle's door warning sounds
+        # (DynObj.cpp:4768-4787); range 25 m unless the MMD says (DynObj.cpp:6359) - the speakers'
+        # own offsets (m_doorspeakers) are not parsed, it sounds at the vehicle
+        "departuresignal": {
+            "event_name": &"departure_signal",
+            "state_property": "doors_departure_signal_sounding",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
+            "range": 25.0,
+        },
         "compressor": {
             "event_name": &"compressor",
             "state_property": "compressor_enabled",

@@ -225,6 +225,8 @@ static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_i
         definition.soundproofing = _HORN_SOUNDPROOFING
     if _RUNNING_RANGES.has(definition.label) and not definition.range_defined:
         definition.range = _RUNNING_RANGES[definition.label]
+    elif MmdSoundCatalog.get_entry(definition.label).has("range") and not definition.range_defined:
+        definition.range = MmdSoundCatalog.get_entry(definition.label)["range"]
     if definition.placement_defined:
         return
     if from_internal_data:

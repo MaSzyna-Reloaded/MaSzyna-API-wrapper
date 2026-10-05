@@ -51,6 +51,7 @@ namespace godot {
                 D_METHOD("operate_doors_locally", "state", "side"), &RailVehicleDoors::operate_doors_locally);
         ClassDB::bind_method(D_METHOD("door_lock", "state"), &RailVehicleDoors::door_lock);
         ClassDB::bind_method(D_METHOD("door_remote_control", "state"), &RailVehicleDoors::door_remote_control);
+        ClassDB::bind_method(D_METHOD("signal_departure", "state"), &RailVehicleDoors::signal_departure);
         ClassDB::bind_method(D_METHOD("forbid_mirrors", "state"), &RailVehicleDoors::forbid_mirrors);
 
 
@@ -112,6 +113,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_mirror_left_position"), &RailVehicleDoors::get_mirror_left_position);
         ClassDB::bind_method(D_METHOD("get_mirror_right_position"), &RailVehicleDoors::get_mirror_right_position);
         ClassDB::bind_method(D_METHOD("get_mirrors_forbidden"), &RailVehicleDoors::get_mirrors_forbidden);
+        ClassDB::bind_method(D_METHOD("get_departure_signal"), &RailVehicleDoors::get_departure_signal);
+        ClassDB::bind_method(
+                D_METHOD("get_departure_signal_sounding"), &RailVehicleDoors::get_departure_signal_sounding);
+        ClassDB::bind_method(D_METHOD("get_remote_only"), &RailVehicleDoors::get_remote_only);
     }
 
     void RailVehicleDoors::_register_commands() {
@@ -126,6 +131,7 @@ namespace godot {
         register_command("doors_right_local", Callable(this, "operate_doors_locally").bind(SIDE_RIGHT));
         register_command("doors_lock", Callable(this, "door_lock"));
         register_command("doors_remote_control", Callable(this, "door_remote_control"));
+        register_command("doors_departure_signal", Callable(this, "signal_departure"));
         register_command("mirrors_forbid", Callable(this, "forbid_mirrors"));
     }
 
@@ -141,6 +147,7 @@ namespace godot {
         unregister_command("doors_right_local");
         unregister_command("doors_lock");
         unregister_command("doors_remote_control");
+        unregister_command("doors_departure_signal");
         unregister_command("mirrors_forbid");
     }
 } // namespace godot

@@ -87,6 +87,9 @@ func register(vehicle_rid:RID, cabin:RID) -> void:
     claimed.append_array(pantographs.control_ids())
     _behaviours.append(pantographs)
     var config:Dictionary = CabinSystem.vehicle_config(vehicle_rid)
+    var doors_present:Dictionary[StringName, bool] = {}
+    for control_id:StringName in LegacyCabinDoors.CONTROLS:
+        doors_present[control_id] = controls.has_control(control_id)
     var switch_behaviours:Array[RefCounted] = [
         LegacyCabinBattery.new(),
         LegacyCabinCabActivation.new(),
@@ -105,6 +108,7 @@ func register(vehicle_rid:RID, cabin:RID) -> void:
         LegacyCabinDoorPermits.new(
                 controls.button_type(LegacyCabinDoorPermits.LEFT_SWITCH),
                 controls.button_type(LegacyCabinDoorPermits.RIGHT_SWITCH)),
+        LegacyCabinDoors.new(doors_present, controls.button_type(LegacyCabinDoors.ALL_CLOSE)),
     ]
     for behaviour:RefCounted in switch_behaviours:
         claimed.append_array(behaviour.control_ids())

@@ -740,6 +740,33 @@ msgstr "车门容许：下一个"
 msgid "Doors Permit Preset Previous"
 msgstr "车门容许：上一个"
 
+msgid "Doors Left Permit"
+msgstr "左侧车门容许"
+
+msgid "Doors Right Permit"
+msgstr "右侧车门容许"
+
+msgid "Doors Left Toggle"
+msgstr "左侧车门：开/关"
+
+msgid "Doors Right Toggle"
+msgstr "右侧车门：开/关"
+
+msgid "Doors Open All"
+msgstr "打开所有车门"
+
+msgid "Doors Close All"
+msgstr "关闭所有车门"
+
+msgid "Doors Remote Mode Toggle"
+msgstr "车门遥控模式"
+
+msgid "Doors Lock Toggle"
+msgstr "车门锁闭"
+
+msgid "Departure Announce"
+msgstr "发车信号"
+
 msgid "Headlights Dim Toggle"
 msgstr "头灯暗光"
 

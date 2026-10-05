@@ -4,6 +4,7 @@
 #include "vehicles/base/VehiclePersonRole.hpp"
 #include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
+#include "vehicles/rail/RailVehicleDoors.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
@@ -206,6 +207,11 @@ namespace godot {
             HashMap<RID, Vector<RID>> track_vehicles;
 
             RailVehicleController *_get_controller(const VehiclePlacement &p_placement) const;
+            /* Whether p_answers(doors, side) holds for a vehicle coupled to p_vehicle by its
+             * couplers, p_side being the side of p_vehicle - swapped for a vehicle standing the other
+             * way round (TController's consist state, Driver.cpp:6093-6106) */
+            template<typename Answers>
+            bool _trainset_any_doors(const RID &p_vehicle, RailVehicleDoors::Side p_side, Answers p_answers) const;
             /* The controller's rail events, relayed under the handle, so whoever follows a vehicle
              * never holds its controller - connected when the vehicle is attached or VehicleServer
              * gives it another controller, disconnected when it is replaced or detached */
@@ -435,6 +441,15 @@ namespace godot {
              * front, every vehicle whichever way round it stands (TDynamicObject::move_set(),
              * DynObj.cpp:4302) */
             void trainset_move(const RID &p_vehicle, double p_distance);
+            /* A doorway (its door or its step) of the trainset coupled to the vehicle not closed on
+             * p_side of the vehicle; doors closing by themselves do not count (IsAnyDoorOpen,
+             * Driver.cpp:6097) */
+            bool trainset_get_doorway_open(const RID &p_vehicle, RailVehicleDoors::Side p_side) const;
+            /* The same for a door alone, its step whatever (IsAnyDoorOnlyOpen, Driver.cpp:6101) */
+            bool trainset_get_door_open(const RID &p_vehicle, RailVehicleDoors::Side p_side) const;
+            /* A door permit given on p_side of the vehicle, of the trainset's vehicles needing one
+             * (IsAnyDoorPermitActive, Driver.cpp:6104) */
+            bool trainset_get_door_permit(const RID &p_vehicle, RailVehicleDoors::Side p_side) const;
             /* Walks one vehicle the distance its own simulation asked for. The step does this for
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);

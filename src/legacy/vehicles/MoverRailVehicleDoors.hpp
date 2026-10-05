@@ -65,6 +65,10 @@ namespace godot {
             void operate_doors_locally(bool p_state, Side p_side) override;
             void door_lock(bool p_state) override;
             void door_remote_control(bool p_state) override;
+            void signal_departure(bool p_state) override;
+            bool get_departure_signal() const override;
+            bool get_departure_signal_sounding() const override;
+            bool get_remote_only() const override;
             void next_permit_preset() override;
             void previous_permit_preset() override;
             double get_mirror_left_position() const override;

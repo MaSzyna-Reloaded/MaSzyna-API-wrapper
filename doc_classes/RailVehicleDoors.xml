@@ -30,6 +30,18 @@
 				Keep the exterior mirrors folded ([code]MirrorForbidden[/code], the cab's [code]mirrors_sw[/code]). Command [code]mirrors_forbid[/code].
 			</description>
 		</method>
+		<method name="get_departure_signal" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the departure signal is given (command [code]doors_departure_signal[/code]).
+			</description>
+		</method>
+		<method name="get_departure_signal_sounding" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the vehicle's door warning sounds: the vehicle has one ([member close_warning]), the departure signal is given and the low voltage is there.
+			</description>
+		</method>
 		<method name="get_left_closed" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -117,6 +129,12 @@
 		<method name="get_permit_preset" qualifiers="const">
 			<return type="int" />
 			<description>
+			</description>
+		</method>
+		<method name="get_remote_only" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the doors are worked only from the cab ([method door_remote_control]).
 			</description>
 		</method>
 		<method name="get_right_closed" qualifiers="const">
@@ -216,6 +234,13 @@
 			<return type="void" />
 			<description>
 				Activate previous permission preset. See [member RailVehicleDoors.permit_list].
+			</description>
+		</method>
+		<method name="signal_departure">
+			<return type="void" />
+			<param index="0" name="state" type="bool" />
+			<description>
+				Gives or takes back the departure signal, along the trainset. Command [code]doors_departure_signal[/code].
 			</description>
 		</method>
 	</methods>

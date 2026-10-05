@@ -171,6 +171,13 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_move", "vehicle", "distance"), &RailVehicleServer::vehicle_move);
         ClassDB::bind_method(D_METHOD("trainset_move", "vehicle", "distance"), &RailVehicleServer::trainset_move);
         ClassDB::bind_method(
+                D_METHOD("trainset_get_doorway_open", "vehicle", "side"),
+                &RailVehicleServer::trainset_get_doorway_open);
+        ClassDB::bind_method(
+                D_METHOD("trainset_get_door_open", "vehicle", "side"), &RailVehicleServer::trainset_get_door_open);
+        ClassDB::bind_method(
+                D_METHOD("trainset_get_door_permit", "vehicle", "side"), &RailVehicleServer::trainset_get_door_permit);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
         ClassDB::bind_method(
@@ -1040,6 +1047,74 @@ namespace godot {
      * says whether it stands the same way round. The leading vehicle goes first, so that a switch
      * on the way is set once for all of them. The couplers need nothing: the next sub-step
      * refreshes every location and neighbour before any force. */
+    template<typename Answers>
+    bool RailVehicleServer::_trainset_any_doors(
+            const RID &p_vehicle, const RailVehicleDoors::Side p_side, Answers p_answers) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        RailVehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (first == nullptr) {
+            return false;
+        }
+        const RailVehicleDoors::Side other_side =
+                p_side == RailVehicleDoors::SIDE_LEFT ? RailVehicleDoors::SIDE_RIGHT : RailVehicleDoors::SIDE_LEFT;
+        const auto answers = [&](const RailVehicleController *p_controller, const bool p_same_way) {
+            const RailVehicleDoors *doors = Object::cast_to<RailVehicleDoors>(
+                    p_controller->get_component(VehicleComponentType::COMPONENT_DOORS).ptr());
+            return doors != nullptr && p_answers(*doors, p_same_way ? p_side : other_side);
+        };
+        if (answers(first, true)) {
+            return true;
+        }
+        // out through each end; a neighbour entered by the same end as the one left stands the other
+        // way round
+        for (const RailVehicleController::CouplerEnd start:
+             {RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLER_END_REAR}) {
+            const RailVehicleController *vehicle = first;
+            RailVehicleController::CouplerEnd end = start;
+            bool same_way = true;
+            while (vehicle->is_coupled_by(end, RailVehicleController::COUPLING_FLAG_COUPLER)) {
+                const RailVehicleController::CouplerEnd entered = vehicle->get_coupled_end(end);
+                same_way = same_way == (entered != end);
+                vehicle = vehicle->get_coupled_controller(end).ptr();
+                end = RailVehicleController::opposite_end(entered);
+                if (vehicle == first) {
+                    break;
+                }
+                if (answers(vehicle, same_way)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool RailVehicleServer::trainset_get_doorway_open(const RID &p_vehicle, const RailVehicleDoors::Side p_side) const {
+        return _trainset_any_doors(
+                p_vehicle, p_side, [](const RailVehicleDoors &p_doors, const RailVehicleDoors::Side p_at) {
+                    return p_doors.get_close_method() != RailVehicleDoors::CONTROLS_AUTOMATIC &&
+                           !(p_at == RailVehicleDoors::SIDE_LEFT ? p_doors.get_left_closed()
+                                                                 : p_doors.get_right_closed());
+                });
+    }
+
+    bool RailVehicleServer::trainset_get_door_open(const RID &p_vehicle, const RailVehicleDoors::Side p_side) const {
+        return _trainset_any_doors(
+                p_vehicle, p_side, [](const RailVehicleDoors &p_doors, const RailVehicleDoors::Side p_at) {
+                    return p_doors.get_close_method() != RailVehicleDoors::CONTROLS_AUTOMATIC &&
+                           !(p_at == RailVehicleDoors::SIDE_LEFT ? p_doors.get_left_door_closed()
+                                                                 : p_doors.get_right_door_closed());
+                });
+    }
+
+    bool RailVehicleServer::trainset_get_door_permit(const RID &p_vehicle, const RailVehicleDoors::Side p_side) const {
+        return _trainset_any_doors(
+                p_vehicle, p_side, [](const RailVehicleDoors &p_doors, const RailVehicleDoors::Side p_at) {
+                    return p_doors.get_permit_required() &&
+                           (p_at == RailVehicleDoors::SIDE_LEFT ? p_doors.get_left_open_permit()
+                                                                : p_doors.get_right_open_permit());
+                });
+    }
+
     void RailVehicleServer::trainset_move(const RID &p_vehicle, const double p_distance) {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;

@@ -740,6 +740,33 @@ msgstr ""
 msgid "Doors Permit Preset Previous"
 msgstr ""
 
+msgid "Doors Left Permit"
+msgstr ""
+
+msgid "Doors Right Permit"
+msgstr ""
+
+msgid "Doors Left Toggle"
+msgstr ""
+
+msgid "Doors Right Toggle"
+msgstr ""
+
+msgid "Doors Open All"
+msgstr ""
+
+msgid "Doors Close All"
+msgstr ""
+
+msgid "Doors Remote Mode Toggle"
+msgstr ""
+
+msgid "Doors Lock Toggle"
+msgstr ""
+
+msgid "Departure Announce"
+msgstr ""
+
 msgid "Headlights Dim Toggle"
 msgstr ""
 

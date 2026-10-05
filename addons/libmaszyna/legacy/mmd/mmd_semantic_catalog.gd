@@ -1349,6 +1349,87 @@ static func _ensure_built() -> void:
         # which are also real light sources). Plain passthroughs of already-exposed state:
         # the radio's lamps of a message heard and of the Radio-Stop (btLampkaRadioMessage,
         # btLampkaRadioStop, Train.cpp:9129-9130, 11618-11619) - the cab radio's own state (CabinRadio3D)
+        # m_doors: a door of the trainset open (autolights, Train.cpp:11753)
+        "i-doors": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoors.DOORS_OPEN_LAMP },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # btLampkaDoorLeft: on the cab's left (Train.cpp:9167)
+        "i-door_left": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoors.SIDE_OPEN_LAMPS[RailVehicleDoors.SIDE_LEFT] },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # btLampkaDoorRight (Train.cpp:9168)
+        "i-door_right": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoors.SIDE_OPEN_LAMPS[RailVehicleDoors.SIDE_RIGHT] },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # m_doorspermitleft (autolights, Train.cpp:11754)
+        "i-doorpermit_left": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoorPermits.LAMP_KEYS[RailVehicleDoors.SIDE_LEFT] },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # m_doorspermitright (Train.cpp:11755)
+        "i-doorpermit_right": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoorPermits.LAMP_KEYS[RailVehicleDoors.SIDE_RIGHT] },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # m_doorpermits: a door permit of the trainset given (Train.cpp:11756)
+        "i-doorpermit_any": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": LegacyCabinDoors.PERMITS_LAMP },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Doors.step_enabled (Train.cpp:11757)
+        "i-doorstep": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "doors_step_enabled" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # btLampkaBlokadaDrzwi: Doors.is_locked (Train.cpp:9170)
+        "i-door_blocked": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "doors_locked" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # btLampkaDoorLockOff: the lock switched off (Train.cpp:9171)
+        "i-door_blockedoff": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "doors_lock_enabled", "invert_value": true },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # btLampkaDepartureSignal: the signal of the controlled vehicle (Train.cpp:9172)
+        "i-departure_signal": {
+            "target": CabinState.Target.CONTROLLED,
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "doors_departure_signal" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
         "i-radiomessage": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": CabinRadio3D.MESSAGE_PLAYED_KEY },
@@ -2034,6 +2115,119 @@ static func _ensure_built() -> void:
                 "action": "doors_right_permit",
             },
             "state_light": {"state_property": LegacyCabinDoorPermits.LAMP_KEYS[RailVehicleDoors.SIDE_RIGHT]},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The door controls - LegacyCabinDoors (Train.cpp:7087-7724, 7899-7929): each takes a press and
+        # a release, a cab without the gauge does nothing; the gauges show what the handlers set
+        # OnCommand_doortoggleleft (Train.cpp:7121), Comma
+        "door_left_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "action": "doors_left_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doortoggleright (Train.cpp:7420), Period
+        "door_right_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "action": "doors_right_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_dooropenleft (Train.cpp:7320) - no key in the original
+        "doorlefton_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_dooropenright (Train.cpp:7495)
+        "doorrighton_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doorcloseleft (Train.cpp:7362)
+        "doorleftoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doorcloseright (Train.cpp:7538)
+        "doorrightoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_dooropenall (Train.cpp:7595), Shift+/
+        "doorallon_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "action": "doors_open_all",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doorcloseall (Train.cpp:7630), Ctrl+/ - lit while a door of the trainset
+        # is open (stategauges, Train.cpp:12035)
+        "dooralloff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "action": "doors_close_all",
+            },
+            "state_light": {"state_property": LegacyCabinDoors.DOORS_OPEN_LAMP},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doormodetoggle (Train.cpp:7717), Ctrl+Shift+/ - shows Doors.remote_only
+        # (autoboolgauges, Train.cpp:12054)
+        "doormode_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "state_property": "doors_remote_only",
+                "action": "doors_remote_mode_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_doorlocktoggle (Train.cpp:7087), Ctrl+S
+        "door_signalling_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "state_property": "doors_lock_enabled",
+                "action": "doors_lock_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # OnCommand_departureannounce (Train.cpp:7899), /
+        "departure_signal_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "action": "departure_announce",
+            },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },

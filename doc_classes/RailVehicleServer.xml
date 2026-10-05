@@ -118,6 +118,30 @@
 				Frees the trainset; its vehicles stay.
 			</description>
 		</method>
+		<method name="trainset_get_door_open" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
+			<description>
+				Whether a door alone (its step whatever) of the trainset coupled to [param vehicle] is not closed on [param side] of [param vehicle]; a vehicle standing the other way round has its sides swapped, doors closing by themselves do not count.
+			</description>
+		</method>
+		<method name="trainset_get_door_permit" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
+			<description>
+				Whether a door permit is given on [param side] of [param vehicle], among the trainset's vehicles that need one.
+			</description>
+		</method>
+		<method name="trainset_get_doorway_open" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="side" type="int" enum="RailVehicleDoors.Side" />
+			<description>
+				Whether a doorway (its door or its step) of the trainset coupled to [param vehicle] is not closed on [param side] of [param vehicle]; a vehicle standing the other way round has its sides swapped, doors closing by themselves do not count.
+			</description>
+		</method>
 		<method name="trainset_get_name" qualifiers="const">
 			<return type="String" />
 			<param index="0" name="trainset" type="RID" />

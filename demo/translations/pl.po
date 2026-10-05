@@ -740,6 +740,33 @@ msgstr "Zezwolenie na drzwi: następne"
 msgid "Doors Permit Preset Previous"
 msgstr "Zezwolenie na drzwi: poprzednie"
 
+msgid "Doors Left Permit"
+msgstr "Zezwolenie na drzwi lewe"
+
+msgid "Doors Right Permit"
+msgstr "Zezwolenie na drzwi prawe"
+
+msgid "Doors Left Toggle"
+msgstr "Drzwi lewe: otwórz/zamknij"
+
+msgid "Doors Right Toggle"
+msgstr "Drzwi prawe: otwórz/zamknij"
+
+msgid "Doors Open All"
+msgstr "Otwórz wszystkie drzwi"
+
+msgid "Doors Close All"
+msgstr "Zamknij wszystkie drzwi"
+
+msgid "Doors Remote Mode Toggle"
+msgstr "Tryb zdalnego sterowania drzwiami"
+
+msgid "Doors Lock Toggle"
+msgstr "Blokada drzwi"
+
+msgid "Departure Announce"
+msgstr "Sygnał odjazdu"
+
 msgid "Headlights Dim Toggle"
 msgstr "Przyciemnienie reflektorów"
 

@@ -190,6 +190,9 @@ namespace godot {
         p_state["mirror_left_position"] = get_mirror_left_position();
         p_state["mirror_right_position"] = get_mirror_right_position();
         p_state["mirrors_forbidden"] = get_mirrors_forbidden();
+        p_state["doors_departure_signal"] = get_departure_signal();
+        p_state["doors_departure_signal_sounding"] = get_departure_signal_sounding();
+        p_state["doors_remote_only"] = get_remote_only();
         // what the cab's door permit switches check (Train.cpp:7203, 7220)
         p_state["doors_permit_preset_count"] = static_cast<int>(mover->Doors.permit_presets.size());
         p_state["doors_open_with_permit_after"] = mover->DoorsOpenWithPermitAfter;
@@ -300,6 +303,28 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorControlMode(p_state);
+    }
+
+    void MoverRailVehicleDoors::signal_departure(const bool p_state) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->signal_departure(p_state);
+    }
+
+    bool MoverRailVehicleDoors::get_departure_signal() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DepartureSignal : false;
+    }
+
+    bool MoverRailVehicleDoors::get_departure_signal_sounding() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Doors.has_warning && mover->DepartureSignal &&
+               (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
+    }
+
+    bool MoverRailVehicleDoors::get_remote_only() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.remote_only : false;
     }
 
     void MoverRailVehicleDoors::_apply_configuration() {

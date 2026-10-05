@@ -740,6 +740,33 @@ msgstr "Ajtóengedély: következő"
 msgid "Doors Permit Preset Previous"
 msgstr "Ajtóengedély: előző"
 
+msgid "Doors Left Permit"
+msgstr "Bal ajtó engedélye"
+
+msgid "Doors Right Permit"
+msgstr "Jobb ajtó engedélye"
+
+msgid "Doors Left Toggle"
+msgstr "Bal ajtó: nyitás/zárás"
+
+msgid "Doors Right Toggle"
+msgstr "Jobb ajtó: nyitás/zárás"
+
+msgid "Doors Open All"
+msgstr "Minden ajtó nyitása"
+
+msgid "Doors Close All"
+msgstr "Minden ajtó zárása"
+
+msgid "Doors Remote Mode Toggle"
+msgstr "Ajtók távvezérlési módja"
+
+msgid "Doors Lock Toggle"
+msgstr "Ajtózár"
+
+msgid "Departure Announce"
+msgstr "Indulási jelzés"
+
 msgid "Headlights Dim Toggle"
 msgstr "Fényszóró tompítás"
 

@@ -81,6 +81,8 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
     "small-compressor": true,
     # DynObj.cpp:6257 - sound_type::multipart with sound_parameters::range
     "turbo": true,
+    # DynObj.cpp:6359
+    "departuresignal": true,
 }
 
 const _BARE_PARAMETERS:Dictionary = {
@@ -90,6 +92,7 @@ const _BARE_PARAMETERS:Dictionary = {
     "brake": [&"range", &"amplitude_factor", &"amplitude_offset"],
     "brakesound": [&"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
     "unbrake": [&"range"],
+    "departuresignal": [&"range"],
     "slipperysound": [&"amplitude_factor", &"amplitude_offset"],
     "airsound": [&"amplitude_factor", &"amplitude_offset"],
     "airsound2": [&"amplitude_factor", &"amplitude_offset"],

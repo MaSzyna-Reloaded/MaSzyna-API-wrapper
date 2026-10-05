@@ -225,7 +225,9 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 
 ## The load is not to go on: its scenery is gone - the editor frees a scene it reopens, mid-load -
 ## or was told to stop (MaszynaIncludeNode.stop_loading()). Asked after every wait of a load.
-static func _is_load_given_up(root:MaszynaIncludeNode) -> bool:
+## `root` is untyped: a parameter typed MaszynaIncludeNode refuses a freed scenery at the call,
+## before is_instance_valid() could say so.
+static func _is_load_given_up(root:Variant) -> bool:
     return not is_instance_valid(root) or root.is_load_given_up()
 
 

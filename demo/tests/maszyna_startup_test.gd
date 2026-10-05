@@ -91,7 +91,6 @@ const MOVED_OFF_SPEED:float = 1.0
 const MAX_CONTROLLER_STEPS:int = 10
 
 var _previous_game_dir:String = ""
-var _previous_speed:float = 1.0
 var _scenery:MaszynaSceneryNode
 var _player:Node
 ## The car whose cab the player sits in
@@ -111,20 +110,24 @@ func after_each() -> void:
         _scenery.free()
         _scenery = null
         UserSettings.save_maszyna_game_dir(_previous_game_dir)
-        SimulationServer.simulation_speed = _previous_speed
+        # at once, not running down - the next start-up begins from the clock a lone one finds
+        SimulationServer.simulation_reset_speed()
 
 
 ## Loads the scenery fixture, puts the player in `vehicle`'s cab and starts it as a `kind`
 func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantographs = Pantographs.SWITCHES) -> void:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
-    _previous_speed = SimulationServer.simulation_speed
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     _scenery = MaszynaSceneryNode.new()
     _scenery.filename = scenery
     add_child(_scenery)
     get_tree().process_frame.connect(_acknowledge_security)
     var loaded:int = Time.get_ticks_msec()
-    while not VehicleServer.vehicle_is_simulation_ready(VehicleServer.vehicle_get_rid_by_name(vehicle)):
+    # every vehicle of the scenery, not only the player's: its trainset is coupled once all of them
+    # are (RailVehicleServer.trainset_place()), and they are built a few per frame
+    # (MaszynaLegacyVehicleSystem) - read before, the powered car is the cab car itself
+    while not VehicleServer.vehicle_get_rid_by_name(vehicle).is_valid() \
+            or not VehicleServer.vehicle_get_rids().all(VehicleServer.vehicle_is_simulation_ready):
         if Time.get_ticks_msec() - loaded > LOAD_TIMEOUT * 1000.0:
             fail_test("%s is not in %s" % [vehicle, scenery])
             return

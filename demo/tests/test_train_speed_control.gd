@@ -17,7 +17,8 @@ func test_defaults():
     assert_eq(speed_control.max_velocity, 120.0)
     assert_eq(speed_control.power_up_speed, 1000.0)
     assert_eq(speed_control.power_down_speed, 1000.0)
-    assert_eq(speed_control.preset_speeds.size(), 0)
+    # LoadFIZ_SpeedControl's ten default buttons (MOVER.h:1257-1286)
+    assert_eq(speed_control.preset_speeds, PackedFloat64Array([30, 40, 50, 60, 70, 80, 90, 100, 110, 120]))
 
 func test_enabling_and_configuring_updates_state():
     speed_control.speed_control_enabled = true

@@ -117,8 +117,15 @@ cannot gate anything. It also loads `scenery/td.scn` from the game dir - needs a
 work. Check the occupant (`DriverType`)/`CabActive` first - `test_sm42_startup_sequence` was an
 unoccupied cab (`FINDINGS.md`, 2026-09-23).
 
-**`test_zzz_startup_sr61_v2` is red in the full run** (2026-10-05) - not
-investigated; with `pipefail` in CI it now fails the build.
+**`test_zzz_startup_sr61_v2` is flaky - red in the full run, green alone** (2026-10-05). The engine
+idles at ~431 rpm, below `nmin=660`; in a failing run it reaches ~740 rpm and stalls to 0 within
+~10 s, pumps off, so the main reservoir never fills. Not resolved: whether the stall is a port
+defect, and whether the fixture's missing `DirChangeMaxPos=2` matters (below). It fails CI.
+
+**Fixture .fiz files differ from the current game data** (2026-10-05): besides comment encoding,
+`sr61v1.fiz` lacks `DirChangeMaxPos=2`, the ED72/EN57 cars have `BM=P10-Bg BSA=16` where the
+game has `BM=P10-Bgu BSA=5` - apparently an older data version. Decide whether to refresh them from
+the game dir (copy only).
 
 **The `.fiz` path has not been run in the game** since the components stopped being nodes - only
 in tests.
@@ -1372,9 +1379,6 @@ data-driven"); what it found is fixed except these:
     (Driver.cpp:2624) follows only from its cabin's kind.
   * A driver the scenery names for a vehicle whose MMD has no cab of that end is not seated (a
     warning, MaszynaLegacyVehicleSystem) - the original keeps a Mechanik without a cab.
-  * `test_legacy_cabin_keys::test_a_knob_moves_while_its_key_is_held` is red: the SM42 fixture's
-    brake has no handle type, so `brake_level_set` moves nothing (min == max) whoever sits where -
-    red at `a6b0cb063` already (2026-10-05).
 * **The cab's door controls** - the next work after the cab occupancy (persons, cabins, roles;
   `a6b0cb063`), on the cabin's kind (`RailVehicleServer.cabin_get_kind()`): the original's
   side is `cab_to_end(iCabn)` (Train.h:220), swapped only for the rear cab.

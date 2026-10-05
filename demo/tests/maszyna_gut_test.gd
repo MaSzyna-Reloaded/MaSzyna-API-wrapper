@@ -5,6 +5,8 @@ class_name MaszynaGutTest
 const BUILT_TRACK_GAUGE:float = 1.435
 ## build_rail_vehicle()'s mass [kg]
 const RAIL_VEHICLE_MASS:float = 74000.0
+## build_passenger_car()'s door travel [m] - a car without it has no doors (Mover.cpp:7920)
+const PASSENGER_CAR_DOOR_SHIFT:float = 0.5
 
 ## How long a spawned vehicle may take to be drawn in detail [s] (RailVehicleRenderingServer looks
 ## at every vehicle's detail a few times a second)
@@ -112,7 +114,9 @@ func build_passenger_car(train_id:String, track_name:String, offset:float, capac
     model.vehicle_id = train_id
     model.mass = RAIL_VEHICLE_MASS
     model.type_name = "test"
-    model.add_component(MoverRailVehicleDoors.new())
+    var doors:MoverRailVehicleDoors = MoverRailVehicleDoors.new()
+    doors.max_shift = PASSENGER_CAR_DOOR_SHIFT
+    model.add_component(doors)
     var load:MoverRailVehicleLoad = MoverRailVehicleLoad.new()
     load.max_load = capacity
     load.load_speed = exchange_speed

@@ -17,6 +17,17 @@ compressor_cab_a_max_pressure = 8.0
 compressor_speed = 0.057
 compressor_power = 3
 rig_effectiveness = 0.85
+cntrl_brake_system = 1
+cntrl_brake_ctrl_position_count = 6
+cntrl_brake_delays = 3
+cntrl_brake_delay_1 = 15.0
+cntrl_brake_delay_2 = 3.0
+cntrl_brake_delay_3 = 36.0
+cntrl_brake_delay_4 = 22.0
+cntrl_brake_handle_type = 2
+cntrl_anti_skid_brake_type = 1
+cntrl_local_brake_type = 2
+cntrl_local_brake_handle_type = 9
 
 [sub_resource type="RailVehicleMotorParameter" id="MotorParameter_210ku"]
 voltage_constant_multiplier = 17.567

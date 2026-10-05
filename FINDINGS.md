@@ -571,3 +571,9 @@ anything. Open work belongs in `TODO.md`.
   even without that section's component (`LoadFIZ_Param`'s EZT `IminLo/Hi`). *(10-05 EN57 cab car reverser)*
 * A delegate, a role or a seat goes to the person its owner created, never to whoever holds the
   role at that moment - the player takes a vehicle over while the scenery still loads. *(10-05 player as the AI driver)*
+* A CI step piping a test run keeps its exit code (`set -o pipefail`); a green run is checked
+  against its summary. *(10-05 CI green over red tests)*
+* A hand-built test vehicle states every value its test depends on, never a component default -
+  defaults follow the original's absent key. *(10-05 test vehicles lost brake handle and doors)*
+* A trainset test waits for every vehicle of it; an "is it gone" check takes the object untyped -
+  a typed parameter fails on a freed object at the call. *(10-05 start-up tests and the trainset)*

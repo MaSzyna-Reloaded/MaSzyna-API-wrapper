@@ -3591,3 +3591,45 @@ lighting or the trainset.
   (`test_zzz_ep07_ai_hand_over.gd`).
 * **Rule:** a role, a delegate or a seat is given to the person its owner created, never to
   "whoever holds the role now" - the occupancy changes while a scenery loads.
+
+## 2026-10-05 CI was green over red tests - tee replaced GUT's exit code
+
+* **Symptom:** after `set -o pipefail` in the GUT step (`023ef1c46`) CI failed on nine tests; the
+  runs before it were green.
+* **What proved it:** the logs of the green runs (`ad2d7b1e7`, `c259f3b76`) - their GUT summary
+  already said "Failing Tests 8" and "3": `godot ... | tee gut.log` took tee's exit code, so red
+  runs passed. `test_zzz_startup_en57_2000_v1` and `test_zzz_startup_sr61_v2` were never green.
+* **Fix:** `pipefail` (`023ef1c46`), then the failures themselves (the two entries below).
+* **Rule:** a CI step that pipes a test run keeps the run's exit code (`set -o pipefail`); a green
+  run is checked against its summary, not only its status.
+
+## 2026-10-05 Test vehicles lost their brake handle and doors to the original's defaults
+
+* **Symptom:** `test_legacy_cabin_keys` - the brake handle did not move on its key, and
+  `brake_level_set` did not move it either; `test_rail_vehicle_load_exchange`,
+  `test_station_server`, `test_driver_station` - the car never opened its doors.
+* **What proved it:** `ad2d7b1e7` set `RailVehicleBrake`'s defaults to the original's for absent
+  keys (no handle, 0 positions, individual brake, no delays) and `RailVehicleDoors.max_shift` to 0.
+  The old defaults were SM42's `Cntrl.` line (`6d1.fiz`), and `sm42_vehicle.tres` set none of it;
+  a door range of 0 is "no doors" to the Mover (`update_doors()`, Mover.cpp:7920), and
+  `build_passenger_car()` set none.
+* **Fix:** the fixture carries SM42's brake description from `6d1.fiz`; `build_passenger_car()`
+  gives its doors a travel.
+* **Rule:** a hand-built test vehicle states every value the test depends on - it never leans on a
+  component's default, which follows the original's absent key.
+
+## 2026-10-05 Start-up tests read the powered car before the trainset was coupled
+
+* **Symptom:** in CI only, `test_zzz_startup_en57_2000_v1`: "EN57-2067ra has the engine of
+  ELECTRIC_MULTIPLE_UNIT" got engine 0; ED72 and EN57AL red only in the full run.
+* **What proved it:** the CI log - the test reached the check 0.4 s after the scenery loaded.
+  `MaszynaLegacyVehicleSystem` builds vehicles within a per-frame budget, a trainset is coupled
+  only once all its vehicles are ready (`RailVehicleServer.trainset_place()`), and the test waited
+  for the player's car alone: on a slow runner `vehicle_find_powered()` returned the cab car. The
+  next test's load then resumed the freed scenery's coroutine, and `_is_load_given_up()`'s typed
+  parameter refused the freed node before `is_instance_valid()` could say so.
+* **Fix:** `MaszynaStartupTest` waits for every vehicle of the scenery and resets the clock to 1x
+  at once after a test; `SceneryInstancer._is_load_given_up()` takes an untyped `root`.
+* **Rule:** a test of a trainset waits for the whole trainset, not for the car it acts on; a
+  function asked whether an object is gone takes it untyped - a typed parameter fails on a freed
+  object at the call.

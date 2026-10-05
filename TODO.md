@@ -251,12 +251,6 @@ is still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referenc
   `door_signalling_sw` (7090), `doorlefton_sw`/`door_left_sw` (7330), `doorleftoff_sw` (7372),
   `doorrighton_sw`/`door_right_sw` (7505), `doorrightoff_sw` (7548), `doorallon_sw` (7605),
   `dooralloff_sw` (7640), `departure_signal_bt` (7902).
-* **`CabinSystem` still drives the vehicle's drawing in two places** (`docs/findings-archive.md`,
-  2026-10-04 SM42's windows missing): it mounts the cab's node on the vehicle
-  (`RailVehicleRenderingServer.vehicle_mount_node()` in `vehicle_show_cabin()`) and lights the
-  low-poly cab (`vehicle_set_cab_light_level()` in `cab_set_light_level()`). Who shows the cab's
-  interior mounts it (the player), and the low-poly cab's light follows `cab_light_level_changed`
-  from the drawing's side - to decide with the operator.
 * **`MaszynaMaterialFactory._get_shader_variant()` builds its shader variants with
   `code.replace()`** (alpha blend, cull disabled, specgloss; since 2026-09-28): to be static
   variant files with the render modes they have now - no change of any render mode, checked with
@@ -558,7 +552,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   lights until back within `maszyna/vehicles/detail_distance`:
   `E3DRenderingServer.instance_set_emission_energy()` and `instance_set_submodel_emission_energy()`
   reach only the NODES backend.
-* The low-poly interior lights only its `cabN` sections (`vehicle_set_cab_light_level()`); its
+* The low-poly interior lights only its `cabN` sections (`cabin_set_light_level()`); its
   compartment and corridor sections (`corridor`/`korytarz`/`compartment`/`przedzial`,
   `DynObj.cpp:2425-2433`) stay unlit - the original lights them from CompartmentLights at its own
   intensity (`DynObj.cpp:1334-1352`), which is not ported.

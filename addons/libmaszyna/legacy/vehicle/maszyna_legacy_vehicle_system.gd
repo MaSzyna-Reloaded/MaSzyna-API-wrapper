@@ -62,6 +62,8 @@ func _ready() -> void:
     RailVehicleRenderingServer.vehicle_model_built.connect(_on_vehicle_model_built)
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     if not Engine.is_editor_hint():
+        # the low-poly cab is lit at its cabin's light level
+        CabinSystem.cabin_light_level_changed.connect(RailVehicleRenderingServer.cabin_set_light_level)
         _auto_rewident = MaszynaLegacyAutoRewident.new()
         add_child(_auto_rewident)
 

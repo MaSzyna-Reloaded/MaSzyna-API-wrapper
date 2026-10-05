@@ -41,6 +41,9 @@ var _released_vehicle:RID
 ## it stands while the player looks from outside too (the keys are the cab logic's,
 ## _unhandled_input())
 var _cabin_vehicle:RID = RID()
+## The node riding on _cabin_vehicle (RailVehicleRenderingServer.vehicle_mount_node()) that the cab
+## interior is shown under
+var _cabin_mount:Node3D = null
 ## A vehicle to follow farther than this is not flown to (FOLLOW_JUMP_DISTANCE_SETTING as it is now)
 var _follow_jump_distance:float = FOLLOW_JUMP_DISTANCE_DEFAULT
 ## Stepping out of the cab, driver_mode::DistantView(true) (drivermode.cpp:1060): beside the vehicle
@@ -266,16 +269,22 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
 ## The player went over to another cabin of the vehicle: its interior is shown instead
 func _on_cabin_person_moved(person:RID, cabin:RID, _previous:RID) -> void:
     if person == PlayerServer.player_get_person() and _cabin_vehicle.is_valid():
-        CabinSystem.cabin_show(cabin, self)
+        CabinSystem.cabin_show(cabin, _cabin_mount)
 
 
 ## The interior of the player's cabin of the vehicle shown, the cab camera in it, where the cab puts
 ## the driver
 func _show_cabin(vehicle:RID) -> void:
-    var cabin:Cabin3D = CabinSystem.cabin_show(VehicleServer.person_get_cabin(PlayerServer.player_get_person()), self)
+    var mount:Node3D = Node3D.new()
+    add_child(mount)
+    RailVehicleRenderingServer.vehicle_mount_node(vehicle, mount.get_instance_id())
+    var cabin:Cabin3D = CabinSystem.cabin_show(VehicleServer.person_get_cabin(PlayerServer.player_get_person()), mount)
     if not cabin:
+        RailVehicleRenderingServer.vehicle_unmount_node(vehicle, mount.get_instance_id())
+        mount.queue_free()
         return
     _cabin_vehicle = vehicle
+    _cabin_mount = mount
     _cabin_camera.reparent(cabin, false)
     cabin.camera_configuration_changed.connect(_on_cabin_camera_configuration_changed)
     _on_cabin_camera_configuration_changed()
@@ -288,6 +297,9 @@ func _hide_cabin() -> void:
     _cabin_camera.reparent(self)
     RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_cabin_vehicle, true)
     CabinSystem.vehicle_hide_cabin(_cabin_vehicle)
+    RailVehicleRenderingServer.vehicle_unmount_node(_cabin_vehicle, _cabin_mount.get_instance_id())
+    _cabin_mount.queue_free()
+    _cabin_mount = null
     _cabin_vehicle = RID()
 
 

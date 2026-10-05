@@ -180,8 +180,8 @@ func vehicle_get_cabin_scene(vehicle_rid:RID) -> PackedScene:
     return _cabin_scenes.get(vehicle_rid)
 
 
-## The interior of the cabin built under `parent`, in a node riding on its vehicle from then on
-## (RailVehicleRenderingServer.vehicle_mount_node()) - the cab keeps its own place in the vehicle's
+## The interior of the cabin built under `parent`, which rides on its vehicle (the caller mounts it,
+## RailVehicleRenderingServer.vehicle_mount_node()) - the cab keeps its own place in the vehicle's
 ## frame; it is built within add_child() (Cabin3D's cabin_ready comes from its NOTIFICATION_READY),
 ## so it returns built. One interior a vehicle is shown: the one of another of its cabins is rebuilt
 ## for this one. Null for a vehicle without a cab.
@@ -200,10 +200,7 @@ func cabin_show(cabin_rid:RID, parent:Node) -> Cabin3D:
         push_error("CabinSystem: the root of a cabin scene must be a Cabin3D")
         return null
     _cabins[vehicle_rid] = cabin.get_instance_id()
-    var mount:Node3D = Node3D.new()
-    parent.add_child(mount)
-    RailVehicleRenderingServer.vehicle_mount_node(vehicle_rid, mount.get_instance_id())
-    mount.add_child(cabin)
+    parent.add_child(cabin)
     # a cabin holds the handles of its cabin and of the vehicle it sits in and takes everything else
     # from here - told once it is in the tree, because building its interior puts nodes there
     cabin.set_cabin(cabin_rid)
@@ -217,10 +214,8 @@ func vehicle_hide_cabin(vehicle_rid:RID) -> void:
     _cabins.erase(vehicle_rid)
     if not cabin:
         return
-    var mount:Node = cabin.get_parent()
-    RailVehicleRenderingServer.vehicle_unmount_node(vehicle_rid, mount.get_instance_id())
-    mount.get_parent().remove_child(mount)
-    mount.queue_free()
+    cabin.get_parent().remove_child(cabin)
+    cabin.queue_free()
 
 
 ## The cab interior while it is shown, else null
@@ -228,14 +223,12 @@ func vehicle_get_cabin(vehicle_rid:RID) -> Cabin3D:
     return instance_from_id(_cabins.get(vehicle_rid, 0)) as Cabin3D
 
 
-## The cab light of a cabin at `level` (0..1): its low-poly cab is lit at it as well
-## (RailVehicleRenderingServer.cabin_set_light_level())
+## The cab light of a cabin at `level` (0..1); the vehicle's drawing follows cabin_light_level_changed
 func cabin_set_light_level(cabin:RID, level:float) -> void:
     var state:CabinState = get_cabin_state(cabin)
     if state.light_level == level:
         return
     state.light_level = level
-    RailVehicleRenderingServer.cabin_set_light_level(cabin, level)
     cabin_light_level_changed.emit(cabin, level)
 
 

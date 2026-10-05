@@ -147,3 +147,32 @@ VehicleServer.vehicle_send_command(vehicle_rid, "lock_power", true)
 
 This approach hides internal structure of the vehicle and creates a
 stable interface between game components.
+
+#### Commands and method calls
+
+Every command is a method of the vehicle's controller or of one of its components, registered under a name
+(`_register_commands()`). The same action can therefore be done two ways, and they are not the same:
+
+| | `VehicleServer.vehicle_send_command(vehicle, "name", p1, p2)` | `controller.method()` / `component.method()` |
+|---|---|---|
+| What it needs | the vehicle's handle (RID) | the controller or the component itself, and its class |
+| The method runs | yes - `VehicleController::send_command()` calls it with as many arguments as it takes | yes |
+| The state dump | renewed: the controller's state serial goes up and the state is updated (`command_executed()`) | **stale** until the next simulation step - `vehicle_dump_state()` is cached on that serial |
+| Who learns of it | everyone following the vehicle: `command_received`, relayed as `VehicleServer.vehicle_command_received` - the cab (`CabinSystem.vehicle_command_received`), the scenario scripts (`maszyna.vehicle.on_command_received`) | nobody |
+| An unknown name | reported (`Unknown command`), the return value says whether the command was taken | a compile or a parse error |
+
+So the choice follows from who acts:
+
+* **Outside the vehicle** - a server, the cab, the player, the AI, a script, the console, a test - an action on the
+  vehicle is a **command**. A server in C++ that holds the controller still sends the command:
+  `RailVehicleServer.person_change_cabin()` switches the cab off and on with `cab_deactivation_auto`,
+  `cab_controls_reset`, `cab_activation_auto`, `cabin_leave` and `cabin_enter`, never with the controller's methods.
+* **Inside the vehicle's own composition** - a component acting on another component of the same vehicle, the
+  controller on its components - a **direct call** (the "Internal communication" above).
+* **A read** is a call of a typed getter from anywhere (`vehicle_component_get()`, see above); it changes nothing.
+* **State handed down by its owner**, which the vehicle only takes and nobody else may decide, is a C++-only call and
+  no command: `RailVehicleController::set_driver_cabin_kind()` is called by `RailVehicleServer` alone.
+
+An operation another layer has to start is registered as a command and bound, even when one server alone sends it.
+The rule and its reasons are in `CODE_STYLE.md` ("A vehicle is commanded, not called"); what it cost when broken is in
+the [findings archive](findings-archive.html) (2026-10-05, the cab change in `RailVehicleServer`).

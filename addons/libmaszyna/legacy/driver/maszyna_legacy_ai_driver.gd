@@ -86,8 +86,6 @@ const NO_MOVEMENT_SPEED:float = 0.05
 const CONNECT_SCAN_DISTANCE:float = 2000.0
 ## The main reservoir pressure the vehicle is ready to drive at (ScndPipePress, Driver.cpp:2894)
 const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
-## Crew moves one cab at a time, 1 -> 0 -> -1 (TMoverParameters::ChangeCab(), Mover.cpp:784)
-const CAB_CHANGE_STEPS:int = 2
 ## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334)
 const PRESSING_VELOCITY:float = 2.0
 ## Faster than this [km/h] the trainset is taken as gone from the stop, and its dispatch is over
@@ -739,13 +737,14 @@ func _activation(state:DriverState, driver:RID, vehicle:RID) -> void:
     var cabin:RID = VehicleServer.person_get_cabin(driver)
     MaszynaLegacyDriverHints.set_zero_speed(vehicle, cabin)
     MaszynaLegacyDriverHints.set_direction(vehicle, cabin, 0)
-    # the crew walks as a player does - a cabin at a time, not a control of the cab
-    for _step:int in CAB_CHANGE_STEPS:
-        var cab:int = _cabin_direction(driver)
-        if cab == state.direction:
-            break
-        CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD
-                if state.direction > cab else CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    # the crew straight to the cab of the new way, as the original sets CabOccupied = iDirection
+    # (Driver.cpp:2067-2068, 2120) - the cab switched off by the vehicle, not through the cab
+    if not _cabin_direction(driver) == state.direction:
+        VehicleServer.vehicle_send_command(vehicle, "cab_activation", false)
+        if state.direction > 0:
+            RailVehicleServer.person_move_to_front_cabin(driver)
+        else:
+            RailVehicleServer.person_move_to_rear_cabin(driver)
     cabin = VehicleServer.person_get_cabin(driver)
     MaszynaLegacyDriverHints.cue(vehicle, cabin, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
     MaszynaLegacyDriverHints.set_direction(vehicle, cabin, 1)

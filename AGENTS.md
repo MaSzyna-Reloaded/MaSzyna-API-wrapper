@@ -25,6 +25,11 @@ Code generation:
   for what is rail (track, couplers, rail component kinds). Its scenery name (`train_id`) may be
   empty or repeated and is only for finding it (`vehicle_get_rid_by_name`). Call a
   `VehicleController` directly only where the composition already holds it (e.g. `VehicleComponent`s)
+* REQUIRED: **outside a vehicle's own composition an action on it is a command, never a method
+  call** - a server, the cab, the player, the AI, a script or a test sends
+  `vehicle_send_command()`; only the command renews the state dump and announces itself
+  (`command_received`). Reads (typed getters) and state the owner hands down stay calls - see
+  `CODE_STYLE.md`
 * REQUIRED, ABSOLUTE: **whoever introduces something generic moves everything onto it - no
   leftovers, no second road to the same goal.** A generic component, operation or class (a
   `UIDialog`, a server method, a shared scene) is not done when it works in the one place it was
@@ -41,7 +46,10 @@ Code generation:
   A second road to the same effect is deleted, not added. Example: the player leaves a vehicle
   only through `PlayerServer.player_leave_vehicle()` (`player_take_over_vehicle()` and
   `player_enter_vehicle()` leave the current one themselves), and a camera operation (`PlayerCameraServer`: follow, unfollow, Shift+F4) never
-  leads there
+  leads there. The one other way the player's vehicle changes is the player's person going
+  through a gangway into the next vehicle (`RailVehicleServer.person_change_cabin()`):
+  `PlayerServer` follows its person there, as the original moves `simulation::Train`
+  (`TTrain::MoveToVehicle()`, Train.cpp:10928)
 * PROHIBITED: **treating a view change as leaving the cab.** The player drives a vehicle
   (`PlayerServer.player_get_vehicle()`, the original's `simulation::Train`) until
   `player_leave_vehicle()`; `PlayerCameraServer`'s mode (CABIN/FREE/FOLLOW), target and follow

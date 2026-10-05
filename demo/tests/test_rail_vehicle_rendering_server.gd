@@ -177,8 +177,8 @@ func test_the_low_poly_interior_hides_the_cab_whose_interior_is_drawn() -> void:
     assert_true((low_poly.get_node("cab2") as Node3D).visible, "the other cab stays")
 
     # the hidden cab follows the driver's (Train.cpp:8516 CabChange: 1 -> 0, the machine room)
-    CabinSystem.person_change_cabin(get_vehicle_driver(_vehicle.get_rid()),
-            CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(get_vehicle_driver(_vehicle.get_rid()),
+            RailVehicleServer.CABIN_CHANGE_BACKWARD)
     assert_false((low_poly.get_node("cab0") as Node3D).visible, "the cab moved to is hidden")
     assert_true((low_poly.get_node("cab1") as Node3D).visible, "and the one left is shown again")
 

@@ -22,6 +22,7 @@
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
+#include <initializer_list>
 
 namespace godot {
     class VehicleComponent;
@@ -43,6 +44,10 @@ namespace godot {
             GDCLASS(RailVehicleServer, Object)
 
         public:
+            /* Which way a cab change goes: forward towards the front of the vehicle the person is
+             * in (cabchangeforward, Train.cpp:8291), backward towards its rear */
+            enum CabinChange { CABIN_CHANGE_FORWARD, CABIN_CHANGE_BACKWARD };
+
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
             }
@@ -239,6 +244,9 @@ namespace godot {
                     const RID &p_person, const RID &p_vehicle, RailVehicleCabinKind::Kind p_kind,
                     VehiclePersonRole::Role p_role);
             Error _person_move_to_cabin(const RID &p_person, RailVehicleCabinKind::Kind p_kind);
+            /* The first cabin of p_vehicle in p_kinds' order, RID() with none */
+            RID
+            _vehicle_find_cabin(const RID &p_vehicle, std::initializer_list<RailVehicleCabinKind::Kind> p_kinds) const;
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_attached(int64_t p_flag, const RID &p_vehicle);
             void _on_vehicle_coupler_detached(int64_t p_flag, const RID &p_vehicle);
@@ -361,6 +369,14 @@ namespace godot {
             Error person_move_to_front_cabin(const RID &p_person);
             Error person_move_to_rear_cabin(const RID &p_person);
             Error person_move_to_machine_room(const RID &p_person);
+            /* The person over to the next cabin that way: of its vehicle, else - from the end of
+             * it - through the gangways to the nearest cabin of the trainset (TTrain::CabChange()
+             * and OnCommand_cabchangeforward/backward, Train.cpp:8291-8352, 10324-10351). The
+             * vehicle's driver switches its cab off and leaves the controls at rest; crossing to
+             * another vehicle it takes that one over, whoever drove it riding along
+             * (TTrain::MoveToVehicle(), Train.cpp:10879). ERR_UNAVAILABLE where there is no cabin
+             * that way. */
+            Error person_change_cabin(const RID &p_person, CabinChange p_direction);
             bool vehicle_front_cabin_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
             bool vehicle_rear_cabin_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
             bool vehicle_machine_room_has_person_role(const RID &p_vehicle, VehiclePersonRole::Role p_role) const;
@@ -512,3 +528,5 @@ namespace godot {
             Dictionary vehicle_get_curve(const RID &p_vehicle, double p_bogie_pivot_spacing);
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(RailVehicleServer::CabinChange);

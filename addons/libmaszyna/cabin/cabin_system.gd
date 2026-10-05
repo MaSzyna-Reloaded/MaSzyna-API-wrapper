@@ -31,19 +31,6 @@ signal radio_message_sent(message:SfxEvent, transcript:Transcript, channel:int, 
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
-## The cabins of a rail vehicle from its rear to its front - a cab change forward goes towards the
-## front (cabchangeforward, CabOccupied 1 -> 0 -> -1 backwards, Train.cpp:10324)
-const CABINS_REAR_TO_FRONT:Array[RailVehicleCabinKind.Kind] = [
-    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR,
-    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE,
-    RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT,
-]
-
-## Which way a cab change goes along the vehicle
-enum CabinChangeDirection {
-    CABIN_CHANGE_FORWARD,
-    CABIN_CHANGE_BACKWARD,
-}
 
 ## By cabin: its state, its control handlers by id, the callables run with the simulation
 var _states:Dictionary[RID, CabinState] = {}
@@ -333,36 +320,6 @@ func act(cabin:RID, control_id:StringName, action:StringName, value:Variant = nu
         GameLog.error("%s: Unknown cabin control: %s" % [vehicle_name, control_id])
         return null
     return handler.call(get_cabin_state(cabin), action, value)
-
-
-## The person over to the next cabin of its vehicle that way - one the vehicle has a cab for
-## (TTrain::CabChange(), Train.cpp:10324-10351); nothing at the end of the vehicle. A driver
-## switches its cab off, leaves the controls at rest and switches the new one on, as the original's
-## does; whoever only rides along just goes over.
-func person_change_cabin(person:RID, direction:CabinChangeDirection) -> void:
-    var cabin:RID = VehicleServer.person_get_cabin(person)
-    var vehicle_rid:RID = VehicleServer.cabin_get_vehicle(cabin)
-    var step:int = 1 if direction == CabinChangeDirection.CABIN_CHANGE_FORWARD else -1
-    var index:int = CABINS_REAR_TO_FRONT.find(RailVehicleServer.cabin_get_kind(cabin)) + step
-    var target:RID = RID()
-    while index >= 0 and index < CABINS_REAR_TO_FRONT.size() and not target.is_valid():
-        match CABINS_REAR_TO_FRONT[index]:
-            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR:
-                target = RailVehicleServer.vehicle_get_rear_cabin(vehicle_rid)
-            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE:
-                target = RailVehicleServer.vehicle_get_machine_room(vehicle_rid)
-            RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT:
-                target = RailVehicleServer.vehicle_get_front_cabin(vehicle_rid)
-        index += step
-    if not target.is_valid():
-        return
-    if not VehicleServer.person_get_role(person) == VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER:
-        VehicleServer.cabin_person_move(person, target)
-        return
-    VehicleServer.vehicle_send_command(vehicle_rid, "cab_deactivation_auto")
-    VehicleServer.cabin_person_move(person, target)
-    VehicleServer.vehicle_send_command(vehicle_rid, "cab_controls_reset")
-    VehicleServer.vehicle_send_command(vehicle_rid, "cab_activation_auto")
 
 
 func get_control(cabin:RID, control_id:StringName) -> Variant:

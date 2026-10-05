@@ -242,6 +242,10 @@ anything. Open work belongs in `TODO.md`.
   `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
   each step)*
 
+* Outside a vehicle's composition an action on it is `vehicle_send_command()`, never the
+  controller's method - a direct call leaves the state dump stale until the next step and is
+  announced to nobody. *(10-05 cab change in RailVehicleServer)*
+
 ## Godot / GDExtension
 * Godot measures a visibility range to the centre of the instance's box, the original from the
   model's origin for every submodel: an E3D submodel's box is centred on the model's origin

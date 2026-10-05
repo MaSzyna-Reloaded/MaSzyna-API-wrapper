@@ -510,6 +510,47 @@ value; `CabinSystem.vehicle_state_value()`), an MMD sound trigger, the console, 
 diagnostic. A value a hot path needs and no component exposes gets a bound getter in C++ - never a
 dump read "for now".
 
+### A vehicle is commanded, not called
+
+A vehicle offers two ways to make it do something: a **command** -
+`VehicleServer.vehicle_send_command(vehicle_rid, "name", p1, p2)` - and the **method** behind it
+on its controller or a component (`controller.cab_activation_auto()`, `doors.operate_doors()`).
+The command calls the same method, and then does what the vehicle needs to know that it was
+acted on (`VehicleController::send_command()`, `command_executed()`):
+
+* **the state is renewed.** The controller's state serial goes up and the state is updated. The
+  state dump (`vehicle_dump_state()`) is cached per vehicle on that serial, which otherwise moves
+  only with a simulation step - so after a direct call every reader of the dump (the cab, the
+  console, a test, `get_state()`) sees the vehicle as it was before it, until the next step;
+* **it is announced.** `command_received` is emitted, relayed as
+  `VehicleServer.vehicle_command_received` - the cab (`CabinSystem.vehicle_command_received`) and
+  the scenario scripts (`maszyna.vehicle.on_command_received`) follow the vehicle's commands by it;
+* **it has a name.** It is reached by the vehicle's handle alone - no controller or component held,
+  no class known - so the cab's controls, the console, the AI, the player, Lua and the tests all
+  act on a vehicle the same way; an unknown name is reported, and the handler's return value says
+  whether the command was taken.
+
+```cpp
+// not this - the Mover acts, nobody learns of it, and the next state read is the previous one
+controller->cab_controls_reset();
+
+// this
+vehicle_server->vehicle_send_command(vehicle, "cab_controls_reset");
+```
+
+So anything **outside the vehicle** that **acts on it** - a server, the cab, the player, the AI, a
+script, a test - sends a command, never calls the method. The method is called directly only
+**inside the vehicle's own composition**: a component acting on another component of the same
+vehicle, or the controller on its components. Two things are not actions and stay calls: a
+**read** (a typed getter, see "A hot path reads a component, never a dump") and **state its owner
+hands down** that the vehicle only takes - `RailVehicleController::set_driver_cabin_kind()`, which
+is no command because nobody but `RailVehicleServer` may decide it.
+
+An operation another layer has to start (`cabin_leave`, `cabin_enter` for a crossing through a
+gangway) is therefore registered as a command (`_register_commands()`) and bound, even when only
+one server sends it. The two ways side by side: `docs/architecture.md`, "Commands and method
+calls".
+
 ## Classes
 1. Explicit privacy declarations
 ```hpp

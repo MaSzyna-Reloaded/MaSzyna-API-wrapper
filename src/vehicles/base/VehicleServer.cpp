@@ -674,9 +674,6 @@ namespace godot {
             return OK;
         }
         Cabin *source = cabins.getptr(previous);
-        if (!(source->vehicle == target->vehicle)) {
-            return ERR_INVALID_PARAMETER;
-        }
         const VehiclePersonRole::Role role = source->persons[p_person];
         if (role == VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER && _cabin_has_other_driver(*target, p_person)) {
             return ERR_UNAVAILABLE;

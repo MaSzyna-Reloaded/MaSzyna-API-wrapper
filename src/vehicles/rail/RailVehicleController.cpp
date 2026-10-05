@@ -39,6 +39,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &RailVehicleController::cab_activation_auto);
         ClassDB::bind_method(D_METHOD("cab_deactivation_auto"), &RailVehicleController::cab_deactivation_auto);
         ClassDB::bind_method(D_METHOD("cab_controls_reset"), &RailVehicleController::cab_controls_reset);
+        ClassDB::bind_method(D_METHOD("cabin_leave"), &RailVehicleController::cabin_leave);
+        ClassDB::bind_method(D_METHOD("cabin_enter"), &RailVehicleController::cabin_enter);
         ClassDB::bind_method(D_METHOD("ground_relay_reset"), &RailVehicleController::ground_relay_reset);
         ClassDB::bind_method(D_METHOD("antislip"), &RailVehicleController::antislip);
         ClassDB::bind_method(
@@ -208,6 +210,8 @@ namespace godot {
     void RailVehicleController::_register_commands() {
         register_command("cab_deactivation_auto", Callable(this, "cab_deactivation_auto"));
         register_command("cab_controls_reset", Callable(this, "cab_controls_reset"));
+        register_command("cabin_leave", Callable(this, "cabin_leave"));
+        register_command("cabin_enter", Callable(this, "cabin_enter"));
         register_command("ground_relay_reset", Callable(this, "ground_relay_reset"));
         register_command("antislip", Callable(this, "antislip"));
         register_command("cab_activation", Callable(this, "cab_activation"));
@@ -227,6 +231,8 @@ namespace godot {
     void RailVehicleController::_unregister_commands() {
         unregister_command("cab_deactivation_auto");
         unregister_command("cab_controls_reset");
+        unregister_command("cabin_leave");
+        unregister_command("cabin_enter");
         unregister_command("ground_relay_reset");
         unregister_command("antislip");
         unregister_command("cab_activation");

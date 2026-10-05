@@ -264,7 +264,7 @@ func test_a_drivers_cab_change_leaves_the_controls_at_rest() -> void:
     assert_eq(int(VehicleServer.vehicle_dump_state(vehicle)["master_controller_position"]), at_rest + 1,
             "the controller off its rest")
 
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_BACKWARD)
 
     assert_eq(VehicleServer.person_get_cabin(driver), RailVehicleServer.vehicle_get_rear_cabin(vehicle))
     assert_eq(RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle)),
@@ -283,7 +283,7 @@ func test_one_riding_along_changes_cabins_without_touching_the_controls() -> voi
     VehicleServer.vehicle_send_command(vehicle, "main_controller_increase", 1)
     var position:int = int(VehicleServer.vehicle_dump_state(vehicle)["master_controller_position"])
 
-    CabinSystem.person_change_cabin(observer, CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(observer, RailVehicleServer.CABIN_CHANGE_BACKWARD)
 
     assert_eq(VehicleServer.person_get_cabin(observer), RailVehicleServer.vehicle_get_rear_cabin(vehicle))
     assert_eq(RailVehicleServer.vehicle_get_driver_cabin(vehicle), RailVehicleServer.vehicle_get_front_cabin(vehicle))
@@ -295,7 +295,7 @@ func test_a_cab_change_stops_at_the_end_of_the_vehicle() -> void:
     var person:RID = _create_person()
     assert_eq(RailVehicleServer.person_enter_front_cabin(person, vehicle, OBSERVER), OK)
 
-    CabinSystem.person_change_cabin(person, CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
+    RailVehicleServer.person_change_cabin(person, RailVehicleServer.CABIN_CHANGE_FORWARD)
 
     assert_eq(VehicleServer.person_get_cabin(person), RailVehicleServer.vehicle_get_front_cabin(vehicle),
             "nothing ahead of the front cabin")

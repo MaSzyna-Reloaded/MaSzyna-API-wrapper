@@ -141,6 +141,13 @@ namespace godot {
             /* The kind of cabin whose cab is switched on (CabActive), NONE with none - C++ only:
              * RailVehicleServer reads it to choose between the drivers of one vehicle */
             virtual RailVehicleCabinKind::Kind get_active_cabin_kind() const = 0;
+            /* Its driver went over to another vehicle: the cab switched off, the brake handle at its
+             * neutral, the controllers at zero (TTrain::MoveToVehicle(), Train.cpp:10950-10954) -
+             * command cabin_leave, sent by RailVehicleServer::person_change_cabin() */
+            virtual void cabin_leave() const = 0;
+            /* A driver came over from another vehicle: the pipe pressure limit taken from the pipe,
+             * the cab switched on (Train.cpp:10976-10977) - command cabin_enter, as cabin_leave() */
+            virtual void cabin_enter() const = 0;
             /* The main circuit's ground relay reset (maincircuitgroundreset, RelayReset(), Mover.cpp:6653) */
             virtual void ground_relay_reset() const = 0;
             /* The anti-slip brake pressed (antislip, AntiSlippingButton()) */

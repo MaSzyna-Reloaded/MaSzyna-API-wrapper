@@ -122,8 +122,8 @@ namespace godot {
             static const char *cabin_person_left_signal;
             /* Somebody took another role in the cabin (cabin: RID, person: RID, role) */
             static const char *cabin_person_role_changed_signal;
-            /* Somebody went over to another cabin of the vehicle, in the role it had (person: RID,
-             * cabin: RID, previous: RID) */
+            /* Somebody went over to another cabin - of the vehicle or, through a gangway, of another
+             * one - in the role it had (person: RID, cabin: RID, previous: RID) */
             static const char *cabin_person_moved_signal;
 
             VehicleServer();
@@ -198,7 +198,8 @@ namespace godot {
             Error cabin_person_enter(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
             void cabin_person_leave(const RID &p_cabin, const RID &p_person);
             Error cabin_person_change_role(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
-            /* Over to another cabin of the same vehicle, in the role the person has */
+            /* Over to another cabin, of the same vehicle or another, in the role the person has;
+             * ERR_UNAVAILABLE for a driver where one already drives */
             Error cabin_person_move(const RID &p_person, const RID &p_cabin);
             /* Who sits in the cabin, or in any cabin of the vehicle, in p_role -
              * VEHICLE_PERSON_ROLE_ANY for everybody */

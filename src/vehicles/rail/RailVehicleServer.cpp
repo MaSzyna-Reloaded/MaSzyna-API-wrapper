@@ -109,6 +109,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("person_move_to_front_cabin", "person"), &RailVehicleServer::person_move_to_front_cabin);
         ClassDB::bind_method(
+                D_METHOD("person_change_cabin", "person", "direction"), &RailVehicleServer::person_change_cabin);
+        BIND_ENUM_CONSTANT(CABIN_CHANGE_FORWARD);
+        BIND_ENUM_CONSTANT(CABIN_CHANGE_BACKWARD);
+        ClassDB::bind_method(
                 D_METHOD("person_move_to_rear_cabin", "person"), &RailVehicleServer::person_move_to_rear_cabin);
         ClassDB::bind_method(
                 D_METHOD("person_move_to_machine_room", "person"), &RailVehicleServer::person_move_to_machine_room);
@@ -2016,6 +2020,103 @@ namespace godot {
     Error RailVehicleServer::person_enter_machine_room(
             const RID &p_person, const RID &p_vehicle, const VehiclePersonRole::Role p_role) {
         return _person_enter_cabin(p_person, p_vehicle, RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE, p_role);
+    }
+
+    RID RailVehicleServer::_vehicle_find_cabin(
+            const RID &p_vehicle, const std::initializer_list<RailVehicleCabinKind::Kind> p_kinds) const {
+        for (const RailVehicleCabinKind::Kind kind: p_kinds) {
+            if (const RID cabin = _vehicle_get_cabin(p_vehicle, kind); cabin.is_valid()) {
+                return cabin;
+            }
+        }
+        return RID();
+    }
+
+    Error RailVehicleServer::person_change_cabin(const RID &p_person, const CabinChange p_direction) {
+        VehicleServer *vehicle_server = VehicleServer::get_instance();
+        ERR_FAIL_NULL_V(vehicle_server, ERR_UNAVAILABLE);
+        const RID cabin = vehicle_server->person_get_cabin(p_person);
+        const RID vehicle = vehicle_server->cabin_get_vehicle(cabin);
+        const VehiclePlacement *placement = vehicles.getptr(vehicle);
+        ERR_FAIL_NULL_V(placement, ERR_DOES_NOT_EXIST);
+        const RailVehicleController *controller = _get_controller(*placement);
+        const bool forward = p_direction == CABIN_CHANGE_FORWARD;
+        const bool driver = placement->driver == p_person;
+        // over to the next cabin of the vehicle - REAR, MACHINE, FRONT from the rear to the front; a
+        // position without a cabin is passed by, where the original stops on it (Train.cpp:10346)
+        const RailVehicleCabinKind::Kind kind = cabin_get_kind(cabin);
+        RID target;
+        if (kind == RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR) {
+            target = forward ? _vehicle_find_cabin(
+                                       vehicle, {RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE,
+                                                 RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT})
+                             : RID();
+        } else if (kind == RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE) {
+            target = _vehicle_get_cabin(
+                    vehicle, forward ? RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT
+                                     : RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR);
+        } else if (kind == RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT) {
+            target = forward ? RID()
+                             : _vehicle_find_cabin(
+                                       vehicle, {RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE,
+                                                 RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR});
+        }
+        if (target.is_valid()) {
+            if (driver) {
+                vehicle_server->vehicle_send_command(vehicle, "cab_deactivation_auto");
+            }
+            const Error moved = vehicle_server->cabin_person_move(p_person, target);
+            if (driver) {
+                vehicle_server->vehicle_send_command(vehicle, "cab_controls_reset");
+                vehicle_server->vehicle_send_command(vehicle, "cab_activation_auto");
+            }
+            return moved;
+        }
+        // out of the vehicle's end through the gangways, on to the first vehicle with a cabin - the
+        // original enters the neighbour by the cab facing it whether it has one or not
+        // (Train.cpp:8301-8306; MASZYNA_ORIGINAL_QUIRKS.md)
+        const RailVehicleController *current = controller;
+        RailVehicleController::CouplerEnd end =
+                forward ? RailVehicleController::COUPLER_END_FRONT : RailVehicleController::COUPLER_END_REAR;
+        while (current != nullptr && !target.is_valid() &&
+               current->is_coupled_by(end, RailVehicleController::COUPLING_FLAG_GANGWAY)) {
+            const RailVehicleController::CouplerEnd entered = current->get_coupled_end(end);
+            current = current->get_coupled_controller(end).ptr();
+            if (current == controller) {
+                break;
+            }
+            target = entered == RailVehicleController::COUPLER_END_FRONT
+                             ? _vehicle_find_cabin(
+                                       current->get_rid(), {RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT,
+                                                            RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE,
+                                                            RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR})
+                             : _vehicle_find_cabin(
+                                       current->get_rid(), {RailVehicleCabinKind::RAIL_VEHICLE_CABIN_REAR,
+                                                            RailVehicleCabinKind::RAIL_VEHICLE_CABIN_MACHINE,
+                                                            RailVehicleCabinKind::RAIL_VEHICLE_CABIN_FRONT});
+            end = RailVehicleController::opposite_end(entered);
+        }
+        if (!target.is_valid()) {
+            return ERR_UNAVAILABLE;
+        }
+        const RID target_vehicle = vehicle_server->cabin_get_vehicle(target);
+        if (driver) {
+            // whoever drove the vehicle rides along: there is one driver to a trainset's cab
+            // (TController::MoveTo(), Driver.cpp:5866-5880)
+            const TypedArray<VehiclePerson> drivers =
+                    vehicle_server->vehicle_list_persons(target_vehicle, VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER);
+            for (int index = 0; index < drivers.size(); ++index) {
+                const Ref<VehiclePerson> other = drivers[index];
+                vehicle_server->cabin_person_change_role(
+                        other->get_cabin(), other->get_person(), VehiclePersonRole::VEHICLE_PERSON_ROLE_OBSERVER);
+            }
+            vehicle_server->vehicle_send_command(vehicle, "cabin_leave");
+        }
+        const Error moved = vehicle_server->cabin_person_move(p_person, target);
+        if (driver) {
+            vehicle_server->vehicle_send_command(target_vehicle, "cabin_enter");
+        }
+        return moved;
     }
 
     Error RailVehicleServer::person_move_to_front_cabin(const RID &p_person) {

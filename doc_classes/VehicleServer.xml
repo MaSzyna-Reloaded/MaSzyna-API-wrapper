@@ -66,6 +66,7 @@
 			<param index="0" name="person" type="RID" />
 			<param index="1" name="cabin" type="RID" />
 			<description>
+				The person over to another cabin, of the same vehicle or another one (a gangway), in the role it has. [constant ERR_UNAVAILABLE] for a driver going where one already drives.
 			</description>
 		</method>
 		<method name="controller_configure">

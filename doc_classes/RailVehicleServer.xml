@@ -45,6 +45,14 @@
 				So much more to get off [param vehicle] at the platform's [param side], in the vehicle's own frame ([method RailVehicleLoad.load_remove]). The vehicle's [code]load_remove[/code] command (amount, side) comes here.
 			</description>
 		</method>
+		<method name="person_change_cabin">
+			<return type="int" enum="Error" />
+			<param index="0" name="person" type="RID" />
+			<param index="1" name="direction" type="int" enum="RailVehicleServer.CabinChange" />
+			<description>
+				The person over to the next cabin that way: of its vehicle, else - from the end of it - through the gangways to the nearest cabin of the trainset. The vehicle's driver switches its cab off and leaves the controls at rest; crossing to another vehicle it takes that one over, whoever drove it riding along, and [PlayerServer] follows the player's person. [constant ERR_UNAVAILABLE] where there is no cabin that way.
+			</description>
+		</method>
 		<method name="person_enter_front_cabin">
 			<return type="int" enum="Error" />
 			<param index="0" name="person" type="RID" />
@@ -587,4 +595,12 @@
 			</description>
 		</signal>
 	</signals>
+	<constants>
+		<constant name="CABIN_CHANGE_FORWARD" value="0" enum="CabinChange">
+			Towards the front of the vehicle the person is in.
+		</constant>
+		<constant name="CABIN_CHANGE_BACKWARD" value="1" enum="CabinChange">
+			Towards its rear.
+		</constant>
+	</constants>
 </class>

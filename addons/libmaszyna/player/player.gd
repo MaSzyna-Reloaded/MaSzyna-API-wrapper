@@ -152,13 +152,11 @@ func _input(event):
     elif event.is_action_pressed("cabin_mode_toggle", false, true):
         PlayerCameraServer.camera_toggle_cabin()
 
-    # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
+    # Train.cpp:8291-8352 - Home (cabchangeforward) / End (cabchangebackward)
     if driven.is_valid() and event.is_action_pressed("cabin_previous", false, true):
-        CabinSystem.person_change_cabin(
-                PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
+        RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_FORWARD)
     if driven.is_valid() and event.is_action_pressed("cabin_next", false, true):
-        CabinSystem.person_change_cabin(
-                PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+        RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
 
     if walking:
         _walk_mode_input(event)
@@ -266,9 +264,11 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
         _show_cabin(vehicle)
 
 
-## The player went over to another cabin of the vehicle: its interior is shown instead
+## The player went over to another cabin of the vehicle: its interior is shown instead (into
+## another vehicle, PlayerServer's player_vehicle_changed shows that one's)
 func _on_cabin_person_moved(person:RID, cabin:RID, _previous:RID) -> void:
-    if person == PlayerServer.player_get_person() and _cabin_vehicle.is_valid():
+    if person == PlayerServer.player_get_person() and _cabin_vehicle.is_valid() \
+            and VehicleServer.cabin_get_vehicle(cabin) == _cabin_vehicle:
         CabinSystem.cabin_show(cabin, _cabin_mount)
 
 

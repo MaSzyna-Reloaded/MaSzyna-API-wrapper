@@ -39,14 +39,14 @@ func test_unmanned_vehicle_starts_in_cab_one_with_inactive_cab():
 
 func test_cab_change_backward_goes_through_machine_room():
     watch_signals(RailVehicleServer)
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_BACKWARD)
     train.update_state()
     assert_eq(_driver_cabin_kind(train.get_rid()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE)
     assert_eq(train.get_state()["cabin"], 0)
     assert_signal_emitted_with_parameters(RailVehicleServer, "vehicle_driver_cabin_changed",
             [train.get_rid(), RailVehicleServer.vehicle_get_machine_room(train.get_rid())])
 
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_BACKWARD)
     train.update_state()
     assert_eq(_driver_cabin_kind(train.get_rid()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR)
     assert_eq(train.get_state()["cabin"], -1)
@@ -55,17 +55,17 @@ func test_cab_change_backward_goes_through_machine_room():
 
 
 func test_cab_change_stops_at_vehicle_end():
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_FORWARD)
     train.update_state()
     assert_eq(_driver_cabin_kind(train.get_rid()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT)
 
     for i in range(3):
-        CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+        RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_BACKWARD)
     train.update_state()
     assert_eq(_driver_cabin_kind(train.get_rid()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR)
 
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
-    CabinSystem.person_change_cabin(driver, CabinSystem.CabinChangeDirection.CABIN_CHANGE_FORWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_FORWARD)
+    RailVehicleServer.person_change_cabin(driver, RailVehicleServer.CABIN_CHANGE_FORWARD)
     train.update_state()
     assert_eq(_driver_cabin_kind(train.get_rid()), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_FRONT)
     assert_eq(train.get_state()["cabin"], 1)
@@ -105,8 +105,8 @@ func test_driver_cab_change_leaves_the_controls_at_rest():
     assert_gt(master.get_second_position(), 0, "the second controller is notched up")
     assert_ne(brake.get_controller_position(), neutral, "the brake handle is out of its neutral")
 
-    CabinSystem.person_change_cabin(get_vehicle_driver(vehicle_rid),
-            CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(get_vehicle_driver(vehicle_rid),
+            RailVehicleServer.CABIN_CHANGE_BACKWARD)
 
     assert_eq(_driver_cabin_kind(vehicle_rid), RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR)
     assert_eq(master.get_main_position(), 0, "the main controller at zero")

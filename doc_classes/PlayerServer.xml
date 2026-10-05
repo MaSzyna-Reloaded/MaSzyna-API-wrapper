@@ -4,7 +4,7 @@
 		What the player drives.
 	</brief_description>
 	<description>
-		The one owner of the vehicle the player drives (the original's [code]simulation::Train[/code]). Taking a vehicle over, entering its cab while its driver drives on and letting it go happen here, by the vehicles' [RailVehicleServer] handles, whoever asks - the keys, the HUD, scripts ([code]maszyna.player[/code]) - and are announced by [signal player_vehicle_changed]; the player's node follows it into the cab and out. It knows nothing of the view: [PlayerCameraServer] follows [signal player_vehicle_entered] into the cab.
+		The one owner of the vehicle the player drives (the original's [code]simulation::Train[/code]). Taking a vehicle over, entering its cab while its driver drives on and letting it go happen here, by the vehicles' [RailVehicleServer] handles, whoever asks - the keys, the HUD, scripts ([code]maszyna.player[/code]) - and are announced by [signal player_vehicle_changed]; the player's node follows it into the cab and out. The player's person going through a gangway into the next vehicle ([method RailVehicleServer.person_change_cabin]) takes the player there as well - driving, with its vehicle's driver, while the driver of the vehicle entered gets out. It knows nothing of the view: [PlayerCameraServer] follows [signal player_vehicle_entered] into the cab.
 	</description>
 	<tutorials>
 	</tutorials>

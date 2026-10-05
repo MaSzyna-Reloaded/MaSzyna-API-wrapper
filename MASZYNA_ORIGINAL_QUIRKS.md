@@ -297,6 +297,17 @@ interface.
   (`FizTrainCntrlParser`, `MCPN` > 1). A wagon given a driver stays without one (a warning): the
   original's AI only moves to vehicles under its control (`FirstFind(dir, coupling::control)`,
   `Driver.cpp:2079`) and works a wagon's doors and lights through the trainset, never from a cab.
+* **A cab change stops on a cab position without a cab, and the gangway leads into one.**
+  `TTrain::CabChange()` moves `CabOccupied` first and only then looks for the MMD's definition
+  (`Train.cpp:10334-10349`): past a missing `cab0definition:` the driver stands in no cab, and one
+  more press goes on. Through a gangway the neighbour is entered by the cab position facing it,
+  `CabOccupied = ±1`, whether it has a cab or not (`Train.cpp:8301-8306`) - an EMU's middle car
+  is entered with no cab view at all. After the change the handler applies two of its own
+  "HACK"s: the door permit preset (`ChangeDoorPermitPreset(0)`) and the lights (`SetLights()`)
+  (`Train.cpp:8309-8318`). Wrapper (`RailVehicleServer.person_change_cabin()`): a person always
+  sits in a cabin - a position without one is passed by, and through the gangways the person
+  goes on to the nearest vehicle that has a cabin, entering it from the side it came from. The two
+  hacks are not ported.
 
 ## Scenery data
 

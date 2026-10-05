@@ -210,15 +210,16 @@ func test_a_driver_does_not_move_into_another_drivers_cabin() -> void:
     assert_eq(VehicleServer.cabin_person_move(observer, other_cabin), OK, "one riding along goes over")
 
 
-func test_a_person_does_not_move_to_another_vehicle_nor_from_the_ground() -> void:
+## A gangway leads into the next vehicle (RailVehicleServer.person_change_cabin())
+func test_a_person_moves_to_another_vehicle_but_not_from_the_ground() -> void:
     var cabin:RID = _attach_cabin(_create_vehicle())
     var other_vehicles_cabin:RID = _attach_cabin(_create_vehicle())
     var person:RID = _create_person()
     var on_foot:RID = _create_person()
     assert_eq(VehicleServer.cabin_person_enter(cabin, person, OBSERVER), OK)
 
-    assert_eq(VehicleServer.cabin_person_move(person, other_vehicles_cabin), ERR_INVALID_PARAMETER)
-    assert_eq(VehicleServer.person_get_cabin(person), cabin)
+    assert_eq(VehicleServer.cabin_person_move(person, other_vehicles_cabin), OK)
+    assert_eq(VehicleServer.person_get_cabin(person), other_vehicles_cabin)
     assert_eq(VehicleServer.cabin_person_move(on_foot, cabin), ERR_INVALID_PARAMETER, "entering is not a move")
     assert_eq(VehicleServer.person_get_cabin(on_foot), RID())
 

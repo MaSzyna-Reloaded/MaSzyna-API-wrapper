@@ -81,6 +81,8 @@ namespace godot {
         VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         vehicles->connect(VehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerServer::_on_vehicle_freed));
+        vehicles->connect(
+                VehicleServer::cabin_person_moved_signal, callable_mp(this, &PlayerServer::_on_cabin_person_moved));
         RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
         ERR_FAIL_NULL(rail_vehicles);
         rail_vehicles->connect(
@@ -113,6 +115,32 @@ namespace godot {
         if (p_vehicle == vehicle) {
             _set_vehicle(RID());
         }
+    }
+
+    /* The player went through a gangway into another vehicle (RailVehicleServer::person_change_cabin())
+     * and is in that one now, as the original moves simulation::Train (TTrain::MoveToVehicle(),
+     * Train.cpp:10928-10933). Driving, the player takes its vehicle's driver along, and the one of
+     * the vehicle entered gets out: one driver to a vehicle (TController::MoveTo(),
+     * Driver.cpp:5864-5880) */
+    void PlayerServer::_on_cabin_person_moved(const RID &p_person, const RID &p_cabin, const RID & /* p_previous */) {
+        VehicleServer *vehicles = VehicleServer::get_instance();
+        const DriverSystem *drivers = DriverSystem::get_instance();
+        ERR_FAIL_NULL(vehicles);
+        ERR_FAIL_NULL(drivers);
+        const RID entered = vehicles->cabin_get_vehicle(p_cabin);
+        if (p_person != person || !vehicle.is_valid() || entered == vehicle) {
+            return;
+        }
+        if (vehicles->person_get_role(person) == VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER) {
+            if (const RID driver = drivers->vehicle_get_driver(vehicle); driver.is_valid()) {
+                if (const RID other = drivers->vehicle_get_driver(entered); other.is_valid()) {
+                    vehicles->cabin_person_leave(vehicles->person_get_cabin(other), other);
+                }
+                vehicles->cabin_person_move(driver, p_cabin);
+            }
+        }
+        _set_vehicle(entered);
+        emit_signal(player_vehicle_entered_signal, entered);
     }
 
     void PlayerServer::_set_vehicle(const RID &p_vehicle) {

@@ -1358,12 +1358,11 @@ data-driven"); what it found is fixed except these:
   controls are only the cab model's. It needs the cab logic to drive the vehicle's low-poly and
   exterior instances.
 * **Cab occupancy (persons, cabins, roles) - what is left** (2026-10-05):
-  * A cab change (`CabinSystem.person_change_cabin()`) goes to the next cabin the MMD defines; the
-    original changes `CabOccupied` first and fails on a missing definition (two presses past a
-    missing cab0), and moves to the next vehicle when there is no further cab
-    (`OnCommand_cabchangeforward/backward`, Train.cpp:6644-6720) - the move between vehicles (gangway,
-    Train.cpp:8305/8337) is not ported. The AI's `DirectionChange()` after its cab change
-    (Driver.cpp:2624) follows only from its cabin's kind.
+  * The cab change (`RailVehicleServer.person_change_cabin()`): a cab change while the AI drives
+    and the player rides along moves only the player - the original shifts the AI's
+    `CabOccupied` (Train.cpp:10326-10333). The driver of the vehicle entered through a gangway
+    gets out without handing over its `primary()` duties (TController::MoveTo(), Driver.cpp:5868).
+    The AI's `DirectionChange()` after a change (Driver.cpp:2624) follows only from its cabin's kind.
 * **The departure signal sounds at the vehicle**: the original plays `departuresignal:` from each
   door speaker at its offset (`m_doorspeakers`, DynObj.cpp:6359-6364); door speaker locations are
   not parsed, so `MmdSoundCatalog`'s `departuresignal` is one source per vehicle.

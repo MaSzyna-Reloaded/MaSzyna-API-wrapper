@@ -180,7 +180,7 @@ Every `MoverRailVehicle<X>` also inherits `MoverComponent` (see the overview), l
 | Vehicle data container        | FIZ files                           | the vehicle's description - a `MoverRailVehicleController` resource with its components - parsed from the `.fiz` (`FizVehicleBuilder`, `addons/libmaszyna/legacy/fiz`)
 | Vehicle data loading + init   | cParser + Mover's `LoadFIZ_*()`     | Component properties + `_apply_configuration()` of the `Mover*` implementation
 | Reading vehicle state         | Direct access to Mover's properties | Typed getters of the component; `vehicle_dump_state()` for diagnostics
-| Modyfing vehicle state        | Direct calls to Mover's methods     | Typed calls on the component or `VehicleServer.vehicle_send_command()`
+| Modyfing vehicle state        | Direct calls to Mover's methods     | `VehicleServer.vehicle_send_command()`; typed calls on a component only within the vehicle's own composition ([Commands and method calls](architecture.html#commands-and-method-calls))
 | Reading runtime config values | Direct property reading or calls    | `Dictionary` with a runtime config (`vehicle_dump_config()`, `config_changed`)
 | Propagating trainset commands | Internal notification + TTrain refs | Using High-Level API commands
 
@@ -599,8 +599,9 @@ void RailVehicleDoors::_register_commands() {
 ```
 
 > NOTE: Method `operate_doors` is not exposed as a command, but due to this technique it is available as a typed
-> call on the component - `VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)` -
-> which can be handy in internal communication.
+> call on the component - handy in internal communication, between the components of one vehicle. Anything outside the
+> vehicle sends the command: only the command renews the state dump and is announced
+> ([Commands and method calls](architecture.html#commands-and-method-calls)).
 
 #### Argument type conversion
 

@@ -3633,3 +3633,19 @@ lighting or the trainset.
 * **Rule:** a test of a trainset waits for the whole trainset, not for the car it acts on; a
   function asked whether an object is gone takes it untyped - a typed parameter fails on a freed
   object at the call.
+
+## 2026-10-05 A cab change moved into RailVehicleServer left the cab active in the state
+
+* **Symptom:** with the cab change moved from `CabinSystem` (GDScript) into
+  `RailVehicleServer.person_change_cabin()` (C++), `test_train_cab_change` read `"cabin"` 0 after
+  changing to the rear cab (expected -1), and `test_rail_vehicle_cabins` saw the master controller
+  still off its rest after a driver's cab change.
+* **What proved it:** the same operations sent from GDScript as commands passed. The C++ version
+  called the controller's methods (`cab_deactivation_auto()`, `cab_controls_reset()`,
+  `cab_activation_auto()`) directly. `VehicleServer.vehicle_dump_state()` is cached on the
+  controller's state serial, which only a step and `VehicleController::command_executed()` move -
+  the Mover had changed, the dump the tests read had not.
+* **Fix:** `person_change_cabin()` sends `vehicle_send_command()`; the gangway's
+  `cabin_leave`/`cabin_enter` are registered commands.
+* **Rule:** outside a vehicle's own composition an action on it is a command, never a call of the
+  controller's or a component's method (`CODE_STYLE.md`, "A vehicle is commanded, not called").

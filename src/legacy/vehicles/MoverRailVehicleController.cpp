@@ -691,6 +691,21 @@ namespace godot {
         }
     }
 
+    // Original engine: TTrain::MoveToVehicle() (Train.cpp:10950-10954) - CabOccupied follows the driver
+    // (set_driver_cabin_kind())
+    void MoverRailVehicleController::cabin_leave() const {
+        mover->CabDeactivisation();
+        mover->BrakeLevelSet(mover->Handle->GetPos(bh_NP));
+        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
+        mover->ScndCtrlPos = 0;
+    }
+
+    // Original engine: TTrain::MoveToVehicle() (Train.cpp:10976-10977)
+    void MoverRailVehicleController::cabin_enter() const {
+        mover->LimPipePress = mover->PipePress;
+        mover->CabActivisationAuto(true);
+    }
+
     /* CabActive counts as CabOccupied does: +1 the front cab, -1 the rear one, 0 none (Mover.cpp:2654) */
     RailVehicleCabinKind::Kind MoverRailVehicleController::get_active_cabin_kind() const {
         if (mover == nullptr) {

@@ -56,7 +56,7 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
     await wait_idle_frames(3)
     assert_false(_low_poly_cab_visible(1), "hi-fi cab 1 hides its low-poly counterpart")
 
-    CabinSystem.person_change_cabin(PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
     await wait_idle_frames(3)
 
     var cabin:Cabin3D = get_viewport().get_camera_3d().get_parent() as Cabin3D

@@ -52,7 +52,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     var cab1_z:float = vehicle.to_local(camera.global_position).z
     assert_true((-camera.global_basis.z).dot(vehicle_forward) > 0.99, "cab 1 camera should look forward")
 
-    CabinSystem.person_change_cabin(PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
     await wait_idle_frames(3)
 
     var machine_room:MaszynaDynamicTrainCabin = camera.get_parent() as MaszynaDynamicTrainCabin
@@ -70,7 +70,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     for diagnostic:Dictionary in machine_room.get_diagnostics():
         assert_false(diagnostic["code"] == "MMD_INVALID_CAB_DEFINITION", "EP07 declares cab0definition:")
 
-    CabinSystem.person_change_cabin(PlayerServer.player_get_person(), CabinSystem.CabinChangeDirection.CABIN_CHANGE_BACKWARD)
+    RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
     await wait_idle_frames(3)
 
     var cabin:Cabin3D = camera.get_parent() as Cabin3D

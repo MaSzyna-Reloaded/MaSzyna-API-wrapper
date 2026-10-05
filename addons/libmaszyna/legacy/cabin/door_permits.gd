@@ -22,6 +22,14 @@ const OPEN_COMMANDS:Dictionary[RailVehicleDoors.Side, String] = {
     RailVehicleDoors.SIDE_LEFT: "doors_left",
     RailVehicleDoors.SIDE_RIGHT: "doors_right",
 }
+## The cab's state the switches' lamps are lit by (m_doorspermitleft/right, Train.cpp:8514-8520)
+const LAMP_KEYS:Dictionary[RailVehicleDoors.Side, String] = {
+    RailVehicleDoors.SIDE_LEFT: "door_permit_lamp_left",
+    RailVehicleDoors.SIDE_RIGHT: "door_permit_lamp_right",
+}
+## A permit lamp is lit on the even seconds when it blinks (wSecond % 2 < 1, Train.cpp:8515)
+const SECONDS_PER_HOUR:int = 3600
+const SECONDS_PER_MINUTE:int = 60
 ## state.data keys of m_doorpermittimers, by the side of the vehicle
 const TIMERS:Dictionary[RailVehicleDoors.Side, String] = {
     RailVehicleDoors.SIDE_LEFT: "door_permit_timer_left",
@@ -49,9 +57,13 @@ func register(vehicle_rid:RID, cab:int) -> void:
     CabinSystem.register_control(vehicle_rid, cab, LEFT_SWITCH, _left_switch)
     CabinSystem.register_control(vehicle_rid, cab, RIGHT_SWITCH, _right_switch)
     CabinSystem.register_process(vehicle_rid, cab, _process)
+    for side:RailVehicleDoors.Side in LAMP_KEYS:
+        CabinSystem.state_computed_value_register(vehicle_rid, LAMP_KEYS[side], _lamp.bind(side))
 
 
 func unregister() -> void:
+    for side:RailVehicleDoors.Side in LAMP_KEYS:
+        CabinSystem.state_computed_value_unregister(_vehicle_rid, LAMP_KEYS[side])
     CabinSystem.unregister_control(_vehicle_rid, _cab, LEFT_SWITCH, _left_switch)
     CabinSystem.unregister_control(_vehicle_rid, _cab, RIGHT_SWITCH, _right_switch)
     CabinSystem.unregister_process(_vehicle_rid, _cab, _process)
@@ -100,3 +112,41 @@ func _process(state:CabinState, delta:float) -> void:
         state.data[TIMERS[side]] = timer
         if timer < 0.0:
             state.send_vehicle_command(OPEN_COMMANDS[side], true)
+
+
+## m_doorspermitleft/right (Train.cpp:8514-8520): the permit of the lamp's side, lit through, or on
+## the even seconds - and through while a door of that side of the train stands open, or only its
+## door, as DoorsPermitLightBlinking says (IsAnyDoorOpen/IsAnyDoorOnlyOpen of the train, Driver.cpp:
+## 6004-6016). The cab's left is the vehicle's left from cab 1, its right from the rear cab
+## (cab_to_end()); a vehicle of the train standing the other way round has its sides swapped.
+func _lamp(lamp:RailVehicleDoors.Side) -> bool:
+    var doors:RailVehicleDoors = CabinSystem.vehicle_component(_vehicle_rid, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
+    if not doors:
+        return false
+    var side:RailVehicleDoors.Side = lamp if _cab >= 0 else _other_side(lamp)
+    if not (doors.get_left_open_permit() if side == RailVehicleDoors.SIDE_LEFT else doors.get_right_open_permit()):
+        return false
+    var blinking:RailVehicleDoors.PermitLight = doors.permit_light_blinking
+    var second:int = int(SimulationServer.time_of_day * SECONDS_PER_HOUR) % SECONDS_PER_MINUTE
+    if second % 2 < 1 or blinking < RailVehicleDoors.PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP:
+        return true
+    var any_open:bool = false
+    var any_door_open:bool = false
+    var forward:Vector3 = RailVehicleServer.vehicle_get_transform(_vehicle_rid).basis.z
+    for vehicle:RID in RailVehicleServer.vehicle_get_coupled(
+            _vehicle_rid, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER):
+        var vehicle_doors:RailVehicleDoors = CabinSystem.vehicle_component(vehicle, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
+        if not vehicle_doors or vehicle_doors.close_method == RailVehicleDoors.CONTROLS_AUTOMATIC:
+            continue
+        var same_way:bool = RailVehicleServer.vehicle_get_transform(vehicle).basis.z.dot(forward) >= 0.0
+        var vehicle_side:RailVehicleDoors.Side = side if same_way else _other_side(side)
+        var left:bool = vehicle_side == RailVehicleDoors.SIDE_LEFT
+        any_open = any_open or not (vehicle_doors.get_left_closed() if left else vehicle_doors.get_right_closed())
+        any_door_open = any_door_open or not (
+                vehicle_doors.get_left_door_closed() if left else vehicle_doors.get_right_door_closed())
+    return (blinking < RailVehicleDoors.PERMIT_LIGHT_FLASHING_ON_PERMISSION and any_open) \
+            or (blinking < RailVehicleDoors.PERMIT_LIGHT_FLASHING_ALWAYS and any_door_open)
+
+
+static func _other_side(side:RailVehicleDoors.Side) -> RailVehicleDoors.Side:
+    return RailVehicleDoors.SIDE_RIGHT if side == RailVehicleDoors.SIDE_LEFT else RailVehicleDoors.SIDE_LEFT

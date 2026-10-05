@@ -32,6 +32,8 @@ namespace godot {
             double get_tractive_force() const;
             double get_power() const;
             double get_rpm_count() const;
+            /* The engine's turn [rad] - what a pendulum swings by (DynObj.cpp:1121-1125) */
+            double get_angle() const;
             double get_rpm_ratio() const;
             double get_circuit_nmax_rpm() const;
             int get_damage() const;

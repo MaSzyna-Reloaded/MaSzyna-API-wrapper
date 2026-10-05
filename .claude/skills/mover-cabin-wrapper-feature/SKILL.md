@@ -165,6 +165,15 @@ our `RailVehicleEnginePowerSource.ValveOperation`, and only `MoverRailVehicleEng
 `operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
 `LoadFIZ_Cntrl`.
 
+**The port is data-driven - ABSOLUTE.** Every name, prefix, count, flag and default the original
+reads from data (FIZ, MMD, SCN/SCM/INC, CHK, lang, models) is read from that data in the wrapper, the
+way the original reads it, with the original's default when absent. Only what the original itself
+hardcodes, or a quirk documented in `MASZYNA_ORIGINAL_QUIRKS.md`, may be hardcoded - with the
+original's line cited. "Confirmed identical across the vehicles checked" is never a reason: the
+pantograph arm names hardcoded on 2026-09-16 after checking three vehicles (`ramiedolne1_pant0`, read
+by the original from `animpant*prefix:`) left 104 vehicles unanimated (36WE, EN57, ET22, 4E...), the
+wheel prefix 109, and searching cab 2 from `cab1definition:` broke 133 cabs.
+
 **A FIZ that leans on a quirk is fixed in the data, never in the wrapper - ABSOLUTE.** A vehicle may
 work in the original only because the Mover has a field whether or not its FIZ declares the
 section (every `TMoverParameters` has `PantsPreset` "0132", so `en57akl_v1` and `et40_v1` cabs

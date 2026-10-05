@@ -29,6 +29,10 @@ enum Light {
     CAB,
     ## the instrument light (CabinSystem.cab_instrument_light_changed)
     INSTRUMENT,
+    ## the dashboard light (CabinSystem.cab_dashboard_light_changed)
+    DASHBOARD,
+    ## the timetable light (CabinSystem.cab_timetable_light_changed)
+    TIMETABLE,
 }
 
 var vehicle_rid:RID
@@ -43,6 +47,12 @@ var light_level:float = 0.0
 ## Whether the instrument light is lit - TTrain::InstrumentLightActive. Written only by
 ## CabinSystem.cab_set_instrument_light_enabled().
 var instrument_light_enabled:bool = false
+## Whether the dashboard light is lit - TTrain::DashboardLightActive. Written only by
+## CabinSystem.cab_set_dashboard_light_enabled().
+var dashboard_light_enabled:bool = false
+## Whether the timetable light is lit - TTrain::TimetableLightActive. Written only by
+## CabinSystem.cab_set_timetable_light_enabled().
+var timetable_light_enabled:bool = false
 
 
 func _init(p_vehicle_rid:RID, p_cab:int) -> void:

@@ -3,11 +3,7 @@ extends RefCounted
 class_name FizTrainLoadParser
 
 ## Load: section parser -> RailVehicleLoad. Registered directly in FizVehicleBuilder's
-## section table. Real syntax is a single scalar line (confirmed against ~25 real vehicle
-## files, wagons/locomotives alike, all matching this shape exactly):
-## `Load: MaxLoad=64 LoadQ=tonns LoadAccepted=Coal,Ore,Calcium LoadSpeed=1 UnLoadSpeed=0.1
-## OverLoadFactor=2`. `minimum_load_offsets`/`load_list` (RailVehicleLoadListItem rows) have no
-## corresponding key in any real file checked - left at compiled defaults.
+## section table. Its keys as LoadFIZ_Load reads them (Mover.cpp:10309-10340).
 
 
 func create_node() -> RailVehicleLoad:
@@ -37,3 +33,9 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.unload_speed = FizLineUtil.get_float(kv, "UnLoadSpeed")
     if kv.has("OverLoadFactor"):
         node.overload_factor = FizLineUtil.get_float(kv, "OverLoadFactor")
+    # one offset per accepted load, the last one for the rest (Mover.cpp:10319-10331)
+    if kv.has("LoadMinOffset"):
+        var offsets: Array[float] = []
+        for offset: String in FizLineUtil.get_string(kv, "LoadMinOffset").split(","):
+            offsets.append(offset.strip_edges().to_float())
+        node.minimum_load_offsets = offsets

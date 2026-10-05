@@ -1901,7 +1901,8 @@ lighting or the trainset.
   4.9 m) or 80 m (`linia053/lamp-y`, `lamp-5`, `lamp-i`).
 * **Rules:**
   * The patch's width is data; its edge is not a falloff radius.
-  * A constant identical across a whole family is the one the author meant.
+  * A constant identical across a whole family is the one the author meant - for that family; it is
+    read from the data, never generalised to models outside it.
 
 ### A RenderingServer light is not a Light3D - it inherits none of the node's defaults
 
@@ -3554,3 +3555,17 @@ lighting or the trainset.
   cp1250 it glued to the keyword, so `scripts/cut-vehicle-fixture` never copied `*_ra_base.mmd`.
 * **Fix:** the cutter drops a leading BOM before tokenising; EN57KM re-cut.
 * **Rule:** a tool that reads the game's text files skips a BOM as the game's parser does.
+
+## 2026-10-05 An EZT cab car's reverser never went back from forward
+
+* **Symptom:** EN57-702ra: the reverser set to forward could not be set back to neutral or reverse.
+* **What proved it:** a headless probe on the EN57 fixture trainset - `direction_decrease` left
+  `direction` at 1. `DirectionBackward()` on an EZT at forward first switches the high start off
+  (`MinCurrentSwitch(false)`, Mover.cpp:3250), which returns true whenever `Imin == IminHi`. A cab
+  car has no engine, so the wrapper wrote no `IminLo`/`IminHi`/`Imin` and all three stayed 0: the
+  switch "succeeded" every time and the direction never moved. The original sets 1/2/1 for every
+  EZT in `LoadFIZ_Param` (Mover.cpp:10300-10305), before `Circuit:` overrides them.
+* **Fix:** `MoverRailVehicleController` gives an EZT those thresholds when nothing has written them;
+  the FIZ factory gives an EZT's electric engine the same defaults before `Circuit:`.
+* **Rule:** a default the original sets in one section for keys another section owns is carried
+  over to the vehicle even when the other section's component is absent.

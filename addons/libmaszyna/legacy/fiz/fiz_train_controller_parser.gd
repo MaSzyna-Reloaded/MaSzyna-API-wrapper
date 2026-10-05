@@ -108,7 +108,7 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
     controller.cntrl_ground_relay_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "GroundRelayStart"), ground_relay_default)
 
     if kv.has("CompartmentLightsStart"):
-        controller.cntrl_compartment_lights_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "CompartmentLightsStart"), RailVehicleController.START_MODE_DISABLED)
+        controller.cntrl_compartment_lights_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "CompartmentLightsStart"), RailVehicleController.START_MODE_AUTOMATIC)
     if kv.has("InactiveCabFlag"):
         controller.cntrl_inactive_cab_flag = FizLineUtil.get_int(kv, "InactiveCabFlag")
 

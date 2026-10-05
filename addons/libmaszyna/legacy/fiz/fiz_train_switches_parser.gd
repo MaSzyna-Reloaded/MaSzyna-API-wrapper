@@ -5,17 +5,12 @@ class_name FizTrainSwitchesParser
 ## Switches: and DimmerList: section parser -> RailVehicleSwitches. Registered directly in
 ## FizVehicleBuilder's section table (both prefixes share this one instance).
 ##
-## `Pantograph=`/`Converter=`/`MotorConnectors=` are string switch-type values, not Yes/No -
-## confirmed against RailVehicleSwitches::_do_update_internal_mover: "Impulse" (case-insensitive)
-## maps to true, anything else (including absent) to false ("impulse"/"" or "impulse"/"toggle"
-## on the mover side). `RelayResetButtonX=`/`PantographPresetDefault=`/`ModernDimmer=`/
-## `DimmerList:` have no effect on the simulation in this vendored Mover (see
-## RailVehicleSwitches.hpp's class doc) but are still parsed and stored on the node faithfully;
-## `PantographPresets=` is what the cab's pantograph selector offers.
+## Its keys as LoadFIZ_Switches reads them (Mover.cpp:11384-11403): the switch types ("impulse",
+## any case, is impulse), the relay reset buttons' relays and the pantograph presets. `ModernDimmer=`
+## and `DimmerList:` are the cab's headlight dimmer, not ported (TODO.md).
 ##
-## DimmerList: row format has no real example in the operator's ~1300-file corpus (0
-## occurrences) - the 3-column mapping to RailVehicleDimmerListItem's high_beam/dimmed/off booleans is a
-## best-effort guess from the field names alone, not confirmed against any real file.
+## DimmerList: header keys `Cycle=`/`DefaultPos=` (LoadFIZ_DimmerList, Mover.cpp:11537-11542) and rows
+## high beam / dimmed / off (readDimmerList, Mover.cpp:9447-9461).
 
 ## The digits of PantographPresets= (Train.cpp:3522 reads each as `preset - '0'`)
 const PANTOGRAPH_PRESETS: Dictionary[String, RailVehicleSwitches.PantographPreset] = {
@@ -39,8 +34,8 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         if node:
             if kv.has("Cycle"):
                 node.dimmer_list_cycle = FizLineUtil.get_bool(kv, "Cycle")
-            if kv.has("Default"):
-                node.dimmer_list_default_position = FizLineUtil.get_int(kv, "Default")
+            if kv.has("DefaultPos"):
+                node.dimmer_list_default_position = FizLineUtil.get_int(kv, "DefaultPos")
         _dimmer_rows = []
         return
 

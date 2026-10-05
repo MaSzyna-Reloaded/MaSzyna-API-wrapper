@@ -41,6 +41,13 @@ breaks the project's rules.
   `CabinSystem.act` on a `LegacyCabinLogic` - a hand-built struct can pass while the real path is
   broken.
 
+## Data reading is tested on the data's variants - ABSOLUTE
+
+A test of anything read from data (FIZ, MMD, SCN) carries a fixture with the variants the game data
+really has, not only the commonest one: custom animation prefixes, `animations:` counts that stop
+early, cab 2 declared before cab 1, a section left out. A fixture that only repeats the convention
+proves nothing - the 36WE's pantograph names passed every test for a month.
+
 ## What a test may use
 
 - Only fixtures: `demo/tests/fixtures/`, `demo/tests/materials/`. Never the game directory

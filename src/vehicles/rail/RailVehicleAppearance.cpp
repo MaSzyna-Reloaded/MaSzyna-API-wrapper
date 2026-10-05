@@ -79,20 +79,32 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_mirrors", "value"), &RailVehicleAppearance::set_mirrors);
         ClassDB::bind_method(D_METHOD("get_mirrors"), &RailVehicleAppearance::get_mirrors);
         ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "mirrors"), "set_mirrors", "get_mirrors");
+        ClassDB::bind_method(D_METHOD("set_doors", "value"), &RailVehicleAppearance::set_doors);
+        ClassDB::bind_method(D_METHOD("get_doors"), &RailVehicleAppearance::get_doors);
+        ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "doors"), "set_doors", "get_doors");
+        ClassDB::bind_method(
+                D_METHOD("set_pantograph_factors", "value"), &RailVehicleAppearance::set_pantograph_factors);
+        ClassDB::bind_method(D_METHOD("get_pantograph_factors"), &RailVehicleAppearance::get_pantograph_factors);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::PACKED_FLOAT64_ARRAY, "pantograph_factors"), "set_pantograph_factors",
+                "get_pantograph_factors");
+        ClassDB::bind_method(D_METHOD("set_pendulums", "value"), &RailVehicleAppearance::set_pendulums);
+        ClassDB::bind_method(D_METHOD("get_pendulums"), &RailVehicleAppearance::get_pendulums);
+        ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "pendulums"), "set_pendulums", "get_pendulums");
+        ClassDB::bind_method(
+                D_METHOD("set_pendulum_amplitude", "value"), &RailVehicleAppearance::set_pendulum_amplitude);
+        ClassDB::bind_method(D_METHOD("get_pendulum_amplitude"), &RailVehicleAppearance::get_pendulum_amplitude);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "pendulum_amplitude"), "set_pendulum_amplitude", "get_pendulum_amplitude");
+        ClassDB::bind_method(D_METHOD("set_door_steps", "value"), &RailVehicleAppearance::set_door_steps);
+        ClassDB::bind_method(D_METHOD("get_door_steps"), &RailVehicleAppearance::get_door_steps);
+        ADD_PROPERTY(PropertyInfo(Variant::PACKED_STRING_ARRAY, "door_steps"), "set_door_steps", "get_door_steps");
         ClassDB::bind_method(
                 D_METHOD("set_head_display_submodel", "value"), &RailVehicleAppearance::set_head_display_submodel);
         ClassDB::bind_method(D_METHOD("get_head_display_submodel"), &RailVehicleAppearance::get_head_display_submodel);
         ADD_PROPERTY(
                 PropertyInfo(Variant::STRING, "head_display_submodel"), "set_head_display_submodel",
                 "get_head_display_submodel");
-        ClassDB::bind_method(
-                D_METHOD("set_pantograph_collector_width", "value"),
-                &RailVehicleAppearance::set_pantograph_collector_width);
-        ClassDB::bind_method(
-                D_METHOD("get_pantograph_collector_width"), &RailVehicleAppearance::get_pantograph_collector_width);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "pantograph_collector_width"), "set_pantograph_collector_width",
-                "get_pantograph_collector_width");
         ClassDB::bind_method(
                 D_METHOD("set_low_poly_emission_energy", "value"),
                 &RailVehicleAppearance::set_low_poly_emission_energy);
@@ -242,6 +254,46 @@ namespace godot {
         return mirrors;
     }
 
+    void RailVehicleAppearance::set_doors(const PackedStringArray &p_value) {
+        doors = p_value;
+    }
+
+    PackedStringArray RailVehicleAppearance::get_doors() const {
+        return doors;
+    }
+
+    void RailVehicleAppearance::set_pantograph_factors(const PackedFloat64Array &p_value) {
+        pantograph_factors = p_value;
+    }
+
+    PackedFloat64Array RailVehicleAppearance::get_pantograph_factors() const {
+        return pantograph_factors;
+    }
+
+    void RailVehicleAppearance::set_pendulums(const PackedStringArray &p_value) {
+        pendulums = p_value;
+    }
+
+    PackedStringArray RailVehicleAppearance::get_pendulums() const {
+        return pendulums;
+    }
+
+    void RailVehicleAppearance::set_pendulum_amplitude(const double p_value) {
+        pendulum_amplitude = p_value;
+    }
+
+    double RailVehicleAppearance::get_pendulum_amplitude() const {
+        return pendulum_amplitude;
+    }
+
+    void RailVehicleAppearance::set_door_steps(const PackedStringArray &p_value) {
+        door_steps = p_value;
+    }
+
+    PackedStringArray RailVehicleAppearance::get_door_steps() const {
+        return door_steps;
+    }
+
     void RailVehicleAppearance::set_head_display_submodel(const String &p_value) {
         head_display_submodel = p_value;
     }
@@ -250,13 +302,6 @@ namespace godot {
         return head_display_submodel;
     }
 
-    void RailVehicleAppearance::set_pantograph_collector_width(const double p_value) {
-        pantograph_collector_width = p_value;
-    }
-
-    double RailVehicleAppearance::get_pantograph_collector_width() const {
-        return pantograph_collector_width;
-    }
 
     void RailVehicleAppearance::set_low_poly_emission_energy(const double p_value) {
         low_poly_emission_energy = p_value;

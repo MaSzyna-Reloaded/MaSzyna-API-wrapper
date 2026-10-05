@@ -30,6 +30,7 @@ namespace godot {
             int get_pantograph_preset_position(RailVehicleController::CouplerEnd p_end) const override;
             PantographPreset get_pantograph_preset(RailVehicleController::CouplerEnd p_end) const override;
             void sand(bool p_active) override;
+            void universal_relay_reset(RelayResetButton p_button) override;
             void next_pantograph_preset(RailVehicleController::CouplerEnd p_end) override;
             void previous_pantograph_preset(RailVehicleController::CouplerEnd p_end) override;
     };

@@ -21,6 +21,7 @@ namespace godot {
             double get_tractive_force() const override;
             double get_power() const override;
             double get_rpm_count() const override;
+            double get_angle() const override;
             double get_rpm_ratio() const override;
             double get_circuit_nmax_rpm() const override;
             int get_damage() const override;

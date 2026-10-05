@@ -6,6 +6,8 @@ namespace godot {
     const char *RailVehicleController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *RailVehicleController::trainset_changed_signal = "trainset_changed";
     const char *RailVehicleController::coupler_attached_signal = "coupler_attached";
+    const char *RailVehicleController::coupler_adapter_attached_signal = "coupler_adapter_attached";
+    const char *RailVehicleController::coupler_adapter_removed_signal = "coupler_adapter_removed";
     const char *RailVehicleController::coupler_detached_signal = "coupler_detached";
 
     Dictionary RailVehicleController::get_state() {
@@ -69,6 +71,41 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &RailVehicleController::get_coupled_end);
         ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &RailVehicleController::coupler_connect);
         ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &RailVehicleController::coupler_disconnect);
+        ClassDB::bind_method(
+                D_METHOD("coupler_adapter_attach", "where"), &RailVehicleController::coupler_adapter_attach);
+        ClassDB::bind_method(D_METHOD("coupler_adapter_fit", "end"), &RailVehicleController::coupler_adapter_fit);
+        ClassDB::bind_method(D_METHOD("is_coupler_automatic", "end"), &RailVehicleController::is_coupler_automatic);
+        ClassDB::bind_method(
+                D_METHOD("coupler_adapter_remove", "where"), &RailVehicleController::coupler_adapter_remove);
+        ClassDB::bind_method(
+                D_METHOD("get_coupler_adapter_fitted_model", "end"),
+                &RailVehicleController::get_coupler_adapter_fitted_model);
+        ClassDB::bind_method(
+                D_METHOD("get_coupler_adapter_fitted_length", "end"),
+                &RailVehicleController::get_coupler_adapter_fitted_length);
+        ClassDB::bind_method(
+                D_METHOD("get_coupler_adapter_fitted_height", "end"),
+                &RailVehicleController::get_coupler_adapter_fitted_height);
+        ClassDB::bind_method(
+                D_METHOD("set_coupler_adapter_model", "value"), &RailVehicleController::set_coupler_adapter_model);
+        ClassDB::bind_method(D_METHOD("get_coupler_adapter_model"), &RailVehicleController::get_coupler_adapter_model);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::STRING, "coupler_adapter_model"), "set_coupler_adapter_model",
+                "get_coupler_adapter_model");
+        ClassDB::bind_method(
+                D_METHOD("set_coupler_adapter_length", "value"), &RailVehicleController::set_coupler_adapter_length);
+        ClassDB::bind_method(
+                D_METHOD("get_coupler_adapter_length"), &RailVehicleController::get_coupler_adapter_length);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "coupler_adapter_length"), "set_coupler_adapter_length",
+                "get_coupler_adapter_length");
+        ClassDB::bind_method(
+                D_METHOD("set_coupler_adapter_height", "value"), &RailVehicleController::set_coupler_adapter_height);
+        ClassDB::bind_method(
+                D_METHOD("get_coupler_adapter_height"), &RailVehicleController::get_coupler_adapter_height);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "coupler_adapter_height"), "set_coupler_adapter_height",
+                "get_coupler_adapter_height");
         BIND_PROPERTY_W_HINT(
                 RailVehicleController, Variant::INT, train_type, PROPERTY_HINT_ENUM,
                 enum_hint(
@@ -109,6 +146,8 @@ namespace godot {
                 "RailVehicleController.CouplingFlags");
         ADD_SIGNAL(MethodInfo(coupler_attached_signal, coupling_flag));
         ADD_SIGNAL(MethodInfo(coupler_detached_signal, coupling_flag));
+        ADD_SIGNAL(MethodInfo(coupler_adapter_attached_signal, PropertyInfo(Variant::INT, "end")));
+        ADD_SIGNAL(MethodInfo(coupler_adapter_removed_signal, PropertyInfo(Variant::INT, "end")));
 
         BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
         BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
@@ -182,6 +221,8 @@ namespace godot {
         register_command("direction_decrease", Callable(this, "direction_decrease"));
         register_command("coupler_connect", Callable(this, "coupler_connect"));
         register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
+        register_command("coupler_adapter_attach", Callable(this, "coupler_adapter_attach"));
+        register_command("coupler_adapter_remove", Callable(this, "coupler_adapter_remove"));
     }
 
     void RailVehicleController::_unregister_commands() {
@@ -198,6 +239,8 @@ namespace godot {
         unregister_command("direction_decrease");
         unregister_command("coupler_connect");
         unregister_command("coupler_disconnect");
+        unregister_command("coupler_adapter_attach");
+        unregister_command("coupler_adapter_remove");
     }
 
     /* The occupied cab is decided every step, from the live getter, as the vehicle's own signals
@@ -227,4 +270,27 @@ namespace godot {
         p_state["coupler_stretched"] = get_coupler_stretched();
     }
 
+    void RailVehicleController::set_coupler_adapter_model(const String &p_value) {
+        coupler_adapter_model = p_value;
+    }
+
+    String RailVehicleController::get_coupler_adapter_model() const {
+        return coupler_adapter_model;
+    }
+
+    void RailVehicleController::set_coupler_adapter_length(const double p_value) {
+        coupler_adapter_length = p_value;
+    }
+
+    double RailVehicleController::get_coupler_adapter_length() const {
+        return coupler_adapter_length;
+    }
+
+    void RailVehicleController::set_coupler_adapter_height(const double p_value) {
+        coupler_adapter_height = p_value;
+    }
+
+    double RailVehicleController::get_coupler_adapter_height() const {
+        return coupler_adapter_height;
+    }
 } // namespace godot

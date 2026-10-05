@@ -90,6 +90,9 @@ namespace godot {
             /* The headlights dimmer (dimheadlights_sw:, Train.cpp:6125) */
             virtual void headlights_dim(bool p_enabled) = 0;
             virtual bool get_headlights_dimmed() const = 0;
+            /* Whether any lamp is lit at either end (iLights[front] != 0 || iLights[rear] != 0) - what
+             * an instrument light of the head lights follows (Train.cpp:9570) */
+            virtual bool get_any_light_enabled() const = 0;
             // Direct per-light override, independent of the selector/"light programator"
             // (LightsPos + light_position_list) system above - sets/clears a single bit of
             // iLights directly, for debugging/testing individual bulbs regardless of what the

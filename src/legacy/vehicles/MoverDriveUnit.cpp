@@ -49,6 +49,11 @@ namespace godot {
         return p_mover != nullptr ? p_mover->enrot : 0.0;
     }
 
+    double MoverDriveUnit::get_angle() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->eAngle : 0.0;
+    }
+
     double MoverDriveUnit::get_rpm_ratio() const {
         TMoverParameters *p_mover = owner.get_mover();
         return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;

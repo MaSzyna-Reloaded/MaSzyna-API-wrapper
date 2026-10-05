@@ -39,9 +39,15 @@ const _HANDLE_TYPE_MAP := {
     "d2": RailVehicleBrake.BRAKE_HANDLE_TYPE_D2, "mhz_en57": RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_EN57,
     "mhz_k5p": RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K5P, "mhz_k8p": RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K8P,
     "mhz_6p": RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_6P, "m394": RailVehicleBrake.BRAKE_HANDLE_TYPE_M394,
-    "knorr": RailVehicleBrake.BRAKE_HANDLE_TYPE_KNORR, "west": RailVehicleBrake.BRAKE_HANDLE_TYPE_WESTINGHOUSE,
+    "knorr": RailVehicleBrake.BRAKE_HANDLE_TYPE_KNORR, "westinghouse": RailVehicleBrake.BRAKE_HANDLE_TYPE_WESTINGHOUSE,
     "fvel6": RailVehicleBrake.BRAKE_HANDLE_TYPE_FVEL6, "fve408": RailVehicleBrake.BRAKE_HANDLE_TYPE_FVE408,
     "st113": RailVehicleBrake.BRAKE_HANDLE_TYPE_ST113,
+}
+
+## The local brake handles LoadFIZ_Cntrl knows (Mover.cpp:10778)
+const _LOCAL_HANDLE_TYPE_MAP := {
+    "fd1": RailVehicleBrake.BRAKE_HANDLE_TYPE_FD1, "knorr": RailVehicleBrake.BRAKE_HANDLE_TYPE_KNORR,
+    "westinghouse": RailVehicleBrake.BRAKE_HANDLE_TYPE_WESTINGHOUSE,
 }
 
 const _LOCAL_BRAKE_TYPE_MAP := {
@@ -61,6 +67,11 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
 
     var node := MoverRailVehicleBrake.new()
     _parse_brake(kv, node)
+    # Mover.cpp:10528 - by default a diesel's releaser works only at the controller's zero; the
+    # engine is the one parsed before this line, as in the original
+    node.releaser_enabled_only_at_no_power_pos = FizLineUtil.get_bool(kv, "ReleaserPowerPosLock") \
+            if kv.has("ReleaserPowerPosLock") \
+            else context.engine_type in [RailVehicleEngine.DIESEL, RailVehicleEngine.DIESEL_ELECTRIC]
     context.add_part("RailVehicleBrake", node)
 
 
@@ -183,6 +194,15 @@ func _parse_brake(kv: Dictionary, node: RailVehicleBrake) -> void:
 
 ## Called by FizTrainCntrlParser with the full Cntrl. key/value set - applies only the
 ## brake-relevant subset.
+## BrakeDelays= (Mover.cpp:10738-10746)
+const _DELAY_MAP := {
+    "g": RailVehicleBrake.BRAKE_DELAY_G, "p": RailVehicleBrake.BRAKE_DELAY_P, "r": RailVehicleBrake.BRAKE_DELAY_R,
+    "gp": RailVehicleBrake.BRAKE_DELAY_GP, "pr": RailVehicleBrake.BRAKE_DELAY_PR,
+    "gpr": RailVehicleBrake.BRAKE_DELAY_GPR, "gpr+mg": RailVehicleBrake.BRAKE_DELAY_GPR_MG,
+    "pr+mg": RailVehicleBrake.BRAKE_DELAY_PR_MG,
+}
+
+
 func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportContext) -> void:
     var brake_system: int = RailVehicleBrake.BRAKE_SYSTEM_INDIVIDUAL
     match FizLineUtil.get_string(kv, "BrakeSystem").to_lower():
@@ -190,6 +210,30 @@ func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportConte
         "electropneumatic": brake_system = RailVehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC
     node.cntrl_brake_system = brake_system
     context.brake_system = brake_system
+
+    # LoadFIZ_Cntrl (Mover.cpp:10817-10895): the local, manual and dynamic brake and the spring
+    # brake keys are read whatever the brake system
+    var local_brake_str: String = FizLineUtil.get_string(kv, "LocalBrake").to_lower()
+    if _LOCAL_BRAKE_TYPE_MAP.has(local_brake_str):
+        node.cntrl_local_brake_type = _LOCAL_BRAKE_TYPE_MAP[local_brake_str]
+    if kv.has("ManualBrake"):
+        node.cntrl_manual_brake_present = FizLineUtil.get_bool(kv, "ManualBrake")
+    var dynamic_str: String = FizLineUtil.get_string(kv, "DynamicBrake").to_lower()
+    match dynamic_str:
+        "passive": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_PASSIVE
+        "switch": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_SWITCH
+        "reversal": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_REVERSAL
+        "automatic": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_AUTOMATIC
+    if kv.has("LocalBrakeTraxx"):
+        node.cntrl_local_brake_traxx = FizLineUtil.get_bool(kv, "LocalBrakeTraxx")
+    if kv.has("ReleaseParkingBySpringBrake"):
+        node.cntrl_release_parking_by_spring_brake = FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrake")
+    if kv.has("ReleaseParkingBySpringBrakeWhenDoorIsOpen"):
+        node.cntrl_release_parking_by_spring_brake_when_door_open = FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrakeWhenDoorIsOpen")
+    if kv.has("SpringBrakeCutsOffDrive"):
+        node.cntrl_spring_brake_cuts_off_drive = FizLineUtil.get_bool(kv, "SpringBrakeCutsOffDrive")
+    if kv.has("SpringBrakeDriveEmergencyVel"):
+        node.cntrl_spring_brake_drive_emergency_velocity = FizLineUtil.get_float(kv, "SpringBrakeDriveEmergencyVel")
 
     if brake_system == RailVehicleBrake.BRAKE_SYSTEM_INDIVIDUAL:
         return
@@ -206,7 +250,6 @@ func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportConte
         node.cntrl_brake_delay_4 = FizLineUtil.get_float(kv, "BDelay4")
 
     var delays_str: String = FizLineUtil.get_string(kv, "BrakeDelays").to_lower()
-    const _DELAY_MAP := {"g": 1, "p": 2, "r": 4, "gp": 3, "pr": 6, "gpr": 7, "gpr+mg": 15, "pr+mg": 14}
     if _DELAY_MAP.has(delays_str):
         node.cntrl_brake_delays = _DELAY_MAP[delays_str]
 
@@ -220,37 +263,13 @@ func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportConte
     if _HANDLE_TYPE_MAP.has(handle_str):
         node.cntrl_brake_handle_type = _HANDLE_TYPE_MAP[handle_str]
     var loc_handle_str: String = FizLineUtil.get_string(kv, "LocBrakeHandle").to_lower()
-    if _HANDLE_TYPE_MAP.has(loc_handle_str):
-        node.cntrl_local_brake_handle_type = _HANDLE_TYPE_MAP[loc_handle_str]
-
-    var local_brake_str: String = FizLineUtil.get_string(kv, "LocalBrake").to_lower()
-    if _LOCAL_BRAKE_TYPE_MAP.has(local_brake_str):
-        node.cntrl_local_brake_type = _LOCAL_BRAKE_TYPE_MAP[local_brake_str]
-    if kv.has("ManualBrake"):
-        node.cntrl_manual_brake_present = FizLineUtil.get_bool(kv, "ManualBrake")
+    if _LOCAL_HANDLE_TYPE_MAP.has(loc_handle_str):
+        node.cntrl_local_brake_handle_type = _LOCAL_HANDLE_TYPE_MAP[loc_handle_str]
 
     match FizLineUtil.get_string(kv, "ASB").to_lower():
         "manual": node.cntrl_anti_skid_brake_type = RailVehicleBrake.ANTI_SKID_BRAKE_MANUAL
         "automatic": node.cntrl_anti_skid_brake_type = RailVehicleBrake.ANTI_SKID_BRAKE_AUTOMATIC
-        "yes": node.cntrl_anti_skid_brake_type = RailVehicleBrake.ANTI_SKID_BRAKE_AUTOMATIC
-
-    var dynamic_str: String = FizLineUtil.get_string(kv, "DynamicBrake").to_lower()
-    match dynamic_str:
-        "passive": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_PASSIVE
-        "switch": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_SWITCH
-        "reversal": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_REVERSAL
-        "automatic": node.cntrl_dynamic_brake_type = RailVehicleBrake.DYNAMIC_BRAKE_AUTOMATIC
-
-    if kv.has("LocalBrakeTraxx"):
-        node.cntrl_local_brake_traxx = FizLineUtil.get_bool(kv, "LocalBrakeTraxx")
-    if kv.has("ReleaseParkingBySpringBrake"):
-        node.cntrl_release_parking_by_spring_brake = FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrake")
-    if kv.has("ReleaseParkingBySpringBrakeWhenDoorIsOpen"):
-        node.cntrl_release_parking_by_spring_brake_when_door_open = FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrakeWhenDoorIsOpen")
-    if kv.has("SpringBrakeCutsOffDrive"):
-        node.cntrl_spring_brake_cuts_off_drive = FizLineUtil.get_bool(kv, "SpringBrakeCutsOffDrive")
-    if kv.has("SpringBrakeDriveEmergencyVel"):
-        node.cntrl_spring_brake_drive_emergency_velocity = FizLineUtil.get_float(kv, "SpringBrakeDriveEmergencyVel")
+        "yes": node.cntrl_anti_skid_brake_type = RailVehicleBrake.ANTI_SKID_BRAKE_YES
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:

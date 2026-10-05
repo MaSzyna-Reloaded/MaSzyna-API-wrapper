@@ -35,6 +35,8 @@ namespace godot {
             virtual int get_open_control() const = 0;
             virtual bool get_left_open() const = 0;
             virtual bool get_left_closed() const = 0;
+            /* The door alone fully closed, its step whatever (is_door_closed, MOVER.h:965) */
+            virtual bool get_left_door_closed() const = 0;
             virtual bool get_left_open_permit() const = 0;
             virtual bool get_left_local_open() const = 0;
             virtual bool get_left_remote_open() const = 0;
@@ -45,6 +47,7 @@ namespace godot {
             virtual bool get_left_step_operating() const = 0;
             virtual bool get_right_open() const = 0;
             virtual bool get_right_closed() const = 0;
+            virtual bool get_right_door_closed() const = 0;
             virtual bool get_right_open_permit() const = 0;
             virtual bool get_right_local_open() const = 0;
             virtual bool get_right_remote_open() const = 0;
@@ -106,7 +109,8 @@ namespace godot {
             MAKE_MEMBER_GS(float, open_time, -1.0f);
             MAKE_MEMBER_GS(float, open_speed, 1.0f);
             MAKE_MEMBER_GS(float, close_speed, 1.0f);
-            MAKE_MEMBER_GS(float, max_shift, 0.5f);
+            /* DoorMaxShiftL/R=, DoorMaxShiftPlug= absent: no movement (range, range_out, MOVER.h:1434-1435) */
+            MAKE_MEMBER_GS(float, max_shift, 0.0f);
             MAKE_MEMBER_GS_NR(Voltage, voltage, Voltage::VOLTAGE_AUTO);
             MAKE_MEMBER_GS(bool, close_warning, false);
             MAKE_MEMBER_GS(bool, close_auto_close_warning, false);
@@ -114,7 +118,7 @@ namespace godot {
             MAKE_MEMBER_GS(float, open_delay, 0.0f);
             MAKE_MEMBER_GS(float, open_with_permit, -1.0f);
             MAKE_MEMBER_GS(bool, has_lock, false);
-            MAKE_MEMBER_GS(float, max_shift_plug, 0.1f);
+            MAKE_MEMBER_GS(float, max_shift_plug, 0.0f);
             MAKE_MEMBER_GS_NO_DEF(Array, permit_list);
             MAKE_MEMBER_GS(int, permit_default, 1);
             MAKE_MEMBER_GS(bool, close_auto_close_remote, false);

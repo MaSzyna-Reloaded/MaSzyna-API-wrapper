@@ -13,6 +13,14 @@ var vehicle:RID = RID():
             vehicle = x
             _dirty = true
 
+## Which vehicle of the occupied one's unit the widget acts on, as the cab's same control does
+## (MmdSemanticCatalog, LegacyCabin*): the main switch is the controlled vehicle's (mvControlled)
+@export var target:CabinState.Target = CabinState.Target.OCCUPIED:
+    set(x):
+        _dirty = true
+        target = x
+var _target_vehicle:RID = RID()
+
 
 
 @export var label:String:
@@ -54,6 +62,7 @@ var _t = 0.0
 func _process(delta):
     if _dirty:
         _dirty = false
+        _target_vehicle = CabinState.vehicle_of(vehicle, target) if vehicle.is_valid() else RID()
 
         $SpinBox.min_value = min_value
         $SpinBox.max_value = max_value
@@ -65,9 +74,9 @@ func _process(delta):
         _t += delta
         if _t > 0.1:
             _t = 0.0
-            if vehicle.is_valid():
+            if _target_vehicle.is_valid():
                 if state_property:
-                    var value = VehicleServer.vehicle_dump_state(vehicle).get(state_property)
+                    var value = VehicleServer.vehicle_dump_state(_target_vehicle).get(state_property)
                     if not value == null:
                         $SpinBox.value = value
                 else:
@@ -79,5 +88,5 @@ func _process(delta):
 
 
 func _on_spin_box_value_changed(value):
-    if vehicle.is_valid() and command:
-        VehicleServer.vehicle_send_command(vehicle, command, value)
+    if _target_vehicle.is_valid() and command:
+        VehicleServer.vehicle_send_command(_target_vehicle, command, value)

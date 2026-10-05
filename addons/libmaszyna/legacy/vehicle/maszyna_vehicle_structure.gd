@@ -29,5 +29,9 @@ class_name MaszynaVehicleStructure
 ## (RailVehicleRenderingServer draws it from this)
 @export var appearance:RailVehicleAppearance = null
 
+## coupleradapter: - the adapter the vehicle hands a neighbour of another coupler type
+## (MmdCabinInstancer.parse_coupler_adapter()); empty without the key, the original's own then
+@export var coupler_adapter:Dictionary = {}
+
 ## The cab is genuinely a tree of widgets, so it stays a scene of its own.
 @export var cabin_scene:PackedScene = null

@@ -42,6 +42,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light_switch", "light", "enabled"), &RailVehicleLighting::light_switch);
         ClassDB::bind_method(D_METHOD("headlights_dim", "enabled"), &RailVehicleLighting::headlights_dim);
         ClassDB::bind_method(D_METHOD("get_headlights_dimmed"), &RailVehicleLighting::get_headlights_dimmed);
+        ClassDB::bind_method(D_METHOD("get_any_light_enabled"), &RailVehicleLighting::get_any_light_enabled);
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
 
         ClassDB::bind_method(D_METHOD("get_position"), &RailVehicleLighting::get_position);

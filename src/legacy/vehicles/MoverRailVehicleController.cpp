@@ -341,6 +341,77 @@ namespace godot {
         }
     }
 
+    // TDynamicObject::attach_coupler_adapter() (DynObj.cpp:1754-1789): the vehicle beyond the end -
+    // the one coupled at it for the scenery, the nearest one within reach otherwise - hands its
+    // adapter; with room asked for, some has to be left; the end then couples as an automatic one
+    bool MoverRailVehicleController::_fit_coupler_adapter(const CouplerEnd p_end, const bool p_with_room) {
+        if (mover == nullptr) {
+            return false;
+        }
+        const neighbour_data &neighbour = mover->Neighbours[p_end];
+        const Ref<RailVehicleController> other =
+                _controller_of(p_with_room ? neighbour.vehicle : mover->Couplers[p_end].Connected);
+        if (other.is_null() || (p_with_room && neighbour.distance > COUPLER_ADAPTER_REACH)) {
+            return false;
+        }
+        const double length = other->get_coupler_adapter_length();
+        if (p_with_room && neighbour.distance - length < COUPLER_ADAPTER_ROOM) {
+            return false;
+        }
+        TCoupling &coupler = mover->Couplers[p_end];
+        coupler.adapter_type = TCouplerType::Automatic;
+        coupler.adapter_length = length;
+        coupler.adapter_height = other->get_coupler_adapter_height();
+        fitted_adapter_models[p_end] = other->get_coupler_adapter_model();
+        emit_signal(coupler_adapter_attached_signal, p_end);
+        return true;
+    }
+
+    bool MoverRailVehicleController::is_coupler_automatic(const CouplerEnd p_end) const {
+        return mover != nullptr && mover->Couplers[p_end].type() == TCouplerType::Automatic;
+    }
+
+    bool MoverRailVehicleController::coupler_adapter_attach(const Variant &p_where) {
+        return mover != nullptr && _fit_coupler_adapter(_resolve_coupler_end(p_where), true);
+    }
+
+    bool MoverRailVehicleController::coupler_adapter_fit(const CouplerEnd p_end) {
+        return _fit_coupler_adapter(p_end, false);
+    }
+
+    // TDynamicObject::remove_coupler_adapter() (DynObj.cpp:1791-1810)
+    bool MoverRailVehicleController::coupler_adapter_remove(const Variant &p_where) {
+        if (mover == nullptr) {
+            return false;
+        }
+        const CouplerEnd end = _resolve_coupler_end(p_where);
+        TCoupling &coupler = mover->Couplers[end];
+        if (coupler.adapter_type == TCouplerType::NoCoupler) {
+            return false;
+        }
+        if (coupler.Connected != nullptr) {
+            uncouple(end);
+        }
+        coupler.adapter_type = TCouplerType::NoCoupler;
+        coupler.adapter_length = 0.0;
+        coupler.adapter_height = 0.0;
+        fitted_adapter_models[end] = String();
+        emit_signal(coupler_adapter_removed_signal, end);
+        return true;
+    }
+
+    String MoverRailVehicleController::get_coupler_adapter_fitted_model(const CouplerEnd p_end) const {
+        return fitted_adapter_models[p_end];
+    }
+
+    double MoverRailVehicleController::get_coupler_adapter_fitted_length(const CouplerEnd p_end) const {
+        return mover != nullptr ? mover->Couplers[p_end].adapter_length : 0.0;
+    }
+
+    double MoverRailVehicleController::get_coupler_adapter_fitted_height(const CouplerEnd p_end) const {
+        return mover != nullptr ? mover->Couplers[p_end].adapter_height : 0.0;
+    }
+
     bool MoverRailVehicleController::is_coupled(const CouplerEnd p_end) const {
         return mover != nullptr && mover->Couplers[p_end].Connected != nullptr;
     }
@@ -480,6 +551,14 @@ namespace godot {
 
         mover->CategoryFlag = get_category();
         mover->TrainType = get_train_type();
+        // an EZT's automatic start thresholds before an engine's Circuit: writes its own
+        // (LoadFIZ_Param, Mover.cpp:10300-10305) - a cab car has no engine to write them, and with
+        // Imin == IminHi == 0 DirectionBackward() switches the high start off forever (Mover.cpp:3250)
+        if (mover->TrainType == Maszyna::dt_EZT && mover->IminLo == 0 && mover->IminHi == 0) {
+            mover->IminLo = EZT_IMIN_LOW;
+            mover->IminHi = EZT_IMIN_HIGH;
+            mover->Imin = mover->IminLo;
+        }
         mover->SandCapacity = static_cast<int>(get_sand_capacity());
         mover->HeatingPower = get_heating_power();
         mover->LightPower = get_light_power();

@@ -59,6 +59,15 @@ namespace godot {
 
         private:
             static void _bind_methods();
+            int turbo_position = 0;
+
+        public:
+            /* TurboPos: - the master controller position from which the turbocharger is heard; 0
+             * without it (LoadFIZ_TurboPos, Mover.cpp:10714; DynObj.cpp:8267) */
+            void set_turbo_position(int p_value);
+            int get_turbo_position() const;
+
+        private:
             MAKE_MEMBER_GS(float, oil_pump_pressure_minimum, 0.0);
             MAKE_MEMBER_GS(float, oil_pump_pressure_maximum, 0.65);
             MAKE_MEMBER_GS_NR(

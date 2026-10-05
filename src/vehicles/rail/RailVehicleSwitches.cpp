@@ -2,6 +2,9 @@
 
 namespace godot {
     void RailVehicleSwitches::_bind_methods() {
+        BIND_ENUM_CONSTANT(RELAY_RESET_BUTTON_1);
+        BIND_ENUM_CONSTANT(RELAY_RESET_BUTTON_2);
+        BIND_ENUM_CONSTANT(RELAY_RESET_BUTTON_3);
         BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_NONE);
         BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_OWN_END);
         BIND_ENUM_CONSTANT(PANTOGRAPH_PRESET_OTHER_END);
@@ -30,6 +33,7 @@ namespace godot {
                 RailVehicleSwitches, Variant::ARRAY, dimmer_list_positions, "dimmer_list_positions",
                 PROPERTY_HINT_TYPE_STRING, "RailVehicleDimmerListItem");
         ClassDB::bind_method(D_METHOD("sand", "active"), &RailVehicleSwitches::sand);
+        ClassDB::bind_method(D_METHOD("universal_relay_reset", "button"), &RailVehicleSwitches::universal_relay_reset);
         ClassDB::bind_method(D_METHOD("next_pantograph_preset", "end"), &RailVehicleSwitches::next_pantograph_preset);
         ClassDB::bind_method(
                 D_METHOD("previous_pantograph_preset", "end"), &RailVehicleSwitches::previous_pantograph_preset);
@@ -44,6 +48,7 @@ namespace godot {
     void RailVehicleSwitches::_register_commands() {
         VehicleComponent::_register_commands();
         register_command("sand", Callable(this, "sand"));
+        register_command("universal_relay_reset", Callable(this, "universal_relay_reset"));
         register_command("pantograph_next_preset", Callable(this, "next_pantograph_preset"));
         register_command("pantograph_previous_preset", Callable(this, "previous_pantograph_preset"));
     }
@@ -51,11 +56,14 @@ namespace godot {
     void RailVehicleSwitches::_unregister_commands() {
         VehicleComponent::_unregister_commands();
         unregister_command("sand");
+        unregister_command("universal_relay_reset");
         unregister_command("pantograph_next_preset");
         unregister_command("pantograph_previous_preset");
     }
     // how the cab operates the pantographs (PantSwitchType, Train.cpp:3175, 3285)
     void RailVehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {
         p_config["pantograph_switch_impulse"] = get_pantograph_impulse();
+        // ConvSwitchType (Train.cpp:4387, 4419)
+        p_config["converter_switch_impulse"] = get_converter_impulse();
     }
 } // namespace godot

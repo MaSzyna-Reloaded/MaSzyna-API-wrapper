@@ -59,6 +59,27 @@
 			<description>
 			</description>
 		</method>
+		<method name="coupler_adapter_attach">
+			<return type="bool" />
+			<param index="0" name="where" type="Variant" />
+			<description>
+				The adapter of the vehicle nearest beyond an end (its [member coupler_adapter_model], length and height) fitted to that end, as long as it stands within reach and leaves room for it (attach_coupler_adapter(), DynObj.cpp:1754-1789); [param where] as [method coupler_connect]'s. Command [code]coupler_adapter_attach[/code].
+			</description>
+		</method>
+		<method name="coupler_adapter_fit">
+			<return type="bool" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The adapter of the vehicle coupled at an end fitted to it whatever the room - a trainset the scenery couples (AttachNext(), DynObj.cpp:2740-2758).
+			</description>
+		</method>
+		<method name="coupler_adapter_remove">
+			<return type="bool" />
+			<param index="0" name="where" type="Variant" />
+			<description>
+				The adapter taken off an end, which is uncoupled first (remove_coupler_adapter(), DynObj.cpp:1791-1810). Command [code]coupler_adapter_remove[/code].
+			</description>
+		</method>
 		<method name="coupler_connect">
 			<return type="void" />
 			<param index="0" name="where" type="Variant" />
@@ -106,6 +127,27 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_coupler_adapter_fitted_height" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The height over the rail of the adapter fitted to an end [m].
+			</description>
+		</method>
+		<method name="get_coupler_adapter_fitted_length" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The length the adapter fitted to an end adds to it [m].
+			</description>
+		</method>
+		<method name="get_coupler_adapter_fitted_model" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The model of the adapter fitted to an end, empty without one.
+			</description>
+		</method>
 		<method name="get_coupler_stretched" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -148,6 +190,13 @@
 			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
 			<param index="1" name="flags" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
 			<description>
+			</description>
+		</method>
+		<method name="is_coupler_automatic" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				Whether an end couples as an automatic coupler, its adapter's or its own (TCoupling::type()).
 			</description>
 		</method>
 		<method name="main_controller_decrease" qualifiers="const">
@@ -205,7 +254,7 @@
 		<member name="cntrl_automatic_cab_activation" type="bool" setter="set_cntrl_automatic_cab_activation" getter="get_cntrl_automatic_cab_activation" default="true">
 			[code]Cntrl.AutomaticCabActivation[/code]
 		</member>
-		<member name="cntrl_compartment_lights_start_mode" type="int" setter="set_cntrl_compartment_lights_start_mode" getter="get_cntrl_compartment_lights_start_mode" enum="RailVehicleController.StartMode" default="0">
+		<member name="cntrl_compartment_lights_start_mode" type="int" setter="set_cntrl_compartment_lights_start_mode" getter="get_cntrl_compartment_lights_start_mode" enum="RailVehicleController.StartMode" default="2">
 			[code]Cntrl.CompartmentLightsStart[/code]
 		</member>
 		<member name="cntrl_ground_relay_start_mode" type="int" setter="set_cntrl_ground_relay_start_mode" getter="get_cntrl_ground_relay_start_mode" enum="RailVehicleController.StartMode" default="1">
@@ -214,6 +263,15 @@
 		<member name="cntrl_inactive_cab_flag" type="int" setter="set_cntrl_inactive_cab_flag" getter="get_cntrl_inactive_cab_flag" default="0">
 			[code]Cntrl.InactiveCabFlag[/code]
 			Bitmask of automatic actions performed on cab deactivation/activation.
+		</member>
+		<member name="coupler_adapter_height" type="float" setter="set_coupler_adapter_height" getter="get_coupler_adapter_height" default="0.95">
+			[code]coupleradapter:[/code] - the height over the rail of the adapter this vehicle hands a neighbour of another coupler type [m]; the original's own without the key (DynObj.cpp:1765-1769).
+		</member>
+		<member name="coupler_adapter_length" type="float" setter="set_coupler_adapter_length" getter="get_coupler_adapter_length" default="0.085">
+			[code]coupleradapter:[/code] - the length the adapter this vehicle hands a neighbour adds to its end [m].
+		</member>
+		<member name="coupler_adapter_model" type="String" setter="set_coupler_adapter_model" getter="get_coupler_adapter_model" default="&quot;tabor/polsprzeg&quot;">
+			[code]coupleradapter:[/code] - the model of that adapter, under [code]models/[/code].
 		</member>
 		<member name="heating_power" type="float" setter="set_heating_power" getter="get_heating_power" default="0.0">
 			[code]Param.HeatingP[/code]
@@ -249,6 +307,18 @@
 			<param index="0" name="cabin_occupied" type="int" />
 			<description>
 				Emitted when the occupied cab changes ([code]1[/code] cab 1, [code]0[/code] machine room, [code]-1[/code] cab 2).
+			</description>
+		</signal>
+		<signal name="coupler_adapter_attached">
+			<param index="0" name="end" type="int" />
+			<description>
+				A coupler adapter was fitted to [param end].
+			</description>
+		</signal>
+		<signal name="coupler_adapter_removed">
+			<param index="0" name="end" type="int" />
+			<description>
+				A coupler adapter was taken off [param end].
 			</description>
 		</signal>
 		<signal name="coupler_attached">

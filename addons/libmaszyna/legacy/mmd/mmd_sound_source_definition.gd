@@ -24,6 +24,11 @@ var chunks:Array[Dictionary] = []
 ## Percentage (0-100) of the gap between adjacent chunk thresholds that the crossfade porting in
 ## MmdSoundEventBuilder blends over - mirrors m_crossfaderange, "crossfade:" in MMD.
 var crossfade_percent:int = 0
+## Where the last chunk ends at the latest, unless its threshold is higher - sound_source::
+## deserialize()'s Chunkrange (sound.cpp:85, default 100 in sound.h:69; outernoise: takes the
+## vehicle's Vmax, DynObj.cpp:6389)
+const DEFAULT_CHUNK_RANGE:int = 100
+var chunk_range:int = DEFAULT_CHUNK_RANGE
 var amplitude_factor:float = 1.0
 var amplitude_offset:float = 0.0
 var frequency_factor:float = 1.0

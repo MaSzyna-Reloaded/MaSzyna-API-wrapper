@@ -88,5 +88,6 @@ namespace godot {
             void light_switch(const String &p_light, bool p_enabled) override;
             void headlights_dim(bool p_enabled) override;
             bool get_headlights_dimmed() const override;
+            bool get_any_light_enabled() const override;
     };
 } // namespace godot

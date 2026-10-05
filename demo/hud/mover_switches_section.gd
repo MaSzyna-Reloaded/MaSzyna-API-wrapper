@@ -9,6 +9,12 @@ var vehicle:RID = RID():
             vehicle = x
             _do_update()
 
+## Which vehicle of the occupied one's unit the section shows, as the cab's controls pick theirs
+## (CabinState.Target): the engine is the controlled vehicle's, the pantographs the carrier's
+@export var target:CabinState.Target = CabinState.Target.OCCUPIED
+## The vehicle of `target`, resolved whenever the occupied vehicle changes
+var target_vehicle:RID = RID()
+
 ## Taken once per vehicle rather than looked up per frame - a component is a live view on the
 ## vehicle, valid for as long as the vehicle is.
 var universal_controller:RailVehicleUniversalController
@@ -18,12 +24,13 @@ func _ready() -> void:
     _do_update()
 
 func _do_update():
+    target_vehicle = CabinState.vehicle_of(vehicle, target) if vehicle.is_valid() else RID()
     universal_controller = _rail_component(RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
 
 
 func _component(type:VehicleComponentType.Type) -> VehicleComponent:
-    return VehicleServer.vehicle_component_get(vehicle, type)
+    return VehicleServer.vehicle_component_get(target_vehicle, type)
 
 
 func _rail_component(type:RailVehicleComponentType.Type) -> VehicleComponent:
-    return RailVehicleServer.vehicle_component_get(vehicle, type)
+    return RailVehicleServer.vehicle_component_get(target_vehicle, type)

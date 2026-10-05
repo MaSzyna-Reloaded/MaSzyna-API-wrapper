@@ -56,7 +56,8 @@ namespace godot {
                          {"P10yBg", BRAKE_METHOD_P10Y_BG},
                          {"P10yBgu", BRAKE_METHOD_P10Y_BGU},
                          {"FR510", BRAKE_METHOD_FR510},
-                         {"Disk1+Mg", BRAKE_METHOD_D1MG}}));
+                         {"Disk1+Mg", BRAKE_METHOD_D1MG},
+                         {"None", BRAKE_METHOD_NONE}}));
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, rapid_transfer, "rapid");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, rapid_switching_speed, "rapid");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, air_leak_multiplier)
@@ -74,6 +75,7 @@ namespace godot {
                 RailVehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING,
                 "RailVehicleCompressorListItem");
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, compressor_emergency_valve_area, "compressor")
+        BIND_PROPERTY(RailVehicleBrake, Variant::BOOL, releaser_enabled_only_at_no_power_pos, "releaser")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, universal_brake_button_1, "universal_brake_button", PROPERTY_HINT_FLAGS,
                 "Releaser,Bridge Emergency Valve,High Pressure Impulse,Assimilation,Anti-Skid Brake")
@@ -89,7 +91,7 @@ namespace godot {
         BIND_PROPERTY(RailVehicleBrake, Variant::INT, cntrl_brake_ctrl_position_count, "cntrl")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_brake_delays, "cntrl", PROPERTY_HINT_ENUM,
-                "G:1,P:2,R:4,GP:3,PR:6,GPR:7,PR+Mg:14,GPR+Mg:15")
+                "None:0,G:1,P:2,R:4,GP:3,PR:6,GPR:7,PR+Mg:14,GPR+Mg:15")
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_1, "cntrl")
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_2, "cntrl")
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_3, "cntrl")
@@ -107,7 +109,7 @@ namespace godot {
                 "MHZ_K5P,MHZ_K8P,MHZ_6P")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_anti_skid_brake_type, "cntrl", PROPERTY_HINT_ENUM,
-                "None,Manual,Automatic")
+                "None,Manual,Automatic,Yes")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_local_brake_type, "cntrl", PROPERTY_HINT_ENUM,
                 "None,Manual,Pneumatic,Hydraulic")
@@ -153,6 +155,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_NONE);
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_MANUAL);
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_AUTOMATIC);
+        BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_YES);
 
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_NONE);
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_PASSIVE);
@@ -160,6 +163,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_REVERSAL);
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_AUTOMATIC);
 
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_NONE);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_G);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_P);
         BIND_ENUM_CONSTANT(BRAKE_DELAY_R);
@@ -236,7 +240,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_METHOD_COSID);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Y_BG);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Y_BGU);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_FR510);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_NONE);
 
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &RailVehicleBrake::brake_releaser);
         ClassDB::bind_method(D_METHOD("consist_releaser", "active"), &RailVehicleBrake::consist_releaser);

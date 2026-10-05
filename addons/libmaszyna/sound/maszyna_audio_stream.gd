@@ -8,6 +8,14 @@ class_name MaszynaAudioStream
             file_path = x
             _real_stream = null
 
+## The directory of the vehicle the sound belongs to, where its file is looked for first
+## (audio.cpp:115); "" for a sound of no vehicle
+@export var vehicle_dir:String = "":
+    set(x):
+        if not vehicle_dir == x:
+            vehicle_dir = x
+            _real_stream = null
+
 @export var loop:bool = false:
     set(x):
         if not loop == x:
@@ -40,7 +48,7 @@ func _get_length() -> float:
 
 func _instantiate_playback() -> AudioStreamPlayback:
     if file_path and not _real_stream:
-        _real_stream = AudioStreamManager.get_stream(file_path, loop)
+        _real_stream = AudioStreamManager.get_stream(file_path, loop, vehicle_dir)
 
     if _real_stream:
         return _real_stream.instantiate_playback()

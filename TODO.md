@@ -266,10 +266,9 @@ OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/
 * `headlights_dimmed` is state only - nothing renders a headlight beam to dim.
 * Distance counter: the double-press start (FIZ `DCMB`/`DCDPP`, not in the vendored Mover), the
   switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
-* The radio plays the scenery's radio messages (`MaszynaDynamicTrainCabin`), non-positional - not yet
-  at `m_radiosound`'s own place in the cab.
-* The cab's Radio-Stop alarm (MMD `radiostop:`, `m_radiostop`, looping while the radio is on and
-  `RadioStopFlag` is set, Train.cpp:10245-10256) is not played.
+* The radio message lamp's sounds (`i-radiomessage` soundinc/sounddec) play at their own gain; the
+  original plays them at the radio's volume (`btLampkaRadioMessage.gain(m_radiovolume)`,
+  Train.cpp:10258-10261).
 
 ### Gauge lamps (`<name>_on`)
 
@@ -1131,7 +1130,7 @@ ported, into a delegate.
       order now; they were the train's everywhere before.
       **Not checked on a scenery** - Stary Jawor has no coupling; linia61 and calkowo do
       (`l61_towarowy1_hn.scm`, `events_tartak.ctr`), too heavy for a headless probe so far.
-      Left: the coupler adapter (`couplingadapterattach/remove`); the high voltage and power
+      Left: the high voltage and power
       lines of a coupler number (no element a shunter joins); `coupler_connect` joins its elements
       in a fixed order, so one asked for past a skipped one brings the skipped one too; the lights
       after the trainset changed (`CheckVehicles()`); the electro-pneumatic brake's own
@@ -1336,3 +1335,56 @@ ported, into a delegate.
 * The `maszyna-reloaded-<branch>` prerelease of a pull request stays after the PR is merged or
   closed; nothing deletes it yet. A pull request from a fork publishes none (read-only token),
   only artifacts.
+
+## Data the original reads that the wrapper does not read yet (audit 2026-10-05)
+
+Found by the data-driven audit (`.claude/skills/mover-cabin-wrapper-feature`, "The port is
+data-driven"); what it found is fixed except these:
+
+* **The destination sign**: the submodel is found by its replaceable skin 4 as the original does, but
+  the sign itself - destination textures by name (`DestinationFind`), `pydestinationsign:` (133
+  MMDs, a python screen), `destinationsignbackground:`, the lit sign on the low voltage
+  (`DynObj.cpp:3044-3062, 6935-6962, 7780-7830`) - is not ported.
+* **Cab controls in the low-poly interior and lamps in the exterior model** (`Gauge.cpp:187`,
+  `Button.cpp:59`): the original animates them on those models, seen from outside; here the cab's
+  controls are only the cab model's. It needs the cab logic to drive the vehicle's low-poly and
+  exterior instances.
+* **The cab's door controls** (`OnCommand_doorlocktoggle`, `doortoggleleft/right`,
+  `dooropenleft/right`, `doorcloseleft/right`, `dooropenall`, `doorcloseall`, `doormodetoggle`,
+  Train.cpp:7091-7740): the MMD labels `door_left/right_sw`, `doorleft/righton_sw`,
+  `doorleft/rightoff_sw`, `doorallon_sw`, `dooralloff_sw` (45 files, its lamp `m_doors` = any door
+  of the train open), `door_signalling_sw`, `doormode_sw` (drivermouseinput.cpp:672-710) and their
+  keys (driverkeyboardinput.cpp:180-196) are not ported. Needs: a `LegacyCabinDoors` behaviour,
+  catalog entries, input actions (Comma/Period with Shift and Ctrl+Shift are taken by the permit
+  actions - pick free bindings), the departure signal on close (`signal_departure`, a command and a
+  state of the doors component) and tests. `RailVehicleDoors.get_left/right_door_closed()`
+  (`is_door_closed`) is added for it.
+* **The door permit switches' lamps** (`door_permit_lamp_left/right`, `LegacyCabinDoorPermits`,
+  Train.cpp:8514-8520) are written - permit on the cab's side, blinking by the simulation's second
+  or the trainset's doors - but have no test yet.
+* **The radio message lamp's sound**: its soundinc/sounddec gain does not follow the radio's
+  volume (Train.cpp:10258-10261).
+* **EN57-702ra drives without the battery and the main switch** (report 2026-10-05): not
+  reproduced on the fixture trainset; needs the operator's scenery and a headless probe of the
+  ra/s/rb start state (`battery_enabled`, `power24_voltage`, `power110_available`).
+* **The EN57 start-up test failed once** after the EZT `Imin` default (2026-10-05) and passed four
+  times since - unexplained, watch it.
+* **Headlight dimmer** `ModernDimmer=`/`DimmerList:` (`Train.cpp:725, 5888-5939`): read from the FIZ,
+  not applied - its effect is the vehicle's lighting (`SetLightDimmings`, DynObj.cpp:7298-7358), and
+  no vehicle of the game data uses it (0 files).
+* **`.flac`** sounds: looked for in the original's order, but Godot reads no FLAC and the game data
+  has no `.flac` file; a decoder would be needed.
+* **`eimscreen: i j`**: parsed as the original does; no gauge reads `fEIMParams` (no data uses it).
+* **The turbo sound** (`turbo:`, `TurboPos:`) is ported (RunningSoundModel) without a test of the
+  sound itself - only the FIZ key reaching the engine is tested.
+
+## Grass and trees vanishing up close (report 2026-10-05, the operator's decision: TODO)
+
+* Ranged triangles are merged per 1 km chunk, and Godot measures `visibility_range` from the chunk
+  AABB centre (`maszyna_scenery_chunk_rendering_server.gd:146-151`); the original merges in 250 m
+  cells and measures from the shape's centre (`scene.cpp:834-837`, `opengl33renderer.cpp:2866-2873`).
+* Models: the original measures the node range and the LOD from the model origin
+  (`opengl33renderer.cpp:2935-2942, 3617, 3654`); 83a941e3 did that for the submodel LODs - whether a
+  model's node range (`E3DOptimizedBackend.cpp:196-205`) still goes by the submodel's own centre is
+  to be checked.
+* Measure at the reported spot (Linia053_Wrzosy, the 36WE) before changing either.

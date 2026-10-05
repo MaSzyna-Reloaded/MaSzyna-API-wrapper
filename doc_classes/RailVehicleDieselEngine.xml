@@ -435,6 +435,10 @@
 			Linearly-interpolated engine torque curve. Each item's [member VehicleCurvePointItem.x] is engine speed in RPM
 			and [member VehicleCurvePointItem.y] is torque in Nm.
 		</member>
+		<member name="turbo_position" type="int" setter="set_turbo_position" getter="get_turbo_position" default="0">
+			[code]TurboPos:TurboPos[/code]
+			The master controller position from which the turbocharger is heard; 0 without it (LoadFIZ_TurboPos, Mover.cpp:10714; DynObj.cpp:8267).
+		</member>
 		<member name="vel2nmax_table" type="VehicleCurvePointItem[]" setter="set_vel2nmax_table" getter="get_vel2nmax_table" default="[]">
 		</member>
 		<member name="water_pump_start_mode" type="int" setter="set_water_pump_start_mode" getter="get_water_pump_start_mode" enum="RailVehicleController.StartMode" default="1">

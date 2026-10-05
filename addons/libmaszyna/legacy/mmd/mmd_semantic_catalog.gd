@@ -109,11 +109,11 @@ static func _ensure_built() -> void:
                 "command_increase": "direction_increase",
                 "command_decrease": "direction_decrease",
                 "state_property": "direction",
-                "position_names": {-1: "backward", 0: "neutral", 1: "forward"},
+                "position_names": {-1: "backward", 0: "neutral", 1: "forward", 2: "forward_high_start"},
                 "action_increase": "direction_increase",
                 "action_decrease": "direction_decrease",
             },
-            "config_max_property": "",
+            "config_max_property": "direction_position_max",
             "mesh_path_field": "mesh_path",
         },
         "brakectrl": {
@@ -539,6 +539,23 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # the dashboard and timetable light switches (Train.cpp:11903-11904) - LegacyCabinCabLights
+        "dashboardlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "timetablelight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "cablight_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -586,8 +603,6 @@ static func _ensure_built() -> void:
             "widget_class": CabinGauge,
             "fixed_fields": {
                 "state_property": "tachometer_speed_jump",
-                # the value itself already jumps once per second - show each jump as is
-                "animation_speed": 0.0,
                 "max_value": 1.0,
             },
             "config_max_property": "",
@@ -597,7 +612,6 @@ static func _ensure_built() -> void:
             "widget_class": CabinGauge,
             "fixed_fields": {
                 "state_property": "tachometer_speed_jump",
-                "animation_speed": 0.0,
                 "max_value": 1.0,
             },
             "config_max_property": "",
@@ -647,6 +661,16 @@ static func _ensure_built() -> void:
                 "state_property": "engine_rpm_count",
                 "max_value": 1.0,
             },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # a pressure of a car of the train, named by the numbers before its shape, on the scale of
+        # the 0.1 multiplier (Train.cpp:12158-12166) - LegacyCabinTrainsetPressures
+        "brakes": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {},
+            "state_property_of_leading_numbers": true,
+            "mmd_scale_multiplier": 0.1,
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
@@ -837,6 +861,45 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Train.cpp:11914-11916 ggRelayResetButtons -> OnCommand_universalrelayreset (Train.cpp:5175),
+        # impulse-only, no key (driverkeyboardinput.cpp:127-129)
+        "relayreset1_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_relay_reset",
+                "command_param": RailVehicleSwitches.RELAY_RESET_BUTTON_1,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11914-11916 ggRelayResetButtons -> OnCommand_universalrelayreset (Train.cpp:5175),
+        # impulse-only, no key (driverkeyboardinput.cpp:127-129)
+        "relayreset2_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_relay_reset",
+                "command_param": RailVehicleSwitches.RELAY_RESET_BUTTON_2,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11914-11916 ggRelayResetButtons -> OnCommand_universalrelayreset (Train.cpp:5175),
+        # impulse-only, no key (driverkeyboardinput.cpp:127-129)
+        "relayreset3_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_relay_reset",
+                "command_param": RailVehicleSwitches.RELAY_RESET_BUTTON_3,
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "speedbutton0": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -991,13 +1054,22 @@ static func _ensure_built() -> void:
             "mesh_path_field": "mesh_path",
         },
         # Confirmed against RailVehicleElectricEngine.cpp:160,172,322 - converter()/converter_enabled.
+        # the converter switch and its off switch: an impulse one springs back (Switches:
+        # Converter=impulse, OnCommand_convertertoggle/disable, Train.cpp:4382-4458) - LegacyCabinConverter
         "converter_sw": {
             "widget_class": CabinButton,
+            "monostable_from_config": "converter_switch_impulse",
             "fixed_fields": {
                 "monostable": false,
-                "command": "converter",
-                "state_property": "converter_enabled",
                 "action": "converter_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "converteroff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
@@ -1247,6 +1319,22 @@ static func _ensure_built() -> void:
         # an "<submodel>_on"/"<submodel>_off" mesh swap, fully automatic once state_property is
         # set - no light_widget_class needed here (that's only for i-cablight/i-instrumentlight,
         # which are also real light sources). Plain passthroughs of already-exposed state:
+        # the radio's lamps of a message heard and of the Radio-Stop (btLampkaRadioMessage,
+        # btLampkaRadioStop, Train.cpp:9129-9130, 11618-11619) - the cab radio's own state (CabinRadio3D)
+        "i-radiomessage": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": CabinRadio3D.MESSAGE_PLAYED_KEY },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-radiostop": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": CabinRadio3D.RADIO_STOP_LAMP_KEY },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
         "i-slippery": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "slipping_wheels" },
@@ -1426,6 +1514,75 @@ static func _ensure_built() -> void:
             # alpha-scissor, or the glow renders as a crisp, wrong-looking silhouette.
             "force_alpha": true,
             # one glow per gauge's overlay, in that overlay's colour
+            "island_lights": IslandLights.GLOW,
+        },
+        # the instrument light's other kinds (Train.cpp:11755-11779: what powers and switches each is the
+        # cab logic's, LegacyCabinCabLights.InstrumentLightType) and the dashboard and timetable lights
+        # (btDashboardLight, btTimetableLight, Train.cpp:11708-11709, 9573-9574)
+        "i-instrumentlight_m": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.INSTRUMENT,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
+            "island_lights": IslandLights.GLOW,
+        },
+        "i-instrumentlight_c": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.INSTRUMENT,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
+            "island_lights": IslandLights.GLOW,
+        },
+        "i-instrumentlight_a": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.INSTRUMENT,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
+            "island_lights": IslandLights.GLOW,
+        },
+        "i-instrumentlight_l": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.INSTRUMENT,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
+            "island_lights": IslandLights.GLOW,
+        },
+        "i-dashboardlight": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.DASHBOARD,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
+            "island_lights": IslandLights.GLOW,
+        },
+        "i-timetablelight": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "cab_light": CabinState.Light.TIMETABLE,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "force_alpha": true,
             "island_lights": IslandLights.GLOW,
         },
         # Confirmed against Mover.cpp:183-188 (is_cabsignal_blinking(): `return power &&
@@ -1793,6 +1950,40 @@ static func _ensure_built() -> void:
         },
         # Train.cpp:12033-12034 ggDoorLeft/RightPermitButton -> OnCommand_doorpermitleft/right
         # (Train.cpp:7196-7294), Shift+, / Shift+. - LegacyCabinDoorPermits
+        # the cruise control switch and its off switch, lit while the speed control is active
+        # (OnCommand_tempomattoggle, Train.cpp:1486-1549; stategauges, Train.cpp:11999-12000) - LegacyCabinTempomat
+        "tempomat_sw": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "tempomatoff_sw": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+            },
+            "state_light": {"state_property": "speed_control/active"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # the door step switch, lit by the step permit (OnCommand_doorsteptoggle, Train.cpp:7692-7720;
+        # stategauges, Train.cpp:12018) - LegacyCabinDoorStep
+        "doorstep_sw": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+            },
+            "state_light": {"state_property": "doors_step_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "doorleftpermit_sw": {
             "widget_class": CabinButton,
             # its original handler branches on the kind of switch (ggDoorLeftPermitButton.is_push(), Train.cpp:7213)
@@ -1801,6 +1992,8 @@ static func _ensure_built() -> void:
                 "monostable": false,
                 "action": "doors_left_permit",
             },
+            # lit as the original lights it (stategauges, Train.cpp:12015; LegacyCabinDoorPermits)
+            "state_light": {"state_property": LegacyCabinDoorPermits.LAMP_KEYS[RailVehicleDoors.SIDE_LEFT]},
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
@@ -1812,6 +2005,7 @@ static func _ensure_built() -> void:
                 "monostable": false,
                 "action": "doors_right_permit",
             },
+            "state_light": {"state_property": LegacyCabinDoorPermits.LAMP_KEYS[RailVehicleDoors.SIDE_RIGHT]},
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },

@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 35
+const FIZ_PARSER_FORMAT_VERSION := 42
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -48,6 +48,7 @@ static func _static_init() -> void:
     var heating_parser := FizTrainHeatingParser.new()
     var power_parser := FizTrainPowerParser.new()
     var engine_parser := FizTrainEngineParser.new()
+    var turbo_parser := FizTrainTurboParser.new()
     var electric_series_parser := engine_parser.electric_series_parser
     var security_system_parser := FizTrainSecuritySystemParser.new()
     var spring_brake_parser := FizTrainSpringBrakeParser.new()
@@ -105,10 +106,9 @@ static func _static_init() -> void:
         {"prefix": "PmaxList:", "parser": engine_parser.electric_induction_parser, "table_end": "END-PML"},
         {"prefix": "WWList:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-WWL"},
         {"prefix": "V2NList:", "parser": diesel_engine_parser, "table_end": "END-V2NL"},
-        # TurboPos: has no Godot-class home and is confirmed genuinely dead in this vendored
-        # physics (no LoadFIZ_TurboPos ever existed) - recognized so its lines aren't
-        # misparsed, data discarded with a warning.
-        {"prefix": "TurboPos:", "parser": null, "table_end": ""},
+        # TurboPos: LoadFIZ_TurboPos (Mover.cpp:10714) sets TurboTest, which the turbo sound reads
+        # (DynObj.cpp:8267)
+        {"prefix": "TurboPos:", "parser": turbo_parser, "table_end": ""},
         # ffList:/ffBrakeList: share electric_induction_parser's wwlist target (DElist/
         # RlistSize, read by TractionForce()'s ElectricInductionMotor branch) - first-write-
         # wins if a file has both, see FizTrainElectricInductionEngineParser.end_table().
@@ -141,6 +141,15 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     if brake and brake.compressor_power == RailVehicleBrake.COMPRESSOR_POWER_MAIN \
             and context.engine_type in [RailVehicleEngine.DIESEL, RailVehicleEngine.DIESEL_ELECTRIC]:
         brake.compressor_power = RailVehicleBrake.COMPRESSOR_POWER_ENGINE
+
+    # an EZT's reverser steps past "forward" to the high start (DirectionForward, Mover.cpp:719)
+    var diesel_engine: RailVehicleDieselEngine = context.get_part("RailVehicleEngine") as RailVehicleDieselEngine
+    if diesel_engine:
+        diesel_engine.turbo_position = context.turbo_position
+
+    var series_engine: RailVehicleElectricSeriesEngine = context.get_part("RailVehicleEngine") as RailVehicleElectricSeriesEngine
+    if series_engine:
+        series_engine.direction_switches_circuit_imin_high = context.train_type == RailVehicleController.TRAIN_TYPE_EZT
 
     for part_name: String in context.parts:
         target.add_component(context.parts[part_name])

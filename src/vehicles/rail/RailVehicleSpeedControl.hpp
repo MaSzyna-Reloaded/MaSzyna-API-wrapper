@@ -38,11 +38,14 @@ namespace godot {
             void _register_commands() override;
             void _unregister_commands() override;
             MAKE_MEMBER_GS(bool, speed_control_enabled, false);
-            MAKE_MEMBER_GS(double, delay, 0.0);
+            /* LoadFIZ_SpeedControl's defaults (MOVER.h:1257-1286, 1933-1934) */
+            MAKE_MEMBER_GS(double, delay, 2.0);
             MAKE_MEMBER_GS(bool, impulse_lever, false);
             MAKE_MEMBER_GS(int, disables_on, 0);
-            MAKE_MEMBER_GS(PackedFloat64Array, preset_speeds, PackedFloat64Array());
-            MAKE_MEMBER_GS(bool, override_manual_power, false);
+            MAKE_MEMBER_GS(
+                    PackedFloat64Array, preset_speeds,
+                    PackedFloat64Array({30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 110.0, 120.0}));
+            MAKE_MEMBER_GS(bool, override_manual_power, true);
             MAKE_MEMBER_GS(double, initial_power, 1.0);
             MAKE_MEMBER_GS(double, full_power_velocity, -1.0);
             MAKE_MEMBER_GS(double, start_velocity, -1.0);

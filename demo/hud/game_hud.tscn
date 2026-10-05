@@ -169,7 +169,6 @@ offset_top = 318.0
 offset_right = 748.0
 offset_bottom = 586.0
 script = ExtResource("9_window")
-vehicle_target = 2
 title = "Power source"
 
 [node name="PowerSourceScroll" type="ScrollContainer" parent="ControlWindows/PowerSource"]
@@ -303,7 +302,6 @@ offset_top = 318.0
 offset_right = 236.0
 offset_bottom = 467.0
 script = ExtResource("9_window")
-vehicle_target = 1
 title = "Controller"
 
 [node name="ControllerScroll" type="ScrollContainer" parent="ControlWindows/Controller"]

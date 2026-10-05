@@ -14,6 +14,10 @@ namespace godot {
         p_mover->PantSwitchType = get_pantograph_impulse() ? "impulse" : "";
         p_mover->ConvSwitchType = get_converter_impulse() ? "impulse" : "";
         p_mover->StLinSwitchType = get_motor_connectors_impulse() ? "impulse" : "toggle";
+        // LoadFIZ_Switches (Mover.cpp:11395-11397)
+        p_mover->UniversalResetButtonFlag[RELAY_RESET_BUTTON_1] = get_relay_reset_button_1();
+        p_mover->UniversalResetButtonFlag[RELAY_RESET_BUTTON_2] = get_relay_reset_button_2();
+        p_mover->UniversalResetButtonFlag[RELAY_RESET_BUTTON_3] = get_relay_reset_button_3();
         // LoadFIZ_Switches (Mover.cpp:11399-11403) keeps the presets as their digits
         p_mover->PantsPreset.first.clear();
         for (const int preset: get_pantograph_presets()) {
@@ -80,6 +84,13 @@ namespace godot {
                 get_pantograph_preset_position(RailVehicleController::COUPLER_END_REAR);
         p_state["pantograph_preset_front"] = get_pantograph_preset(RailVehicleController::COUPLER_END_FRONT);
         p_state["pantograph_preset_rear"] = get_pantograph_preset(RailVehicleController::COUPLER_END_REAR);
+    }
+
+    // Train.cpp:5175 OnCommand_universalrelayreset - the occupied vehicle's own buttons
+    void MoverRailVehicleSwitches::universal_relay_reset(const RelayResetButton p_button) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->UniversalResetButton(p_button);
     }
 
     void MoverRailVehicleSwitches::sand(const bool p_active) {

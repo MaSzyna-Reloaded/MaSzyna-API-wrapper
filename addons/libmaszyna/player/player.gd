@@ -190,6 +190,12 @@ func _walk_mode_input(event:InputEvent) -> void:
         _send_to_nearest_train("coupler_connect", free_camera.global_position)
     elif event.is_action_pressed("coupler_disconnect", false, true):
         _send_to_nearest_train("coupler_disconnect", free_camera.global_position)
+    # the adapter of the coupler nearest the walker (OnCommand_nearestcarcoupleradapterattach/remove,
+    # Train.cpp:7799-7834)
+    elif event.is_action_pressed("coupler_adapter_attach", false, true):
+        _send_to_nearest_train("coupler_adapter_attach", free_camera.global_position)
+    elif event.is_action_pressed("coupler_adapter_remove", false, true):
+        _send_to_nearest_train("coupler_adapter_remove", free_camera.global_position)
     else:
         return
     get_viewport().set_input_as_handled()
@@ -286,7 +292,12 @@ func _on_cabin_camera_configuration_changed() -> void:
     _cabin_camera.bound_max = cabin.get_camera_bound_max() + Vector3.UP * CABIN_BOUND_CEILING_RAISE
     _cabin_camera.global_transform = cabin.get_camera_transform()
     var basis:Basis = cabin.global_basis
-    _cabin_camera.global_basis = basis if cabin.get_cab_number() < 0 else basis.rotated(Vector3.UP, PI)
+    var facing:Basis = basis if cabin.get_cab_number() < 0 else basis.rotated(Vector3.UP, PI)
+    # turned by the MMD's driverNangle: from that facing, yaw then pitch - the original's frame is
+    # Godot's turned about the vertical, not mirrored, so the signs carry over (Camera.cpp:205-216)
+    var view_angle:Vector2 = cabin.get_driver_view_angle()
+    _cabin_camera.global_basis = facing * Basis(Vector3.UP, deg_to_rad(view_angle.x)) \
+            * Basis(Vector3.RIGHT, deg_to_rad(view_angle.y))
     _draw_cab_interior()
 
 

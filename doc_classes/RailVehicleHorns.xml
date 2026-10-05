@@ -66,12 +66,4 @@
 			</description>
 		</method>
 	</methods>
-	<members>
-		<member name="high_horn_enabled" type="bool" setter="set_high_horn_enabled" getter="get_high_horn_enabled" default="true">
-		</member>
-		<member name="low_horn_enabled" type="bool" setter="set_low_horn_enabled" getter="get_low_horn_enabled" default="true">
-		</member>
-		<member name="whistle_enabled" type="bool" setter="set_whistle_enabled" getter="get_whistle_enabled" default="true">
-		</member>
-	</members>
 </class>

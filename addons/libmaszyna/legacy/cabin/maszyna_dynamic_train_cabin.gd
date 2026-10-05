@@ -32,10 +32,6 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
     "lampa_suf0", "lampy_sufit", "lampa_sufi", "lampa_sufit", "lampasufitowa", "lampasufit", "swiatlo_sufit",
     "cablight", "lampa",
 ]
-## The radio message played on the cab's radio (_on_radio_message_sent())
-const RADIO_MESSAGE:StringName = &"radio_message"
-## The quietest gain a radio turned all the way down plays at, above linear_to_db()'s -inf
-const MUTED_GAIN:float = 0.0001
 ## Distance of the cab light below the found ceiling lamp - inside the lamp's shadow casting mesh
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
@@ -51,16 +47,10 @@ var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
 ## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
 var _occluders:Array[RID] = []
-## The cab radio's loudspeaker
-var _radio_player:SfxPlayer
 
 
 func _ready() -> void:
     vehicle_rid_changed.connect(_on_vehicle_rid_changed)
-    _radio_player = SfxPlayer.new()
-    _radio_player.name = "RadioSfxPlayer"
-    add_child(_radio_player)
-    CabinSystem.radio_message_sent.connect(_on_radio_message_sent)
     # the MMD and the models are the game directory's
     GameDataServer.data_reload_requested.connect(reload)
     ProjectSettings.settings_changed.connect(_apply_reverse_cull_face)
@@ -84,42 +74,11 @@ func _exit_tree() -> void:
     # the announcement goes first: clearing the vehicle would otherwise rebuild the cab on its
     # way out of the tree
     vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
-    CabinSystem.radio_message_sent.disconnect(_on_radio_message_sent)
     GameDataServer.data_reload_requested.disconnect(reload)
     ProjectSettings.settings_changed.disconnect(_apply_reverse_cull_face)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_vehicle_rid(RID())
     _free_occluders()
-
-
-## TTrain::radio_message() (Train.cpp:11034-11049): a message within reach of the vehicle, heard
-## on its radio switched on, powered and tuned to the message's channel, at the radio's volume.
-## The original plays the others muted and raises them when the radio is tuned mid-message
-## (update_sounds_radio(), Train.cpp:10251-10268); here they are not played (TODO.md). Its
-## transcript is shown when it is heard at all (sound_source::update_counter(), sound.cpp:955).
-func _on_radio_message_sent(
-    message:SfxEvent, transcript:Transcript, channel:int, position:Vector3, reach:float
-) -> void:
-    var vehicle:RID = get_vehicle_rid()
-    if not vehicle or message == null:
-        return
-    if reach > 0.0 and RailVehicleServer.vehicle_get_transform(vehicle).origin.distance_to(position) > reach:
-        return
-    var state:Dictionary = CabinSystem.vehicle_state(vehicle)
-    if not (state.get("radio_enabled", false) and state.get("radio_powered", false)
-            and int(state.get("radio_channel", 0)) == channel):
-        return
-    var played:SfxEvent = message.duplicate(true)
-    played.name = RADIO_MESSAGE
-    played.spatial_config = null
-    played.master_track.volume_db += linear_to_db(maxf(float(state.get("radio_volume", 0.0)), MUTED_GAIN))
-    var bank:SfxBank = SfxBank.new()
-    var events:Array[SfxEvent] = [played]
-    bank.events = events
-    _radio_player.bank = bank
-    _radio_player.play(RADIO_MESSAGE)
-    if transcript and float(state.get("radio_volume", 0.0)) > 0.0:
-        TranscriptSystem.add(transcript)
 
 
 func get_diagnostics() -> Array[Dictionary]:
@@ -173,7 +132,9 @@ func _rebuild_generated() -> void:
     camera_bound_max = definition.bounds_max
     camera_bound_enabled = true
     has_cab_model = true if definition.model_relpath else false
-    driver_position = definition.driver_pos
+    # the camera starts at the seat, turned as the MMD says (drivermode.cpp:1224-1226)
+    driver_position = definition.driver_sitpos
+    driver_view_angle = definition.driver_angle
     shake_spring_stiffness = definition.shake_spring_stiffness
     shake_spring_damping = definition.shake_spring_damping
     shake_jolt_scale = definition.shake_jolt_scale
@@ -257,7 +218,7 @@ func _free_occluders() -> void:
 func _build_cab_light(definition:MmdCabinDefinition) -> void:
     var light := CabinOmniLight3D.new()
     light.name = "CabLight"
-    light.light_color = Color(0.9, 0.9 * 216.0 / 255.0, 0.9 * 176.0 / 255.0)
+    light.light_color = definition.interior_light
     light.shadow_enabled = true
     # without a cab model: the top of the camera bounds
     light.position = (definition.bounds_min + definition.bounds_max) * 0.5

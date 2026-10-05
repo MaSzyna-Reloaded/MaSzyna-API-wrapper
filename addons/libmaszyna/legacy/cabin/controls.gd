@@ -27,6 +27,17 @@ var _fields:Dictionary[StringName, Dictionary] = {}
 var _button_types:Dictionary[StringName, CabinButton.ButtonType] = {}
 ## control_id -> the vehicle of the cab its command goes to (the catalog entry's `target`)
 var _targets:Dictionary[StringName, CabinState.Target] = {}
+## The kind of the cab's instrument light, by its lamp's label - the last one the MMD names, as
+## each sets InstrumentLightType (Train.cpp:11755-11779)
+var instrument_light_type:LegacyCabinCabLights.InstrumentLightType = LegacyCabinCabLights.InstrumentLightType.STANDARD
+## The instrument light kinds by their lamp labels (Train.cpp:11755-11779)
+const INSTRUMENT_LIGHT_LABELS:Dictionary[String, LegacyCabinCabLights.InstrumentLightType] = {
+    "i-instrumentlight": LegacyCabinCabLights.InstrumentLightType.STANDARD,
+    "i-instrumentlight_m": LegacyCabinCabLights.InstrumentLightType.MAINS,
+    "i-instrumentlight_c": LegacyCabinCabLights.InstrumentLightType.CONVERTER,
+    "i-instrumentlight_a": LegacyCabinCabLights.InstrumentLightType.ALWAYS,
+    "i-instrumentlight_l": LegacyCabinCabLights.InstrumentLightType.HEAD_LIGHTS,
+}
 
 
 ## The controls of the cab the MMD defines as `cab` (1, 0, or -1 for the rear one)
@@ -39,6 +50,8 @@ static func from_mmd(cab:int, abs_mmd_path:String, parameters:Dictionary) -> Leg
 static func from_definition(definition:MmdCabinDefinition) -> LegacyCabinControls:
     var controls:LegacyCabinControls = LegacyCabinControls.new()
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
+        if INSTRUMENT_LIGHT_LABELS.has(descriptor.label):
+            controls.instrument_light_type = INSTRUMENT_LIGHT_LABELS[descriptor.label]
         if not MmdSemanticCatalog.has_label(descriptor.label):
             continue
         var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)

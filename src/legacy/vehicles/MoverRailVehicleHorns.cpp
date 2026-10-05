@@ -9,10 +9,6 @@ namespace godot {
     void MoverRailVehicleHorns::set_horn_low(const bool p_state) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (!get_low_horn_enabled()) {
-            log_warning("Low horn button is missing, or wasn't defined");
-            return;
-        }
         if (p_state) {
             mover->WarningSignal |= 1;
         } else {
@@ -23,10 +19,6 @@ namespace godot {
     void MoverRailVehicleHorns::set_horn_high(const bool p_state) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (!get_high_horn_enabled()) {
-            log_warning("High horn button is missing, or wasn't defined");
-            return;
-        }
         if (p_state) {
             mover->WarningSignal |= 2;
         } else {
@@ -37,10 +29,6 @@ namespace godot {
     void MoverRailVehicleHorns::set_whistle(const bool p_state) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (!get_whistle_enabled()) {
-            log_warning("Whistle button is missing, or wasn't defined");
-            return;
-        }
         if (p_state) {
             mover->WarningSignal |= 4;
         } else {

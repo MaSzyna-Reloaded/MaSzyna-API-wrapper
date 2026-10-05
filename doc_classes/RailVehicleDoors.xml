@@ -252,12 +252,12 @@
 			[code]Doors:DoorBlocked[/code]
 			Doors has locking mechanism
 		</member>
-		<member name="max_shift" type="float" setter="set_max_shift" getter="get_max_shift" default="0.5">
+		<member name="max_shift" type="float" setter="set_max_shift" getter="get_max_shift" default="0.0">
 			[code]Doors:DoorMaxShiftL[/code] or [code]Doors:DoorMaxShiftR[/code]
 			Width (or angle) of full door opening.
 			Note that the original simulator is using the same value for both sides. When both are provided, the simulator will use [code]DoorMaxShiftR[/code] for both sides.
 		</member>
-		<member name="max_shift_plug" type="float" setter="set_max_shift_plug" getter="get_max_shift_plug" default="0.1">
+		<member name="max_shift_plug" type="float" setter="set_max_shift_plug" getter="get_max_shift_plug" default="0.0">
 			[code]Doors:DoorMaxShiftPlug[/code]
 			Bounce distance for Plug-type doors (sliding bounce), in meters
 		</member>

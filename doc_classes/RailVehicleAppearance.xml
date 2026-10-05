@@ -15,6 +15,12 @@
 		<member name="data_path" type="String" setter="set_data_path" getter="get_data_path" default="&quot;&quot;">
 			Where the model files are.
 		</member>
+		<member name="door_steps" type="PackedStringArray" setter="set_door_steps" getter="get_door_steps" default="PackedStringArray()">
+			Every door step of [code]animstepprefix:[/code], numbered as the doors (DynObj.cpp:5763-5790).
+		</member>
+		<member name="doors" type="PackedStringArray" setter="set_doors" getter="get_doors" default="PackedStringArray()">
+			Every door of [code]animdoorprefix:[/code], numbered from 1 - odd on the left, even on the right - each with its first submodel below and that one's, which a folding door turns as well; a name the model has not got is empty (DynObj.cpp:592-622, 5721-5760).
+		</member>
 		<member name="front_bogie" type="String" setter="set_front_bogie" getter="get_front_bogie" default="&quot;&quot;">
 			The front bogie submodel.
 		</member>
@@ -45,8 +51,8 @@
 		<member name="model_transform" type="Transform3D" setter="set_model_transform" getter="get_model_transform" default="Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)">
 			Where every model of the vehicle sits in the vehicle's own frame.
 		</member>
-		<member name="pantograph_collector_width" type="float" setter="set_pantograph_collector_width" getter="get_pantograph_collector_width" default="0.5">
-			The slider's width [m] for a vehicle whose FIZ declares none.
+		<member name="pantograph_factors" type="PackedFloat64Array" setter="set_pantograph_factors" getter="get_pantograph_factors" default="PackedFloat64Array()">
+			[code]pantfactors:[/code] - the first and the second pantograph's place along the vehicle, then their slider heights, for a pantograph the model cannot be measured by (DynObj.cpp:5577-5633); empty without the key.
 		</member>
 		<member name="pantograph_front_arms" type="PackedStringArray" setter="set_pantograph_front_arms" getter="get_pantograph_front_arms" default="PackedStringArray()">
 			Lower arm, its pair, upper arm, its pair and slider of the front pantograph.
@@ -56,6 +62,12 @@
 		</member>
 		<member name="passengers_model_filename" type="String" setter="set_passengers_model_filename" getter="get_passengers_model_filename" default="&quot;&quot;">
 			The passengers.
+		</member>
+		<member name="pendulum_amplitude" type="float" setter="set_pendulum_amplitude" getter="get_pendulum_amplitude" default="0.0">
+			[code]pendulumamplitude:[/code] - how far the pendulums swing [deg] (DynObj.cpp:5714-5718).
+		</member>
+		<member name="pendulums" type="PackedStringArray" setter="set_pendulums" getter="get_pendulums" default="PackedStringArray()">
+			[code]animpendulumprefix:[/code] 1 to 4, swinging about their x by [member pendulum_amplitude] times the cosine of the engine's turn while the MMD declares levers (DynObj.cpp:1121-1125, 5702-5719).
 		</member>
 		<member name="powered_wheels" type="PackedStringArray" setter="set_powered_wheels" getter="get_powered_wheels" default="PackedStringArray()">
 			The powered wheel submodels.

@@ -34,14 +34,12 @@ namespace godot {
     }
 
     // Original engine: simulation.cpp:184 consistreleaser - the valve's releaser, not
-    // BrakeReleaser(): no cab conditions, nothing sent along the control line. The original holds
-    // it while its button is held; here it is held until the brakes stop braking
-    // (_do_process_component()).
+    // BrakeReleaser(): no cab conditions, nothing sent along the control line; held while its
+    // button is held (vehicleparams.cpp:289-293)
     void MoverRailVehicleBrake::consist_releaser(const bool p_active) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->Hamulec->Releaser(p_active ? 1 : 0);
-        trainset_releasing = p_active;
     }
 
     void MoverRailVehicleBrake::compressor(const bool p_enabled) {
@@ -248,9 +246,6 @@ namespace godot {
     void MoverRailVehicleBrake::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
-        if (trainset_releasing && !is_braking()) {
-            consist_releaser(false);
-        }
         // GetSoundFlag() clears the flag it returns, so it is read once per tick, here, and never
         // in a getter (DynObj.cpp:4718-4723)
         if (p_mover->Hamulec && (p_mover->Hamulec->GetSoundFlag() & Maszyna::sf_Acc) != 0) {
@@ -551,11 +546,15 @@ namespace godot {
         p_mover->BrakeOpModes = get_cntrl_brake_op_modes();                                      // BrakeOpModes
         p_mover->BrakeHandle = brake_handle_type_map.at(get_cntrl_brake_handle_type());          // BrakeHandle
         p_mover->BrakeLocHandle = brake_handle_type_map.at(get_cntrl_local_brake_handle_type()); // LocBrakeHandle
-        p_mover->ASBType = get_cntrl_anti_skid_brake_type();                                     // ASB
-        p_mover->LocalBrake = local_brake_type_map.at(get_cntrl_local_brake_type());             // LocalBrake
-        p_mover->MBrake = get_cntrl_manual_brake_present();                                      // ManualBrake
-        p_mover->LocHandleTimeTraxx = get_cntrl_local_brake_traxx();                             // LocalBrakeTraxx
-        p_mover->DynamicBrakeType = get_cntrl_dynamic_brake_type();                              // DynamicBrake
+        // ASB - a vehicle without a train brake handle takes only "yes" (Mover.cpp:10794-10815)
+        p_mover->ASBType =
+                get_cntrl_brake_ctrl_position_count() > 0 || get_cntrl_anti_skid_brake_type() == ANTI_SKID_BRAKE_YES
+                        ? anti_skid_brake_type_map.at(get_cntrl_anti_skid_brake_type())
+                        : 0;
+        p_mover->LocalBrake = local_brake_type_map.at(get_cntrl_local_brake_type()); // LocalBrake
+        p_mover->MBrake = get_cntrl_manual_brake_present();                          // ManualBrake
+        p_mover->LocHandleTimeTraxx = get_cntrl_local_brake_traxx();                 // LocalBrakeTraxx
+        p_mover->DynamicBrakeType = get_cntrl_dynamic_brake_type();                  // DynamicBrake
         p_mover->ReleaseParkingBySpringBrake = get_cntrl_release_parking_by_spring_brake();
         p_mover->ReleaseParkingBySpringBrakeWhenDoorIsOpen = get_cntrl_release_parking_by_spring_brake_when_door_open();
         p_mover->SpringBrakeCutsOffDrive = get_cntrl_spring_brake_cuts_off_drive();
@@ -608,9 +607,7 @@ namespace godot {
                         M_PI * std::pow(get_cylinder_radius(), 2) * get_cylinder_distance() * get_cylinder_count();
                 p_mover->BrakeVVolume = get_tank_volume_aux();
 
-                const std::unordered_map<BrakeMethod, int>::const_iterator lookup;
-                p_mover->BrakeMethod = lookup != brake_method_map.find(get_brake_method()) ? get_brake_method() : 0;
-                p_mover->BrakeMethod = get_brake_method();
+                p_mover->BrakeMethod = brake_method_map.at(get_brake_method()); // BM (Mover.cpp:10469)
                 p_mover->RapidMult = get_rapid_transfer();
                 p_mover->RapidVel = get_rapid_switching_speed();
             }

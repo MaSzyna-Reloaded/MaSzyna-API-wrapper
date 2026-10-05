@@ -38,7 +38,7 @@ you actually need saves a lot of grepping in the wrong place.
 | `scene.cpp` (`basic_cell::update_traction`) / `Traction.cpp` (`TTractionPowerSource`, network) | Scenery-level overhead wire geometry search and electrical network solve | `src/traction/TractionServer.cpp` (`TractionServer`) |
 | Track/switch topology (scattered across `scene.cpp`/track pieces) | Track graph, switch state, vehicle-on-track offset math | `src/vehicles/rail/RailVehicleServer.cpp` (`RailVehicleServer`) + `src/tracks/TrackServer.cpp` |
 | `LoadFIZ_*` functions (`Mover.cpp`) | `.fiz` per-vehicle config parsing, including original engine's fallback defaults when a key is absent | `addons/libmaszyna/legacy/fiz/fiz_train_*_parser.gd` - must match the *default*, not just the parsed value, when a key is missing |
-| `.mmd` cab file parsing (`Train.cpp`'s `Load()`, incl. `animpant*prefix:`/`animwheelprefix:` etc. submodel-name tokens) | Cab layout, submodel animation binding by name convention | `addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d_instancer.gd` (auto-wires bogie/wheel/pantograph-arm `NodePath`s by the *practical* real-data naming convention rather than parsing the prefix tokens themselves - confirmed identical across every real vehicle checked, e.g. `bogie1`/`wheel01`/`ramiedolne1_pant01`; see that file's own doc comments) + `addons/libmaszyna/legacy/mmd/mmd_cabin_instancer.gd`/`mmd_semantic_catalog.gd` |
+| `.mmd` vehicle and cab file parsing (`DynObj.cpp` `LoadMMediaFile`: `animations:`, `animpant*prefix:`, `animwheelprefix:`, `animwiperprefix:`, `animmirrorprefix:`...; `Train.cpp` `InitializeCab`) | Model animation binding and cab layout, by the names, prefixes and counts the MMD declares | `addons/libmaszyna/legacy/mmd/mmd_cabin_instancer.gd` (`parse_*`) feeding `addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d_instancer.gd`; cab: `mmd_cabin_instancer.gd`/`mmd_semantic_catalog.gd`. Nothing the MMD declares is assumed by convention (see "The port is data-driven" below) |
 
 Two-minute rule of thumb: if the question is "what value does a flag/relay
 have, or when does it flip" → `Mover.cpp`/`MOVER.h`. If it's "why doesn't
@@ -160,6 +160,15 @@ How to write such a test and how to probe a vehicle headless without reading fro
 [[testing]] (`.claude/skills/testing/SKILL.md`).
 
 ## Hard constraints
+
+- **The port is data-driven - ABSOLUTE.** Every name, prefix, count, flag and default the original
+  reads from data (FIZ, MMD, SCN/SCM/INC, CHK, lang, models) is read from that data in the wrapper, the
+  way the original reads it, with the original's default when absent. Only what the original itself
+  hardcodes, or a quirk documented in `MASZYNA_ORIGINAL_QUIRKS.md`, may be hardcoded - with the
+  original's line cited. "Confirmed identical across the vehicles checked" is never a reason: the
+  pantograph arm names hardcoded on 2026-09-16 after checking three vehicles (`ramiedolne1_pant0`, read
+  by the original from `animpant*prefix:`) left 104 vehicles unanimated (36WE, EN57, ET22, 4E...), the
+  wheel prefix 109, and searching cab 2 from `cab1definition:` broke 133 cabs.
 
 - **Never edit `src/legacy/maszyna-mover/` (vendored Mover).** All integration lives in
   the wrapper's own engine/controller classes, writing to the mover's public

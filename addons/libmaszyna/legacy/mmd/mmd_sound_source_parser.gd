@@ -36,6 +36,8 @@ const _BARE_SINGLE_LABELS:Dictionary = {
     # handles that transparently, same as every other bare label here.
     "buzzer": true,
     "buzzershp": true,
+    # radiostop: (Train.cpp:10340, sound_type::single)
+    "radiostop": true,
     "brake": true,
     "brakesound": true,
     "unbrake": true,
@@ -77,6 +79,8 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
     "compressor": true,
     "converter": true,
     "small-compressor": true,
+    # DynObj.cpp:6257 - sound_type::multipart with sound_parameters::range
+    "turbo": true,
 }
 
 const _BARE_PARAMETERS:Dictionary = {
@@ -96,6 +100,7 @@ const _BARE_PARAMETERS:Dictionary = {
     "localbrakesound2": [&"amplitude_factor", &"amplitude_offset"],
     "releaser": [&"range"],
     "compressor": [&"range"],
+    "turbo": [&"range"],
     "converter": [&"range"],
     "small-compressor": [&"range"],
     "tractionmotor": [&"range", &"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
@@ -146,7 +151,7 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
         "ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true, "tachoclock": true,
         "brakesound": true, "slipperysound": true, "localbrakesound": true, "localbrakesound2": true,
         "airsound": true, "airsound2": true, "airsound3": true, "airsound4": true, "airsound5": true,
-        "runningnoise": true,
+        "runningnoise": true, "radiostop": true,
     })
 
 

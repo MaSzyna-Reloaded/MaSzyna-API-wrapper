@@ -193,6 +193,22 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
         BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_TYPE_NONE);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_TYPE_AKP_4E);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_TYPE_DSAX);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_TYPE_EC160_200);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_TYPE_WBL85);
+        ClassDB::bind_method(
+                D_METHOD("set_current_collector_pantograph_type", "value"),
+                &RailVehicleEnginePowerSource::set_current_collector_pantograph_type);
+        ClassDB::bind_method(
+                D_METHOD("get_current_collector_pantograph_type"),
+                &RailVehicleEnginePowerSource::get_current_collector_pantograph_type);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::INT, "current_collector_pantograph_type", PROPERTY_HINT_ENUM,
+                        "None,AKP_4E,DSAx,EC160_200,WBL85"),
+                "set_current_collector_pantograph_type", "get_current_collector_pantograph_type");
         BIND_ENUM_CONSTANT(VALVE_OPERATION_NONE);
         BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE);
         BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE);
@@ -266,5 +282,13 @@ namespace godot {
             p_state["power_cable/source"] = get_power_cable_source();
             p_state["power_cable/steam_pressure"] = get_power_cable_steam_pressure();
         }
+    }
+    void RailVehicleEnginePowerSource::set_current_collector_pantograph_type(const PantographType p_value) {
+        current_collector_pantograph_type = p_value;
+    }
+
+    RailVehicleEnginePowerSource::PantographType
+    RailVehicleEnginePowerSource::get_current_collector_pantograph_type() const {
+        return current_collector_pantograph_type;
     }
 } // namespace godot

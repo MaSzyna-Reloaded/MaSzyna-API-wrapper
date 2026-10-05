@@ -93,6 +93,8 @@ namespace godot {
                 BRAKE_METHOD_P10Y_BGU,
                 BRAKE_METHOD_FR510,
                 BRAKE_METHOD_D1MG,
+                /* no BM= (BrakeMethod 0, Mover.cpp:10469) */
+                BRAKE_METHOD_NONE,
             };
             enum CompressorPower {
                 COMPRESSOR_POWER_MAIN = 0,
@@ -138,6 +140,9 @@ namespace godot {
                 ANTI_SKID_BRAKE_NONE,
                 ANTI_SKID_BRAKE_MANUAL,
                 ANTI_SKID_BRAKE_AUTOMATIC,
+                /* "yes": the original's ASBType 128, the only kind a vehicle without a train brake
+                   handle takes (Mover.cpp:10794-10815) */
+                ANTI_SKID_BRAKE_YES,
             };
             /* DynamicBrake= */
             enum DynamicBrakeType {
@@ -149,6 +154,8 @@ namespace godot {
             };
             /* BrakeDelays= : possible brake delay settings, named per the FIZ wiki */
             enum BrakeDelaySetting {
+                /* no BrakeDelays= (Mover.cpp:10751) */
+                BRAKE_DELAY_NONE = 0,
                 BRAKE_DELAY_G = 1,
                 BRAKE_DELAY_P = 2,
                 BRAKE_DELAY_R = 4,
@@ -258,15 +265,20 @@ namespace godot {
             MAKE_MEMBER_GS(double, rapid_transfer, 1.0);
             MAKE_MEMBER_GS(double, rapid_switching_speed, 55.0);
             MAKE_MEMBER_GS_NR(CompressorPower, compressor_power, COMPRESSOR_POWER_CONVERTER_MANUAL);
-            MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_P10_BGU);
+            MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_NONE);
             MAKE_MEMBER_GS(double, rig_effectiveness, 0.0);
             MAKE_MEMBER_GS(double, air_leak_multiplier, 1.0);
             MAKE_MEMBER_GS(bool, compressor_tank_valve_active, false);
             MAKE_MEMBER_GS(double, compressor_lower_emergency_closing_pressure, -1.0);
             MAKE_MEMBER_GS(double, compressor_higher_emergency_closing_pressure, -1.0);
-            MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, 0.0);
-            MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
-            MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);
+            /* LPOn=/LPOff= absent: the main pipe is never locked, no pressure is below it
+               (LockPipeOn/Off -1, Mover.cpp:4533, 10505-10506) */
+            static constexpr double MAIN_PIPE_LOCK_NONE = -1.0;
+            /* HandlePipeUnlockPos= absent (HandleUnlock -3, Mover.cpp:10507) */
+            static constexpr double MAIN_PIPE_UNLOCK_HANDLE_POSITION_NONE = -3.0;
+            MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, MAIN_PIPE_LOCK_NONE);
+            MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, MAIN_PIPE_LOCK_NONE);
+            MAKE_MEMBER_GS(double, main_pipe_minimum_unblocking_handle_position, MAIN_PIPE_UNLOCK_HANDLE_POSITION_NONE);
 
         public:
             virtual bool get_main_pipe_emergency_cuts_off_handle() const = 0;
@@ -279,18 +291,21 @@ namespace godot {
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleBrakePressureTableItem>, brake_pressure_table)
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<RailVehicleCompressorListItem>, compressor_list)
             /* Cntrl. (czesc dotyczaca hamulca) */
-            MAKE_MEMBER_GS_NR(BrakeSystemType, cntrl_brake_system, BRAKE_SYSTEM_PNEUMATIC);
-            MAKE_MEMBER_GS(int, cntrl_brake_ctrl_position_count, 6);
-            MAKE_MEMBER_GS_NR(BrakeDelaySetting, cntrl_brake_delays, BRAKE_DELAY_GP);
-            MAKE_MEMBER_GS(double, cntrl_brake_delay_1, 15.0);
-            MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 3.0);
-            MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 36.0);
-            MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 22.0);
+            /* BrakeSystem= absent: Individual (Mover.cpp:10726) */
+            MAKE_MEMBER_GS_NR(BrakeSystemType, cntrl_brake_system, BRAKE_SYSTEM_INDIVIDUAL);
+            /* LoadFIZ_Cntrl's defaults (MOVER.h:1612-1630, 1696, 2045): no handle, no delays - a
+               delay of 0 is taken from CheckLocomotiveParameters' table (Mover.cpp:12066-12073) */
+            MAKE_MEMBER_GS(int, cntrl_brake_ctrl_position_count, 0);
+            MAKE_MEMBER_GS_NR(BrakeDelaySetting, cntrl_brake_delays, BRAKE_DELAY_NONE);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_1, 0.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 0.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 0.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 0.0);
             MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_NONE);
-            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
-            MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
-            MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);
-            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_local_brake_handle_type, BRAKE_HANDLE_TYPE_FD1);
+            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_NO_HANDLE);
+            MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_NONE);
+            MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_NONE);
+            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_local_brake_handle_type, BRAKE_HANDLE_TYPE_NO_HANDLE);
             MAKE_MEMBER_GS(bool, cntrl_manual_brake_present, false);
             MAKE_MEMBER_GS_NR(DynamicBrakeType, cntrl_dynamic_brake_type, DYNAMIC_BRAKE_NONE);
             MAKE_MEMBER_GS(bool, cntrl_local_brake_traxx, false);

@@ -97,7 +97,7 @@ func test_maszyna_stream_starts_at_the_start_fraction_before_its_first_playback(
     var previous:String = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     var clip:SfxClip = SfxClip.new()
-    clip.stream = MmdSoundEventBuilder.build_stream(FIXTURE_LOOP, true)
+    clip.stream = MmdSoundEventBuilder.build_stream(FIXTURE_LOOP, true, "")
     var runtime:SfxPlaybackRuntime = _play_clip(clip)
     UserSettings.save_maszyna_game_dir(previous)
     assert_gt(clip.stream.get_length(), 0.0)

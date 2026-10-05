@@ -45,6 +45,9 @@ namespace godot {
             Vector3 camera_bound_max;
             bool camera_bound_enabled = false;
             Vector3 driver_position;
+            /* The cab camera's start: yaw, then pitch, in degrees, from the way the cab faces
+             * (driverNangle:, Train.cpp:10529-10538; drivermode.cpp:1225-1226) */
+            Vector2 driver_view_angle;
 
             double shake_spring_stiffness = 125.0;
             double shake_spring_damping = 0.002;
@@ -99,6 +102,8 @@ namespace godot {
             bool get_camera_bound_enabled() const;
             void set_driver_position(const Vector3 &p_position);
             Vector3 get_driver_position() const;
+            void set_driver_view_angle(const Vector2 &p_angle);
+            Vector2 get_driver_view_angle() const;
 
             void set_shake_spring_stiffness(double p_value);
             double get_shake_spring_stiffness() const;

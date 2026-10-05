@@ -10,6 +10,10 @@ class_name FizTrainEngineParser
 ## WheelsDriven, Dumb and Steam engines are not built (the TODO branch below); every other type
 ## has its own field-mapping parser.
 
+## An EZT's automatic start thresholds (LoadFIZ_Param, Mover.cpp:10303-10304)
+const EZT_IMIN_LOW:int = 1
+const EZT_IMIN_HIGH:int = 2
+
 var electric_series_parser: FizTrainElectricSeriesEngineParser = FizTrainElectricSeriesEngineParser.new()
 var diesel_electric_parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
 var electric_induction_parser: FizTrainElectricInductionEngineParser = FizTrainElectricInductionEngineParser.new()
@@ -62,6 +66,11 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
                     "FIZ Engine:EngineType=%s: no engine class for it yet." % FizLineUtil.get_string(kv, "EngineType"))
         _:
             push_warning("FIZ Engine:EngineType=%s: unrecognized or unsupported." % FizLineUtil.get_string(kv, "EngineType"))
+    # an EZT's automatic start thresholds before Circuit: overrides them (LoadFIZ_Param, Mover.cpp:10300-10305)
+    var electric_engine: RailVehicleElectricEngine = node as RailVehicleElectricEngine
+    if electric_engine and context.train_type == RailVehicleController.TRAIN_TYPE_EZT:
+        electric_engine.circuit_imin_low = EZT_IMIN_LOW
+        electric_engine.circuit_imin_high = EZT_IMIN_HIGH
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:

@@ -14,11 +14,14 @@ func test_battery_sw_uses_battery_command_and_state():
     assert_eq(entry["fixed_fields"]["action"], "battery_toggle")
 
 
-func test_converter_sw_uses_converter_command_and_state():
+# the converter switch is the cab logic's (LegacyCabinConverter, OnCommand_convertertoggle,
+# Train.cpp:4382-4458): its key, and its kind - an impulse one springs back - the vehicle's
+func test_converter_sw_is_the_cab_logics_and_springs_back_by_the_vehicle():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("converter_sw")
     assert_eq(entry["widget_class"], CabinButton)
-    assert_eq(entry["fixed_fields"]["command"], "converter")
-    assert_eq(entry["fixed_fields"]["state_property"], "converter_enabled")
+    assert_eq(entry["fixed_fields"]["action"], "converter_toggle")
+    assert_eq(entry["monostable_from_config"], "converter_switch_impulse")
+    assert_false(entry["fixed_fields"].has("command"), "the cab logic sends the command")
 
 
 func test_compressor_sw_uses_compressor_command_and_state():

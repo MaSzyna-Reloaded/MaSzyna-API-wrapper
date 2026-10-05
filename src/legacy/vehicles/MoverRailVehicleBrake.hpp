@@ -69,6 +69,14 @@ namespace godot {
                     {BrakeMethod::BRAKE_METHOD_FR513, 11},   {BrakeMethod::BRAKE_METHOD_COSID, 12},
                     {BrakeMethod::BRAKE_METHOD_P10Y_BG, 14}, {BrakeMethod::BRAKE_METHOD_P10Y_BGU, 16},
                     {BrakeMethod::BRAKE_METHOD_FR510, 17},   {BrakeMethod::BRAKE_METHOD_D1MG, 137},
+                    {BrakeMethod::BRAKE_METHOD_NONE, 0},
+            };
+            /* ASBType: 1 manual, 2 automatic, 128 "yes" (Mover.cpp:10794-10815) */
+            const std::unordered_map<AntiSkidBrakeType, int> anti_skid_brake_type_map = {
+                    {ANTI_SKID_BRAKE_NONE, 0},
+                    {ANTI_SKID_BRAKE_MANUAL, 1},
+                    {ANTI_SKID_BRAKE_AUTOMATIC, 2},
+                    {ANTI_SKID_BRAKE_YES, 128},
             };
             const std::unordered_map<std::string, int> brake_handle_position_string_map = {
                     {"min", Maszyna::bh_MIN}, {"max", Maszyna::bh_MAX},      {"drive", Maszyna::bh_RP},
@@ -131,11 +139,6 @@ namespace godot {
             void set_main_pipe_emergency_cuts_off_handle(const bool p_value) override {
                 main_pipe_emergency_cuts_off_handle = p_value;
             }
-
-        private:
-            /* The releaser was switched on by consist_releaser() and is held until the brakes stop
-             * braking */
-            bool trainset_releasing = false;
 
         protected:
             void _apply_configuration() override;

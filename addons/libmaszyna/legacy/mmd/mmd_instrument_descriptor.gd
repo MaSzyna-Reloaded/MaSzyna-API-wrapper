@@ -8,12 +8,17 @@ class_name MmdInstrumentDescriptor
 
 var label:String = ""
 var submodel_name:String = ""
-## "rot" or "mov" - wip/dgt/rotvar/movvar are out of Etap A+B scope and are parsed as "rot"/"mov"
-## with their trailing endvalue/endscale tokens ignored, rather than rejected outright.
+## The MMD's animation: rot, mov, wip, dgt, rotvar or movvar (TGauge::Load, Gauge.cpp:212-221)
 var animation_type:String = ""
 var scale:float = 0.0
 var offset:float = 0.0
 var friction:float = 0.0
+## rotvar/movvar: the value at which the scale has become end_scale (Gauge.cpp:116-122, 448-456)
+var end_value:float = 0.0
+var end_scale:float = 0.0
+## brakes:/eimscreen: - the two numbers before the shape: which car of the train and which of its
+## values (Train.cpp:12147-12166)
+var leading_numbers:PackedInt32Array = []
 ## "return"/"impulse"/"push"/"toggle"/"pushtoggle"/"delayed", or "" when the label has no
 ## explicit `type:` field (plain 5-token form).
 var button_type:String = ""

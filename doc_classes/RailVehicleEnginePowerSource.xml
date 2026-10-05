@@ -262,6 +262,10 @@
 		<member name="current_collector_overvoltage_relay" type="bool" setter="set_current_collector_overvoltage_relay" getter="get_current_collector_overvoltage_relay" default="false">
 			Overvoltage relay presence.
 		</member>
+		<member name="current_collector_pantograph_type" type="int" setter="set_current_collector_pantograph_type" getter="get_current_collector_pantograph_type" enum="RailVehicleEnginePowerSource.PantographType" default="0">
+			[code]Power:PantType[/code]
+			The pantograph type whose arms' dimensions the vehicle has (Mover.cpp:11620-11629, DynObj.cpp:90-194); NONE without the key - the arms are then measured from the model.
+		</member>
 		<member name="current_collector_physical_layout" type="int" setter="set_current_collector_physical_layout" getter="get_current_collector_physical_layout" default="0">
 			[code]Power:PhysicalLayout[/code]
 			Bitmask of physically present pantographs: 1 - front, 2 - rear.

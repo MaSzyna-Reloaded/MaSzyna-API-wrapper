@@ -1,5 +1,6 @@
 #include "RailVehicleRenderingServer.hpp"
 #include "game_data/GameDataServer.hpp"
+#include "legacy/e3d/E3DModel.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
@@ -10,6 +11,7 @@
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
 #include "vehicles/rail/RailVehicleDoors.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
+#include "vehicles/rail/RailVehicleEngine.hpp"
 #include "vehicles/rail/RailVehicleLighting.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -73,6 +75,26 @@ namespace godot {
         constexpr int PANTOGRAPH_LOWER_ARM = 0;
         constexpr int PANTOGRAPH_UPPER_ARM = 2;
         constexpr int PANTOGRAPH_SLIDER = 4;
+        /* Where a coupler adapter's model is looked for (TModelsManager::GetModel()) */
+        constexpr const char *COUPLER_ADAPTER_MODELS = "models";
+        /* TAnimPant's dimensions of a pantograph type: lower and upper arm, the slider's horizontal
+         * offset and its height over its pivot - AKP_4E, and the DSAx, EC160_200 and WBL85 alike
+         * (DynObj.cpp:90-160) */
+        struct PantographDimensions {
+                double lower_length;
+                double upper_length;
+                double horizontal;
+                double slider_height;
+        };
+        constexpr PantographDimensions PANTOGRAPH_AKP_4E{1.22, 1.755, 0.535, 0.07};
+        constexpr PantographDimensions PANTOGRAPH_DSA{1.98374, 2.14199, 0.142, 0.09353};
+        /* common_pantograph_settings(): the lower arm's angle lowered (DynObj.cpp:74) */
+        constexpr double PANTOGRAPH_LOWER_REST_ANGLE_DEGREES = 2.8547285515689267247882521833308;
+        /* The slider's scale the model's own height is trusted at (DynObj.cpp:5459) */
+        constexpr double PANTOGRAPH_SLIDER_SCALE_TOLERANCE = 0.001;
+        /* pantfactors: - two places along, then two slider heights (DynObj.cpp:5580-5588) */
+        constexpr int PANTOGRAPH_FACTOR_COUNT = 4;
+        constexpr int PANTOGRAPH_FACTOR_HEIGHTS = 2;
         constexpr std::array<const char *, 2> PNEUMATIC_SUBMODELS = {"cpneumatic", "pneumatic"};
 
     } // namespace
@@ -128,6 +150,12 @@ namespace godot {
             rail_vehicles->connect(
                     RailVehicleServer::vehicle_coupler_detached_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_coupler_changed));
+            rail_vehicles->connect(
+                    RailVehicleServer::vehicle_coupler_adapter_attached_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_coupler_adapter_changed));
+            rail_vehicles->connect(
+                    RailVehicleServer::vehicle_coupler_adapter_removed_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_vehicle_coupler_adapter_changed));
         }
         if (E3DRenderingServer *models = E3DRenderingServer::get_instance(); models != nullptr) {
             models->connect(
@@ -334,6 +362,11 @@ namespace godot {
             for (const RID &instance: p_visual.attachments) {
                 models->instance_set_scenario(instance, p_scenario);
             }
+            for (const RID &instance: p_visual.coupler_adapters) {
+                if (instance.is_valid()) {
+                    models->instance_set_scenario(instance, p_scenario);
+                }
+            }
         }
         if (p_visual.load.is_valid()) {
             models->instance_set_scenario(p_visual.load, p_scenario);
@@ -470,7 +503,14 @@ namespace godot {
             for (const RID &instance: p_visual.attachments) {
                 models->instance_free(instance);
             }
+            for (const RID &instance: p_visual.coupler_adapters) {
+                if (instance.is_valid()) {
+                    models->instance_free(instance);
+                }
+            }
         }
+        p_visual.coupler_adapters[0] = RID();
+        p_visual.coupler_adapters[1] = RID();
         p_visual.model = RID();
         p_visual.low_poly = RID();
         p_visual.passengers = RID();
@@ -528,7 +568,60 @@ namespace godot {
                 p_visual.attachments.push_back(attachment);
             }
         }
+        _update_coupler_adapters(p_vehicle, p_visual);
         _register_pickable(p_vehicle, p_visual);
+    }
+
+    Transform3D RailVehicleRenderingServer::_coupler_adapter_transform(
+            const RID &p_vehicle, const Visual &p_visual, const int p_end) const {
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
+        if (server == nullptr || vehicle_server == nullptr) {
+            return p_visual.transform * p_visual.model_transform;
+        }
+        const auto end = static_cast<RailVehicleController::CouplerEnd>(p_end);
+        const double sign = end == RailVehicleController::COUPLER_END_FRONT ? 1.0 : -1.0;
+        // in the model's own frame: at the coupler's height, the adapter's length beyond the end,
+        // the rear one turned about
+        const double length = vehicle_server->vehicle_get_dimensions(p_vehicle).z;
+        const Transform3D placement(
+                end == RailVehicleController::COUPLER_END_FRONT ? Basis() : Basis(Vector3(0.0, 1.0, 0.0), Math::PI),
+                Vector3(0.0, static_cast<real_t>(server->vehicle_get_coupler_adapter_height(p_vehicle, end)),
+                        static_cast<real_t>(
+                                (server->vehicle_get_coupler_adapter_length(p_vehicle, end) + (length * 0.5)) * sign)));
+        return p_visual.transform * p_visual.model_transform * placement;
+    }
+
+    void RailVehicleRenderingServer::_update_coupler_adapters(const RID &p_vehicle, Visual &p_visual) {
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        if (models == nullptr || !p_visual.own_models) {
+            return;
+        }
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        for (int end = 0; end < 2; ++end) {
+            if (p_visual.coupler_adapters[end].is_valid()) {
+                models->instance_free(p_visual.coupler_adapters[end]);
+                p_visual.coupler_adapters[end] = RID();
+            }
+            const String model_name = server != nullptr
+                                              ? server->vehicle_get_coupler_adapter_model(
+                                                        p_vehicle, static_cast<RailVehicleController::CouplerEnd>(end))
+                                              : String();
+            // the original's model manager takes it under models/ (TModelsManager::GetModel())
+            const Ref<E3DModel> model =
+                    model_name.is_empty() ? Ref<E3DModel>() : models->model_load(COUPLER_ADAPTER_MODELS, model_name);
+            if (model.is_null()) {
+                continue;
+            }
+            const RID instance = models->instance_create(
+                    model, E3DRenderingServer::INSTANCER_OPTIMIZED, E3DRenderingServer::INSTANCE_KIND_DYNAMIC);
+            models->instance_set_options(
+                    instance, COUPLER_ADAPTER_MODELS, p_visual.appearance->get_skins(), Array(), true, {}, 0);
+            models->instance_set_scenario(instance, p_visual.placed ? p_visual.scenario : RID());
+            models->instance_set_transform(instance, _coupler_adapter_transform(p_vehicle, p_visual, end));
+            models->instance_build(instance);
+            p_visual.coupler_adapters[end] = instance;
+        }
     }
 
     RailVehicleRenderingServer::Part
@@ -577,6 +670,12 @@ namespace godot {
                 _parts(p_visual, appearance->get_pantograph_rear_arms());
         p_visual.wiper_arms = _parts(p_visual, appearance->get_wiper_arms());
         p_visual.mirrors = _parts(p_visual, appearance->get_mirrors());
+        p_visual.doors = _parts(p_visual, appearance->get_doors());
+        p_visual.door_steps = _parts(p_visual, appearance->get_door_steps());
+        p_visual.pendulums = _parts(p_visual, appearance->get_pendulums());
+        p_visual.pendulum_amplitude = appearance->get_pendulum_amplitude();
+        p_visual.door_positions[0] = p_visual.door_positions[1] = -1.0;
+        p_visual.door_step_positions[0] = p_visual.door_step_positions[1] = -1.0;
         for (const char *coupler: COUPLER_SUBMODELS) {
             for (const char *suffix: COUPLER_SUFFIXES) {
                 const String name = String(coupler) + suffix;
@@ -617,34 +716,117 @@ namespace godot {
      * TAnimPant's lengths and angles (DynObj.cpp:5508-5549). Where it sits on the vehicle is read
      * the same way the original reads it off the submodel's matrix (TAnimPant::vPos): without it
      * both pantographs of a vehicle sampled the wire at the vehicle's origin. */
+    /* The pantograph as TAnimPant builds it (DynObj.cpp:5404-5480, 5577-5633): the arms' dimensions of
+     * the type the FIZ names (PantType=, DynObj.cpp:90-194), or - QUIRK, as long as the FIZ files do
+     * not name their type - measured from the model: the lower arm's place, the arms' lengths and
+     * rest angles from the lower arm to the upper one and the slider, the slider's height over its
+     * pivot and its place along the vehicle. A slider the model cannot be measured by takes its
+     * place and height from the MMD's pantfactors:, and with it a pantograph with no lower arm stands
+     * on top of the vehicle's box. Without a slider nothing is animated. */
     void RailVehicleRenderingServer::_publish_pantograph_geometry(
             const RID &p_vehicle, const Visual &p_visual,
             const RailVehicleEnginePowerSource::PantographSelector p_pantograph) const {
         RailVehicleServer *server = RailVehicleServer::get_instance();
+        const VehicleServer *vehicle_server = VehicleServer::get_instance();
         const Vector<Part> &arms = p_visual.pantograph_arms[p_pantograph];
-        if (server == nullptr || arms.size() != PANTOGRAPH_ELEMENTS) {
+        if (server == nullptr || vehicle_server == nullptr || arms.size() != PANTOGRAPH_ELEMENTS ||
+            arms[PANTOGRAPH_SLIDER].submodel.is_empty()) {
             return;
         }
-        // the second arm of each pair is optional - a single-arm pantograph has none
+        const Ref<RailVehicleEnginePowerSource> source =
+                server->vehicle_component_get(p_vehicle, RailVehicleComponentType::COMPONENT_ENGINE_POWER_SOURCE);
+        const RailVehicleEnginePowerSource::PantographType type =
+                source.is_valid() ? source->get_current_collector_pantograph_type()
+                                  : RailVehicleEnginePowerSource::PANTOGRAPH_TYPE_NONE;
+        const PantographDimensions &dimensions =
+                type == RailVehicleEnginePowerSource::PANTOGRAPH_TYPE_NONE ||
+                                type == RailVehicleEnginePowerSource::PANTOGRAPH_TYPE_AKP_4E
+                        ? PANTOGRAPH_AKP_4E
+                        : PANTOGRAPH_DSA;
+        double lower_length = dimensions.lower_length;
+        double upper_length = dimensions.upper_length;
+        double horizontal = dimensions.horizontal;
+        double slider_height = dimensions.slider_height;
+        double lower_rest_angle = Math::deg_to_rad(PANTOGRAPH_LOWER_REST_ANGLE_DEGREES);
+        double upper_rest_angle =
+                Math::acos(((lower_length * Math::cos(lower_rest_angle)) + horizontal) / upper_length);
+        const bool measured = type == RailVehicleEnginePowerSource::PANTOGRAPH_TYPE_NONE;
         const Part &lower = arms[PANTOGRAPH_LOWER_ARM];
         const Part &upper = arms[PANTOGRAPH_UPPER_ARM];
         const Part &slider = arms[PANTOGRAPH_SLIDER];
-        if (lower.submodel.is_empty() || upper.submodel.is_empty() || slider.submodel.is_empty()) {
-            return;
+        Vector3 position;
+        if (lower.submodel.is_empty()) {
+            slider_height = 0.0;
+        } else {
+            position.x = lower.rest.origin.x;
+            position.y = lower.rest.origin.y;
+            if (measured && !upper.submodel.is_empty()) {
+                const Vector3 lower_to_upper = lower.rest.basis.inverse().xform(upper.rest.origin - lower.rest.origin);
+                const Vector3 upper_to_slider =
+                        upper.rest.basis.inverse().xform(slider.rest.origin - upper.rest.origin);
+                lower_length = Vector2(lower_to_upper.y, lower_to_upper.z).length();
+                upper_length = Vector2(upper_to_slider.y, upper_to_slider.z).length();
+                horizontal = Math::abs(upper_to_slider.y) - Math::abs(lower_to_upper.y);
+                lower_rest_angle = Math::atan2(Math::abs(lower_to_upper.z), Math::abs(lower_to_upper.y));
+                upper_rest_angle = Math::atan2(Math::abs(upper_to_slider.z), Math::abs(upper_to_slider.y));
+                // the slider's own top over its pivot and its place along, while its scale holds
+                // (DynObj.cpp:5455-5475); a slider with no mesh has no top over it
+                if (Math::abs(slider.rest.basis.determinant() - 1.0) < PANTOGRAPH_SLIDER_SCALE_TOLERANCE) {
+                    const Ref<E3DSubModel> slider_model = _find_e3d_submodel(p_visual, slider.submodel);
+                    slider_height = slider_model.is_valid() && slider_model->get_mesh().is_valid()
+                                            ? slider.rest.xform(slider_model->get_mesh()->get_aabb()).get_end().y -
+                                                      slider.rest.origin.y
+                                            : 0.0;
+                    position.z = slider.rest.origin.z;
+                } else {
+                    slider_height = 0.0;
+                }
+            }
         }
-        const Vector3 lower_to_upper = lower.rest.basis.inverse().xform(upper.rest.origin - lower.rest.origin);
-        const Vector3 upper_to_slider = upper.rest.basis.inverse().xform(slider.rest.origin - upper.rest.origin);
-        const double lower_length = Vector2(lower_to_upper.y, lower_to_upper.z).length();
-        const double upper_length = Vector2(upper_to_slider.y, upper_to_slider.z).length();
-        if (lower_length <= 0.0 || upper_length <= 0.0) {
-            return;
+        const PackedFloat64Array factors = p_visual.appearance->get_pantograph_factors();
+        if (factors.size() == PANTOGRAPH_FACTOR_COUNT) {
+            const int index = p_pantograph == RailVehicleEnginePowerSource::PANTOGRAPH_FIRST ? 0 : 1;
+            if (slider_height == 0.0) {
+                // the MMD's place along is the model's own, the vehicle frame turns it (DynObj.cpp:5605-5614)
+                position.z = p_visual.model_transform.basis.xform(Vector3(0.0, 0.0, real_t(factors[index]))).z;
+                slider_height = factors[PANTOGRAPH_FACTOR_HEIGHTS + index];
+            }
+            if (position.y == 0.0) {
+                const double raised = (lower_length * Math::sin(lower_rest_angle)) +
+                                      (upper_length * Math::sin(upper_rest_angle)) + slider_height;
+                position.y = static_cast<real_t>(
+                        vehicle_server->vehicle_get_dimensions(p_vehicle).y - slider_height - raised);
+            }
         }
         server->vehicle_set_pantograph_geometry(
-                p_vehicle, p_pantograph, lower.rest.origin, lower_length, upper_length,
-                Math::abs(upper_to_slider.y) - Math::abs(lower_to_upper.y),
-                Math::atan2(Math::abs(lower_to_upper.z), Math::abs(lower_to_upper.y)),
-                Math::atan2(Math::abs(upper_to_slider.z), Math::abs(upper_to_slider.y)),
-                p_visual.appearance->get_pantograph_collector_width());
+                p_vehicle, p_pantograph, position, lower_length, upper_length, horizontal, lower_rest_angle,
+                upper_rest_angle, slider_height);
+    }
+
+    Ref<E3DSubModel>
+    RailVehicleRenderingServer::_find_e3d_submodel(const Visual &p_visual, const String &p_name) const {
+        const E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        const Ref<E3DModel> model = models != nullptr ? models->instance_get_model(p_visual.model) : Ref<E3DModel>();
+        if (model.is_null()) {
+            return {};
+        }
+        Vector<TypedArray<E3DSubModel>> levels;
+        levels.push_back(model->get_submodels());
+        while (!levels.is_empty()) {
+            const TypedArray<E3DSubModel> submodels = levels[levels.size() - 1];
+            levels.remove_at(levels.size() - 1);
+            for (int index = 0; index < submodels.size(); ++index) {
+                const Ref<E3DSubModel> submodel = submodels[index];
+                if (submodel.is_null()) {
+                    continue;
+                }
+                if (submodel->get_name().to_lower() == p_name) {
+                    return submodel;
+                }
+                levels.push_back(submodel->get_submodels());
+            }
+        }
+        return {};
     }
 
     /* The vehicle stands on a track: it is drawn where RailVehicleServer placed it. The body's
@@ -687,6 +869,12 @@ namespace godot {
             for (const RID &instance: p_visual.attachments) {
                 models->instance_set_transform(instance, model_transform);
             }
+            for (int end = 0; end < 2; ++end) {
+                if (p_visual.coupler_adapters[end].is_valid()) {
+                    models->instance_set_transform(
+                            p_visual.coupler_adapters[end], _coupler_adapter_transform(p_vehicle, p_visual, end));
+                }
+            }
         }
         _update_load(p_vehicle, p_visual);
         if (PhysicsServer3D *physics = PhysicsServer3D::get_singleton();
@@ -702,6 +890,12 @@ namespace godot {
     void RailVehicleRenderingServer::_pose(Visual &p_visual, const Part &p_part, const Basis &p_pose) {
         if (!p_part.submodel.is_empty()) {
             p_visual.poses[p_part.submodel] = Transform3D(p_pose);
+        }
+    }
+
+    void RailVehicleRenderingServer::_pose(Visual &p_visual, const Part &p_part, const Transform3D &p_pose) {
+        if (!p_part.submodel.is_empty()) {
+            p_visual.poses[p_part.submodel] = p_pose;
         }
     }
 
@@ -827,6 +1021,83 @@ namespace godot {
             const bool active = front ? occupied_cab > 0 : occupied_cab < 0;
             const double angle = active ? max_shift * (index % 2 == 1 ? right : left) : 0.0;
             _pose(p_visual, mirror, Basis(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(angle)));
+        }
+    }
+
+    // TDynamicObject::UpdateDoorTranslate/Rotate/Fold/Plug and UpdatePlatformTranslate/Rotate
+    // (DynObj.cpp:561-693): door n+1 is on the left when odd, on the right when even; a door slides
+    // along its z, turns about its x by its position in degrees, folds - itself and its first submodel
+    // the other way twice as far about their z, that one's about y - or plugs out and slides; a step
+    // slides along its x or turns about its y, by its share of the step range.
+    void RailVehicleRenderingServer::_pose_doors(const RID &p_vehicle, Visual &p_visual) {
+        const Ref<RailVehicleDoors> doors =
+                component<RailVehicleDoors>(p_vehicle, VehicleComponentType::COMPONENT_DOORS);
+        if ((p_visual.doors.is_empty() && p_visual.door_steps.is_empty()) || doors.is_null()) {
+            return;
+        }
+        const double positions[2] = {doors->get_left_position(), doors->get_right_position()};
+        const double step_positions[2] = {doors->get_left_step_position(), doors->get_right_step_position()};
+        if (positions[0] == p_visual.door_positions[0] && positions[1] == p_visual.door_positions[1] &&
+            step_positions[0] == p_visual.door_step_positions[0] &&
+            step_positions[1] == p_visual.door_step_positions[1]) {
+            return;
+        }
+        for (int side = 0; side < 2; ++side) {
+            p_visual.door_positions[side] = positions[side];
+            p_visual.door_step_positions[side] = step_positions[side];
+        }
+        const double range_out = doors->get_max_shift_plug();
+        for (int64_t first = 0; first < p_visual.doors.size(); first += DOOR_ELEMENTS) {
+            // door n+1 odd: the left side, positions[0]
+            const auto position = static_cast<real_t>(positions[(first / DOOR_ELEMENTS) % 2]);
+            const Part &leaf = p_visual.doors[first];
+            switch (doors->get_type()) {
+                case RailVehicleDoors::TYPE_SHIFT:
+                    _pose(p_visual, leaf, Transform3D(Basis(), Vector3(0.0, 0.0, position)));
+                    break;
+                case RailVehicleDoors::TYPE_ROTATE:
+                    _pose(p_visual, leaf, Basis(Vector3(1.0, 0.0, 0.0), Math::deg_to_rad(position)));
+                    break;
+                case RailVehicleDoors::TYPE_FOLD:
+                    _pose(p_visual, leaf, Basis(Vector3(0.0, 0.0, 1.0), Math::deg_to_rad(position)));
+                    _pose(p_visual, p_visual.doors[first + 1],
+                          Basis(Vector3(0.0, 0.0, 1.0), Math::deg_to_rad(-2 * position)));
+                    _pose(p_visual, p_visual.doors[first + 2],
+                          Basis(Vector3(0.0, 1.0, 0.0), Math::deg_to_rad(position)));
+                    break;
+                case RailVehicleDoors::TYPE_PLUG:
+                    _pose(p_visual, leaf,
+                          Transform3D(
+                                  Basis(), Vector3(static_cast<real_t>(MIN(position * 2.0, range_out)), 0.0,
+                                                   static_cast<real_t>(MAX(0.0, position - (range_out * 0.5))))));
+                    break;
+            }
+        }
+        const double step_range = doors->get_platform_max_shift();
+        for (int step = 0; step < p_visual.door_steps.size(); ++step) {
+            const auto shift = static_cast<real_t>(step_range * step_positions[step % 2]);
+            const Part &platform = p_visual.door_steps[step];
+            if (doors->get_platform_type() == RailVehicleDoors::PLATFORM_TYPE_ROTATE) {
+                _pose(p_visual, platform, Basis(Vector3(0.0, 1.0, 0.0), Math::deg_to_rad(shift)));
+            } else {
+                _pose(p_visual, platform, Transform3D(Basis(), Vector3(shift, 0.0, 0.0)));
+            }
+        }
+    }
+
+    // The pendulums swing about their x by the amplitude [deg] times the cosine of the engine's turn
+    // (DynObj.cpp:1121-1125)
+    void RailVehicleRenderingServer::_pose_pendulums(const RID &p_vehicle, Visual &p_visual) {
+        const Ref<RailVehicleEngine> engine =
+                component<RailVehicleEngine>(p_vehicle, VehicleComponentType::COMPONENT_ENGINE);
+        if (p_visual.pendulums.is_empty() || engine.is_null()) {
+            return;
+        }
+        const Basis swing(
+                Vector3(1.0, 0.0, 0.0),
+                static_cast<real_t>(Math::deg_to_rad(p_visual.pendulum_amplitude * Math::cos(engine->get_angle()))));
+        for (const Part &pendulum: p_visual.pendulums) {
+            _pose(p_visual, pendulum, swing);
         }
     }
 
@@ -1245,6 +1516,12 @@ namespace godot {
         _on_vehicle_trainset_changed(p_vehicle);
     }
 
+    void RailVehicleRenderingServer::_on_vehicle_coupler_adapter_changed(const RID &p_vehicle, const int64_t p_end) {
+        if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
+            _update_coupler_adapters(p_vehicle, *visual);
+        }
+    }
+
     void RailVehicleRenderingServer::_on_vehicle_config_changed(const RID &p_vehicle) {
         if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
             _update_load(p_vehicle, *visual);
@@ -1319,6 +1596,8 @@ namespace godot {
             _pose_pantographs(vehicle, visual);
             _pose_wipers(vehicle, visual);
             _pose_mirrors(vehicle, visual);
+            _pose_doors(vehicle, visual);
+            _pose_pendulums(vehicle, visual);
             _update_lights(vehicle, visual);
             _send_poses(visual);
         }

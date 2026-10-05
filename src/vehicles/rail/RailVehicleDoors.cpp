@@ -88,6 +88,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_open_control"), &RailVehicleDoors::get_open_control);
         ClassDB::bind_method(D_METHOD("get_left_open"), &RailVehicleDoors::get_left_open);
         ClassDB::bind_method(D_METHOD("get_left_closed"), &RailVehicleDoors::get_left_closed);
+        ClassDB::bind_method(D_METHOD("get_left_door_closed"), &RailVehicleDoors::get_left_door_closed);
         ClassDB::bind_method(D_METHOD("get_left_open_permit"), &RailVehicleDoors::get_left_open_permit);
         ClassDB::bind_method(D_METHOD("get_left_local_open"), &RailVehicleDoors::get_left_local_open);
         ClassDB::bind_method(D_METHOD("get_left_remote_open"), &RailVehicleDoors::get_left_remote_open);
@@ -98,6 +99,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_left_step_operating"), &RailVehicleDoors::get_left_step_operating);
         ClassDB::bind_method(D_METHOD("get_right_open"), &RailVehicleDoors::get_right_open);
         ClassDB::bind_method(D_METHOD("get_right_closed"), &RailVehicleDoors::get_right_closed);
+        ClassDB::bind_method(D_METHOD("get_right_door_closed"), &RailVehicleDoors::get_right_door_closed);
         ClassDB::bind_method(D_METHOD("get_right_open_permit"), &RailVehicleDoors::get_right_open_permit);
         ClassDB::bind_method(D_METHOD("get_right_local_open"), &RailVehicleDoors::get_right_local_open);
         ClassDB::bind_method(D_METHOD("get_right_remote_open"), &RailVehicleDoors::get_right_remote_open);

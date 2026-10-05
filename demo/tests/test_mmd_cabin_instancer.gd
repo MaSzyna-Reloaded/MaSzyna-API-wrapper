@@ -299,7 +299,7 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var driver_position:Vector3 = Vector3(1.0, 2.0, 10.0)
     var sound_events:Array[SfxEvent] = []
     var sound_player:SfxPlayer3D = add_child_autofree(SfxPlayer3D.new())
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, driver_position, sound_player, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, driver_position, sound_player, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
     var widget:CabinSpotLight3D = generated_root.get_child(0)
@@ -339,7 +339,7 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
 
@@ -354,7 +354,7 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), {}, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), {}, null, generated_root, 1, Vector3.ZERO, null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 0)
     assert_eq(diagnostics.size(), 1)
@@ -380,7 +380,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -430,7 +430,7 @@ func test_build_instrument_light_glows_at_each_backlight_piece():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 3)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -457,7 +457,7 @@ func test_build_alerter_lights_each_of_its_lamps_with_a_copy_of_its_light():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3(0.0, 1.0, 2.0), null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3(0.0, 1.0, 2.0), null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 4)
     var widget:CabinSpotLight3D = generated_root.get_child(0)
@@ -499,7 +499,7 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.get_rid(), submodel_index, cab_model, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, cab_model, generated_root, 1, Vector3.ZERO, null, sound_events, "", diagnostics)
 
     assert_eq(generated_root.get_child_count(), 3)
     var indicator:CabinSpotLight3D = generated_root.get_child(1)

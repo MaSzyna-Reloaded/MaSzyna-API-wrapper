@@ -100,11 +100,14 @@ func test_uncoupling_announces_the_trainset_change_once() -> void:
     assert_eq(first_detached, [RailVehicleController.COUPLING_FLAG_COUPLER])
 
 
-func test_the_consist_releaser_is_held_only_while_the_brakes_brake() -> void:
+# simulation.cpp:184, vehicleparams.cpp:289-293 - the releaser is held while its button is held
+func test_the_consist_releaser_is_held_while_its_button_is() -> void:
     controllers[0].send_command("consist_releaser", true)
     assert_true(brakes[0].get_releaser_active(), "switched on")
     await wait_seconds(RELEASER_TICK_SECONDS)
-    assert_false(brakes[0].get_releaser_active(), "a released brake lets go of it on the next tick")
+    assert_true(brakes[0].get_releaser_active(), "still held")
+    controllers[0].send_command("consist_releaser", false)
+    assert_false(brakes[0].get_releaser_active(), "let go with the button")
 
 
 func test_a_freed_vehicle_leaves_its_neighbours_uncoupled() -> void:

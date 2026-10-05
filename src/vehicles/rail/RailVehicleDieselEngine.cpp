@@ -89,7 +89,16 @@ namespace godot {
         }
     }
 
+    void RailVehicleDieselEngine::set_turbo_position(const int p_value) {
+        turbo_position = p_value;
+    }
+
+    int RailVehicleDieselEngine::get_turbo_position() const {
+        return turbo_position;
+    }
+
     void RailVehicleDieselEngine::_bind_methods() {
+        BIND_PROPERTY(RailVehicleDieselEngine, Variant::INT, turbo_position);
         BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, oil_pump_pressure_minimum, "oil_pump");
         BIND_PROPERTY(RailVehicleDieselEngine, Variant::FLOAT, oil_pump_pressure_maximum, "oil_pump");
         BIND_PROPERTY_W_HINT(

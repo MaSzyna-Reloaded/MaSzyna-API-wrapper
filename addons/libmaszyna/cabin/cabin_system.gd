@@ -20,6 +20,10 @@ signal vehicle_cabin_occupied_changed(vehicle_rid:RID, cabin_occupied:int)
 signal cab_light_level_changed(vehicle_rid:RID, cab:int, level:float)
 ## The instrument light of a cab came on or went out (cab_set_instrument_light_enabled())
 signal cab_instrument_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
+## The dashboard light of a cab came on or went out (cab_set_dashboard_light_enabled())
+signal cab_dashboard_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
+## The timetable light of a cab came on or went out (cab_set_timetable_light_enabled())
+signal cab_timetable_light_changed(vehicle_rid:RID, cab:int, enabled:bool)
 ## A radio message sent from `position`: heard on the radio of the player's cab tuned to
 ## `channel`, within `reach` [m] of it when that is positive (simulation::radio_message(),
 ## simulation.cpp:506); `transcript` is what it says, null when unknown
@@ -35,6 +39,8 @@ var _cab_logics:Dictionary[RID, CabinLogic] = {}
 ## The cab interior each vehicle's crew sits in, and the one shown, by instance id
 var _cabin_scenes:Dictionary[RID, PackedScene] = {}
 var _cabins:Dictionary[RID, int] = {}
+## Values of a vehicle's state the cab computes rather than reads, by name (state_computed_value_register())
+var _state_computed_values:Dictionary[RID, Dictionary] = {}
 
 
 func _ready() -> void:
@@ -58,6 +64,7 @@ func _on_vehicle_freed(vehicle_rid:RID) -> void:
         _cab_logics.erase(vehicle_rid)
     _cabin_scenes.erase(vehicle_rid)
     _cabins.erase(vehicle_rid)
+    _state_computed_values.erase(vehicle_rid)
     for cab:int in [1, 0, -1]:
         var key:String = _key(vehicle_rid, cab)
         _states.erase(key)
@@ -89,8 +96,25 @@ func vehicle_state(vehicle_rid:RID) -> Dictionary:
 ## One named value of the vehicle's state. This is what a cabin element wants: it is driven by a
 ## property name out of the MMD and reads exactly one of them, so handing it the whole dump only
 ## gives it something to hold wrongly.
+## A value the cab computes (state_computed_value_register()) is answered by its callable.
 func vehicle_state_value(vehicle_rid:RID, key:String, default_value:Variant = null) -> Variant:
+    var computed:Callable = _state_computed_values.get(vehicle_rid, {}).get(key, Callable())
+    if computed.is_valid():
+        return computed.call()
     return vehicle_state(vehicle_rid).get(key, default_value)
+
+
+## The cab shows a value of the vehicle's state as it computes it, not as the vehicle has it - as
+## TTrain::Update feeds a gauge (Train.cpp:9451-9458). callable() -> Variant, asked by
+## vehicle_state_value() for `key` of this vehicle until state_computed_value_unregister().
+func state_computed_value_register(vehicle_rid:RID, key:String, callable:Callable) -> void:
+    if not _state_computed_values.has(vehicle_rid):
+        _state_computed_values[vehicle_rid] = {}
+    _state_computed_values[vehicle_rid][key] = callable
+
+
+func state_computed_value_unregister(vehicle_rid:RID, key:String) -> void:
+    _state_computed_values.get(vehicle_rid, {}).erase(key)
 
 
 ## Whether the vehicle has its low voltage, without which every lamp of its cab is dark -
@@ -216,6 +240,32 @@ func cab_set_instrument_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) ->
 func cab_get_instrument_light_enabled(vehicle_rid:RID, cab:int) -> bool:
     var state:CabinState = _states.get(_key(vehicle_rid, cab))
     return state.instrument_light_enabled if state else false
+
+
+func cab_set_dashboard_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+    if state.dashboard_light_enabled == enabled:
+        return
+    state.dashboard_light_enabled = enabled
+    cab_dashboard_light_changed.emit(vehicle_rid, cab, enabled)
+
+
+func cab_get_dashboard_light_enabled(vehicle_rid:RID, cab:int) -> bool:
+    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+    return state.dashboard_light_enabled if state else false
+
+
+func cab_set_timetable_light_enabled(vehicle_rid:RID, cab:int, enabled:bool) -> void:
+    var state:CabinState = get_cabin_state(vehicle_rid, cab)
+    if state.timetable_light_enabled == enabled:
+        return
+    state.timetable_light_enabled = enabled
+    cab_timetable_light_changed.emit(vehicle_rid, cab, enabled)
+
+
+func cab_get_timetable_light_enabled(vehicle_rid:RID, cab:int) -> bool:
+    var state:CabinState = _states.get(_key(vehicle_rid, cab))
+    return state.timetable_light_enabled if state else false
 
 
 func get_cabin_state(vehicle_rid:RID, cab:int) -> CabinState:

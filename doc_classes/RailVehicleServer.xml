@@ -181,6 +181,30 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_coupler_adapter_height" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The height over the rail of the adapter fitted to an end of [param vehicle] [m].
+			</description>
+		</method>
+		<method name="vehicle_get_coupler_adapter_length" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The length the adapter fitted to an end of [param vehicle] adds to it [m].
+			</description>
+		</method>
+		<method name="vehicle_get_coupler_adapter_model" qualifiers="const">
+			<return type="String" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The model of the adapter fitted to an end of [param vehicle], empty without one.
+			</description>
+		</method>
 		<method name="vehicle_get_curve">
 			<return type="Dictionary" />
 			<param index="0" name="vehicle" type="RID" />
@@ -242,6 +266,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_is_coupler_automatic" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				Whether an end of [param vehicle] couples as an automatic coupler, its adapter's or its own.
+			</description>
+		</method>
 		<method name="vehicle_move">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -281,9 +313,9 @@
 			<param index="5" name="horizontal" type="float" />
 			<param index="6" name="lower_rest_angle" type="float" />
 			<param index="7" name="upper_rest_angle" type="float" />
-			<param index="8" name="collector_width" type="float" />
+			<param index="8" name="slider_height" type="float" />
 			<description>
-				Sets [param pantograph] of [param vehicle] as its model builds it ([code]TAnimPant[/code]): where the lower arm stands in the vehicle's own space, the arms' lengths, the horizontal offset between their ends and their angles lowered, and the slider's width the model gives for a vehicle whose FIZ declares none. Measured by whoever draws the vehicle. The server raises the pantograph on its step; a model rebuilt sets it again and the raise is kept.
+				Sets [param pantograph] of [param vehicle] as it is built ([code]TAnimPant[/code]): where it stands in the vehicle's own space, the arms' lengths, the horizontal offset between their ends, their angles lowered and the slider's height over its pivot. Given by whoever draws the vehicle. The server raises the pantograph on its step; a model rebuilt sets it again and the raise is kept.
 			</description>
 		</method>
 		<method name="vehicle_set_track">
@@ -312,6 +344,20 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="vehicle_coupler_adapter_attached">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<description>
+				A coupler adapter was fitted to [param end] of [param vehicle].
+			</description>
+		</signal>
+		<signal name="vehicle_coupler_adapter_removed">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" />
+			<description>
+				A coupler adapter was taken off [param end] of [param vehicle].
+			</description>
+		</signal>
 		<signal name="vehicle_coupler_attached">
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="flag" type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />

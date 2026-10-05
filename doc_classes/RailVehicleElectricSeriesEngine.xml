@@ -14,6 +14,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_circuit_imin_high_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the automatic start steps on the high current ([code]Imin == IminHi[/code]). State key [code]circuit_imin_high_enabled[/code].
+			</description>
+		</method>
 		<method name="get_next_position_velocity" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="main_controller" type="bool" />
@@ -27,6 +33,10 @@
 		</method>
 	</methods>
 	<members>
+		<member name="direction_switches_circuit_imin_high" type="bool" setter="set_direction_switches_circuit_imin_high" getter="get_direction_switches_circuit_imin_high" default="false">
+			[code]Param:Type=ezt[/code]
+			The reverser's step past "forward" switches the automatic start to the high current, and its step back from there to the low one (TMoverParameters::DirectionForward/Backward, Mover.cpp:719, 3250). In the config dump, with [code]direction_position_max[/code] - the reverser key's last position.
+		</member>
 		<member name="dynamic_brake_resistance" type="float" setter="set_dynamic_brake_resistance" getter="get_dynamic_brake_resistance" default="5.8">
 			[code]RList:DynBrakeRes[/code]
 			Resistance of the resistors during ED (dynamic) braking, for two motors combined, in ohms.

@@ -24,7 +24,7 @@ func _do_update():
 func _on_refresh_timer_timeout() -> void:
     if not _load:
         return
-    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(target_vehicle)
     %LoadName.text = _load.get_load_name() if _load.get_load_name() else tr("Empty")
     %LoadAmount.text = "%d / %d" % [_load.get_load_amount(), _load.max_load]
     %Unloading.text = "%d" % state.get("load_exchange_unload", 0.0)
@@ -33,8 +33,8 @@ func _on_refresh_timer_timeout() -> void:
 
 
 func _on_unload_pressed() -> void:
-    RailVehicleServer.load_remove(vehicle, LOAD_STEP, RailVehicleLoad.PLATFORM_SIDE_BOTH)
+    RailVehicleServer.load_remove(target_vehicle, LOAD_STEP, RailVehicleLoad.PLATFORM_SIDE_BOTH)
 
 
 func _on_load_pressed() -> void:
-    RailVehicleServer.load_add(vehicle, LOAD_STEP, RailVehicleLoad.PLATFORM_SIDE_BOTH)
+    RailVehicleServer.load_add(target_vehicle, LOAD_STEP, RailVehicleLoad.PLATFORM_SIDE_BOTH)

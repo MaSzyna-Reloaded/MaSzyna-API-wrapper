@@ -16,7 +16,7 @@ class_name MmdSoundCatalog
 ## compressor) + Tier 3 (brake-related labels - `entry["controller"] == &"brake"` marks these;
 ## MmdSoundBankInstancer hands them to BrakeSoundModel instead of building a TrainSoundTrigger
 ## from `state_property`/`trigger_mode` the way Tier 1/2 entries do) + running sounds (`entry["controller"] == &"running"`, see RunningSoundModel). Every
-## other label surveyed in dynamic/pkp/ (turbo/door family/announcements/...) is deliberately
+## other label surveyed in dynamic/pkp/ (door family/announcements/...) is deliberately
 ## absent - each still needs its own wrapper-state cross-reference before it can be added, same
 ## discipline as the cabin catalog.
 
@@ -49,6 +49,18 @@ static func _ensure_built() -> void:
         # DynObj.cpp:4855-4905). The vehicle reports each attach and each detach once
         # (VehicleController.coupler_attached / coupler_detached); the running counts these names
         # address live in TrainSoundSystem, which is what owns sound state.
+        # A coupler adapter fitted and taken off (DynObj.cpp:6835-6852, played on sound::attachadapter/
+        # removeadapter of TDynamicObject::attach/remove_coupler_adapter())
+        "coupleradapterattach": {
+            "event_name": &"coupler_adapter_attach",
+            "state_property": "coupler_sound/attach_adapter",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "coupleradapterremove": {
+            "event_name": &"coupler_adapter_remove",
+            "state_property": "coupler_sound/remove_adapter",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
         "couplerattach": {
             "event_name": &"coupler_attach",
             "state_property": "coupler_sound/attach_coupler",
@@ -232,6 +244,9 @@ static func _ensure_built() -> void:
         # one event per location, suffixed with its index.
         # Traction motors, one per `tractionmotors:` location (DynObj.cpp:5710, 7933-8010)
         "tractionmotor": {"event_name": &"traction_motor", "controller": &"running"},
+        # A diesel's turbocharger from the master controller position TurboPos: on (DynObj.cpp:6255-6259,
+        # 8266-8290)
+        "turbo": {"event_name": &"engine_turbo", "controller": &"running"},
         # Resistor ventilator (DynObj.cpp:5801, 8081-8092)
         "ventilator": {"event_name": &"ventilator", "controller": &"running"},
         # Curve squeal (DynObj.cpp:5916, 4735-4763)

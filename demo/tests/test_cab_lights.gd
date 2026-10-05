@@ -2,7 +2,9 @@ extends MaszynaGutTest
 
 ## The cab's own lights (LegacyCabinCabLights): the cab light, its dimmer (cablightdim_sw,
 ## TTrain::OnCommand_interiorlightdimenable/disable, Train.cpp:6291-6340) and the instrument light
-## belong to the cab they are switched in, never to the vehicle.
+## belong to the cab they are switched in, never to the vehicle. The instrument light's kind - the
+## cab's lamp label - says what powers and switches it, and the dashboard and timetable lights share
+## its power (Train.cpp:9562-9574, 11755-11779).
 
 const CAB:int = 1
 const OTHER_CAB:int = -1
@@ -19,8 +21,15 @@ func before_each():
     await wait_idle_frames(2)
     train.send_command("battery", true)
     await wait_idle_frames(2)
-    lights = LegacyCabinCabLights.new()
+    lights = LegacyCabinCabLights.new(LegacyCabinCabLights.InstrumentLightType.STANDARD)
     lights.register(train.get_rid(), CAB)
+
+
+func _lights_of_kind(kind:LegacyCabinCabLights.InstrumentLightType) -> void:
+    lights.unregister()
+    lights = LegacyCabinCabLights.new(kind)
+    lights.register(train.get_rid(), CAB)
+    await wait_idle_frames(2)
 
 
 func after_each():
@@ -62,3 +71,24 @@ func test_the_vehicle_has_no_cab_light_of_its_own():
 
     assert_false(train.get_state().has("roof_light_enabled"))
     assert_false(train.get_state().has("devices_light_enabled"))
+
+
+func test_an_always_on_instrument_light_needs_no_switch():
+    await _lights_of_kind(LegacyCabinCabLights.InstrumentLightType.ALWAYS)
+    assert_true(CabinSystem.cab_get_instrument_light_enabled(train.get_rid(), CAB), "lit with the low voltage")
+
+
+func test_a_converter_instrument_light_needs_the_110_v():
+    await _lights_of_kind(LegacyCabinCabLights.InstrumentLightType.CONVERTER)
+    CabinSystem.act(train.get_rid(), CAB, LegacyCabinCabLights.INSTRUMENT_LIGHT, &"toggle", true)
+    var power110:bool = bool(train.get_state().get("power110_available", false))
+    assert_eq(CabinSystem.cab_get_instrument_light_enabled(train.get_rid(), CAB), power110,
+            "lit only with the converter's 110 V")
+
+
+func test_the_dashboard_and_timetable_lights_are_switched_on_their_own():
+    CabinSystem.act(train.get_rid(), CAB, LegacyCabinCabLights.DASHBOARD_LIGHT, &"toggle", true)
+    assert_true(CabinSystem.cab_get_dashboard_light_enabled(train.get_rid(), CAB))
+    assert_false(CabinSystem.cab_get_timetable_light_enabled(train.get_rid(), CAB))
+    CabinSystem.act(train.get_rid(), CAB, LegacyCabinCabLights.TIMETABLE_LIGHT, &"toggle", true)
+    assert_true(CabinSystem.cab_get_timetable_light_enabled(train.get_rid(), CAB))

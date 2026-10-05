@@ -18,11 +18,6 @@ class_name MmdSoundEventBuilder
 ##   (matches engine.tres's own combined clips+automations shape) instead of a separate event.
 ## - sound_main only, no begin/end/chunks -> 1 looping clip (matches oil_pump.tres's shape).
 
-## Generous ceiling so the TOP chunk (length=0, i.e. "extends to max_domain" - see
-## _automation_clip_contains_value()) stays audible for any real RPM/parameter value instead of
-## silently going quiet past its own threshold, which is what a literal port of the original
-## engine's Chunkrange=100 default would do for any real chunk table (thresholds are always > 100).
-const _AUTOMATION_HEADROOM:float = 100000.0
 const _CROSSFADE_CURVE_SEGMENTS:int = 8
 const _CROSSFADE_LOG_FACTOR:float = -0.57
 ## An emitter's own pitch factor when the MMD gives no pitchvariation: (sound.cpp:374-377)
@@ -49,7 +44,7 @@ static func build(
         event.clips = _build_begin_main_end_clips(definition)
     elif not has_chunks and definition.sound_main:
         var clip := SfxClip.new()
-        clip.stream = build_stream(definition.sound_main, loop)
+        clip.stream = build_stream(definition.sound_main, loop, definition.source_file.get_base_dir())
         event.clips = [clip]
 
     if parameterized:
@@ -128,11 +123,11 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
     # once, then switch to looping main" state machine - the main clip's start is approximated
     # from the begin clip's own real duration (queried from the actual audio asset, not guessed)
     # so it starts right as the begin clip finishes.
-    var main_offset:float = AudioStreamManager.get_stream_length(definition.sound_begin)
+    var main_offset:float = AudioStreamManager.get_stream_length(definition.sound_begin, definition.source_file.get_base_dir())
 
     if definition.sound_begin:
         var begin_clip := SfxClip.new()
-        begin_clip.stream = build_stream(definition.sound_begin, false)
+        begin_clip.stream = build_stream(definition.sound_begin, false, definition.source_file.get_base_dir())
         # the span is known before the stream is loaded, so an event started past it
         # (TrainSoundSystem, a running sound heard again) does not play it
         begin_clip.length = main_offset
@@ -141,13 +136,13 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
 
     if definition.sound_main:
         var main_clip := SfxClip.new()
-        main_clip.stream = build_stream(definition.sound_main, true)
+        main_clip.stream = build_stream(definition.sound_main, true, definition.source_file.get_base_dir())
         main_clip.offset = main_offset
         clips.append(main_clip)
 
     if definition.sound_end:
         var end_clip := SfxClip.new()
-        end_clip.stream = build_stream(definition.sound_end, false)
+        end_clip.stream = build_stream(definition.sound_end, false, definition.source_file.get_base_dir())
         end_clip.trigger_mode = SfxClip.TriggerMode.TRIGGER_SUSTAIN
         end_clip.bookend = true
         clips.append(end_clip)
@@ -169,8 +164,7 @@ static func _build_automation(
     chunks.sort_custom(func(a:Dictionary, b:Dictionary) -> bool: return int(a["threshold"]) < int(b["threshold"]))
 
     # fadeins[i]/fadeouts[i] mirror sound_source::deserialize()'s own cached chunk range points
-    # (audio/sound.cpp:60-85) - fadeouts has no entry for the LAST chunk since that boundary is
-    # superseded by length=0 below (open-ended, see the class doc comment), not consumed anywhere.
+    # (audio/sound.cpp:60-85); the last chunk ends at its Chunkrange or its threshold (sound.cpp:85)
     var fadeins:Array[float] = []
     var fadeouts:Array[float] = []
     for idx in range(chunks.size()):
@@ -180,8 +174,8 @@ static func _build_automation(
         else:
             var previous_threshold:float = float(chunks[idx - 1]["threshold"])
             fadeins.append(threshold - 0.01 * definition.crossfade_percent * (threshold - previous_threshold))
-        if idx < chunks.size() - 1:
-            fadeouts.append(float(chunks[idx + 1]["threshold"]))
+        fadeouts.append(float(chunks[idx + 1]["threshold"]) if idx < chunks.size() - 1
+                else maxf(float(definition.chunk_range), threshold))
 
     var automation := SfxAutomation.new()
     automation.parameter_name = sound_parameter
@@ -191,7 +185,6 @@ static func _build_automation(
     automation.crossfade_mode = SfxAutomation.CrossfadeMode.EQUAL_POWER
     var clips:Array[SfxClip] = []
     var tracks:Array[SfxTrack] = []
-    var max_threshold:float = 0.0
 
     for idx in range(chunks.size()):
         var threshold:float = float(chunks[idx]["threshold"])
@@ -199,11 +192,9 @@ static func _build_automation(
         var fadein:float = fadeins[idx]
 
         var clip := SfxClip.new()
-        clip.stream = build_stream(chunks[idx]["filename"], loop)
+        clip.stream = build_stream(chunks[idx]["filename"], loop, definition.source_file.get_base_dir())
         clip.offset = fadein
-        # top chunk: 0 means "active up to automation.max_domain" (_automation_clip_contains_value)
-        # - stays audible at any RPM above its own threshold instead of cutting out past Chunkrange.
-        clip.length = 0.0 if is_last else maxf(0.0, fadeouts[idx] - fadein)
+        clip.length = maxf(0.0, fadeouts[idx] - fadein)
 
         var fade_in_width:float = threshold - fadein
         clip.fade_in_curve = _build_ramp_curve(true, fade_in_width)
@@ -223,10 +214,9 @@ static func _build_automation(
         tracks.append(track)
 
         clips.append(clip)
-        max_threshold = maxf(max_threshold, threshold)
 
     automation.clips = clips
-    automation.max_domain = max_threshold + _AUTOMATION_HEADROOM
+    automation.max_domain = fadeouts.back() if fadeouts else 0.0
     return {"automation": automation, "tracks": tracks}
 
 
@@ -310,10 +300,12 @@ static func shape_emitter(
 
 ## A sound file of the game, with its length known before its first playback - a voice's start in
 ## it (a start fraction, a seek) is placed before the file is read. Every MaSzyna sound stream is
-## made here.
-static func build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
+## made here. `vehicle_dir` is the directory of the vehicle it belongs to, looked in first
+## (audio.cpp:115), "" for a sound of no vehicle.
+static func build_stream(filename:String, loop:bool, vehicle_dir:String) -> MaszynaAudioStream:
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
+    stream.vehicle_dir = vehicle_dir
     stream.loop = loop
-    stream.length = AudioStreamManager.get_stream_length(filename)
+    stream.length = AudioStreamManager.get_stream_length(filename, vehicle_dir)
     return stream

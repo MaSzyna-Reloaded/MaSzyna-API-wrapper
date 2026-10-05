@@ -5,14 +5,7 @@ class_name FizTrainSecuritySystemParser
 ## Security: section parser -> RailVehicleSecuritySystem (czuwak/SHP/radiostop). Registered directly
 ## in FizVehicleBuilder's section table.
 ##
-## This repo's vendored Mover.cpp doesn't keep the original LoadFIZ_Security loader (no
-## LoadFIZ_* functions survived vendoring at all - see the other fiz_train_*_parser.gd files'
-## same note), so the AwareSystem= token vocabulary below is inferred from
-## RailVehicleSecuritySystem's own property names (aware_system_active/cab_signal/
-## separate_acknowledge/sifa - MOVER.h's basic_security_system::vigilance_enabled/
-## cabsignal_enabled/separate_acknowledge/is_sifa) rather than confirmed against original
-## source - treat the exact token spellings as best-effort pending a more authoritative source
-## if precise behavior ever matters.
+## Its keys and their defaults as TSecuritySystem::load reads them (Mover.cpp:235-254).
 
 
 func create_node() -> RailVehicleSecuritySystem:
@@ -43,5 +36,9 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.emergency_brake_delay = FizLineUtil.get_float(kv, "EmergencyBrakeDelay")
     if kv.has("RadioStop"):
         node.radio_stop_enabled = FizLineUtil.get_bool(kv, "RadioStop")
-    if kv.has("SHPDist"):
-        node.shp_magnet_distance = FizLineUtil.get_float(kv, "SHPDist")
+    if kv.has("MagnetLocation"):
+        node.shp_magnet_distance = FizLineUtil.get_float(kv, "MagnetLocation")
+    if kv.has("AwareMinSpeed"):
+        node.aware_min_speed = FizLineUtil.get_float(kv, "AwareMinSpeed")
+    if kv.has("CabDependent"):
+        node.cab_dependent = FizLineUtil.get_bool(kv, "CabDependent")

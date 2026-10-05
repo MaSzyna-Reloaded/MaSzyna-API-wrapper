@@ -39,6 +39,7 @@ namespace godot {
             int get_open_control() const override;
             bool get_left_open() const override;
             bool get_left_closed() const override;
+            bool get_left_door_closed() const override;
             bool get_left_open_permit() const override;
             bool get_left_local_open() const override;
             bool get_left_remote_open() const override;
@@ -49,6 +50,7 @@ namespace godot {
             bool get_left_step_operating() const override;
             bool get_right_open() const override;
             bool get_right_closed() const override;
+            bool get_right_door_closed() const override;
             bool get_right_open_permit() const override;
             bool get_right_local_open() const override;
             bool get_right_remote_open() const override;

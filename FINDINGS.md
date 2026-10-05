@@ -566,3 +566,5 @@ anything. Open work belongs in `TODO.md`.
 * A property's default is the original's value for an absent key - read the lookup's fallback,
   not only the parsed values (`CompressorPower` falls back to 1). *(10-05 EN57KM compressor)*
 * A tool reading the game's text files skips a UTF-8 BOM as the game does. *(10-05 EN57KM cab)*
+* A default the original sets in one FIZ section for another section's keys reaches the vehicle
+  even without that section's component (`LoadFIZ_Param`'s EZT `IminLo/Hi`). *(10-05 EN57 cab car reverser)*

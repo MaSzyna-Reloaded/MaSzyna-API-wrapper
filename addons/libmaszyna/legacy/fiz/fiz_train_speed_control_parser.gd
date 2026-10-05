@@ -5,14 +5,7 @@ class_name FizTrainSpeedControlParser
 ## SpeedControl: section parser -> RailVehicleSpeedControl. Registered directly in
 ## FizVehicleBuilder's section table.
 ##
-## Key mapping confirmed against a real vehicle line (en57-class cohort):
-## `SpeedControl: SpeedCtrl=Yes OverrideManual=No InitPwr=1.0 MaxPwrVel=-1 StartVel=-1
-## VelStep=10 PwrStep=0.00 MinPwr=1.0 MaxPwr=1.0 MinVel=0 MaxVel=120 Offset=-0.1 kPpos=0.2
-## kPneg=0.4 kIpos=0.00 kIneg=0.00 BrakeIntervention=No SpeedCtrlATOF=1`. `Delay=`/
-## `ImpulseLever=`/`Buttons=`/`BrakeInterventionVel=`/`PwrUpSpeed=`/`PwrDownSpeed=` don't appear
-## in that example - their key spellings below are a best-effort guess following the same
-## abbreviation convention (Pwr=/Vel=) seen in the confirmed keys, not verified against a real
-## file.
+## Its keys and their defaults as LoadFIZ_SpeedControl reads them (Mover.cpp:11093-11130).
 
 
 func create_node() -> RailVehicleSpeedControl:
@@ -26,14 +19,14 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
 
     if kv.has("SpeedCtrl"):
         node.speed_control_enabled = FizLineUtil.get_bool(kv, "SpeedCtrl")
-    if kv.has("Delay"):
-        node.delay = FizLineUtil.get_float(kv, "Delay")
-    if kv.has("ImpulseLever"):
-        node.impulse_lever = FizLineUtil.get_bool(kv, "ImpulseLever")
+    if kv.has("SpeedCtrlDelay"):
+        node.delay = FizLineUtil.get_float(kv, "SpeedCtrlDelay")
+    # SpeedCtrlTypeTime (Mover.cpp:11100)
+    node.impulse_lever = FizLineUtil.get_string(kv, "SpeedCtrlType") == "Time"
     if kv.has("SpeedCtrlATOF"):
         node.disables_on = FizLineUtil.get_int(kv, "SpeedCtrlATOF")
-    if kv.has("Buttons"):
-        var tokens: PackedStringArray = FizLineUtil.get_string(kv, "Buttons").split("|")
+    if kv.has("SpeedButtons"):
+        var tokens: PackedStringArray = FizLineUtil.get_string(kv, "SpeedButtons").split("|")
         var speeds := PackedFloat64Array()
         for token: String in tokens:
             if token.strip_edges().is_valid_float():
@@ -71,9 +64,9 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.integral_gain_negative = FizLineUtil.get_float(kv, "kIneg")
     if kv.has("BrakeIntervention"):
         node.brake_intervention = FizLineUtil.get_bool(kv, "BrakeIntervention")
-    if kv.has("BrakeInterventionVel"):
-        node.brake_intervention_max_velocity = FizLineUtil.get_float(kv, "BrakeInterventionVel")
-    if kv.has("PwrUpSpeed"):
-        node.power_up_speed = FizLineUtil.get_float(kv, "PwrUpSpeed")
-    if kv.has("PwrDownSpeed"):
-        node.power_down_speed = FizLineUtil.get_float(kv, "PwrDownSpeed")
+    if kv.has("BrakeIntMaxVel"):
+        node.brake_intervention_max_velocity = FizLineUtil.get_float(kv, "BrakeIntMaxVel")
+    if kv.has("PowerUpSpeed"):
+        node.power_up_speed = FizLineUtil.get_float(kv, "PowerUpSpeed")
+    if kv.has("PowerDownSpeed"):
+        node.power_down_speed = FizLineUtil.get_float(kv, "PowerDownSpeed")

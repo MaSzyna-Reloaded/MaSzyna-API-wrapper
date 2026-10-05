@@ -133,6 +133,7 @@ namespace godot {
 
         p_mover->dizel_nmin = p_engine->get_mechanical_min_rpm();
         p_mover->dizel_nmax = p_engine->get_mechanical_max_rpm();
+        p_mover->TurboTest = p_engine->get_turbo_position();
         p_mover->dizel_nmax_cutoff = p_engine->get_mechanical_fuel_cutoff_rpm();
         p_mover->dizel_AIM = p_engine->get_mechanical_inertia();
         p_mover->engageupspeed = p_engine->get_mechanical_clutch_engage_speed();

@@ -233,6 +233,24 @@ interface.
   an MMD gives. Wrapper: the FIZ factory makes a master controller only for `MCPN > 1`
   (`FizTrainCntrlParser.MASTER_CONTROLLER_MIN_POSITIONS`), and the horns and the radio only for a
   vehicle that has one; a wagon gets none of the three (`docs/findings-archive.md`, 2026-10-04).
+* **A FIZ declares no battery of its own.** Every Mover has a battery and the low-voltage circuits;
+  a vehicle without one simply has `NominalBatteryVoltage` 0, and the battery logic is gated on it
+  (`Mover.cpp:941`). What says a vehicle has a low voltage at all is `Light:`'s `LMaxVoltage` (the
+  battery's nominal voltage) or `Cntrl.`'s `BatteryStart`/`ConverterStart`/`ConverterStartDelay`.
+  Wrapper: the FIZ factory makes a power supply only for a vehicle with one of these
+  (`FizTrainPowerSupplyParser`); a vehicle with none - a freight wagon - has no power supply
+  component, which stands for the original's zero nominal voltage.
+
+## Pantograph geometry (`vehicle/DynObj.cpp`)
+
+* **A pantograph's arms are measured from the vehicle's model, not read from its FIZ.** The original
+  gives every pantograph the dimensions of its type (`PantType=`, AKP_4E by default,
+  `DynObj.cpp:90-194`) and then overrides them with what it measures off the model's lower arm, upper
+  arm and slider (`DynObj.cpp:5404-5480`); `pantfactors:` of the MMD places a slider the model cannot
+  be measured by (`DynObj.cpp:5577-5633`). No FIZ of the game data names `PantType=`. Wrapper: a FIZ
+  that names it takes that type's dimensions; one that does not - every FIZ today - has its arms
+  measured from the model as the original does, until the FIZ files name their pantographs
+  (`RailVehicleRenderingServer::_publish_pantograph_geometry`).
 
 ## Cab definitions (MMD data)
 

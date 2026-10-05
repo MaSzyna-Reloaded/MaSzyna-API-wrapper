@@ -15,6 +15,17 @@ on how often it was read.
 wholesale, would this field go with it?* If yes, it belongs there. If it would have to be kept
 for somebody else, it belongs to that somebody.
 
+## The port is data-driven
+
+**The port is data-driven - ABSOLUTE.** Every name, prefix, count, flag and default the original
+reads from data (FIZ, MMD, SCN/SCM/INC, CHK, lang, models) is read from that data in the wrapper, the
+way the original reads it, with the original's default when absent. Only what the original itself
+hardcodes, or a quirk documented in `MASZYNA_ORIGINAL_QUIRKS.md`, may be hardcoded - with the
+original's line cited. "Confirmed identical across the vehicles checked" is never a reason: the
+pantograph arm names hardcoded on 2026-09-16 after checking three vehicles (`ramiedolne1_pant0`, read
+by the original from `animpant*prefix:`) left 104 vehicles unanimated (36WE, EN57, ET22, 4E...), the
+wheel prefix 109, and searching cab 2 from `cab1definition:` broke 133 cabs.
+
 ## The map
 
 Read top to bottom: each layer may use the ones below it and must know nothing of the ones above.

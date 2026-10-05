@@ -75,7 +75,9 @@ enum ButtonType {
     set(x):
         mesh_rotation_offset = x
         _update_mesh_target()
-@export var speed = 10.0
+## How fast the control follows its value - 1 / the MMD's friction; 0 moves it at once
+## (TGauge::Update(), Gauge.cpp:364-375)
+@export var animation_speed = 10.0
 ## The cab's sound player and the events of its bank this button plays, filled by whoever builds
 ## the cab (MmdCabinInstancer)
 @export var sound_player:SfxPlayer3D
@@ -128,6 +130,7 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            _take_wiper_chain(_mesh)
             _set_mouse_control(_mesh, hint_actions, press, release, Callable(), Callable(), Vector3.ZERO, Vector3.ZERO)
             _set_mouse_state(_mouse_state())
     _update_state()
@@ -143,17 +146,18 @@ func _process_tool(delta):
         _current_position = _target_mesh_position
         _current_rotation = _target_mesh_rotation
     else:
-        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * speed)
-        _current_position = _current_position.lerp(_target_mesh_position, delta * speed)
+        # Gauge.cpp:364-375 - no friction, or a step longer than half of it, sets it outright
+        var weight:float = delta * animation_speed if animation_speed > 0.0 else 1.0
+        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, minf(weight, 1.0))
+        _current_position = _current_position.lerp(_target_mesh_position, minf(weight, 1.0))
 
     if is_instance_valid(_mesh):
-        var new_basis = _mesh_original_basis
-        new_basis *= Basis(Vector3.RIGHT, deg_to_rad(_current_rotation.x))
-        new_basis *= Basis(Vector3.UP, deg_to_rad(_current_rotation.y))
-        new_basis *= Basis(Vector3.FORWARD, deg_to_rad(_current_rotation.z))
-
-        _mesh.transform.basis = new_basis
+        var rotation_basis:Basis = Basis(Vector3.RIGHT, deg_to_rad(_current_rotation.x)) \
+                * Basis(Vector3.UP, deg_to_rad(_current_rotation.y)) \
+                * Basis(Vector3.FORWARD, deg_to_rad(_current_rotation.z))
+        _mesh.transform.basis = _mesh_original_basis * rotation_basis
         _mesh.position = _mesh_original_position + _current_position
+        _pose_wiper_chain(rotation_basis)
 
 ## A flag from the cabin logic presses or releases the control; a number is the pose itself
 ## (0, value_rest or 1), shown as it is.

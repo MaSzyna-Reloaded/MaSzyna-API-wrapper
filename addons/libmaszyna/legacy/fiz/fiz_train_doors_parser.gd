@@ -39,12 +39,12 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.open_time = FizLineUtil.get_float(kv, "DoorStayOpen")
     if kv.has("OpenSpeed"):
         node.open_speed = FizLineUtil.get_float(kv, "OpenSpeed")
-    if kv.has("OpenDelay"):
-        node.open_delay = FizLineUtil.get_float(kv, "OpenDelay")
+    if kv.has("DoorOpenDelay"):
+        node.open_delay = FizLineUtil.get_float(kv, "DoorOpenDelay")
     if kv.has("CloseSpeed"):
         node.close_speed = FizLineUtil.get_float(kv, "CloseSpeed")
-    if kv.has("CloseDelay"):
-        node.close_delay = FizLineUtil.get_float(kv, "CloseDelay")
+    if kv.has("DoorCloseDelay"):
+        node.close_delay = FizLineUtil.get_float(kv, "DoorCloseDelay")
     if kv.has("DoorClosureWarning"):
         node.close_warning = FizLineUtil.get_bool(kv, "DoorClosureWarning")
     if kv.has("DoorClosureWarningAuto"):

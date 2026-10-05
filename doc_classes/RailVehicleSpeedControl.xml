@@ -83,7 +83,7 @@
 			[code]SpeedControl:BrakeIntMaxVel[/code]
 			Maximum velocity, in km/h, at which the cruise control may use pneumatic braking.
 		</member>
-		<member name="delay" type="float" setter="set_delay" getter="get_delay" default="0.0">
+		<member name="delay" type="float" setter="set_delay" getter="get_delay" default="2.0">
 			[code]SpeedControl:SpeedCtrlDelay[/code]
 			Delay before a newly set target velocity is applied.
 		</member>
@@ -133,7 +133,7 @@
 			[code]SpeedControl:Offset[/code]
 			Target velocity control error offset, in km/h.
 		</member>
-		<member name="override_manual_power" type="bool" setter="set_override_manual_power" getter="get_override_manual_power" default="false">
+		<member name="override_manual_power" type="bool" setter="set_override_manual_power" getter="get_override_manual_power" default="true">
 			[code]SpeedControl:OverrideManual[/code]
 			Whether the cruise control overrides manual power settings.
 		</member>
@@ -149,7 +149,7 @@
 			[code]SpeedControl:PowerUpSpeed[/code]
 			Rate at which requested power increases, in 100%/s.
 		</member>
-		<member name="preset_speeds" type="PackedFloat64Array" setter="set_preset_speeds" getter="get_preset_speeds" default="PackedFloat64Array()">
+		<member name="preset_speeds" type="PackedFloat64Array" setter="set_preset_speeds" getter="get_preset_speeds" default="PackedFloat64Array(30, 40, 50, 60, 70, 80, 90, 100, 110, 120)">
 			[code]SpeedControl:SpeedButtons[/code]
 			Predefined target velocities (up to 10 values, in km/h) selectable with number key shortcuts.
 		</member>

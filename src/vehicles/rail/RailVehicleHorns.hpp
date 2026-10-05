@@ -13,11 +13,9 @@ namespace godot {
     // signal. The original engine has no FIZ-level config for
     // horn count - a vehicle's 0-3 horn complement is implied entirely by which MMD cabin
     // button (horn_bt:/hornlow_bt:/hornhigh_bt:/whistle_bt:) and sound (horn1:/horn2:/
-    // horn3:) labels it declares. low_horn_enabled/high_horn_enabled/whistle_enabled
-    // re-expose that same gate (the original's cabin SubModel-presence null check) as
-    // explicit config, since this class has no visibility into cabin nodes - callers
-    // building a vehicle from MMD data (e.g. MaszynaRailVehicle3D) set these from label
-    // presence.
+    // horn3:) labels it declares. Whether a cab's key reaches a horn is the cab's business - the
+    // original refuses it in a cab without the horn's button (Train.cpp:7936, 7980, 8024); the
+    // vehicle sounds whatever it is told.
     class RailVehicleHorns : public RailVehicleComponent {
             GDCLASS(RailVehicleHorns, RailVehicleComponent)
 
@@ -52,8 +50,5 @@ namespace godot {
             virtual void set_horn_low(bool p_state) = 0;
             virtual void set_horn_high(bool p_state) = 0;
             virtual void set_whistle(bool p_state) = 0;
-            MAKE_MEMBER_GS_NR(bool, low_horn_enabled, true);
-            MAKE_MEMBER_GS_NR(bool, high_horn_enabled, true);
-            MAKE_MEMBER_GS_NR(bool, whistle_enabled, true);
     };
 } // namespace godot

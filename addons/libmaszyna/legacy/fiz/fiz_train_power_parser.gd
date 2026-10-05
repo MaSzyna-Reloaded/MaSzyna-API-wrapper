@@ -47,6 +47,7 @@ static func create_node(context: FizImportContext) -> RailVehicleEnginePowerSour
     node.current_collector_min_collector_lifting = FizLineUtil.get_float(kv, "MinH")
     node.current_collector_max_collector_lifting = FizLineUtil.get_float(kv, "MaxH")
     node.current_collector_sliding_width = FizLineUtil.get_float(kv, "CSW")
+    node.current_collector_pantograph_type = pantograph_type(FizLineUtil.get_string(kv, "PantType"))
     node.current_collector_max_voltage = max_voltage
     node.current_collector_max_current = FizLineUtil.get_float(kv, "MaxCurrent")
     node.current_collector_overvoltage_relay = FizLineUtil.get_bool(kv, "OverVoltProt")
@@ -87,3 +88,16 @@ static func create_node(context: FizImportContext) -> RailVehicleEnginePowerSour
     if cntrl_kv.has("PantValveSolenoid"):
         node.cntrl_pantograph_valve_solenoid = FizLineUtil.get_bool(cntrl_kv, "PantValveSolenoid")
     return node
+
+
+## PantType= - AKP_4E, DSA..., EC160 or EC200, WBL85 (Mover.cpp:11620-11629); none without the key
+static func pantograph_type(value: String) -> RailVehicleEnginePowerSource.PantographType:
+    if value == "AKP_4E":
+        return RailVehicleEnginePowerSource.PANTOGRAPH_TYPE_AKP_4E
+    if value.begins_with("DSA"):
+        return RailVehicleEnginePowerSource.PANTOGRAPH_TYPE_DSAX
+    if value in ["EC160", "EC200"]:
+        return RailVehicleEnginePowerSource.PANTOGRAPH_TYPE_EC160_200
+    if value == "WBL85":
+        return RailVehicleEnginePowerSource.PANTOGRAPH_TYPE_WBL85
+    return RailVehicleEnginePowerSource.PANTOGRAPH_TYPE_NONE

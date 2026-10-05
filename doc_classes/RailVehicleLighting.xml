@@ -39,6 +39,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_any_light_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether any lamp is lit at either end. State key [code]any_light_enabled[/code].
+			</description>
+		</method>
 		<method name="get_front_headlight_left_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>

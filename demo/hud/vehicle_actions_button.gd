@@ -23,13 +23,21 @@ func _on_pressed() -> void:
     %ActionsPopup.popup(Rect2i(Vector2i(anchor.position + Vector2(0.0, anchor.size.y)), Vector2i.ZERO))
 
 
-## consistreleaser (simulation.cpp:184): every vehicle of the trainset; each holds its releaser
-## until its brakes stop braking
-func _on_release_brakes_pressed() -> void:
+## consistreleaser (simulation.cpp:184): every vehicle of the trainset releases its brake while the
+## button is held (vehicleparams.cpp:289-293)
+func _on_release_brakes_button_down() -> void:
+    _release_trainset_brakes(true)
+
+
+func _on_release_brakes_button_up() -> void:
+    _release_trainset_brakes(false)
     %ActionsPopup.hide()
+
+
+func _release_trainset_brakes(active:bool) -> void:
     for trainset_vehicle:RID in RailVehicleServer.vehicle_get_coupled(
             vehicle, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER):
-        VehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", true)
+        VehicleServer.vehicle_send_command(trainset_vehicle, "consist_releaser", active)
 
 
 func _on_emergency_stop_pressed() -> void:

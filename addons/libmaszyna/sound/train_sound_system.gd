@@ -124,6 +124,8 @@ const VEHICLE_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/detach_heating": 11,
     "pantograph_sound/up": 12,
     "pantograph_sound/down": 13,
+    "coupler_sound/attach_adapter": 15,
+    "coupler_sound/remove_adapter": 16,
 }
 ## A coupling flag's place among the attach (and, offset, the detach) counts
 const COUPLING_EVENT_INDICES:Dictionary[int, int] = {
@@ -138,7 +140,10 @@ const COUPLER_DETACH_OFFSET:int = 6
 const PANTOGRAPH_UP_EVENT:int = 12
 const PANTOGRAPH_DOWN_EVENT:int = 13
 const BRAKE_ACCELERATOR_EVENT:int = 14
-const VEHICLE_EVENT_COUNT:int = 15
+## A coupler adapter fitted and taken off (sound::attachadapter/removeadapter, DynObj.cpp:1785, 1806)
+const ADAPTER_ATTACH_EVENT:int = 15
+const ADAPTER_REMOVE_EVENT:int = 16
+const VEHICLE_EVENT_COUNT:int = 17
 ## The cab's brake hisses sit at their handle, the local brake's at the driver's brake valve when the
 ## cab has no local brake handle (Train.cpp:9406-9421)
 const _BRAKE_VALVE_LABELS:Array[String] = ["airsound", "airsound2", "airsound3", "airsound4", "airsound5"]
@@ -184,6 +189,8 @@ func _ready() -> void:
     SimulationServer.simulation_speed_changed.connect(_mute_world)
     RailVehicleServer.vehicle_coupler_attached.connect(_on_coupler_attached)
     RailVehicleServer.vehicle_coupler_detached.connect(_on_coupler_detached)
+    RailVehicleServer.vehicle_coupler_adapter_attached.connect(_on_coupler_adapter_attached)
+    RailVehicleServer.vehicle_coupler_adapter_removed.connect(_on_coupler_adapter_removed)
     VehicleServer.vehicle_controller_changed.connect(_on_vehicle_controller_changed)
     _on_simulation_current_speed_changed()
 
@@ -391,7 +398,8 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     trigger.placement = StringName(descriptor.get("sound_placement", &"general"))
     trigger.source = descriptor.get("source") as MmdSoundSourceDefinition
     if trigger.source:
-        trigger.beginning_length = AudioStreamManager.get_stream_length(trigger.source.sound_begin)
+        trigger.beginning_length = AudioStreamManager.get_stream_length(
+                trigger.source.sound_begin, trigger.source.source_file.get_base_dir())
     runtime.triggers.append(trigger)
     return trigger.id
 
@@ -459,6 +467,16 @@ func _on_coupler_attached(vehicle_rid:RID, flag:RailVehicleController.CouplingFl
 func _on_coupler_detached(vehicle_rid:RID, flag:RailVehicleController.CouplingFlags) -> void:
     if _vehicle_events.has(vehicle_rid):
         _vehicle_events[vehicle_rid][COUPLER_DETACH_OFFSET + COUPLING_EVENT_INDICES[flag]] += 1
+
+
+func _on_coupler_adapter_attached(vehicle_rid:RID, _end:int) -> void:
+    if _vehicle_events.has(vehicle_rid):
+        _vehicle_events[vehicle_rid][ADAPTER_ATTACH_EVENT] += 1
+
+
+func _on_coupler_adapter_removed(vehicle_rid:RID, _end:int) -> void:
+    if _vehicle_events.has(vehicle_rid):
+        _vehicle_events[vehicle_rid][ADAPTER_REMOVE_EVENT] += 1
 
 
 ## Both pantographs count as one event: the vehicle has one sound for them (sPantUp,

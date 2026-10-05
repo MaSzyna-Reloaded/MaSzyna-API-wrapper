@@ -1,5 +1,9 @@
 extends MaszynaGutTest
 
+## LockPipeOn/Off and HandleUnlock absent (Mover.cpp:10505-10507)
+const MAIN_PIPE_LOCK_NONE:float = -1.0
+const MAIN_PIPE_UNLOCK_HANDLE_POSITION_NONE:float = -3.0
+
 var vehicle: VehiclePhysicsNode
 var train: VehicleController
 var brake: RailVehicleBrake
@@ -20,22 +24,30 @@ func after_each():
     remove_child(vehicle)
     vehicle.free()
 
+# LoadFIZ_Cntrl with none of the brake keys (Mover.cpp:10720-10895, MOVER.h:1612-1630, 1696, 2045)
 func test_defaults_match_original_mover():
-    assert_eq(brake.cntrl_brake_system, RailVehicleBrake.BRAKE_SYSTEM_PNEUMATIC)
-    assert_eq(brake.cntrl_brake_ctrl_position_count, 6)
-    assert_eq(brake.cntrl_brake_delay_1, 15.0)
-    assert_eq(brake.cntrl_brake_delay_2, 3.0)
-    assert_eq(brake.cntrl_brake_delay_3, 36.0)
-    assert_eq(brake.cntrl_brake_delay_4, 22.0)
-    assert_eq(brake.cntrl_brake_delays, RailVehicleBrake.BRAKE_DELAY_GP)
+    assert_eq(brake.cntrl_brake_system, RailVehicleBrake.BRAKE_SYSTEM_INDIVIDUAL)
+    assert_eq(brake.cntrl_brake_ctrl_position_count, 0)
+    # a delay of 0 is taken from CheckLocomotiveParameters' table (Mover.cpp:12066-12073)
+    assert_eq(brake.cntrl_brake_delay_1, 0.0)
+    assert_eq(brake.cntrl_brake_delay_2, 0.0)
+    assert_eq(brake.cntrl_brake_delay_3, 0.0)
+    assert_eq(brake.cntrl_brake_delay_4, 0.0)
+    assert_eq(brake.cntrl_brake_delays, RailVehicleBrake.BRAKE_DELAY_NONE)
     # none unless the FIZ says (MOVER.h:1580, Mover.cpp:10746) - with PS the handle works only from an occupied cab
     assert_eq(brake.cntrl_brake_op_modes, RailVehicleBrake.BRAKE_OP_MODE_NONE)
-    assert_eq(brake.cntrl_brake_handle_type, RailVehicleBrake.BRAKE_HANDLE_TYPE_FV4A)
-    assert_eq(brake.cntrl_local_brake_handle_type, RailVehicleBrake.BRAKE_HANDLE_TYPE_FD1)
-    assert_eq(brake.cntrl_anti_skid_brake_type, RailVehicleBrake.ANTI_SKID_BRAKE_MANUAL)
-    assert_eq(brake.cntrl_local_brake_type, RailVehicleBrake.LOCAL_BRAKE_TYPE_PNEUMATIC)
+    assert_eq(brake.cntrl_brake_handle_type, RailVehicleBrake.BRAKE_HANDLE_TYPE_NO_HANDLE)
+    assert_eq(brake.cntrl_local_brake_handle_type, RailVehicleBrake.BRAKE_HANDLE_TYPE_NO_HANDLE)
+    assert_eq(brake.cntrl_anti_skid_brake_type, RailVehicleBrake.ANTI_SKID_BRAKE_NONE)
+    assert_eq(brake.cntrl_local_brake_type, RailVehicleBrake.LOCAL_BRAKE_TYPE_NONE)
     assert_false(brake.cntrl_manual_brake_present)
     assert_true(brake.cntrl_spring_brake_cuts_off_drive)
+    assert_eq(brake.brake_method, RailVehicleBrake.BRAKE_METHOD_NONE)
+    # LPOn/LPOff/HandlePipeUnlockPos absent (Mover.cpp:10505-10507)
+    assert_eq(brake.main_pipe_blocking_pressure, MAIN_PIPE_LOCK_NONE)
+    assert_eq(brake.main_pipe_unblocking_pressure, MAIN_PIPE_LOCK_NONE)
+    assert_eq(brake.main_pipe_minimum_unblocking_handle_position, MAIN_PIPE_UNLOCK_HANDLE_POSITION_NONE)
+
 
 func test_round_trip_and_update_without_crashing():
     brake.cntrl_brake_system = RailVehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC

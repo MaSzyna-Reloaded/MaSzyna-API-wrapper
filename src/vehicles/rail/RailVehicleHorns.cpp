@@ -3,9 +3,6 @@
 
 namespace godot {
     void RailVehicleHorns::_bind_methods() {
-        BIND_PROPERTY(RailVehicleHorns, Variant::BOOL, low_horn_enabled);
-        BIND_PROPERTY(RailVehicleHorns, Variant::BOOL, high_horn_enabled);
-        BIND_PROPERTY(RailVehicleHorns, Variant::BOOL, whistle_enabled);
         ClassDB::bind_method(D_METHOD("set_horn_low", "state"), &RailVehicleHorns::set_horn_low);
         ClassDB::bind_method(D_METHOD("set_horn_high", "state"), &RailVehicleHorns::set_horn_high);
         ClassDB::bind_method(D_METHOD("set_whistle", "state"), &RailVehicleHorns::set_whistle);

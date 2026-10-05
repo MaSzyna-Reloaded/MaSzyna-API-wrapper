@@ -58,6 +58,10 @@
 		<member name="controller_path" type="NodePath" setter="set_controller_path" getter="get_controller_path" default="NodePath(&quot;&quot;)">
 		</member>
 		<member name="driver_position" type="Vector3" setter="set_driver_position" getter="get_driver_position" default="Vector3(0, 0, 0)">
+			Where the cab camera starts - the driver's seat ([code]driverNsitpos:[/code], or [code]driverNpos:[/code] without it).
+		</member>
+		<member name="driver_view_angle" type="Vector2" setter="set_driver_view_angle" getter="get_driver_view_angle" default="Vector2(0, 0)">
+			The cab camera's start: yaw, then pitch, in degrees, from the way the cab faces ([code]driverNangle:[/code], Train.cpp:10529-10538).
 		</member>
 		<member name="engine_shake_fade_in_factor" type="float" setter="set_engine_shake_fade_in_factor" getter="get_engine_shake_fade_in_factor" default="0.3">
 		</member>

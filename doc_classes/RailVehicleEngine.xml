@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_angle" qualifiers="const">
+			<return type="float" />
+			<description>
+				The engine's turn [rad]: its revolutions summed (eAngle, Mover.cpp:5554) - what a pendulum swings by (DynObj.cpp:1121-1125).
+			</description>
+		</method>
 		<method name="get_circuit_nmax_rpm" qualifiers="const">
 			<return type="float" />
 			<description>

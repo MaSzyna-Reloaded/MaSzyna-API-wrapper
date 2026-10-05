@@ -19,6 +19,8 @@ const GROUPS: Dictionary = {
         "coupler_connect",
         "coupler_disconnect",
         "coupler_disconnect_occupied",
+        "coupler_adapter_attach",
+        "coupler_adapter_remove",
     ],
     "UI": [
         "hud_toggle",

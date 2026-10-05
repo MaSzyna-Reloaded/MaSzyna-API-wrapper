@@ -5,6 +5,7 @@
 
 [node name="Controller" type="VBoxContainer"]
 script = ExtResource("1_ucl")
+target = 1
 
 [node name="Direction" type="HBoxContainer" parent="." unique_id=2020502642]
 layout_mode = 2
@@ -28,11 +29,13 @@ layout_mode = 2
 layout_mode = 2
 text = "Main -"
 command = "main_controller_decrease"
+target = 1
 
 [node name="MainIncrease" parent="MainController" instance=ExtResource("2_ucl")]
 layout_mode = 2
 text = "Main +"
 command = "main_controller_increase"
+target = 1
 
 [node name="MainPosition" type="Label" parent="MainController"]
 unique_name_in_owner = true
@@ -46,11 +49,13 @@ layout_mode = 2
 layout_mode = 2
 text = "Shunt -"
 command = "second_controller_decrease"
+target = 1
 
 [node name="SecondIncrease" parent="SecondController" instance=ExtResource("2_ucl")]
 layout_mode = 2
 text = "Shunt +"
 command = "second_controller_increase"
+target = 1
 
 [node name="SecondPosition" type="Label" parent="SecondController"]
 unique_name_in_owner = true

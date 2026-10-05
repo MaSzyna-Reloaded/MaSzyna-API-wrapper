@@ -60,6 +60,11 @@ namespace godot {
         return mover != nullptr ? mover->Imin : 0.0;
     }
 
+    bool MoverRailVehicleElectricSeriesEngine::get_circuit_imin_high_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Imin == mover->IminHi;
+    }
+
     void MoverRailVehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
         RailVehicleElectricSeriesEngine::_fill_config_dictionary(p_config);
         TMoverParameters *mover = get_mover();

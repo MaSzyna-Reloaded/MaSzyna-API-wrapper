@@ -20,10 +20,10 @@ const PERCENT:float = 100.0
 
 
 func _on_refresh_timer_timeout() -> void:
-    if not vehicle.is_valid():
+    if not target_vehicle.is_valid():
         return
-    %Speed.value = VehicleServer.vehicle_get_speed(vehicle)
-    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
+    %Speed.value = VehicleServer.vehicle_get_speed(target_vehicle)
+    var state:Dictionary = VehicleServer.vehicle_dump_state(target_vehicle)
     %Channel.text = tr("Channel: %d") % state.get("radio_channel", 0)
     %Volume.text = tr("Volume: %d%%") % roundi(PERCENT * float(state.get("radio_volume", 0.0)))
     var damage:int = state.get("train_damage", 0)

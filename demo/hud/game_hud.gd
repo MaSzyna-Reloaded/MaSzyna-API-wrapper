@@ -296,12 +296,11 @@ func _on_player_vehicle_chip_driver_pressed() -> void:
 ## widgets used to be given a NodePath into the vehicle's own subtree and resolve it themselves,
 ## which reached across two scenes and could resolve before the vehicle had been built. They are
 ## given the vehicle itself now, and PlayerServer says when it changes.
-## Each window gets the vehicle its target names (HUDWindow.vehicle_target), as a cab control does.
+## Each control and section picks the vehicle of its own target from it, as a cab control does.
 func _bind_vehicle(node: Node = null) -> void:
     var vehicle: RID = PlayerServer.player_get_vehicle()
     for window: HUDWindow in ([node] if node else _windows):
-        var target: RID = CabinState.vehicle_of(vehicle, window.vehicle_target) if vehicle.is_valid() else RID()
-        _propagate_vehicle(window, target)
+        _propagate_vehicle(window, vehicle)
 
 
 func _propagate_vehicle(node: Node, vehicle: RID) -> void:

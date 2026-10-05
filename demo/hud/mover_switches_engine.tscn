@@ -7,6 +7,7 @@
 
 [node name="Engine" type="VBoxContainer"]
 script = ExtResource("1_engine")
+target = 1
 
 [node name="EngineType" type="Label" parent="."]
 unique_name_in_owner = true
@@ -19,6 +20,7 @@ label = "Main"
 type = 0
 state_property = "main_switch_enabled"
 command = "main_switch"
+target = 1
 
 [node name="Compressor" parent="." instance=ExtResource("2_switch")]
 layout_mode = 2
@@ -31,6 +33,7 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Overload relay reset"
 command = "fuse_reset"
+target = 1
 
 [node name="Diesel" type="VBoxContainer" parent="."]
 unique_name_in_owner = true
@@ -42,6 +45,7 @@ label = "Oil Pump"
 type = 1
 state_property = "oil_pump_active"
 command = "oil_pump"
+target = 1
 
 [node name="FuelPump" parent="Diesel" instance=ExtResource("2_switch")]
 layout_mode = 2
@@ -49,6 +53,7 @@ label = "Fuel Pump"
 type = 1
 state_property = "fuel_pump_active"
 command = "fuel_pump"
+target = 1
 
 [node name="Gauges" type="HFlowContainer" parent="Diesel"]
 layout_mode = 2
@@ -85,6 +90,7 @@ command = "converter"
 layout_mode = 2
 text = "Converter fuse reset"
 command = "converter_fuse_reset"
+target = 1
 
 [node name="Gauges" type="HFlowContainer" parent="Electric"]
 layout_mode = 2

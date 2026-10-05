@@ -11,8 +11,18 @@ namespace godot {
     class RailVehicleController : public VehicleController {
             GDCLASS(RailVehicleController, VehicleController)
 
+        public:
+            /* The original's own coupler adapter, for a vehicle whose MMD has no coupleradapter:
+             * (DynObj.cpp:1765-1769) */
+            static constexpr const char *DEFAULT_COUPLER_ADAPTER_MODEL = "tabor/polsprzeg";
+            static constexpr double DEFAULT_COUPLER_ADAPTER_LENGTH = 0.085;
+            static constexpr double DEFAULT_COUPLER_ADAPTER_HEIGHT = 0.95;
+
         private:
             int prev_cabin_occupied = 0;
+            String coupler_adapter_model = DEFAULT_COUPLER_ADAPTER_MODEL;
+            double coupler_adapter_length = DEFAULT_COUPLER_ADAPTER_LENGTH;
+            double coupler_adapter_height = DEFAULT_COUPLER_ADAPTER_HEIGHT;
 
         protected:
             static void _bind_methods();
@@ -112,6 +122,10 @@ namespace godot {
             /// one carrying a direction: every listener would have opened by branching on it.
             static const char *coupler_attached_signal;
             static const char *coupler_detached_signal;
+            /// A coupler adapter was fitted to / taken off an end (TDynamicObject::attach_coupler_adapter(),
+            /// remove_coupler_adapter(), DynObj.cpp:1754-1810)
+            static const char *coupler_adapter_attached_signal;
+            static const char *coupler_adapter_removed_signal;
 
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
@@ -147,6 +161,33 @@ namespace godot {
             virtual bool is_coupled_by(CouplerEnd p_end, BitField<CouplingFlags> p_flags) const = 0;
             virtual void coupler_connect(const Variant &p_where) = 0;
             virtual void coupler_disconnect(const Variant &p_where) = 0;
+            /* The adapter of the neighbour beyond an end (its coupleradapter:, or the original's own
+             * when it has none) fitted to that end, with room left for it (attach_coupler_adapter(),
+             * DynObj.cpp:1754-1789) - p_where as coupler_connect()'s */
+            virtual bool coupler_adapter_attach(const Variant &p_where) = 0;
+            /* The adapter of the vehicle coupled at an end fitted to it, whatever the room - a
+             * trainset the scenery couples (AttachNext(), DynObj.cpp:2740-2758) */
+            virtual bool coupler_adapter_fit(CouplerEnd p_end) = 0;
+            /* Whether an end couples as an automatic coupler, its adapter's or its own
+             * (TCoupling::type(), MOVER.h:800) */
+            virtual bool is_coupler_automatic(CouplerEnd p_end) const = 0;
+            /* The adapter taken off an end, uncoupling it first (DynObj.cpp:1791-1810) */
+            virtual bool coupler_adapter_remove(const Variant &p_where) = 0;
+            /* The model of the adapter fitted to an end, "" without one */
+            virtual String get_coupler_adapter_fitted_model(CouplerEnd p_end) const = 0;
+            /* The fitted adapter's length added to the end and its height over the rail [m] */
+            virtual double get_coupler_adapter_fitted_length(CouplerEnd p_end) const = 0;
+            virtual double get_coupler_adapter_fitted_height(CouplerEnd p_end) const = 0;
+
+            /* coupleradapter: of the MMD - the adapter this vehicle hands a neighbour of another
+             * coupler type: its model, its length and its height over the rail [m]; the original's
+             * own without the key (DynObj.cpp:1765-1773, 5284-5292) */
+            void set_coupler_adapter_model(const String &p_value);
+            String get_coupler_adapter_model() const;
+            void set_coupler_adapter_length(double p_value);
+            double get_coupler_adapter_length() const;
+            void set_coupler_adapter_height(double p_value);
+            double get_coupler_adapter_height() const;
             virtual Ref<RailVehicleController> get_coupled_controller(CouplerEnd p_end) const = 0;
             /* Wakes the simulation the vehicle switched off while it stood with nothing to do -
              * somebody took it (RailVehicleServer::vehicle_wake()) */
@@ -183,7 +224,8 @@ namespace godot {
 
             /* Cntrl. (ogolne, przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
             MAKE_MEMBER_GS_NR(StartMode, cntrl_ground_relay_start_mode, START_MODE_MANUAL);
-            MAKE_MEMBER_GS_NR(StartMode, cntrl_compartment_lights_start_mode, START_MODE_DISABLED);
+            /* CompartmentLightsStart= absent: automatic, "legacy behaviour" (Mover.cpp:10984) */
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_compartment_lights_start_mode, START_MODE_AUTOMATIC);
             MAKE_MEMBER_GS(bool, cntrl_automatic_cab_activation, true);
             MAKE_MEMBER_GS(int, cntrl_inactive_cab_flag, 0);
     };

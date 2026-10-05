@@ -47,7 +47,9 @@ enum ControllerMode { OnOff, On, Off }
         mesh_rotation_offset = x
         _dirty = true
 
-@export var speed = 10.0
+## How fast the control follows its value - 1 / the MMD's friction; 0 moves it at once
+## (TGauge::Update(), Gauge.cpp:364-375)
+@export var animation_speed = 10.0
 
 ## The positions the value range spans - Handle->GetPos(bh_MIN)..GetPos(bh_MAX) for a brake valve,
 ## whose whole positions are the rows of its brake pressure table (BCPN). Equal, the default, for
@@ -133,8 +135,10 @@ func _process_tool(delta):
         _current_rotation = _target_mesh_rotation
         _sounded_value = value
     else:
-        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * speed)
-        _current_position = _current_position.lerp(_target_mesh_position, delta * speed)
+        # Gauge.cpp:364-375 - no friction, or a step longer than half of it, sets it outright
+        var weight:float = delta * animation_speed if animation_speed > 0.0 else 1.0
+        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, minf(weight, 1.0))
+        _current_position = _current_position.lerp(_target_mesh_position, minf(weight, 1.0))
 
     if not _setup_phase and not value == _sounded_value:
         _play_sound(_sounded_value)

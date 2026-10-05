@@ -25,6 +25,16 @@ namespace godot {
                 PANTOGRAPH_FIRST,
                 PANTOGRAPH_SECOND,
             };
+            /* Power: PantType= - the pantograph type whose arms' dimensions the vehicle has (TPantType;
+             * Mover.cpp:11620-11629 of the original, the drawing's TAnimPant, DynObj.cpp:181-194);
+             * NONE without the key - the arms are then measured from the model */
+            enum PantographType {
+                PANTOGRAPH_TYPE_NONE,
+                PANTOGRAPH_TYPE_AKP_4E,
+                PANTOGRAPH_TYPE_DSAX,
+                PANTOGRAPH_TYPE_EC160_200,
+                PANTOGRAPH_TYPE_WBL85,
+            };
             /* What an operation does to a valve - Maszyna's operation_t (MOVER.h:177):
              * ENABLE/DISABLE set it for a two-state switch, the ..._ON/..._OFF pairs press and
              * release one side of an impulse switch, NONE lets both sides go. */
@@ -122,6 +132,13 @@ namespace godot {
             MAKE_MEMBER_GS(double, current_collector_min_collector_lifting, 0.0);
             MAKE_MEMBER_GS(double, current_collector_max_collector_lifting, 0.0);
             MAKE_MEMBER_GS(double, current_collector_sliding_width, 0.0);
+
+        private:
+            PantographType current_collector_pantograph_type = PANTOGRAPH_TYPE_NONE;
+
+        public:
+            void set_current_collector_pantograph_type(PantographType p_value);
+            PantographType get_current_collector_pantograph_type() const;
             MAKE_MEMBER_GS(double, current_collector_min_main_switch_voltage, 0.0);
             MAKE_MEMBER_GS(double, current_collector_min_pantograph_tank_pressure, 0.0);
             MAKE_MEMBER_GS(double, current_collector_max_pantograph_tank_pressure, 0.0);
@@ -159,3 +176,4 @@ namespace godot {
 
 VARIANT_ENUM_CAST(RailVehicleEnginePowerSource::PantographSelector);
 VARIANT_ENUM_CAST(RailVehicleEnginePowerSource::ValveOperation);
+VARIANT_ENUM_CAST(RailVehicleEnginePowerSource::PantographType);

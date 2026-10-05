@@ -13,16 +13,14 @@ namespace godot {
             GDCLASS(RailVehicleAppearance, Resource)
 
         public:
-            /* The submodel a head display material is drawn on - the wrapper's own convention: the
-             * original swaps replaceable skin 4 instead (update_destinations(), DynObj.cpp:3055) */
+            /* The submodel a head display material is drawn on, for a vehicle put together by hand -
+             * the wrapper's own name; a vehicle of the game data takes the submodel with replaceable
+             * skin 4, as the original (MaszynaRailVehicle3DInstancer, DynObj.cpp:2539-2545) */
             static constexpr const char *DEFAULT_HEAD_DISPLAY_SUBMODEL = "tablice_relacyjne";
             /* How bright the low-poly interior glows with the roof light on [emission energy], and
              * how fast it follows it [s] - the wrapper's own */
             static constexpr double DEFAULT_LOW_POLY_EMISSION_ENERGY = 0.2;
             static constexpr double DEFAULT_LOW_POLY_EMISSION_FADE_TIME = 0.2;
-            /* The slider's width [m] for a vehicle whose FIZ declares none (CSW, MOVER.h:881) - the
-             * wrapper's own default */
-            static constexpr double DEFAULT_PANTOGRAPH_COLLECTOR_WIDTH = 0.5;
 
         private:
             String data_path;
@@ -41,8 +39,12 @@ namespace godot {
             PackedStringArray pantograph_rear_arms;
             PackedStringArray wiper_arms;
             PackedStringArray mirrors;
+            PackedStringArray doors;
+            PackedStringArray door_steps;
+            PackedStringArray pendulums;
+            PackedFloat64Array pantograph_factors;
+            double pendulum_amplitude = 0.0;
             String head_display_submodel = DEFAULT_HEAD_DISPLAY_SUBMODEL;
-            double pantograph_collector_width = DEFAULT_PANTOGRAPH_COLLECTOR_WIDTH;
             double low_poly_emission_energy = DEFAULT_LOW_POLY_EMISSION_ENERGY;
             double low_poly_emission_fade_time = DEFAULT_LOW_POLY_EMISSION_FADE_TIME;
             bool joint_cabs = false;
@@ -91,10 +93,27 @@ namespace godot {
             /* In the original's order, odd on the left, even on the right (DynObj.cpp:5887-5910) */
             void set_mirrors(const PackedStringArray &p_value);
             PackedStringArray get_mirrors() const;
+            /* Every door of animdoorprefix:, numbered from 1 - odd on the left, even on the right - each
+             * with its first submodel below and that one's, which a folding door turns as well; a
+             * name the model has not got is empty (DynObj.cpp:592-622, 5721-5760) */
+            void set_doors(const PackedStringArray &p_value);
+            PackedStringArray get_doors() const;
+            /* Every door step of animstepprefix:, numbered as the doors (DynObj.cpp:5763-5790) */
+            void set_door_steps(const PackedStringArray &p_value);
+            PackedStringArray get_door_steps() const;
+            /* animpendulumprefix: 1 to 4, swinging about their x by pendulumamplitude: [deg] times
+             * the cosine of the engine's turn (DynObj.cpp:1121-1125, 5702-5719) */
+            /* pantfactors: - the first and the second pantograph's position along the vehicle and
+             * slider height, for one the model cannot be measured by (DynObj.cpp:5577-5633); empty
+             * without the key */
+            void set_pantograph_factors(const PackedFloat64Array &p_value);
+            PackedFloat64Array get_pantograph_factors() const;
+            void set_pendulums(const PackedStringArray &p_value);
+            PackedStringArray get_pendulums() const;
+            void set_pendulum_amplitude(double p_value);
+            double get_pendulum_amplitude() const;
             void set_head_display_submodel(const String &p_value);
             String get_head_display_submodel() const;
-            void set_pantograph_collector_width(double p_value);
-            double get_pantograph_collector_width() const;
             void set_low_poly_emission_energy(double p_value);
             double get_low_poly_emission_energy() const;
             void set_low_poly_emission_fade_time(double p_value);

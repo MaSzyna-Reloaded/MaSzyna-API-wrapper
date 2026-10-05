@@ -75,6 +75,8 @@ enum ControllerMode { OnOff, On, Off }
         value_offset = x
         _dirty = true
 
+## How fast the control follows its value - 1 / the MMD's friction; 0 moves it at once
+## (TGauge::Update(), Gauge.cpp:364-375)
 @export var animation_speed = 10.0
 ## The cab's sound player and the events of its bank this switch plays, filled by whoever builds
 ## the cab (MmdCabinInstancer). sound_override_events[N - 1] belongs to position N,
@@ -158,8 +160,10 @@ func _process_tool(delta):
         _current_position = _target_mesh_position
         _current_rotation = _target_mesh_rotation
     else:
-        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * animation_speed)
-        _current_position = _current_position.lerp(_target_mesh_position, delta * animation_speed)
+        # Gauge.cpp:364-375 - no friction, or a step longer than half of it, sets it outright
+        var weight:float = delta * animation_speed if animation_speed > 0.0 else 1.0
+        _current_rotation = _current_rotation.lerp(_target_mesh_rotation, minf(weight, 1.0))
+        _current_position = _current_position.lerp(_target_mesh_position, minf(weight, 1.0))
 
     if is_instance_valid(_mesh):
         var new_basis = _mesh_original_basis

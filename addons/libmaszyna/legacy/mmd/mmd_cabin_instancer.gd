@@ -16,6 +16,23 @@ class_name MmdCabinInstancer
 
 ## How far an aimed indicator light is moved out of its lamp mesh (see _aim_spotlight_at_driver()).
 const INDICATOR_LIGHT_OFFSET:float = 0.05
+## The radio's lamp, where the cab's radio sounds (Train.cpp:10734, 11617)
+const RADIO_LAMP_LABEL:String = "i-radio"
+## pantfactors: - its four numbers, and the first slider height taken for a mistake above this
+## (DynObj.cpp:5580-5590)
+const PANTOGRAPH_FACTOR_COUNT:int = 4
+const PANTOGRAPH_FACTOR_MAX_HEIGHT:float = 0.5
+## coupleradapter:'s model, length and height (DynObj.cpp:5286-5290), and the directory the model is
+## under (TModelsManager::GetModel())
+const COUPLER_ADAPTER_TOKENS:int = 3
+const MODELS_DIRECTORY:String = "models/"
+## The pendulums a vehicle model has at most (DynObj.cpp:5706)
+const PENDULUM_COUNT:int = 4
+## The labels with a car's number and a value's number before their shape (Train.cpp:12147-12166)
+const LEADING_NUMBER_LABELS:Array[String] = ["brakes", "eimscreen"]
+const LEADING_NUMBER_COUNT:int = 2
+## internaldata:'s Radio-Stop alarm (Train.cpp:10340)
+const RADIO_STOP_SOUND_LABEL:String = "radiostop"
 ## Spacing and limit of the lights spread along a long ceiling lamp (see _light_points_along_submodel()).
 const LAMP_LIGHT_SPACING:float = 2.0
 ## An indicator lamp's glow into the cab: its brightness and reach. The defaults are SM42's
@@ -58,9 +75,17 @@ const _VARIABLE_ANIMATION_TYPES := ["rotvar", "movvar"]
 ## Original engine: Globals.h:123 PythonScreenUpdateRate - the shortest interval a Python screen is
 ## redrawn at, in milliseconds
 const PYTHON_SCREEN_UPDATE_TIME_MSEC:int = 200
-## How far a control's click carries - the range the cab widgets' own players had before the
-## sounds moved into the cab's bank
-const CONTROL_SOUND_MAX_DISTANCE:float = 3.0
+## A control's lit and unlit submodels: "<name>_on", "<name>_off" (Gauge.cpp:192, 204; Button.cpp:32-33)
+const ON_SUFFIX:String = "_on"
+const OFF_SUFFIX:String = "_off"
+## The colours of a cab's cablight: (TCab::Load, Train.cpp:140) - three RGB triples
+const CAB_LIGHT_COLOUR_COUNT:int = 9
+const RGB_COMPONENTS:int = 3
+## An MMD colour component's range (InteriorLight / 255.f, DynObj.cpp:6930)
+const RGB_MAX:float = 255.0
+## How far a control's click carries (EU07_SOUND_CABCONTROLSCUTOFFRANGE, sound.h:17; Gauge.h:109,
+## Button.h:57-58)
+const CONTROL_SOUND_MAX_DISTANCE:float = 7.5
 ## Voices of the cab's control sounds together, so clicks of several controls overlap
 const CONTROL_SOUND_VOICE_COUNT:int = 16
 
@@ -77,21 +102,16 @@ static func parse(
 
     var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
 
-    # An MMD file's models:/sounds:/locations: preamble (everything before the cab/instrument
-    # section) has a completely different, non-uniform grammar this parser doesn't understand -
-    # scanning it with the label dispatch below would immediately misparse it. Bound the real
-    # parse to [first cab1definition:/cab2definition:, first cab0definition: at or after it) so
-    # the preamble is skipped outright and a later desync from some other unrecognized,
-    # non-uniform label (e.g. a bare "clock: analog") can't run past the real end of the section.
-    # Cab 0 (machine room) is parsed from cab0definition: to the end of the file - the original
-    # InitializeCab() loop only stops at cab0definition: (Train.cpp:8908), which cab 0 is already past.
-    var start_index:int = _find_label_index(tokens, "cab0definition:" if cab_number == 0 else "cab1definition:")
-    if start_index == -1 and not cab_number == 0:
-        start_index = _find_label_index(tokens, "cab2definition:")
+    # TTrain::InitializeCab() (Train.cpp:10504-10517, 10700-10704): the cab's own cab<N>definition:
+    # wherever it stands, read from there until the next cab0definition: or the end of the file -
+    # so a cab reads every cab section that follows its own (the original's "TODO: enable full
+    # per-cab deserialization"), and the preamble before it is never scanned
+    var cab_label:String = "cab%ddefinition:" % cab_number
+    var start_index:int = _find_label_index(tokens, cab_label)
     if start_index == -1:
-        context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "No cab%ddefinition: found" % cab_number, abs_mmd_path)
+        context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "No %s found" % cab_label, abs_mmd_path)
         start_index = tokens.size()
-    var end_index:int = tokens.size() if cab_number == 0 else _find_label_index(tokens, "cab0definition:", start_index)
+    var end_index:int = _find_label_index(tokens, "cab0definition:", start_index + 1)
     if end_index == -1:
         end_index = tokens.size()
 
@@ -113,12 +133,18 @@ static func parse(
         match label:
             "cab0definition:", "cab1definition:", "cab2definition:":
                 var n:int = int(label.substr(3, 1))
+                # TCab::Load (Train.cpp:130-157): an optional cablight: and its 9 colours come
+                # before the bounds, and are not used
+                if i < tokens.size() and tokens[i].to_lower() == "cablight:":
+                    i += 1 + CAB_LIGHT_COLOUR_COUNT
                 var values:Array = _read_floats(tokens, i, 6)
                 i += 6
                 cab_data[n]["bounds_min"] = Vector3(values[0], values[1], values[2])
                 cab_data[n]["bounds_max"] = Vector3(values[3], values[4], values[5])
             "cablight:":
-                i += 9 # ambient cab light color block - not wired to anything in Etap A+B
+                # anywhere else in the cab it is no control: the original passes over the label
+                # alone (InitializeCab, Train.cpp:10530-10700)
+                pass
             "driver0angle:", "driver1angle:", "driver2angle:":
                 var n:int = int(label.substr(6, 1))
                 var values:Array = _read_floats(tokens, i, 2)
@@ -129,6 +155,8 @@ static func parse(
                 var values:Array = _read_floats(tokens, i, 3)
                 i += 3
                 cab_data[n]["driver_pos"] = Vector3(values[0], values[1], values[2])
+                # the seat is where the driver stands unless driverNsitpos: says otherwise (Train.cpp:10548)
+                cab_data[n]["driver_sitpos"] = cab_data[n]["driver_pos"]
             "driver0sitpos:", "driver1sitpos:", "driver2sitpos:":
                 var n:int = int(label.substr(6, 1))
                 var values:Array = _read_floats(tokens, i, 3)
@@ -136,9 +164,15 @@ static func parse(
                 cab_data[n]["driver_sitpos"] = Vector3(values[0], values[1], values[2])
             "cab0model:", "cab1model:", "cab2model:":
                 var n:int = int(label.substr(3, 1))
-                var model_token:String = tokens[i] if i < tokens.size() else "none"
+                var model_token:String = tokens[i] if i < tokens.size() else NO_SUBMODEL
                 i += 1
                 cab_data[n]["model_relpath"] = _resolve_model_relpath(model_token)
+                # cab 1 without a model of its own is the vehicle's model - its controls are looked
+                # for there (Train.cpp:10611-10615)
+                var models_index:int = _find_label_index(tokens, "models:")
+                if n == 1 and model_token.to_lower() == NO_SUBMODEL and not models_index == -1 \
+                        and models_index + 1 < tokens.size():
+                    cab_data[n]["model_relpath"] = _resolve_model_relpath(tokens[models_index + 1])
             "clock:":
                 i += 1 # analog/digital clock type, not an instrument definition
             "pyscreen:":
@@ -206,6 +240,11 @@ static func parse(
                 # confirmed real and CONFIRMED to previously desync whatever follows it when force-
                 # fed through _parse_instrument()'s 5-token read (both fall inside the same
                 # cab1definition:/cab0definition: bounds this parser scans).
+                # brakes:/eimscreen: name a car and a value of it before the shape (Train.cpp:12147-12166)
+                if descriptor.label in LEADING_NUMBER_LABELS:
+                    for _number:int in range(LEADING_NUMBER_COUNT):
+                        descriptor.leading_numbers.append(int(tokens[i]) if i < end_index else 0)
+                        i += 1
                 var consumed:int = (
                         _parse_indicator(tokens, i, descriptor, context, abs_mmd_path) if descriptor.label.begins_with("i-")
                         else _parse_instrument(tokens, i, descriptor, context, abs_mmd_path))
@@ -214,6 +253,18 @@ static func parse(
                     instruments.append(descriptor)
 
     var definition := MmdCabinDefinition.new()
+    # internaldata:'s cablight: - low power, base and dimmed light, the base one is the cab's
+    # (DynObj.cpp:6924-6932), before the cab definitions
+    var internal_data_index:int = _find_label_index(tokens, "internaldata:")
+    var interior_light_index:int = _find_label_index(tokens, "cablight:", internal_data_index + 1) \
+            if not internal_data_index == -1 else -1
+    var cab_labels:Array[String] = ["cab0definition:", "cab1definition:", "cab2definition:"]
+    var first_cab_index:int = _first_label_index(tokens, cab_labels)
+    if not interior_light_index == -1 and interior_light_index < first_cab_index:
+        var colours:Array = _read_floats(tokens, interior_light_index + 1 + RGB_COMPONENTS, RGB_COMPONENTS)
+        definition.interior_light = Color(
+                clampf(colours[0] / RGB_MAX, 0.0, 1.0), clampf(colours[1] / RGB_MAX, 0.0, 1.0),
+                clampf(colours[2] / RGB_MAX, 0.0, 1.0))
     var mechspring_index:int = _find_label_index(tokens, "mechspring:")
     if mechspring_index >= 0:
         var values:Array = _read_floats(tokens, mechspring_index + 1, 8)
@@ -249,6 +300,10 @@ static func parse(
         elif screen.update_time_msec < -1:
             screen.update_time_msec = -screen.update_time_msec
     definition.python_screens = python_screens
+    # the cab radio's Radio-Stop alarm, internaldata:'s radiostop: (Train.cpp:10340)
+    for sound:MmdSoundSourceDefinition in MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context):
+        if sound.label == RADIO_STOP_SOUND_LABEL:
+            definition.radio_stop_sound = sound
     definition.diagnostics = context.diagnostics
     return definition
 
@@ -325,40 +380,146 @@ static func parse_lowpoly_interior_model(abs_mmd_path:String, parameters:Diction
     return _resolve_model_relpath(tokens[index + 1])
 
 
-## Reads `animwiperprefix:` from the MMD (DynObj.cpp:5833) - the name the wiper submodels of the
-## vehicle model start with, "" without wipers.
-static func parse_wiper_prefix(abs_mmd_path:String, parameters:Dictionary) -> String:
+## The kinds of animation the MMD's `animations:` line counts, in its order (DynObj.h:32-41)
+enum AnimationType { WHEELS, DOORS, LEVERS, BUFFERS, BOGIES, PANTOGRAPHS, STEAM, DOORSTEPS, MIRRORS, WIPERS }
+
+## The labels of a pantograph's elements, in the order the original keeps them (smElement[0..4],
+## DynObj.cpp:5404-5575): lower arm 1, lower arm 2, upper arm 1, upper arm 2, slider
+const PANTOGRAPH_ELEMENT_LABELS:Array[String] = [
+    "animpantrd1prefix:", "animpantrd2prefix:", "animpantrg1prefix:", "animpantrg2prefix:", "animpantslprefix:",
+]
+
+
+## The wheel submodels of the vehicle model: `animwheelprefix:` numbered from 1, as many as the
+## `animations:` line declares (DynObj.cpp:5343-5359)
+static func parse_wheel_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
     var context := MmdImportContext.new()
-    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
-    var index:int = _find_label_index(tokens, "animwiperprefix:")
-    if index == -1 or index + 1 >= tokens.size():
-        return ""
-    return tokens[index + 1]
+    return _numbered_names(_tokenize_file(abs_mmd_path, context, parameters), "animwheelprefix:", AnimationType.WHEELS)
 
 
-## Where the mirrors stand among the counts of the MMD's `animations:` line (DynObj.h:40 ANIM_MIRRORS).
-const ANIM_MIRRORS:int = 8
+## The wipers of the vehicle model: `animwiperprefix:` numbered from 1, as many as the `animations:`
+## line declares (DynObj.cpp:5832-5873); each has its elements "_p1", "_p2" and "_p3"
+static func parse_wiper_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
+    var context := MmdImportContext.new()
+    return _numbered_names(_tokenize_file(abs_mmd_path, context, parameters), "animwiperprefix:", AnimationType.WIPERS)
 
 
 ## The mirror submodels of the vehicle model: `animmirrorprefix:` numbered from 1, as many as the
-## `animations:` line declares (DynObj.cpp:5309-5333, 5887-5910) - a count list ends at its first
-## negative number, and a vehicle without the line has no mirrors.
+## `animations:` line declares (DynObj.cpp:5799-5830)
 static func parse_mirror_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
     var context := MmdImportContext.new()
+    return _numbered_names(_tokenize_file(abs_mmd_path, context, parameters), "animmirrorprefix:", AnimationType.MIRRORS)
+
+
+## pantfactors: - the first and the second pantograph's place along the vehicle, then their slider
+## heights, for a pantograph the model cannot be measured by - with the original's corrections: a
+## first height above PANTOGRAPH_FACTOR_MAX_HEIGHT is the second's, and a first place behind the
+## centre with the second ahead are both turned (DynObj.cpp:5577-5596); empty without the key
+static func parse_pantograph_factors(abs_mmd_path:String, parameters:Dictionary) -> PackedFloat64Array:
+    var context := MmdImportContext.new()
     var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
-    var names:PackedStringArray = PackedStringArray()
-    var prefix_index:int = _find_label_index(tokens, "animmirrorprefix:")
+    var index:int = _find_label_index(tokens, "pantfactors:")
+    if index == -1:
+        return PackedFloat64Array()
+    var values:Array = _read_floats(tokens, index + 1, PANTOGRAPH_FACTOR_COUNT)
+    var first_place:float = values[0]
+    var second_place:float = values[1]
+    var first_height:float = values[2]
+    var second_height:float = values[3]
+    if first_height > PANTOGRAPH_FACTOR_MAX_HEIGHT:
+        first_height = second_height
+    if first_place < 0.0 and second_place > 0.0:
+        first_place = -first_place
+        second_place = -second_place
+    return PackedFloat64Array([first_place, second_place, first_height, second_height])
+
+
+## coupleradapter: - the model of the adapter this vehicle hands a neighbour of another coupler type,
+## its length and its height (DynObj.cpp:5284-5292): {"model": String, "length": float, "height":
+## float}, empty without the key. The data writes it with commas ("models/tabor/polsprzeg.t3d, 0.085,
+## 0.84"); the model is named as RailVehicleRenderingServer takes it: under models/, no extension
+static func parse_coupler_adapter(abs_mmd_path:String, parameters:Dictionary) -> Dictionary:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
+    var index:int = _find_label_index(tokens, "coupleradapter:")
+    if index == -1 or index + COUPLER_ADAPTER_TOKENS >= tokens.size():
+        return {}
+    var model:String = tokens[index + 1].trim_suffix(",").replace("\\", "/").trim_prefix("/")
+    if model.to_lower().begins_with(MODELS_DIRECTORY):
+        model = model.substr(MODELS_DIRECTORY.length())
+    return {
+        "model": model.get_basename(),
+        "length": float(tokens[index + 2].trim_suffix(",")),
+        "height": float(tokens[index + 3].trim_suffix(",")),
+    }
+
+
+## The pendulums of the vehicle model: `animpendulumprefix:` numbered 1 to 4 and the
+## `pendulumamplitude:` after it [deg] - swinging only while the `animations:` line declares levers
+## (DynObj.cpp:1121-1125, 5702-5719): {"names": PackedStringArray, "amplitude": float}
+static func parse_pendulums(abs_mmd_path:String, parameters:Dictionary) -> Dictionary:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
+    var pendulums:Dictionary = {"names": PackedStringArray(), "amplitude": 0.0}
+    var index:int = _find_label_index(tokens, "animpendulumprefix:")
+    if index == -1 or index + 1 >= tokens.size() or _animation_count(tokens, AnimationType.LEVERS) <= 0:
+        return pendulums
+    var names:PackedStringArray = []
+    for number:int in range(1, PENDULUM_COUNT + 1):
+        names.append(tokens[index + 1] + str(number))
+    pendulums["names"] = names
+    if index + 3 < tokens.size() and tokens[index + 2].to_lower() == "pendulumamplitude:":
+        pendulums["amplitude"] = float(tokens[index + 3])
+    return pendulums
+
+
+## The door submodels of the vehicle model: `animdoorprefix:` numbered from 1, as many as the
+## `animations:` line declares (DynObj.cpp:5721-5760)
+static func parse_door_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
+    var context := MmdImportContext.new()
+    return _numbered_names(_tokenize_file(abs_mmd_path, context, parameters), "animdoorprefix:", AnimationType.DOORS)
+
+
+## The door step submodels: `animstepprefix:` numbered from 1 (DynObj.cpp:5763-5790)
+static func parse_door_step_names(abs_mmd_path:String, parameters:Dictionary) -> PackedStringArray:
+    var context := MmdImportContext.new()
+    return _numbered_names(_tokenize_file(abs_mmd_path, context, parameters), "animstepprefix:", AnimationType.DOORSTEPS)
+
+
+## The elements of every pantograph of the vehicle model, by PANTOGRAPH_ELEMENT_LABELS: for each
+## label its prefix numbered from 1, as many as the `animations:` line declares pantographs
+## (DynObj.cpp:5404-5575) - empty for a label the MMD does not declare
+static func parse_pantograph_element_names(abs_mmd_path:String, parameters:Dictionary) -> Array[PackedStringArray]:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context, parameters)
+    var elements:Array[PackedStringArray] = []
+    for label:String in PANTOGRAPH_ELEMENT_LABELS:
+        elements.append(_numbered_names(tokens, label, AnimationType.PANTOGRAPHS))
+    return elements
+
+
+## How many animations of a kind the MMD declares: the `animations:` counts end at their first
+## negative number, and every kind after it - or without the line at all - has none (DynObj.cpp:5226-5245)
+static func _animation_count(tokens:Array[String], type:AnimationType) -> int:
     var counts_index:int = _find_label_index(tokens, "animations:")
-    if prefix_index == -1 or prefix_index + 1 >= tokens.size() or counts_index == -1:
-        return names
-    var mirror_count:int = 0
-    for type:int in range(ANIM_MIRRORS + 1):
-        var token_index:int = counts_index + 1 + type
+    if counts_index == -1:
+        return 0
+    for kind:int in range(type + 1):
+        var token_index:int = counts_index + 1 + kind
         if token_index >= tokens.size() or int(tokens[token_index]) < 0:
-            return names
-        mirror_count = int(tokens[token_index])
-    for number:int in range(1, mirror_count + 1):
-        names.append(tokens[prefix_index + 1] + str(number))
+            return 0
+    return int(tokens[counts_index + 1 + type])
+
+
+## A label's prefix numbered from 1 as many times as the MMD declares animations of the kind, as the
+## original names them (token + std::to_string(i + 1)); none without the label
+static func _numbered_names(tokens:Array[String], label:String, type:AnimationType) -> PackedStringArray:
+    var names:PackedStringArray = PackedStringArray()
+    var index:int = _find_label_index(tokens, label)
+    if index == -1 or index + 1 >= tokens.size():
+        return names
+    for number:int in range(1, _animation_count(tokens, type) + 1):
+        names.append(tokens[index + 1] + str(number))
     return names
 
 
@@ -441,11 +602,24 @@ static func parse_attachments(abs_mmd_path:String, parameters:Dictionary) -> Pac
 static func build_into(
         generated_root:Node3D, definition:MmdCabinDefinition, vehicle_rid:RID,
         data_path:String, skin:String, diagnostics:Array[Dictionary]) -> void:
+    # the cab's radio, a model or none: at the middle of the cab a metre up until its lamp places it
+    # (Train.cpp:10730-10739)
+    var radio := CabinRadio3D.new()
+    radio.name = "Radio"
+    radio.position = (definition.bounds_min + definition.bounds_max) * 0.5 + Vector3.UP
+    if definition.radio_stop_sound:
+        radio.radio_stop_alarm = MmdSoundEventBuilder.build(definition.radio_stop_sound, CabinRadio3D.RADIO_STOP)
+        radio.radio_stop_alarm.spatial_config = null
+    generated_root.add_child(radio)
+    radio.set_vehicle_rid(vehicle_rid)
     if not definition.model_relpath:
         # Valid in the original (e.g. su46 cab0) - the low-poly interior is shown instead.
         diagnostics.append(_diag("info", "MMD_MODEL_NOT_FOUND", "Cab %d has no model (model: none)" % definition.cab_number, definition.cab_number))
         return
 
+    # where the cab's sounds are looked for first (Global.asCurrentDynamicPath, audio.cpp:115)
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var vehicle_dir:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, data_path.trim_prefix("/")))
     var model := E3DModelInstance.new()
     model.name = "CabModel"
     # the original loads a cab as a dynamic model (Train.cpp:10599), which hides its "_on" controls
@@ -503,7 +677,8 @@ static func build_into(
             # (which only ever has one real target mesh).
             _build_indicator_lights(
                     descriptor, entry, vehicle_rid, submodel_index, model, generated_root,
-                    definition.cab_number, definition.driver_pos, sound_player, sound_events, diagnostics)
+                    definition.cab_number, definition.driver_pos, sound_player, sound_events, vehicle_dir,
+                    diagnostics)
             continue
         # a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control with
         # one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237): its
@@ -519,11 +694,11 @@ static func build_into(
         var sound_position:Vector3 = (
                 generated_root.to_local((widget.get_node(mesh_path) as Node3D).global_position) if mesh_path
                 else Vector3.ZERO)
-        _apply_sound(widget, descriptor, sound_player, sound_position, sound_events)
+        _apply_sound(widget, descriptor, sound_player, sound_position, sound_events, vehicle_dir)
         widget.set_vehicle_rid(vehicle_rid)
         # A gauge's own lamp: TGauge takes "<name>_on" as the lit state of the control, shown
         # instead of the control while the flag its entry names is set (Gauge.cpp:204-210, 386-392)
-        var on_matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower() + "_on", [])
+        var on_matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower() + ON_SUFFIX, [])
         if entry.has("state_light") and on_matches:
             var lamp := CabinIndicator3D.new()
             lamp.name = "%s_%s_on" % [descriptor.label, descriptor.submodel_name]
@@ -534,6 +709,29 @@ static func build_into(
             if widget.get("mesh_path"):
                 lamp.off_target_path = lamp.get_path_to(widget.get_node(widget.get("mesh_path")))
             lamp.set_vehicle_rid(vehicle_rid)
+
+    # the gauges of the train's cars read their pressures from it (Train.cpp:8670-8680)
+    var pressure_keys:PackedStringArray = []
+    for descriptor:MmdInstrumentDescriptor in definition.instruments:
+        if MmdSemanticCatalog.has_label(descriptor.label) \
+                and MmdSemanticCatalog.get_entry(descriptor.label).has("state_property_of_leading_numbers") \
+                and descriptor.leading_numbers.size() == LEADING_NUMBER_COUNT:
+            pressure_keys.append(LegacyCabinTrainsetPressures.state_key(
+                    descriptor.leading_numbers[0], descriptor.leading_numbers[1]))
+    if pressure_keys:
+        var pressures := LegacyCabinTrainsetPressures.new()
+        pressures.name = "TrainsetPressures"
+        pressures.state_keys = pressure_keys
+        generated_root.add_child(pressures)
+        pressures.set_vehicle_rid(vehicle_rid)
+
+    # the radio sounds at its lamp (btLampkaRadio.model_offset(), Train.cpp:10734)
+    for descriptor:MmdInstrumentDescriptor in definition.instruments:
+        if descriptor.label == RADIO_LAMP_LABEL:
+            var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
+            var lamps:Array = submodel_index.get(base_name + ON_SUFFIX, []) + submodel_index.get(base_name + OFF_SUFFIX, [])
+            if lamps:
+                radio.position = generated_root.to_local((lamps[0] as Node3D).global_position)
 
     for descriptor:MmdPythonScreenDescriptor in definition.python_screens:
         if not FileAccess.file_exists(descriptor.script_path + ".py"):
@@ -583,6 +781,16 @@ static func _diag(severity:String, code:String, message:String, cab_number:int, 
     }
 
 
+## The first of `labels` in the tokens; tokens.size() without any
+static func _first_label_index(tokens:Array[String], labels:Array[String]) -> int:
+    var first:int = tokens.size()
+    for label:String in labels:
+        var index:int = _find_label_index(tokens, label)
+        if not index == -1:
+            first = mini(first, index)
+    return first
+
+
 static func _find_label_index(tokens:Array[String], needle:String, from:int = 0) -> int:
     for i in range(from, tokens.size()):
         if tokens[i].to_lower() == needle:
@@ -625,7 +833,9 @@ static func _parse_instrument(
     i += 5
 
     if descriptor.animation_type in _VARIABLE_ANIMATION_TYPES:
-        i += 2 # endvalue, endscale - out of Etap A+B scope, discarded (position preserved)
+        descriptor.end_value = float(tokens[i]) if i < tokens.size() else 0.0
+        descriptor.end_scale = float(tokens[i + 1]) if i + 1 < tokens.size() else 0.0
+        i += 2
 
     if in_block:
         while i < tokens.size() and tokens[i] != "}":
@@ -925,6 +1135,10 @@ static func _build_widget(
 
     if widget is CabinButton:
         widget.button_type = button_type
+    # a gauge of a car of the train reads the value its numbers name (LegacyCabinTrainsetPressures)
+    if entry.has("state_property_of_leading_numbers") and descriptor.leading_numbers.size() == LEADING_NUMBER_COUNT:
+        widget.set("state_property", LegacyCabinTrainsetPressures.state_key(
+                descriptor.leading_numbers[0], descriptor.leading_numbers[1]))
 
     # "i-*:" indicator descriptors (see _parse_indicator()) never set animation_type - they have
     # no "rot"/"mov" shape at all, so there's nothing for _apply_animation_shape() to compute.
@@ -940,12 +1154,14 @@ static func _build_widget(
 ## the override lists. CabinGauge has no sound, so this is a no-op for it.
 static func _apply_sound(
         widget:Node, descriptor:MmdInstrumentDescriptor, sound_player:SfxPlayer3D,
-        sound_position:Vector3, events:Array[SfxEvent]) -> void:
+        sound_position:Vector3, events:Array[SfxEvent], vehicle_dir:String) -> void:
     if not "sound_player" in widget:
         return
     widget.set("sound_player", sound_player)
-    var increase:StringName = _add_control_sound(events, widget, "increase", descriptor.sound_increase, sound_position)
-    var decrease:StringName = _add_control_sound(events, widget, "decrease", descriptor.sound_decrease, sound_position)
+    var increase:StringName = _add_control_sound(
+            events, widget, "increase", descriptor.sound_increase, sound_position, vehicle_dir)
+    var decrease:StringName = _add_control_sound(
+            events, widget, "decrease", descriptor.sound_decrease, sound_position, vehicle_dir)
     if "sound_on_event" in widget:
         widget.set("sound_on_event", increase)
         widget.set("sound_off_event", decrease)
@@ -957,7 +1173,8 @@ static func _apply_sound(
         var position_events:Dictionary[int, StringName] = {}
         for position:int in descriptor.sound_positions:
             var event:StringName = _add_control_sound(
-                    events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position)
+                    events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position,
+                    vehicle_dir)
             if event:
                 position_events[position] = event
         widget.set("sound_position_events", position_events)
@@ -973,7 +1190,8 @@ static func _apply_sound(
         if position_events.size() <= index:
             position_events.resize(index + 1)
         position_events[index] = _add_control_sound(
-                events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position)
+                events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position,
+                vehicle_dir)
     widget.set("sound_override_events", positive)
     widget.set("sound_override_negative_events", negative)
 
@@ -982,11 +1200,11 @@ static func _apply_sound(
 ## name, or an empty one when the MMD gives no file.
 static func _add_control_sound(
         events:Array[SfxEvent], widget:Node, sound_case:String, filename:String,
-        sound_position:Vector3) -> StringName:
+        sound_position:Vector3, vehicle_dir:String) -> StringName:
     if not filename:
         return &""
     var clip := SfxClip.new()
-    clip.stream = MmdSoundEventBuilder.build_stream(filename, false)
+    clip.stream = MmdSoundEventBuilder.build_stream(filename, false, vehicle_dir)
     var clips:Array[SfxClip] = [clip]
     var event := SfxEvent.new()
     event.name = StringName("%s_%s" % [widget.name, sound_case])
@@ -1033,9 +1251,11 @@ static func _apply_animation_shape(
         cab_number:int, diagnostics:Array[Dictionary]) -> void:
     var range_scale:float = 1.0
     var range_properties:Array = entry.get("animation_range_config_properties", [])
-    if range_properties.size() == 2:
-        var range_min:float = float(CabinSystem.vehicle_config(vehicle_rid).get(range_properties[0], 0.0))
-        var range_max:float = float(CabinSystem.vehicle_config(vehicle_rid).get(range_properties[1], 1.0))
+    var config:Dictionary = CabinSystem.vehicle_config(vehicle_rid)
+    # the range is the vehicle's - one without the component that has it gives none
+    if range_properties.size() == 2 and config.has(range_properties[0]) and config.has(range_properties[1]):
+        var range_min:float = float(config[range_properties[0]])
+        var range_max:float = float(config[range_properties[1]])
         range_scale = range_max - range_min
         # the same raw range is where the knob's whole positions lie (a brake valve's BCPN rows)
         if "position_min" in widget:
@@ -1044,8 +1264,26 @@ static func _apply_animation_shape(
 
     var mmd_scale:float = descriptor.scale * float(entry.get("mmd_scale_multiplier", 1.0))
 
-    match descriptor.animation_type:
-        "rot":
+    # rotvar/movvar turn and slide as rot/mov with a scale that runs to their end scale, multiplied
+    # alike (Gauge.cpp:116-141, 182-185); wip turns as rot, and its two submodels below with it
+    var shape:String = descriptor.animation_type
+    if shape in _VARIABLE_ANIMATION_TYPES and "variable_end_value" in widget:
+        widget.set("variable_end_value", descriptor.end_value)
+        widget.set("variable_end_scale", descriptor.end_scale / descriptor.scale if not is_zero_approx(descriptor.scale) else 1.0)
+    if shape == "wip" and "wiper_chain" in widget:
+        widget.set("wiper_chain", true)
+    match shape:
+        "dgt":
+            if "animation_type" in widget:
+                widget.set("animation_type", CabinGauge.AnimationType.DIGITAL)
+                widget.set("digital_scale", mmd_scale)
+                widget.set("digital_offset", descriptor.offset)
+            else:
+                diagnostics.append(_diag(
+                        "info", "MMD_ANIMATION_UNSUPPORTED",
+                        "Label '%s' uses 'dgt' but its widget is no gauge" % descriptor.label,
+                        cab_number, descriptor.label, descriptor.submodel_name))
+        "rot", "rotvar", "wip":
             if "mesh_rotation" in widget:
                 var rotation_vec:Vector3 = widget.get("mesh_rotation")
                 rotation_vec.y = mmd_scale * 360.0 * range_scale
@@ -1064,7 +1302,9 @@ static func _apply_animation_shape(
                         "info", "MMD_ANIMATION_UNSUPPORTED",
                         "Label '%s' uses 'rot' but its widget has no mesh_rotation field" % descriptor.label,
                         cab_number, descriptor.label, descriptor.submodel_name))
-        "mov":
+        "mov", "movvar":
+            if "animation_type" in widget:
+                widget.set("animation_type", CabinGauge.AnimationType.MOVE)
             if "mesh_position" in widget:
                 var position_vec:Vector3 = widget.get("mesh_position")
                 position_vec.z = mmd_scale * range_scale
@@ -1081,7 +1321,7 @@ static func _apply_animation_shape(
             else:
                 diagnostics.append(_diag(
                         "info", "MMD_ANIMATION_UNSUPPORTED",
-                        "Label '%s' uses 'mov' but its widget has no mesh_position field (e.g. CabinGauge)" % descriptor.label,
+                        "Label '%s' uses 'mov' but its widget has no mesh_position field" % descriptor.label,
                         cab_number, descriptor.label, descriptor.submodel_name))
         _:
             diagnostics.append(_diag(
@@ -1094,11 +1334,10 @@ static func _apply_animation_shape(
                         "Label '%s' has a non-zero MMD offset (%s) which the reused cabin widgets cannot represent - ignored" % [descriptor.label, descriptor.offset],
                         cab_number, descriptor.label, descriptor.submodel_name))
 
-    # TGauge::Update() (Gauge.cpp:366): value += dt * (target - value) / friction - the same smoothing
-    # as the widgets' lerp(delta * animation_speed)
-    if descriptor.friction > 0.0 and "animation_speed" in widget \
-            and not entry.get("fixed_fields", {}).has("animation_speed"):
-        widget.set("animation_speed", 1.0 / descriptor.friction)
+    # TGauge::Update() (Gauge.cpp:364-375): value += dt * (target - value) / friction, and no friction
+    # sets it outright - the widgets' lerp(delta * animation_speed), 0 for at once
+    if "animation_speed" in widget:
+        widget.set("animation_speed", 1.0 / descriptor.friction if descriptor.friction > 0.0 else 0.0)
 
 
 ## `widget` must already be inside the tree (a child of the same generated_root as `model`'s
@@ -1114,19 +1353,17 @@ static func _wire_mesh_path(
     # (Train.cpp:11907, m_controlmapper), and only its presence matters; there is nothing to draw
     if descriptor.submodel_name.to_lower() == NO_SUBMODEL:
         return
-    # Submodel nodes carry Godot-validated names ("a.swmasz1" -> "a_swmasz1").
+    # TGauge::Load (Gauge.cpp:186-197): the submodel by its name, else by its name with "_off" - the
+    # first one GetFromName meets. Submodel nodes carry Godot-validated names ("a.swmasz1" -> "a_swmasz1").
     var matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower(), [])
-    if matches.size() == 1:
+    if not matches:
+        matches = submodel_index.get((descriptor.submodel_name + OFF_SUFFIX).validate_node_name().to_lower(), [])
+    if matches:
         widget.set(mesh_path_field, widget.get_path_to(matches[0]))
-    elif not matches:
+    else:
         diagnostics.append(_diag(
                 "warning", "MMD_SUBMODEL_NOT_FOUND",
                 "Submodel '%s' not found (label '%s')" % [descriptor.submodel_name, descriptor.label],
-                cab_number, descriptor.label, descriptor.submodel_name))
-    else:
-        diagnostics.append(_diag(
-                "warning", "MMD_SUBMODEL_AMBIGUOUS",
-                "Submodel '%s' has %d matches (label '%s') - mesh not bound" % [descriptor.submodel_name, matches.size(), descriptor.label],
                 cab_number, descriptor.label, descriptor.submodel_name))
 
     # Animation shape (mesh_rotation/max_value) comes from entry["fixed_fields"] above, not from
@@ -1150,7 +1387,7 @@ static func _wire_mesh_path(
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, vehicle_rid:RID,
         submodel_index:Dictionary, cab_model:E3DModelInstance, generated_root:Node3D, cab_number:int,
-        driver_position:Vector3, sound_player:SfxPlayer3D, sound_events:Array[SfxEvent],
+        driver_position:Vector3, sound_player:SfxPlayer3D, sound_events:Array[SfxEvent], vehicle_dir:String,
         diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
@@ -1183,7 +1420,7 @@ static func _build_indicator_lights(
         # sounding at the lamp's submodel
         _apply_sound(
                 widget, descriptor, sound_player, generated_root.to_local(submodel.global_position),
-                sound_events)
+                sound_events, vehicle_dir)
         if entry.get("aim_at_driver", false) and widget is SpotLight3D:
             _aim_spotlight_at_driver(widget as SpotLight3D, generated_root, driver_position)
         if on_node:

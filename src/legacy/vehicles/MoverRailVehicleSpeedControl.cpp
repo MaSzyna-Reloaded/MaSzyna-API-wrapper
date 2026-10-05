@@ -12,7 +12,10 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
-        p_mover->SpeedCtrl = get_speed_control_enabled();
+        // Mover.cpp:11097 - an induction motor with a second controller has it whatever its FIZ says
+        p_mover->SpeedCtrl =
+                get_speed_control_enabled() ||
+                (p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor && p_mover->ScndCtrlPosNo > 0);
         p_mover->SpeedCtrlDelay = get_delay();
         p_mover->SpeedCtrlTypeTime = get_impulse_lever();
         p_mover->SpeedCtrlAutoTurnOffFlag = get_disables_on();

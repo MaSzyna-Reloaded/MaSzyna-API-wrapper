@@ -46,6 +46,16 @@ namespace godot {
         return mover != nullptr ? mover->Doors.instances[side::left].is_open : false;
     }
 
+    bool MoverRailVehicleDoors::get_left_door_closed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].is_door_closed : true;
+    }
+
+    bool MoverRailVehicleDoors::get_right_door_closed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].is_door_closed : true;
+    }
+
     bool MoverRailVehicleDoors::get_left_closed() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].is_closed : true;

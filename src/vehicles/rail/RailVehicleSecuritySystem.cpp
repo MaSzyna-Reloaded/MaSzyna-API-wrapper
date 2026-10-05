@@ -11,6 +11,8 @@ namespace godot {
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::BOOL, aware_system_separate_acknowledge, "aware_system");
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::BOOL, aware_system_sifa, "aware_system");
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, aware_delay);
+        BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, aware_min_speed);
+        BIND_PROPERTY(RailVehicleSecuritySystem, Variant::BOOL, cab_dependent);
         BIND_PROPERTY(RailVehicleSecuritySystem, Variant::FLOAT, emergency_brake_delay, "emergency_brake");
         BIND_PROPERTY_W_HINT(
                 RailVehicleSecuritySystem, Variant::INT, emergency_signal, PROPERTY_HINT_ENUM,

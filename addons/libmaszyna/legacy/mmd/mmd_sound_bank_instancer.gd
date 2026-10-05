@@ -11,6 +11,7 @@ const _HORN_LABELS:Array[String] = ["horn1", "horn2", "horn3"]
 const _COUPLER_LABELS:Array[String] = [
     "couplerattach", "brakehoseattach", "mainhoseattach", "controlattach", "gangwayattach", "heatingattach",
     "couplerdetach", "brakehosedetach", "mainhosedetach", "controldetach", "gangwaydetach", "heatingdetach",
+    "coupleradapterattach", "coupleradapterremove",
 ]
 ## Used when the vehicle defines none (DynObj.cpp:6693-6700, 7059-7062)
 const _DEFAULT_SOUNDS:Dictionary = {
@@ -90,6 +91,11 @@ static func build_into(
     var soundproofing:Array[PackedFloat32Array] = MmdSoundSourceParser.parse_vehicle_soundproofing(abs_mmd_path, context)
     var locations:Dictionary = MmdSoundSourceParser.parse_locations(abs_mmd_path, context)
     _merge_ignition_and_shutdown_into_engine(exterior_definitions, internal_data)
+    # outernoise: takes the vehicle's Vmax for its Chunkrange (DynObj.cpp:6389)
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(vehicle_rid)
+    for definition:MmdSoundSourceDefinition in exterior_definitions:
+        if definition.label == "outernoise" and controller:
+            definition.chunk_range = int(controller.max_velocity)
 
     var cabin_definitions:Array[MmdSoundSourceDefinition] = []
     for definition:MmdSoundSourceDefinition in internal_data:

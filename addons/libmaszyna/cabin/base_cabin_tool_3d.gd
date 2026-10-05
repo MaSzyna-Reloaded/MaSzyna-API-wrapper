@@ -27,6 +27,37 @@ signal vehicle_rid_changing
 @export var target:CabinState.Target = CabinState.Target.OCCUPIED
 ## The keys of this control, named under its caption - the cab logic takes them (CabinLogic.input())
 @export var hint_actions:PackedStringArray = []
+## A wiper animation (MMD `wip`): the control's first submodel below it and that one's first turn
+## with it, by the same angle (TGauge gt_Wiper, Gauge.cpp:469-479) - wipers, folding doors, the
+## alarm chain's handle
+@export var wiper_chain:bool = false
+
+## How deep the wiper animation turns the submodels below the control (Gauge.cpp:472-478)
+const WIPER_CHAIN_DEPTH:int = 2
+var _wiper_chain_meshes:Array[Node3D] = []
+var _wiper_chain_bases:Array[Basis] = []
+
+
+## The submodels a wiper animation turns with `mesh`, taken once its mesh is found
+func _take_wiper_chain(mesh:Node3D) -> void:
+    _wiper_chain_meshes.clear()
+    _wiper_chain_bases.clear()
+    if not wiper_chain:
+        return
+    var node:Node3D = mesh
+    for _depth:int in range(WIPER_CHAIN_DEPTH):
+        var children:Array[Node] = node.get_children().filter(func(child:Node) -> bool: return child is Node3D)
+        if not children:
+            return
+        node = children[0]
+        _wiper_chain_meshes.append(node)
+        _wiper_chain_bases.append(node.basis)
+
+
+## The wiper chain turned by `rotation`, the control's own turn
+func _pose_wiper_chain(rotation:Basis) -> void:
+    for index:int in range(_wiper_chain_meshes.size()):
+        _wiper_chain_meshes[index].basis = _wiper_chain_bases[index] * rotation
 
 
 ## The vehicle this element sits in, as the cabin root hands it down.

@@ -12,11 +12,22 @@ namespace godot {
             GDCLASS(MoverRailVehicleController, RailVehicleController)
 
         private:
+            /* An EZT's automatic start thresholds (LoadFIZ_Param, Mover.cpp:10303-10304) */
+            static constexpr int EZT_IMIN_LOW = 1;
+            static constexpr int EZT_IMIN_HIGH = 2;
+            /* attach_coupler_adapter(): the neighbour's reach and the room asked for fitting the
+             * adapter [m] (DynObj.cpp:1760, 1774) */
+            static constexpr double COUPLER_ADAPTER_REACH = 25.0;
+            static constexpr double COUPLER_ADAPTER_ROOM = 0.5;
             /* This vehicle's Mover, which MaszynaMoverVehicleServer owns: taken in
              * _initialize_simulation(), handed back in release(). mover_vehicle is the handle it
              * was created for - the controller's own may change meanwhile. */
             TMoverParameters *mover = nullptr;
             RID mover_vehicle;
+            /* The model of the adapter fitted to each end, "" without one */
+            String fitted_adapter_models[2];
+            /* An end fitted with its neighbour's adapter; p_with_room asks for room left for it */
+            bool _fit_coupler_adapter(CouplerEnd p_end, bool p_with_room);
             /* The MaszynaMoverVehicleServer the Mover came from, by id: at shutdown it is freed -
              * and with it every Mover - before the controllers it served */
             ObjectID mover_implementation;
@@ -99,6 +110,13 @@ namespace godot {
             bool is_coupled_by(CouplerEnd p_end, BitField<CouplingFlags> p_flags) const override;
             void coupler_connect(const Variant &p_where) override;
             void coupler_disconnect(const Variant &p_where) override;
+            bool coupler_adapter_attach(const Variant &p_where) override;
+            bool coupler_adapter_fit(CouplerEnd p_end) override;
+            bool is_coupler_automatic(CouplerEnd p_end) const override;
+            bool coupler_adapter_remove(const Variant &p_where) override;
+            String get_coupler_adapter_fitted_model(CouplerEnd p_end) const override;
+            double get_coupler_adapter_fitted_length(CouplerEnd p_end) const override;
+            double get_coupler_adapter_fitted_height(CouplerEnd p_end) const override;
             Ref<RailVehicleController> get_coupled_controller(CouplerEnd p_end) const override;
             CouplerEnd get_coupled_end(CouplerEnd p_end) const override;
     };

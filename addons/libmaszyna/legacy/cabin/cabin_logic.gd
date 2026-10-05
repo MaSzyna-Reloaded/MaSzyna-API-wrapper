@@ -86,10 +86,11 @@ func register(vehicle_rid:RID, cab:int) -> void:
     var pantographs:LegacyCabinPantographs = LegacyCabinPantographs.new(present, controls.has_control(LegacyCabinPantographPresets.SELECTOR))
     claimed.append_array(pantographs.control_ids())
     _behaviours.append(pantographs)
+    var config:Dictionary = CabinSystem.vehicle_config(vehicle_rid)
     var switch_behaviours:Array[RefCounted] = [
         LegacyCabinBattery.new(),
         LegacyCabinCabActivation.new(),
-        LegacyCabinCabLights.new(),
+        LegacyCabinCabLights.new(controls.instrument_light_type),
         LegacyCabinPump.new(&"fuelpump_sw", "fuel_pump", "fuel_pump_switch_off", "fuel_pump_enabled",
                 controls.button_type(&"fuelpump_sw")),
         LegacyCabinPump.new(&"oilpump_sw", "oil_pump", "oil_pump_switch_off", "oil_pump_enabled",
@@ -98,6 +99,11 @@ func register(vehicle_rid:RID, cab:int) -> void:
         LegacyCabinPantographsDropAll.new(
                 controls.button_type(LegacyCabinPantographsDropAll.CONTROL),
                 controls.has_control(LegacyCabinPantographsDropAll.CONTROL)),
+        LegacyCabinConverter.new(bool(config.get("converter_switch_impulse", false)),
+                controls.has_control(LegacyCabinConverter.OFF_SWITCH)),
+        LegacyCabinTempomat.new(controls.button_type(LegacyCabinTempomat.SWITCH),
+                controls.has_control(LegacyCabinTempomat.OFF_SWITCH)),
+        LegacyCabinDoorStep.new(controls.button_type(LegacyCabinDoorStep.SWITCH)),
         LegacyCabinDoorPermits.new(
                 controls.button_type(LegacyCabinDoorPermits.LEFT_SWITCH),
                 controls.button_type(LegacyCabinDoorPermits.RIGHT_SWITCH)),
@@ -113,6 +119,8 @@ func register(vehicle_rid:RID, cab:int) -> void:
         claimed.append_array(joint_controller.control_ids())
         _behaviours.append(joint_controller)
     _behaviours.append(LegacyCabinForwardCommands.new(controls, claimed))
+    if config.get("direction_switches_circuit_imin_high", false):
+        _behaviours.append(LegacyCabinDirectionKey.new())
     if not controls.has_control(LegacyCabinManualBrake.CONTROL):
         _behaviours.append(LegacyCabinManualBrake.new())
     if not controls.has_control(LegacyCabinWipers.CONTROL):
@@ -126,7 +134,6 @@ func register(vehicle_rid:RID, cab:int) -> void:
     _unmodelled_controls = LegacyCabinUnmodelledControls.new(controls)
     _unmodelled_controls.register(vehicle_rid, cab)
     _behaviours.append(_unmodelled_controls)
-    var config:Dictionary = CabinSystem.vehicle_config(vehicle_rid)
     for control_id:StringName in controls.get_control_ids():
         _bind(control_id, controls.wiring(control_id).get("kind", &""), controls.target(control_id),
                 controls.resolved_fields(control_id, config))

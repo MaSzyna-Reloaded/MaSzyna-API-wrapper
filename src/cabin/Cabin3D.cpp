@@ -57,6 +57,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_driver_position", "position"), &Cabin3D::set_driver_position);
         ClassDB::bind_method(D_METHOD("get_driver_position"), &Cabin3D::get_driver_position);
         ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "driver_position"), "set_driver_position", "get_driver_position");
+        ClassDB::bind_method(D_METHOD("set_driver_view_angle", "angle"), &Cabin3D::set_driver_view_angle);
+        ClassDB::bind_method(D_METHOD("get_driver_view_angle"), &Cabin3D::get_driver_view_angle);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::VECTOR2, "driver_view_angle"), "set_driver_view_angle", "get_driver_view_angle");
 
         ADD_GROUP("Camera Shake", "");
         ClassDB::bind_method(D_METHOD("set_shake_spring_stiffness", "value"), &Cabin3D::set_shake_spring_stiffness);
@@ -267,6 +271,12 @@ namespace godot {
     }
     Vector3 Cabin3D::get_driver_position() const {
         return driver_position;
+    }
+    void Cabin3D::set_driver_view_angle(const Vector2 &p_angle) {
+        driver_view_angle = p_angle;
+    }
+    Vector2 Cabin3D::get_driver_view_angle() const {
+        return driver_view_angle;
     }
     void Cabin3D::set_shake_spring_stiffness(const double p_value) {
         shake_spring_stiffness = p_value;

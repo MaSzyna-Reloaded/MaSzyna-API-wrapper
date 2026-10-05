@@ -22,6 +22,8 @@ namespace godot {
             virtual double get_tractive_force() const = 0;
             virtual double get_power() const = 0;
             virtual double get_rpm_count() const = 0;
+            /* The engine's turn [rad, 0..2pi]: the revolutions summed (eAngle, Mover.cpp:5554) */
+            virtual double get_angle() const = 0;
             virtual double get_rpm_ratio() const = 0;
             virtual double get_circuit_nmax_rpm() const = 0;
             virtual int get_damage() const = 0;

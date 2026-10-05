@@ -37,6 +37,10 @@ func _enter_tree() -> void:
             CabinSystem.cab_light_level_changed.connect(_on_cab_light_changed)
         CabinState.Light.INSTRUMENT:
             CabinSystem.cab_instrument_light_changed.connect(_on_cab_light_changed)
+        CabinState.Light.DASHBOARD:
+            CabinSystem.cab_dashboard_light_changed.connect(_on_cab_light_changed)
+        CabinState.Light.TIMETABLE:
+            CabinSystem.cab_timetable_light_changed.connect(_on_cab_light_changed)
 
 func _exit_tree() -> void:
     match cab_light:
@@ -44,6 +48,10 @@ func _exit_tree() -> void:
             CabinSystem.cab_light_level_changed.disconnect(_on_cab_light_changed)
         CabinState.Light.INSTRUMENT:
             CabinSystem.cab_instrument_light_changed.disconnect(_on_cab_light_changed)
+        CabinState.Light.DASHBOARD:
+            CabinSystem.cab_dashboard_light_changed.disconnect(_on_cab_light_changed)
+        CabinState.Light.TIMETABLE:
+            CabinSystem.cab_timetable_light_changed.disconnect(_on_cab_light_changed)
 
 func _on_cab_light_changed(vehicle_rid:RID, cab:int, value:Variant) -> void:
     if vehicle_rid == _vehicle_rid and cab == CabinSystem.occupied_cab(_vehicle_rid):
@@ -57,7 +65,7 @@ func _update_state():
         enabled = level > 0.0
     elif _vehicle_rid and state_property:
         # a bool state or a 0..1 level
-        level = float(CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false))
+        level = float(CabinSystem.vehicle_state_value(_vehicle_rid, state_property, false))
         enabled = level > 0.0
 
     _target_light_energy = lerpf(light_energy_off, light_energy_on, level) if enabled else light_energy_off
@@ -73,6 +81,10 @@ func _process(delta):
                     _cab_light_level = CabinSystem.cab_get_light_level(_vehicle_rid, cab)
                 CabinState.Light.INSTRUMENT:
                     _cab_light_level = float(CabinSystem.cab_get_instrument_light_enabled(_vehicle_rid, cab))
+                CabinState.Light.DASHBOARD:
+                    _cab_light_level = float(CabinSystem.cab_get_dashboard_light_enabled(_vehicle_rid, cab))
+                CabinState.Light.TIMETABLE:
+                    _cab_light_level = float(CabinSystem.cab_get_timetable_light_enabled(_vehicle_rid, cab))
             _setup_phase = true
             _update_state()
 

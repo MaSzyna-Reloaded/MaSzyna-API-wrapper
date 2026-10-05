@@ -65,8 +65,8 @@ func build() -> void:
         # the voices of the one player at the origin stand at the sound's own place
         spatial_config.position = sound.position
         var bank_events:Array[SfxEvent] = [
-            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, false), spatial_config),
-            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, true), spatial_config),
+            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, false, ""), spatial_config),
+            ScenerySoundServer.event_build(MmdSoundEventBuilder.build_stream(sound.file, true, ""), spatial_config),
         ]
         if ambient:
             for sound_event:SfxEvent in bank_events:

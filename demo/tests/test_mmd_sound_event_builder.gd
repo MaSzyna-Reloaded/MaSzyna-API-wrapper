@@ -68,9 +68,9 @@ func test_chunks_produce_one_automation_with_clips_positioned_by_threshold():
     var high:SfxClip = automation.clips[2]
     assert_eq((high.stream as MaszynaAudioStream).file_path, "idle_high")
     assert_almost_eq(high.offset, 640.0, 0.01) # 1000 - 0.9*(1000-600)
-    # top chunk is open-ended (0 = "active up to automation.max_domain") rather than cut off just
-    # past its own threshold, so it stays audible for any RPM above 1000 instead of going silent.
-    assert_almost_eq(high.length, 0.0, 0.01)
+    # the top chunk ends at max(Chunkrange 100, its threshold) - above it the original plays none
+    # (sound.cpp:85, 427-430)
+    assert_almost_eq(high.length, 360.0, 0.01) # fadeout(1000) - fadein(640)
     assert_not_null(high.fade_in_curve)
     assert_null(high.fade_out_curve) # last chunk: no next chunk to blend out into
 
@@ -103,7 +103,7 @@ func test_chunks_produce_one_automation_with_clips_positioned_by_threshold():
     assert_almost_eq(high.pitch_curve.sample(0.0), 0.64, 0.001)
     assert_almost_eq(high.pitch_curve.sample(360.0), 1.0, 0.001)
 
-    assert_almost_eq(automation.max_domain, 101000.0, 0.01)
+    assert_almost_eq(automation.max_domain, 1000.0, 0.01)
 
 
 func test_engine_event_has_separate_physical_gain_modulation() -> void:
@@ -175,3 +175,15 @@ func _has_modulation_target(modulations:Array[SfxParameterModulation], target:in
         if modulation.target == target:
             return true
     return false
+
+
+# sound.cpp:85 - a chunk table below its Chunkrange ends at the Chunkrange (100 by default)
+func test_last_chunk_ends_at_the_chunk_range() -> void:
+    var definition:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
+    definition.chunks = [{"threshold": 10, "filename": "low"}, {"threshold": 50, "filename": "high"}]
+    var event:SfxEvent = MmdSoundEventBuilder.build(definition, &"chunked", &"point")
+    var automation:SfxAutomation = event.automations[0]
+    assert_almost_eq(automation.max_domain, float(MmdSoundSourceDefinition.DEFAULT_CHUNK_RANGE), 0.01)
+    definition.chunk_range = 160
+    automation = MmdSoundEventBuilder.build(definition, &"chunked", &"point").automations[0]
+    assert_almost_eq(automation.max_domain, 160.0, 0.01, "outernoise: the vehicle's Vmax (DynObj.cpp:6389)")

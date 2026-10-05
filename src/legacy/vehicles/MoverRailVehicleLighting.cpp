@@ -186,6 +186,7 @@ namespace godot {
         // what lights_sw shows - LightsPos runs from 1 (Train.cpp:5220)
         p_state["light_selector_position"] = std::max(0, get_position() - 1);
         p_state["headlights_dimmed"] = get_headlights_dimmed();
+        p_state["any_light_enabled"] = get_any_light_enabled();
         p_state["light_power"] = get_power();
         p_state["light_power_source"] = get_power_source();
         p_state["lights/front_headlight_upper_enabled"] = get_front_headlight_upper_enabled();
@@ -311,6 +312,12 @@ namespace godot {
 
     bool MoverRailVehicleLighting::get_headlights_dimmed() const {
         return headlights_dimmed;
+    }
+
+    bool MoverRailVehicleLighting::get_any_light_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr &&
+               (mover->iLights[Maszyna::end::front] != 0 || mover->iLights[Maszyna::end::rear] != 0);
     }
 
     namespace {

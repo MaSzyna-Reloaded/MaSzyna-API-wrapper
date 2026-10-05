@@ -44,10 +44,6 @@ var _resize_handle: TextureRect
         allow_close = value
         queue_redraw()
 
-## Which vehicle of the player's the window shows - the one sat in, or the one its controls drive
-## (a unit's motor car), as the cab's controls pick theirs (CabinState.Target)
-@export var vehicle_target: CabinState.Target = CabinState.Target.OCCUPIED
-
 @export var title: String = "":
     set(value):
         title = value

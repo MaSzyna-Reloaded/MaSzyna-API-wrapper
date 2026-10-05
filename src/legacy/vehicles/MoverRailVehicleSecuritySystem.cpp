@@ -99,6 +99,10 @@ namespace godot {
         p_mover->SecuritySystem.is_sifa = get_aware_system_sifa();
 
         p_mover->SecuritySystem.AwareDelay = get_aware_delay();
+        p_mover->SecuritySystem.AwareMinSpeed = get_aware_min_speed() == AWARE_MIN_SPEED_FROM_MAX_VELOCITY
+                                                        ? AWARE_MIN_SPEED_MAX_VELOCITY_SHARE * p_mover->Vmax
+                                                        : get_aware_min_speed();
+        p_mover->SecuritySystem.CabDependent = get_cab_dependent();
         p_mover->SecuritySystem.EmergencyBrakeDelay = get_emergency_brake_delay();
         p_mover->SecuritySystem.radiostop_enabled = get_radio_stop_enabled();
         p_mover->SecuritySystem.SoundSignalDelay = get_sound_signal_delay();

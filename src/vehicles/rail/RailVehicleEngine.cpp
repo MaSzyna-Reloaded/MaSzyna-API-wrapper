@@ -29,6 +29,9 @@ namespace godot {
     double RailVehicleEngine::get_rpm_count() const {
         return drive_unit != nullptr ? drive_unit->get_rpm_count() : 0.0;
     }
+    double RailVehicleEngine::get_angle() const {
+        return drive_unit != nullptr ? drive_unit->get_angle() : 0.0;
+    }
     double RailVehicleEngine::get_rpm_ratio() const {
         return drive_unit != nullptr ? drive_unit->get_rpm_ratio() : 0.0;
     }
@@ -168,6 +171,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_tractive_force"), &RailVehicleEngine::get_tractive_force);
         ClassDB::bind_method(D_METHOD("get_power"), &RailVehicleEngine::get_power);
         ClassDB::bind_method(D_METHOD("get_rpm_count"), &RailVehicleEngine::get_rpm_count);
+        ClassDB::bind_method(D_METHOD("get_angle"), &RailVehicleEngine::get_angle);
         ClassDB::bind_method(D_METHOD("get_rpm_ratio"), &RailVehicleEngine::get_rpm_ratio);
         ClassDB::bind_method(D_METHOD("get_circuit_nmax_rpm"), &RailVehicleEngine::get_circuit_nmax_rpm);
         ClassDB::bind_method(D_METHOD("get_damage"), &RailVehicleEngine::get_damage);

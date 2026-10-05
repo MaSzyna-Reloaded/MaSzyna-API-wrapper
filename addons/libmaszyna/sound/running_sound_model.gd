@@ -31,6 +31,21 @@ var _controller:VehicleController
 var _engine:RailVehicleEngine
 var _wheels:RailVehicleWheels
 var _brake:RailVehicleBrake
+var _master_controller:RailVehicleMasterController
+## engine_turbo_pitch and the turbo's gain, eased toward their goals (DynObj.cpp:8275-8280)
+var _turbo_pitch:float = 0.0
+var _turbo_volume:float = 0.0
+
+## Original engine: DynObj.cpp:8269-8288 - the turbo's lowest goal pitch, its rate of change [1/s],
+## the share of it a falling pitch changes by, the engine speed [1/s] it needs, its pitch mapping
+## and the gain below which it stops
+const TURBO_MIN_PITCH:float = 0.025
+const TURBO_CHANGE_RATE:float = 0.4
+const TURBO_PITCH_FALL_SHARE:float = 0.5
+const TURBO_MIN_ENGINE_SPEED:float = 0.1
+const TURBO_PITCH_BASE:float = 0.4
+const TURBO_PITCH_SCALE:float = 0.4
+const TURBO_STOP_VOLUME:float = 0.05
 
 
 ## The vehicle whose components the formulas read, taken once - TrainSoundSystem calls it again
@@ -44,6 +59,8 @@ func attach_vehicle(vehicle_rid:RID) -> void:
             vehicle_rid, VehicleComponentType.COMPONENT_WHEELS) as RailVehicleWheels
     _brake = RailVehicleServer.vehicle_component_get(
             vehicle_rid, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    _master_controller = RailVehicleServer.vehicle_component_get(
+            vehicle_rid, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
 
 
 ## Returns event name -> {"action": Action, "parameters": Dictionary, "source": definition}, only
@@ -55,7 +72,8 @@ func update(delta:float, outer_noise_audible:bool) -> Dictionary:
             _labels[(entry["source"] as MmdSoundSourceDefinition).label] = true
     var speed:float = VehicleServer.vehicle_get_speed(_vehicle_rid)
     # a standing vehicle with still wheels and fan plays nothing - every formula below gives silence
-    if speed <= 0.0 and not _playing and _wheel_revolutions() <= 0.01 and _resistor_fan_rotation() <= 0.1:
+    if speed <= 0.0 and not _playing and _wheel_revolutions() <= 0.01 and _resistor_fan_rotation() <= 0.1 \
+            and not (_labels.has("turbo") and _engine and _engine.get_rpm_count() > TURBO_MIN_ENGINE_SPEED):
         _motor_volume = 0.0
         return {}
     # the track is only read by sounds of a moving vehicle, the curve radius only above 5 km/h
@@ -99,7 +117,32 @@ func _level(
         "curve": return _curve(source, speed, shape)
         "outernoise": return _outer_noise(source, speed, quality_volume, outer_noise_audible)
         "runningnoise": return _running_noise(source, speed, quality_volume)
+        "turbo": return _turbo(source, delta)
     return []
+
+
+## DynObj.cpp:8266-8290: a diesel's turbocharger, heard from the master controller position
+## TurboPos: on while the engine turns; its pitch and gain ease toward their goals
+func _turbo(source:MmdSoundSourceDefinition, delta:float) -> Array:
+    var diesel:RailVehicleDieselEngine = _engine as RailVehicleDieselEngine
+    if not diesel or diesel.turbo_position <= 0:
+        return []
+    var engine_speed:float = diesel.get_rpm_count()
+    var pitch_diesel:float = (engine_speed / diesel.mechanical_max_rpm * diesel.get_fill()
+            if diesel.mechanical_max_rpm > 0.0 else 0.0)
+    var goal_pitch:float = maxf(TURBO_MIN_PITCH, (pitch_diesel + source.frequency_offset) * source.frequency_factor)
+    var heard:bool = (_master_controller != null and _master_controller.get_main_position() >= diesel.turbo_position
+            and engine_speed > TURBO_MIN_ENGINE_SPEED)
+    var goal_volume:float = (maxf(0.0, (_turbo_pitch + source.amplitude_offset) * source.amplitude_factor)
+            if heard else 0.0)
+    var change:float = TURBO_CHANGE_RATE * delta
+    _turbo_pitch = (maxf(goal_pitch, _turbo_pitch - change * TURBO_PITCH_FALL_SHARE) if _turbo_pitch > goal_pitch
+            else minf(goal_pitch, _turbo_pitch + change))
+    _turbo_volume = (maxf(goal_volume, _turbo_volume - change) if _turbo_volume > goal_volume
+            else minf(goal_volume, _turbo_volume + change))
+    if _turbo_volume <= TURBO_STOP_VOLUME:
+        return []
+    return [TURBO_PITCH_BASE + _turbo_pitch * TURBO_PITCH_SCALE, _turbo_volume]
 
 
 ## DynObj.cpp:7933-8010, amplitude divisor from DynObj.cpp:5714
@@ -283,7 +326,7 @@ func _result(source:MmdSoundSourceDefinition, level:Array) -> Dictionary:
 
 
 ## Chunks sorted by threshold, with the fade in/out points of sound_source::deserialize()
-## (sound.cpp:56-85, Chunkrange 100).
+## (sound.cpp:56-85, the source's Chunkrange).
 static func sorted_chunks(source:MmdSoundSourceDefinition) -> Array[Dictionary]:
     var chunks:Array[Dictionary] = source.chunks.duplicate(true)
     chunks.sort_custom(func(a:Dictionary, b:Dictionary) -> bool: return int(a["threshold"]) < int(b["threshold"]))
@@ -295,7 +338,8 @@ static func sorted_chunks(source:MmdSoundSourceDefinition) -> Array[Dictionary]:
             var previous_threshold:float = float(chunks[idx - 1]["threshold"])
             chunks[idx]["fadein"] = threshold - 0.01 * source.crossfade_percent * (threshold - previous_threshold)
         chunks[idx]["fadeout"] = (
-                float(chunks[idx + 1]["threshold"]) if idx < chunks.size() - 1 else maxf(100.0, threshold))
+                float(chunks[idx + 1]["threshold"]) if idx < chunks.size() - 1
+                else maxf(float(source.chunk_range), threshold))
     return chunks
 
 

@@ -1,4 +1,5 @@
 #pragma once
+#include "legacy/e3d/E3DSubModel.hpp"
 #include "vehicles/rail/RailVehicleAppearance.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 
@@ -45,6 +46,8 @@ namespace godot {
              * lamp change slowly - and how many vehicles a frame may look at doing it */
             static constexpr double SLOW_UPDATE_PERIOD = 0.25;
             static constexpr int MAX_SLOW_UPDATES_PER_FRAME = 16;
+            /* A door's submodels: itself and the two below it a folding door turns (DynObj.cpp:592-622) */
+            static constexpr int DOOR_ELEMENTS = 3;
             /* How many vehicles drawn in detail a frame animates (pantographs, wipers, mirrors) */
             static constexpr int MAX_DETAILED_UPDATES_PER_FRAME = 32;
 
@@ -85,6 +88,8 @@ namespace godot {
                     RID low_poly;
                     RID passengers;
                     Vector<RID> attachments;
+                    /* The coupler adapter fitted to each end, drawn as the exterior is */
+                    RID coupler_adapters[2];
                     RID load;
                     /* The cargo's model file, read again with the game's data */
                     String load_data_path;
@@ -101,6 +106,11 @@ namespace godot {
                     Vector<Part> pantograph_arms[2];
                     Vector<Part> wiper_arms;
                     Vector<Part> mirrors;
+                    /* RailVehicleAppearance::get_doors(): DOOR_ELEMENTS a door */
+                    Vector<Part> doors;
+                    Vector<Part> door_steps;
+                    Vector<Part> pendulums;
+                    double pendulum_amplitude = 0.0;
                     /* The coupler and hose submodels the model has (AirCoupler::Init(),
                      * DynObj.cpp:2170-2181) */
                     HashSet<String> coupler_submodels;
@@ -127,6 +137,9 @@ namespace godot {
                     double mirror_left = -1.0;
                     double mirror_right = -1.0;
                     int mirror_cab = 0;
+                    /* The door and step positions last posed, left and right */
+                    double door_positions[2] = {-1.0, -1.0};
+                    double door_step_positions[2] = {-1.0, -1.0};
             };
 
             enum PneumaticLine {
@@ -175,6 +188,8 @@ namespace godot {
             void _bind_parts(const RID &p_vehicle, Visual &p_visual);
             Part _part(const Visual &p_visual, const String &p_submodel) const;
             Vector<Part> _parts(const Visual &p_visual, const PackedStringArray &p_submodels) const;
+            /* The submodel of the vehicle's model by its lowered name, for its mesh */
+            Ref<E3DSubModel> _find_e3d_submodel(const Visual &p_visual, const String &p_name) const;
             void _publish_pantograph_geometry(
                     const RID &p_vehicle, const Visual &p_visual,
                     RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
@@ -182,6 +197,9 @@ namespace godot {
             void _move(const RID &p_vehicle, Visual &p_visual);
             void _show_models(const Visual &p_visual, const RID &p_scenario) const;
             void _pose(Visual &p_visual, const Part &p_part, const Basis &p_pose);
+            void _pose(Visual &p_visual, const Part &p_part, const Transform3D &p_pose);
+            void _pose_doors(const RID &p_vehicle, Visual &p_visual);
+            void _pose_pendulums(const RID &p_vehicle, Visual &p_visual);
             void _pose_running_gear(const RID &p_vehicle, Visual &p_visual);
             void _pose_pantographs(const RID &p_vehicle, Visual &p_visual);
             void _pose_wipers(const RID &p_vehicle, Visual &p_visual);
@@ -205,6 +223,11 @@ namespace godot {
             void _on_vehicle_placed(const RID &p_vehicle);
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_changed(const RID &p_vehicle, int64_t p_flag);
+            void _on_vehicle_coupler_adapter_changed(const RID &p_vehicle, int64_t p_end);
+            /* The adapters fitted to the vehicle's ends, built again as its controller has them */
+            void _update_coupler_adapters(const RID &p_vehicle, Visual &p_visual);
+            /* Where an adapter fitted to an end is drawn (Render_coupler_adapter(), opengl33renderer.cpp:1356-1376) */
+            Transform3D _coupler_adapter_transform(const RID &p_vehicle, const Visual &p_visual, int p_end) const;
             void _on_vehicle_config_changed(const RID &p_vehicle);
             void _on_vehicle_freed(const RID &p_vehicle);
             void _on_instance_built(const RID &p_instance);

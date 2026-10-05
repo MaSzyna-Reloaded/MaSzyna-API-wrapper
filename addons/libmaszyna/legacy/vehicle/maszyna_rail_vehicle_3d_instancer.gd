@@ -7,30 +7,30 @@ class_name MaszynaRailVehicle3DInstancer
 ## by RailVehicleRenderingServer), the models of its cargo and its interactive MMD-driven cabin
 ## (CabinSystem). Used by MaszynaLegacyVehicleSystem, which builds the vehicle from it.
 
-## Fixed original-engine submodel naming convention for bogies/wheel axles (DynObj.cpp:2341-2346
-## for bogies, DynObj.cpp:5132-5176 for wheel axles) - confirmed against real game data (e.g.
-## dynamic/pkp/su45_v2/301d.e3d, dynamic/pkp/sm42_v1/6d1.e3d both contain bogie1/bogie2
-## submodels; every .mmd in the game data declaring animwheelprefix: uses "wheel0").
-##
-## NOTE: every discovered wheel submodel is treated as powered. The original engine also splits
-## axles into front-rolling/powered/rear-rolling groups based on AxleArangement letters/digits
-## (DynObj.cpp:5150-5176), but only when a vehicle's rolling-wheel diameter differs from its
-## powered-wheel diameter - no vehicle in the current game data needs that, and it would require
-## threading the parsed RailVehicleWheels config through to spawn time. Left unimplemented until an
-## actual vehicle needs it.
+## The bogies, by the names the original itself looks for (DynObj.cpp:2482-2487). Everything else
+## that moves - wheels, pantographs, wipers, mirrors - is named by the vehicle's MMD
+## (MmdCabinInstancer.parse_*_names).
 const FRONT_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie1", "boogie01"]
 const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
-const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
+## The elements of a wiper (DynObj.cpp:5845-5866)
 const WIPER_ELEMENT_SUFFIXES:Array[String] = ["_p1", "_p2", "_p3"]
-## std::vector<bool>(8, false) wiperDirection of the original (DynObj.h:328)
-const MAX_WIPERS:int = 8
-const MAX_WHEEL_AXLES:int = 20
 
-## lower arm 1, upper arm 1 and the slider
-const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [0, 2, 4]
-const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
-    "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
-]
+## The pantograph element without which the pantograph is not animated: the slider (DynObj.cpp:5562-5566;
+## an index of MmdCabinInstancer.PANTOGRAPH_ELEMENT_LABELS)
+const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [4]
+## The front and the rear pantograph (Pantographs[end::front/rear], MOVER.h)
+## An axle's diameter: the front rolling, the powered and the rear rolling one (dWheelAngle[0..2],
+## DynObj.cpp:5362-5385)
+## The destination sign's replaceable skin: material -4, held as its index 3 (E3DModelBuilder.cpp:153)
+const DESTINATION_SIGN_SKIN:int = 3
+enum WheelGroup { FRONT_ROLLING, POWERED, REAR_ROLLING }
+## The axle arrangement's symbols of powered axles, A to J, and of rolling ones, 1 to 9
+## (DynObj.cpp:5372, 5378)
+const POWERED_AXLES_FIRST:int = 65
+const POWERED_AXLES_LAST:int = 74
+const ROLLING_AXLES_FIRST:int = 49
+const ROLLING_AXLES_LAST:int = 57
+const PANTOGRAPH_COUNT:int = 2
 
 ## Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab) lives in
 ## one vehicle-local frame where +Z is the direction of travel: the original draws all of them under
@@ -90,9 +90,24 @@ static func read_structure(
     appearance.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path, parameters)
     var model:E3DModel = E3DModelManager.load_model(normalized_data_path, appearance.model_filename)
     if model:
-        _resolve_parts(appearance, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path, parameters),
-                MmdCabinInstancer.parse_mirror_names(abs_mmd_path, parameters))
+        # the wheels' diameters and axle arrangement split the axles into powered and rolling ones
+        var description:VehicleController = FizVehicleBuilder.build_description(
+                normalized_data_path.trim_prefix("/"), file_name)
+        var wheels:RailVehicleWheels = null
+        if description:
+            for component:VehicleComponent in description.get_components():
+                if component is RailVehicleWheels:
+                    wheels = component
+        _resolve_parts(appearance, model, wheels, MmdCabinInstancer.parse_wheel_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_pantograph_element_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_wiper_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_mirror_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_door_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_door_step_names(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_pendulums(abs_mmd_path, parameters),
+                MmdCabinInstancer.parse_pantograph_factors(abs_mmd_path, parameters))
     structure.appearance = appearance
+    structure.coupler_adapter = MmdCabinInstancer.parse_coupler_adapter(abs_mmd_path, parameters)
     structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     return structure
 
@@ -146,42 +161,119 @@ static func _build_cabin_scene(normalized_data_path:String, file_name:String, sk
     return packed
 
 
-## The submodels of the exterior model that move, by the original's names.
+## The submodels of the exterior model that move, by the names the MMD gives them; a name the
+## model has not got is not animated, as in the original (DynObj.cpp:5351, 5414, 5848)
 static func _resolve_parts(
-        appearance:RailVehicleAppearance, model:E3DModel, wiper_prefix:String,
-        mirror_names:PackedStringArray) -> void:
-    var names:Dictionary[String, bool] = {}
+        appearance:RailVehicleAppearance, model:E3DModel, wheels:RailVehicleWheels, wheel_names:PackedStringArray,
+        pantograph_elements:Array[PackedStringArray], wiper_names:PackedStringArray,
+        mirror_names:PackedStringArray, door_names:PackedStringArray, door_step_names:PackedStringArray,
+        pendulums:Dictionary, pantograph_factors:PackedFloat64Array) -> void:
+    var names:Dictionary[String, E3DSubModel] = {}
     _index_submodels(model.submodels, names)
+
+    # the destination sign is the submodel with replaceable skin 4 (TSubModel::find_replacable4(),
+    # Model3d.cpp:932-958; init_destination(), DynObj.cpp:2539-2545); none, no sign
+    var sign:E3DSubModel = _find_destination_sign(model.submodels, 0)
+    appearance.head_display_submodel = sign.resource_name if sign else ""
 
     appearance.front_bogie = _find_submodel(names, FRONT_BOGIE_SUBMODEL_NAMES)
     appearance.rear_bogie = _find_submodel(names, REAR_BOGIE_SUBMODEL_NAMES)
 
-    var powered_wheels:PackedStringArray = []
-    for axle_index:int in range(1, MAX_WHEEL_AXLES + 1):
-        var wheel:String = _find_submodel(names, ["%s%d" % [WHEEL_SUBMODEL_PREFIX, axle_index]])
+    # every axle turns as a powered one unless the rolling wheels have diameters of their own; then
+    # the axle arrangement says which they are: letters powered, digits rolling - the front ones
+    # before the first letter, the rear ones after it (DynObj.cpp:5361-5388)
+    var groups:PackedInt32Array = []
+    groups.resize(wheel_names.size())
+    groups.fill(WheelGroup.POWERED)
+    if wheels and (not wheels.front_rolling_wheel_diameter == wheels.powered_wheel_diameter
+            or not wheels.rear_rolling_wheel_diameter == wheels.powered_wheel_diameter):
+        var arrangement:String = wheels.axle_arrangement
+        var axle:int = 0
+        # the original reads the arrangement from its second character (j = 1, DynObj.cpp:5364)
+        var next:int = 1
+        var symbol:int = 0
+        var rolling_group:WheelGroup = WheelGroup.FRONT_ROLLING
+        while axle < groups.size() and next <= arrangement.length():
+            if symbol >= POWERED_AXLES_FIRST and symbol <= POWERED_AXLES_LAST:
+                groups[axle] = WheelGroup.POWERED
+                axle += 1
+                symbol -= 1
+                rolling_group = WheelGroup.REAR_ROLLING
+            elif symbol >= ROLLING_AXLES_FIRST and symbol <= ROLLING_AXLES_LAST:
+                groups[axle] = rolling_group
+                axle += 1
+                symbol -= 1
+            else:
+                symbol = arrangement.unicode_at(next) if next < arrangement.length() else 0
+                next += 1
+    var wheel_groups:Array[PackedStringArray] = [PackedStringArray(), PackedStringArray(), PackedStringArray()]
+    for index:int in range(wheel_names.size()):
+        var wheel:String = _find_submodel(names, [wheel_names[index].to_lower()])
         if wheel:
-            powered_wheels.append(wheel)
-    appearance.powered_wheels = powered_wheels
+            wheel_groups[groups[index]].append(wheel)
+    appearance.front_rolling_wheels = wheel_groups[WheelGroup.FRONT_ROLLING]
+    appearance.powered_wheels = wheel_groups[WheelGroup.POWERED]
+    appearance.rear_rolling_wheels = wheel_groups[WheelGroup.REAR_ROLLING]
 
-    appearance.pantograph_front_arms = _find_pantograph_arms(names, 1)
-    appearance.pantograph_rear_arms = _find_pantograph_arms(names, 2)
-    if wiper_prefix:
-        appearance.wiper_arms = _find_wiper_arms(names, wiper_prefix)
+    var pantographs:Array[PackedStringArray] = []
+    for pantograph:int in PANTOGRAPH_COUNT:
+        pantographs.append(_find_pantograph_arms(names, pantograph_elements, pantograph))
+    appearance.pantograph_factors = pantograph_factors
+    appearance.pantograph_front_arms = pantographs[0]
+    appearance.pantograph_rear_arms = pantographs[1]
+    var wiper_arms:PackedStringArray = []
+    for wiper_name:String in wiper_names:
+        for element:String in WIPER_ELEMENT_SUFFIXES:
+            wiper_arms.append(_find_submodel(names, [(wiper_name + element).to_lower()]))
+    appearance.wiper_arms = wiper_arms
     var mirrors:PackedStringArray = []
     for mirror_name:String in mirror_names:
         mirrors.append(_find_submodel(names, [mirror_name.to_lower()]))
     appearance.mirrors = mirrors
+    # a door with the first submodel below it and that one's, which a folding door turns as well
+    # (UpdateDoorFold(), DynObj.cpp:592-622); "" for what the model has not got
+    var doors:PackedStringArray = []
+    for door_name:String in door_names:
+        var door:E3DSubModel = names.get(door_name.to_lower())
+        var below:E3DSubModel = _first_child(door)
+        var further:E3DSubModel = _first_child(below)
+        doors.append_array([door.resource_name.to_lower() if door else "", below.resource_name.to_lower() if below else "",
+                further.resource_name.to_lower() if further else ""])
+    appearance.doors = doors
+    var steps:PackedStringArray = []
+    for step_name:String in door_step_names:
+        steps.append(_find_submodel(names, [step_name.to_lower()]))
+    appearance.door_steps = steps
+    var swinging:PackedStringArray = []
+    for pendulum_name:String in pendulums["names"]:
+        var pendulum:String = _find_submodel(names, [pendulum_name.to_lower()])
+        if pendulum:
+            swinging.append(pendulum)
+    appearance.pendulums = swinging
+    appearance.pendulum_amplitude = pendulums["amplitude"]
 
 
-## The 5 arm/slider names for the given pantograph number (1=front, 2=rear), or none when the lower
-## arm 1, the upper arm 1 or the slider is missing - RailVehicleRenderingServer takes the geometry
-## of the pantograph from these three. The second arm of each pair is optional, an empty name
-## without it: a single-arm pantograph has none (dynamic/pkp/e186_v2 has no "ramiegorne2"), and the
-## original does not animate a missing element either (DynObj.cpp:5414).
-static func _find_pantograph_arms(names:Dictionary[String, bool], pantograph_number:int) -> PackedStringArray:
+## The first submodel below `submodel` (TSubModel::ChildGet()), null without one
+static func _first_child(submodel:E3DSubModel) -> E3DSubModel:
+    if not submodel:
+        return null
+    for child:Variant in submodel.submodels:
+        if child is E3DSubModel:
+            return child
+    return null
+
+
+## The 5 element names of a pantograph (0 the front one), or none without its slider. An element the
+## model has not got is an empty name and is not animated, as in the original (DynObj.cpp:644-661) -
+## a single-arm pantograph has no second arms (dynamic/pkp/e186_v2 has no "ramiegorne2"), and one with
+## no lower arm takes its geometry from the type and pantfactors: (RailVehicleRenderingServer).
+static func _find_pantograph_arms(
+        names:Dictionary[String, E3DSubModel], pantograph_elements:Array[PackedStringArray], pantograph:int) -> PackedStringArray:
     var arms:PackedStringArray = []
-    for index:int in PANTOGRAPH_ARM_SUBMODEL_PREFIXES.size():
-        var arm:String = _find_submodel(names, ["%s%d" % [PANTOGRAPH_ARM_SUBMODEL_PREFIXES[index], pantograph_number]])
+    for index:int in pantograph_elements.size():
+        var element_names:PackedStringArray = pantograph_elements[index]
+        var arm:String = _find_submodel(names, [element_names[pantograph].to_lower()]) \
+                if pantograph < element_names.size() else ""
         if not arm and index in PANTOGRAPH_REQUIRED_ARMS:
             return PackedStringArray()
         arms.append(arm)
@@ -198,23 +290,7 @@ static func apply_wiper_count(vehicle:RID, appearance:RailVehicleAppearance) -> 
         wipers.apply_config()
 
 
-## Arm 1, arm 2 and blade of every wiper - "<prefix><number>_p1/_p2/_p3", numbered from 1
-## (DynObj.cpp:5838-5870); an empty name for an element the model does not have. The original
-## takes the number of wipers from the MMD "animations:" counts, here they are collected until a
-## wiper with no element at all.
-static func _find_wiper_arms(names:Dictionary[String, bool], wiper_prefix:String) -> PackedStringArray:
-    var arms:PackedStringArray = []
-    for wiper:int in range(1, MAX_WIPERS + 1):
-        var wiper_arms:PackedStringArray = []
-        for element:String in WIPER_ELEMENT_SUFFIXES:
-            wiper_arms.append(_find_submodel(names, ["%s%d%s" % [wiper_prefix.to_lower(), wiper, element]]))
-        if not Array(wiper_arms).any(func(arm:String) -> bool: return not arm == ""):
-            break
-        arms.append_array(wiper_arms)
-    return arms
-
-
-static func _find_submodel(names:Dictionary[String, bool], candidates:Array[String]) -> String:
+static func _find_submodel(names:Dictionary[String, E3DSubModel], candidates:Array[String]) -> String:
     for candidate:String in candidates:
         if names.has(candidate):
             return candidate
@@ -224,9 +300,23 @@ static func _find_submodel(names:Dictionary[String, bool], candidates:Array[Stri
 ## Indexed by LOWERCASED name, matching the original engine's own TSubModel::GetFromName
 ## (case-insensitive by default) - see mmd_cabin_instancer.gd's _index_submodels for the
 ## real-data case mismatch (su45_v2) this guards against.
-static func _index_submodels(submodels:Array, names:Dictionary[String, bool]) -> void:
+## The first submodel with replaceable skin 4 in the original's order: the submodel, then its next
+## siblings and all below them, then its children (Model3d.cpp:932-958)
+static func _find_destination_sign(submodels:Array, index:int) -> E3DSubModel:
+    if index >= submodels.size():
+        return null
+    var submodel:E3DSubModel = submodels[index] as E3DSubModel
+    if submodel and submodel.dynamic_material and submodel.dynamic_material_index == DESTINATION_SIGN_SKIN:
+        return submodel
+    var later:E3DSubModel = _find_destination_sign(submodels, index + 1)
+    if later:
+        return later
+    return _find_destination_sign(submodel.submodels, 0) if submodel else null
+
+
+static func _index_submodels(submodels:Array, names:Dictionary[String, E3DSubModel]) -> void:
     for item:Variant in submodels:
         var submodel:E3DSubModel = item as E3DSubModel
         if submodel:
-            names[submodel.resource_name.to_lower()] = true
+            names[submodel.resource_name.to_lower()] = submodel
             _index_submodels(submodel.submodels, names)

@@ -20,7 +20,15 @@ const OGG_TAIL_SIZE:int = 8192
 const VORBIS_SAMPLE_RATE_OFFSET:int = 12
 const VORBIS_SAMPLE_RATE_SIZE:int = 4
 
+## The extensions a sound's file is looked for with, in the original's order (audio.cpp:184-191)
+const OGG_EXTENSION:String = "ogg"
+const FLAC_EXTENSION:String = "flac"
+const WAV_EXTENSION:String = "wav"
+const SOUND_EXTENSIONS:PackedStringArray = [OGG_EXTENSION, FLAC_EXTENSION, WAV_EXTENSION]
+
 var _silence:AudioStreamWAV = AudioStreamWAV.new()
+## The .wav files read so far, by their path - Godot's resource cache takes .ogg only
+var _wav_streams:Dictionary[String, AudioStreamWAV] = {}
 
 
 func _init() -> void:
@@ -31,13 +39,46 @@ func _init() -> void:
     _silence.data = data
 
 
-func get_stream(name:String, loop:bool = false) -> AudioStream:
-    var project_data_dir:String = UserSettings.get_maszyna_game_dir()
-    var sounds_dir:String = project_data_dir.path_join("sounds")
-    var full_path:String = sounds_dir.path_join(MaszynaDataPath.resolve(sounds_dir, name + ".ogg"))
-    if not ResourceLoader.exists(full_path):
-        push_warning("[%s] file does not exist: %s" % [self, full_path])
+## The file a sound of the game is read from, looked for where the original looks
+## (buffer_manager::create, audio.cpp:107-147): in the vehicle's directory, then under the path the
+## name gives, then in sounds/, with each of the original's extensions in turn (audio.cpp:184-191);
+## "" when there is none.
+func find_sound(name:String, vehicle_dir:String) -> String:
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var directories:Array[String] = []
+    if vehicle_dir:
+        directories.append(vehicle_dir)
+    if "/" in name:
+        directories.append(game_dir)
+    directories.append(game_dir.path_join("sounds"))
+    for directory:String in directories:
+        for extension:String in SOUND_EXTENSIONS:
+            var path:String = directory.path_join(MaszynaDataPath.resolve(directory, name + "." + extension))
+            if FileAccess.file_exists(path):
+                return path
+    return ""
+
+
+func get_stream(name:String, loop:bool, vehicle_dir:String) -> AudioStream:
+    var full_path:String = find_sound(name, vehicle_dir)
+    if not full_path:
+        push_warning("[%s] file does not exist: %s" % [self, name])
         return _silence
+    match full_path.get_extension().to_lower():
+        WAV_EXTENSION:
+            var wav:AudioStreamWAV = _load_wav(full_path)
+            if wav and not (wav.loop_mode == AudioStreamWAV.LOOP_FORWARD) == loop:
+                wav = wav.duplicate(0)
+                wav.loop_mode = AudioStreamWAV.LOOP_FORWARD if loop else AudioStreamWAV.LOOP_DISABLED
+                wav.loop_begin = 0
+                # the end of the loop is the last sample frame: the data over the bytes of a frame
+                wav.loop_end = wav.data.size() / ((2 if wav.format == AudioStreamWAV.FORMAT_16_BITS else 1)
+                        * (2 if wav.stereo else 1))
+            return wav if wav else _silence
+        FLAC_EXTENSION:
+            # Godot reads no FLAC; the game data has none either (TODO.md)
+            push_warning("[%s] FLAC is not read: %s" % [self, full_path])
+            return _silence
     var stream:AudioStreamOggVorbis = load(full_path)  # uses godot's builtin resource cache
     if stream and not stream.loop == loop:
         stream = stream.duplicate(0)
@@ -45,16 +86,26 @@ func get_stream(name:String, loop:bool = false) -> AudioStream:
     return stream
 
 
+func _load_wav(path:String) -> AudioStreamWAV:
+    if not _wav_streams.has(path):
+        _wav_streams[path] = AudioStreamWAV.load_from_file(path)
+    return _wav_streams[path]
+
+
 ## The duration [s] of a sound of the game, read off its Ogg pages without loading or decoding it:
 ## the samples the last page ends at over the sample rate of the identification header. 0.0 when
 ## the file is missing or is no Ogg Vorbis - silently, as an unknown length is an expected outcome
 ## where it is asked for (a voice's start placed before the file is read).
-func get_stream_length(name:String) -> float:
+func get_stream_length(name:String, vehicle_dir:String) -> float:
     if not name:
         return 0.0
-    var sounds_dir:String = UserSettings.get_maszyna_game_dir().path_join("sounds")
-    var file:FileAccess = FileAccess.open(
-            sounds_dir.path_join(MaszynaDataPath.resolve(sounds_dir, name + ".ogg")), FileAccess.READ)
+    var path:String = find_sound(name, vehicle_dir)
+    if not path:
+        return 0.0
+    if path.get_extension().to_lower() == WAV_EXTENSION:
+        var wav:AudioStreamWAV = _load_wav(path)
+        return wav.get_length() if wav else 0.0
+    var file:FileAccess = FileAccess.open(path, FileAccess.READ)
     if not file:
         return 0.0
     var first_page:PackedByteArray = file.get_buffer(OGG_PAGE_HEADER_SIZE)

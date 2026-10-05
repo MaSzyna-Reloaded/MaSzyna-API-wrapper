@@ -75,7 +75,6 @@ namespace godot {
              * loss of voltage where the original keeps contact. */
             static constexpr double PANTOGRAPH_HORN_WIDTH = 0.381;
             /* The slider's height over the upper arm's end (TAnimPant::fHeight, DynObj.cpp:97) */
-            static constexpr double PANTOGRAPH_SLIDER_HEIGHT = 0.07;
             /* Tank pressure the arm rises from [bar], an EMU's lower (DynObj.cpp:3863-3866) */
             static constexpr double PANTOGRAPH_RAISING_PRESSURE = 3.45;
             static constexpr double PANTOGRAPH_EMU_RAISING_PRESSURE = 2.45;
@@ -106,6 +105,8 @@ namespace godot {
                     double horizontal = 0.0;
                     double lower_rest_angle = 0.0;
                     double upper_rest_angle = 0.0;
+                    /* fHeight: the slider's top over its pivot */
+                    double slider_height = 0.0;
                     /* fAngleL, fAngleU, PantWys */
                     double lower_angle = 0.0;
                     double upper_angle = 0.0;
@@ -163,8 +164,6 @@ namespace godot {
                     bool neighbour_cleared[2] = {false, false};
                     /* PANTOGRAPH_FIRST, PANTOGRAPH_SECOND */
                     Pantograph pantographs[2];
-                    /* The slider's width the model gives, for a vehicle whose FIZ declares none */
-                    double pantograph_collector_width = 0.0;
                     /* How long the pantographs have fed no voltage [s] (NoVoltTime) */
                     double no_voltage_time = 0.0;
             };
@@ -210,6 +209,8 @@ namespace godot {
             void _on_vehicle_trainset_changed(const RID &p_vehicle);
             void _on_vehicle_coupler_attached(int64_t p_flag, const RID &p_vehicle);
             void _on_vehicle_coupler_detached(int64_t p_flag, const RID &p_vehicle);
+            void _on_vehicle_coupler_adapter_attached(int64_t p_end, const RID &p_vehicle);
+            void _on_vehicle_coupler_adapter_removed(int64_t p_end, const RID &p_vehicle);
             void _on_load_add_command(double p_amount, int p_side, const RID &p_vehicle);
             void _on_load_remove_command(double p_amount, int p_side, const RID &p_vehicle);
             RailVehicleLoad *_get_load(const RID &p_vehicle) const;
@@ -253,6 +254,9 @@ namespace godot {
             static const char *vehicle_trainset_changed_signal;
             static const char *vehicle_coupler_attached_signal;
             static const char *vehicle_coupler_detached_signal;
+            /* A coupler adapter fitted to / taken off an end of the vehicle (its controller's) */
+            static const char *vehicle_coupler_adapter_attached_signal;
+            static const char *vehicle_coupler_adapter_removed_signal;
             /* The vehicle has started moving along the track towards its start, its end, or has
              * stopped on it - once per change, what a scenery's track events are fired by
              * (TTrackFollower::Move(), TrkFoll.cpp:113-161) */
@@ -307,6 +311,16 @@ namespace godot {
             /* The vehicles joined to this one by every one of p_flags, in order: from the last of them
              * beyond p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
+            /* The coupler adapter fitted to an end: its model ("" without one), its length added to the
+             * end and its height over the rail [m] */
+            String
+            vehicle_get_coupler_adapter_model(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
+            /* Whether an end couples as an automatic coupler, its adapter's or its own */
+            bool vehicle_is_coupler_automatic(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
+            double
+            vehicle_get_coupler_adapter_length(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
+            double
+            vehicle_get_coupler_adapter_height(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
             TypedArray<RID> vehicle_get_coupled(
                     const RID &p_vehicle, RailVehicleController::CouplerEnd p_end,
                     BitField<RailVehicleController::CouplingFlags> p_flags) const;
@@ -383,14 +397,14 @@ namespace godot {
              * draws it a frame late */
             void vehicle_report_placement(const RID &p_vehicle);
             Transform3D vehicle_get_transform(const RID &p_vehicle);
-            /* A pantograph as the model builds it: where its lower arm stands in the vehicle's own
-             * space, the arms' lengths, the horizontal offset between their ends and their angles
-             * lowered; with the slider's width the model gives. Measured by whoever draws the
-             * vehicle; a model rebuilt hands it again and the raise is kept. */
+            /* A pantograph as it is built: where it stands in the vehicle's own space, the arms'
+             * lengths, the horizontal offset between their ends, their angles lowered and the slider's
+             * height over its pivot (TAnimPant). Given by whoever draws the vehicle; a model rebuilt
+             * hands it again and the raise is kept. */
             void vehicle_set_pantograph_geometry(
                     const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph,
                     const Vector3 &p_position, double p_lower_length, double p_upper_length, double p_horizontal,
-                    double p_lower_rest_angle, double p_upper_rest_angle, double p_collector_width);
+                    double p_lower_rest_angle, double p_upper_rest_angle, double p_slider_height);
             /* Where the pantograph stands in the vehicle's own space; zero for one the model lacks */
             Vector3 vehicle_get_pantograph_position(
                     const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;

@@ -111,6 +111,8 @@ const MANUAL_CLOSE_CONTROLS:Array[RailVehicleDoors.Controls] = [
 ## (UpdateConnect(), Driver.cpp:7005-7040)
 const CONNECT_DISTANCE:float = 20.0
 const ATTACH_DISTANCE:float = 2.0
+## UpdateConnect(): within this of the vehicle ahead an end takes the adapter it needs (Driver.cpp:6900)
+const ADAPTER_DISTANCE:float = 10.0
 ## The couplings a `Shunt` may ask for (coupling::, MOVER.h:162); the high voltage and the power
 ## lines are nothing a shunter joins
 const SHUNTER_COUPLINGS:int = (RailVehicleController.COUPLING_FLAG_COUPLER
@@ -750,7 +752,9 @@ func _activation(state:DriverState, vehicle:RID) -> void:
 ## UpdateConnect() (Driver.cpp:6993-7055): within CONNECT_DISTANCE of the vehicle ahead the front
 ## vehicle of the trainset starts coupling up; within ATTACH_DISTANCE the shunter joins an element
 ## a time - the vehicle's `coupler_connect`, as the player's crew does - and once every element
-## asked for is joined, the next order follows. The coupler adapter is not ported (TODO.md).
+## asked for is joined, the next order follows. Within ADAPTER_DISTANCE an end that is no automatic
+## coupler facing an automatic one takes its adapter first, and couples once it has it
+## (couplingadapterattach, Driver.cpp:6895-6912; driverhints.cpp:1215-1224).
 func _update_connect(state:DriverState, vehicle:RID) -> void:
     if not state.coupling_vehicle.is_valid():
         if state.route.obstacle and state.route.obstacle.distance <= CONNECT_DISTANCE and state.trainset.vehicles:
@@ -761,7 +765,13 @@ func _update_connect(state:DriverState, vehicle:RID) -> void:
     if not _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
         var neighbour:RailVehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
                 state.coupling_vehicle, state.coupling_end, MaszynaLegacyDriverRoute.OBSTACLE_RANGE)
-        if neighbour and neighbour.distance < ATTACH_DISTANCE:
+        var compatible:bool = true
+        if neighbour and neighbour.distance < ADAPTER_DISTANCE \
+                and not RailVehicleServer.vehicle_is_coupler_automatic(state.coupling_vehicle, state.coupling_end) \
+                and RailVehicleServer.vehicle_is_coupler_automatic(neighbour.vehicle_rid, neighbour.end):
+            compatible = false
+            MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_adapter_attach", state.coupling_end)
+        if compatible and neighbour and neighbour.distance < ATTACH_DISTANCE:
             MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_connect", state.coupling_end)
     # the command joins at once: coupled now, it drives on
     if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
@@ -814,6 +824,11 @@ func _update_disconnect(state:DriverState, situation:MaszynaLegacyDriverTraction
                 MaszynaLegacyDriverHints.send(decoupled, "coupler_disconnect", end)
                 if not _is_coupled_by(decoupled, end, RailVehicleController.COUPLING_FLAG_COUPLER):
                     state.vehicle_count = -2
+                    # an adapter the front vehicle's end was fitted with comes off (couplingadapterremove,
+                    # Driver.cpp:7068-7070; driverhints.cpp:1226-1232)
+                    var front:RID = state.trainset.vehicles[0]
+                    if RailVehicleServer.vehicle_get_coupler_adapter_model(front, end):
+                        MaszynaLegacyDriverHints.send(front, "coupler_adapter_remove", end)
         if not state.pressing:
             if state.direction_backup == 0:
                 state.direction_backup = state.direction

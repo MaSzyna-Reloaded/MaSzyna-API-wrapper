@@ -3861,3 +3861,14 @@ lighting or the trainset.
   2 and 3 lights). `i-dashboardlight_on` now takes 233 ms, and the whole cab build 1.1 s.
 * **Rule:** a build step that runs on every cab change is measured on the largest real cab, not
   on a fixture. A fixture without models skips the code that is slow.
+* **Follow-up, the same day:** the remaining 1.1 s was mostly the lamps' texture. Every lamp mesh
+  decompressed its whole 4096 px BC3 texture (53 ms) and scanned it in `detect_used_channels()`. That
+  happened again for every mesh, and the decompression also changed the image the texture returned
+  in place. In the player's cab (`36wea-a_kd.mmd`) the dashboard light is one mesh of 13277
+  triangles in 7237 pieces, which merged into one light in 2.0 s (debug build). The islands moved to
+  C++ (`LegacyCabinLampIslands`, described as a workaround for E3D models). A sample decodes only its
+  DXT block, with bcdec's formulas, and a grid finds each piece's nearest. A mesh of more than 1024
+  pieces is a backlight and gets one light at once. Against the GDScript on all 26 lamps of the
+  36WEa cab, the same lights at the same positions, colours within 0.024. The cab build went from
+  1.1 s to 0.43 s; the dashboard light from 2.0 s to 42 ms. A walk through the unit took at most
+  288 ms a cab change (the first entry of the other driver's cab).

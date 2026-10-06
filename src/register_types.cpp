@@ -6,6 +6,7 @@
 #include "game_data/GameDataServer.hpp"
 #include "hud/HUDServer.hpp"
 #include "legacy/MaszynaDataPath.hpp"
+#include "legacy/cabin/LegacyCabinLampIslands.hpp"
 #include "legacy/cabin/PythonScreenServer.hpp"
 #include "legacy/e3d/E3DModel.hpp"
 #include "legacy/e3d/E3DModelLightDefinition.hpp"
@@ -265,6 +266,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(Timetable);
         GDREGISTER_CLASS(MaszynaLegacyEventCondition);
         GDREGISTER_ABSTRACT_CLASS(MaszynaDataPath);
+        GDREGISTER_ABSTRACT_CLASS(LegacyCabinLampIslands);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(MaszynaTrianglesChunkGeometry);

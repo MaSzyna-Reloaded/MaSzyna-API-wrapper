@@ -378,10 +378,10 @@ const CONTROLS:Dictionary = {
     Hint.DOOR_RIGHT_CLOSE: [&"door_right_sw", CabinLogic.Gesture.PRESS],
     Hint.DOOR_LEFT_OPEN: [&"door_left_sw", CabinLogic.Gesture.PRESS],
     Hint.DOOR_LEFT_CLOSE: [&"door_left_sw", CabinLogic.Gesture.PRESS],
+    # a permit is revoked by closing the doors (Mover.cpp:8745-8749) - a push permit button only
+    # grants (Train.cpp:7213-7220), so the revoking hints have no key
     Hint.DOOR_RIGHT_PERMIT_ON: [&"doorrightpermit_sw", CabinLogic.Gesture.PRESS],
-    Hint.DOOR_RIGHT_PERMIT_OFF: [&"doorrightpermit_sw", CabinLogic.Gesture.PRESS],
     Hint.DOOR_LEFT_PERMIT_ON: [&"doorleftpermit_sw", CabinLogic.Gesture.PRESS],
-    Hint.DOOR_LEFT_PERMIT_OFF: [&"doorleftpermit_sw", CabinLogic.Gesture.PRESS],
     Hint.HORN_ON: [&"hornlow_bt", CabinLogic.Gesture.PRESS],
     Hint.SECURITY_SYSTEM_RESET: [SECURITY_RESET, CabinLogic.Gesture.PRESS],
     Hint.SHP_SYSTEM_RESET: [CABSIGNAL_RESET, CabinLogic.Gesture.PRESS],

@@ -359,12 +359,13 @@ func _close_doors(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var vehicle:RID = situation.vehicle
     state.departure_warned = false
     var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_DOORS)
-    if doors and doors.permit_required:
-        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF)
-        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_RIGHT_PERMIT_OFF)
+    # the doors closed first: closing them revokes the permits (Mover.cpp:8745-8749)
     if doors and doors.close_method in REMOTE_CLOSE_CONTROLS:
-        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_CLOSE)
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_RIGHT_CLOSE)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_CLOSE)
+    if doors and doors.permit_required:
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_RIGHT_PERMIT_OFF)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF)
     if not DriverSystem.vehicle_is_control_active(vehicle):
         return
     for car:RID in state.trainset.vehicles:

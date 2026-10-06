@@ -16,8 +16,8 @@ extends Node
 ## which *instance* a vehicle is - its name, velocity, driver, load - is not in it: two wagons of
 ## the same type are still two vehicles.
 
-## The vehicle has been built: it has its simulation and is drawn - or neither, when its data
-## cannot be read
+## The vehicle has been built: it has its simulation and its appearance, drawn once it stands within
+## the draw distance (RailVehicleRenderingServer) - or neither, when its data cannot be read
 signal vehicle_built(vehicle:RID)
 
 ## Time the vehicle builds may take per frame; a vehicle that started is finished, so a frame

@@ -3814,3 +3814,31 @@ lighting or the trainset.
 * **Fix:** the end is taken from `CabOccupied`, and the machine room counts as the front.
 * **Rule:** a cab's controls act on the end of the cab the player sits in (`cab_to_end()`), not on
   the active cab. A cab switched off is still the one the player works.
+
+## 2026-10-06 the Vehicles stage drew every vehicle of the scenery
+
+* **Symptom:** on a large scenery the loading screen's Vehicles stage took 35.1 s, with 1 s
+  frames and 2.49 GB resident. Hundreds of `Model /dynamic/pkp/14xa_v1 has no skins set` warnings
+  showed that every vehicle's materials were being resolved, near the player or not. Even
+  `demo_3d.tscn` built its few vehicles slowly.
+* **What proved it:** a headless probe timed each part of a vehicle's build. The simulation took
+  about 2 ms a vehicle (the FIZ description, configure and bind), and the appearance took 45-140
+  ms even with every cache warm. `vehicle_set_appearance()` built every model at once.
+  Splitting it further, `E3DRenderingServer.instance_build()` took 12-40 ms a model. The same model
+  built again while its materials were still held took about 1 ms, so the cost was the materials
+  and textures created for each type and skin. The only part the simulation took from the drawing
+  was `_publish_pantograph_geometry()`, read off the built instance.
+* **Fix:** `RailVehicleRenderingServer` builds a vehicle's own models when it stands within the
+  streaming's draw distance of its camera. The nearest go first, `BUILD_BUDGET_MSEC` a frame,
+  from the vehicles' sweep in `_update_detail()`. It frees them beyond the draw distance and its
+  margin. Without a camera (while a scenery loads) nothing is built; the editor builds at once.
+  The pantographs' geometry is measured off the model file (`model_load()`, the submodels' rest
+  transforms and the slider's mesh), not off its drawing. It is read only for a vehicle with a
+  power source component and published on `vehicle_set_appearance()` and on the config event.
+  On Galicja (`linia_107_poludnie.scn`, headless under gamescope, two runs each) the Vehicles
+  stage went from 2.7-2.8 s to 0.5 s, the longest frame from 0.15-0.18 s to 0.08 s, and the
+  resident memory after the load from 2.16 GB to 2.07 GB. The skin warnings at load went from 22
+  to 0.
+* **Rule:** a vehicle's models are built when it comes within the draw distance and freed beyond
+  it, never at load. What the simulation needs of the model is read off the model file, not off
+  its drawing.

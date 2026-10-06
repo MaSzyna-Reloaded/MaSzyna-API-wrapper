@@ -287,12 +287,15 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `cntrl_ground_relay_start_mode` are the controller's while the relays are the engine's;
   `RailVehiclePowerSupply.power_changed` has no listener; the driver's code looks a component up
   per call.
-* **Build a vehicle's body only within the streaming's range** (operator's proposal): a
-  "vehicles" owner of `SceneryStreamingServer` builds/clears the instances
-  (`E3DRenderingServer.instance_clear()` to add), `SceneryStreamingServer.stream_set_position()`
-  (to add) moves an entry between chunks from `_place()`. The E3D stays loaded at load only for
-  `_publish_pantograph_geometry()`; a setting `maszyna/vehicles/pantographs_from_model` (default
-  true) turns that read off for when the FIZ has a pantograph section.
+* **A vehicle's first build costs ~50-140 ms on the main thread** (headless, warm caches): the
+  `instance_build()` of each model 12-40 ms, nearly all of it the materials created for the first
+  vehicle of a type and skin (`MaterialManager.get_submodel_material()`: `.mat` parse, DDS loads,
+  path resolution) - the same model built again with its materials held takes ~1 ms. A vehicle
+  coming within the draw distance is one such stall a frame (`BUILD_BUDGET_MSEC`); moving the
+  material and texture reads to a preload thread is the item below.
+* **"has no skins set, but submodel requires material #3"** for `pkp/11xa_v2` and `pkp/14xa_v1`:
+  check what the original draws for a replaceable skin index the skin has no file for, and warn
+  once per vehicle type, not per submodel and vehicle.
 * **Road vehicles return with roads:** a vehicle on an unregistered track (every road) is left out
   at load (`SceneryInstancer._attach_objects()`).
 * **The stepping of parked vehicles** (Wrzosy, profiling build, after the neighbour scan cache):

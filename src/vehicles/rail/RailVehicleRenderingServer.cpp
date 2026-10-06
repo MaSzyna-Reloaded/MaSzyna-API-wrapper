@@ -22,6 +22,7 @@
 #include <godot_cpp/classes/physics_server3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -305,6 +306,7 @@ namespace godot {
         if (visual == nullptr) {
             return;
         }
+        _cancel_build(p_vehicle, *visual);
         _free_models(*visual);
         if (visual->load.is_valid()) {
             E3DRenderingServer::get_instance()->instance_free(visual->load);
@@ -407,12 +409,15 @@ namespace godot {
         Visual *visual = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(visual);
         visual->appearance = p_appearance;
-        // models of its own replace the ones built from the last appearance; handed-over ones stay
+        // models of its own replace the ones built from the last appearance, built once the
+        // vehicle is within the draw distance (_update_detail()); handed-over ones stay
         if (p_appearance.is_valid() && !p_appearance->get_model_filename().is_empty()) {
             _free_models(*visual);
-            _create_models(p_vehicle, *visual);
+            _build_load(p_vehicle, *visual);
         }
         _bind_parts(p_vehicle, *visual);
+        _publish_pantographs(p_vehicle, *visual);
+        _update_detail(p_vehicle, *visual);
     }
 
     Ref<RailVehicleAppearance> RailVehicleRenderingServer::vehicle_get_appearance(const RID &p_vehicle) const {
@@ -447,27 +452,34 @@ namespace godot {
     void RailVehicleRenderingServer::vehicle_set_load_model(
             const RID &p_vehicle, const String &p_data_path, const String &p_model_filename) {
         Visual *visual = vehicles.getptr(p_vehicle);
-        E3DRenderingServer *models = E3DRenderingServer::get_instance();
         ERR_FAIL_NULL(visual);
-        ERR_FAIL_NULL(models);
-        if (visual->load.is_valid()) {
-            models->instance_free(visual->load);
-            visual->load = RID();
-        }
         visual->load_data_path = p_data_path;
         visual->load_model_filename = p_model_filename;
-        const Ref<E3DModel> model =
-                p_model_filename.is_empty() ? Ref<E3DModel>() : models->model_load(p_data_path, p_model_filename);
+        _build_load(p_vehicle, *visual);
+    }
+
+    /* The cargo is built while the vehicle's models are, and goes with them */
+    void RailVehicleRenderingServer::_build_load(const RID &p_vehicle, Visual &p_visual) {
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        ERR_FAIL_NULL(models);
+        if (p_visual.load.is_valid()) {
+            models->instance_free(p_visual.load);
+            p_visual.load = RID();
+        }
+        const Ref<E3DModel> model = !p_visual.model.is_valid() || p_visual.load_model_filename.is_empty()
+                                            ? Ref<E3DModel>()
+                                            : models->model_load(p_visual.load_data_path, p_visual.load_model_filename);
         if (model.is_null()) {
             return;
         }
         // nobody looks into the cargo, so it needs no node tree
-        visual->load = models->instance_create(
+        p_visual.load = models->instance_create(
                 model, E3DRenderingServer::INSTANCER_OPTIMIZED, E3DRenderingServer::INSTANCE_KIND_DYNAMIC);
-        models->instance_set_options(visual->load, p_data_path, PackedStringArray(), Array(), false, {}, 0);
-        models->instance_set_scenario(visual->load, visual->placed ? visual->scenario : RID());
-        models->instance_build(visual->load);
-        _update_load(p_vehicle, *visual);
+        models->instance_set_options(
+                p_visual.load, p_visual.load_data_path, PackedStringArray(), Array(), false, {}, 0);
+        models->instance_set_scenario(p_visual.load, p_visual.placed ? p_visual.scenario : RID());
+        models->instance_build(p_visual.load);
+        _update_load(p_vehicle, p_visual);
     }
 
     void RailVehicleRenderingServer::vehicle_set_head_display_material(
@@ -746,8 +758,6 @@ namespace godot {
         }
         p_visual.headlights_dimmed = false;
         models->instance_set_lights_state(p_visual.model, p_visual.lights);
-        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleEnginePowerSource::PANTOGRAPH_FIRST);
-        _publish_pantograph_geometry(p_vehicle, p_visual, RailVehicleEnginePowerSource::PANTOGRAPH_SECOND);
         vehicle_set_head_display_material(p_vehicle, p_visual.head_display_material);
         _update_detection_area(p_vehicle, p_visual);
         _update_low_poly_cabs(p_vehicle, p_visual);
@@ -766,7 +776,58 @@ namespace godot {
     /* The pantograph as the model builds it, handed to RailVehicleServer, which raises it -
      * TAnimPant's lengths and angles (DynObj.cpp:5508-5549). Where it sits on the vehicle is read
      * the same way the original reads it off the submodel's matrix (TAnimPant::vPos): without it
-     * both pantographs of a vehicle sampled the wire at the vehicle's origin. */
+     * both pantographs of a vehicle sampled the wire at the vehicle's origin. Read off the model
+     * file, not off its drawing - a vehicle far from the camera has none - and only for a vehicle
+     * with a power source, whose pantographs RailVehicleServer raises (vehicle_collect_current()):
+     * an EMU's car without an engine carries its unit's (FizTrainPowerParser). */
+    void RailVehicleRenderingServer::_publish_pantographs(const RID &p_vehicle, const Visual &p_visual) const {
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        const Ref<RailVehicleEnginePowerSource> source =
+                server != nullptr ? Ref<RailVehicleEnginePowerSource>(server->vehicle_component_get(
+                                            p_vehicle, RailVehicleComponentType::COMPONENT_ENGINE_POWER_SOURCE))
+                                  : Ref<RailVehicleEnginePowerSource>();
+        const Ref<RailVehicleAppearance> &appearance = p_visual.appearance;
+        if (models == nullptr || appearance.is_null() || source.is_null()) {
+            return;
+        }
+        // the model this server builds from the appearance, or the one handed over
+        Ref<E3DModel> model;
+        if (!appearance->get_model_filename().is_empty()) {
+            model = models->model_load(appearance->get_data_path(), appearance->get_model_filename());
+        } else if (p_visual.model.is_valid()) {
+            model = models->instance_get_model(p_visual.model);
+        }
+        if (model.is_null()) {
+            return;
+        }
+        _publish_pantograph_geometry(p_vehicle, p_visual, model, RailVehicleEnginePowerSource::PANTOGRAPH_FIRST);
+        _publish_pantograph_geometry(p_vehicle, p_visual, model, RailVehicleEnginePowerSource::PANTOGRAPH_SECOND);
+    }
+
+    /* The submodel of the model by its lowered name, and where it rests in the model's frame - the
+     * chain of its parents' transforms; null when the model has none of that name */
+    static Ref<E3DSubModel> find_submodel(
+            const TypedArray<E3DSubModel> &p_submodels, const String &p_name, const Transform3D &p_parent,
+            Transform3D &p_r_transform) {
+        for (int index = 0; index < p_submodels.size(); ++index) {
+            Ref<E3DSubModel> submodel = p_submodels[index];
+            if (submodel.is_null()) {
+                continue;
+            }
+            const Transform3D transform = p_parent * submodel->get_transform();
+            if (submodel->get_name().to_lower() == p_name) {
+                p_r_transform = transform;
+                return submodel;
+            }
+            if (Ref<E3DSubModel> found = find_submodel(submodel->get_submodels(), p_name, transform, p_r_transform);
+                found.is_valid()) {
+                return found;
+            }
+        }
+        return {};
+    }
+
     /* The pantograph as TAnimPant builds it (DynObj.cpp:5404-5480, 5577-5633): the arms' dimensions of
      * the type the FIZ names (PantType=, DynObj.cpp:90-194), or - QUIRK, as long as the FIZ files do
      * not name their type - measured from the model: the lower arm's place, the arms' lengths and
@@ -775,13 +836,34 @@ namespace godot {
      * place and height from the MMD's pantfactors:, and with it a pantograph with no lower arm stands
      * on top of the vehicle's box. Without a slider nothing is animated. */
     void RailVehicleRenderingServer::_publish_pantograph_geometry(
-            const RID &p_vehicle, const Visual &p_visual,
+            const RID &p_vehicle, const Visual &p_visual, const Ref<E3DModel> &p_model,
             const RailVehicleEnginePowerSource::PantographSelector p_pantograph) const {
         RailVehicleServer *server = RailVehicleServer::get_instance();
         const VehicleServer *vehicle_server = VehicleServer::get_instance();
-        const Vector<Part> &arms = p_visual.pantograph_arms[p_pantograph];
-        if (server == nullptr || vehicle_server == nullptr || arms.size() != PANTOGRAPH_ELEMENTS ||
-            arms[PANTOGRAPH_SLIDER].submodel.is_empty()) {
+        const PackedStringArray names = p_pantograph == RailVehicleEnginePowerSource::PANTOGRAPH_FIRST
+                                                ? p_visual.appearance->get_pantograph_front_arms()
+                                                : p_visual.appearance->get_pantograph_rear_arms();
+        if (server == nullptr || vehicle_server == nullptr || names.size() != PANTOGRAPH_ELEMENTS) {
+            return;
+        }
+        // each arm where it rests in the vehicle's own frame, and the slider's own submodel
+        const Transform3D model_transform = p_visual.appearance->get_model_transform();
+        Part arms[PANTOGRAPH_ELEMENTS];
+        Ref<E3DSubModel> slider_model;
+        for (int element = 0; element < PANTOGRAPH_ELEMENTS; ++element) {
+            Transform3D rest;
+            const String name = names[element].to_lower();
+            const Ref<E3DSubModel> submodel =
+                    name.is_empty() ? Ref<E3DSubModel>()
+                                    : find_submodel(p_model->get_submodels(), name, Transform3D(), rest);
+            if (submodel.is_valid()) {
+                arms[element] = Part{name, model_transform * rest};
+            }
+            if (element == PANTOGRAPH_SLIDER) {
+                slider_model = submodel;
+            }
+        }
+        if (slider_model.is_null()) {
             return;
         }
         const Ref<RailVehicleEnginePowerSource> source =
@@ -823,8 +905,7 @@ namespace godot {
                 // the slider's own top over its pivot and its place along, while its scale holds
                 // (DynObj.cpp:5455-5475); a slider with no mesh has no top over it
                 if (Math::abs(slider.rest.basis.determinant() - 1.0) < PANTOGRAPH_SLIDER_SCALE_TOLERANCE) {
-                    const Ref<E3DSubModel> slider_model = _find_e3d_submodel(p_visual, slider.submodel);
-                    slider_height = slider_model.is_valid() && slider_model->get_mesh().is_valid()
+                    slider_height = slider_model->get_mesh().is_valid()
                                             ? slider.rest.xform(slider_model->get_mesh()->get_aabb()).get_end().y -
                                                       slider.rest.origin.y
                                             : 0.0;
@@ -839,7 +920,7 @@ namespace godot {
             const int index = p_pantograph == RailVehicleEnginePowerSource::PANTOGRAPH_FIRST ? 0 : 1;
             if (slider_height == 0.0) {
                 // the MMD's place along is the model's own, the vehicle frame turns it (DynObj.cpp:5605-5614)
-                position.z = p_visual.model_transform.basis.xform(Vector3(0.0, 0.0, real_t(factors[index]))).z;
+                position.z = model_transform.basis.xform(Vector3(0.0, 0.0, real_t(factors[index]))).z;
                 slider_height = factors[PANTOGRAPH_FACTOR_HEIGHTS + index];
             }
             if (position.y == 0.0) {
@@ -854,32 +935,6 @@ namespace godot {
                 upper_rest_angle, slider_height);
     }
 
-    Ref<E3DSubModel>
-    RailVehicleRenderingServer::_find_e3d_submodel(const Visual &p_visual, const String &p_name) const {
-        const E3DRenderingServer *models = E3DRenderingServer::get_instance();
-        const Ref<E3DModel> model = models != nullptr ? models->instance_get_model(p_visual.model) : Ref<E3DModel>();
-        if (model.is_null()) {
-            return {};
-        }
-        Vector<TypedArray<E3DSubModel>> levels;
-        levels.push_back(model->get_submodels());
-        while (!levels.is_empty()) {
-            const TypedArray<E3DSubModel> submodels = levels[levels.size() - 1];
-            levels.remove_at(levels.size() - 1);
-            for (int index = 0; index < submodels.size(); ++index) {
-                const Ref<E3DSubModel> submodel = submodels[index];
-                if (submodel.is_null()) {
-                    continue;
-                }
-                if (submodel->get_name().to_lower() == p_name) {
-                    return submodel;
-                }
-                levels.push_back(submodel->get_submodels());
-            }
-        }
-        return {};
-    }
-
     /* The vehicle stands on a track: it is drawn where RailVehicleServer placed it. The body's
      * transform is RailVehicleServer's answer and nothing else - it composes it from the bogies. */
     void RailVehicleRenderingServer::_place(const RID &p_vehicle, Visual &p_visual) {
@@ -892,14 +947,16 @@ namespace godot {
         _move(p_vehicle, p_visual);
     }
 
-    /* Everything of the vehicle goes where it stands: the nodes mounted on it, its models - in
-     * their world from its first place on - its cargo and its detection area; the running gear
+    /* Everything of the vehicle goes where it stands: the nodes mounted on it, its models - built
+     * and in their world from its first place on - its cargo and its detection area; the running gear
      * follows where the vehicle is drawn in detail. */
     void RailVehicleRenderingServer::_move(const RID &p_vehicle, Visual &p_visual) {
         if (!p_visual.placed) {
             p_visual.placed = true;
             _show_models(p_visual, p_visual.scenario);
             _update_detection_area(p_vehicle, p_visual);
+            // its models are built where it stands
+            _update_detail(p_vehicle, p_visual);
         }
         for (const ObjectID &mount_id: p_visual.mounts) {
             if (Node3D *mount = Object::cast_to<Node3D>(ObjectDB::get_instance(mount_id));
@@ -1382,26 +1439,91 @@ namespace godot {
     /// Node3Ds per vehicle to walk, notify and propagate a transform through, times the hundreds of
     /// vehicles a scenery runs. Its simulation is untouched. Note the OPTIMIZED backend does not
     /// render SUBMODEL_FREE_SPOTLIGHT (see TODO.md), so a distant vehicle loses its lights.
+    ///
+    /// Beyond the streaming's draw distance a vehicle is not drawn at all: the models built from its
+    /// appearance are built when it comes within it - a scenery's hundreds of vehicles all built at
+    /// load filled it with the materials and textures of vehicles nobody saw - and freed when it
+    /// leaves. Without the streaming's camera - while a scenery loads - nothing is decided; the
+    /// editor builds them at once.
     void RailVehicleRenderingServer::_update_detail(const RID &p_vehicle, Visual &p_visual) {
         const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
         const Node3D *node = _node(p_visual);
         // the nodes of a vehicle drawn in detail are built under its scene node
-        if (node == nullptr || !node->is_inside_tree() || !p_visual.model.is_valid() || !p_visual.placed) {
+        if (node == nullptr || !node->is_inside_tree() || !p_visual.placed) {
+            return;
+        }
+        const bool has_camera = streaming != nullptr && streaming->streaming_has_camera();
+        const double distance =
+                has_camera ? p_visual.transform.origin.distance_to(streaming->streaming_get_camera_position()) : 0.0;
+        if (p_visual.appearance.is_valid() && !p_visual.appearance->get_model_filename().is_empty()) {
+            const bool at_once = p_visual.editable || Engine::get_singleton()->is_editor_hint();
+            bool drawn = at_once || p_visual.model.is_valid();
+            if (!at_once && has_camera) {
+                const float draw_distance = streaming->streaming_get_draw_distance();
+                const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, draw_distance * DETAIL_HYSTERESIS);
+                drawn = p_visual.model.is_valid() ? distance <= draw_distance + hysteresis : distance <= draw_distance;
+            }
+            if (drawn && !p_visual.model.is_valid()) {
+                if (at_once) {
+                    _build_models(p_vehicle, p_visual);
+                } else if (!p_visual.build_pending) {
+                    int index = 0;
+                    while (index < pending_builds.size() && pending_builds[index].distance <= distance) {
+                        ++index;
+                    }
+                    pending_builds.insert(index, PendingBuild{p_vehicle, distance});
+                    p_visual.build_pending = true;
+                }
+                return;
+            }
+            if (!drawn) {
+                _cancel_build(p_vehicle, p_visual);
+            }
+            if (!drawn && p_visual.model.is_valid()) {
+                if (p_visual.detailed) {
+                    _set_detailed(p_vehicle, p_visual, false);
+                }
+                _free_models(p_visual);
+                _build_load(p_vehicle, p_visual);
+                _bind_parts(p_vehicle, p_visual);
+                _register_pickable(p_vehicle, p_visual);
+                return;
+            }
+        }
+        if (!p_visual.model.is_valid()) {
             return;
         }
         bool detailed = p_visual.editable;
         if (!detailed) {
-            if (streaming == nullptr || !streaming->streaming_has_camera()) {
+            if (!has_camera) {
                 return;
             }
             const float detail_distance =
                     ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
-            const double distance = p_visual.transform.origin.distance_to(streaming->streaming_get_camera_position());
             const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, detail_distance * DETAIL_HYSTERESIS);
             detailed = p_visual.detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
         }
         if (detailed != p_visual.detailed) {
             _set_detailed(p_vehicle, p_visual, detailed);
+        }
+    }
+
+    void RailVehicleRenderingServer::_build_models(const RID &p_vehicle, Visual &p_visual) {
+        _create_models(p_vehicle, p_visual);
+        _bind_parts(p_vehicle, p_visual);
+        _build_load(p_vehicle, p_visual);
+    }
+
+    void RailVehicleRenderingServer::_cancel_build(const RID &p_vehicle, Visual &p_visual) {
+        if (!p_visual.build_pending) {
+            return;
+        }
+        p_visual.build_pending = false;
+        for (int index = 0; index < pending_builds.size(); ++index) {
+            if (pending_builds[index].vehicle == p_vehicle) {
+                pending_builds.remove_at(index);
+                return;
+            }
         }
     }
 
@@ -1590,6 +1712,7 @@ namespace godot {
     void RailVehicleRenderingServer::_on_vehicle_config_changed(const RID &p_vehicle) {
         if (Visual *visual = vehicles.getptr(p_vehicle); visual != nullptr) {
             _update_load(p_vehicle, *visual);
+            _publish_pantographs(p_vehicle, *visual);
             _place(p_vehicle, *visual);
         }
     }
@@ -1636,6 +1759,16 @@ namespace godot {
         const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
         const double delta = tree != nullptr ? tree->get_root()->get_process_delta_time() : 0.0;
         const int count = static_cast<int>(visit_order.size());
+
+        // the models of the vehicles that came within the draw distance, the nearest first
+        const uint64_t deadline = Time::get_singleton()->get_ticks_msec() + BUILD_BUDGET_MSEC;
+        while (!pending_builds.is_empty() && Time::get_singleton()->get_ticks_msec() < deadline) {
+            const RID vehicle = pending_builds[0].vehicle;
+            pending_builds.remove_at(0);
+            Visual &visual = vehicles[vehicle];
+            visual.build_pending = false;
+            _build_models(vehicle, visual);
+        }
 
         slow_elapsed += delta;
         const int slow_budget =

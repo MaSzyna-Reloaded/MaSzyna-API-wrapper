@@ -1,5 +1,5 @@
 #pragma once
-#include "legacy/e3d/E3DSubModel.hpp"
+#include "legacy/e3d/E3DModel.hpp"
 #include "vehicles/rail/RailVehicleAppearance.hpp"
 #include "vehicles/rail/RailVehicleCabinKind.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
@@ -51,6 +51,10 @@ namespace godot {
             static constexpr int DOOR_ELEMENTS = 3;
             /* How many vehicles drawn in detail a frame animates (pantographs, wipers, mirrors) */
             static constexpr int MAX_DETAILED_UPDATES_PER_FRAME = 32;
+            /* Time the models of the vehicles coming within the draw distance may take to build a
+             * frame [ms]; a build that started is finished, so a frame builds at least one - the
+             * streaming's own budget (SceneryStreamingServer::BUDGET_MSEC) */
+            static constexpr uint64_t BUILD_BUDGET_MSEC = 4;
 
         private:
             static RailVehicleRenderingServer *singleton;
@@ -96,6 +100,8 @@ namespace godot {
                     String load_data_path;
                     String load_model_filename;
                     bool own_models = false;
+                    /* Waiting in pending_builds for its models to be built */
+                    bool build_pending = false;
                     Transform3D model_transform;
                     /* How far the cargo sinks into an empty vehicle [m] (DynObj.cpp:3070-3080) */
                     double load_height = 0.0;
@@ -121,9 +127,8 @@ namespace godot {
                     TypedDictionary<String, bool> lights;
                     bool headlights_dimmed = false;
                     Ref<Material> head_display_material;
-                    /* Born optimized: the models are made before the vehicle stands on its track, at
-                     * the origin, and a scenery's hundreds of vehicles all built as node hierarchies
-                     * (cars, interiors) filled the load; _update_detail() details the near ones */
+                    /* Born optimized: a scenery's vehicles built as node hierarchies (cars,
+                     * interiors) filled the load; _update_detail() details the near ones */
                     bool detailed = false;
                     /* vehicle_set_editable(): drawn in detail wherever the camera is, its nodes
                      * shown in the editor's Scene dock */
@@ -181,6 +186,13 @@ namespace godot {
             double slow_elapsed = 0.0;
             /* The vehicles whose low-poly cabs are still following their cab lights */
             Vector<RID> fading;
+            /* A vehicle within the draw distance whose models wait for their build, and how far
+             * from the camera it was when it came there - the nearest are built first */
+            struct PendingBuild {
+                    RID vehicle;
+                    double distance = 0.0;
+            };
+            Vector<PendingBuild> pending_builds;
             bool processing = false;
 
             static Node3D *_node(const Visual &p_visual);
@@ -192,10 +204,9 @@ namespace godot {
             void _bind_parts(const RID &p_vehicle, Visual &p_visual);
             Part _part(const Visual &p_visual, const String &p_submodel) const;
             Vector<Part> _parts(const Visual &p_visual, const PackedStringArray &p_submodels) const;
-            /* The submodel of the vehicle's model by its lowered name, for its mesh */
-            Ref<E3DSubModel> _find_e3d_submodel(const Visual &p_visual, const String &p_name) const;
+            void _publish_pantographs(const RID &p_vehicle, const Visual &p_visual) const;
             void _publish_pantograph_geometry(
-                    const RID &p_vehicle, const Visual &p_visual,
+                    const RID &p_vehicle, const Visual &p_visual, const Ref<E3DModel> &p_model,
                     RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
             void _place(const RID &p_vehicle, Visual &p_visual);
             void _move(const RID &p_vehicle, Visual &p_visual);
@@ -220,6 +231,10 @@ namespace godot {
             void _update_smoke(const RID &p_vehicle, const Visual &p_visual) const;
             void _update_detail(const RID &p_vehicle, Visual &p_visual);
             void _set_detailed(const RID &p_vehicle, Visual &p_visual, bool p_detailed);
+            /* The models built from the appearance - created, the parts found in them, the cargo */
+            void _build_models(const RID &p_vehicle, Visual &p_visual);
+            void _cancel_build(const RID &p_vehicle, Visual &p_visual);
+            void _build_load(const RID &p_vehicle, Visual &p_visual);
             void _update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const;
             void _on_vehicle_driver_cabin_changed(const RID &p_vehicle, const RID &p_cabin);
             void _update_load(const RID &p_vehicle, Visual &p_visual);
@@ -270,8 +285,11 @@ namespace godot {
              * are drawn there - the node's NOTIFICATION_ENTER_WORLD/EXIT_WORLD, as
              * VisualInstance3D's */
             void vehicle_set_scenario(const RID &p_vehicle, const RID &p_scenario);
-            /* What the vehicle looks like. With model files, this server builds the models itself;
-             * without, it draws the ones vehicle_set_models() hands it. */
+            /* What the vehicle looks like. With model files, this server builds the models itself -
+             * once the vehicle stands within the draw distance of the streaming's camera
+             * (SceneryStreamingServer), and frees them beyond it; without, it draws the ones
+             * vehicle_set_models() hands it. The pantographs' geometry is read off the exterior
+             * model at once, for a vehicle with a current collector. */
             void vehicle_set_appearance(const RID &p_vehicle, const Ref<RailVehicleAppearance> &p_appearance);
             Ref<RailVehicleAppearance> vehicle_get_appearance(const RID &p_vehicle) const;
             /* The exterior and the low-poly interior, as E3DRenderingServer instances somebody else
@@ -279,8 +297,8 @@ namespace godot {
             void vehicle_set_models(const RID &p_vehicle, const RID &p_model, const RID &p_low_poly);
             /* The exterior model as E3DRenderingServer draws it */
             RID vehicle_get_model(const RID &p_vehicle) const;
-            /* The cargo, drawn at the floor of the vehicle (DynObj.cpp:866) - none for an empty
-             * file name */
+            /* The cargo, drawn at the floor of the vehicle (DynObj.cpp:866) while its models are -
+             * none for an empty file name */
             void
             vehicle_set_load_model(const RID &p_vehicle, const String &p_data_path, const String &p_model_filename);
             void vehicle_set_head_display_material(const RID &p_vehicle, const Ref<Material> &p_material);

@@ -576,6 +576,9 @@ anything. Open work belongs in `TODO.md`.
 * A vehicle's sound bank is built when the vehicle comes within earshot, not at load; a sound's
   length is read off its Ogg pages, never by loading the file. *(10-02 the Vehicles stage spent
   its time on sound banks nobody heard)*
+* A vehicle's models are built when it comes within the draw distance and freed beyond it, never
+  at load; what the simulation needs of the model (the pantographs) is read off the model file,
+  not off its drawing. *(10-06 the Vehicles stage drew every vehicle of the scenery)*
 * Code that runs in the editor calls no autoload that is not `@tool` (`TrainSoundSystem`,
   `CabinSystem`): the call is a script error returning null into the caller's data - a null part
   of a vehicle crashed the editor on its first rebuild. *(09-30 editor crash on a game dir change)*

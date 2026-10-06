@@ -45,6 +45,27 @@ func test_the_factors_are_read_with_the_originals_corrections() -> void:
 
 func test_a_slider_only_pantograph_stands_where_the_factors_put_it() -> void:
     vehicle = await spawn_maszyna_vehicle(DATA_PATH, "pantslider", "", "test_pantslider")
+    _assert_stands_where_the_factors_put_it()
+
+
+## The pantograph is the vehicle's, read off its model file: a vehicle not drawn - none is, while a
+## scenery loads and the streaming has no camera - raises it all the same
+func test_a_pantograph_of_a_vehicle_not_drawn_stands_where_the_factors_put_it() -> void:
+    assert_false(SceneryStreamingServer.streaming_has_camera(), "no camera to draw the vehicle near")
+    var not_drawn:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    not_drawn.data_path = DATA_PATH
+    not_drawn.file_name = "pantslider"
+    not_drawn.vehicle_id = "test_pantslider_not_drawn"
+    vehicle = not_drawn
+    add_child(not_drawn)
+    await not_drawn.vehicle_built
+    await wait_idle_frames(1)
+
+    assert_false(RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid()).is_valid(), "the vehicle is not drawn")
+    _assert_stands_where_the_factors_put_it()
+
+
+func _assert_stands_where_the_factors_put_it() -> void:
     var position:Vector3 = RailVehicleServer.vehicle_get_pantograph_position(
             vehicle.get_rid(), RailVehicleEnginePowerSource.PANTOGRAPH_FIRST)
     var lower_rest:float = deg_to_rad(LOWER_REST_ANGLE_DEGREES)

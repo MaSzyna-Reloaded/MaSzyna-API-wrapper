@@ -22,6 +22,11 @@ enum HoseGeometry { HANGING_ONLY, CONNECTED }
 const MOVE_DISTANCE:float = 5.0
 ## The fabricated vehicle with models (demo/tests/fixtures/dynamic/test/synthetic_v1)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
+## Where a camera stands beyond the streaming's draw distance and its margin (a quarter of it), as
+## a share of the draw distance
+const BEYOND_DRAW_DISTANCE:float = 2.0
+## How long the vehicles' sweep may take to build or free a vehicle's models [s]
+const MODELS_TIMEOUT:float = 5.0
 
 var _track:RID
 var _vehicle:RailVehicle3D
@@ -160,6 +165,50 @@ func test_an_editable_vehicle_shows_its_model_as_nodes() -> void:
 
     assert_false(RailVehicleRenderingServer.vehicle_is_editable(rid))
     assert_eq(vehicle.get_child_count(false), 0, "the holder is hidden again")
+    # the vehicle goes before the game directory it was read from
+    vehicle.free()
+    UserSettings.save_maszyna_game_dir(previous_game_dir)
+
+
+func _has_model(vehicle:RID) -> bool:
+    return RailVehicleRenderingServer.vehicle_get_model(vehicle).is_valid()
+
+
+func _has_no_model(vehicle:RID) -> bool:
+    return not RailVehicleRenderingServer.vehicle_get_model(vehicle).is_valid()
+
+
+## A vehicle beyond the streaming's draw distance is not drawn at all: its models are built when the
+## camera comes within it and freed when the camera goes beyond it again - a scenery's hundreds of
+## vehicles all built at load spent it on vehicles nobody saw
+func test_a_vehicle_is_built_only_within_the_draw_distance() -> void:
+    var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    var camera:Camera3D = add_child_autoqfree(Camera3D.new())
+    var far:Vector3 = Vector3(BEYOND_DRAW_DISTANCE * SceneryStreamingServer.streaming_get_draw_distance(), 0.0, 0.0)
+    camera.global_position = far
+    SceneryStreamingServer.streaming_set_camera(camera)
+    var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    vehicle.data_path = "dynamic/test/synthetic_v1"
+    vehicle.file_name = "synthetic"
+    vehicle.vehicle_id = "rendering_draw_distance"
+    add_child(vehicle)
+    await vehicle.vehicle_built
+    await wait_idle_frames(SETTLE_FRAMES)
+    var rid:RID = vehicle.get_rid()
+
+    assert_true(VehicleServer.vehicle_is_simulation_ready(rid), "simulated wherever the camera is")
+    assert_false(_has_model(rid), "beyond the draw distance it has no model")
+
+    camera.global_position = vehicle.global_position
+    await wait_until(_has_model.bind(rid), MODELS_TIMEOUT)
+    assert_true(_has_model(rid), "within the draw distance its model is built")
+
+    camera.global_position = far
+    await wait_until(_has_no_model.bind(rid), MODELS_TIMEOUT)
+    assert_false(_has_model(rid), "beyond it again its model is freed")
+
+    SceneryStreamingServer.streaming_set_camera(null)
     # the vehicle goes before the game directory it was read from
     vehicle.free()
     UserSettings.save_maszyna_game_dir(previous_game_dir)

@@ -258,12 +258,7 @@ func _on_refresh_timer_timeout() -> void:
     var driver_state:Dictionary = DriverSystem.driver_get_state(driver) if driver.is_valid() else {}
     var driver_data:Dictionary[String, String] = {}
     if driver_state:
-        var orders:PackedStringArray = []
-        var order:int = driver_state.get("order", 0)
-        for name:String in MaszynaLegacyAIDriver.Order:
-            if order & MaszynaLegacyAIDriver.Order[name]:
-                orders.append(name.capitalize())
-        driver_data[tr("Order")] = ", ".join(orders) if orders else tr("Wait for orders")
+        driver_data[tr("Order")] = driver_state.get("order_text", "")
         driver_data[tr("Direction")] = tr("Forward") if driver_state.get("direction", 1) > 0 else tr("Backward")
         driver_data[tr("Speed allowed")] = _format_velocity(driver_state.get("velocity", NO_VELOCITY))
         driver_data[tr("Speed ahead")] = _format_velocity(driver_state.get("velocity_next", NO_VELOCITY))

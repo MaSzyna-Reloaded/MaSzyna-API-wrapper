@@ -522,6 +522,7 @@ mouse_filter = 2
 [connection signal="popup_hide" from="TopBar/HBoxContainer/MenuBar/Diagnostics" to="TopBar" method="_on_menu_popup_hide"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]
 [connection signal="close_requested" from="TimetablePanel" to="." method="_on_timetable_panel_close_requested"]
+[connection signal="timetable_received" from="TimetablePanel" to="." method="_on_timetable_panel_timetable_received"]
 [connection signal="close_requested" from="ScenarioPanel" to="." method="_on_scenario_panel_close_requested"]
 [connection signal="close_requested" from="HelpPanel" to="." method="_on_help_panel_close_requested"]
 [connection signal="close_requested" from="ScriptEditorPanel" to="." method="_on_script_editor_panel_close_requested"]

@@ -1801,3 +1801,42 @@ msgstr "Környezet"
 
 msgid "Vehicle card"
 msgstr "Járműkártya"
+
+msgid "Scenario description"
+msgstr "Forgatókönyv leírása"
+
+msgid "Scenario progress"
+msgstr "Forgatókönyv menete"
+
+msgid "No scenario set"
+msgstr "Nincs meghatározott forgatókönyv"
+
+msgid "No scenario set for %s"
+msgstr "Nincs meghatározott forgatókönyv ehhez: %s"
+
+msgid "Scenario progress for %s"
+msgstr "Forgatókönyv menete ehhez: %s"
+
+msgid "You drive train %s from %s to %s."
+msgstr "A(z) %s vonatot vezeted, viszonylat: %s – %s."
+
+msgid "You drive train %s."
+msgstr "A(z) %s vonatot vezeted."
+
+msgid "Vehicles in the trainset: %d, mass %d t."
+msgstr "Járművek a szerelvényben: %d, tömeg %d t."
+
+msgid "Start station: %s"
+msgstr "Kiinduló állomás: %s"
+
+msgid "Next station: %s"
+msgstr "Következő állomás: %s"
+
+msgid ", departure at %s"
+msgstr ", indulás %s-kor"
+
+msgid "Stops on the way: %s."
+msgstr "Megállók: %s."
+
+msgid "%s: change of direction - uncouple the engine and shunt according to signals."
+msgstr "%s: irányváltás – a mozdony lekapcsolása és tolatás a jelzések szerint."

@@ -9,6 +9,9 @@ extends PanelContainer
 
 ## The close button asks the owner of the View menu to hide the panel and untick its entry
 signal close_requested
+## The player's train was given a timetable (or the player drives one that has it): the owner of the
+## View menu shows the panel
+signal timetable_received
 
 const ROW:PackedScene = preload("timetable_row.tscn")
 const MINUTES_PER_HOUR:float = 60.0
@@ -83,6 +86,8 @@ func _follow_trainset() -> void:
         for row:TimetableRow in _rows:
             row.queue_free()
         _rows.clear()
+        if timetable:
+            timetable_received.emit()
         %Train.text = "%s %s" % [timetable.train_category, timetable.train_name] if timetable else tr("No timetable")
         %TrainLabel.text = timetable.train_label if timetable else ""
         %TrainLabel.visible = not %TrainLabel.text == ""

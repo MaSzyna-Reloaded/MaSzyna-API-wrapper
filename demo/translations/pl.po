@@ -1801,3 +1801,42 @@ msgstr "Otoczenie"
 
 msgid "Vehicle card"
 msgstr "Karta pojazdu"
+
+msgid "Scenario description"
+msgstr "Opis scenariusza"
+
+msgid "Scenario progress"
+msgstr "Przebieg scenariusza"
+
+msgid "No scenario set"
+msgstr "Brak ustalonego scenariusza"
+
+msgid "No scenario set for %s"
+msgstr "Brak ustalonego scenariusza dla %s"
+
+msgid "Scenario progress for %s"
+msgstr "Przebieg scenariusza dla %s"
+
+msgid "You drive train %s from %s to %s."
+msgstr "Prowadzisz pociąg %s relacji %s – %s."
+
+msgid "You drive train %s."
+msgstr "Prowadzisz pociąg %s."
+
+msgid "Vehicles in the trainset: %d, mass %d t."
+msgstr "Pojazdów w składzie: %d, masa %d t."
+
+msgid "Start station: %s"
+msgstr "Stacja początkowa: %s"
+
+msgid "Next station: %s"
+msgstr "Następna stacja: %s"
+
+msgid ", departure at %s"
+msgstr ", odjazd o %s"
+
+msgid "Stops on the way: %s."
+msgstr "Postoje: %s."
+
+msgid "%s: change of direction - uncouple the engine and shunt according to signals."
+msgstr "%s: zmiana kierunku jazdy – odpiąć lokomotywę i prowadzić manewry według sygnałów."

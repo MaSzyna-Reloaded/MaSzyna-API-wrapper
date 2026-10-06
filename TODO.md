@@ -91,6 +91,17 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
   Ctrl+~ (size), Escape, the arrows, Page Up/Down and Tab - only its toggle is an action
   (`console_toggle`).
 
+### Scenario panel (Shift+F2, `demo/hud/scenario_panel.gd`)
+* A scenery started with `-s` shows the file name as the title and an empty "Scenario
+  description" tab, although its header has `//$n`, `//$d` and `//$i` (seen on
+  `$zwierzyniec_tlk.scn`; the same before the "Scenario progress" tab was added).
+* "Scenario progress" (`ScenarioTask`) tells only what the driver already has - its timetable and
+  the order the scenario's events gave it so far; an order an event will give later cannot be
+  known ahead, events being tied to tracks, not to vehicles.
+* The trainset's `assignment <lang> "<text>" ... endassignment` block
+  (simulationstateserializer.cpp:197-205, the original's "Assignment" in the scenario window) is
+  not parsed.
+
 ### Problem reports (`demo/bug_report/`)
 * The reporting endpoint (`maszyna/bugtracking/endpoint`, the Cloudflare Worker in
   `MaSzyna-Reloaded/reports`, `worker/`) is on a personal `workers.dev` account; moving it to the

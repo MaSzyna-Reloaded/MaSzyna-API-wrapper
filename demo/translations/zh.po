@@ -1801,3 +1801,42 @@ msgstr "周围环境"
 
 msgid "Vehicle card"
 msgstr "车辆卡片"
+
+msgid "Scenario description"
+msgstr "场景说明"
+
+msgid "Scenario progress"
+msgstr "场景进程"
+
+msgid "No scenario set"
+msgstr "没有设定的场景"
+
+msgid "No scenario set for %s"
+msgstr "%s 没有设定的场景"
+
+msgid "Scenario progress for %s"
+msgstr "%s 的场景进程"
+
+msgid "You drive train %s from %s to %s."
+msgstr "你驾驶 %s 次列车，区间 %s – %s。"
+
+msgid "You drive train %s."
+msgstr "你驾驶 %s 次列车。"
+
+msgid "Vehicles in the trainset: %d, mass %d t."
+msgstr "编组车辆：%d，质量 %d 吨。"
+
+msgid "Start station: %s"
+msgstr "始发站：%s"
+
+msgid "Next station: %s"
+msgstr "下一站：%s"
+
+msgid ", departure at %s"
+msgstr "，%s 发车"
+
+msgid "Stops on the way: %s."
+msgstr "停靠站：%s。"
+
+msgid "%s: change of direction - uncouple the engine and shunt according to signals."
+msgstr "%s：改变运行方向 – 摘下机车并按信号调车。"

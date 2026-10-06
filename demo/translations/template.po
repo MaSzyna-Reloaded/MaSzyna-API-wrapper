@@ -1801,3 +1801,42 @@ msgstr ""
 
 msgid "Vehicle card"
 msgstr ""
+
+msgid "Scenario description"
+msgstr ""
+
+msgid "Scenario progress"
+msgstr ""
+
+msgid "No scenario set"
+msgstr ""
+
+msgid "No scenario set for %s"
+msgstr ""
+
+msgid "Scenario progress for %s"
+msgstr ""
+
+msgid "You drive train %s from %s to %s."
+msgstr ""
+
+msgid "You drive train %s."
+msgstr ""
+
+msgid "Vehicles in the trainset: %d, mass %d t."
+msgstr ""
+
+msgid "Start station: %s"
+msgstr ""
+
+msgid "Next station: %s"
+msgstr ""
+
+msgid ", departure at %s"
+msgstr ""
+
+msgid "Stops on the way: %s."
+msgstr ""
+
+msgid "%s: change of direction - uncouple the engine and shunt according to signals."
+msgstr ""

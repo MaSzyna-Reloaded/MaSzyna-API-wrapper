@@ -405,6 +405,44 @@ func _get_seconds_until_departure(driver:RID, hours:float) -> float:
     return state.timetable.seconds_until_departure(hours)
 
 
+## The order to show the player, translated (OrderCurrent(), Driver.cpp:1990-2035): a change of
+## direction first, unless it is coupling; an uncoupling with the vehicles it leaves the engine with;
+## empty for an order the original names not
+static func order_text(order:int, vehicle_count:int, coupling:bool) -> String:
+    if order & Order.CHANGE_DIRECTION and not coupling:
+        return TranslationServer.translate("Change direction")
+    match order & ~Order.CHANGE_DIRECTION:
+        Order.WAIT_FOR_ORDERS:
+            return TranslationServer.translate("Wait for orders")
+        Order.PREPARE_ENGINE:
+            return TranslationServer.translate("Start the engine")
+        Order.RELEASE_ENGINE:
+            return TranslationServer.translate("Shut down the engine")
+        Order.CHANGE_DIRECTION:
+            return TranslationServer.translate("Change direction")
+        Order.CONNECT:
+            return TranslationServer.translate("Couple to consist ahead")
+        Order.DISCONNECT:
+            if vehicle_count < 0:
+                # done with uncoupling, the order changes shortly
+                return TranslationServer.translate("Wait for orders")
+            var vehicles:String = TranslationServer.translate("the engine")
+            if vehicle_count == 1:
+                vehicles = TranslationServer.translate("the engine plus the next vehicle")
+            elif vehicle_count > 1:
+                vehicles = TranslationServer.translate("the engine plus %d next vehicles") % vehicle_count
+            return TranslationServer.translate("Uncouple %s") % vehicles
+        Order.SHUNT:
+            return TranslationServer.translate("Shunt according to signals")
+        Order.LOOSE_SHUNT:
+            return TranslationServer.translate("Loose shunt according to signals")
+        Order.OBEY_TRAIN:
+            return TranslationServer.translate("Drive according to signals and timetable")
+        Order.BANK:
+            return TranslationServer.translate("Bank consist ahead")
+    return ""
+
+
 ## What the driver keeps: its orders and what they asked for (DriverDelegate.get_state())
 func _get_state(driver:RID) -> Dictionary:
     var state:DriverState = _drivers.get(driver)
@@ -412,6 +450,8 @@ func _get_state(driver:RID) -> Dictionary:
         return {}
     return {
         "order": state.orders[state.order_position],
+        "order_text": order_text(state.orders[state.order_position], state.vehicle_count,
+                state.coupling_vehicle.is_valid()),
         "orders": state.orders.slice(0, state.order_top),
         "order_position": state.order_position,
         "direction": state.direction,

@@ -202,6 +202,10 @@ func _on_timetable_panel_close_requested() -> void:
     HUDServer.panel_set_visible(PANEL_TIMETABLE, false)
 
 
+func _on_timetable_panel_timetable_received() -> void:
+    HUDServer.panel_set_visible(PANEL_TIMETABLE, true)
+
+
 func _on_scenario_panel_close_requested() -> void:
     HUDServer.panel_set_visible(PANEL_SCENARIO, false)
 

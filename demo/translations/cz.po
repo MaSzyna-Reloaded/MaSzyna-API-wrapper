@@ -1801,3 +1801,42 @@ msgstr "Okolí"
 
 msgid "Vehicle card"
 msgstr "Karta vozidla"
+
+msgid "Scenario description"
+msgstr "Popis scénáře"
+
+msgid "Scenario progress"
+msgstr "Průběh scénáře"
+
+msgid "No scenario set"
+msgstr "Žádný stanovený scénář"
+
+msgid "No scenario set for %s"
+msgstr "Žádný stanovený scénář pro %s"
+
+msgid "Scenario progress for %s"
+msgstr "Průběh scénáře pro %s"
+
+msgid "You drive train %s from %s to %s."
+msgstr "Řídíte vlak %s v relaci %s – %s."
+
+msgid "You drive train %s."
+msgstr "Řídíte vlak %s."
+
+msgid "Vehicles in the trainset: %d, mass %d t."
+msgstr "Vozidel v soupravě: %d, hmotnost %d t."
+
+msgid "Start station: %s"
+msgstr "Výchozí stanice: %s"
+
+msgid "Next station: %s"
+msgstr "Příští stanice: %s"
+
+msgid ", departure at %s"
+msgstr ", odjezd v %s"
+
+msgid "Stops on the way: %s."
+msgstr "Zastávky: %s."
+
+msgid "%s: change of direction - uncouple the engine and shunt according to signals."
+msgstr "%s: změna směru jízdy – odpojit lokomotivu a posunovat podle návěstí."

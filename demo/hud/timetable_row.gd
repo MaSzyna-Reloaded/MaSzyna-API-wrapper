@@ -54,9 +54,9 @@ func show_entry(entry:TimetableEntry, place:Place, velocity:float) -> void:
     %Facilities.text = entry.facilities.replace(",", " · ")
     %Speed.text = "%d" % velocity
     %SpeedChip.visible = velocity > 0.0
-    %Arrival.text = _format_time(entry.arrival)
+    %Arrival.text = format_time(entry.arrival)
     %Arrival.visible = entry.is_stop() and entry.arrival >= 0.0
-    %Departure.text = _format_time(entry.departure)
+    %Departure.text = format_time(entry.departure)
     %Departure.visible = entry.departure >= 0.0
     if not entry.is_stop():
         %Departure.theme_type_variation = &"TimetableMuted"
@@ -107,6 +107,6 @@ func _draw_line() -> void:
 
 
 ## Hours since midnight as HH:MM
-static func _format_time(hours:float) -> String:
+static func format_time(hours:float) -> String:
     var minutes:int = roundi(hours * MINUTES_PER_HOUR)
     return "%02d:%02d" % [(minutes / int(MINUTES_PER_HOUR)) % HOURS_PER_DAY, minutes % int(MINUTES_PER_HOUR)]

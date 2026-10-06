@@ -20,6 +20,19 @@
 				The vehicle's handle.
 			</description>
 		</method>
+		<method name="is_editable_in_editor" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the models of the vehicle this node draws stand as nodes in the editor's Scene dock ("Edit FIZ").
+			</description>
+		</method>
+		<method name="set_editable_in_editor">
+			<return type="void" />
+			<param index="0" name="editable" type="bool" />
+			<description>
+				Shows the models of the vehicle this node draws as nodes in the editor's Scene dock, to be inspected and edited there, or hides them again ([method RailVehicleRenderingServer.vehicle_set_editable]) - for every vehicle the node draws from now on. A view of the vehicle, not kept by the scene.
+			</description>
+		</method>
 		<method name="set_vehicle">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />

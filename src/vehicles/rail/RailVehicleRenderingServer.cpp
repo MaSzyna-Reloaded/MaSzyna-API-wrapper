@@ -98,8 +98,16 @@ namespace godot {
         constexpr int PANTOGRAPH_FACTOR_COUNT = 4;
         constexpr int PANTOGRAPH_FACTOR_HEIGHTS = 2;
         constexpr std::array<const char *, 2> PNEUMATIC_SUBMODELS = {"cpneumatic", "pneumatic"};
-
     } // namespace
+
+    /* A vehicle far away is drawn from instances, a near one as nodes - shown and owned in the
+     * editor when it is editable */
+    static E3DRenderingServer::Instancer detail_instancer(const bool p_detailed, const bool p_editable) {
+        if (!p_detailed) {
+            return E3DRenderingServer::INSTANCER_OPTIMIZED;
+        }
+        return p_editable ? E3DRenderingServer::INSTANCER_EDITABLE_NODES : E3DRenderingServer::INSTANCER_NODES;
+    }
 
     /* The low-poly cab of a kind of cabin: cab1 the front one, cab2 the rear one, cab0 the machine
      * room - and nobody's, as the original's CabOccupied 0 is (DynObj.cpp:1389-1397) */
@@ -264,6 +272,11 @@ namespace godot {
                 &RailVehicleRenderingServer::cabin_set_light_level);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_detailed", "vehicle"), &RailVehicleRenderingServer::vehicle_is_detailed);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_set_editable", "vehicle", "editable"),
+                &RailVehicleRenderingServer::vehicle_set_editable);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_is_editable", "vehicle"), &RailVehicleRenderingServer::vehicle_is_editable);
         ADD_SIGNAL(MethodInfo(vehicle_model_built_signal, PropertyInfo(Variant::RID, "vehicle")));
     }
 
@@ -509,6 +522,27 @@ namespace godot {
         return visual->detailed;
     }
 
+    /* The nodes are built anew: the holder goes with the detail, and comes back shown in the Scene
+     * dock or hidden, with the instancer that gives its nodes owners or none */
+    void RailVehicleRenderingServer::vehicle_set_editable(const RID &p_vehicle, const bool p_editable) {
+        Visual *visual = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(visual);
+        if (visual->editable == p_editable) {
+            return;
+        }
+        visual->editable = p_editable;
+        if (visual->detailed) {
+            _set_detailed(p_vehicle, *visual, false);
+        }
+        _update_detail(p_vehicle, *visual);
+    }
+
+    bool RailVehicleRenderingServer::vehicle_is_editable(const RID &p_vehicle) const {
+        const Visual *visual = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL_V(visual, false);
+        return visual->editable;
+    }
+
     void RailVehicleRenderingServer::_free_models(Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
         model_vehicles.erase(p_visual.model);
@@ -560,7 +594,7 @@ namespace godot {
             // a cutout leaves holes in the glass
             constexpr bool FORCE_ALPHA = true;
             models->instance_set_options(instance, data_path, p_skins, Array(), FORCE_ALPHA, {}, 0);
-            if (p_instancer == E3DRenderingServer::INSTANCER_NODES) {
+            if (p_instancer != E3DRenderingServer::INSTANCER_OPTIMIZED) {
                 models->instance_attach_node(instance, holder);
             }
             models->instance_set_node_transform(instance, appearance->get_model_transform());
@@ -569,8 +603,7 @@ namespace godot {
             models->instance_build(instance);
             return instance;
         };
-        const E3DRenderingServer::Instancer detail =
-                p_visual.detailed ? E3DRenderingServer::INSTANCER_NODES : E3DRenderingServer::INSTANCER_OPTIMIZED;
+        const E3DRenderingServer::Instancer detail = detail_instancer(p_visual.detailed, p_visual.editable);
         p_visual.own_models = true;
         p_visual.model = create(appearance->get_model_filename(), appearance->get_skins(), detail);
         model_vehicles[p_visual.model] = p_vehicle;
@@ -1350,29 +1383,45 @@ namespace godot {
     /// vehicles a scenery runs. Its simulation is untouched. Note the OPTIMIZED backend does not
     /// render SUBMODEL_FREE_SPOTLIGHT (see TODO.md), so a distant vehicle loses its lights.
     void RailVehicleRenderingServer::_update_detail(const RID &p_vehicle, Visual &p_visual) {
-        E3DRenderingServer *models = E3DRenderingServer::get_instance();
         const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-        Node3D *node = _node(p_visual);
+        const Node3D *node = _node(p_visual);
         // the nodes of a vehicle drawn in detail are built under its scene node
-        if (models == nullptr || streaming == nullptr || node == nullptr || !node->is_inside_tree() ||
-            !streaming->streaming_has_camera() || !p_visual.model.is_valid() || !p_visual.placed) {
+        if (node == nullptr || !node->is_inside_tree() || !p_visual.model.is_valid() || !p_visual.placed) {
             return;
         }
-        const float detail_distance =
-                ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
-        const double distance = p_visual.transform.origin.distance_to(streaming->streaming_get_camera_position());
-        const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, detail_distance * DETAIL_HYSTERESIS);
-        const bool detailed =
-                p_visual.detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
-        if (detailed == p_visual.detailed) {
-            return;
+        bool detailed = p_visual.editable;
+        if (!detailed) {
+            if (streaming == nullptr || !streaming->streaming_has_camera()) {
+                return;
+            }
+            const float detail_distance =
+                    ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
+            const double distance = p_visual.transform.origin.distance_to(streaming->streaming_get_camera_position());
+            const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, detail_distance * DETAIL_HYSTERESIS);
+            detailed = p_visual.detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
         }
-        p_visual.detailed = detailed;
+        if (detailed != p_visual.detailed) {
+            _set_detailed(p_vehicle, p_visual, detailed);
+        }
+    }
+
+    void RailVehicleRenderingServer::_set_detailed(const RID &p_vehicle, Visual &p_visual, const bool p_detailed) {
+        E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        Node3D *node = _node(p_visual);
+        ERR_FAIL_NULL(models);
+        ERR_FAIL_NULL(node);
+        p_visual.detailed = p_detailed;
         // the models this server built get a node of its own to be built under, there only while
-        // the vehicle is drawn in detail; the ones handed over have their owner's
-        if (detailed && p_visual.own_models) {
+        // the vehicle is drawn in detail; the ones handed over have their owner's. An editable
+        // vehicle's holder is shown in the Scene dock - a node's internal mode is chosen only when
+        // it is added - and owned as the scene node is, which its nodes take (E3DNodesBackend)
+        if (p_detailed && p_visual.own_models) {
             Node3D *holder = memnew(Node3D);
-            node->add_child(holder, false, Node::INTERNAL_MODE_BACK);
+            holder->set_name(p_visual.appearance->get_model_filename().get_file().get_basename());
+            node->add_child(holder, false, p_visual.editable ? Node::INTERNAL_MODE_DISABLED : Node::INTERNAL_MODE_BACK);
+            if (p_visual.editable) {
+                holder->set_owner(node->get_owner() != nullptr ? node->get_owner() : node);
+            }
             holder->set_global_transform(p_visual.transform);
             p_visual.holder = ObjectID(holder->get_instance_id());
             models->instance_attach_node(p_visual.model, holder);
@@ -1380,20 +1429,21 @@ namespace godot {
                 models->instance_attach_node(p_visual.low_poly, holder);
             }
         }
-        const E3DRenderingServer::Instancer instancer =
-                detailed ? E3DRenderingServer::INSTANCER_NODES : E3DRenderingServer::INSTANCER_OPTIMIZED;
+        const E3DRenderingServer::Instancer instancer = detail_instancer(p_visual.detailed, p_visual.editable);
         models->instance_set_instancer(p_visual.model, instancer);
         if (p_visual.low_poly.is_valid()) {
             models->instance_set_instancer(p_visual.low_poly, instancer);
         }
         if (Node *holder = Object::cast_to<Node>(ObjectDB::get_instance(p_visual.holder));
-            !detailed && holder != nullptr) {
-            // the nodes built under it went with the instancer that built them
+            !p_detailed && holder != nullptr) {
+            // the nodes built under it went with the instancer that built them; out of the tree at
+            // once, so that the holder made next does not take its name
+            node->remove_child(holder);
             holder->queue_free();
             p_visual.holder = ObjectID();
         }
         _register_pickable(p_vehicle, p_visual);
-        if (detailed) {
+        if (p_detailed) {
             _place(p_vehicle, p_visual);
         }
     }

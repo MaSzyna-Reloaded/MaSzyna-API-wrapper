@@ -81,11 +81,6 @@ signal vehicle_built
             _dirty = true
             set_process(true)
 
-## Toggled by the "Edit FIZ" 3D-viewport toolbar button (addons/libmaszyna/editor/fiz_toolbar/).
-## It shows nothing now: the vehicle is built in the servers, not as children of this node
-## (TODO.md - "Edit FIZ" is to switch the kind of instancing)
-var editable_in_editor:bool = false
-
 ## A change of the data rebuilds the vehicle once, whatever else changes in the same frame; the node
 ## processes only while a rebuild is pending
 var _dirty:bool = true

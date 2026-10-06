@@ -315,9 +315,9 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `pitch_variation` and `start_fraction` per player in the vendored gnd-sfx.
 * The vehicle build exceeds `MaszynaLegacyVehicleSystem.BUILD_BUDGET_MSEC` (~16 ms a vehicle).
 * Vehicles and the editor:
-  * "Edit FIZ" shows nothing. Operator's direction: Edit FIZ and Edit SCN switch the kind of
-    instancing; Edit SCN puts every model of the camera's chunk into the editor (under a
-    `SceneryChunkNode`), removed automatically or on request; losing changes is acceptable.
+  * "Edit FIZ" (`RailVehicleRenderingServer.vehicle_set_editable()`) shows the exterior and the
+    low-poly interior as nodes; the passengers, attachments, coupler adapters and cargo stay
+    instances, and nothing edited there is kept - the nodes are built again from the model.
   * Trainsets tab: "Show" puts marker nodes and selects them; a hand-made `TrainSet3D` lists no
     vehicles right after its scene is opened.
   * Vehicles tab (spawner): a vehicle is placed only by a track name and offset [m]; spawning at

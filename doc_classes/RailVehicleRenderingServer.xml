@@ -73,6 +73,13 @@
 				Whether the vehicle is drawn in detail - as nodes, animated - near the camera.
 			</description>
 		</method>
+		<method name="vehicle_is_editable" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				Whether the vehicle's models stand as nodes the editor shows and edits.
+			</description>
+		</method>
 		<method name="vehicle_mount_node">
 			<return type="void" />
 			<param index="0" name="vehicle" type="RID" />
@@ -87,6 +94,14 @@
 			<param index="1" name="appearance" type="RailVehicleAppearance" />
 			<description>
 				What the vehicle looks like. With model files this server builds the models itself; without, it draws the ones [method vehicle_set_models] hands it.
+			</description>
+		</method>
+		<method name="vehicle_set_editable">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="editable" type="bool" />
+			<description>
+				Whether the vehicle's models stand as nodes the editor shows and edits ("Edit FIZ"): drawn in detail wherever the camera is, under a holder node of the scene, owned by the scene node's owner. Whoever saves the scene takes them off first.
 			</description>
 		</method>
 		<method name="vehicle_set_head_display_material">

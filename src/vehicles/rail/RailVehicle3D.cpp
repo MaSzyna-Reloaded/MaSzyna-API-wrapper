@@ -61,6 +61,8 @@ namespace godot {
                 "set_head_display_material", "get_head_display_material");
 
         ClassDB::bind_method(D_METHOD("set_vehicle", "vehicle"), &RailVehicle3D::set_vehicle);
+        ClassDB::bind_method(D_METHOD("set_editable_in_editor", "editable"), &RailVehicle3D::set_editable_in_editor);
+        ClassDB::bind_method(D_METHOD("is_editable_in_editor"), &RailVehicle3D::is_editable_in_editor);
         ClassDB::bind_method(D_METHOD("get_rid"), &RailVehicle3D::get_rid);
         ClassDB::bind_method(D_METHOD("get_controller"), &RailVehicle3D::get_controller);
 #undef BIND_RAIL_NODE_PATH_ARRAY
@@ -196,6 +198,7 @@ namespace godot {
             if (head_display_material.is_valid()) {
                 drawing->vehicle_set_head_display_material(rid, head_display_material);
             }
+            drawing->vehicle_set_editable(rid, editable_in_editor);
             start_track_pending = !start_track_name.is_empty();
             _place_on_start_track();
         }
@@ -277,6 +280,18 @@ namespace godot {
         }
         start_track_pending = false;
         rail_vehicles->vehicle_set_track(rid, track, start_track_offset, start_direction);
+    }
+
+    void RailVehicle3D::set_editable_in_editor(const bool p_editable) {
+        editable_in_editor = p_editable;
+        RailVehicleRenderingServer *drawing = RailVehicleRenderingServer::get_instance();
+        if (drawing != nullptr && rid.is_valid()) {
+            drawing->vehicle_set_editable(rid, editable_in_editor);
+        }
+    }
+
+    bool RailVehicle3D::is_editable_in_editor() const {
+        return editable_in_editor;
     }
 
     RID RailVehicle3D::get_rid() const {

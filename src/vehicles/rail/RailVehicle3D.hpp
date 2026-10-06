@@ -50,6 +50,9 @@ namespace godot {
             /* The start track is not there yet: whichever comes last, the vehicle or the track,
              * places it */
             bool start_track_pending = false;
+            /* "Edit FIZ": the vehicle's models stand as nodes the editor shows - not a property,
+             * a view of the vehicle that the scene does not keep */
+            bool editable_in_editor = false;
 
             void _on_physics_node_vehicle_changed();
             /* A model of a vehicle assembled by hand is built after this node enters the tree, and
@@ -78,6 +81,11 @@ namespace godot {
             RID get_rid() const;
             /* The controller the vehicle runs on, null before it has one */
             Ref<RailVehicleController> get_controller() const;
+            /* The vehicle's models shown in the editor's Scene dock as nodes, and edited there
+             * (RailVehicleRenderingServer::vehicle_set_editable()) - every vehicle this node
+             * draws from now on */
+            void set_editable_in_editor(bool p_editable);
+            bool is_editable_in_editor() const;
 
             void set_controller_path(const NodePath &p_value);
             NodePath get_controller_path() const;

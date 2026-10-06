@@ -125,6 +125,9 @@ namespace godot {
                      * the origin, and a scenery's hundreds of vehicles all built as node hierarchies
                      * (cars, interiors) filled the load; _update_detail() details the near ones */
                     bool detailed = false;
+                    /* vehicle_set_editable(): drawn in detail wherever the camera is, its nodes
+                     * shown in the editor's Scene dock */
+                    bool editable = false;
                     RID pickable;
                     RID detection_area;
                     RID detection_shape;
@@ -216,6 +219,7 @@ namespace godot {
             void _update_lights(const RID &p_vehicle, Visual &p_visual);
             void _update_smoke(const RID &p_vehicle, const Visual &p_visual) const;
             void _update_detail(const RID &p_vehicle, Visual &p_visual);
+            void _set_detailed(const RID &p_vehicle, Visual &p_visual, bool p_detailed);
             void _update_low_poly_cabs(const RID &p_vehicle, const Visual &p_visual) const;
             void _on_vehicle_driver_cabin_changed(const RID &p_vehicle, const RID &p_cabin);
             void _update_load(const RID &p_vehicle, Visual &p_visual);
@@ -290,5 +294,10 @@ namespace godot {
             void cabin_set_light_level(const RID &p_cabin, double p_level);
             /* Whether the vehicle is drawn in detail - as nodes, animated */
             bool vehicle_is_detailed(const RID &p_vehicle) const;
+            /* Whether the vehicle's models stand as nodes the editor shows and edits ("Edit FIZ"):
+             * in detail wherever the camera is, under a holder of the scene, owned by the scene's
+             * owner - so whoever saves the scene takes them off first */
+            void vehicle_set_editable(const RID &p_vehicle, bool p_editable);
+            bool vehicle_is_editable(const RID &p_vehicle) const;
     };
 } // namespace godot

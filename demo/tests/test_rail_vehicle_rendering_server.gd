@@ -138,6 +138,33 @@ func test_the_detection_area_names_its_vehicle() -> void:
     UserSettings.save_maszyna_game_dir(previous_game_dir)
 
 
+## "Edit FIZ": an editable vehicle's models stand as nodes under a holder the Scene dock shows - not
+## an internal child of the vehicle's node - and are hidden again with it off
+func test_an_editable_vehicle_shows_its_model_as_nodes() -> void:
+    var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    var vehicle:MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
+            "dynamic/test/synthetic_v1", "synthetic", "", "rendering_editable")
+    var rid:RID = vehicle.get_rid()
+    assert_eq(vehicle.get_child_count(false), 0, "the nodes of the model are internal")
+
+    vehicle.set_editable_in_editor(true)
+
+    assert_true(RailVehicleRenderingServer.vehicle_is_editable(rid))
+    assert_true(RailVehicleRenderingServer.vehicle_is_detailed(rid), "drawn in detail wherever the camera is")
+    assert_eq(vehicle.get_child_count(false), 1, "the holder of the model is shown")
+    if vehicle.get_child_count(false):
+        assert_gt(vehicle.get_child(0, false).get_child_count(), 0, "the model stands as nodes under it")
+
+    vehicle.set_editable_in_editor(false)
+
+    assert_false(RailVehicleRenderingServer.vehicle_is_editable(rid))
+    assert_eq(vehicle.get_child_count(false), 0, "the holder is hidden again")
+    # the vehicle goes before the game directory it was read from
+    vehicle.free()
+    UserSettings.save_maszyna_game_dir(previous_game_dir)
+
+
 func test_a_rebuilt_model_is_announced() -> void:
     _vehicle = build_rail_vehicle("RenderingRebuilt", TRACK_NAME, OFFSET)
     var submodels:Dictionary = {"body": Transform3D()}

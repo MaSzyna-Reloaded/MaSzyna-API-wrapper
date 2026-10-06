@@ -40,9 +40,8 @@ func scan() -> void:
     var notes: PackedStringArray = []
     notes.resize(_dirs.size())
     notes.fill("")
-    %InstallationList.set_rows(_dirs, notes)
     # the directory in use stands selected, when the search found it
-    %InstallationList.select_row(_dirs.find(UserSettings.get_maszyna_game_dir()))
+    %InstallationList.set_rows(_dirs, notes, PackedStringArray(), _dirs.find(UserSettings.get_maszyna_game_dir()))
     %NoneFound.visible = not _dirs
     %InstallationList.visible = not %NoneFound.visible
     %SetButton.disabled = %NoneFound.visible

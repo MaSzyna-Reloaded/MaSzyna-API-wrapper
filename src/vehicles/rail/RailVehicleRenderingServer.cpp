@@ -1427,7 +1427,7 @@ namespace godot {
         const double max_rpm = diesel_engine.is_valid() ? diesel_engine->get_max_rpm() : 0.0;
         const double power = engine->get_power(); // kW
         const double current = electric_engine.is_valid() ? electric_engine->get_motor_current() : 0.0;
-        const double direction = vehicle->get_direction_absolute();
+        const double direction = static_cast<double>(vehicle->get_direction_absolute());
 
         double intensity;
         if (diesel_engine.is_valid() && diesel_engine->get_spinup()) {

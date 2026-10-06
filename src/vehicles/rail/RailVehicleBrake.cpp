@@ -9,11 +9,20 @@
 namespace godot {
     const char *RailVehicleBrake::accelerator_activated_signal = "accelerator_activated";
 
+    void RailVehicleBrake::set_valve_parameters(const String &p_valve_parameters) {
+        valve_parameters = p_valve_parameters;
+    }
+
+    String RailVehicleBrake::get_valve_parameters() const {
+        return valve_parameters;
+    }
+
     void RailVehicleBrake::_bind_methods() {
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, valve_type, "valve", PROPERTY_HINT_ENUM,
                 "NoValve,W,W_Lu_VI,W_Lu_L,W_Lu_XR,K,Kg,Kp,Kss,Kkg,Kkp,Kks,Hikg1,Hikss,Hikp1,KE,SW,EStED,NESt3,ESt3,LSt,"
                 "ESt4,ESt3AL2,EP1,EP2,M483,CV1_L_TR,CV1,CV1_R,Other")
+        BIND_PROPERTY(RailVehicleBrake, Variant::STRING, valve_parameters, "valve");
         BIND_PROPERTY(RailVehicleBrake, Variant::INT, friction_elements_per_axle);
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, brake_force_max, "brake_force");
         BIND_PROPERTY(RailVehicleBrake, Variant::INT, est_valve_size, "est_valve");

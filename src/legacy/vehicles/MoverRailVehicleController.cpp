@@ -593,8 +593,8 @@ namespace godot {
         p_config["train_type"] = get_train_type();
     }
 
-    int MoverRailVehicleController::get_direction_absolute() const {
-        return mover != nullptr ? mover->DirAbsolute : 0;
+    VehicleController::Direction MoverRailVehicleController::get_direction_absolute() const {
+        return mover != nullptr ? static_cast<Direction>(mover->DirAbsolute) : DIRECTION_NEUTRAL;
     }
 
     int MoverRailVehicleController::get_train_damage() const {
@@ -630,8 +630,8 @@ namespace godot {
         return mover != nullptr ? mover->DistCounter : 0.0;
     }
 
-    int MoverRailVehicleController::get_direction() const {
-        return mover != nullptr ? mover->DirActive : 0;
+    VehicleController::Direction MoverRailVehicleController::get_direction() const {
+        return mover != nullptr ? static_cast<Direction>(mover->DirActive) : DIRECTION_NEUTRAL;
     }
 
     void MoverRailVehicleController::compartment_lights(const bool p_enabled) const {

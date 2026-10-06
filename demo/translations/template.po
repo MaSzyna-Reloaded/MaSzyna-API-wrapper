@@ -1583,6 +1583,9 @@ msgstr ""
 msgid "Simulator"
 msgstr ""
 
+msgid "Refresh the list"
+msgstr ""
+
 msgid "Reset to defaults"
 msgstr ""
 

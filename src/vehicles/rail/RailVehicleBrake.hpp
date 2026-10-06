@@ -242,6 +242,16 @@ namespace godot {
 
         private:
             MAKE_MEMBER_GS_NR(TrainBrakeValve, valve_type, BRAKE_VALVE_NO_VALVE);
+            /* BrakeValve= as the data writes it (BrakeValveParams): an ESt3's relays are read off it -
+             * "PZZ" takes the independent brake's pressure, "AL2", "-s216", "-ED" (TNESt3::SetSize(),
+             * Oerlikon_ESt.cpp) */
+            String valve_parameters;
+
+        public:
+            void set_valve_parameters(const String &p_valve_parameters);
+            String get_valve_parameters() const;
+
+        private:
             MAKE_MEMBER_GS(int, est_valve_size, 0);
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
             MAKE_MEMBER_GS(double, brake_force_max, 1.0);

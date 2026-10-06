@@ -2084,9 +2084,11 @@ namespace godot {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
         const double velocity = controller != nullptr ? controller->get_velocity() : 0.0;
-        const int direction = controller != nullptr ? controller->get_direction() : 0;
+        const VehicleController::Direction direction =
+                controller != nullptr ? controller->get_direction() : VehicleController::DIRECTION_NEUTRAL;
         // the mover's V > 0 moves the vehicle towards its front; standing, the reverser says where to
-        const bool rearwards = velocity < 0.0 || (velocity == 0.0 && direction < 0);
+        const bool rearwards =
+                velocity < 0.0 || (velocity == 0.0 && direction == VehicleController::DIRECTION_BACKWARD);
         const RID front = vehicle_get_front_cabin(p_vehicle);
         const RID rear = vehicle_get_rear_cabin(p_vehicle);
         RID facing = rearwards ? rear : front;

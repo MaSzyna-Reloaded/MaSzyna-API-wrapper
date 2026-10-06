@@ -36,7 +36,7 @@ namespace godot {
              * is: every one of these is bound for GDScript, and a reader in C++ - the node that
              * draws the vehicle, a component of another kind - has the same right to it as a
              * script has. */
-            virtual int get_direction_absolute() const = 0;
+            virtual Direction get_direction_absolute() const = 0;
             virtual int get_train_damage() const = 0;
             /* The rotating masses' share of the vehicle's mass [kg] (Mred) - as the simulation
              * holds it, which the wheels may have derived from their own inertia */

@@ -20,7 +20,11 @@ const METRES_PER_KILOMETRE:float = 1000.0
 ## The positions of a local brake (LocalBrakePosNo, hamulce.h:45)
 const LOCAL_BRAKE_POSITIONS:float = 10.0
 ## The reverser of the vehicle that pulls (DirActive, "direction"): forward, neutral, backward
-const DIRECTION_SYMBOLS:Dictionary[int, String] = {1: "▲", 0: "—", -1: "▼"}
+const DIRECTION_SYMBOLS:Dictionary[VehicleController.Direction, String] = {
+    VehicleController.DIRECTION_FORWARD: "▲",
+    VehicleController.DIRECTION_NEUTRAL: "—",
+    VehicleController.DIRECTION_BACKWARD: "▼",
+}
 ## A train keeps under its timetable's speed; any other order under the shunting speed
 ## (driveruipanels.cpp:78-81)
 const TRAIN_ORDERS:int = MaszynaLegacyAIDriver.Order.OBEY_TRAIN | MaszynaLegacyAIDriver.Order.BANK
@@ -90,7 +94,7 @@ func _on_refresh_timer_timeout() -> void:
         return
     # the controllers of the vehicle that pulls (Controlling(), driveruipanels.cpp:139-140)
     var powered:RID = RailVehicleServer.vehicle_find_powered(vehicle)
-    var direction:int = 0
+    var direction:VehicleController.Direction = VehicleController.DIRECTION_NEUTRAL
     var main_position:int = 0
     var second_position:int = 0
     if VehicleServer.vehicle_exists(powered):
@@ -100,7 +104,7 @@ func _on_refresh_timer_timeout() -> void:
         if master_controller:
             main_position = master_controller.get_main_position()
             second_position = master_controller.get_second_position()
-    %DirectionValue.text = DIRECTION_SYMBOLS[signi(direction)]
+    %DirectionValue.text = DIRECTION_SYMBOLS[direction]
     %ControllerValue.text = "%2d + %-2d" % [main_position, second_position]
     var brakes:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
             vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake

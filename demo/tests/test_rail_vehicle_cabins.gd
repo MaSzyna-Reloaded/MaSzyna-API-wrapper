@@ -10,8 +10,6 @@ const OBSERVER:VehiclePersonRole.Role = VehiclePersonRole.VEHICLE_PERSON_ROLE_OB
 const ANY:VehiclePersonRole.Role = VehiclePersonRole.VEHICLE_PERSON_ROLE_ANY
 ## Enough frames for a built vehicle to take its controller
 const SETTLE_FRAMES:int = 4
-## The reverser pointing backwards (the Mover's DirActive)
-const DIRECTION_BACKWARD:int = -1
 
 var _persons:Array[RID] = []
 
@@ -188,7 +186,7 @@ func test_the_leading_cabin_is_the_way_the_reverser_points() -> void:
 
     VehicleServer.vehicle_send_command(vehicle, "direction_decrease")
 
-    assert_eq(int(VehicleServer.vehicle_dump_state(vehicle)["direction"]), DIRECTION_BACKWARD)
+    assert_eq(int(VehicleServer.vehicle_dump_state(vehicle)["direction"]), VehicleController.DIRECTION_BACKWARD)
     assert_eq(RailVehicleServer.vehicle_get_leading_cabin(vehicle), RailVehicleServer.vehicle_get_rear_cabin(vehicle))
 
 

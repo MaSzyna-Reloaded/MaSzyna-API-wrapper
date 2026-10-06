@@ -119,7 +119,7 @@ func _is_engine_ready(vehicle:RID) -> bool:
             or not int(brake.get_controller_position())
                     == int(brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_CUTOFF)))
     return (
-            not VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0
+            not VehicleServer.vehicle_get_controller(vehicle).get_direction() == VehicleController.DIRECTION_NEUTRAL
             and engine and engine.get_main_switch_enabled()
             and (not brake or brake.get_feed_pipe_pressure() > READY_FEED_PIPE_PRESSURE
                     or is_zero_approx(brake.tank_volume_main))

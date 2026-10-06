@@ -95,6 +95,10 @@ namespace godot {
         BIND_ENUM_CONSTANT(CATEGORY_ROAD);
         BIND_ENUM_CONSTANT(CATEGORY_SHIP);
         BIND_ENUM_CONSTANT(CATEGORY_AIRPLANE);
+
+        BIND_ENUM_CONSTANT(DIRECTION_BACKWARD);
+        BIND_ENUM_CONSTANT(DIRECTION_NEUTRAL);
+        BIND_ENUM_CONSTANT(DIRECTION_FORWARD);
     }
 
     void VehicleController::register_command(const StringName &p_command, const Callable &p_callable) {

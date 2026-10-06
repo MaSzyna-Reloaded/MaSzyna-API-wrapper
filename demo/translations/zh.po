@@ -1583,6 +1583,9 @@ msgstr "保存"
 msgid "Simulator"
 msgstr "模拟器"
 
+msgid "Refresh the list"
+msgstr "刷新列表"
+
 msgid "Reset to defaults"
 msgstr "恢复默认"
 

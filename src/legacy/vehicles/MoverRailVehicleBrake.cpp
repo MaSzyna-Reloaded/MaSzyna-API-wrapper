@@ -578,6 +578,7 @@ namespace godot {
 
         // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
         p_mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(get_valve_type()));
+        p_mover->BrakeValveParams = get_valve_parameters().utf8().get_data();
 
         const std::unordered_map<TBrakeValve, TBrakeSubSystem>::const_iterator it =
                 brake_valve_to_subsystem_map.find(p_mover->BrakeValve);

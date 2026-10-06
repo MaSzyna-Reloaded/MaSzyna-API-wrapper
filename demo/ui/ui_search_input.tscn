@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" path="res://ui/ui_search_input.gd" id="1_search"]
 [ext_resource type="Texture2D" uid="uid://dgvryp8oiphb8" path="res://ui/search_icon.svg" id="2_icon"]
+[ext_resource type="Texture2D" path="res://ui/refresh_icon.svg" id="3_refresh"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_search"]
 content_margin_left = 12.0
@@ -58,5 +59,21 @@ theme_override_font_sizes/font_size = 16
 text = "✕"
 flat = true
 
+[node name="RefreshButton" type="Button" parent="Row"]
+unique_name_in_owner = true
+visible = false
+modulate = Color(0.7, 0.82, 1, 0.75)
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+tooltip_text = "Refresh the list"
+focus_mode = 0
+mouse_default_cursor_shape = 2
+icon = ExtResource("3_refresh")
+flat = true
+icon_alignment = 1
+expand_icon = true
+
 [connection signal="text_changed" from="Row/Field" to="." method="_on_field_text_changed"]
 [connection signal="pressed" from="Row/ClearButton" to="." method="_on_clear_button_pressed"]
+[connection signal="pressed" from="Row/RefreshButton" to="." method="_on_refresh_button_pressed"]

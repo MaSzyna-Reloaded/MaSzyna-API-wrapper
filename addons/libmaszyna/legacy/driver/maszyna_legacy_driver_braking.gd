@@ -618,6 +618,11 @@ func _control_releaser(situation:MaszynaLegacyDriverTraction.Situation, accelera
             MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.RELEASER_ON)
     elif releasing:
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.RELEASER_OFF)
+    else:
+        # Differs from the original, which keeps "Actuate" listed until the releaser is on: an
+        # independent brake applied and let off before the start left it asking for the releaser
+        # with the cylinders empty (SN61-02, 2026-10-07)
+        MaszynaLegacyDriverHints.withdraw(situation, MaszynaLegacyDriverHints.Hint.RELEASER_ON)
 
 
 ## brakingforcesetzero's action (driverhints.cpp:863-872): DecBrake() until nothing is left to

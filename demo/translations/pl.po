@@ -1583,6 +1583,9 @@ msgstr "Zapisz"
 msgid "Simulator"
 msgstr "Symulator"
 
+msgid "Refresh the list"
+msgstr "Odśwież listę"
+
 msgid "Reset to defaults"
 msgstr "Przywróć domyślne"
 

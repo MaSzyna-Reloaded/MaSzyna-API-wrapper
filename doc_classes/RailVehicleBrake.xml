@@ -563,6 +563,9 @@
 			[code]Brake:UBB3[/code]
 			Bitmask of functions assigned to universal brake button 3. See [member universal_brake_button_1].
 		</member>
+		<member name="valve_parameters" type="String" setter="set_valve_parameters" getter="get_valve_parameters" default="&quot;&quot;">
+			[code]Brake:BrakeValve[/code] as the data writes it ([code]BrakeValveParams[/code]). An ESt3 distributor's relays are read off it: [code]PZZ[/code] passes the independent brake's pressure to the cylinders, [code]AL2[/code], [code]-s216[/code] and [code]-ED[/code] choose others.
+		</member>
 		<member name="valve_type" type="int" setter="set_valve_type" getter="get_valve_type" enum="RailVehicleBrake.TrainBrakeValve" default="0">
 			Brake distributor/valve type.
 		</member>

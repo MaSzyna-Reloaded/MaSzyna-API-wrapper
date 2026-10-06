@@ -116,33 +116,8 @@ func after_each() -> void:
 
 ## Loads the scenery fixture, puts the player in `vehicle`'s cab and starts it as a `kind`
 func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantographs = Pantographs.SWITCHES) -> void:
-    _previous_game_dir = UserSettings.get_maszyna_game_dir()
-    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
-    _scenery = MaszynaSceneryNode.new()
-    _scenery.filename = scenery
-    add_child(_scenery)
-    get_tree().process_frame.connect(_acknowledge_security)
-    var loaded:int = Time.get_ticks_msec()
-    # every vehicle of the scenery, not only the player's: its trainset is coupled once all of them
-    # are (RailVehicleServer.trainset_place()), and they are built a few per frame
-    # (MaszynaLegacyVehicleSystem) - read before, the powered car is the cab car itself
-    while not VehicleServer.vehicle_get_rid_by_name(vehicle).is_valid() \
-            or not VehicleServer.vehicle_get_rids().all(VehicleServer.vehicle_is_simulation_ready):
-        if Time.get_ticks_msec() - loaded > LOAD_TIMEOUT * 1000.0:
-            fail_test("%s is not in %s" % [vehicle, scenery])
-            return
-        await wait_idle_frames(1)
-    occupied = VehicleServer.vehicle_get_rid_by_name(vehicle)
-    _player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
-    _player.start_vehicle_id = vehicle
-    add_child(_player)
-    if not await _until("the player in the cab", func() -> bool: return PlayerServer.player_get_vehicle() == occupied):
+    if not await enter_vehicle(scenery, vehicle):
         return
-    powered = RailVehicleServer.vehicle_find_powered(occupied)
-    carrier = RailVehicleServer.vehicle_find_pantograph_carrier(occupied)
-    if not carrier.is_valid():
-        carrier = powered
-    SimulationServer.simulation_speed = SIMULATION_SPEED
     var engine_type:int = _engine(powered).get_type() if _engine(powered) else RailVehicleEngine.NONE
     assert_has(KIND_ENGINES[kind], engine_type, "%s has the engine of %s" % [vehicle, Kind.keys()[kind]])
     var train_type:int = (VehicleServer.vehicle_get_controller(occupied) as RailVehicleController).train_type
@@ -231,7 +206,7 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
             return
         if not await _direction_forward():
             return
-        # an SN61 starts with its master controller at the first position, then goes back to idle
+        # an SN61 starts with its master controller at the first position, then goes on to idle
         # (the manual, sterowanie.html)
         var sn61:bool = _sn61()
         if sn61:
@@ -243,8 +218,11 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
         await key_release(&"main_switch_toggle")
         if not started:
             return
+        # idle is the first position with a clutch engaged (Mn > 0), not position 0: that one gives
+        # no fuel (R = 0) and the engine dies (driverhints.cpp:489, Driver.cpp:5778)
         if sn61:
-            await key_tap(&"main_controller_decrease")
+            while diesel.get_clutch_desired() == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE:
+                await key_tap(&"main_controller_increase")
     # once the line breaker or the engine is on: the converter, then the compressor - for an
     # electric and a diesel alike (Driver.cpp:2799-2806)
     # a vehicle without a converter (EL16: ConverterStart=Disabled) runs on its battery alone
@@ -346,6 +324,39 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
 
 
 
+## Loads the scenery fixture and puts the player in `vehicle`'s cab, as the game does - nothing of
+## the vehicle touched; false when it never came
+func enter_vehicle(scenery:String, vehicle:String) -> bool:
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    _scenery = MaszynaSceneryNode.new()
+    _scenery.filename = scenery
+    add_child(_scenery)
+    get_tree().process_frame.connect(_acknowledge_security)
+    var loaded:int = Time.get_ticks_msec()
+    # every vehicle of the scenery, not only the player's: its trainset is coupled once all of them
+    # are (RailVehicleServer.trainset_place()), and they are built a few per frame
+    # (MaszynaLegacyVehicleSystem) - read before, the powered car is the cab car itself
+    while not VehicleServer.vehicle_get_rid_by_name(vehicle).is_valid() \
+            or not VehicleServer.vehicle_get_rids().all(VehicleServer.vehicle_is_simulation_ready):
+        if Time.get_ticks_msec() - loaded > LOAD_TIMEOUT * 1000.0:
+            fail_test("%s is not in %s" % [vehicle, scenery])
+            return false
+        await wait_idle_frames(1)
+    occupied = VehicleServer.vehicle_get_rid_by_name(vehicle)
+    _player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
+    _player.start_vehicle_id = vehicle
+    add_child(_player)
+    if not await _until("the player in the cab", func() -> bool: return PlayerServer.player_get_vehicle() == occupied):
+        return false
+    powered = RailVehicleServer.vehicle_find_powered(occupied)
+    carrier = RailVehicleServer.vehicle_find_pantograph_carrier(occupied)
+    if not carrier.is_valid():
+        carrier = powered
+    SimulationServer.simulation_speed = SIMULATION_SPEED
+    return true
+
+
 ## The player goes to the next or the previous cab of the vehicle (the machine room lies between)
 func _change_cab(action:StringName) -> void:
     var left:RID = RailVehicleServer.vehicle_get_driver_cabin(occupied)
@@ -354,11 +365,13 @@ func _change_cab(action:StringName) -> void:
             return not RailVehicleServer.vehicle_get_driver_cabin(occupied) == left)
 
 
+## Forward from the cab the player sits in: the reverser counts from its cab, the vehicle's own
+## direction is DirActive * CabActive (Mover.cpp:669) - a rear cab drives forward at 1 as well
 func _direction_forward() -> bool:
-    if VehicleServer.vehicle_get_controller(occupied).get_direction() == 0:
+    if VehicleServer.vehicle_get_controller(occupied).get_direction() == VehicleController.DIRECTION_NEUTRAL:
         await key_tap(&"direction_increase")
     return await _until("direction forward", func() -> bool:
-            return VehicleServer.vehicle_get_controller(occupied).get_direction() == _master(occupied).get_cabin())
+            return VehicleServer.vehicle_get_controller(occupied).get_direction() == VehicleController.DIRECTION_FORWARD)
 
 
 ## Waits (simulated time) for `done`; a step that does not come about fails the test and says what

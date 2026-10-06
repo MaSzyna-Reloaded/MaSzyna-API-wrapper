@@ -68,7 +68,6 @@ func _ready() -> void:
     %ActionsSection.focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     UserSettings.game_dir_changed.connect(list_sceneries)
     UserSettings.game_dir_changed.connect(update_game_dir_warning)
-    list_sceneries()
     update_game_dir_warning()
     # without the game's data the development notice says nothing yet - the problem goes first
     if UserSettings.is_maszyna_game_dir_valid():
@@ -77,8 +76,11 @@ func _ready() -> void:
         %GameDirProblem.ask()
 
 
-## The sceneries of the game directory - read again whenever it changes
+## The sceneries of the game directory - read again whenever it changes, the screen opens or the
+## refresh button asks. The search typed and the scenery selected stay, while it is still there.
 func list_sceneries() -> void:
+    var selected: int = %SceneryList.get_selected()
+    var selected_file: String = _files[selected] if selected >= 0 else ""
     _files.clear()
     _titles.clear()
     var files: PackedStringArray = DirAccess.get_files_at(UserSettings.get_maszyna_game_dir().path_join("scenery"))
@@ -107,8 +109,8 @@ func list_sceneries() -> void:
                     group_name = other
             groups.append(group_name)
     %SceneryList.title_separator = MaszynaSceneryInfo.PART_SEPARATOR
-    # the list selects its first slot and reports it back, so the details follow from here on
-    %SceneryList.set_rows(_titles, notes, groups)
+    # the list selects the scenery and reports it back, so the details follow from here on
+    %SceneryList.set_rows(_titles, notes, groups, _files.find(selected_file))
 
 
 ## The build caption is composed, not a msgid a Label translates itself; the tree sends this on
@@ -125,7 +127,10 @@ func _notification(what:int) -> void:
     ]) if stamp else tr("Pre-Alpha Demo Release (unbuilt)")
 
 
+## Shown at the start and on every way back from a game - with the sceneries read again, as files
+## may have come or changed meanwhile
 func open() -> void:
+    list_sceneries()
     (%Background.material as ShaderMaterial).set_shader_parameter("dissolve", 0.0)
     %Content.visible = true
     visible = true

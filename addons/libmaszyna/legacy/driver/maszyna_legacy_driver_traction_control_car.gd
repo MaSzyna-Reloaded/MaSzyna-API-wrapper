@@ -52,7 +52,7 @@ func set_speed(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     if action_time < 0.0 or not situation.trainset.ready:
         return
     # the second position of the reverser, so that an EN57 drives at full field (Driver.cpp:3874)
-    if VehicleServer.vehicle_get_controller(situation.vehicle).get_direction() > 0:
+    if VehicleServer.vehicle_get_controller(situation.vehicle).get_direction() == VehicleController.DIRECTION_FORWARD:
         CabinSystem.act(situation.cabin, MaszynaLegacyDriverHints.REVERSER, &"increase")
     var engine:RailVehicleElectricEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricEngine

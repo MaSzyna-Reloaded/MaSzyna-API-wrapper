@@ -237,14 +237,14 @@ func _on_vehicle_command_received(vehicle:RID, command:String, _p1:Variant, _p2:
     if not controller or DriverSystem.vehicle_is_control_active(vehicle):
         return
     var reverser:bool = (command == "direction_increase" or command == "direction_decrease") \
-            and not controller.get_direction() == 0
+            and not controller.get_direction() == VehicleController.DIRECTION_NEUTRAL
     if not (command == "cab_activation_auto" or reverser):
         return
     var direction:int = controller.get_direction_absolute()
-    if direction == 0:
+    if direction == VehicleController.DIRECTION_NEUTRAL:
         direction = _active_cab(vehicle)
     for state:DriverState in _drivers.values():
-        if VehicleServer.person_get_vehicle(state.driver) == vehicle and not direction == 0 \
+        if VehicleServer.person_get_vehicle(state.driver) == vehicle and not direction == VehicleController.DIRECTION_NEUTRAL \
                 and not direction == state.direction:
             state.direction = direction
             _check_vehicles(state)
@@ -957,7 +957,7 @@ func _prepare_engine(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
         missing |= EngineCheck.CONVERTER_OVERLOAD
     if not mains:
         missing |= EngineCheck.LINE_BREAKER
-    if VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0:
+    if VehicleServer.vehicle_get_controller(vehicle).get_direction() == VehicleController.DIRECTION_NEUTRAL:
         missing |= EngineCheck.DIRECTION
     if not _converter_enabled(controlling):
         missing |= EngineCheck.CONVERTER
@@ -1013,7 +1013,7 @@ func _release_engine(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BATTERY_OFF)
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
-    var released:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0 \
+    var released:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == VehicleController.DIRECTION_NEUTRAL \
             and not (engine and engine.get_main_switch_enabled()) \
             and not _power24_available(vehicle)
     if released:
@@ -1202,7 +1202,7 @@ func _control_security_system(situation:MaszynaLegacyDriverTraction.Situation, e
     var security:RailVehicleSecuritySystem = RailVehicleServer.vehicle_component_get(
             vehicle, RailVehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
     if security:
-        var neutral:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0 \
+        var neutral:bool = VehicleServer.vehicle_get_controller(vehicle).get_direction() == VehicleController.DIRECTION_NEUTRAL \
                 and not MaszynaLegacyDriverBraking.is_emu(vehicle)
         if security.get_cabsignal_blinking() and security.get_separate_acknowledge():
             if neutral:

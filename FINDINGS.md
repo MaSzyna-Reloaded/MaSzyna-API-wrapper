@@ -62,6 +62,9 @@ anything. Open work belongs in `TODO.md`.
 * Port the whole `LoadFIZ_*` / loader function: derived counts, container sizes, fallbacks, and
   the state it sets at the end. A struct default is what a vehicle **without** that section gets.
   *(09-24 NaN forces; 09-24 spring brake)*
+* A Mover field the original keeps as the FIZ text (`BrakeValveParams`: an ESt3's `PZZ`, `AL2`,
+  `-s216`, `-ED` relays) is passed as text, not only decoded into its enum. *(10-06 SN61: the
+  independent brake did not brake, the engine stopped after the start)*
 * One FIZ key can feed several Mover fields. Grep every `extract_value(..., "Key", ...)`.
   *(09-24 line breaker opened)*
 * A value from a scenery token carries the unit the loader gives it right after parsing. Read the
@@ -494,6 +497,17 @@ anything. Open work belongs in `TODO.md`.
 * The headless dummy renderer's mesh storage is not thread safe: meshes created on the streaming
   worker and on the main thread at once corrupt the heap, and the crash shows later, at teardown.
   *(09-26 headless test crashes at teardown)*
+* A hint's check agrees with what its own action does: a diesel's "neutral" is a position
+  without the clutch in (`DecSpeed()`), not 0, where its engine stops. *(10-06 SN61: the
+  independent brake did not brake, the engine stopped after the start)*
+* The hint list is followed top to bottom: a hint keeps its place (it rules out the others of its
+  group, not itself), a rear cab is shown the reverser's own side, every hand step shows its key;
+  test it by following the list by its keys, held in real time. *(10-06 SN61 did not start by the
+  driving aid's hints)*
+* A diesel's master controller position with `R=0` is stop, not idle: idle is the first position
+  with `Mn>0` (driverhints.cpp:489). The starter holds a fuelless engine at 0.7 x nmin while it
+  still spins up, so the stall shows only when frames are slow. *(10-06 SR61 start-up test red
+  in the suite)*
 * A test that drives a scenery vehicle by commands takes it from its driver and activates a cab:
   `IncMainCtrl()` refuses every step while no cab is active. *(09-28 the EP07 trip test never
   moved)*

@@ -182,7 +182,8 @@ func _parse_brake(kv: Dictionary, node: RailVehicleBrake) -> void:
     if kv.has("RV"):
         node.rapid_switching_speed = FizLineUtil.get_float(kv, "RV")
 
-    var valve_str: String = FizLineUtil.get_string(kv, "BrakeValve").to_lower()
+    node.valve_parameters = FizLineUtil.get_string(kv, "BrakeValve")
+    var valve_str: String = node.valve_parameters.to_lower()
     if valve_str:
         if _VALVE_MAP.has(valve_str):
             node.valve_type = _VALVE_MAP[valve_str]

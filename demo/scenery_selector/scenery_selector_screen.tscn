@@ -173,6 +173,7 @@ layout_mode = 2
 size_flags_vertical = 3
 sounds = ExtResource("10_sounds")
 searchable = true
+refreshable = true
 
 [node name="VehicleViewer" parent="Content/HBoxContainer/LeftSlot" unique_id=757307533 instance=ExtResource("5_viewer")]
 unique_name_in_owner = true
@@ -429,6 +430,7 @@ layout_mode = 1
 [connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]
 [connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_scenery_list"]
 [connection signal="item_selected" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_item_selected"]
+[connection signal="refresh_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="list_sceneries"]
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]

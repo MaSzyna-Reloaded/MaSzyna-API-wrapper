@@ -186,7 +186,7 @@
 			</description>
 		</method>
 		<method name="get_direction_absolute" qualifiers="const">
-			<return type="int" />
+			<return type="int" enum="VehicleController.Direction" />
 			<description>
 			</description>
 		</method>

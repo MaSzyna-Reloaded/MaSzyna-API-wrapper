@@ -70,6 +70,14 @@ namespace godot {
                 CATEGORY_SHIP = 4,
                 CATEGORY_AIRPLANE = 8,
             };
+            /* The reverser, counted from the cab it is set in (DirActive): forward is forward from
+             * that cab, and the vehicle's own direction is this times the active cab (DirAbsolute,
+             * Mover.cpp:669) */
+            enum Direction {
+                DIRECTION_BACKWARD = -1,
+                DIRECTION_NEUTRAL = 0,
+                DIRECTION_FORWARD = 1,
+            };
 
 
             /// The simulation now carries the configuration (the vehicle's and every component's)
@@ -127,7 +135,7 @@ namespace godot {
             /// backend - nothing is stored, and the dump is built from these.
             virtual double get_mass_total() const = 0;
             virtual double get_total_distance() const = 0;
-            virtual int get_direction() const = 0;
+            virtual Direction get_direction() const = 0;
             virtual void apply_config() = 0;
             virtual bool is_physics_active() const = 0;
             static void _bind_methods();
@@ -206,3 +214,4 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(VehicleController::Category);
+VARIANT_ENUM_CAST(VehicleController::Direction);

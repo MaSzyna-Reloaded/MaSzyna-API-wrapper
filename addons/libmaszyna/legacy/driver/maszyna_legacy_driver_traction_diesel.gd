@@ -64,14 +64,18 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     if situation.trainset.ready:
         # past the clutch's full engagement the controller goes up, and off the idle positions
         # always (RList[].Mn, the throttle table's clutch)
-        if velocity > engine.clutch_min_velocity_full_engage and _clutch(situation, engine) > 0:
+        if velocity > engine.clutch_min_velocity_full_engage and not _clutch(situation, engine) == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE:
             moved = step_main(situation, 1)
-        if _clutch(situation, engine) == 0:
+        if _clutch(situation, engine) == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE:
             moved = step_main(situation, 1)
-    # TODO in the original: to move to a better place (Driver.cpp:3669-3677)
+    # TODO in the original: to move to a better place (Driver.cpp:3669-3677). The idle position
+    # goes first, as PrepareEngine() cues it (Driver.cpp:2840-2843): at a position without fuel
+    # (R = 0) the engine does not start, and a hint list with the line breaker first leads the
+    # player to close it there
     if not engine.get_main_switch_enabled():
         set_cruise_control(situation, 0.0)
         set_second_controller(situation, 0)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_IDLE)
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.LINE_BREAKER_CLOSE)
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.CONVERTER_ON)
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON)
@@ -94,10 +98,10 @@ func decrease(situation:MaszynaLegacyDriverTraction.Situation, force:bool = fals
         return false
     var moved:bool = false
     if VehicleServer.vehicle_get_speed(situation.controlling) > engine.clutch_min_velocity_full_engage:
-        if _clutch(situation, engine) > 0:
+        if not _clutch(situation, engine) == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE:
             moved = step_main(situation, -1)
     else:
-        while _clutch(situation, engine) > 0 and main_powercontroller_position(situation) > 1 and step_main(situation, -1):
+        while not _clutch(situation, engine) == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE and main_powercontroller_position(situation) > 1 and step_main(situation, -1):
             moved = true
     if force:
         # DecMainCtrl(2) of a diesel: to zero (Mover.cpp:2638-2643)
@@ -190,7 +194,7 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         var max_position:int = mini(positions.size() - 1, main_position_count(situation))
         var min_position:int = max_position
         var index:int = max_position
-        while index > 1 and (positions[index] as RailVehicleThrottlePositionItem).clutch_behavior > 0:
+        while index > 1 and not (positions[index] as RailVehicleThrottlePositionItem).clutch_behavior == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE:
             min_position = index
             index -= 1
         var main:int = main_controller_position(situation)
@@ -214,10 +218,12 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
 
 
 ## RList[MainCtrlPos].Mn of a diesel: the clutch at the master controller's position (0 idle)
-func _clutch(situation:MaszynaLegacyDriverTraction.Situation, engine:RailVehicleDieselEngine) -> int:
+func _clutch(situation:MaszynaLegacyDriverTraction.Situation,
+        engine:RailVehicleDieselEngine) -> RailVehicleThrottlePositionItem.ClutchBehavior:
     var positions:Array = engine.throttle_table_positions
     var main:int = main_controller_position(situation)
-    return (positions[main] as RailVehicleThrottlePositionItem).clutch_behavior if main < positions.size() else 0
+    return (positions[main] as RailVehicleThrottlePositionItem).clutch_behavior if main < positions.size() \
+            else RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE
 
 
 ## A neutral gear, to be passed (MotorParam[].mIsat == 0)

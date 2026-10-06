@@ -321,7 +321,7 @@ const MOTOR_BLOWERS:Dictionary = {
 
 ## The control a hint is about and the gesture of the player's hand that does it - what the hints
 ## window shows its key by (LegacyCabinLogic.get_action()). A hint whose step goes either way
-## (DIRECTION_NONE, MASTER_CONTROLLER_SET_IDLE), is let go (a horn's, a releaser's end) or has no
+## (DIRECTION_NONE), is let go (a horn's, a releaser's end) or has no
 ## key of its own (sanding, heating, the headcodes) is not here
 const CONTROLS:Dictionary = {
     Hint.BATTERY_ON: [&"battery_sw", CabinLogic.Gesture.PRESS],
@@ -356,6 +356,8 @@ const CONTROLS:Dictionary = {
     Hint.MANUAL_BRAKE_ON: [LegacyCabinManualBrake.CONTROL, CabinLogic.Gesture.INCREASE],
     Hint.MANUAL_BRAKE_OFF: [LegacyCabinManualBrake.CONTROL, CabinLogic.Gesture.DECREASE],
     Hint.MASTER_CONTROLLER_SET_SERIES_MODE: [MASTER_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    # only up: the original steps up while the position has no clutch in (driverhints.cpp:491-494)
+    Hint.MASTER_CONTROLLER_SET_IDLE: [MASTER_CONTROLLER, CabinLogic.Gesture.INCREASE],
     Hint.WATER_HEATER_ON: [&"waterheater_sw", CabinLogic.Gesture.PRESS],
     Hint.WATER_HEATER_OFF: [&"waterheater_sw", CabinLogic.Gesture.PRESS],
     Hint.WATER_HEATER_BREAKER_ON: [&"waterheaterbreaker_sw", CabinLogic.Gesture.PRESS],
@@ -410,8 +412,13 @@ const MASTER_CONTROLLER_HINTS:Array[Hint] = [
     Hint.MASTER_CONTROLLER_SET_REVERSER_UNLOCK, Hint.TRACTIVE_FORCE_DECREASE, Hint.TRACTIVE_FORCE_INCREASE,
     Hint.BUFFERS_COMPRESS,
 ]
+## The reverser hint of the vehicle's one way and the other - what a rear cab shows instead
+const REVERSER_SIDES:Dictionary[Hint, Hint] = {
+    Hint.DIRECTION_FORWARD: Hint.DIRECTION_BACKWARD,
+    Hint.DIRECTION_BACKWARD: Hint.DIRECTION_FORWARD,
+}
 const REVERSER_HINTS:Array[Hint] = [Hint.DIRECTION_FORWARD, Hint.DIRECTION_BACKWARD, Hint.DIRECTION_OTHER, Hint.DIRECTION_NONE]
-## The group of hints a hint's cue takes away (itself among them, recorded again after)
+## The group of hints a hint's cue takes away - the others of it, the hint keeping its place
 const GROUPS:Dictionary = {
     Hint.MASTER_CONTROLLER_SET_IDLE: MASTER_CONTROLLER_HINTS,
     Hint.MASTER_CONTROLLER_SET_SERIES_MODE: MASTER_CONTROLLER_HINTS,
@@ -719,7 +726,7 @@ static func cue(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, para
                 var positions:Array = engine.throttle_table_positions if engine else []
                 while MaszynaLegacyDriverTraction.main_controller_position(situation) < positions.size() \
                         and (positions[MaszynaLegacyDriverTraction.main_controller_position(situation)] \
-                            as RailVehicleThrottlePositionItem).clutch_behavior == 0 \
+                            as RailVehicleThrottlePositionItem).clutch_behavior == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE \
                         and MaszynaLegacyDriverTraction.step_main(situation, 1):
                     pass
             # the master controller down until the reverser may move (driverhints.cpp:534-547)
@@ -750,11 +757,6 @@ static func cue(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, para
                     current = stepped
     var hints:Array[Queued] = situation.state.hints
     var ruled_out:Array = GROUPS.get(hint, []) + OPPOSITES.get(hint, [])
-    for index:int in range(hints.size() - 1, -1, -1):
-        if hints[index].hint in ruled_out:
-            hints.remove_at(index)
-    if hint in UNKEPT:
-        return true
     # the hint's own parameter, where the original works it out (driverhints.cpp:557-561, 834,
     # 851-855, 897, 546)
     var tractive_force:float = absf(_tractive_force(situation.controlling))
@@ -778,7 +780,19 @@ static func cue(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, para
         Hint.MASTER_CONTROLLER_SET_REVERSER_UNLOCK:
             var master:RailVehicleMasterController = MaszynaLegacyDriverTraction.master_controller(situation.controlling)
             parameter = master.direction_change_max_position if master else 0.0
-    if is_done(situation, hint, parameter):
+    var unkept:bool = hint in UNKEPT
+    if not unkept and is_done(situation, hint, parameter):
+        return true
+    # the list keeps the order the steps came in, which is the order a player follows it: a hint
+    # rules out the others of its group, not itself, and a kept one only when it is listed itself.
+    # The original removes the whole group, the hint with it, before its check
+    # (remove_master_controller_hints(), remove_reverser_hints(), driverhints.cpp): every update
+    # put the idle and the reverser behind the line breaker, which a player following the list
+    # closes with an SN61's controller at 0, where its engine does not start
+    for index:int in range(hints.size() - 1, -1, -1):
+        if hints[index].hint in ruled_out and not hints[index].hint == hint:
+            hints.remove_at(index)
+    if unkept:
         return true
     for queued:Queued in hints:
         if queued.hint == hint:
@@ -786,6 +800,15 @@ static func cue(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, para
             return false
     hints.append(Queued.new(hint, parameter))
     return false
+
+
+## A hint whose reason has gone leaves the list undone. The original has no such step: a cued hint
+## stays until the vehicle shows it done or a hint of its group replaces it (driverhints.cpp:30-35).
+static func withdraw(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint) -> void:
+    var hints:Array[Queued] = situation.state.hints
+    for index:int in range(hints.size() - 1, -1, -1):
+        if hints[index].hint == hint:
+            hints.remove_at(index)
 
 
 ## update_hints() (driverhints.cpp:30-35): the hints the vehicle shows done leave the list
@@ -801,14 +824,22 @@ static func update(situation:MaszynaLegacyDriverTraction.Situation) -> void:
 ## driveruipanels.cpp:280-294)
 static func get_list(situation:MaszynaLegacyDriverTraction.Situation) -> Array[Dictionary]:
     var listed:Array[Dictionary] = []
+    # the reverser hints count along the vehicle (DirActive * CabActive, driverhints.cpp:921, 932),
+    # the reverser and its keys from the cab: from a rear cab the vehicle's backward is the
+    # reverser's forward, so the player is shown that one - its words and its key
+    var rear_cab:bool = RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(situation.vehicle)) \
+            == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
     for queued:Queued in situation.state.hints:
+        var shown:Hint = queued.hint
+        if rear_cab and shown in REVERSER_SIDES:
+            shown = REVERSER_SIDES[shown]
         listed.append({
             "hint": queued.hint,
-            "text": TEXTS[queued.hint],
+            "text": TEXTS[shown],
             "parameter": queued.parameter,
             "done": is_done(situation, queued.hint, queued.parameter),
-            "control": CONTROLS[queued.hint][0] if CONTROLS.has(queued.hint) else &"",
-            "gesture": CONTROLS[queued.hint][1] if CONTROLS.has(queued.hint) else CabinLogic.Gesture.PRESS,
+            "control": CONTROLS[shown][0] if CONTROLS.has(shown) else &"",
+            "gesture": CONTROLS[shown][1] if CONTROLS.has(shown) else CabinLogic.Gesture.PRESS,
         })
     return listed
 
@@ -991,7 +1022,8 @@ static func is_done(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, 
             var engine:RailVehicleDieselEngine = _diesel(controlling)
             var position:int = MaszynaLegacyDriverTraction.main_controller_position(situation)
             return engine == null or position >= engine.throttle_table_positions.size() \
-                    or (engine.throttle_table_positions[position] as RailVehicleThrottlePositionItem).clutch_behavior > 0
+                    or not (engine.throttle_table_positions[position] as RailVehicleThrottlePositionItem).clutch_behavior \
+                        == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE
         Hint.MASTER_CONTROLLER_SET_SERIES_MODE:
             var engine:RailVehicleElectricSeriesEngine = _engine(controlling) as RailVehicleElectricSeriesEngine
             var position:int = MaszynaLegacyDriverTraction.main_controller_position(situation)
@@ -999,8 +1031,18 @@ static func is_done(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, 
                     or (engine.relay_list[position] as RailVehicleRelayListItem).branch_count < 2
         Hint.MASTER_CONTROLLER_SET_ZERO_SPEED:
             var master:RailVehicleMasterController = MaszynaLegacyDriverTraction.master_controller(controlling)
-            return master == null or (master.get_main_position() <= master.get_main_no_power_position()
-                    and master.get_second_position() == 0)
+            if master == null:
+                return true
+            # a diesel with a gearbox is off power where its own ZeroSpeed() stops - on a position
+            # without the clutch in (DecSpeed(), Driver.cpp:3740-3749), never at 0, where its engine
+            # gets no fuel; the original's check (IsMainCtrlNoPowerPos()) sent a player there
+            var diesel:RailVehicleDieselEngine = _diesel(controlling)
+            var position:int = master.get_main_position()
+            if diesel and diesel.get_type() == RailVehicleEngine.DIESEL \
+                    and position < diesel.throttle_table_positions.size():
+                return (diesel.throttle_table_positions[position] as RailVehicleThrottlePositionItem).clutch_behavior \
+                        == RailVehicleThrottlePositionItem.CLUTCH_BEHAVIOR_NONE and master.get_second_position() == 0
+            return position <= master.get_main_no_power_position() and master.get_second_position() == 0
         Hint.MASTER_CONTROLLER_SET_REVERSER_UNLOCK:
             var master:RailVehicleMasterController = MaszynaLegacyDriverTraction.master_controller(controlling)
             return master == null or master.get_main_position() <= master.direction_change_max_position
@@ -1012,12 +1054,16 @@ static func is_done(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, 
                         and brake.get_handle_control_pressure() > brake.pipe_pressure_max - HANDLE_CONTROL_MARGIN)
         Hint.TRAIN_BRAKE_APPLY:
             return situation.trainset.braked
+        # DirActive * CabActive (driverhints.cpp:921, 932) is the vehicle's own direction,
+        # DirAbsolute (Mover.cpp:669)
         Hint.DIRECTION_FORWARD:
-            return VehicleServer.vehicle_get_controller(vehicle).get_direction() * _active_cab(vehicle) > 0
+            return (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_direction_absolute() \
+                    == VehicleController.DIRECTION_FORWARD
         Hint.DIRECTION_BACKWARD:
-            return VehicleServer.vehicle_get_controller(vehicle).get_direction() * _active_cab(vehicle) < 0
+            return (VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).get_direction_absolute() \
+                    == VehicleController.DIRECTION_BACKWARD
         Hint.DIRECTION_NONE:
-            return VehicleServer.vehicle_get_controller(vehicle).get_direction() == 0
+            return VehicleServer.vehicle_get_controller(vehicle).get_direction() == VehicleController.DIRECTION_NEUTRAL
         Hint.DIRECTION_OTHER:
             return situation.state.direction == situation.state.direction_order
         Hint.WAIT_PRESSURE_TOO_LOW:

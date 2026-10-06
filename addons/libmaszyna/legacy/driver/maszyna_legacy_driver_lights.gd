@@ -151,7 +151,7 @@ static func _ends(vehicles:Array[RID], direction:int) -> Array[RailVehicleContro
 ## Tb1's lamps, head and rear: the right one at the head driving forward, the left one otherwise
 ## (headcodetb1, driverhints.cpp:1270-1276)
 static func _tb1(situation:MaszynaLegacyDriverTraction.Situation) -> Vector2i:
-    if VehicleServer.vehicle_get_controller(situation.vehicle).get_direction() >= 0:
+    if not VehicleServer.vehicle_get_controller(situation.vehicle).get_direction() == VehicleController.DIRECTION_BACKWARD:
         return Vector2i(HEADLIGHT_RIGHT, HEADLIGHT_LEFT)
     return Vector2i(HEADLIGHT_LEFT, HEADLIGHT_RIGHT)
 
@@ -175,7 +175,7 @@ static func _end_of_train(vehicle:RID, pattern:int) -> int:
     if not pattern == PC5:
         return pattern
     var controller:VehicleController = VehicleServer.vehicle_get_controller(vehicle)
-    if controller.power > POWERED and controller.get_direction() == 0:
+    if controller.power > POWERED and controller.get_direction() == VehicleController.DIRECTION_NEUTRAL:
         return 0
     return RED_MARKERS
 

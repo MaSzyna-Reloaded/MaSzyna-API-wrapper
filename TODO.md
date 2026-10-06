@@ -688,10 +688,10 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `scenery/td.scn` from the game dir - needs a fixture scenery.
 * **`test_zzz_ep07_main_switch_trip_diagnostic`** was red (no acceleration past 2 m/s over five
   notches, the Hasler sees no speed) - check whether it still is; driver's cabin/`CabActive` first.
-* **`test_zzz_startup_sr61_v2` is flaky** - red in the full run, green alone; the engine stalls
-  from ~740 rpm to 0, so the main reservoir never fills. Fails CI.
 * **The EN57 start-up test failed once** after the EZT `Imin` default and passed four times
-  since - watch it.
+  since - watch it. Again 10-06 in `test_zzz_driver_hints_en57_2000_v1`, in a sequential run
+  after nine other scripts: "line contactors on the first power position", the controller at 0
+  after the key; green alone twice right after.
 * **EN57-702ra drives without the battery and the main switch** (report): not reproduced on the
   fixture; needs the operator's scenery and a probe of the ra/s/rb start state.
 * A headless GUT run sometimes does not exit after passing (`test_scenery_compiled_cache`,

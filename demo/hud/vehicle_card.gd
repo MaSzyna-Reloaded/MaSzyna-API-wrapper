@@ -23,6 +23,12 @@ const DISPATCH_STEP_NAMES:Dictionary[StationServer.DispatchStep, String] = {
     StationServer.DISPATCH_STEP_WAIT_DEPARTURE: "Waiting for departure",
     StationServer.DISPATCH_STEP_CLOSE_DOORS: "Closing doors",
 }
+## The reverser's positions (VehicleController.get_direction(), the driver's own direction alike)
+const DIRECTION_NAMES:Dictionary[VehicleController.Direction, String] = {
+    VehicleController.DIRECTION_FORWARD: "Forward",
+    VehicleController.DIRECTION_NEUTRAL: "Neutral",
+    VehicleController.DIRECTION_BACKWARD: "Backward",
+}
 
 ## The vehicle the card was opened for
 var vehicle:RID = RID()
@@ -182,7 +188,7 @@ func _on_refresh_timer_timeout() -> void:
     var motion:Dictionary[String, String] = {
         tr("Speed"): "%.1f km/h" % absf(state.get("speed", 0.0)),
         tr("Acceleration"): "%.2f m/s²" % state.get("acceleration", 0.0),
-        tr("Direction"): [tr("Backward"), tr("Neutral"), tr("Forward")][signi(state.get("direction", 0)) + 1],
+        tr("Direction"): tr(DIRECTION_NAMES[state.get("direction", VehicleController.DIRECTION_NEUTRAL)]),
         tr("Distance"): "%.2f km" % state.get("total_distance", 0.0),
     }
     _show_values(%MotionData, motion)
@@ -259,7 +265,7 @@ func _on_refresh_timer_timeout() -> void:
     var driver_data:Dictionary[String, String] = {}
     if driver_state:
         driver_data[tr("Order")] = driver_state.get("order_text", "")
-        driver_data[tr("Direction")] = tr("Forward") if driver_state.get("direction", 1) > 0 else tr("Backward")
+        driver_data[tr("Direction")] = tr(DIRECTION_NAMES[driver_state.get("direction", VehicleController.DIRECTION_FORWARD)])
         driver_data[tr("Speed allowed")] = _format_velocity(driver_state.get("velocity", NO_VELOCITY))
         driver_data[tr("Speed ahead")] = _format_velocity(driver_state.get("velocity_next", NO_VELOCITY))
         if driver_state.get("next_stop", ""):

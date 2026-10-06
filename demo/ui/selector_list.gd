@@ -11,6 +11,8 @@ extends FocusSection
 ## The selection moved, by key, by search or by click. -1 when it is on a group header, or when the
 ## search matched nothing - the only states with no row selected.
 signal item_selected(index: int)
+## The refresh button of the search field - the screen reads its rows again and gives them anew
+signal refresh_requested
 
 ## The bank this component plays from - a slot the screen using it fills. Events are named after
 ## what happened, not after the sample, and the bank has to name "keystroke" and "change_focus".
@@ -48,8 +50,13 @@ const TOKEN_PATTERN: String = "[\\p{L}\\p{N}]+"
 ## A typed token shorter than this filters nothing - one letter would only throw rows away
 const MIN_FRAGMENT: int = 2
 
+## set_rows() without a row of the screen's choice: the first visible slot is selected
+const FIRST_VISIBLE_ROW: int = -1
+
 ## Lists without a search field keep the whole row for their content. Read once, in _ready().
 @export var searchable: bool = false
+## The search field carries a refresh button, heard as refresh_requested. Read once, in _ready().
+@export var refreshable: bool = false
 ## What joins the parts of a title ("Bałtyk · SKM1"), so a row of a group can show only the parts
 ## that tell it apart from the other rows of its group; empty when titles have no parts
 @export var title_separator: String = ""
@@ -88,6 +95,8 @@ func _ready() -> void:
     add_child(_ui_sounds)
     focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     %SearchInput.visible = searchable
+    if refreshable:
+        %SearchInput.show_refresh_button()
 
 
 ## The ring and the marker are the same change seen twice: the marker belongs to the selected row of
@@ -113,10 +122,14 @@ func release_section_focus() -> void:
 
 ## Rows of the list, given as what they show: a title and the smaller grey note beside it, and
 ## optionally the group of each row. Rows of one group stand together under a folded header, in the
-## order the groups first appear; a group of a single row is no group. The first slot is selected
-## right away - nothing here is ever left deselected while there is something to select.
+## order the groups first appear; a group of a single row is no group. The typed search stays and
+## filters the new rows. selected_row is selected right away - its group unfolded, the list scrolled
+## to it - as the screen's own choice (the game directory in use, the scenery chosen before a
+## refresh); without one, or when it is not on the list, the first visible slot is - nothing here is
+## ever left deselected while there is something to select.
 func set_rows(
-    titles: PackedStringArray, notes: PackedStringArray, groups: PackedStringArray = PackedStringArray()
+    titles: PackedStringArray, notes: PackedStringArray, groups: PackedStringArray = PackedStringArray(),
+    selected_row: int = FIRST_VISIBLE_ROW
 ) -> void:
     for slot: PanelContainer in _slots:
         slot.queue_free()
@@ -168,20 +181,13 @@ func set_rows(
             var index: int = members[at][member]
             _add_slot(_create_line(row_titles[member], _notes[index], _create_folder()), index, group)
 
-    if searchable:
-        %SearchInput.reset()
-    _filter("")
+    _filter(%SearchInput.get_text() if searchable else "")
     %Scroll.scroll_vertical = 0
-    _select(_next_visible_slot(-1, 1))
-
-
-## The selection put on that row - its group unfolded, the list scrolled to it - as the screen's
-## own choice of what is selected (the game directory in use); a row not on the list changes nothing
-func select_row(row: int) -> void:
-    # a group header's slot carries -1 as its row
-    if row < 0:
+    # a group header's slot carries -1 as its row, so FIRST_VISIBLE_ROW is found on none
+    var slot: int = _slot_rows.find(selected_row) if selected_row >= 0 else -1
+    if slot < 0:
+        _select(_first_result_slot())
         return
-    var slot: int = _slot_rows.find(row)
     var group: int = _slot_groups[slot]
     if group >= 0 and not _group_unfolded[group]:
         _toggle_group(group)
@@ -467,18 +473,29 @@ func _on_search_input_cleared() -> void:
     %SearchDebounce.start()
 
 
+func _on_search_input_refresh_requested() -> void:
+    _ui_sounds.play(click_event)
+    refresh_requested.emit()
+
+
 func _on_search_debounce_timeout() -> void:
     _filter(%SearchInput.get_text())
     # the first result takes over the selection; nothing found is the one case with none at all
-    var slot: int = _next_visible_slot(-1, 1)
-    # a group a search unfolded leads with its header, and the result is the row under it
-    var first_row: int = _next_visible_slot(slot, 1) if slot >= 0 and _slot_rows[slot] < 0 else -1
-    if first_row >= 0 and _slot_rows[first_row] >= 0 and _slot_groups[first_row] == _slot_groups[slot]:
-        slot = first_row
+    var slot: int = _first_result_slot()
     if not slot == _selected:
         _select(slot)
     # the filtered-out rows take no room, so the first result sits at the top of the list
     %Scroll.scroll_vertical = 0
+
+
+## The first visible slot - but when a typed search unfolded a group, that group leads with its
+## header and the result is the row under it. -1 when nothing is visible.
+func _first_result_slot() -> int:
+    var slot: int = _next_visible_slot(-1, 1)
+    var first_row: int = _next_visible_slot(slot, 1) if slot >= 0 and _slot_rows[slot] < 0 else -1
+    if first_row >= 0 and _slot_rows[first_row] >= 0 and _slot_groups[first_row] == _slot_groups[slot]:
+        return first_row
+    return slot
 
 
 ## Rows that carry every token of the search, and carry each one as a fragment: "krak tarn" finds

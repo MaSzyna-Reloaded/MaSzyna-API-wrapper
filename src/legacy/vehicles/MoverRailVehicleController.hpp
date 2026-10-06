@@ -57,7 +57,7 @@ namespace godot {
             void _initialize_simulation() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
-            int get_direction_absolute() const override;
+            Direction get_direction_absolute() const override;
             int get_train_damage() const override;
             double get_mass_reduced() const override;
             bool get_coupler_stretched() const override;
@@ -98,7 +98,7 @@ namespace godot {
             double get_acceleration() const override;
             double get_mass_total() const override;
             double get_total_distance() const override;
-            int get_direction() const override;
+            Direction get_direction() const override;
             void apply_config() override;
             double process_movement(double p_delta) override;
             void update_location() override;

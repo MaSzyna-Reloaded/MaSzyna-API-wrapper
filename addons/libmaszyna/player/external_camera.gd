@@ -177,7 +177,7 @@ func _process_dirty() -> void:
         return
 
     # drivermode.cpp:951-1019 - offsetflip from the occupied cab and the active direction
-    var flip:float = cab * (1 if direction == 0 else direction)
+    var flip:float = cab * (VehicleController.DIRECTION_FORWARD if direction == VehicleController.DIRECTION_NEUTRAL else direction)
     if view == View.TRAINSET_REAR:
         flip = -flip
 

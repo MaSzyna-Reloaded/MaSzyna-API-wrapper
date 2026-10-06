@@ -1583,6 +1583,9 @@ msgstr "Mentés"
 msgid "Simulator"
 msgstr "Szimulátor"
 
+msgid "Refresh the list"
+msgstr "Lista frissítése"
+
 msgid "Reset to defaults"
 msgstr "Alapértelmezések visszaállítása"
 

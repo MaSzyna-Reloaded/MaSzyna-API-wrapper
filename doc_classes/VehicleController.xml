@@ -76,7 +76,7 @@
 			</description>
 		</method>
 		<method name="get_direction" qualifiers="const">
-			<return type="int" />
+			<return type="int" enum="VehicleController.Direction" />
 			<description>
 			</description>
 		</method>
@@ -260,6 +260,12 @@
 		<constant name="CATEGORY_SHIP" value="4" enum="Category">
 		</constant>
 		<constant name="CATEGORY_AIRPLANE" value="8" enum="Category">
+		</constant>
+		<constant name="DIRECTION_BACKWARD" value="-1" enum="Direction">
+		</constant>
+		<constant name="DIRECTION_NEUTRAL" value="0" enum="Direction">
+		</constant>
+		<constant name="DIRECTION_FORWARD" value="1" enum="Direction">
 		</constant>
 	</constants>
 </class>

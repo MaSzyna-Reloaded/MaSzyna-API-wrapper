@@ -3873,6 +3873,76 @@ lighting or the trainset.
   1.1 s to 0.43 s; the dashboard light from 2.0 s to 42 ms. A walk through the unit took at most
   288 ms a cab change (the first entry of the other driver's cab).
 
+## 2026-10-06 SN61: the independent brake did not brake, the engine stopped after the start
+
+* **Symptom:** the operator drove SN61-02 off; "the breaker trips" (the engine stopped), and the
+  independent brake seemed not to brake.
+* **What proved it:** `test_zzz_driver_hints_sn61_v2` driven on: after the start the hint list's
+  first step was "Set master controller to neutral" (`Kp-`); followed, it took the controller to 0
+  (`R=0`, no fuel) and the engine stopped. The original's check of that hint is
+  `IsMainCtrlNoPowerPos()` (0 for an SN61), while its own action for a diesel (`DecSpeed()`,
+  Driver.cpp:3740-3749) stops on the first position without the clutch in. The independent brake:
+  handle 1.0, `LocBrakePress` 3.8 bar, cylinder 0.00 bar. An ESt3 is a `TNESt3` that passes the
+  independent brake's pressure only to a `TPrzek_PZZ` relay, chosen by `SetSize()` from the
+  `BrakeValve=` text (`ESt3d_PZZ`, Oerlikon_ESt.cpp); the wrapper decoded the type and never set
+  `BrakeValveParams`, so no ESt3 got its `PZZ`, `AL2`, `-s216` or `-ED` relay.
+* **Fix:** the "neutral" hint of a diesel with a gearbox is done on a position without the clutch
+  in; `RailVehicleBrake.valve_parameters` keeps `BrakeValve=` as written and the Mover wrapper
+  passes it as `BrakeValveParams` (FIZ format 45). With both, SN61-02 drives off by the player's
+  keys, stays running, and the independent brake fills the cylinders to 3.8 bar and stops it; each
+  fix alone was shown missing by the test going red without it.
+* **Rule:** a Mover field the original reads as text (`BrakeValveParams`) is passed as text, not
+  only decoded; a hint's check agrees with what its own action does.
+
+## 2026-10-06 SN61 did not start by the driving aid's hints
+
+* **Symptom:** SN61-02 (calkowo_sn61_zima.scn, rear cab) could not be started by the player. The
+  driving aid listed "Close line breaker" (M) first, "Set reverser to reverse" and "Set engine to
+  idle" (without a key) after it; M did nothing with the master controller at 0, the pumps on.
+* **What proved it:** `test_zzz_driver_hints_sn61_v2` - the vehicle cut from that scenery, started
+  by nothing but the listed hints, top to bottom, each by the key the window shows, held in real
+  time as a player holds it. It stood exactly where the player stood. Prints in `cue()` showed the
+  list reordered on every update: a hint ruled out its whole group, itself included, so the idle
+  and the reverser hint were removed and appended again behind the line breaker each time they
+  were cued; and the neutral hint, already done at 0, removed the idle too. The original does
+  both (`remove_master_controller_hints()`, `remove_reverser_hints()` before the check,
+  driverhints.cpp). With the order fixed, the reverser hint stayed undone: it counts along the
+  vehicle (`DirActive * CabActive`, driverhints.cpp:921, 932), and from the rear cab the vehicle's
+  "reverse" is the reverser's forward - the hint's words and key pointed the other way. At 0
+  (`R=0`) `dizel_StartupCheck()` cancels the start (Mover.cpp:7063-7069), as in the original. The
+  test also needed keys held in real seconds: a knob moves at the hand's speed (`KNOB_KEY_SPEED`),
+  and two simulated seconds at 100x moved the independent brake nowhere.
+* **Fix:** a hint rules out the others of its group, not itself, and only when it is listed;
+  the hints window shows a rear cab the reverser hint of the reverser's own side (words and key);
+  the idle hint has the master controller's "up" key (its step only goes up,
+  driverhints.cpp:491-494) and is cued before the line breaker in the diesel traction step as
+  well. `VehicleController.Direction` names the reverser's positions everywhere; the start-up
+  tests' "forward" is the reverser's from any cab (`DirAbsolute = DirActive * CabActive`,
+  Mover.cpp:669).
+* **Rule:** the hint list is what a player follows top to bottom: it keeps the order the steps
+  came in and shows each in the player's cab's terms; a hint is tested by following the list by
+  its keys, in real-time key holds.
+
+## 2026-10-06 SR61 start-up test red in the suite
+
+* **Symptom:** `test_zzz_startup_sr61_v2` green alone, red in the full run and in CI: "start-up
+  stopped at compressor: main reservoir", the engine started and then at 0 rpm with the main
+  switch open, the controller at position 0.
+* **What proved it:** the test started the SN61 at controller position 1 and went back to 0 as
+  "idle". `sr61v1.fiz` gives position 0 `R=0`: `dizel_fillcheck()` gives no fuel there
+  (Mover.cpp:7144-7228), the torque is `-Mstand` and at 0 rpm the engine switches off
+  (Mover.cpp:7384). It passed alone by a quirk: the starter (`dizel_spinup`, Mover.cpp:7269) adds
+  `Mstand / (0.3 + enrot/nmin)`, which balances `Mstand` at 0.7 x nmin, and spin-up ends only past
+  0.95 x nmin (Mover.cpp:7117) - a decrease one fast frame after ignition left a fuelless engine
+  held by the starter. Slower frames at simulation speed 100 let the engine reach its governed
+  ~740 rpm first, spin-up ended, and the decrease stalled it.
+* **Fix:** the test goes up from the starting position to the first one with a clutch engaged
+  (`RailVehicleDieselEngine.get_clutch_desired()`, `RList[MainCtrlPos].Mn > 0`), the original's
+  idle (`mastercontrollersetidle`, driverhints.cpp:489; Driver.cpp:5778). The vehicle itself
+  behaves as the original.
+* **Rule:** a diesel's idle is the first controller position with `Mn>0`, never a position with
+  `R=0`; a start-up that passes only with fast frames is racing the starter.
+
 ## 2026-10-06 Vehicle not ready with nothing missing
 
 * **Symptom:** in a 36WEa the driving aid kept showing "Vehicle not ready" with STOP - first with

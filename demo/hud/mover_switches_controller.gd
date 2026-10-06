@@ -9,9 +9,9 @@ func _on_refresh_timer_timeout() -> void:
     if not target_vehicle.is_valid():
         return
     var state:Dictionary = VehicleServer.vehicle_dump_state(target_vehicle)
-    var direction:int = state.get("direction", 0)
-    %Forward.modulate = Color.GREEN if direction > 0 else Color.WHITE
-    %Reverse.modulate = Color.GREEN if direction < 0 else Color.WHITE
+    var direction:int = state.get("direction", VehicleController.DIRECTION_NEUTRAL)
+    %Forward.modulate = Color.GREEN if direction == VehicleController.DIRECTION_FORWARD else Color.WHITE
+    %Reverse.modulate = Color.GREEN if direction == VehicleController.DIRECTION_BACKWARD else Color.WHITE
     if universal_controller:
         %MainPosition.text = tr("Pos: %s") % universal_controller.get_selector_position()
     else:

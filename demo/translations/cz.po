@@ -1583,6 +1583,9 @@ msgstr "Uložit"
 msgid "Simulator"
 msgstr "Simulátor"
 
+msgid "Refresh the list"
+msgstr "Obnovit seznam"
+
 msgid "Reset to defaults"
 msgstr "Obnovit výchozí"
 

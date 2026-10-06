@@ -55,6 +55,14 @@ interface.
   powered front vehicle, then counts again every powered vehicle under control that is not the
   driver's own - the front one among them when the driver sits elsewhere (`Driver.cpp:2470-2489`).
   Wrapper: every engine under control once (`MaszynaLegacyDriverTrainset._read_control()`).
+* **A train is a goods train when its driver's locomotive is set to G.** `IsCargoTrain` is the
+  occupied vehicle's own `BrakeDelayFlag & bdelay_G` (`Driver.cpp:2302-2304`), and a player's
+  locomotive is never re-set (`Driver.cpp:2194`). A locomotive with `BrakeDelays=GP` starts at G
+  (`Mover.cpp:12040-12042`), so a passenger train behind it (Galicja, Os33733 behind the SU42) is
+  taken for a goods train once the order becomes Obey_train: it keeps further from obstacles and
+  leaves every stop without waiting for the departure time (`Driver.cpp:1297`). Wrapper: the type
+  comes from the cars (`RailVehicleServer.trainset_determine_type()`, by their `BrakeDelays` as
+  `AutoRewident()` counts them), determined where `AutoRewident()` runs.
 * **A series motor's power is "taken off" when it is not.** `DecMainCtrl(2)` of an electric series
   motor returns true whatever it did (`Mover.cpp:2616-2622`), so `ZeroSpeed()`'s loop ends only
   on the next position check. Wrapper: true only when the controller moved - a controller the

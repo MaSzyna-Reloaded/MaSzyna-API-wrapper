@@ -126,7 +126,8 @@ var _acceleration_average:float = 0.0
 func pick(
     order:int, active:bool, stop_here:bool, dispatch_step:StationServer.DispatchStep, velocity:float,
     shunt_velocity:float, timetable_velocity:float, speed:float, trainset:MaszynaLegacyDriverTrainset,
-    route:MaszynaLegacyDriverRoute, reaction:float, braking:MaszynaLegacyDriverBraking
+    route:MaszynaLegacyDriverRoute, reaction:float, braking:MaszynaLegacyDriverBraking,
+    trainset_type:RailVehicleServer.TrainsetType
 ) -> void:
     reaction_time = reaction
     velocity_desired = trainset.velocity_max
@@ -167,7 +168,7 @@ func pick(
         velocity_desired = 0.0
         stop_reason = StopReason.WAITING_FOR_ORDERS if order == MaszynaLegacyAIDriver.Order.WAIT_FOR_ORDERS \
                 else StopReason.SIGNAL
-    _adjust_for_target_speed(order, speed, route, braking, trainset)
+    _adjust_for_target_speed(order, speed, route, braking, trainset, trainset_type)
     # adjust_desired_speed_for_current_speed() (Driver.cpp:7722-7760)
     if speed > velocity_desired:
         if velocity_desired == 0.0:
@@ -176,7 +177,7 @@ func pick(
             acceleration_desired = minf(acceleration_desired, NO_ACCELERATION + braking.acceleration_threshold)
         else:
             acceleration_desired = minf(acceleration_desired, maxf(0.0, acceleration_preferred))
-    _adjust_for_slope_and_couplers(speed, trainset, route, braking)
+    _adjust_for_slope_and_couplers(speed, trainset, route, braking, trainset_type)
     # pick_optimal_speed() (Driver.cpp:7383-7398)
     if acceleration_desired > NO_ACCELERATION:
         _acceleration_average = SMOOTHING_NEW * acceleration_desired + SMOOTHING_KEPT * _acceleration_average
@@ -238,7 +239,7 @@ func _adjust_for_obstacle(order:int, speed:float, route:MaszynaLegacyDriverRoute
 ## next speed, braking to arrive at it within the distances kept to a stop
 func _adjust_for_target_speed(
     order:int, speed:float, route:MaszynaLegacyDriverRoute, braking:MaszynaLegacyDriverBraking,
-    trainset:MaszynaLegacyDriverTrainset
+    trainset:MaszynaLegacyDriverTrainset, trainset_type:RailVehicleServer.TrainsetType
 ) -> void:
     acceleration_desired = acceleration_preferred if not velocity_desired == 0.0 else STANDING_ACCELERATION
     var next:float = velocity_next
@@ -271,7 +272,7 @@ func _adjust_for_target_speed(
             if speed > min_speed(COAST_SPEED_FAR if distance > COAST_DISTANCE else COAST_SPEED_NEAR, velocity_desired):
                 # don't slow down while there is room to stop at a safe distance - a goods train and a
                 # slow target need longer (braking_distance_multiplier(), Driver.cpp:7644-7654)
-                var multiplier:float = braking.distance_multiplier(next, speed, trainset)
+                var multiplier:float = braking.distance_multiplier(next, speed, trainset, trainset_type)
                 var braking_distance:float = route.brake_distance * multiplier
                 var slowdown:float = maxf(
                         SLOWDOWN_CONNECT if order & MaszynaLegacyAIDriver.Order.CONNECT else SLOWDOWN_DISTANCE,
@@ -297,7 +298,7 @@ func _adjust_for_target_speed(
 ## brake off again at once
 func _adjust_for_slope_and_couplers(
     speed:float, trainset:MaszynaLegacyDriverTrainset, route:MaszynaLegacyDriverRoute,
-    braking:MaszynaLegacyDriverBraking
+    braking:MaszynaLegacyDriverBraking, trainset_type:RailVehicleServer.TrainsetType
 ) -> void:
     var gravity:float = trainset.gravity_acceleration
     if gravity > DOWNHILL_GRAVITY:
@@ -309,7 +310,7 @@ func _adjust_for_slope_and_couplers(
             else:
                 acceleration_desired = minf(acceleration_desired, NO_ACCELERATION + braking.acceleration_threshold)
                 # a goods train braking late crosses its threshold
-                if braking.cargo and braking.table_a0 > CARGO_LATE_A0:
+                if trainset_type == RailVehicleServer.TRAINSET_TYPE_CARGO and braking.table_a0 > CARGO_LATE_A0:
                     acceleration_desired -= clampf(braking.table_a0 - CARGO_LATE_A0, 0.0, CARGO_LATE_EXTRA)
         elif route.velocity_minus > 0.0:
             # ease off closing in on the speed wanted
@@ -330,7 +331,7 @@ func _adjust_for_slope_and_couplers(
         var limit:float = braking.table_a0 * NOT_READY_BRAKE_SHARE \
                 if not trainset.ready or velocity_next > speed - NEAR_NEXT_VELOCITY else -braking.acceleration_threshold
         if -acceleration_desired * braking.factor(self, route, trainset, speed) \
-                < limit / (DISTANCE_MULTIPLIER_SHARE * braking.distance_multiplier(velocity_next, speed, trainset)):
+                < limit / (DISTANCE_MULTIPLIER_SHARE * braking.distance_multiplier(velocity_next, speed, trainset, trainset_type)):
             acceleration_desired = maxf(NO_ACCELERATION, acceleration_desired)
 
 

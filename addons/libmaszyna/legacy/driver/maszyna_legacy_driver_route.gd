@@ -280,7 +280,8 @@ func update(
             signal_velocity_last = NO_LIMIT
     _scheduled_stop_visible = false
     # IsCargoTrain (Driver.cpp:2303): keeps further from a stop, leaves a passenger stop at once
-    var cargo:bool = braking.cargo
+    var trainset_type:RailVehicleServer.TrainsetType = RailVehicleServer.trainset_get_type(vehicle)
+    var cargo:bool = trainset_type == RailVehicleServer.TRAINSET_TYPE_CARGO
     _determine_distances(vehicle, order, speed, trainset, shunt_velocity, velocity_desired, coupling, cargo,
             braking.acceleration_threshold)
     reach = maxf(MIN_RANGE, MOVING_RANGE + brake_distance if absf(speed) > MOVEMENT_SPEED else STANDING_RANGE)
@@ -424,7 +425,7 @@ func update(
                 if speed < velocity or velocity == 0.0:
                     # plenty of room to brake: keep the preferred acceleration, easing into braking
                     var easing:float = EASING_BRAKING_SHARE * brake_distance \
-                            * braking.distance_multiplier(velocity, absf(speed), trainset)
+                            * braking.distance_multiplier(velocity, absf(speed), trainset, trainset_type)
                     if easing > 0.0:
                         # std::lerp gives its end exactly (Driver.cpp:919), lerpf() may miss it by a
                         # rounding: a far stop then read above the preferred acceleration and lost to

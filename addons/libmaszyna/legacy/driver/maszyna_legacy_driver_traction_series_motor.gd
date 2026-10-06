@@ -77,7 +77,7 @@ func increase(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var high_on:bool = engine.circuit_imax_high > engine.circuit_imax_low and imax > engine.circuit_imax_low
     var velocity:float = VehicleServer.vehicle_get_speed(situation.vehicle)
     var trainset:MaszynaLegacyDriverTrainset = situation.trainset
-    var cargo:bool = situation.braking.cargo
+    var cargo:bool = RailVehicleServer.trainset_get_type(situation.vehicle) == RailVehicleServer.TRAINSET_TYPE_CARGO
     var heavy:bool = situation.braking.heavy_cargo
     var engines:int = trainset.controlled_engines
     var gravity:float = trainset.gravity_acceleration

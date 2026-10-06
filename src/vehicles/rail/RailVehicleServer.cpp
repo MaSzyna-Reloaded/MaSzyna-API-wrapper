@@ -1,5 +1,6 @@
 #include "RailVehicleServer.hpp"
 #include "vehicles/base/VehicleComponent.hpp"
+#include "vehicles/rail/RailVehicleBrake.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleEngine.hpp"
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
@@ -191,6 +192,13 @@ namespace godot {
                 D_METHOD("trainset_get_door_open", "vehicle", "side"), &RailVehicleServer::trainset_get_door_open);
         ClassDB::bind_method(
                 D_METHOD("trainset_get_door_permit", "vehicle", "side"), &RailVehicleServer::trainset_get_door_permit);
+        ClassDB::bind_method(
+                D_METHOD("trainset_determine_type", "vehicle"), &RailVehicleServer::trainset_determine_type);
+        ClassDB::bind_method(D_METHOD("trainset_get_type", "vehicle"), &RailVehicleServer::trainset_get_type);
+        BIND_ENUM_CONSTANT(TRAINSET_TYPE_NONE);
+        BIND_ENUM_CONSTANT(TRAINSET_TYPE_PASSENGER);
+        BIND_ENUM_CONSTANT(TRAINSET_TYPE_CARGO);
+        BIND_ENUM_CONSTANT(TRAINSET_TYPE_MIXED);
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
@@ -1142,6 +1150,47 @@ namespace godot {
                            (p_at == RailVehicleDoors::SIDE_LEFT ? p_doors.get_left_open_permit()
                                                                 : p_doors.get_right_open_permit());
                 });
+    }
+
+    void RailVehicleServer::trainset_determine_type(const RID &p_vehicle) {
+        const TypedArray<RID> trainset = vehicle_get_coupled(
+                p_vehicle, RailVehicleController::COUPLER_END_FRONT, RailVehicleController::COUPLING_FLAG_COUPLER);
+        bool passenger = false;
+        bool cargo = false;
+        for (const Variant &member: trainset) {
+            const VehiclePlacement *placement = vehicles.getptr(member);
+            const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+            // a car is a vehicle without power (Power < 1, Driver.cpp:2156)
+            if (controller == nullptr || controller->get_power() >= 1.0) {
+                continue;
+            }
+            const Ref<RailVehicleBrake> brake =
+                    controller->get_rail_component(RailVehicleComponentType::COMPONENT_BRAKES);
+            const int delays = brake.is_valid() ? brake->get_cntrl_brake_delays() : RailVehicleBrake::BRAKE_DELAY_NONE;
+            if ((delays & RailVehicleBrake::BRAKE_DELAY_G) != 0 && (delays & RailVehicleBrake::BRAKE_DELAY_R) == 0) {
+                cargo = true;
+            } else {
+                passenger = true;
+            }
+        }
+        TrainsetType type = TRAINSET_TYPE_NONE;
+        if (passenger && cargo) {
+            type = TRAINSET_TYPE_MIXED;
+        } else if (cargo) {
+            type = TRAINSET_TYPE_CARGO;
+        } else if (passenger) {
+            type = TRAINSET_TYPE_PASSENGER;
+        }
+        for (const Variant &member: trainset) {
+            if (VehiclePlacement *placement = vehicles.getptr(member)) {
+                placement->trainset_type = type;
+            }
+        }
+    }
+
+    RailVehicleServer::TrainsetType RailVehicleServer::trainset_get_type(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? placement->trainset_type : TRAINSET_TYPE_NONE;
     }
 
     void RailVehicleServer::trainset_move(const RID &p_vehicle, const double p_distance) {

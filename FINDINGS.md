@@ -68,6 +68,9 @@ anything. Open work belongs in `TODO.md`.
   lines after `>>`. *(09-24 wire 100x too resistive)*
 * A Mover method nothing in `Mover.cpp` calls is driven from DynObj.cpp/Train.cpp. Grep for its
   callers. *(09-24 induction motor never pulled)*
+* The type of a train (passenger, goods) comes from `RailVehicleServer.trainset_get_type()`,
+  never from the brakes or a vehicle's G/P setting. *(10-06 Os33733 left Zagórz before its
+  departure)*
 * The vendored engine assumed its own `stdafx.h`. Check overload-sensitive calls (`abs`, `min`,
   `max`) when something numeric just stops. *(09-24 C's abs())*
 * Before porting a field that looks like data, read what the backend does with its **name**

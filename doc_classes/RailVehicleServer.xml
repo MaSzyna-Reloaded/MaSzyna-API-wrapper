@@ -119,6 +119,13 @@
 				A scenery's trainset: vehicles standing one after another on a track, coupled.
 			</description>
 		</method>
+		<method name="trainset_determine_type">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				Determines what the trainset coupled to [param vehicle] carries, from its cars (the vehicles without power) and their brake delays, and gives every vehicle of the trainset that type: a car with R, or without G, carries passengers; one with G and without R, goods. The type stays until it is determined again. The legacy driver determines it where the original judges its train (AutoRewident(), Driver.cpp:2154-2165).
+			</description>
+		</method>
 		<method name="trainset_free">
 			<return type="void" />
 			<param index="0" name="trainset" type="RID" />
@@ -155,6 +162,13 @@
 			<param index="0" name="trainset" type="RID" />
 			<description>
 				The scenery's name of the trainset, empty for one that has none.
+			</description>
+		</method>
+		<method name="trainset_get_type" qualifiers="const">
+			<return type="int" enum="RailVehicleServer.TrainsetType" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+				The type of [param vehicle]'s trainset, as [method trainset_determine_type] last determined it; [constant TRAINSET_TYPE_NONE] before that.
 			</description>
 		</method>
 		<method name="trainset_get_vehicles" qualifiers="const">
@@ -601,6 +615,18 @@
 		</constant>
 		<constant name="CABIN_CHANGE_BACKWARD" value="1" enum="CabinChange">
 			Towards its rear.
+		</constant>
+		<constant name="TRAINSET_TYPE_NONE" value="0" enum="TrainsetType">
+			No cars coupled to the vehicle, or not determined yet.
+		</constant>
+		<constant name="TRAINSET_TYPE_PASSENGER" value="1" enum="TrainsetType">
+			Only cars carrying passengers.
+		</constant>
+		<constant name="TRAINSET_TYPE_CARGO" value="2" enum="TrainsetType">
+			Only cars carrying goods.
+		</constant>
+		<constant name="TRAINSET_TYPE_MIXED" value="3" enum="TrainsetType">
+			Cars of both kinds.
 		</constant>
 	</constants>
 </class>

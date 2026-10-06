@@ -3896,3 +3896,24 @@ lighting or the trainset.
   of a vehicle with one").
 * **Rule:** a readiness check and the reset that takes it away read the same state, and only of
   devices a car has; a hint asks only for what the vehicle has.
+
+## 2026-10-06 Os33733 left Zagórz before its departure
+
+* **Symptom:** in Galicja (`linia_107_poludnie.scn`, 12:30) Os33733 stood at Zagórz waiting for
+  its departure at 12:47; once the player readied the SU42 and drew up to the signal, the
+  timetable passed Zagórz and the panel showed -15 min.
+* **What proved it:** the first station has no arrival, so it is made a stop (mtable.cpp:570-574,
+  `MaszynaLegacyTimetableFactory`); the wait was right. The SU42's FIZ has `BrakeDelays=GP`, which
+  starts the Mover at G (Mover.cpp:12040-12042), and a player's own locomotive is never re-set
+  (Driver.cpp:2194). `MaszynaLegacyDriverBraking.read_trainset()` took `cargo` from that setting
+  (IsCargoTrain, Driver.cpp:2303) once the order became OBEY_TRAIN, and a goods train leaves a stop
+  at once (`route.gd`, Driver.cpp:1297). The -15 is the arrival delay stored at 12:32.
+* **Fix:** `RailVehicleServer.trainset_determine_type()` / `trainset_get_type()`
+  (NONE, PASSENGER, CARGO, MIXED), from the cars' `BrakeDelays` as AutoRewident() counts them;
+  the driver's AutoRewident port determines it, and every consumer of the original's
+  IsCargoTrain/IsPassengerTrain (stops, proximity, braking level and distance, series motor,
+  heating, the brake settings' passenger/goods choice) reads it. `braking.cargo` and the heating's
+  own copy are gone (MASZYNA_ORIGINAL_QUIRKS.md, "A train is a goods train when its driver's
+  locomotive is set to G").
+* **Rule:** the type of a train comes from `RailVehicleServer.trainset_get_type()`, never from the
+  brakes or a vehicle's G/P setting.

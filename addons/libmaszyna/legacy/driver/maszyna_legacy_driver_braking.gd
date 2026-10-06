@@ -215,8 +215,8 @@ var position:float = POSITION_RUNNING
 var delay:float = 0.0
 ## fAccThreshold [m/s2]: braking starts past it
 var acceleration_threshold:float = SHUNT_THRESHOLD
-## IsCargoTrain, IsHeavyCargoTrain
-var cargo:bool = false
+## IsHeavyCargoTrain: a goods train (RailVehicleServer.trainset_get_type()) braking poorly and
+## heavy behind its engines
 var heavy_cargo:bool = false
 ## fBrake_a0[0], fBrake_a1[0] - the braking table at the current speed; read by the speed wanted
 var table_a0:float = 0.0
@@ -224,10 +224,9 @@ var table_a1:float = 0.0
 ## fBrake_a0[1..], fBrake_a1[1..]
 var _a0:PackedFloat64Array = []
 var _a1:PackedFloat64Array = []
-## fNominalAccThreshold, fBrakeReaction, BrakingInitialLevel
+## fNominalAccThreshold, fBrakeReaction
 var _nominal_threshold:float = SHUNT_THRESHOLD
 var _reaction:float = BRAKE_REACTION
-var _initial_level:float = BRAKING_INITIAL_LEVEL
 ## The trainset and the order the table was worked out for; a DMU (its gearbox)
 var _checked:int = 0
 var _dmu:bool = false
@@ -255,6 +254,9 @@ func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset,
     var checked:int = hash([trainset.vehicles, train, shunt])
     if not checked == _checked:
         _checked = checked
+        # what the trainset carries, judged where the original judges its train (AutoRewident(),
+        # Driver.cpp:2302-2304); the brake settings below follow it
+        RailVehicleServer.trainset_determine_type(vehicle)
         var passenger:bool = _set_brake_delays(vehicle, trainset, in_control)
         _a0.fill(0.0)
         _a1.fill(0.0)
@@ -265,14 +267,9 @@ func read_trainset(vehicle:RID, order:int, trainset:MaszynaLegacyDriverTrainset,
             acceleration_threshold = _nominal_threshold
         if train and trainset.mass > 0.0 and velocity_max > 0.0:
             _build_table(trainset, velocity_max)
-            cargo = brake != null and brake.get_delay_setting() == DELAY_SETTING_G
-            var engines:int = 0
-            for other:RID in trainset.vehicles:
-                if VehicleServer.vehicle_get_controller(other).power > POWERED:
-                    engines += 1
-            heavy_cargo = cargo and _a0[1] > HEAVY_CARGO_A0 and trainset.vehicles.size() - engines > 0 \
+            heavy_cargo = RailVehicleServer.trainset_get_type(vehicle) == RailVehicleServer.TRAINSET_TYPE_CARGO \
+                    and _a0[1] > HEAVY_CARGO_A0 and trainset.vehicles.size() - trainset.controlled_engines > 0 \
                     and trainset.mass / trainset.vehicles.size() > HEAVY_CARGO_MASS
-            _initial_level = CARGO_INITIAL_LEVEL if cargo else BRAKING_INITIAL_LEVEL
             var last:int = TABLE_SIZE
             if emu:
                 var steps:float = EP_THRESHOLD_STEPS \
@@ -320,14 +317,18 @@ func factor(
 ## braking_distance_multiplier() (Driver.cpp:1731-1771): how much longer than the braking distance
 ## the train needs to reach `target` [km/h] - the slower the target, the longer; a goods train or
 ## one downhill braking hard needs up to twice as long to stop
-func distance_multiplier(target:float, vehicle_speed:float, trainset:MaszynaLegacyDriverTrainset) -> float:
+func distance_multiplier(
+    target:float, vehicle_speed:float, trainset:MaszynaLegacyDriverTrainset,
+    trainset_type:RailVehicleServer.TrainsetType
+) -> float:
     if target > FAST_TARGET:
         return 1.0
     if target < STOP_TARGET:
         if _dmu and vehicle_speed < DMU_EASING_SPEED and target == 0.0:
             var most:float = clampf(1.0 + trainset.vehicles.size() * DMU_MULTIPLIER_PER_VEHICLE, DMU_MULTIPLIER_MIN, DMU_MULTIPLIER_MAX)
             return lerpf(most, 1.0, vehicle_speed / DMU_EASING_SPEED)
-        if _a0[1] > MULTIPLIER_A0 and (cargo or trainset.gravity_acceleration > DOWNHILL_GRAVITY):
+        if _a0[1] > MULTIPLIER_A0 and (trainset_type == RailVehicleServer.TRAINSET_TYPE_CARGO
+                or trainset.gravity_acceleration > DOWNHILL_GRAVITY):
             return lerpf(1.0, STOP_MULTIPLIER, clampf((_a0[1] - MULTIPLIER_A0) / MULTIPLIER_A0, 0.0, 1.0))
         return 1.0
     return lerpf(MOST_MULTIPLIER, 1.0, (target - STOP_TARGET) / MULTIPLIER_SPAN)
@@ -355,7 +356,8 @@ func _build_table(trainset:MaszynaLegacyDriverTrainset, velocity_max:float) -> v
 ## CheckVehicles() 1.-3. (Driver.cpp:2154-2237): the brake setting the train needs, from its
 ## wagons - a passenger train P or R, a goods train P, GP or G by its length and mass - put on
 ## every vehicle by the crew (`auto_rewident`, the rewident's own lever); the driver's vehicle only
-## while the driver drives it. True for a passenger train (ustaw > 16).
+## while the driver drives it. A passenger train (ustaw > 16) by the trainset's type
+## (RailVehicleServer.trainset_get_type()); a mixed one by the original's count of its wagons.
 func _set_brake_delays(vehicle:RID, trainset:MaszynaLegacyDriverTrainset, in_control:bool) -> bool:
     var fast:int = 0
     var goods:int = 0
@@ -371,10 +373,12 @@ func _set_brake_delays(vehicle:RID, trainset:MaszynaLegacyDriverTrainset, in_con
             goods += 1
         else:
             passengers += 1
-    var passenger:bool = true
+    var type:RailVehicleServer.TrainsetType = RailVehicleServer.trainset_get_type(vehicle)
+    var passenger:bool = not type == RailVehicleServer.TRAINSET_TYPE_CARGO
+    if type == RailVehicleServer.TRAINSET_TYPE_MIXED:
+        passenger = goods < mini(PASSENGER_GOODS_LIMIT, fast + passengers)
     var setting:int = RailVehicleBrake.BRAKE_DELAY_R
     if fast + goods + passengers > 0:
-        passenger = goods < mini(PASSENGER_GOODS_LIMIT, fast + passengers)
         if passenger:
             setting = RailVehicleBrake.BRAKE_DELAY_P if goods and fast < goods + passengers else RailVehicleBrake.BRAKE_DELAY_R
         elif trainset.length < GOODS_P_LENGTH and trainset.mass < GOODS_P_MASS:
@@ -663,7 +667,9 @@ func _increase(situation:MaszynaLegacyDriverTraction.Situation, brake_factor:flo
                 var excess:float = -acceleration * brake_factor - (table_a0 + TABLE_STEPS * (position - 1.0 - correction) * table_a1)
                 if excess > table_a1:
                     if position < BRAKING_FROM:
-                        moved = _add_position(_initial_level)
+                        # BrakingInitialLevel (Driver.cpp:2306-2309)
+                        moved = _add_position(CARGO_INITIAL_LEVEL if RailVehicleServer.trainset_get_type(vehicle) \
+                                == RailVehicleServer.TRAINSET_TYPE_CARGO else BRAKING_INITIAL_LEVEL)
                         # stronger braking to overcome SA134's engine (Driver.cpp:3137-3144)
                         var route:MaszynaLegacyDriverRoute = situation.route
                         if _dmu and situation.speed.velocity_next == 0.0 and route.brake_distance < DMU_STOP_DISTANCE:

@@ -649,7 +649,8 @@ func _update(driver:RID) -> void:
             state.orders[state.order_position], state.engine_active, state.stop_here,
             StationServer.dispatch_get_step(vehicle), state.velocity,
             state.shunt_velocity, state.timetable.velocity,
-            directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking)
+            directional_speed, state.trainset, state.route, EASY_REACTION_TIME, state.braking,
+            RailVehicleServer.trainset_get_type(vehicle))
     state.reaction_time = state.speed.reaction_time
     # check_route_behind() (Driver.cpp:8238-8266, at the end of the speed's pick, Driver.cpp:7298):
     # the way ahead closed, a shunting driver turns back to a signal behind that lets it go - a
@@ -1456,9 +1457,8 @@ func _check_vehicles(state:DriverState) -> void:
     var train_type:RailVehicleController.TrainType = (
             VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).train_type
     var unit:bool = MaszynaLegacyDriverBraking.is_emu(vehicle) or train_type == RailVehicleController.TRAIN_TYPE_DMU
-    var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
-            vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
-    var passenger_train:bool = not unit and not (brake and brake.get_delay_setting() & RailVehicleBrake.BRAKE_DELAY_G) \
+    var passenger_train:bool = not unit \
+            and RailVehicleServer.trainset_get_type(vehicle) == RailVehicleServer.TRAINSET_TYPE_PASSENGER \
             and trainset.vehicles.size() > trainset.controlled_engines
     var heating_line:bool = not trainset.controlled_engines == 1 or (trainset.vehicles and RailVehicleServer.vehicle_get_coupled(
             trainset.vehicles[0], RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_HEATING) \

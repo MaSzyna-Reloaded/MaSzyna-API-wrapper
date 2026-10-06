@@ -8,6 +8,8 @@ const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const REACTION:float = MaszynaLegacyAIDriver.EASY_REACTION_TIME
 ## No dispatch at a stop (StationServer)
 const NO_DISPATCH:StationServer.DispatchStep = StationServer.DISPATCH_STEP_NONE
+## A trainset whose type was never determined
+const NO_TRAINSET:RailVehicleServer.TrainsetType = RailVehicleServer.TRAINSET_TYPE_NONE
 const STEP:float = 0.5
 
 var train:VehicleController
@@ -62,7 +64,7 @@ func _decide() -> void:
 
 
 func test_standing_it_holds_the_locomotive_with_its_own_brake():
-    speed.pick(Order.SHUNT, false, false, NO_DISPATCH, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking)
+    speed.pick(Order.SHUNT, false, false, NO_DISPATCH, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking, NO_TRAINSET)
 
     # the fixture's handle starts at lap: the train brake to running first, then the local brake
     _decide()
@@ -72,12 +74,12 @@ func test_standing_it_holds_the_locomotive_with_its_own_brake():
 
 
 func test_wanting_to_go_it_releases():
-    speed.pick(Order.SHUNT, false, false, NO_DISPATCH, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking)
+    speed.pick(Order.SHUNT, false, false, NO_DISPATCH, 0.0, 0.0, -1.0, 0.0, trainset, route, REACTION, braking, NO_TRAINSET)
     _decide()
     _decide()
     assert_eq(float(train.get_state()["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
-    speed.pick(Order.SHUNT, true, false, NO_DISPATCH, 20.0, 20.0, -1.0, 0.0, trainset, route, REACTION, braking)
+    speed.pick(Order.SHUNT, true, false, NO_DISPATCH, 20.0, 20.0, -1.0, 0.0, trainset, route, REACTION, braking, NO_TRAINSET)
     _decide()
 
     assert_eq(float(train.get_state()["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_RELEASED)

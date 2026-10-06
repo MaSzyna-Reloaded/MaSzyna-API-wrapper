@@ -48,6 +48,14 @@ namespace godot {
             /* Which way a cab change goes: forward towards the front of the vehicle the person is
              * in (cabchangeforward, Train.cpp:8291), backward towards its rear */
             enum CabinChange { CABIN_CHANGE_FORWARD, CABIN_CHANGE_BACKWARD };
+            /* What a trainset carries, by its cars (the vehicles without power): passengers, goods
+             * or both; none for a vehicle without cars coupled to it */
+            enum TrainsetType {
+                TRAINSET_TYPE_NONE,
+                TRAINSET_TYPE_PASSENGER,
+                TRAINSET_TYPE_CARGO,
+                TRAINSET_TYPE_MIXED,
+            };
 
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
@@ -194,6 +202,8 @@ namespace godot {
                     RID driver;
                     /* That person's cabin, last announced */
                     RID driver_cabin;
+                    /* The type of its trainset, as last determined */
+                    TrainsetType trainset_type = TRAINSET_TYPE_NONE;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
@@ -491,6 +501,12 @@ namespace godot {
             /* A door permit given on p_side of the vehicle, of the trainset's vehicles needing one
              * (IsAnyDoorPermitActive, Driver.cpp:6104) */
             bool trainset_get_door_permit(const RID &p_vehicle, RailVehicleDoors::Side p_side) const;
+            /* Determines the type of the trainset coupled to the vehicle from its cars, for every
+             * vehicle of it, by the cars' brake delays (AutoRewident(), Driver.cpp:2154-2165): one
+             * with R or without G carries passengers, one with G and without R goods */
+            void trainset_determine_type(const RID &p_vehicle);
+            /* The type of the vehicle's trainset, as last determined */
+            TrainsetType trainset_get_type(const RID &p_vehicle) const;
             /* Walks one vehicle the distance its own simulation asked for. The step does this for
              * every vehicle; on its own it is how a single vehicle is advanced deliberately. */
             void vehicle_process_movement(const RID &p_vehicle, double p_delta);
@@ -551,3 +567,4 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(RailVehicleServer::CabinChange);
+VARIANT_ENUM_CAST(RailVehicleServer::TrainsetType);

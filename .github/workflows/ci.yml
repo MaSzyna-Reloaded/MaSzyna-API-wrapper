@@ -113,7 +113,8 @@ jobs:
             output: bin/linux/maszyna-reloaded-linux64.zip
           - platform: windows
             templates: godot.windows.template_release.double.x86_64.exe
-            output: bin/windows/maszyna-reloaded-win64.zip
+            # the zip and the installer beside it
+            output: bin/windows/maszyna-reloaded-win64*
           - platform: android
             templates: android_release.apk
             output: bin/android/maszyna-reloaded-android-arm64.apk
@@ -198,7 +199,7 @@ jobs:
           pattern: maszyna-reloaded-*
           path: artifacts
 
-      # each file is published as maszyna-reloaded-<tag or branch>-<platform>.<ext>
+      # each file is published as maszyna-reloaded-<tag or branch>-<platform>[-setup].<ext>
       - name: Name the files
         env:
           NAME: ${{ github.head_ref || github.ref_name }}
@@ -206,7 +207,8 @@ jobs:
           mkdir release
           for file in artifacts/maszyna-reloaded-*/*; do
             platform=${file#artifacts/maszyna-reloaded-}
-            mv "$file" "release/maszyna-reloaded-${NAME//\//-}-${platform%%/*}.${file##*.}"
+            suffix=; case "$file" in *-setup.*) suffix=-setup ;; esac
+            mv "$file" "release/maszyna-reloaded-${NAME//\//-}-${platform%%/*}${suffix}.${file##*.}"
           done
 
       - name: Publish the branch prerelease

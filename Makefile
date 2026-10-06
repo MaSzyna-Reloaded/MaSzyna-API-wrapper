@@ -1,4 +1,4 @@
-.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols release-clear-godot-cache
+.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols release-clear-godot-cache windows-installer-image
 .DEFAULT_GOAL = compile-debug
 
 # The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
@@ -6,6 +6,7 @@
 LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
 ANDROID_APK:=bin/android/maszyna-reloaded-android-arm64.apk
 WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
+WINDOWS_SETUP:=bin/windows/maszyna-reloaded-win64-setup.exe
 BUILD_NUMBER_FILE:=demo/build_number.txt
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
@@ -35,6 +36,9 @@ GODOT_SCONS=scons precision=double production=yes -j$(CMAKE_BUILD_JOBS)
 LINUX_TEMPLATE:=$(GODOT_BIN)/godot.linuxbsd.template_release.double.x86_64
 ANDROID_TEMPLATES:=$(GODOT_BIN)/android_release.apk $(GODOT_BIN)/android_debug.apk
 LINUX_TEMPLATE_INSTALLED:=$(HOME)/.local/share/godot/export_templates/$(GODOT_VERSION).stable.double/linux_release.x86_64
+# The Windows installer is made by NSIS in ci/docker/windows-installer, mounted the same way
+WINDOWS_INSTALLER_IMAGE:=maszyna-windows-installer
+WINDOWS_INSTALLER_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(WINDOWS_INSTALLER_IMAGE)
 
 #Helper for CLion so it would see generated bindings
 generate-bindings: $(CMAKE_GODOTCPP_API_FILE)
@@ -187,6 +191,9 @@ compile-android-release: $(BUILD_NUMBER_FILE)
 linux-sdk-image:
 	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
 
+windows-installer-image:
+	docker build -q -t $(WINDOWS_INSTALLER_IMAGE) ci/docker/windows-installer
+
 
 # The SDK container has no Godot, so the API the build binds against is dumped on the host first
 extension_api.json:
@@ -255,11 +262,16 @@ release-linux: release-clear-godot-cache compile-debug compile-release-linux $(L
 	@echo "Exported: $(LINUX_ZIP)"
 
 
-release-windows: release-clear-godot-cache compile-debug compile-windows-release
+release-windows: release-clear-godot-cache compile-debug compile-windows-release windows-installer-image
 	mkdir -p bin/windows
 	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
 	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
 	@echo "Exported: $(WINDOWS_ZIP)"
+	$(WINDOWS_INSTALLER_RUN) sh -c 'rm -rf bin/windows/installer && unzip -q $(WINDOWS_ZIP) -d bin/windows/installer \
+	    && makensis -V2 -DSOURCE_DIR=$(CURDIR)/bin/windows/installer -DBUILD_NUMBER=$$(cat $(BUILD_NUMBER_FILE)) \
+	       -DOUTFILE=$(CURDIR)/$(WINDOWS_SETUP) ci/windows/maszyna-reloaded.nsi \
+	    && rm -rf bin/windows/installer'
+	@echo "Exported: $(WINDOWS_SETUP)"
 
 
 release-android: release-clear-godot-cache compile-debug compile-android-release

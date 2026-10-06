@@ -711,6 +711,9 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * The engine is built without Swappy and AccessKit, which the official builds carry.
 * Android: only `arm64`; the `android_x86_64` preset has no template.
 * The `maszyna-reloaded-<branch>` prerelease of a pull request stays after it is merged or closed.
+* The Windows installer and the exe are unsigned: SmartScreen asks "Run anyway". Candidates:
+  SignPath Foundation (free for open source, signs in GitHub Actions), Certum Open Source Code
+  Signing (cloud key, awkward in CI), Azure Trusted Signing (eligibility for individuals limited).
 
 ## Data the original reads that the wrapper does not read yet
 

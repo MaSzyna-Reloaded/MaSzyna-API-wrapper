@@ -29,16 +29,24 @@ static func _list_indexed_skins(index_path: String, file_name: String) -> Array[
     # the descriptions are cp1250; file and vehicle names, all that is read here, are ASCII
     var lines: PackedStringArray = FileAccess.get_file_as_bytes(index_path).get_string_from_ascii().split("\n")
     for line: String in lines:
-        line = line.get_slice("//", 0).strip_edges()
-        if not line.contains("=") or line.left(1) in RULE_PREFIXES:
+        var entry: PackedStringArray = parse_skin_line(line)
+        if not entry or not entry[0].to_lower() == file_name.to_lower():
             continue
-        var vehicle: String = line.get_slice("=", 1).get_slice(",", 0).strip_edges()
-        if not vehicle.to_lower() == file_name.to_lower():
-            continue
-        var skin: String = line.get_slice("=", 0).strip_edges().get_basename()
-        if not skin in skins:
-            skins.append(skin)
+        if not entry[1] in skins:
+            skins.append(entry[1])
     return skins
+
+
+## The vehicle and the skin of one line of a textures.txt, as [vehicle, skin]; empty for a line
+## that names no skin - a rule, a comment or nothing (vehicles_bank::parse_entry(),
+## launcher/textures_scanner.cpp:28)
+static func parse_skin_line(line: String) -> PackedStringArray:
+    line = line.get_slice("//", 0).strip_edges()
+    if not line.contains("=") or line.left(1) in RULE_PREFIXES:
+        return PackedStringArray()
+    return PackedStringArray([
+            line.get_slice("=", 1).get_slice(",", 0).strip_edges(),
+            line.get_slice("=", 0).strip_edges().get_basename()])
 
 
 static func _list_material_skins(vehicle_dir: String) -> Array[String]:

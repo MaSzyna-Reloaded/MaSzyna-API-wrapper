@@ -131,6 +131,35 @@ static func load_model_filename(structure:MaszynaVehicleStructure, load_name:Str
     return generic if _model_exists(structure.data_path, generic) else ""
 
 
+## The vehicle's exterior as its MMD names it - the body model, and its attachments as its
+## children, drawn in its frame (DynObj.cpp:5384) - in the skin, drawn by RenderingServer instances
+## (OPTIMIZED): a vehicle to look at - the vehicle viewer, a vehicle dragged into the editor's 3D
+## view - not to run. Lies in the model's own frame; MASZYNA_VEHICLE_FRAME turns it as a vehicle.
+static func build_exterior(data_path:String, file_name:String, skin:String, vehicle_name:String) -> E3DModelInstance:
+    var normalized_data_path:String = data_path if data_path.begins_with("/") else "/" + data_path
+    var game_dir:String = UserSettings.get_maszyna_game_dir()
+    var relative_path:String = normalized_data_path.trim_prefix("/").path_join(file_name + ".mmd")
+    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
+    var parameters:Dictionary = MmdCabinInstancer.vehicle_parameters(vehicle_name, file_name, skin)
+    var body_model:String = MmdCabinInstancer.parse_body_model(abs_mmd_path, parameters)
+    if not body_model:
+        body_model = file_name
+    var skins:Array = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
+    var exterior:E3DModelInstance = E3DModelInstance.new()
+    exterior.instancer = E3DModelInstance.Instancer.OPTIMIZED
+    exterior.data_path = normalized_data_path
+    exterior.model_filename = body_model
+    exterior.skins = skins
+    for attachment_filename:String in MmdCabinInstancer.parse_attachments(abs_mmd_path, parameters):
+        var attachment:E3DModelInstance = E3DModelInstance.new()
+        attachment.instancer = E3DModelInstance.Instancer.OPTIMIZED
+        attachment.data_path = normalized_data_path
+        attachment.model_filename = attachment_filename
+        attachment.skins = skins
+        exterior.add_child(attachment)
+    return exterior
+
+
 static func _model_exists(data_path:String, relpath:String) -> bool:
     if not relpath:
         return false

@@ -320,6 +320,12 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
     `SceneryChunkNode`), removed automatically or on request; losing changes is acceptable.
   * Trainsets tab: "Show" puts marker nodes and selects them; a hand-made `TrainSet3D` lists no
     vehicles right after its scene is opened.
+  * Vehicles tab (spawner): a vehicle is placed only by a track name and offset [m]; spawning at
+    a kilometre needs the scenery's mileposts and a lookup from kilometre to track and offset
+    (none exists - only `TimetableEntry.kilometre`).
+  * Operator's direction: a toolbar tool "Make trainset" for 1+ selected `MaszynaRailVehicle3D`s
+    puts them into a new `TrainSet3D`; vehicles that belong to a trainset are detached from it
+    into the new one.
   * The HUD's "remove trainset" frees only vehicles built from MaSzyna data.
   * A vehicle coming within detail distance is built twice
     (`instance_attach_node()` then `instance_set_instancer()`).

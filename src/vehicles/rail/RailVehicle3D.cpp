@@ -4,6 +4,7 @@
 #include "vehicles/rail/RailVehicleRenderingServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
@@ -74,6 +75,8 @@ namespace godot {
     void RailVehicle3D::_notification(const int p_what) {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE: {
+                // moved in the editor (its gizmo), the vehicle on no track goes along
+                set_notify_transform(Engine::get_singleton()->is_editor_hint());
                 if (TrackServer *tracks = TrackServer::get_instance(); tracks != nullptr) {
                     tracks->connect(
                             TrackServer::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_tracks_changed));
@@ -96,6 +99,18 @@ namespace godot {
                     drawing->vehicle_set_scenario(
                             rid, p_what == NOTIFICATION_ENTER_WORLD ? get_world_3d()->get_scenario() : RID());
                 }
+            } break;
+            // a vehicle on no track stands where its node does; on a track the node rides on the
+            // vehicle instead - and the vehicle moving the node lands here with its own transform
+            case NOTIFICATION_TRANSFORM_CHANGED: {
+                const RailVehicleServer *rail_vehicles = RailVehicleServer::get_instance();
+                RailVehicleRenderingServer *drawing = RailVehicleRenderingServer::get_instance();
+                if (rail_vehicles == nullptr || drawing == nullptr || !drawing->vehicle_is_attached(rid) ||
+                    RID(rail_vehicles->vehicle_get_track_position(rid).get("track_rid", RID())).is_valid() ||
+                    drawing->vehicle_get_transform(rid).is_equal_approx(get_global_transform())) {
+                    break;
+                }
+                drawing->vehicle_set_transform(rid, get_global_transform());
             } break;
             default:
                 break;

@@ -67,29 +67,10 @@ func _build_model(skin: String) -> void:
     if _model:
         _model.queue_free()
 
-    var game_dir:String = UserSettings.get_maszyna_game_dir()
-    var relative_path:String = _data_path.trim_prefix("/").path_join(_vehicle.file_name + ".mmd")
-    var abs_mmd_path:String = game_dir.path_join(MaszynaDataPath.resolve(game_dir, relative_path))
-    var parameters: Dictionary = MmdCabinInstancer.vehicle_parameters(_vehicle.train_id, _vehicle.file_name, skin)
-    var body_model: String = MmdCabinInstancer.parse_body_model(abs_mmd_path, parameters)
-    if not body_model:
-        body_model = _vehicle.file_name
-    var skins: Array = MmdCabinInstancer.resolve_skins(_data_path, skin)
-    _model = E3DModelInstance.new()
-    _model.instancer = E3DModelInstance.Instancer.OPTIMIZED
-    _model.data_path = _data_path
-    _model.model_filename = body_model
-    _model.skins = skins
+    _model = MaszynaRailVehicle3DInstancer.build_exterior(_data_path, _vehicle.file_name, skin, _vehicle.train_id)
     _attachments.clear()
-    # the attachments are drawn in the exterior's frame (DynObj.cpp:5384), so they turn with it
-    for attachment_filename: String in MmdCabinInstancer.parse_attachments(abs_mmd_path, parameters):
-        var attachment := E3DModelInstance.new()
-        attachment.instancer = E3DModelInstance.Instancer.OPTIMIZED
-        attachment.data_path = _data_path
-        attachment.model_filename = attachment_filename
-        attachment.skins = skins
-        _model.add_child(attachment)
-        _attachments.append(attachment)
+    for attachment:Node in _model.get_children():
+        _attachments.append(attachment as E3DModelInstance)
     %ModelRoot.add_child(_model)
     _frame_model()
 

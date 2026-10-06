@@ -31,7 +31,7 @@ func add_vehicle_profile(tooltip:String) -> TextureRect:
 
 
 ## The side view in its place, as wide as the vehicle is long
-static func show_profile(profile:TextureRect, texture:Texture2D) -> void:
+func show_profile(texture:Texture2D, profile:TextureRect) -> void:
     profile.texture = texture
     profile.custom_minimum_size = Vector2(
             PROFILE_HEIGHT * float(texture.get_width()) / float(texture.get_height()), PROFILE_HEIGHT)

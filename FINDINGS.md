@@ -113,7 +113,8 @@ anything. Open work belongs in `TODO.md`.
 * A Mover field every engine type computes (EngineVoltage) is published by the part they all
   have, not by the first subclass that needed it. *(09-29 the E186 screen showed no line voltage)*
 * Grep every `extract_value(..., "Key")` of LoadFIZ_Cntrl against the parser before calling the
-  section ported. *(09-29 MainInitTime was never loaded)*
+  section ported. *(09-29 MainInitTime was never loaded; 10-06 EN57 braked weakly - its trailers'
+  wheels locked)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
   for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
 * Most `OnCommand_*` work without their gauge; those that refuse (`ggX.SubModel == nullptr`) are

@@ -136,6 +136,12 @@ namespace godot {
                 LOCAL_BRAKE_TYPE_HYDRAULIC,
             };
             /* ASB= : anti-skid brake control method */
+            /* How the train brake handle answers a key: a position per press, or moving while the key
+               is held (OnCommand_trainbrakeincrease(), Train.cpp:1960-1966) */
+            enum BrakeHandleMovement {
+                BRAKE_HANDLE_MOVEMENT_STEPPED,
+                BRAKE_HANDLE_MOVEMENT_CONTINUOUS,
+            };
             enum AntiSkidBrakeType {
                 ANTI_SKID_BRAKE_NONE,
                 ANTI_SKID_BRAKE_MANUAL,
@@ -301,8 +307,42 @@ namespace godot {
             MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 0.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 0.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 0.0);
+
+        private:
+            /* MaxBPMass= [t]: the mass at which the cylinders reach MaxBP, an empty car TareMaxBP and a
+               load between them in proportion (MBPM, Mover.cpp:10771, TEStEP2::PLC(), hamulce.cpp:1264);
+               0 when absent - the cylinders then always reach MaxBP */
+            double cntrl_max_brake_pressure_mass = 0.0;
+
+        public:
+            double get_cntrl_max_brake_pressure_mass() const {
+                return cntrl_max_brake_pressure_mass;
+            }
+            void set_cntrl_max_brake_pressure_mass(const double p_value) {
+                cntrl_max_brake_pressure_mass = p_value;
+            }
             MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_NONE);
             MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_NO_HANDLE);
+
+        private:
+            /* How the handle answers a key; the positions brake_level_increase()/_decrease() move it
+               (Global.fBrakeStep, Globals.h:194) */
+            BrakeHandleMovement handle_movement = BRAKE_HANDLE_MOVEMENT_STEPPED;
+            double handle_step = 1.0;
+
+        public:
+            BrakeHandleMovement get_handle_movement() const {
+                return handle_movement;
+            }
+            void set_handle_movement(const BrakeHandleMovement p_value) {
+                handle_movement = p_value;
+            }
+            double get_handle_step() const {
+                return handle_step;
+            }
+            void set_handle_step(const double p_value) {
+                handle_step = p_value;
+            }
             MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_NONE);
             MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_NONE);
             MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_local_brake_handle_type, BRAKE_HANDLE_TYPE_NO_HANDLE);
@@ -360,6 +400,7 @@ VARIANT_ENUM_CAST(RailVehicleBrake::BrakeMethod)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeHandleType)
 VARIANT_ENUM_CAST(RailVehicleBrake::LocalBrakeType)
 VARIANT_ENUM_CAST(RailVehicleBrake::AntiSkidBrakeType)
+VARIANT_ENUM_CAST(RailVehicleBrake::BrakeHandleMovement)
 VARIANT_ENUM_CAST(RailVehicleBrake::DynamicBrakeType)
 VARIANT_ENUM_CAST(RailVehicleBrake::BrakeDelaySetting)
 VARIANT_ENUM_CAST(RailVehicleBrake::HandlePosition)

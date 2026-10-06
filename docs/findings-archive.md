@@ -3933,3 +3933,20 @@ lighting or the trainset.
   by them.
 * **Rule:** a hint about a device is done by the device's switch on any vehicle of the consist
   that has it, not by the device running on the controlling car.
+
+## 2026-10-06 EN57 braked weakly - its trailers' wheels locked
+
+* **Symptom:** an EN57 (EN57-636ra, `pkp/en57_v2`) braked as if its brakes barely worked.
+* **What proved it:** `test_zzz_startup_en57_v2.gd`'s fixture (cut by `cut-vehicle-fixture`, which
+  needed `find_path()` for an include in `misc/`), braked from 40 km/h at FVel6's position 3: every
+  car's cylinders reached MaxBP 4 bar, and at ~26 km/h the trailers' brake force fell from 82 kN to
+  28 kN at the same pressure - locked wheels. The cars give `MaxBPMass=52` and `TareMaxBP=2.5`:
+  an empty 34 t car brakes at 2.5 bar (`TEStEP2::PLC()`, hamulce.cpp:1264, from
+  `SetLP(Mass, MBPM, TareMaxBP)`, Mover.cpp:11763). No FIZ parser read `MaxBPMass`, so `MBPM` kept
+  its 1.0 and every car braked as fully loaded.
+* **Fix:** `RailVehicleBrake.cntrl_max_brake_pressure_mass` [t], read from `Cntrl.` and given to the
+  Mover in kilograms (Mover.cpp:10771-10775); `FIZ_PARSER_FORMAT_VERSION` 43. The trailers now brake
+  at 2.49 bar, the motor car at 2.79.
+* **Rule:** grep every `extract_value()` key of a `LoadFIZ_*` against the parser before trusting a
+  vehicle's physics; the keys still unread are in `TODO.md`.
+

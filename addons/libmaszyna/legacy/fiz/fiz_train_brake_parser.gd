@@ -248,6 +248,9 @@ func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportConte
         node.cntrl_brake_delay_3 = FizLineUtil.get_float(kv, "BDelay3")
     if kv.has("BDelay4"):
         node.cntrl_brake_delay_4 = FizLineUtil.get_float(kv, "BDelay4")
+    # the mass the cylinders reach MaxBP at [t] (Mover.cpp:10771)
+    if kv.has("MaxBPMass"):
+        node.cntrl_max_brake_pressure_mass = FizLineUtil.get_float(kv, "MaxBPMass")
 
     var delays_str: String = FizLineUtil.get_string(kv, "BrakeDelays").to_lower()
     if _DELAY_MAP.has(delays_str):
@@ -262,6 +265,10 @@ func apply_cntrl(kv: Dictionary, node: RailVehicleBrake, context: FizImportConte
     var handle_str: String = FizLineUtil.get_string(kv, "BrakeHandle").to_lower()
     if _HANDLE_TYPE_MAP.has(handle_str):
         node.cntrl_brake_handle_type = _HANDLE_TYPE_MAP[handle_str]
+    # a key moves an FV4a while held, any other handle a position per press
+    # (OnCommand_trainbrakeincrease(), Train.cpp:1960-1966)
+    if node.cntrl_brake_handle_type == RailVehicleBrake.BRAKE_HANDLE_TYPE_FV4A:
+        node.handle_movement = RailVehicleBrake.BRAKE_HANDLE_MOVEMENT_CONTINUOUS
     var loc_handle_str: String = FizLineUtil.get_string(kv, "LocBrakeHandle").to_lower()
     if _LOCAL_HANDLE_TYPE_MAP.has(loc_handle_str):
         node.cntrl_local_brake_handle_type = _LOCAL_HANDLE_TYPE_MAP[loc_handle_str]

@@ -54,7 +54,9 @@ static func wiring(
                 "command_set": fields.get("command_set", ""),
                 "position_commands": fields.get("position_commands", {}), "target": target}
     if widget_class == CabinKnob:
-        return {"kind": &"knob", "command": fields.get("command", ""), "target": target}
+        return {"kind": &"knob", "command": fields.get("command", ""),
+                "command_increase": fields.get("command_increase", ""),
+                "command_decrease": fields.get("command_decrease", ""), "target": target}
     return {}
 
 
@@ -65,6 +67,12 @@ static func _handle(state:CabinState, action:StringName, value:Variant, wiring:D
         &"switch":
             return _handle_switch(state, action, value, wiring)
         &"knob":
+            # a step of a knob that steps (a key press) is the vehicle's own command
+            var step_command:String = (
+                    wiring["command_increase"] if action == &"increase"
+                    else wiring["command_decrease"] if action == &"decrease" else "")
+            if step_command:
+                return state.send_vehicle_command(step_command, null, null, wiring["target"])
             state.set_value(wiring["control_id"], value)
             if wiring["command"]:
                 return state.send_vehicle_command(wiring["command"], value, null, wiring["target"])

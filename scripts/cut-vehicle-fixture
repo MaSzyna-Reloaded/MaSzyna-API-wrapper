@@ -93,7 +93,7 @@ def substitute(text, parameters):
 
 def include_closure(vehicle_dir, filename, parameters, found, missing):
     """Every file a FIZ/MMD reads, through its includes; paths are the vehicle directory's"""
-    path = find_file(vehicle_dir, filename)
+    path = find_path(vehicle_dir, filename)
     if path is None:
         missing.append(os.path.join(vehicle_dir, filename))
         return

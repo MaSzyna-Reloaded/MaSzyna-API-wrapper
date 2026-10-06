@@ -739,6 +739,13 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   applied (`SetLightDimmings`, DynObj.cpp:7298-7358); no vehicle uses it.
 * **`.flac`** sounds: Godot reads no FLAC; no game data uses it.
 * **`eimscreen: i j`**: no gauge reads `fEIMParams` (no data uses it).
+* **`Cntrl.` keys no FIZ parser reads** (`LoadFIZ_Cntrl`, Mover.cpp:10707; grep of every
+  `extract_value()` key against `addons/libmaszyna/legacy/fiz/`, 2026-10-06 - each to be checked,
+  some may be read under another spelling): `BackwardsBranchesAllowed`, `BBHT`, `BDelay` (the
+  plain one), `ConverterOverloadWhenMainIsOff`, `DBAM`, `DBPN`, `DCDPP`, `DCMB`, `HAO`, `HGDP1`,
+  `HGDP2`, `HideDirStatusSpeed`, `HideDirStatusWhenMoving`, `HMO`, `IBTB`, `MaxTachoSpeed`, `OMP`,
+  `OPD`, `SBBBH`, `SBD`, `SCIM`, `SplitEDPneumaticBrake`. `MaxBPMass` was one of them (EN57's
+  trailers braked at MaxBP and locked their wheels, `docs/findings-archive.md` 2026-10-06).
 
 ## Grass and trees vanishing up close (report 2026-10-05)
 

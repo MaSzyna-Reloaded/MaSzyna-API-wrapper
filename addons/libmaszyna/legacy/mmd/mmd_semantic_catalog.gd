@@ -129,6 +129,9 @@ static func _ensure_built() -> void:
                 "state_property": "brake_controller_position_normalized",
                 "action_increase": "brake_level_increase",
                 "action_decrease": "brake_level_decrease",
+                # a handle that steps takes a position per key press (Train.cpp:1964-1965)
+                "command_increase": "brake_level_increase",
+                "command_decrease": "brake_level_decrease",
                 # Quirk: the grip heuristic of CabinHUDMouseSystem got SM42's valve backwards - its
                 # handle swings first down, then to the right towards full braking. Down and right
                 # brake, as the original's slider does for the train brake (mouse_slider,
@@ -146,6 +149,8 @@ static func _ensure_built() -> void:
                 "brakes_controller_position_emergency": "emergency braking",
             },
             "config_max_property": "",
+            # the vehicle's handle steps a position per key press, or moves while the key is held
+            "key_stepped_from_config": "brake_handle_movement",
             "mesh_path_field": "mesh_path",
             # brake_level_set expects a normalized 0..1 level (RailVehicleBrake.cpp converts it back to
             # raw internally), so the widget's own value/command domain has to stay normalized -
@@ -2684,6 +2689,12 @@ static func resolve_fields(label:String, button_type:CabinButton.ButtonType, veh
         var monostable_property:String = entry.get("monostable_from_config", "")
         if monostable_property:
             fields["monostable"] = bool(vehicle_config.get(monostable_property, fields.get("monostable", false)))
+    # A knob whose key steps or holds as the vehicle's handle does (the train brake handle,
+    # Train.cpp:1960-1966)
+    var key_stepped_property:String = entry.get("key_stepped_from_config", "")
+    if key_stepped_property:
+        fields["key_stepped"] = int(vehicle_config.get(key_stepped_property,
+                RailVehicleBrake.BRAKE_HANDLE_MOVEMENT_STEPPED)) == RailVehicleBrake.BRAKE_HANDLE_MOVEMENT_STEPPED
     var config_max_property:String = entry.get("config_max_property", "")
     if config_max_property and entry.get("widget_class") == CabinSwitch and vehicle_config.has(config_max_property):
         fields["switch_max_position"] = int(vehicle_config[config_max_property])

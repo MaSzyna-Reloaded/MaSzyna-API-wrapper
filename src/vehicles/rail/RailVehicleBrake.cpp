@@ -96,6 +96,12 @@ namespace godot {
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_2, "cntrl")
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_3, "cntrl")
         BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_brake_delay_4, "cntrl")
+        BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, cntrl_max_brake_pressure_mass, "cntrl")
+        BIND_PROPERTY_W_HINT(
+                RailVehicleBrake, Variant::INT, handle_movement, "handle", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"Stepped", BRAKE_HANDLE_MOVEMENT_STEPPED}, {"Continuous", BRAKE_HANDLE_MOVEMENT_CONTINUOUS}}))
+        BIND_PROPERTY(RailVehicleBrake, Variant::FLOAT, handle_step, "handle")
         BIND_PROPERTY_W_HINT(
                 RailVehicleBrake, Variant::INT, cntrl_brake_op_modes, "cntrl", PROPERTY_HINT_ENUM,
                 enum_hint(
@@ -156,6 +162,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_MANUAL);
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_AUTOMATIC);
         BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_YES);
+
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_MOVEMENT_STEPPED);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_MOVEMENT_CONTINUOUS);
 
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_NONE);
         BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_PASSIVE);

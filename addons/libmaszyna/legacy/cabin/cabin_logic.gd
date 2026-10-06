@@ -258,6 +258,9 @@ func increase(control_id:StringName) -> void:
         &"switch":
             _move_switch(control_id, binding, _switch_position(control_id, binding) + 1)
         &"knob":
+            if binding["fields"].get("key_stepped", false):
+                CabinSystem.act(_cabin, control_id, &"increase")
+                return
             _hold_knob(control_id, binding, binding["fields"].get("step", KNOB_KEY_SPEED))
 
 
@@ -267,6 +270,9 @@ func decrease(control_id:StringName) -> void:
         &"switch":
             _move_switch(control_id, binding, _switch_position(control_id, binding) - 1)
         &"knob":
+            if binding["fields"].get("key_stepped", false):
+                CabinSystem.act(_cabin, control_id, &"decrease")
+                return
             _hold_knob(control_id, binding, -binding["fields"].get("step", KNOB_KEY_SPEED))
 
 

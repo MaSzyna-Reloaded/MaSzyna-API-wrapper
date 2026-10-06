@@ -33,13 +33,13 @@
 		<method name="brake_level_decrease">
 			<return type="void" />
 			<description>
-				Moves the main brake handle one step toward release (less braking). Clamped at the minimum position.
+				Moves the main brake handle [member handle_step] positions toward release (less braking). Clamped at the minimum position.
 			</description>
 		</method>
 		<method name="brake_level_increase">
 			<return type="void" />
 			<description>
-				Moves the main brake handle one step toward more braking. Clamped at the maximum position.
+				Moves the main brake handle [member handle_step] positions toward more braking. Clamped at the maximum position.
 			</description>
 		</method>
 		<method name="brake_level_set">
@@ -406,6 +406,9 @@
 		<member name="cntrl_manual_brake_present" type="bool" setter="set_cntrl_manual_brake_present" getter="get_cntrl_manual_brake_present" default="false">
 			[code]Cntrl.ManualBrake[/code]
 		</member>
+		<member name="cntrl_max_brake_pressure_mass" type="float" setter="set_cntrl_max_brake_pressure_mass" getter="get_cntrl_max_brake_pressure_mass" default="0.0">
+			[code]Cntrl.MaxBPMass[/code] [t]: the mass at which the brake cylinders reach [member max_cylinder_pressure]; an empty car reaches [member max_tare_pressure] and a load between them in proportion. 0 when absent: the cylinders always reach [member max_cylinder_pressure].
+		</member>
 		<member name="cntrl_release_parking_by_spring_brake" type="bool" setter="set_cntrl_release_parking_by_spring_brake" getter="get_cntrl_release_parking_by_spring_brake" default="false">
 			[code]Cntrl.ReleaseParkingBySpringBrake[/code]
 		</member>
@@ -487,6 +490,12 @@
 		</member>
 		<member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle" getter="get_friction_elements_per_axle" default="1">
 			Number of friction elements per axle (0–4).
+		</member>
+		<member name="handle_movement" type="int" setter="set_handle_movement" getter="get_handle_movement" enum="RailVehicleBrake.BrakeHandleMovement" default="0">
+			How the train brake handle answers a key: [constant BRAKE_HANDLE_MOVEMENT_STEPPED] moves it [member handle_step] positions per press ([method brake_level_increase], [method brake_level_decrease]), [constant BRAKE_HANDLE_MOVEMENT_CONTINUOUS] while the key is held. The legacy FIZ import sets the continuous movement for an FV4a handle, as the original's cab does (Train.cpp:1960-1966).
+		</member>
+		<member name="handle_step" type="float" setter="set_handle_step" getter="get_handle_step" default="1.0">
+			The positions [method brake_level_increase] and [method brake_level_decrease] move the train brake handle (the original's [code]Global.fBrakeStep[/code]).
 		</member>
 		<member name="main_pipe_blocking_pressure" type="float" setter="set_main_pipe_blocking_pressure" getter="get_main_pipe_blocking_pressure" default="-1.0">
 			Main line blocking pressure
@@ -645,6 +654,12 @@
 		</constant>
 		<constant name="ANTI_SKID_BRAKE_YES" value="3" enum="AntiSkidBrakeType">
 			[code]ASB=Yes[/code]: the only kind a vehicle without a train brake handle takes.
+		</constant>
+		<constant name="BRAKE_HANDLE_MOVEMENT_STEPPED" value="0" enum="BrakeHandleMovement">
+			A key press moves the handle [member handle_step] positions.
+		</constant>
+		<constant name="BRAKE_HANDLE_MOVEMENT_CONTINUOUS" value="1" enum="BrakeHandleMovement">
+			The handle moves while the key is held.
 		</constant>
 		<constant name="DYNAMIC_BRAKE_NONE" value="0" enum="DynamicBrakeType">
 			No dynamic (ED) brake.

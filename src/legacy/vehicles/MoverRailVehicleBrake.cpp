@@ -9,6 +9,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    /* The data gives masses in tonnes, the Mover takes kilograms (Mover.cpp:10774) */
+    static constexpr double KILOGRAMS_PER_TONNE = 1000.0;
+
     void MoverRailVehicleBrake::_bind_methods() {}
 
 
@@ -74,13 +77,13 @@ namespace godot {
     void MoverRailVehicleBrake::brake_level_increase() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        mover->IncBrakeLevel();
+        mover->BrakeLevelAdd(get_handle_step());
     }
 
     void MoverRailVehicleBrake::brake_level_decrease() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        mover->DecBrakeLevel();
+        mover->BrakeLevelAdd(-get_handle_step());
     }
 
     // Original engine: "localbrake:"/ggLocalBrake (Train.cpp:10026) is the independent/loco
@@ -235,6 +238,8 @@ namespace godot {
         p_config["brakes_controller_position_ep_brake"] = get_handle_position(HANDLE_POSITION_EP_BRAKE);
         // the EP brake is applied by how long the handle is held (TDriverHandle::TimeEP)
         p_config["brake_handle_ep_time_controlled"] = get_handle_ep_time_controlled();
+        // a key moves the handle a position per press, or while held (Train.cpp:1960-1966)
+        p_config["brake_handle_movement"] = get_handle_movement();
         // a handle that sets the pipe pressure by how long it is held, not by where it stands
         // (TDriverHandle::Time, hamulce.cpp: MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405)
         p_config["brake_handle_time_controlled"] = get_handle_time_controlled();
@@ -536,13 +541,17 @@ namespace godot {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         /* logika z Mover::LoadFiz_Brake */
-        p_mover->BrakeSystem = brake_system_type_map.at(get_cntrl_brake_system());               // BrakeSystem
-        p_mover->BrakeCtrlPosNo = get_cntrl_brake_ctrl_position_count();                         // BCPN
-        p_mover->BrakeDelay[0] = get_cntrl_brake_delay_1();                                      // BDelay1
-        p_mover->BrakeDelay[1] = get_cntrl_brake_delay_2();                                      // BDelay2
-        p_mover->BrakeDelay[2] = get_cntrl_brake_delay_3();                                      // BDelay3
-        p_mover->BrakeDelay[3] = get_cntrl_brake_delay_4();                                      // BDelay4
-        p_mover->BrakeDelays = get_cntrl_brake_delays();                                         // BrakeDelays
+        p_mover->BrakeSystem = brake_system_type_map.at(get_cntrl_brake_system()); // BrakeSystem
+        p_mover->BrakeCtrlPosNo = get_cntrl_brake_ctrl_position_count();           // BCPN
+        p_mover->BrakeDelay[0] = get_cntrl_brake_delay_1();                        // BDelay1
+        p_mover->BrakeDelay[1] = get_cntrl_brake_delay_2();                        // BDelay2
+        p_mover->BrakeDelay[2] = get_cntrl_brake_delay_3();                        // BDelay3
+        p_mover->BrakeDelay[3] = get_cntrl_brake_delay_4();                        // BDelay4
+        p_mover->BrakeDelays = get_cntrl_brake_delays();                           // BrakeDelays
+        // MaxBPMass, in tonnes in the data and only then in kilograms (Mover.cpp:10771-10775)
+        if (get_cntrl_max_brake_pressure_mass() > 0.0) {
+            p_mover->MBPM = get_cntrl_max_brake_pressure_mass() * KILOGRAMS_PER_TONNE;
+        }
         p_mover->BrakeOpModes = get_cntrl_brake_op_modes();                                      // BrakeOpModes
         p_mover->BrakeHandle = brake_handle_type_map.at(get_cntrl_brake_handle_type());          // BrakeHandle
         p_mover->BrakeLocHandle = brake_handle_type_map.at(get_cntrl_local_brake_handle_type()); // LocBrakeHandle

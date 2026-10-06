@@ -23,6 +23,8 @@ namespace godot {
             /// The game directory in use, absolute - resolved where the configuration or the
             /// game_dir setting changes
             String game_dir;
+            /// The configuration as the file has it - last loaded or saved - what a change is told from
+            String saved_text;
 
             static constexpr const char *MASZYNA_GAMEDIR_SECTION = "maszyna";
             static constexpr const char *MASZYNA_GAMEDIR_KEY = "game_dir";
@@ -49,6 +51,8 @@ namespace godot {
             /// Set in memory and in effect at once; saved by save_config(), dropped by load_config()
             void set_setting(const String &p_section, const String &p_key, const Variant &p_value);
             void save_config();
+            /// Something set differs from what the file holds - set and not saved yet
+            bool is_config_changed() const;
             /// The player's value goes, in memory like set_setting(): a key with a default takes the
             /// default, a project setting the project's own value
             void erase_setting(const String &p_section, const String &p_key);

@@ -59,6 +59,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("save_setting", "section", "key", "value"), &UserSettings::save_setting);
         ClassDB::bind_method(D_METHOD("set_setting", "section", "key", "value"), &UserSettings::set_setting);
         ClassDB::bind_method(D_METHOD("save_config"), &UserSettings::save_config);
+        ClassDB::bind_method(D_METHOD("is_config_changed"), &UserSettings::is_config_changed);
         ClassDB::bind_method(D_METHOD("erase_setting", "section", "key"), &UserSettings::erase_setting);
 
         ClassDB::bind_method(
@@ -127,6 +128,7 @@ namespace godot {
                 _set_project_setting(key, config->get_value(PROJECT_SETTINGS_SECTION, key));
             }
         }
+        saved_text = config->encode_to_text();
 
         emit_signal("config_changed");
         if (game_dir != previous_game_dir) {
@@ -188,6 +190,13 @@ namespace godot {
 
         Error err = config->save(config_file_path);
         ERR_FAIL_COND_MSG(err != OK, "Cannot save user settings.");
+        saved_text = config->encode_to_text();
+    }
+
+    /* Told from the text of the whole configuration, so a value set and set back is no change */
+    bool UserSettings::is_config_changed() const {
+        ERR_FAIL_COND_V_MSG(config.is_null(), false, "UserSettings config is null.");
+        return config->encode_to_text() != saved_text;
     }
 
     void UserSettings::save_setting(const String &p_section, const String &p_key, const Variant &p_value) {

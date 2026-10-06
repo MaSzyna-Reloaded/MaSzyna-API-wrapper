@@ -35,6 +35,14 @@ func focus_page() -> void:
     %Title.text = _titles[_page]
 
 
+## F11 and the "Simulator" menu's entry: open, or - open already - closed as by its close button
+func toggle() -> void:
+    if visible:
+        ask_save_or_discard()
+        return
+    open()
+
+
 ## Up from the buttons: back to whichever of the two is shown
 func focus_content() -> void:
     if _page_open:

@@ -4,7 +4,8 @@ extends Control
 ## on the left, the settings of the selected one on the right, both built from settings.json. A
 ## change is in effect at once; "Save" writes the changes to the file and closes; "Discard
 ## changes", once the player confirms it, puts back what the file holds - what there was when the
-## screen opened - and closes; the close button and Escape ask whether to save or to discard. Tab
+## screen opened - and closes; the close button and Escape ask whether to save or to discard, or
+## close at once when nothing was changed. Tab
 ## and Shift+Tab walk the sidebar, the page and the buttons. The project's settings that a server
 ## reads at its init take effect on the next start (setting_row.gd). The window (UIWindow) keeps
 ## the keys and the mouse to itself.
@@ -170,8 +171,12 @@ func cancel() -> void:
 
 
 ## The close button and Escape, wherever the focus is (editing a value aside, which Escape ends):
-## the player chooses whether the changes are saved or discarded
+## the player chooses whether the changes are saved or discarded - with nothing changed it closes
 func ask_save_or_discard() -> void:
+    if not UserSettings.is_config_changed():
+        _ui_sounds.play(&"back_button")
+        _close()
+        return
     %CloseDialog.ask()
 
 

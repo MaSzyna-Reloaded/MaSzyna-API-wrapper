@@ -67,5 +67,5 @@ color = Color(0, 0, 0, 1)
 [connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
 [connection signal="game_dir_change_requested" from="SettingsPanel" to="." method="_exit_to_menu"]
 [connection signal="problem_report_requested" from="GameHud" to="BugReport" method="open_report"]
-[connection signal="settings_requested" from="GameHud" to="SettingsPanel" method="open"]
+[connection signal="settings_requested" from="GameHud" to="SettingsPanel" method="toggle"]
 [connection signal="settings_requested" from="ScenerySelectorScreen" to="SettingsScreen" method="open"]

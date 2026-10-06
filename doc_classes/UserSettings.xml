@@ -34,6 +34,12 @@
 				If the key does not exist, [param default_value] is returned.
 			</description>
 		</method>
+		<method name="is_config_changed" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether something set ([method set_setting], [method erase_setting]) differs from what the config file holds - since it was last loaded or saved. A value set and set back again is no change.
+			</description>
+		</method>
 		<method name="is_maszyna_game_dir" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="path" type="String" />

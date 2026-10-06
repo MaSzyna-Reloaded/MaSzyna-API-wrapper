@@ -578,6 +578,12 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   followed driver on coupling.
 * **The driver's hints to a player** (`cue_action()`, Driver.cpp:2759-2916) - a tooltip-styled
   HUD panel.
+  Report MaSzyna-Reloaded/reports#9 shows what is missing without it: a player who takes an EP07
+  or another locomotive with a manual three-way valve (no `PantAutoValve`) from the AI between
+  its small compressor going off and `control_pantographs()` (Driver.cpp:6226) setting the air
+  source back to the main reservoir keeps the pantograph tank cut off; it leaks, the line breaker
+  and the pantograph go down, and nothing tells the player to turn the valve
+  (`pantographairsourcesetmain`, driverhints.cpp:213). The original does the same, but hints it.
 * **Coupling and uncoupling - not checked on a scenery** (linia61, calkowo too heavy for a headless
   probe so far). Left: high voltage and power lines of a coupler number; `coupler_connect` joins in
   a fixed order; lights after the trainset changed (`CheckVehicles()`); `bh_EPB`; a coupling a

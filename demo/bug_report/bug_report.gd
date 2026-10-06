@@ -49,7 +49,7 @@ func open_report() -> void:
     %EdgeButton.retract()
     await RenderingServer.frame_post_draw
     var screenshot: Image = get_viewport().get_texture().get_image()
-    _snapshot = BugReportSnapshot.collect(_world, %Recorder, _started_msec)
+    _snapshot = BugReportSnapshot.collect(_world, _started_msec)
     %ReportDialog.begin(screenshot)
 
 
@@ -93,7 +93,8 @@ func send_report() -> void:
         session_log = file.get_buffer(mini(length, LOG_TAIL_BYTES))
     %ReportDialog.show_sending()
     %Sender.send(
-        report, JSON.stringify(_snapshot, "\t"), %ReportDialog.render_screenshot(), session_log
+        report, JSON.stringify(_snapshot, "\t"), %ReportDialog.render_screenshot(), session_log,
+        %Recorder.get_log()
     )
 
 

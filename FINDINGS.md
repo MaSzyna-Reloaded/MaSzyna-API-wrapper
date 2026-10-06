@@ -496,6 +496,9 @@ anything. Open work belongs in `TODO.md`.
 * Hold an `E3DModel` in a variable for as long as its submodels are used: freeing it clears
   every submodel (`E3DModel::clear()`), so `load_model(...).get_node(...)` gives a mesh-less
   submodel. *(09-29 submodels without meshes)*
+* A pantograph-air report is reproduced on a fixture whose FIZ matches its `PantAutoValve`: the
+  EP09 fixture has it, the EP07 (303E) does not, and the valve matters only without it.
+  *(10-06 EP09 fixture fills its pantographs on its own)*
 
 ## Sound
 * A method bound with different arguments is still one connection: when the key changes

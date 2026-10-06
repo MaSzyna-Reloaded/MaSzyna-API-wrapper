@@ -3649,3 +3649,16 @@ lighting or the trainset.
   `cabin_leave`/`cabin_enter` are registered commands.
 * **Rule:** outside a vehicle's own composition an action on it is a command, never a call of the
   controller's or a component's method (`CODE_STYLE.md`, "A vehicle is commanded, not called").
+
+## 2026-10-06 The EP09 fixture fills its pantographs from the main reservoir on its own
+
+* **Symptom:** a probe of report MaSzyna-Reloaded/reports#9 (EP07, pantograph tank cut off from
+  the main reservoir) on `startup_ep09_v1.scn` never lost its pantograph air: with the three-way
+  valve on the small compressor the tank still followed the main reservoir.
+* **What proved it:** `104e-039.fiz` has `PantAutoValve=Yes`, and `UpdatePantVolume()`
+  (Mover.cpp:783) then feeds the tank whenever it is below the main reservoir, whatever
+  `bPantKurek3` says. The 303E/EP07 files (`303e-ep.fiz`) have no `PantAutoValve`, so the valve
+  decides. The same probe on `ep07.scn` (EP07-424) reproduced the report.
+* **Fix:** none needed in the code; the probe moved to the EP07 fixture.
+* **Rule:** before reproducing a pantograph-air report on a fixture, check the fixture's FIZ for
+  `PantAutoValve` - the EP09 and the EP07 behave differently with the same valve.

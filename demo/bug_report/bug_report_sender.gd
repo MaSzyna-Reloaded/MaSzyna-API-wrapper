@@ -7,8 +7,8 @@ extends HTTPRequest
 ## multipart/form-data POST of text fields and one archive.
 ##   fields      "api_version", then the report's own: "title", "description", "build",
 ##               "scenery", "vehicle" (UTF-8 text; a field may be empty)
-##   attachments ATTACHMENTS_FILE (application/zip): SNAPSHOT_FILE, and SCREENSHOT_FILE and
-##               LOG_FILE (the session's log) when there are any
+##   attachments ATTACHMENTS_FILE (application/zip): SNAPSHOT_FILE, and SCREENSHOT_FILE, LOG_FILE
+##               (the session's log) and GAMEPLAY_LOG_FILE (BugReportRecorder) when there are any
 ## It answers JSON with the issue's "issue_url". The fields are enough to open the issue; the
 ## archive is the one file the issue links to.
 ##
@@ -31,6 +31,7 @@ const ATTACHMENTS_FILE: String = "report.zip"
 const SNAPSHOT_FILE: String = "snapshot.json"
 const SCREENSHOT_FILE: String = "screenshot.jpg"
 const LOG_FILE: String = "app.log"
+const GAMEPLAY_LOG_FILE: String = "gameplay.log"
 ## The archive of a report that is sent is made here, and gone once it is read
 const PACKING_DIRECTORY: String = "user://bug_reports_outgoing"
 const BOUNDARY_PREFIX: String = "MaSzynaReport"
@@ -46,13 +47,15 @@ static func is_available() -> bool:
 ## An empty screenshot or log is left out of the archive
 func send(
         report: Dictionary, snapshot: String, screenshot: PackedByteArray,
-        session_log: PackedByteArray) -> void:
+        session_log: PackedByteArray, gameplay_log: PackedByteArray) -> void:
     var endpoint: String = ProjectSettings.get_setting(ENDPOINT_SETTING)
     var files: Dictionary[String, PackedByteArray] = {SNAPSHOT_FILE: snapshot.to_utf8_buffer()}
     if screenshot:
         files[SCREENSHOT_FILE] = screenshot
     if session_log:
         files[LOG_FILE] = session_log
+    if gameplay_log:
+        files[GAMEPLAY_LOG_FILE] = gameplay_log
     var fields: Dictionary = fields_of(report)
     if not endpoint.begins_with("http://") and not endpoint.begins_with("https://"):
         # a directory per report, named by when it was made

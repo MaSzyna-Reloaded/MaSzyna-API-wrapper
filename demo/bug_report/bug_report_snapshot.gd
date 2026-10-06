@@ -3,8 +3,8 @@ extends RefCounted
 
 ## The state of the game a problem report carries, read at the moment the report is opened: the
 ## hardware, the scenario, the simulation and its weather, the camera, the streaming, the vehicles
-## and signal heads around the player and what the recorder kept. Read once per report - the
-## vehicles' dumps are no hot path here.
+## and signal heads around the player and the events ahead (what already happened is in the
+## recorder's gameplay log). Read once per report - the vehicles' dumps are no hot path here.
 
 ## Metres around the player's vehicle in which other vehicles and signal heads are reported
 const NEARBY_RADIUS: float = 2000.0
@@ -17,7 +17,7 @@ const LIGHT_LETTERS: Dictionary[SignallingServer.LightState, String] = {
 
 
 ## Everything, by section; the world is null when no scenery is running
-static func collect(world: SceneryWorld, recorder: BugReportRecorder, started_msec: int) -> Dictionary:
+static func collect(world: SceneryWorld, started_msec: int) -> Dictionary:
     var origin: Vector3 = RailVehicleServer.vehicle_get_transform(PlayerServer.player_get_vehicle()).origin
     return {
         "hardware": hardware(),
@@ -28,10 +28,8 @@ static func collect(world: SceneryWorld, recorder: BugReportRecorder, started_ms
         "vehicles": vehicles(origin),
         "signal_heads": signal_heads(origin),
         "events": {
-            "launched": recorder.get_launched_events(),
             "upcoming": upcoming_events(),
         },
-        "commands": recorder.get_commands(),
     }
 
 

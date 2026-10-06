@@ -2,60 +2,103 @@ class_name BugReportRecorder
 extends Node
 
 ## What a problem report cannot read back at the moment it is made: the commands the player's
-## vehicle received and the scenario's events that ran, from start() to stop(), the oldest dropped
-## past their limits. A command carries no sender, so the scenario's commands to the player's
-## vehicle are kept as well as the player's own.
+## vehicle received and the scenario's events that ran, from start() to stop(). They go to the
+## gameplay log as they come, not into memory, so a session of any length goes with the report. A
+## command carries no sender, so the scenario's commands to the player's vehicle are written as
+## well as the player's own. A command repeated without a pause - a lever dragged with the mouse, a
+## key held - is one line: the first one, its count and the last one's time and values.
 
-## Commands kept, the latest
-const MAX_COMMANDS: int = 500
-## Events that ran kept, the latest
-const MAX_LAUNCHED_EVENTS: int = 200
+## How much of the gameplay log's end goes with a report - it compresses well
+const LOG_TAIL_BYTES: int = 50 * 1024 * 1024
+## A command coming this soon after the same one [ms of real time] is counted on its line
+const REPEAT_GAP_MSEC: int = 1000
 
-## "<time> <simulation time> <vehicle> <command> <p1> <p2>", one line a command
-var _commands: PackedStringArray = []
-## "<time> <simulation time> <event> <activator>", one line an event
-var _launched_events: PackedStringArray = []
+## The gameplay log, started afresh with every scenery
+@export var log_path: String = "user://logs/gameplay.log"
+
+## Lines: "<time> <simulation time> <vehicle> <command> <p1> <p2>", for a repeated command
+## followed by "x<count> until <time> <simulation time> <p1> <p2>"; "<time> <simulation time>
+## <event> <activator>" for an event
+var _log: FileAccess = null
+## The last command, not written yet while it may repeat: its line, what tells a repeat (vehicle
+## and command), how many times it came, the last one's time and values and when it came
+var _repeated_line: String = ""
+var _repeated_key: String = ""
+var _repeats: int = 0
+var _repeated_last: String = ""
+var _repeated_msec: int = 0
 
 
 ## For a scenery being started
 func start() -> void:
+    DirAccess.make_dir_recursive_absolute(log_path.get_base_dir())
+    _log = FileAccess.open(log_path, FileAccess.WRITE)
     VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     ScenarioEventServer.event_launched.connect(_on_event_launched)
 
 
-## For a scenery being left: what it kept goes with it
+## For a scenery being left: the log is closed, and stays until the next scenery starts
 func stop() -> void:
     VehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     ScenarioEventServer.event_launched.disconnect(_on_event_launched)
-    _commands.clear()
-    _launched_events.clear()
+    _write_repeated()
+    _log = null
 
 
-## The commands the player's vehicle received, a line each, the oldest first
-func get_commands() -> PackedStringArray:
-    return _commands
-
-
-## The scenario's events that ran, a line each, the oldest first
-func get_launched_events() -> PackedStringArray:
-    return _launched_events
+## The gameplay log's last LOG_TAIL_BYTES, with the command still being counted
+func get_log() -> PackedByteArray:
+    if not _log:
+        return PackedByteArray()
+    _log.flush()
+    var file: FileAccess = FileAccess.open(log_path, FileAccess.READ)
+    if not file:
+        return PackedByteArray()
+    var length: int = file.get_length()
+    file.seek(maxi(length - LOG_TAIL_BYTES, 0))
+    var tail: PackedByteArray = file.get_buffer(mini(length, LOG_TAIL_BYTES))
+    if _repeated_line:
+        tail.append_array((_repeated_text() + "\n").to_utf8_buffer())
+    return tail
 
 
 func _on_vehicle_command_received(vehicle_rid: RID, command: String, p1: Variant, p2: Variant) -> void:
     if not vehicle_rid == PlayerServer.player_get_vehicle():
         return
-    if _commands.size() == MAX_COMMANDS:
-        _commands.remove_at(0)
-    _commands.append("%s %.3f %s %s %s %s" % [
-        Time.get_time_string_from_system(), SimulationServer.simulation_get_time(),
-        VehicleServer.vehicle_get_name(vehicle_rid), command, p1, p2
-    ])
+    var key: String = "%s %s" % [VehicleServer.vehicle_get_name(vehicle_rid), command]
+    var now: int = Time.get_ticks_msec()
+    if key == _repeated_key and now - _repeated_msec <= REPEAT_GAP_MSEC:
+        _repeats += 1
+        _repeated_last = "%s %s %s" % [_time_text(), p1, p2]
+    else:
+        _write_repeated()
+        _repeated_key = key
+        _repeated_line = "%s %s %s %s" % [_time_text(), key, p1, p2]
+        _repeats = 1
+    _repeated_msec = now
 
 
 func _on_event_launched(event: RID, activator: RID) -> void:
-    if _launched_events.size() == MAX_LAUNCHED_EVENTS:
-        _launched_events.remove_at(0)
-    _launched_events.append("%s %.3f %s %s" % [
-        Time.get_time_string_from_system(), SimulationServer.simulation_get_time(),
-        ScenarioEventServer.event_get_name(event), VehicleServer.vehicle_get_name(activator)
+    _write_repeated()
+    _log.store_line("%s %s %s" % [
+        _time_text(), ScenarioEventServer.event_get_name(event), VehicleServer.vehicle_get_name(activator)
     ])
+
+
+## The command being counted goes to the log, and the next one starts a line of its own
+func _write_repeated() -> void:
+    if not _repeated_line:
+        return
+    _log.store_line(_repeated_text())
+    _repeated_line = ""
+    _repeated_key = ""
+
+
+func _repeated_text() -> String:
+    if _repeats == 1:
+        return _repeated_line
+    return "%s x%d until %s" % [_repeated_line, _repeats, _repeated_last]
+
+
+## "<time> <simulation time>" of a line
+func _time_text() -> String:
+    return "%s %.3f" % [Time.get_time_string_from_system(), SimulationServer.simulation_get_time()]

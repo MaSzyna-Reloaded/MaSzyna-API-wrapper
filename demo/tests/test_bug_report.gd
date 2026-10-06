@@ -16,7 +16,7 @@ func before_each() -> void:
 
 func after_each() -> void:
     ProjectSettings.set_setting(BugReportSender.ENDPOINT_SETTING, _endpoint)
-    # only the test of saving makes the directory
+    # only the tests that write files make the directory
     if not DirAccess.dir_exists_absolute(REPORTS_DIRECTORY):
         return
     for directory: String in DirAccess.get_directories_at(REPORTS_DIRECTORY):
@@ -44,14 +44,12 @@ func test_hardware_names_the_build_and_the_graphics_adapter() -> void:
 
 
 func test_a_snapshot_without_a_scenery_is_valid_json() -> void:
-    var recorder: BugReportRecorder = autofree(BugReportRecorder.new())
-
-    var snapshot: Dictionary = BugReportSnapshot.collect(null, recorder, Time.get_ticks_msec())
+    var snapshot: Dictionary = BugReportSnapshot.collect(null, Time.get_ticks_msec())
 
     var parsed: Variant = JSON.parse_string(JSON.stringify(snapshot))
     assert_true(parsed is Dictionary, "the snapshot should survive JSON")
     for section: String in ["hardware", "scenario", "simulation", "camera", "streaming", "vehicles",
-            "signal_heads", "events", "commands"]:
+            "signal_heads", "events"]:
         assert_has(parsed, section, "the snapshot should have its %s" % section)
 
 
@@ -98,7 +96,8 @@ func test_a_directory_endpoint_saves_the_report_instead_of_sending_it() -> void:
     watch_signals(sender)
     var report: Dictionary = {"title": "a title"}
 
-    sender.send(report, "{}", PackedByteArray([1, 2, 3]), "a log line".to_utf8_buffer())
+    sender.send(report, "{}", PackedByteArray([1, 2, 3]), "a log line".to_utf8_buffer(),
+            "a gameplay line".to_utf8_buffer())
 
     assert_signal_emitted(sender, "report_saved")
     assert_signal_not_emitted(sender, "report_failed")
@@ -109,11 +108,32 @@ func test_a_directory_endpoint_saves_the_report_instead_of_sending_it() -> void:
     var reader: ZIPReader = ZIPReader.new()
     reader.open(directory.path_join(BugReportSender.ATTACHMENTS_FILE))
     assert_eq(Array(reader.get_files()),
-            [BugReportSender.SNAPSHOT_FILE, BugReportSender.SCREENSHOT_FILE, BugReportSender.LOG_FILE])
+            [BugReportSender.SNAPSHOT_FILE, BugReportSender.SCREENSHOT_FILE, BugReportSender.LOG_FILE,
+                BugReportSender.GAMEPLAY_LOG_FILE])
     reader.close()
     var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string(directory.path_join(BugReportSender.REPORT_FILE)))
     assert_eq(saved["title"], "a title")
     assert_eq(saved["api_version"], str(BugReportSender.API_VERSION))
+
+
+func test_the_gameplay_log_counts_a_repeated_command_on_one_line() -> void:
+    var recorder: BugReportRecorder = add_child_autofree(BugReportRecorder.new())
+    recorder.log_path = REPORTS_DIRECTORY.path_join("gameplay.log")
+    recorder.start()
+    # no player's vehicle here: the commands to no vehicle are its commands
+    var player_vehicle: RID = PlayerServer.player_get_vehicle()
+    for level: float in [0.1, 0.2, 0.3]:
+        VehicleServer.vehicle_command_received.emit(player_vehicle, "brake_level_set", level, null)
+    VehicleServer.vehicle_command_received.emit(player_vehicle, "converter", true, null)
+
+    var lines: PackedStringArray = recorder.get_log().get_string_from_utf8().strip_edges().split("\n")
+    recorder.stop()
+    DirAccess.remove_absolute(recorder.log_path)
+
+    assert_eq(lines.size(), 2, "a dragged lever should be one line, the next command another")
+    assert_string_contains(lines[0], "brake_level_set 0.1 <null> x3 until ")
+    assert_true(lines[0].ends_with(" 0.3 <null>"), "the line should end with the last values")
+    assert_true(lines[1].ends_with("converter true <null>"), "a single command should stand as it came")
 
 
 func test_a_mark_is_burnt_into_the_screenshot_along_its_edges() -> void:

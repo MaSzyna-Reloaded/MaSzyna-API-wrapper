@@ -13,6 +13,10 @@ const BRAKE_FILL_SECONDS:float = 10.0
 const PRESSURE_TOLERANCE:float = 0.1
 ## [handle position]
 const HANDLE_TOLERANCE:float = 0.001
+## Cab changes a walk may take: three cabs a car, three cars
+const MAX_CAB_CHANGES:int = 9
+## Simulated seconds a cab change is given
+const CAB_CHANGE_SECONDS:float = 1.0
 
 
 func test_starts_and_moves_off() -> void:
@@ -42,3 +46,35 @@ func test_a_key_press_steps_the_brake_handle_a_position() -> void:
     assert_almost_eq(brake.get_controller_position(), before + brake.handle_step, HANDLE_TOLERANCE,
             "one press, one position")
 
+
+
+## The driver walks to the other end and back (report 2026-10-06): every cab activated on the way
+## sends its direction to the unit (CabActivisation(), Mover.cpp:2907) - the machine room's is 0,
+## Sign(0) sending it back (utilities.h:48) - so the reverser is at neutral again and the master
+## controller of an EMU refuses (IncMainCtrl(), Mover.cpp:2390) until it is set: as the original
+func test_the_controller_works_once_the_reverser_is_set_after_a_walk() -> void:
+    await run_startup("startup_en57-636ra.scn", "EN57-636ra", Kind.ELECTRIC_MULTIPLE_UNIT)
+    var master:RailVehicleMasterController = _master(powered)
+    while master.get_main_position() > 0:
+        await key_tap(&"main_controller_decrease")
+    await _walk_to_cab(&"cabin_next", "EN57-636rb", true)
+    await _walk_to_cab(&"cabin_previous", "EN57-636ra", false)
+    assert_eq(VehicleServer.vehicle_get_controller(powered).get_direction(), 0, "the reverser at neutral after the walk")
+    await key_tap(&"main_controller_increase")
+    assert_eq(master.get_main_position(), 0, "the master controller refuses with no direction")
+    await _direction_forward()
+    await key_tap(&"main_controller_increase")
+    assert_gt(master.get_main_position(), 0, "the master controller moves once the reverser is set")
+
+
+## Cab changes by `action` until the player sits in `vehicle_name`'s rear or front cab
+func _walk_to_cab(action:StringName, vehicle_name:String, rear:bool) -> void:
+    for _change:int in MAX_CAB_CHANGES:
+        var vehicle:RID = PlayerServer.player_get_vehicle()
+        var wanted:RID = RailVehicleServer.vehicle_get_rear_cabin(vehicle) if rear \
+                else RailVehicleServer.vehicle_get_front_cabin(vehicle)
+        if VehicleServer.vehicle_get_name(vehicle) == vehicle_name and RailVehicleServer.vehicle_get_driver_cabin(vehicle) == wanted:
+            return
+        await key_tap(action)
+        await wait_simulated(CAB_CHANGE_SECONDS)
+    fail_test("the player did not reach %s" % vehicle_name)

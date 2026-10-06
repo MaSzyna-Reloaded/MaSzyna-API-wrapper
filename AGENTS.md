@@ -223,6 +223,12 @@ Before every commit:
 
 Commit style:
 
+* REQUIRED, ABSOLUTE: **changes of one subject are one commit** - no trail of follow-ups. A fix, a
+  correction or a next step of the same subject (the CI, one feature, one bug) goes into that
+  subject's commit while it is unpushed (`--amend`, or a soft reset of the run and one recommit),
+  and a run of pushed commits of one subject is squashed into one before anything else is pushed
+  on top. Before every commit: `git log -1` - when HEAD is the same subject, amend it; when HEAD is
+  another session's commit, never amend that one
 * Commit messages must be written in English.
 * If the change has a GitHub Issue, prefix the first line with its number in the existing `(#NUMBER) Message` format.
 * The first line must name the subject and scope of the change briefly and unambiguously. Avoid generic verbs when they

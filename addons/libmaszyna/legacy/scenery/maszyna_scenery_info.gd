@@ -3,7 +3,8 @@ extends RefCounted
 class_name MaszynaSceneryInfo
 
 ## Scenario description from the header comments of a .scn file (read by the original starter):
-## [code]//$n[/code] title, [code]//$d[/code] description lines, [code]//$i[/code] image in
+## its name (read_display_name(), from [code]//$l[/code], [code]//$n[/code] and the file name),
+## [code]//$d[/code] description lines, [code]//$i[/code] image in
 ## scenery/images/, plus the trainsets of its [code]trainset[/code] blocks. Files are in cp1250.
 ##
 ## Read line by line: the tokens of a "trainset"/"node ... dynamic" are written on one line in
@@ -75,6 +76,7 @@ const NAME_FILLER_WORDS:PackedStringArray = ["sceneria"]
 const NAME_MAX_LENGTH:int = 60
 ## ...and so is one with any of these ("//$n Bieszczady topuwa, dużo izoluw przy torach wisi...")
 const SENTENCE_MARKS:PackedStringArray = [",", "...", "!", "?"]
+## The scenery's name, as the scenario selector and the loading screen show it (read_display_name())
 var title:String = ""
 var description:String = ""
 ## Absolute path of the scenario image, empty when it does not exist
@@ -185,6 +187,8 @@ static func read(filename:String) -> MaszynaSceneryInfo:
     )
     if not file:
         return info
+    # the name the scenario selector and the loading screen show it by
+    info.title = read_display_name(filename)
     # raw bytes - FileAccess.get_line() decodes UTF-8 and would lose the cp1250 characters
     var bytes:PackedByteArray = file.get_buffer(mini(file.get_length(), MAX_BYTES))
     var description_lines:PackedStringArray = []
@@ -205,9 +209,6 @@ static func read(filename:String) -> MaszynaSceneryInfo:
         if in_header:
             if line and not line.begins_with("//"):
                 in_header = false
-            elif line.begins_with("//$n"):
-                info.title = line.substr(4).strip_edges()
-                continue
             elif line.begins_with("//$d"):
                 description_lines.append(line.substr(4).strip_edges())
                 continue

@@ -215,12 +215,14 @@ namespace godot {
     }
 
     /* The directory the player chose, when it holds the data; otherwise the game's own directory
-     * when it does - the archive unpacked where it belongs - and the chosen one again when neither
-     * does, so the player is told which one is wrong. Made absolute here, against the directory
-     * the game itself sits in, so a build dropped anywhere still finds the data next to it. It
-     * must not be left relative: a path with no prefix is read as res://, which in a shipped build
-     * is the packed data and holds no game files, so every FileAccess check over such a path
-     * answers "missing" (see FINDINGS.md, 2026-09-23). */
+     * when it does - the archive unpacked where it belongs - then the one installation the search
+     * finds (find_maszyna_game_dirs()), taken and saved without asking when it is the only one,
+     * and the chosen one again when none of these does, so the player is told which one is wrong.
+     * Made absolute here, against the directory the game itself sits in, so a build dropped
+     * anywhere still finds the data next to it. It must not be left relative: a path with no
+     * prefix is read as res://, which in a shipped build is the packed data and holds no game
+     * files, so every FileAccess check over such a path answers "missing" (see FINDINGS.md,
+     * 2026-09-23). */
     void UserSettings::_update_game_dir() {
         OS *os = OS::get_singleton();
         ERR_FAIL_NULL(os);
@@ -234,7 +236,27 @@ namespace godot {
             dir = executable_dir.path_join(dir);
         }
         dir = dir.simplify_path();
-        game_dir = !is_maszyna_game_dir(dir) && is_maszyna_game_dir(executable_dir) ? executable_dir : dir;
+        if (is_maszyna_game_dir(dir)) {
+            game_dir = dir;
+            return;
+        }
+        if (is_maszyna_game_dir(executable_dir)) {
+            game_dir = executable_dir;
+            return;
+        }
+        const PackedStringArray found = find_maszyna_game_dirs();
+        if (found.size() != 1) {
+            game_dir = dir;
+            return;
+        }
+        game_dir = found[0];
+        // saved at once, and only this key - the rest of the config may hold changes not saved yet
+        config->set_value(MASZYNA_GAMEDIR_SECTION, MASZYNA_GAMEDIR_KEY, game_dir);
+        Ref<ConfigFile> saved;
+        saved.instantiate();
+        saved->load(config_file_path);
+        saved->set_value(MASZYNA_GAMEDIR_SECTION, MASZYNA_GAMEDIR_KEY, game_dir);
+        ERR_FAIL_COND_MSG(saved->save(config_file_path) != OK, "Cannot save the game directory.");
     }
 
     String UserSettings::get_maszyna_game_dir() const {

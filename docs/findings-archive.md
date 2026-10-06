@@ -3799,3 +3799,18 @@ lighting or the trainset.
   and on the reverser. The probe shows the driver following each cab at once.
 * **Rule:** what the original does after a step of an operation is hooked to that step's own
   event, not to the first event of the operation.
+
+## 2026-10-06 A light switch in a cab switched off lit the other end's lamps
+
+* **Symptom:** on Stary Jawor's SU46 the Tb1 hint ("switch on Tb 1 head lamp code") stayed
+  whatever the operator lit, from either cab.
+* **What proved it:** probes on the SU46, SU45 and ST45 fixtures, driven by the keys. With the
+  right lamps (the occupied cab's end showing only its right lamp, the far end only its left; on
+  the ST45 the presets "Tb1b" from the front cab and "TB1a" from the rear) the hint cleared in
+  every cab, as the original's check does (driverhints.cpp:1281-1288). In the SU46's rear cab
+  switched off (`CabActive` 0), though, its right-lamp switch put out the front end's right lamp.
+  `MoverRailVehicleLighting::_active_end()` took the end from `CabActive`. The original takes it
+  from the cab the driver sits in (`cab_to_end()`, `iCabn`, Train.h:220-227).
+* **Fix:** the end is taken from `CabOccupied`, and the machine room counts as the front.
+* **Rule:** a cab's controls act on the end of the cab the player sits in (`cab_to_end()`), not on
+  the active cab. A cab switched off is still the one the player works.

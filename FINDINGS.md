@@ -312,11 +312,14 @@ anything. Open work belongs in `TODO.md`.
 * A player's cab change and reverser turn the driver (`DirectionChange()`, Train.cpp:2670-2842,
   10343): a driver that keeps its own way reads the tracks behind the player. *(10-06 the eszelon
   turned back to an open dwarf)*
+* Hook what the original does after a step to that step's event: the driver turned on the cab
+  change's first event read the cab left still active. *(10-06 one cab change late)*
+* A cab's controls act on the end of the cab the player sits in (`cab_to_end()`, CabOccupied),
+  never on the active cab: a cab switched off is still the one worked. *(10-06 a light switch lit the
+  other end)*
 * The vehicle's supply voltage is held through a loss of up to 0.2 s (NoVoltTime), and the driver's
   readiness is tested against the consist on every update (a line breaker tripped while driving).
   *(09-29 EP07 rolled out of Markowo without power)*
-* Hook what the original does after a step to that step's event: the driver turned on the cab
-  change's first event read the cab left still active. *(10-06 one cab change late)*
 * `lerpf()` does not return its end exactly, `std::lerp` does: a port whose result is compared
   exactly takes the end as it is. *(09-29 the driving aid flickered)*
 * A model rebuilt is a view change: nothing the simulation reads lives in the node that draws it

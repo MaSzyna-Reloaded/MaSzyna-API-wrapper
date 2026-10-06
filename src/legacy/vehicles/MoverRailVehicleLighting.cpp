@@ -54,8 +54,11 @@ namespace godot {
         return (lights & light_type_mask_map.at(p_type)) != 0;
     }
 
+    /* The end of the cab the driver sits in, active or not - the machine room counts as the front
+     * (cab_to_end(), Train.h:220-227). Taken from the active cab, a switch in a cab switched off
+     * lit the other end's lamps (docs/findings-archive.md, 2026-10-06) */
     MoverRailVehicleLighting::LightEnd MoverRailVehicleLighting::_active_end(const TMoverParameters *p_mover) {
-        return p_mover->CabActive < 0 ? LIGHT_END_REAR : LIGHT_END_FRONT;
+        return p_mover->CabOccupied < 0 ? LIGHT_END_REAR : LIGHT_END_FRONT;
     }
 
     MoverRailVehicleLighting::LightEnd MoverRailVehicleLighting::_opposite_end(const TMoverParameters *p_mover) {
@@ -400,8 +403,8 @@ namespace godot {
 
     // Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft) -
     // upperlight_sw:/leftlight_sw:/rightlight_sw:/leftend_sw:/rightend_sw: (p_light without a
-    // "rear" prefix) toggle whichever end is the CURRENTLY ACTIVE cab's own front
-    // (Train->cab_to_end()); rearupperlight_sw:/etc. (p_light with a "rear" prefix, stripped
+    // "rear" prefix) toggle the end of the cab the driver sits in (Train->cab_to_end(),
+    // _active_end()); rearupperlight_sw:/etc. (p_light with a "rear" prefix, stripped
     // here) toggle the opposite end - see this class's own _do_fetch_state_from_mover() for the
     // matching active_end/opposite_end state this mirrors. NOTE: a real nuance from the original
     // is deliberately NOT reproduced here - OnCommand_headlightenableleft also clears the

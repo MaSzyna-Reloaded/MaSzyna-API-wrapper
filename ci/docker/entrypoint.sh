@@ -21,9 +21,16 @@ cmp -s build-api/dump/extension_api.json build-api/extension_api.json || \
     mv build-api/dump/extension_api.json build-api/extension_api.json
 godotcpp_common_args=(-DGODOTCPP_PRECISION=double -DGODOTCPP_CUSTOM_API_FILE=/var/maszyna/build-api/extension_api.json)
 
-echo "Building Dynamic-linked library for host platform"
-cmake -B build-host -DGODOTCPP_TARGET=template_debug "${godotcpp_common_args[@]}" || exit 1
-cmake --build build-host || exit 1
+# The host library (template_debug) is what Godot loads to import, test and export the project: the
+# CI builds it once (HOST_ONLY=true) and hands it to the other jobs (HOST_PREBUILT=true)
+if [ "${HOST_PREBUILT:-}" != "true" ]; then
+    echo "Building Dynamic-linked library for host platform"
+    cmake -B build-host -DGODOTCPP_TARGET=template_debug "${godotcpp_common_args[@]}" || exit 1
+    cmake --build build-host || exit 1
+fi
+if [ "${HOST_ONLY:-}" = "true" ]; then
+    exit 0
+fi
 if [ "$unit_tests" = "true" ]; then
     echo "Running unit tests..."
     (godot --path demo --headless --import || exit 0) && godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml || exit 1

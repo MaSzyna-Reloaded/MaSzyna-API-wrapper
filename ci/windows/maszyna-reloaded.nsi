@@ -61,7 +61,8 @@ Section "!$(SECTION_GAME)" SectionGame
     SectionIn RO
     SetOutPath "$INSTDIR"
     File "${SOURCE_DIR}/reloaded.exe"
-    File "${SOURCE_DIR}/reloaded.console.exe"
+    ; the console wrapper only when the export has made one (it needs the templates' console exe)
+    File /nonfatal "${SOURCE_DIR}/reloaded.console.exe"
     File "${SOURCE_DIR}/libmaszyna.64.dll"
     WriteUninstaller "$INSTDIR\uninstall.exe"
 

@@ -19,6 +19,10 @@ LIBMASZYNA_DEBUG:=""
 #   make release-linux GODOT=godot-double
 GODOT?=godot-double
 CMAKE_GODOTCPP_API_VERSION=4.7
+# f21961238's precision and API file: the double-precision API this repository versions, which
+# CMakeLists.txt binds anyway (FORCE), so no target needs a Godot to dump it
+CMAKE_GODOTCPP_PRECISION=double
+CMAKE_GODOTCPP_API_FILE=$(CURDIR)/extension_api.json
 # The engine the release is exported with - it has to match the editor exactly, since the export
 # looks its template up by this version
 GODOT_VERSION:=4.7.2

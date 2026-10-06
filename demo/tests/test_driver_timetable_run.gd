@@ -230,7 +230,7 @@ func _update(hours:float, speed:float) -> void:
     _trainset.update(_vehicle, _trainset.direction, true)
     _route.update(_vehicle, Order.OBEY_TRAIN, false, LINE_VELOCITY, speed, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
             LINE_VELOCITY, _trainset, _timetable, hours, LINE_VELOCITY, LINE_VELOCITY, false,
-            MaszynaLegacyDriverBraking.new())
+            MaszynaLegacyDriverBraking.new(), false)
 
 
 ## The driver's timetable state (MaszynaLegacyAIDriver._get_timetable_state())

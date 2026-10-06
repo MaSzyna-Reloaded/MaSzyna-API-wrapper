@@ -303,6 +303,9 @@ anything. Open work belongs in `TODO.md`.
 * An event the original clears once passed (a signal at proceed, `Point.Clear()`) is cleared in the
   port - kept, it holds on what it shows later. *(09-29 a signal closing behind the train braked
   it hard)*
+* A signal the front has reached is read again on every update while it is in the table
+  (`TableUpdateEvent()`): one taken once on passing holds what it showed then. *(10-06 the eszelon
+  stood at a dwarf that had opened)*
 * The vehicle's supply voltage is held through a loss of up to 0.2 s (NoVoltTime), and the driver's
   readiness is tested against the consist on every update (a line breaker tripped while driving).
   *(09-29 EP07 rolled out of Markowo without power)*

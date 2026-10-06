@@ -94,6 +94,10 @@ const NO_DISTANCE:float = -1.0
 const LIMIT_BEYOND_RANGE:float = 10000.0
 ## A speed the driver takes as an order to go (TableUpdateEvent(), Driver.cpp:1680)
 const GO_SPEED:float = 1.0
+## A human driver drops a signal passed further than the trainset's length plus the margin, and at
+## least the distance [m] (TableUpdateEvent(), Driver.cpp:1551)
+const HUMAN_PASSED_SIGNAL_MARGIN:float = 100.0
+const HUMAN_PASSED_SIGNAL_DISTANCE:float = 250.0
 ## A signal speaks to a driver only while it drives - shunting, as a train, banking - or waits for
 ## orders; an order with anything else in it hears nothing (check_route_ahead(), Driver.cpp:8321-8335)
 const TAKES_SPEED:int = (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT
@@ -252,12 +256,14 @@ var _front_along:float = 0.0
 ## of `vehicle`: `allowed` is the speed allowed now (VelSignal), `speed` the trainset's along the way
 ## it drives [km/h], `acceleration` the one preferred (AccPreferred) [m/s2]; `timetable` how far it
 ## got, at `hours` of the day; `shunt_velocity` and `velocity_desired` the driver's [km/h], `coupling`
-## whether it is coupling up now (moveConnect). The speed allowed afterwards is `signal_velocity`, the
-## orders it gives itself `commands` and `stop_orders`.
+## whether it is coupling up now (moveConnect), `human_driving` whether a player drives it
+## (AIControllFlag false). The speed allowed afterwards is `signal_velocity`, the orders it gives
+## itself `commands` and `stop_orders`.
 func update(
     vehicle:RID, order:int, stop_here:bool, allowed:float, speed:float, acceleration:float, velocity_max:float,
     trainset:MaszynaLegacyDriverTrainset, timetable:MaszynaLegacyDriverTimetable, hours:float,
-    shunt_velocity:float, velocity_desired:float, coupling:bool, braking:MaszynaLegacyDriverBraking
+    shunt_velocity:float, velocity_desired:float, coupling:bool, braking:MaszynaLegacyDriverBraking,
+    human_driving:bool
 ) -> void:
     commands.clear()
     stop_orders.clear()
@@ -301,13 +307,11 @@ func update(
             _stops_moved.erase(event)
     var signal_distance:float = NO_SIGNAL_DISTANCE
     var obey_train:bool = order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN
-    # the events the front has reached take effect once (TableUpdateEvent(), fDist < 0); one
-    # dropped from the table unreached - a switch ahead thrown - is not passed (FINDINGS.md,
-    # 2026-09-29)
+    # the events the front has reached; one dropped from the table unreached - a switch ahead
+    # thrown - is not passed (FINDINGS.md, 2026-09-29)
     for entry:Entry in _table:
         if entry.event.is_valid() and not entry.passed and entry.distance <= 0.0:
             entry.passed = true
-            allowed = _pass(entry, obey_train, allowed)
 
     velocity_next = NO_LIMIT
     proximity_distance = reach
@@ -338,6 +342,17 @@ func update(
         if entry.kind == Kind.SWITCH:
             # the trainset is on a switch until it has left it (Driver.cpp:880-883)
             switch_clear_distance = distance + entry.length + trainset.length
+        # a signal the front has reached gives the speed in force, read again on every update while
+        # it is in the table - taken once on passing, a Tm at stop held the player when it opened
+        # (TableUpdateEvent(), Driver.cpp:1545-1558, FINDINGS.md 2026-10-06); a player's is dropped
+        # once passed far enough
+        if entry.event.is_valid() and distance <= 0.0 and _is_proper_semaphore(entry.kind, obey_train):
+            if human_driving and distance < -maxf(trainset.length + HUMAN_PASSED_SIGNAL_MARGIN,
+                    HUMAN_PASSED_SIGNAL_DISTANCE):
+                allowed = NO_LIMIT
+                let_go.append(entry)
+                continue
+            signal_velocity_last = velocity
         if entry.event.is_valid():
             if distance > 0.0:
                 if _is_proper_semaphore(entry.kind, obey_train):
@@ -378,6 +393,13 @@ func update(
             elif entry.kind == Kind.SHUNT_SEMAPHORE and obey_train and velocity == 0.0:
                 # a train ignores a Tm at stop passed as much as one ahead, and lets go of it
                 # (TableUpdateEvent(), Driver.cpp:1618-1626)
+                let_go.append(entry)
+                continue
+            elif entry.kind == Kind.SHUNT_SEMAPHORE and not velocity == 0.0 and go.is_empty():
+                # passed, a Tm letting it go gives its speed and is let go of - the player stands at
+                # the dwarf, often a metre past it (TableUpdateEvent(), Driver.cpp:1649-1665)
+                go = "ShuntVelocity"
+                allowed = velocity
                 let_go.append(entry)
                 continue
             elif (entry.kind == Kind.SEMAPHORE or (entry.kind == Kind.OUTSIDE_STATION and obey_train)) \
@@ -819,21 +841,6 @@ func _update_stop_point(
     # waiting for the departure time
     waiting_for_departure = true
     return StopResult.USE
-
-
-## An event passed (TableUpdateEvent(), fDist < 0, Driver.cpp:1535-1700); returns the speed allowed
-## from here
-func _pass(entry:Entry, obey_train:bool, allowed:float) -> float:
-    if _is_proper_semaphore(entry.kind, obey_train):
-        signal_velocity_last = entry.velocity
-    match entry.kind:
-        Kind.SHUNT_SEMAPHORE:
-            if not entry.velocity == 0.0 and not (obey_train and entry.velocity == 0.0):
-                return entry.velocity
-        Kind.SEMAPHORE:
-            if entry.velocity < 0.0 or entry.velocity >= GO_SPEED:
-                return NO_LIMIT
-    return allowed
 
 
 ## A memory's command, as far as sending it again goes

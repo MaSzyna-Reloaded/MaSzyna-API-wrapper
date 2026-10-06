@@ -563,7 +563,7 @@ func _update(driver:RID) -> void:
             vehicle, state.orders[state.order_position], state.stop_here, state.velocity, directional_speed,
             MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset,
             state.timetable, SimulationServer.time_of_day, state.shunt_velocity, state.speed.velocity_desired,
-            state.coupling_vehicle.is_valid(), state.braking)
+            state.coupling_vehicle.is_valid(), state.braking, not DriverSystem.vehicle_is_control_active(vehicle))
     state.velocity = state.route.signal_velocity
     # uncoupling: stand, then press the buffers at walking pace (pick_optimal_speed(), Driver.cpp:7330-7343)
     if state.orders[state.order_position] & Order.DISCONNECT and state.vehicle_count >= 0:

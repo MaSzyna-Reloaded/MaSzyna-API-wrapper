@@ -25,6 +25,9 @@ const SWITCH_LENGTH:float = 30.0
 const DIVERGING_OFFSET:float = 10.0
 ## How far [m] from the vehicle's middle the Tm on either side stand: inside the moving reading
 const SHUNT_SIGNAL_DISTANCE:float = 200.0
+## How far [m] from the vehicle's middle a signal stands that a player has left far behind: beyond
+## MaszynaLegacyDriverRoute.HUMAN_PASSED_SIGNAL_DISTANCE, inside the standing reading
+const FAR_BEHIND_DISTANCE:float = 400.0
 ## Markowo Górne's approach: its entry signal at stop this far ahead [m], and the line's speed
 ## given 88 m after it (markowo_grn_tor2_wjazd_speedinfo); the speeds the train comes at [km/h]
 const STOP_SIGNAL_DISTANCE:float = 400.0
@@ -153,6 +156,50 @@ func test_a_signal_passed_at_proceed_does_not_hold_the_train_when_it_closes() ->
     assert_eq(route.velocity_next, MaszynaLegacyDriverRoute.NO_LIMIT, "the signal closed behind it holds nothing")
 
 
+## FINDINGS.md 2026-10-06: Stary Jawor's eszelon stood at a dwarf (Tm) it had reached at stop and
+## kept "STOP" when the dwarf showed Ms2 - the speed of a signal passed was taken once, on passing
+func test_a_shunting_signal_reached_at_stop_lets_go_when_it_opens() -> void:
+    var line:RID = _track(Vector3.ZERO, Vector3(LINE_LENGTH, 0.0, 0.0), null, LINE_VELOCITY, "line")
+    TrackServer.topology_rebuild()
+    var vehicle:RID = await _place("line", LINE_LENGTH / 2.0)
+    # the Tm at the vehicle's middle: behind its front, whichever way it drives
+    var action:MaszynaLegacyVehicleCommandAction = _signal(line, "ShuntVelocity",
+            RailVehicleServer.vehicle_get_transform(vehicle).origin)
+    var trainset:MaszynaLegacyDriverTrainset = _trainset(vehicle, 1)
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+    _update(route, vehicle, trainset, 0.0)
+    assert_eq(route.velocity_limit, 0.0, "at stop, it holds the driver")
+
+    action.value1 = SHUNT_SPEED
+    _update(route, vehicle, trainset, 0.0)
+
+    assert_eq(route.velocity_limit, SHUNT_SPEED, "open, its speed is the limit")
+    assert_eq(route.signal_velocity, SHUNT_SPEED, "and the speed allowed")
+    assert_eq(route.commands, [["ShuntVelocity", SHUNT_SPEED, route.velocity_next, Vector3.ZERO]],
+            "and it tells the driver to go")
+
+
+## Driver.cpp:1549-1553: a player passed a signal at stop and drove on - far enough behind it holds
+## the player no more, while it still holds the computer
+func test_a_signal_at_stop_far_behind_holds_a_player_no_more() -> void:
+    var line:RID = _track(Vector3.ZERO, Vector3(LINE_LENGTH, 0.0, 0.0), null, LINE_VELOCITY, "line")
+    TrackServer.topology_rebuild()
+    var vehicle:RID = await _place("line", LINE_LENGTH / 2.0)
+    var middle:Vector3 = RailVehicleServer.vehicle_get_transform(vehicle).origin
+    # one on either side, beyond a player's distance: one of them behind
+    for offset:float in [-FAR_BEHIND_DISTANCE, FAR_BEHIND_DISTANCE]:
+        _signal(line, "SetVelocity", middle + Vector3(offset, 0.0, 0.0))
+    var trainset:MaszynaLegacyDriverTrainset = _trainset(vehicle, 1)
+    var computer:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+    var player:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+
+    _update(computer, vehicle, trainset, 0.0)
+    _update(player, vehicle, trainset, 0.0, Order.SHUNT, true)
+
+    assert_eq(computer.signal_velocity_last, 0.0, "the computer keeps to it")
+    assert_eq(player.signal_velocity_last, MaszynaLegacyDriverRoute.NO_LIMIT, "the player is let go of it")
+
+
 ## FINDINGS.md 2026-09-29: a stop far ahead lost to the line speed given after it on some updates
 ## and not on others - lerpf() at its end is not exactly its end, std::lerp is - and the driving aid
 ## flickered between "0 in 0.4 km" and nothing
@@ -222,9 +269,24 @@ func _trainset(vehicle:RID, direction:int) -> MaszynaLegacyDriverTrainset:
     return trainset
 
 
-## One update of the route with `order` (shunting unless given), wanting LINE_VELOCITY, at `speed` [km/h]
+## A signal's memory read on both ways of `track` at `position`, at stop; its action, to change
+func _signal(track:RID, command:String, position:Vector3) -> MaszynaLegacyVehicleCommandAction:
+    var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+    action.command = command
+    action.position = position
+    var event:RID = ScenarioEventServer.event_create()
+    _events.append(event)
+    ScenarioEventServer.event_attach_action(event, action)
+    ScenarioEventServer.event_set_passive(event, true)
+    ScenarioEventServer.track_add_event(track, ScenarioEventServer.TRACK_EVENT1, event)
+    ScenarioEventServer.track_add_event(track, ScenarioEventServer.TRACK_EVENT2, event)
+    return action
+
+
+## One update of the route with `order` (shunting unless given), wanting LINE_VELOCITY, at `speed`
+## [km/h], by the computer unless `human_driving`
 func _update(route:MaszynaLegacyDriverRoute, vehicle:RID, trainset:MaszynaLegacyDriverTrainset, speed:float,
-        order:Order = Order.SHUNT) -> void:
+        order:Order = Order.SHUNT, human_driving:bool = false) -> void:
     route.update(vehicle, order, false, SHUNT_SPEED, speed, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
             MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, MaszynaLegacyDriverTimetable.new(), 0.0, SHUNT_SPEED,
-            LINE_VELOCITY, false, MaszynaLegacyDriverBraking.new())
+            LINE_VELOCITY, false, MaszynaLegacyDriverBraking.new(), human_driving)

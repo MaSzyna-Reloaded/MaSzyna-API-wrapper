@@ -3707,3 +3707,24 @@ lighting or the trainset.
 * **Rule:** before a run that loads the game's data, read `game_dir` in
   `~/.local/share/MaSzyna-Reloaded/settings.cfg`; a test run that was killed may have left the
   fixtures there.
+
+## 2026-10-06 The eszelon stood at a dwarf that had opened
+
+* **Symptom:** on Stary Jawor - Eszelon the player drove the SU46 past the first signal, stopped
+  at the next dwarf (Tm, `ms2nbk.inc`) and saw it show Ms2 (`ShuntVelocity 40`). The driving
+  aid kept showing STOP and the hints cued neutral and the brakes.
+* **What proved it:** the scenery's data has a `ShuntVelocity` memory for each Tm, and opening
+  it writes `ShuntVelocity 40 0` (`_m40`). The table read the memory again on every update, but
+  a signal the front had reached took effect once, in `_pass()`, when the front reached it. A
+  Tm reached at stop set `signal_velocity_last` to 0 and nothing read it again, so
+  `velocity_limit` stayed 0. Its opening also gave no `ShuntVelocity`, because a command to go
+  came only from signals ahead. The original runs `TableUpdateEvent()` on every update for
+  every point still in the table. A passed proper signal sets `VelSignalLast` each time
+  (Driver.cpp:1554-1558), and a passed Tm that opens gives `cm_ShuntVelocity` and leaves the
+  table (Driver.cpp:1649-1665, "ustawienie, gdy przejechany jest lepsze niż wcale"). A player's
+  passed signal is dropped further than `max(fLength + 100, 250)` m (Driver.cpp:1549-1553).
+  `test_driver_route_table.gd`'s two new tests fail on the old table.
+* **Fix:** `_pass()` is gone. The table's loop reads a reached signal on every update, as the
+  original does: the speed in force, a passed Tm that opens, and the player's distance.
+* **Rule:** a signal the front has reached is read again on every update while it is in the
+  table. One taken once on passing holds the aspect it showed then.

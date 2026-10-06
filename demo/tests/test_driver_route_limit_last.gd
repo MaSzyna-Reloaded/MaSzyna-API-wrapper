@@ -86,5 +86,5 @@ func _read(route:MaszynaLegacyDriverRoute, track_name:String, offset:float) -> M
     trainset.update(vehicle.get_rid(), 1, true)
     route.update(vehicle.get_rid(), Order.SHUNT, false, SHUNT_SPEED, 0.0, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
             MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, MaszynaLegacyDriverTimetable.new(), 0.0, SHUNT_SPEED,
-            LINE_VELOCITY, false, MaszynaLegacyDriverBraking.new())
+            LINE_VELOCITY, false, MaszynaLegacyDriverBraking.new(), false)
     return trainset

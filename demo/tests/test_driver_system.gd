@@ -376,13 +376,13 @@ func test_a_turn_forgets_the_stop_of_a_signal_passed() -> void:
     var timetable:MaszynaLegacyDriverTimetable = MaszynaLegacyDriverTimetable.new()
     trainset.update(vehicle, 1, true)
     route.update(vehicle, Order.SHUNT, false, SHUNT_SPEED, 0.0, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
-            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false, MaszynaLegacyDriverBraking.new())
+            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false, MaszynaLegacyDriverBraking.new(), false)
     # a signal at stop passed, behind it now
     route.signal_velocity_last = 0.0
 
     trainset.update(vehicle, -1, true)
     route.update(vehicle, Order.SHUNT, false, SHUNT_SPEED, 0.0, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
-            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false, MaszynaLegacyDriverBraking.new())
+            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false, MaszynaLegacyDriverBraking.new(), false)
 
     assert_eq(route.signal_velocity_last, MaszynaLegacyDriverSpeed.NO_LIMIT,
             "turned, the stop of the signal passed does not hold it (Driver.cpp:520-524)")

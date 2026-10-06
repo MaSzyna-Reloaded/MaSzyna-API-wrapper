@@ -430,6 +430,9 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `light_energy` not passed by `E3DModelBuilder`.
 * Vehicle headlamps and cab lights not measured for shadow acne at night.
 * Skydome: an option to disable `light_angular_distance` (`FINDINGS.md`, 2026-09-20).
+* Skydome installs the sun shafts effect twice at start ("Installed sunshafts compositor effect"
+  printed twice before `(Re)Initialized`); the earlier one is removed, but the install runs twice.
+  The D3D12 crash fix (`FINDINGS.md`, 2026-10-06) is unconfirmed on Windows until a player reports.
 * Normal maps: Godot's tangents not checked against the original's `f_tbn`.
 * Overexposure in the demo scenery unmeasured. Candidates, one at a time: `tonemap_mode`,
   `soft_shadow_filter_quality` 3 -> 1, `directional_shadow/size=8192` (`042b392`), `fog_enabled`,
@@ -628,6 +631,9 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Tests
 
+* **`test_sun_shafts_compositor_effect.gd` is pending in CI**: it renders on a GPU, and the CI runs
+  GUT `--headless` (no RenderingDevice). Locally it runs under `gamescope --backend headless`. A
+  GPU runner (lavapipe) would make it a CI test; D3D12 itself is not covered anywhere.
 * **Tests that switch the game dir** (`UserSettings.save_maszyna_game_dir()`) write the user's
   `settings.cfg`, and a crash skips the restore: `test_maszyna_rail_vehicle_3d_manager.gd`,
   `test_audio_stream_manager.gd`, `test_e3d_lights_state.gd`, `test_fiz_train_controller.gd`,

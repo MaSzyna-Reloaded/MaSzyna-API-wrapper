@@ -271,6 +271,9 @@ anything. Open work belongs in `TODO.md`.
   announced to nobody. *(10-05 cab change in RailVehicleServer)*
 
 ## Godot / GDExtension
+* A compute effect never samples the texture it writes in the same dispatch: D3D12 refuses the
+  command list (`Close` E_INVALIDARG) and removes the device - every allocation after fails with
+  `0x887a0005`. Copy the source first. *(10-06 crash at 0% loading on D3D12)*
 * Godot measures a visibility range to the centre of the instance's box, the original from the
   model's origin for every submodel: an E3D submodel's box is centred on the model's origin
   (`E3DInstanceBackend::_visibility_aabb()`), or two LODs with meshes of their own centres leave a

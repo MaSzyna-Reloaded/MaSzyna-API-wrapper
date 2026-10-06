@@ -4038,3 +4038,28 @@ lighting or the trainset.
 * **Rule:** the original's driver is the train's and sits in the occupied cab - every move of the
   player moves the driver; which pantographs a vehicle has is its `PhysicalLayout`.
 
+
+## 2026-10-06 Crash at 0% loading on D3D12
+
+* **Symptom:** a player on Windows (GTX 960, D3D12) crashed at 0% of loading Galicja, build
+  20261006-1712. The log has `Close failed with error 0x80070057` in `command_buffer_end` right
+  after `[Skydome] (Re)Initialized`, then ~1400 `Can't create buffer ... 0x887a0005`, failed
+  pipelines and textures, and the crash on a texture read-back; the scenery went on parsing on the
+  CPU meanwhile (`FILES 27.9 s`).
+* **What proved it:** `0x887a0005` is `DXGI_ERROR_DEVICE_REMOVED`, and the first error before it is
+  E_INVALIDARG on closing a command list - an invalid operation recorded, in the first frames with
+  a 3D camera. The one compute effect there is gnd-skydome's sun shafts
+  (`SunShaftsCompositorEffect.gd`): with no MSAA there is no `resolved_color`, so the colour it
+  samples (`get_color_layer(view)`) is the image it writes - one texture as a sampler and a
+  storage image in one dispatch. Vulkan allows it (GENERAL layout); D3D12 cannot hold a subresource
+  as SRV and UAV at once. `project.godot` sets `driver.windows="d3d12"`, sun shafts are on by
+  default. On Vulkan the same is a silent race: the shader reads pixels already overwritten.
+* **Fix:** a compute pass copies the colour into a texture of the effect's own (`imageLoad`/
+  `imageStore`; the scene colour has no `CAN_COPY_FROM`, `texture_copy()` refuses it) and the
+  shafts sample the copy; the colour layer is only written. Checked on Vulkan under gamescope
+  headless (`$td.scn`): no errors; D3D12 unconfirmed until a Windows player reports. The Windows
+  build runs on Vulkan again (`driver.windows`, d3d12 since the Godot 4.6 bump `64dbf13a0`), the
+  renderer the game is developed and tested on. Regression tests: `test_project_rendering_driver.gd`
+  and `test_sun_shafts_compositor_effect.gd` (renders on a GPU, pending under `--headless`), both
+  red on the broken versions.
+* **Rule:** a compute effect never samples the texture it writes in the same dispatch.

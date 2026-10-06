@@ -14,7 +14,7 @@ signal exit_to_menu_requested
 ## The entries of the "Simulator" menu, by their ids - a separator (id 3) stands before EXIT_TO_MENU
 enum SimulatorItem { SETTINGS = 0, PROBLEM_REPORT = 1, EXIT_TO_MENU = 2, HELP = 4 }
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED, LOGS, CARD }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, CARD, SIMULATION_SPEED, LOGS }
 
 ## The HUD elements' names in HUDServer
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
@@ -97,6 +97,10 @@ func _ready() -> void:
     %View.set_item_shortcut(ViewItem.DRIVING_AID, _action_shortcut(&"driving_aid_toggle"))
     # F3, as the original's scenario window with its hints (driveruilayer.cpp:168)
     %View.set_item_shortcut(ViewItem.HINTS, _action_shortcut(&"hints_toggle"))
+    # F7 and Shift+F7 - the original's F7 works only in its debug mode (wireframe), Shift+F7 not at
+    # all (drivermode.cpp:994-1020)
+    %View.set_item_shortcut(ViewItem.CARD, _action_shortcut(&"vehicle_card_toggle"))
+    %View.set_item_shortcut(ViewItem.TRAINSETS, _action_shortcut(&"trainsets_toggle"))
     # the transcripts, the driving aid and the hints are open from the start
     HUDServer.panel_set_visible(PANEL_TRANSCRIPTS, true)
     HUDServer.panel_set_visible(PANEL_DRIVING_AID, true)
@@ -147,8 +151,8 @@ func _on_simulator_menu_id_pressed(id: int) -> void:
 
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the hints, the timetable, the
-## scenario, all the control windows at once, the Lua editor, the trainset list, the simulation
-## speed, the logs and the vehicle card
+## scenario, all the control windows at once, the Lua editor, the trainset list, the vehicle card,
+## the simulation speed and the logs
 func _on_view_menu_index_pressed(index: int) -> void:
     # the card of the player's vehicle, or the open one closed
     if index == ViewItem.CARD:

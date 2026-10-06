@@ -113,13 +113,13 @@ item_6/id = 6
 item_7/text = "Trainset list"
 item_7/checkable = 1
 item_7/id = 7
-item_8/text = "Simulation speed"
+item_8/text = "Vehicle card"
 item_8/checkable = 1
 item_8/id = 8
-item_9/text = "Logs"
+item_9/text = "Simulation speed"
 item_9/checkable = 1
 item_9/id = 9
-item_10/text = "Vehicle card"
+item_10/text = "Logs"
 item_10/checkable = 1
 item_10/id = 10
 

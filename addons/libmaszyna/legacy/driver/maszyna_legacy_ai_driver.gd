@@ -832,11 +832,12 @@ func _prepare_engine(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
     var speed:float = VehicleServer.vehicle_get_speed(vehicle)
     state.reaction_time = PREPARE_TIME if speed < ROLLING_START_SPEED else EASY_REACTION_TIME
     var controlling:RID = state.trainset.controlling
-    var controlling_engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
-            controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
-    var converter_overload:bool = controlling_engine is RailVehicleElectricEngine \
-            and (controlling_engine as RailVehicleElectricEngine).get_converter_overload()
-    var mains:bool = controlling_engine != null and controlling_engine.get_main_switch_enabled()
+    # every vehicle under control, as the update's readiness test reads them - not the controlling
+    # one alone: an EMU's other motor car with its line breaker open left the vehicle "not ready"
+    # with nothing missing (IsAnyConverterOverloadRelayOpen, IsAnyLineBreakerOpen, Driver.cpp:2828,
+    # 2834, 2893)
+    var converter_overload:bool = state.trainset.converter_overload_relay_open
+    var mains:bool = not state.trainset.line_breaker_open
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BATTERY_ON)
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.CAB_ACTIVATION)
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.RADIO_ON)

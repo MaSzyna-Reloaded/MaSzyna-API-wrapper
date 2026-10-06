@@ -122,8 +122,10 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
                 or (diesel_electric != null and diesel_electric.get_fuse_active())
         converter_overload_relay_open = converter_overload_relay_open \
                 or (electric != null and electric.get_converter_overload())
-        if power > LINE_BREAKER_POWER:
-            line_breaker_open = line_breaker_open or not (engine != null and engine.get_main_switch_enabled())
+        # the line breaker is the engine's: a powered car without one - an EMU's pantograph car,
+        # PWR=2 - has none to be open (MASZYNA_ORIGINAL_QUIRKS.md, "A pantograph car's line breaker")
+        if power > LINE_BREAKER_POWER and engine:
+            line_breaker_open = line_breaker_open or not engine.get_main_switch_enabled()
     var couplers:RailVehicleBuffCoupl = RailVehicleServer.vehicle_component_get(
             vehicle, RailVehicleComponentType.COMPONENT_BUFFERS) as RailVehicleBuffCoupl
     var behind:RailVehicleController.CouplerEnd = RailVehicleController.opposite_end(ahead)

@@ -3872,3 +3872,27 @@ lighting or the trainset.
   36WEa cab, the same lights at the same positions, colours within 0.024. The cab build went from
   1.1 s to 0.43 s; the dashboard light from 2.0 s to 42 ms. A walk through the unit took at most
   288 ms a cab change (the first entry of the other driver's cab).
+
+## 2026-10-06 Vehicle not ready with nothing missing
+
+* **Symptom:** in a 36WEa the driving aid kept showing "Vehicle not ready" with STOP - first with
+  no list of what was missing, and once the readiness check read the whole trainset, with the line
+  breaker listed while it was closed. The hints asked to raise pantograph B, which the cab could
+  not raise.
+* **What proved it:** `test_zzz_driver_ready_36wea_014a.gd` - the unit started by the keys and moved
+  off - printed every car: the A and C cars (`PWR=1000`) with their line breakers closed, the B car
+  `PWR=2`, no engine, `main_switch_enabled` absent; and the pantograph unit, the A car, with
+  `CollectorsNo=1`, pantograph A up at 3499 V. `MaszynaLegacyDriverTrainset` counted every car over
+  `Power > 0.01` (`IsAnyLineBreakerOpen`, Driver.cpp:6143-6144) and a car without an engine as a
+  line breaker open, so the readiness was taken away on every update; `_prepare_engine()` read the
+  controlling car alone and listed nothing. The original closes the B car's `Mains` like any car
+  with a master controller (`MainSwitch_()`, Mover.cpp:3621-3645). The hints asked for both
+  pantographs of any vehicle with a collector (Driver.cpp:2782-2813) and applied the vehicle's
+  pantograph setup with both (Driver.cpp:6276-6319).
+* **Fix:** `_prepare_engine()` reads the line breaker and the converter overload relay of the
+  trainset, as the reset does; the trainset counts a line breaker only of a car with an engine; a
+  vehicle with one collector is asked only for pantograph A, and the setup applies only to a
+  vehicle with two (MASZYNA_ORIGINAL_QUIRKS.md, "A pantograph car's line breaker", "Pantograph B
+  of a vehicle with one").
+* **Rule:** a readiness check and the reset that takes it away read the same state, and only of
+  devices a car has; a hint asks only for what the vehicle has.

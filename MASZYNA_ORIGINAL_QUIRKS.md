@@ -100,6 +100,23 @@ interface.
   called from the tractive force code before adding power (`Driver.cpp:7949`). Wrapper: not
   ported as such - `StationServer` keeps the dispatch as steps (exchange, wait for the departure,
   doors closed), each over on the cars' own events, and the driver stands while there is one.
+* **A pantograph car's line breaker.** The data gives an EMU's car without traction motors a
+  power of its own (36WE B, `36wea-b_kd.fiz`: `PWR=2`, `EnginePower=CurrentCollector`) - without
+  one its current collector would not count (`LoadFIZ_Power`). The driver's readiness then counts
+  its `Mains` among the consist's line breakers (`Power > 0.01`, `IsAnyLineBreakerOpen`,
+  `Driver.cpp:6143-6144`), and the original closes it like any other: `MainSwitch_()` sets
+  `Mains` on any vehicle with a master controller (`MainCtrlPosNo > 0`, `Mover.cpp:3621-3645`),
+  engine or not. Wrapper: the line breaker is the engine's (`RailVehicleEngine`); a car without
+  an engine has none and is not counted (`MaszynaLegacyDriverTrainset`) - counted, it stood open
+  for ever and the driver never took the unit ready.
+* **Pantograph B of a vehicle with one.** `PrepareEngine()` asks for both pantographs of any
+  vehicle with a current collector (`CollectorsNo > 0`, `Driver.cpp:2782-2813`), and
+  `control_pantographs()` applies the vehicle's pantograph setup with both of them
+  (`Driver.cpp:6276-6319`). The 36WE A car has one collector (`36wea-a_kd.fiz`: `CollectorsNo=1`):
+  the hints asked to raise pantograph B, which the car has not got, and on the move to lower A, the
+  one carrying the current - neither ever done. Wrapper: a vehicle with one collector is asked
+  only for pantograph A, and the setup applies only to a vehicle with two
+  (`MaszynaLegacyDriverPantographs`).
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 

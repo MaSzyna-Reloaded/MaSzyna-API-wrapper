@@ -90,6 +90,10 @@ anything. Open work belongs in `TODO.md`.
   above it. *(09-20 coupled wagons drifting)*
 * A tuning factor with no counterpart in the original scales the data's errors with the data.
   *(09-20 blotchy ground)*
+* A driver's readiness is tested on every vehicle under control (`IsAnyLineBreakerOpen`), in its
+  reset and in its check alike, and only on devices a car has - a car without an engine has no line
+  breaker to be open; a hint asks only for what the vehicle has. *(10-06 Vehicle not ready with
+  nothing missing)*
 * A vehicle that is not driven is not simulated (`CabActive`/`PhysicActivation`). *(09-23 loco
   with nobody in the cab)*
 * A parser of the original's data mirrors its tolerance: skip what is not known, and let every

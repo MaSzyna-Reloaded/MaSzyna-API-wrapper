@@ -48,6 +48,11 @@ static func prepare(situation:MaszynaLegacyDriverTraction.Situation, emu:bool) -
             or tank <= (brake.get_compressor_pressure() if brake else 0.0):
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_COMPRESSOR_OFF)
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.PANTOGRAPHS_VALVE_ON)
+    # QUIRK of the original: one current collector is pantograph A, raised whichever way; the
+    # original asks for B as well (MASZYNA_ORIGINAL_QUIRKS.md, "Pantograph B of a vehicle with one")
+    if power_source.current_collector_number_of_collectors < 2:
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON)
+        return
     var forward:bool = situation.state.direction >= 0
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON,
             SETUP_SPEED if forward else 0.0)
@@ -76,8 +81,10 @@ static func control(situation:MaszynaLegacyDriverTraction.Situation, emu:bool, w
     var hints:RailVehicleAIHints = RailVehicleServer.vehicle_component_get(
             vehicle, RailVehicleComponentType.COMPONENT_AI_HINTS) as RailVehicleAIHints
     var setup:RailVehicleAIHints.PantographState = hints.pantograph_state if hints else RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC
+    # the setup's two pantographs are a vehicle's with two (MASZYNA_ORIGINAL_QUIRKS.md, "Pantograph
+    # B of a vehicle with one")
     if not setup == RailVehicleAIHints.PANTOGRAPH_STATE_AUTOMATIC:
-        if speed > SETUP_SPEED:
+        if speed > SETUP_SPEED and power_source.current_collector_number_of_collectors > 1:
             MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON
                     if setup & RailVehicleAIHints.PANTOGRAPH_STATE_FRONT else MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_OFF)
             MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.REAR_PANTOGRAPH_VALVE_ON

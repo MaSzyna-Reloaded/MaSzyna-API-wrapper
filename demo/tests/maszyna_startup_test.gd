@@ -69,7 +69,7 @@ const STEP_TIMEOUT:float = 120.0
 const AIR_TIMEOUT:float = 300.0
 ## Real seconds a step may take whatever the clock does - a stopped clock is a failure, not a hang
 const STEP_REAL_TIMEOUT:float = 45.0
-## Simulated seconds main_switch_on is held beyond the line breaker's InitialCtrlDelay
+## Simulated seconds main_switch_toggle (M) is held beyond the line breaker's InitialCtrlDelay
 ## (LegacyCabinMainSwitch closes it on the release once the delay has run)
 const MAIN_SWITCH_HOLD_MARGIN:float = 1.0
 ## The main reservoir the driver waits for before releasing the brakes (Driver.cpp PrepareEngine
@@ -209,7 +209,7 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
             await key_tap(&"converter_fuse_reset")
         if not await _until("relays reset: line breaker closable", func() -> bool: return _engine(powered).get_main_switch_closable()):
             return
-        await key_hold(&"main_switch_on", (_engine(powered) as RailVehicleElectricEngine).get_line_breaker_initial_delay()
+        await key_hold(&"main_switch_toggle", (_engine(powered) as RailVehicleElectricEngine).get_line_breaker_initial_delay()
                 + MAIN_SWITCH_HOLD_MARGIN)
         if not await _until("line breaker", func() -> bool: return _engine(powered).get_main_switch_enabled()):
             return
@@ -237,10 +237,10 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
         if sn61:
             await key_tap(&"main_controller_increase")
         # the starter held until the engine fires
-        await key_press(&"main_switch_on")
+        await key_press(&"main_switch_toggle")
         var started:bool = await _until("engine started", func() -> bool:
                 return diesel.get_main_switch_enabled() and diesel.get_rpm() > 0.0)
-        await key_release(&"main_switch_on")
+        await key_release(&"main_switch_toggle")
         if not started:
             return
         if sn61:

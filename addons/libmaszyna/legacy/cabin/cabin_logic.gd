@@ -27,6 +27,7 @@ const KEYBOARD_ONLY:Dictionary[StringName, StringName] = {
     LegacyCabinOccupiedCouplerDisconnect.CONTROL: LegacyCabinOccupiedCouplerDisconnect.ACTION,
     LegacyCabinSpringBrakeShutOff.CONTROL: LegacyCabinSpringBrakeShutOff.ACTION,
     LegacyCabinBrakeCharging.CONTROL: LegacyCabinBrakeCharging.ACTION,
+    LegacyCabinMainSwitch.KEY: LegacyCabinMainSwitch.KEY_ACTION,
 }
 
 ## (cabin:RID) -> LegacyCabinControls - the controls of the cabin it is registered for
@@ -98,6 +99,15 @@ func register(vehicle_rid:RID, cabin:RID) -> void:
                 controls.button_type(&"fuelpump_sw")),
         LegacyCabinPump.new(&"oilpump_sw", "oil_pump", "oil_pump_switch_off", "oil_pump_enabled",
                 controls.button_type(&"oilpump_sw")),
+        LegacyCabinPump.new(&"waterpump_sw", "water_pump", "water_pump_switch_off", "water_pump_enabled",
+                controls.button_type(&"waterpump_sw")),
+        LegacyCabinPump.new(&"motorblowersfront_sw", "motor_blowers_front", "motor_blowers_front_switch_off",
+                "motor_blowers_front_enabled", controls.button_type(&"motorblowersfront_sw")),
+        LegacyCabinPump.new(&"motorblowersrear_sw", "motor_blowers_rear", "motor_blowers_rear_switch_off",
+                "motor_blowers_rear_enabled", controls.button_type(&"motorblowersrear_sw")),
+        LegacyCabinMotorBlowersAllOff.new(controls.button_type(LegacyCabinMotorBlowersAllOff.CONTROL)),
+        LegacyCabinCompartmentLights.new(controls.button_type(LegacyCabinCompartmentLights.SWITCH),
+                controls.has_control(LegacyCabinCompartmentLights.SWITCH)),
         LegacyCabinTrainHeating.new(),
         LegacyCabinPantographsDropAll.new(controls.button_type(LegacyCabinPantographsDropAll.CONTROL)),
         LegacyCabinConverter.new(bool(config.get("converter_switch_impulse", false)),

@@ -232,6 +232,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="water_pump_switch_off">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="clutch_diameter" type="float" setter="set_clutch_diameter" getter="get_clutch_diameter" default="0.5">

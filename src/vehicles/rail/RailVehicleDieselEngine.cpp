@@ -279,6 +279,8 @@ namespace godot {
                 &RailVehicleDieselEngine::get_auxiliary_circuit_water_temperature);
         ClassDB::bind_method(D_METHOD("get_oil_temperature"), &RailVehicleDieselEngine::get_oil_temperature);
         ClassDB::bind_method(D_METHOD("water_pump", "enabled"), &RailVehicleDieselEngine::water_pump);
+        ClassDB::bind_method(
+                D_METHOD("water_pump_switch_off", "enabled"), &RailVehicleDieselEngine::water_pump_switch_off);
         ClassDB::bind_method(D_METHOD("water_pump_breaker", "enabled"), &RailVehicleDieselEngine::water_pump_breaker);
         ClassDB::bind_method(D_METHOD("water_heater", "enabled"), &RailVehicleDieselEngine::water_heater);
         ClassDB::bind_method(
@@ -360,6 +362,12 @@ namespace godot {
         }
     }
 
+    void RailVehicleDieselEngine::water_pump_switch_off(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_pump_switch_off(p_enabled);
+        }
+    }
+
     void RailVehicleDieselEngine::water_pump_breaker(const bool p_enabled) {
         if (diesel_engine_unit != nullptr) {
             diesel_engine_unit->water_pump_breaker(p_enabled);
@@ -391,6 +399,7 @@ namespace godot {
         register_command("oil_pump_switch_off", Callable(this, "oil_pump_switch_off"));
         register_command("fuel_pump_switch_off", Callable(this, "fuel_pump_switch_off"));
         register_command("water_pump", Callable(this, "water_pump"));
+        register_command("water_pump_switch_off", Callable(this, "water_pump_switch_off"));
         register_command("water_pump_breaker", Callable(this, "water_pump_breaker"));
         register_command("water_heater", Callable(this, "water_heater"));
         register_command("water_heater_breaker", Callable(this, "water_heater_breaker"));
@@ -404,6 +413,7 @@ namespace godot {
         unregister_command("oil_pump_switch_off");
         unregister_command("fuel_pump_switch_off");
         unregister_command("water_pump");
+        unregister_command("water_pump_switch_off");
         unregister_command("water_pump_breaker");
         unregister_command("water_heater");
         unregister_command("water_heater_breaker");

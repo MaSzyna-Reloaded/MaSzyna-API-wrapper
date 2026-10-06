@@ -596,9 +596,6 @@ msgstr "Üzemanyag-szivattyú"
 msgid "Radio Toggle"
 msgstr "Rádió"
 
-msgid "Main Switch On"
-msgstr "Főmegszakító: be"
-
 msgid "Main Switch Off"
 msgstr "Főmegszakító: ki"
 
@@ -1747,3 +1744,30 @@ msgstr "Tippek"
 
 msgid "Cycle Debug Menu"
 msgstr "Teljesítmény statisztika"
+
+msgid "Main Switch Toggle"
+msgstr "Főmegszakító"
+
+msgid "Water Pump Toggle"
+msgstr "Vízszivattyú"
+
+msgid "Water Pump Breaker Toggle"
+msgstr "Vízszivattyú megszakító"
+
+msgid "Water Heater Toggle"
+msgstr "Vízmelegítő"
+
+msgid "Water Heater Breaker Toggle"
+msgstr "Vízmelegítő megszakító"
+
+msgid "Water Circuits Link Toggle"
+msgstr "Vízkörök összekötése"
+
+msgid "Motor Blowers Front Toggle"
+msgstr "Motorhűtő ventilátorok A"
+
+msgid "Motor Blowers Rear Toggle"
+msgstr "Motorhűtő ventilátorok B"
+
+msgid "Motor Blowers All Off"
+msgstr "Minden motorhűtő ventilátor ki"

@@ -373,6 +373,12 @@ namespace godot {
         p_mover->WaterPumpSwitch(p_enabled);
     }
 
+    void MoverDieselEngineUnit::water_pump_switch_off(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterPumpSwitchOff(p_enabled);
+    }
+
     void MoverDieselEngineUnit::water_pump_breaker(const bool p_enabled) const {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);

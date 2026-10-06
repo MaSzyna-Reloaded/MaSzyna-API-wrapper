@@ -3749,6 +3749,21 @@ lighting or the trainset.
   (`Mechanik->...` in Train.cpp) has to reach the port's driver. A driver kept apart from the
   cab reads a different railway than the player drives.
 
+## 2026-10-06 The demo's line breaker keys took the rear motor blowers' Shift+M
+
+* **Symptom:** porting the motor blowers' switches, the original's key of the rear blowers (Shift+M)
+  was already the demo's `main_switch_off`.
+* **What proved it:** the original binds M to `linebreakertoggle` and nothing to
+  `linebreakeropen`/`linebreakerclose` (driverkeyboardinput.cpp:108-110, 293-294); the demo's
+  M/Shift+M on/off pair dates from its first commit and was never the original's.
+* **Fix:** M toggles the line breaker as `linebreakertoggle` - a key of LegacyCabinMainSwitch's
+  own (`main_switch_key`), pressed and let go whatever switches the cab has: tied to an unmodelled
+  `main_sw` it only flipped the switch, never let go, and no series motor cab closed the breaker.
+  The opening alone moved to Ctrl+Shift+M, which the original leaves free; Shift+M is the rear
+  blowers again.
+* **Rule:** a key is the original's binding (`driverkeyboardinput.cpp`); a free key of ours only
+  for an action the original leaves unbound.
+
 ## 2026-10-06 demo_3d put the player in the Impuls looking from outside
 
 * **Symptom:** demo_3d made the player drive impuls-a, but the view stayed outside: no cab was shown.

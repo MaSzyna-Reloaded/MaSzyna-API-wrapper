@@ -596,9 +596,6 @@ msgstr "燃油泵"
 msgid "Radio Toggle"
 msgstr "无线电"
 
-msgid "Main Switch On"
-msgstr "断路器：闭合"
-
 msgid "Main Switch Off"
 msgstr "断路器：断开"
 
@@ -1747,3 +1744,30 @@ msgstr "提示"
 
 msgid "Cycle Debug Menu"
 msgstr "性能统计"
+
+msgid "Main Switch Toggle"
+msgstr "主断路器"
+
+msgid "Water Pump Toggle"
+msgstr "水泵"
+
+msgid "Water Pump Breaker Toggle"
+msgstr "水泵断路器"
+
+msgid "Water Heater Toggle"
+msgstr "水加热器"
+
+msgid "Water Heater Breaker Toggle"
+msgstr "水加热器断路器"
+
+msgid "Water Circuits Link Toggle"
+msgstr "水路连接"
+
+msgid "Motor Blowers Front Toggle"
+msgstr "牵引电机风机 A"
+
+msgid "Motor Blowers Rear Toggle"
+msgstr "牵引电机风机 B"
+
+msgid "Motor Blowers All Off"
+msgstr "关闭全部牵引电机风机"

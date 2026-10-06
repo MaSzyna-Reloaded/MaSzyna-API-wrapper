@@ -596,9 +596,6 @@ msgstr ""
 msgid "Radio Toggle"
 msgstr ""
 
-msgid "Main Switch On"
-msgstr ""
-
 msgid "Main Switch Off"
 msgstr ""
 
@@ -1746,4 +1743,31 @@ msgid "Hints Toggle"
 msgstr ""
 
 msgid "Cycle Debug Menu"
+msgstr ""
+
+msgid "Main Switch Toggle"
+msgstr ""
+
+msgid "Water Pump Toggle"
+msgstr ""
+
+msgid "Water Pump Breaker Toggle"
+msgstr ""
+
+msgid "Water Heater Toggle"
+msgstr ""
+
+msgid "Water Heater Breaker Toggle"
+msgstr ""
+
+msgid "Water Circuits Link Toggle"
+msgstr ""
+
+msgid "Motor Blowers Front Toggle"
+msgstr ""
+
+msgid "Motor Blowers Rear Toggle"
+msgstr ""
+
+msgid "Motor Blowers All Off"
 msgstr ""

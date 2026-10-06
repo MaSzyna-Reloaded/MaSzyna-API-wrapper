@@ -17,6 +17,10 @@ const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 const ON_BUTTON:StringName = &"main_on_bt"
 const OFF_BUTTON:StringName = &"main_off_bt"
 const TOGGLE_SWITCH:StringName = &"main_sw"
+## The line breaker's key (M, linebreakertoggle, driverkeyboardinput.cpp:108) - a keyboard-only
+## control, pressed and let go whatever switches the cab has
+const KEY:StringName = &"main_switch_key"
+const KEY_ACTION:StringName = &"main_switch_toggle"
 
 ## m_linebreakerstate: 0 = open, 1 = closed, 2 = ready to close
 const OPEN:int = 0
@@ -47,7 +51,7 @@ func _init(toggle_button_type:CabinButton.ButtonType, has_on_button:bool, has_of
 
 
 func control_ids() -> Array[StringName]:
-    return [ON_BUTTON, OFF_BUTTON, TOGGLE_SWITCH]
+    return [ON_BUTTON, OFF_BUTTON, TOGGLE_SWITCH, KEY]
 
 
 func register(_vehicle_rid:RID, cabin:RID) -> void:
@@ -55,6 +59,7 @@ func register(_vehicle_rid:RID, cabin:RID) -> void:
     CabinSystem.register_control(cabin, ON_BUTTON, _on_button)
     CabinSystem.register_control(cabin, OFF_BUTTON, _off_button)
     CabinSystem.register_control(cabin, TOGGLE_SWITCH, _toggle_switch)
+    CabinSystem.register_control(cabin, KEY, _key)
     CabinSystem.register_process(cabin, _process)
 
 
@@ -62,6 +67,7 @@ func unregister() -> void:
     CabinSystem.unregister_control(_cabin, ON_BUTTON, _on_button)
     CabinSystem.unregister_control(_cabin, OFF_BUTTON, _off_button)
     CabinSystem.unregister_control(_cabin, TOGGLE_SWITCH, _toggle_switch)
+    CabinSystem.unregister_control(_cabin, KEY, _key)
     CabinSystem.unregister_process(_cabin, _process)
 
 
@@ -113,6 +119,26 @@ func _toggle_switch(state:CabinState, action:StringName, value:Variant) -> Varia
     if state.data.get("linebreaker_state", OPEN) == OPEN:
         return null
     return _close_released(state)
+
+
+# Train.cpp:3712-3750 OnCommand_linebreakertoggle by its key: pressed and let go like a button. A
+# cab whose closing control is main_sw works its lever; any other one presses main_on_bt to close
+# an open breaker (OnCommand_linebreakerclose) and main_off_bt to open a closed one
+# (OnCommand_linebreakeropen), and lets go of both on the release (Train.cpp:3725-3745)
+func _key(state:CabinState, action:StringName, value:Variant) -> Variant:
+    var pressed:bool = state.is_pressed(KEY, action, value)
+    state.set_value(KEY, pressed)
+    if _has_toggle_switch and not _has_on_button:
+        return _toggle_switch(state, &"hold" if pressed else &"release", null)
+    var linebreaker_state:int = state.data.get("linebreaker_state", OPEN)
+    if pressed:
+        if linebreaker_state == OPEN:
+            return _on_button(state, &"hold", null)
+        if linebreaker_state == CLOSED:
+            return _off_button(state, &"hold", null)
+        return null
+    _off_button(state, &"release", null)
+    return _on_button(state, &"release", null)
 
 
 func _two_state() -> bool:

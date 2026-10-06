@@ -401,7 +401,6 @@ static func _ensure_built() -> void:
                 "monostable": true,
                 "command": "main_switch",
                 "controller_mode": CabinButton.ControllerMode.On,
-                "action": "main_switch_on",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
@@ -412,6 +411,7 @@ static func _ensure_built() -> void:
                 "monostable": true,
                 "command": "main_switch",
                 "controller_mode": CabinButton.ControllerMode.Off,
+                # Ctrl+Shift+M - the original binds no key to opening alone (driverkeyboardinput.cpp:109)
                 "action": "main_switch_off",
             },
             "config_max_property": "",
@@ -419,7 +419,9 @@ static func _ensure_built() -> void:
         },
         # main_sw: one line breaker switch instead of the main_on_bt/main_off_bt pair
         # (drivermouseinput.cpp:774 -> linebreakertoggle, Train.cpp:3714). Its behaviour is
-        # LegacyCabinMainSwitch; no key of its own, M / Shift+M reach main_on_bt/main_off_bt.
+        # LegacyCabinMainSwitch; its key M is the behaviour's own keyboard control
+        # (LegacyCabinMainSwitch.KEY), as the original's linebreakertoggle acts in every cab
+        # (driverkeyboardinput.cpp:108).
         "main_sw": {
             "widget_class": CabinButton,
             # its original handler branches on the kind of switch (ggMainButton.type(), Train.cpp:3733)
@@ -544,6 +546,144 @@ static func _ensure_built() -> void:
                 "command": "oil_pump",
                 "state_property": "oil_pump_active",
                 "action": "oil_pump_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # A diesel's cooling water pump (LegacyCabinPump), W (OnCommand_waterpumptoggle, Train.cpp:4228)
+        "waterpump_sw": {
+            "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggWaterPumpButton.type(), Train.cpp:4236)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "water_pump_active",
+                "action": "water_pump_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The water pump's breaker, Ctrl+W (OnCommand_waterpumpbreakertoggle, Train.cpp:4175)
+        "waterpumpbreaker_sw": {
+            # the original's handler acts on mvControlled (Train.cpp:4175-4226)
+            "target": CabinState.Target.CONTROLLED,
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "water_pump_breaker",
+                "state_property": "water_pump_breaker",
+                "action": "water_pump_breaker_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The cooling water's heater, Shift+W (OnCommand_waterheatertoggle, Train.cpp:4122)
+        "waterheater_sw": {
+            # the original's handler acts on mvControlled (Train.cpp:4122-4173)
+            "target": CabinState.Target.CONTROLLED,
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "water_heater",
+                "state_property": "water_heater_enabled",
+                "action": "water_heater_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The water heater's breaker, Ctrl+Shift+W (OnCommand_waterheaterbreakertoggle, Train.cpp:4069)
+        "waterheaterbreaker_sw": {
+            # the original's handler acts on mvControlled (Train.cpp:4069-4120)
+            "target": CabinState.Target.CONTROLLED,
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "water_heater_breaker",
+                "state_property": "water_heater_breaker",
+                "action": "water_heater_breaker_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The link of the two water circuits, Shift+H (OnCommand_watercircuitslinktoggle, Train.cpp:4327)
+        "watercircuitslink_sw": {
+            # the original's handler acts on mvControlled (Train.cpp:4327-4378)
+            "target": CabinState.Target.CONTROLLED,
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "water_circuits_link",
+                "state_property": "water_circuits_link",
+                "action": "water_circuits_link_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The traction motors' blowers A (LegacyCabinPump), Shift+N (OnCommand_motorblowerstogglefront, Train.cpp:4750)
+        "motorblowersfront_sw": {
+            "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggMotorBlowersFrontButton.type(), Train.cpp:4758)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "motor_blowers_front_active",
+                "action": "motor_blowers_front_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The traction motors' blowers B (LegacyCabinPump); the original's Shift+M is the line breaker's off here (OnCommand_motorblowerstogglerear, Train.cpp:4848)
+        "motorblowersrear_sw": {
+            "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggMotorBlowersRearButton.type(), Train.cpp:4856)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "motor_blowers_rear_active",
+                "action": "motor_blowers_rear_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # All the traction motors' blowers held off (LegacyCabinMotorBlowersAllOff), Ctrl+M (OnCommand_motorblowersdisableall, Train.cpp:4948)
+        "motorblowersalloff_sw": {
+            "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggMotorBlowersAllOffButton.type(), Train.cpp:4956)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "motor_blowers_front_disabled",
+                "action": "motor_blowers_all_off",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The passengers' compartment lights (LegacyCabinCompartmentLights): one switch, or an on and
+        # an off button (OnCommand_compartmentlightstoggle/enable/disable, Train.cpp:6357-6460); the
+        # original binds no key
+        "compartmentlights_sw": {
+            "widget_class": CabinButton,
+            # its original handlers branch on the kind of switch (ggCompartmentLightsButton.type(), Train.cpp:6386)
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "compartment_lights_enabled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "compartmentlightson_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "compartmentlightsoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",

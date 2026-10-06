@@ -30,7 +30,7 @@ drives this sequence.
    with a direction set (Mover.cpp:6038-6051).
 5. **Relay reset** - `fuse_reset`, `converter_fuse_reset` while
    `RailVehicleEngine.get_main_switch_closable()` is false.
-6. **Main switch** - hold `main_switch_on` for at least the line breaker's InitialCtrlDelay
+6. **Main switch** - hold `main_switch_toggle` (M, the original's `linebreakertoggle`) for at least the line breaker's InitialCtrlDelay
    (`RailVehicleElectricEngine.get_line_breaker_initial_delay()`), then release: a series motor
    vehicle closes it on the release (`LegacyCabinMainSwitch`, Train.cpp:3809). Diesel: the same
    key starts the engine, after `oil_pump_toggle` and `fuel_pump_toggle`.

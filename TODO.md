@@ -131,11 +131,6 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
 ### Controls not in the cab yet
 
 Each needs a catalog entry and, where missing, a vehicle command (with its `type()` branches):
-`compartmentlights_sw` (Train.cpp: OnCommand_compartmentlights*), `waterpump_sw`,
-`waterpumpbreaker_sw`, `waterheater_sw`, `waterheaterbreaker_sw`, `watercircuitslink_sw`,
-`motorblowersfront_sw`/`rear_sw`/`alloff_sw` - their commands exist (`compartment_lights`,
-`water_pump`, `water_pump_breaker`, `water_heater`, `water_heater_breaker`, `water_circuits_link`,
-`motor_blowers_front`/`rear` and `_switch_off`), the driver hints them, a player has no switch -
 `epbrake_bt` (ggEPFuseButton, Train.cpp:2350), `doorrightpermit_sw` (Train.cpp:7263),
 `compressorlist_sw`, `autosandallow_sw`.
 

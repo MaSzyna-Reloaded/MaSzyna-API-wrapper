@@ -217,6 +217,8 @@ namespace godot {
             /* WaterPumpSwitch(), WaterPumpBreakerSwitch(), WaterHeaterSwitch(),
              * WaterHeaterBreakerSwitch(), WaterCircuitsLinkSwitch() (Mover.cpp) */
             void water_pump(bool p_enabled);
+            /* The "off" side of a two-state water pump switch (WaterPumpSwitchOff, Train.cpp:4312) */
+            void water_pump_switch_off(bool p_enabled);
             void water_pump_breaker(bool p_enabled);
             void water_heater(bool p_enabled);
             void water_heater_breaker(bool p_enabled);

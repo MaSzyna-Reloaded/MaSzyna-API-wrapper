@@ -64,6 +64,7 @@ namespace godot {
             virtual void oil_pump_switch_off(bool p_enabled) const = 0;
             virtual void fuel_pump_switch_off(bool p_enabled) const = 0;
             virtual void water_pump(bool p_enabled) const = 0;
+            virtual void water_pump_switch_off(bool p_enabled) const = 0;
             virtual void water_pump_breaker(bool p_enabled) const = 0;
             virtual void water_heater(bool p_enabled) const = 0;
             virtual void water_heater_breaker(bool p_enabled) const = 0;

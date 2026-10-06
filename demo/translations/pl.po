@@ -596,9 +596,6 @@ msgstr "Pompa paliwa"
 msgid "Radio Toggle"
 msgstr "Radio"
 
-msgid "Main Switch On"
-msgstr "Wyłącznik szybki: załącz"
-
 msgid "Main Switch Off"
 msgstr "Wyłącznik szybki: wyłącz"
 
@@ -1747,3 +1744,30 @@ msgstr "Podpowiedzi"
 
 msgid "Cycle Debug Menu"
 msgstr "Statystyki wydajności"
+
+msgid "Main Switch Toggle"
+msgstr "Wyłącznik szybki"
+
+msgid "Water Pump Toggle"
+msgstr "Pompa wody"
+
+msgid "Water Pump Breaker Toggle"
+msgstr "Wyłącznik pompy wody"
+
+msgid "Water Heater Toggle"
+msgstr "Podgrzewacz wody"
+
+msgid "Water Heater Breaker Toggle"
+msgstr "Wyłącznik podgrzewacza wody"
+
+msgid "Water Circuits Link Toggle"
+msgstr "Łącznik obiegów wody"
+
+msgid "Motor Blowers Front Toggle"
+msgstr "Wentylatory silników A"
+
+msgid "Motor Blowers Rear Toggle"
+msgstr "Wentylatory silników B"
+
+msgid "Motor Blowers All Off"
+msgstr "Wszystkie wentylatory silników wyłączone"

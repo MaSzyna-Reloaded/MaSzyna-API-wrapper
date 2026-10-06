@@ -596,9 +596,6 @@ msgstr "Palivové čerpadlo"
 msgid "Radio Toggle"
 msgstr "Vysílačka"
 
-msgid "Main Switch On"
-msgstr "Hlavní vypínač: zapnout"
-
 msgid "Main Switch Off"
 msgstr "Hlavní vypínač: vypnout"
 
@@ -1747,3 +1744,30 @@ msgstr "Instrukce"
 
 msgid "Cycle Debug Menu"
 msgstr "Statistiky výkonu"
+
+msgid "Main Switch Toggle"
+msgstr "Hlavní vypínač"
+
+msgid "Water Pump Toggle"
+msgstr "Vodní čerpadlo"
+
+msgid "Water Pump Breaker Toggle"
+msgstr "Jistič vodního čerpadla"
+
+msgid "Water Heater Toggle"
+msgstr "Ohřívač vody"
+
+msgid "Water Heater Breaker Toggle"
+msgstr "Jistič ohřívače vody"
+
+msgid "Water Circuits Link Toggle"
+msgstr "Propojení vodních okruhů"
+
+msgid "Motor Blowers Front Toggle"
+msgstr "Ventilátory motorů A"
+
+msgid "Motor Blowers Rear Toggle"
+msgstr "Ventilátory motorů B"
+
+msgid "Motor Blowers All Off"
+msgstr "Všechny ventilátory motorů vypnuty"

@@ -174,6 +174,9 @@ anything. Open work belongs in `TODO.md`.
 
 * A FIZ key given twice counts with its first value (`extract_value`'s `find()`); a dictionary
   that keeps the last one made BR285's `Vadd` 0 and its traction force 0/0. *(09-30 BR285 NaN)*
+* A key is the original's binding (`driverkeyboardinput.cpp`); a key of our own only for an action
+  the original leaves unbound - never move the original's keys around. *(10-06 the line breaker's
+  keys took the rear motor blowers' Shift+M)*
 
 ## State, ownership, events
 * An operation somebody awaits is done only when everything its waiter relies on is; a signal

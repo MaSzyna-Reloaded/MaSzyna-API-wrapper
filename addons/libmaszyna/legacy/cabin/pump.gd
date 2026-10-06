@@ -1,14 +1,16 @@
 extends RefCounted
 class_name LegacyCabinPump
 
-## A diesel engine's fuel or oil pump switch (fuelpump_sw, oilpump_sw) - TTrain::
-## OnCommand_fuelpumptoggle/enable/disable (Train.cpp:3871-3968) and their oil pump twins
-## (Train.cpp:3970-4067). What it does depends on the kind of switch:
+## A switch the original works as its fuel pump's (fuelpump_sw, oilpump_sw, waterpump_sw,
+## motorblowersfront_sw, motorblowersrear_sw) - TTrain::OnCommand_fuelpumptoggle/enable/disable
+## (Train.cpp:3871-3968) and their oil pump, water pump and motor blowers twins (Train.cpp:3970-4067,
+## 4228-4325, 4750-4946). What it does depends on the kind of switch:
 ## * push (type: return) - the pump runs while it is held (Train.cpp:3914);
 ## * two-state - a press flips it, and switching off also sets the pump's off flag
 ##   (FuelPumpSwitchOff, Train.cpp:3937, 3963).
 
-## The pumps are the driven vehicle's (OnCommand_fuelpump*/oilpump*: mvControlled)
+## The pumps and blowers are the driven vehicle's (OnCommand_fuelpump*/oilpump*/waterpump*/
+## motorblowers*: mvControlled)
 const TARGET:CabinState.Target = CabinState.Target.CONTROLLED
 var _control:StringName
 var _command:String
@@ -18,7 +20,7 @@ var _button_type:CabinButton.ButtonType
 var _cabin:RID
 
 
-## control: the MMD label; command/switch_off_command: the pump's vehicle commands;
+## control: the MMD label; command/switch_off_command: the device's vehicle commands;
 ## enabled_state: the state key of its switch (is_enabled)
 func _init(control:StringName, command:String, switch_off_command:String, enabled_state:String,
         button_type:CabinButton.ButtonType) -> void:

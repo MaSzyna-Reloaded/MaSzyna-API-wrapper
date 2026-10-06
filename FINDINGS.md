@@ -115,6 +115,9 @@ anything. Open work belongs in `TODO.md`.
 * Grep every `extract_value(..., "Key")` of LoadFIZ_Cntrl against the parser before calling the
   section ported. *(09-29 MainInitTime was never loaded; 10-06 EN57 braked weakly - its trailers'
   wheels locked)*
+* The player's driver (DriverSystem) sits in the player's cab after every cab change, of the same
+  vehicle too; which pantographs a vehicle has is its `PhysicalLayout`, not `CollectorsNo`.
+  *(10-06 36WEa: "deactivate the cab" and "raise pantograph A" in the C car's cab)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
   for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
 * Most `OnCommand_*` work without their gauge; those that refuse (`ggX.SubModel == nullptr`) are

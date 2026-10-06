@@ -3950,3 +3950,21 @@ lighting or the trainset.
 * **Rule:** grep every `extract_value()` key of a `LoadFIZ_*` against the parser before trusting a
   vehicle's physics; the keys still unread are in `TODO.md`.
 
+## 2026-10-06 36WEa: "deactivate the cab" and "raise pantograph A" in the C car's cab
+
+* **Symptom:** 36WEa-024a (l053_poranek.scn) at the platform; the player walked through the gangways
+  to the C car's rear cab to drive back. The driving aid asked to raise pantograph A, which could
+  not be done, and after the cab was activated to deactivate it, with a green signal ahead.
+* **What proved it:** `test_zzz_startup_36wea_024a.gd` on the unit's own fixture, the walk by the
+  cab change keys. The driver's person (DriverSystem) moved into the C car's front cab with the
+  gangway, and the in-vehicle cab changes after it moved the player alone:
+  `PlayerServer._on_cabin_person_moved()` returned for a cab of the same vehicle. The driver's cab
+  (+1) against the active rear cab (-1) is the original's condition for the hint
+  (`CabActive == -CabOccupied`, Driver.cpp:6017). The C car's one pantograph is B
+  (`PhysicalLayout=2`), which the loader counts as two collectors (Mover.cpp:11636-11637); the
+  hints asked for A (one collector) or for both (two).
+* **Fix:** the driver follows the player into every cab, of the same vehicle too. The pantograph
+  hints go by the layout's bits, not by `CollectorsNo`: one pantograph, the one it has.
+* **Rule:** the original's driver is the train's and sits in the occupied cab - every move of the
+  player moves the driver; which pantographs a vehicle has is its `PhysicalLayout`.
+

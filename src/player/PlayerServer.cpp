@@ -117,27 +117,31 @@ namespace godot {
         }
     }
 
-    /* The player went through a gangway into another vehicle (RailVehicleServer::person_change_cabin())
-     * and is in that one now, as the original moves simulation::Train (TTrain::MoveToVehicle(),
-     * Train.cpp:10928-10933). Driving, the player takes its vehicle's driver along, and the one of
-     * the vehicle entered gets out: one driver to a vehicle (TController::MoveTo(),
-     * Driver.cpp:5864-5880) */
+    /* The player went to another cab (RailVehicleServer::person_change_cabin()): of the same vehicle
+     * (TTrain::CabChange(), Train.cpp:10324), or through a gangway into another vehicle, as the
+     * original moves simulation::Train (TTrain::MoveToVehicle(), Train.cpp:10928-10933). Driving,
+     * the player takes its vehicle's driver along into every cab - the original's driver is the
+     * train's, its cab the occupied one (CabOccupied) - and the driver of a vehicle entered gets
+     * out: one driver to a vehicle (TController::MoveTo(), Driver.cpp:5864-5880) */
     void PlayerServer::_on_cabin_person_moved(const RID &p_person, const RID &p_cabin, const RID & /* p_previous */) {
         VehicleServer *vehicles = VehicleServer::get_instance();
         const DriverSystem *drivers = DriverSystem::get_instance();
         ERR_FAIL_NULL(vehicles);
         ERR_FAIL_NULL(drivers);
         const RID entered = vehicles->cabin_get_vehicle(p_cabin);
-        if (p_person != person || !vehicle.is_valid() || entered == vehicle) {
+        if (p_person != person || !vehicle.is_valid()) {
             return;
         }
         if (vehicles->person_get_role(person) == VehiclePersonRole::VEHICLE_PERSON_ROLE_DRIVER) {
             if (const RID driver = drivers->vehicle_get_driver(vehicle); driver.is_valid()) {
-                if (const RID other = drivers->vehicle_get_driver(entered); other.is_valid()) {
+                if (const RID other = drivers->vehicle_get_driver(entered); other.is_valid() && entered != vehicle) {
                     vehicles->cabin_person_leave(vehicles->person_get_cabin(other), other);
                 }
                 vehicles->cabin_person_move(driver, p_cabin);
             }
+        }
+        if (entered == vehicle) {
+            return;
         }
         _set_vehicle(entered);
         emit_signal(player_vehicle_entered_signal, entered);

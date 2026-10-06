@@ -405,9 +405,11 @@ func _until(step:String, done:Callable, timeout:float = STEP_TIMEOUT) -> bool:
 
 
 ## The driver's reflex, every frame: the security system blinking is acknowledged at once - left
-## alone it brakes in emergency and empties the brake pipe (the battery arms it, Mover.cpp:131)
+## alone it brakes in emergency and empties the brake pipe (the battery arms it, Mover.cpp:131);
+## the one of the vehicle the player is in, as the key reaches only that one
 func _acknowledge_security() -> void:
-    var security:RailVehicleSecuritySystem = _security(occupied) if occupied.is_valid() else null
+    var vehicle:RID = PlayerServer.player_get_vehicle()
+    var security:RailVehicleSecuritySystem = _security(vehicle) if vehicle.is_valid() else null
     if not security:
         return
     if security.get_cabsignal_blinking():

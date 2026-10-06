@@ -123,8 +123,10 @@ interface.
   (`Driver.cpp:6276-6319`). The 36WE A car has one collector (`36wea-a_kd.fiz`: `CollectorsNo=1`):
   the hints asked to raise pantograph B, which the car has not got, and on the move to lower A, the
   one carrying the current - neither ever done. Wrapper: a vehicle with one collector is asked
-  only for pantograph A, and the setup applies only to a vehicle with two
-  (`MaszynaLegacyDriverPantographs`).
+  only for the pantograph it has - A or B by its `PhysicalLayout` (the 36WE C car's is B,
+  `PhysicalLayout=2`, which the original's loader counts as two collectors, `CollectorsNo =
+  min(PhysicalLayout, 2)`, Mover.cpp:11636-11637) - and the setup applies only to a vehicle with
+  both (`MaszynaLegacyDriverPantographs`).
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 

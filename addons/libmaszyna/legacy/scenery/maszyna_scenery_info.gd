@@ -47,6 +47,10 @@ class Trainset:
     func is_offered() -> bool:
         return not description.begins_with("-")
 
+    ## The player can drive it: it is occupied and the scenario offers it
+    func is_drivable() -> bool:
+        return is_occupied() and is_offered()
+
     ## Vehicle the player starts in: the one with a headdriver, else any with a driver
     func get_driver_train_id() -> String:
         for vehicle:Vehicle in vehicles:

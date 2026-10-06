@@ -1,7 +1,9 @@
 extends PanelContainer
 
 ## The vehicle selector: every vehicle with a driver, AI or player, as the original's vehicle list
-## (vehiclelist.cpp:28-44), and the player's own vehicle when it has none. Each row shows how its
+## (vehiclelist.cpp:28-44), and the player's own vehicle when it has none - of a scenario, only the
+## vehicles of the trainsets the player can drive (MaszynaSceneryInfo.Trainset.is_drivable()) until
+## the switch shows all of them, as the scenario selector does. Each row shows how its
 ## train is going and opens its card and the operator's actions. The rows follow the persons
 ## getting on and off and the drivers freed; what they show is refreshed by one Timer while the
 ## panel is open.
@@ -21,6 +23,10 @@ var _rows:Dictionary[RID, VehicleSelectorRow] = {}
 var _player_vehicle:RID = RID()
 ## The vehicle of the active row, whose card the selector has open; lit
 var _active_vehicle:RID = RID()
+## The scenery's names of the vehicles of the trainsets the player can drive
+var _drivable_vehicle_names:Dictionary[String, bool] = {}
+## Without a scenario (a scene put together by hand) every vehicle is listed
+var _has_scenario:bool = false
 
 
 func _ready() -> void:
@@ -29,8 +35,7 @@ func _ready() -> void:
     DriverSystem.driver_attached.connect(_on_driver_changed)
     DriverSystem.driver_freed.connect(_on_driver_changed)
     VehicleServer.vehicle_freed.connect(_on_vehicle_freed)
-    for driver:RID in DriverSystem.driver_get_rids():
-        _update_row(VehicleServer.person_get_vehicle(driver))
+    _update_rows()
 
 
 func _exit_tree() -> void:
@@ -46,6 +51,20 @@ func show_active_vehicle(vehicle:RID) -> void:
     _active_vehicle = vehicle
     for row_vehicle:RID in _rows:
         _rows[row_vehicle].show_active(row_vehicle == _active_vehicle)
+
+
+## The scenario played: its trainsets the player cannot drive are listed only with the switch on
+func show_scenario(info:MaszynaSceneryInfo) -> void:
+    _drivable_vehicle_names.clear()
+    _has_scenario = info != null
+    if info:
+        for trainset:MaszynaSceneryInfo.Trainset in info.trainsets:
+            if not trainset.is_drivable():
+                continue
+            for vehicle:MaszynaSceneryInfo.Vehicle in trainset.vehicles:
+                _drivable_vehicle_names[vehicle.train_id] = true
+    %AllTrainsetsSwitch.visible = _has_scenario
+    _update_rows()
 
 
 ## The vehicle the player drives or last drove, or none
@@ -77,12 +96,22 @@ func _on_vehicle_freed(vehicle:RID) -> void:
     _update_row(vehicle)
 
 
-## The vehicle is listed while it has a driver or is the player's; a new row goes in by name
+## Every vehicle that may be listed: those with a driver and the player's
+func _update_rows() -> void:
+    for driver:RID in DriverSystem.driver_get_rids():
+        _update_row(VehicleServer.person_get_vehicle(driver))
+    _update_row(_player_vehicle)
+
+
+## The vehicle is listed while it has a driver or is the player's - of a scenario, one the player
+## can drive unless the switch shows all; a new row goes in by name
 func _update_row(vehicle:RID) -> void:
     if not vehicle.is_valid():
         return
     var listed:bool = VehicleServer.vehicle_exists(vehicle) and (
-            DriverSystem.vehicle_get_driver(vehicle).is_valid() or vehicle == _player_vehicle)
+            DriverSystem.vehicle_get_driver(vehicle).is_valid() or vehicle == _player_vehicle) and (
+            vehicle == _player_vehicle or not _has_scenario or %AllTrainsetsSwitch.button_pressed
+            or _drivable_vehicle_names.has(VehicleServer.vehicle_get_name(vehicle)))
     var row:VehicleSelectorRow = _rows.get(vehicle)
     if row and not listed:
         _rows.erase(vehicle)
@@ -118,6 +147,10 @@ func _on_visibility_changed() -> void:
 func _on_refresh_timer_timeout() -> void:
     for row:VehicleSelectorRow in _rows.values():
         row.refresh()
+
+
+func _on_all_trainsets_switch_toggled(_toggled_on:bool) -> void:
+    _update_rows()
 
 
 func _on_close_button_pressed() -> void:

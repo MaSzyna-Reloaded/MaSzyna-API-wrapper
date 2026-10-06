@@ -4,6 +4,7 @@
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
 [ext_resource type="Script" path="res://hud/window_move_handle.gd" id="3_move"]
 [ext_resource type="Script" path="res://hud/window_resize_corner.gd" id="4_resize"]
+[ext_resource type="Script" path="res://ui/ui_switch.gd" id="5_switch"]
 
 [node name="VehicleSelectorPanel" type="PanelContainer"]
 visible = false
@@ -51,6 +52,14 @@ layout_mode = 2
 mouse_filter = 2
 theme_type_variation = &"TimetableSeparator"
 
+[node name="AllTrainsetsSwitch" type="CheckButton" parent="Content"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+focus_mode = 0
+text = "Show all trainsets of the scenario"
+script = ExtResource("5_switch")
+
 [node name="Empty" type="Label" parent="Content"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -84,4 +93,5 @@ wait_time = 0.5
 
 [connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
 [connection signal="pressed" from="Content/TitleBar/CloseButton" to="." method="_on_close_button_pressed"]
+[connection signal="toggled" from="Content/AllTrainsetsSwitch" to="." method="_on_all_trainsets_switch_toggled"]
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

@@ -324,7 +324,7 @@ func _list_trainsets() -> void:
     var names: PackedStringArray = []
     var notes: PackedStringArray = []
     for trainset: MaszynaSceneryInfo.Trainset in _info.trainsets:
-        if not (trainset.is_occupied() and trainset.is_offered()) and not %AllTrainsetsSwitch.button_pressed:
+        if not trainset.is_drivable() and not %AllTrainsetsSwitch.button_pressed:
             continue
         _listed_trainsets.append(trainset)
         names.append(_get_trainset_name(trainset))

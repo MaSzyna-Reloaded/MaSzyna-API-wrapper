@@ -271,6 +271,7 @@ func attach_environment(environment: MaszynaEnvironmentNode) -> void:
 ## the player opens it
 func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
     %ScenarioPanel.show_scenario(info, train_id)
+    %VehicleSelectorPanel.show_scenario(info)
 
 
 ## What shows the player's train follows the vehicle the player drives: the timetable of its

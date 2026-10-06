@@ -38,6 +38,8 @@ const SUBSCENE_TRIANGLES_BUDGET_BYTES:int = 32 * 1024 * 1024
 const INLINE_INCLUDE_MAX_SIZE:int = 16384
 ## Share of the loading progress taken by reading the scenery - parsing the .scn, or the cache
 const PARSE_PROGRESS:float = 0.5
+## The progress the vehicles' stage starts at; it reaches the end as their trainsets stand
+const VEHICLES_PROGRESS:float = 0.9
 ## Time the main thread may work through a load before it lets a frame be drawn - the loading
 ## screen's animations move only between frames (it was 100 ms: 10 frames a second at best)
 const FRAME_BUDGET_MSEC:int = 12
@@ -266,7 +268,7 @@ static func frame_budget_wait() -> void:
 ## then the drivers are given their orders - what a driver does first is sent along the couplers
 ## (simulationstateserializer.cpp:818-848). Every track is registered by now.
 static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTrainsetData]) -> void:
-    await _report_progress(root, 0.9, MaszynaIncludeNode.LoadStage.VEHICLES, "Instancing vehicles")
+    await _report_progress(root, VEHICLES_PROGRESS, MaszynaIncludeNode.LoadStage.VEHICLES, "Instancing vehicles")
     # A trainset on a track that is not built - a road car, roads are not built yet
     # (maszyna_node_track_importer.gd) - could never be placed, and still cost whole vehicles:
     # their physics stepped, their drivers and cab logic run (docs/findings-archive.md, 2026-10-03
@@ -295,15 +297,26 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
     if placed.size() < trainsets.size():
         print("[SceneryLoad] %d trainsets on tracks that are not built (roads) left out" % (trainsets.size() - placed.size()))
 
+    var vehicle_count:int = 0
+    for trainset_vehicles:Array[RID] in vehicles:
+        vehicle_count += trainset_vehicles.size()
+    var built_count:int = 0
     for index:int in placed.size():
-        await frame_budget_wait()
         var trainset_data:MaszynaTrainsetData = placed[index]
         var trainset_vehicles:Array[RID] = vehicles[index]
         for vehicle:RID in trainset_vehicles:
+            # reported before the wait: the trainset stands, and its driver is given its orders, in
+            # the frame its last vehicle is built
+            await _report_progress_throttled(
+                    root, lerpf(VEHICLES_PROGRESS, 1.0, float(built_count) / vehicle_count),
+                    MaszynaIncludeNode.LoadStage.VEHICLES, "Instancing vehicles")
+            if _is_load_given_up(root):
+                return
             while not MaszynaLegacyVehicleSystem.vehicle_is_built(vehicle):
                 await MaszynaLegacyVehicleSystem.vehicle_built
                 if _is_load_given_up(root):
                     return
+            built_count += 1
         var trainset:RID = RailVehicleServer.trainset_create()
         root._trainset_rids.append(trainset)
         RailVehicleServer.trainset_set_name(trainset, trainset_data.name)

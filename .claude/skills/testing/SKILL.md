@@ -69,6 +69,14 @@ proves nothing - the 36WE's pantograph names passed every test for a month.
   `godot-double --headless --path demo -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gselect=<script> -gexit`
   (60 s). `-gtest=` does not filter. Never the whole suite.
 - Redirect to a file and read the file - `| grep | head` kills the run with SIGPIPE.
+- **A long timeout hides the early error.** A probe that hangs or fails in its third second, wrapped
+  in `timeout 170`, says nothing for 170 s and then only "exit 124". Never one blocking call with a
+  generous ceiling: the probe prints a line at every stage (`STAGE loaded`, `STAGE player in`, one
+  per step), runs in the background into a file, and the file is watched - no new line for 15 s
+  means it is hung or dead: kill it and read the file at once. The ceiling is the time the next
+  stage should take, never the whole run "just in case".
+- A probe never `save_*`s a user setting - a killed probe leaves it written in the operator's
+  `settings.cfg`. In memory only: `UserSettings.set_setting("maszyna", "game_dir", ...)`.
 - `godot-double`, never `godot` (double-precision extension).
 - After every headless run `git status`: Godot rewrites `.tres`/`.tscn`; restore what you did not
   edit.

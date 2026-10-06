@@ -91,6 +91,14 @@ namespace godot {
 
             bool main_switch(bool p_enabled);
             bool motor_overload_relay_threshold(bool p_high);
+            /* The traction motors' blowers at an end switched on, or their "off" switch
+             * (MotorBlowersSwitch(), MotorBlowersSwitchOff()) */
+            void motor_blowers(bool p_enabled, RailVehicleController::CouplerEnd p_end);
+            void motor_blowers_switch_off(bool p_enabled, RailVehicleController::CouplerEnd p_end);
+            /* The traction motors' blowers at an end: switched on, switched off, working */
+            bool get_motor_blowers_enabled(RailVehicleController::CouplerEnd p_end) const;
+            bool get_motor_blowers_disabled(RailVehicleController::CouplerEnd p_end) const;
+            bool get_motor_blowers_active(RailVehicleController::CouplerEnd p_end) const;
             static void _bind_methods();
             TypedArray<RailVehicleMotorParameter> motor_param_table;
 

@@ -145,6 +145,9 @@ namespace godot {
                 D_METHOD("get_collector_pantograph_pressure_switch_armed"),
                 &RailVehicleEnginePowerSource::get_collector_pantograph_pressure_switch_armed);
         ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_pressure_lock_active"),
+                &RailVehicleEnginePowerSource::get_collector_pantograph_pressure_lock_active);
+        ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_compressor_valve"),
                 &RailVehicleEnginePowerSource::get_collector_pantograph_compressor_valve);
         ClassDB::bind_method(
@@ -259,6 +262,7 @@ namespace godot {
         p_state["current_collector/pantograph_tank_pressure"] = get_collector_pantograph_tank_pressure();
         p_state["current_collector/pantograph_pressure_switch_armed"] =
                 get_collector_pantograph_pressure_switch_armed();
+        p_state["current_collector/pantograph_pressure_lock_active"] = get_collector_pantograph_pressure_lock_active();
         p_state["current_collector/pantograph_compressor_valve"] = get_collector_pantograph_compressor_valve();
         p_state["current_collector/pantograph_compressor_enabled"] = get_collector_pantograph_compressor_enabled();
         p_state["current_collector/overvoltage_relay"] = get_collector_overvoltage_relay();

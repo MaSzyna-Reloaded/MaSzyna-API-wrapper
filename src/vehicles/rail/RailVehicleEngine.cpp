@@ -111,6 +111,14 @@ namespace godot {
 
     void RailVehicleEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &RailVehicleEngine::main_switch);
+        ClassDB::bind_method(D_METHOD("motor_blowers", "enabled", "end"), &RailVehicleEngine::motor_blowers);
+        ClassDB::bind_method(
+                D_METHOD("motor_blowers_switch_off", "enabled", "end"), &RailVehicleEngine::motor_blowers_switch_off);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_blowers_enabled", "end"), &RailVehicleEngine::get_motor_blowers_enabled);
+        ClassDB::bind_method(
+                D_METHOD("get_motor_blowers_disabled", "end"), &RailVehicleEngine::get_motor_blowers_disabled);
+        ClassDB::bind_method(D_METHOD("get_motor_blowers_active", "end"), &RailVehicleEngine::get_motor_blowers_active);
         ClassDB::bind_method(
                 D_METHOD("motor_overload_relay_threshold", "high"), &RailVehicleEngine::motor_overload_relay_threshold);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
@@ -226,6 +234,10 @@ namespace godot {
         p_state["main_switch_time"] = get_main_switch_time();
         p_state["main_no_power_pos"] = get_main_no_power_pos();
         p_state["motor_overload_relay_high_threshold"] = get_motor_overload_relay_high_threshold();
+        p_state["motor_blowers_front_enabled"] = get_motor_blowers_enabled(RailVehicleController::COUPLER_END_FRONT);
+        p_state["motor_blowers_rear_enabled"] = get_motor_blowers_enabled(RailVehicleController::COUPLER_END_REAR);
+        p_state["motor_blowers_front_active"] = get_motor_blowers_active(RailVehicleController::COUPLER_END_FRONT);
+        p_state["motor_blowers_rear_active"] = get_motor_blowers_active(RailVehicleController::COUPLER_END_REAR);
         p_state["eimic_real"] = get_eimic_real();
         p_state["relay_novolt"] = get_relay_novolt();
         p_state["relay_overvoltage"] = get_relay_overvoltage();
@@ -245,13 +257,52 @@ namespace godot {
     }
 
 
+    void RailVehicleEngine::motor_blowers(const bool p_enabled, const RailVehicleController::CouplerEnd p_end) {
+        if (drive_unit != nullptr) {
+            drive_unit->motor_blowers(p_enabled, p_end);
+        }
+    }
+
+    void
+    RailVehicleEngine::motor_blowers_switch_off(const bool p_enabled, const RailVehicleController::CouplerEnd p_end) {
+        if (drive_unit != nullptr) {
+            drive_unit->motor_blowers_switch_off(p_enabled, p_end);
+        }
+    }
+
+    bool RailVehicleEngine::get_motor_blowers_enabled(const RailVehicleController::CouplerEnd p_end) const {
+        return drive_unit != nullptr && drive_unit->get_motor_blowers_enabled(p_end);
+    }
+
+    bool RailVehicleEngine::get_motor_blowers_disabled(const RailVehicleController::CouplerEnd p_end) const {
+        return drive_unit != nullptr && drive_unit->get_motor_blowers_disabled(p_end);
+    }
+
+    bool RailVehicleEngine::get_motor_blowers_active(const RailVehicleController::CouplerEnd p_end) const {
+        return drive_unit != nullptr && drive_unit->get_motor_blowers_active(p_end);
+    }
+
     void RailVehicleEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
         register_command("motor_overload_relay_threshold", Callable(this, "motor_overload_relay_threshold"));
+        register_command(
+                "motor_blowers_front", Callable(this, "motor_blowers").bind(RailVehicleController::COUPLER_END_FRONT));
+        register_command(
+                "motor_blowers_rear", Callable(this, "motor_blowers").bind(RailVehicleController::COUPLER_END_REAR));
+        register_command(
+                "motor_blowers_front_switch_off",
+                Callable(this, "motor_blowers_switch_off").bind(RailVehicleController::COUPLER_END_FRONT));
+        register_command(
+                "motor_blowers_rear_switch_off",
+                Callable(this, "motor_blowers_switch_off").bind(RailVehicleController::COUPLER_END_REAR));
     }
 
     void RailVehicleEngine::_unregister_commands() {
         unregister_command("main_switch");
         unregister_command("motor_overload_relay_threshold");
+        unregister_command("motor_blowers_front");
+        unregister_command("motor_blowers_rear");
+        unregister_command("motor_blowers_front_switch_off");
+        unregister_command("motor_blowers_rear_switch_off");
     }
 } // namespace godot

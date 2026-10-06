@@ -2,6 +2,8 @@ extends MaszynaGutTest
 
 const Order = MaszynaLegacyAIDriver.Order
 const MAX_WAIT:float = 5.0
+## A water heater that switches itself off at this [C] (HeaterMaxTemperature)
+const WATER_HEATER_MAX_TEMPERATURE:float = 60.0
 const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const SHUNT_SPEED:float = 40.0
 
@@ -197,12 +199,95 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
     # a player in the cab (MaszynaPlayer)
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_seconds(1.0)
+    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
     assert_false(train.get_state()["battery_enabled"], "the order is taken, the battery left alone")
+    assert_eq(_hint_count(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), 1,
+            "the player is hinted to switch the battery on, once (cue_action(), driverhints.cpp:83)")
 
     PlayerServer.player_leave_vehicle()
     await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
     assert_true(train.get_state()["battery_enabled"], "back in control, it carries the order out")
+    DriverSystem.driver_attach_delegate(driver, null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
+func test_a_player_gets_the_next_hint_once_one_is_done() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverHintTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    PlayerServer.player_take_over_vehicle(vehicle)
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+
+    CabinSystem.act(RailVehicleServer.vehicle_get_driver_cabin(vehicle), &"battery_sw", &"toggle", true)
+    await wait_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+
+    assert_true(train.get_state()["battery_enabled"], "the player switched the battery on")
+    assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), "its hint is gone")
+    assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.OIL_PUMP_ON), "the diesel's oil pump stays hinted")
+    var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
+    assert_false(engine.get_oil_pump_enabled(), "and left for the player")
+    PlayerServer.player_leave_vehicle()
+    DriverSystem.driver_attach_delegate(driver, null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
+## A pump the vehicle starts by itself needs no hint (driverhints.cpp:198) - the operator's report of
+## 2026-10-06, "Switch on fuel pump" hanging for good
+func test_a_pump_not_switched_by_hand_is_never_hinted() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverPumpHintTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
+    var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
+    engine.fuel_pump_start_mode = RailVehicleController.START_MODE_AUTOMATIC
+    engine.oil_pump_start_mode = RailVehicleController.START_MODE_MANUAL
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    PlayerServer.player_take_over_vehicle(vehicle)
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+
+    assert_false(engine.get_fuel_pump_enabled(), "the fuel pump is off")
+    assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_ON), "but it starts by itself: no hint")
+    assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.OIL_PUMP_ON), "the oil pump, switched by hand, is hinted")
+    PlayerServer.player_leave_vehicle()
+    DriverSystem.driver_attach_delegate(driver, null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
+## PrepareHeating() (Driver.cpp:5032-5085): a diesel whose water heater switches itself off is
+## always heated - the player is hinted to start the water pump first, and nothing is touched
+func test_a_diesel_with_a_water_heater_is_hinted_its_water_pump() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverHeatingHintTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
+    var engine:RailVehicleDieselEngine = VehicleServer.vehicle_component_get(
+            vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
+    engine.cooling_heater_max_temperature = WATER_HEATER_MAX_TEMPERATURE
+    engine.water_pump_start_mode = RailVehicleController.START_MODE_MANUAL
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    PlayerServer.player_take_over_vehicle(vehicle)
+    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_ON), MAX_WAIT)
+
+    assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_BREAKER_ON), "the water pump's breaker first")
+    assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_ON), "then the water pump")
+    assert_false(engine.get_water_pump_enabled(), "left for the player")
+    PlayerServer.player_leave_vehicle()
     DriverSystem.driver_attach_delegate(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
@@ -269,7 +354,7 @@ func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
     PlayerServer.player_take_over_vehicle(vehicle)
     var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
     # the player puts the reverser backwards and leaves the vehicle
-    MaszynaLegacyDriverHints.set_direction(vehicle, cabin, -1)
+    CabinSystem.act(cabin, MaszynaLegacyDriverHints.REVERSER, &"decrease")
     var left_with:int = int(train.get_state()["direction"])
 
     PlayerServer.player_leave_vehicle()
@@ -337,3 +422,16 @@ class UpdateCounter extends DriverDelegate:
 
     func _update(_driver:RID) -> void:
         updates += 1
+
+
+## The driver's hints of `hint` (DriverSystem.driver_get_state()["hints"])
+func _hint_count(driver:RID, hint:MaszynaLegacyDriverHints.Hint) -> int:
+    var count:int = 0
+    for entry:Dictionary in DriverSystem.driver_get_state(driver).get("hints", []):
+        if entry["hint"] == hint:
+            count += 1
+    return count
+
+
+func _hinted(driver:RID, hint:MaszynaLegacyDriverHints.Hint) -> bool:
+    return _hint_count(driver, hint) > 0

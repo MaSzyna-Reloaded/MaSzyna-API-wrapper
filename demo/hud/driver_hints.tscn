@@ -1,0 +1,55 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/driver_hints.gd" id="1_hints"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://ui/ui_chip.gd" id="ui_chip"]
+
+[node name="DriverHints" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+visible = false
+mouse_filter = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_hints")
+
+[node name="HintsTile" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 16.0
+offset_top = 104.0
+offset_right = 16.0
+offset_bottom = 104.0
+mouse_filter = 2
+script = ExtResource("ui_chip")
+
+[node name="Layout" type="VBoxContainer" parent="HintsTile"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Caption" type="Label" parent="HintsTile/Layout"]
+layout_mode = 2
+theme_type_variation = &"DrivingAidCaption"
+text = "Hints"
+
+[node name="HintList" type="VBoxContainer" parent="HintsTile/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="EmptyText" type="Label" parent="HintsTile/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidHint"
+text = "No hints"
+
+[node name="RefreshTimer" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.5
+
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]
+[connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

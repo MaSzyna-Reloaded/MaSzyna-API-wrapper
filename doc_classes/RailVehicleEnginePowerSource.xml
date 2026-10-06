@@ -74,6 +74,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_collector_pantograph_pressure_lock_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="get_collector_pantograph_pressure_switch_armed" qualifiers="const">
 			<return type="bool" />
 			<description>

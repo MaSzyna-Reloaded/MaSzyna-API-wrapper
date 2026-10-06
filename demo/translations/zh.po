@@ -1735,3 +1735,15 @@ msgstr "更改游戏目录将结束当前游戏并返回主菜单。"
 
 msgid "End the game and change the directory"
 msgstr "结束游戏并更改目录"
+
+msgid "Hints"
+msgstr "提示"
+
+msgid "No hints"
+msgstr "无提示"
+
+msgid "Hints Toggle"
+msgstr "提示"
+
+msgid "Cycle Debug Menu"
+msgstr "性能统计"

@@ -14,11 +14,12 @@ signal exit_to_menu_requested
 ## The entries of the "Simulator" menu, by their ids - a separator (id 3) stands before EXIT_TO_MENU
 enum SimulatorItem { SETTINGS = 0, PROBLEM_REPORT = 1, EXIT_TO_MENU = 2, HELP = 4 }
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, DRIVING_AID, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
 
 ## The HUD elements' names in HUDServer
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
 const PANEL_DRIVING_AID:StringName = &"driving_aid"
+const PANEL_HINTS:StringName = &"hints"
 const PANEL_TIMETABLE:StringName = &"timetable"
 const PANEL_SCENARIO:StringName = &"scenario"
 const PANEL_SCRIPTS:StringName = &"scripts"
@@ -30,6 +31,7 @@ const PANEL_HELP:StringName = &"help"
 const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
     ViewItem.TRANSCRIPTS: PANEL_TRANSCRIPTS,
     ViewItem.DRIVING_AID: PANEL_DRIVING_AID,
+    ViewItem.HINTS: PANEL_HINTS,
     ViewItem.TIMETABLE: PANEL_TIMETABLE,
     ViewItem.SCENARIO: PANEL_SCENARIO,
     ViewItem.SCRIPTS: PANEL_SCRIPTS,
@@ -80,9 +82,12 @@ func _ready() -> void:
     %View.set_item_shortcut(ViewItem.CONTROLS, _action_shortcut(&"hud_toggle"))
     # F1, as the original's driving aid (driveruilayer.cpp:76)
     %View.set_item_shortcut(ViewItem.DRIVING_AID, _action_shortcut(&"driving_aid_toggle"))
-    # the transcripts and the driving aid are open from the start
+    # F3, as the original's scenario window with its hints (driveruilayer.cpp:168)
+    %View.set_item_shortcut(ViewItem.HINTS, _action_shortcut(&"hints_toggle"))
+    # the transcripts, the driving aid and the hints are open from the start
     HUDServer.panel_set_visible(PANEL_TRANSCRIPTS, true)
     HUDServer.panel_set_visible(PANEL_DRIVING_AID, true)
+    HUDServer.panel_set_visible(PANEL_HINTS, true)
 
 
 func _exit_tree() -> void:
@@ -122,7 +127,7 @@ func _on_simulator_menu_id_pressed(id: int) -> void:
             exit_to_menu_requested.emit()
 
 
-## The "View" menu: its entries show or hide the transcripts, the driving aid, the timetable, the
+## The "View" menu: its entries show or hide the transcripts, the driving aid, the hints, the timetable, the
 ## scenario, all the control windows at once, the Lua editor, the trainset list and the simulation
 ## speed
 func _on_view_menu_index_pressed(index: int) -> void:
@@ -147,6 +152,8 @@ func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
             %TranscriptsPanel.set_shown(shown)
         PANEL_DRIVING_AID:
             %DrivingAid.visible = shown
+        PANEL_HINTS:
+            %DriverHints.visible = shown
         PANEL_TIMETABLE:
             %TimetablePanel.visible = shown
         PANEL_SCENARIO:

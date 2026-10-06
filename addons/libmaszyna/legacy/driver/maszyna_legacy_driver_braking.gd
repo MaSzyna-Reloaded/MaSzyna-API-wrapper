@@ -141,7 +141,6 @@ const DELAY_APPLY_G:int = 3
 ## The releaser (control_releaser(), Driver.cpp:8191-8250): the handles that have one, and the
 ## pressures [bar] it is pressed at - an empty pipe, a released cylinder, a charged control
 ## reservoir - and never past an overcharged pipe
-const RELEASER:StringName = &"releaser_bt"
 const RELEASER_HANDLES:Array[int] = [
     RailVehicleBrake.BRAKE_HANDLE_TYPE_FV4A, RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_6P, RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K5P,
     RailVehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K8P, RailVehicleBrake.BRAKE_HANDLE_TYPE_M394,
@@ -149,6 +148,8 @@ const RELEASER_HANDLES:Array[int] = [
 const EMPTY_PIPE_PRESSURE:float = 3.0
 const RELEASED_BRAKE_PRESSURE:float = 0.4
 const CHARGED_CONTROL_RESERVOIR:float = 4.9
+## Pressing the buffers, its own brake is released over this [bar] (Driver.cpp:8226)
+const PRESSING_BRAKE_PRESSURE:float = 0.1
 const OVERCHARGED_PIPE_PRESSURE:float = 5.2
 ## The positions of MHZ_K8P and MHZ_EN57 (Driver.cpp:4072-4092)
 const K8P_FULL_POSITION:float = 10.0
@@ -430,7 +431,7 @@ func control(situation:MaszynaLegacyDriverTraction.Situation, elapsed:float) -> 
     var disconnecting:bool = situation.order == MaszynaLegacyAIDriver.Order.DISCONNECT
     # accelerating, it does not brake - but not while uncoupling
     if acceleration > 0.0 and not disconnecting:
-        _release(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_SET_ZERO, 0.0, _release.bind(situation))
     if is_emu(vehicle):
         # an EMU's own braking: the EP brake answers at once (Driver.cpp:8078-8110)
         var threshold:float = acceleration_threshold if gravity < DOWNHILL_GRAVITY \
@@ -439,35 +440,39 @@ func control(situation:MaszynaLegacyDriverTraction.Situation, elapsed:float) -> 
         var margin:float = EMU_BRAKING_MARGIN if acceleration_max > EMU_MARGIN_SHARE * acceleration and gravity < DOWNHILL_GRAVITY \
                 else 0.0
         if acceleration < threshold and (trainset.acceleration > acceleration + margin or position < POSITION_RUNNING):
-            _increase(situation)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_INCREASE, 0.0, _increase.bind(situation, 1.0))
         elif not disconnecting:
             if trainset.acceleration < acceleration - RELEASING_MARGIN:
                 if position >= POSITION_RUNNING and speed.velocity_desired > 0.0:
-                    _decrease(situation, factor(speed, situation.route, trainset, absf(directional_speed)))
+                    MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_DECREASE, 0.0, _decrease.bind(
+                            situation, factor(speed, situation.route, trainset, absf(directional_speed))))
             else:
-                # brakingforcelap: LapBrake() (Driver.cpp:3344-3353) - an EP brake applied by time
-                # held where it is
-                var brake:RailVehicleBrake = _brake(situation.vehicle)
-                if not (brake and brake.get_handle_ep_time_controlled()):
-                    return
-                var hold:float = brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_EP_HOLD)
-                if brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_EP_RELEASE) - hold < EP_SWITCHED:
-                    MaszynaLegacyDriverHints.send(situation.vehicle, "ep_brake", false)
-                else:
-                    _set_handle(situation.vehicle, situation.cabin, hold)
+                # LapBrake() (Driver.cpp:3344-3353): an EP brake applied by time held where it is
+                MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_LAP, 0.0, func() -> void:
+                    var brake:RailVehicleBrake = _brake(vehicle)
+                    if not (brake and brake.get_handle_ep_time_controlled()):
+                        return
+                    var hold:float = brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_EP_HOLD)
+                    if brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_EP_RELEASE) - hold < EP_SWITCHED:
+                        MaszynaLegacyDriverHints.send(vehicle, "ep_brake", false)
+                    else:
+                        _set_handle(vehicle, cabin, hold))
     else:
         var brake_factor:float = factor(speed, situation.route, trainset, absf(directional_speed))
         if (acceleration < gravity - BRAKING_MARGIN and trainset.acceleration > acceleration + table_a1) \
                 or (gravity < ROLLING_BACK_GRAVITY and directional_speed < ROLLING_BACK_SPEED):
             if delay < 0.0 or acceleration < gravity - SUDDEN_BRAKING_MARGIN or position <= POSITION_RUNNING:
-                if _increase(situation, brake_factor):
-                    delay = (BRAKE_DELAY_BASE + BRAKE_DELAY_SHARE
-                            * (_brake_delay(vehicle, DELAY_APPLY_P, DELAY_APPLY_G) - BRAKE_DELAY_BASE)) * BRAKE_DELAY_SHARE
+                # with the delay before the next change of the brakes (driverhints.cpp:840-845)
+                MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_INCREASE, 0.0, func() -> void:
+                    if _increase(situation, brake_factor):
+                        delay = (BRAKE_DELAY_BASE + BRAKE_DELAY_SHARE
+                                * (_brake_delay(vehicle, DELAY_APPLY_P, DELAY_APPLY_G) - BRAKE_DELAY_BASE)) * BRAKE_DELAY_SHARE)
         if acceleration < gravity - RELEASING_MARGIN \
                 and (acceleration - table_a1 * RELEASING_TABLE_FACTOR) - trainset.acceleration > RELEASING_EXCESS \
                 and not disconnecting and speed.velocity_desired > 0.0:
-            if _decrease(situation, brake_factor):
-                delay = _brake_delay(vehicle, DELAY_RELEASE_P, DELAY_RELEASE_G) / RELEASE_DELAY_SHARE * BRAKE_DELAY_SHARE
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_DECREASE, 0.0, func() -> void:
+                if _decrease(situation, brake_factor):
+                    delay = _brake_delay(vehicle, DELAY_RELEASE_P, DELAY_RELEASE_G) / RELEASE_DELAY_SHARE * BRAKE_DELAY_SHARE)
     # at a stop: the locomotive held by its own brake on the flat, the train released
     # (Driver.cpp:8166-8180)
     var standing:bool = VehicleServer.vehicle_get_speed(vehicle) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED
@@ -475,13 +480,14 @@ func control(situation:MaszynaLegacyDriverTraction.Situation, elapsed:float) -> 
         var joining:int = (MaszynaLegacyAIDriver.Order.DISCONNECT | MaszynaLegacyAIDriver.Order.CONNECT
                 | MaszynaLegacyAIDriver.Order.CHANGE_DIRECTION)
         if not situation.order & joining and absf(gravity) < FLAT_GRAVITY:
-            _apply_independent_brake_only(vehicle, cabin)
+            apply_independent_brake_only(situation)
+        # told to turn, the brake left applied in the cab it leaves is let go (Driver.cpp:8171-8175)
         if situation.order & MaszynaLegacyAIDriver.Order.CHANGE_DIRECTION:
-            _set_local_brake(vehicle, cabin, LOCAL_BRAKE_RELEASED)
-    _control_releaser(vehicle, cabin, acceleration)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.INDEPENDENT_BRAKE_RELEASE)
+    _control_releaser(situation, acceleration)
 
 
-## brakingforcedecrease: the brakes eased once - as the wheels slip (control_wheelslip(),
+## brakingforcedecrease's action as the wheels slip: the brakes eased once (control_wheelslip(),
 ## Driver.cpp:6205)
 func ease(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     _decrease(situation, 1.0)
@@ -550,21 +556,24 @@ func set_time_controllers(situation:MaszynaLegacyDriverTraction.Situation) -> vo
         MaszynaLegacyDriverHints.send(vehicle, "universal_brake_button", index, bool(pressed & buttons[index]))
 
 
-## trainbrakeapply (driverhints.cpp:810-825): the train brake applied to uncouple; the handle takes
-## it on the next control(). The electro-pneumatic brake's own position is not ported (TODO.md).
+## trainbrakeapply's action (driverhints.cpp:810-825): the train brake applied to uncouple; the
+## handle takes it on the next control(). The electro-pneumatic brake's own position is not ported
+## (TODO.md).
 func apply_train_brake() -> void:
     position = POSITION_UNCOUPLING
 
 
-## independentbrakerelease (driverhints.cpp:901-910): the local brake off, to press the buffers
+## independentbrakerelease's action (driverhints.cpp:901-910): the local brake off
 func release_local_brake(vehicle:RID, cabin:RID) -> void:
     _set_local_brake(vehicle, cabin, LOCAL_BRAKE_RELEASED)
 
 
 ## control_releaser() (Driver.cpp:8191-8250): the releaser held while the driver wants to go and
-## the pipe is empty or its own brake overcharged - a locomotive whose control reservoir stayed
-## fuller than the pipe keeps braking otherwise
-func _control_releaser(vehicle:RID, cabin:RID, acceleration:float) -> void:
+## the pipe is empty - the handle at the position that unlocks the pipe first, where the vehicle
+## has one - or its own brake overcharged, or pressing the buffers - a locomotive whose control
+## reservoir stayed fuller than the pipe keeps braking otherwise
+func _control_releaser(situation:MaszynaLegacyDriverTraction.Situation, acceleration:float) -> void:
+    var vehicle:RID = situation.vehicle
     var brake:RailVehicleBrake = _brake(vehicle)
     var train_type:RailVehicleController.TrainType = (
             VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController).train_type
@@ -572,23 +581,43 @@ func _control_releaser(vehicle:RID, cabin:RID, acceleration:float) -> void:
             or train_type == RailVehicleController.TRAIN_TYPE_EZT or train_type == RailVehicleController.TRAIN_TYPE_DMU \
             or not brake.cntrl_brake_handle_type in RELEASER_HANDLES:
         return
+    # nothing done standing while told to wait (Driver.cpp:8193)
+    if VehicleServer.vehicle_get_speed(vehicle) < MaszynaLegacyDriverTrainset.MOVEMENT_SPEED \
+            and situation.traction.action_time < 0.0:
+        return
     var pipe:float = brake.get_pipe_pressure()
-    var actuate:bool = acceleration > MaszynaLegacyDriverSpeed.NO_ACCELERATION and (pipe < EMPTY_PIPE_PRESSURE
-            or (brake.get_air_pressure() > RELEASED_BRAKE_PRESSURE
-                and brake.get_control_reservoir_pressure() > CHARGED_CONTROL_RESERVOIR))
+    var actuate:bool = false
+    var handle_unlocked:bool = true
+    if acceleration > MaszynaLegacyDriverSpeed.NO_ACCELERATION:
+        if pipe < EMPTY_PIPE_PRESSURE:
+            actuate = true
+            var unlock:float = brake.main_pipe_minimum_unblocking_handle_position
+            if not unlock == MaszynaLegacyDriverHints.PIPE_UNLOCK_NONE:
+                # trainbrakesetpipeunlock (driverhints.cpp:779-795): its level down to the position
+                MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRAIN_BRAKE_SET_PIPE_UNLOCK, 0.0, func() -> void:
+                    while position >= unlock and _add_position(-1.0):
+                        pass)
+                handle_unlocked = position == unlock
+        if brake.get_air_pressure() > RELEASED_BRAKE_PRESSURE \
+                and brake.get_control_reservoir_pressure() > CHARGED_CONTROL_RESERVOIR:
+            actuate = true
+        # its own brakes kept released while pressing the buffers (Driver.cpp:8224-8228)
+        if situation.pressing and brake.get_air_pressure() > PRESSING_BRAKE_PRESSURE:
+            actuate = true
     if pipe > OVERCHARGED_PIPE_PRESSURE:
         actuate = false
     var releasing:bool = brake.get_releaser_active()
     if actuate:
         # some vehicles take the releaser only with the master controller at zero
-        MaszynaLegacyDriverHints.set_zero_speed(vehicle, cabin)
-        if not releasing:
-            CabinSystem.act(cabin, RELEASER, &"hold")
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
+        if not releasing and handle_unlocked:
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.RELEASER_ON)
     elif releasing:
-        CabinSystem.act(cabin, RELEASER, &"release")
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.RELEASER_OFF)
 
 
-## brakingforcesetzero (driverhints.cpp:863-872): DecBrake() until nothing is left to release
+## brakingforcesetzero's action (driverhints.cpp:863-872): DecBrake() until nothing is left to
+## release
 func _release(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     while _decrease(situation, 1.0):
         pass
@@ -881,20 +910,23 @@ func _is_standalone(situation:MaszynaLegacyDriverTraction.Situation) -> bool:
 
 ## apply_independent_brake_only() (Driver.cpp:8178-8189): the local brake on if the train brake
 ## runs, otherwise the train brake to running first; not with a manual brake, nor in shunting mode
-func _apply_independent_brake_only(vehicle:RID, cabin:RID) -> void:
+func apply_independent_brake_only(situation:MaszynaLegacyDriverTraction.Situation) -> void:
+    var vehicle:RID = situation.vehicle
     var brake:RailVehicleBrake = _brake(vehicle)
     if brake == null or brake.cntrl_local_brake_type == RailVehicleBrake.LOCAL_BRAKE_TYPE_MANUAL:
         return
     var running:float = brake.get_handle_position(RailVehicleBrake.HANDLE_POSITION_DRIVE)
     if absf(brake.get_controller_position() - running) <= HANDLE_TOLERANCE:
         # independentbrakeapply (driverhints.cpp:888-899): an emergency EIM controller one short
-        var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
-        var most:float = (LOCAL_BRAKE_POSITIONS - 1.0) / LOCAL_BRAKE_POSITIONS \
-                if engine and engine.cntrl_eim_control_emergency else LOCAL_BRAKE_APPLIED
-        if brake.get_local_position_normalized() < most:
-            _set_local_brake(vehicle, cabin, most)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.INDEPENDENT_BRAKE_APPLY, 0.0, func() -> void:
+            var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+            var most:float = (LOCAL_BRAKE_POSITIONS - 1.0) / LOCAL_BRAKE_POSITIONS \
+                    if engine and engine.cntrl_eim_control_emergency else LOCAL_BRAKE_APPLIED
+            if brake.get_local_position_normalized() < most:
+                _set_local_brake(vehicle, situation.cabin, most))
     else:
-        position = POSITION_RUNNING
+        # trainbrakerelease (driverhints.cpp:796-799): the driver's own level to running
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRAIN_BRAKE_RELEASE, 0.0, func() -> void: position = POSITION_RUNNING)
 
 
 ## IncLocalBrakeLevel()/DecLocalBrakeLevel() through the knob; true when it moved

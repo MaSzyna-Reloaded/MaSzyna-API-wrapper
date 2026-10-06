@@ -316,4 +316,84 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitchOff(p_enabled);
     }
+
+    bool MoverDieselEngineUnit::get_water_pump_enabled() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterPump.is_enabled : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_pump_active() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterPump.is_active : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_pump_breaker() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterPump.breaker : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_heater_enabled() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterHeater.is_enabled : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_heater_active() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterHeater.is_active : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_heater_breaker() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterHeater.breaker : false;
+    }
+
+    bool MoverDieselEngineUnit::get_water_circuits_link() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->WaterCircuitsLink : false;
+    }
+
+    double MoverDieselEngineUnit::get_main_circuit_water_temperature() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.temperatura1 : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_auxiliary_circuit_water_temperature() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.temperatura2 : 0.0;
+    }
+
+    double MoverDieselEngineUnit::get_oil_temperature() const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.To : 0.0;
+    }
+
+    void MoverDieselEngineUnit::water_pump(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterPumpSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineUnit::water_pump_breaker(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterPumpBreakerSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineUnit::water_heater(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterHeaterSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineUnit::water_heater_breaker(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterHeaterBreakerSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineUnit::water_circuits_link(const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->WaterCircuitsLinkSwitch(p_enabled);
+    }
 } // namespace godot

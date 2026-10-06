@@ -43,6 +43,10 @@ namespace godot {
             virtual double get_mass_reduced() const = 0;
             /* A coupler pulled past its strength (stretch_duration > 0, Mover.cpp:5405) */
             virtual bool get_coupler_stretched() const = 0;
+            /* The passengers' compartment lights switched on, and lit (CompartmentLights.is_enabled,
+             * is_active) */
+            virtual bool get_compartment_lights_enabled() const = 0;
+            virtual bool get_compartment_lights_active() const = 0;
 
             /* shared enum for every FIZ "...Start=" device activation mode field (Cntrl. section) */
             enum StartMode {
@@ -127,6 +131,10 @@ namespace godot {
             static const char *coupler_adapter_removed_signal;
 
             virtual void cab_activation(bool p_enabled) const = 0;
+            /* The compartment lights switched on, or their "off" switch (CompartmentLightsSwitch(),
+             * CompartmentLightsSwitchOff()) */
+            virtual void compartment_lights(bool p_enabled) const = 0;
+            virtual void compartment_lights_switch_off(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
             /* The cab switched off as the vehicle switches it off by itself, when the FIZ lets it
              * (CabDeactivisationAuto(), Train.cpp:10336) */

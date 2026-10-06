@@ -24,6 +24,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_auxiliary_circuit_water_temperature" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_clutch_desired" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -79,6 +84,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_main_circuit_water_temperature" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_max_rpm" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -100,6 +110,11 @@
 			</description>
 		</method>
 		<method name="get_oil_pump_pressure" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_oil_temperature" qualifiers="const">
 			<return type="float" />
 			<description>
 			</description>
@@ -134,6 +149,41 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_water_circuits_link" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_heater_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_heater_breaker" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_heater_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_pump_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_pump_breaker" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_water_pump_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="get_water_temperature" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -147,6 +197,36 @@
 			</description>
 		</method>
 		<method name="oil_pump_switch_off">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="water_circuits_link">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="water_heater">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="water_heater_breaker">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="water_pump">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="water_pump_breaker">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>

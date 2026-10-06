@@ -35,6 +35,16 @@ namespace godot {
             double get_water_temperature() const override;
             double get_engine_temperature() const override;
             double get_retarder_fill() const override;
+            bool get_water_pump_enabled() const override;
+            bool get_water_pump_active() const override;
+            bool get_water_pump_breaker() const override;
+            bool get_water_heater_enabled() const override;
+            bool get_water_heater_active() const override;
+            bool get_water_heater_breaker() const override;
+            bool get_water_circuits_link() const override;
+            double get_main_circuit_water_temperature() const override;
+            double get_auxiliary_circuit_water_temperature() const override;
+            double get_oil_temperature() const override;
             double get_max_rpm() const override;
             double get_idle_rpm_count() const override;
             void apply_configuration(const RailVehicleDieselEngine *p_engine) const override;
@@ -42,6 +52,11 @@ namespace godot {
             void fuel_pump(bool p_enabled) const override;
             void oil_pump_switch_off(bool p_enabled) const override;
             void fuel_pump_switch_off(bool p_enabled) const override;
+            void water_pump(bool p_enabled) const override;
+            void water_pump_breaker(bool p_enabled) const override;
+            void water_heater(bool p_enabled) const override;
+            void water_heater_breaker(bool p_enabled) const override;
+            void water_circuits_link(bool p_enabled) const override;
             void fill_config(Dictionary &p_config) const override;
     };
 } // namespace godot

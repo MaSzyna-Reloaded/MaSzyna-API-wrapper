@@ -45,9 +45,9 @@ func control_handles(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var master:RailVehicleMasterController = master_controller(situation.controlling)
     if not (engine and engine.is_line_contactor_closed()) and not (master and master.get_main_delayed()) \
             and main_powercontroller_position(situation) > 1:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
     if not situation.trainset.ready and main_powercontroller_position(situation) > 1:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
 
 
 ## The universal controller of a diesel-electric engine (SetTimeControllers() 5.5,

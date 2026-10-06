@@ -70,6 +70,10 @@ namespace godot {
             TMoverParameters *get_mover() const;
 
             void cab_activation(bool p_enabled) const override;
+            void compartment_lights(bool p_enabled) const override;
+            void compartment_lights_switch_off(bool p_enabled) const override;
+            bool get_compartment_lights_enabled() const override;
+            bool get_compartment_lights_active() const override;
             void cab_activation_auto() const override;
             void cab_deactivation_auto() const override;
             void cab_controls_reset() const override;

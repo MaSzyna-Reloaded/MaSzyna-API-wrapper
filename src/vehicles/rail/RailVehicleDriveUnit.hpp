@@ -1,4 +1,5 @@
 #pragma once
+#include "vehicles/rail/RailVehicleController.hpp"
 #include <godot_cpp/variant/dictionary.hpp>
 
 namespace godot {
@@ -43,7 +44,15 @@ namespace godot {
              * (ShowCurrent(), Mover.cpp:2345) */
             virtual double get_current(int p_ammeter) const = 0;
             virtual void apply_configuration(const RailVehicleEngine *p_engine) const = 0;
+            /* The traction motors' blowers at an end: switched on, switched off, working
+             * (MotorBlowers[].is_enabled, is_disabled, is_active) */
+            virtual bool get_motor_blowers_enabled(RailVehicleController::CouplerEnd p_end) const = 0;
+            virtual bool get_motor_blowers_disabled(RailVehicleController::CouplerEnd p_end) const = 0;
+            virtual bool get_motor_blowers_active(RailVehicleController::CouplerEnd p_end) const = 0;
             virtual bool main_switch(bool p_enabled) const = 0;
+            /* MotorBlowersSwitch(), MotorBlowersSwitchOff() (Mover.cpp) */
+            virtual void motor_blowers(bool p_enabled, RailVehicleController::CouplerEnd p_end) const = 0;
+            virtual void motor_blowers_switch_off(bool p_enabled, RailVehicleController::CouplerEnd p_end) const = 0;
             /* The motor overload relay's high threshold, or the shunting mode of an engine that has
              * one (CurrentSwitch(), Mover.cpp:805) */
             virtual bool motor_overload_relay_threshold(bool p_high) const = 0;

@@ -70,6 +70,24 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_motor_blowers_active" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_blowers_disabled" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+			</description>
+		</method>
+		<method name="get_motor_blowers_enabled" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+			</description>
+		</method>
 		<method name="get_motor_overload_relay_high_threshold" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -141,6 +159,20 @@
 			<param index="0" name="enabled" type="bool" />
 			<description>
 				Operate main switch immediately (vehicle level, no cab hold logic). Returns whether the main switch state was changed.
+			</description>
+		</method>
+		<method name="motor_blowers">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+			</description>
+		</method>
+		<method name="motor_blowers_switch_off">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
 			</description>
 		</method>
 		<method name="motor_overload_relay_threshold">

@@ -82,6 +82,9 @@ namespace godot {
             virtual double get_collector_max_pantograph_tank_pressure() const = 0;
             virtual double get_collector_pantograph_tank_pressure() const = 0;
             virtual bool get_collector_pantograph_pressure_switch_armed() const = 0;
+            /* An EMU's converter and heating held off since its pressure switch tripped, until it
+             * is primed again (PantPressLockActive, Mover.cpp:875) */
+            virtual bool get_collector_pantograph_pressure_lock_active() const = 0;
             virtual bool get_collector_pantograph_compressor_valve() const = 0;
             /* The small compressor filling the pantograph tank is running (PantCompFlag) */
             virtual bool get_collector_pantograph_compressor_enabled() const = 0;

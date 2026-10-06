@@ -45,6 +45,20 @@ namespace godot {
             double get_retarder_fill() const;
             double get_max_rpm() const;
             double get_idle_rpm_count() const;
+            /* The cooling water's pump, its breaker, the water heater, its breaker and the link of
+             * the two water circuits (WaterPump, WaterHeater, WaterCircuitsLink) */
+            bool get_water_pump_enabled() const;
+            bool get_water_pump_active() const;
+            bool get_water_pump_breaker() const;
+            bool get_water_heater_enabled() const;
+            bool get_water_heater_active() const;
+            bool get_water_heater_breaker() const;
+            bool get_water_circuits_link() const;
+            /* The main and the auxiliary water circuit's and the oil's temperature [C] - what the
+             * original's driver warms the engine up by (PrepareHeating(), Driver.cpp:5040-5045) */
+            double get_main_circuit_water_temperature() const;
+            double get_auxiliary_circuit_water_temperature() const;
+            double get_oil_temperature() const;
 
             /* Original engine: Mover.cpp:11371 NominalCoolingPower's default - su45's, the engine
              * the heat model was written for */
@@ -200,6 +214,13 @@ namespace godot {
              * Train.cpp:3937, 3963) - an impulse switch has none */
             void oil_pump_switch_off(bool p_enabled);
             void fuel_pump_switch_off(bool p_enabled);
+            /* WaterPumpSwitch(), WaterPumpBreakerSwitch(), WaterHeaterSwitch(),
+             * WaterHeaterBreakerSwitch(), WaterCircuitsLinkSwitch() (Mover.cpp) */
+            void water_pump(bool p_enabled);
+            void water_pump_breaker(bool p_enabled);
+            void water_heater(bool p_enabled);
+            void water_heater_breaker(bool p_enabled);
+            void water_circuits_link(bool p_enabled);
     };
 } // namespace godot
 VARIANT_ENUM_CAST(RailVehicleDieselEngine::RetarderPlacement)

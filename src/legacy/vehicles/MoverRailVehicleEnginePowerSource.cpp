@@ -187,6 +187,11 @@ namespace godot {
         return mover != nullptr ? mover->PantPress : 0.0;
     }
 
+    bool MoverRailVehicleEnginePowerSource::get_collector_pantograph_pressure_lock_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->PantPressLockActive;
+    }
+
     bool MoverRailVehicleEnginePowerSource::get_collector_pantograph_pressure_switch_armed() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr && mover->PantPressSwitchActive;

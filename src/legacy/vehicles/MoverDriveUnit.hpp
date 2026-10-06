@@ -35,7 +35,12 @@ namespace godot {
             int get_circuit_rlist_size() const override;
             double get_current(int p_ammeter) const override;
             void apply_configuration(const RailVehicleEngine *p_engine) const override;
+            bool get_motor_blowers_enabled(RailVehicleController::CouplerEnd p_end) const override;
+            bool get_motor_blowers_disabled(RailVehicleController::CouplerEnd p_end) const override;
+            bool get_motor_blowers_active(RailVehicleController::CouplerEnd p_end) const override;
             bool main_switch(bool p_enabled) const override;
+            void motor_blowers(bool p_enabled, RailVehicleController::CouplerEnd p_end) const override;
+            void motor_blowers_switch_off(bool p_enabled, RailVehicleController::CouplerEnd p_end) const override;
             bool motor_overload_relay_threshold(bool p_high) const override;
             void process(const RailVehicleEngine *p_engine, double p_delta) const override;
             void fill_config(Dictionary &p_config) const override;

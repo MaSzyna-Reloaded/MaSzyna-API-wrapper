@@ -73,9 +73,8 @@ Our own classes still in GDScript, fixed when their base moves to C++:
   values: `driver_braking.gd:799, 975, 982`, `driver_pantographs.gd:46, 70, 78`,
   `driver_traction.gd:133-134, 324, 330, 380-393, 479`, `ai_driver.gd:695, 874`.
 * Where the original's AI bypasses the cab (`driverhints.cpp`: `mvOccupied->RelayReset()`, ...),
-  the AI sends `VehicleServer.vehicle_send_command()`, not `CabinSystem.act()`: `fuse_bt`
-  (`maszyna_legacy_driver_traction.gd:149`) and `converterfuse_bt`
-  (`maszyna_legacy_ai_driver.gd:670`).
+  the AI sends `VehicleServer.vehicle_send_command()`, not `CabinSystem.act()`: `fuse_bt` and
+  `converterfuse_bt` (`MaszynaLegacyDriverHints.BUTTONS`).
 * `LegacyCabinDirectionKey` (`legacy/cabin/direction_key.gd`) reads `direction` from the dump
   until there is `vehicle_get_direction()`.
 
@@ -133,8 +132,12 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
 
 Each needs a catalog entry and, where missing, a vehicle command (with its `type()` branches):
 `compartmentlights_sw` (Train.cpp: OnCommand_compartmentlights*), `waterpump_sw`,
-`motorblowersfront_sw`/`rear_sw`/`alloff_sw`, `epbrake_bt` (ggEPFuseButton, Train.cpp:2350),
-`doorrightpermit_sw` (Train.cpp:7263), `compressorlist_sw`, `autosandallow_sw`.
+`waterpumpbreaker_sw`, `waterheater_sw`, `waterheaterbreaker_sw`, `watercircuitslink_sw`,
+`motorblowersfront_sw`/`rear_sw`/`alloff_sw` - their commands exist (`compartment_lights`,
+`water_pump`, `water_pump_breaker`, `water_heater`, `water_heater_breaker`, `water_circuits_link`,
+`motor_blowers_front`/`rear` and `_switch_off`), the driver hints them, a player has no switch -
+`epbrake_bt` (ggEPFuseButton, Train.cpp:2350), `doorrightpermit_sw` (Train.cpp:7263),
+`compressorlist_sw`, `autosandallow_sw`.
 
 ### E186 controls - what is still simplified
 
@@ -573,14 +576,10 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * **Timetable panel** (`demo/hud/timetable_panel.gd`): the list from `StationStart`
   (driveruipanels.cpp:392), the expanded mode's weight and length (:360-386), re-resolving the
   followed driver on coupling.
-* **The driver's hints to a player** (`cue_action()`, Driver.cpp:2759-2916) - a tooltip-styled
-  HUD panel.
-  Report MaSzyna-Reloaded/reports#9 shows what is missing without it: a player who takes an EP07
-  or another locomotive with a manual three-way valve (no `PantAutoValve`) from the AI between
-  its small compressor going off and `control_pantographs()` (Driver.cpp:6226) setting the air
-  source back to the main reservoir keeps the pantograph tank cut off; it leaks, the line breaker
-  and the pantograph go down, and nothing tells the player to turn the valve
-  (`pantographairsourcesetmain`, driverhints.cpp:213). The original does the same, but hints it.
+* **The driver's hints**: the compartment lights go by the scenery's light level alone - the
+  consist's shade (`ConsistShade`) is not published.
+* **The Hints chip** (`demo/hud/driver_hints.tscn`): its place under the driving aid not seen in the
+  running game yet.
 * **Coupling and uncoupling - not checked on a scenery** (linia61, calkowo too heavy for a headless
   probe so far). Left: high voltage and power lines of a coupler number; `coupler_connect` joins in
   a fixed order; lights after the trainset changed (`CheckVehicles()`); `bh_EPB`; a coupling a

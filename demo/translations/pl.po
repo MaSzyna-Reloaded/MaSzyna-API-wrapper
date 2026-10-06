@@ -1735,3 +1735,15 @@ msgstr "Zmiana katalogu gry zakończy bieżącą grę i wróci do menu główneg
 
 msgid "End the game and change the directory"
 msgstr "Zakończ grę i zmień katalog"
+
+msgid "Hints"
+msgstr "Podpowiedzi"
+
+msgid "No hints"
+msgstr "Brak podpowiedzi"
+
+msgid "Hints Toggle"
+msgstr "Podpowiedzi"
+
+msgid "Cycle Debug Menu"
+msgstr "Statystyki wydajności"

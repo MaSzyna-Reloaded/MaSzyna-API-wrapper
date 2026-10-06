@@ -36,6 +36,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_rail_component", "type"), &RailVehicleController::get_rail_component);
         ClassDB::bind_method(D_METHOD("find_rail_components", "type"), &RailVehicleController::find_rail_components);
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &RailVehicleController::cab_activation);
+        ClassDB::bind_method(D_METHOD("compartment_lights", "enabled"), &RailVehicleController::compartment_lights);
+        ClassDB::bind_method(
+                D_METHOD("compartment_lights_switch_off", "enabled"),
+                &RailVehicleController::compartment_lights_switch_off);
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &RailVehicleController::cab_activation_auto);
         ClassDB::bind_method(D_METHOD("cab_deactivation_auto"), &RailVehicleController::cab_deactivation_auto);
         ClassDB::bind_method(D_METHOD("cab_controls_reset"), &RailVehicleController::cab_controls_reset);
@@ -205,6 +209,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_train_damage"), &RailVehicleController::get_train_damage);
         ClassDB::bind_method(D_METHOD("get_mass_reduced"), &RailVehicleController::get_mass_reduced);
         ClassDB::bind_method(D_METHOD("get_coupler_stretched"), &RailVehicleController::get_coupler_stretched);
+        ClassDB::bind_method(
+                D_METHOD("get_compartment_lights_enabled"), &RailVehicleController::get_compartment_lights_enabled);
+        ClassDB::bind_method(
+                D_METHOD("get_compartment_lights_active"), &RailVehicleController::get_compartment_lights_active);
     }
 
     void RailVehicleController::_register_commands() {
@@ -215,6 +223,8 @@ namespace godot {
         register_command("ground_relay_reset", Callable(this, "ground_relay_reset"));
         register_command("antislip", Callable(this, "antislip"));
         register_command("cab_activation", Callable(this, "cab_activation"));
+        register_command("compartment_lights", Callable(this, "compartment_lights"));
+        register_command("compartment_lights_switch_off", Callable(this, "compartment_lights_switch_off"));
         register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
         register_command("main_controller_increase", Callable(this, "main_controller_increase"));
         register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -236,6 +246,8 @@ namespace godot {
         unregister_command("ground_relay_reset");
         unregister_command("antislip");
         unregister_command("cab_activation");
+        unregister_command("compartment_lights");
+        unregister_command("compartment_lights_switch_off");
         unregister_command("cab_activation_auto");
         unregister_command("main_controller_increase");
         unregister_command("main_controller_decrease");
@@ -260,6 +272,8 @@ namespace godot {
         p_state["train_damage"] = get_train_damage();
         p_state["mass_reduced"] = get_mass_reduced();
         p_state["coupler_stretched"] = get_coupler_stretched();
+        p_state["compartment_lights_enabled"] = get_compartment_lights_enabled();
+        p_state["compartment_lights_active"] = get_compartment_lights_active();
     }
 
     void RailVehicleController::set_coupler_adapter_model(const String &p_value) {

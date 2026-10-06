@@ -28,6 +28,7 @@
 [ext_resource type="PackedScene" path="res://hud/vehicle_chip.tscn" id="29_vehicle_chip"]
 [ext_resource type="PackedScene" path="res://hud/streaming_spinner.tscn" id="37_streaming_spinner"]
 [ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
+[ext_resource type="PackedScene" path="res://hud/driver_hints.tscn" id="39_driver_hints"]
 [ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
@@ -84,7 +85,7 @@ item_4/id = 2
 unique_name_in_owner = true
 title = "View"
 hide_on_checkable_item_selection = false
-item_count = 8
+item_count = 9
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -93,24 +94,28 @@ item_1/text = "Driving aid"
 item_1/checkable = 1
 item_1/checked = true
 item_1/id = 1
-item_2/text = "Timetable"
+item_2/text = "Hints"
 item_2/checkable = 1
+item_2/checked = true
 item_2/id = 2
-item_3/text = "Scenario"
+item_3/text = "Timetable"
 item_3/checkable = 1
 item_3/id = 3
-item_4/text = "Toggle controls"
+item_4/text = "Scenario"
 item_4/checkable = 1
 item_4/id = 4
-item_5/text = "Lua scripts"
+item_5/text = "Toggle controls"
 item_5/checkable = 1
 item_5/id = 5
-item_6/text = "Trainset list"
+item_6/text = "Lua scripts"
 item_6/checkable = 1
 item_6/id = 6
-item_7/text = "Simulation speed"
+item_7/text = "Trainset list"
 item_7/checkable = 1
 item_7/id = 7
+item_8/text = "Simulation speed"
+item_8/checkable = 1
+item_8/id = 8
 
 [node name="Diagnostics" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
 title = "Diagnostics"
@@ -432,6 +437,10 @@ unique_name_in_owner = true
 layout_mode = 1
 
 [node name="DrivingAid" parent="." instance=ExtResource("33_driving_aid")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="DriverHints" parent="." instance=ExtResource("39_driver_hints")]
 unique_name_in_owner = true
 layout_mode = 1
 

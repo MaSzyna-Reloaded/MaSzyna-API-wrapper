@@ -634,6 +634,22 @@ namespace godot {
         return mover != nullptr ? mover->DirActive : 0;
     }
 
+    void MoverRailVehicleController::compartment_lights(const bool p_enabled) const {
+        mover->CompartmentLightsSwitch(p_enabled);
+    }
+
+    void MoverRailVehicleController::compartment_lights_switch_off(const bool p_enabled) const {
+        mover->CompartmentLightsSwitchOff(p_enabled);
+    }
+
+    bool MoverRailVehicleController::get_compartment_lights_enabled() const {
+        return mover != nullptr && mover->CompartmentLights.is_enabled;
+    }
+
+    bool MoverRailVehicleController::get_compartment_lights_active() const {
+        return mover != nullptr && mover->CompartmentLights.is_active;
+    }
+
     // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
     void MoverRailVehicleController::cab_activation(const bool p_enabled) const {
         if (p_enabled) {

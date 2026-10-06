@@ -28,6 +28,8 @@ const GROUPS: Dictionary = {
         "toggle_weather_controls",
         "timetable_toggle",
         "scenario_toggle",
+        "hints_toggle",
+        "cycle_debug_menu",
     ],
 }
 

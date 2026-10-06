@@ -1735,3 +1735,15 @@ msgstr "A játékkönyvtár módosítása befejezi a jelenlegi játékot, és vi
 
 msgid "End the game and change the directory"
 msgstr "Játék befejezése és könyvtár módosítása"
+
+msgid "Hints"
+msgstr "Tippek"
+
+msgid "No hints"
+msgstr "Nincs tipp"
+
+msgid "Hints Toggle"
+msgstr "Tippek"
+
+msgid "Cycle Debug Menu"
+msgstr "Teljesítmény statisztika"

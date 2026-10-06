@@ -12,7 +12,7 @@ class_name MaszynaLegacyDriverTraction
 ## DecSpeed(), SpeedSet(), Driver.cpp:3406-3827, 3846-4010): one subclass per engine type,
 ## chosen by create(). This base class is the vehicle without an engine of its own to drive.
 ##
-## Not ported: the doors closed and the departure signal switched off before adding power, the
+## The doors are closed before adding power by the driver (MaszynaLegacyAIDriver). Not ported: the
 ## no-current sections of the track (fOverhead2, iOverheadZero) - see TODO.md, "Drivers".
 
 const MASTER_CONTROLLER:StringName = MaszynaLegacyDriverHints.MASTER_CONTROLLER
@@ -77,10 +77,12 @@ var voltage:float = 0.0
 var retry:bool = false
 
 
-## What one decision about the power works with: the driver's vehicle and cab, the engine its
-## controls drive (MaszynaLegacyDriverTrainset.controlling) and what the driver made of its
-## situation on this update
+## What one decision of the driver works with: the driver's state, its vehicle and cab, the engine
+## its controls drive (MaszynaLegacyDriverTrainset.controlling) and what the driver made of its
+## situation on this update - read afresh for every decision, never kept
 class Situation:
+    var state:MaszynaLegacyAIDriver.DriverState
+    var traction:MaszynaLegacyDriverTraction
     var vehicle:RID
     var cabin:RID
     var controlling:RID
@@ -144,23 +146,21 @@ func prepare(situation:Situation) -> bool:
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     if action_time >= 0.0:
         if situation.trainset.motor_overload_relay_open:
-            zero(situation)
-            # tractionnmotoroverloadreset: a press of the relay's reset button
-            CabinSystem.act(situation.cabin, MOTOR_OVERLOAD_RESET, &"hold")
-            CabinSystem.act(situation.cabin, MOTOR_OVERLOAD_RESET, &"release")
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRACTION_MOTOR_OVERLOAD_RESET)
         # an engine without one has no ground relay to reset
         if engine and not engine.get_relay_ground():
-            zero(situation)
-            MaszynaLegacyDriverHints.send(situation.vehicle, "ground_relay_reset")
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MAIN_CIRCUIT_GROUND_RESET)
     if retry:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
         retry = false
     # after a Radio-Stop the power only comes off, nothing else is touched
     var radio:RailVehicleRadio = VehicleServer.vehicle_component_get(
             situation.vehicle, VehicleComponentType.COMPONENT_RADIO) as RailVehicleRadio
     if radio and radio.get_radio_stop_active() \
             and VehicleServer.vehicle_get_speed(situation.vehicle) > MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
         return false
     var wheels:RailVehicleWheels = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_WHEELS) as RailVehicleWheels
@@ -172,15 +172,14 @@ func prepare(situation:Situation) -> bool:
     var high_current:bool = electric != null \
             and absf(electric.get_motor_current()) > SANDING_CURRENT_SHARE * electric.circuit_imax_high
     if slipping or high_current:
-        if not sanding:
-            MaszynaLegacyDriverHints.send(situation.controlling, "sand", true)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.SANDING_ON)
     elif sanding:
-        MaszynaLegacyDriverHints.send(situation.controlling, "sand", false)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.SANDING_OFF)
     # slipping, the controls are left alone - the power off and the brakes eased first
     if slipping:
-        decrease(situation)
-        situation.braking.ease(situation)
-        MaszynaLegacyDriverHints.send(situation.controlling, "antislip")
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRACTIVE_FORCE_DECREASE, 0.0, decrease.bind(situation, false))
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.BRAKING_FORCE_DECREASE, 0.0, situation.braking.ease.bind(situation))
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.ANTISLIP)
         return false
     return true
 
@@ -207,21 +206,30 @@ func control(situation:Situation) -> void:
             var spring_brake:RailVehicleSpringBrake = RailVehicleServer.vehicle_component_get(
                     situation.vehicle, RailVehicleComponentType.COMPONENT_SPRING_BRAKE) as RailVehicleSpringBrake
             if spring_brake and spring_brake.get_active():
-                MaszynaLegacyDriverHints.send(situation.vehicle, "set_spring_brake_active", false)
-            increase(situation)
+                MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.SPRING_BRAKE_OFF)
+            var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(
+                    situation.vehicle, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
+            if doors and doors.get_departure_signal():
+                MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DEPARTURE_SIGNAL_OFF)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRACTIVE_FORCE_INCREASE, 0.0,
+                    increase.bind(situation))
     if not situation.pressing:
         var speed_margin:float = SPEED_CONTROL_MARGIN if speed_control and velocity_desired > SPEED_CONTROL_FROM else 0.0
         if acceleration_desired <= MaszynaLegacyDriverSpeed.NO_ACCELERATION:
-            zero(situation)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
         elif velocity > velocity_desired + speed_margin or situation.trainset.coupler_stretched \
                 or (acceleration_desired < 0.0 if situation.trainset.gravity_acceleration < UPHILL_GRAVITY
                 else situation.trainset.acceleration > acceleration_desired + EXCESS_ACCELERATION):
-            decrease(situation)
+            MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.TRACTIVE_FORCE_DECREASE, 0.0,
+                    decrease.bind(situation, false))
     control_handles(situation)
-    set_speed(situation)
+    # SpeedSet() is the computer's own (AIControllFlag, Driver.cpp:3848)
+    if DriverSystem.vehicle_is_control_active(situation.vehicle):
+        set_speed(situation)
 
 
-## bufferscompress (driverhints.cpp:582-594): power against its own brakes, to press the buffers
+## bufferscompress's action (driverhints.cpp:582-594): power against its own brakes, to press the
+## buffers
 func press(situation:Situation) -> void:
     var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
@@ -240,7 +248,7 @@ func decrease(_situation:Situation, _force:bool = false) -> bool:
     return false
 
 
-## ZeroSpeed() (Driver.cpp:3683): the power off altogether
+## ZeroSpeed() (Driver.cpp:3683), mastercontrollersetzerospeed's action: the power off altogether
 func zero(situation:Situation, force:bool = false) -> void:
     while decrease(situation, force):
         pass
@@ -449,15 +457,15 @@ func control_series_motor_handles(situation:Situation) -> void:
     # the line contactors dropped out: back to zero
     if not (engine and engine.is_line_contactor_closed()) and not (master and master.get_main_delayed()) \
             and main_powercontroller_position(situation) > 1:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
     # a heavily burdened substation: series mode, to lessen the load
     if voltage <= series_voltage(situation):
-        set_series_mode(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_SERIES_MODE)
     if not situation.trainset.ready and main_powercontroller_position(situation) > 1:
-        zero(situation)
+        MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.MASTER_CONTROLLER_SET_ZERO_SPEED)
 
 
-## mastercontrollersetseriesmode (driverhints.cpp:503-521): off the parallel positions
+## mastercontrollersetseriesmode's action (driverhints.cpp:503-521): off the parallel positions
 func set_series_mode(situation:Situation) -> void:
     var engine:RailVehicleElectricSeriesEngine = VehicleServer.vehicle_component_get(
             situation.controlling, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleElectricSeriesEngine

@@ -76,6 +76,36 @@ namespace godot {
     double RailVehicleDieselEngine::get_idle_rpm_count() const {
         return diesel_engine_unit != nullptr ? diesel_engine_unit->get_idle_rpm_count() : 0.0;
     }
+    bool RailVehicleDieselEngine::get_water_pump_enabled() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_pump_enabled() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_pump_active() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_pump_active() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_pump_breaker() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_pump_breaker() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_heater_enabled() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_heater_enabled() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_heater_active() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_heater_active() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_heater_breaker() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_heater_breaker() : false;
+    }
+    bool RailVehicleDieselEngine::get_water_circuits_link() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_water_circuits_link() : false;
+    }
+    double RailVehicleDieselEngine::get_main_circuit_water_temperature() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_main_circuit_water_temperature() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_auxiliary_circuit_water_temperature() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_auxiliary_circuit_water_temperature() : 0.0;
+    }
+    double RailVehicleDieselEngine::get_oil_temperature() const {
+        return diesel_engine_unit != nullptr ? diesel_engine_unit->get_oil_temperature() : 0.0;
+    }
     void RailVehicleDieselEngine::_apply_configuration() {
         RailVehicleEngine::_apply_configuration();
         if (diesel_engine_unit != nullptr) {
@@ -234,6 +264,26 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_retarder_fill"), &RailVehicleDieselEngine::get_retarder_fill);
         ClassDB::bind_method(D_METHOD("get_max_rpm"), &RailVehicleDieselEngine::get_max_rpm);
         ClassDB::bind_method(D_METHOD("get_idle_rpm_count"), &RailVehicleDieselEngine::get_idle_rpm_count);
+        ClassDB::bind_method(D_METHOD("get_water_pump_enabled"), &RailVehicleDieselEngine::get_water_pump_enabled);
+        ClassDB::bind_method(D_METHOD("get_water_pump_active"), &RailVehicleDieselEngine::get_water_pump_active);
+        ClassDB::bind_method(D_METHOD("get_water_pump_breaker"), &RailVehicleDieselEngine::get_water_pump_breaker);
+        ClassDB::bind_method(D_METHOD("get_water_heater_enabled"), &RailVehicleDieselEngine::get_water_heater_enabled);
+        ClassDB::bind_method(D_METHOD("get_water_heater_active"), &RailVehicleDieselEngine::get_water_heater_active);
+        ClassDB::bind_method(D_METHOD("get_water_heater_breaker"), &RailVehicleDieselEngine::get_water_heater_breaker);
+        ClassDB::bind_method(D_METHOD("get_water_circuits_link"), &RailVehicleDieselEngine::get_water_circuits_link);
+        ClassDB::bind_method(
+                D_METHOD("get_main_circuit_water_temperature"),
+                &RailVehicleDieselEngine::get_main_circuit_water_temperature);
+        ClassDB::bind_method(
+                D_METHOD("get_auxiliary_circuit_water_temperature"),
+                &RailVehicleDieselEngine::get_auxiliary_circuit_water_temperature);
+        ClassDB::bind_method(D_METHOD("get_oil_temperature"), &RailVehicleDieselEngine::get_oil_temperature);
+        ClassDB::bind_method(D_METHOD("water_pump", "enabled"), &RailVehicleDieselEngine::water_pump);
+        ClassDB::bind_method(D_METHOD("water_pump_breaker", "enabled"), &RailVehicleDieselEngine::water_pump_breaker);
+        ClassDB::bind_method(D_METHOD("water_heater", "enabled"), &RailVehicleDieselEngine::water_heater);
+        ClassDB::bind_method(
+                D_METHOD("water_heater_breaker", "enabled"), &RailVehicleDieselEngine::water_heater_breaker);
+        ClassDB::bind_method(D_METHOD("water_circuits_link", "enabled"), &RailVehicleDieselEngine::water_circuits_link);
     }
 
     RailVehicleEngine::EngineType RailVehicleDieselEngine::get_type() const {
@@ -268,6 +318,16 @@ namespace godot {
         p_state["diesel_engine_temperature"] = get_engine_temperature();
         p_state["diesel_retarder_fill"] = get_retarder_fill();
         p_state["diesel_max_rpm"] = get_max_rpm();
+        p_state["water_pump_enabled"] = get_water_pump_enabled();
+        p_state["water_pump_active"] = get_water_pump_active();
+        p_state["water_pump_breaker"] = get_water_pump_breaker();
+        p_state["water_heater_enabled"] = get_water_heater_enabled();
+        p_state["water_heater_active"] = get_water_heater_active();
+        p_state["water_heater_breaker"] = get_water_heater_breaker();
+        p_state["water_circuits_link"] = get_water_circuits_link();
+        p_state["main_circuit_water_temperature"] = get_main_circuit_water_temperature();
+        p_state["auxiliary_circuit_water_temperature"] = get_auxiliary_circuit_water_temperature();
+        p_state["oil_temperature"] = get_oil_temperature();
     }
 
     void RailVehicleDieselEngine::oil_pump(const bool p_enabled) {
@@ -294,12 +354,47 @@ namespace godot {
         }
     }
 
+    void RailVehicleDieselEngine::water_pump(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_pump(p_enabled);
+        }
+    }
+
+    void RailVehicleDieselEngine::water_pump_breaker(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_pump_breaker(p_enabled);
+        }
+    }
+
+    void RailVehicleDieselEngine::water_heater(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_heater(p_enabled);
+        }
+    }
+
+    void RailVehicleDieselEngine::water_heater_breaker(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_heater_breaker(p_enabled);
+        }
+    }
+
+    void RailVehicleDieselEngine::water_circuits_link(const bool p_enabled) {
+        if (diesel_engine_unit != nullptr) {
+            diesel_engine_unit->water_circuits_link(p_enabled);
+        }
+    }
+
     void RailVehicleDieselEngine::_register_commands() {
         RailVehicleEngine::_register_commands();
         register_command("oil_pump", Callable(this, "oil_pump"));
         register_command("fuel_pump", Callable(this, "fuel_pump"));
         register_command("oil_pump_switch_off", Callable(this, "oil_pump_switch_off"));
         register_command("fuel_pump_switch_off", Callable(this, "fuel_pump_switch_off"));
+        register_command("water_pump", Callable(this, "water_pump"));
+        register_command("water_pump_breaker", Callable(this, "water_pump_breaker"));
+        register_command("water_heater", Callable(this, "water_heater"));
+        register_command("water_heater_breaker", Callable(this, "water_heater_breaker"));
+        register_command("water_circuits_link", Callable(this, "water_circuits_link"));
     }
 
     void RailVehicleDieselEngine::_unregister_commands() {
@@ -308,5 +403,10 @@ namespace godot {
         unregister_command("fuel_pump");
         unregister_command("oil_pump_switch_off");
         unregister_command("fuel_pump_switch_off");
+        unregister_command("water_pump");
+        unregister_command("water_pump_breaker");
+        unregister_command("water_heater");
+        unregister_command("water_heater_breaker");
+        unregister_command("water_circuits_link");
     }
 } // namespace godot

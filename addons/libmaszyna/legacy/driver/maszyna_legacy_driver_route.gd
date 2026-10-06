@@ -142,7 +142,12 @@ enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION
 ## NEXT_ORDER takes the next order; GUARD_SIGNAL - it left a stop, the guard's message is due
 ## (moveGuardSignal, Driver.cpp:1313-1316); LOAD_EXCHANGE - it arrived at a platform, on the side of
 ## `exchange_platform`, and its passengers get off and on (Driver.cpp:1233-1241)
-enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER, GUARD_SIGNAL, LOAD_EXCHANGE }
+## START_HORN / NO_START_HORN: the horn before moving off due, or not, after this stop
+## (moveStartHorn, Driver.cpp:1240, 1375)
+enum StopOrder {
+    HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER, GUARD_SIGNAL, LOAD_EXCHANGE, START_HORN,
+    NO_START_HORN,
+}
 ## The platform's digit of a passenger stop's second number - its last one (`% 10`,
 ## Driver.cpp:1236): 1 on the left of the way the train drives, 2 on the right, 3 both; any other
 ## is no platform, and nothing is exchanged (TDynamicObject::LoadExchange(), DynObj.cpp:2828)
@@ -211,6 +216,9 @@ var obstacle:RailVehicleNeighbour = null
 var obstacle_speed:float = 0.0
 ## Standing at its passenger stop (IsAtPassengerStop)
 var at_passenger_stop:bool = false
+## Standing at its passenger stop before the departure time (the else of TableUpdateStopPoint(),
+## Driver.cpp:1341-1342), read afresh on every update
+var waiting_for_departure:bool = false
 ## What its passenger stop asked of the orders on this update
 var stop_orders:Array[StopOrder] = []
 ## The side of the platform LOAD_EXCHANGE asks about
@@ -254,6 +262,7 @@ func update(
     commands.clear()
     stop_orders.clear()
     at_passenger_stop = false
+    waiting_for_departure = false
     # read the other way, or afresh: what was ahead is not passed and no stop is done (TableClear()),
     # and the stop of a signal passed does not keep it from reversing (TableCheck(), Driver.cpp:510-526)
     if not trainset.direction == _direction:
@@ -766,6 +775,9 @@ func _update_stop_point(
         entry.velocity = NO_LIMIT
         return StopResult.USE
     var arrived:bool = timetable.arrive(hours)
+    # further stations ahead: no horn before leaving this one (Driver.cpp:1236-1241)
+    if arrived and not timetable.is_last_station():
+        stop_orders.append(StopOrder.NO_START_HORN)
     var platform:int = floori(absf(entry.value2)) % PLATFORM_DIGITS
     if arrived and PLATFORM_SIDES.has(platform):
         exchange_platform = PLATFORM_SIDES[platform]
@@ -792,6 +804,7 @@ func _update_stop_point(
             timetable.pass_stops()
         stop_orders.append(StopOrder.NEXT_ORDER)
         stop_orders.append(StopOrder.HOLD)
+        stop_orders.append(StopOrder.START_HORN)
         _stops_done[entry.event] = true
         return StopResult.SKIP
     if cargo or timetable.is_time_to_go(hours):
@@ -804,6 +817,7 @@ func _update_stop_point(
         _stops_done[entry.event] = true
         return StopResult.READY
     # waiting for the departure time
+    waiting_for_departure = true
     return StopResult.USE
 
 

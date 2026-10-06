@@ -47,6 +47,18 @@
 				Its driver went over to another vehicle through a gangway: the cab switched off, the brake handle at its neutral, the controllers at zero. Command [code]cabin_leave[/code], sent by [method RailVehicleServer.person_change_cabin].
 			</description>
 		</method>
+		<method name="compartment_lights" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="compartment_lights_switch_off" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="compute_fast_movement">
 			<return type="void" />
 			<param index="0" name="delta" type="float" />
@@ -122,6 +134,16 @@
 		<method name="find_rail_components" qualifiers="const">
 			<return type="VehicleComponent[]" />
 			<param index="0" name="type" type="int" enum="RailVehicleComponentType.Type" />
+			<description>
+			</description>
+		</method>
+		<method name="get_compartment_lights_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="get_compartment_lights_enabled" qualifiers="const">
+			<return type="bool" />
 			<description>
 			</description>
 		</method>

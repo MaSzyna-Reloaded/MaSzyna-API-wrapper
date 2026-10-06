@@ -16,6 +16,8 @@ var braking:MaszynaLegacyDriverBraking
 var speed:MaszynaLegacyDriverSpeed
 var trainset:MaszynaLegacyDriverTrainset
 var route:MaszynaLegacyDriverRoute
+var state:MaszynaLegacyAIDriver.DriverState
+var driver:RID
 
 
 func before_each():
@@ -30,9 +32,14 @@ func before_each():
     trainset = MaszynaLegacyDriverTrainset.new()
     trainset.update(vehicle, 1, false)
     route = MaszynaLegacyDriverRoute.new()
+    state = MaszynaLegacyAIDriver.DriverState.new()
+    # the computer drives (AIControllFlag): a driver whose cues are taken
+    driver = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, DriverDelegate.new())
 
 
 func after_each():
+    DriverSystem.driver_attach_delegate(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
@@ -40,6 +47,8 @@ func after_each():
 ## SetTimeControllers())
 func _decide() -> void:
     var situation:MaszynaLegacyDriverTraction.Situation = MaszynaLegacyDriverTraction.Situation.new()
+    situation.state = state
+    situation.traction = state.traction
     situation.vehicle = vehicle
     situation.cabin = RailVehicleServer.vehicle_get_front_cabin(vehicle)
     situation.controlling = vehicle

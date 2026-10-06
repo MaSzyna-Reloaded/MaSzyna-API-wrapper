@@ -119,8 +119,12 @@ func _follow_trainset() -> void:
             row.show_entry(entry, place, entry.velocity if not entry.velocity == velocity else TimetableRow.NO_SPEED)
             velocity = entry.velocity
             _rows.append(row)
-        # a new timetable fits the card to what it shows; its size is the player's until the next
+        # a new timetable fits the card to what it shows; its size is the player's until the next.
+        # The card stands in the bottom right corner, above the vehicle chips, and grows up and
+        # left: its bottom right corner stays where it is
+        var corner:Vector2 = position + size
         reset_size()
+        position = corner - size
     for index:int in _rows.size():
         var progress:TimetableRow.Progress = TimetableRow.Progress.AHEAD
         if index == _current:

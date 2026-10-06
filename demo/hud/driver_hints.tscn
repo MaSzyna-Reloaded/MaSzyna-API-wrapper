@@ -37,11 +37,16 @@ script = ExtResource("1_hints")
 
 [node name="HintsTile" type="PanelContainer" parent="."]
 unique_name_in_owner = true
-layout_mode = 0
-offset_left = 16.0
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -16.0
 offset_top = 104.0
-offset_right = 16.0
+offset_right = -16.0
 offset_bottom = 104.0
+grow_horizontal = 0
 mouse_filter = 2
 script = ExtResource("ui_chip")
 

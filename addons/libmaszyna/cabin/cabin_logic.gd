@@ -10,6 +10,9 @@ class_name CabinLogic
 ## widget - is one of press(), release(), increase(), decrease(), which decide what the control
 ## does with it as the cab has it. The original's is LegacyCabinLogic.
 
+## The driver's hand on a control, as a key moves it: press() and increase()/decrease()
+enum Gesture { PRESS, INCREASE, DECREASE }
+
 
 ## Registers the handlers of the vehicle's `cabin` (a VehicleServer cabin)
 func register(_vehicle_rid:RID, _cabin:RID) -> void:
@@ -43,3 +46,8 @@ func increase(_control_id:StringName) -> void:
 ## The driver's hand moves the control one position (or, held, a knob) down
 func decrease(_control_id:StringName) -> void:
     pass
+
+
+## The input action whose key makes `gesture` on the control in this cab; empty when no key does
+func get_action(_control_id:StringName, _gesture:Gesture) -> StringName:
+    return &""

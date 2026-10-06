@@ -165,7 +165,7 @@ func _set_mouse_control(mesh:Node3D, actions:PackedStringArray, pressed:Callable
     for action_name:String in actions:
         if action_name and InputMap.has_action(action_name):
             for event:InputEvent in InputMap.action_get_events(action_name):
-                hints.append(event.as_text())
+                hints.append(InputEventNames.event_name(event))
     var step_basis:Basis = Basis(Vector3.RIGHT, deg_to_rad(step_rotation.x)) \
             * Basis(Vector3.UP, deg_to_rad(step_rotation.y)) \
             * Basis(Vector3.FORWARD, deg_to_rad(step_rotation.z))

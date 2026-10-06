@@ -29,6 +29,12 @@ const KEYBOARD_ONLY:Dictionary[StringName, StringName] = {
     LegacyCabinBrakeCharging.CONTROL: LegacyCabinBrakeCharging.ACTION,
     LegacyCabinMainSwitch.KEY: LegacyCabinMainSwitch.KEY_ACTION,
 }
+## The field of a control's entry naming the key of each gesture
+const GESTURE_FIELDS:Dictionary[Gesture, String] = {
+    Gesture.PRESS: "action",
+    Gesture.INCREASE: "action_increase",
+    Gesture.DECREASE: "action_decrease",
+}
 
 ## (cabin:RID) -> LegacyCabinControls - the controls of the cabin it is registered for
 var _controls_for_cabin:Callable
@@ -179,6 +185,16 @@ func _bind(control_id:StringName, kind:StringName, target:CabinState.Target, fie
         var action:String = fields.get(field, "")
         if action and not _keys.has(action):
             _keys[action] = control_id
+
+
+## The action of a gesture's field of the control - as the cab binds it, else as the catalog has
+## it for a control the cab leaves to another (mainctrl's key works jointctrl) - if a control of
+## the cab takes its key
+func get_action(control_id:StringName, gesture:Gesture) -> StringName:
+    var fields:Dictionary = _bindings[control_id]["fields"] if _bindings.has(control_id) \
+            else MmdSemanticCatalog.get_entry(control_id).get("fixed_fields", {})
+    var action:String = fields.get(GESTURE_FIELDS[gesture], "")
+    return StringName(action) if _keys.has(action) else &""
 
 
 ## The player's keys of the cab's controls - a key down is the hand on its control, a key up lets

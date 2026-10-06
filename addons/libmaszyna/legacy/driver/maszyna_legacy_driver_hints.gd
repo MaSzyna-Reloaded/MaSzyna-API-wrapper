@@ -319,6 +319,86 @@ const MOTOR_BLOWERS:Dictionary = {
     Hint.REAR_MOTOR_BLOWERS_ON: [RailVehicleController.COUPLER_END_REAR, &"motor_blowers_rear", &"motor_blowers_rear_switch_off"],
 }
 
+## The control a hint is about and the gesture of the player's hand that does it - what the hints
+## window shows its key by (LegacyCabinLogic.get_action()). A hint whose step goes either way
+## (DIRECTION_NONE, MASTER_CONTROLLER_SET_IDLE), is let go (a horn's, a releaser's end) or has no
+## key of its own (sanding, heating, the headcodes) is not here
+const CONTROLS:Dictionary = {
+    Hint.BATTERY_ON: [&"battery_sw", CabinLogic.Gesture.PRESS],
+    Hint.BATTERY_OFF: [&"battery_sw", CabinLogic.Gesture.PRESS],
+    Hint.RADIO_ON: [&"radio_sw", CabinLogic.Gesture.PRESS],
+    Hint.RADIO_OFF: [&"radio_sw", CabinLogic.Gesture.PRESS],
+    Hint.OIL_PUMP_ON: [&"oilpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.OIL_PUMP_OFF: [&"oilpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.FUEL_PUMP_ON: [&"fuelpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.FUEL_PUMP_OFF: [&"fuelpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN: [&"pantcompressorvalve_sw", CabinLogic.Gesture.PRESS],
+    Hint.PANTOGRAPH_AIR_SOURCE_SET_AUXILIARY: [&"pantcompressorvalve_sw", CabinLogic.Gesture.PRESS],
+    Hint.PANTOGRAPH_COMPRESSOR_ON: [&"pantcompressor_sw", CabinLogic.Gesture.PRESS],
+    Hint.FRONT_PANTOGRAPH_VALVE_ON: [&"pantfront_sw", CabinLogic.Gesture.PRESS],
+    Hint.FRONT_PANTOGRAPH_VALVE_OFF: [&"pantfront_sw", CabinLogic.Gesture.PRESS],
+    Hint.REAR_PANTOGRAPH_VALVE_ON: [&"pantrear_sw", CabinLogic.Gesture.PRESS],
+    Hint.REAR_PANTOGRAPH_VALVE_OFF: [&"pantrear_sw", CabinLogic.Gesture.PRESS],
+    Hint.CONVERTER_ON: [&"converter_sw", CabinLogic.Gesture.PRESS],
+    Hint.CONVERTER_OFF: [&"converter_sw", CabinLogic.Gesture.PRESS],
+    Hint.PRIMARY_CONVERTER_OVERLOAD_RESET: [&"converterfuse_bt", CabinLogic.Gesture.PRESS],
+    Hint.TRACTION_MOTOR_OVERLOAD_RESET: [&"fuse_bt", CabinLogic.Gesture.PRESS],
+    Hint.LINE_BREAKER_CLOSE: [LegacyCabinMainSwitch.KEY, CabinLogic.Gesture.PRESS],
+    Hint.LINE_BREAKER_OPEN: [LegacyCabinMainSwitch.KEY, CabinLogic.Gesture.PRESS],
+    Hint.COMPRESSOR_ON: [&"compressor_sw", CabinLogic.Gesture.PRESS],
+    Hint.COMPRESSOR_OFF: [&"compressor_sw", CabinLogic.Gesture.PRESS],
+    Hint.FRONT_MOTOR_BLOWERS_ON: [&"motorblowersfront_sw", CabinLogic.Gesture.PRESS],
+    Hint.FRONT_MOTOR_BLOWERS_OFF: [&"motorblowersfront_sw", CabinLogic.Gesture.PRESS],
+    Hint.REAR_MOTOR_BLOWERS_ON: [&"motorblowersrear_sw", CabinLogic.Gesture.PRESS],
+    Hint.REAR_MOTOR_BLOWERS_OFF: [&"motorblowersrear_sw", CabinLogic.Gesture.PRESS],
+    Hint.SPRING_BRAKE_ON: [&"springbraketoggle_bt", CabinLogic.Gesture.PRESS],
+    Hint.SPRING_BRAKE_OFF: [&"springbraketoggle_bt", CabinLogic.Gesture.PRESS],
+    Hint.MANUAL_BRAKE_ON: [LegacyCabinManualBrake.CONTROL, CabinLogic.Gesture.INCREASE],
+    Hint.MANUAL_BRAKE_OFF: [LegacyCabinManualBrake.CONTROL, CabinLogic.Gesture.DECREASE],
+    Hint.MASTER_CONTROLLER_SET_SERIES_MODE: [MASTER_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    Hint.WATER_HEATER_ON: [&"waterheater_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_HEATER_OFF: [&"waterheater_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_HEATER_BREAKER_ON: [&"waterheaterbreaker_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_HEATER_BREAKER_OFF: [&"waterheaterbreaker_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_PUMP_ON: [&"waterpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_PUMP_OFF: [&"waterpump_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_PUMP_BREAKER_ON: [&"waterpumpbreaker_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_PUMP_BREAKER_OFF: [&"waterpumpbreaker_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_CIRCUITS_LINK_ON: [&"watercircuitslink_sw", CabinLogic.Gesture.PRESS],
+    Hint.WATER_CIRCUITS_LINK_OFF: [&"watercircuitslink_sw", CabinLogic.Gesture.PRESS],
+    Hint.MASTER_CONTROLLER_SET_ZERO_SPEED: [MASTER_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    Hint.MASTER_CONTROLLER_SET_REVERSER_UNLOCK: [MASTER_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    Hint.TRAIN_BRAKE_RELEASE: [TRAIN_BRAKE_RELEASE, CabinLogic.Gesture.PRESS],
+    Hint.TRAIN_BRAKE_APPLY: [TRAIN_BRAKE, CabinLogic.Gesture.INCREASE],
+    Hint.DIRECTION_FORWARD: [REVERSER, CabinLogic.Gesture.INCREASE],
+    Hint.DIRECTION_BACKWARD: [REVERSER, CabinLogic.Gesture.DECREASE],
+    Hint.CONSIST_DOOR_LOCKS_ON: [&"door_signalling_sw", CabinLogic.Gesture.PRESS],
+    Hint.DEPARTURE_SIGNAL_ON: [&"departure_signal_bt", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_RIGHT_OPEN: [&"door_right_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_RIGHT_CLOSE: [&"door_right_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_LEFT_OPEN: [&"door_left_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_LEFT_CLOSE: [&"door_left_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_RIGHT_PERMIT_ON: [&"doorrightpermit_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_RIGHT_PERMIT_OFF: [&"doorrightpermit_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_LEFT_PERMIT_ON: [&"doorleftpermit_sw", CabinLogic.Gesture.PRESS],
+    Hint.DOOR_LEFT_PERMIT_OFF: [&"doorleftpermit_sw", CabinLogic.Gesture.PRESS],
+    Hint.HORN_ON: [&"hornlow_bt", CabinLogic.Gesture.PRESS],
+    Hint.SECURITY_SYSTEM_RESET: [SECURITY_RESET, CabinLogic.Gesture.PRESS],
+    Hint.SHP_SYSTEM_RESET: [CABSIGNAL_RESET, CabinLogic.Gesture.PRESS],
+    Hint.SECOND_CONTROLLER_SET_ZERO: [SECOND_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    Hint.TRACTIVE_FORCE_DECREASE: [MASTER_CONTROLLER, CabinLogic.Gesture.DECREASE],
+    Hint.TRACTIVE_FORCE_INCREASE: [MASTER_CONTROLLER, CabinLogic.Gesture.INCREASE],
+    Hint.BRAKING_FORCE_DECREASE: [TRAIN_BRAKE, CabinLogic.Gesture.DECREASE],
+    Hint.BRAKING_FORCE_INCREASE: [TRAIN_BRAKE, CabinLogic.Gesture.INCREASE],
+    Hint.BRAKING_FORCE_SET_ZERO: [TRAIN_BRAKE_RELEASE, CabinLogic.Gesture.PRESS],
+    Hint.INDEPENDENT_BRAKE_APPLY: [INDEPENDENT_BRAKE, CabinLogic.Gesture.INCREASE],
+    Hint.INDEPENDENT_BRAKE_RELEASE: [INDEPENDENT_BRAKE, CabinLogic.Gesture.DECREASE],
+    Hint.RELEASER_ON: [RELEASER, CabinLogic.Gesture.PRESS],
+    Hint.BUFFERS_COMPRESS: [MASTER_CONTROLLER, CabinLogic.Gesture.INCREASE],
+    Hint.CAB_ACTIVATION: [&"cabactivation_sw", CabinLogic.Gesture.PRESS],
+    Hint.CAB_DEACTIVATION: [&"cabactivation_sw", CabinLogic.Gesture.PRESS],
+}
+
 ## The hints that rule each other out (remove_train_brake_hints(), remove_master_controller_hints(),
 ## remove_reverser_hints(), driverhints.cpp:46-76)
 const TRAIN_BRAKE_HINTS:Array[Hint] = [
@@ -439,6 +519,8 @@ const TRAIN_BRAKE_RELEASE:StringName = LegacyCabinControls.BRAKE_LEVEL_DRIVE
 const SECURITY_RESET:StringName = &"security_reset_bt"
 const CABSIGNAL_RESET:StringName = &"shp_reset_bt"
 const RELEASER:StringName = &"releaser_bt"
+const TRAIN_BRAKE:StringName = &"brakectrl"
+const INDEPENDENT_BRAKE:StringName = &"localbrake"
 
 ## ManualBrakePosNo (MOVER.h:111): the hand brake's wheel turned all the way
 const MANUAL_BRAKE_POSITIONS:int = 20
@@ -725,6 +807,8 @@ static func get_list(situation:MaszynaLegacyDriverTraction.Situation) -> Array[D
             "text": TEXTS[queued.hint],
             "parameter": queued.parameter,
             "done": is_done(situation, queued.hint, queued.parameter),
+            "control": CONTROLS[queued.hint][0] if CONTROLS.has(queued.hint) else &"",
+            "gesture": CONTROLS[queued.hint][1] if CONTROLS.has(queued.hint) else CabinLogic.Gesture.PRESS,
         })
     return listed
 

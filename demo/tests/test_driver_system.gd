@@ -223,6 +223,20 @@ func test_a_player_gets_the_next_hint_once_one_is_done() -> void:
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
     await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+    # the hints window shows the hint's key: its control, and the action of the cab binding it
+    var battery_hint:Dictionary = {}
+    for entry:Dictionary in DriverSystem.driver_get_state(driver)["hints"]:
+        if entry["hint"] == MaszynaLegacyDriverHints.Hint.BATTERY_ON:
+            battery_hint = entry
+    assert_eq(battery_hint.get("control"), &"battery_sw", "the battery hint is about the battery switch")
+    var cab_logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(vehicle)
+    assert_eq(cab_logic.get_action(battery_hint.get("control", &""), battery_hint.get("gesture", CabinLogic.Gesture.PRESS)),
+            &"battery_toggle", "whose key is the battery's")
+    assert_eq(cab_logic.get_action(LegacyCabinMainSwitch.KEY, CabinLogic.Gesture.PRESS), &"main_switch_toggle",
+            "the line breaker's key is M's, whatever switches the cab has")
+    assert_eq(cab_logic.get_action(&"mainctrl", CabinLogic.Gesture.INCREASE), &"main_controller_increase",
+            "a knob's increase has its own key")
+    assert_eq(cab_logic.get_action(&"sand_bt", CabinLogic.Gesture.PRESS), &"", "and a control without a key has none")
 
     CabinSystem.act(RailVehicleServer.vehicle_get_driver_cabin(vehicle), &"battery_sw", &"toggle", true)
     await wait_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)

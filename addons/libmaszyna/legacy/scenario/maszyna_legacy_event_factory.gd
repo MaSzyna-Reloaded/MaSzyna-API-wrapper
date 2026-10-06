@@ -475,7 +475,7 @@ static func build(
             var hints:PackedStringArray = []
             var key:Key = ScenarioEventServer.launcher_get_key(launcher)
             if not key == KEY_NONE:
-                var key_text:String = OS.get_keycode_string(key)
+                var key_text:String = InputEventNames.key_name(key)
                 hints.append(key_text)
                 if not launcher_data.event2 == "":
                     hints.append("Shift+" + key_text)

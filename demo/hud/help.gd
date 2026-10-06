@@ -4,6 +4,7 @@ class_name Help
 ## Lists input actions defined in project settings as "Action [Shortcut]" rows, grouped by GROUPS.
 ## Actions not listed in any group go to DEFAULT_GROUP; built-in ui_* actions are skipped.
 
+const KEY_CAP: PackedScene = preload("key_cap.tscn")
 const DEFAULT_GROUP: String = "Vehicle"
 const GROUPS: Dictionary = {
     "Vehicle": [],
@@ -75,25 +76,8 @@ func _make_row(action: String) -> HBoxContainer:
     label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_child(label)
     for event: InputEvent in ProjectSettings.get_setting("input/" + action)["events"]:
-        var key_cap: PanelContainer = PanelContainer.new()
-        key_cap.theme_type_variation = &"KeyCap"
-        key_cap.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-        var key_label: Label = Label.new()
-        key_label.theme_type_variation = &"KeyCapLabel"
-        key_label.text = _format_event(event)
-        key_cap.add_child(key_label)
+        var key_cap: KeyCap = KEY_CAP.instantiate()
         row.add_child(key_cap)
+        key_cap.show_event(event)
     return row
 
-
-func _format_event(event: InputEvent) -> String:
-    if event is InputEventKey:
-        var key: InputEventKey = event as InputEventKey
-        if key.keycode:
-            return key.as_text_keycode()
-        return key.as_text_physical_keycode()
-    # as_text() names the button on every pad ("Joypad Button 0 (Bottom Action, Sony Cross, ...)"),
-    # wider than the window, which cannot be narrower than its widest row
-    if event is InputEventJoypadButton:
-        return "Joypad Button %d" % (event as InputEventJoypadButton).button_index
-    return event.as_text()

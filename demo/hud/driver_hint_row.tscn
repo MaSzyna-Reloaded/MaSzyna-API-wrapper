@@ -1,0 +1,18 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/driver_hint_row.gd" id="1_row"]
+[ext_resource type="PackedScene" path="res://hud/key_cap.tscn" id="2_key_cap"]
+
+[node name="DriverHintRow" type="HBoxContainer"]
+mouse_filter = 2
+theme_override_constants/separation = 8
+script = ExtResource("1_row")
+
+[node name="KeyCap" parent="." instance=ExtResource("2_key_cap")]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Text" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"DrivingAidHint"

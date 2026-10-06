@@ -4,11 +4,14 @@ extends Control
 ## The driver's hints to the player (the "Hints" of the original's scenario window,
 ## driveruipanels.cpp:280-294): the steps the driver of the player's vehicle would take, in the
 ## order it decided on them, translated - a step the vehicle already shows done in green until the
-## driver's next update. With no hints, or no driver, the tile says so. Read on a Timer while shown;
-## the vehicle is the player's of the moment (PlayerServer), kept nowhere here.
+## driver's next update. On its left the key that does it in the cab of the moment
+## (CabinLogic.get_action()); a hint no key does starts at the left edge. With no hints, or no
+## driver, the tile says so. Read on a Timer while shown; the vehicle is the player's of the moment
+## (PlayerServer), kept nowhere here.
 
 ## The hint whose text has a place for its parameter (`%.0f`)
 const PARAMETER_MARK:String = "%"
+const ROW:PackedScene = preload("driver_hint_row.tscn")
 
 
 func _ready() -> void:
@@ -29,19 +32,24 @@ func _on_refresh_timer_timeout() -> void:
     var driver:RID = DriverSystem.vehicle_get_driver(vehicle) if vehicle.is_valid() else RID()
     if driver.is_valid():
         hints = DriverSystem.driver_get_state(driver).get("hints", [])
-    var labels:Array[Node] = %HintList.get_children()
+    var cab_logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(vehicle) if vehicle.is_valid() else null
+    var rows:Array[Node] = %HintList.get_children()
     for index:int in hints.size():
-        var label:Label
-        if index < labels.size():
-            label = labels[index] as Label
+        var row:DriverHintRow
+        if index < rows.size():
+            row = rows[index] as DriverHintRow
         else:
-            label = Label.new()
-            %HintList.add_child(label)
+            row = ROW.instantiate()
+            %HintList.add_child(row)
         var hint:Dictionary = hints[index]
+        var event:InputEvent = null
+        if cab_logic and hint["control"]:
+            var action:StringName = cab_logic.get_action(hint["control"], hint["gesture"])
+            if action and InputMap.has_action(action) and InputMap.action_get_events(action):
+                event = InputMap.action_get_events(action)[0]
         var text:String = tr(hint["text"])
-        label.text = text % hint["parameter"] if text.contains(PARAMETER_MARK) else text
-        label.theme_type_variation = &"DrivingAidHintDone" if hint["done"] else &"DrivingAidHint"
-        label.visible = true
-    for index:int in range(hints.size(), labels.size()):
-        (labels[index] as Label).visible = false
+        row.show_hint(event, text % hint["parameter"] if text.contains(PARAMETER_MARK) else text, hint["done"])
+        row.visible = true
+    for index:int in range(hints.size(), rows.size()):
+        (rows[index] as Control).visible = false
     %EmptyText.visible = not hints

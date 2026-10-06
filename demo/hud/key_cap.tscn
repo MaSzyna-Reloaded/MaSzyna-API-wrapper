@@ -1,0 +1,15 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/key_cap.gd" id="1_key_cap"]
+
+[node name="KeyCap" type="PanelContainer"]
+size_flags_vertical = 4
+mouse_filter = 2
+theme_type_variation = &"KeyCap"
+script = ExtResource("1_key_cap")
+
+[node name="Text" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"KeyCapLabel"
+horizontal_alignment = 1

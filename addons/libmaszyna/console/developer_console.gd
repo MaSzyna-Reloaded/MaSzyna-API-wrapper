@@ -21,14 +21,12 @@ func _ready() -> void:
         "cabin", self.console_cabin, ["train", "operation", "control", "value"], 2,
         "Occupied cabin: controls | state | get [control] | increase|decrease|hold|release|toggle|set <control> [value]")
 
-    GameLog.log_updated.connect(self.console_print_log)
-
 ## The console knows a vehicle by its scenery name only, so it goes through the server's name
 ## registry; a name that is empty, "none" or unknown reaches no vehicle.
 func _vehicle(train:String) -> RID:
     var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(train)
     if not vehicle.is_valid():
-        GameLog.error("No vehicle named \"%s\"" % train)
+        console_print_error("No vehicle named \"%s\"" % train)
     return vehicle
 
 func console_get_config_value(train, property):
@@ -70,13 +68,9 @@ func console_list_train_commands():
     names.sort()
     Console.print_line("%s" % "\n".join(names))
 
-func console_print_log(loglevel, line):
-    if loglevel >= GameLog.LogLevel.ERROR:
-        Console.print_line("[color=red]%s[/color]" % [line])
-    elif loglevel == GameLog.LogLevel.WARNING:
-        Console.print_line("[color=orange]%s[/color]" % [line])
-    else:
-        Console.print_line("%s" % [line])
+## A command's own error, in the console - the game's log (GameLog) is not printed here
+func console_print_error(line:String) -> void:
+    Console.print_line("[color=red]%s[/color]" % [line])
 
 func console_cabin(train, operation, control=null, value=null):
     var vehicle:RID = _vehicle(train)
@@ -85,7 +79,7 @@ func console_cabin(train, operation, control=null, value=null):
     # the cabin the vehicle is driven from
     var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
     if not cabin.is_valid():
-        GameLog.error("%s: Nobody drives it, no cabin to operate" % [train])
+        console_print_error("%s: Nobody drives it, no cabin to operate" % [train])
         return
     if operation == "controls":
         Console.print_line("controls:\n%s\nactions: %s" % [
@@ -95,9 +89,9 @@ func console_cabin(train, operation, control=null, value=null):
     elif operation == "get":
         Console.print_line("%s" % [CabinSystem.get_control(cabin, control)])
     elif not StringName(operation) in CabinSystem.ACTIONS:
-        GameLog.error("%s: Unknown cabin operation: %s" % [train, operation])
+        console_print_error("%s: Unknown cabin operation: %s" % [train, operation])
     elif not control:
-        GameLog.error("%s: Cabin operation %s needs a control id" % [train, operation])
+        console_print_error("%s: Cabin operation %s needs a control id" % [train, operation])
     else:
         Console.print_line("%s" % [CabinSystem.act(cabin, control, operation, value)])
 

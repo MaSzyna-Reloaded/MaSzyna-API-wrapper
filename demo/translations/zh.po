@@ -83,6 +83,15 @@ msgstr "场景流式加载"
 msgid "Track & Traction"
 msgstr "轨道与接触网"
 
+msgid "Power source"
+msgstr "电源"
+
+msgid "Scenario and Events"
+msgstr "场景与事件"
+
+msgid "Developer console"
+msgstr "开发者控制台"
+
 msgid "Weather and Time"
 msgstr "天气与时间"
 
@@ -1618,6 +1627,18 @@ msgstr "调试"
 
 msgid "Enable file logging"
 msgstr "将日志写入文件"
+
+msgid "Console"
+msgstr "控制台"
+
+msgid "Gameplay"
+msgstr "游戏过程"
+
+msgid "App"
+msgstr "应用程序"
+
+msgid "Logs"
+msgstr "日志"
 
 msgid "Log folder"
 msgstr "日志文件夹"

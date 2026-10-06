@@ -83,6 +83,15 @@ msgstr "Strumieniowanie scenerii"
 msgid "Track & Traction"
 msgstr "Tor i sieć trakcyjna"
 
+msgid "Power source"
+msgstr "Źródło zasilania"
+
+msgid "Scenario and Events"
+msgstr "Scenariusz i eventy"
+
+msgid "Developer console"
+msgstr "Konsola deweloperska"
+
 msgid "Weather and Time"
 msgstr "Pogoda i czas"
 
@@ -1618,6 +1627,18 @@ msgstr "Debugowanie"
 
 msgid "Enable file logging"
 msgstr "Zapisuj log do pliku"
+
+msgid "Console"
+msgstr "Konsola"
+
+msgid "Gameplay"
+msgstr "Rozgrywka"
+
+msgid "App"
+msgstr "Aplikacja"
+
+msgid "Logs"
+msgstr "Logi"
 
 msgid "Log folder"
 msgstr "Folder logów"

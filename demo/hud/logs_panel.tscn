@@ -1,0 +1,101 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/logs_panel.gd" id="1_panel"]
+[ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://hud/window_move_handle.gd" id="3_move"]
+[ext_resource type="Script" path="res://hud/window_resize_corner.gd" id="4_resize"]
+[ext_resource type="Script" path="res://hud/log_lines.gd" id="5_lines"]
+
+[node name="LogsPanel" type="PanelContainer"]
+visible = false
+custom_minimum_size = Vector2(340, 0)
+anchors_preset = 0
+offset_left = 16.0
+offset_top = 124.0
+offset_right = 556.0
+mouse_filter = 2
+theme = ExtResource("2_theme")
+theme_type_variation = &"TimetableCard"
+script = ExtResource("1_panel")
+
+[node name="Content" type="VBoxContainer" parent="."]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+
+[node name="TitleBar" type="HBoxContainer" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MoveHandle" type="Control" parent="Content/TitleBar" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(0, 10)
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_default_cursor_shape = 13
+script = ExtResource("3_move")
+window = NodePath("../../..")
+
+[node name="CloseButton" type="Button" parent="Content/TitleBar"]
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"TimetableClose"
+text = "✕"
+flat = true
+
+[node name="Title" type="Label" parent="Content"]
+layout_mode = 2
+theme_type_variation = &"TimetableTitle"
+text = "Logs"
+
+[node name="Separator" type="HSeparator" parent="Content"]
+layout_mode = 2
+mouse_filter = 2
+theme_type_variation = &"TimetableSeparator"
+
+[node name="Tabs" type="TabContainer" parent="Content"]
+custom_minimum_size = Vector2(0, 320)
+layout_mode = 2
+size_flags_vertical = 3
+theme_type_variation = &"LogTabs"
+current_tab = 0
+tab_focus_mode = 0
+
+[node name="Console" type="RichTextLabel" parent="Content/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"LogLines"
+scroll_following = true
+selection_enabled = true
+script = ExtResource("5_lines")
+metadata/_tab_index = 0
+
+[node name="Gameplay" type="RichTextLabel" parent="Content/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"LogLines"
+scroll_following = true
+selection_enabled = true
+script = ExtResource("5_lines")
+metadata/_tab_index = 1
+
+[node name="App" type="RichTextLabel" parent="Content/Tabs"]
+unique_name_in_owner = true
+layout_mode = 2
+focus_mode = 0
+theme_type_variation = &"LogLines"
+scroll_following = true
+selection_enabled = true
+script = ExtResource("5_lines")
+metadata/_tab_index = 2
+
+[node name="ResizeCorner" type="Control" parent="Content" node_paths=PackedStringArray("window")]
+custom_minimum_size = Vector2(14, 14)
+layout_mode = 2
+size_flags_horizontal = 8
+mouse_default_cursor_shape = 12
+script = ExtResource("4_resize")
+window = NodePath("../..")
+
+[connection signal="pressed" from="Content/TitleBar/CloseButton" to="." method="_on_close_button_pressed"]

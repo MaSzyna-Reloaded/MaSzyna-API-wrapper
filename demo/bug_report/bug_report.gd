@@ -8,6 +8,9 @@ extends CanvasLayer
 ## its buttons only ask (bug_report.tscn). What happened before the report was opened is kept by
 ## its recorder from the moment a scenery starts (attach_world()).
 
+## A line of the gameplay log the recorder has just written
+signal gameplay_line_written(line: String)
+
 ## Characters of the description that go into the issue's title
 const TITLE_DESCRIPTION_LENGTH: int = 80
 ## The engine's file log of this session, and how much of its end goes with a report
@@ -96,6 +99,10 @@ func send_report() -> void:
         report, JSON.stringify(_snapshot, "\t"), %ReportDialog.render_screenshot(), session_log,
         %Recorder.get_log()
     )
+
+
+func _on_recorder_line_written(line: String) -> void:
+    gameplay_line_written.emit(line)
 
 
 ## Sent: a confirmation that can open the issue, and the simulation stays paused until it is closed;

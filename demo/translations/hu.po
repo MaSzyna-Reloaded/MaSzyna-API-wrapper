@@ -83,6 +83,15 @@ msgstr "Pálya streamelése"
 msgid "Track & Traction"
 msgstr "Pálya és felsővezeték"
 
+msgid "Power source"
+msgstr "Áramforrás"
+
+msgid "Scenario and Events"
+msgstr "Forgatókönyv és események"
+
+msgid "Developer console"
+msgstr "Fejlesztői konzol"
+
 msgid "Weather and Time"
 msgstr "Időjárás és idő"
 
@@ -1618,6 +1627,18 @@ msgstr "Hibakeresés"
 
 msgid "Enable file logging"
 msgstr "Napló fájlba írása"
+
+msgid "Console"
+msgstr "Konzol"
+
+msgid "Gameplay"
+msgstr "Játékmenet"
+
+msgid "App"
+msgstr "Alkalmazás"
+
+msgid "Logs"
+msgstr "Naplók"
 
 msgid "Log folder"
 msgstr "Naplómappa"

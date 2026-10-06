@@ -83,6 +83,15 @@ msgstr "Streamování scenérie"
 msgid "Track & Traction"
 msgstr "Trať a trakční vedení"
 
+msgid "Power source"
+msgstr "Zdroj napájení"
+
+msgid "Scenario and Events"
+msgstr "Scénář a události"
+
+msgid "Developer console"
+msgstr "Vývojářská konzole"
+
 msgid "Weather and Time"
 msgstr "Počasí a čas"
 
@@ -1618,6 +1627,18 @@ msgstr "Ladění"
 
 msgid "Enable file logging"
 msgstr "Zapisovat log do souboru"
+
+msgid "Console"
+msgstr "Konzole"
+
+msgid "Gameplay"
+msgstr "Hra"
+
+msgid "App"
+msgstr "Aplikace"
+
+msgid "Logs"
+msgstr "Logy"
 
 msgid "Log folder"
 msgstr "Složka logů"

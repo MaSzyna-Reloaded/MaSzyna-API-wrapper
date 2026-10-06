@@ -14,7 +14,7 @@ signal exit_to_menu_requested
 ## The entries of the "Simulator" menu, by their ids - a separator (id 3) stands before EXIT_TO_MENU
 enum SimulatorItem { SETTINGS = 0, PROBLEM_REPORT = 1, EXIT_TO_MENU = 2, HELP = 4 }
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED, LOGS }
 
 ## The HUD elements' names in HUDServer
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
@@ -26,6 +26,7 @@ const PANEL_SCRIPTS:StringName = &"scripts"
 const PANEL_TRAINSETS:StringName = &"trainsets"
 const PANEL_SIMULATION_SPEED:StringName = &"simulation_speed"
 const PANEL_HELP:StringName = &"help"
+const PANEL_LOGS:StringName = &"logs"
 ## The View menu's entries of HUD elements; CONTROLS is not one - the control windows are this
 ## node's own
 const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
@@ -37,6 +38,7 @@ const VIEW_PANELS:Dictionary[ViewItem, StringName] = {
     ViewItem.SCRIPTS: PANEL_SCRIPTS,
     ViewItem.TRAINSETS: PANEL_TRAINSETS,
     ViewItem.SIMULATION_SPEED: PANEL_SIMULATION_SPEED,
+    ViewItem.LOGS: PANEL_LOGS,
 }
 
 const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
@@ -45,6 +47,8 @@ const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 var _windows: Array[HUDWindow] = []
 ## The "Diagnostics" entry of the frame time statistics (DebugMenu), after the windows
 var _frame_times_index: int = -1
+## The "Diagnostics" entry of the developer console (Console), after the frame time statistics
+var _console_index: int = -1
 ## The vehicle card, while HUDServer has one open
 var _card: VehicleCard = null
 ## Where the card was when it was last closed; it opens there again (no area until then)
@@ -77,6 +81,9 @@ func _ready() -> void:
     menu.add_item("Frame time statistics")
     _frame_times_index = menu.item_count - 1
     menu.set_item_shortcut(_frame_times_index, _action_shortcut(&"cycle_debug_menu"))
+    menu.add_item("Developer console")
+    _console_index = menu.item_count - 1
+    menu.set_item_shortcut(_console_index, _action_shortcut(&"console_toggle"))
     menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))
     # Tab, as the original's map panel (driveruilayer.cpp:136)
     menu.set_item_shortcut(_windows.find($ControlWindows/MiniMap), _action_shortcut(&"minimap_toggle"))
@@ -119,6 +126,9 @@ func _on_diagnostics_menu_index_pressed(index: int) -> void:
     if index == _frame_times_index:
         DebugMenu.cycle_style()
         return
+    if index == _console_index:
+        Console.toggle_console()
+        return
     var win: HUDWindow = _windows[index]
     win.visible = not win.visible
     _bind_vehicle(win)
@@ -137,8 +147,8 @@ func _on_simulator_menu_id_pressed(id: int) -> void:
 
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the hints, the timetable, the
-## scenario, all the control windows at once, the Lua editor, the trainset list and the simulation
-## speed
+## scenario, all the control windows at once, the Lua editor, the trainset list, the simulation
+## speed and the logs
 func _on_view_menu_index_pressed(index: int) -> void:
     if index == ViewItem.CONTROLS:
         %View.toggle_item_checked(index)
@@ -147,8 +157,6 @@ func _on_view_menu_index_pressed(index: int) -> void:
             _bind_vehicle(win)
         return
     HUDServer.panel_toggle(VIEW_PANELS[index])
-    if index == ViewItem.TRAINSETS:
-        %View.hide()
 
 
 ## A HUD element opened or closed in HUDServer: its View menu entry ticked, the element shown
@@ -175,6 +183,8 @@ func _on_panel_visibility_changed(panel: StringName, shown: bool) -> void:
             %SimulationSpeedPanel.visible = shown
         PANEL_HELP:
             %HelpPanel.visible = shown
+        PANEL_LOGS:
+            %LogsPanel.visible = shown
 
 
 func _on_hud_visibility_changed(shown: bool) -> void:
@@ -199,6 +209,10 @@ func _on_script_editor_panel_close_requested() -> void:
 
 func _on_vehicle_selector_panel_close_requested() -> void:
     HUDServer.panel_set_visible(PANEL_TRAINSETS, false)
+
+
+func _on_logs_panel_close_requested() -> void:
+    HUDServer.panel_set_visible(PANEL_LOGS, false)
 
 
 ## A click on a selector row: the card shows the row's vehicle; the vehicle of the open card clicked
@@ -274,6 +288,11 @@ func attach_script_context(context: RID) -> void:
 ## no world (the menu)
 func attach_environment(environment: MaszynaEnvironmentNode) -> void:
     %WeatherControls.attach_environment(environment)
+
+
+## A line of the gameplay log (BugReportRecorder), for the logs' "Gameplay" tab
+func add_gameplay_line(line: String) -> void:
+    %LogsPanel.add_gameplay_line(line)
 
 
 ## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until

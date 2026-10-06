@@ -17,6 +17,9 @@ corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_dialog_panel"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_log_tabs_panel"]
+content_margin_top = 8.0
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_focus"]
 draw_center = false
 border_width_left = 1
@@ -377,6 +380,18 @@ DrivingAidValue/colors/font_color = Color(1, 1, 1, 1)
 DrivingAidValue/font_sizes/font_size = 24
 DrivingAidValue/fonts/font = ExtResource("digits_font")
 Label/colors/font_color = Color(0.9, 0.93, 0.97, 1)
+LogLines/base_type = &"RichTextLabel"
+LogLines/font_sizes/normal_font_size = 12
+LogLines/fonts/normal_font = ExtResource("digits_font")
+LogTabs/base_type = &"TabContainer"
+LogTabs/colors/font_hovered_color = Color(1, 1, 1, 1)
+LogTabs/colors/font_selected_color = Color(1, 1, 1, 1)
+LogTabs/colors/font_unselected_color = Color(0.6, 0.66, 0.75, 1)
+LogTabs/styles/panel = SubResource("StyleBoxEmpty_log_tabs_panel")
+LogTabs/styles/tab_hovered = SubResource("StyleBoxFlat_vehicle_row")
+LogTabs/styles/tab_selected = SubResource("StyleBoxFlat_row_current")
+LogTabs/styles/tab_unselected = SubResource("StyleBoxFlat_row")
+LogTabs/styles/tabbar_background = SubResource("StyleBoxEmpty_dialog_panel")
 MenuBar/colors/font_color = Color(0.9, 0.93, 0.97, 1)
 MenuBar/colors/font_hover_color = Color(1, 1, 1, 1)
 MenuBar/colors/font_hover_pressed_color = Color(1, 1, 1, 1)

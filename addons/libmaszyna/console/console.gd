@@ -78,9 +78,10 @@ func _ready() -> void:
 
 func _input(event : InputEvent) -> void:
     if (event is InputEventKey):
-        if (event.get_physical_keycode_with_modifiers() == KEY_QUOTELEFT): # ~ key.
-            if (event.pressed):
-                toggle_console()
+        # ~ key, the project's action; it also stands as the shortcut of the HUD's menu entry, which
+        # never sees the key - it is taken here first
+        if (event.is_action_pressed(&"console_toggle", false, true)):
+            toggle_console()
             get_tree().get_root().set_input_as_handled()
         elif (event.physical_keycode == KEY_QUOTELEFT and event.is_command_or_control_pressed()): # Toggles console size or opens big console.
             if (event.pressed):

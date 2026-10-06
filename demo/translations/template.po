@@ -83,6 +83,15 @@ msgstr ""
 msgid "Track & Traction"
 msgstr ""
 
+msgid "Power source"
+msgstr ""
+
+msgid "Scenario and Events"
+msgstr ""
+
+msgid "Developer console"
+msgstr ""
+
 msgid "Weather and Time"
 msgstr ""
 
@@ -1617,6 +1626,18 @@ msgid "Debug"
 msgstr ""
 
 msgid "Enable file logging"
+msgstr ""
+
+msgid "Console"
+msgstr ""
+
+msgid "Gameplay"
+msgstr ""
+
+msgid "App"
+msgstr ""
+
+msgid "Logs"
 msgstr ""
 
 msgid "Log folder"

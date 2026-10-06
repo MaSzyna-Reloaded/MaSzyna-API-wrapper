@@ -185,6 +185,7 @@ title = "Reporting unavailable"
 message = "Reporting problems is not available in this version of the game."
 confirm_text = "OK"
 
+[connection signal="line_written" from="Recorder" to="." method="_on_recorder_line_written"]
 [connection signal="report_failed" from="Sender" to="ReportDialog" method="show_failed"]
 [connection signal="report_saved" from="Sender" to="." method="close_report" unbinds=1]
 [connection signal="report_sent" from="Sender" to="." method="_on_report_sent"]

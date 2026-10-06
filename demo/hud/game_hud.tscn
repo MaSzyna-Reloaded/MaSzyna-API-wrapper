@@ -30,6 +30,7 @@
 [ext_resource type="PackedScene" path="res://hud/driving_aid.tscn" id="33_driving_aid"]
 [ext_resource type="PackedScene" path="res://hud/driver_hints.tscn" id="39_driver_hints"]
 [ext_resource type="PackedScene" path="res://hud/simulation_speed_panel.tscn" id="35_simulation_speed"]
+[ext_resource type="PackedScene" path="res://hud/logs_panel.tscn" id="40_logs"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye.svg" id="30_eye"]
 [ext_resource type="Texture2D" path="res://hud/icons/hand_over.svg" id="32_hand_over"]
 [ext_resource type="Texture2D" path="res://hud/icons/eye_off.svg" id="34_eye_off"]
@@ -84,8 +85,7 @@ item_4/id = 2
 [node name="View" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar"]
 unique_name_in_owner = true
 title = "View"
-hide_on_checkable_item_selection = false
-item_count = 9
+item_count = 10
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -116,6 +116,9 @@ item_7/id = 7
 item_8/text = "Simulation speed"
 item_8/checkable = 1
 item_8/id = 8
+item_9/text = "Logs"
+item_9/checkable = 1
+item_9/id = 9
 
 [node name="Diagnostics" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
 title = "Diagnostics"
@@ -424,6 +427,10 @@ layout_mode = 1
 unique_name_in_owner = true
 layout_mode = 1
 
+[node name="LogsPanel" parent="." instance=ExtResource("40_logs")]
+unique_name_in_owner = true
+layout_mode = 1
+
 [node name="HelpPanel" parent="." instance=ExtResource("12_help_panel")]
 unique_name_in_owner = true
 layout_mode = 1
@@ -504,12 +511,19 @@ mouse_filter = 2
 
 [connection signal="id_pressed" from="TopBar/HBoxContainer/MenuBar/Simulator" to="." method="_on_simulator_menu_id_pressed"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/Diagnostics" to="." method="_on_diagnostics_menu_index_pressed"]
+[connection signal="about_to_popup" from="TopBar/HBoxContainer/MenuBar/Simulator" to="TopBar" method="_on_menu_about_to_popup"]
+[connection signal="popup_hide" from="TopBar/HBoxContainer/MenuBar/Simulator" to="TopBar" method="_on_menu_popup_hide"]
+[connection signal="about_to_popup" from="TopBar/HBoxContainer/MenuBar/View" to="TopBar" method="_on_menu_about_to_popup"]
+[connection signal="popup_hide" from="TopBar/HBoxContainer/MenuBar/View" to="TopBar" method="_on_menu_popup_hide"]
+[connection signal="about_to_popup" from="TopBar/HBoxContainer/MenuBar/Diagnostics" to="TopBar" method="_on_menu_about_to_popup"]
+[connection signal="popup_hide" from="TopBar/HBoxContainer/MenuBar/Diagnostics" to="TopBar" method="_on_menu_popup_hide"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/View" to="." method="_on_view_menu_index_pressed"]
 [connection signal="close_requested" from="TimetablePanel" to="." method="_on_timetable_panel_close_requested"]
 [connection signal="close_requested" from="ScenarioPanel" to="." method="_on_scenario_panel_close_requested"]
 [connection signal="close_requested" from="HelpPanel" to="." method="_on_help_panel_close_requested"]
 [connection signal="close_requested" from="ScriptEditorPanel" to="." method="_on_script_editor_panel_close_requested"]
 [connection signal="close_requested" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_close_requested"]
+[connection signal="close_requested" from="LogsPanel" to="." method="_on_logs_panel_close_requested"]
 [connection signal="vehicle_activated" from="VehicleSelectorPanel" to="." method="_on_vehicle_selector_panel_vehicle_activated"]
 [connection signal="remove_trainset_requested" from="VehicleSelectorPanel" to="." method="_remove_trainset"]
 [connection signal="pressed" from="FloatingCorner/FloatingButtons/FollowedVehicleChip" to="." method="_on_followed_vehicle_chip_pressed"]

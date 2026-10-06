@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="GameLog" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
-		Application-wide logger for general purpose. Use it to write messages to the game's debug console. For development-only logs, prefer Godot's built-in functions such as push_error(), push_warning(), print(), and print_rich().
+		Application-wide logger for general purpose. Use it to write messages to the game's log, shown in the "Console" tab of the HUD's Logs window. For development-only logs, prefer Godot's built-in functions such as push_error(), push_warning(), print(), and print_rich().
 	</brief_description>
 	<description>
 		Provides a simple, application-wide logging system with severity levels and a signal that emits whenever a new log line is produced.

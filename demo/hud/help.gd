@@ -31,6 +31,7 @@ const GROUPS: Dictionary = {
         "scenario_toggle",
         "hints_toggle",
         "cycle_debug_menu",
+        "console_toggle",
     ],
 }
 

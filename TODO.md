@@ -87,6 +87,9 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
 
 * The HUD keeps copies of the player's state: `DrivingAid.vehicle`, `FollowedVehicleChip.vehicle`,
   `PlayerVehicleChip.vehicle` (set from `PlayerServer`/`PlayerCameraServer` signals).
+* The developer console (`addons/libmaszyna/console/console.gd`) still reads keycodes for
+  Ctrl+~ (size), Escape, the arrows, Page Up/Down and Tab - only its toggle is an action
+  (`console_toggle`).
 
 ### Problem reports (`demo/bug_report/`)
 * The reporting endpoint (`maszyna/bugtracking/endpoint`, the Cloudflare Worker in

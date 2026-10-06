@@ -6,7 +6,11 @@ extends Node
 ## gameplay log as they come, not into memory, so a session of any length goes with the report. A
 ## command carries no sender, so the scenario's commands to the player's vehicle are written as
 ## well as the player's own. A command repeated without a pause - a lever dragged with the mouse, a
-## key held - is one line: the first one, its count and the last one's time and values.
+## key held - is one line: the first one, its count and the last one's time and values, written
+## once the command has not come again for REPEAT_GAP_MSEC.
+
+## A line went to the gameplay log
+signal line_written(line: String)
 
 ## How much of the gameplay log's end goes with a report - it compresses well
 const LOG_TAIL_BYTES: int = 50 * 1024 * 1024
@@ -27,6 +31,16 @@ var _repeated_key: String = ""
 var _repeats: int = 0
 var _repeated_last: String = ""
 var _repeated_msec: int = 0
+## Writes the command being counted once it has not come again for REPEAT_GAP_MSEC - the file
+## reads the same as when the next command wrote it, but the line is out at once
+var _repeat_timer: Timer = null
+
+
+func _ready() -> void:
+    _repeat_timer = Timer.new()
+    _repeat_timer.one_shot = true
+    add_child(_repeat_timer)
+    _repeat_timer.timeout.connect(_write_repeated)
 
 
 ## For a scenery being started
@@ -41,6 +55,7 @@ func start() -> void:
 func stop() -> void:
     VehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
     ScenarioEventServer.event_launched.disconnect(_on_event_launched)
+    _repeat_timer.stop()
     _write_repeated()
     _log = null
 
@@ -75,11 +90,12 @@ func _on_vehicle_command_received(vehicle_rid: RID, command: String, p1: Variant
         _repeated_line = "%s %s %s %s" % [_time_text(), key, p1, p2]
         _repeats = 1
     _repeated_msec = now
+    _repeat_timer.start(REPEAT_GAP_MSEC / 1000.0)
 
 
 func _on_event_launched(event: RID, activator: RID) -> void:
     _write_repeated()
-    _log.store_line("%s %s %s" % [
+    _write_line("%s %s %s" % [
         _time_text(), ScenarioEventServer.event_get_name(event), VehicleServer.vehicle_get_name(activator)
     ])
 
@@ -88,9 +104,14 @@ func _on_event_launched(event: RID, activator: RID) -> void:
 func _write_repeated() -> void:
     if not _repeated_line:
         return
-    _log.store_line(_repeated_text())
+    _write_line(_repeated_text())
     _repeated_line = ""
     _repeated_key = ""
+
+
+func _write_line(line: String) -> void:
+    _log.store_line(line)
+    line_written.emit(line)
 
 
 func _repeated_text() -> String:

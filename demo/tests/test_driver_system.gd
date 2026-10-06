@@ -369,6 +369,65 @@ func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
+## FINDINGS.md 2026-10-06: on Stary Jawor the player changed the cab to drive back to an open dwarf
+## and the driving aid kept reading the way left - the player's reverser turns the driver
+## (DirectionChange(), Train.cpp:2670-2842)
+func test_a_players_reverser_turns_the_driver() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverReverserTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    PlayerServer.player_take_over_vehicle(vehicle)
+    var cabin:RID = RailVehicleServer.vehicle_get_driver_cabin(vehicle)
+    VehicleServer.vehicle_send_command(vehicle, "cab_activation", true)
+    var cab_active:int = int(train.get_state()["cabin"])
+    var way:int = DriverSystem.driver_get_state(driver)["direction"]
+
+    # the reverser stepped all the way against the way the driver drives
+    while not int(train.get_state()["direction"]) == -way * cab_active:
+        var before:int = int(train.get_state()["direction"])
+        CabinSystem.act(cabin, MaszynaLegacyDriverHints.REVERSER, &"decrease" if way * cab_active > 0 else &"increase")
+        if int(train.get_state()["direction"]) == before:
+            break
+
+    assert_ne(cab_active, 0, "the cab is on")
+    assert_eq(int(train.get_state()["direction"]), -way * cab_active, "the player set the reverser the other way")
+    assert_eq(DriverSystem.driver_get_state(driver)["direction"], -way, "and the driver drives that way")
+    PlayerServer.player_leave_vehicle()
+    DriverSystem.driver_attach_delegate(driver, null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
+## FINDINGS.md 2026-10-06: the driver took the way of the cab left on a cab change, one change late -
+## it read the active cab before the new one was switched on (TTrain::CabChange(), Train.cpp:10335)
+func test_a_players_cab_change_turns_the_driver_the_way_of_the_new_cab() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverCabChangeTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    var vehicle:RID = train.get_rid()
+    var controls:LegacyCabinControls = LegacyCabinControls.new()
+    CabinSystem.vehicle_attach_cab_logic(
+            vehicle, LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return controls))
+    var driver:RID = get_vehicle_driver(vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    PlayerServer.player_take_over_vehicle(vehicle)
+    VehicleServer.vehicle_send_command(vehicle, "cab_activation", true)
+    CabinSystem.act(RailVehicleServer.vehicle_get_driver_cabin(vehicle), MaszynaLegacyDriverHints.REVERSER, &"increase")
+    var way:int = DriverSystem.driver_get_state(driver)["direction"]
+
+    RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
+
+    var absolute:int = int(train.get_state()["direction_absolute"])
+    assert_eq(absolute, -way, "the new cab, its reverser forward, drives the other way")
+    assert_eq(DriverSystem.driver_get_state(driver)["direction"], absolute, "and so does the driver at once")
+    PlayerServer.player_leave_vehicle()
+    DriverSystem.driver_attach_delegate(driver, null)
+    CabinSystem.vehicle_attach_cab_logic(vehicle, null)
+
+
 func test_a_turn_forgets_the_stop_of_a_signal_passed() -> void:
     var vehicle:RID = build_vehicle("RouteTurnTest", SM42, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD).get_rid()
     var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()

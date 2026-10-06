@@ -3728,3 +3728,41 @@ lighting or the trainset.
   original does: the speed in force, a passed Tm that opens, and the player's distance.
 * **Rule:** a signal the front has reached is read again on every update while it is in the
   table. One taken once on passing holds the aspect it showed then.
+
+## 2026-10-06 The eszelon turned back to an open dwarf and still read STOP
+
+* **Symptom:** after the fix above the operator still saw STOP on Stary Jawor. Tm18 let the SU46
+  past Tm19, then the script opened Tm19 and Tm20, which face the other way, for the way back
+  to H1. The operator changed the cab and put the reverser forward. The neutral hint was gone,
+  but the large STOP stayed.
+* **What proved it:** in the data, Tm19 and Tm20 (`skp_wskazniki.scm:167-168`, angle -50) face
+  away from Tm18 (131.5), so the open dwarf was behind the train. In the original, a player's
+  reverser (`OnCommand_reverser*`, Train.cpp:2670-2842) and cab change (`CabChange()`,
+  Train.cpp:10343) call `Mechanik->DirectionChange()`. That sets `iDirection = CheckDirection()`
+  (DirAbsolute, else CabActive). The port's driver changed its way only through its own orders,
+  so it kept reading the tracks ahead of the old cab. `test_a_players_reverser_turns_the_driver`
+  fails without the change.
+* **Fix:** the driver follows `vehicle_driver_cabin_changed` and the vehicle's
+  `direction_increase`/`direction_decrease` commands of a vehicle a player drives. Its way is set
+  from `get_direction_absolute()`, else the active cab, and the trainset is read again.
+* **Rule:** whatever the original lets the player change in the cab and also tells the driver
+  (`Mechanik->...` in Train.cpp) has to reach the port's driver. A driver kept apart from the
+  cab reads a different railway than the player drives.
+
+## 2026-10-06 The driver took the way of the cab left, one cab change late
+
+* **Symptom:** on Stary Jawor the operator changed the cab while passing the dwarf. STOP stayed
+  when the dwarf turned white. Only after a second cab change did the aid show 40, and it then
+  showed the same in both cabs.
+* **What proved it:** a probe (SM42, the player in the front cab, reverser forward, then
+  `person_change_cabin()` backward) printed the following after the change: `CabActive -1`,
+  `direction_absolute -1`, driver direction `1`. Changing back gave `1`/`1` against a driver
+  at `-1`, which is one change late. The first version turned the driver on
+  `vehicle_driver_cabin_changed`. That signal is emitted when the person moves, before
+  `person_change_cabin()` sends `cab_controls_reset` and `cab_activation_auto`, so the cab
+  left was still the active one. The original calls `DirectionChange()` after
+  `CabActivisationAuto()` (Train.cpp:10335-10336).
+* **Fix:** the driver turns on the `cab_activation_auto` command, the last step of a cab change,
+  and on the reverser. The probe shows the driver following each cab at once.
+* **Rule:** what the original does after a step of an operation is hooked to that step's own
+  event, not to the first event of the operation.

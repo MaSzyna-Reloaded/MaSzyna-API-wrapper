@@ -221,6 +221,33 @@ var _drivers:Dictionary[RID, DriverState] = {}
 
 func _init() -> void:
     StationServer.dispatch_step_changed.connect(_on_dispatch_step_changed)
+    VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
+
+
+## DirectionChange() (Driver.cpp:2624-2631) of the driver of a vehicle a player drives - the computer
+## turns through its own orders: after a cab change, once the new cab is switched on, its last step
+## (TTrain::CabChange(), Train.cpp:10335-10336; RailVehicleServer.person_change_cabin()), and after
+## the reverser is moved off neutral (OnCommand_reverserforward/backward..., Train.cpp:2670-2842).
+## Taken when the person moved, with the cab left still active, the driver read the way of the cab
+## left (FINDINGS.md 2026-10-06). The way is the reverser's and the active cab's (CheckDirection(),
+## DirAbsolute, else CabActive, Driver.cpp:2384-2392), its trainset read again on a change; with
+## neither it keeps its way, the driver here never drives none
+func _on_vehicle_command_received(vehicle:RID, command:String, _p1:Variant, _p2:Variant) -> void:
+    var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController
+    if not controller or DriverSystem.vehicle_is_control_active(vehicle):
+        return
+    var reverser:bool = (command == "direction_increase" or command == "direction_decrease") \
+            and not controller.get_direction() == 0
+    if not (command == "cab_activation_auto" or reverser):
+        return
+    var direction:int = controller.get_direction_absolute()
+    if direction == 0:
+        direction = _active_cab(vehicle)
+    for state:DriverState in _drivers.values():
+        if VehicleServer.person_get_vehicle(state.driver) == vehicle and not direction == 0 \
+                and not direction == state.direction:
+            state.direction = direction
+            _check_vehicles(state)
 
 
 func _driver_attached(driver:RID) -> void:

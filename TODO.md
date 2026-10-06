@@ -593,8 +593,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * **`movePrimary` is not ported** (`TController::primary()`, Driver.h:226-231): the others defer
   to it (Driver.cpp:2410-2430), only it runs the dynamic brake test (Driver.cpp:7856), and one
   moving through a gangway takes over (Driver.cpp:5870).
-* **The AI's `DirectionChange()` after a cab change** (Driver.cpp:2624) follows only from its
-  cabin's kind.
 * **To drive again in game**: Stary Jawor Osobowy 1, the AI's n323m ran past a signal at stop
   while the player shunted in SM42-329 (two likely causes fixed on krzyzowa2).
 * **Cab targets**: the motor car's ammeters, voltmeters and lamps (`mvControlled` in

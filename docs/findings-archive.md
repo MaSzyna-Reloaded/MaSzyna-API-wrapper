@@ -3917,3 +3917,19 @@ lighting or the trainset.
   locomotive is set to G").
 * **Rule:** the type of a train comes from `RailVehicleServer.trainset_get_type()`, never from the
   brakes or a vehicle's G/P setting.
+
+## 2026-10-06 "Switch on compressor" with the compressor on
+
+* **Symptom:** in EN57-636ra on Linia 053 Poranek the compressor was switched on and running, and
+  the hints kept asking to switch it on.
+* **What proved it:** `test_zzz_driver_hints_en57_2000_v1.gd` - the EN57 started by the keys -
+  printed every car's compressor: the ra cars `CompressorSpeed` 0.018, allowed and running; the s
+  car, the controlling one, none. The hint was done by the controlling car's compressor running
+  (`CompressorFlag`), which an EN57 has not got and which stops by itself once the reservoir is
+  full. The original's hint is done by `IsAnyCompressorEnabled` - any vehicle under control with
+  its compressor allowed to run (driverhints.cpp:394-414, Driver.cpp:6136-6137).
+* **Fix:** `MaszynaLegacyDriverTrainset` keeps `compressor_enabled` and
+  `compressor_explicitly_enabled` of every vehicle under control, and the compressor hints are done
+  by them.
+* **Rule:** a hint about a device is done by the device's switch on any vehicle of the consist
+  that has it, not by the device running on the controlling car.

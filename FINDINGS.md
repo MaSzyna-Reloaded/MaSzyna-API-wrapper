@@ -95,8 +95,9 @@ anything. Open work belongs in `TODO.md`.
   *(09-20 blotchy ground)*
 * A driver's readiness is tested on every vehicle under control (`IsAnyLineBreakerOpen`), in its
   reset and in its check alike, and only on devices a car has - a car without an engine has no line
-  breaker to be open; a hint asks only for what the vehicle has. *(10-06 Vehicle not ready with
-  nothing missing)*
+  breaker to be open; a hint asks only for what the vehicle has, and is done by the switch of any
+  car that has the device, not by the device running. *(10-06 Vehicle not ready with nothing
+  missing; "Switch on compressor" with the compressor on)*
 * A vehicle that is not driven is not simulated (`CabActive`/`PhysicActivation`). *(09-23 loco
   with nobody in the cab)*
 * A parser of the original's data mirrors its tolerance: skip what is not known, and let every

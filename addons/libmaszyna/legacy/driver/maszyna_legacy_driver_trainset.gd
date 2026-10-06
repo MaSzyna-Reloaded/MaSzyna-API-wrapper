@@ -79,6 +79,11 @@ var motor_overload_relay_open:bool = false
 ## player - and a converter's overload relay tripped
 var line_breaker_open:bool = false
 var converter_overload_relay_open:bool = false
+## IsAnyCompressorEnabled, IsAnyCompressorExplicitlyEnabled (Driver.cpp:6136-6137): a vehicle under
+## control has its compressor allowed to run - switched on, or started on its own - and switched on
+## by hand
+var compressor_enabled:bool = false
+var compressor_explicitly_enabled:bool = false
 ## IsAnyCouplerStretched (Driver.cpp:6087-6090): a coupler pulled past its strength
 var coupler_stretched:bool = false
 ## FmaxC of the driver's vehicle's coupler behind it, the way it drives [N] (Driver.cpp:7784)
@@ -109,6 +114,8 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
     motor_overload_relay_open = false
     line_breaker_open = false
     converter_overload_relay_open = false
+    compressor_enabled = false
+    compressor_explicitly_enabled = false
     for other:RID in controlled:
         var power:float = VehicleServer.vehicle_get_controller(other).power
         if power > POWERED:
@@ -126,6 +133,14 @@ func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
         # PWR=2 - has none to be open (MASZYNA_ORIGINAL_QUIRKS.md, "A pantograph car's line breaker")
         if power > LINE_BREAKER_POWER and engine:
             line_breaker_open = line_breaker_open or not engine.get_main_switch_enabled()
+        # an engine's compressor starts on its own (CompressorStart automatic, Mover.cpp:3889-3892);
+        # CompressorAllowLocal is not modelled - always on
+        var brake:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+                other, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+        if brake and brake.compressor_speed > 0.0:
+            compressor_enabled = compressor_enabled or brake.get_compressor_allowed() \
+                    or brake.compressor_power == RailVehicleBrake.COMPRESSOR_POWER_ENGINE
+            compressor_explicitly_enabled = compressor_explicitly_enabled or brake.get_compressor_allowed()
     var couplers:RailVehicleBuffCoupl = RailVehicleServer.vehicle_component_get(
             vehicle, RailVehicleComponentType.COMPONENT_BUFFERS) as RailVehicleBuffCoupl
     var behind:RailVehicleController.CouplerEnd = RailVehicleController.opposite_end(ahead)

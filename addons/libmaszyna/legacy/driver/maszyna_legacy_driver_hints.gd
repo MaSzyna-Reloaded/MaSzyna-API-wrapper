@@ -901,9 +901,12 @@ static func is_done(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, 
         Hint.LINE_BREAKER_CLOSE, Hint.LINE_BREAKER_OPEN:
             var engine:RailVehicleEngine = _engine(controlling)
             return engine == null or engine.get_main_switch_enabled() == (hint == Hint.LINE_BREAKER_CLOSE)
-        Hint.COMPRESSOR_ON, Hint.COMPRESSOR_OFF:
-            var brake:RailVehicleBrake = _brake(controlling)
-            return brake == null or brake.get_compressor_enabled() == (hint == Hint.COMPRESSOR_ON)
+        # any vehicle under control's - an EMU's compressor is in another car than its motors - allowed
+        # to run, not running: it stops itself once the reservoir is full (driverhints.cpp:394-414)
+        Hint.COMPRESSOR_ON:
+            return situation.trainset.compressor_enabled
+        Hint.COMPRESSOR_OFF:
+            return not situation.trainset.compressor_explicitly_enabled
         # a pump not switched by hand needs no hint (driverhints.cpp:613-636)
         Hint.WATER_PUMP_ON:
             var diesel:RailVehicleDieselEngine = _diesel(controlling)

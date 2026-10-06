@@ -66,6 +66,16 @@ namespace godot {
         vehicle_server->connect(
                 VehicleServer::vehicle_cabin_detached_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_cabin_detached));
+        // where a neighbour scan goes depends on the switches and the network
+        TrackServer *tracks = TrackServer::get_instance();
+        ERR_FAIL_NULL(tracks);
+        tracks->connect(
+                TrackServer::switch_active_track_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_switch_active_track_changed));
+        tracks->connect(
+                TrackServer::tracks_changed_signal, callable_mp(this, &RailVehicleServer::_on_topology_changed));
+        tracks->connect(
+                TrackServer::topology_changed_signal, callable_mp(this, &RailVehicleServer::_on_topology_changed));
     }
 
     void RailVehicleServer::_bind_methods() {
@@ -474,6 +484,7 @@ namespace godot {
         }
         _disconnect_relays(p_vehicle, *placement);
         const RID reported_track = placement->reported_track;
+        _track_changed(placement->track);
         vehicles.erase(p_vehicle);
         if (TrackServer *tracks = TrackServer::get_instance(); tracks != nullptr && reported_track.is_valid()) {
             tracks->track_vehicle_left(reported_track, p_vehicle);
@@ -841,6 +852,8 @@ namespace godot {
         }
         _disconnect_relays(p_vehicle, *placement);
         placement->controller_id = ObjectID(vehicle_server->vehicle_get_controller_instance_id(p_vehicle));
+        // the scans that found it hold the previous controller
+        _track_changed(placement->track);
         _connect_relays(p_vehicle, *placement);
         // a newly bound controller takes the rail values before its simulation starts
         // (VehicleServer::vehicle_bind_controller() tells this before starting it)
@@ -1022,6 +1035,7 @@ namespace godot {
         }
         TrackServer *tracks = TrackServer::get_instance();
         ERR_FAIL_NULL(tracks);
+        _track_changed(placement->track);
         placement->track = p_track;
         placement->track_direction = p_track_direction;
         placement->moved = true;
@@ -1037,6 +1051,7 @@ namespace godot {
         const double remaining_offset = p_track_offset - placement->track_offset;
         const double direction_sign = p_track_direction == TrackServer::DIRECTION_NORMAL ? -1.0 : 1.0;
         _move_placement(*placement, remaining_offset * direction_sign, false);
+        _track_changed(placement->track);
         placement->placement_unreported = false;
         emit_signal(vehicle_placed_signal, p_vehicle);
     }
@@ -1047,7 +1062,9 @@ namespace godot {
         if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
             return;
         }
+        _track_changed(placement->track);
         _move_placement(*placement, p_distance, true);
+        _track_changed(placement->track);
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
             controller->emit_position_changed_if_needed();
         }
@@ -1478,7 +1495,9 @@ namespace godot {
         RID found;
         RailVehicleController::CouplerEnd found_end = RailVehicleController::COUPLER_END_FRONT;
         double found_distance = 0.0;
-        if (!_find_vehicle(p_vehicle, *placement, p_end, p_distance, found, found_end, found_distance)) {
+        LocalVector<RID> scanned_tracks;
+        if (!_find_vehicle(
+                    p_vehicle, *placement, p_end, p_distance, found, found_end, found_distance, scanned_tracks)) {
             return Ref<RailVehicleNeighbour>();
         }
         // the scan measures between the centres (MoverRailVehicleController::update_neighbour())
@@ -1570,15 +1589,37 @@ namespace godot {
         if (Math::is_zero_approx(distance)) {
             return;
         }
+        _track_changed(placement->track);
         _move_placement(*placement, distance, true);
+        _track_changed(placement->track);
     }
 
     void RailVehicleServer::neighbour_index_rebuild() {
         track_vehicles.clear();
         // every rail vehicle is a neighbour to be found, whatever implementation steps it
-        for (const KeyValue<RID, VehiclePlacement> &item: vehicles) {
+        for (KeyValue<RID, VehiclePlacement> &item: vehicles) {
             track_vehicles[item.value.track].push_back(item.key);
+            // a scan made since it entered the track could not find it there yet
+            if (item.value.indexed_track != item.value.track) {
+                _track_changed(item.value.indexed_track);
+                _track_changed(item.value.track);
+                item.value.indexed_track = item.value.track;
+            }
         }
+    }
+
+    void RailVehicleServer::_track_changed(const RID &p_track) {
+        if (p_track.is_valid()) {
+            track_change_serials[p_track] = ++track_change_serial;
+        }
+    }
+
+    void RailVehicleServer::_on_topology_changed() {
+        topology_change_serial = ++track_change_serial;
+    }
+
+    void RailVehicleServer::_on_switch_active_track_changed(const RID &p_track, const int p_active_track) {
+        _track_changed(p_track);
     }
 
     void RailVehicleServer::vehicle_report_position(const RID &p_vehicle) {
@@ -1792,18 +1833,33 @@ namespace godot {
             // distance on every update (DynObj.cpp:7550-7559) and CouplerForce() starts from it on
             // every step (Mover.cpp:4781) - skip it and the couplers stretch with no force
             if (controller->is_coupled(end)) {
+                p_placement.neighbour_scans[end].valid = false;
                 p_placement.neighbour_cleared[end] = false;
                 controller->clear_neighbour(end);
                 continue;
             }
+            VehiclePlacement::NeighbourScan &scan = p_placement.neighbour_scans[end];
             if (!on_track) {
+                scan.valid = false;
                 _clear_neighbour(controller, p_placement, end);
                 continue;
             }
+            // nothing on the tracks the last scan went along has changed: it would find the same
+            bool scan_current = scan.valid && topology_change_serial <= scan.serial;
+            for (uint32_t index = 0; scan_current && index < scan.tracks.size(); ++index) {
+                const uint64_t *changed = track_change_serials.getptr(scan.tracks[index]);
+                scan_current = changed == nullptr || *changed <= scan.serial;
+            }
+            if (scan_current) {
+                continue;
+            }
+            scan.valid = true;
+            scan.serial = track_change_serial;
             RID found;
             RailVehicleController::CouplerEnd found_end = RailVehicleController::COUPLER_END_FRONT;
             double found_distance = 0.0;
-            if (!_find_vehicle(p_vehicle, p_placement, end, scan_range, found, found_end, found_distance)) {
+            if (!_find_vehicle(
+                        p_vehicle, p_placement, end, scan_range, found, found_end, found_distance, scan.tracks)) {
                 _clear_neighbour(controller, p_placement, end);
                 continue;
             }
@@ -1819,7 +1875,7 @@ namespace godot {
     bool RailVehicleServer::_find_vehicle(
             const RID &p_vehicle, const VehiclePlacement &p_placement, const RailVehicleController::CouplerEnd p_end,
             const double p_scan_range, RID &p_found_out, RailVehicleController::CouplerEnd &p_found_end_out,
-            double &p_found_distance_out) {
+            double &p_found_distance_out, LocalVector<RID> &p_tracks_out) {
         TrackServer *tracks = TrackServer::get_instance();
         if (tracks == nullptr) {
             return false;
@@ -1830,8 +1886,10 @@ namespace godot {
         cursor.controller_id = ObjectID();
         double scanned = 0.0;
         double min_along = 0.0;
+        p_tracks_out.clear();
 
         while (scanned < p_scan_range) {
+            p_tracks_out.push_back(cursor.track);
             // same conversion to the curve offset direction as in _move_placement()
             const double movement_sign =
                     (cursor.track_direction == TrackServer::DIRECTION_NORMAL ? -1.0 : 1.0) * request_sign;

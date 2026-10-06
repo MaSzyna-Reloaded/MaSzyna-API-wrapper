@@ -300,10 +300,10 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   true) turns that read off for when the FIZ has a pantograph section.
 * **Road vehicles return with roads:** a vehicle on an unregistered track (every road) is left out
   at load (`SceneryInstancer._attach_objects()`).
-* **The stepping of parked vehicles** (Wrzosy: ~560 vehicles, ~17-22 ms a frame, debug build):
-  `vehicle_update_neighbours` runs in every sub-step, parked EMUs/DMUs never switch their physics
-  off. Measure in `compile-profiling` first; candidate: no neighbour scan for a vehicle whose
-  physics is off and whose neighbours did not move.
+* **The stepping of parked vehicles** (Wrzosy, profiling build, after the neighbour scan cache):
+  the step is 30.9% of the main thread - forces and movement ~8%, the remaining neighbour scans
+  ~4% (vehicles near moving ones), placements reported to rendering ~5%. Parked EMUs/DMUs keep
+  their physics on by the Mover's own rule (Mover.cpp:4487-4489).
 * **WeatherNode costs ~16 ms a frame** on Wrzosy with one rain volume - measure inside.
 * **Textures loaded on the streaming's preload threads**: every owner's preload parses the `.mat`
   and loads all its textures into `MaterialManager`'s cache, the build only assembles. Measure
@@ -699,9 +699,15 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 * The frame drop with a trainset in a scenery is the scenery's dynamic lights; nothing bounds how
   many are lit (`FINDINGS.md`, 2026-09-21). Measure the count first.
-* Multi-core physics: keep the phases of `vehicle_table::update()` (`DynObj.cpp:8181`), run per
-  island (a coupled trainset plus vehicles in collision range) on
-  `WorkerThreadPool::add_group_task` with a barrier per phase; no Godot calls on workers.
+* Multi-core physics - not worth it as measured (`docs/findings-archive.md`, 2026-10-06 parked
+  vehicles): only the sub-step loop of `MaszynaMoverVehicleServer::stepping_advance()` could run
+  per island (a coupled trainset plus vehicles in collision range) on
+  `WorkerThreadPool::add_group_task`, one island per task, one wait per slice - at most ~10% of
+  the main thread. Blocked by the Mover's global `std::mt19937` (`utilities.cpp:35-36`, used by
+  `Adhesive`, `ComputeMovement`, `CouplerForce`): per-thread engines need a change of the vendored
+  Mover and give up bit-reproducible runs. Also to move off the loop first: the switch forcing in
+  `_move_placement()` (writes TrackServer, emits signals) and `Curve3D` baking on first sample.
+  The original's function is `vehicle_table::update()`, `DynObj.cpp:8686`.
 
 ## Linux release built on an old glibc
 

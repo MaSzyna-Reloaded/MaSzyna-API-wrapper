@@ -3662,3 +3662,48 @@ lighting or the trainset.
 * **Fix:** none needed in the code; the probe moved to the EP07 fixture.
 * **Rule:** before reproducing a pantograph-air report on a fixture, check the fixture's FIZ for
   `PantAutoValve` - the EP09 and the EP07 behave differently with the same valve.
+
+## 2026-10-06 Parked vehicles scanned for neighbours in every sub-step
+
+* **Symptom:** Wrzosy EIC (`wrzosy_eie2620.scn`, ~850 vehicles), player in the cab, profiling
+  build: the main thread busy 96% of the time, and the vehicle step (`stepping_advance`) is 35.5%
+  of it.
+* **What proved it:** `perf record --call-graph dwarf` of the main thread for 20 s under
+  `gamescope --backend headless` (real GPU, no window); the stacks were summed by the phase of
+  `MaszynaMoverVehicleServer::stepping_advance()` they ran in. Of the main thread: the neighbour
+  scan (`_update_neighbours` / `_find_vehicle`) 10.2%; the forces and movement 8.1%; the
+  locations and track movement 4.6%; reporting placements to rendering 4.5%; current collection
+  and components 3.4%; overhead 3.6%. The sub-step loop that could run on worker threads came to
+  ~23%, the serial phase after it to ~9%.
+* **The cause:** every vehicle walked the track for its nearest neighbour in every sub-step, even
+  when it and everything around it stood still.
+* **Fix:** each end remembers the tracks its last scan went along and the change serial it was
+  made at (`RailVehicleServer::VehiclePlacement::NeighbourScan`). A track's serial goes up when a
+  vehicle moves on it, enters or leaves it, or its switch is set, and a change of the network
+  stales every scan. An end scans again only when one of its tracks changed. Neighbour scan 10.2%
+  -> 4.0% of the main thread, the step 35.5% -> 30.9%.
+  `test_a_parked_vehicle_is_pushed_by_one_rolling_onto_it` fails with the invalidation on
+  movement left out.
+* **What stays:** a parked EMU or DMU keeps its physics on - the Mover's own rule
+  (`TrainType == dt_EZT || dt_DMU`, Mover.cpp:4487-4489), not the wrapper's.
+* **Threads:** the sub-step loop is the only part that could run per island on workers, and it
+  calls the Mover's global `std::mt19937` (`utilities.cpp:35-36`: `Adhesive`, `ComputeMovement`,
+  `CouplerForce`), which a change of the vendored Mover would have to make per thread. With the
+  scan cut the most that threads could take off the main thread is ~10%.
+* **Rule:** a per-sub-step query whose answer depends only on placements is cached per vehicle
+  against a change serial of what it read; measure the split by phase with `perf` before
+  proposing threads.
+
+## 2026-10-06 A killed test leaves the game directory pointing at the fixtures
+
+* **Symptom:** `godot-double --path demo -- -s wrzosy_eie2620.scn` quit at once with "Invalid
+  game directory: res://tests/fixtures", inside and outside the sandbox.
+* **What proved it:** `demo/project.godot` sets `custom_user_dir_name="MaSzyna-Reloaded"`, so
+  `user://` is `~/.local/share/MaSzyna-Reloaded/`, not `app_userdata/MaSzyna Reloaded/` (which
+  still held the right directory). Its `settings.cfg` had `game_dir="res://tests/fixtures"`,
+  written at 08:56 by a test that points the game directory at the fixtures
+  (`save_maszyna_game_dir(FIXTURES_GAME_DIR)`) and was killed before restoring it.
+* **Fix:** the setting restored by hand; the `godot-frame-time` skill checks it before a run.
+* **Rule:** before a run that loads the game's data, read `game_dir` in
+  `~/.local/share/MaSzyna-Reloaded/settings.cfg`; a test run that was killed may have left the
+  fixtures there.

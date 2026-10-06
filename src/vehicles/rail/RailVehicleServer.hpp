@@ -17,6 +17,7 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/hash_set.hpp>
+#include <godot_cpp/templates/local_vector.hpp>
 #include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -171,6 +172,17 @@ namespace godot {
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
+                    /* Per end: the tracks the last neighbour scan went along and the change serial
+                     * it was made at. While none of them changed since, the scan would find the
+                     * same and is not repeated - a parked vehicle among parked ones scans nothing. */
+                    struct NeighbourScan {
+                            LocalVector<RID> tracks;
+                            uint64_t serial = 0;
+                            bool valid = false;
+                    };
+                    NeighbourScan neighbour_scans[2];
+                    /* The track it is listed under in track_vehicles */
+                    RID indexed_track;
                     /* PANTOGRAPH_FIRST, PANTOGRAPH_SECOND */
                     Pantograph pantographs[2];
                     /* How long the pantographs have fed no voltage [s] (NoVoltTime) */
@@ -213,6 +225,15 @@ namespace godot {
             /* The rail vehicles on each track, rebuilt once a step (neighbour_index_rebuild()),
              * kept as a member so the step allocates nothing per frame */
             HashMap<RID, Vector<RID>> track_vehicles;
+            /* Counts every change a neighbour scan depends on; each track keeps the count of its
+             * last change - a vehicle moving on it, entering or leaving it, its switch set - and a
+             * change of the track network as a whole stales every scan */
+            uint64_t track_change_serial = 0;
+            uint64_t topology_change_serial = 0;
+            HashMap<RID, uint64_t> track_change_serials;
+            void _track_changed(const RID &p_track);
+            void _on_topology_changed();
+            void _on_switch_active_track_changed(const RID &p_track, int p_active_track);
 
             RailVehicleController *_get_controller(const VehiclePlacement &p_placement) const;
             /* Whether p_answers(doors, side) holds for a vehicle coupled to p_vehicle by its
@@ -271,7 +292,7 @@ namespace godot {
             bool _find_vehicle(
                     const RID &p_vehicle, const VehiclePlacement &p_placement, RailVehicleController::CouplerEnd p_end,
                     double p_scan_range, RID &p_found_out, RailVehicleController::CouplerEnd &p_found_end_out,
-                    double &p_found_distance_out);
+                    double &p_found_distance_out, LocalVector<RID> &p_tracks_out);
             /* Where the vehicle is, in the terms a scenery is written in - for the pantographs'
              * warnings, which a world position alone does not tie to the .scn */
             String _track_position_text(const RID &p_vehicle) const;

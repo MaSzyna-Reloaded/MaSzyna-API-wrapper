@@ -15,6 +15,9 @@ anything. Open work belongs in `TODO.md`.
   power profile and build flags. *(09-22 GPU that never woke up)*
 * Measure by phase before restructuring: the visible loop is rarely the cost. *(09-22 sound
   system's per-frame cost)*
+* Before proposing threads, split the main thread by phase with `perf` on a profiling build; a
+  query that depends only on placements is cached against a change serial of what it read.
+  *(10-06 parked vehicles scanned for neighbours in every sub-step)*
 * A streaming budget is checked between pieces: measure the longest single piece per owner
   (`owner_max_msec`), not the total. A real-renderer run goes through `gamescope --backend
   headless` - `xvfb-run` shows Godot on a Wayland desktop and has no DRI3 for Vulkan. *(10-02
@@ -447,6 +450,9 @@ anything. Open work belongs in `TODO.md`.
   every `release-*` export builds `compile-debug` too. *(09-30 release export without CabinSystem)*
 
 ## Tests
+* `user://` is `~/.local/share/MaSzyna-Reloaded/` (`custom_user_dir_name`); a killed test may
+  leave `game_dir` there pointing at the fixtures - check it before a run on the game's data.
+  *(10-06 a killed test leaves the game directory pointing at the fixtures)*
 * The game directory is changed only while nothing built from it is alive: saving it reloads the
   game's data, and a vehicle rebuilds itself from the directory current then. *(10-03 a test's
   vehicle was built twice)*

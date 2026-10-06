@@ -3,6 +3,15 @@ extends MaszynaGutTest
 
 ## trainset_move(): the ends and the coupling of a coupler alone (coupling::coupler, MOVER.h:161)
 const MOVE_DISTANCE: float = 10.0
+## A vehicle with buffers and couplers that collide
+const FIXTURE_PATH: String = "res://tests/fixtures/test_vehicle.fiz"
+## A vehicle rolling at this speed [m/s] onto a parked one, this far apart [m] - beyond the parked
+## one's scan range - meets it within COLLISION_TIME [s] of simulation, advanced in frames of
+## COLLISION_FRAME [s]
+const COLLISION_SPEED: float = 5.0
+const COLLISION_GAP: float = 80.0
+const COLLISION_TIME: float = 30.0
+const COLLISION_FRAME: float = 0.1
 
 var created_tracks: Array[RID] = []
 var created_vehicle_rids: Array[RID] = []
@@ -543,6 +552,30 @@ func test_vehicle_move_from_common_point_uses_active_switch_branch() -> void:
     )
 
 
+# A parked vehicle does not scan for neighbours again while nothing near it changes; one rolling
+# up from beyond its scan range has to reach it all the same - it wakes its physics and pushes it
+# (Mover.cpp:4490-4503)
+func test_a_parked_vehicle_is_pushed_by_one_rolling_onto_it() -> void:
+    _register_track(_curve(Vector3(0.0, 0.0, 0.0), Vector3(200.0, 0.0, 0.0)), null, TrackServer.TRACK_NORMAL)
+    TrackServer.topology_rebuild()
+    var rolling: VehicleController = _create_fiz_vehicle(COLLISION_SPEED)
+    var parked: VehicleController = _create_fiz_vehicle(0.0)
+    RailVehicleServer.vehicle_set_track(rolling.get_rid(), created_tracks[0], 100.0, TrackServer.DIRECTION_NORMAL)
+    # parked ahead of the rolling one's front, whichever way along the track that is
+    var forward: Vector3 = -RailVehicleServer.vehicle_get_transform(rolling.get_rid()).basis.z.normalized()
+    RailVehicleServer.vehicle_set_track(parked.get_rid(), created_tracks[0],
+            100.0 + signf(forward.x) * COLLISION_GAP, TrackServer.DIRECTION_NORMAL)
+    var parked_start: Vector3 = RailVehicleServer.vehicle_get_transform(parked.get_rid()).origin
+
+    var simulated: float = 0.0
+    while simulated < COLLISION_TIME:
+        SimulationServer.simulation_advance(COLLISION_FRAME)
+        simulated += COLLISION_FRAME
+
+    var pushed_by: Vector3 = RailVehicleServer.vehicle_get_transform(parked.get_rid()).origin - parked_start
+    assert_gt(pushed_by.dot(forward), 0.0, "the parked vehicle is pushed the way the other one rolled")
+
+
 func _create_vehicle() -> RID:
     var vehicle_rid: RID = VehicleServer.vehicle_create()
     RailVehicleServer.vehicle_attach(vehicle_rid)
@@ -555,6 +588,14 @@ func _create_controller(velocity: float = 0.0) -> VehicleController:
     # the initial velocity is read while the Mover is initialised, so it goes in before the build
     var controller: VehicleController = build_vehicle(
             "mock_train_%d" % created_controllers.size(), null, velocity * 3.6)
+    created_controllers.append(controller)
+    return controller
+
+
+## A vehicle of the fixture FIZ - buffers and couplers that collide - rolling at `velocity` (m/s)
+func _create_fiz_vehicle(velocity: float) -> VehicleController:
+    var controller: VehicleController = build_vehicle("fiz_train_%d" % created_controllers.size(),
+            FizVehicleBuilder.build_description_at(FIXTURE_PATH), velocity * 3.6)
     created_controllers.append(controller)
     return controller
 

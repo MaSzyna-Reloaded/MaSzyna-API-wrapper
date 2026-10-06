@@ -1615,31 +1615,53 @@ static func _submodel_islands(lamp:Node3D) -> Array[Dictionary]:
                 piece["tint"] = tint
                 pieces.append(piece)
 
-    # pieces nearer than ISLAND_MERGE_DISTANCE, then the nearest while there are too many
-    var merged:bool = true
-    while merged:
-        merged = false
-        var nearest:Vector2i = Vector2i(-1, -1)
-        var nearest_gap:float = INF
-        for a:int in pieces.size():
-            for b:int in range(a + 1, pieces.size()):
-                var gap:float = (pieces[a]["bounds"] as AABB).get_center().distance_to(
-                        (pieces[b]["bounds"] as AABB).get_center())
-                var bounds_gap:float = maxf(0.0, gap - ((pieces[a]["bounds"] as AABB).get_longest_axis_size()
-                        + (pieces[b]["bounds"] as AABB).get_longest_axis_size()) * 0.5)
-                if bounds_gap < nearest_gap:
-                    nearest_gap = bounds_gap
-                    nearest = Vector2i(a, b)
-        if nearest.x >= 0 and (nearest_gap < ISLAND_MERGE_DISTANCE or pieces.size() > ISLAND_LIGHT_MAX_COUNT):
-            var kept:Dictionary = pieces[nearest.x]
-            var gone:Dictionary = pieces[nearest.y]
-            kept["bounds"] = (kept["bounds"] as AABB).merge(gone["bounds"])
-            kept["color_sum"] += gone["color_sum"]
-            pieces.remove_at(nearest.y)
-            merged = true
+    # pieces nearer than ISLAND_MERGE_DISTANCE, then the nearest while there are too many. Every
+    # piece keeps its nearest, so a merge looks again only at what it changed - a lamp mesh of
+    # hundreds of unwelded triangles (36WEa's dashboard light, 727) took half a minute when every
+    # merge measured every pair again
+    var bounds:Array[AABB] = []
+    for piece:Dictionary in pieces:
+        bounds.append(piece["bounds"])
+    var alive:PackedByteArray = PackedByteArray()
+    alive.resize(pieces.size())
+    alive.fill(1)
+    var alive_count:int = pieces.size()
+    var nearest:PackedInt32Array = PackedInt32Array()
+    nearest.resize(pieces.size())
+    var nearest_gap:PackedFloat64Array = PackedFloat64Array()
+    nearest_gap.resize(pieces.size())
+    for a:int in pieces.size():
+        _island_find_nearest(bounds, alive, a, nearest, nearest_gap)
+    while alive_count > 1:
+        var a:int = -1
+        for i:int in pieces.size():
+            if alive[i] and (a < 0 or nearest_gap[i] < nearest_gap[a]):
+                a = i
+        if not (nearest_gap[a] < ISLAND_MERGE_DISTANCE or alive_count > ISLAND_LIGHT_MAX_COUNT):
+            break
+        var b:int = nearest[a]
+        bounds[a] = bounds[a].merge(bounds[b])
+        pieces[a]["color_sum"] += pieces[b]["color_sum"]
+        alive[b] = 0
+        alive_count -= 1
+        # only the grown piece changed: it is the nearest of whoever it is no farther from than that
+        # one's nearest was; who had a or b nearest and is now farther from it looks again
+        _island_find_nearest(bounds, alive, a, nearest, nearest_gap)
+        for i:int in pieces.size():
+            if not alive[i] or i == a:
+                continue
+            var gap:float = _island_gap(bounds[i], bounds[a])
+            if gap <= nearest_gap[i]:
+                nearest_gap[i] = gap
+                nearest[i] = a
+            elif nearest[i] == a or nearest[i] == b:
+                _island_find_nearest(bounds, alive, i, nearest, nearest_gap)
 
     var islands:Array[Dictionary] = []
-    for piece:Dictionary in pieces:
+    for index:int in pieces.size():
+        if not alive[index]:
+            continue
+        var piece:Dictionary = pieces[index]
         var color_sum:Color = piece["color_sum"]
         var color:Color = piece["tint"]
         if color_sum.a > 0.0:
@@ -1647,8 +1669,29 @@ static func _submodel_islands(lamp:Node3D) -> Array[Dictionary]:
         var brightest:float = maxf(color.r, maxf(color.g, color.b))
         if brightest > 0.0:
             color = Color(color.r / brightest, color.g / brightest, color.b / brightest)
-        islands.append({"position": (piece["bounds"] as AABB).get_center(), "color": color})
+        islands.append({"position": bounds[index].get_center(), "color": color})
     return islands
+
+
+## The nearest live piece to `piece` and the gap to it, into nearest/nearest_gap (-1 and INF alone)
+static func _island_find_nearest(
+        bounds:Array[AABB], alive:PackedByteArray, piece:int,
+        nearest:PackedInt32Array, nearest_gap:PackedFloat64Array) -> void:
+    nearest[piece] = -1
+    nearest_gap[piece] = INF
+    for other:int in bounds.size():
+        if not alive[other] or other == piece:
+            continue
+        var gap:float = _island_gap(bounds[piece], bounds[other])
+        if gap < nearest_gap[piece]:
+            nearest_gap[piece] = gap
+            nearest[piece] = other
+
+
+## The gap between two pieces: their centres' distance less half of both longest sides
+static func _island_gap(first:AABB, second:AABB) -> float:
+    return maxf(0.0, first.get_center().distance_to(second.get_center())
+            - (first.get_longest_axis_size() + second.get_longest_axis_size()) * 0.5)
 
 
 static func _island_root(parent:PackedInt32Array, vertex:int) -> int:

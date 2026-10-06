@@ -3842,3 +3842,22 @@ lighting or the trainset.
 * **Rule:** a vehicle's models are built when it comes within the draw distance and freed beyond
   it, never at load. What the simulation needs of the model is read off the model file, not off
   its drawing.
+
+## 2026-10-06 A cab change in the 36WEa froze the game for half a minute
+
+* **Symptom:** walking the 36WEa unit with End, the game got slower and slower until it froze
+  completely. After 30-60 s the player was standing outside. `app.log` showed the driver's cab
+  (`36wea-a_ks.mmd`, 93 instruments) being built again on every pass through a front or rear cab.
+* **What proved it:** a headless probe (fixture scenery `startup_36wea-014a.scn`, real game data)
+  timed the build of the cab by its steps. `MmdCabinInstancer.parse()` took 9 ms, the cab model
+  116 ms and `build_into()` 30 s. Inside it `_submodel_islands()` merged lamp pieces in 22.3 s for
+  `i-dashboardlight_on` (727 pieces, unwelded triangles) and 6.8 s for `i-dashboardlight_pom_on`
+  (487). Every merge measured every pair again, which is O(P^3), in GDScript. On the ED78 fixture
+  without cab models the same walk cost 7-22 ms a change, with nothing growing.
+* **Fix:** every piece keeps its nearest piece and the gap to it. A merge changes only the grown
+  piece. Each other piece compares its gap to it with the gap it had: no farther means the grown
+  piece is now its nearest. Only a piece that had one of the two merged pieces nearest and is now
+  farther from the grown one looks through all the others again. The merges come out the same (2,
+  2 and 3 lights). `i-dashboardlight_on` now takes 233 ms, and the whole cab build 1.1 s.
+* **Rule:** a build step that runs on every cab change is measured on the largest real cab, not
+  on a fixture. A fixture without models skips the code that is slow.

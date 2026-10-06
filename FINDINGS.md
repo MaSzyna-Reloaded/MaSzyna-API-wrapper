@@ -54,6 +54,9 @@ anything. Open work belongs in `TODO.md`.
   *(09-21 +38 dB SfxTrack)*
 * A red test that survives many unrelated commits is no evidence of the commit that turned it red.
   *(09-23 loco with nobody in the cab)*
+* A cab build runs on every cab change: measure it on the largest real cab, not on a fixture
+  without models. Pairwise merging that measures every pair again on each merge is O(P^3).
+  *(10-06 a cab change in the 36WEa froze the game)*
 
 ## Porting the original engine
 * Port the whole `LoadFIZ_*` / loader function: derived counts, container sizes, fallbacks, and

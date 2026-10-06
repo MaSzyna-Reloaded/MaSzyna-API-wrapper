@@ -224,18 +224,18 @@ func _on_refresh_timer_timeout() -> void:
     %DriveTitle.visible = drive.size() > 0
 
     # the whole trainset, as the original's electricity usage (vehicleparams.cpp:240-262)
-    var trainset:Array[RID] = RailVehicleServer.vehicle_get_coupled(
-            _shown, RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     var mass:float = 0.0
     var drawn:float = 0.0
     var returned:float = 0.0
-    for trainset_vehicle:RID in trainset:
-        var vehicle_state:Dictionary = VehicleServer.vehicle_dump_state(trainset_vehicle)
-        mass += vehicle_state.get("mass_total", 0.0)
-        drawn += vehicle_state.get("power_drawn", 0.0)
-        returned += vehicle_state.get("power_returned", 0.0)
+    for trainset_vehicle:RID in _coupled:
+        mass += VehicleServer.vehicle_get_controller(trainset_vehicle).get_mass_total()
+        var trainset_power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
+                trainset_vehicle, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+        if trainset_power_source:
+            drawn += trainset_power_source.get_energy_drawn()
+            returned += trainset_power_source.get_energy_returned()
     var trainset_data:Dictionary[String, String] = {
-        tr("Vehicles"): "%d" % trainset.size(),
+        tr("Vehicles"): "%d" % _coupled.size(),
         tr("Mass"): "%.1f t" % (mass / KILOGRAMS_PER_TONNE),
     }
     if drawn or returned:

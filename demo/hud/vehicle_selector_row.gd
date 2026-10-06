@@ -83,9 +83,11 @@ static func driver_label(p_driver:Driver) -> String:
 ## How the vehicle is going now, as the selector and the floating buttons show it
 static func motion_label(p_vehicle:RID) -> String:
     var motion:Motion = Motion.RUNNING
+    var brakes:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            p_vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
     if absf(VehicleServer.vehicle_get_velocity(p_vehicle)) < STANDING_VELOCITY:
         motion = Motion.STANDING
-    elif VehicleServer.vehicle_dump_state(p_vehicle).get("brake_is_braking", false):
+    elif brakes and brakes.is_braking():
         motion = Motion.BRAKING
     return [TranslationServer.translate("Standing"), TranslationServer.translate("Running"),
             TranslationServer.translate("Braking")][motion]

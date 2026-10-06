@@ -88,28 +88,45 @@ func _on_visibility_changed() -> void:
 func _on_refresh_timer_timeout() -> void:
     if not VehicleServer.vehicle_exists(vehicle):
         return
-    var state:Dictionary = VehicleServer.vehicle_dump_state(vehicle)
     # the controllers of the vehicle that pulls (Controlling(), driveruipanels.cpp:139-140)
-    var powered:Dictionary = VehicleServer.vehicle_dump_state(RailVehicleServer.vehicle_find_powered(vehicle))
-    %DirectionValue.text = DIRECTION_SYMBOLS[signi(int(powered.get("direction", 0)))]
-    %ControllerValue.text = "%2d + %-2d" % [
-            powered.get("controller_main_position", 0), powered.get("controller_second_position", 0)]
-    %BrakesValue.text = "%4.1f + %-2d" % [
-            state.get("brake_controller_position", 0.0),
-            roundi(state.get("brake_local_position_normalized", 0.0) * LOCAL_BRAKE_POSITIONS)]
+    var powered:RID = RailVehicleServer.vehicle_find_powered(vehicle)
+    var direction:int = 0
+    var main_position:int = 0
+    var second_position:int = 0
+    if VehicleServer.vehicle_exists(powered):
+        direction = VehicleServer.vehicle_get_controller(powered).get_direction()
+        var master_controller:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+                powered, RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+        if master_controller:
+            main_position = master_controller.get_main_position()
+            second_position = master_controller.get_second_position()
+    %DirectionValue.text = DIRECTION_SYMBOLS[signi(direction)]
+    %ControllerValue.text = "%2d + %-2d" % [main_position, second_position]
+    var brakes:RailVehicleBrake = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    var brake_position:float = 0.0
+    var local_brake_position:float = 0.0
+    var pipe_pressure:float = 0.0
+    if brakes:
+        brake_position = brakes.get_controller_position()
+        local_brake_position = brakes.get_local_position_normalized()
+        pipe_pressure = brakes.get_pipe_pressure()
+    %BrakesValue.text = "%4.1f + %-2d" % [brake_position, roundi(local_brake_position * LOCAL_BRAKE_POSITIONS)]
     # the train pipe (PipePress, driveruipanels.cpp:160), as the cab's gauge
-    %BrakePipeValue.text = "%4.2f" % state.get("pipe_pressure", 0.0)
-    %SpeedValue.text = "%3d" % floori(absf(state.get("speed", 0.0)))
+    %BrakePipeValue.text = "%4.2f" % pipe_pressure
+    %SpeedValue.text = "%3d" % floori(absf(VehicleServer.vehicle_get_speed(vehicle)))
     # the vigilance lamp blinks while the alerter asks, the cab signal lamp is lit while it is
     # active (Train.cpp:9024-9039)
-    var vigilance:bool = state.get("vigilance_blinking", false)
+    var security:RailVehicleSecuritySystem = RailVehicleServer.vehicle_component_get(
+            vehicle, RailVehicleComponentType.COMPONENT_SECURITY) as RailVehicleSecuritySystem
+    var vigilance:bool = security and security.get_vigilance_blinking()
     if vigilance and %BlinkTimer.is_stopped():
         %BlinkTimer.start()
         _light_lamp(%VigilanceLamp, true)
     elif not vigilance and not %BlinkTimer.is_stopped():
         %BlinkTimer.stop()
         _light_lamp(%VigilanceLamp, false)
-    _light_lamp(%CabSignalLamp, state.get("cabsignal_blinking", false))
+    _light_lamp(%CabSignalLamp, security and security.get_cabsignal_blinking())
 
     var driver:RID = DriverSystem.vehicle_get_driver(vehicle)
     %LimitTile.visible = driver.is_valid()

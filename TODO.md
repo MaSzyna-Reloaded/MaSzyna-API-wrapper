@@ -54,9 +54,6 @@ Our own classes still in GDScript, fixed when their base moves to C++:
 
 ### Readers still on the state dump
 
-* `demo/hud/` - `driving_aid.gd`, `vehicle_card.gd`, `vehicle_selector_row.gd`,
-  `mover_switches_*.gd`, `knob.gd`, `switch.gd`: the ones that name no value from the data belong
-  on components.
 * `TrainSoundSystem._build_brake_events()` and `MaszynaBrakeSfxEventFactory.build_events()` read
   the config dump at build; the brake handle positions have getters
   (`RailVehicleBrake.get_handle_position()`).

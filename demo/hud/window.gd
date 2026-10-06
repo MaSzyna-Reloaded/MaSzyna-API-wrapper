@@ -74,6 +74,10 @@ func _notification(what: int) -> void:
         _layout_children()
         return
     if what == NOTIFICATION_VISIBILITY_CHANGED:
+        # a hidden window does nothing: its content's _process and Timers stop with it (the
+        # Diagnostics windows read the vehicle's state dump ten times a second)
+        if not Engine.is_editor_hint():
+            process_mode = Node.PROCESS_MODE_INHERIT if visible else Node.PROCESS_MODE_DISABLED
         _update_resize_handle()
         queue_redraw()
         return

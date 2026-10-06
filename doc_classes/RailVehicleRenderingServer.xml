@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="builds_get_pending_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				How many vehicles within the streaming's draw distance still wait for their models to be built. A vehicle's models are built once it stands within the draw distance of the streaming camera, the nearest first, and freed beyond it.
+			</description>
+		</method>
 		<method name="cabin_set_light_level">
 			<return type="void" />
 			<param index="0" name="cabin" type="RID" />

@@ -1774,3 +1774,6 @@ msgstr ""
 
 msgid "Frame time statistics"
 msgstr ""
+
+msgid "Surroundings"
+msgstr ""

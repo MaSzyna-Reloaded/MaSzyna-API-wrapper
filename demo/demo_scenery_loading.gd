@@ -17,6 +17,12 @@ const CABIN_SETTLE_FRAMES: int = 5
 const VEHICLE_WAIT_FRAMES: int = 120
 ## Seconds the loading screen waits for the streaming to fill in around the player before giving up
 const STREAMING_WAIT_TIME: float = 30.0
+## The chunks around the camera's built before the game is shown - one each way, so at least a
+## chunk's length (1 km) in every direction wherever the camera stands in its own
+const SURROUNDINGS_CHUNK_RADIUS: int = 1
+## The share of the loading screen's progress the scenery's load takes; the player's surroundings
+## the rest
+const SCENERY_LOAD_SHARE: float = 0.9
 ## Seconds of each fade of "Exit to menu": game -> spinner -> scenario selector
 const EXIT_FADE_TIME: float = 0.5
 ## Seconds the spinner stays after the scenery has been unloaded
@@ -109,7 +115,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
         await $ScenerySelectorScreen.hidden
     # made under the loading screen: its environment and first frames stall the main thread
     _world = WORLD_SCENE.instantiate() as SceneryWorld
-    _world.load_progress.connect($LoadingScreen.set_progress)
+    _world.load_progress.connect(_on_world_load_progress)
     _world.load_files_parsed.connect($LoadingScreen.set_files)
     _world.scenery_loaded.connect(_on_scenery_loaded)
     add_child(_world)
@@ -119,7 +125,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     await _world.load_scenery(filename, skin_overrides)
     await _wait_for_cabin()
     SceneryStreamingServer.streaming_set_camera(get_viewport().get_camera_3d())
-    await _wait_for_streaming()
+    await _build_surroundings()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
     tween.parallel().tween_callback(SimulationServer.simulation_unpause).set_delay(SIMULATION_START_DELAY)
@@ -141,14 +147,31 @@ func _wait_for_cabin() -> void:
         await get_tree().process_frame
 
 
-## Wait only for the chunk containing the camera. Neighbouring chunks and the rest of the draw
-## distance keep streaming after the game appears.
-func _wait_for_streaming() -> void:
-    var deadline: float = Time.get_ticks_msec() + STREAMING_WAIT_TIME * 1000.0
+## The scenery's load on the loading screen, in its share of the progress
+func _on_world_load_progress(progress: float, stage: MaszynaIncludeNode.LoadStage, message: String) -> void:
+    $LoadingScreen.set_progress(progress * SCENERY_LOAD_SHARE, stage, message)
+
+
+## The player's surroundings, the last stage of the loading screen: the streaming's chunks around
+## the camera (SURROUNDINGS_CHUNK_RADIUS) and the vehicles within the draw distance
+## (RailVehicleRenderingServer) built. The rest of the draw distance keeps streaming after the game
+## appears.
+func _build_surroundings() -> void:
+    var started_msec: int = Time.get_ticks_msec()
+    var deadline: float = started_msec + STREAMING_WAIT_TIME * 1000.0
+    var most_pending: int = 0
     while SceneryStreamingServer.streaming_has_camera() and Time.get_ticks_msec() < deadline:
-        if SceneryStreamingServer.area_is_ready(0):
+        var pending: int = SceneryStreamingServer.area_get_pending_count(SURROUNDINGS_CHUNK_RADIUS) \
+                + RailVehicleRenderingServer.builds_get_pending_count()
+        if SceneryStreamingServer.area_is_ready(SURROUNDINGS_CHUNK_RADIUS) \
+                and RailVehicleRenderingServer.builds_get_pending_count() == 0:
             break
+        most_pending = maxi(most_pending, pending)
+        var built: float = 1.0 - float(pending) / most_pending if most_pending > 0 else 0.0
+        $LoadingScreen.set_progress(
+                lerpf(SCENERY_LOAD_SHARE, 1.0, built), MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
         await get_tree().process_frame
+    print("[SceneryLoad] SURROUNDINGS %.1f s" % ((Time.get_ticks_msec() - started_msec) / 1000.0))
 
 
 ## Escape in the scenario selector: fade the screen to black and the music out, then quit

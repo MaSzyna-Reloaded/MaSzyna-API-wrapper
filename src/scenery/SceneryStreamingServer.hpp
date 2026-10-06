@@ -79,6 +79,8 @@ namespace godot {
             /// ...and every one of them is built
             static const char *streaming_builds_finished_signal;
             static const char *streaming_camera_chunk_changed_signal;
+            /// The camera the streaming follows was set or cleared (streaming_set_camera())
+            static const char *streaming_camera_changed_signal;
             static const char *chunk_cleared_signal;
 
             static SceneryStreamingServer *get_instance() {
@@ -356,6 +358,8 @@ namespace godot {
             /// Pieces in range are still waiting to be built (streaming_builds_started/finished)
             bool streaming_is_building() const;
             bool area_is_ready(int p_chunk_radius = 1) const;
+            /// Pieces of the chunks within p_chunk_radius of the camera's still to be built
+            int area_get_pending_count(int p_chunk_radius = 1) const;
             int streaming_get_streamed_count() const;
             Dictionary streaming_get_statistics() const;
     };

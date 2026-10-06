@@ -1774,3 +1774,6 @@ msgstr "Minden motorhűtő ventilátor ki"
 
 msgid "Frame time statistics"
 msgstr "Képkockaidő-statisztika"
+
+msgid "Surroundings"
+msgstr "Környezet"

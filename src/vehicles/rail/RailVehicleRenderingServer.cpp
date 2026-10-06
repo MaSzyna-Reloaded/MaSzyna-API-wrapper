@@ -192,6 +192,23 @@ namespace godot {
                     GameDataServer::data_reload_requested_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_data_reload_requested));
         }
+        if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance(); streaming != nullptr) {
+            streaming->connect(
+                    SceneryStreamingServer::streaming_camera_changed_signal,
+                    callable_mp(this, &RailVehicleRenderingServer::_on_streaming_camera_changed));
+        }
+    }
+
+    /* Every vehicle's place against the new camera at once - the ones within the draw distance
+     * wait for their build from now on (builds_get_pending_count()), not from the sweep's turn */
+    void RailVehicleRenderingServer::_on_streaming_camera_changed() {
+        for (const RID &vehicle: visit_order) {
+            _update_detail(vehicle, vehicles[vehicle]);
+        }
+    }
+
+    int RailVehicleRenderingServer::builds_get_pending_count() const {
+        return static_cast<int>(pending_builds.size());
     }
 
     /* The models this server built from model files are built again from them; the ones handed
@@ -278,6 +295,8 @@ namespace godot {
                 &RailVehicleRenderingServer::vehicle_set_editable);
         ClassDB::bind_method(
                 D_METHOD("vehicle_is_editable", "vehicle"), &RailVehicleRenderingServer::vehicle_is_editable);
+        ClassDB::bind_method(
+                D_METHOD("builds_get_pending_count"), &RailVehicleRenderingServer::builds_get_pending_count);
         ADD_SIGNAL(MethodInfo(vehicle_model_built_signal, PropertyInfo(Variant::RID, "vehicle")));
     }
 
@@ -1508,10 +1527,13 @@ namespace godot {
         }
     }
 
+    /* Built, the vehicle takes its detail at once: one near the camera is drawn as nodes before its
+     * build counts as done (builds_get_pending_count()), not at the sweep's next turn */
     void RailVehicleRenderingServer::_build_models(const RID &p_vehicle, Visual &p_visual) {
         _create_models(p_vehicle, p_visual);
         _bind_parts(p_vehicle, p_visual);
         _build_load(p_vehicle, p_visual);
+        _update_detail(p_vehicle, p_visual);
     }
 
     void RailVehicleRenderingServer::_cancel_build(const RID &p_vehicle, Visual &p_visual) {

@@ -15,6 +15,13 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="area_get_pending_count" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="chunk_radius" type="int" default="1" />
+			<description>
+				How many wanted pieces of the camera chunk and the [param chunk_radius] chunks around it are still to be built - the progress towards [method area_is_ready].
+			</description>
+		</method>
 		<method name="area_is_ready" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="chunk_radius" type="int" default="1" />
@@ -187,6 +194,11 @@
 		<signal name="streaming_builds_started">
 			<description>
 				Pieces in range of the camera started waiting to be built.
+			</description>
+		</signal>
+		<signal name="streaming_camera_changed">
+			<description>
+				The camera the streaming follows was set or cleared ([method streaming_set_camera]).
 			</description>
 		</signal>
 		<signal name="streaming_camera_chunk_changed">

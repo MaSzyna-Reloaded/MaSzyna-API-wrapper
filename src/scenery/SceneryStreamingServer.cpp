@@ -12,6 +12,7 @@ namespace godot {
     const char *SceneryStreamingServer::streaming_builds_started_signal = "streaming_builds_started";
     const char *SceneryStreamingServer::streaming_builds_finished_signal = "streaming_builds_finished";
     const char *SceneryStreamingServer::streaming_camera_chunk_changed_signal = "streaming_camera_chunk_changed";
+    const char *SceneryStreamingServer::streaming_camera_changed_signal = "streaming_camera_changed";
     const char *SceneryStreamingServer::chunk_cleared_signal = "chunk_cleared";
 
     void SceneryStreamingServer::_bind_methods() {
@@ -52,12 +53,16 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("area_is_ready", "chunk_radius"), &SceneryStreamingServer::area_is_ready, DEFVAL(1));
         ClassDB::bind_method(
+                D_METHOD("area_get_pending_count", "chunk_radius"), &SceneryStreamingServer::area_get_pending_count,
+                DEFVAL(1));
+        ClassDB::bind_method(
                 D_METHOD("streaming_get_streamed_count"), &SceneryStreamingServer::streaming_get_streamed_count);
         ClassDB::bind_method(D_METHOD("streaming_get_statistics"), &SceneryStreamingServer::streaming_get_statistics);
 
         ADD_SIGNAL(MethodInfo(streaming_builds_started_signal));
         ADD_SIGNAL(MethodInfo(streaming_builds_finished_signal));
         ADD_SIGNAL(MethodInfo(streaming_camera_chunk_changed_signal, PropertyInfo(Variant::VECTOR2I, "chunk")));
+        ADD_SIGNAL(MethodInfo(streaming_camera_changed_signal));
         // the last built piece of the chunk cleared as the camera went away
         ADD_SIGNAL(MethodInfo(chunk_cleared_signal, PropertyInfo(Variant::VECTOR2I, "chunk")));
     }
@@ -475,10 +480,13 @@ namespace godot {
     void SceneryStreamingServer::streaming_set_camera(Camera3D *p_camera) {
         bool was_streaming;
         bool is_streaming;
+        bool changed;
         {
             MutexLock lock(mutex);
             was_streaming = camera_id.is_valid();
+            const ObjectID previous_camera_id = camera_id;
             camera_id = p_camera != nullptr ? ObjectID(p_camera->get_instance_id()) : ObjectID();
+            changed = camera_id != previous_camera_id;
             is_streaming = camera_id.is_valid();
             filling = is_streaming;
             target_revision++;
@@ -486,6 +494,9 @@ namespace godot {
             pending_build_count = 0;
             force_plan = is_streaming;
             _drop_stale_work();
+        }
+        if (changed) {
+            emit_signal(streaming_camera_changed_signal);
         }
         if (is_streaming == was_streaming) {
             return;
@@ -591,6 +602,11 @@ namespace godot {
     bool SceneryStreamingServer::area_is_ready(const int p_chunk_radius) const {
         MutexLock lock(mutex);
         return _is_area_ready_locked(MAX(0, p_chunk_radius));
+    }
+
+    int SceneryStreamingServer::area_get_pending_count(const int p_chunk_radius) const {
+        MutexLock lock(mutex);
+        return _get_pending_nearby_locked(MAX(0, p_chunk_radius));
     }
 
     /// Pieces currently built - what the streaming actually keeps alive

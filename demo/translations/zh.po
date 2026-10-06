@@ -1774,3 +1774,6 @@ msgstr "关闭全部牵引电机风机"
 
 msgid "Frame time statistics"
 msgstr "帧时间统计"
+
+msgid "Surroundings"
+msgstr "周围环境"

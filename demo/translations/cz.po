@@ -1774,3 +1774,6 @@ msgstr "Všechny ventilátory motorů vypnuty"
 
 msgid "Frame time statistics"
 msgstr "Statistiky času snímku"
+
+msgid "Surroundings"
+msgstr "Okolí"

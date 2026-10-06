@@ -10,7 +10,9 @@ extends Control
 enum StageState { TO_COME, DONE, UNDER_WAY }
 
 ## Names of MaszynaIncludeNode.LoadStage, in its order
-const STAGE_NAMES: Array[String] = ["Scenery files", "Infrastructure", "Terrain", "Objects", "Vehicles"]
+const STAGE_NAMES: Array[String] = [
+    "Scenery files", "Infrastructure", "Terrain", "Objects", "Vehicles", "Surroundings"
+]
 const STAGE_SHADER: Shader = preload("loading_stage.gdshader")
 ## A stage's name in each StageState
 const STAGE_COLORS: Array[Color] = [Color(0.81, 0.88, 1.0, 0.4), Color(0.75, 0.82, 0.92, 1.0), Color(1.0, 1.0, 1.0, 1.0)]

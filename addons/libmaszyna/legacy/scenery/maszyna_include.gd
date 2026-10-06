@@ -5,8 +5,9 @@ class_name MaszynaIncludeNode
 signal loaded
 ## What a load is doing, in the order SceneryInstancer goes through it: the scenery's files read
 ## (parsed, or its cache), tracks, traction and models registered, terrain built, objects
-## instanced, vehicles built
-enum LoadStage { FILES, INFRASTRUCTURE, TERRAIN, OBJECTS, VEHICLES }
+## instanced, vehicles built - and then, the game's own, the player's surroundings built by the
+## streaming around the player's camera
+enum LoadStage { FILES, INFRASTRUCTURE, TERRAIN, OBJECTS, VEHICLES, SURROUNDINGS }
 ## Emitted by SceneryInstancer as the load goes (progress 0..1 of the whole load, its stage, what
 ## it is doing now)
 signal load_progress(progress:float, stage:LoadStage, message:String)

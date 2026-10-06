@@ -1774,3 +1774,6 @@ msgstr "Wszystkie wentylatory silników wyłączone"
 
 msgid "Frame time statistics"
 msgstr "Statystyki czasu klatki"
+
+msgid "Surroundings"
+msgstr "Otoczenie"

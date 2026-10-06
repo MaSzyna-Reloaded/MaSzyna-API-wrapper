@@ -1771,3 +1771,6 @@ msgstr "Motorhűtő ventilátorok B"
 
 msgid "Motor Blowers All Off"
 msgstr "Minden motorhűtő ventilátor ki"
+
+msgid "Frame time statistics"
+msgstr "Képkockaidő-statisztika"

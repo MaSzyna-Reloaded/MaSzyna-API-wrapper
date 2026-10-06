@@ -1771,3 +1771,6 @@ msgstr "Wentylatory silników B"
 
 msgid "Motor Blowers All Off"
 msgstr "Wszystkie wentylatory silników wyłączone"
+
+msgid "Frame time statistics"
+msgstr "Statystyki czasu klatki"

@@ -1771,3 +1771,6 @@ msgstr "Ventilátory motorů B"
 
 msgid "Motor Blowers All Off"
 msgstr "Všechny ventilátory motorů vypnuty"
+
+msgid "Frame time statistics"
+msgstr "Statistiky času snímku"

@@ -1771,3 +1771,6 @@ msgstr "牵引电机风机 B"
 
 msgid "Motor Blowers All Off"
 msgstr "关闭全部牵引电机风机"
+
+msgid "Frame time statistics"
+msgstr "帧时间统计"

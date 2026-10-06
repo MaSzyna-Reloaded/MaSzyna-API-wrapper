@@ -1771,3 +1771,6 @@ msgstr ""
 
 msgid "Motor Blowers All Off"
 msgstr ""
+
+msgid "Frame time statistics"
+msgstr ""

@@ -43,6 +43,8 @@ const VEHICLE_CARD:PackedScene = preload("vehicle_card.tscn")
 
 ## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
 var _windows: Array[HUDWindow] = []
+## The "Diagnostics" entry of the frame time statistics (DebugMenu), after the windows
+var _frame_times_index: int = -1
 ## The vehicle card, while HUDServer has one open
 var _card: VehicleCard = null
 ## Where the card was when it was last closed; it opens there again (no area until then)
@@ -71,6 +73,10 @@ func _ready() -> void:
     %Simulator.set_item_shortcut(
         %Simulator.get_item_index(SimulatorItem.SETTINGS), _action_shortcut(&"settings_open")
     )
+    menu.add_separator()
+    menu.add_item("Frame time statistics")
+    _frame_times_index = menu.item_count - 1
+    menu.set_item_shortcut(_frame_times_index, _action_shortcut(&"cycle_debug_menu"))
     menu.set_item_shortcut(_windows.find($ControlWindows/WeatherAndTime), _action_shortcut(&"toggle_weather_controls"))
     # Tab, as the original's map panel (driveruilayer.cpp:136)
     menu.set_item_shortcut(_windows.find($ControlWindows/MiniMap), _action_shortcut(&"minimap_toggle"))
@@ -110,6 +116,9 @@ static func _action_shortcut(action: StringName) -> Shortcut:
 
 
 func _on_diagnostics_menu_index_pressed(index: int) -> void:
+    if index == _frame_times_index:
+        DebugMenu.cycle_style()
+        return
     var win: HUDWindow = _windows[index]
     win.visible = not win.visible
     _bind_vehicle(win)

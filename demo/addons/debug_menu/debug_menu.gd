@@ -135,9 +135,10 @@ func _ready() -> void:
     )
 
 
-func _input(event: InputEvent) -> void:
-    if event.is_action_pressed("cycle_debug_menu"):
-        style = wrapi(style + 1, 0, Style.MAX) as Style
+## The next style - hidden, compact, detailed - as the HUD's "Diagnostics" entry and its key
+## (cycle_debug_menu) ask
+func cycle_style() -> void:
+    style = wrapi(style + 1, 0, Style.MAX) as Style
 
 
 func _exit_tree() -> void:

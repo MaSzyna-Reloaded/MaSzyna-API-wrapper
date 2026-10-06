@@ -25,6 +25,30 @@ were at fault.
 editor still loads it. Go back with `make compile-debug`. Comparing against the original engine is
 only meaningful this way - that one is a release build.
 
+## Measure a real scenery without a window
+
+No probe is needed: the game takes the original's command line, so
+`godot-double --path demo --audio-driver Dummy -- -s <scenery>.scn` loads the scenery from the
+game directory and puts the player in its first trainset (`-v <train_id>` for another one).
+
+* Run it under `gamescope --backend headless -W 1920 -H 1080 -- ...` with `WAYLAND_DISPLAY`
+  unset. That gives a real GPU and no window. Plain `--headless` crashes a big scenery on the dummy
+  renderer, and `xvfb-run` opens a window under Wayland (`FINDINGS.md`, 2026-10-03).
+* Run it outside the sandbox, and in the background.
+* Split the CPU with `perf record -F 499 --call-graph dwarf,16384 -p <godot pid> -- sleep 20` on
+  the `compile-profiling` build. Go back to `make compile-debug` afterwards, because the profiling
+  build replaces the debug `.so` the editor loads.
+* **The script fails fast. Never wait out a fixed delay blind.** Check the log and the process
+  every second, and stop at once on `Invalid game directory`, a crash, a `SCRIPT ERROR` or a dead
+  process. Only a clean load reaches `perf`. A 150 s `sleep` before the first look once spent the
+  whole wait on a scenery that had refused to load in the first second.
+* **The user directory is custom**: `demo/project.godot` sets `custom_user_dir_name`, so `user://`
+  is `~/.local/share/MaSzyna-Reloaded/`, not `~/.local/share/godot/app_userdata/MaSzyna Reloaded/`.
+  A test that points the game directory at the fixtures (`save_maszyna_game_dir(FIXTURES_GAME_DIR)`)
+  and is killed before its `after_all` leaves `game_dir="res://tests/fixtures"` in that
+  `settings.cfg`. Every later `-s` start then quits with "Invalid game directory". Check
+  `game_dir` there before the first run.
+
 ## Read the instruments correctly
 
 This is where most of the time gets lost, so start here.

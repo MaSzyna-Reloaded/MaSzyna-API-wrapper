@@ -17,6 +17,10 @@ const LOG_TAIL_BYTES: int = 50 * 1024 * 1024
 ## A command coming this soon after the same one [ms of real time] is counted on its line
 const REPEAT_GAP_MSEC: int = 1000
 
+## The gameplay log of a run without a display - a test, a probe: it shares the game's user
+## directory, and starting its own scenery would cut the log of a game running beside it
+const HEADLESS_LOG_PATH: String = "user://logs/headless/gameplay.log"
+
 ## The gameplay log, started afresh with every scenery
 @export var log_path: String = "user://logs/gameplay.log"
 
@@ -37,6 +41,8 @@ var _repeat_timer: Timer = null
 
 
 func _ready() -> void:
+    if DisplayServer.get_name() == "headless":
+        log_path = HEADLESS_LOG_PATH
     _repeat_timer = Timer.new()
     _repeat_timer.one_shot = true
     add_child(_repeat_timer)

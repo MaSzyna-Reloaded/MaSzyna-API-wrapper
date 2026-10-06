@@ -196,6 +196,10 @@ Checks:
 * do not run tests or headless Godot after every edit - only before a commit, or when operator asks
 * TESTS: **redirect a headless run to a file and read the file** - do not pipe it through
   `grep | head`: `head` closes the pipe, the run dies of SIGPIPE, and a pass reads as a hang.
+* REQUIRED: **every headless Godot run (a test, a probe, `--import`, `--check-only`) passes
+  `--log-file <scratchpad>/godot.log`** - it shares the game's user directory, and without it each
+  run rotates the operator's `logs/app.log` (five runs delete it). A headless run's gameplay log
+  goes to `logs/headless/` by itself (`BugReportRecorder.HEADLESS_LOG_PATH`)
 * TESTS: a GDScript that fails to **parse** is not reported as failing - GUT ignores it, finds no
   match for `-gselect` and runs the whole directory until the timeout, so a syntax error looks
   like a hang. Parse-check first:

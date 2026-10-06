@@ -69,6 +69,8 @@ proves nothing - the 36WE's pantograph names passed every test for a month.
   `godot-double --headless --path demo -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gselect=<script> -gexit`
   (60 s). `-gtest=` does not filter. Never the whole suite.
 - Redirect to a file and read the file - `| grep | head` kills the run with SIGPIPE.
+- Every headless run takes `--log-file <scratchpad>/godot.log`: it shares the game's user
+  directory, and its own `logs/app.log` rotates the operator's (five runs and it is gone).
 - **A long timeout hides the early error.** A probe that hangs or fails in its third second, wrapped
   in `timeout 170`, says nothing for 170 s and then only "exit 124". Never one blocking call with a
   generous ceiling: the probe prints a line at every stage (`STAGE loaded`, `STAGE player in`, one

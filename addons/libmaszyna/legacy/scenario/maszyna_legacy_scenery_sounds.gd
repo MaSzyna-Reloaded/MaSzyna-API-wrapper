@@ -47,8 +47,10 @@ func get_transcript(sound_name:String) -> Transcript:
     return _transcripts_by_name.get(sound_name)
 
 
-## Every sound made an event pair of ScenerySoundServer's one bank, played once or looped
-func build() -> void:
+## Every sound made an event pair of ScenerySoundServer's one bank, played once or looped;
+## `progressed` is told the share of them made (0..1) after each
+func build(progressed:Callable = Callable()) -> void:
+    var built_count:int = 0
     for sound_name:String in _data_by_name:
         var sound:MaszynaSoundData = _data_by_name[sound_name]
         await SceneryInstancer.frame_budget_wait()
@@ -78,6 +80,9 @@ func build() -> void:
                 bank_events[0], bank_events[1], sound.position, spatial_config.max_distance)
         _transcripts_by_name[sound_name] = MaszynaLegacySoundCaption.from_sound_file(
                 UserSettings.get_maszyna_game_dir().path_join(SOUNDS_DIRECTORY).path_join(sound.file))
+        built_count += 1
+        if progressed.is_valid():
+            progressed.call(float(built_count) / _data_by_name.size())
 
 
 ## The sounds freed; the data stays for the next build()

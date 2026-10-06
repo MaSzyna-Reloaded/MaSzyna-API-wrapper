@@ -15,10 +15,11 @@ var _script_context:RID = RID()
 
 ## The scripts run last, when everything a script may reach exists. The original runs them as it
 ## parses the file (simulationstateserializer.cpp:346-356); here the parsing runs on workers. Every
-## scenery gets a context, so that a script can be applied to it while it runs.
-func start(scenery:MaszynaIncludeNode) -> void:
+## scenery gets a context, so that a script can be applied to it while it runs. `progressed` is
+## told the share of the start done (0..1) - the scenery's sounds made, the longest of it.
+func start(scenery:MaszynaIncludeNode, progressed:Callable = Callable()) -> void:
     _scenery_sounds = scenery.get_scenery_sounds()
-    await _scenery_sounds.build()
+    await _scenery_sounds.build(progressed)
     _script_context = ScenarioScriptServer.context_create(
             UserSettings.get_maszyna_game_dir().path_join(SCRIPTS_DIRECTORY))
     ScenarioScriptServer.context_attach_cabin_delegate(_script_context, CabinScriptDelegate.new())

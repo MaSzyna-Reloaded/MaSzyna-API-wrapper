@@ -20,9 +20,11 @@ const STREAMING_WAIT_TIME: float = 30.0
 ## The chunks around the camera's built before the game is shown - one each way, so at least a
 ## chunk's length (1 km) in every direction wherever the camera stands in its own
 const SURROUNDINGS_CHUNK_RADIUS: int = 1
-## The share of the loading screen's progress the scenery's load takes; the player's surroundings
-## the rest
+## The share of the loading screen's progress the scenery's load takes; the surroundings the rest:
+## the scenario started (its sounds) up to SURROUNDINGS_STREAMING_PROGRESS, then the cab and the
+## streaming around the camera
 const SCENERY_LOAD_SHARE: float = 0.9
+const SURROUNDINGS_STREAMING_PROGRESS: float = 0.95
 ## Seconds of each fade of "Exit to menu": game -> spinner -> scenario selector
 const EXIT_FADE_TIME: float = 0.5
 ## Seconds the spinner stays after the scenery has been unloaded
@@ -116,6 +118,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     # made under the loading screen: its environment and first frames stall the main thread
     _world = WORLD_SCENE.instantiate() as SceneryWorld
     _world.load_progress.connect(_on_world_load_progress)
+    _world.scenario_progress.connect(_on_world_scenario_progress)
     _world.load_files_parsed.connect($LoadingScreen.set_files)
     _world.scenery_loaded.connect(_on_scenery_loaded)
     add_child(_world)
@@ -152,6 +155,13 @@ func _on_world_load_progress(progress: float, stage: MaszynaIncludeNode.LoadStag
     $LoadingScreen.set_progress(progress * SCENERY_LOAD_SHARE, stage, message)
 
 
+## The scenario starts as the first part of the surroundings - right after the vehicles
+func _on_world_scenario_progress(progress: float) -> void:
+    $LoadingScreen.set_progress(
+            lerpf(SCENERY_LOAD_SHARE, SURROUNDINGS_STREAMING_PROGRESS, progress),
+            MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
+
+
 ## The player's surroundings, the last stage of the loading screen: the streaming's chunks around
 ## the camera (SURROUNDINGS_CHUNK_RADIUS) and the vehicles within the draw distance
 ## (RailVehicleRenderingServer) built. The rest of the draw distance keeps streaming after the game
@@ -169,7 +179,7 @@ func _build_surroundings() -> void:
         most_pending = maxi(most_pending, pending)
         var built: float = 1.0 - float(pending) / most_pending if most_pending > 0 else 0.0
         $LoadingScreen.set_progress(
-                lerpf(SCENERY_LOAD_SHARE, 1.0, built), MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
+                lerpf(SURROUNDINGS_STREAMING_PROGRESS, 1.0, built), MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
         await get_tree().process_frame
     print("[SceneryLoad] SURROUNDINGS %.1f s" % ((Time.get_ticks_msec() - started_msec) / 1000.0))
 

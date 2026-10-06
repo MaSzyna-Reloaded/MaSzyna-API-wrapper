@@ -11,6 +11,9 @@ signal load_progress(progress: float, stage: MaszynaIncludeNode.LoadStage, messa
 signal load_files_parsed(count: int, filename: String)
 ## The scenery has loaded, with its first vehicle's train_id (MaszynaSceneryNode.scenery_loaded)
 signal scenery_loaded(first_train_id: String)
+## The share of the scenario's start done (0..1), between the load and scenery_loaded
+## (MaszynaLegacyScenario.start())
+signal scenario_progress(progress: float)
 
 ## The scenery's scenario, running from its load until it unloads
 var _scenario: MaszynaLegacyScenario = null
@@ -63,7 +66,9 @@ func _on_scenery_load_files_parsed(count: int, filename: String) -> void:
 ## The game runs the scenario of a loaded scenery; the scenery only loads it
 func _on_scenery_loaded(first_train_id: String) -> void:
     _scenario = MaszynaLegacyScenario.new()
-    await _scenario.start(%MaszynaSceneryNode)
+    # started - a scenery without sounds tells no share of it on the way
+    scenario_progress.emit(0.0)
+    await _scenario.start(%MaszynaSceneryNode, scenario_progress.emit)
     scenery_loaded.emit(first_train_id)
 
 

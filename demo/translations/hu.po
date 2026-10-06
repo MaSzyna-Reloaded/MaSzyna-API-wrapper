@@ -1798,3 +1798,6 @@ msgstr "Képkockaidő-statisztika"
 
 msgid "Surroundings"
 msgstr "Környezet"
+
+msgid "Vehicle card"
+msgstr "Járműkártya"

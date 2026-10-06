@@ -9,10 +9,14 @@
 [node name="VehicleSelectorPanel" type="PanelContainer"]
 visible = false
 custom_minimum_size = Vector2(520, 0)
-anchors_preset = 0
-offset_left = 16.0
-offset_top = 124.0
-offset_right = 536.0
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 464.0
+offset_top = -72.0
+offset_right = 984.0
+offset_bottom = -72.0
+grow_vertical = 0
 mouse_filter = 2
 theme = ExtResource("2_theme")
 theme_type_variation = &"TimetableCard"

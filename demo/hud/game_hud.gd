@@ -14,7 +14,7 @@ signal exit_to_menu_requested
 ## The entries of the "Simulator" menu, by their ids - a separator (id 3) stands before EXIT_TO_MENU
 enum SimulatorItem { SETTINGS = 0, PROBLEM_REPORT = 1, EXIT_TO_MENU = 2, HELP = 4 }
 ## The entries of the "View" menu
-enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED, LOGS }
+enum ViewItem { TRANSCRIPTS, DRIVING_AID, HINTS, TIMETABLE, SCENARIO, CONTROLS, SCRIPTS, TRAINSETS, SIMULATION_SPEED, LOGS, CARD }
 
 ## The HUD elements' names in HUDServer
 const PANEL_TRANSCRIPTS:StringName = &"transcripts"
@@ -148,8 +148,15 @@ func _on_simulator_menu_id_pressed(id: int) -> void:
 
 ## The "View" menu: its entries show or hide the transcripts, the driving aid, the hints, the timetable, the
 ## scenario, all the control windows at once, the Lua editor, the trainset list, the simulation
-## speed and the logs
+## speed, the logs and the vehicle card
 func _on_view_menu_index_pressed(index: int) -> void:
+    # the card of the player's vehicle, or the open one closed
+    if index == ViewItem.CARD:
+        if HUDServer.card_get_vehicle().is_valid():
+            HUDServer.card_close()
+            return
+        HUDServer.card_open(PlayerServer.player_get_vehicle())
+        return
     if index == ViewItem.CONTROLS:
         %View.toggle_item_checked(index)
         for win: HUDWindow in _windows:
@@ -238,6 +245,7 @@ func _on_followed_vehicle_chip_action_pressed() -> void:
 ## it is remembered where it stood and no row is lit.
 func _on_card_changed(vehicle: RID) -> void:
     %VehicleSelectorPanel.show_active_vehicle(vehicle)
+    %View.set_item_checked(ViewItem.CARD, vehicle.is_valid())
     if not vehicle.is_valid():
         _card_rect = _card.get_rect()
         _card.queue_free()

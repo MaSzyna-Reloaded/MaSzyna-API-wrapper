@@ -85,7 +85,7 @@ item_4/id = 2
 [node name="View" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar"]
 unique_name_in_owner = true
 title = "View"
-item_count = 10
+item_count = 11
 item_0/text = "Transcripts"
 item_0/checkable = 1
 item_0/checked = true
@@ -119,6 +119,9 @@ item_8/id = 8
 item_9/text = "Logs"
 item_9/checkable = 1
 item_9/id = 9
+item_10/text = "Vehicle card"
+item_10/checkable = 1
+item_10/id = 10
 
 [node name="Diagnostics" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=385371067]
 title = "Diagnostics"

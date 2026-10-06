@@ -1798,3 +1798,6 @@ msgstr "帧时间统计"
 
 msgid "Surroundings"
 msgstr "周围环境"
+
+msgid "Vehicle card"
+msgstr "车辆卡片"

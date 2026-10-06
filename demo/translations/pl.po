@@ -1798,3 +1798,6 @@ msgstr "Statystyki czasu klatki"
 
 msgid "Surroundings"
 msgstr "Otoczenie"
+
+msgid "Vehicle card"
+msgstr "Karta pojazdu"

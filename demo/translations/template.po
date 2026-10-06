@@ -1798,3 +1798,6 @@ msgstr ""
 
 msgid "Surroundings"
 msgstr ""
+
+msgid "Vehicle card"
+msgstr ""

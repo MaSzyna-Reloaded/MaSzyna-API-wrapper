@@ -1798,3 +1798,6 @@ msgstr "Statistiky času snímku"
 
 msgid "Surroundings"
 msgstr "Okolí"
+
+msgid "Vehicle card"
+msgstr "Karta vozidla"

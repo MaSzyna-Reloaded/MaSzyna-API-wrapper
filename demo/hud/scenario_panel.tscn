@@ -116,7 +116,7 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 custom_minimum_size = Vector2(1, 0)
 layout_mode = 2
-theme_type_variation = &"TimetableTitle"
+theme_type_variation = &"TimetableHeading"
 autowrap_mode = 3
 
 [node name="ProgressText" type="Label" parent="Content/Tabs/Scenario progress/Progress"]

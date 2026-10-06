@@ -1,0 +1,9 @@
+[gd_resource type="FontVariation" format=3]
+
+[ext_resource type="FontFile" path="res://ui/fonts/VendSans.ttf" id="1_vend"]
+
+[resource]
+base_font = ExtResource("1_vend")
+variation_opentype = {
+2003265652: 700
+}

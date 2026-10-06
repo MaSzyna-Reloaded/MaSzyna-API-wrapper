@@ -9,15 +9,20 @@ extends Node
 ## writing that cache and loading the vehicle model run on WorkerTaskQueue workers; the
 ## render itself has to stay on the main thread, a SubViewport is only drawn with the frame.
 
-const PROFILE_SIZE:Vector2i = Vector2i(360, 80)
+## Every profile has the same scale and the same band above the rail, so profiles shown at one
+## height stand on one rail and in one scale; its centre is the vehicle's centre, so the vehicles
+## of a trainset are laid get_profile_coupling_width() apart, as they stand on the track
+const PROFILE_PIXELS_PER_METRE:float = 16.0
+## The band a profile shows, from below the rail (the wheels) to above the highest roof and a
+## lowered pantograph [m]; a vehicle's origin lies on the rail level
+const PROFILE_BOTTOM:float = -0.3
+const PROFILE_TOP:float = 5.0
 ## Bump to re-render the cached profiles after changing how they are rendered
-const PROFILE_VERSION:int = 7
-## Kept around the trimmed vehicle, so a glow drawn around it has somewhere to go
-const PROFILE_MARGIN:int = 8
+const PROFILE_VERSION:int = 9
 const CACHE_DIRECTORY:String = "vehicle_profiles"
 ## Profiles kept in memory; past it the least recently used go - read back from the disk cache
 ## when asked again. A game directory holds thousands of vehicles and skins; a profile is at most
-## PROFILE_SIZE in RGBA8 (~115 KB), so this is ~100 MB at most.
+## 85 px high and a 27 m car ~430 px long in RGBA8 (~150 KB), so this is ~130 MB at most.
 const PROFILE_MEMORY_LIMIT:int = 900
 
 var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
@@ -98,6 +103,14 @@ func _remember_profile(key:String, texture:Texture2D) -> void:
         _profiles.erase(_profiles.keys()[0])
 
 
+## The pixels of a profile the vehicle takes in a trainset: its length over the buffers, the one
+## its FIZ gives and the vehicles are coupled at (DynObj.cpp). The side view may be longer - the
+## shared bogies of an articulated unit overhang its neighbours. 0 when there is no length.
+func get_profile_coupling_width(data_path:String, file_name:String) -> float:
+    var description:VehicleController = FizVehicleBuilder.build_description(data_path.trim_prefix("/"), file_name)
+    return description.dimensions_length * PROFILE_PIXELS_PER_METRE if description else 0.0
+
+
 ## Runs task on a queue worker while the main thread keeps drawing
 func _run_in_queue(task:Callable) -> Variant:
     var task_id:int = _queue.submit(task)
@@ -119,10 +132,12 @@ func _render_profile(
         var over_black:Image = await _capture(Color.BLACK)
         var over_white:Image = await _capture(Color.WHITE)
         var image:Image = _extract_alpha(over_black, over_white)
-        # trim the empty space around the vehicle, so the profile is exactly as long as it is
+        # trim the empty space before and after the vehicle by as much on both sides, so the
+        # vehicle's centre stays the profile's; the height stays the band, so does the rail
         var used:Rect2i = image.get_used_rect()
-        if used.size.x > 0 and used.size.y > 0:
-            image = image.get_region(used.grow(PROFILE_MARGIN).intersection(Rect2i(Vector2i.ZERO, image.get_size())))
+        var trim:int = mini(used.position.x, image.get_width() - used.end.x)
+        if used.size.x > 0:
+            image = image.get_region(Rect2i(trim, 0, image.get_width() - 2 * trim, image.get_height()))
         texture = ImageTexture.create_from_image(image)
     _rendering = false
     return texture
@@ -208,13 +223,20 @@ func _build_model(
         bounds = bounds.merge(attachment.submodels_aabb)
     if not bounds.size.length() > 0.0:
         return false
-    _model.position = -bounds.get_center()
+    # centred across the track, but left on its rail and on its own centre along it
+    _model.position = Vector3(-bounds.get_center().x, 0.0, 0.0)
+    # the vehicle's longer half on both sides at the common scale; an orthogonal camera sizes its
+    # view by height, the width follows the viewport's
+    var half_length:float = maxf(-bounds.position.z, bounds.end.z)
+    _viewport.size = Vector2i(
+        ceili(maxf(2.0 * half_length, 1.0) * PROFILE_PIXELS_PER_METRE),
+        ceili((PROFILE_TOP - PROFILE_BOTTOM) * PROFILE_PIXELS_PER_METRE)
+    )
+    _camera.size = float(_viewport.size.y) / PROFILE_PIXELS_PER_METRE
     # the vehicle runs along Z in the model frame, the camera looks at it down -X
-    _camera.position = Vector3(maxf(bounds.size.z, 1.0), 0.0, 0.0)
-    _camera.look_at(Vector3.ZERO)
-    # an orthogonal camera sizes its view by height, a profile is much wider than it is tall
-    var aspect:float = float(PROFILE_SIZE.x) / float(PROFILE_SIZE.y)
-    _camera.size = maxf(bounds.size.y * 1.15, bounds.size.z * 1.05 / aspect)
+    var band_centre:Vector3 = Vector3(0.0, PROFILE_BOTTOM + _camera.size * 0.5, 0.0)
+    _camera.position = band_centre + Vector3(maxf(bounds.size.z, 1.0), 0.0, 0.0)
+    _camera.look_at(band_centre)
     return true
 
 
@@ -234,7 +256,6 @@ func _ensure_viewport() -> void:
     if _viewport:
         return
     _viewport = SubViewport.new()
-    _viewport.size = PROFILE_SIZE
     _viewport.own_world_3d = true
     _viewport.transparent_bg = true
     _viewport.msaa_3d = Viewport.MSAA_4X

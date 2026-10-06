@@ -88,7 +88,8 @@ func _ready() -> void:
     focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     _container = HBoxContainer.new() if layout == Layout.ROW else HFlowContainer.new()
     _container.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    _container.add_theme_constant_override("separation", 8)
+    # the vehicles of a trainset meet buffer to buffer, as they stand on the track
+    _container.add_theme_constant_override("separation", 0)
     _container.add_theme_constant_override("h_separation", 10)
     _container.add_theme_constant_override("v_separation", 10)
     # a tile's place is known once the container has laid it out - after new tiles, and after a
@@ -340,11 +341,22 @@ func _load_profile(preview: TextureButton, tile: Tile) -> void:
         placeholder.queue_free()
     preview.texture_normal = profile
     var control: Control = preview.get_parent() as Control
-    # as wide as the vehicle is long, so the vehicles of a trainset line up without gaps
+    # as wide as the side view is long
     var tile_size: Vector2 = Vector2(
         tile_height * float(profile.get_width()) / float(profile.get_height()),
         tile_height * tile_padding
     )
+    # a vehicle of a trainset takes its length over the buffers, and its side view overhangs that
+    # onto its neighbours when it is longer - the shared bogies of an articulated unit
+    var coupling_width: float = (
+        MaszynaVehicleProfileManager.get_profile_coupling_width(tile.data_path, tile.file_name)
+        if layout == Layout.ROW else 0.0
+    )
+    if coupling_width > 0.0:
+        var overhang: float = (tile_size.x - coupling_width * tile_height / float(profile.get_height())) * 0.5
+        tile_size.x -= 2.0 * overhang
+        preview.offset_left = -overhang
+        preview.offset_right = overhang
     control.custom_minimum_size = tile_size
     var background: ColorRect = control.get_node("Background") as ColorRect
     (background.material as ShaderMaterial).set_shader_parameter("rect_size", tile_size)

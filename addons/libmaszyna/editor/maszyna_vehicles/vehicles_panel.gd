@@ -8,8 +8,8 @@ extends VBoxContainer
 
 const VehicleProfileQueue = preload("./vehicle_profile_queue.gd")
 const ITEMS_PER_PAGE:int = 50
-## Size of a vehicle's tile [px] - a side view is 4.5 times as wide as it is high
-## (MaszynaVehicleProfileManager.PROFILE_SIZE)
+## Size of a vehicle's tile [px] - a side view of a long car is about 5 times as wide as it is
+## high (MaszynaVehicleProfileManager.PROFILE_PIXELS_PER_METRE)
 const TILE_SIZE:Vector2 = Vector2(180.0, 60.0)
 ## Size of the popup the start track is picked in [px]
 const TRACK_PICKER_SIZE:Vector2i = Vector2i(480, 400)

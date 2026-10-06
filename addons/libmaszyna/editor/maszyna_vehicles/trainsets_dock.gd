@@ -71,7 +71,9 @@ func list_trainsets() -> void:
                 var dynamic:MaszynaDynamicData = MaszynaLegacyVehicleSystem.vehicle_get_dynamic(vehicle)
                 var tooltip:String = "%s (%s)" % [dynamic.name, dynamic.file_name]
                 _profile_queue.enqueue(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name,
-                        row.show_profile.bind(row.add_vehicle_profile(tooltip)))
+                        row.show_profile.bind(row.add_vehicle_profile(tooltip),
+                                MaszynaVehicleProfileManager.get_profile_coupling_width(
+                                        dynamic.data_path, dynamic.file_name)))
 
 
 func _on_spawn_button_pressed() -> void:

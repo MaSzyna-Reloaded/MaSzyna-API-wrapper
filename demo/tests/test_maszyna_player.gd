@@ -93,6 +93,32 @@ func test_the_cab_interior_stands_while_the_vehicle_is_driven() -> void:
     await wait_idle_frames(1)
 
 
+## Regression: a scenery's vehicle is taken over the moment it has its simulation
+## (vehicle_configured), and MaszynaLegacyVehicleSystem hands its cab scene over only after that, in
+## the same build - the player sat in it looking from outside, with no cab shown (demo_3d)
+func test_the_cab_is_shown_when_its_scene_comes_after_the_vehicle_was_taken_over() -> void:
+    _track = build_track(TRACK_NAME, TRACK_LENGTH)
+    _vehicle = build_rail_vehicle("PlayerLateCabinTest", TRACK_NAME, TRACK_OFFSET)
+    _player = PLAYER_SCENE.instantiate()
+    _player.auto_start = false
+    add_child(_player)
+    await wait_idle_frames(SETTLE_FRAMES)
+    var vehicle:RID = _vehicle.get_rid()
+
+    PlayerServer.player_take_over_vehicle(vehicle)
+    assert_null(CabinSystem.vehicle_get_cabin(vehicle), "no cab scene yet, no cab shown")
+
+    CabinSystem.vehicle_set_cabin_scene(vehicle, _cabin_scene())
+
+    var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(vehicle)
+    assert_not_null(cabin, "the cab scene come, the cab interior is shown")
+    assert_eq(PlayerCameraServer.camera_get_mode(), PlayerCameraServer.CAMERA_MODE_CABIN)
+    assert_eq(get_viewport().get_camera_3d().get_parent(), cabin, "and the player looks from it")
+    PlayerServer.player_leave_vehicle()
+    # the cabs hidden are freed at the end of the frame
+    await wait_idle_frames(1)
+
+
 ## Following takes the view of the vehicle followed, applied in full - from the view's own place,
 ## however far it was (a follow from where the camera stood kept that distance); another vehicle takes
 ## that one's view; one farther than the jump distance is not flown to but jumped beside

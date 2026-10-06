@@ -16,6 +16,9 @@ signal control_changed(cabin:RID, control_id:StringName, value:Variant)
 ## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
 ## here so a cabin element can react without ever holding the vehicle itself.
 signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:Variant)
+## The vehicle has a cab scene to show now (vehicle_set_cabin_scene()) - one its builder hands over
+## after the vehicle has its simulation, and may already be driven
+signal vehicle_cabin_scene_changed(vehicle_rid:RID)
 ## The light of a cabin shines at another level (cabin_set_light_level())
 signal cabin_light_level_changed(cabin:RID, level:float)
 ## The instrument light of a cabin came on or went out (cabin_set_instrument_light_enabled())
@@ -161,6 +164,7 @@ func vehicle_get_cab_logic(vehicle_rid:RID) -> CabinLogic:
 ## Only a view: the cab logic is the vehicle's (vehicle_attach_cab_logic()).
 func vehicle_set_cabin_scene(vehicle_rid:RID, scene:PackedScene) -> void:
     _cabin_scenes[vehicle_rid] = scene
+    vehicle_cabin_scene_changed.emit(vehicle_rid)
 
 
 func vehicle_get_cabin_scene(vehicle_rid:RID) -> PackedScene:

@@ -598,3 +598,5 @@ anything. Open work belongs in `TODO.md`.
   defaults follow the original's absent key. *(10-05 test vehicles lost brake handle and doors)*
 * A trainset test waits for every vehicle of it; an "is it gone" check takes the object untyped -
   a typed parameter fails on a freed object at the call. *(10-05 start-up tests and the trainset)*
+* A player's cab is built from its scene only once the vehicle has its cab logic - the builder
+  hands the scene over last; a cab built without it hangs the game. *(10-06 demo_3d cab not shown)*

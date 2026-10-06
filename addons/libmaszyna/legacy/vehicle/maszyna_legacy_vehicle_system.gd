@@ -209,10 +209,12 @@ func _build(vehicle:RID, record:Vehicle) -> void:
     MaszynaRailVehicle3DInstancer.apply_wiper_count(vehicle, structure.appearance)
     if Engine.is_editor_hint():
         return
-    CabinSystem.vehicle_set_cabin_scene(vehicle, structure.cabin_scene)
     if cabin_kinds:
         CabinSystem.vehicle_attach_cab_logic(
                 vehicle, LegacyCabinLogic.from_mmd(dynamic.data_path, dynamic.file_name, dynamic.skin, dynamic.name))
+    # last of the cab: the scene is what the driving player's cab is shown from, built on the cab
+    # logic (CabinSystem.vehicle_cabin_scene_changed)
+    CabinSystem.vehicle_set_cabin_scene(vehicle, structure.cabin_scene)
     # its sound is built only once it is within earshot - a scenery's vehicles all built at once
     # spent most of their loading on banks nobody hears
     TrainSoundSystem.vehicle_set_bank_builder(vehicle, _build_sounds.bind(vehicle))

@@ -3749,6 +3749,24 @@ lighting or the trainset.
   (`Mechanik->...` in Train.cpp) has to reach the port's driver. A driver kept apart from the
   cab reads a different railway than the player drives.
 
+## 2026-10-06 demo_3d put the player in the Impuls looking from outside
+
+* **Symptom:** demo_3d made the player drive impuls-a, but the view stayed outside: no cab was shown.
+* **What proved it:** a headless probe of demo_3d. The player takes over the first vehicle that gets
+  its controller (`player.gd` `_on_vehicle_configured()`), which happens inside
+  `MaszynaLegacyVehicleSystem._build()` at `vehicle_bind_controller()`. At that moment the vehicle
+  is not in `RailVehicleRenderingServer` yet ("Parameter visual is null" in `vehicle_mount_node()`)
+  and `CabinSystem` has no cab scene ("the vehicle has no cab interior to show"). Nothing showed
+  the cab later. Showing it when the scene came, but before the cab logic was attached, hung the
+  game in `Cabin3D.set_vehicle_rid()` (`MaszynaDynamicTrainCabin._rebuild_generated()`): probed
+  with prints, the probe got no further in 150 s; with the logic attached first it went on.
+* **Fix:** `CabinSystem.vehicle_cabin_scene_changed` announces the scene; the player shows the cab
+  of the vehicle it drives when it takes it over with a scene already there, or when the scene
+  comes. `_build()` attaches the cab logic before it hands the scene over.
+  `test_the_cab_is_shown_when_its_scene_comes_after_the_vehicle_was_taken_over` covers the order.
+* **Rule:** a cab's scene is the last thing of the cab a builder hands over - it is the event the
+  cab is shown on, and a cab built before its logic hangs.
+
 ## 2026-10-06 The driver took the way of the cab left, one cab change late
 
 * **Symptom:** on Stary Jawor the operator changed the cab while passing the dwarf. STOP stayed

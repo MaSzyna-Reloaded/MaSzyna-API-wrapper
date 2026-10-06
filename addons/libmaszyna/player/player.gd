@@ -76,6 +76,7 @@ func _ready() -> void:
     CabinHUDMouseSystem.mouse_set_camera(_cabin_camera.get_instance_id())
     PlayerServer.player_vehicle_changed.connect(_on_player_vehicle_changed)
     VehicleServer.cabin_person_moved.connect(_on_cabin_person_moved)
+    CabinSystem.vehicle_cabin_scene_changed.connect(_on_vehicle_cabin_scene_changed)
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
@@ -87,6 +88,7 @@ func _ready() -> void:
 func _exit_tree() -> void:
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     VehicleServer.cabin_person_moved.disconnect(_on_cabin_person_moved)
+    CabinSystem.vehicle_cabin_scene_changed.disconnect(_on_vehicle_cabin_scene_changed)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
@@ -254,13 +256,24 @@ func _on_vehicle_emergency_signal_received(vehicle:RID) -> void:
 
 
 ## The player sits in the cab of the vehicle taken over and leaves the one let go. Let go while
-## looked from its cab, the view steps out first, while the cab camera is still in the cab.
+## looked from its cab, the view steps out first, while the cab camera is still in the cab. A vehicle
+## taken over before it has its cab scene shows its cab when the scene comes
+## (_on_vehicle_cabin_scene_changed()).
 func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
     if not vehicle.is_valid() and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN:
         PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
     if _cabin_vehicle.is_valid():
         _hide_cabin()
-    if vehicle.is_valid():
+    if vehicle.is_valid() and CabinSystem.vehicle_get_cabin_scene(vehicle):
+        _show_cabin(vehicle)
+
+
+## The vehicle driven got its cab scene after it was taken over - a vehicle is taken over the moment
+## it has its simulation (_on_vehicle_configured()), and MaszynaLegacyVehicleSystem hands its cab
+## scene over after that, in the same build
+func _on_vehicle_cabin_scene_changed(vehicle:RID) -> void:
+    if vehicle == PlayerServer.player_get_vehicle() and not _cabin_vehicle.is_valid() \
+            and CabinSystem.vehicle_get_cabin_scene(vehicle):
         _show_cabin(vehicle)
 
 

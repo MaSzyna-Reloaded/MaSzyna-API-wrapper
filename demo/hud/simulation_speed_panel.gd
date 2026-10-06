@@ -1,12 +1,12 @@
 extends Control
 
-## The simulation's speed at hand: slowed, paused, or the wall clock's times one to eight. What it
+## The simulation's speed at hand: slowed, paused, or the wall clock's times one to thirty. What it
 ## shows is SimulationServer's - the speed and the pause change there, from this panel, the weather
 ## window or a script alike, and the panel lights the button of what is set.
 
 ## The speeds offered and their buttons' texts: slowed, then the wall clock's and its multiples
-const SPEEDS:Array[float] = [0.1, 0.5, 1.0, 2.0, 4.0, 8.0]
-const SPEED_TEXTS:Array[String] = ["0.1", "0.5", "▶", "▶▶", "▶▶▶", "▶▶▶▶"]
+const SPEEDS:Array[float] = [0.1, 0.5, 1.0, 2.0, 4.0, 8.0, 30.0]
+const SPEED_TEXTS:Array[String] = ["0.1", "0.5", "▶", "▶▶", "▶▶▶", "▶▶▶▶", "▶▶▶▶▶"]
 ## The pause button stands after the slowed speeds
 const PAUSE_INDEX:int = 2
 

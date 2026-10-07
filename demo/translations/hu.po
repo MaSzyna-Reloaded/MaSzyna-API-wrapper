@@ -813,7 +813,7 @@ msgid "Timetable"
 msgstr ""
 
 msgid "Timetable Toggle"
-msgstr ""
+msgstr "Menetrend"
 
 msgid "No timetable"
 msgstr ""
@@ -1942,3 +1942,129 @@ msgstr "Keresés törlése"
 
 msgid "Cabin Sit Down"
 msgstr "Vissza a vezetőállásba"
+
+msgid "Menu Up"
+msgstr "Menü: fel"
+
+msgid "Menu Down"
+msgstr "Menü: le"
+
+msgid "Menu Left"
+msgstr "Menü: balra"
+
+msgid "Menu Right"
+msgstr "Menü: jobbra"
+
+msgid "Menu Move Left"
+msgstr "Menü: mozgatás balra"
+
+msgid "Menu Move Right"
+msgstr "Menü: mozgatás jobbra"
+
+msgid "Menu Reverse"
+msgstr "Menü: megfordítás"
+
+msgid "Menu Page Up"
+msgstr "Menü: oldal fel"
+
+msgid "Menu Page Down"
+msgstr "Menü: oldal le"
+
+msgid "Menu Home"
+msgstr "Menü: elejére"
+
+msgid "Menu End"
+msgstr "Menü: végére"
+
+msgid "Menu Activate"
+msgstr "Menü: kiválasztás"
+
+msgid "Menu Back"
+msgstr "Menü: vissza"
+
+msgid "Menu Next Section"
+msgstr "Menü: következő szakasz"
+
+msgid "Menu Previous Section"
+msgstr "Menü: előző szakasz"
+
+msgid "Settings Open"
+msgstr "Beállítások"
+
+msgid "Toggle Fullscreen"
+msgstr "Teljes képernyő"
+
+msgid "Console Toggle"
+msgstr "Fejlesztői konzol"
+
+msgid "Scenario Toggle"
+msgstr "Forgatókönyv"
+
+msgid "Trainsets Toggle"
+msgstr "Szerelvények"
+
+msgid "Vehicle Card Toggle"
+msgstr "Járműkártya"
+
+msgid "Minimap Toggle"
+msgstr "Minitérkép"
+
+msgid "Coupler Adapter Attach"
+msgstr "Kapcsolóadapter felhelyezése"
+
+msgid "Coupler Adapter Remove"
+msgstr "Kapcsolóadapter levétele"
+
+msgid "Brake Operation Mode Increase"
+msgstr "Fékmód: következő"
+
+msgid "Brake Operation Mode Decrease"
+msgstr "Fékmód: előző"
+
+msgid "Cabin Light Dim Toggle"
+msgstr "Fülkevilágítás tompítása"
+
+msgid "Ai Driver Enable"
+msgstr "AI bekapcsolása"
+
+msgid "Ai Driver Disable"
+msgstr "AI kikapcsolása"
+
+msgid "Pantograph Select Next"
+msgstr "Áramszedő választása: következő"
+
+msgid "Pantograph Select Previous"
+msgstr "Áramszedő választása: előző"
+
+msgid "Radio Call 3 Send"
+msgstr "Rádió: 3. hívás"
+
+msgid "Scenario Keyctrl 0"
+msgstr "Forgatókönyv: 0. billentyű"
+
+msgid "Scenario Keyctrl 1"
+msgstr "Forgatókönyv: 1. billentyű"
+
+msgid "Scenario Keyctrl 2"
+msgstr "Forgatókönyv: 2. billentyű"
+
+msgid "Scenario Keyctrl 3"
+msgstr "Forgatókönyv: 3. billentyű"
+
+msgid "Scenario Keyctrl 4"
+msgstr "Forgatókönyv: 4. billentyű"
+
+msgid "Scenario Keyctrl 5"
+msgstr "Forgatókönyv: 5. billentyű"
+
+msgid "Scenario Keyctrl 6"
+msgstr "Forgatókönyv: 6. billentyű"
+
+msgid "Scenario Keyctrl 7"
+msgstr "Forgatókönyv: 7. billentyű"
+
+msgid "Scenario Keyctrl 8"
+msgstr "Forgatókönyv: 8. billentyű"
+
+msgid "Scenario Keyctrl 9"
+msgstr "Forgatókönyv: 9. billentyű"

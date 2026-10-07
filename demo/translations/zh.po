@@ -813,7 +813,7 @@ msgid "Timetable"
 msgstr ""
 
 msgid "Timetable Toggle"
-msgstr ""
+msgstr "时刻表"
 
 msgid "No timetable"
 msgstr ""
@@ -1942,3 +1942,129 @@ msgstr "清除搜索"
 
 msgid "Cabin Sit Down"
 msgstr "回到司机座位"
+
+msgid "Menu Up"
+msgstr "菜单：上"
+
+msgid "Menu Down"
+msgstr "菜单：下"
+
+msgid "Menu Left"
+msgstr "菜单：左"
+
+msgid "Menu Right"
+msgstr "菜单：右"
+
+msgid "Menu Move Left"
+msgstr "菜单：左移"
+
+msgid "Menu Move Right"
+msgstr "菜单：右移"
+
+msgid "Menu Reverse"
+msgstr "菜单：调头"
+
+msgid "Menu Page Up"
+msgstr "菜单：上一页"
+
+msgid "Menu Page Down"
+msgstr "菜单：下一页"
+
+msgid "Menu Home"
+msgstr "菜单：开头"
+
+msgid "Menu End"
+msgstr "菜单：末尾"
+
+msgid "Menu Activate"
+msgstr "菜单：确认"
+
+msgid "Menu Back"
+msgstr "菜单：返回"
+
+msgid "Menu Next Section"
+msgstr "菜单：下一栏"
+
+msgid "Menu Previous Section"
+msgstr "菜单：上一栏"
+
+msgid "Settings Open"
+msgstr "设置"
+
+msgid "Toggle Fullscreen"
+msgstr "全屏"
+
+msgid "Console Toggle"
+msgstr "开发者控制台"
+
+msgid "Scenario Toggle"
+msgstr "场景"
+
+msgid "Trainsets Toggle"
+msgstr "编组"
+
+msgid "Vehicle Card Toggle"
+msgstr "车辆卡片"
+
+msgid "Minimap Toggle"
+msgstr "小地图"
+
+msgid "Coupler Adapter Attach"
+msgstr "安装车钩转换器"
+
+msgid "Coupler Adapter Remove"
+msgstr "拆下车钩转换器"
+
+msgid "Brake Operation Mode Increase"
+msgstr "制动模式：下一个"
+
+msgid "Brake Operation Mode Decrease"
+msgstr "制动模式：上一个"
+
+msgid "Cabin Light Dim Toggle"
+msgstr "司机室灯调暗"
+
+msgid "Ai Driver Enable"
+msgstr "启用 AI"
+
+msgid "Ai Driver Disable"
+msgstr "停用 AI"
+
+msgid "Pantograph Select Next"
+msgstr "选择受电弓：下一个"
+
+msgid "Pantograph Select Previous"
+msgstr "选择受电弓：上一个"
+
+msgid "Radio Call 3 Send"
+msgstr "无线电：呼叫 3"
+
+msgid "Scenario Keyctrl 0"
+msgstr "场景：按键 0"
+
+msgid "Scenario Keyctrl 1"
+msgstr "场景：按键 1"
+
+msgid "Scenario Keyctrl 2"
+msgstr "场景：按键 2"
+
+msgid "Scenario Keyctrl 3"
+msgstr "场景：按键 3"
+
+msgid "Scenario Keyctrl 4"
+msgstr "场景：按键 4"
+
+msgid "Scenario Keyctrl 5"
+msgstr "场景：按键 5"
+
+msgid "Scenario Keyctrl 6"
+msgstr "场景：按键 6"
+
+msgid "Scenario Keyctrl 7"
+msgstr "场景：按键 7"
+
+msgid "Scenario Keyctrl 8"
+msgstr "场景：按键 8"
+
+msgid "Scenario Keyctrl 9"
+msgstr "场景：按键 9"

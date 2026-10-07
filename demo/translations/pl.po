@@ -1942,3 +1942,129 @@ msgstr "Wyczyść wyszukiwanie"
 
 msgid "Cabin Sit Down"
 msgstr "Usiądź za nastawnikiem"
+
+msgid "Menu Up"
+msgstr "Menu: w górę"
+
+msgid "Menu Down"
+msgstr "Menu: w dół"
+
+msgid "Menu Left"
+msgstr "Menu: w lewo"
+
+msgid "Menu Right"
+msgstr "Menu: w prawo"
+
+msgid "Menu Move Left"
+msgstr "Menu: przesuń w lewo"
+
+msgid "Menu Move Right"
+msgstr "Menu: przesuń w prawo"
+
+msgid "Menu Reverse"
+msgstr "Menu: odwróć"
+
+msgid "Menu Page Up"
+msgstr "Menu: strona w górę"
+
+msgid "Menu Page Down"
+msgstr "Menu: strona w dół"
+
+msgid "Menu Home"
+msgstr "Menu: na początek"
+
+msgid "Menu End"
+msgstr "Menu: na koniec"
+
+msgid "Menu Activate"
+msgstr "Menu: wybierz"
+
+msgid "Menu Back"
+msgstr "Menu: wstecz"
+
+msgid "Menu Next Section"
+msgstr "Menu: następna sekcja"
+
+msgid "Menu Previous Section"
+msgstr "Menu: poprzednia sekcja"
+
+msgid "Settings Open"
+msgstr "Ustawienia"
+
+msgid "Toggle Fullscreen"
+msgstr "Pełny ekran"
+
+msgid "Console Toggle"
+msgstr "Konsola deweloperska"
+
+msgid "Scenario Toggle"
+msgstr "Scenariusz"
+
+msgid "Trainsets Toggle"
+msgstr "Składy"
+
+msgid "Vehicle Card Toggle"
+msgstr "Karta pojazdu"
+
+msgid "Minimap Toggle"
+msgstr "Minimapa"
+
+msgid "Coupler Adapter Attach"
+msgstr "Załóż adapter sprzęgu"
+
+msgid "Coupler Adapter Remove"
+msgstr "Zdejmij adapter sprzęgu"
+
+msgid "Brake Operation Mode Increase"
+msgstr "Tryb pracy hamulca: następny"
+
+msgid "Brake Operation Mode Decrease"
+msgstr "Tryb pracy hamulca: poprzedni"
+
+msgid "Cabin Light Dim Toggle"
+msgstr "Przyciemnienie oświetlenia kabiny"
+
+msgid "Ai Driver Enable"
+msgstr "Włącz AI"
+
+msgid "Ai Driver Disable"
+msgstr "Wyłącz AI"
+
+msgid "Pantograph Select Next"
+msgstr "Wybór pantografu: następny"
+
+msgid "Pantograph Select Previous"
+msgstr "Wybór pantografu: poprzedni"
+
+msgid "Radio Call 3 Send"
+msgstr "Radio: zew 3"
+
+msgid "Scenario Keyctrl 0"
+msgstr "Scenariusz: klawisz 0"
+
+msgid "Scenario Keyctrl 1"
+msgstr "Scenariusz: klawisz 1"
+
+msgid "Scenario Keyctrl 2"
+msgstr "Scenariusz: klawisz 2"
+
+msgid "Scenario Keyctrl 3"
+msgstr "Scenariusz: klawisz 3"
+
+msgid "Scenario Keyctrl 4"
+msgstr "Scenariusz: klawisz 4"
+
+msgid "Scenario Keyctrl 5"
+msgstr "Scenariusz: klawisz 5"
+
+msgid "Scenario Keyctrl 6"
+msgstr "Scenariusz: klawisz 6"
+
+msgid "Scenario Keyctrl 7"
+msgstr "Scenariusz: klawisz 7"
+
+msgid "Scenario Keyctrl 8"
+msgstr "Scenariusz: klawisz 8"
+
+msgid "Scenario Keyctrl 9"
+msgstr "Scenariusz: klawisz 9"

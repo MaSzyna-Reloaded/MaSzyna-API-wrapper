@@ -813,7 +813,7 @@ msgid "Timetable"
 msgstr ""
 
 msgid "Timetable Toggle"
-msgstr ""
+msgstr "Jízdní řád"
 
 msgid "No timetable"
 msgstr ""
@@ -1942,3 +1942,129 @@ msgstr "Vymazat hledání"
 
 msgid "Cabin Sit Down"
 msgstr "Posadit se za kontrolér"
+
+msgid "Menu Up"
+msgstr "Menu: nahoru"
+
+msgid "Menu Down"
+msgstr "Menu: dolů"
+
+msgid "Menu Left"
+msgstr "Menu: doleva"
+
+msgid "Menu Right"
+msgstr "Menu: doprava"
+
+msgid "Menu Move Left"
+msgstr "Menu: posunout doleva"
+
+msgid "Menu Move Right"
+msgstr "Menu: posunout doprava"
+
+msgid "Menu Reverse"
+msgstr "Menu: otočit"
+
+msgid "Menu Page Up"
+msgstr "Menu: o stránku nahoru"
+
+msgid "Menu Page Down"
+msgstr "Menu: o stránku dolů"
+
+msgid "Menu Home"
+msgstr "Menu: na začátek"
+
+msgid "Menu End"
+msgstr "Menu: na konec"
+
+msgid "Menu Activate"
+msgstr "Menu: potvrdit"
+
+msgid "Menu Back"
+msgstr "Menu: zpět"
+
+msgid "Menu Next Section"
+msgstr "Menu: další sekce"
+
+msgid "Menu Previous Section"
+msgstr "Menu: předchozí sekce"
+
+msgid "Settings Open"
+msgstr "Nastavení"
+
+msgid "Toggle Fullscreen"
+msgstr "Celá obrazovka"
+
+msgid "Console Toggle"
+msgstr "Vývojářská konzole"
+
+msgid "Scenario Toggle"
+msgstr "Scénář"
+
+msgid "Trainsets Toggle"
+msgstr "Soupravy"
+
+msgid "Vehicle Card Toggle"
+msgstr "Karta vozidla"
+
+msgid "Minimap Toggle"
+msgstr "Minimapa"
+
+msgid "Coupler Adapter Attach"
+msgstr "Nasadit adaptér spřáhla"
+
+msgid "Coupler Adapter Remove"
+msgstr "Sejmout adaptér spřáhla"
+
+msgid "Brake Operation Mode Increase"
+msgstr "Režim brzdy: další"
+
+msgid "Brake Operation Mode Decrease"
+msgstr "Režim brzdy: předchozí"
+
+msgid "Cabin Light Dim Toggle"
+msgstr "Tlumení osvětlení kabiny"
+
+msgid "Ai Driver Enable"
+msgstr "Zapnout AI"
+
+msgid "Ai Driver Disable"
+msgstr "Vypnout AI"
+
+msgid "Pantograph Select Next"
+msgstr "Volba pantografu: další"
+
+msgid "Pantograph Select Previous"
+msgstr "Volba pantografu: předchozí"
+
+msgid "Radio Call 3 Send"
+msgstr "Rádio: volání 3"
+
+msgid "Scenario Keyctrl 0"
+msgstr "Scénář: klávesa 0"
+
+msgid "Scenario Keyctrl 1"
+msgstr "Scénář: klávesa 1"
+
+msgid "Scenario Keyctrl 2"
+msgstr "Scénář: klávesa 2"
+
+msgid "Scenario Keyctrl 3"
+msgstr "Scénář: klávesa 3"
+
+msgid "Scenario Keyctrl 4"
+msgstr "Scénář: klávesa 4"
+
+msgid "Scenario Keyctrl 5"
+msgstr "Scénář: klávesa 5"
+
+msgid "Scenario Keyctrl 6"
+msgstr "Scénář: klávesa 6"
+
+msgid "Scenario Keyctrl 7"
+msgstr "Scénář: klávesa 7"
+
+msgid "Scenario Keyctrl 8"
+msgstr "Scénář: klávesa 8"
+
+msgid "Scenario Keyctrl 9"
+msgstr "Scénář: klávesa 9"

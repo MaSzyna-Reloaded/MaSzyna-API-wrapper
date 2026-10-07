@@ -1942,3 +1942,129 @@ msgstr ""
 
 msgid "Cabin Sit Down"
 msgstr ""
+
+msgid "Menu Up"
+msgstr ""
+
+msgid "Menu Down"
+msgstr ""
+
+msgid "Menu Left"
+msgstr ""
+
+msgid "Menu Right"
+msgstr ""
+
+msgid "Menu Move Left"
+msgstr ""
+
+msgid "Menu Move Right"
+msgstr ""
+
+msgid "Menu Reverse"
+msgstr ""
+
+msgid "Menu Page Up"
+msgstr ""
+
+msgid "Menu Page Down"
+msgstr ""
+
+msgid "Menu Home"
+msgstr ""
+
+msgid "Menu End"
+msgstr ""
+
+msgid "Menu Activate"
+msgstr ""
+
+msgid "Menu Back"
+msgstr ""
+
+msgid "Menu Next Section"
+msgstr ""
+
+msgid "Menu Previous Section"
+msgstr ""
+
+msgid "Settings Open"
+msgstr ""
+
+msgid "Toggle Fullscreen"
+msgstr ""
+
+msgid "Console Toggle"
+msgstr ""
+
+msgid "Scenario Toggle"
+msgstr ""
+
+msgid "Trainsets Toggle"
+msgstr ""
+
+msgid "Vehicle Card Toggle"
+msgstr ""
+
+msgid "Minimap Toggle"
+msgstr ""
+
+msgid "Coupler Adapter Attach"
+msgstr ""
+
+msgid "Coupler Adapter Remove"
+msgstr ""
+
+msgid "Brake Operation Mode Increase"
+msgstr ""
+
+msgid "Brake Operation Mode Decrease"
+msgstr ""
+
+msgid "Cabin Light Dim Toggle"
+msgstr ""
+
+msgid "Ai Driver Enable"
+msgstr ""
+
+msgid "Ai Driver Disable"
+msgstr ""
+
+msgid "Pantograph Select Next"
+msgstr ""
+
+msgid "Pantograph Select Previous"
+msgstr ""
+
+msgid "Radio Call 3 Send"
+msgstr ""
+
+msgid "Scenario Keyctrl 0"
+msgstr ""
+
+msgid "Scenario Keyctrl 1"
+msgstr ""
+
+msgid "Scenario Keyctrl 2"
+msgstr ""
+
+msgid "Scenario Keyctrl 3"
+msgstr ""
+
+msgid "Scenario Keyctrl 4"
+msgstr ""
+
+msgid "Scenario Keyctrl 5"
+msgstr ""
+
+msgid "Scenario Keyctrl 6"
+msgstr ""
+
+msgid "Scenario Keyctrl 7"
+msgstr ""
+
+msgid "Scenario Keyctrl 8"
+msgstr ""
+
+msgid "Scenario Keyctrl 9"
+msgstr ""

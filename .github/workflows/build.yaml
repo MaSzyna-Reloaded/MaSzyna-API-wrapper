@@ -12,6 +12,8 @@ on:
 jobs:
   build-host:
     runs-on: ubuntu-24.04
+    outputs:
+      build_number: ${{ steps.build-number.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -28,6 +30,14 @@ jobs:
           key: template_debug-host-godot-cpp
           restore-keys: |
             template_debug-host-
+
+      # the build number of the whole run, stamped once (cmake/write_build_number.cmake): every
+      # platform's game and the installer carry the same one
+      - name: Build number
+        id: build-number
+        run: |
+          make build-number
+          echo "value=$(cat demo/build_number.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Docker build the host library
         run: sudo chmod 777 ci/docker/entrypoint.sh |
@@ -144,9 +154,11 @@ jobs:
           name: host-library
           path: demo/bin/libmaszyna/linux
 
-      # the build number the game shows and the installer carries (cmake/write_build_number.cmake)
+      # the build number the game shows and the installer carries, the one build-host stamped
       - name: Build number
-        run: make build-number
+        env:
+          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
+        run: printf '%s' "$BUILD_NUMBER" > demo/build_number.txt
 
       # a throwaway key: a release APK has to be signed, and this build is for testing - a published
       # APK is signed elsewhere; it lies in the checkout, which the container mounts as /var/maszyna
@@ -213,10 +225,10 @@ jobs:
 
   # The games the builds exported (game-<platform>-<target>-<arch>), published as the branch's
   # prerelease (maszyna-reloaded-<branch>, "/" as "-") on its own commit, whose files every push
-  # replaces, so its download links stay the same; nothing is built again here. A pull request from
-  # a fork has a read-only token and keeps only the artifacts.
+  # replaces with the latest build's, named with its build number; nothing is built again here. A
+  # pull request from a fork has a read-only token and keeps only the artifacts.
   publish:
-    needs: build
+    needs: [build-host, build]
     if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     permissions:
@@ -234,15 +246,17 @@ jobs:
           pattern: installer-*
           path: installers
 
-      # each game as maszyna-reloaded-<branch>-<platform>-<target>-<arch>.zip, an APK as it is, the
-      # Windows installer as maszyna-reloaded-<branch>-windows-setup.exe
+      # each game as maszyna-reloaded-<branch>-<build>-<platform>-<target>-<arch>.zip, an APK as it
+      # is, the Windows installer as maszyna-reloaded-<branch>-<build>-windows-setup.exe
       - name: Name the files
         env:
           NAME: ${{ github.head_ref }}
+          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
         run: |
           mkdir release
+          prefix="maszyna-reloaded-${NAME//\//-}-$BUILD_NUMBER"
           for dir in artifacts/game-*; do
-            file="$PWD/release/maszyna-reloaded-${NAME//\//-}-${dir#artifacts/game-}"
+            file="$PWD/release/$prefix-${dir#artifacts/game-}"
             if ls "$dir"/*.apk > /dev/null 2>&1; then
               cp "$dir"/*.apk "$file.apk"
             else
@@ -251,8 +265,8 @@ jobs:
           done
           # one artifact is unpacked straight into installers/, several each into its own directory
           find installers -name maszyna-reloaded-win64-setup.exe \
-            -exec cp {} "release/maszyna-reloaded-${NAME//\//-}-windows-setup.exe" \;
-          test -f "release/maszyna-reloaded-${NAME//\//-}-windows-setup.exe"
+            -exec cp {} "release/$prefix-windows-setup.exe" \;
+          test -f "release/$prefix-windows-setup.exe"
           ls -l release
 
       - name: Publish the branch prerelease
@@ -261,9 +275,10 @@ jobs:
           GH_REPO: ${{ github.repository }}
           BRANCH: ${{ github.head_ref }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
         run: |
           tag="maszyna-reloaded-${BRANCH//\//-}"
           # the tag is moved to the commit just built: the old release goes with its tag
           gh release delete "$tag" --cleanup-tag --yes || true
           gh release create "$tag" release/* --prerelease --target "$HEAD_SHA" \
-            --title "$tag" --notes "Build of $HEAD_SHA (#${{ github.event.number }})"
+            --title "$tag" --notes "Build $BUILD_NUMBER of $HEAD_SHA (#${{ github.event.number }})"

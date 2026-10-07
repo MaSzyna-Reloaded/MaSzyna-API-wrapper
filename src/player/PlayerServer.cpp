@@ -4,6 +4,8 @@
 #include "scenery/SceneryStreamingServer.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
+#include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 namespace godot {
@@ -78,6 +80,9 @@ namespace godot {
         PersonServer *persons = PersonServer::get_instance();
         ERR_FAIL_NULL(persons);
         person = persons->person_create();
+        _on_project_settings_changed();
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &PlayerServer::_on_project_settings_changed));
         VehicleServer *vehicles = VehicleServer::get_instance();
         ERR_FAIL_NULL(vehicles);
         vehicles->connect(VehicleServer::vehicle_freed_signal, callable_mp(this, &PlayerServer::_on_vehicle_freed));
@@ -90,6 +95,18 @@ namespace godot {
         rail_vehicles->connect(
                 RailVehicleServer::vehicle_placement_changed_signal,
                 callable_mp(this, &PlayerServer::_on_vehicle_placed));
+    }
+
+    void PlayerServer::_on_project_settings_changed() {
+        PersonServer *persons = PersonServer::get_instance();
+        ERR_FAIL_NULL(persons);
+        String name = String(ProjectSettings::get_singleton()->get_setting(NICK_SETTING, String())).strip_edges();
+        if (name.is_empty()) {
+            // the system's user name: USER on Linux and macOS, USERNAME on Windows
+            const OS *os = OS::get_singleton();
+            name = os->has_environment("USER") ? os->get_environment("USER") : os->get_environment("USERNAME");
+        }
+        persons->person_set_name(person, name.is_empty() ? String(UNNAMED_PLAYER) : name);
     }
 
     PlayerServer::~PlayerServer() {

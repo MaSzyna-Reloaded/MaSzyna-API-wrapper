@@ -445,6 +445,8 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Scenery loading
 
+* calkowo_sn61_zima.scn: `Cannot load include file: .../scenery/F` - a cut name, an include whose
+  name has a space or a parse slip; not looked into.
 * After a scenery has loaded, `Unicode parsing error ... Invalid UTF-8 leading byte (b0)` once
   (td.scn) - source not found.
 * Air temperature (`MaszynaEnvironmentNode.temperature`) is consumed by nothing - the vendored
@@ -548,6 +550,15 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Drivers (#297)
 
+* **The AI stops at a Tm at Ms1, not 7-12 m before it** (shunting, SN61-02 + a wagon,
+  calkowo_sn61_zima.scn, Paszki Tm7, 2026-10-07): at "0.0 km" to the stop point it still ran
+  11 km/h and stood with its buffers past the mast, braking hard (pipe 2.8 bar). The original's
+  shunting range is 5-25 m (`Driver.cpp:6715-6716`, ported the same). Measure with a probe - speed,
+  distance of the front, `brake_distance`, when braking starts - against the original's.
+* **Commands a vehicle does not have are sent and fail**: `fuse_reset` from the cab key (N, every
+  cab, `mmd_semantic_catalog.gd:224`) and `security_cabsignal_trigger` from an SHP event
+  (`MaszynaLegacyVehicleCommandAction.cpp:38`) on an SN61 - no electric engine, no security system;
+  "Unknown command" in the log each time.
 * Cab logic without the 3D cab: an AI caller must pass what a widget would have worked out (knob
   and switch limits, spring return, the horn's value); `LegacyCabinControls` parses the MMD with no
   random choices. The `brake_level_drive` `CabinCommand` node still carries `command`/
@@ -624,6 +635,8 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Game data (GameDataServer)
 
+* The build named at the top of `app.log` is `res://build_number.txt`, written by the last full
+  build - a checkout built incrementally logs an older number than the code it runs.
 * `MaszynaVehicleProfileManager._ensure_viewport()` is an `ensure_*` API: create the viewport
   where the manager is.
 * An owner that is not a scenery's rebuilds its streamed pieces when the scenery reloads itself in

@@ -1266,6 +1266,18 @@
             ]
         },
         {
+            "title": "Player",
+            "settings": [
+                {
+                    "title": "Nick",
+                    "store": "project",
+                    "key": "maszyna/player/nick",
+                    "type": "String",
+                    "default": ""
+                }
+            ]
+        },
+        {
             "title": "Debug",
             "settings": [
                 {

@@ -1703,6 +1703,9 @@ msgstr "Diagnostyka"
 msgid "Game directory"
 msgstr "Katalog gry"
 
+msgid "Nick"
+msgstr "Nick"
+
 msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
 msgstr "MaSzyna Reloaded nie może znaleźć danych oryginalnej MaSzyny. Wybierz jedną z instalacji znalezionych na tym komputerze albo własny folder."
 

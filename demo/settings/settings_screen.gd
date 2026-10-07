@@ -12,7 +12,8 @@ extends Control
 ##
 ## settings.json lists "sections", each with a "title" and its "settings". A setting has a "title",
 ## a "store" ("project": "key" is the full name of a project setting; "user": "section" and "key"
-## of UserSettings), a "type" ("bool", "int", "float"), a "default" and, for a number, a "hint"
+## of UserSettings), a "type" ("bool", "int", "float", "String" - a text typed into a field), a
+## "default" and, for a number, a "hint"
 ## with its "hint_string" as a property hint of that kind has it: "range" "min,max,step,suffix:m",
 ## "enum" "Name:value,Name:value"; "hint": "resolution" is the window's size, its choices made from
 ## the screen, and "folder" a project setting naming a file, shown as its folder with a button that
@@ -33,6 +34,7 @@ const OPTION: PackedScene = preload("setting_option.tscn")
 const RESOLUTION: PackedScene = preload("setting_resolution.tscn")
 const FOLDER: PackedScene = preload("setting_folder.tscn")
 const GAME_DIR: PackedScene = preload("setting_game_dir.tscn")
+const TEXT: PackedScene = preload("setting_text.tscn")
 const STORES: Dictionary[String, SettingRow.Store] = {
     "project": SettingRow.Store.PROJECT,
     "user": SettingRow.Store.USER,
@@ -80,6 +82,7 @@ func _ready() -> void:
                 else RESOLUTION if setting.get("hint") == "resolution"
                 else FOLDER if setting.get("hint") == "folder"
                 else GAME_DIR if setting.get("hint") == "game_dir"
+                else TEXT if setting["type"] == "String"
                 else OPTION
             ).instantiate()
             row.title = setting["title"]

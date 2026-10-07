@@ -180,7 +180,8 @@ func _build(vehicle:RID, record:Vehicle) -> void:
             RailVehicleCabinKind.RAIL_VEHICLE_CABIN_MACHINE:
                 RailVehicleServer.vehicle_add_machine_room(vehicle)
     if not dynamic.driver_type == MaszynaDynamicData.DriverType.DRIVER_NOBODY:
-        record.driver = PersonServer.person_create()
+        # the driver goes by its vehicle's name, as the original's (OwnerName(), Driver.cpp:5968-5971)
+        record.driver = PersonServer.person_create(dynamic.name)
         var seated:Error = (
                 RailVehicleServer.person_enter_front_cabin(
                         record.driver, vehicle, VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER)

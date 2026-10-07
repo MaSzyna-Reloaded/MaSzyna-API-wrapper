@@ -15,6 +15,11 @@ namespace godot {
             GDCLASS(PlayerServer, Object)
 
         public:
+            /// The player's nick (the Settings' Player section); empty: the system's user name
+            static constexpr const char *NICK_SETTING = "maszyna/player/nick";
+            /// The player's name with neither a nick nor a system user name
+            static constexpr const char *UNNAMED_PLAYER = "unnamed";
+
             /// What the player drives changed (vehicle: RID, previous: RID; invalid for none)
             static const char *player_vehicle_changed_signal;
             /// The player entered a vehicle (vehicle: RID) - also the one it already drives
@@ -38,6 +43,8 @@ namespace godot {
             void _on_vehicle_freed(const RID &p_vehicle);
             void _on_cabin_person_moved(const RID &p_person, const RID &p_cabin, const RID &p_previous);
             void _on_vehicle_placed(const RID &p_vehicle);
+            /// The player's person is named by the player's nick
+            void _on_project_settings_changed();
 
         protected:
             static void _bind_methods();

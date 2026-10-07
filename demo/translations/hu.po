@@ -1703,6 +1703,9 @@ msgstr "Diagnosztika"
 msgid "Game directory"
 msgstr "Játékkönyvtár"
 
+msgid "Nick"
+msgstr "Becenév"
+
 msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
 msgstr "A MaSzyna Reloaded nem találja az eredeti MaSzyna adatait. Válasszon egyet a számítógépen talált telepítések közül, vagy egy saját mappát."
 

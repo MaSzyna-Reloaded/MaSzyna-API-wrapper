@@ -15,6 +15,11 @@ extends HTTPRequest
 ## Anything else - user://, file:// or a plain path - is a directory: a new directory of the
 ## report's own in it gets REPORT_FILE (the fields as JSON) and the same ATTACHMENTS_FILE.
 ## Empty - the default, until the endpoint exists - is no reporting at all (is_available()).
+##
+## What leaves the machine names nobody: the snapshot and the logs go with the player's home
+## directory and system user name masked (mask_personal()) - the logs write paths under the home,
+## and a player with no nick is named by the user name. The report's own fields are what the player
+## typed and go as they are.
 
 signal report_sent(issue_url: String)
 ## The report was saved into a directory, not sent
@@ -37,6 +42,14 @@ const PACKING_DIRECTORY: String = "user://bug_reports_outgoing"
 const BOUNDARY_PREFIX: String = "MaSzynaReport"
 const HTTP_OK_FIRST: int = 200
 const HTTP_OK_LAST: int = 299
+## The home directory: HOME on Linux and macOS, USERPROFILE on Windows
+const HOME_VARIABLES: PackedStringArray = ["HOME", "USERPROFILE"]
+## The system user name: USER on Linux and macOS, USERNAME on Windows
+const USER_VARIABLES: PackedStringArray = ["USER", "USERNAME"]
+const HOME_MASK: String = "~"
+const USER_MASK: String = "<user>"
+## What a regular expression reads as its own, escaped in a user name - the backslash first
+const REGEX_SPECIAL_CHARACTERS: String = "\\.^$|?*+()[]{}-"
 
 
 ## Whether a report has anywhere to go
@@ -49,13 +62,15 @@ func send(
         report: Dictionary, snapshot: String, screenshot: PackedByteArray,
         session_log: PackedByteArray, gameplay_log: PackedByteArray) -> void:
     var endpoint: String = ProjectSettings.get_setting(ENDPOINT_SETTING)
-    var files: Dictionary[String, PackedByteArray] = {SNAPSHOT_FILE: snapshot.to_utf8_buffer()}
+    var files: Dictionary[String, PackedByteArray] = {
+        SNAPSHOT_FILE: mask_personal(snapshot).to_utf8_buffer()
+    }
     if screenshot:
         files[SCREENSHOT_FILE] = screenshot
     if session_log:
-        files[LOG_FILE] = session_log
+        files[LOG_FILE] = mask_personal(session_log.get_string_from_utf8()).to_utf8_buffer()
     if gameplay_log:
-        files[GAMEPLAY_LOG_FILE] = gameplay_log
+        files[GAMEPLAY_LOG_FILE] = mask_personal(gameplay_log.get_string_from_utf8()).to_utf8_buffer()
     var fields: Dictionary = fields_of(report)
     if not endpoint.begins_with("http://") and not endpoint.begins_with("https://"):
         # a directory per report, named by when it was made
@@ -90,6 +105,23 @@ func send(
             HTTPClient.METHOD_POST, build_body(boundary, fields, archive))
     if not error == OK:
         report_failed.emit(error_string(error))
+
+
+## The text without the player's home directory - HOME_MASK, written with either slash - and
+## system user name - USER_MASK, as a whole word wherever it stands
+static func mask_personal(text: String) -> String:
+    for variable: String in HOME_VARIABLES:
+        var home: String = OS.get_environment(variable)
+        if home:
+            text = text.replace(home, HOME_MASK).replace(home.replace("\\", "/"), HOME_MASK)
+    for variable: String in USER_VARIABLES:
+        var user: String = OS.get_environment(variable)
+        if not user:
+            continue
+        for special: String in REGEX_SPECIAL_CHARACTERS:
+            user = user.replace(special, "\\" + special)
+        text = RegEx.create_from_string("\\b%s\\b" % user).sub(text, USER_MASK, true)
+    return text
 
 
 ## The text fields of a report: the API version, then the report's own, each as text

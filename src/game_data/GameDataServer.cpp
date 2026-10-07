@@ -18,6 +18,9 @@ namespace godot {
     GameDataServer::GameDataServer() {
         singleton = this;
         build_number = FileAccess::get_file_as_string(BUILD_NUMBER_PATH).strip_edges();
+        // the first thing the session's log says: which build wrote it
+        UtilityFunctions::print(
+                "[GameDataServer] Build ", build_number.is_empty() ? String("none (unbuilt checkout)") : build_number);
         if (UserSettings *settings = UserSettings::get_instance(); settings != nullptr) {
             settings->connect("game_dir_changed", callable_mp(this, &GameDataServer::data_reload));
         }

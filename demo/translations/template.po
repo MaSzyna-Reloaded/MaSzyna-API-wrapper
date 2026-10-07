@@ -1703,6 +1703,9 @@ msgstr ""
 msgid "Game directory"
 msgstr ""
 
+msgid "Nick"
+msgstr ""
+
 msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
 msgstr ""
 

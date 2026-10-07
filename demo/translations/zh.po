@@ -1703,6 +1703,9 @@ msgstr "诊断"
 msgid "Game directory"
 msgstr "游戏目录"
 
+msgid "Nick"
+msgstr "昵称"
+
 msgid "MaSzyna Reloaded cannot find the data of the original MaSzyna. Choose one of the installations found on this computer, or a folder of your own."
 msgstr "MaSzyna Reloaded 找不到原版 MaSzyna 的数据。请选择在此电脑上找到的某个安装，或自行选择文件夹。"
 

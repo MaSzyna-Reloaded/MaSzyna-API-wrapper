@@ -103,7 +103,43 @@ and the report, and to publishing them on GitHub".
 |---|---|---|
 | `snapshot.json` | the state of the game, below | yes |
 | `screenshot.jpg` | the screen when the form opened, with the player's red marks, JPEG at quality 75 | only when attached |
-| `app.log` | the end of this session's log (the engine's file log, `debug/file_logging/log_path`), its last 4 MB | only while the file logging is on (the Debug settings) - with it off the file would be an earlier session's |
+| `app.log` | the end of this session's log (the engine's file log, `debug/file_logging/log_path`), its last 4 MB; its first lines name the build (`[GameDataServer] Build <number>`) | only while the file logging is on (the Debug settings) - with it off the file would be an earlier session's |
+| `gameplay.log` | the scenery's gameplay log (`BugReportRecorder`), its last 50 MB - lines below | when a scenery ran |
+
+#### `gameplay.log`
+
+From the scenery's start, one line per happening: `<time> <simulation time> <kind> <subject>
+<details>`, the subject a name and its RID (`SN61-02#2`), the details `key=value`:
+
+```
+07:16:42 0.000 player marcin#3 present
+07:16:42 0.012 person SN61-02#812 created
+07:16:42 0.012 ai SN61-02#812 attached
+07:16:42 0.012 ai SN61-02#812 entered vehicle=SN61-02#2 cab=rear role=driver
+07:16:42 0.020 vehicle SN61-02#2 created
+07:16:42 0.021 trainset SN61-02#2 vehicles=SN61-02#2,bdhpumn_1#4412
+07:16:45 2.904 ai SN61-02#812 role=observer vehicle=SN61-02#2 cab=rear
+07:16:45 2.904 player marcin#3 entered vehicle=SN61-02#2 cab=rear role=driver
+07:17:20 37.640 player Marcin#3 renamed previous=marcin
+07:17:33 50.281 command SN61-02#2 direction_increase p1=<null> p2=<null>
+07:17:49 66.631 command SN61-02#2 local_brake_set p1=0.016 p2=<null> repeats=60 until=67.631 last=1.0,<null>
+07:21:45 108.186 event wylacz_wilis_hi activator=SP42-260
+08:16:58 1758.119 scenery left
+```
+
+* `player`, `ai`, `person` - a person by its kind: the player (named by its nick, Settings -
+  Player; without one the system's user name, else `unnamed`), an AI driver (named after its
+  vehicle), a person neither yet; `present` (the player, made with the game), `created`, `freed`,
+  `attached` (as an AI driver), `renamed previous=`; `entered`/`left vehicle= cab=` with its
+  `role=`, `moved` to a cab `from_vehicle= from_cab=`, `role=` changed in a cab;
+* `vehicle` - `created` (in the simulation from its configuration on) or `freed`;
+* `trainset` - the vehicles coupled together, in their order, whenever they change;
+* `command` - a command to any vehicle (the player's, an AI driver's, the scenario's - it carries no
+  sender); a command repeated without a pause is one line with `repeats=`, the last one's
+  `until=` simulation time and `last=` values;
+* `event` - a launched event and the vehicle that set it off;
+* `scenery left` when the player leaves the scenery, `game closed` when the game quits with it
+  running - the last line either way.
 
 ### `snapshot.json`
 

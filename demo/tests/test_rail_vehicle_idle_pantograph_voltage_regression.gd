@@ -96,13 +96,13 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     vehicle.start_direction = TrackServer.DIRECTION_NORMAL
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(physics_node)
-    await wait_idle_frames(2)
+    await step(2)
 
     controller.send_command("battery", true)
     controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
     var voltage_reached:bool = false
     for i in range(60):
-        await wait_idle_frames(1)
+        await step(1)
         if float(controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)) > 100.0:
             voltage_reached = true
             break
@@ -117,7 +117,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     controller.send_command("fuse_reset")
     print("[before main_switch] %s" % [_dump(controller)])
     controller.send_command("main_switch", true)
-    await wait_idle_frames(2)
+    await step(2)
     print("[after main_switch] %s" % [_dump(controller)])
     assert_true(
         bool(controller.get_state().get("main_switch_enabled", false)),
@@ -132,7 +132,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     var min_voltage:float = INF
     var tripped:bool = false
     for i in range(300): # ~5s at 60fps
-        await wait_idle_frames(1)
+        await step(1)
         var voltage:float = float(controller.get_state().get("current_collector/pantograph_first_voltage", 0.0))
         min_voltage = minf(min_voltage, voltage)
         if not bool(controller.get_state().get("main_switch_enabled", false)):

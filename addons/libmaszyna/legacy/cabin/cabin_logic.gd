@@ -298,8 +298,8 @@ func _move_switch(control_id:StringName, binding:Dictionary, position:int) -> vo
     CabinSystem.act(_cabin, control_id, &"increase" if moved > current else &"decrease", moved)
 
 
-## The key holds the knob: it moves `rate` of its range a second while held, from where the vehicle
-## shows it, by frames as the widget's hand did (CabinKnob)
+## The key holds the knob: it moves `rate` of its range a simulated second while held, from where
+## the vehicle shows it - by the simulation's clock, as the vehicle it moves (standing in a pause)
 func _hold_knob(control_id:StringName, binding:Dictionary, rate:float) -> void:
     if _held_knobs.has(control_id):
         _held_knobs[control_id]["rate"] = rate
@@ -311,17 +311,16 @@ func _hold_knob(control_id:StringName, binding:Dictionary, rate:float) -> void:
         value = CabinSystem.vehicle_state_value(CabinState.vehicle_of(_vehicle_rid, binding["target"]), state_property, value)
     _held_knobs[control_id] = {"rate": rate, "value": fields.get("value_min", 0.0) if value == null else float(value)}
     if _held_knobs.size() == 1:
-        (Engine.get_main_loop() as SceneTree).process_frame.connect(_on_knobs_held)
+        SimulationServer.simulation_advanced.connect(_on_knobs_held)
 
 
 func _let_go_knob(control_id:StringName) -> void:
     if not _held_knobs.erase(control_id) or _held_knobs:
         return
-    (Engine.get_main_loop() as SceneTree).process_frame.disconnect(_on_knobs_held)
+    SimulationServer.simulation_advanced.disconnect(_on_knobs_held)
 
 
-func _on_knobs_held() -> void:
-    var seconds:float = (Engine.get_main_loop() as SceneTree).root.get_process_delta_time()
+func _on_knobs_held(seconds:float) -> void:
     for control_id:StringName in _held_knobs:
         var held:Dictionary = _held_knobs[control_id]
         var fields:Dictionary = _bindings[control_id]["fields"]

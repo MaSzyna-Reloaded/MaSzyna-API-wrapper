@@ -21,6 +21,8 @@ var _on_target:Node3D
 var _off_target:Node3D
 var _dirty:bool = false
 var _update_elapsed:float = 0.0
+## The element's time - the simulation's
+var _clock:SimulationClock = SimulationClock.new()
 
 ## When the lamp is lit by state_property: a flag, or the sign of a number - the reverser's
 ## buttons light by the sign of DirActive (Train.cpp:8520)
@@ -83,7 +85,7 @@ func _process(delta:float) -> void:
         _process_dirty()
         _dirty = false
 
-    _update_elapsed += delta
+    _update_elapsed += _clock.advance(delta)
     if _update_elapsed > 0.1:
         _update_elapsed = 0.0
         _update_state()

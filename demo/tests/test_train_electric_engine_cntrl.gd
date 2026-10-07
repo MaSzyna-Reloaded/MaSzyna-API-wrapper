@@ -12,7 +12,7 @@ func before_each():
     power_source = MoverRailVehicleEnginePowerSource.new()
     power_source.source_type = RailVehicleController.POWER_SOURCE_ACCUMULATOR
     train.add_component(power_source)
-    await wait_idle_frames(2)
+    await step(2)
 
 func test_defaults():
     assert_false(power_source.cntrl_pantograph_auto_valve)
@@ -24,7 +24,7 @@ func test_round_trip_and_update_without_crashing():
     power_source.cntrl_pantograph_compressor_start_mode = RailVehicleController.START_MODE_AUTOMATIC
     power_source.cntrl_pantograph_auto_valve = true
     engine.cntrl_main_switch_start_mode = RailVehicleController.START_MODE_AUTOMATIC
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_true(power_source.cntrl_pantograph_auto_valve)
     assert_true(train.get_state().has("main_switch_enabled"), "RailVehicleElectricEngine should keep functioning after configuring the Cntrl. section")
@@ -41,9 +41,9 @@ func _pantograph_vehicle(master_valve_start:RailVehicleController.StartMode) -> 
     collector.cntrl_pantographs_valve_start_mode = master_valve_start
     vehicle.add_component(collector)
     vehicle.apply_configuration()
-    await wait_idle_frames(2)
+    await step(2)
     vehicle.send_command("battery", true)
-    await wait_idle_frames(2)
+    await step(2)
     return vehicle
 
 

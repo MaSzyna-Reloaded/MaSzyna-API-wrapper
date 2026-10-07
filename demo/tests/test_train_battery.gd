@@ -1,5 +1,11 @@
 extends MaszynaGutTest
 
+## Simulated seconds the battery's drain takes to show: 2 V/s at 110 V without a converter
+## (Mover.cpp:887-888), so the vehicle's next step lowers it - and that shows within a frame of the
+## clock after it, which counts at most SimulationServer::MAX_FRAME_DELTA; the done check comes
+## before the limit, so the frame that shows it passes however long it was
+const BATTERY_DRAIN_SECONDS:float = 0.25
+
 var train: VehicleController
 
 ## The battery voltage is configuration the Mover reads while the vehicle is being built, so it
@@ -45,9 +51,11 @@ func test_battery_start_disabled_from_zero_voltage_blocks_switching():
 
 func test_successful_battery_voltage_drop_after_two_seconds():
     train.send_command("battery", true)
-    await wait_idle_frames(2)
-    var before = train.get_state()["battery_voltage"]
-    await wait_seconds(2)
-    var after = train.get_state()["battery_voltage"]
+    assert_true(train.get_state()["battery_enabled"], "Battery should be enabled")
+    var before:float = train.get_state()["battery_voltage"]
+    if not await wait_simulated_until(func() -> bool: return train.get_state()["battery_voltage"] < before,
+            BATTERY_DRAIN_SECONDS, "the battery's drain"):
+        return
+    var after:float = train.get_state()["battery_voltage"]
 
-    assert_true(before > after, "There should be a battery voltage drop after 2 seconds")
+    assert_true(before > after, "There should be a battery voltage drop")

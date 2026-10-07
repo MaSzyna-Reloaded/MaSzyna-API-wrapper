@@ -3,7 +3,13 @@ extends MaszynaGutTest
 const LuaImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_lua_importer.gd")
 const FIXTURES:String = "res://tests/fixtures/lua"
 const OUTPUT:StringName = &"lua_test_output"
-const MAX_WAIT:float = 5.0
+## SimulationServer::MAX_FRAME_DELTA
+const MAX_FRAME_DELTA:float = 0.25
+## Simulated seconds an event runs past its delay at most: the frame it falls due in and the frame
+## that runs it, each counting MAX_FRAME_DELTA at most
+const EVENT_MARGIN:float = 2.0 * MAX_FRAME_DELTA
+## maszyna.sim.after()'s delay in the timer's script [s]
+const AFTER_DELAY:float = 0.05
 ## Enough frames for a queued event to have run, were it going to
 const SETTLE_FRAMES:int = 5
 ## The track the player's vehicle stands on
@@ -104,7 +110,9 @@ func test_an_event_the_script_created_runs_and_goes_with_the_context() -> void:
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"events", source))
     var event:RID = ScenarioEventServer.event_get_rid_by_name(&"lua_test_event")
     assert_true(event.is_valid())
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "lua_test_event", MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "lua_test_event", EVENT_MARGIN,
+            "the script's event run"):
+        return
 
     assert_eq(ScenarioEventServer.memory_get_value1(_output), 1.0, "nothing activated it")
     ScenarioScriptServer.context_free(_context)
@@ -115,13 +123,15 @@ func test_an_event_the_script_created_runs_and_goes_with_the_context() -> void:
 func test_after_runs_once_on_the_simulation_clock() -> void:
     var source:String = (
         "local output = maszyna.memory.find('lua_test_output')\n"
-        + "maszyna.sim.after(0.05, function()\n"
+        + "maszyna.sim.after(%s, function()\n" % AFTER_DELAY
         + "    local text, count = maszyna.memory.read(output)\n"
         + "    maszyna.memory.write(output, 'after', count + 1, 0)\n"
         + "end)"
     )
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"timer", source))
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "after", MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "after", AFTER_DELAY + EVENT_MARGIN,
+            "the timer's function run"):
+        return
     await wait_idle_frames(SETTLE_FRAMES)
 
     assert_eq(ScenarioEventServer.memory_get_value1(_output), 1.0)
@@ -158,7 +168,9 @@ func test_a_subscription_runs_through_the_queue_until_cancelled() -> void:
 
     TrackServer.track_vehicle_entered(track, vehicle)
     assert_eq(ScenarioEventServer.memory_get_text(_output), "", "never inside the server that reported it")
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "true", MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "true", EVENT_MARGIN,
+            "the subscription's function run"):
+        return
     TrackServer.track_vehicle_left(track, vehicle)
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"cancel", "assert(maszyna.cancel(subscription))"))
     TrackServer.track_vehicle_entered(track, vehicle)
@@ -189,7 +201,9 @@ func test_a_vehicle_takes_commands_and_reports_them() -> void:
         + "assert(maszyna.driver.send_command(v, 'SetVelocity', 40, 30))"
     )
     assert_true(ScenarioScriptServer.context_apply_source(_context, &"vehicle", source))
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "battery", MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "battery", EVENT_MARGIN,
+            "the command reported to the script"):
+        return
 
     assert_eq(ScenarioEventServer.memory_get_value1(_output), 1.0)
     assert_eq(recording.commands, [["SetVelocity", 40.0, 30.0]])
@@ -278,9 +292,10 @@ func test_the_player_its_view_and_the_hud_are_reached_by_vehicle_handles() -> vo
 func test_the_original_api_runs_an_onstart_event() -> void:
     ScenarioEventServer.memory_set_values(_output, "", 0.0, 5.0)
     assert_true(ScenarioScriptServer.context_run_file(_context, "legacy_events.lua"))
-    await wait_until(
-        func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "legacy:lua_test_legacy_onstart", MAX_WAIT
-    )
+    if not await wait_simulated_until(
+            func() -> bool: return ScenarioEventServer.memory_get_text(_output) == "legacy:lua_test_legacy_onstart",
+            EVENT_MARGIN, "the onstart event run"):
+        return
 
     assert_eq(ScenarioEventServer.memory_get_value1(_output), 1.0)
     assert_eq(ScenarioEventServer.memory_get_value2(_output), 0.0, "memcell_update writes every field")

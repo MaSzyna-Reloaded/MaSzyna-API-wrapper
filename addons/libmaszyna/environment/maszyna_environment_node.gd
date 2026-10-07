@@ -233,9 +233,6 @@ func _enter_tree() -> void:
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     SimulationServer.simulation_paused.connect(_on_runtime_paused)
     SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
-    SimulationServer.simulation_current_speed_changed.connect(_publish_animation_speed)
-    # the speed may have been set before (the scene's own simulation_speed)
-    _publish_animation_speed()
 
 
 func _exit_tree() -> void:
@@ -245,7 +242,6 @@ func _exit_tree() -> void:
     ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
     SimulationServer.simulation_paused.disconnect(_on_runtime_paused)
     SimulationServer.simulation_unpaused.disconnect(_on_runtime_unpaused)
-    SimulationServer.simulation_current_speed_changed.disconnect(_publish_animation_speed)
 
 
 func _process(delta: float) -> void:
@@ -449,17 +445,10 @@ func _on_project_settings_changed() -> void:
 
 func _on_runtime_paused() -> void:
     _sky_environment.pause_weather()
-    _publish_animation_speed()
 
 
 func _on_runtime_unpaused() -> void:
     _sky_environment.unpause_weather()
-    _publish_animation_speed()
-
-
-## Scenery submodels animate in the simulation's time: at its speed, and not at all while paused
-func _publish_animation_speed() -> void:
-    E3DRenderingServer.animation_set_speed(0.0 if SimulationServer.simulation_is_paused() else SimulationServer.simulation_get_current_speed())
 
 
 func _apply_time_configuration() -> void:

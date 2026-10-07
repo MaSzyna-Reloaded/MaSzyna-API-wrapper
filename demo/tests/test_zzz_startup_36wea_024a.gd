@@ -31,7 +31,7 @@ func test_the_driver_walks_to_the_rear_cab_with_the_player() -> void:
         if engine and _master(car):
             assert_true(engine.get_main_switch_enabled(), "%s's line breaker stays closed" % VehicleServer.vehicle_get_name(car))
     await key_tap(&"cab_activation_toggle")
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     assert_eq(_master(player_vehicle).get_cabin(), -1, "the rear cab is the active one")
     assert_false(MaszynaLegacyDriverHints.TEXTS[MaszynaLegacyDriverHints.Hint.CAB_DEACTIVATION] in _hints(),
             "no hint to deactivate the cab just activated: %s" % [_hints()])
@@ -46,7 +46,7 @@ func test_the_c_car_is_asked_for_its_own_pantograph() -> void:
             RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE)
     VehicleServer.vehicle_send_command(PlayerServer.player_get_vehicle(), "pantograph_valve_operate",
             RailVehicleEnginePowerSource.PANTOGRAPH_SECOND, RailVehicleEnginePowerSource.VALVE_OPERATION_DISABLE)
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     var hints:Array[String] = _hints()
     assert_false(MaszynaLegacyDriverHints.TEXTS[MaszynaLegacyDriverHints.Hint.FRONT_PANTOGRAPH_VALVE_ON] in hints,
             "no hint to raise pantograph A, which the C car has not got: %s" % [hints])
@@ -67,12 +67,12 @@ func _walk_to_the_rear_cab_of_c() -> void:
                 and RailVehicleServer.vehicle_get_driver_cabin(vehicle) == RailVehicleServer.vehicle_get_rear_cabin(vehicle):
             break
         await key_tap(&"cabin_next")
-        await wait_simulated(1.0)
+        await step(ticks(1.0))
     var reached:RID = PlayerServer.player_get_vehicle()
     assert_eq(VehicleServer.vehicle_get_name(reached), "36WEa-024c", "the player reached the C car")
     assert_eq(RailVehicleServer.vehicle_get_driver_cabin(reached), RailVehicleServer.vehicle_get_rear_cabin(reached),
             "in its rear cab")
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
 
 
 func _hints() -> Array[String]:

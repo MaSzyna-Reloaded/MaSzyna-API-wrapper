@@ -3,7 +3,6 @@ extends MaszynaGutTest
 ## The demo scene loading a scenery: EP07-424 of td.scn on a cut of its line (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
-const LOAD_TIMEOUT_SEC:float = 120.0
 ## How far from the middle of its vehicle the cab camera may be [m] - a vehicle's length at most
 const CAB_TO_VEHICLE_MAX_DISTANCE:float = 30.0
 
@@ -30,12 +29,16 @@ func test_demo_scenery_loading_scene_instantiates() -> void:
     # TrackServer is an engine singleton, not a node under /root - it has been since it moved
     # to C++, and looking it up by path is what AGENTS.md forbids
     # the player gets its vehicle once the scenery has loaded
-    await wait_until(func() -> bool: return PlayerServer.player_get_vehicle().is_valid(), LOAD_TIMEOUT_SEC)
+    if not await wait_until(func() -> bool: return PlayerServer.player_get_vehicle().is_valid(), LOAD_TIMEOUT):
+        fail_test("the player has no vehicle %.0f s into loading %s" % [LOAD_TIMEOUT, SCENERY])
+        return
     assert_true(_has_tracks(), "at least one track should have registered with TrackServer")
     # the loading screen goes only once the player sits in its vehicle and the scenery around it
     # is streamed in - not while the view is still where the menu left it
     var loading_screen:CanvasItem = instance.get_node("LoadingScreen")
-    await wait_until(func() -> bool: return not loading_screen.visible, LOAD_TIMEOUT_SEC)
+    if not await wait_until(func() -> bool: return not loading_screen.visible, LOAD_TIMEOUT):
+        fail_test("the loading screen still up %.0f s after the player got its vehicle" % LOAD_TIMEOUT)
+        return
     var vehicle_position:Vector3 = RailVehicleRenderingServer.vehicle_get_transform(
             PlayerServer.player_get_vehicle()).origin
     assert_lt(SceneryStreamingServer.streaming_get_camera_position().distance_to(vehicle_position),

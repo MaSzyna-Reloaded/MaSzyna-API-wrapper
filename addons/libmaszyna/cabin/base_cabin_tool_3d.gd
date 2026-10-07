@@ -11,6 +11,8 @@ var _vehicle_rid:RID
 ## for another cabin (MaszynaDynamicTrainCabin)
 var _cabin:RID
 var _dirty:bool = false
+## The element's time - the simulation's
+var _clock:SimulationClock = SimulationClock.new()
 ## This control as CabinHUDMouseSystem knows it, once its mesh is found
 var _mouse_control:RID = RID()
 
@@ -200,7 +202,8 @@ func _process_tool(delta):
 
 
 func _process(delta):
+    var seconds:float = _clock.advance(delta)
     if _dirty:
         _dirty = false
-        _process_dirty(delta)
-    _process_tool(delta)
+        _process_dirty(seconds)
+    _process_tool(seconds)

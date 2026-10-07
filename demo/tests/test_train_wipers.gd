@@ -3,6 +3,7 @@ extends MaszynaGutTest
 ## RailVehicleWipers: the wiper switch (Train.cpp:2638-2661) and the movement of the wipers
 ## (DynObj.cpp:4048-4115), both kept in the node - the vendored Mover has neither.
 
+
 var train: VehicleController
 var wipers: RailVehicleWipers
 
@@ -19,8 +20,10 @@ func before_each():
         _item(3, 0.2, 0.0, 0.1),
     ]
     train.add_component(wipers)
-    # a VehicleComponent publishes its state with its first processed frame
-    await wait_idle_frames(2)
+    # a VehicleComponent takes its configuration and its commands on its first step
+    if not await wait_simulated_until(func() -> bool: return train.get_state()["wiper_positions"].size() > 0,
+            TICK, "the wipers' first step"):
+        return
 
 
 func _item(mask: int, transit_time: float, period: float, return_delay: float) -> RailVehicleWiperListItem:
@@ -49,7 +52,8 @@ func test_round_trip_and_update_without_crashing():
         _item(3, 0.7, 0.7, 0.0),
         _item(3, 0.5, 0.5, 0.0),
     ]
-    await wait_idle_frames(2)
+    # a step with the new list
+    await step(1)
 
     assert_eq(wipers.angle, 58.0)
     assert_eq(wipers.positions.size(), 4)
@@ -63,12 +67,10 @@ func test_switch_is_limited_to_the_wiper_list():
 
     for i in 5:
         train.send_command("wipers_switch_increase")
-    await wait_idle_frames(2)
     assert_eq(train.get_state()["wipers_switch_position"], 2)
 
     for i in 5:
         train.send_command("wipers_switch_decrease")
-    await wait_idle_frames(2)
     assert_eq(train.get_state()["wipers_switch_position"], 0)
 
 
@@ -82,26 +84,29 @@ func test_wipers_sweep_out_and_back_with_active_cab_and_battery():
     train.send_command("wipers_switch_increase")
     train.send_command("wipers_switch_increase")
 
-    var reached_out: bool = false
-    var reached_return: bool = false
-    # sweep 0.2 s + 0.1 s at the far end; polled by time, a headless frame takes no time at all
-    for i in 40:
-        await wait_seconds(0.05)
-        var position: float = train.get_state()["wiper_positions"][0]
-        reached_out = reached_out or (position > 0.0 and position <= 1.0)
-        reached_return = reached_return or position > 1.0
-        if reached_out and reached_return:
-            break
+    # the wiper is out and back past its far end in the transit time of the position it starts its
+    # sweep with - a parked wiper holds the list's first one, the switch is taken once it parks again
+    # (workingSwitchPos, DynObj.cpp:4150, 4197); that position's period is 0, so it starts on
+    # the next step. [out, return]
+    var reached: Array[bool] = [false, false]
+    var working: RailVehicleWiperListItem = wipers.positions[0]
+    if not await wait_simulated_until(func() -> bool:
+            var position: float = train.get_state()["wiper_positions"][0]
+            reached[0] = reached[0] or (position > 0.0 and position <= 1.0)
+            reached[1] = reached[1] or position > 1.0
+            return reached[0] and reached[1], working.transit_time + TICK, "the wiper's sweep out and back"):
+        return
 
-    assert_true(reached_out, "wiper should sweep out (0..1)")
-    assert_true(reached_return, "wiper should come back (1..2)")
+    assert_true(reached[0], "wiper should sweep out (0..1)")
+    assert_true(reached[1], "wiper should come back (1..2)")
 
 
 func test_wipers_stay_parked_without_battery():
     train.send_command("cab_activation", true)
     train.send_command("wipers_switch_increase")
     train.send_command("wipers_switch_increase")
-    await wait_idle_frames(10)
+    # the switched position's period is 0: a wiper that ran would be out on the first step
+    await step(1)
 
     assert_eq(train.get_state()["wiper_positions"][0], 0.0)
 
@@ -115,7 +120,12 @@ func test_wiper_count_of_the_model_limits_the_sweep_to_the_active_end():
     train.send_command("cab_activation", true)
     train.send_command("wipers_switch_increase")
     train.send_command("wipers_switch_increase")
-    await wait_seconds(0.15)
+    # the switched position's period is 0: the wipers that run are out on the first step, and the
+    # other end's would be as well
+    if not await wait_simulated_until(func() -> bool:
+            var swept: PackedFloat64Array = train.get_state()["wiper_positions"]
+            return swept[0] > 0.0 and swept[1] > 0.0, TICK, "the active end's wipers out"):
+        return
 
     var positions: PackedFloat64Array = train.get_state()["wiper_positions"]
     assert_eq(positions.size(), 4)

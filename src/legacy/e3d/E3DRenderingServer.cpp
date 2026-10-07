@@ -3,6 +3,7 @@
 #include "game_data/GameDataServer.hpp"
 #include "resources/ResourceLazyLoader.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
+#include "simulation/SimulationServer.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -141,8 +142,6 @@ namespace godot {
                 &E3DRenderingServer::instance_set_smoke_intensity);
         ClassDB::bind_method(D_METHOD("smoke_get_statistics"), &E3DRenderingServer::smoke_get_statistics);
         ClassDB::bind_method(D_METHOD("environment_set_time", "hours"), &E3DRenderingServer::environment_set_time);
-        ClassDB::bind_method(D_METHOD("animation_set_speed", "speed"), &E3DRenderingServer::animation_set_speed);
-        ClassDB::bind_method(D_METHOD("animation_get_speed"), &E3DRenderingServer::animation_get_speed);
         ClassDB::bind_method(
                 D_METHOD("environment_set_light_level", "level"), &E3DRenderingServer::environment_set_light_level);
         ClassDB::bind_method(
@@ -1676,10 +1675,7 @@ namespace godot {
     /// TAnimContainer::UpdateModel() (AnimModel.cpp:92-188): every angle turns towards its target at
     /// the speed, the offset moves along the straight line to its own. A model out of range keeps
     /// moving, so it is where it should be when it comes back.
-    void E3DRenderingServer::_process_animations() {
-        const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        ERR_FAIL_NULL(tree);
-        const double delta = tree->get_root()->get_process_delta_time() * animation_speed;
+    void E3DRenderingServer::_process_animations(const double p_seconds) {
         for (int index = static_cast<int>(animating_instances.size() - 1); index >= 0; index--) {
             const RID instance_rid = animating_instances[index];
             E3DInstanceData *instance = instances.getptr(instance_rid);
@@ -1689,7 +1685,7 @@ namespace godot {
                 for (KeyValue<String, E3DInstanceData::SubmodelAnimation> &item: instance->submodel_animations) {
                     E3DInstanceData::SubmodelAnimation &animation = item.value;
                     if (animation.rotate_speed != 0.0) {
-                        const double step = Math::abs(animation.rotate_speed) * delta;
+                        const double step = Math::abs(animation.rotate_speed) * p_seconds;
                         for (int axis = Vector3::AXIS_X; axis <= Vector3::AXIS_Z; axis++) {
                             const double difference = animation.target_angles[axis] - animation.angles[axis];
                             animation.angles[axis] =
@@ -1706,7 +1702,7 @@ namespace godot {
                     }
                     if (animation.translate_speed != 0.0) {
                         const Vector3 difference = animation.target_offset - animation.offset;
-                        const double step = Math::abs(animation.translate_speed) * delta;
+                        const double step = Math::abs(animation.translate_speed) * p_seconds;
                         if (difference.length() <= MAX(step, ANIMATION_TRANSLATION_EPSILON)) {
                             animation.offset = animation.target_offset;
                             animation.translate_speed = 0.0;
@@ -1736,16 +1732,18 @@ namespace godot {
         if (animation_processing == p_processing) {
             return;
         }
-        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
-        if (tree == nullptr) {
-            return;
-        }
+        SimulationServer *simulation = SimulationServer::get_instance();
+        ERR_FAIL_NULL(simulation);
         animation_processing = p_processing;
         if (p_processing) {
-            tree->connect("process_frame", callable_mp(this, &E3DRenderingServer::_process_animations));
+            simulation->connect(
+                    SimulationServer::simulation_advanced_signal,
+                    callable_mp(this, &E3DRenderingServer::_process_animations));
             return;
         }
-        tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_animations));
+        simulation->disconnect(
+                SimulationServer::simulation_advanced_signal,
+                callable_mp(this, &E3DRenderingServer::_process_animations));
     }
 
     /// One emitter's share of a frame. Fractional particles are carried over, so a rate below one
@@ -1912,14 +1910,6 @@ namespace godot {
                 _update_if_built(item.value);
             }
         }
-    }
-
-    void E3DRenderingServer::animation_set_speed(const double p_speed) {
-        animation_speed = p_speed;
-    }
-
-    double E3DRenderingServer::animation_get_speed() const {
-        return animation_speed;
     }
 
     void E3DRenderingServer::environment_set_time(const double p_hours) {

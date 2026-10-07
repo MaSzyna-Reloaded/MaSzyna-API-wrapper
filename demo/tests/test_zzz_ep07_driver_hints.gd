@@ -10,10 +10,14 @@ extends MaszynaGutTest
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
 const VEHICLE:String = "EP07-424"
-## The clock runs fast - the main reservoir fills for tens of simulated seconds
-const SIMULATION_SPEED:float = 100.0
-## Real seconds the driver gets
-const MAX_WAIT:float = 30.0
+## Simulated seconds the driver takes to get the cold EP07 ready (engine_active): the converter on
+## its fifth update, PREPARE_TIME apart, then the compressor filling the main reservoir past
+## MIN_MAIN_RESERVOIR_PRESSURE from the 4.1 bar it spawns with while the brake pipe charges from it,
+## and the update that sees it - 17.7 s measured - and one more of its updates (PREPARE_TIME, 2 s)
+const ENGINE_READY_SECONDS:float = 20.0
+## Simulated seconds beyond the driver's update for the clock's slice it lands in
+## (SimulationServer MAX_SLICE_TIME)
+const SLICE_MARGIN:float = 0.1
 ## How long the scenery's horn sounds [s] (`Warning_signal`)
 const WARNING_DURATION:float = 3.0
 
@@ -28,15 +32,14 @@ func before_each() -> void:
     _scenery = MaszynaSceneryNode.new()
     _scenery.filename = SCENERY
     add_child(_scenery)
-    await wait_until(func() -> bool:
-            _vehicle = VehicleServer.vehicle_get_rid_by_name(VEHICLE)
-            return VehicleServer.vehicle_is_simulation_ready(_vehicle), MAX_WAIT)
-    SimulationServer.simulation_speed = SIMULATION_SPEED
+    # the scenery is announced once its vehicles are built and its drivers given their AI
+    if not await wait_loaded(_scenery.scenery_loaded, SCENERY):
+        return
+    _vehicle = VehicleServer.vehicle_get_rid_by_name(VEHICLE)
 
 
 func after_each() -> void:
     PlayerServer.player_leave_vehicle()
-    SimulationServer.simulation_reset_speed()
     _scenery.free()
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
@@ -50,20 +53,29 @@ func test_a_player_with_the_pantograph_tank_cut_off_is_hinted_to_turn_the_valve(
             _vehicle, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
     assert_false(power_source.cntrl_pantograph_auto_valve, "the EP07's three-way valve is turned by hand")
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return DriverSystem.driver_get_state(driver)["engine_active"], MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return DriverSystem.driver_get_state(driver)["engine_active"],
+            ENGINE_READY_SECONDS, "the driver's locomotive ready"):
+        return
     assert_true(DriverSystem.driver_get_state(driver)["engine_active"], "the driver gets the locomotive ready")
 
     # the player takes it over with the valve on the small compressor
     PlayerServer.player_take_over_vehicle(_vehicle)
     VehicleServer.vehicle_send_command(_vehicle, "pantograph_compressor_valve", true)
-    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN), MAX_WAIT)
+    # the driver hints on its next update, PREPARE_TIME at the latest for a standing vehicle
+    if not await wait_simulated_until(
+            func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN),
+            MaszynaLegacyAIDriver.PREPARE_TIME + SLICE_MARGIN, "the hint to turn the valve"):
+        return
 
     assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN),
             "the player is hinted to turn the valve to the main reservoir")
     assert_true(power_source.get_collector_pantograph_compressor_valve(), "and the driver leaves the valve to the player")
 
     VehicleServer.vehicle_send_command(_vehicle, "pantograph_compressor_valve", false)
-    await wait_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN), MAX_WAIT)
+    if not await wait_simulated_until(
+            func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN),
+            MaszynaLegacyAIDriver.PREPARE_TIME + SLICE_MARGIN, "the hint to turn the valve gone"):
+        return
     assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.PANTOGRAPH_AIR_SOURCE_SET_MAIN),
             "the valve turned, the hint is gone")
 
@@ -78,7 +90,10 @@ func test_the_horn_a_scenery_asks_for_is_hinted() -> void:
     assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.HORN_ON), "the player is hinted to sound the horn")
 
     VehicleServer.vehicle_send_command(_vehicle, "horn_low", true)
-    await wait_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.HORN_ON), MAX_WAIT)
+    # the driver sees the horn on its next update, PREPARE_TIME at the latest for a standing vehicle
+    if not await wait_simulated_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.HORN_ON),
+            MaszynaLegacyAIDriver.PREPARE_TIME + SLICE_MARGIN, "the horn hint gone"):
+        return
     assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.HORN_ON), "the horn sounding, the hint is gone")
     VehicleServer.vehicle_send_command(_vehicle, "horn_low", false)
 

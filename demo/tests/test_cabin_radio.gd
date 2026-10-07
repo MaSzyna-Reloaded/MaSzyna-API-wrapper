@@ -42,13 +42,13 @@ func before_each() -> void:
     vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
     vehicle_rid = physics_node.get_vehicle_rid()
-    await wait_idle_frames(3)
+    await step(3)
     VehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
     radio = CabinRadio3D.new()
     radio.radio_stop_alarm = _event(CabinRadio3D.RADIO_STOP)
     add_child_autofree(radio)
     radio.set_vehicle_rid(vehicle_rid)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func after_each() -> void:
@@ -63,12 +63,12 @@ func _message_played() -> bool:
 
 func _send(channel:int) -> void:
     CabinSystem.send_radio_message(_event(&"message"), null, channel, Vector3.ZERO, 0.0)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func _tune(channel:int) -> void:
     VehicleServer.vehicle_send_command(vehicle_rid, "radio_channel_set", channel)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func _players() -> int:
@@ -90,7 +90,7 @@ func test_switching_the_radio_off_mutes_a_message() -> void:
     await _send(CHANNEL)
     assert_true(_message_played())
     VehicleServer.vehicle_send_command(vehicle_rid, "radio", false)
-    await wait_idle_frames(2)
+    await step(2)
     assert_false(_message_played(), "muted with the radio off")
 
 
@@ -103,9 +103,9 @@ func test_messages_overlap() -> void:
 
 func test_the_radio_stop_alarm_and_its_lamp() -> void:
     VehicleServer.vehicle_send_command(vehicle_rid, "radio", true)
-    await wait_idle_frames(2)
+    await step(2)
     assert_false(CabinSystem.vehicle_state_value(vehicle_rid, CabinRadio3D.RADIO_STOP_LAMP_KEY, true))
     VehicleServer.vehicle_send_command(vehicle_rid, "radio_stop", true)
-    await wait_idle_frames(2)
+    await step(2)
     assert_true(CabinSystem.vehicle_state_value(vehicle_rid, CabinRadio3D.RADIO_STOP_LAMP_KEY, false), "the lamp")
     assert_true(_message_played(), "the alarm sounds on the radio")

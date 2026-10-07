@@ -8,9 +8,57 @@ const RAIL_VEHICLE_MASS:float = 74000.0
 ## build_passenger_car()'s door travel [m] - a car without it has no doors (Mover.cpp:7920)
 const PASSENGER_CAR_DOOR_SHIFT:float = 0.5
 
-## How long a spawned vehicle may take to be drawn in detail [s] (RailVehicleRenderingServer looks
-## at every vehicle's detail a few times a second)
+## Simulated seconds a spawned vehicle may take to be drawn in detail - its steps place it, its frames
+## look at its detail a few times a second (RailVehicleRenderingServer)
 const DETAIL_TIMEOUT:float = 5.0
+## Real seconds a vehicle of the game data may take to be built - parsed and configured, a few
+## frames of work
+const BUILD_TIMEOUT:float = 5.0
+## Real seconds a scenery fixture may take to load: parsing and building is the machine's work, not
+## simulated time - a fixture loads in under 0.1 s, this only catches a hang
+const LOAD_TIMEOUT:float = 5.0
+## One step of the test's clock [simulated s]: the simulation's tick to come (#301, 30 Hz). The run
+## has no SimulationRuntime - no frame moves the simulation; a test steps it tick by tick, as a step
+## debugger does, and what happens does not depend on how fast the machine is
+const TICK:float = 1.0 / 30.0
+
+
+## The ticks `seconds` of simulated time take, the last one whole
+static func ticks(seconds:float) -> int:
+    return ceili(seconds / TICK)
+
+
+## `count` ticks of the simulation, one after the other - a frame between them for what runs on the
+## frames (the keys, a knob a key holds)
+func step(count:int) -> void:
+    for _tick:int in count:
+        SimulationServer.simulation_advance(TICK)
+        await Engine.get_main_loop().process_frame
+
+
+## Steps the simulation tick by tick until `done`, for at most `simulated_seconds` - worked out from
+## the data of what is waited for. Not coming about by then fails the test there, saying `what`;
+## true when it came
+func wait_simulated_until(done:Callable, simulated_seconds:float, what:String) -> bool:
+    for _tick:int in ticks(simulated_seconds):
+        if done.call():
+            return true
+        SimulationServer.simulation_advance(TICK)
+        await Engine.get_main_loop().process_frame
+    if done.call():
+        return true
+    fail_test("%s did not come about within %.2f simulated seconds (%d ticks)" % [
+            what, simulated_seconds, ticks(simulated_seconds)])
+    return false
+
+
+## The loading that `loaded` announces is done; one that does not end within LOAD_TIMEOUT fails the
+## test there, saying `what`
+func wait_loaded(loaded:Signal, what:String) -> bool:
+    if await wait_for_signal(loaded, LOAD_TIMEOUT):
+        return true
+    fail_test("%s did not load within %.0f s" % [what, LOAD_TIMEOUT])
+    return false
 
 
 func wait_idle_frames(frames, message = ""):
@@ -171,9 +219,9 @@ func build_model_instance(submodels:Dictionary, parents:Dictionary) -> E3DModelI
     return instance
 
 
-## A MaSzyna vehicle built from the game data, added to the test, built and drawn in detail - as
-## nodes, which the tests look into - awaited. A vehicle is drawn in detail only near the streaming
-## camera: one stands at it for as long as that takes, unless the test has its own.
+## A MaSzyna vehicle built from the game data, added to the test and built - awaited. Drawn in detail
+## (as nodes, which a test looks into) only once wait_detailed() says so: a fixture without model
+## files is never drawn in detail
 func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehicle_id:String,
         driver_type:MaszynaDynamicData.DriverType = MaszynaDynamicData.DriverType.DRIVER_NOBODY) -> MaszynaRailVehicle3D:
     var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
@@ -183,15 +231,25 @@ func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehi
     vehicle.skin = skin
     vehicle.vehicle_id = vehicle_id
     add_child(vehicle)
-    await vehicle.vehicle_built
+    if not await wait_for_signal(vehicle.vehicle_built, BUILD_TIMEOUT):
+        fail_test("%s/%s was not built within %.0f s" % [data_path, file_name, BUILD_TIMEOUT])
+        return vehicle
     # resumed inside the vehicle's own emission, the test would run on its stack - where the
     # vehicle is locked and cannot be freed; the test goes on from the next frame
     await wait_idle_frames(1)
-    if RailVehicleRenderingServer.vehicle_is_attached(vehicle.get_rid()):
-        var has_camera:bool = SceneryStreamingServer.streaming_has_camera()
-        if not has_camera:
-            SceneryStreamingServer.streaming_set_camera(add_child_autoqfree(Camera3D.new()))
-        await wait_until(RailVehicleRenderingServer.vehicle_is_detailed.bind(vehicle.get_rid()), DETAIL_TIMEOUT)
-        if not has_camera:
-            SceneryStreamingServer.streaming_set_camera(null)
     return vehicle
+
+
+## The vehicle drawn in detail, as nodes - only near the streaming camera: one stands at it for as
+## long as that takes, unless the test has its own. Placed by the simulation's step, drawn by the
+## frames - a step is both; not coming about fails the test there
+func wait_detailed(vehicle:MaszynaRailVehicle3D) -> bool:
+    var has_camera:bool = SceneryStreamingServer.streaming_has_camera()
+    if not has_camera:
+        SceneryStreamingServer.streaming_set_camera(add_child_autoqfree(Camera3D.new()))
+    var detailed:bool = await wait_simulated_until(
+            RailVehicleRenderingServer.vehicle_is_detailed.bind(vehicle.get_rid()), DETAIL_TIMEOUT,
+            "%s drawn in detail" % vehicle.vehicle_id)
+    if not has_camera:
+        SceneryStreamingServer.streaming_set_camera(null)
+    return detailed

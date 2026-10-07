@@ -23,6 +23,9 @@ extends MaszynaGutTest
 ## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
+## Simulated seconds each controller notch is driven and watched for a trip - the 180 frames at
+## 60 fps the test was written with
+const NOTCH_SECONDS:float = 3.0
 
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
@@ -34,10 +37,9 @@ func before_each():
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    for i in range(20):
-        if scenery.get_child_count() > 0:
-            break
-        await wait_seconds(0.5)
+    # the scenery is announced once its vehicles are built and its drivers given their AI
+    if not await wait_loaded(scenery.scenery_loaded, SCENERY):
+        return
 
 
 func after_each():
@@ -53,12 +55,7 @@ func _find_train_controller(vehicle_name:String) -> VehicleController:
 
 
 func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
-    var controller:VehicleController = null
-    for i in range(10):
-        controller = _find_train_controller("EP07-424")
-        if controller:
-            break
-        await wait_seconds(0.5)
+    var controller:VehicleController = _find_train_controller("EP07-424")
     assert_not_null(controller, "EP07-424 should exist somewhere under the loaded scenery")
     if not controller:
         return
@@ -66,9 +63,16 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     # the scenery gives EP07-424 its driver (headdriver); the test drives it as a player does, who
     # takes the controls from the driver (MaszynaPlayer, drivermode.cpp:266)
     PlayerServer.player_take_over_vehicle(controller.get_rid())
-    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
+    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
+            controller.get_rid(), RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
+    assert_not_null(power_supply, "the EP07's FIZ (Light: LMaxVoltage) gives it a power supply")
+    if not power_supply:
+        return
+    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered - the
+    # battery's low voltage is there from the next step on.
     controller.send_command("battery", true)
-    await wait_idle_frames(2)
+    if not await wait_simulated_until(power_supply.get_power24_available, TICK, "the battery's low voltage"):
+        return
     # the controllers answer only from an active cab (IncMainCtrl, Mover.cpp:2226)
     controller.send_command("cab_activation", true)
     controller.send_command("security_acknowledge", true)
@@ -76,34 +80,36 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
     controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
-    # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
-    # voltage instead of a fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd -
     # main_switch must not be sent before EnginePowerSourceVoltage() has anything to report, since
     # MainSwitchCheck's powerisavailable check is evaluated once at the moment of the command and
     # silently refuses the close otherwise (it isn't retried later just because voltage shows up
-    # afterward).
-    for i in range(20):
-        await wait_seconds(0.5)
-        if controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
-            break
-    var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
-            controller.get_rid(), RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
-    assert_not_null(power_supply, "the EP07's FIZ (Light: LMaxVoltage) gives it a power supply")
-    if not power_supply:
+    # afterward). The fixture's EP07 has no model, so no arms to raise: its pantograph is at the
+    # wire the step it goes up (RailVehicleServer::vehicle_collect_current()), its tank spawned
+    # above MinPress (303e-ep.fiz).
+    if not await wait_simulated_until(
+            func() -> bool: return controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > 100.0,
+            TICK, "the wire's voltage at the first pantograph"):
         return
     assert_true(power_supply.get_power24_available(), "the battery gives the low voltage")
     controller.send_command("direction_increase")
-    await wait_idle_frames(2)
     controller.send_command("converter_fuse_reset")
     controller.send_command("fuse_reset")
-    await wait_idle_frames(2)
+    # the line breaker closes only CtrlDelay (SCDelay) after its last switching, counted from the
+    # vehicle's spawn (Mover.cpp:3362)
+    var engine:RailVehicleEngine = VehicleServer.vehicle_component_get(
+            controller.get_rid(), VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
+    var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
+            controller.get_rid(), RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
+    if not await wait_simulated_until(engine.get_main_switch_closable, master.step_delay + TICK,
+            "a closable line breaker"):
+        return
     controller.send_command("main_switch", true)
-    await wait_idle_frames(5)
     controller.send_command("converter", true)
-    await wait_seconds(5.0)
+    # the converter starts ConverterStartDelay after it is switched on (Mover.cpp:2055-2067)
+    if not await wait_simulated_until(power_supply.get_converter_enabled,
+            power_supply.cntrl_converter_start_delay + TICK, "the converter"):
+        return
     controller.send_command("compressor", true)
-    await wait_seconds(5.0)
 
     assert_true(
             controller.get_state().get("main_switch_enabled", false),
@@ -114,14 +120,12 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     var tripped:bool = false
     for notch in range(1, 6):
         controller.send_command("main_controller_increase")
-        # Poll every single idle frame (not just every 0.5s) so the exact frame Mains flips is
+        # Watched every single frame (not just every 0.5s) so the exact frame Mains flips is
         # caught, instead of a coarser 0.5s snapshot that could miss a one-frame relay blip that
         # already self-recovered by the next sample.
-        for i in range(180): # ~3s at 60fps
-            var was_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-            await wait_idle_frames(1)
-            var now_enabled:bool = controller.get_state().get("main_switch_enabled", false)
-            if was_enabled and not now_enabled:
+        for _tick:int in ticks(NOTCH_SECONDS):
+            await step(1)
+            if not controller.get_state().get("main_switch_enabled", false):
                 tripped = true
                 break
         if tripped:

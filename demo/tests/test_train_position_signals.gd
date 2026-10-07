@@ -83,7 +83,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(physics_node)
     _created_vehicles.append(vehicle)
-    await wait_idle_frames(2)
+    await step(2)
 
     return {
         "controller": VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()),

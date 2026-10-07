@@ -8,8 +8,14 @@ extends MaszynaGutTest
 ## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
-## Real seconds the driver gets: pantographs, InitialCtrlDelay and the converter's start
-const MAX_WAIT:float = 60.0
+## The driver's update the converter comes on with: the battery and the pantographs on the first,
+## the line breaker closed on the fourth, its button held over InitialCtrlDelay between them, the
+## converter on the fifth (8.1 s measured) - each PREPARE_TIME after the one before, the first
+## within PREPARE_TIME of the order
+const CONVERTER_UPDATE:int = 5
+## Simulated seconds beyond the driver's update for the clock's slice it lands in
+## (SimulationServer MAX_SLICE_TIME)
+const SLICE_MARGIN:float = 0.1
 
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
@@ -22,11 +28,10 @@ func before_each():
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    for i in range(30):
-        vehicle_rid = VehicleServer.vehicle_get_rid_by_name("EP07-424")
-        if VehicleServer.vehicle_is_simulation_ready(vehicle_rid):
-            break
-        await wait_seconds(0.5)
+    # the scenery is announced once its vehicles are built and its drivers given their AI
+    if not await wait_loaded(scenery.scenery_loaded, SCENERY):
+        return
+    vehicle_rid = VehicleServer.vehicle_get_rid_by_name("EP07-424")
 
 
 func after_each():
@@ -50,7 +55,9 @@ func test_the_driver_prepares_an_electric_locomotive_to_the_converter() -> void:
     assert_false(engine.get_main_switch_enabled(), "the locomotive stands cold, the line breaker open")
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return power_supply.get_converter_enabled(), MAX_WAIT)
+    if not await wait_simulated_until(power_supply.get_converter_enabled,
+            CONVERTER_UPDATE * MaszynaLegacyAIDriver.PREPARE_TIME + SLICE_MARGIN, "the converter the driver starts"):
+        return
 
     assert_true(power_supply.get_power24_available(), "the battery gives the low voltage")
     assert_true(engine.get_main_switch_enabled(), "the driver closes the line breaker")

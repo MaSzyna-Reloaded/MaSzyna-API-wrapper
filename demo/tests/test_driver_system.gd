@@ -1,7 +1,9 @@
 extends MaszynaGutTest
 
 const Order = MaszynaLegacyAIDriver.Order
-const MAX_WAIT:float = 5.0
+## Simulated seconds an order takes to be carried out: the driver's next update, a standing driver's
+## reaction time away at most (MaszynaLegacyAIDriver.PREPARE_TIME)
+const DRIVER_UPDATE:float = MaszynaLegacyAIDriver.PREPARE_TIME + TICK
 ## A water heater that switches itself off at this [C] (HeaterMaxTemperature)
 const WATER_HEATER_MAX_TEMPERATURE:float = 60.0
 const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
@@ -131,7 +133,10 @@ func test_a_putvalues_order_reaches_the_activators_driver() -> void:
     ScenarioEventServer.event_attach_action(event, action)
 
     ScenarioEventServer.event_queue(event, vehicle)
-    await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), MAX_WAIT)
+    # an event of no delay runs on the clock's next step
+    if not await wait_simulated_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), TICK,
+            "the event run"):
+        return
 
     assert_eq(DriverSystem.driver_get_state(driver)["radio_channel"], 4)
     ScenarioEventServer.event_free(event)
@@ -143,8 +148,10 @@ func test_a_scheduled_update_reaches_the_delegate() -> void:
 
     DriverSystem.driver_schedule_update(driver, 0.0)
     DriverSystem.driver_schedule_update(driver, 0.0)
-    await wait_until(func() -> bool: return delegate.updates > 0, MAX_WAIT)
-    await wait_idle_frames(2)
+    # an update scheduled at once is delivered on the clock's next step - and only one
+    if not await wait_simulated_until(func() -> bool: return delegate.updates > 0, TICK, "the scheduled update"):
+        return
+    await step(1)
 
     assert_eq(delegate.updates, 1, "a later schedule replaces the pending one")
 
@@ -161,12 +168,16 @@ func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return train.get_state()["battery_enabled"], DRIVER_UPDATE,
+            "the battery switched on by the driver"):
+        return
     assert_true(train.get_state()["battery_enabled"], "the battery is switched on")
     assert_eq(CabinSystem.get_control(RailVehicleServer.vehicle_get_front_cabin(vehicle), &"battery_sw"), true, "by its switch in the cab")
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 0.0, 0.0)
-    await wait_until(func() -> bool: return not train.get_state()["battery_enabled"], MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return not train.get_state()["battery_enabled"], DRIVER_UPDATE,
+            "the battery switched off by the driver"):
+        return
     assert_false(train.get_state()["battery_enabled"], "put away, the battery is off")
     DriverSystem.driver_attach_delegate(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
@@ -199,13 +210,17 @@ func test_a_driver_not_in_control_touches_nothing() -> void:
     # a player in the cab (MaszynaPlayer)
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON),
+            DRIVER_UPDATE, "the battery's hint"):
+        return
     assert_false(train.get_state()["battery_enabled"], "the order is taken, the battery left alone")
     assert_eq(_hint_count(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), 1,
             "the player is hinted to switch the battery on, once (cue_action(), driverhints.cpp:83)")
 
     PlayerServer.player_leave_vehicle()
-    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return train.get_state()["battery_enabled"], DRIVER_UPDATE,
+            "the battery switched on by the driver back in control"):
+        return
     assert_true(train.get_state()["battery_enabled"], "back in control, it carries the order out")
     DriverSystem.driver_attach_delegate(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
@@ -222,7 +237,9 @@ func test_a_player_gets_the_next_hint_once_one_is_done() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON),
+            DRIVER_UPDATE, "the battery's hint"):
+        return
     # the hints window shows the hint's key: its control, and the action of the cab binding it
     var battery_hint:Dictionary = {}
     for entry:Dictionary in DriverSystem.driver_get_state(driver)["hints"]:
@@ -239,7 +256,9 @@ func test_a_player_gets_the_next_hint_once_one_is_done() -> void:
     assert_eq(cab_logic.get_action(&"sand_bt", CabinLogic.Gesture.PRESS), &"", "and a control without a key has none")
 
     CabinSystem.act(RailVehicleServer.vehicle_get_driver_cabin(vehicle), &"battery_sw", &"toggle", true)
-    await wait_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return not _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON),
+            DRIVER_UPDATE, "the battery's hint gone"):
+        return
 
     assert_true(train.get_state()["battery_enabled"], "the player switched the battery on")
     assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), "its hint is gone")
@@ -269,7 +288,9 @@ func test_a_pump_not_switched_by_hand_is_never_hinted() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.BATTERY_ON),
+            DRIVER_UPDATE, "the battery's hint"):
+        return
 
     assert_false(engine.get_fuel_pump_enabled(), "the fuel pump is off")
     assert_false(_hinted(driver, MaszynaLegacyDriverHints.Hint.FUEL_PUMP_ON), "but it starts by itself: no hint")
@@ -296,7 +317,9 @@ func test_a_diesel_with_a_water_heater_is_hinted_its_water_pump() -> void:
     DriverSystem.driver_attach_delegate(driver, ai)
     PlayerServer.player_take_over_vehicle(vehicle)
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_ON), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return _hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_ON),
+            DRIVER_UPDATE, "the water pump's hint"):
+        return
 
     assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_BREAKER_ON), "the water pump's breaker first")
     assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.WATER_PUMP_ON), "then the water pump")
@@ -320,11 +343,14 @@ func test_a_driver_created_for_a_vehicle_a_player_drives_touches_nothing() -> vo
     assert_false(DriverSystem.vehicle_is_control_active(vehicle), "the player drives it, not its new driver")
 
     DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    await wait_seconds(1.0)
+    # the driver's next update, which leaves the battery alone
+    await step(ticks(MaszynaLegacyAIDriver.PREPARE_TIME))
     assert_false(train.get_state()["battery_enabled"], "the order is taken, the battery left alone")
 
     PlayerServer.player_leave_vehicle()
-    await wait_until(func() -> bool: return train.get_state()["battery_enabled"], MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return train.get_state()["battery_enabled"], DRIVER_UPDATE,
+            "the battery switched on by the driver, the player gone"):
+        return
     assert_true(train.get_state()["battery_enabled"], "the player gone, it carries the order out")
     DriverSystem.driver_attach_delegate(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
@@ -337,7 +363,11 @@ func test_the_driver_reads_its_trainset() -> void:
     var driver:RID = get_vehicle_driver(vehicle)
     DriverSystem.driver_attach_delegate(driver, ai)
 
-    await wait_until(func() -> bool: return not DriverSystem.driver_get_state(driver)["trainset_vehicles"].is_empty(), MAX_WAIT)
+    # on its first update, at once on attaching
+    if not await wait_simulated_until(
+            func() -> bool: return not DriverSystem.driver_get_state(driver)["trainset_vehicles"].is_empty(),
+            TICK, "the driver's trainset read"):
+        return
 
     var state:Dictionary = DriverSystem.driver_get_state(driver)
     var alone:Array[RID] = [vehicle]

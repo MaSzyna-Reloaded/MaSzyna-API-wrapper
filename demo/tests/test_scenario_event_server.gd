@@ -3,13 +3,19 @@ extends MaszynaGutTest
 const EventImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd")
 const NodeImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd")
 const IsolatedImporter = preload("res://addons/libmaszyna/legacy/scenery/maszyna_isolated_importer.gd")
-const MAX_WAIT:float = 5.0
+## The scenery animation's turn [degrees] and its speed [degrees a simulated second]
+const QUARTER_TURN:float = 90.0
+const TURN_SPEED:float = 900.0
 ## Longer than any test runs, so the event stays queued
 const NEVER:float = 3600.0
+## An event another one queues runs a step later: a pass of the queue does not run what it queued
+const CHAINED_EVENT_SECONDS:float = 2.0 * TICK
 ## Fast enough for one frame to pass the cap
 const FAST_SPEED:float = 1000.0
 ## SimulationServer::MAX_FRAME_DELTA
 const MAX_FRAME_DELTA:float = 0.25
+## The delay of an event queued to run after two of no delay [s]
+const LATE_DELAY:float = 0.2
 ## `departuredelay`: an event of this delay [s] and this departure delay [s], queued by a train that
 ## departs this many seconds from now; run times compared within this [s]
 const EVENT_DELAY:float = 5.0
@@ -49,14 +55,16 @@ class RequeueingAction extends ScenarioEventAction:
 
 func test_events_run_in_time_order_and_in_queue_order_on_equal_times() -> void:
     var action:RecordingAction = RecordingAction.new()
-    var late:RID = _create_event(action, 0.2)
+    var late:RID = _create_event(action, LATE_DELAY)
     var first:RID = _create_event(action, 0.0)
     var second:RID = _create_event(action, 0.0)
 
     ScenarioEventServer.event_queue(late)
     ScenarioEventServer.event_queue(first)
     ScenarioEventServer.event_queue(second)
-    await wait_until(func() -> bool: return action.runs.size() == 3, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 3, LATE_DELAY + TICK,
+            "the three events run"):
+        return
 
     var expected:Array[RID] = [first, second, late]
     assert_eq(action.runs, expected)
@@ -73,7 +81,9 @@ func test_a_queued_event_is_not_queued_again_and_keeps_its_activator() -> void:
     assert_true(ScenarioEventServer.event_queue(event, activator))
     assert_false(ScenarioEventServer.event_queue(event, other_activator), "a waiting event should refuse")
     assert_true(ScenarioEventServer.event_is_queued(event))
-    await wait_until(func() -> bool: return action.runs.size() == 1, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 1, TICK,
+            "the event run"):
+        return
 
     var expected:Array[RID] = [activator]
     assert_eq(action.activators, expected)
@@ -83,18 +93,20 @@ func test_a_queued_event_is_not_queued_again_and_keeps_its_activator() -> void:
     ScenarioEventServer.memory_free(other_activator)
 
 
-func test_an_event_queueing_itself_runs_once_a_frame() -> void:
+func test_an_event_queueing_itself_runs_once_a_step() -> void:
     var action:RequeueingAction = RequeueingAction.new()
     var event:RID = _create_event(action, 0.0)
 
-    # the clock starts ticking when the event is queued; between two frames it ticks once
+    # the event server takes one pass of its queue a step of the clock
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return action.count > 0, MAX_WAIT)
-    await get_tree().process_frame
+    if not await wait_simulated_until(func() -> bool: return action.count > 0, TICK,
+            "the event run"):
+        return
+    await step(1)
     var count:int = action.count
-    await get_tree().process_frame
+    await step(1)
 
-    assert_eq(action.count, count + 1, "once a frame: the pass does not run the event it queued")
+    assert_eq(action.count, count + 1, "once a step: the pass does not run the event it queued")
     _free_events([event])
 
 
@@ -119,10 +131,15 @@ func test_the_condition_chooses_between_the_events_and_the_else_events() -> void
 
     ScenarioEventServer.memory_set_values(memory, "go_ahead", 0.0, 0.0)
     ScenarioEventServer.event_queue(multiple, activator)
-    await wait_until(func() -> bool: return action.runs.size() == 1, MAX_WAIT)
+    # the multiple runs on one pass of the queue, the event it queues on the next
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 1, CHAINED_EVENT_SECONDS,
+            "the chosen event run"):
+        return
     ScenarioEventServer.memory_set_values(memory, "stop", 0.0, 0.0)
     ScenarioEventServer.event_queue(multiple)
-    await wait_until(func() -> bool: return action.runs.size() == 2, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 2, CHAINED_EVENT_SECONDS,
+            "the else event run"):
+        return
 
     var expected:Array[RID] = [chosen, otherwise]
     assert_eq(action.runs, expected, "a text with * should be compared up to it")
@@ -145,7 +162,7 @@ func test_pause_stops_the_time_and_the_speed_scales_it() -> void:
 
     SimulationServer.simulation_speed = FAST_SPEED
     var fast_from:float = SimulationServer.simulation_get_time()
-    await get_tree().process_frame
+    SimulationServer.simulation_advance(TICK)
     var advanced:float = SimulationServer.simulation_get_time() - fast_from
     assert_gt(advanced, 0.0, "the time should run at the speed")
     assert_lte(advanced, MAX_FRAME_DELTA * FAST_SPEED, "a frame counts at most MAX_FRAME_DELTA, sped up")
@@ -209,7 +226,9 @@ func test_putvalues_cab_signal_reaches_the_security_system() -> void:
     watch_signals(VehicleServer)
 
     ScenarioEventServer.event_queue(event, vehicle)
-    await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), TICK,
+            "the CabSignal event run"):
+        return
 
     assert_signal_emitted_with_parameters(
         VehicleServer, "vehicle_command_received", [vehicle, "security_cabsignal_trigger", null, null]
@@ -363,17 +382,20 @@ func test_scenery_memcells_and_value_events() -> void:
     var cell2:RID = ScenarioEventServer.memory_get_rid_by_name(&"cell2")
     assert_eq(ScenarioEventServer.memory_get_text(cell1), "Start")
 
-    await _run_event(&"set_cell")
+    if not await _run_event(&"set_cell"):
+        return
     assert_eq(ScenarioEventServer.memory_get_text(cell1), "Go", "the text keeps its case")
     assert_eq(ScenarioEventServer.memory_get_value1(cell1), 1.0, "* should leave the value")
     assert_eq(ScenarioEventServer.memory_get_value2(cell1), 5.0)
 
-    await _run_event(&"add_cell")
+    if not await _run_event(&"add_cell"):
+        return
     assert_eq(ScenarioEventServer.memory_get_text(cell1), "Go_x")
     assert_eq(ScenarioEventServer.memory_get_value1(cell1), 2.0)
     assert_eq(ScenarioEventServer.memory_get_value2(cell1), 5.0)
 
-    await _run_event(&"copy_cell")
+    if not await _run_event(&"copy_cell"):
+        return
     assert_eq(ScenarioEventServer.memory_get_text(cell2), "Other", "mask 2 copies only value 1")
     assert_eq(ScenarioEventServer.memory_get_value1(cell2), 2.0)
     assert_eq(ScenarioEventServer.memory_get_value2(cell2), 8.0)
@@ -412,7 +434,8 @@ func test_scenery_lights_event_shows_the_aspect() -> void:
     var models:Array[MaszynaModelData] = [model_data]
     var root:MaszynaIncludeNode = await _build_scenery("event sem_a_sem_ligh1 lights 0 sem_a 1 endevent", models)
 
-    await _run_event(&"sem_a_sem_ligh1")
+    if not await _run_event(&"sem_a_sem_ligh1"):
+        return
 
     assert_eq(SignallingServer.signal_head_get_aspect(signal_head), &"sem_ligh1")
     assert_eq(SignallingServer.signal_head_get_light_state(signal_head, 0), SignallingServer.LIGHT_STATE_ON)
@@ -432,7 +455,9 @@ func test_a_track_event_fires_once_per_entry_in_its_direction() -> void:
 
     RailVehicleServer.vehicle_heading_to_track_end.emit(vehicle, track)
     assert_true(ScenarioEventServer.event_is_queued(to_end))
-    await wait_until(func() -> bool: return action.runs.size() == 1, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 1, TICK,
+            "the track event run"):
+        return
     RailVehicleServer.vehicle_stopped_on_track.emit(vehicle, track)
     RailVehicleServer.vehicle_heading_to_track_end.emit(vehicle, track)
     assert_false(ScenarioEventServer.event_is_queued(to_end), "once per entry")
@@ -456,10 +481,14 @@ func test_a_standing_event_goes_on_while_the_vehicle_stands() -> void:
     ScenarioEventServer.track_add_event(track, ScenarioEventServer.TRACK_EVENTALL0, standing)
 
     RailVehicleServer.vehicle_stopped_on_track.emit(vehicle, track)
-    await wait_until(func() -> bool: return action.runs.size() >= 2, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() >= 2, TICK,
+            "the standing event run again"):
+        return
     assert_gt(action.runs.size(), 1, "queued again after its run")
     RailVehicleServer.vehicle_heading_to_track_end.emit(vehicle, track)
-    await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(standing), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return not ScenarioEventServer.event_is_queued(standing), TICK,
+            "the standing event let go"):
+        return
     var runs:int = action.runs.size()
     await get_tree().process_frame
     assert_eq(action.runs.size(), runs, "not once the vehicle moves")
@@ -486,21 +515,22 @@ func test_scenery_animation_turns_the_submodel() -> void:
     var instances:Dictionary[String, RID] = {"rog1": instance.get_e3d_instance()}
     var root:MaszynaIncludeNode = await _build_scenery(
         "node -1 0 c1 memcell 0 0 0 moving 0 0 none endmemcell "
-        + "event rog1on animation 0 rog1 rotate ramie01 0 0 90 900 endevent "
+        + "event rog1on animation 0 rog1 rotate ramie01 0 0 %.0f %.0f endevent " % [QUARTER_TURN, TURN_SPEED]
         + "event rog1.ramie01:done updatevalues 0 c1 done * * endevent",
         models, instances
     )
     var arm_node:Node3D = instance.find_child("Ramie01", true, false)
     var cell:RID = ScenarioEventServer.memory_get_rid_by_name(&"c1")
 
-    E3DRenderingServer.animation_set_speed(0.0)
-    await _run_event(&"rog1on")
-    await get_tree().process_frame
-    assert_true(arm_node.basis.is_equal_approx(Basis()), "no motion while paused")
-    E3DRenderingServer.animation_set_speed(1.0)
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "done", MAX_WAIT)
+    if not await _run_event(&"rog1on"):
+        return
+    # the arm turns on the simulation's clock at its speed - the quarter turn in QUARTER_TURN / TURN_SPEED
+    # simulated seconds, its :done event on the step it arrives
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "done",
+            QUARTER_TURN / TURN_SPEED + TICK, "the animation's arrival"):
+        return
 
-    assert_true(arm_node.basis.is_equal_approx(Basis(Vector3(0, 0, 1), deg_to_rad(90.0))), "turned by 90 degrees about z")
+    assert_true(arm_node.basis.is_equal_approx(Basis(Vector3(0, 0, 1), deg_to_rad(QUARTER_TURN))), "turned by 90 degrees about z")
     assert_eq(ScenarioEventServer.memory_get_text(cell), "done", "the :done event runs when it arrives")
     root.free()
 
@@ -524,7 +554,8 @@ func test_scenery_voltage_event_sets_the_power_source() -> void:
         tracks, models, model_rids, power_sources
     )
 
-    await _run_event(&"keyctrl05")
+    if not await _run_event(&"keyctrl05"):
+        return
 
     assert_eq(TractionServer.power_source_get_nominal_voltage(power_source), 2400.0)
     root.free()
@@ -566,13 +597,17 @@ func test_scenery_isolated_section_fires_busy_and_marks_its_memory() -> void:
 
     TrackServer.track_vehicle_entered(track, vehicle)
     assert_true(TrackServer.isolated_is_occupied(section))
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "busy", MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "busy", TICK,
+            "the busy event run"):
+        return
     assert_eq(ScenarioEventServer.memory_get_text(cell), "busy")
     assert_eq(int(ScenarioEventServer.memory_get_value2(own_memory)) & 1, 1, "value 2 made odd")
 
     TrackServer.track_vehicle_left(track, vehicle)
     assert_false(TrackServer.isolated_is_occupied(section))
-    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_value2(own_memory) == 0.0, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return ScenarioEventServer.memory_get_value2(own_memory) == 0.0, TICK,
+            "the section's memory cleared"):
+        return
     assert_eq(ScenarioEventServer.memory_get_value2(own_memory), 0.0, "the low byte cleared")
     root.free()
     TrackServer.track_free(track)
@@ -596,10 +631,14 @@ func test_memcompareex_and_track_tests() -> void:
 
     condition.pass = MaszynaLegacyEventCondition.PASS_ANY
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return action.runs.size() == 1, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 1, TICK,
+            "the event run"):
+        return
     condition.pass = MaszynaLegacyEventCondition.PASS_ALL
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return action.else_runs.size() == 1, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.else_runs.size() == 1, TICK,
+            "the else events run"):
+        return
     assert_eq(action.runs.size(), 1, "any: \"b\" > \"a\" passes although 5 < 3 does not")
     assert_eq(action.else_runs.size(), 1, "all: 5 < 3 fails")
 
@@ -609,10 +648,14 @@ func test_memcompareex_and_track_tests() -> void:
     condition.tracks = condition_tracks
     condition.track_test = MaszynaLegacyEventCondition.TRACK_TEST_OCCUPIED
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return action.else_runs.size() == 2, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.else_runs.size() == 2, TICK,
+            "the else events run for an empty track"):
+        return
     TrackServer.track_vehicle_entered(track, memory)
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return action.runs.size() == 2, MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() == 2, TICK,
+            "the events run for an occupied track"):
+        return
     assert_eq(action.else_runs.size(), 2, "an empty track is not occupied")
     assert_eq(action.runs.size(), 2, "a track with a vehicle is")
 
@@ -693,7 +736,9 @@ func _parse(text:String) -> MaszynaImporterContext:
     return context
 
 
-func _run_event(event_name:StringName) -> void:
+## Queues the scenery's event and waits for it to run - its delay, in simulated time; true when it ran
+func _run_event(event_name:StringName) -> bool:
     var event:RID = ScenarioEventServer.event_get_rid_by_name(event_name)
     ScenarioEventServer.event_queue(event)
-    await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), MAX_WAIT)
+    return await wait_simulated_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event),
+            ScenarioEventServer.event_get_delay(event) + TICK, "%s run" % event_name)

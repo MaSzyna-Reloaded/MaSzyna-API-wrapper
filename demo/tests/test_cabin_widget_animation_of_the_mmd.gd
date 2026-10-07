@@ -5,8 +5,8 @@ extends MaszynaGutTest
 ## once (Gauge.cpp:364-375).
 
 const FULL_SHIFT:float = 0.2
-## Longer than a switch's refresh of its target
-const REFRESH_SECONDS:float = 0.2
+## How often a switch takes its target (_process_tool(), cabin_switch.gd)
+const SWITCH_REFRESH_SECONDS:float = 0.05
 
 
 func test_a_sliding_gauge_moves_its_mesh() -> void:
@@ -32,6 +32,8 @@ func test_a_switch_without_friction_moves_at_once() -> void:
     switch.mesh_path = switch.get_path_to(lever)
     await wait_idle_frames(3)
     switch.switch_position = 2
-    # the switch takes its target on its own refresh (_process_tool, every 0.05 s)
-    await wait_seconds(REFRESH_SECONDS)
+    # the switch takes its target on its own refresh, and moves at once without friction
+    if not await wait_simulated_until(func() -> bool: return is_equal_approx(lever.position.z, FULL_SHIFT * 2.0),
+            SWITCH_REFRESH_SECONDS + TICK, "the lever at its target"):
+        return
     assert_almost_eq(lever.position.z, FULL_SHIFT * 2.0, 0.001)

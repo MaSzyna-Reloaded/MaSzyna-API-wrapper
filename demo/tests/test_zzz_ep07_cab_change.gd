@@ -24,7 +24,7 @@ func after_each() -> void:
     # out of the cab before the vehicle goes: the player's cab camera is in it
     PlayerServer.player_leave_vehicle()
     # the cab interior is freed at the end of the frame
-    await wait_idle_frames(1)
+    await step(1)
     if is_instance_valid(vehicle):
         vehicle.free()
     if is_instance_valid(player):
@@ -45,7 +45,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     player.auto_start = false
     add_child(player)
     PlayerServer.player_take_over_vehicle(vehicle_rid)
-    await wait_idle_frames(3)
+    await step(3)
 
     var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D
     var vehicle_forward:Vector3 = -vehicle.global_basis.z
@@ -53,7 +53,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     assert_true((-camera.global_basis.z).dot(vehicle_forward) > 0.99, "cab 1 camera should look forward")
 
     RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
-    await wait_idle_frames(3)
+    await step(3)
 
     var machine_room:MaszynaDynamicTrainCabin = camera.get_parent() as MaszynaDynamicTrainCabin
     assert_eq(RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle_rid)),
@@ -71,7 +71,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
         assert_false(diagnostic["code"] == "MMD_INVALID_CAB_DEFINITION", "EP07 declares cab0definition:")
 
     RailVehicleServer.person_change_cabin(PlayerServer.player_get_person(), RailVehicleServer.CABIN_CHANGE_BACKWARD)
-    await wait_idle_frames(3)
+    await step(3)
 
     var cabin:Cabin3D = camera.get_parent() as Cabin3D
     assert_eq(RailVehicleServer.cabin_get_kind(RailVehicleServer.vehicle_get_driver_cabin(vehicle_rid)),

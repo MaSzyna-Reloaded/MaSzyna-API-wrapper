@@ -26,6 +26,8 @@ func after_each() -> void:
 
 func test_exterior_lights_resolve_and_switch() -> void:
     vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_lights")
+    if not await wait_detailed(vehicle):
+        return
     var model:RID = RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid())
     assert_true(model.is_valid(), "the exterior model should load")
     if not model.is_valid():

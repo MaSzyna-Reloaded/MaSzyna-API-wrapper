@@ -7,9 +7,9 @@ extends MaszynaGutTest
 ## presets, the doors closed from the cab (CloseCtrl=DriverCtrl).
 
 const CONTROL_CAR_PATH:String = "res://tests/fixtures/dynamic/pkp/en57-2000_v1/6bs.fiz"
-## Long enough for the doors to open or close [s]
-const DOORS_TIMEOUT:float = 20.0
-const SETTLE_FRAMES:int = 2
+## Steps a vehicle just built takes to stand ready: its node takes the controller within the
+## frames, the vehicle its configuration on its first step
+const SETTLE_TICKS:int = 2
 
 var _vehicle:RID
 
@@ -22,15 +22,21 @@ func before_each() -> void:
     var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
             _vehicle, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
     power_supply.cntrl_battery_start_mode = RailVehicleController.START_MODE_MANUAL
-    await wait_idle_frames(SETTLE_FRAMES)
+    await step(SETTLE_TICKS)
     # the doors are worked from the cab only with the low voltage (Mover.cpp:8669-8673)
     VehicleServer.vehicle_send_command(_vehicle, "battery", true)
-    await wait_until(func() -> bool: return VehicleServer.vehicle_dump_state(_vehicle)["power24_available"], DOORS_TIMEOUT)
+    # the low voltage is reckoned on the vehicle's next step
+    if not await wait_simulated_until(
+            func() -> bool: return VehicleServer.vehicle_dump_state(_vehicle)["power24_available"],
+            TICK, "the low voltage on the battery"):
+        return
     VehicleServer.vehicle_send_command(_vehicle, "cab_activation", true)
     VehicleServer.vehicle_send_command(_vehicle, "doors_left_permit", true)
     VehicleServer.vehicle_send_command(_vehicle, "doors_right_permit", true)
     VehicleServer.vehicle_send_command(_vehicle, "doors_left", true)
-    await wait_until(func() -> bool: return _doors().get_left_open(), DOORS_TIMEOUT)
+    # the doors' travel: their delay, then their shift at their speed (update_doors(), Mover.cpp:8000-8008)
+    await wait_simulated_until(func() -> bool: return _doors().get_left_open(),
+            _doors().open_delay + _doors().max_shift / _doors().open_speed + TICK, "the left doors open")
 
 
 func after_each() -> void:
@@ -50,7 +56,10 @@ func test_a_revoking_hint_has_no_key_a_granting_one_has() -> void:
 func test_closing_the_doors_revokes_their_permit() -> void:
     assert_true(_doors().get_left_open(), "the left doors open with their permit")
     VehicleServer.vehicle_send_command(_vehicle, "doors_left", false)
-    await wait_until(func() -> bool: return not _doors().get_left_open_permit(), DOORS_TIMEOUT)
+    # revoked on the doors' next step, as they start closing (Mover.cpp:7939-7944)
+    if not await wait_simulated_until(func() -> bool: return not _doors().get_left_open_permit(), TICK,
+            "the left doors' permit revoked"):
+        return
     assert_false(_doors().get_left_open_permit(), "closing the doors revokes their permit")
 
 
@@ -58,14 +67,20 @@ func test_a_player_is_hinted_to_close_the_doors_before_the_permits() -> void:
     var driver:RID = get_vehicle_driver(_vehicle)
     DriverSystem.driver_attach_delegate(driver, MaszynaLegacyAIDriver.new())
     PlayerServer.player_take_over_vehicle(_vehicle)
-    # the hints look at the doors of the trainset the driver has checked
-    await wait_until(func() -> bool: return DriverSystem.driver_get_state(driver).get("trainset_vehicles", []).size() > 0,
-            DOORS_TIMEOUT)
+    # the hints look at the doors of the trainset the driver has checked - on its first update, at
+    # once on attaching (MaszynaLegacyAIDriver)
+    if not await wait_simulated_until(
+            func() -> bool: return DriverSystem.driver_get_state(driver).get("trainset_vehicles", []).size() > 0,
+            TICK, "the driver's trainset checked"):
+        return
     var cars:Array[RID] = [_vehicle]
     StationServer.dispatch_start(_vehicle, cars)
     StationServer.dispatch_depart(_vehicle)
-    await wait_until(func() -> bool: return _hints(driver).has(MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF),
-            DOORS_TIMEOUT)
+    # on the driver's next update, a standing driver's reaction time away at most
+    if not await wait_simulated_until(
+            func() -> bool: return _hints(driver).has(MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF),
+            MaszynaLegacyAIDriver.PREPARE_TIME + TICK, "the hint to revoke the left doors' permit"):
+        return
     var hints:Array[MaszynaLegacyDriverHints.Hint] = _hints(driver)
     assert_has(hints, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_CLOSE, "the open doors are to be closed")
     assert_lt(hints.find(MaszynaLegacyDriverHints.Hint.DOOR_LEFT_CLOSE),

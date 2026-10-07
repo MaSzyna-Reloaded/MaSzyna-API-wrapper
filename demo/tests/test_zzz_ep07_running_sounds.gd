@@ -14,6 +14,8 @@ const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.
 
 ## How near its vehicle the node the vehicle's sound players are built under stands [m]
 const MOUNT_TOLERANCE:float = 1.0
+## Simulated seconds the rolling EP07 is listened to: about 110 m at 40 km/h, over 25 m rails
+const LISTEN_SECONDS:float = 10.0
 
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
@@ -69,12 +71,9 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    var template:RID = RID()
-    for i in range(40):
-        template = VehicleServer.vehicle_get_rid_by_name("EP07-424")
-        if template.is_valid():
-            break
-        await wait_seconds(0.5)
+    if not await wait_loaded(scenery.scenery_loaded, SCENERY):
+        return
+    var template:RID = VehicleServer.vehicle_get_rid_by_name("EP07-424")
     assert_true(template.is_valid(), "EP07-424 should be a vehicle of the loaded scenery")
     if not template.is_valid():
         return
@@ -88,14 +87,14 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     vehicle.start_track_name = "tdo_n25"
     vehicle.start_track_offset = 50.0
     scenery.add_child(vehicle)
-    var rail_vehicle:RailVehicle3D = null
-    for i in range(40):
-        await wait_seconds(0.25)
-        rail_vehicle = vehicle as RailVehicle3D
-        if rail_vehicle and rail_vehicle.get_controller():
-            break
-    assert_not_null(rail_vehicle)
-    if not rail_vehicle:
+    if not await wait_for_signal(vehicle.vehicle_built, BUILD_TIMEOUT):
+        fail_test("the rolling EP07 was not built within %.0f s" % BUILD_TIMEOUT)
+        return
+    # resumed inside the vehicle's own emission: on from the next frame
+    await wait_idle_frames(1)
+    var rail_vehicle:RailVehicle3D = vehicle as RailVehicle3D
+    assert_not_null(rail_vehicle.get_controller(), "the rolling EP07 has its controller once built")
+    if not rail_vehicle.get_controller():
         return
     var controller:VehicleController = rail_vehicle.get_controller()
     # the sound is built once a listener is near the vehicle - on foot the player listens through
@@ -104,25 +103,26 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     player.auto_start = false
     add_child_autofree(player)
     player.free_camera.global_position = rail_vehicle.global_position
-    var running:SfxPlayer3D = null
-    # the vehicle's sound players are built under a node riding on it, of the system that built it
-    for i in range(40):
+    # the vehicle's sound players are built under a node riding on it, of the system that built it -
+    # the machine's work over a few frames once the listener is near; an array, as a lambda takes a
+    # local by value
+    var found_players:Array[SfxPlayer3D] = []
+    var found:Callable = func() -> bool:
         for node:Node in MaszynaLegacyVehicleSystem.find_children("RunningSfxPlayer3D", "SfxPlayer3D", true, false):
             if (node.get_parent() as Node3D).global_position.distance_to(rail_vehicle.global_position) < MOUNT_TOLERANCE:
-                running = node as SfxPlayer3D
-        if running:
-            break
-        await wait_seconds(0.25)
-    assert_not_null(running)
-    if not running:
+                found_players.append(node as SfxPlayer3D)
+        return found_players.size() > 0
+    if not await wait_until(found, BUILD_TIMEOUT):
+        fail_test("the rolling EP07's sound was not built within %.0f s" % BUILD_TIMEOUT)
         return
+    var running:SfxPlayer3D = found_players[0]
 
     var motor_heard:bool = false
     var outer_noise_heard:bool = false
     var clatter_count:int = 0
     var clatter_playing:Dictionary = {}
-    for i in range(600): # ~10s at 60fps
-        await wait_idle_frames(1)
+    for _tick:int in ticks(LISTEN_SECONDS):
+        await step(1)
         motor_heard = motor_heard or running.is_playing(&"traction_motor_0")
         outer_noise_heard = outer_noise_heard or running.is_playing(&"outer_noise_0")
         for event:SfxEvent in running.bank.events:

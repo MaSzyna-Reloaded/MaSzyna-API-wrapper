@@ -16,9 +16,12 @@ var vehicle_rid:RID
 
 var _since_out:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)
 var _since_return:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)
+## The windscreen's time - the simulation's, as the wipers it follows
+var _clock:SimulationClock = SimulationClock.new()
 
 
-func _process(delta:float) -> void:
+func _process(frame_delta:float) -> void:
+    var delta:float = _clock.advance(frame_delta)
     var positions:PackedFloat64Array = CabinSystem.vehicle_state(vehicle_rid).get("wiper_positions", PackedFloat64Array())
     var cab:int = CabinSystem.vehicle_state(vehicle_rid).get("cabin", 0)
     var wiper_pos:Vector4 = Vector4.ZERO

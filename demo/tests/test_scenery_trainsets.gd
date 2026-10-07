@@ -8,7 +8,6 @@ const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 ## A trainset "express" of `first` (with a driver) and `second` on main_track, `lone` on
 ## side_track, and `road_car` on a track the scenery does not have
 const SCENERY:String = "trainsets.scn"
-const LOAD_TIMEOUT:float = 30.0
 ## How exactly the second vehicle stands a vehicle's length behind the first [m]
 const PLACEMENT_TOLERANCE:float = 0.01
 

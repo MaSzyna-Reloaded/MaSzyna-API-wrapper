@@ -22,6 +22,8 @@ var _cabin:RID
 var _dirty:bool = false
 var _setup_phase: bool = true
 var _t = 0.0
+## The element's time - the simulation's
+var _clock:SimulationClock = SimulationClock.new()
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
@@ -167,7 +169,8 @@ func _update_state():
     if _off_target:
         _off_target.visible = not active_now
 
-func _process(delta):
+func _process(frame_delta):
+    var delta:float = _clock.advance(frame_delta)
     if _dirty:
         _dirty = false
         if not _on_target and on_target_path:

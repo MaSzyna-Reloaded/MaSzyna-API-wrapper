@@ -9,8 +9,6 @@ extends MaszynaGutTest
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "startup_sp45_v1.scn"
 const VEHICLE:String = "301db-152"
-## Real seconds a scenery fixture may take to load its vehicles
-const LOAD_TIMEOUT:float = 15.0
 
 var _previous_game_dir:String = ""
 var _scenery:MaszynaSceneryNode
@@ -25,9 +23,11 @@ func before_each() -> void:
     _scenery = MaszynaSceneryNode.new()
     _scenery.filename = SCENERY
     add_child(_scenery)
-    await wait_until(func() -> bool:
-            _vehicle = VehicleServer.vehicle_get_rid_by_name(VEHICLE)
-            return VehicleServer.vehicle_is_simulation_ready(_vehicle), LOAD_TIMEOUT)
+    # announced once its vehicles are built
+    if not await wait_loaded(_scenery.scenery_loaded, SCENERY):
+        return
+    _vehicle = VehicleServer.vehicle_get_rid_by_name(VEHICLE)
+    assert_true(VehicleServer.vehicle_is_simulation_ready(_vehicle), "%s is simulated once %s is loaded" % [VEHICLE, SCENERY])
     _cabin = RailVehicleServer.vehicle_get_driver_cabin(_vehicle)
     _engine = VehicleServer.vehicle_component_get(_vehicle, VehicleComponentType.COMPONENT_ENGINE) as RailVehicleDieselEngine
 

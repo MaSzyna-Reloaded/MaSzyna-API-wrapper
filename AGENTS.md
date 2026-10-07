@@ -191,8 +191,10 @@ Checks:
   CI has none. Everything a test needs is a fixture in `demo/tests/fixtures/` or
   `demo/tests/materials/`. A throwaway diagnostic script does not belong in `demo/tests/` either.
 * TESTS: never run the whole test suite. Before a commit run only the test scripts you wrote or
-  modified, one script at a time: `-gdir=res://tests/ -gselect=<script name>` (`-gtest=` does
-  not filter here and runs everything)
+  modified, all of them in one Godot process - not one process per script (each pays Godot's and
+  GUT's start-up): `-gconfig= -gpre_run_script=res://tests/simulation_runtime_hook.gd
+  -gtest=res://tests/a.gd,res://tests/b.gd`. `-gconfig=` is required: `.gutconfig.json`'s `dirs`
+  adds the whole directory to `-gtest`
 * do not run tests or headless Godot after every edit - only before a commit, or when operator asks
 * TESTS: **redirect a headless run to a file and read the file** - do not pipe it through
   `grep | head`: `head` closes the pipe, the run dies of SIGPIPE, and a pass reads as a hang.

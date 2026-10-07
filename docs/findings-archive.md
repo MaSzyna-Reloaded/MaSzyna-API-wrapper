@@ -4063,3 +4063,63 @@ lighting or the trainset.
   and `test_sun_shafts_compositor_effect.gd` (renders on a GPU, pending under `--headless`), both
   red on the broken versions.
 * **Rule:** a compute effect never samples the texture it writes in the same dispatch.
+
+
+## 2026-10-07 Tests waited on the machine's speed
+
+* **Symptom:** tests on GitHub CI failed at random and some ran for minutes: a wait of 120 s for a
+  vehicle's detail, start-up tests run at simulation speed x100 with a real-time limit per step,
+  "wait N idle frames" for a command, a key or a cab element to act. The same script passed
+  alone and failed in a batch or on a slower runner; one waited for a scenery whose vehicles
+  could not be detailed at all (fixtures without models), so it only ran out.
+* **What proved it:** the simulated time a step of the test got was a function of the frame rate
+  (`SimulationRuntime` advances by the frame's delta, the x100 speed multiplied it), and so was
+  how far a cab element, a sound or a held key moved between two checks - cab tools, lamps, the
+  wipers, the held knobs and the E3D animations ran on the frame's delta, not the simulation's.
+  Counting the simulated time of the failing runs gave a different number per run for the same
+  script.
+* **Fix:** a test steps the simulation itself, like a step debugger (inspired by #301):
+  `MaszynaGutTest.step(count)` advances by `TICK` (1/30 s) per step, `wait_simulated_until()`
+  steps until a condition holds or a limit in simulated seconds runs out (the limit from the
+  vehicle's data, the margin one `TICK`), `SimulationRuntime` is not used in tests. Everything that
+  moves with the simulation goes by the simulation's time: `SimulationClock` for the cab elements
+  and the train sound system, `simulation_advanced` for the held knobs and
+  `E3DRenderingServer`'s animations. Only loading a scenery keeps a real-time limit - as a hang
+  guard, a failure when it runs out.
+* **Rule:** a test advances simulated time by stepping it and waits for a condition with a limit in
+  simulated seconds; never a real-time wait, a frame count or a raised simulation speed.
+
+
+## 2026-10-07 A vehicle without its model held the loading screen 30 s
+
+* **Symptom:** `test_zzz_scenery_scene_smoke` failed once its wait for the loading screen got a
+  limit: the screen went down 31 s after the player got the EP07 of the fixture scenery. The test
+  had waited 120 s without checking, so it never showed.
+* **What proved it:** `[SceneryLoad] SURROUNDINGS 30.0 s` - `_build_surroundings()` ran into its
+  `STREAMING_WAIT_TIME` with `area_is_ready()` true and `builds_get_pending_count()` 1. The
+  fixture EP07 has no model: `_build_models()` failed to load it and ended in `_update_detail()`,
+  which put the vehicle back into `pending_builds` - a load attempt every frame, and a pending
+  build that never ends. In the game any vehicle whose `.e3d` is missing does the same.
+* **Fix:** `RailVehicleRenderingServer` notes a model that could not be loaded (`model_missing`)
+  and does not queue it again until another appearance is set.
+* **Rule:** a build that failed is a result, not a pending build - an operation that cannot
+  finish says so once instead of being retried.
+
+
+## 2026-10-07 Test runs that did not exit
+
+* **Symptom:** a headless GUT run passed all its tests and then did not exit, now and then and
+  more often with several runs at once: `test_mmd_semantic_catalog`, `test_player_camera_server`,
+  `test_driver_timetable_run`, `test_game_window` and others - each a batch's hang until its limit.
+* **What proved it:** Godot run under gdb, interrupted 5 s after GUT's `Totals`: the main thread
+  in `std::thread::join()` at shutdown, one thread of the scripts asleep on a condition variable.
+  The one script thread at start-up is the `DebugMenu` autoload's (`debug_menu.gd`): it called
+  `RenderingServer` (the adapter's name, the viewport) and wrote labels, with thread safety checks
+  off. A call into the RenderingServer from another thread is answered through the main thread;
+  a script that ends within a second stops the main loop first, the thread waits for an answer
+  forever, and `_exit_tree()` waits for the thread (`wait_to_finish()`). In the game the same
+  happens on a quit right after the start.
+* **Fix:** no thread - the debug menu takes the information on the main thread in `_ready()`.
+  The three scripts that hung went through 5 runs each clean.
+* **Rule:** a script thread never calls a server that answers through the main thread, nor touches
+  a node; whatever needs them runs on the main thread.

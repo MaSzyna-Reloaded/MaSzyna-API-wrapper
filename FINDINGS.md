@@ -641,3 +641,10 @@ anything. Open work belongs in `TODO.md`.
   a typed parameter fails on a freed object at the call. *(10-05 start-up tests and the trainset)*
 * A player's cab is built from its scene only once the vehicle has its cab logic - the builder
   hands the scene over last; a cab built without it hangs the game. *(10-06 demo_3d cab not shown)*
+* A test steps the simulation (`step()`, `wait_simulated_until()`, limits in simulated seconds
+  from the data); never real time, frames or a raised speed; what moves with the simulation runs
+  on its time. *(10-07 tests waited on the machine's speed)*
+* A build that failed is a result, not a pending build - a vehicle whose model is missing is not
+  queued again. *(10-07 a vehicle without its model held the loading screen 30 s)*
+* A script thread never calls a server that answers through the main thread, nor touches a node -
+  the exit joins it while it waits forever. *(10-07 test runs that did not exit)*

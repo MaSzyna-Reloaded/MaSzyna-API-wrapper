@@ -118,8 +118,7 @@ func after_each() -> void:
         remove_child(vehicle)
         vehicle.queue_free()
     _vehicles.clear()
-    for event:RID in _events:
-        ScenarioEventServer.event_free(event)
+    # the events are the scenery's (MaszynaLegacyEventFactory.build()) - freed with it
     _events.clear()
     remove_child(_scenery)
     _scenery.free()

@@ -11,10 +11,10 @@ extends MaszynaStartupTest
 const MAX_STEPS:int = 20
 ## Notches of the master controller the player gives at most to reach DRIVING_SPEED
 const MAX_DRIVING_STEPS:int = 40
-## Real seconds a hint's key is held, as a player holds it: a knob moves at the hand's speed while
-## its key is down (CabinLogic, KNOB_KEY_SPEED), and the line breaker closes only after the SN61's
-## InitialCtrlDelay (1.5 s) of holding (Train.cpp:8438-8472) - simulated time runs faster still
-const KEY_HOLD:float = 1.0
+## Simulated seconds a hint's key is held, as a player holds it: a knob moves at the hand's speed
+## while its key is down (CabinLogic, KNOB_KEY_SPEED), and the line breaker closes only after the
+## SN61's InitialCtrlDelay (1.5 s) of holding (Train.cpp:8438-8472) - held over that
+const KEY_HOLD:float = 2.0
 ## Simulated seconds the driver is given to update its list after a step (its reaction time)
 const DRIVER_UPDATE_SECONDS:float = 5.0
 ## The speed the player drives up to before braking [km/h]
@@ -88,12 +88,14 @@ func test_the_hints_start_it_and_the_independent_brake_stops_it() -> void:
         await _hold(&"local_brake_increase")
         if brake.get_local_position_normalized() == before:
             break
-    var started:float = SimulationServer.simulation_get_time()
-    var cylinder_max:float = brake.get_air_pressure()
-    while VehicleServer.vehicle_get_speed(occupied) > STOPPED_SPEED \
-            and SimulationServer.simulation_get_time() - started < BRAKING_TIMEOUT:
-        await wait_idle_frames(1)
-        cylinder_max = maxf(cylinder_max, brake.get_air_pressure())
+    # the highest cylinder pressure on the way - an array, as a lambda takes a local by value
+    var cylinder_peak:Array[float] = [brake.get_air_pressure()]
+    var stopped:Callable = func() -> bool:
+        cylinder_peak[0] = maxf(cylinder_peak[0], brake.get_air_pressure())
+        return VehicleServer.vehicle_get_speed(occupied) < STOPPED_SPEED
+    if not await wait_simulated_until(stopped, BRAKING_TIMEOUT, "SN61-02 stopped by the independent brake"):
+        return
+    var cylinder_max:float = cylinder_peak[0]
     assert_gt(cylinder_max, BRAKING_CYLINDER_SHARE * brake.max_cylinder_pressure,
             "the independent brake fills the cylinders (max %.2f bar): %s" % [cylinder_max, _story()])
     assert_lt(VehicleServer.vehicle_get_speed(occupied), STOPPED_SPEED,
@@ -118,11 +120,14 @@ func test_the_releaser_is_not_asked_for_once_the_independent_brake_is_let_off() 
         await _hold(&"local_brake_decrease")
         if brake.get_local_position_normalized() == before:
             break
-    var released_since:float = SimulationServer.simulation_get_time()
-    while brake.get_air_pressure() > MaszynaLegacyDriverBraking.RELEASED_BRAKE_PRESSURE \
-            and SimulationServer.simulation_get_time() - released_since < BRAKING_TIMEOUT:
-        await wait_idle_frames(1)
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    # the cylinders empty within the brake's longest delay (BDelay1-4 of its FIZ)
+    var release_seconds:float = maxf(maxf(brake.cntrl_brake_delay_1, brake.cntrl_brake_delay_2),
+            maxf(brake.cntrl_brake_delay_3, brake.cntrl_brake_delay_4))
+    if not await wait_simulated_until(func() -> bool:
+            return brake.get_air_pressure() <= MaszynaLegacyDriverBraking.RELEASED_BRAKE_PRESSURE,
+            release_seconds, "the cylinders emptied"):
+        return
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     assert_false(_listed(MaszynaLegacyDriverHints.Hint.RELEASER_ON),
             "no releaser asked for with the cylinders empty: %s" % _story())
 
@@ -138,7 +143,7 @@ func _start_by_hints(scenery:String) -> bool:
         return false
     _diesel = _engine(powered) as RailVehicleDieselEngine
     _cab_logic = CabinSystem.vehicle_get_cab_logic(occupied)
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
 
     for _step:int in MAX_STEPS:
         if _running():
@@ -186,11 +191,9 @@ func _hold(action:StringName) -> void:
     for entry:Dictionary in DriverSystem.driver_get_state(_driver).get("hints", []):
         listed.append(entry["text"])
     await key_press(action)
-    var held:int = Time.get_ticks_msec()
-    while Time.get_ticks_msec() - held < KEY_HOLD * 1000.0:
-        await wait_idle_frames(1)
+    await step(ticks(KEY_HOLD))
     await key_release(action)
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     _followed.append("%s of %s -> %s" % [action, listed, _vehicle_text()])
 
 

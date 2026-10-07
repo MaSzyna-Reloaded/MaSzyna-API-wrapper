@@ -40,6 +40,8 @@ func after_each() -> void:
 
 func _spawn_vehicle() -> bool:
     vehicle = await spawn_maszyna_vehicle("dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_frame")
+    if not await wait_detailed(vehicle):
+        return false
     var loaded:bool = RailVehicleRenderingServer.vehicle_get_model(vehicle.get_rid()).is_valid()
     assert_true(loaded, "the vehicle's exterior model should be built")
     return loaded

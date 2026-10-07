@@ -24,6 +24,43 @@ lost `battery_voltage = 110` with nothing in its place and stayed green, because
 asserted the low voltage. The tester could not start an EU07, ED78 or 36WE. Breaking this rule
 breaks the project's rules.
 
+## The test steps the simulation - no timeouts - PROHIBITED, ABSOLUTE
+
+A test's result never depends on how fast the machine is. On 2026-10-07 the EN57 start-up test
+went red on CI and green locally: the simulation then moved with the frames (SimulationRuntime,
+real frame time x the speed, up to 25 simulated seconds a frame at x100), the test checked between
+frames, and it waited 120 simulated seconds for line contactors after a key that had not moved
+the master controller at all. The rules that came out of it:
+
+- **No SimulationRuntime in the tests.** `simulation_runtime_hook.gd` places none: no frame moves
+  SimulationServer's clock. The test steps it, tick by tick, as a step debugger does -
+  `MaszynaGutTest.step(count)`, `wait_simulated_until(done, seconds, what)`, `ticks(seconds)`,
+  `TICK` = 1/30 s (the simulation's tick to come, #301). Never `wait_seconds()`, never
+  `wait_idle_frames()` or `Time.get_ticks_msec()` to let the simulation run, never a loop on
+  `simulation_get_time()` awaiting frames (with no runtime it never ends).
+- **Everything that moves with the simulation moves by simulation time** - the vehicles, the
+  drivers, the events, and the cab's view of them: a widget's animation (`BaseCabinTool3D._process`)
+  and a knob a key holds (`CabinLogic`, on `simulation_advanced`). A test step moves them all; no
+  frame rate (`--fixed-fps`) is needed or wanted.
+- **A key press lasts at least one tick** (`MaszynaStartupTest.key_tap()`): the cab's logic takes
+  keys on the simulation's step, a press that ends before the next tick is never seen.
+- **A command or a key takes on the next tick, or it never will.** Check its own effect after one
+  tick - the switch moved, the controller's position changed - and fail there
+  (`MaszynaStartupTest._key_taken()`). Never fold "did the key work" into the wait for what it
+  starts.
+- **A physical process is waited for as long as the data says it takes**, in simulated seconds
+  turned into ticks: a relay's `InitialCtrlDelay`, the doors' `open_delay + max_shift /
+  open_speed`, the brake's `BDelay`, plus one `TICK` for the step that shows it. Never a blanket
+  constant ("120 s a step", "20 s for the doors") and never a margin of a file's own (0.1, 0.25 -
+  frame-clock numbers): the margin is `TICK`, from `MaszynaGutTest`.
+- **A wait that runs out fails the test there**, saying what did not come about
+  (`wait_simulated_until()` does). GUT's `wait_until()`/`wait_for_signal()` only return false -
+  one whose result is ignored lets the test run on, or pass. An `await` of a signal with no limit
+  hangs the run.
+- **Loading is the machine's work, not simulated time**: a scenery fixture, a model, a screen.
+  Its limit is real time and only a hang guard - a few seconds, named, the result checked (a
+  fixture loads in under 0.1 s). Tens of seconds for it is the same antipattern.
+
 ## Physics is tested end to end and blackbox - ABSOLUTE
 
 - A change to a physics component - the Mover wrapper (`src/legacy/vehicles/`), a vehicle
@@ -65,9 +102,13 @@ proves nothing - the 36WE's pantograph names passed every test for a month.
 - Parse-check first: `godot-double --headless --path demo --check-only -s res://tests/<file>.gd`
   (5 s). A script that does not parse is skipped by GUT, `-gselect` then matches nothing and the
   whole directory runs until the timeout - it looks like a hang.
-- One script at a time, only the ones you wrote or changed:
-  `godot-double --headless --path demo -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gselect=<script> -gexit`
-  (60 s). `-gtest=` does not filter. Never the whole suite.
+- Only the scripts you wrote or changed, **all in one process** - Godot's and GUT's start-up is
+  paid once, not per script:
+  `godot-double --headless --path demo --log-file <scratchpad>/godot.log -s addons/gut/gut_cmdln.gd -gconfig= -gpre_run_script=res://tests/simulation_runtime_hook.gd -gtest=res://tests/a.gd,res://tests/b.gd -gexit`.
+  `-gconfig=` is required: `.gutconfig.json`'s `dirs` adds the whole directory to `-gtest`, which
+  is why it once looked as if `-gtest` did not filter. Many scripts: two or three such processes
+  side by side, the list split between them. One script: `-gdir=res://tests/ -gselect=<script>`.
+  Never the whole suite.
 - Redirect to a file and read the file - `| grep | head` kills the run with SIGPIPE.
 - Every headless run takes `--log-file <scratchpad>/godot.log`: it shares the game's user
   directory, and its own `logs/app.log` rotates the operator's (five runs and it is gone).
@@ -90,11 +131,13 @@ A probe reads frozen values - and "proves" anything - unless the vehicle is real
 - it stands on a track: `RailVehiclePhysicsNode` plus a `RailVehicle3D` whose `controller_path`
   is set **before** it enters the tree (only `RailVehicleServer.vehicle_is_attached()` vehicles are
   stepped);
-- the clock runs: a `SimulationRuntime` node is in the tree and the simulation is unpaused; check
-  that `SimulationServer.simulation_get_time()` grows;
+- the clock runs: a probe steps it itself (`SimulationServer.simulation_advance()`, as
+  `MaszynaGutTest.step()` does) - with no `SimulationRuntime` nothing else moves it; check that
+  `SimulationServer.simulation_get_time()` grows;
 - it is driven (`PlayerServer.player_take_over_vehicle()` or
   `DriverSystem.vehicle_set_control_active()`), or a standing vehicle switches its physics off;
-- waits are in time (`create_timer`), not in frames - a headless frame is microseconds.
+- waits are in simulated time the probe steps, never in frames or `create_timer` - a headless
+  frame is microseconds and a real second says nothing of the simulation.
 
 A probe using autoloads (`CabinSystem`, `UserSettings`) runs as a scene
 (`godot-double --headless --audio-driver Dummy --path demo <scratch>/probe.tscn`); a `-s` script
@@ -135,8 +178,8 @@ read it before reading a red step as a bug.
   mechanical); the test fails when the powered car's engine or the unit type says otherwise.
   One script, one vehicle: `-gselect=test_zzz_startup_ep09_v1` runs it, `-gselect=test_zzz_startup`
   the whole batch (in the background, one script at a time).
-- The clock runs at x100 (`SimulationServer.simulation_speed`, restored after): a fixture has no
-  world to stream. The security system is acknowledged every frame, as a driver's reflex - a few
-  frames are seconds of simulated time.
+- The test steps the clock at speed 1, tick by tick (see "The test steps the simulation"): every
+  step's limit is the vehicle's own delay in ticks. The security system is acknowledged every
+  frame, as a driver's reflex - a step is a frame.
 - A red step is checked against the original (mover-parity-check) before anything is changed:
   either the driving is wrong (then the lesson goes to the driving skill) or the port is.

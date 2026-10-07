@@ -102,6 +102,9 @@ namespace godot {
                     bool own_models = false;
                     /* Waiting in pending_builds for its models to be built */
                     bool build_pending = false;
+                    /* The appearance's model could not be loaded - not built again until another
+                     * appearance is set */
+                    bool model_missing = false;
                     Transform3D model_transform;
                     /* How far the cargo sinks into an empty vehicle [m] (DynObj.cpp:3070-3080) */
                     double load_height = 0.0;

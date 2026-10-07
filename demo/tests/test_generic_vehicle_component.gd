@@ -4,6 +4,8 @@ extends MaszynaGutTest
 ## way back to the vehicle, and command registration.
 
 const ProbeComponent: GDScript = preload("fixtures/probe_vehicle_component.gd")
+## Steps the vehicle is stepped over: it takes the component on its first, and ticks it on each
+const SETTLE_TICKS:int = 2
 
 var _vehicle: VehiclePhysicsNode = null
 var _probe: GenericVehicleComponentNode = null
@@ -16,7 +18,7 @@ func before_each() -> void:
     _probe.name = "ProbeComponent"
     _vehicle.add_child(_probe)
     add_child(_vehicle)
-    await wait_idle_frames(2)
+    await step(SETTLE_TICKS)
 
 
 func after_each() -> void:
@@ -26,11 +28,11 @@ func after_each() -> void:
     _probe = null
 
 
-func test_the_script_is_ticked_with_the_frame_delta() -> void:
+func test_the_script_is_ticked_with_the_step_delta() -> void:
     var before: int = _probe.process_calls
-    await wait_idle_frames(2)
+    await step(SETTLE_TICKS)
     assert_gt(_probe.process_calls, before, "_process_component runs while the component is enabled")
-    assert_gt(_probe.last_delta, 0.0, "it is handed the frame delta")
+    assert_gt(_probe.last_delta, 0.0, "it is handed the step's delta")
 
 
 func test_the_scripts_keys_reach_the_vehicle_state_dump() -> void:
@@ -58,8 +60,8 @@ func test_a_command_registered_from_the_script_is_received() -> void:
 ## A disabled component is left out of the tick and out of the dump, the way a native one is.
 func test_a_disabled_component_neither_ticks_nor_publishes() -> void:
     _probe.get_component().enabled = false
-    await wait_idle_frames(2)
+    await step(SETTLE_TICKS)
     var before: int = _probe.process_calls
-    await wait_idle_frames(2)
+    await step(SETTLE_TICKS)
     assert_eq(_probe.process_calls, before, "a disabled component is not ticked")
     assert_false(VehicleServer.vehicle_get_controller(_vehicle.get_vehicle_rid()).get_state().has("probe_process_calls"), "nor does it publish state")

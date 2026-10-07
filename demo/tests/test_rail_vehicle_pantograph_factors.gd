@@ -45,6 +45,8 @@ func test_the_factors_are_read_with_the_originals_corrections() -> void:
 
 func test_a_slider_only_pantograph_stands_where_the_factors_put_it() -> void:
     vehicle = await spawn_maszyna_vehicle(DATA_PATH, "pantslider", "", "test_pantslider")
+    if not await wait_detailed(vehicle):
+        return
     _assert_stands_where_the_factors_put_it()
 
 

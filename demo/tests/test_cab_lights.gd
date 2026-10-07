@@ -19,9 +19,9 @@ func before_each():
     train = build_vehicle("TestCabLights")
     train.add_component(build_power_supply(110.0))
     train.apply_configuration()
-    await wait_idle_frames(2)
+    await step(2)
     train.send_command("battery", true)
-    await wait_idle_frames(2)
+    await step(2)
     cabin = RailVehicleServer.vehicle_get_front_cabin(train.get_rid())
     other_cabin = RailVehicleServer.vehicle_get_rear_cabin(train.get_rid())
     lights = LegacyCabinCabLights.new(LegacyCabinCabLights.InstrumentLightType.STANDARD)
@@ -32,7 +32,7 @@ func _lights_of_kind(kind:LegacyCabinCabLights.InstrumentLightType) -> void:
     lights.unregister()
     lights = LegacyCabinCabLights.new(kind)
     lights.register(train.get_rid(), cabin)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func after_each():

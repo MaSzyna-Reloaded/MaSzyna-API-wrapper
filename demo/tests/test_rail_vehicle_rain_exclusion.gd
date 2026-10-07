@@ -17,6 +17,8 @@ func after_each() -> void:
 func test_vehicle_keeps_no_rain_volume_of_its_own() -> void:
     var vehicle: MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
             "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain")
+    if not await wait_detailed(vehicle):
+        return
     autofree(vehicle)
 
     assert_eq(_rain_volumes(self).size(), 0)
@@ -25,6 +27,8 @@ func test_vehicle_keeps_no_rain_volume_of_its_own() -> void:
 func test_shown_cab_excludes_rain_over_the_vehicle_body() -> void:
     var vehicle: MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
             "dynamic/test/synthetic_v1", "synthetic", "", "test_vehicle_rain")
+    if not await wait_detailed(vehicle):
+        return
     autofree(vehicle)
 
     var cabin: Cabin3D = CabinSystem.cabin_show(RailVehicleServer.vehicle_get_front_cabin(vehicle.get_rid()), self)

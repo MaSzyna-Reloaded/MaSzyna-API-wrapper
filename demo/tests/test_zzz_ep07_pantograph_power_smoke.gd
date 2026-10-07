@@ -10,6 +10,8 @@ extends MaszynaGutTest
 ## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
+## A wire's voltage, not the noise of none [V]
+const MIN_WIRE_VOLTAGE:float = 100.0
 
 var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
@@ -21,10 +23,8 @@ func before_each():
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
     add_child(scenery)
-    for i in range(20):
-        if scenery.get_child_count() > 0:
-            break
-        await wait_seconds(0.5)
+    # announced once its vehicles are built
+    await wait_loaded(scenery.scenery_loaded, SCENERY)
 
 
 func after_each():
@@ -32,47 +32,38 @@ func after_each():
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
-func _find_train_controller(vehicle_name:String) -> VehicleController:
-    var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(vehicle_name)
-    return VehicleServer.vehicle_get_controller(vehicle) if VehicleServer.vehicle_is_simulation_ready(vehicle) else null
-
-
 func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
-    var controller:VehicleController = null
-    for i in range(10):
-        controller = _find_train_controller("EP07-424")
-        if controller:
-            break
-        await wait_seconds(0.5)
-    assert_not_null(controller, "EP07-424 should exist somewhere under the loaded scenery")
-    if not controller:
+    var vehicle:RID = VehicleServer.vehicle_get_rid_by_name("EP07-424")
+    assert_true(VehicleServer.vehicle_is_simulation_ready(vehicle), "EP07-424 should be simulated once the scenery is loaded")
+    if not VehicleServer.vehicle_is_simulation_ready(vehicle):
         return
+    var controller:VehicleController = VehicleServer.vehicle_get_controller(vehicle)
 
     # Same startup sequence a real driver uses on a cold EP07: battery, then the (main) compressor
     # to actually build air pressure - PantPress mirrors ScndPipePress (Mover.cpp's
     # UpdatePantVolume, bPantKurek3 branch), so without this the reservoir never fills and the
-    # pantograph raise simulation added in RailVehicle3D._update_pantograph_raise_state() would
-    # never see enough pressure to move at all, regardless of "pantograph" being sent. No separate
-    # master pantograph-valve command - this vehicle's cabin has no such switch (confirmed against
-    # its .mmd) and nothing in this wrapper sends one via keybind either. If this ever needs a
-    # fourth command again, that's a real regression, not a missing test setup step - see
-    # RailVehicleEnginePowerSource::pantograph()'s own comment for why it's otherwise self-contained.
+    # pantograph would never see enough pressure to move at all, regardless of "pantograph" being
+    # sent. No separate master pantograph-valve command - this vehicle's cabin has no such switch
+    # (confirmed against its .mmd) and nothing in this wrapper sends one via keybind either. If this
+    # ever needs a fourth command again, that's a real regression, not a missing test setup step -
+    # see RailVehicleEnginePowerSource::pantograph()'s own comment for why it's otherwise
+    # self-contained.
     controller.send_command("battery", true)
-    await wait_seconds(0.5)
+    await step(1)
     controller.send_command("compressor", true)
-    await wait_seconds(0.5)
+    await step(1)
     controller.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
 
-    var voltage:float = 0.0
-    var active:bool = false
-    for i in range(60):
-        await wait_seconds(0.5)
-        active = controller.get_state().get("current_collector/pantograph_first_active", false)
-        voltage = controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)
-        if active and voltage > 100.0:
-            break
+    # the fixture's EP07 has no pantograph arms in its model: the raised pantograph samples the wire
+    # where it stands, on the step after the command (RailVehicleServer, "a model without the arms")
+    await wait_simulated_until(func() -> bool:
+            return controller.get_state().get("current_collector/pantograph_first_active", false) \
+                    and controller.get_state().get("current_collector/pantograph_first_voltage", 0.0) > MIN_WIRE_VOLTAGE,
+            TICK, "the pantograph at the wire")
+    var active:bool = controller.get_state().get("current_collector/pantograph_first_active", false)
+    var voltage:float = controller.get_state().get("current_collector/pantograph_first_voltage", 0.0)
 
     assert_true(active, "pantograph should report raised once battery+valves are on")
     assert_true(
-            voltage > 100.0,
+            voltage > MIN_WIRE_VOLTAGE,
             "pantograph should read a real wire voltage once raised and placed over td.scn's electrified track, got %s" % voltage)

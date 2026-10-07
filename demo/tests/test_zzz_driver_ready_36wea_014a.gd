@@ -17,7 +17,7 @@ func test_a_unit_moved_off_is_ready_for_its_driver() -> void:
     assert_true(driver.is_valid(), "the scenery's driver is seated in the unit")
     if not driver.is_valid():
         return
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     var state:Dictionary = DriverSystem.driver_get_state(driver)
     var cars:Array[String] = []
     for car:RID in VehicleServer.vehicle_get_rids():

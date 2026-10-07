@@ -24,7 +24,7 @@ func before_each():
     power_source.current_collector_max_voltage = 3600.0
     power_source.current_collector_number_of_collectors = 2
     train.add_component(power_source)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func test_raised_pantograph_with_wire_voltage_reaches_mover_state():
@@ -32,9 +32,9 @@ func test_raised_pantograph_with_wire_voltage_reaches_mover_state():
     # since no cabin switch/keybind for that exists anywhere in this wrapper (see
     # RailVehicleEnginePowerSource::pantograph()'s own comment on why it opens the master valve itself).
     train.send_command("battery", true)
-    await wait_idle_frames(2)
+    await step(2)
     train.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_true(
             power_source.get_state().get("current_collector/pantograph_first_active", false),
@@ -55,7 +55,7 @@ func test_repeated_wire_voltage_updates_keep_reaching_the_mover():
     # dropped. Calling this repeatedly, like RailVehicle3D does every frame, must keep working.
     train.send_command("battery", true)
     train.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    await wait_idle_frames(2)
+    await step(2)
 
     for i in range(5):
         power_source.set_pantograph_wire_voltage(RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, 3000.0 + i * 100.0)
@@ -72,6 +72,6 @@ func test_lowered_pantograph_does_not_report_active():
     # feature) - is_active is the actual gate EnginePowerSourceVoltage()/PantFrontVolt use, so
     # that's what this asserts instead of the echoed value.
     power_source.set_pantograph_wire_voltage(RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, 3600.0)
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_false(power_source.get_state().get("current_collector/pantograph_first_active", false))

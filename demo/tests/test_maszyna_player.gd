@@ -18,10 +18,11 @@ const SECOND_OFFSET:float = 700.0
 const FAR_OFFSET:float = 3700.0
 ## How high above the near vehicle the view stands before following - too far for a view [m]
 const VIEW_HEIGHT:float = 500.0
-## Long enough for the following camera to have flown to its view (ExternalCamera3D.response 2/s) [s]
-const FLIGHT_TIME:float = 3.0
 ## A view stands within this of its vehicle [m]
 const VIEW_REACH:float = 100.0
+## The farthest the following camera flies to a vehicle here: from VIEW_HEIGHT above one, or from one
+## vehicle to the next (SECOND_OFFSET - NEAR_OFFSET) [m]
+const FLIGHT_DISTANCE:float = 500.0
 
 var _vehicle:RailVehicle3D
 var _second_vehicle:RailVehicle3D
@@ -135,12 +136,20 @@ func test_the_vehicle_followed_is_looked_at_from_its_view() -> void:
 
     PlayerCameraServer.camera_set_target(_vehicle.get_rid())
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FOLLOW)
-    await wait_seconds(FLIGHT_TIME)
+    if not await wait_until(func() -> bool:
+            return _player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
+            _flight_time()):
+        fail_test("followed from its view, not from %.0f m up: not there within %.1f s" % [VIEW_HEIGHT, _flight_time()])
+        return
     assert_true(_player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
             "followed from its view, not from %.0f m up" % VIEW_HEIGHT)
 
     PlayerCameraServer.camera_set_target(_second_vehicle.get_rid())
-    await wait_seconds(FLIGHT_TIME)
+    if not await wait_until(func() -> bool:
+            return _player.external_camera.global_position.distance_to(_second_vehicle.global_position) < VIEW_REACH,
+            _flight_time()):
+        fail_test("another vehicle: its view not reached within %.1f s" % _flight_time())
+        return
     assert_true(_player.external_camera.global_position.distance_to(_second_vehicle.global_position) < VIEW_REACH,
             "another vehicle: its view, not the first one's distance kept")
 
@@ -170,6 +179,17 @@ func test_the_vehicle_left_is_followed_from_the_cab_of_another() -> void:
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FOLLOW)
     assert_eq(_player.external_camera.global_transform, PlayerCameraServer.camera_get_show_transform(left),
             "far from the cab: the view jumps beside the vehicle left")
-    await wait_seconds(FLIGHT_TIME)
+    if not await wait_until(func() -> bool:
+            return _player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
+            _flight_time()):
+        fail_test("the vehicle left: its view not reached within %.1f s" % _flight_time())
+        return
     assert_true(_player.external_camera.global_position.distance_to(_vehicle.global_position) < VIEW_REACH,
             "the vehicle left is followed from its view")
+
+
+## Real seconds the following camera takes over FLIGHT_DISTANCE to within VIEW_REACH of its
+## vehicle: it closes on its view e-fold every 1/response s (ExternalCamera3D._process()), and one
+## e-fold more for the view's own distance from the vehicle
+func _flight_time() -> float:
+    return (log(FLIGHT_DISTANCE / VIEW_REACH) + 1.0) / _player.external_camera.response

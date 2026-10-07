@@ -5,7 +5,6 @@ extends MaszynaGutTest
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const ROOT:String = "subscene/root.scn"
-const LOAD_TIMEOUT_SEC:float = 30.0
 
 var _previous_game_dir:String = ""
 var _cache_dir:String = "user://cache".path_join(SceneryInstancer.CACHE_DIRECTORY)
@@ -63,7 +62,8 @@ func test_loaded_scenery_writes_its_terrain_chunks_as_files() -> void:
     scenery.use_cache = false
     scenery.filename = ROOT
     add_child(scenery)
-    await wait_for_signal(scenery.loaded, LOAD_TIMEOUT_SEC)
+    if not await wait_loaded(scenery.loaded, scenery.filename):
+        return
     var chunk_files:int = 0
     for directory:String in DirAccess.get_directories_at(_cache_dir):
         if not _existing_directories.has(directory):

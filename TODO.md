@@ -131,6 +131,13 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
 
 ## Cabins
 
+* **Cab elements run on a clock of their own** (`SimulationClock`, the simulation's time in their
+  `_process`): every `BaseCabinTool3D` (buttons, switches, knobs, gauges, blinkers), the lamps and
+  lights (`CabinIndicator3D`, `CabinSpotLight3D`, `CabinOmniLight3D` - which also poll the vehicle
+  every 0.1 s) and the windscreen wipers. Their state belongs to the simulation step (#301): taken
+  on an event of `CabinSystem` after a step and after a command; what they show - a lever's
+  travel, a lamp's blinking, a light's fade - is the presentation, interpolated between the
+  previous and the current step's state in the render frame, as #301 lays out for the vehicles.
 * **Gauges that gate their command but have no catalog entry yet** - when ported, they get
   `requires_gauge` (Train.cpp line in brackets): `antislip_bt` (2232), `nextcurrent_sw` (1584),
   `signalling_sw` (2602), `converterlocal_sw` (4463), `compressorlocal_sw` (4629).
@@ -705,17 +712,17 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   the streaming worker preloads models while the main thread loads the cab's. Decide: one lock in
   `E3DModelManager.load_model()`, or load on the worker only with a real renderer. It also loads
   `scenery/td.scn` from the game dir - needs a fixture scenery.
-* **`test_zzz_ep07_main_switch_trip_diagnostic`** was red (no acceleration past 2 m/s over five
-  notches, the Hasler sees no speed) - check whether it still is; driver's cabin/`CabActive` first.
+* **A headless test run sometimes crashes at exit** (SIGSEGV inside Godot after the main loop,
+  no symbols; `test_scenery_subscene_cache` 2 of 6 runs) - a debug build of Godot and a core dump
+  to find which singleton frees out of order.
+* **The EP07 fixture has no models**: its pantograph arms, the cab's visibility of the low-poly
+  interior and the detail are not tested on it.
 * **The EN57 start-up test failed once** after the EZT `Imin` default and passed four times
   since - watch it. Again 10-06 in `test_zzz_driver_hints_en57_2000_v1`, in a sequential run
   after nine other scripts: "line contactors on the first power position", the controller at 0
   after the key; green alone twice right after.
 * **EN57-702ra drives without the battery and the main switch** (report): not reproduced on the
   fixture; needs the operator's scenery and a probe of the ra/s/rb start state.
-* A headless GUT run sometimes does not exit after passing (`test_scenery_compiled_cache`,
-  `test_cab_lights`, `test_maszyna_scenery_time`; `test_e3d_rendering_server.gd` always):
-  attach `gdb -p` (`thread apply all bt`) before killing it.
 * `test_train_electric_induction_engine.gd` fails 3 tests: `_powered_up_eim()` never closes the
   line breaker.
 * Stary Jawor's eszelon at x10 runs ~20 km/h wanting 70 (controller jumps 0-7, `Ft` 0 half the

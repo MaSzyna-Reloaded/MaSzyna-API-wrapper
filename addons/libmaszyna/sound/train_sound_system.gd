@@ -34,8 +34,8 @@ const OPEN_WINDOW_CONTEXT:int = 3
 ## Update cadence for a bank right at the culling distance edge - banks closer to the listener
 ## interpolate down to 0.0 (every frame), matching prior behavior for nearby vehicles.
 const FAR_UPDATE_INTERVAL:float = 0.5
-## How often the distance to the listener is looked at. Between sweeps the frame only visits the
-## banks that are in range.
+## How often the distance to the listener is looked at [s of simulated time]. Between sweeps the
+## frame only visits the banks that are in range.
 const SWEEP_INTERVAL:float = 0.25
 ## Time the banks of vehicles come within earshot may take to build per frame; a bank that started is
 ## finished, so a frame builds at least one
@@ -154,6 +154,8 @@ var _banks:Dictionary = {}
 var _banks_by_vehicle:Dictionary[RID, BankRuntime] = {}
 ## The banks within the culling distance - the only ones a frame visits
 var _active:Array[BankRuntime] = []
+## The simulation's time between this system's frames
+var _clock:SimulationClock = SimulationClock.new()
 ## Coupling and pantograph one-shots are events, not vehicle state: the vehicle reports each
 ## attach, detach, pantograph up and down once, and the running counts the CHANGE triggers
 ## compare against live here, one entry per vehicle RID, shared by that vehicle's banks.
@@ -170,7 +172,8 @@ var _culling_distance:float = 1000.0
 var _bank_builders:Dictionary[RID, Callable] = {}
 ## Of those, the ones the sweep found within it, the nearest first - built a budget a frame
 var _bank_build_queue:Array[RID] = []
-var _sweep_timer:Timer
+## Simulated time since the last sweep
+var _sweep_elapsed:float = 0.0
 var _listener:TrainSoundListener3D
 var _next_trigger_id:int = 1
 var _wall_tween:Tween
@@ -178,11 +181,7 @@ var _wall_tween:Tween
 
 func _ready() -> void:
     set_process(false)
-    _sweep_timer = Timer.new()
-    _sweep_timer.wait_time = SWEEP_INTERVAL
-    _sweep_timer.timeout.connect(_refresh_active_banks)
-    add_child(_sweep_timer)
-    _sweep_timer.start()
+    SimulationServer.simulation_advanced.connect(_on_simulation_advanced)
     SimulationServer.simulation_paused.connect(_on_runtime_paused)
     SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
     SimulationServer.simulation_current_speed_changed.connect(_on_simulation_current_speed_changed)
@@ -277,7 +276,10 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
 ## Only the banks the sweep left in range, and of those only the ones whose own interval is up.
 ## Everything that does not change with the frame - the distance, the culling, the listener's
 ## trainset - belongs to _refresh_active_banks().
-func _process(delta:float) -> void:
+## The sounds' state moves with the simulation - an axle's run to the next rail joint, a trigger's
+## interval: its seconds, not the frame's; what is heard plays on in the frame's time
+func _process(frame_delta:float) -> void:
+    var delta:float = _clock.advance(frame_delta)
     for runtime:BankRuntime in _active:
         runtime.sound_update_elapsed += delta
         if runtime.sound_update_elapsed < runtime.update_interval:
@@ -302,7 +304,7 @@ func _process(delta:float) -> void:
 
 
 ## Distance, culling and the set of banks a frame visits - the state this system owns about
-## where the listener is. Driven by _sweep_timer, four times a second.
+## where the listener is. Swept every SWEEP_INTERVAL of the simulation's time.
 func _refresh_active_banks() -> void:
     # a player beyond its hard cut drops every play() silently, so the banks are culled - and
     # their triggers know they are unheard - no farther than that
@@ -368,6 +370,14 @@ func _on_bank_build_frame() -> void:
         builder.call()
     if not _bank_build_queue:
         get_tree().process_frame.disconnect(_on_bank_build_frame)
+
+
+func _on_simulation_advanced(seconds:float) -> void:
+    _sweep_elapsed += seconds
+    if _sweep_elapsed < SWEEP_INTERVAL:
+        return
+    _sweep_elapsed = 0.0
+    _refresh_active_banks()
 
 
 ## Takes a bank into the set the frame visits, before the next sweep has looked at it.

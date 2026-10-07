@@ -2,6 +2,9 @@ extends MaszynaGutTest
 
 ## The overhead wire's voltage the tests stand under [V]
 const WIRE_VOLTAGE:float = 3000.0
+## Ticks the closed line breaker is watched under the wire: the voltage check that opened it ran on
+## the step after it closed (TractionForce(), Mover.cpp) - a few steps show it holds
+const KEPT_CLOSED_TICKS:int = 5
 
 var train: VehicleController
 var engine: RailVehicleElectricInductionEngine
@@ -14,7 +17,7 @@ func before_each():
     var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
     power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(power_source)
-    await wait_idle_frames(2)
+    await step(2)
 
 func _make_point(x: float, y: float) -> VehicleCurvePointItem:
     var item = VehicleCurvePointItem.new()
@@ -51,7 +54,7 @@ func test_round_trip_and_update_without_crashing():
     engine.braking_decay_start_velocity = 20.0
     engine.motor_max_current = 600.0
     engine.max_power_table = [_make_point(0.0, 1200.0), _make_point(100.0, 600.0)]
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_eq(engine.slip_current_ratio, 0.1)
     assert_eq(engine.max_power, 1200.0)
@@ -79,21 +82,16 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     driven.add_component(eim)
     driven.add_component(power_source)
     driven.apply_configuration()
-    await wait_idle_frames(2)
+    await step(1)
     driven.send_command("battery", true)
-    await wait_idle_frames(2)
     driven.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    for i in 10:
-        _feed_wire(power_source)
-        await wait_idle_frames(1)
-    await wait_seconds(1.0)
-    _feed_wire(power_source)
-    assert_true(driven.get_state()["main_switch_closable"], "the line breaker should be closable at 3000 V")
+    if not await _wire_until_closable(driven, power_source):
+        return
 
     driven.send_command("main_switch", true)
-    for i in 5:
+    for _tick:int in KEPT_CLOSED_TICKS:
         _feed_wire(power_source)
-        await wait_idle_frames(1)
+        await step(1)
 
     assert_true(driven.get_state()["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
 
@@ -129,20 +127,17 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     driven.add_component(eim)
     driven.add_component(power_source)
     driven.apply_configuration()
-    await wait_idle_frames(2)
+    await step(1)
     driven.send_command("battery", true)
     # the crew switches its cab on - no cab is active before (CabActive = 0, MOVER.h:2090)
     driven.send_command("cab_activation", true)
     driven.send_command("pantograph", RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, true)
-    for i in 10:
-        _feed_wire(power_source)
-        await wait_idle_frames(1)
-    await wait_seconds(1.0)
+    await _wire_until_closable(driven, power_source)
     driven.send_command("main_switch", true)
     driven.send_command("direction_increase")
-    for i in 5:
+    for _tick:int in KEPT_CLOSED_TICKS:
         _feed_wire(power_source)
-        await wait_idle_frames(1)
+        await step(1)
     return driven
 
 
@@ -178,7 +173,7 @@ func test_driven_induction_motor_pulls_once_the_controller_moves():
     driven.send_command("main_controller_increase")
     for i in 30:
         _feed_wire(power_source)
-        await wait_idle_frames(1)
+        await step(1)
 
     assert_gt(float(driven.get_state()["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
 
@@ -221,13 +216,21 @@ func test_the_screen_state_shows_the_line_voltage_of_the_powered_car():
 func test_main_init_time_reaches_the_config():
     engine.main_init_time = 2.5
     train.apply_configuration()
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_eq(float(train.get_config()["main_init_time"]), 2.5)
 
 
 ## What the vehicles' step does for a vehicle standing under a live wire, for one standing on
 ## no track: the wire's voltage on the first pantograph and the vehicle fed with it
+## The wire fed to the raised pantograph: its voltage reaches the Mover on the next step, and the
+## line breaker's relays are closable with it; false when they are not (the test has failed there)
+func _wire_until_closable(driven:VehicleController, power_source:RailVehicleEnginePowerSource) -> bool:
+    return await wait_simulated_until(func() -> bool:
+            _feed_wire(power_source)
+            return driven.get_state()["main_switch_closable"], TICK, "the line breaker closable at 3000 V")
+
+
 func _feed_wire(power_source:RailVehicleEnginePowerSource) -> void:
     power_source.set_pantograph_wire_voltage(RailVehicleEnginePowerSource.PANTOGRAPH_FIRST, WIRE_VOLTAGE)
     power_source.set_collector_voltage(WIRE_VOLTAGE)

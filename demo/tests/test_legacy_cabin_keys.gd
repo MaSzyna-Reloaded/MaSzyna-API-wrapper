@@ -28,7 +28,7 @@ func before_each() -> void:
     logic = LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return cab_controls)
     cabin = RailVehicleServer.vehicle_get_front_cabin(train.get_rid())
     logic.register(train.get_rid(), cabin)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func after_each() -> void:
@@ -60,7 +60,7 @@ func _power24() -> bool:
 func test_a_modelled_switch_takes_its_key_without_a_widget() -> void:
     logic.input(_action(&"battery_toggle", true))
     logic.input(_action(&"battery_toggle", false))
-    await wait_idle_frames(2)
+    await step(2)
     assert_true(_power24(), "battery_sw is in the cab's MMD and no widget is built - its key switches it")
 
 
@@ -77,17 +77,17 @@ func test_a_monostable_button_is_held_while_its_key_is() -> void:
 func test_repeat_on_hold_steps_on_key_echo() -> void:
     VehicleServer.vehicle_send_command(train.get_rid(), "battery", true)
     VehicleServer.vehicle_send_command(train.get_rid(), "cab_activation", true)
-    await wait_idle_frames(2)
+    await step(2)
     logic.input(_key("direction_increase", false))
     logic.input(_key("direction_increase", true))
-    await wait_idle_frames(2)
+    await step(2)
     assert_eq(train.get_direction(), 1, "the reverser takes the press, not the key repeat")
 
     var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
             train.get_rid(), RailVehicleComponentType.COMPONENT_MASTER_CONTROLLER) as RailVehicleMasterController
     for echo:bool in [false, true, true]:
         logic.input(_key("main_controller_increase", echo))
-        await wait_idle_frames(1)
+        await step(1)
     assert_eq(master.get_main_position(), 3, "press + two key repeats step the controller three times")
 
 
@@ -97,12 +97,12 @@ func test_a_knob_moves_while_its_key_is_held() -> void:
             train.get_rid(), RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
     var before:float = brake.get_controller_position_normalized()
     logic.input(_action(&"brake_level_increase", true))
-    await wait_idle_frames(KNOB_HOLD_FRAMES)
+    await step(KNOB_HOLD_FRAMES)
     logic.input(_action(&"brake_level_increase", false))
-    await wait_idle_frames(2)
+    await step(2)
     var held:float = brake.get_controller_position_normalized()
     assert_gt(held, before, "the brake handle moved while the key was held")
-    await wait_idle_frames(KNOB_HOLD_FRAMES)
+    await step(KNOB_HOLD_FRAMES)
     assert_eq(brake.get_controller_position_normalized(), held, "and stays where it was let go")
 
 
@@ -116,18 +116,18 @@ func test_a_widget_does_not_take_the_key_a_second_time() -> void:
     widget.control_id = &"battery_sw"
     add_child_autofree(widget)
     widget.set_vehicle_rid(train.get_rid())
-    await wait_idle_frames(1)
+    await step(1)
 
     Input.parse_input_event(_action(&"battery_toggle", true))
     Input.parse_input_event(_action(&"battery_toggle", false))
     logic.input(_action(&"battery_toggle", true))
     logic.input(_action(&"battery_toggle", false))
-    await wait_idle_frames(2)
+    await step(2)
     assert_true(_power24(), "one key, one switch - the widget takes no key")
 
     widget.press()
     widget.release()
-    await wait_idle_frames(2)
+    await step(2)
     assert_false(_power24(), "a click is the logic's press")
     CabinSystem.vehicle_attach_cab_logic(train.get_rid(), null)
 

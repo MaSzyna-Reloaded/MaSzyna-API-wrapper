@@ -41,12 +41,12 @@ func _build(train_id:String, auto_warning:bool) -> void:
     vehicle_rid = train.get_rid()
     front_cabin = RailVehicleServer.vehicle_get_front_cabin(vehicle_rid)
     rear_cabin = RailVehicleServer.vehicle_get_rear_cabin(vehicle_rid)
-    await wait_idle_frames(2)
+    await step(2)
     VehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
     VehicleServer.vehicle_send_command(vehicle_rid, "cab_activation", true)
     VehicleServer.vehicle_send_command(vehicle_rid, "doors_left_permit", true)
     VehicleServer.vehicle_send_command(vehicle_rid, "doors_right_permit", true)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func _doors_behaviour(cabin:RID, present_controls:Array[StringName],
@@ -65,9 +65,9 @@ func _state(key:String) -> Variant:
 
 func _click(cabin:RID, control_id:StringName) -> void:
     CabinSystem.act(cabin, control_id, &"hold")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     CabinSystem.act(cabin, control_id, &"release")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
 
 
 func test_the_toggle_opens_the_cab_side() -> void:
@@ -92,11 +92,11 @@ func test_the_automatic_departure_signal_sounds_while_closing_is_held() -> void:
     _doors_behaviour(front_cabin, controls)
     await _click(front_cabin, LegacyCabinDoors.LEFT_TOGGLE)
     CabinSystem.act(front_cabin, LegacyCabinDoors.LEFT_TOGGLE, &"hold")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_true(bool(_state("doors_departure_signal")), "held: the signal is given")
     assert_true(bool(_state("doors_left_remote_open")), "held: the doors stay open")
     CabinSystem.act(front_cabin, LegacyCabinDoors.LEFT_TOGGLE, &"release")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_false(bool(_state("doors_departure_signal")), "released: the signal stops")
     assert_false(bool(_state("doors_left_remote_open")), "released: the doors close")
 
@@ -107,7 +107,7 @@ func test_without_the_automatic_signal_the_doors_close_on_the_press() -> void:
     _doors_behaviour(front_cabin, controls)
     await _click(front_cabin, LegacyCabinDoors.LEFT_TOGGLE)
     CabinSystem.act(front_cabin, LegacyCabinDoors.LEFT_TOGGLE, &"hold")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_false(bool(_state("doors_departure_signal")))
     assert_false(bool(_state("doors_left_remote_open")), "closed as it is pressed")
 
@@ -130,11 +130,11 @@ func test_a_delayed_close_all_button_closes_on_its_release() -> void:
     await _click(front_cabin, LegacyCabinDoors.ALL_OPEN)
     assert_true(bool(_state("doors_left_remote_open")) and bool(_state("doors_right_remote_open")), "both sides open")
     CabinSystem.act(front_cabin, LegacyCabinDoors.ALL_CLOSE, &"hold")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_true(bool(_state("doors_left_remote_open")), "held: still open")
     assert_true(bool(_state("doors_departure_signal")), "held: the signal is given")
     CabinSystem.act(front_cabin, LegacyCabinDoors.ALL_CLOSE, &"release")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_false(bool(_state("doors_left_remote_open")) or bool(_state("doors_right_remote_open")), "released: closed")
     assert_false(bool(_state("doors_departure_signal")))
 
@@ -155,11 +155,11 @@ func test_the_departure_signal_button_gives_the_signal_while_held() -> void:
     var controls:Array[StringName] = [LegacyCabinDoors.DEPARTURE_SIGNAL]
     _doors_behaviour(front_cabin, controls)
     CabinSystem.act(front_cabin, LegacyCabinDoors.DEPARTURE_SIGNAL, &"hold")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_true(bool(_state("doors_departure_signal")))
     assert_eq(CabinSystem.get_control(front_cabin, LegacyCabinDoors.DEPARTURE_SIGNAL), 1.0)
     CabinSystem.act(front_cabin, LegacyCabinDoors.DEPARTURE_SIGNAL, &"release")
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_false(bool(_state("doors_departure_signal")))
 
 
@@ -187,7 +187,7 @@ func test_the_door_lamps_follow_the_open_doors_on_the_cab_side() -> void:
     _doors_behaviour(rear_cabin, controls)
     assert_false(bool(CabinSystem.vehicle_state_value(vehicle_rid, LegacyCabinDoors.DOORS_OPEN_LAMP)), "all closed")
     await _click(rear_cabin, LegacyCabinDoors.LEFT_TOGGLE)
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     assert_true(bool(CabinSystem.vehicle_state_value(vehicle_rid, LegacyCabinDoors.DOORS_OPEN_LAMP)), "a door is open")
     assert_true(bool(CabinSystem.vehicle_state_value(
             vehicle_rid, LegacyCabinDoors.SIDE_OPEN_LAMPS[RailVehicleDoors.SIDE_LEFT])), "on the rear cab's left")
@@ -209,7 +209,7 @@ func _permits_behaviour(cabin:RID) -> void:
 
 func test_a_permit_lamp_is_lit_through_by_a_steady_light() -> void:
     VehicleServer.vehicle_send_command(vehicle_rid, "doors_right_permit", false)
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     _permits_behaviour(front_cabin)
     var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(vehicle_rid, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
     doors.permit_light_blinking = RailVehicleDoors.PERMIT_LIGHT_CONTINUOUS
@@ -230,7 +230,7 @@ func test_a_blinking_permit_lamp_is_dark_on_the_odd_seconds_while_the_doors_are_
 
 func test_the_rear_cab_permit_lamps_show_the_other_side_of_the_vehicle() -> void:
     VehicleServer.vehicle_send_command(vehicle_rid, "doors_right_permit", false)
-    await wait_idle_frames(STEP_FRAMES)
+    await step(STEP_FRAMES)
     _permits_behaviour(rear_cabin)
     var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(vehicle_rid, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
     doors.permit_light_blinking = RailVehicleDoors.PERMIT_LIGHT_CONTINUOUS

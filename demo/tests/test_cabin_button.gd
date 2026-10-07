@@ -5,6 +5,9 @@ extends MaszynaGutTest
 
 const SM42:VehicleController = preload("res://tests/fixtures/sm42_vehicle.tres")
 const SHOWN_CONTROL:StringName = &"test_shown_control"
+## Time constants of a widget's exponential approach (delta * animation_speed a frame, cabin_button.gd)
+## to its pose: e^-15 of the way is left, below is_equal_approx's tolerance
+const POSE_TIME_CONSTANTS:float = 15.0
 
 
 ## The vehicle's cab logic, registered for its driver's cabin, with one cab-only button, wired as
@@ -36,7 +39,9 @@ func test_rotation_offset_is_the_released_pose():
     assert_true(pedal.transform.basis.is_equal_approx(released), "released pedal should rest at the offset")
 
     widget.pushed = true
-    await wait_seconds(1.5)
+    if not await wait_simulated_until(func() -> bool: return pedal.transform.basis.is_equal_approx(Basis.IDENTITY),
+            POSE_TIME_CONSTANTS / widget.animation_speed, "the pushed pedal's pose"):
+        return
 
     assert_true(pedal.transform.basis.is_equal_approx(Basis.IDENTITY), "pushed pedal should reach the modelled pose")
 

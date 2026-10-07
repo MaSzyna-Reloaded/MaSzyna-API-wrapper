@@ -17,6 +17,7 @@ const COUPLING_WITH_BRAKE_HOSE:int = (RailVehicleController.COUPLING_FLAG_COUPLE
 ## pipe charged (TMoverParameters::CheckLocomotiveParameters, Mover.cpp:8902); 0.1 is what
 ## scenery authors write for a standing, ready vehicle
 const READY_TO_DEPART_VELOCITY:float = 0.1
+## Simulated seconds the pipe of the last vehicle takes to follow the handle - braked, then refilled
 const BRAKING_SECONDS:float = 10.0
 const RELEASING_SECONDS:float = 30.0
 ## the brake pipe of a released train (CntrlPipePress)
@@ -24,8 +25,10 @@ const CHARGED_PIPE_PRESSURE:float = 5.0
 const PRESSURE_TOLERANCE:float = 0.1
 ## a service braking lowers the pipe by at least this much (FV4a full service: about 1.5 bar)
 const SERVICE_BRAKING_PIPE_DROP:float = 1.0
-## long enough for a few simulation ticks
-const RELEASER_TICK_SECONDS:float = 0.5
+## Steps the releaser is held over - it has to stay on through them
+const RELEASER_HELD_TICKS:int = 3
+## Steps the vehicles just built take to stand ready: they take their configuration on their first
+const SETTLE_TICKS:int = 2
 
 var nodes:Array[VehiclePhysicsNode] = []
 var controllers:Array[VehicleController] = []
@@ -46,7 +49,7 @@ func before_each() -> void:
         var controller:VehicleController = VehicleServer.vehicle_get_controller(node.get_vehicle_rid())
         controllers.append(controller)
         brakes.append(controller.get_rail_component(RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake)
-    await wait_idle_frames(2)
+    await step(SETTLE_TICKS)
     for index:int in range(1, VEHICLE_COUNT):
         controllers[index - 1].couple(controllers[index], RailVehicleController.COUPLER_END_REAR,
                 RailVehicleController.COUPLER_END_FRONT, COUPLING_WITH_BRAKE_HOSE)
@@ -74,11 +77,17 @@ func test_the_pipe_of_the_last_vehicle_follows_the_handle() -> void:
     assert_almost_eq(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "a ready train starts charged")
 
     controllers[0].send_command("brake_level_set_position", "full")
-    await wait_seconds(BRAKING_SECONDS)
+    if not await wait_simulated_until(
+            func() -> bool: return last.get_pipe_pressure() < CHARGED_PIPE_PRESSURE - SERVICE_BRAKING_PIPE_DROP,
+            BRAKING_SECONDS, "the pipe of the last vehicle emptied"):
+        return
     assert_lt(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE - SERVICE_BRAKING_PIPE_DROP, "the pipe of the last vehicle empties")
 
     controllers[0].send_command("brake_level_set_position", "drive")
-    await wait_seconds(RELEASING_SECONDS)
+    if not await wait_simulated_until(
+            func() -> bool: return absf(last.get_pipe_pressure() - CHARGED_PIPE_PRESSURE) <= PRESSURE_TOLERANCE,
+            RELEASING_SECONDS, "the pipe of the last vehicle refilled"):
+        return
     assert_almost_eq(last.get_pipe_pressure(), CHARGED_PIPE_PRESSURE, PRESSURE_TOLERANCE, "the pipe of the last vehicle refills")
 
 
@@ -101,7 +110,7 @@ func test_uncoupling_announces_the_trainset_change_once() -> void:
 func test_the_consist_releaser_is_held_while_its_button_is() -> void:
     controllers[0].send_command("consist_releaser", true)
     assert_true(brakes[0].get_releaser_active(), "switched on")
-    await wait_seconds(RELEASER_TICK_SECONDS)
+    await step(RELEASER_HELD_TICKS)
     assert_true(brakes[0].get_releaser_active(), "still held")
     controllers[0].send_command("consist_releaser", false)
     assert_false(brakes[0].get_releaser_active(), "let go with the button")

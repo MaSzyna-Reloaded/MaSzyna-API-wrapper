@@ -27,7 +27,7 @@ func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
     logic = LegacyCabinLogic.new(func(_cabin:RID) -> LegacyCabinControls: return cab_controls)
     cabin = RailVehicleServer.vehicle_get_front_cabin(train.get_rid())
     logic.register(train.get_rid(), cabin)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func after_each():
@@ -65,11 +65,11 @@ func test_push_battery_switch_flips_on_each_press():
     await _build_cab(controls)
     CabinSystem.act(cabin, &"battery_sw", &"hold")
     CabinSystem.act(cabin, &"battery_sw", &"release")
-    await wait_idle_frames(2)
+    await step(2)
     assert_true(train.get_state()["battery_enabled"], "the first press switches it on")
     CabinSystem.act(cabin, &"battery_sw", &"hold")
     CabinSystem.act(cabin, &"battery_sw", &"release")
-    await wait_idle_frames(2)
+    await step(2)
     assert_false(train.get_state()["battery_enabled"], "the second one off")
 
 
@@ -150,11 +150,11 @@ func test_battery_on_and_off_buttons_switch_the_battery():
     await _build_cab(controls)
     CabinSystem.act(cabin, &"batteryon_sw", &"hold")
     CabinSystem.act(cabin, &"batteryon_sw", &"release")
-    await wait_idle_frames(2)
+    await step(2)
     assert_true(train.get_state()["battery_enabled"], "on")
     CabinSystem.act(cabin, &"batteryoff_sw", &"hold")
     CabinSystem.act(cabin, &"batteryoff_sw", &"release")
-    await wait_idle_frames(2)
+    await step(2)
     assert_false(train.get_state()["battery_enabled"], "off")
 
 

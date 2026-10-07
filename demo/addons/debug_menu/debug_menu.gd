@@ -61,8 +61,6 @@ var style := Style.HIDDEN:
 # Value of `Time.get_ticks_usec()` on the previous frame.
 var last_tick := 0
 
-var thread := Thread.new()
-
 ## Returns the sum of all values of an array (use as a parameter to `Array.reduce()`).
 var sum_func := func avg(accum: float, number: float) -> float: return accum + number
 
@@ -113,36 +111,18 @@ func _ready() -> void:
 
     get_viewport().size_changed.connect(update_settings_label)
 
-    # Display loading text while information is being queried,
-    # in case the user toggles the full debug menu just after starting the project.
-    information.text = "Loading hardware information...\n\n "
-    settings.text = "Loading project information..."
-    thread.start(
-        func():
-            # Disable thread safety checks as they interfere with this add-on.
-            # This only affects this particular thread, not other thread instances in the project.
-            # See <https://github.com/godotengine/godot/pull/78000> for details.
-            # Use a Callable so that this can be ignored on Godot 4.0 without causing a script error
-            # (thread safety checks were added in Godot 4.1).
-            if Engine.get_version_info()["hex"] >= 0x040100:
-                Callable(Thread, "set_thread_safety_checks_enabled").call(false)
-
-            # Enable required time measurements to display CPU/GPU frame time information.
-            # These lines are time-consuming operations, so run them in a separate thread.
-            RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
-            update_information_label()
-            update_settings_label()
-    )
+    # On the main thread: the information asks the RenderingServer, which answers through the main
+    # thread - a thread asking it never finished once the main loop had stopped, and the game hung
+    # at exit joining it
+    RenderingServer.viewport_set_measure_render_time(get_viewport().get_viewport_rid(), true)
+    update_information_label()
+    update_settings_label()
 
 
 ## The next style - hidden, compact, detailed - as the HUD's "Diagnostics" entry and its key
 ## (cycle_debug_menu) ask
 func cycle_style() -> void:
     style = wrapi(style + 1, 0, Style.MAX) as Style
-
-
-func _exit_tree() -> void:
-    thread.wait_to_finish()
 
 
 ## Update hardware information label (this can change at runtime based on window

@@ -122,6 +122,8 @@ func test_the_detection_area_names_its_vehicle() -> void:
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     var vehicle:MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
             "dynamic/test/synthetic_v1", "synthetic", "", "rendering_detection")
+    if not await wait_detailed(vehicle):
+        return
     await wait_physics_frames(SETTLE_FRAMES)
 
     # the area is a box the size of the model, where the model is drawn
@@ -150,6 +152,8 @@ func test_an_editable_vehicle_shows_its_model_as_nodes() -> void:
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
     var vehicle:MaszynaRailVehicle3D = await spawn_maszyna_vehicle(
             "dynamic/test/synthetic_v1", "synthetic", "", "rendering_editable")
+    if not await wait_detailed(vehicle):
+        return
     var rid:RID = vehicle.get_rid()
     assert_eq(vehicle.get_child_count(false), 0, "the nodes of the model are internal")
 

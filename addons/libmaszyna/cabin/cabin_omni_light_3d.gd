@@ -17,6 +17,8 @@ var _cabin:RID
 
 var _dirty:bool = false
 var _t = 0.0
+## The element's time - the simulation's
+var _clock:SimulationClock = SimulationClock.new()
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
@@ -74,7 +76,8 @@ func _update_state():
 
     _target_light_energy = lerpf(light_energy_off, light_energy_on, level) if enabled else light_energy_off
 
-func _process(delta):
+func _process(frame_delta):
+    var delta:float = _clock.advance(frame_delta)
     if _dirty:
         _dirty = false
         if _vehicle_rid:

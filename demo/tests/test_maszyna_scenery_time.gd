@@ -8,7 +8,6 @@ const SCENERY_WITH_TIME:String = "evening_time.scn"
 const SCENERY_WITHOUT_TIME:String = "no_time.scn"
 ## evening_time.scn: time 18:45
 const EVENING_START_TIME:float = 18.75
-const LOAD_TIMEOUT:float = 30.0
 
 var _previous_game_dir:String = ""
 var _scenery:MaszynaSceneryNode
@@ -40,4 +39,5 @@ func _load(scenery_file:String) -> void:
     _scenery = MaszynaSceneryNode.new()
     _scenery.filename = scenery_file
     add_child(_scenery)
-    await wait_for_signal(_scenery.scenery_loaded, LOAD_TIMEOUT)
+    if not await wait_loaded(_scenery.scenery_loaded, _scenery.filename):
+        return

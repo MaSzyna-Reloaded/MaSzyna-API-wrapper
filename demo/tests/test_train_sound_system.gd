@@ -36,9 +36,13 @@ const NEAR:Vector3 = Vector3(0.0, 0.0, 10.0)
 const FAR:Vector3 = Vector3(0.0, 0.0, 10000.0)
 const BOOKEND_LENGTH:float = 1.0
 const MIX_RATE:int = 8000
-const MAX_WAIT:float = 2.0
-## Long enough for the sweep to have looked at the listener, and for a few trigger ticks
-const SETTLE:float = 4.0 * TrainSoundSystem.SWEEP_INTERVAL
+## The sound system runs on the simulation's time. Simulated seconds a change takes to be heard or
+## silenced: a sweep to see where the listener is (SWEEP_INTERVAL), a bank's
+## update interval (never above FAR_UPDATE_INTERVAL) and a trigger tick (TRIGGER_INTERVAL)
+const HEARD_SECONDS:float = (TrainSoundSystem.SWEEP_INTERVAL + TrainSoundSystem.FAR_UPDATE_INTERVAL
+        + TrainSoundSystem.TRIGGER_INTERVAL)
+## Simulated seconds within which a change is heard, or proved unheard
+const SETTLE:float = HEARD_SECONDS + TICK
 const EVENT_TIME_TOLERANCE:float = 0.25
 
 var _vehicle_rid:RID
@@ -129,26 +133,31 @@ func test_running_sound_plays_again_when_the_camera_comes_back() -> void:
     _build(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
     _camera.global_position = NEAR
     VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
-    await wait_until(_playing, MAX_WAIT)
+    if not await wait_simulated_until(_playing, SETTLE, "the running sound"):
+        return
     assert_true(_playing(), "heard while the camera is near")
 
     _camera.global_position = FAR
-    await wait_until(func() -> bool: return not _playing(), MAX_WAIT)
+    if not await wait_simulated_until(func() -> bool: return not _playing(), SETTLE, "the running sound silenced"):
+        return
     assert_false(_playing(), "silent while the camera is away")
 
     _camera.global_position = NEAR
-    await wait_until(_playing, MAX_WAIT)
+    if not await wait_simulated_until(_playing, SETTLE, "the running sound heard again"):
+        return
     assert_true(_playing(), "heard again once the camera is back")
 
 
 func test_sound_switched_on_while_heard_plays_its_opening_bookend() -> void:
     _build(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
+    # the sweep sees the listener away, then near - nothing to observe but its time
     _camera.global_position = FAR
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
     _camera.global_position = NEAR
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
     VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
-    await wait_until(_playing, MAX_WAIT)
+    if not await wait_simulated_until(_playing, SETTLE, "the sound switched on"):
+        return
 
     assert_almost_eq(
             float(_sound.get_event_visualization_state(&"engine")["event_time"]), 0.0,
@@ -157,14 +166,16 @@ func test_sound_switched_on_while_heard_plays_its_opening_bookend() -> void:
 
 func test_one_shot_due_while_the_camera_is_away_is_dropped() -> void:
     _build(TrainSoundSystem.TRIGGER_MODE_CHANGE)
+    # the sweep sees the listener near, then away; the change is due unheard, and the listener comes
+    # back - nothing to observe but the time each takes
     _camera.global_position = NEAR
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
     _camera.global_position = FAR
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
     VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
     _camera.global_position = NEAR
-    await wait_seconds(SETTLE)
+    await step(ticks(SETTLE))
 
     assert_false(_playing(), "the change happened unheard")
 
@@ -175,7 +186,8 @@ func test_bank_registered_after_its_vehicle_has_a_controller_is_heard() -> void:
     _register_bank(TrainSoundSystem.TRIGGER_MODE_TOGGLE)
     _camera.global_position = NEAR
     VehicleServer.vehicle_send_command(_vehicle_rid, "battery", true)
-    await wait_until(_playing, MAX_WAIT)
+    if not await wait_simulated_until(_playing, SETTLE, "the late bank heard"):
+        return
 
     assert_true(_playing())
 
@@ -185,12 +197,15 @@ func test_bank_is_built_once_its_vehicle_is_within_earshot() -> void:
     var built:Array[int] = [0]
     _camera.global_position = FAR
     TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, func() -> void: built[0] += 1)
-    await wait_seconds(SETTLE)
+    # proved unbuilt by the time a sweep takes
+    await step(ticks(SETTLE))
     assert_eq(built[0], 0, "not built while the camera is away")
 
     _camera.global_position = NEAR
-    await wait_until(func() -> bool: return built[0] > 0, MAX_WAIT)
-    await wait_seconds(SETTLE)
+    if not await wait_simulated_until(func() -> bool: return built[0] > 0, SETTLE, "the bank built after the camera came near"):
+        return
+    # proved built only once by the time the next sweep takes
+    await step(ticks(SETTLE))
     assert_eq(built[0], 1, "built once, when the camera came near")
 
 
@@ -201,6 +216,7 @@ func test_bank_builder_taken_back_is_never_called() -> void:
     TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, func() -> void: built[0] += 1)
     TrainSoundSystem.vehicle_set_bank_builder(_vehicle_rid, Callable())
     _camera.global_position = NEAR
-    await wait_seconds(SETTLE)
+    # proved never called by the time a sweep takes
+    await step(ticks(SETTLE))
 
     assert_eq(built[0], 0)

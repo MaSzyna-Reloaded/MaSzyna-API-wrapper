@@ -28,7 +28,7 @@ func test_starts_and_moves_off() -> void:
 func test_empty_trailer_brakes_at_its_empty_car_pressure() -> void:
     await run_startup("startup_en57-636ra.scn", "EN57-636ra", Kind.ELECTRIC_MULTIPLE_UNIT)
     VehicleServer.vehicle_send_command(occupied, "brake_level_set", EP_BRAKE_LEVEL)
-    await wait_simulated(BRAKE_FILL_SECONDS)
+    await step(ticks(BRAKE_FILL_SECONDS))
     var brake:RailVehicleBrake = _brake(occupied)
     assert_eq(brake.cntrl_max_brake_pressure_mass, 52.0, "MaxBPMass read from the FIZ")
     assert_almost_eq(brake.get_air_pressure(), brake.max_tare_pressure, PRESSURE_TOLERANCE,
@@ -76,5 +76,5 @@ func _walk_to_cab(action:StringName, vehicle_name:String, rear:bool) -> void:
         if VehicleServer.vehicle_get_name(vehicle) == vehicle_name and RailVehicleServer.vehicle_get_driver_cabin(vehicle) == wanted:
             return
         await key_tap(action)
-        await wait_simulated(CAB_CHANGE_SECONDS)
+        await step(ticks(CAB_CHANGE_SECONDS))
     fail_test("the player did not reach %s" % vehicle_name)

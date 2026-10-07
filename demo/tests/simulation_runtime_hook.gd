@@ -1,8 +1,11 @@
 extends GutHookScript
 
-## The tests run as the game does: SimulationServer's clock ticks only with a SimulationRuntime in
-## the tree (demo_scenery_loading.tscn places one), so the whole run gets one at its root
+## The tests drive the simulation themselves: no SimulationRuntime is placed, so no frame moves
+## SimulationServer's clock - a test steps it tick by tick (MaszynaGutTest.step(),
+## wait_simulated_until()), and its result does not depend on how fast the machine renders frames.
+## The simulation is unpaused and at speed 1 for every test.
 
 
 func run() -> void:
-    gut.get_tree().root.add_child(SimulationRuntime.new())
+    SimulationServer.simulation_unpause()
+    SimulationServer.simulation_reset_speed()

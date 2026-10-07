@@ -16,7 +16,7 @@ func before_each() -> void:
     var cab:VehicleController = build_vehicle("TestPressuresCabCar", FizVehicleBuilder.build_description_at(CAB_CAR_PATH),
             0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     var motor:VehicleController = build_vehicle("TestPressuresMotorCar", FizVehicleBuilder.build_description_at(MOTOR_CAR_PATH))
-    await wait_idle_frames(2)
+    await step(2)
     cab.couple(motor, RailVehicleController.COUPLER_END_REAR, RailVehicleController.COUPLER_END_FRONT,
             RailVehicleController.COUPLING_FLAG_COUPLER | RailVehicleController.COUPLING_FLAG_PERMANENT
             | RailVehicleController.COUPLING_FLAG_CONTROL)
@@ -27,7 +27,7 @@ func before_each() -> void:
             LegacyCabinTrainsetPressures.state_key(3, PIPE)]
     add_child_autofree(pressures)
     pressures.set_vehicle_rid(cab_car)
-    await wait_idle_frames(2)
+    await step(2)
 
 
 func test_each_car_gauge_reads_its_car() -> void:

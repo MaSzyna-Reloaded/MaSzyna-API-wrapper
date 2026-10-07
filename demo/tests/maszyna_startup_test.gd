@@ -55,20 +55,16 @@ const UNIT_KINDS:Array[Kind] = [Kind.ELECTRIC_MULTIPLE_UNIT, Kind.DIESEL_MULTIPL
 const UNIT_TRAIN_TYPES:int = RailVehicleController.TRAIN_TYPE_EZT | RailVehicleController.TRAIN_TYPE_DMU
 ## Simulated seconds a driver gives each notch of a controller without resistor steps
 const CONTROLLER_NOTCH_SECONDS:float = 1.0
+## Simulated seconds the line contactors may take beyond the controller's InitialCtrlDelay at its
+## first power position (Mover.cpp:6394-6401) - a relay step of the unit's cars on top
+const LINE_CONTACTORS_MARGIN:float = 5.0
 
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
-## The clock runs fast - the main reservoir filling from cold takes minutes of simulated time, and a
-## fixture has no world to stream
-const SIMULATION_SPEED:float = 100.0
-## Real seconds a scenery fixture may take to load its vehicles
-const LOAD_TIMEOUT:float = 15.0
 ## Simulated seconds a step may take
 const STEP_TIMEOUT:float = 120.0
 ## Simulated seconds the air may take - the main reservoir and the brake pipe filling from cold; a
 ## compressor driven by an idling diesel is slow (EngineRPMRatio, Mover.cpp:4424)
 const AIR_TIMEOUT:float = 300.0
-## Real seconds a step may take whatever the clock does - a stopped clock is a failure, not a hang
-const STEP_REAL_TIMEOUT:float = 45.0
 ## Simulated seconds main_switch_toggle (M) is held beyond the line breaker's InitialCtrlDelay
 ## (LegacyCabinMainSwitch closes it on the release once the delay has run)
 const MAIN_SWITCH_HOLD_MARGIN:float = 1.0
@@ -124,12 +120,16 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
     assert_eq(kind in UNIT_KINDS, bool(train_type & UNIT_TRAIN_TYPES), "%s is driven as a unit or not" % vehicle)
     if not is_passing():
         return
-    if not _power_supply(occupied).get_power24_available():
-        await key_tap(&"battery_toggle")
+    if not _power_supply(occupied).get_power24_available() and not await _key_taken(&"battery_toggle", func() -> bool:
+            # the battery may be the powered car's, of a unit
+            return _power_supply(occupied).get_battery_enabled() or _power_supply(powered).get_battery_enabled() \
+                    or _power_supply(occupied).get_power24_available()):
+        return
     if not await _until("battery: low voltage", func() -> bool: return _power_supply(occupied).get_power24_available()):
         return
-    if _master(occupied).get_cabin() == 0:
-        await key_tap(&"cab_activation_toggle")
+    if _master(occupied).get_cabin() == 0 and not await _key_taken(&"cab_activation_toggle", func() -> bool:
+            return not _master(occupied).get_cabin() == 0):
+        return
     if not await _until("cab activation", func() -> bool: return not _master(occupied).get_cabin() == 0):
         return
     if kind in [Kind.ELECTRIC_LOCOMOTIVE, Kind.ELECTRIC_MULTIPLE_UNIT]:
@@ -172,9 +172,9 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
                         # the valves lever up and let go, as the hand does it (CabinLogic.increase())
                         var logic:CabinLogic = CabinSystem.vehicle_get_cab_logic(occupied)
                         logic.increase(VALVES_LEVER)
-                        await wait_simulated(PANTOGRAPH_SWITCH_HOLD)
+                        await step(ticks(PANTOGRAPH_SWITCH_HOLD))
                         logic.release(VALVES_LEVER)
-                        await wait_simulated(PANTOGRAPH_SWITCH_HOLD)
+                        await step(ticks(PANTOGRAPH_SWITCH_HOLD))
             if not await _until("pantographs: line voltage", func() -> bool: return power_source.get_collector_voltage() > 0.0):
                 return
         if not await _direction_forward():
@@ -284,8 +284,10 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
                 else:
                     await key_press(&"brake_level_charging")
             await key_press(&"brake_release")
+            # the lock lets go only above LockPipeOff, higher than where it closes (LockPipeOn,
+            # Mover.cpp:4030) - let go below it, the pipe locks again
             var filled:bool = await _until("brake pipe filled, the releaser held", func() -> bool:
-                    return brake.get_pipe_pressure() > released_pipe, AIR_TIMEOUT)
+                    return brake.get_pipe_pressure() > released_pipe and not brake.get_main_pipe_locked(), AIR_TIMEOUT)
             await key_release(&"brake_release")
             if unlock_button:
                 logic.release(unlock_button)
@@ -307,18 +309,23 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
     # (Mover.cpp:6394-6401)
     var master:RailVehicleMasterController = _master(powered)
     var series_motor:bool = _engine(powered).get_type() == RailVehicleEngine.ELECTRIC_SERIES_MOTOR
+    var position_max:int = int(VehicleServer.vehicle_dump_config(powered).get("master_controller_position_max", 0))
     for _step:int in MAX_CONTROLLER_STEPS:
         if VehicleServer.vehicle_get_speed(occupied) > MOVED_OFF_SPEED:
             break
-        await key_tap(&"main_controller_increase")
-        # a series motor waits for its line contactors on the first power position; every other
-        # notch, and every notch of an induction motor or a diesel, is given its time
+        var position:int = master.get_main_position()
+        if not await _key_taken(&"main_controller_increase", func() -> bool:
+                return master.get_main_position() > position or position >= position_max):
+            return
+        # a series motor waits for its line contactors on the first power position, as long as its
+        # InitialCtrlDelay; every other notch, and every notch of an induction motor or a diesel, is
+        # given its time
         if series_motor and master.get_main_actual_position() == 0:
             if not await _until("line contactors on the first power position", func() -> bool:
-                    return master.get_main_actual_position() > 0):
+                    return master.get_main_actual_position() > 0, master.initial_delay + LINE_CONTACTORS_MARGIN):
                 return
         else:
-            await wait_simulated(CONTROLLER_NOTCH_SECONDS)
+            await step(ticks(CONTROLLER_NOTCH_SECONDS))
     await _until("moved off", func() -> bool: return VehicleServer.vehicle_get_speed(occupied) > MOVED_OFF_SPEED)
 
 
@@ -353,7 +360,6 @@ func enter_vehicle(scenery:String, vehicle:String) -> bool:
     carrier = RailVehicleServer.vehicle_find_pantograph_carrier(occupied)
     if not carrier.is_valid():
         carrier = powered
-    SimulationServer.simulation_speed = SIMULATION_SPEED
     return true
 
 
@@ -376,45 +382,59 @@ func _direction_forward() -> bool:
 
 ## Waits (simulated time) for `done`; a step that does not come about fails the test and says what
 ## the cars show
-func _until(step:String, done:Callable, timeout:float = STEP_TIMEOUT) -> bool:
-    var started:float = SimulationServer.simulation_get_time()
-    var real:int = Time.get_ticks_msec()
-    while not done.call():
-        if SimulationServer.simulation_get_time() - started > timeout \
-                or Time.get_ticks_msec() - real > STEP_REAL_TIMEOUT * 1000.0:
-            var cars:Array[String] = []
-            var seen:Array[RID] = []
-            for car:RID in [occupied, powered, carrier]:
-                if car in seen:
-                    continue
-                seen.append(car)
-                var state:Dictionary = VehicleServer.vehicle_dump_state(car)
-                var line:String = VehicleServer.vehicle_get_controller(car).vehicle_id + ":"
-                for key:String in ["battery_enabled", "power24_available", "cabin", "direction",
-                        "current_collector/pantograph_first_active", "current_collector/voltage",
-                        "main_switch_enabled", "main_switch_closable", "converter_enabled", "power110_available",
-                        "current_collector/pantograph_tank_pressure", "current_collector/min_pantograph_tank_pressure",
-                        "current_collector/pantograph_compressor_enabled", "current_collector/pantograph_compressor_valve",
-                        "current_collector/valve_enabled", "current_collector/valve_active",
-                        "current_collector/pantograph_first_valve_enabled", "current_collector/pantograph_second_valve_enabled",
-                        "oil_pump_enabled", "oil_pump_active", "oil_pump_disabled", "fuel_pump_enabled", "fuel_pump_active",
-                        "fuel_pump_disabled", "engine_rpm_count",
-                        "compressor_pressure", "compressor_enabled", "compressor_allowed", "feed_pipe_pressure", "main_pipe_locked", "brake_is_cut_off", "pipe_pressure",
-                        "brake_air_pressure", "brake_controller_position",
-                        "brake_local_position_normalized", "spring_brake/active", "controller_main_position",
-                        "controller_main_actual_position", "engine_current", "Ft", "speed",
-                        "blinking", "vigilance_blinking", "cabsignal_blinking", "braking",
-                        "brake_emergency_valve_flow", "brake_main_valve_flow", "brake_handle_release_flow",
-                        "brake_handle_emergency_flow", "brake_handle_braking_flow", "alarm_chain_pulled",
-                        "brake_releaser_active", "brake_operation_mode", "brake_control_pressure"]:
-                    if state.has(key):
-                        line += " %s=%s" % [key, state[key]]
-                cars.append(line)
-            fail_test("start-up stopped at %s after %.0f s: %s" % [
-                    step, SimulationServer.simulation_get_time() - started, "; ".join(cars)])
-            return false
-        await wait_idle_frames(1)
-    return true
+func _until(step_name:String, done:Callable, timeout:float = STEP_TIMEOUT) -> bool:
+    for _tick:int in ticks(timeout):
+        if done.call():
+            return true
+        await step(1)
+    if done.call():
+        return true
+    fail_test("start-up stopped at %s after %.1f simulated s: %s" % [step_name, timeout, _cars_text()])
+    return false
+
+
+## What the cars show - the cab's own gauges, the driving aid's and the brake's
+func _cars_text() -> String:
+    var cars:Array[String] = []
+    var seen:Array[RID] = []
+    for car:RID in [occupied, powered, carrier]:
+        if car in seen:
+            continue
+        seen.append(car)
+        var state:Dictionary = VehicleServer.vehicle_dump_state(car)
+        var line:String = VehicleServer.vehicle_get_controller(car).vehicle_id + ":"
+        for key:String in ["battery_enabled", "power24_available", "cabin", "direction",
+                "current_collector/pantograph_first_active", "current_collector/voltage",
+                "main_switch_enabled", "main_switch_closable", "converter_enabled", "power110_available",
+                "current_collector/pantograph_tank_pressure", "current_collector/min_pantograph_tank_pressure",
+                "current_collector/pantograph_compressor_enabled", "current_collector/pantograph_compressor_valve",
+                "current_collector/valve_enabled", "current_collector/valve_active",
+                "current_collector/pantograph_first_valve_enabled", "current_collector/pantograph_second_valve_enabled",
+                "oil_pump_enabled", "oil_pump_active", "oil_pump_disabled", "fuel_pump_enabled", "fuel_pump_active",
+                "fuel_pump_disabled", "engine_rpm_count",
+                "compressor_pressure", "compressor_enabled", "compressor_allowed", "feed_pipe_pressure", "main_pipe_locked", "brake_is_cut_off", "pipe_pressure",
+                "brake_air_pressure", "brake_controller_position",
+                "brake_local_position_normalized", "spring_brake/active", "controller_main_position",
+                "controller_main_actual_position", "engine_current", "Ft", "speed",
+                "blinking", "vigilance_blinking", "cabsignal_blinking", "braking",
+                "brake_emergency_valve_flow", "brake_main_valve_flow", "brake_handle_release_flow",
+                "brake_handle_emergency_flow", "brake_handle_braking_flow", "alarm_chain_pulled",
+                "brake_releaser_active", "brake_operation_mode", "brake_control_pressure"]:
+            if state.has(key):
+                line += " %s=%s" % [key, state[key]]
+        cars.append(line)
+    return "; ".join(cars)
+
+
+## The key's own control moves on the next tick - what it starts may take its time, the key itself
+## not: a key that did not take fails the step here, not after a wait for what it never started
+func _key_taken(action:StringName, taken:Callable) -> bool:
+    await key_tap(action)
+    await step(1)
+    if taken.call():
+        return true
+    fail_test("start-up stopped at %s: the key did not take: %s" % [action, _cars_text()])
+    return false
 
 
 ## The driver's reflex, every frame: the security system blinking is acknowledged at once - left
@@ -431,14 +451,6 @@ func _acknowledge_security() -> void:
         _key_now(&"security_acknowledge")
 
 
-func wait_simulated(seconds:float) -> void:
-    var started:float = SimulationServer.simulation_get_time()
-    var real:int = Time.get_ticks_msec()
-    while SimulationServer.simulation_get_time() - started < seconds \
-            and Time.get_ticks_msec() - real < STEP_REAL_TIMEOUT * 1000.0:
-        await wait_idle_frames(1)
-
-
 func key_press(action:StringName) -> void:
     await _key(action, true)
 
@@ -447,14 +459,17 @@ func key_release(action:StringName) -> void:
     await _key(action, false)
 
 
+## Pressed for one tick and let go: the cab's logic takes a key on the simulation's step
+## (CabinSystem), so a press that ends before the next tick is never seen
 func key_tap(action:StringName) -> void:
     await key_press(action)
+    await step(1)
     await key_release(action)
 
 
 func key_hold(action:StringName, seconds:float) -> void:
     await key_press(action)
-    await wait_simulated(seconds)
+    await step(ticks(seconds))
     await key_release(action)
 
 

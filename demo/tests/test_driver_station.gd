@@ -8,15 +8,15 @@ const TRACK_LENGTH:float = 400.0
 const TRACK_OFFSET:float = 100.0
 const CAPACITY:float = 100.0
 const EXCHANGE_SPEED:float = 5.0
-const SETTLE_FRAMES:int = 2
+## Steps a vehicle just built takes to stand ready: its node takes the controller within the
+## frames, the vehicle its configuration on its first step
+const SETTLE_TICKS:int = 2
 ## The global random generator's seed, so the groups drawn are the same every run
 const RANDOM_SEED:int = 7
 const DEPARTURE:float = 10.5
 ## A car driven along itself, and one the other way round
 const ALONG:int = 1
 const REVERSED:int = -1
-## Long enough for a car's doors to open [s]
-const DOORS_TIMEOUT:float = 10.0
 
 var _track:RID
 var _car:RailVehicle3D
@@ -28,7 +28,7 @@ func before_each() -> void:
     seed(RANDOM_SEED)
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
     _car = build_passenger_car("StationTest", TRACK_NAME, TRACK_OFFSET, CAPACITY, EXCHANGE_SPEED)
-    await wait_idle_frames(SETTLE_FRAMES)
+    await step(SETTLE_TICKS)
     _trainset = MaszynaLegacyDriverTrainset.new()
     var vehicles:Array[RID] = [_car.get_rid()]
     _trainset.vehicles = vehicles
@@ -72,9 +72,15 @@ func test_a_car_the_other_way_round_has_the_platform_on_its_other_side() -> void
     _trainset.directions = directions
 
     MaszynaLegacyStation.update_load(_trainset, _timetable, RailVehicleLoad.PLATFORM_SIDE_LEFT)
-    await wait_until(func() -> bool:
+    # the doors' travel: their delay, then their shift at their speed (update_doors(), Mover.cpp:8000-8008)
+    var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(
+            _car.get_rid(), VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
+    var opened:Callable = func() -> bool:
         var state:Dictionary = VehicleServer.vehicle_dump_state(_car.get_rid())
-        return state.get("doors_right_open", false) or state.get("doors_left_open", false), DOORS_TIMEOUT)
+        return state.get("doors_right_open", false) or state.get("doors_left_open", false)
+    if not await wait_simulated_until(opened, doors.open_delay + doors.max_shift / doors.open_speed + TICK,
+            "the car's doors open"):
+        return
 
     var state:Dictionary = VehicleServer.vehicle_dump_state(_car.get_rid())
     assert_true(state.get("doors_right_open", false), "the train's left is the reversed car's right")

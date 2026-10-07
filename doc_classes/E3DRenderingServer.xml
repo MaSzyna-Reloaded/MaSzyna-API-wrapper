@@ -10,17 +10,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="animation_get_speed" qualifiers="const">
-			<return type="float" />
-			<description>
-			</description>
-		</method>
-		<method name="animation_set_speed">
-			<return type="void" />
-			<param index="0" name="speed" type="float" />
-			<description>
-			</description>
-		</method>
 		<method name="emission_light_create">
 			<return type="RID" />
 			<param index="0" name="instance" type="RID" />

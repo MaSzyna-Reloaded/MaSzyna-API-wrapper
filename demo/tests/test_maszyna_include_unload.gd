@@ -11,7 +11,6 @@ const OTHER_SCENERY_FILE:String = "evening_time.scn"
 const OTHER_SCENERY_START_TIME:float = 18.75
 ## A scenery with vehicles and trainsets (demo/tests/fixtures/scenery)
 const TRAINSETS_SCENERY_FILE:String = "trainsets.scn"
-const LOAD_TIMEOUT:float = 30.0
 ## How long a preload in flight takes [ms] - longer than a reload of an empty scenery
 const PRELOAD_MSEC:int = 500
 ## Frames given to the streaming to start the preload
@@ -94,7 +93,8 @@ func test_a_load_asked_for_during_a_load_gives_that_one_up() -> void:
     scenery.load()
     scenery.filename = OTHER_SCENERY_FILE
     scenery.load()
-    await wait_for_signal(scenery.scenery_loaded, LOAD_TIMEOUT)
+    if not await wait_loaded(scenery.scenery_loaded, scenery.filename):
+        return
 
     assert_signal_emit_count(scenery, "scenery_loaded", 1, "the load given up announced a scenery")
     assert_eq(scenery.start_time, OTHER_SCENERY_START_TIME, "the scenery loaded is not the one asked for last")
@@ -110,7 +110,8 @@ func test_a_stopped_load_leaves_nothing_loaded() -> void:
 
     scenery.load()
     scenery.stop_loading()
-    await wait_for_signal(scenery.load_ended, LOAD_TIMEOUT)
+    if not await wait_loaded(scenery.load_ended, scenery.filename):
+        return
 
     assert_signal_not_emitted(scenery, "scenery_loaded")
     assert_signal_not_emitted(scenery, "loaded")
@@ -140,7 +141,8 @@ func test_a_scenario_runs_from_its_start_until_its_scenery_unloads() -> void:
     var scenery:MaszynaSceneryNode = MaszynaSceneryNode.new()
     scenery.filename = SCENERY_FILE
     add_child_autofree(scenery)
-    await wait_for_signal(scenery.scenery_loaded, LOAD_TIMEOUT)
+    if not await wait_loaded(scenery.scenery_loaded, scenery.filename):
+        return
 
     var scenario:MaszynaLegacyScenario = MaszynaLegacyScenario.new()
     assert_false(scenario.get_script_context().is_valid(), "a scenario ran before it was started")

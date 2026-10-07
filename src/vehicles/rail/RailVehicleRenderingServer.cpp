@@ -428,6 +428,7 @@ namespace godot {
         Visual *visual = vehicles.getptr(p_vehicle);
         ERR_FAIL_NULL(visual);
         visual->appearance = p_appearance;
+        visual->model_missing = false;
         // models of its own replace the ones built from the last appearance, built once the
         // vehicle is within the draw distance (_update_detail()); handed-over ones stay
         if (p_appearance.is_valid() && !p_appearance->get_model_filename().is_empty()) {
@@ -637,6 +638,7 @@ namespace godot {
         const E3DRenderingServer::Instancer detail = detail_instancer(p_visual.detailed, p_visual.editable);
         p_visual.own_models = true;
         p_visual.model = create(appearance->get_model_filename(), appearance->get_skins(), detail);
+        p_visual.model_missing = !p_visual.model.is_valid();
         model_vehicles[p_visual.model] = p_vehicle;
         p_visual.low_poly = create(appearance->get_low_poly_model_filename(), appearance->get_skins(), detail);
         // the passengers carry no skin of their own
@@ -1482,7 +1484,9 @@ namespace godot {
                 const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, draw_distance * DETAIL_HYSTERESIS);
                 drawn = p_visual.model.is_valid() ? distance <= draw_distance + hysteresis : distance <= draw_distance;
             }
-            if (drawn && !p_visual.model.is_valid()) {
+            // a model that could not be loaded is not loaded again - it would stay a pending build,
+            // and the loading screen waits for the builds within the draw distance
+            if (drawn && !p_visual.model.is_valid() && !p_visual.model_missing) {
                 if (at_once) {
                     _build_models(p_vehicle, p_visual);
                 } else if (!p_visual.build_pending) {

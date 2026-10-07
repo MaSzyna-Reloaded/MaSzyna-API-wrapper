@@ -230,15 +230,13 @@ namespace godot {
             int blinking_cursor = 0;
             bool light_processing = false;
             /// Instances with a submodel still moving towards its target, advanced by
-            /// _process_animations()
+            /// _process_animations() on the simulation's clock - at its speed, standing while it
+            /// stands (Timer::GetDeltaTime())
             Vector<RID> animating_instances;
             bool animation_processing = false;
             double light_clock = 0.0;   // seconds, the clock every blinking light cycles on
             double current_time = 12.0; // hours, 0..24
-            /// Simulated seconds per real second the submodels animate in, 0 while the world is
-            /// paused (Timer::GetDeltaTime())
-            double animation_speed = 1.0;
-            double light_level = 1.0; // Global.fLuminance equivalent (simulationenvironment.cpp:184)
+            double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
             Callable smoke_source_resolver;
             /// The ResourceLazyLoader resource of each registered instance's model - in a map of
@@ -322,7 +320,7 @@ namespace godot {
             static bool _merge_submodel_aabb(
                     const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent, AABB &p_r_aabb);
             /// Connected to SceneTree's process_frame while a submodel moves
-            void _process_animations();
+            void _process_animations(double p_seconds);
             void _set_animation_processing(bool p_processing);
 
         protected:
@@ -442,9 +440,6 @@ namespace godot {
             /// Pushed by MaszynaEnvironmentNode; the first two drive the automatic light modes,
             /// the wind drifts the particles of every emitter
             void environment_set_time(double p_hours);
-            /// Pushed by MaszynaEnvironmentNode: the simulation speed, 0 while paused
-            void animation_set_speed(double p_speed);
-            double animation_get_speed() const;
             void environment_set_light_level(double p_level);
             void environment_set_wind(float p_strength, const Vector3 &p_direction);
 

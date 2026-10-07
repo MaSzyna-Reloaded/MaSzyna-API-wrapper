@@ -15,7 +15,7 @@ func test_a_compressor_switched_on_is_not_hinted() -> void:
     assert_true(driver.is_valid(), "the scenery's driver is seated in the unit")
     if not driver.is_valid():
         return
-    await wait_simulated(DRIVER_UPDATE_SECONDS)
+    await step(ticks(DRIVER_UPDATE_SECONDS))
     var cars:Array[String] = []
     var allowed:bool = false
     for car:RID in VehicleServer.vehicle_get_rids():

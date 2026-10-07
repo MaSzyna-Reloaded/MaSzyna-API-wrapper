@@ -9,7 +9,6 @@ const FILE_NAME:String = "test_vehicle"
 ## test_vehicle with a one-position master controller - a wagon (FizTrainCntrlParser)
 const WAGON_FILE_NAME:String = "test_wagon"
 const PLAYER_SCENE:PackedScene = preload("res://addons/libmaszyna/player/player.tscn")
-const BUILD_TIMEOUT:float = 10.0
 ## Long enough for TrainSoundSystem's sweep to find the vehicle within earshot and build its sound
 const SOUND_TIMEOUT:float = 5.0
 ## Exterior and cabin - the fixture has no running sounds
@@ -55,7 +54,8 @@ func _create(vehicle_name:String, file_name:String = FILE_NAME,
     dynamic.driver_type = driver
     var vehicle:RID = MaszynaLegacyVehicleSystem.vehicle_create(dynamic, get_instance_id())
     _vehicles.append(vehicle)
-    await wait_until(MaszynaLegacyVehicleSystem.vehicle_is_built.bind(vehicle), BUILD_TIMEOUT)
+    if not await wait_until(MaszynaLegacyVehicleSystem.vehicle_is_built.bind(vehicle), BUILD_TIMEOUT):
+        fail_test("the vehicle was not built within %.0f s" % BUILD_TIMEOUT)
     return vehicle
 
 

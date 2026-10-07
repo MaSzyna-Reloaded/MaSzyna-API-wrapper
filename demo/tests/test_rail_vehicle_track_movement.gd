@@ -26,12 +26,12 @@ func test_dynamic_vehicle_track_properties_do_not_rebuild_vehicle() -> void:
     var dynamic_vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
     watch_signals(dynamic_vehicle)
     add_child_autofree(dynamic_vehicle)
-    await wait_idle_frames(2)
+    await step(2)
 
     dynamic_vehicle.start_track_name = "common"
     dynamic_vehicle.start_track_offset = 12.0
     dynamic_vehicle.start_direction = TrackServer.DIRECTION_REVERSED
-    await wait_idle_frames(2)
+    await step(2)
 
     assert_signal_emit_count(dynamic_vehicle, "vehicle_built", 1, "track placement should not rebuild the dynamic vehicle")
 
@@ -93,7 +93,7 @@ func test_bogies_follow_track_tangents() -> void:
     vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
     created_vehicles.append(vehicle)
-    await wait_idle_frames(2)
+    await step(2)
     var front_bogie:Node3D = vehicle.get_node("Model/bogie1")
     var rear_bogie:Node3D = vehicle.get_node("Model/bogie2")
     var powered_wheel:Node3D = vehicle.get_node("Model/bogie1/wheel01")
@@ -109,7 +109,7 @@ func test_bogies_follow_track_tangents() -> void:
     # its local X, like the original's UpdateAxle() (DynObj.cpp:489). Driving the vehicle is what
     # makes the angle non-trivial - the state is read-only, so it cannot be injected.
     RailVehicleServer.vehicle_move(vehicle.get_rid(), 1.5)
-    await wait_idle_frames(2)
+    await step(2)
     var published_angle:float = wheels.get_angle_powered_deg()
     assert_almost_eq(
         Basis(Vector3.RIGHT, deg_to_rad(published_angle)).get_euler().x,
@@ -135,7 +135,7 @@ func test_start_track_name_retries_after_tracks_changed_when_track_is_added_late
         "late_track"
     )
     TrackServer.topology_rebuild()
-    await wait_idle_frames(2)
+    await step(2)
 
     _assert_vector_eq(controller.get_world_position(), _rail_position(4.0, 0.0), "controller should move after the missing track appears")
     _assert_vector_eq(vehicle.global_position, _rail_position(4.0, 0.0), "vehicle should move after the missing track appears")
@@ -613,15 +613,15 @@ func test_start_track_properties_reapply_vehicle_track() -> void:
     var controller: VehicleController = fixture["controller"]
 
     vehicle.start_track_offset = 6.0
-    await wait_idle_frames(2)
+    await step(2)
     _assert_vector_eq(controller.get_world_position(), _rail_position(6.0, 0.0), "offset change should reapply placement")
 
     vehicle.set("start_direction", TrackServer.DIRECTION_REVERSED)
-    await wait_idle_frames(2)
+    await step(2)
     _assert_vector_eq(_vehicle_forward(vehicle), Vector3.LEFT, "direction change should reapply orientation")
 
     vehicle.start_track_name = "next"
-    await wait_idle_frames(2)
+    await step(2)
     _assert_vector_eq(controller.get_world_position(), _rail_position(16.0, 0.0), "track name change should reapply placement on the new track")
 
 
@@ -638,7 +638,7 @@ func _create_vehicle(
     vehicle.controller_path = NodePath("../%s" % physics_node.name)
     add_child(vehicle)
     created_vehicles.append(vehicle)
-    await wait_idle_frames(2)
+    await step(2)
     return {
         "vehicle": vehicle,
         "controller": VehicleServer.vehicle_get_controller(physics_node.get_vehicle_rid()),

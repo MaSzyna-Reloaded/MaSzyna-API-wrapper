@@ -11,6 +11,7 @@ const GROUPS: Dictionary = {
     "Player": [
         "change_vehicle",
         "cabin_mode_toggle",
+        "cabin_sit_down",
         "cabin_next",
         "cabin_previous",
         "external_view_cycle",

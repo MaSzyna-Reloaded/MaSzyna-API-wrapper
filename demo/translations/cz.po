@@ -1939,3 +1939,6 @@ msgstr "Nenalezena žádná vozidla"
 
 msgid "Clear search"
 msgstr "Vymazat hledání"
+
+msgid "Cabin Sit Down"
+msgstr "Posadit se za kontrolér"

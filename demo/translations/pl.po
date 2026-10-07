@@ -1939,3 +1939,6 @@ msgstr "Nie znaleziono pojazdów"
 
 msgid "Clear search"
 msgstr "Wyczyść wyszukiwanie"
+
+msgid "Cabin Sit Down"
+msgstr "Usiądź za nastawnikiem"

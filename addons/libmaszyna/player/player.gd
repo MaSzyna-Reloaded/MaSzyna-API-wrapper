@@ -136,6 +136,13 @@ func _input(event):
     if CabinHUDMouseSystem.mouse_input(event) or SceneryHUDMouseServer.mouse_input(event):
         get_viewport().set_input_as_handled()
         return
+    # drivermode.cpp:541 - the right button outside a control sits the driver back down
+    # (CabView()); here the right button alone looks around, so it is Ctrl with it
+    if (event.is_action_pressed("cabin_sit_down", false, true)
+            and PlayerCameraServer.camera_get_mode() == PlayerCameraServer.CAMERA_MODE_CABIN):
+        sit_down()
+        get_viewport().set_input_as_handled()
+        return
     if event.is_action_pressed("flashlight_toggle", false, true):
         var enabled:bool = headlamp.visible
         headlamp.visible = not enabled
@@ -316,14 +323,23 @@ func _hide_cabin() -> void:
     _cabin_vehicle = RID()
 
 
-## The cab camera at the driver's place of the cab, within its bounds, looking the way the cab
-## faces (drivermode.cpp:1071 VectorFront * CabOccupied - the cab carries the vehicle's turn
-## already, so cab 1 turns back from it)
+## The cab camera within the cab's bounds, at the driver's place
 func _on_cabin_camera_configuration_changed() -> void:
     var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
     _cabin_camera.bound_enabled = cabin.get_camera_bound_enabled()
     _cabin_camera.bound_min = cabin.get_camera_bound_min() + Vector3.UP * CABIN_BOUND_FLOOR_RAISE
     _cabin_camera.bound_max = cabin.get_camera_bound_max() + Vector3.UP * CABIN_BOUND_CEILING_RAISE
+    sit_down()
+    _draw_cab_interior()
+
+
+## The driver back in the seat of the cab the camera is in, after walking and looking around -
+## the original's CabView() (drivermode.cpp:1035): the sitting position, looking the way the cab
+## faces (drivermode.cpp:1071 VectorFront * CabOccupied - the cab carries the vehicle's turn
+## already, so cab 1 turns back from it)
+func sit_down() -> void:
+    var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
+    _cabin_camera.stop_motion()
     _cabin_camera.global_transform = cabin.get_camera_transform()
     var basis:Basis = cabin.global_basis
     var rear:bool = RailVehicleServer.cabin_get_kind(cabin.get_cabin()) == RailVehicleCabinKind.RAIL_VEHICLE_CABIN_REAR
@@ -333,7 +349,6 @@ func _on_cabin_camera_configuration_changed() -> void:
     var view_angle:Vector2 = cabin.get_driver_view_angle()
     _cabin_camera.global_basis = facing * Basis(Vector3.UP, deg_to_rad(view_angle.x)) \
             * Basis(Vector3.RIGHT, deg_to_rad(view_angle.y))
-    _draw_cab_interior()
 
 
 ## The cab interior of the vehicle driven is drawn only in the view from its cab, where the

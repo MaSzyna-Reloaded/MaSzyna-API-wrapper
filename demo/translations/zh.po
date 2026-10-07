@@ -1939,3 +1939,6 @@ msgstr "未找到车辆"
 
 msgid "Clear search"
 msgstr "清除搜索"
+
+msgid "Cabin Sit Down"
+msgstr "回到司机座位"

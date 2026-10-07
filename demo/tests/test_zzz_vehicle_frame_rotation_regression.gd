@@ -15,6 +15,9 @@ const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 ## The driver sits in the exterior's cab shell, not just on its side of the vehicle [m]
 const DRIVER_TO_CAB_SHELL_MAX_DISTANCE:float = 2.0
 const FORWARD_MIN_DOT:float = 0.99
+## How far the player walks and turns away from the seat before sitting back down [m], [rad]
+const WALK_AWAY:Vector3 = Vector3(0.3, 0.0, 0.5)
+const TURN_AWAY:float = 1.0
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -107,3 +110,32 @@ func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
         camera_forward.dot(vehicle_forward) > FORWARD_MIN_DOT,
         "driver camera should look along the vehicle's forward, got %s vs %s" % [camera_forward, vehicle_forward],
     )
+
+
+## drivermode.cpp:541 CabView() - Ctrl and the right button sit the driver back down, after walking
+## and looking around the cab
+func test_ctrl_and_the_right_button_sit_the_driver_back_down() -> void:
+    if not await _spawn_vehicle():
+        return
+    player = PLAYER_SCENE.instantiate()
+    player.auto_start = false
+    add_child(player)
+    PlayerServer.player_take_over_vehicle(vehicle.get_rid())
+    await wait_idle_frames(3)
+    var camera:FreeCamera3D = get_viewport().get_camera_3d() as FreeCamera3D
+    var seat:Transform3D = camera.global_transform
+    camera.position += WALK_AWAY
+    camera.rotate_y(TURN_AWAY)
+
+    var click:InputEventMouseButton = InputEventMouseButton.new()
+    click.button_index = MOUSE_BUTTON_RIGHT
+    click.ctrl_pressed = true
+    click.pressed = true
+    Input.parse_input_event(click)
+    await wait_idle_frames(2)
+
+    assert_true(camera.global_transform.is_equal_approx(seat),
+            "the camera should be back at the seat: %s vs %s" % [camera.global_transform, seat])
+    assert_eq(Input.mouse_mode, Input.MOUSE_MODE_VISIBLE, "Ctrl with the right button should not start the look")
+    click.pressed = false
+    Input.parse_input_event(click)

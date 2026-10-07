@@ -1939,3 +1939,6 @@ msgstr "Nincs találat"
 
 msgid "Clear search"
 msgstr "Keresés törlése"
+
+msgid "Cabin Sit Down"
+msgstr "Vissza a vezetőállásba"

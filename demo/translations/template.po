@@ -1939,3 +1939,6 @@ msgstr ""
 
 msgid "Clear search"
 msgstr ""
+
+msgid "Cabin Sit Down"
+msgstr ""

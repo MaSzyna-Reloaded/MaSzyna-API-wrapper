@@ -74,6 +74,9 @@ func _input(event):
     if event is InputEventMouseButton:
         match event.button_index:
             MOUSE_BUTTON_RIGHT: # Only allows rotation if right click down
+                # the right button with a modifier is another action, not the look (cabin_sit_down)
+                if event.pressed and (event.ctrl_pressed or event.shift_pressed or event.alt_pressed):
+                    return
                 _looking = event.pressed
                 Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE)
             MOUSE_BUTTON_WHEEL_UP:
@@ -111,6 +114,16 @@ func _input(event):
 
     if _looking and event is InputEventMouseMotion:
         _pending_mouse_delta += event.relative
+
+## The camera stands still where it is put next: the look, the keys' and a glide's motion left over
+## from before do not carry it on
+func stop_motion() -> void:
+    _looking = false
+    _pending_mouse_delta = Vector2.ZERO
+    _mouse_look_velocity = Vector2.ZERO
+    _smoothed_direction = Vector3.ZERO
+    _glide_velocity = Vector3.ZERO
+
 
 ## Keeps the camera moving at the velocity [m/s] another camera had when it handed over, slowing
 ## down by deceleration until it stops - or, once the keys steer it, fading into their speed

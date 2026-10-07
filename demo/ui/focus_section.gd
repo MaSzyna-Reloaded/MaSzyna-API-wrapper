@@ -11,6 +11,8 @@ extends PanelContainer
 signal focus_requested
 ## The section was given the focus. The focus sound hangs off this.
 signal focus_taken
+## The section gave the focus up - a row of buttons in it (UIActionButtons) lets the keyboard go
+signal focus_released
 ## The keyboard left the section on that side. A section with nothing to walk - a row of buttons -
 ## leaves on the first press; one that walks items emits it when a step would go past its edge. One
 ## signal per side and no side in a parameter: each one is wired to wherever the screen wants the
@@ -50,7 +52,10 @@ func grab_section_focus() -> void:
 
 
 func release_section_focus() -> void:
+    if not focused:
+        return
     focused = false
+    focus_released.emit()
 
 
 ## The keys every section has: Enter, Escape, and the four arrows as the way out of it. A subclass

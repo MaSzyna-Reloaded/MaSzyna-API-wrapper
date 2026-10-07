@@ -1846,3 +1846,96 @@ msgstr "Zastávky: %s."
 
 msgid "%s: change of direction - uncouple the engine and shunt according to signals."
 msgstr "%s: změna směru jízdy – odpojit lokomotivu a posunovat podle návěstí."
+
+msgid "Change vehicle"
+msgstr "Změnit vozidlo"
+
+msgid "Remove vehicle"
+msgstr "Odebrat vozidlo"
+
+msgid "Add vehicle"
+msgstr "Přidat vozidlo"
+
+msgid "Search vehicle"
+msgstr "Hledat vozidlo"
+
+msgid "Select vehicle"
+msgstr "Vybrat vozidlo"
+
+msgid "Restore trainset"
+msgstr "Obnovit soupravu"
+
+msgid "The trainset goes back to the vehicles the scenario gives it."
+msgstr "Souprava se vrátí k vozidlům, která jí dává scénář."
+
+msgid "Restore"
+msgstr "Obnovit"
+
+msgid "modified"
+msgstr "upraveno"
+
+msgid "Move left"
+msgstr "Posunout doleva"
+
+msgid "Move right"
+msgstr "Posunout doprava"
+
+msgid "Turn round"
+msgstr "Otočit"
+
+msgid "All vehicles"
+msgstr "Všechna vozidla"
+
+msgid "Electric locos"
+msgstr "Elektrické lokomotivy"
+
+msgid "Diesel locos"
+msgstr "Motorové lokomotivy"
+
+msgid "Steam locos"
+msgstr "Parní lokomotivy"
+
+msgid "Railcars"
+msgstr "Motorové vozy"
+
+msgid "EMU"
+msgstr "Elektrické jednotky"
+
+msgid "Utility"
+msgstr "Speciální vozidla"
+
+msgid "Draisines"
+msgstr "Drezíny"
+
+msgid "Trams"
+msgstr "Tramvaje"
+
+msgid "Trucks"
+msgstr "Nákladní auta"
+
+msgid "Buses"
+msgstr "Autobusy"
+
+msgid "Cars"
+msgstr "Automobily"
+
+msgid "People"
+msgstr "Lidé"
+
+msgid "Animals"
+msgstr "Zvířata"
+
+msgid "Carriages"
+msgstr "Vagóny"
+
+msgid "Unknown"
+msgstr "Neznámé"
+
+msgid "%s leaves the trainset."
+msgstr "%s bude odebrán ze soupravy."
+
+msgid "No vehicles found"
+msgstr "Nenalezena žádná vozidla"
+
+msgid "Clear search"
+msgstr "Vymazat hledání"

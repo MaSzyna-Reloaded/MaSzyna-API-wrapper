@@ -195,6 +195,14 @@ func set_rows(
     scroll_to_item(%Scroll, _slots[slot])
 
 
+## The note of a row anew - what its owner says about it changed; the rows and the selection stay
+func set_row_note(row: int, note: String) -> void:
+    _notes[row] = note
+    # the note is the last label of the row's line (_create_line())
+    var line: HBoxContainer = _slots[_slot_rows.find(row)].get_child(0) as HBoxContainer
+    (line.get_child(line.get_child_count() - 1) as Label).text = note
+
+
 ## Row the selection is on, or -1 when it is on a group header or the search matched nothing
 func get_selected() -> int:
     return _slot_rows[_selected] if _selected >= 0 else -1

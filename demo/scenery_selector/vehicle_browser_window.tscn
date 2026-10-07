@@ -1,0 +1,153 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scenery_selector/vehicle_browser_window.gd" id="1_window"]
+[ext_resource type="Theme" uid="uid://dydlldjr6yrr2" path="res://scenery_selector/selector_theme.tres" id="2_theme"]
+[ext_resource type="PackedScene" path="res://ui/ui_window.tscn" id="3_ui_window"]
+[ext_resource type="PackedScene" path="res://ui/ui_search_input.tscn" id="4_search"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="5_grid"]
+[ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="6_sounds"]
+[ext_resource type="Texture2D" uid="uid://b7dxj0otp70ih" path="res://startup/eu07_parked_sketch.svg" id="7_sketch"]
+[ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="8_focus"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="9_action_buttons"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="10_button"]
+[ext_resource type="PackedScene" uid="uid://5f6cnr8et0l6" path="res://ui/selector_list.tscn" id="11_list"]
+
+[node name="VehicleBrowserWindow" type="Control"]
+visible = false
+top_level = true
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_window")
+
+[node name="Window" parent="." instance=ExtResource("3_ui_window")]
+unique_name_in_owner = true
+title = "Vehicles"
+
+[node name="SearchInput" parent="Window/Frame/Layout/Body" instance=ExtResource("4_search")]
+unique_name_in_owner = true
+layout_mode = 2
+placeholder_text = "Search vehicle"
+
+[node name="Columns" type="HBoxContainer" parent="Window/Frame/Layout/Body"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CategoryList" parent="Window/Frame/Layout/Body/Columns" instance=ExtResource("11_list")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+sounds = ExtResource("6_sounds")
+
+[node name="Results" type="VBoxContainer" parent="Window/Frame/Layout/Body/Columns"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_stretch_ratio = 2.0
+alignment = 1
+theme_override_constants/separation = 16
+
+[node name="NoneFound" type="Label" parent="Window/Frame/Layout/Body/Columns/Results"]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+text = "No vehicles found"
+horizontal_alignment = 1
+
+[node name="ClearSearchButton" type="Button" parent="Window/Frame/Layout/Body/Columns/Results"]
+unique_name_in_owner = true
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_default_cursor_shape = 2
+script = ExtResource("10_button")
+text = "Clear search"
+
+[node name="VehicleGrid" parent="Window/Frame/Layout/Body/Columns/Results" instance=ExtResource("5_grid")]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+sounds = ExtResource("6_sounds")
+layout = 1
+tile_padding = 1.8
+placeholder_silhouette = ExtResource("7_sketch")
+
+[node name="ActionsSection" type="PanelContainer" parent="Window/Frame/Layout/Body"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"FocusSection"
+script = ExtResource("8_focus")
+
+[node name="ActionButtons" type="HBoxContainer" parent="Window/Frame/Layout/Body/ActionsSection"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+script = ExtResource("9_action_buttons")
+tab_walks_buttons = false
+
+[node name="PreviousPageButton" type="Button" parent="Window/Frame/Layout/Body/ActionsSection/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("10_button")
+text = "‹"
+
+[node name="PageLabel" type="Label" parent="Window/Frame/Layout/Body/ActionsSection/ActionButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="NextPageButton" type="Button" parent="Window/Frame/Layout/Body/ActionsSection/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(44, 44)
+layout_mode = 2
+size_flags_horizontal = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("10_button")
+text = "›"
+
+[node name="SelectButton" type="Button" parent="Window/Frame/Layout/Body/ActionsSection/ActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("10_button")
+intent = 1
+text = "Select vehicle"
+
+[node name="SearchDebounce" type="Timer" parent="."]
+unique_name_in_owner = true
+wait_time = 0.25
+one_shot = true
+
+[connection signal="close_requested" from="Window" to="." method="close"]
+[connection signal="window_input" from="Window" to="." method="_on_window_window_input"]
+[connection signal="typed" from="Window/Frame/Layout/Body/SearchInput" to="." method="_on_search_input_typed"]
+[connection signal="cleared" from="Window/Frame/Layout/Body/SearchInput" to="." method="search_vehicles"]
+[connection signal="activated" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="choose_selected_vehicle"]
+[connection signal="cancelled" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="close"]
+[connection signal="focus_requested" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="focus_vehicles"]
+[connection signal="navigate_down" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="show_next_page"]
+[connection signal="navigate_up" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="_on_vehicle_grid_navigate_up"]
+[connection signal="navigate_left" from="Window/Frame/Layout/Body/Columns/Results/VehicleGrid" to="." method="focus_categories"]
+[connection signal="item_selected" from="Window/Frame/Layout/Body/Columns/CategoryList" to="." method="_on_category_list_item_selected"]
+[connection signal="focus_requested" from="Window/Frame/Layout/Body/Columns/CategoryList" to="." method="focus_categories"]
+[connection signal="navigate_right" from="Window/Frame/Layout/Body/Columns/CategoryList" to="." method="focus_vehicles"]
+[connection signal="activated" from="Window/Frame/Layout/Body/Columns/CategoryList" to="." method="focus_vehicles"]
+[connection signal="cancelled" from="Window/Frame/Layout/Body/Columns/CategoryList" to="." method="close"]
+[connection signal="focus_taken" from="Window/Frame/Layout/Body/ActionsSection" to="Window/Frame/Layout/Body/ActionsSection/ActionButtons" method="grab_button_focus"]
+[connection signal="focus_released" from="Window/Frame/Layout/Body/ActionsSection" to="Window/Frame/Layout/Body/ActionsSection/ActionButtons" method="release_button_focus"]
+[connection signal="cancelled" from="Window/Frame/Layout/Body/ActionsSection" to="." method="close"]
+[connection signal="navigate_up" from="Window/Frame/Layout/Body/ActionsSection" to="." method="focus_vehicles"]
+[connection signal="pressed" from="Window/Frame/Layout/Body/ActionsSection/ActionButtons/PreviousPageButton" to="." method="show_previous_page"]
+[connection signal="pressed" from="Window/Frame/Layout/Body/ActionsSection/ActionButtons/NextPageButton" to="." method="show_next_page"]
+[connection signal="pressed" from="Window/Frame/Layout/Body/ActionsSection/ActionButtons/SelectButton" to="." method="choose_selected_vehicle"]
+[connection signal="timeout" from="SearchDebounce" to="." method="search_vehicles"]
+[connection signal="pressed" from="Window/Frame/Layout/Body/Columns/Results/ClearSearchButton" to="Window/Frame/Layout/Body/SearchInput" method="clear"]
+
+[editable path="Window"]

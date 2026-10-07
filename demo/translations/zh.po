@@ -1846,3 +1846,96 @@ msgstr "停靠站：%s。"
 
 msgid "%s: change of direction - uncouple the engine and shunt according to signals."
 msgstr "%s：改变运行方向 – 摘下机车并按信号调车。"
+
+msgid "Change vehicle"
+msgstr "更换车辆"
+
+msgid "Remove vehicle"
+msgstr "移除车辆"
+
+msgid "Add vehicle"
+msgstr "添加车辆"
+
+msgid "Search vehicle"
+msgstr "搜索车辆"
+
+msgid "Select vehicle"
+msgstr "选择车辆"
+
+msgid "Restore trainset"
+msgstr "恢复编组"
+
+msgid "The trainset goes back to the vehicles the scenario gives it."
+msgstr "编组将恢复为场景设定的车辆。"
+
+msgid "Restore"
+msgstr "恢复"
+
+msgid "modified"
+msgstr "已修改"
+
+msgid "Move left"
+msgstr "向左移动"
+
+msgid "Move right"
+msgstr "向右移动"
+
+msgid "Turn round"
+msgstr "调转方向"
+
+msgid "All vehicles"
+msgstr "全部车辆"
+
+msgid "Electric locos"
+msgstr "电力机车"
+
+msgid "Diesel locos"
+msgstr "内燃机车"
+
+msgid "Steam locos"
+msgstr "蒸汽机车"
+
+msgid "Railcars"
+msgstr "轨道车"
+
+msgid "EMU"
+msgstr "电动车组"
+
+msgid "Utility"
+msgstr "工程车辆"
+
+msgid "Draisines"
+msgstr "轨道巡检车"
+
+msgid "Trams"
+msgstr "有轨电车"
+
+msgid "Trucks"
+msgstr "卡车"
+
+msgid "Buses"
+msgstr "公共汽车"
+
+msgid "Cars"
+msgstr "汽车"
+
+msgid "People"
+msgstr "人物"
+
+msgid "Animals"
+msgstr "动物"
+
+msgid "Carriages"
+msgstr "车厢"
+
+msgid "Unknown"
+msgstr "未知"
+
+msgid "%s leaves the trainset."
+msgstr "%s 将从编组中移除。"
+
+msgid "No vehicles found"
+msgstr "未找到车辆"
+
+msgid "Clear search"
+msgstr "清除搜索"

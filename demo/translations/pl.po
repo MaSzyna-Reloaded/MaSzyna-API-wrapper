@@ -1846,3 +1846,96 @@ msgstr "Postoje: %s."
 
 msgid "%s: change of direction - uncouple the engine and shunt according to signals."
 msgstr "%s: zmiana kierunku jazdy – odpiąć lokomotywę i prowadzić manewry według sygnałów."
+
+msgid "Change vehicle"
+msgstr "Zmień pojazd"
+
+msgid "Remove vehicle"
+msgstr "Usuń pojazd"
+
+msgid "Add vehicle"
+msgstr "Dodaj pojazd"
+
+msgid "Search vehicle"
+msgstr "Szukaj pojazdu"
+
+msgid "Select vehicle"
+msgstr "Wybierz pojazd"
+
+msgid "Restore trainset"
+msgstr "Przywróć skład"
+
+msgid "The trainset goes back to the vehicles the scenario gives it."
+msgstr "Skład wraca do pojazdów, które daje mu scenariusz."
+
+msgid "Restore"
+msgstr "Przywróć"
+
+msgid "modified"
+msgstr "zmieniony"
+
+msgid "Move left"
+msgstr "Przesuń w lewo"
+
+msgid "Move right"
+msgstr "Przesuń w prawo"
+
+msgid "Turn round"
+msgstr "Odwróć"
+
+msgid "All vehicles"
+msgstr "Wszystkie pojazdy"
+
+msgid "Electric locos"
+msgstr "Lokomotywy elektryczne"
+
+msgid "Diesel locos"
+msgstr "Lokomotywy spalinowe"
+
+msgid "Steam locos"
+msgstr "Parowozy"
+
+msgid "Railcars"
+msgstr "Wagony silnikowe"
+
+msgid "EMU"
+msgstr "Elektryczne zespoły trakcyjne"
+
+msgid "Utility"
+msgstr "Pojazdy specjalne"
+
+msgid "Draisines"
+msgstr "Drezyny"
+
+msgid "Trams"
+msgstr "Tramwaje"
+
+msgid "Trucks"
+msgstr "Ciężarówki"
+
+msgid "Buses"
+msgstr "Autobusy"
+
+msgid "Cars"
+msgstr "Samochody"
+
+msgid "People"
+msgstr "Ludzie"
+
+msgid "Animals"
+msgstr "Zwierzęta"
+
+msgid "Carriages"
+msgstr "Wagony"
+
+msgid "Unknown"
+msgstr "Nieznane"
+
+msgid "%s leaves the trainset."
+msgstr "%s zostanie usunięty ze składu."
+
+msgid "No vehicles found"
+msgstr "Nie znaleziono pojazdów"
+
+msgid "Clear search"
+msgstr "Wyczyść wyszukiwanie"

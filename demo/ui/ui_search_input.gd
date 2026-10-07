@@ -48,7 +48,8 @@ func _on_field_text_changed(text: String) -> void:
     typed.emit(text)
 
 
-func _on_clear_button_pressed() -> void:
+## The field emptied, as its clear button does - the typing stays in it
+func clear() -> void:
     %Field.text = ""
     %ClearButton.visible = false
     grab_typing_focus()

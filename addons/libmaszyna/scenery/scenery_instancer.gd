@@ -276,24 +276,22 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
     var placed:Array[MaszynaTrainsetData] = []
     var tracks:Array[RID] = []
     var vehicles:Array[Array] = []
+    # the vehicles of each placed trainset, as this load arranges them (trainset_override)
+    var dynamics:Array[Array] = []
     for trainset_data:MaszynaTrainsetData in trainsets:
         var track:RID = TrackServer.track_get_rid_by_name(trainset_data.track_name)
         if not track.is_valid():
             continue
         var trainset_vehicles:Array[RID] = []
-        for dynamic:MaszynaDynamicData in trainset_data.dynamics:
-            var vehicle_dynamic:MaszynaDynamicData = dynamic
-            # the cache holds what the .scn declares; the skin chosen for this load is this
-            # vehicle's alone
-            if root.skin_overrides.has(dynamic.name):
-                vehicle_dynamic = dynamic.duplicate()
-                vehicle_dynamic.skin = root.skin_overrides[dynamic.name]
-            var vehicle:RID = MaszynaLegacyVehicleSystem.vehicle_create(vehicle_dynamic, root.get_instance_id())
+        var trainset_dynamics:Array[MaszynaDynamicData] = trainset_data.get_arranged_dynamics(root.trainset_override)
+        for dynamic:MaszynaDynamicData in trainset_dynamics:
+            var vehicle:RID = MaszynaLegacyVehicleSystem.vehicle_create(dynamic, root.get_instance_id())
             root._vehicle_rids.append(vehicle)
             trainset_vehicles.append(vehicle)
         placed.append(trainset_data)
         tracks.append(track)
         vehicles.append(trainset_vehicles)
+        dynamics.append(trainset_dynamics)
     if placed.size() < trainsets.size():
         print("[SceneryLoad] %d trainsets on tracks that are not built (roads) left out" % (trainsets.size() - placed.size()))
 
@@ -326,7 +324,7 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
         for member:int in trainset_vehicles.size():
             if not VehicleServer.vehicle_is_simulation_ready(trainset_vehicles[member]):
                 continue
-            var dynamic:MaszynaDynamicData = trainset_data.dynamics[member]
+            var dynamic:MaszynaDynamicData = dynamics[index][member]
             RailVehicleServer.trainset_add_vehicle(
                     trainset, trainset_vehicles[member], dynamic.direction, dynamic.gap, dynamic.coupling)
             members.append(member)

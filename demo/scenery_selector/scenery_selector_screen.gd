@@ -1,10 +1,14 @@
 extends Control
 
 ## Full screen scenario selector: <game_dir>/scenery/*.scn on the left, details of the selected
-## one (MaszynaSceneryInfo) on the right, with the trainsets it declares. After "Load" the background dissolves into the
+## one (MaszynaSceneryInfo) on the right, with the trainsets it declares. The vehicles of the shown
+## trainset can be changed, taken out, added (VehicleBrowserWindow), moved (Ctrl+Left/Right, a
+## drag) and turned round (Ctrl+R), and their skins picked - kept while the game runs, until the
+## trainset is restored. After "Load" the background dissolves into the
 ## loading screen below. Escape asks to quit (quit_requested).
 
-signal scenery_selected(filename: String, train_id: String, skin_overrides: Dictionary)
+## trainset: the shown trainset as arranged here (MaszynaIncludeNode.trainset_override)
+signal scenery_selected(filename: String, train_id: String, trainset: Array[MaszynaDynamicData])
 ## Escape - the game fades out and quits
 signal quit_requested
 ## The gear - the settings are the game's, not this screen's
@@ -21,7 +25,10 @@ const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
 const VehicleViewer = preload("res://scenery_selector/vehicle_viewer.gd")
 ## Sections the keyboard walks through with Tab. The focus is virtual - the search field keeps the
 ## Godot focus, so typing filters the list whichever section is current.
-enum Section { SCENERY, TRAINSETS, VEHICLES, SKINS, ACTIONS }
+enum Section { SCENERY, TRAINSETS, VEHICLES, TRAINSET_EDIT, VEHICLE_ACTIONS, SKINS, ACTIONS }
+## What the vehicle chosen in the browser is for: the place of the vehicle open in the viewer, or
+## a new one after the selected vehicle
+enum VehicleChoice { CHANGE, ADD }
 
 ## Where "back" from the scenery list leads while there is nothing better to come back to: one step
 ## deeper, the trainsets of the scenery
@@ -35,10 +42,19 @@ var _info: MaszynaSceneryInfo = null
 ## The trainsets of the scenery the list shows, in its order - the occupied ones, or all of them
 ## while the check box asks for those that cannot be driven as well
 var _listed_trainsets: Array[MaszynaSceneryInfo.Trainset] = []
-## Vehicles of the shown trainset, in the order they run
+## Vehicles of the shown trainset, in the order they run - the arranged ones of _arranged_trainsets
 var _vehicles: Array[MaszynaSceneryInfo.Vehicle] = []
+## The trainsets as the player arranged them - copies of the scenery's vehicles, by scenery file and
+## trainset (_get_trainset_key()), kept while the game runs, so going to another scenery and back
+## finds them as they were left
+var _arranged_trainsets: Dictionary[String, Array] = {}
 ## Vehicle whose viewer is open
 var _shown_index: int = -1
+## What the vehicle browser was opened for, and for CHANGE the vehicle whose place it fills
+var _vehicle_choice: VehicleChoice = VehicleChoice.CHANGE
+var _changed_index: int = -1
+## The vehicle the remove question asks about
+var _removed_index: int = -1
 ## Fade of the scenery list under the viewer, killed when the other fade starts
 var _list_fade_tween: Tween = null
 ## Section the keyboard is on - one of Section, kept as int so no enum cast is needed, and -1 until
@@ -59,13 +75,18 @@ func _ready() -> void:
     _ui_sounds.bank = UI_SOUNDS
     add_child(_ui_sounds)
     _sections.assign([
-        %SceneryList, %TrainsetList, %TrainsetGrid, %VehicleViewer.get_skins_section(),
-        %ActionsSection
+        %SceneryList, %TrainsetList, %TrainsetGrid, %TrainsetEditSection,
+        %VehicleViewer.get_vehicle_actions_section(), %VehicleViewer.get_skins_section(), %ActionsSection
     ])
-    # the skins section lives in another scene, so the screen wires it here, and the buttons row
-    # has no player of its own to play its focus with
+    # the viewer's sections live in another scene, so the screen wires them here, and the rows of
+    # buttons have no player of their own to play their focus with
     %VehicleViewer.get_skins_section().focus_requested.connect(focus_skins)
+    %VehicleViewer.get_skins_section().navigate_up.connect(focus_vehicle_actions)
+    %VehicleViewer.get_vehicle_actions_section().navigate_down.connect(focus_skins)
+    %VehicleViewer.get_vehicle_actions_section().navigate_up.connect(focus_trainset_vehicles)
+    %VehicleViewer.get_vehicle_actions_section().focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     %ActionsSection.focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
+    %TrainsetEditSection.focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     UserSettings.game_dir_changed.connect(list_sceneries)
     UserSettings.game_dir_changed.connect(update_game_dir_warning)
     update_game_dir_warning()
@@ -165,17 +186,20 @@ func _input(event: InputEvent) -> void:
 
 
 ## Sections that have something to walk right now: the scenery list is gone under the viewer, the
-## trainsets need a scenery, the vehicles a trainset, the skins an open viewer, and "Load" needs
-## a scenery to load
+## trainsets need a scenery, the vehicles and "+" a trainset, the vehicle's buttons and skins an
+## open viewer, and "Load" needs a scenery to load
 func _available_sections() -> Array[int]:
     var sections: Array[int] = []
     if %ListPanel.visible:
         sections.append(Section.SCENERY)
     if %TrainsetList.visible:
         sections.append(Section.TRAINSETS)
+    if not %AddVehicleButton.disabled:
+        sections.append(Section.TRAINSET_EDIT)
     if %TrainsetGrid.visible:
         sections.append(Section.VEHICLES)
     if %VehicleViewer.visible:
+        sections.append(Section.VEHICLE_ACTIONS)
         sections.append(Section.SKINS)
     if not %LoadButton.disabled:
         sections.append(Section.ACTIONS)
@@ -219,8 +243,16 @@ func focus_trainset_list() -> void:
     activate_section(Section.TRAINSETS)
 
 
+func focus_trainset_edit() -> void:
+    activate_section(Section.TRAINSET_EDIT)
+
+
 func focus_trainset_vehicles() -> void:
     activate_section(Section.VEHICLES)
+
+
+func focus_vehicle_actions() -> void:
+    activate_section(Section.VEHICLE_ACTIONS)
 
 
 func focus_skins() -> void:
@@ -265,20 +297,25 @@ func load_selected_scenery() -> void:
     var index: int = %SceneryList.get_selected()
     _ui_sounds.play(&"load_scenery")
     %Content.visible = false
-    scenery_selected.emit(
-        _files[index], _get_selected_train_id(), _get_skin_overrides()
-    )
+    scenery_selected.emit(_files[index], _get_selected_train_id(), _get_arranged_trainset())
     var tween: Tween = create_tween()
     tween.tween_property(%Background.material, "shader_parameter/dissolve", 1.0, DISSOLVE_TIME)
     tween.tween_callback(hide)
 
 
-## The scenery is loaded with the skins of the trainset as they are shown in the grid
-func _get_skin_overrides() -> Dictionary[String, String]:
-    var overrides: Dictionary[String, String] = {}
+## The scenery is loaded with the trainset as the grid shows it - its vehicles, their order and
+## their skins; an added vehicle has no name of the scenery
+func _get_arranged_trainset() -> Array[MaszynaDynamicData]:
+    var trainset: Array[MaszynaDynamicData] = []
     for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
-        overrides[vehicle.train_id] = vehicle.skin
-    return overrides
+        var dynamic: MaszynaDynamicData = MaszynaDynamicData.new()
+        dynamic.name = vehicle.train_id
+        dynamic.data_path = vehicle.data_path
+        dynamic.file_name = vehicle.file_name
+        dynamic.skin = vehicle.skin
+        dynamic.direction = TrackServer.DIRECTION_REVERSED if vehicle.reversed else TrackServer.DIRECTION_NORMAL
+        trainset.append(dynamic)
+    return trainset
 
 
 ## The player starts in the headdriver vehicle of the selected trainset
@@ -352,10 +389,8 @@ func _show_trainset(index: int) -> void:
     if %VehicleViewer.visible:
         %VehicleViewer.close()
     _shown_index = -1
-    _vehicles.clear()
-    # one exit, and the tiles are built typed: an untyped [] is refused by a typed parameter, and
-    # the refusal is a runtime error - the grid would keep the vehicles of the scenery before
-    var tiles: Array[TileGrid.Tile] = []
+    var vehicles: Array[MaszynaSceneryInfo.Vehicle] = []
+    _vehicles = vehicles
     if _info and index >= 0:
         var trainset: MaszynaSceneryInfo.Trainset = _listed_trainsets[index]
         %Description.text = (
@@ -363,13 +398,208 @@ func _show_trainset(index: int) -> void:
             if trainset.description
             else _info.description
         )
-        _vehicles.assign(trainset.vehicles)
-        for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
-            tiles.append(TileGrid.Tile.new(
-                vehicle.data_path, vehicle.file_name, vehicle.skin, vehicle.train_id,
-                "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
-            ))
+        # copies: the scenery's own vehicles are read again with every scenery shown
+        var key: String = _get_trainset_key(trainset)
+        if not _arranged_trainsets.has(key):
+            for vehicle: MaszynaSceneryInfo.Vehicle in trainset.vehicles:
+                vehicles.append(vehicle.copy())
+            _arranged_trainsets[key] = vehicles
+        _vehicles = _arranged_trainsets[key]
+    _show_vehicles(0)
+
+
+## The vehicles of the trainset in the grid, the one at `selected` selected and the open one
+## marked, and "+" with them
+func _show_vehicles(selected: int) -> void:
+    # the tiles are built typed: an untyped [] is refused by a typed parameter, and the refusal is
+    # a runtime error - the grid would keep the vehicles of the scenery before
+    var tiles: Array[TileGrid.Tile] = []
+    for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
+        var tile: TileGrid.Tile = TileGrid.Tile.new(
+            vehicle.data_path, vehicle.file_name, vehicle.skin, vehicle.train_id,
+            "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
+        )
+        tile.flipped = vehicle.reversed
+        tile.removable = _is_removable(tiles.size())
+        tiles.append(tile)
     %TrainsetGrid.set_tiles(tiles)
+    # the buttons at the end of the row keep their room while they cannot be used, so nothing moves
+    %AddVehicleButton.disabled = not tiles
+    %TrainsetEditSection.modulate.a = 1.0 if tiles else 0.0
+    _show_trainset_changes()
+    if not tiles:
+        return
+    %TrainsetGrid.select(selected)
+    %TrainsetGrid.set_marked(_shown_index)
+    if _shown_index >= 0:
+        %VehicleViewer.set_removable(_is_removable(_shown_index))
+
+
+## Whether the trainset is arranged otherwise than the scenario gives it: its note on the list says
+## so, and the restore button can take it back
+func _show_trainset_changes() -> void:
+    var index: int = %TrainsetList.get_selected()
+    var modified: bool = index >= 0 and _is_trainset_modified(_listed_trainsets[index])
+    %RestoreTrainsetButton.disabled = not modified
+    if index >= 0:
+        %TrainsetList.set_row_note(index, _format_trainset_note(_listed_trainsets[index]))
+
+
+## The trainset's own vehicles and the arranged ones differ in their number, order, files or skins
+func _is_trainset_modified(trainset: MaszynaSceneryInfo.Trainset) -> bool:
+    var arranged: Array = _arranged_trainsets.get(_get_trainset_key(trainset), trainset.vehicles)
+    if not arranged.size() == trainset.vehicles.size():
+        return true
+    for index: int in arranged.size():
+        if not (arranged[index] as MaszynaSceneryInfo.Vehicle).is_same(trainset.vehicles[index]):
+            return true
+    return false
+
+
+## A trainset of the scenery shown, as _arranged_trainsets knows it: the scenery file and its place
+## among the scenery's trainsets
+func _get_trainset_key(trainset: MaszynaSceneryInfo.Trainset) -> String:
+    return "%s/%d" % [_files[%SceneryList.get_selected()], _info.trainsets.find(trainset)]
+
+
+## The restore button asks first - what was arranged goes for good
+func ask_restore_trainset() -> void:
+    %RestoreTrainsetQuestion.ask()
+
+
+## The trainset as the scenario gives it, the arranged one dropped
+func restore_trainset() -> void:
+    var index: int = %TrainsetList.get_selected()
+    if index < 0:
+        return
+    _arranged_trainsets.erase(_get_trainset_key(_listed_trainsets[index]))
+    _show_trainset(index)
+
+
+## The trash takes neither the vehicle with a driver - the player's - nor the last one
+func _is_removable(index: int) -> bool:
+    return _vehicles.size() > 1 and not _vehicles[index].has_driver()
+
+
+## "Change vehicle" in the viewer or on a tile: the browser chooses another vehicle for its place
+func open_vehicle_browser_to_change(index: int) -> void:
+    _vehicle_choice = VehicleChoice.CHANGE
+    _changed_index = index
+    %VehicleBrowser.open()
+
+
+func _on_vehicle_viewer_change_requested() -> void:
+    open_vehicle_browser_to_change(_shown_index)
+
+
+func _on_vehicle_viewer_remove_requested() -> void:
+    ask_remove_vehicle(_shown_index)
+
+
+## The trash, in the viewer or on a tile, asks first - the vehicle is named in the question
+func ask_remove_vehicle(index: int) -> void:
+    if index < 0 or not _is_removable(index):
+        return
+    _removed_index = index
+    var vehicle: MaszynaSceneryInfo.Vehicle = _vehicles[index]
+    %RemoveVehicleQuestion.message = tr("%s leaves the trainset.") % (
+        vehicle.train_id if vehicle.train_id else vehicle.file_name
+    )
+    %RemoveVehicleQuestion.ask()
+
+
+func _on_remove_vehicle_question_confirmed() -> void:
+    remove_vehicle(_removed_index)
+
+
+func _on_vehicle_viewer_reverse_requested() -> void:
+    reverse_vehicle(_shown_index)
+
+
+## "+": the browser chooses a vehicle to go after the selected one
+func open_vehicle_browser_to_add() -> void:
+    _vehicle_choice = VehicleChoice.ADD
+    %VehicleBrowser.open()
+
+
+func _on_vehicle_browser_vehicle_chosen(data_path: String, file_name: String, skin: String) -> void:
+    match _vehicle_choice:
+        VehicleChoice.CHANGE:
+            change_vehicle(data_path, file_name, skin)
+        VehicleChoice.ADD:
+            add_vehicle(data_path, file_name, skin)
+
+
+## The vehicle the browser was opened for becomes another one; its place, name, direction and
+## crew stay, and the viewer shows the new one when it was open on it
+func change_vehicle(data_path: String, file_name: String, skin: String) -> void:
+    if _changed_index < 0:
+        return
+    var vehicle: MaszynaSceneryInfo.Vehicle = _vehicles[_changed_index]
+    vehicle.data_path = data_path
+    vehicle.file_name = file_name
+    vehicle.skin = skin
+    _show_vehicles(_changed_index)
+    if _changed_index == _shown_index:
+        %VehicleViewer.show_vehicle(vehicle)
+
+
+## A vehicle after the selected one, with nobody aboard and no name of the scenery
+func add_vehicle(data_path: String, file_name: String, skin: String) -> void:
+    var index: int = %TrainsetGrid.get_selected() + 1
+    var vehicle: MaszynaSceneryInfo.Vehicle = MaszynaSceneryInfo.Vehicle.new()
+    vehicle.data_path = data_path
+    vehicle.file_name = file_name
+    vehicle.skin = skin
+    _vehicles.insert(index, vehicle)
+    if _shown_index >= index:
+        _shown_index += 1
+    _show_vehicles(index)
+
+
+## The vehicle leaves the trainset - asked and answered (ask_remove_vehicle()); the viewer closes
+## when it was open on it
+func remove_vehicle(index: int) -> void:
+    if index < 0 or not _is_removable(index):
+        return
+    _vehicles.remove_at(index)
+    if index == _shown_index:
+        %VehicleViewer.close()
+    elif _shown_index > index:
+        _shown_index -= 1
+    _show_vehicles(mini(index, _vehicles.size() - 1))
+
+
+## Ctrl+R or the tile's button: the vehicle stands the other way round, and its side view with it
+func reverse_vehicle(index: int) -> void:
+    if index < 0:
+        return
+    _vehicles[index].reversed = not _vehicles[index].reversed
+    %TrainsetGrid.set_tile_flipped(index, _vehicles[index].reversed)
+    _show_trainset_changes()
+
+
+## Ctrl+Left and Ctrl+Right, or the tile's buttons: the vehicle one place that way
+func move_vehicle_left(index: int) -> void:
+    move_vehicle(index, index - 1)
+
+
+func move_vehicle_right(index: int) -> void:
+    move_vehicle(index, index + 1)
+
+
+## The vehicle at `from` goes to the place `to` - a key, or a tile dragged onto another - and the
+## ones between close up; the open one stays open wherever it went
+func move_vehicle(from: int, to: int) -> void:
+    if from < 0 or to < 0 or to >= _vehicles.size() or from == to:
+        return
+    var shown: MaszynaSceneryInfo.Vehicle = _vehicles[_shown_index] if _shown_index >= 0 else null
+    _vehicles.insert(to, _vehicles.pop_at(from))
+    _shown_index = _vehicles.find(shown) if shown else -1
+    # the tile moves as it is - a rebuilt row would render and scroll anew
+    %TrainsetGrid.move_tile(from, to)
+    %TrainsetGrid.select(to)
+    _show_trainset_changes()
 
 
 ## A skin accepted in the viewer: the trainset shows it and the scenery is loaded with it
@@ -379,6 +609,7 @@ func _on_vehicle_viewer_skin_applied(skin: String) -> void:
         return
     _vehicles[_shown_index].skin = skin
     %TrainsetGrid.reload_tile(_shown_index, skin)
+    _show_trainset_changes()
 
 
 ## A vehicle of the preview was opened - the viewer takes the place of the scenery list, the two
@@ -392,14 +623,15 @@ func _on_trainset_grid_item_activated() -> void:
         %TrainsetGrid.set_marked(index)
         _fade_list_panel(0.0)
         %VehicleViewer.show_vehicle(_vehicles[index])
+        %VehicleViewer.set_removable(_is_removable(index))
     activate_section(Section.SKINS)
 
 
 ## Emitted when the viewer starts fading out
 func _on_vehicle_viewer_closed() -> void:
-    # Escape on the skins closed the viewer, so the keyboard steps back to the vehicle it was opened
-    # from - the same way in as the way out
-    if _section == Section.SKINS:
+    # Escape in the viewer closed it, so the keyboard steps back to the vehicle it was opened from -
+    # the same way in as the way out
+    if _section == Section.SKINS or _section == Section.VEHICLE_ACTIONS:
         activate_section(Section.VEHICLES)
     _shown_index = -1
     %TrainsetGrid.set_marked(-1)
@@ -425,8 +657,13 @@ static func _get_trainset_name(trainset: MaszynaSceneryInfo.Trainset) -> String:
     return trainset.get_driver_train_id()
 
 
-static func _format_trainset_note(trainset: MaszynaSceneryInfo.Trainset) -> String:
-    return "%d POJAZDÓW" % trainset.vehicles.size()
+## Its vehicles as arranged, and whether that is not as the scenario gives them
+func _format_trainset_note(trainset: MaszynaSceneryInfo.Trainset) -> String:
+    var arranged: Array = _arranged_trainsets.get(_get_trainset_key(trainset), trainset.vehicles)
+    var note: String = "%d POJAZDÓW" % arranged.size()
+    if _is_trainset_modified(trainset):
+        note += " · " + tr("modified").to_upper()
+    return note
 
 
 ## The warning stays over the screen while the game directory holds no game data

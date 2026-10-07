@@ -4,6 +4,11 @@
 [ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="2_grid"]
 [ext_resource type="Resource" path="res://startup/ui_sounds.tres" id="3_sounds"]
 [ext_resource type="Texture2D" path="res://startup/eu07_parked_sketch.svg" id="4_sketch"]
+[ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="5_focus"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="6_action_buttons"]
+[ext_resource type="Script" path="res://ui/ui_button.gd" id="7_button"]
+[ext_resource type="Texture2D" path="res://ui/trash_icon.svg" id="8_trash"]
+[ext_resource type="Texture2D" path="res://ui/flip_icon.svg" id="9_flip"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 16.0
@@ -85,6 +90,55 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_apply")
 theme_override_styles/hover = SubResource("StyleBoxFlat_apply_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_apply_hover")
 text = "→"
+
+[node name="VehicleActions" type="PanelContainer" parent="VBoxContainer/ModelArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -68.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"FocusSection"
+script = ExtResource("5_focus")
+
+[node name="VehicleActionButtons" type="HBoxContainer" parent="VBoxContainer/ModelArea/VehicleActions"]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 2
+theme_override_constants/separation = 12
+script = ExtResource("6_action_buttons")
+tab_walks_buttons = false
+
+[node name="RemoveButton" type="Button" parent="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+tooltip_text = "Remove vehicle"
+icon = ExtResource("8_trash")
+icon_alignment = 1
+script = ExtResource("7_button")
+intent = 3
+
+[node name="ReverseButton" type="Button" parent="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+tooltip_text = "Turn round"
+icon = ExtResource("9_flip")
+icon_alignment = 1
+script = ExtResource("7_button")
+
+[node name="ChangeButton" type="Button" parent="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+script = ExtResource("7_button")
+text = "Change vehicle"
 
 [node name="SubViewport" type="SubViewport" parent="VBoxContainer/ModelArea/ModelView"]
 own_world_3d = true
@@ -187,3 +241,9 @@ text = "←"
 [connection signal="item_selected" from="VBoxContainer/SkinsGrid" to="." method="_on_skins_grid_item_selected"]
 [connection signal="activated" from="VBoxContainer/SkinsGrid" to="." method="apply_selected_skin"]
 [connection signal="cancelled" from="VBoxContainer/SkinsGrid" to="." method="close"]
+[connection signal="focus_taken" from="VBoxContainer/ModelArea/VehicleActions" to="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons" method="grab_button_focus"]
+[connection signal="focus_released" from="VBoxContainer/ModelArea/VehicleActions" to="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons" method="release_button_focus"]
+[connection signal="cancelled" from="VBoxContainer/ModelArea/VehicleActions" to="." method="close"]
+[connection signal="pressed" from="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons/ChangeButton" to="." method="emit_signal" binds= ["change_requested"]]
+[connection signal="pressed" from="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons/RemoveButton" to="." method="emit_signal" binds= ["remove_requested"]]
+[connection signal="pressed" from="VBoxContainer/ModelArea/VehicleActions/VehicleActionButtons/ReverseButton" to="." method="emit_signal" binds= ["reverse_requested"]]

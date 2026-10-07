@@ -1846,3 +1846,96 @@ msgstr ""
 
 msgid "%s: change of direction - uncouple the engine and shunt according to signals."
 msgstr ""
+
+msgid "Change vehicle"
+msgstr ""
+
+msgid "Remove vehicle"
+msgstr ""
+
+msgid "Add vehicle"
+msgstr ""
+
+msgid "Search vehicle"
+msgstr ""
+
+msgid "Select vehicle"
+msgstr ""
+
+msgid "Restore trainset"
+msgstr ""
+
+msgid "The trainset goes back to the vehicles the scenario gives it."
+msgstr ""
+
+msgid "Restore"
+msgstr ""
+
+msgid "modified"
+msgstr ""
+
+msgid "Move left"
+msgstr ""
+
+msgid "Move right"
+msgstr ""
+
+msgid "Turn round"
+msgstr ""
+
+msgid "All vehicles"
+msgstr ""
+
+msgid "Electric locos"
+msgstr ""
+
+msgid "Diesel locos"
+msgstr ""
+
+msgid "Steam locos"
+msgstr ""
+
+msgid "Railcars"
+msgstr ""
+
+msgid "EMU"
+msgstr ""
+
+msgid "Utility"
+msgstr ""
+
+msgid "Draisines"
+msgstr ""
+
+msgid "Trams"
+msgstr ""
+
+msgid "Trucks"
+msgstr ""
+
+msgid "Buses"
+msgstr ""
+
+msgid "Cars"
+msgstr ""
+
+msgid "People"
+msgstr ""
+
+msgid "Animals"
+msgstr ""
+
+msgid "Carriages"
+msgstr ""
+
+msgid "Unknown"
+msgstr ""
+
+msgid "%s leaves the trainset."
+msgstr ""
+
+msgid "No vehicles found"
+msgstr ""
+
+msgid "Clear search"
+msgstr ""

@@ -66,6 +66,9 @@ const GAME_LOG_LEVELS: Dictionary[String, GameLog.LogLevel] = {
     "ai.log": GameLog.LogLevel.DEBUG,
 }
 
+## The trainsets as the scenery declares them - a start without the selector arranges none
+const DECLARED_TRAINSET: Array[MaszynaDynamicData] = []
+
 ## A scenery started at once, without the selector - as "-s" on the command line does
 @export var scenery: String = ""
 
@@ -108,17 +111,18 @@ func _ready() -> void:
                 if not at == scenery_at + 1 and not args[at].begins_with("-"):
                     train_id = args[at]
                     break
-        start_scenery(args[scenery_at + 1], train_id, {})
+        start_scenery(args[scenery_at + 1], train_id, DECLARED_TRAINSET)
     elif scenery:
-        start_scenery(scenery, "", {})
+        start_scenery(scenery, "", DECLARED_TRAINSET)
     else:
         $ScenerySelectorScreen.open()
         $BugReport.show_edge_button()
 
 
 ## Loads scenery/<filename> and puts the player in train_id (none: the scenery's own driver) -
-## chosen in the selector, or given on the command line
-func start_scenery(filename: String, train_id: String, skin_overrides: Dictionary) -> void:
+## chosen in the selector, or given on the command line; trainset is the player's trainset as the
+## selector arranged it (MaszynaIncludeNode.trainset_override), empty for the declared one
+func start_scenery(filename: String, train_id: String, trainset: Array[MaszynaDynamicData]) -> void:
     _play_music(MUSIC_LOADING_VOLUME_DB)
     # the world starts while the loading screen fades out, not when it is built, and at the wall
     # clock's speed whatever the last one ran at
@@ -162,7 +166,7 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     $GamePlayLogRecorder.start()
     $BugReport.attach_world(_world, log_files)
     _chosen_train_id = train_id
-    await _world.load_scenery(filename, skin_overrides)
+    await _world.load_scenery(filename, trainset)
     await _wait_for_cabin()
     SceneryStreamingServer.streaming_set_camera(get_viewport().get_camera_3d())
     await _build_surroundings()

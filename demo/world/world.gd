@@ -19,11 +19,11 @@ signal scenario_progress(progress: float)
 var _scenario: MaszynaLegacyScenario = null
 
 
-## Loads scenery/<filename>, its vehicles with the skins overridden, and starts its scenario -
-## done once `scenery_loaded` has been emitted
-func load_scenery(filename: String, skin_overrides: Dictionary) -> void:
+## Loads scenery/<filename>, the player's trainset as arranged (MaszynaIncludeNode.trainset_override),
+## and starts its scenario - done once `scenery_loaded` has been emitted
+func load_scenery(filename: String, trainset: Array[MaszynaDynamicData]) -> void:
     %MaszynaSceneryNode.filename = filename
-    %MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
+    %MaszynaSceneryNode.trainset_override.assign(trainset)
     %Player.clear_start_train()
     %MaszynaSceneryNode.load()
     await scenery_loaded

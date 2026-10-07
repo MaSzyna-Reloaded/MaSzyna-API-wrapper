@@ -19,6 +19,10 @@
 [ext_resource type="Script" path="res://ui/ui_chip.gd" id="16_chip"]
 [ext_resource type="Texture2D" path="res://ui/warning_icon.svg" id="17_warning_icon"]
 [ext_resource type="Script" path="res://ui/ui_button.gd" id="18_button"]
+[ext_resource type="Texture2D" path="res://ui/plus_icon.svg" id="19_plus"]
+[ext_resource type="Texture2D" path="res://ui/reset_icon.svg" id="21_reset"]
+[ext_resource type="Script" path="res://ui/ui_action_buttons.gd" id="22_action_buttons"]
+[ext_resource type="PackedScene" path="res://scenery_selector/vehicle_browser_window.tscn" id="20_vehicle_browser"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -252,13 +256,54 @@ custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 sounds = ExtResource("10_sounds")
 
-[node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=1198650542 instance=ExtResource("9_grid")]
+[node name="TrainsetRow" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow" unique_id=1198650542 instance=ExtResource("9_grid")]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
+size_flags_horizontal = 3
 sounds = ExtResource("10_sounds")
 placeholder_silhouette = ExtResource("11_sketch")
+reorderable = true
+tile_actions = true
+
+[node name="TrainsetEditSection" type="PanelContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow"]
+unique_name_in_owner = true
+modulate = Color(1, 1, 1, 0)
+layout_mode = 2
+size_flags_vertical = 4
+theme_type_variation = &"FocusSection"
+script = ExtResource("8_focus")
+
+[node name="TrainsetEditButtons" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+script = ExtResource("22_action_buttons")
+tab_walks_buttons = false
+
+[node name="RestoreTrainsetButton" type="Button" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+mouse_default_cursor_shape = 2
+tooltip_text = "Restore trainset"
+icon = ExtResource("21_reset")
+icon_alignment = 1
+script = ExtResource("18_button")
+intent = 3
+
+[node name="AddVehicleButton" type="Button" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons"]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+mouse_default_cursor_shape = 2
+tooltip_text = "Add vehicle"
+icon = ExtResource("19_plus")
+icon_alignment = 1
+script = ExtResource("18_button")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=831792652]
 custom_minimum_size = Vector2(0, 120)
@@ -422,7 +467,28 @@ layout_mode = 1
 title = "Game directory changed"
 confirm_text = "OK"
 
+[node name="RestoreTrainsetQuestion" parent="." instance=ExtResource("13_notice")]
+unique_name_in_owner = true
+layout_mode = 1
+title = "Restore trainset"
+message = "The trainset goes back to the vehicles the scenario gives it."
+confirm_text = "Restore"
+back_text = "Back"
+confirm_intent = 3
+
+[node name="RemoveVehicleQuestion" parent="." instance=ExtResource("13_notice")]
+unique_name_in_owner = true
+layout_mode = 1
+title = "Remove vehicle"
+confirm_text = "Remove"
+back_text = "Back"
+confirm_intent = 3
+
 [node name="GameDirWindow" parent="." instance=ExtResource("15_game_dir_window")]
+unique_name_in_owner = true
+layout_mode = 1
+
+[node name="VehicleBrowser" parent="." instance=ExtResource("20_vehicle_browser")]
 unique_name_in_owner = true
 layout_mode = 1
 
@@ -434,6 +500,9 @@ layout_mode = 1
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
+[connection signal="change_requested" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_change_requested"]
+[connection signal="remove_requested" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_remove_requested"]
+[connection signal="reverse_requested" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_reverse_requested"]
 [connection signal="toggled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/AllTrainsetsSwitch" to="." method="_on_all_trainsets_switch_toggled"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_actions"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
@@ -442,14 +511,29 @@ layout_mode = 1
 [connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
 [connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
-[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
-[connection signal="item_clicked" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
-[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
-[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_vehicles"]
-[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
-[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_scenery_list"]
-[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
-[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
+[connection signal="item_clicked" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
+[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_trainset_list"]
+[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_trainset_vehicles"]
+[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_scenery_list"]
+[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_trainset_edit"]
+[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="focus_trainset_list"]
+[connection signal="move_left_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="move_vehicle_left"]
+[connection signal="move_right_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="move_vehicle_right"]
+[connection signal="move_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="move_vehicle"]
+[connection signal="flip_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="reverse_vehicle"]
+[connection signal="change_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="open_vehicle_browser_to_change"]
+[connection signal="remove_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetGrid" to="." method="ask_remove_vehicle"]
+[connection signal="focus_taken" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection" to="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons" method="grab_button_focus"]
+[connection signal="focus_released" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection" to="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons" method="release_button_focus"]
+[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection" to="." method="focus_trainset_vehicles"]
+[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection" to="." method="focus_trainset_list"]
+[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection" to="." method="focus_actions"]
+[connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons/RestoreTrainsetButton" to="." method="ask_restore_trainset"]
+[connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetRow/TrainsetEditSection/TrainsetEditButtons/AddVehicleButton" to="." method="open_vehicle_browser_to_add"]
+[connection signal="confirmed" from="RestoreTrainsetQuestion" to="." method="restore_trainset"]
+[connection signal="confirmed" from="RemoveVehicleQuestion" to="." method="_on_remove_vehicle_question_confirmed"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="load_selected_scenery"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
@@ -463,3 +547,4 @@ layout_mode = 1
 [connection signal="dismissed" from="GameDirProblem" to="." method="show_development_notice"]
 [connection signal="closed" from="GameDirWindow" to="." method="show_development_notice"]
 [connection signal="game_dir_chosen" from="GameDirWindow" to="." method="_on_game_dir_window_game_dir_chosen"]
+[connection signal="vehicle_chosen" from="VehicleBrowser" to="." method="_on_vehicle_browser_vehicle_chosen"]

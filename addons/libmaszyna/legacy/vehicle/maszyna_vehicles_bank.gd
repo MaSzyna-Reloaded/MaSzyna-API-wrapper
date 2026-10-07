@@ -10,6 +10,47 @@ class_name MaszynaVehiclesBank
 
 const DYNAMIC_DIR: String = "dynamic"
 const INDEX_FILE: String = "textures.txt"
+## A line of the index that sets the category of the vehicles listed after it: "!=e,E186" - the
+## letter after it is the category's code (CATEGORY_CODES), the rest is no matter here
+const CATEGORY_PREFIX: String = "!="
+
+## What kind of vehicle it is, as the original's launcher sorts them - by the index's category
+## lines alone, never by the .fiz, the engine or the name
+enum Category {
+    ELECTRIC_LOCOS,
+    DIESEL_LOCOS,
+    STEAM_LOCOS,
+    RAILCARS,
+    EMU,
+    UTILITY,
+    DRAISINES,
+    TRAMS,
+    TRUCKS,
+    BUSES,
+    CARS,
+    PEOPLE,
+    ANIMALS,
+    ## any upper case letter
+    CARRIAGES,
+    ## any other code, and a vehicle listed before a category line
+    UNKNOWN,
+}
+## The lower case codes; an upper case letter is a carriage
+const CATEGORY_CODES: Dictionary[String, Category] = {
+    "e": Category.ELECTRIC_LOCOS,
+    "s": Category.DIESEL_LOCOS,
+    "p": Category.STEAM_LOCOS,
+    "a": Category.RAILCARS,
+    "z": Category.EMU,
+    "r": Category.UTILITY,
+    "d": Category.DRAISINES,
+    "t": Category.TRAMS,
+    "c": Category.TRUCKS,
+    "b": Category.BUSES,
+    "o": Category.CARS,
+    "h": Category.PEOPLE,
+    "f": Category.ANIMALS,
+}
 
 
 class Vehicle:
@@ -18,6 +59,7 @@ class Vehicle:
     var file_name: String
     ## In the order of the index
     var skins: Array[String] = []
+    var category: Category = Category.UNKNOWN
 
     func _init(p_data_path: String, p_file_name: String) -> void:
         data_path = p_data_path
@@ -41,13 +83,19 @@ static func scan(game_dir: String) -> Array[Vehicle]:
             # the descriptions are cp1250; file and vehicle names, all that is read here, are ASCII
             var lines: PackedStringArray = FileAccess.get_file_as_bytes(
                     absolute_dir.path_join(file)).get_string_from_ascii().split("\n")
+            var category: Category = Category.UNKNOWN
             for line: String in lines:
+                var rule: String = line.strip_edges()
+                if rule.begins_with(CATEGORY_PREFIX):
+                    category = category_of(rule.substr(CATEGORY_PREFIX.length(), 1))
+                    continue
                 var entry: PackedStringArray = MaszynaVehicleSkins.parse_skin_line(line)
                 if not entry:
                     continue
                 var key: String = data_path.path_join(entry[0].to_lower())
                 if not by_path.has(key):
                     by_path[key] = Vehicle.new(data_path, entry[0].to_lower())
+                    by_path[key].category = category
                 if not entry[1] in by_path[key].skins:
                     by_path[key].skins.append(entry[1])
     var keys: Array[String] = []
@@ -57,3 +105,25 @@ static func scan(game_dir: String) -> Array[Vehicle]:
     for key: String in keys:
         vehicles.append(by_path[key])
     return vehicles
+
+
+## The category of a category line's code: a lower case letter of CATEGORY_CODES, any upper case
+## letter a carriage, anything else unknown
+static func category_of(code: String) -> Category:
+    if CATEGORY_CODES.has(code):
+        return CATEGORY_CODES[code]
+    if code.length() == 1 and code >= "A" and code <= "Z":
+        return Category.CARRIAGES
+    return Category.UNKNOWN
+
+
+## The vehicles whose name, directory or a skin contains `query` (any case), in their order; all of
+## them for an empty one
+static func filter(vehicles: Array[Vehicle], query: String) -> Array[Vehicle]:
+    var text: String = query.strip_edges().to_lower()
+    var found: Array[Vehicle] = []
+    for vehicle: Vehicle in vehicles:
+        if (not text or vehicle.file_name.contains(text) or vehicle.data_path.to_lower().contains(text)
+                or " ".join(vehicle.skins).to_lower().contains(text)):
+            found.append(vehicle)
+    return found

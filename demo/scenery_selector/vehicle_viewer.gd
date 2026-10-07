@@ -8,6 +8,12 @@ extends Control
 signal closed
 ## The skin picked in the viewer was accepted
 signal skin_applied(skin: String)
+## "Change vehicle" - its owner lets the player choose another vehicle for its place
+signal change_requested
+## The trash - its owner takes the vehicle out of the trainset
+signal remove_requested
+## Turned round - its owner stands the vehicle the other way
+signal reverse_requested
 
 const ROTATION_SPEED: float = 0.35
 
@@ -115,6 +121,17 @@ func _on_skins_grid_item_selected() -> void:
 ## The skins are a section of the screen's focus cycle, and the screen drives it through this node
 func get_skins_section() -> FocusSection:
     return %SkinsGrid
+
+
+## "Change vehicle" and the trash, a section of the screen's focus cycle as the skins are
+func get_vehicle_actions_section() -> FocusSection:
+    return %VehicleActions
+
+
+## Whether the trash can take the vehicle away - not the one with a driver, nor the last one; the
+## owner knows the trainset
+func set_removable(removable: bool) -> void:
+    %RemoveButton.disabled = not removable
 
 
 func _on_back_button_pressed() -> void:

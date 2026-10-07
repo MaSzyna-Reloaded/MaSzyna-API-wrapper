@@ -22,6 +22,29 @@ class Vehicle:
     var file_name:String = ""
     ## "headdriver" for the vehicle the player starts in, "reardriver", "passenger", ...
     var driver_type:String = ""
+    ## Stood the other way round - its offset is -1 (MaszynaNodeDynamicImporter)
+    var reversed:bool = false
+
+    ## A driver sits in it - only "headdriver" and "reardriver" steer a cab, "passenger" and
+    ## "nobody" are no driver (DynObj.cpp:1994-2001)
+    func has_driver() -> bool:
+        return driver_type == "headdriver" or driver_type == "reardriver"
+
+    ## The same vehicle in the same files and skin - the name of the scenery included
+    func is_same(other:Vehicle) -> bool:
+        return (train_id == other.train_id and data_path == other.data_path
+                and file_name == other.file_name and skin == other.skin and reversed == other.reversed)
+
+    ## The same vehicle, to be changed without touching this one
+    func copy() -> Vehicle:
+        var vehicle:Vehicle = Vehicle.new()
+        vehicle.train_id = train_id
+        vehicle.data_path = data_path
+        vehicle.skin = skin
+        vehicle.file_name = file_name
+        vehicle.driver_type = driver_type
+        vehicle.reversed = reversed
+        return vehicle
 
 
 ## One "trainset ... endtrainset" block
@@ -33,12 +56,10 @@ class Trainset:
     var vehicles:Array[Vehicle] = []
 
     ## A driver sits in one of its vehicles, so the player can take the trainset - the original's
-    ## launcher refuses one without ("Trainset not occupied", scenery_list.cpp:135-153); only
-    ## "headdriver" and "reardriver" steer a cab, "passenger" and "nobody" are no driver
-    ## (DynObj.cpp:1994-2001)
+    ## launcher refuses one without ("Trainset not occupied", scenery_list.cpp:135-153)
     func is_occupied() -> bool:
         for vehicle:Vehicle in vehicles:
-            if vehicle.driver_type == "headdriver" or vehicle.driver_type == "reardriver":
+            if vehicle.has_driver():
                 return true
         return false
 
@@ -247,6 +268,7 @@ static func read(filename:String) -> MaszynaSceneryInfo:
                     # files are found by MaszynaDataPath.resolve() whatever the letter case
                     vehicle.skin = tokens[6]
                     vehicle.file_name = tokens[7]
+                    vehicle.reversed = is_equal_approx(float(tokens[8]), -1.0)
                     vehicle.driver_type = tokens[9].to_lower()
                     trainset.vehicles.append(vehicle)
     info.description = "\n".join(description_lines)

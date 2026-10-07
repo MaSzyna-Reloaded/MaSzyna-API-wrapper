@@ -38,12 +38,7 @@ func load_vehicles() -> void:
 
 ## The vehicles whose name, directory or a skin contains the search text, from the first page
 func search_vehicles() -> void:
-    var query:String = %Search.text.strip_edges().to_lower()
-    _found.clear()
-    for vehicle:MaszynaVehiclesBank.Vehicle in _vehicles:
-        if (not query or vehicle.file_name.contains(query) or vehicle.data_path.to_lower().contains(query)
-                or " ".join(vehicle.skins).to_lower().contains(query)):
-            _found.append(vehicle)
+    _found = MaszynaVehiclesBank.filter(_vehicles, %Search.text)
     show_page(0)
 
 

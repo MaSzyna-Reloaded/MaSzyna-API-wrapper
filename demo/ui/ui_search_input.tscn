@@ -75,5 +75,5 @@ icon_alignment = 1
 expand_icon = true
 
 [connection signal="text_changed" from="Row/Field" to="." method="_on_field_text_changed"]
-[connection signal="pressed" from="Row/ClearButton" to="." method="_on_clear_button_pressed"]
+[connection signal="pressed" from="Row/ClearButton" to="." method="clear"]
 [connection signal="pressed" from="Row/RefreshButton" to="." method="_on_refresh_button_pressed"]

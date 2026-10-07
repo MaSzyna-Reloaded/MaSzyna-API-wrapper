@@ -1846,3 +1846,96 @@ msgstr "Megállók: %s."
 
 msgid "%s: change of direction - uncouple the engine and shunt according to signals."
 msgstr "%s: irányváltás – a mozdony lekapcsolása és tolatás a jelzések szerint."
+
+msgid "Change vehicle"
+msgstr "Jármű cseréje"
+
+msgid "Remove vehicle"
+msgstr "Jármű eltávolítása"
+
+msgid "Add vehicle"
+msgstr "Jármű hozzáadása"
+
+msgid "Search vehicle"
+msgstr "Jármű keresése"
+
+msgid "Select vehicle"
+msgstr "Jármű kiválasztása"
+
+msgid "Restore trainset"
+msgstr "Szerelvény visszaállítása"
+
+msgid "The trainset goes back to the vehicles the scenario gives it."
+msgstr "A szerelvény visszakapja a forgatókönyv szerinti járműveit."
+
+msgid "Restore"
+msgstr "Visszaállítás"
+
+msgid "modified"
+msgstr "módosítva"
+
+msgid "Move left"
+msgstr "Mozgatás balra"
+
+msgid "Move right"
+msgstr "Mozgatás jobbra"
+
+msgid "Turn round"
+msgstr "Megfordítás"
+
+msgid "All vehicles"
+msgstr "Minden jármű"
+
+msgid "Electric locos"
+msgstr "Villamosmozdonyok"
+
+msgid "Diesel locos"
+msgstr "Dízelmozdonyok"
+
+msgid "Steam locos"
+msgstr "Gőzmozdonyok"
+
+msgid "Railcars"
+msgstr "Motorkocsik"
+
+msgid "EMU"
+msgstr "Villamos motorvonatok"
+
+msgid "Utility"
+msgstr "Különleges járművek"
+
+msgid "Draisines"
+msgstr "Hajtányok"
+
+msgid "Trams"
+msgstr "Villamosok"
+
+msgid "Trucks"
+msgstr "Teherautók"
+
+msgid "Buses"
+msgstr "Buszok"
+
+msgid "Cars"
+msgstr "Személyautók"
+
+msgid "People"
+msgstr "Emberek"
+
+msgid "Animals"
+msgstr "Állatok"
+
+msgid "Carriages"
+msgstr "Kocsik"
+
+msgid "Unknown"
+msgstr "Ismeretlen"
+
+msgid "%s leaves the trainset."
+msgstr "%s kikerül a szerelvényből."
+
+msgid "No vehicles found"
+msgstr "Nincs találat"
+
+msgid "Clear search"
+msgstr "Keresés törlése"

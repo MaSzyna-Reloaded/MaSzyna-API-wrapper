@@ -104,11 +104,12 @@ and the report, and to publishing them on GitHub".
 | `snapshot.json` | the state of the game, below | yes |
 | `screenshot.jpg` | the screen when the form opened, with the player's red marks, JPEG at quality 75 | only when attached |
 | `app.log` | the end of this session's log (the engine's file log, `debug/file_logging/log_path`), its last 4 MB; its first lines name the build (`[GameDataServer] Build <number>`) | only while the file logging is on (the Debug settings) - with it off the file would be an earlier session's |
-| `gameplay.log` | the scenery's gameplay log (`BugReportRecorder`), its last 50 MB - lines below | when a scenery ran |
+| `gameplay.log`, `scenario.log`, `ai.log` | the scenery's game log files (`demo_scenery_loading.gd`), the last 50 MB of each - lines below | while the file logging is on and a scenery runs |
 
-#### `gameplay.log`
+#### `gameplay.log`, `scenario.log`, `ai.log`
 
-From the scenery's start, one line per happening: `<time> <simulation time> <kind> <subject>
+From the scenery's start (`GamePlayLogRecorder`, to the loggers `gameplay`, `scenario` and `ai`), one
+line per happening: `<time> <simulation time> <kind> <subject>
 <details>`, the subject a name and its RID (`SN61-02#2`), the details `key=value`:
 
 ```
@@ -134,12 +135,15 @@ From the scenery's start, one line per happening: `<time> <simulation time> <kin
   `role=`, `moved` to a cab `from_vehicle= from_cab=`, `role=` changed in a cab;
 * `vehicle` - `created` (in the simulation from its configuration on) or `freed`;
 * `trainset` - the vehicles coupled together, in their order, whenever they change;
-* `command` - a command to any vehicle (the player's, an AI driver's, the scenario's - it carries no
-  sender); a command repeated without a pause is one line with `repeats=`, the last one's
-  `until=` simulation time and `last=` values;
-* `event` - a launched event and the vehicle that set it off;
+* `command` - a command to a vehicle (it carries no sender): to the player's vehicle in
+  `gameplay.log`, to any other in `ai.log`; a command repeated without a pause is one line with
+  `repeats=`, the last one's `until=` simulation time and `last=` values;
+* `event` - a launched event and the vehicle that set it off, in `scenario.log` and in
+  `gameplay.log` (from INFO);
 * `scenery left` when the player leaves the scenery, `game closed` when the game quits with it
-  running - the last line either way.
+  running - the last line of `gameplay.log` either way.
+
+`ai.log` also has the AI drivers' orders (`MaszynaLegacyAIDriver`, at DEBUG).
 
 ### `snapshot.json`
 

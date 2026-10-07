@@ -46,6 +46,26 @@ const EXIT_INVALID_GAME_DIR: int = 1
 ## behind it
 const WORLD_SCENE: PackedScene = preload("world/world.tscn")
 
+## The game's log files of a scenery (GameLogFileHandler), each started afresh with it, beside the
+## engine's file log (Log folder, the Debug settings) - none with the file logging off. A run
+## without a display (a test, a probe) writes them into HEADLESS_LOG_DIRECTORY there: it shares the
+## game's user directory, and starting its own scenery would cut the logs of a game running beside it
+const FILE_LOGGING_SETTING: String = "debug/file_logging/enable_file_logging"
+const LOG_PATH_SETTING: String = "debug/file_logging/log_path"
+const HEADLESS_LOG_DIRECTORY: String = "headless"
+## Each log file's loggers and the lowest level it takes: gameplay.log has the scenario's events from
+## INFO beside the gameplay (GamePlayLogRecorder)
+const GAME_LOG_FILES: Dictionary[String, Array] = {
+    "gameplay.log": ["gameplay", "scenario"],
+    "scenario.log": ["scenario"],
+    "ai.log": ["ai"],
+}
+const GAME_LOG_LEVELS: Dictionary[String, GameLog.LogLevel] = {
+    "gameplay.log": GameLog.LogLevel.INFO,
+    "scenario.log": GameLog.LogLevel.DEBUG,
+    "ai.log": GameLog.LogLevel.DEBUG,
+}
+
 ## A scenery started at once, without the selector - as "-s" on the command line does
 @export var scenery: String = ""
 
@@ -54,6 +74,8 @@ var _music_tween: Tween
 var _world: SceneryWorld = null
 ## The trainset chosen in the selector, handed to the player once the scenery is loaded
 var _chosen_train_id: String = ""
+## The handlers of the running scenery's log files, by file name (GAME_LOG_FILES)
+var _log_handlers: Dictionary[String, GameLogFileHandler] = {}
 
 
 ## Before _ready(): the children must not read a cache left by another build
@@ -123,7 +145,22 @@ func start_scenery(filename: String, train_id: String, skin_overrides: Dictionar
     _world.scenery_loaded.connect(_on_scenery_loaded)
     add_child(_world)
     $GameHud.attach_environment(_world.get_environment())
-    $BugReport.attach_world(_world)
+    var log_files: PackedStringArray = []
+    if ProjectSettings.get_setting(FILE_LOGGING_SETTING, false):
+        var log_directory: String = String(ProjectSettings.get_setting(LOG_PATH_SETTING)).get_base_dir()
+        if DisplayServer.get_name() == "headless":
+            log_directory = log_directory.path_join(HEADLESS_LOG_DIRECTORY)
+        for log_file: String in GAME_LOG_FILES:
+            var handler: GameLogFileHandler = GameLogFileHandler.open(log_directory.path_join(log_file))
+            if not handler:
+                continue
+            handler.min_level = GAME_LOG_LEVELS[log_file]
+            for logger_id: String in GAME_LOG_FILES[log_file]:
+                GameLog.create_handler(logger_id, handler)
+            _log_handlers[log_file] = handler
+            log_files.append(handler.get_path())
+    $GamePlayLogRecorder.start()
+    $BugReport.attach_world(_world, log_files)
     _chosen_train_id = train_id
     await _world.load_scenery(filename, skin_overrides)
     await _wait_for_cabin()
@@ -217,7 +254,12 @@ func _exit_to_menu(game_dir: String = "") -> void:
     # the scenery's script context and environment go with the world
     $GameHud.attach_script_context(RID())
     $GameHud.attach_environment(null)
-    $BugReport.attach_world(null)
+    $GamePlayLogRecorder.stop()
+    for log_file: String in _log_handlers:
+        for logger_id: String in GAME_LOG_FILES[log_file]:
+            GameLog.remove_handler(logger_id, _log_handlers[log_file])
+    _log_handlers.clear()
+    $BugReport.attach_world(null, PackedStringArray())
     await _world.unload_scenery()
     _world.queue_free()
     _world = null

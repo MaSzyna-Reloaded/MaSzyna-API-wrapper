@@ -505,7 +505,7 @@ func _handle_command(driver:RID, command:String, value1:float, value2:float, pos
         return
     var vehicle:RID = VehicleServer.person_get_vehicle(driver)
     # the original writes every order to its log (TController::PutCommand(), Driver.cpp:4470)
-    GameLog.debug("%s: %s %s %s (order %s)" % [
+    GameLog.get_logger("ai").debug("%s: %s %s %s (order %s)" % [
             VehicleServer.vehicle_get_name(vehicle), command, value1, value2,
             state.orders[state.order_position]])
     if command.begins_with(TIMETABLE_PREFIX):

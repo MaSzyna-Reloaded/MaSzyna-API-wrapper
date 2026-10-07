@@ -331,7 +331,8 @@ being addressed.
 
 A `get_*`, a property getter, a `_get()` - anything a *reader*
 calls - returns a value and does nothing else. It does not advance a filter, consume a flag, emit
-a signal, write to another object, or build what it returns on the way out.
+a signal, write to another object, or build what it returns on the way out. The one exception is
+`GameLog.get_logger()` ("Logging").
 
 The failure mode is what makes this worth a rule of its own: a value computed inside a getter
 depends on **how often it is read**, and nothing at the call site says so. One reader looks
@@ -584,8 +585,21 @@ namespace godot {
 Always use `static_cast<type>`, don't use C-style cast
 
 ### Logging
-For dev logging, use and only Godot's built-in methods.  
-For in-game logging, use `GameLog` but be aware that it'll only post log messages to the HUD's Logs window ("Console" tab) or anything else connected to its `log_updated` signal. It won't print logs to the Godot's console nor to the developer console (`~`)
+For dev logging, use and only Godot's built-in methods.
+
+For in-game logging, use a `GameLogger` of `GameLog`, as Python's `logging`: a logger by its id
+(`GameLog.get_logger("game")`, `"ai"`, `"gameplay"`, `"scenario"`), kept in a member where a
+script logs more than once (`var _log: GameLogger = GameLog.get_logger("ai")`, then
+`_log.debug(...)`). A line goes at once - nothing is kept in memory - to the handlers registered
+for the logger's id (`GameLog.create_handler()`, a `GameLogHandler` with its `min_level`, e.g.
+`GameLogFileHandler`) and to `GameLog.message_logged`, which the HUD's Logs window shows, a tab per
+logger. The game sets up the log files (`demo_scenery_loading.gd`); a handler may be registered
+for an id whose logger does not exist yet. Nothing goes to the Godot's console nor to the developer
+console (`~`).
+
+`GameLog.get_logger()` is **the one getter that changes state**, a deliberate exception to "A
+getter never changes state": it creates a logger missing yet (and emits `logger_created`), as
+Python's `logging.getLogger()` does, so whoever logs never has to know who made the logger first.
 
 ### Sound
 This project has a sound system - the vendored `gnd-sfx` addon (`SfxBank` / `SfxEvent` /

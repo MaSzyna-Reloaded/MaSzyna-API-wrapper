@@ -306,11 +306,6 @@ func attach_environment(environment: MaszynaEnvironmentNode) -> void:
     %WeatherControls.attach_environment(environment)
 
 
-## A line of the gameplay log (BugReportRecorder), for the logs' "Gameplay" tab
-func add_gameplay_line(line: String) -> void:
-    %LogsPanel.add_gameplay_line(line)
-
-
 ## The scenario the player has started, for the "Scenario" entry of the View menu - hidden until
 ## the player opens it
 func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:

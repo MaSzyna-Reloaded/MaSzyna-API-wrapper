@@ -1,6 +1,6 @@
 #include "ScenarioScriptAction.hpp"
 #include "ScenarioScriptServer.hpp"
-#include "logging/GameLog.hpp"
+#include "logging/GameLogger.hpp"
 #include "scenario/ScenarioEventServer.hpp"
 #include "signalling/SignallingServer.hpp"
 #include "tracks/TrackServer.hpp"
@@ -351,7 +351,7 @@ namespace godot {
     void ScenarioScriptServer::_report(const RID &p_context, const String &p_error) {
         GameLog *log = GameLog::get_instance();
         ERR_FAIL_NULL(log);
-        log->error("lua: " + p_error);
+        log->get_logger(GameLog::GAME_LOGGER)->error("lua: " + p_error);
         emit_signal(script_error_signal, p_context, p_error);
     }
 

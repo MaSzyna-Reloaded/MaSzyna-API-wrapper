@@ -1,32 +1,21 @@
-class_name BugReportRecorder
+class_name GamePlayLogRecorder
 extends Node
 
-## What a problem report cannot read back at the moment it is made, from start() to stop(): the
-## commands every vehicle received - the player's, the AI drivers', the scenario's (a command
-## carries no sender) - the scenario's events that ran, the persons made and freed, where they sit
-## and in what role, the vehicles made and freed and the trainsets they form. They go to the
-## gameplay log as they come, not into memory, so a session of any length goes with the report. A
-## command repeated without a pause - a lever dragged with the mouse, a key held - is one line: the
-## first one, its count and the last one's time and values, written once the command has not come
-## again for REPEAT_GAP_MSEC.
+## The gameplay's log, from start() to stop() (a scenery, demo_scenery_loading.gd), to GameLog's
+## loggers: "gameplay" - the commands the player's vehicle received (the player's and the
+## scenario's - a command carries no sender), the persons made and freed, where they sit and in
+## what role, the vehicles made and freed and the trainsets they form; "ai" - the commands the
+## other vehicles received; "scenario" - the scenario's events that ran. They go to the loggers'
+## handlers as they come, not into memory (the log files, demo_scenery_loading.gd), so a session of
+## any length goes with a problem report. A command repeated without a pause - a lever dragged with
+## the mouse, a key held - is one line: the first one, its count and the last one's time and
+## values, written once the command has not come again for REPEAT_GAP_MSEC.
 
-## A line went to the gameplay log
-signal line_written(line: String)
-
-## How much of the gameplay log's end goes with a report - it compresses well
-const LOG_TAIL_BYTES: int = 50 * 1024 * 1024
 ## A command coming this soon after the same one [ms of real time] is counted on its line
 const REPEAT_GAP_MSEC: int = 1000
 ## What a role's and a cabin kind's constant name starts with, left out of the log
 const ROLE_PREFIX: String = "VEHICLE_PERSON_ROLE_"
 const CABIN_PREFIX: String = "RAIL_VEHICLE_CABIN_"
-
-## The gameplay log of a run without a display - a test, a probe: it shares the game's user
-## directory, and starting its own scenery would cut the log of a game running beside it
-const HEADLESS_LOG_PATH: String = "user://logs/headless/gameplay.log"
-
-## The gameplay log, started afresh with every scenery
-@export var log_path: String = "user://logs/gameplay.log"
 
 ## Lines: "<time> <simulation time> <kind> <subject> <details>", the subject a name and
 ## its RID ("SN61-02#2"), the details key=value:
@@ -36,7 +25,11 @@ const HEADLESS_LOG_PATH: String = "user://logs/headless/gameplay.log"
 ##   vehicle <name#rid> created|freed;  trainset <first#rid> vehicles=<name#rid>,...
 ##   command <name#rid> <command> p1=<p1> p2=<p2> [repeats=<n> until=<simulation time> last=<p1>,<p2>]
 ##   event <event> [activator=<name>];  scenery left;  game closed
-var _log: FileAccess = null
+var _gameplay_log: GameLogger = GameLog.get_logger("gameplay")
+var _scenario_log: GameLogger = GameLog.get_logger("scenario")
+var _ai_log: GameLogger = GameLog.get_logger("ai")
+## Between start() and stop()
+var _recording: bool = false
 ## The names of the vehicles logged as created: a freed vehicle's name is gone when it is announced
 var _vehicle_names: Dictionary[RID, String] = {}
 ## The trainset logged last - every vehicle of a trainset announces the same change
@@ -45,9 +38,11 @@ var _last_trainset: String = ""
 ## without its prefix ("driver", "rear")
 var _role_names: Dictionary[int, String] = {}
 var _cabin_kind_names: Dictionary[int, String] = {}
-## The last command, not written yet while it may repeat: its line, what tells a repeat (vehicle
-## and command), how many times it came, the last one's time and values and when it came
+## The last command, not written yet while it may repeat: its line, the logger it goes to, what
+## tells a repeat (vehicle and command), how many times it came, the last one's time and values and
+## when it came
 var _repeated_line: String = ""
+var _repeated_log: GameLogger = null
 var _repeated_key: String = ""
 var _repeats: int = 0
 var _repeated_last: String = ""
@@ -58,8 +53,6 @@ var _repeat_timer: Timer = null
 
 
 func _ready() -> void:
-    if DisplayServer.get_name() == "headless":
-        log_path = HEADLESS_LOG_PATH
     _repeat_timer = Timer.new()
     _repeat_timer.one_shot = true
     add_child(_repeat_timer)
@@ -74,8 +67,7 @@ func _ready() -> void:
 
 ## For a scenery being started
 func start() -> void:
-    DirAccess.make_dir_recursive_absolute(log_path.get_base_dir())
-    _log = FileAccess.open(log_path, FileAccess.WRITE)
+    _recording = true
     VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
     ScenarioEventServer.event_launched.connect(_on_event_launched)
     PersonServer.person_created.connect(_on_person_created)
@@ -93,14 +85,14 @@ func start() -> void:
     _write_person(PlayerServer.player_get_person(), "present")
 
 
-## For a scenery being left: the log is closed, and stays until the next scenery starts
+## For a scenery being left
 func stop() -> void:
     _close("scenery", "left")
 
 
 ## The game quit with a scenery running - before the scenery goes down, whose freeing would follow
 func _exit_tree() -> void:
-    if _log:
+    if _recording:
         _close("game", "closed")
 
 
@@ -123,24 +115,8 @@ func _close(subject: String, what: String) -> void:
     _last_trainset = ""
     _repeat_timer.stop()
     _write_repeated()
-    _write_line(_entry(subject, what, ""))
-    _log = null
-
-
-## The gameplay log's last LOG_TAIL_BYTES, with the command still being counted
-func get_log() -> PackedByteArray:
-    if not _log:
-        return PackedByteArray()
-    _log.flush()
-    var file: FileAccess = FileAccess.open(log_path, FileAccess.READ)
-    if not file:
-        return PackedByteArray()
-    var length: int = file.get_length()
-    file.seek(maxi(length - LOG_TAIL_BYTES, 0))
-    var tail: PackedByteArray = file.get_buffer(mini(length, LOG_TAIL_BYTES))
-    if _repeated_line:
-        tail.append_array((_repeated_text() + "\n").to_utf8_buffer())
-    return tail
+    _gameplay_log.info(_entry(subject, what, ""))
+    _recording = false
 
 
 func _on_vehicle_command_received(vehicle_rid: RID, command: String, p1: Variant, p2: Variant) -> void:
@@ -151,6 +127,7 @@ func _on_vehicle_command_received(vehicle_rid: RID, command: String, p1: Variant
         _repeated_last = "until=%.3f last=%s,%s" % [SimulationServer.simulation_get_time(), p1, p2]
     else:
         _write_repeated()
+        _repeated_log = _gameplay_log if vehicle_rid == PlayerServer.player_get_vehicle() else _ai_log
         _repeated_key = key
         _repeated_line = _entry("command", _named(vehicle_rid, VehicleServer.vehicle_get_name(vehicle_rid)),
                 "%s p1=%s p2=%s" % [command, p1, p2])
@@ -161,7 +138,7 @@ func _on_vehicle_command_received(vehicle_rid: RID, command: String, p1: Variant
 
 func _on_event_launched(event: RID, activator: RID) -> void:
     _write_repeated()
-    _write_line(_entry("event", ScenarioEventServer.event_get_name(event),
+    _scenario_log.info(_entry("event", ScenarioEventServer.event_get_name(event),
             "activator=%s" % VehicleServer.vehicle_get_name(activator) if activator.is_valid() else ""))
 
 
@@ -204,14 +181,14 @@ func _on_vehicle_configured(vehicle: RID) -> void:
         return
     _vehicle_names[vehicle] = VehicleServer.vehicle_get_name(vehicle)
     _write_repeated()
-    _write_line(_entry("vehicle", _named(vehicle, _vehicle_names[vehicle]), "created"))
+    _gameplay_log.info(_entry("vehicle", _named(vehicle, _vehicle_names[vehicle]), "created"))
 
 
 func _on_vehicle_freed(vehicle: RID) -> void:
     if not _vehicle_names.has(vehicle):
         return
     _write_repeated()
-    _write_line(_entry("vehicle", _named(vehicle, _vehicle_names[vehicle]), "freed"))
+    _gameplay_log.info(_entry("vehicle", _named(vehicle, _vehicle_names[vehicle]), "freed"))
     _vehicle_names.erase(vehicle)
 
 
@@ -228,7 +205,7 @@ func _on_vehicle_trainset_changed(vehicle: RID) -> void:
         return
     _last_trainset = trainset
     _write_repeated()
-    _write_line(_entry("trainset", members[0], "vehicles=%s" % trainset))
+    _gameplay_log.info(_entry("trainset", members[0], "vehicles=%s" % trainset))
 
 
 ## A person's line, its kind the player, an AI driver or a person who is neither (yet)
@@ -239,7 +216,7 @@ func _write_person(person: RID, what: String) -> void:
     elif DriverSystem.driver_get_rids().has(person):
         kind = "ai"
     _write_repeated()
-    _write_line(_entry(kind, _named(person, PersonServer.person_get_name(person)), what))
+    _gameplay_log.info(_entry(kind, _named(person, PersonServer.person_get_name(person)), what))
 
 
 ## "vehicle=<name#rid> cab=<kind>"
@@ -267,17 +244,9 @@ func _entry(kind: String, subject: String, details: String) -> String:
 func _write_repeated() -> void:
     if not _repeated_line:
         return
-    _write_line(_repeated_text())
+    _repeated_log.info(_repeated_text())
     _repeated_line = ""
     _repeated_key = ""
-
-
-## Out to the disk at once: a log that explains a crash must not lose its end in the file's buffer
-## when the game goes down - the lines are few, a repeated command is one of them
-func _write_line(line: String) -> void:
-    _log.store_line(line)
-    _log.flush()
-    line_written.emit(line)
 
 
 func _repeated_text() -> String:

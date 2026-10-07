@@ -4,7 +4,7 @@
 [ext_resource type="Theme" path="res://hud/timetable_theme.tres" id="2_theme"]
 [ext_resource type="Script" path="res://hud/window_move_handle.gd" id="3_move"]
 [ext_resource type="Script" path="res://hud/window_resize_corner.gd" id="4_resize"]
-[ext_resource type="Script" path="res://hud/log_lines.gd" id="5_lines"]
+[ext_resource type="PackedScene" path="res://hud/log_lines.tscn" id="5_lines"]
 
 [node name="LogsPanel" type="PanelContainer"]
 visible = false
@@ -53,6 +53,7 @@ mouse_filter = 2
 theme_type_variation = &"TimetableSeparator"
 
 [node name="Tabs" type="TabContainer" parent="Content"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 320)
 layout_mode = 2
 size_flags_vertical = 3
@@ -60,35 +61,10 @@ theme_type_variation = &"LogTabs"
 current_tab = 0
 tab_focus_mode = 0
 
-[node name="Console" type="RichTextLabel" parent="Content/Tabs"]
+[node name="App" parent="Content/Tabs" instance=ExtResource("5_lines")]
 unique_name_in_owner = true
 layout_mode = 2
-focus_mode = 0
-theme_type_variation = &"LogLines"
-scroll_following = true
-selection_enabled = true
-script = ExtResource("5_lines")
 metadata/_tab_index = 0
-
-[node name="Gameplay" type="RichTextLabel" parent="Content/Tabs"]
-unique_name_in_owner = true
-layout_mode = 2
-focus_mode = 0
-theme_type_variation = &"LogLines"
-scroll_following = true
-selection_enabled = true
-script = ExtResource("5_lines")
-metadata/_tab_index = 1
-
-[node name="App" type="RichTextLabel" parent="Content/Tabs"]
-unique_name_in_owner = true
-layout_mode = 2
-focus_mode = 0
-theme_type_variation = &"LogLines"
-scroll_following = true
-selection_enabled = true
-script = ExtResource("5_lines")
-metadata/_tab_index = 2
 
 [node name="ResizeCorner" type="Control" parent="Content" node_paths=PackedStringArray("window")]
 custom_minimum_size = Vector2(14, 14)

@@ -1,5 +1,6 @@
 #include "VehicleComponent.hpp"
 #include "VehicleController.hpp"
+#include "logging/GameLogger.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -104,7 +105,8 @@ namespace godot {
             return;
         }
         if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
-            game_log->log(p_level, vformat(String("%s: %s"), train_controller_node->get_vehicle_id(), p_line));
+            game_log->get_logger(GameLog::GAME_LOGGER)
+                    ->log(p_level, vformat(String("%s: %s"), train_controller_node->get_vehicle_id(), p_line));
         }
     }
     void VehicleComponent::log_debug(const String &p_line) {

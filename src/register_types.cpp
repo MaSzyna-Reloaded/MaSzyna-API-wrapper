@@ -59,6 +59,8 @@
 #include "legacy/vehicles/MoverRailVehicleWipers.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "logging/GameLog.hpp"
+#include "logging/GameLogFileHandler.hpp"
+#include "logging/GameLogger.hpp"
 #include "person/PersonServer.hpp"
 #include "player/PlayerCameraServer.hpp"
 #include "player/PlayerServer.hpp"
@@ -329,6 +331,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(RailVehicleLighting);
         GDREGISTER_CLASS(MoverRailVehicleLighting);
         GDREGISTER_CLASS(GameLog);
+        GDREGISTER_CLASS(GameLogger);
+        GDREGISTER_CLASS(GameLogHandler);
+        GDREGISTER_CLASS(GameLogFileHandler);
         GDREGISTER_CLASS(RailVehicleWWListItem);
         GDREGISTER_CLASS(RailVehicleInverter);
         GDREGISTER_CLASS(RailVehicleMotorParameter);

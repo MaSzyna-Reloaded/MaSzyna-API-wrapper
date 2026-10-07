@@ -6,9 +6,6 @@ const MARK: Rect2 = Rect2(10.0, 10.0, 30.0, 20.0)
 const BOUNDARY: String = "TestBoundary"
 ## Where the test saves its reports
 const REPORTS_DIRECTORY: String = "user://test_bug_reports"
-## A gameplay log line's fields (BugReportRecorder): time, simulation time, kind, subject, details
-const COLUMN_KIND: int = 2
-const COLUMN_DETAILS: int = 4
 
 var _endpoint: Variant = null
 
@@ -79,7 +76,7 @@ func test_the_fields_start_with_the_api_version() -> void:
 func test_the_archive_holds_the_files_it_is_given() -> void:
     var files: Dictionary[String, PackedByteArray] = {
         BugReportSender.SNAPSHOT_FILE: "{}".to_utf8_buffer(),
-        BugReportSender.LOG_FILE: "a log line".to_utf8_buffer(),
+        "app.log": "a log line".to_utf8_buffer(),
     }
     DirAccess.make_dir_recursive_absolute(REPORTS_DIRECTORY.path_join("archive"))
     var path: String = REPORTS_DIRECTORY.path_join("archive").path_join(BugReportSender.ATTACHMENTS_FILE)
@@ -88,8 +85,8 @@ func test_the_archive_holds_the_files_it_is_given() -> void:
 
     var reader: ZIPReader = ZIPReader.new()
     assert_eq(reader.open(path), OK)
-    assert_eq(Array(reader.get_files()), [BugReportSender.SNAPSHOT_FILE, BugReportSender.LOG_FILE])
-    assert_eq(reader.read_file(BugReportSender.LOG_FILE).get_string_from_utf8(), "a log line")
+    assert_eq(Array(reader.get_files()), [BugReportSender.SNAPSHOT_FILE, "app.log"])
+    assert_eq(reader.read_file("app.log").get_string_from_utf8(), "a log line")
     reader.close()
 
 
@@ -99,8 +96,13 @@ func test_a_directory_endpoint_saves_the_report_instead_of_sending_it() -> void:
     watch_signals(sender)
     var report: Dictionary = {"title": "a title"}
 
-    sender.send(report, "{}", PackedByteArray([1, 2, 3]), "a log line".to_utf8_buffer(),
-            "a gameplay line".to_utf8_buffer())
+    var logs: Dictionary[String, PackedByteArray] = {
+        "app.log": "a log line".to_utf8_buffer(),
+        "gameplay.log": "a gameplay line".to_utf8_buffer(),
+        "ai.log": PackedByteArray(),
+    }
+
+    sender.send(report, "{}", PackedByteArray([1, 2, 3]), logs)
 
     assert_signal_emitted(sender, "report_saved")
     assert_signal_not_emitted(sender, "report_failed")
@@ -111,60 +113,12 @@ func test_a_directory_endpoint_saves_the_report_instead_of_sending_it() -> void:
     var reader: ZIPReader = ZIPReader.new()
     reader.open(directory.path_join(BugReportSender.ATTACHMENTS_FILE))
     assert_eq(Array(reader.get_files()),
-            [BugReportSender.SNAPSHOT_FILE, BugReportSender.SCREENSHOT_FILE, BugReportSender.LOG_FILE,
-                BugReportSender.GAMEPLAY_LOG_FILE])
+            [BugReportSender.SNAPSHOT_FILE, BugReportSender.SCREENSHOT_FILE, "app.log", "gameplay.log"],
+            "an empty log should be left out")
     reader.close()
     var saved: Variant = JSON.parse_string(FileAccess.get_file_as_string(directory.path_join(BugReportSender.REPORT_FILE)))
     assert_eq(saved["title"], "a title")
     assert_eq(saved["api_version"], str(BugReportSender.API_VERSION))
-
-
-func test_the_gameplay_log_counts_a_repeated_command_on_one_line() -> void:
-    var recorder: BugReportRecorder = add_child_autofree(BugReportRecorder.new())
-    recorder.log_path = REPORTS_DIRECTORY.path_join("gameplay.log")
-    recorder.start()
-    # no player's vehicle here: the commands to no vehicle are its commands
-    var player_vehicle: RID = PlayerServer.player_get_vehicle()
-    for level: float in [0.1, 0.2, 0.3]:
-        VehicleServer.vehicle_command_received.emit(player_vehicle, "brake_level_set", level, null)
-    VehicleServer.vehicle_command_received.emit(player_vehicle, "converter", true, null)
-
-    var lines: PackedStringArray = recorder.get_log().get_string_from_utf8().strip_edges().split("\n")
-    recorder.stop()
-    DirAccess.remove_absolute(recorder.log_path)
-
-    # the first line is the player, present from the start
-    assert_eq(lines.size(), 3, "a dragged lever should be one line, the next command another")
-    var dragged: PackedStringArray = _fields(lines[1])
-    assert_eq(dragged[COLUMN_KIND], "command")
-    assert_eq(Array(dragged.slice(COLUMN_DETAILS, COLUMN_DETAILS + 4)), ["brake_level_set", "p1=0.1", "p2=<null>", "repeats=3"])
-    assert_eq(dragged[-1], "last=0.3,<null>", "the line should end with the last values")
-    assert_eq(Array(_fields(lines[2]).slice(COLUMN_DETAILS)), ["converter", "p1=true", "p2=<null>"],
-            "a single command should stand as it came")
-
-
-func test_the_gameplay_log_names_the_persons_made_renamed_and_freed() -> void:
-    var recorder: BugReportRecorder = add_child_autofree(BugReportRecorder.new())
-    recorder.log_path = REPORTS_DIRECTORY.path_join("gameplay.log")
-    recorder.start()
-    var person: RID = PersonServer.person_create("SN61-02")
-    PersonServer.person_set_name(person, "SN61-03")
-    PersonServer.person_free(person)
-
-    var lines: PackedStringArray = recorder.get_log().get_string_from_utf8().strip_edges().split("\n")
-    recorder.stop()
-    DirAccess.remove_absolute(recorder.log_path)
-
-    var player: RID = PlayerServer.player_get_person()
-    assert_eq(lines.size(), 4, "the player, then the person made, renamed and freed: %s" % lines)
-    assert_eq(Array(_fields(lines[0]).slice(COLUMN_KIND)),
-            ["player", "%s#%d" % [PersonServer.person_get_name(player), player.get_id()], "present"],
-            "the player is named from the start: %s" % lines[0])
-    assert_eq(Array(_fields(lines[1]).slice(COLUMN_KIND)), ["person", "SN61-02#%d" % person.get_id(), "created"])
-    assert_eq(Array(_fields(lines[2]).slice(COLUMN_KIND)),
-            ["person", "SN61-03#%d" % person.get_id(), "renamed", "previous=SN61-02"])
-    assert_eq(Array(_fields(lines[3]).slice(COLUMN_KIND)), ["person", "SN61-03#%d" % person.get_id(), "freed"],
-            "a freed person still has its name: %s" % lines[3])
 
 
 ## Linux, macOS and Windows set one of each pair; the test sets them all, to a home and a login of
@@ -196,29 +150,6 @@ func test_the_home_directory_and_the_login_leave_no_trace_in_what_is_sent() -> v
     ]))
 
 
-func test_a_gameplay_line_is_on_the_disk_at_once() -> void:
-    var recorder: BugReportRecorder = add_child_autofree(BugReportRecorder.new())
-    recorder.log_path = REPORTS_DIRECTORY.path_join("gameplay.log")
-    recorder.start()
-    # read past the recorder, as a crash leaves the file - nothing flushed it on the way
-    var on_disk: String = FileAccess.get_file_as_string(recorder.log_path)
-    recorder.stop()
-    DirAccess.remove_absolute(recorder.log_path)
-
-    assert_string_contains(on_disk, " present", "the line written at the start is in the file")
-
-
-func test_leaving_the_scenery_is_the_last_line() -> void:
-    var recorder: BugReportRecorder = add_child_autofree(BugReportRecorder.new())
-    recorder.log_path = REPORTS_DIRECTORY.path_join("gameplay.log")
-    recorder.start()
-    recorder.stop()
-    var lines: PackedStringArray = FileAccess.get_file_as_string(recorder.log_path).strip_edges().split("\n")
-    DirAccess.remove_absolute(recorder.log_path)
-
-    assert_true(lines[-1].ends_with(" scenery left"), "the log ends where the scenery was left: %s" % lines[-1])
-
-
 func test_a_mark_is_burnt_into_the_screenshot_along_its_edges() -> void:
     var annotator: ScreenshotAnnotator = autofree(ScreenshotAnnotator.new())
     var image: Image = Image.create_empty(IMAGE_SIZE.x, IMAGE_SIZE.y, false, Image.FORMAT_RGBA8)
@@ -243,8 +174,3 @@ func test_the_last_mark_can_be_taken_away() -> void:
     annotator.remove_last_mark()
 
     assert_eq(annotator.render_annotated_image().get_pixelv(Vector2i(MARK.position)), Color(0, 0, 0, 0))
-
-
-## A gameplay log line's fields
-func _fields(line: String) -> PackedStringArray:
-    return line.split(" ")

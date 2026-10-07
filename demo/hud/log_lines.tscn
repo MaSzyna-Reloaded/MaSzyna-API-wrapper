@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/log_lines.gd" id="1_lines"]
+
+[node name="LogLines" type="RichTextLabel"]
+focus_mode = 0
+theme_type_variation = &"LogLines"
+scroll_following = true
+selection_enabled = true
+script = ExtResource("1_lines")

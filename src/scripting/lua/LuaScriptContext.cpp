@@ -5,7 +5,7 @@
 #include "lauxlib.h"
 #include "legacy/MaszynaDataPath.hpp"
 #include "legacy/scenario/MaszynaLegacyLuaEventsModule.hpp"
-#include "logging/GameLog.hpp"
+#include "logging/GameLogger.hpp"
 #include "lualib.h"
 #include <cstdlib>
 #include <godot_cpp/classes/file_access.hpp>
@@ -222,7 +222,7 @@ namespace godot {
             lua_pop(p_state, 1);
         }
         GameLog *log = LuaModules::server<GameLog>(p_state);
-        log->info(line);
+        log->get_logger(GameLog::GAME_LOGGER)->info(line);
         return 0;
     }
 

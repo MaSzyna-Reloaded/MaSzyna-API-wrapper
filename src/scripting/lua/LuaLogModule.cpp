@@ -1,10 +1,10 @@
 #include "LuaModules.hpp"
-#include "logging/GameLog.hpp"
+#include "logging/GameLogger.hpp"
 
 namespace godot {
     static int log_at(lua_State *p_state, const GameLog::LogLevel p_level) {
         const String line = String::utf8(luaL_checkstring(p_state, 1));
-        LuaModules::server<GameLog>(p_state)->log(p_level, line);
+        LuaModules::server<GameLog>(p_state)->get_logger(GameLog::GAME_LOGGER)->log(p_level, line);
         return 0;
     }
 

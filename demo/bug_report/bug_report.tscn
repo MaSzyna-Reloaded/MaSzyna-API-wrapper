@@ -1,7 +1,6 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://bug_report/bug_report.gd" id="1_report"]
-[ext_resource type="Script" path="res://bug_report/bug_report_recorder.gd" id="2_recorder"]
 [ext_resource type="Script" path="res://bug_report/bug_report_sender.gd" id="3_sender"]
 [ext_resource type="Script" path="res://bug_report/edge_button.gd" id="4_edge"]
 [ext_resource type="Texture2D" path="res://bug_report/bug_icon.svg" id="5_icon"]
@@ -38,10 +37,6 @@ shadow_size = 6
 [node name="BugReport" type="CanvasLayer"]
 layer = 100
 script = ExtResource("1_report")
-
-[node name="Recorder" type="Node" parent="."]
-unique_name_in_owner = true
-script = ExtResource("2_recorder")
 
 [node name="Sender" type="HTTPRequest" parent="."]
 unique_name_in_owner = true
@@ -185,7 +180,6 @@ title = "Reporting unavailable"
 message = "Reporting problems is not available in this version of the game."
 confirm_text = "OK"
 
-[connection signal="line_written" from="Recorder" to="." method="_on_recorder_line_written"]
 [connection signal="report_failed" from="Sender" to="ReportDialog" method="show_failed"]
 [connection signal="report_saved" from="Sender" to="." method="close_report" unbinds=1]
 [connection signal="report_sent" from="Sender" to="." method="_on_report_sent"]

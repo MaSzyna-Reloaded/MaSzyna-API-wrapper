@@ -45,6 +45,7 @@ var _cabin_scenes:Dictionary[RID, PackedScene] = {}
 var _cabins:Dictionary[RID, int] = {}
 ## Values of a vehicle's state the cab computes rather than reads, by name (state_computed_value_register())
 var _state_computed_values:Dictionary[RID, Dictionary] = {}
+var _log:GameLogger = GameLog.get_logger("game")
 
 
 func _ready() -> void:
@@ -317,11 +318,11 @@ func unregister_process(cabin:RID, callable:Callable) -> void:
 func act(cabin:RID, control_id:StringName, action:StringName, value:Variant = null) -> Variant:
     var vehicle_name:String = VehicleServer.vehicle_get_name(VehicleServer.cabin_get_vehicle(cabin))
     if not action in ACTIONS:
-        GameLog.error("%s: Unknown cabin action: %s" % [vehicle_name, action])
+        _log.error("%s: Unknown cabin action: %s" % [vehicle_name, action])
         return null
     var handler:Callable = _controls.get(cabin, {}).get(control_id, Callable())
     if not handler.is_valid():
-        GameLog.error("%s: Unknown cabin control: %s" % [vehicle_name, control_id])
+        _log.error("%s: Unknown cabin control: %s" % [vehicle_name, control_id])
         return null
     return handler.call(get_cabin_state(cabin), action, value)
 

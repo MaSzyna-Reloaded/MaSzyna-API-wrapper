@@ -5,11 +5,9 @@ extends CanvasLayer
 ## the right edge both open it; the game shows that button wherever a report can be made
 ## (demo_scenery_loading.gd). The report pauses the simulation while its form is open and resumes
 ## it on closing, unless it was paused already. It is the one owner of that state - the form and
-## its buttons only ask (bug_report.tscn). What happened before the report was opened is kept by
-## its recorder from the moment a scenery starts (attach_world()).
-
-## A line of the gameplay log the recorder has just written
-signal gameplay_line_written(line: String)
+## its buttons only ask (bug_report.tscn). What happened before the report was opened is in the
+## logs it attaches: the engine's (app.log) and the game's log files of the running scenery
+## (attach_world()).
 
 ## Characters of the description that go into the issue's title
 const TITLE_DESCRIPTION_LENGTH: int = 80
@@ -17,11 +15,15 @@ const TITLE_DESCRIPTION_LENGTH: int = 80
 const FILE_LOGGING_SETTING: String = "debug/file_logging/enable_file_logging"
 const LOG_PATH_SETTING: String = "debug/file_logging/log_path"
 const LOG_TAIL_BYTES: int = 4 * 1024 * 1024
+## How much of the end of each of the game's log files goes with a report - they compress well
+const GAME_LOG_TAIL_BYTES: int = 50 * 1024 * 1024
 
 ## The running scenery, null in the menu
 var _world: SceneryWorld = null
 ## When the scenery started, Time.get_ticks_msec()
 var _started_msec: int = 0
+## The game's log files of the running scenery (GameLogFileHandler), empty in the menu
+var _log_files: PackedStringArray = []
 ## The simulation was running when the report opened, so closing it resumes it
 var _paused_by_report: bool = false
 ## The state read when the report opened
@@ -30,14 +32,11 @@ var _snapshot: Dictionary = {}
 var _issue_url: String = ""
 
 
-## The scenery being started, null when it is left; its recorder runs in between
-func attach_world(world: SceneryWorld) -> void:
+## The scenery being started and its log files, null and none when it is left
+func attach_world(world: SceneryWorld, log_files: PackedStringArray) -> void:
     _world = world
-    if not world:
-        %Recorder.stop()
-        return
+    _log_files = log_files
     _started_msec = Time.get_ticks_msec()
-    %Recorder.start()
 
 
 ## With no reporting endpoint (BugReportSender.is_available()) a notice says so instead of a form
@@ -84,25 +83,25 @@ func send_report() -> void:
         "vehicle": vehicle,
     }
     # the log of this session, its last part - only while it is written: with file logging off the
-    # file is an earlier session's (EngineOverrides, the Debug settings)
-    var session_log: PackedByteArray = PackedByteArray()
-    var file: FileAccess = (
-        FileAccess.open(ProjectSettings.get_setting(LOG_PATH_SETTING), FileAccess.READ)
-        if ProjectSettings.get_setting(FILE_LOGGING_SETTING, false) else null
-    )
-    if file:
-        var length: int = file.get_length()
-        file.seek(maxi(length - LOG_TAIL_BYTES, 0))
-        session_log = file.get_buffer(mini(length, LOG_TAIL_BYTES))
+    # file is an earlier session's (EngineOverrides, the Debug settings), and there are no game logs
+    var logs: Dictionary[String, PackedByteArray] = {}
+    if ProjectSettings.get_setting(FILE_LOGGING_SETTING, false):
+        var session_log: String = ProjectSettings.get_setting(LOG_PATH_SETTING)
+        logs[session_log.get_file()] = _read_tail(session_log, LOG_TAIL_BYTES)
+    for log_file: String in _log_files:
+        logs[log_file.get_file()] = _read_tail(log_file, GAME_LOG_TAIL_BYTES)
     %ReportDialog.show_sending()
-    %Sender.send(
-        report, JSON.stringify(_snapshot, "\t"), %ReportDialog.render_screenshot(), session_log,
-        %Recorder.get_log()
-    )
+    %Sender.send(report, JSON.stringify(_snapshot, "\t"), %ReportDialog.render_screenshot(), logs)
 
 
-func _on_recorder_line_written(line: String) -> void:
-    gameplay_line_written.emit(line)
+## The last `bytes` of a file, nothing when it cannot be read
+func _read_tail(path: String, bytes: int) -> PackedByteArray:
+    var file: FileAccess = FileAccess.open(path, FileAccess.READ)
+    if not file:
+        return PackedByteArray()
+    var length: int = file.get_length()
+    file.seek(maxi(length - bytes, 0))
+    return file.get_buffer(mini(length, bytes))
 
 
 ## Sent: a confirmation that can open the issue, and the simulation stays paused until it is closed;

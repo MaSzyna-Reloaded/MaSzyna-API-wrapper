@@ -104,7 +104,8 @@ Code generation:
   value keeps the original's value and a source reference (`Track.cpp:35`). Exempt: 0, 1, -1, 2
   as themselves and literal positional indices - see `CODE_STYLE.md`
 * PROHIBITED: **a getter never changes state** - no filter ticks, flag consumption, signals,
-  writes elsewhere or lazy building in any `get_*`/property getter/`_get()` - see `CODE_STYLE.md`
+  writes elsewhere or lazy building in any `get_*`/property getter/`_get()` - see `CODE_STYLE.md`;
+  the one exception is `GameLog.get_logger()` (CODE_STYLE.md, "Logging")
 * PROHIBITED: **a hot path never reads the state or config dump** - per frame, per step or per
   tick a vehicle's value comes from its component (taken once, typed getter) and configuration
   from the component's properties; `vehicle_dump_state()`/`vehicle_dump_config()` only for
@@ -200,8 +201,8 @@ Checks:
   `grep | head`: `head` closes the pipe, the run dies of SIGPIPE, and a pass reads as a hang.
 * REQUIRED: **every headless Godot run (a test, a probe, `--import`, `--check-only`) passes
   `--log-file <scratchpad>/godot.log`** - it shares the game's user directory, and without it each
-  run rotates the operator's `logs/app.log` (five runs delete it). A headless run's gameplay log
-  goes to `logs/headless/` by itself (`BugReportRecorder.HEADLESS_LOG_PATH`)
+  run rotates the operator's `logs/app.log` (five runs delete it). A headless run's game log files
+  go to `logs/headless/` by themselves (`demo_scenery_loading.gd`, `HEADLESS_LOG_DIRECTORY`)
 * TESTS: a GDScript that fails to **parse** is not reported as failing - GUT ignores it, finds no
   match for `-gselect` and runs the whole directory until the timeout, so a syntax error looks
   like a hang. Parse-check first:

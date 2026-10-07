@@ -27,7 +27,7 @@ const loglevel_names = {
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
     $%TrainName.text = tr("%s (type: %s)") % [train.vehicle_id, train.type_name]
-    GameLog.log_updated.connect(print_log_entry_to_godot_console)
+    GameLog.message_logged.connect(print_log_entry_to_godot_console)
 
 
 func _colorize_loglevel(loglevel, line):
@@ -37,7 +37,9 @@ func _colorize_loglevel(loglevel, line):
     else:
         return line
 
-func print_log_entry_to_godot_console(loglevel, line):
+func print_log_entry_to_godot_console(logger_id, loglevel, line):
+    if not logger_id == "game":
+        return
     print_rich(_colorize_loglevel(loglevel, "%s: %s" % [loglevel_names[loglevel], line]))
 
 

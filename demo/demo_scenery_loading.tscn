@@ -9,6 +9,7 @@
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="PackedScene" path="res://ui/ui_dialog.tscn" id="ui_dialog_scene"]
 [ext_resource type="PackedScene" path="res://bug_report/bug_report.tscn" id="bug_report_scene"]
+[ext_resource type="Script" uid="uid://dkfq35r0l8fkp" path="res://logging/game_play_log_recorder.gd" id="game_play_log_recorder_script"]
 [ext_resource type="PackedScene" path="res://settings/settings_screen.tscn" id="settings_screen_scene"]
 [ext_resource type="PackedScene" path="res://settings/settings_panel.tscn" id="settings_panel_scene"]
 
@@ -35,6 +36,9 @@ back_text = "Back"
 confirm_intent = 3
 
 [node name="BugReport" parent="." instance=ExtResource("bug_report_scene")]
+
+[node name="GamePlayLogRecorder" type="Node" parent="."]
+script = ExtResource("game_play_log_recorder_script")
 
 [node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
 
@@ -67,6 +71,5 @@ color = Color(0, 0, 0, 1)
 [connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
 [connection signal="game_dir_change_requested" from="SettingsPanel" to="." method="_exit_to_menu"]
 [connection signal="problem_report_requested" from="GameHud" to="BugReport" method="open_report"]
-[connection signal="gameplay_line_written" from="BugReport" to="GameHud" method="add_gameplay_line"]
 [connection signal="settings_requested" from="GameHud" to="SettingsPanel" method="toggle"]
 [connection signal="settings_requested" from="ScenerySelectorScreen" to="SettingsScreen" method="open"]

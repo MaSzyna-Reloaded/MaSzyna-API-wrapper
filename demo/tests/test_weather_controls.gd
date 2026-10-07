@@ -3,18 +3,16 @@ extends MaszynaGutTest
 const WEATHER_CONTROLS_SCENE: PackedScene = preload("res://weather/weather_controls.tscn")
 
 var _previous_weather: MaszynaEnvironment.Weather
-var _previous_simulation_speed: float
 
 
 func before_each() -> void:
     _previous_weather = MaterialManager.weather
-    _previous_simulation_speed = SimulationServer.simulation_speed
 
 
 func after_each() -> void:
     MaterialManager.weather = _previous_weather
     # the time scale slider sets SimulationServer's speed - every script after this one runs at it
-    SimulationServer.simulation_speed = _previous_simulation_speed
+    SimulationServer.simulation_reset_speed()
 
 
 func test_controls_drive_environment_node() -> void:

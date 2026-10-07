@@ -129,6 +129,7 @@ func after_all() -> void:
             TrackServer.track_free(track_rid)
     _tracks.clear()
     TrackServer.topology_rebuild()
+    super()
 
 
 ## Every vehicle has to be on the track and publishing state, or the three measurements below

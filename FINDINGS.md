@@ -648,3 +648,6 @@ anything. Open work belongs in `TODO.md`.
   queued again. *(10-07 a vehicle without its model held the loading screen 30 s)*
 * A script thread never calls a server that answers through the main thread, nor touches a node -
   the exit joins it while it waits forever. *(10-07 test runs that did not exit)*
+* A script sets the speed back with `simulation_reset_speed()` - `simulation_speed = x` leaves the
+  clock at the old speed for the scripts after; reproduce CI with an empty `HOME`; the player is
+  seated after `scenery_loaded`. *(10-07 tests that ran at the speed an earlier script left)*

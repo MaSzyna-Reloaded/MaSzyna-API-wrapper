@@ -4123,3 +4123,30 @@ lighting or the trainset.
   The three scripts that hung went through 5 runs each clean.
 * **Rule:** a script thread never calls a server that answers through the main thread, nor touches
   a node; whatever needs them runs on the main thread.
+
+
+## 2026-10-07 Tests that ran at the speed an earlier script left
+
+* **Symptom:** on CI `test_rail_vehicle_idle_pantograph_voltage_regression` (no wire voltage, the
+  pantograph not even up) and `test_zzz_driver_hints_en57_2000_v1` (the master controller key did
+  not take) failed, green alone; locally the suite in one process failed 80 tests more.
+* **What proved it:** a bisection in CI's order in one process: the pantograph test went red only
+  after `test_maszyna_environment_node` (with `test_maszyna_include_unload` between). That script,
+  `test_weather_controls`, `test_simulation_clock` and `test_scenario_event_server` set
+  `simulation_speed` to 20-1000 and set it back by `simulation_speed = ...` only: the clock's
+  current speed stays where it was and closes on 1 over `speed_change_time`, so the scripts after
+  ran at up to 100x. The local 80 came from the game directory: `UserSettings` finds the real game
+  in `HOME` and uses it in place of the fixtures; with an empty `HOME` and `XDG_DATA_HOME` the
+  run is CI's. There the EN57 failed alone too: a trace of the commands showed the player's
+  `cab_activation_auto` at t=0.033 with `ra` coupled to nothing - `enter_vehicle()` seated the
+  player once the vehicles had their simulation, before `_build_trainsets()` coupled the unit -
+  so `SendCtrlToNext("CabActivisation")` never reached `s`, and `IncMainCtrl` on `s` refused
+  without `CabActive` (Mover.cpp:2663).
+* **Fix:** the four scripts set the speed back with `simulation_reset_speed()`;
+  `MaszynaGutTest.after_all()` asserts every script leaves the simulation running at 1, so the
+  one that does not goes red itself. `enter_vehicle()` seats the player on `scenery_loaded`, as
+  `World.start_player()` does. The standing event test, green only at the leaked speed, waits the
+  two steps its rerun takes.
+* **Rule:** a script leaves the simulation's speed with `simulation_reset_speed()`, never by setting
+  `simulation_speed` back; reproduce CI with an empty `HOME`; the player is seated once the scenery
+  is loaded - a cab activated before the coupling never reaches the unit.

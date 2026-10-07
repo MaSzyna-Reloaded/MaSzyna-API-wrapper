@@ -56,8 +56,7 @@ func before_each() -> void:
 
 
 func after_each() -> void:
-    SimulationServer.simulation_speed = 1.0
-    SimulationServer.simulation_advance(SHORT_FRAME)
+    SimulationServer.simulation_reset_speed()
     ProjectSettings.set_setting(SPEED_CHANGE_TIME_SETTING, _speed_change_time)
     if TrackServer.track_exists(_track):
         TrackServer.track_free(_track)

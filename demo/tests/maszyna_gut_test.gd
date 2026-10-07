@@ -23,6 +23,17 @@ const LOAD_TIMEOUT:float = 5.0
 const TICK:float = 1.0 / 30.0
 
 
+## A script leaves the simulation as the hook set it: running, at speed 1, there already - a speed
+## only set back (simulation_speed) leaves the clock at the old one, and every script after it runs
+## at that until the speed change closes (FINDINGS.md); SimulationServer.simulation_reset_speed()
+## sets both. Asserted here, so the script that leaves it is the one that goes red.
+func after_all() -> void:
+    assert_false(SimulationServer.simulation_is_paused(), "the script left the simulation paused")
+    assert_eq(SimulationServer.simulation_speed, 1.0, "the script left the simulation's speed set")
+    assert_eq(SimulationServer.simulation_get_current_speed(), 1.0,
+            "the script left the simulation's clock at another speed")
+
+
 ## The ticks `seconds` of simulated time take, the last one whole
 static func ticks(seconds:float) -> int:
     return ceili(seconds / TICK)

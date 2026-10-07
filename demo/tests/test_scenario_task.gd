@@ -20,6 +20,7 @@ func before_all() -> void:
 
 func after_all() -> void:
     TranslationServer.set_locale(_locale)
+    super()
 
 
 func test_an_order_is_told_as_the_original_tells_it() -> void:

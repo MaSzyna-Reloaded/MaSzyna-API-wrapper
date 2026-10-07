@@ -8,7 +8,8 @@ const QUARTER_TURN:float = 90.0
 const TURN_SPEED:float = 900.0
 ## Longer than any test runs, so the event stays queued
 const NEVER:float = 3600.0
-## An event another one queues runs a step later: a pass of the queue does not run what it queued
+## An event another one queues - or one that queues itself again - runs a step later: a pass of
+## the queue does not run what it queued
 const CHAINED_EVENT_SECONDS:float = 2.0 * TICK
 ## Fast enough for one frame to pass the cap
 const FAST_SPEED:float = 1000.0
@@ -166,7 +167,7 @@ func test_pause_stops_the_time_and_the_speed_scales_it() -> void:
     var advanced:float = SimulationServer.simulation_get_time() - fast_from
     assert_gt(advanced, 0.0, "the time should run at the speed")
     assert_lte(advanced, MAX_FRAME_DELTA * FAST_SPEED, "a frame counts at most MAX_FRAME_DELTA, sped up")
-    SimulationServer.simulation_speed = 1.0
+    SimulationServer.simulation_reset_speed()
     _free_events([event])
 
 
@@ -481,7 +482,7 @@ func test_a_standing_event_goes_on_while_the_vehicle_stands() -> void:
     ScenarioEventServer.track_add_event(track, ScenarioEventServer.TRACK_EVENTALL0, standing)
 
     RailVehicleServer.vehicle_stopped_on_track.emit(vehicle, track)
-    if not await wait_simulated_until(func() -> bool: return action.runs.size() >= 2, TICK,
+    if not await wait_simulated_until(func() -> bool: return action.runs.size() >= 2, CHAINED_EVENT_SECONDS,
             "the standing event run again"):
         return
     assert_gt(action.runs.size(), 1, "queued again after its run")

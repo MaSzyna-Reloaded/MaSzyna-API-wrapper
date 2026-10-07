@@ -340,17 +340,15 @@ func enter_vehicle(scenery:String, vehicle:String) -> bool:
     _scenery.filename = scenery
     add_child(_scenery)
     get_tree().process_frame.connect(_acknowledge_security)
-    var loaded:int = Time.get_ticks_msec()
-    # every vehicle of the scenery, not only the player's: its trainset is coupled once all of them
-    # are (RailVehicleServer.trainset_place()), and they are built a few per frame
-    # (MaszynaLegacyVehicleSystem) - read before, the powered car is the cab car itself
-    while not VehicleServer.vehicle_get_rid_by_name(vehicle).is_valid() \
-            or not VehicleServer.vehicle_get_rids().all(VehicleServer.vehicle_is_simulation_ready):
-        if Time.get_ticks_msec() - loaded > LOAD_TIMEOUT * 1000.0:
-            fail_test("%s is not in %s" % [vehicle, scenery])
-            return false
-        await wait_idle_frames(1)
+    # the player takes its vehicle once the scenery is loaded, as the game does (World.start_player()):
+    # its trainsets coupled by then (RailVehicleServer.trainset_place()) - a cab activated in a car not
+    # coupled yet never reaches the unit's motor car (SendCtrlToNext, Mover.cpp:2663)
+    if not await wait_loaded(_scenery.scenery_loaded, scenery):
+        return false
     occupied = VehicleServer.vehicle_get_rid_by_name(vehicle)
+    if not occupied.is_valid():
+        fail_test("%s is not in %s" % [vehicle, scenery])
+        return false
     _player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
     _player.start_vehicle_id = vehicle
     add_child(_player)

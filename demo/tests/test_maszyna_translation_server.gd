@@ -29,6 +29,7 @@ func before_each() -> void:
 
 func after_all() -> void:
     SimulationServer.language = _previous_language
+    super()
 
 
 func test_translates_a_game_msgid() -> void:

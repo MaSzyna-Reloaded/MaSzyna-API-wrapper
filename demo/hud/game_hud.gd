@@ -323,6 +323,7 @@ func show_scenario(info: MaszynaSceneryInfo, train_id: String) -> void:
 func _on_player_vehicle_changed(vehicle: RID, _previous: RID) -> void:
     %TimetablePanel.follow_vehicle(vehicle)
     %DrivingAid.show_vehicle(vehicle)
+    %DriverHints.show_vehicle(vehicle)
     %VehicleSelectorPanel.follow_player_vehicle(vehicle)
     _bind_vehicle()
     _show_chips()

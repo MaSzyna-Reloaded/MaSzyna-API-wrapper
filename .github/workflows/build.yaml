@@ -184,13 +184,13 @@ jobs:
             ${{ matrix.platform }}_${{ matrix.arch }}
 
       # the installer of the exported game (ci/windows/maszyna-reloaded.nsi), made as release-windows
-      # makes it: the export's exe under the name the installer gives it, its library beside it
+      # makes it: the export's exe, its library beside it
       - name: Windows installer
         if: matrix.platform == 'windows'
         run: |
           # build/ is the container's (root's), the runner writes beside it
           mkdir -p installer setup
-          cp build/windows/reloaded_windows_x86_64.exe installer/reloaded.exe
+          cp build/windows/reloaded.exe installer/
           cp build/windows/libmaszyna.64.dll installer/
           make windows-installer-image
           docker run --rm -v "$PWD:$PWD" -w "$PWD" maszyna-windows-installer \

@@ -1,7 +1,7 @@
 ; Windows installer of the exported game: one file to download instead of a zip, whose exe run
 ; from inside the archive starts without libmaszyna.64.dll. Built by `make release-windows` in
 ; ci/docker/windows-installer with:
-;   SOURCE_DIR   - the unpacked export (reloaded.exe, reloaded.console.exe, libmaszyna.64.dll)
+;   SOURCE_DIR   - the unpacked export (reloaded.exe, libmaszyna.64.dll)
 ;   BUILD_NUMBER - demo/build_number.txt
 ;   OUTFILE      - the installer to write
 ; Installed per user, so it needs no administrator rights.
@@ -61,8 +61,6 @@ Section "!$(SECTION_GAME)" SectionGame
     SectionIn RO
     SetOutPath "$INSTDIR"
     File "${SOURCE_DIR}/reloaded.exe"
-    ; the console wrapper only when the export has made one (it needs the templates' console exe)
-    File /nonfatal "${SOURCE_DIR}/reloaded.console.exe"
     File "${SOURCE_DIR}/libmaszyna.64.dll"
     WriteUninstaller "$INSTDIR\uninstall.exe"
 

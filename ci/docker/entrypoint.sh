@@ -67,14 +67,13 @@ esac
 
 mkdir -p "build/${platform}"
 export_preset="${platform}_${arch}"
-target_file_name="reloaded_${export_preset}"
+# a desktop game is exported as `make release-linux` / `release-windows` export it: Godot names the
+# binary after the file, so reloaded.zip holds reloaded (ELF) or reloaded.exe
 unzip="true"
+target_file_name="reloaded.zip"
 if [ "$platform" = "android" ]; then
     unzip="false"
-    target_file_name="$target_file_name.apk"
-else
-    unzip="true"
-    target_file_name="$target_file_name.zip"
+    target_file_name="reloaded_${export_preset}.apk"
 fi
 
 echo "Importing Godot project..."

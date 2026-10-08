@@ -90,7 +90,6 @@ func test_cabin_camera_sits_in_exterior_cab_and_looks_forward() -> void:
         return
 
     player = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child(player)
     PlayerServer.player_take_over_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)
@@ -118,7 +117,6 @@ func test_ctrl_and_the_right_button_sit_the_driver_back_down() -> void:
     if not await _spawn_vehicle():
         return
     player = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child(player)
     PlayerServer.player_take_over_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)

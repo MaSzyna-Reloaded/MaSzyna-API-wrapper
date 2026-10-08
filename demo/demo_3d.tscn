@@ -20,6 +20,7 @@
 [ext_resource type="SignallingSystemDelegate" path="res://signalling/demo_block_delegate.tres" id="demo_block_delegate"]
 [ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
+[ext_resource type="Script" path="res://addons/libmaszyna/scenery/scenery_streamer.gd" id="scenery_streamer"]
 [ext_resource type="SignalHeadKind" uid="uid://diyvl26to634d" path="res://signalling/sbl_3.tres" id="sbl_3_kind"]
 
 [sub_resource type="Resource" id="TrackCurve_common"]
@@ -118,6 +119,11 @@ tonemap_agx_contrast = 1.0
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, -18.508982, 1.959, 168.0919)
 sfx_bank = ExtResource("player_sfx_bank")
+
+[node name="SceneryStreamer" type="Node" parent="." node_paths=PackedStringArray("camera")]
+script = ExtResource("scenery_streamer")
+active = true
+camera = NodePath("../Player/FreeCamera3D")
 
 [node name="ImpulsTrainset" type="Node3D" parent="." unique_id=1580396332]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)
@@ -1393,5 +1399,7 @@ signal_head_names = PackedStringArray("demo_sbl")
 [node name="AspectCycle" type="Timer" parent="." unique_id=517233640]
 wait_time = 5.0
 autostart = true
+
+[connection signal="camera_changed" from="Player" to="SceneryStreamer" method="set_camera"]
 
 [connection signal="timeout" from="AspectCycle" to="DemoBlock" method="send_event" binds= [&"next"]]

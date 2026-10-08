@@ -1,7 +1,5 @@
 #include "SimulationServer.hpp"
 
-#include "utils/UserSettings.hpp"
-
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -10,18 +8,12 @@
 
 namespace godot {
 
-    const char *SimulationServer::language_changed_signal = "language_changed";
     const char *SimulationServer::simulation_paused_signal = "simulation_paused";
     const char *SimulationServer::simulation_unpaused_signal = "simulation_unpaused";
     const char *SimulationServer::simulation_speed_changed_signal = "simulation_speed_changed";
     const char *SimulationServer::simulation_current_speed_changed_signal = "simulation_current_speed_changed";
     const char *SimulationServer::time_of_day_changed_signal = "time_of_day_changed";
     const char *SimulationServer::simulation_advanced_signal = "simulation_advanced";
-
-    namespace {
-        constexpr const char *LANGUAGE_SECTION = "maszyna";
-        constexpr const char *LANGUAGE_KEY = "language";
-    } // namespace
 
     SimulationServer::SimulationServer() {
         _on_project_settings_changed();
@@ -58,12 +50,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(simulation_advanced_signal, PropertyInfo(Variant::FLOAT, "seconds")));
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "light_level"), "set_light_level", "get_light_level");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_temperature"), "set_air_temperature", "get_air_temperature");
-        ClassDB::bind_method(D_METHOD("set_language", "language"), &SimulationServer::set_language);
-        ClassDB::bind_method(D_METHOD("get_language"), &SimulationServer::get_language);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "language"), "set_language", "get_language");
-        ADD_SIGNAL(MethodInfo(language_changed_signal));
-
-
         ClassDB::bind_method(D_METHOD("simulation_pause"), &SimulationServer::simulation_pause);
         ClassDB::bind_method(D_METHOD("simulation_unpause"), &SimulationServer::simulation_unpause);
         ClassDB::bind_method(D_METHOD("simulation_is_paused"), &SimulationServer::simulation_is_paused);
@@ -213,22 +199,6 @@ namespace godot {
 
     double SimulationServer::get_air_temperature() const {
         return air_temperature;
-    }
-
-    void SimulationServer::set_language(const String &p_language) {
-        if (p_language == get_language()) {
-            return;
-        }
-        UserSettings *user_settings = UserSettings::get_instance();
-        ERR_FAIL_NULL(user_settings);
-        user_settings->save_setting(LANGUAGE_SECTION, LANGUAGE_KEY, p_language);
-        emit_signal(language_changed_signal);
-    }
-
-    String SimulationServer::get_language() const {
-        const UserSettings *user_settings = UserSettings::get_instance();
-        ERR_FAIL_NULL_V(user_settings, DEFAULT_LANGUAGE);
-        return user_settings->get_setting(LANGUAGE_SECTION, LANGUAGE_KEY, DEFAULT_LANGUAGE);
     }
 
     void SimulationServer::simulation_pause() {

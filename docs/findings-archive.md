@@ -4150,3 +4150,22 @@ lighting or the trainset.
 * **Rule:** a script leaves the simulation's speed with `simulation_reset_speed()`, never by setting
   `simulation_speed` back; reproduce CI with an empty `HOME`; the player is seated once the scenery
   is loaded - a cab activated before the coupling never reaches the unit.
+
+
+## 2026-10-08 Player initialization CI regression
+
+* **Symptom:** CI reported 64 failing tests. Forty-seven vehicle start-up cases stopped at "the
+  player in the cab", and the demo scenery smoke test had no player vehicle five seconds after
+  loading.
+* **What proved it:** every failure reached a valid, fully loaded vehicle but
+  `PlayerServer.player_get_vehicle()` remained invalid. The shared start-up fixture instantiated
+  `MaszynaPlayer` only after `MaszynaSceneryNode.scenery_loaded` had already fired, while other
+  fixtures never connected that signal after `auto_start` was removed. `SceneryWorld` also passed
+  an empty selection straight through instead of resolving it to the scenery's first vehicle.
+* **Fix:** fixtures create and configure the player, connect `scenery_loaded`, and only then start
+  the scenery load. `world.tscn` connects its own post-scenario `scenery_loaded` signal to the
+  player, and `SceneryWorld` resolves an empty selection to the first vehicle before emitting it.
+  Moving the cab camera now clears scene ownership before reparenting and does not preserve a
+  global transform while its player is leaving the tree.
+* **Rule:** a consumer of `scenery_loaded` exists and is connected before loading starts; removing
+  a readiness fallback requires migrating every composition and test fixture to that signal path.

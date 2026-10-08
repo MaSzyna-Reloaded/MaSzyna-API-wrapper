@@ -34,7 +34,7 @@ func test_the_caption_is_read_beside_its_sound_wherever_it_is() -> void:
     # a scenery's radio message has its caption beside it, not in the sounds (audio.cpp:84-94)
     var directory:String = "user://sound_caption_test"
     DirAccess.make_dir_recursive_absolute(directory)
-    var caption:String = "%s/ex6435radio-%s.txt" % [directory, SimulationServer.language]
+    var caption:String = "%s/ex6435radio-%s.txt" % [directory, MaszynaTranslationServer.language]
     var file:FileAccess = FileAccess.open(caption, FileAccess.WRITE)
     file.store_string("[0][30]EX6435 odjazd.")
     file.close()

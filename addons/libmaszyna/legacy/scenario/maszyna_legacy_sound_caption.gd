@@ -31,7 +31,7 @@ const UTF8_LEAD_FOUR:int = 0xF0
 ## language, beside it wherever it is - the sounds or a scenery - or null when it has none
 static func from_sound_file(sound_path:String) -> Transcript:
     var base_dir:String = sound_path.get_base_dir()
-    var filename:String = "%s-%s%s" % [sound_path.get_file(), SimulationServer.language, EXTENSION]
+    var filename:String = "%s-%s%s" % [sound_path.get_file(), MaszynaTranslationServer.language, EXTENSION]
     var path:String = base_dir.path_join(MaszynaDataPath.resolve(base_dir, filename))
     if not FileAccess.file_exists(path):
         return null

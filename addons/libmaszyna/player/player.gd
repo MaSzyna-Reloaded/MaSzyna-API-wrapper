@@ -1,23 +1,19 @@
 extends Node3D
 class_name MaszynaPlayer
 
+## The camera and streaming are at the player's starting position.
+signal initialization_ready
+## Initialization is cancelled before the scenery's vehicles are freed.
+signal initialization_stopped
+## The view camera has been positioned and made current.
+signal camera_changed(camera:Camera3D)
+
 ## The player: what it drives is PlayerServer's, where it looks from PlayerCameraServer's - the
 ## player follows both with its nodes: its cab camera into the cab of the vehicle driven, the camera
 ## of the view made current. The cab stays the player's while it looks from outside and its controls
 ## keep working, as the original's simulation::Train does in its free fly mode (command.cpp:884-889).
 
-@export var start_vehicle_id:String = "":
-    set(x):
-        if not start_vehicle_id == x:
-            start_vehicle_id = x
-            if x:
-                _auto_start_pending = false
-            _dirty = true
-
-## Without a start_vehicle_id the player takes the first vehicle whose simulation is ready. Off where the
-## scene names the train itself once its scenery is loaded - a vehicle taken while the scenery still
-## loads is not coupled yet, and the cab it activates reaches no other car of its unit.
-@export var auto_start:bool = true
+@export var start_vehicle_id:String = ""
 
 ## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
 @export var sfx_bank:SfxBank
@@ -33,9 +29,8 @@ class_name MaszynaPlayer
 @onready var headlamp_glow:MeshInstance3D = $Camera3D/HeadlampGlow
 ## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
 @onready var sfx_player:SfxPlayer = $PlayerSfx
-## start_vehicle_id changed - its vehicle is taken, once (it is named when its scenery is loaded)
-var _dirty: bool = true
-var _auto_start_pending:bool = false
+enum InitializationState { WAITING_SCENERY, WAITING_VEHICLE, READY, STOPPED }
+var _initialization_state:InitializationState = InitializationState.WAITING_SCENERY
 var _released_vehicle:RID
 ## The vehicle whose cab interior is shown with the cab camera in it - the one the player drives;
 ## it stands while the player looks from outside too (the keys are the cab logic's,
@@ -65,7 +60,6 @@ const FOLLOW_JUMP_DISTANCE_SETTING:StringName = &"maszyna/camera/follow_jump_dis
 const FOLLOW_JUMP_DISTANCE_DEFAULT:float = 1000.0
 
 func _ready() -> void:
-    _auto_start_pending = auto_start and not start_vehicle_id
     sfx_player.bank = sfx_bank
     _on_project_settings_changed()
     # the glow follows the spot: both are children of the camera, so their transform is view space
@@ -80,21 +74,17 @@ func _ready() -> void:
     PlayerCameraServer.camera_changed.connect(_on_camera_changed)
     PlayerCameraServer.camera_placed.connect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.connect(_on_vehicle_emergency_signal_received)
-    VehicleServer.vehicle_configured.connect(_on_vehicle_configured)
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
     _show_camera(_mode_camera())
-
-
 func _exit_tree() -> void:
+    clear_start_train()
     PlayerServer.player_vehicle_changed.disconnect(_on_player_vehicle_changed)
     VehicleServer.cabin_person_moved.disconnect(_on_cabin_person_moved)
     CabinSystem.vehicle_cabin_scene_changed.disconnect(_on_vehicle_cabin_scene_changed)
     PlayerCameraServer.camera_changed.disconnect(_on_camera_changed)
     PlayerCameraServer.camera_placed.disconnect(_on_camera_placed)
     RailVehicleServer.vehicle_emergency_signal_received.disconnect(_on_vehicle_emergency_signal_received)
-    VehicleServer.vehicle_configured.disconnect(_on_vehicle_configured)
     ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
-    SceneryStreamingServer.streaming_set_camera(null)
 
 
 ## The headlamp's shadow (opengl33renderer.cpp:1758) and the follow jump follow their settings
@@ -103,20 +93,6 @@ func _on_project_settings_changed() -> void:
     _follow_jump_distance = ProjectSettings.get_setting(FOLLOW_JUMP_DISTANCE_SETTING, FOLLOW_JUMP_DISTANCE_DEFAULT)
 
 func _process(_delta:float) -> void:
-    if _dirty:
-        _dirty = false
-        var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(start_vehicle_id) if start_vehicle_id else RID()
-        # without one named, the first vehicle that has its simulation already - or the first to
-        # get it (_on_vehicle_configured())
-        if _auto_start_pending:
-            for candidate:RID in VehicleServer.vehicle_get_rids():
-                if VehicleServer.vehicle_is_simulation_ready(candidate):
-                    _auto_start_pending = false
-                    vehicle = candidate
-                    break
-        if vehicle.is_valid():
-            PlayerServer.player_take_over_vehicle(vehicle)
-
     var cabin:Cabin3D = _cabin_camera.get_parent() as Cabin3D
     if cabin:
         _cabin_camera.h_offset = cabin.get_camera_shake_offset().x * 1.5
@@ -125,9 +101,41 @@ func _process(_delta:float) -> void:
         _cabin_camera.h_offset = 0.0
         _cabin_camera.rotation.z = 0.0
 
+## The source announces this after the trainsets have been built, coupled and placed.
+## CabinSystem shows the cabin synchronously; exterior models need streaming, not the reverse.
+func _on_scenery_loaded(_first_train_id:String) -> void:
+    _initialization_state = InitializationState.WAITING_VEHICLE
+    var train_id:String = start_vehicle_id
+    var vehicle:RID = VehicleServer.vehicle_get_rid_by_name(train_id) if train_id else RID()
+    var outside_transform:Transform3D = free_camera.global_transform
+    if vehicle.is_valid():
+        if CabinSystem.vehicle_get_cabin_scene(vehicle):
+            PlayerServer.player_take_over_vehicle(vehicle)
+            if _cabin_vehicle == vehicle:
+                _initialization_complete()
+                return
+        return
+    else:
+        if train_id:
+            push_warning("Player initialization: vehicle '%s' is not registered; starting outside." % train_id)
+        PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
+        free_camera.global_transform = outside_transform
+    _initialization_complete()
+
+
+func _initialization_complete() -> void:
+    _initialization_state = InitializationState.READY
+    _show_camera(_mode_camera())
+    initialization_ready.emit()
+
+
 ## Before the scenery holding the vehicles is freed: the player leaves the cab (the cab camera lives
 ## in it) and the view stops following, as the followed vehicle goes with the scenery as well
 func clear_start_train() -> void:
+    if _initialization_state == InitializationState.STOPPED:
+        return
+    _initialization_state = InitializationState.STOPPED
+    initialization_stopped.emit()
     start_vehicle_id = ""
     PlayerServer.player_leave_vehicle()
     PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
@@ -242,13 +250,6 @@ func _picked_vehicle() -> RID:
     return vehicle if vehicle.is_valid() and CabinSystem.vehicle_get_cabin_scene(vehicle) else RID()
 
 
-## Without a start vehicle named, the player takes the first vehicle that gets its simulation
-func _on_vehicle_configured(vehicle:RID) -> void:
-    if _auto_start_pending:
-        _auto_start_pending = false
-        PlayerServer.player_take_over_vehicle(vehicle)
-
-
 ## The keys of the cab's controls act on the vehicle driven, whether the player looks from its cab
 ## or from outside - the cab logic is the vehicle's (CabinSystem), not the 3D cab's
 func _unhandled_input(event:InputEvent) -> void:
@@ -274,14 +275,16 @@ func _on_player_vehicle_changed(vehicle:RID, _previous:RID) -> void:
     if vehicle.is_valid() and CabinSystem.vehicle_get_cabin_scene(vehicle):
         _show_cabin(vehicle)
 
-
-## The vehicle driven got its cab scene after it was taken over - a vehicle is taken over the moment
-## it has its simulation (_on_vehicle_configured()), and MaszynaLegacyVehicleSystem hands its cab
-## scene over after that, in the same build
+## The selected vehicle's cab scene became available after the scenery-loaded signal.
 func _on_vehicle_cabin_scene_changed(vehicle:RID) -> void:
+    if _initialization_state == InitializationState.WAITING_VEHICLE \
+            and vehicle == VehicleServer.vehicle_get_rid_by_name(start_vehicle_id):
+        PlayerServer.player_take_over_vehicle(vehicle)
     if vehicle == PlayerServer.player_get_vehicle() and not _cabin_vehicle.is_valid() \
             and CabinSystem.vehicle_get_cabin_scene(vehicle):
         _show_cabin(vehicle)
+        if _initialization_state == InitializationState.WAITING_VEHICLE and _cabin_vehicle.is_valid():
+            _initialization_complete()
 
 
 ## The player went over to another cabin of the vehicle: its interior is shown instead (into
@@ -305,6 +308,7 @@ func _show_cabin(vehicle:RID) -> void:
         return
     _cabin_vehicle = vehicle
     _cabin_mount = mount
+    _cabin_camera.owner = null
     _cabin_camera.reparent(cabin, false)
     cabin.camera_configuration_changed.connect(_on_cabin_camera_configuration_changed)
     _on_cabin_camera_configuration_changed()
@@ -314,7 +318,7 @@ func _show_cabin(vehicle:RID) -> void:
 func _hide_cabin() -> void:
     var cabin:Cabin3D = CabinSystem.vehicle_get_cabin(_cabin_vehicle)
     cabin.camera_configuration_changed.disconnect(_on_cabin_camera_configuration_changed)
-    _cabin_camera.reparent(self)
+    _cabin_camera.reparent(self, false)
     RailVehicleRenderingServer.vehicle_set_visible_low_poly_cabins(_cabin_vehicle, true)
     CabinSystem.vehicle_hide_cabin(_cabin_vehicle)
     RailVehicleRenderingServer.vehicle_unmount_node(_cabin_vehicle, _cabin_mount.get_instance_id())
@@ -428,11 +432,13 @@ func _show_camera(camera:Camera3D) -> void:
         head.process_mode = Node.PROCESS_MODE_INHERIT if head == camera else Node.PROCESS_MODE_DISABLED
     camera.make_current()
     if camera is FreeCamera3D and not headlamp.get_parent() == camera:
+        headlamp.owner = null
+        headlamp_glow.owner = null
         headlamp.reparent(camera, false)
         headlamp_glow.reparent(camera, false)
-    SceneryStreamingServer.streaming_set_camera(camera)
     var cabin_view:bool = camera == _cabin_camera
     get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", cabin_view)
     SceneryHUDMouseServer.mouse_set_camera(camera.get_instance_id())
     SceneryHUDMouseServer.mouse_set_active(not cabin_view)
     _draw_cab_interior()
+    camera_changed.emit(camera)

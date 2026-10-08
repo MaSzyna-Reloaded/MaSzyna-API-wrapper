@@ -19,8 +19,8 @@ var _previous_language:String
 
 
 func before_all() -> void:
-    _previous_language = SimulationServer.language
-    SimulationServer.language = FIXTURE_LANGUAGE
+    _previous_language = MaszynaTranslationServer.language
+    MaszynaTranslationServer.language = FIXTURE_LANGUAGE
 
 
 func before_each() -> void:
@@ -28,7 +28,7 @@ func before_each() -> void:
 
 
 func after_all() -> void:
-    SimulationServer.language = _previous_language
+    MaszynaTranslationServer.language = _previous_language
     super()
 
 

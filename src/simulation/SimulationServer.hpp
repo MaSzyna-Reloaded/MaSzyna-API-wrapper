@@ -66,7 +66,6 @@ namespace godot {
         public:
             SimulationServer();
             static const char *simulation_advanced_signal;
-            static const char *language_changed_signal;
             static const char *simulation_paused_signal;
             static const char *simulation_unpaused_signal;
             static const char *simulation_speed_changed_signal;
@@ -76,8 +75,6 @@ namespace godot {
             /// ... when the project does not set it (libmaszyna.gd registers the same) [s]
             static constexpr double SPEED_CHANGE_TIME_DEFAULT = 0.4;
             static const char *time_of_day_changed_signal;
-            /// The original's own strings, untranslated - no catalogue needed
-            static constexpr const char *DEFAULT_LANGUAGE = "en";
 
             static SimulationServer *get_instance() {
                 return dynamic_cast<SimulationServer *>(Engine::get_singleton()->get_singleton("SimulationServer"));
@@ -122,10 +119,6 @@ namespace godot {
             /// Degrees Celsius
             void set_air_temperature(double p_temperature);
             double get_air_temperature() const;
-            /// The language of the game's strings, by the name of its catalogue in `lang/`
-            /// ("pl" for lang/pl.po; Global.asLang, Globals.cpp:137). Kept in the user settings.
-            void set_language(const String &p_language);
-            String get_language() const;
             /// Stops the world while something covers it (a loading screen, the spinner of "Exit to
             /// menu"): whoever runs a part of the simulation, or its sound, holds it on "simulation_paused"
             /// and lets it go on "simulation_unpaused"

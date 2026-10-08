@@ -1,6 +1,5 @@
 #include "MaszynaTranslationServer.hpp"
 #include "game_data/GameDataServer.hpp"
-#include "simulation/SimulationServer.hpp"
 #include "utils/UserSettings.hpp"
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/file_access.hpp>
@@ -12,17 +11,18 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    namespace {
+        constexpr const char *LANGUAGE_SECTION = "maszyna";
+        constexpr const char *LANGUAGE_KEY = "language";
+    } // namespace
+
     MaszynaTranslationServer::MaszynaTranslationServer() {
         GameDataServer *game_data = GameDataServer::get_instance();
         ERR_FAIL_NULL(game_data);
-        SimulationServer *runtime = SimulationServer::get_instance();
-        ERR_FAIL_NULL(runtime);
         game_data->connect(
                 GameDataServer::data_reload_requested_signal,
                 callable_mp(this, &MaszynaTranslationServer::_on_data_reload_requested));
-        runtime->connect(
-                SimulationServer::language_changed_signal,
-                callable_mp(this, &MaszynaTranslationServer::_on_language_changed));
+        language = UserSettings::get_instance()->get_setting(LANGUAGE_SECTION, LANGUAGE_KEY, DEFAULT_LANGUAGE);
         _on_data_reload_requested();
     }
 
@@ -34,14 +34,17 @@ namespace godot {
 
     void MaszynaTranslationServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("translation_load", "po_path"), &MaszynaTranslationServer::translation_load);
+        ClassDB::bind_method(D_METHOD("set_language", "language"), &MaszynaTranslationServer::set_language);
+        ClassDB::bind_method(D_METHOD("get_language"), &MaszynaTranslationServer::get_language);
         ClassDB::bind_method(
                 D_METHOD("translation_get_languages"), &MaszynaTranslationServer::translation_get_languages);
         ADD_SIGNAL(MethodInfo(TRANSLATION_LANGUAGES_CHANGED_SIGNAL));
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "language"), "set_language", "get_language");
     }
 
     void MaszynaTranslationServer::_on_data_reload_requested() {
         languages.clear();
-        languages.push_back(SimulationServer::DEFAULT_LANGUAGE);
+        languages.push_back(DEFAULT_LANGUAGE);
         const String lang_dir = UserSettings::get_instance()->get_maszyna_game_dir().path_join("lang");
         // a game directory without translations is English alone
         const PackedStringArray files =
@@ -57,7 +60,6 @@ namespace godot {
     }
 
     void MaszynaTranslationServer::_on_language_changed() {
-        const String language = SimulationServer::get_instance()->get_language();
         // locale::init(), translation.cpp:18 - "lang/" + Global.asLang + ".po"
         translation_load(
                 UserSettings::get_instance()->get_maszyna_game_dir().path_join("lang").path_join(
@@ -66,6 +68,19 @@ namespace godot {
 
     PackedStringArray MaszynaTranslationServer::translation_get_languages() const {
         return languages;
+    }
+
+    void MaszynaTranslationServer::set_language(const String &p_language) {
+        if (language == p_language) {
+            return;
+        }
+        language = p_language;
+        UserSettings::get_instance()->save_setting(LANGUAGE_SECTION, LANGUAGE_KEY, language);
+        _on_language_changed();
+    }
+
+    String MaszynaTranslationServer::get_language() const {
+        return language;
     }
 
     void MaszynaTranslationServer::translation_load(const String &p_po_path) {
@@ -77,7 +92,6 @@ namespace godot {
         }
 
         TranslationServer *translation_server = TranslationServer::get_singleton();
-        const String language = SimulationServer::get_instance()->get_language();
         Ref<Translation> merged;
         merged.instantiate();
         merged->set_locale(language);

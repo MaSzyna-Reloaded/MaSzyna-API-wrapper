@@ -116,7 +116,6 @@ func test_vehicles_of_one_type_have_their_own_sound_built_within_earshot() -> vo
     assert_eq(_sound_players().size(), 0, "no sound is built before a listener is near")
 
     var player:MaszynaPlayer = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child_autoqfree(player)
     await wait_until(
             func() -> bool: return _sound_players().size() == 2 * PLAYERS_PER_VEHICLE, SOUND_TIMEOUT)

@@ -42,7 +42,6 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
     var vehicle_rid:RID = vehicle.get_rid()
 
     player = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child(player)
     PlayerServer.player_take_over_vehicle(vehicle_rid)
     await step(3)
@@ -87,4 +86,3 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
         "cab 2 camera (z=%s) should sit at the other end than cab 1 (z=%s)" % [cab2_z, cab1_z],
     )
     assert_true((-camera.global_basis.z).dot(vehicle_forward) < -0.99, "cab 2 camera should look backward")
-

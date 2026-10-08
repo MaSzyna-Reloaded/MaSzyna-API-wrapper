@@ -52,7 +52,6 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
         return
 
     player = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child(player)
     PlayerServer.player_take_over_vehicle(vehicle.get_rid())
     await wait_idle_frames(3)

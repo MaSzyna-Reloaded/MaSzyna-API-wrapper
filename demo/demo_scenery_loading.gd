@@ -11,10 +11,6 @@ const LOADING_FADE_OUT_TIME: float = 1.0
 ## Seconds into the loading screen fade out before the world starts - the simulation and its sound
 ## starting together with the fade make its first frames stutter
 const SIMULATION_START_DELAY: float = 0.5
-## Frames given to the cabin to instantiate before the loading screen fades out
-const CABIN_SETTLE_FRAMES: int = 5
-## Frames waited for the player to get its vehicle
-const VEHICLE_WAIT_FRAMES: int = 120
 ## Seconds the loading screen waits for the streaming to fill in around the player before giving up
 const STREAMING_WAIT_TIME: float = 30.0
 ## The chunks around the camera's built before the game is shown - one each way, so at least a
@@ -75,8 +71,6 @@ const DECLARED_TRAINSET: Array[MaszynaDynamicData] = []
 var _music_tween: Tween
 ## The world of the scenery being played, null in the menu
 var _world: SceneryWorld = null
-## The trainset chosen in the selector, handed to the player once the scenery is loaded
-var _chosen_train_id: String = ""
 ## The handlers of the running scenery's log files, by file name (GAME_LOG_FILES)
 var _log_handlers: Dictionary[String, GameLogFileHandler] = {}
 
@@ -130,9 +124,6 @@ func start_scenery(filename: String, train_id: String, trainset: Array[MaszynaDy
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     $BugReport.hide_edge_button()
-    # The camera moves to the selected vehicle only after loading; planning before that point
-    # streams the empty menu position and puts irrelevant work ahead of the starting area.
-    SceneryStreamingServer.streaming_set_camera(null)
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
     $GameHud.show_scenario(info, train_id)
     # the name the scenery list gave it ("//$l", "//$n" and the file name)
@@ -165,10 +156,7 @@ func start_scenery(filename: String, train_id: String, trainset: Array[MaszynaDy
             log_files.append(handler.get_path())
     $GamePlayLogRecorder.start()
     $BugReport.attach_world(_world, log_files)
-    _chosen_train_id = train_id
-    await _world.load_scenery(filename, trainset)
-    await _wait_for_cabin()
-    SceneryStreamingServer.streaming_set_camera(get_viewport().get_camera_3d())
+    await _world.load_scenery(filename, trainset, train_id)
     await _build_surroundings()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
@@ -178,17 +166,6 @@ func start_scenery(filename: String, train_id: String, trainset: Array[MaszynaDy
     $LoadingScreen.modulate.a = 1.0
     HUDServer.hud_set_visible(true)
     $BugReport.show_edge_button()
-
-
-## The player gets its vehicle a few frames after the scenery is loaded, and the cabin is built
-## a few frames later still - without this the game pops in half-built behind the loading screen
-func _wait_for_cabin() -> void:
-    var waited: int = 0
-    while not PlayerServer.player_get_vehicle().is_valid() and waited < VEHICLE_WAIT_FRAMES:
-        await get_tree().process_frame
-        waited += 1
-    for frame: int in CABIN_SETTLE_FRAMES:
-        await get_tree().process_frame
 
 
 ## The scenery's load on the loading screen, in its share of the progress
@@ -211,6 +188,7 @@ func _build_surroundings() -> void:
     var started_msec: int = Time.get_ticks_msec()
     var deadline: float = started_msec + STREAMING_WAIT_TIME * 1000.0
     var most_pending: int = 0
+    var progress: float = SURROUNDINGS_STREAMING_PROGRESS
     while SceneryStreamingServer.streaming_has_camera() and Time.get_ticks_msec() < deadline:
         var pending: int = SceneryStreamingServer.area_get_pending_count(SURROUNDINGS_CHUNK_RADIUS) \
                 + RailVehicleRenderingServer.builds_get_pending_count()
@@ -219,9 +197,11 @@ func _build_surroundings() -> void:
             break
         most_pending = maxi(most_pending, pending)
         var built: float = 1.0 - float(pending) / most_pending if most_pending > 0 else 0.0
+        progress = maxf(progress, lerpf(SURROUNDINGS_STREAMING_PROGRESS, 0.99, built))
         $LoadingScreen.set_progress(
-                lerpf(SURROUNDINGS_STREAMING_PROGRESS, 1.0, built), MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
+                progress, MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
         await get_tree().process_frame
+    $LoadingScreen.set_progress(1.0, MaszynaIncludeNode.LoadStage.SURROUNDINGS, "")
     print("[SceneryLoad] SURROUNDINGS %.1f s" % ((Time.get_ticks_msec() - started_msec) / 1000.0))
 
 
@@ -254,7 +234,6 @@ func _exit_to_menu(game_dir: String = "") -> void:
     SimulationServer.simulation_reset_speed()
     HUDServer.hud_set_visible(false)
     $BugReport.hide_edge_button()
-    SceneryStreamingServer.streaming_set_camera(null)
     # the scenery's script context and environment go with the world
     $GameHud.attach_script_context(RID())
     $GameHud.attach_environment(null)
@@ -291,11 +270,8 @@ func _play_music(volume_db: float) -> void:
         $Music.play()
 
 
-## The player takes the trainset only now: the trainsets are coupled, so the cab it activates on
-## entering reaches every car of its unit (CabActivisation() sends to the coupled ones, Mover.cpp:2905).
-## The trainset chosen in the selector; none chosen, the scenery's own driver.
-func _on_scenery_loaded(first_train_id: String) -> void:
-    _world.start_player(_chosen_train_id if _chosen_train_id else first_train_id)
+## The world's scenario is ready; player initialization is coordinated by the world scene.
+func _on_scenery_loaded(_first_train_id: String) -> void:
     $GameHud.attach_script_context(_world.get_script_context())
     _music_tween = create_tween()
     _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)

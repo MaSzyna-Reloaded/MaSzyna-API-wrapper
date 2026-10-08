@@ -51,6 +51,8 @@ var _trainset:RID = RID()
 var _track:RID = RID()
 ## The trainset is handed over once, whatever changed in the frame; the node processes only then
 var _dirty:bool = false
+## The trainset got its initial placement from one of its MaszynaRailVehicle3D children.
+var _start_track_taken_from_child:bool = false
 
 
 ## The trainset's handle in RailVehicleServer
@@ -85,6 +87,16 @@ func _on_child_entered_tree(node:Node) -> void:
     var vehicle:RailVehicle3D = node as RailVehicle3D
     if vehicle:
         vehicle.vehicle_changed.connect(_on_child_order_changed)
+    var maszyna_vehicle:MaszynaRailVehicle3D = node as MaszynaRailVehicle3D
+    if not maszyna_vehicle:
+        return
+    if not start_track_name and maszyna_vehicle.start_track_name:
+        start_track_name = maszyna_vehicle.start_track_name
+        start_track_offset = maszyna_vehicle.start_track_offset
+        _start_track_taken_from_child = true
+    if _start_track_taken_from_child:
+        maszyna_vehicle.start_track_name = ""
+        maszyna_vehicle.start_track_offset = 0.0
 
 
 func _on_child_exiting_tree(node:Node) -> void:

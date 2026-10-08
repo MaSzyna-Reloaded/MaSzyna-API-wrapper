@@ -111,3 +111,39 @@ func test_reordered_the_vehicles_stand_anew() -> void:
             vehicles[1].get_rid(), RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     assert_eq(coupled, [vehicles[1].get_rid(), vehicles[0].get_rid(), vehicles[2].get_rid()] as Array[RID],
             "one trainset in the new order, open at both ends")
+
+
+func test_a_trainset_takes_its_start_track_from_a_child_vehicle() -> void:
+    _trainset = TrainSet3D.new()
+    var first:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    first.start_track_name = TRACK_NAME
+    first.start_track_offset = FRONT
+    var second:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    second.start_track_name = TRACK_NAME
+    second.start_track_offset = FRONT - SHORT_LENGTH
+    _trainset.add_child(first)
+    _trainset.add_child(second)
+    add_child(_trainset)
+
+    assert_eq(_trainset.start_track_name, TRACK_NAME)
+    assert_eq(_trainset.start_track_offset, FRONT)
+    assert_eq(first.start_track_name, "")
+    assert_eq(first.start_track_offset, 0.0)
+    assert_eq(second.start_track_name, "")
+    assert_eq(second.start_track_offset, 0.0)
+
+
+func test_a_trainset_with_its_own_start_track_leaves_children_unchanged() -> void:
+    _trainset = TrainSet3D.new()
+    _trainset.start_track_name = TRACK_NAME
+    _trainset.start_track_offset = FRONT
+    var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
+    vehicle.start_track_name = "child_track"
+    vehicle.start_track_offset = FRONT - SHORT_LENGTH
+    _trainset.add_child(vehicle)
+    add_child(_trainset)
+
+    assert_eq(_trainset.start_track_name, TRACK_NAME)
+    assert_eq(_trainset.start_track_offset, FRONT)
+    assert_eq(vehicle.start_track_name, "child_track")
+    assert_eq(vehicle.start_track_offset, FRONT - SHORT_LENGTH)

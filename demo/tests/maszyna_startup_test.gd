@@ -88,7 +88,7 @@ const MAX_CONTROLLER_STEPS:int = 10
 
 var _previous_game_dir:String = ""
 var _scenery:MaszynaSceneryNode
-var _player:Node
+var _player:MaszynaPlayer
 ## The car whose cab the player sits in
 var occupied:RID
 ## The car whose engine it controls (RailVehicleServer.vehicle_find_powered)
@@ -336,11 +336,15 @@ func run_startup(scenery:String, vehicle:String, kind:Kind, pantographs:Pantogra
 func enter_vehicle(scenery:String, vehicle:String) -> bool:
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    _player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
+    _player.start_vehicle_id = vehicle
+    add_child(_player)
     _scenery = MaszynaSceneryNode.new()
     _scenery.filename = scenery
+    _scenery.scenery_loaded.connect(_player._on_scenery_loaded)
     add_child(_scenery)
     get_tree().process_frame.connect(_acknowledge_security)
-    # the player takes its vehicle once the scenery is loaded, as the game does (World.start_player()):
+    # the scenery-loaded signal lets the player take its vehicle, as the game does.
     # its trainsets coupled by then (RailVehicleServer.trainset_place()) - a cab activated in a car not
     # coupled yet never reaches the unit's motor car (SendCtrlToNext, Mover.cpp:2663)
     if not await wait_loaded(_scenery.scenery_loaded, scenery):
@@ -349,9 +353,6 @@ func enter_vehicle(scenery:String, vehicle:String) -> bool:
     if not occupied.is_valid():
         fail_test("%s is not in %s" % [vehicle, scenery])
         return false
-    _player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
-    _player.start_vehicle_id = vehicle
-    add_child(_player)
     if not await _until("the player in the cab", func() -> bool: return PlayerServer.player_get_vehicle() == occupied):
         return false
     powered = RailVehicleServer.vehicle_find_powered(occupied)

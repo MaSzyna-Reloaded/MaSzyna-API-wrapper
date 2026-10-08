@@ -6,7 +6,7 @@
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {
-    /// The one catalogue Godot's i18n translates with, in the language of SimulationServer: the
+    /// The one catalogue Godot's i18n translates with, in its selected language: the
     /// wrapper's own .po files (`maszyna/locale/translations`) with the game's
     /// `<game_dir>/lang/<language>.po` - the original engine's `locale` (translation.cpp:18-160) -
     /// merged over them, so the game's translation of a msgid wins.
@@ -24,6 +24,8 @@ namespace godot {
 
             /// The wrapper's own .po files, merged under the game's catalogue
             static constexpr const char *TRANSLATIONS_SETTING = "maszyna/locale/translations";
+            /// The original's own strings, untranslated - no catalogue needed.
+            static constexpr const char *DEFAULT_LANGUAGE = "en";
             /// The game's data was read again (another game directory): translation_get_languages()
             /// lists what it has now
             static constexpr const char *TRANSLATION_LANGUAGES_CHANGED_SIGNAL = "translation_languages_changed";
@@ -32,6 +34,7 @@ namespace godot {
             /// The merged catalogue registered in TranslationServer
             Ref<Translation> translation;
             PackedStringArray languages;
+            String language = DEFAULT_LANGUAGE;
 
             void _on_data_reload_requested();
             void _on_language_changed();
@@ -47,6 +50,9 @@ namespace godot {
             /// in TranslationServer in place of the previous one; with no such file only the
             /// wrapper's own strings are translated, as in the original (translation.cpp:21)
             void translation_load(const String &p_po_path);
+            /// The language of the game's strings, by the name of its catalogue in `lang/`.
+            void set_language(const String &p_language);
+            String get_language() const;
             /// The languages there is a catalogue for in the game's `lang/`, English (the msgids
             /// themselves) always first
             PackedStringArray translation_get_languages() const;

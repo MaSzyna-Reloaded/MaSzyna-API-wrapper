@@ -100,7 +100,6 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     # the sound is built once a listener is near the vehicle - on foot the player listens through
     # the free camera
     var player:MaszynaPlayer = PLAYER_SCENE.instantiate()
-    player.auto_start = false
     add_child_autofree(player)
     player.free_camera.global_position = rail_vehicle.global_position
     # the vehicle's sound players are built under a node riding on it, of the system that built it -

@@ -753,7 +753,7 @@ namespace godot {
         bool is_building;
         {
             MutexLock lock(mutex);
-            is_building = pending_build_count > 0;
+            is_building = planning || pending_build_count > 0;
         }
         _set_building(is_building);
     }

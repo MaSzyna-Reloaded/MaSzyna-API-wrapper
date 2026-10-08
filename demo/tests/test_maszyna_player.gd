@@ -61,7 +61,6 @@ func test_the_cab_interior_stands_while_the_vehicle_is_driven() -> void:
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
     _vehicle = build_rail_vehicle("PlayerCabinTest", TRACK_NAME, TRACK_OFFSET)
     _player = PLAYER_SCENE.instantiate()
-    _player.auto_start = false
     add_child(_player)
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _vehicle.get_rid()
@@ -101,7 +100,6 @@ func test_the_cab_is_shown_when_its_scene_comes_after_the_vehicle_was_taken_over
     _track = build_track(TRACK_NAME, TRACK_LENGTH)
     _vehicle = build_rail_vehicle("PlayerLateCabinTest", TRACK_NAME, TRACK_OFFSET)
     _player = PLAYER_SCENE.instantiate()
-    _player.auto_start = false
     add_child(_player)
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _vehicle.get_rid()
@@ -129,7 +127,6 @@ func test_the_vehicle_followed_is_looked_at_from_its_view() -> void:
     _second_vehicle = build_rail_vehicle("PlayerFollowSecond", TRACK_NAME, SECOND_OFFSET)
     _far_vehicle = build_rail_vehicle("PlayerFollowFar", TRACK_NAME, FAR_OFFSET)
     _player = PLAYER_SCENE.instantiate()
-    _player.auto_start = false
     add_child(_player)
     await wait_idle_frames(SETTLE_FRAMES)
     _player.free_camera.global_position = _vehicle.global_position + Vector3.UP * VIEW_HEIGHT
@@ -166,7 +163,6 @@ func test_the_vehicle_left_is_followed_from_the_cab_of_another() -> void:
     _vehicle = build_rail_vehicle("PlayerFollowLeft", TRACK_NAME, NEAR_OFFSET)
     _second_vehicle = build_rail_vehicle("PlayerFollowEntered", TRACK_NAME, FAR_OFFSET)
     _player = PLAYER_SCENE.instantiate()
-    _player.auto_start = false
     add_child(_player)
     await wait_idle_frames(SETTLE_FRAMES)
     var left:RID = _vehicle.get_rid()

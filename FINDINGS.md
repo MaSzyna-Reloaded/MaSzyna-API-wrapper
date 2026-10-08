@@ -651,3 +651,6 @@ anything. Open work belongs in `TODO.md`.
 * A script sets the speed back with `simulation_reset_speed()` - `simulation_speed = x` leaves the
   clock at the old speed for the scripts after; reproduce CI with an empty `HOME`; the player is
   seated after `scenery_loaded`. *(10-07 tests that ran at the speed an earlier script left)*
+* A consumer of `scenery_loaded` exists and is connected before loading starts; removing a
+  readiness fallback means every composition and its test fixture must use that signal path.
+  *(10-08 player initialization CI regression)*

@@ -21,12 +21,13 @@ var _scenario: MaszynaLegacyScenario = null
 
 ## Loads scenery/<filename>, the player's trainset as arranged (MaszynaIncludeNode.trainset_override),
 ## and starts its scenario - done once `scenery_loaded` has been emitted
-func load_scenery(filename: String, trainset: Array[MaszynaDynamicData]) -> void:
+func load_scenery(filename: String, trainset: Array[MaszynaDynamicData], train_id: String = "") -> void:
     %MaszynaSceneryNode.filename = filename
     %MaszynaSceneryNode.trainset_override.assign(trainset)
     %Player.clear_start_train()
+    %Player.start_vehicle_id = train_id
     %MaszynaSceneryNode.load()
-    await scenery_loaded
+    await %Player.initialization_ready
 
 
 ## Frees what the scenery holds, spread over frames - the world itself goes with queue_free()
@@ -34,11 +35,6 @@ func unload_scenery() -> void:
     %Player.clear_start_train()
     %MaszynaSceneryNode.filename = ""
     await %MaszynaSceneryNode.load()
-
-
-## The vehicle the player takes once the scenery is loaded
-func start_player(train_id: String) -> void:
-    %Player.start_vehicle_id = train_id
 
 
 ## The ScenarioScriptServer context the scenery's scripts run in, invalid without a scenario
@@ -69,6 +65,8 @@ func _on_scenery_loaded(first_train_id: String) -> void:
     # started - a scenery without sounds tells no share of it on the way
     scenario_progress.emit(0.0)
     await _scenario.start(%MaszynaSceneryNode, scenario_progress.emit)
+    if not %Player.start_vehicle_id:
+        %Player.start_vehicle_id = first_train_id
     scenery_loaded.emit(first_train_id)
 
 

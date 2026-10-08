@@ -1,5 +1,4 @@
 #include "RailVehicleHorns.hpp"
-#include "legacy/maszyna-mover/utilities.h"
 
 namespace godot {
     void RailVehicleHorns::_bind_methods() {

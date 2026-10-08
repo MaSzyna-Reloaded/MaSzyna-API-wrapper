@@ -59,7 +59,7 @@ static func hardware() -> Dictionary:
         "window_size": vector_to_array(DisplayServer.window_get_size()),
         "window_mode": enum_name(&"DisplayServer", &"WindowMode", DisplayServer.window_get_mode()),
         "locale": OS.get_locale(),
-        "language": SimulationServer.language,
+        "language": MaszynaTranslationServer.language,
     }
 
 

@@ -9,8 +9,7 @@ extends MaszynaGutTest
 ## EP07-424 of td.scn on a cut of its line, with the EP07's own .fiz and .mmd (demo/tests/fixtures)
 const FIXTURES_GAME_DIR:String = "res://tests/fixtures"
 const SCENERY:String = "ep07.scn"
-## Real seconds the player may take to sit in the vehicle named to it - its next frame
-## (MaszynaPlayer._process())
+## Real seconds the player may take to sit after the scenery-loaded signal
 const TAKE_OVER_TIMEOUT:float = 1.0
 ## A press of main_on_bt shorter than the EP07's InitialCtrlDelay (IniCDelay=0.5, 303e-ep.fiz) [s]
 const SHORT_PRESS_SECONDS:float = 0.2
@@ -19,25 +18,24 @@ var _previous_game_dir:String = ""
 var scenery:MaszynaSceneryNode
 var player:MaszynaPlayer
 var controller:VehicleController
-var train_id:String
 var vehicle_rid:RID
 
 
 func before_each():
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(FIXTURES_GAME_DIR)
+    player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
+    player.start_vehicle_id = "EP07-424"
+    add_child(player)
     scenery = MaszynaSceneryNode.new()
     scenery.filename = SCENERY
+    scenery.scenery_loaded.connect(player._on_scenery_loaded)
     add_child(scenery)
     # the scenery is announced once its vehicles are built
     if not await wait_loaded(scenery.scenery_loaded, SCENERY):
         return
     vehicle_rid = VehicleServer.vehicle_get_rid_by_name("EP07-424")
     controller = VehicleServer.vehicle_get_controller(vehicle_rid)
-    train_id = controller.vehicle_id if controller else ""
-    player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
-    player.start_vehicle_id = train_id
-    add_child(player)
     if controller and not await wait_until(func() -> bool: return PlayerServer.player_get_vehicle() == vehicle_rid,
             TAKE_OVER_TIMEOUT):
         fail_test("the player did not take EP07-424 within %.0f s" % TAKE_OVER_TIMEOUT)

@@ -1511,6 +1511,12 @@ msgstr "Dosah sond deště"
 msgid "Sound"
 msgstr "Zvuk"
 
+msgid "Music"
+msgstr "Hudba"
+
+msgid "Music volume"
+msgstr "Hlasitost hudby"
+
 msgid "Sound culling distance"
 msgstr "Dosah slyšitelnosti zvuků"
 

@@ -1195,6 +1195,25 @@
             "title": "Sound",
             "settings": [
                 {
+                    "title": "Music",
+                    "store": "user",
+                    "section": "sound",
+                    "key": "music_enabled",
+                    "type": "bool",
+                    "default": true
+                },
+                {
+                    "title": "Music volume",
+                    "store": "user",
+                    "section": "sound",
+                    "key": "music_volume",
+                    "type": "float",
+                    "hint": "range",
+                    "hint_string": "0,100,1,suffix:%",
+                    "default": 75.0,
+                    "depends_on": "music_enabled"
+                },
+                {
                     "title": "Sound culling distance",
                     "store": "project",
                     "key": "maszyna/sound/culling_distance",

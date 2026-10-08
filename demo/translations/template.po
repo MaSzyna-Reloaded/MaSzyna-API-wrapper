@@ -1511,6 +1511,12 @@ msgstr ""
 msgid "Sound"
 msgstr ""
 
+msgid "Music"
+msgstr ""
+
+msgid "Music volume"
+msgstr ""
+
 msgid "Sound culling distance"
 msgstr ""
 

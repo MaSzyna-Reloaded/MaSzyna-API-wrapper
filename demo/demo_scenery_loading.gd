@@ -6,6 +6,13 @@ const MUSIC_FADE_OUT_TIME: float = 1.0
 ## scale the loading used to make
 const MUSIC_MENU_VOLUME_DB: float = -6.0
 const MUSIC_LOADING_VOLUME_DB: float = -3.0
+## UserSettings section and keys for the starter music.
+const MUSIC_SETTINGS_SECTION: String = "sound"
+const MUSIC_ENABLED_KEY: String = "music_enabled"
+const MUSIC_VOLUME_KEY: String = "music_volume"
+const MUSIC_ENABLED_DEFAULT: bool = true
+const MUSIC_VOLUME_DEFAULT: float = 75.0
+const MUSIC_VOLUME_PERCENT: float = 100.0
 ## Seconds of the loading screen fade out into the game
 const LOADING_FADE_OUT_TIME: float = 1.0
 ## Seconds into the loading screen fade out before the world starts - the simulation and its sound
@@ -69,6 +76,8 @@ const DECLARED_TRAINSET: Array[MaszynaDynamicData] = []
 @export var scenery: String = ""
 
 var _music_tween: Tween
+## The level appropriate to the menu or loading screen, before the player's music volume.
+var _music_volume_db: float = MUSIC_MENU_VOLUME_DB
 ## The world of the scenery being played, null in the menu
 var _world: SceneryWorld = null
 ## The handlers of the running scenery's log files, by file name (GAME_LOG_FILES)
@@ -81,6 +90,8 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+    UserSettings.config_changed.connect(_apply_music_settings)
+    _apply_music_settings()
     var exported: bool = OS.has_feature("template")
     var args: PackedStringArray = OS.get_cmdline_user_args()
     if exported:
@@ -265,9 +276,20 @@ func _exit_to_menu(game_dir: String = "") -> void:
 func _play_music(volume_db: float) -> void:
     if _music_tween:
         _music_tween.kill()
-    $Music.volume_db = volume_db
+    _music_volume_db = volume_db
+    _apply_music_settings()
     if not $Music.playing:
         $Music.play()
+
+
+## The player's sound settings change the starter music immediately, including Discard changes.
+func _apply_music_settings() -> void:
+    var enabled: bool = bool(UserSettings.get_setting(
+            MUSIC_SETTINGS_SECTION, MUSIC_ENABLED_KEY, MUSIC_ENABLED_DEFAULT))
+    var volume: float = float(UserSettings.get_setting(
+            MUSIC_SETTINGS_SECTION, MUSIC_VOLUME_KEY, MUSIC_VOLUME_DEFAULT))
+    $Music.volume_linear = (
+        db_to_linear(_music_volume_db) * volume / MUSIC_VOLUME_PERCENT if enabled else 0.0)
 
 
 ## The world's scenario is ready; player initialization is coordinated by the world scene.

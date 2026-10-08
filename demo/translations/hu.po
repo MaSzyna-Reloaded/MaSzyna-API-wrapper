@@ -1511,6 +1511,12 @@ msgstr "Esőszondák hatótávja"
 msgid "Sound"
 msgstr "Hang"
 
+msgid "Music"
+msgstr "Zene"
+
+msgid "Music volume"
+msgstr "Zene hangereje"
+
 msgid "Sound culling distance"
 msgstr "Hangok hallótávolsága"
 

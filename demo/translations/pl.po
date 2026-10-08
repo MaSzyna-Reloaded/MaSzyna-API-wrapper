@@ -1511,6 +1511,12 @@ msgstr "Zasięg sond deszczu"
 msgid "Sound"
 msgstr "Dźwięk"
 
+msgid "Music"
+msgstr "Muzyka"
+
+msgid "Music volume"
+msgstr "Głośność muzyki"
+
 msgid "Sound culling distance"
 msgstr "Zasięg słyszalności dźwięków"
 

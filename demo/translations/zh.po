@@ -1511,6 +1511,12 @@ msgstr "雨探针距离"
 msgid "Sound"
 msgstr "声音"
 
+msgid "Music"
+msgstr "音乐"
+
+msgid "Music volume"
+msgstr "音乐音量"
+
 msgid "Sound culling distance"
 msgstr "声音剔除距离"
 

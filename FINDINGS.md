@@ -677,3 +677,6 @@ anything. Open work belongs in `TODO.md`.
   parse every test script (`-gdir=res://tests/ -gunit_test_name=<none>`) - a warm class cache hides
   the move, and GUT drops a script that fails to parse without failing the run. *(10-09 classes
   moved out, hidden by a warm class cache)*
+* A test frees what it built through its owner (an include node, not the RIDs it owns) before it
+  ends - a leftover freed later errors inside the next script's test. *(10-09 a test that fails
+  only after another script)*

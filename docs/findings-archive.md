@@ -4292,3 +4292,20 @@ lighting or the trainset.
   it says on its way out is read and logged - the game survives it and the next report carries
   the reason.
 
+
+## 2026-10-09 A test that fails only after another script
+
+* **Symptom:** `test_rail_vehicle_idle_orientation_regression.gd` failed with
+  `Parameter "event" is null` (`ScenarioEventServer::event_free`) when run right after
+  `test_scenario_event_server.gd`, and passed alone; the error was the same on the commit before.
+* **What proved it:** the backtrace pointed at `MaszynaIncludeNode._free_owned_rids()` from its
+  `NOTIFICATION_PREDELETE`, and GUT reported 2 unfreed children of `test_scenario_event_server.gd`.
+  `test_a_passenger_stop_is_named_as_the_timetable_names_it` dropped the include node
+  `_build_scenery()` returned and freed its event by hand. The node outlived the script, and when
+  GUT freed it during the next script's test it freed the same event again - an engine error GUT
+  pins on whichever test is running.
+* **Fix:** the test keeps the include node and frees it, as the other scenery tests do; what the
+  node built is freed only through it.
+* **Rule:** a test frees what it built through the owner that built it, before it ends - never an
+  owned RID by hand, never an owner left for GUT. An error of the freeing lands on the next
+  script's test.

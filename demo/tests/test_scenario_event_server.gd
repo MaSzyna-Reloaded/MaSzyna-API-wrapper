@@ -349,13 +349,15 @@ func test_a_timed_launcher_of_a_radius_fires_only_near_the_camera() -> void:
 
 func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
     var models:Array[MaszynaModelData] = []
-    await _build_scenery("event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models)
+    var root:MaszynaIncludeNode = await _build_scenery(
+        "event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models
+    )
     var event:RID = ScenarioEventServer.event_get_rid_by_name(&"w4_stopinfo")
     var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event)
 
     assert_eq(action.command, "PassengerStopPoint:Jawor", "unique only past its #")
     assert_true(ScenarioEventServer.event_is_passive(event), "read by the drivers ahead, never queued")
-    _free_events([event])
+    root.free()
 
 
 func test_a_departure_delay_is_read_from_the_scenery() -> void:

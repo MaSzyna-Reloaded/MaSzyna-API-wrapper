@@ -1,5 +1,21 @@
 # TODO
 
+## Split from the game
+
+* `demo/examples/mover_demo.tscn` and `cabin_demo.tscn` point at `res://vehicles/sm42/*`, deleted in
+  af72fa4c0 (`cabin_demo` also at the missing `environment/sky.gd`) - the simple Mover demo the
+  demo is to keep does not load.
+* The core input actions live in both `demo/project.godot` and the game's `project.godot`: Godot
+  keeps no input map per addon.
+* A vehicle (`MaszynaRailVehicle3D`, `TrainSet3D`) is not rebuilt on
+  `GameDataServer.data_reload_requested` as models, cabs, tracks and materials are: a game directory
+  set while `demo_3d` runs leaves its vehicles unbuilt until the scene starts again.
+* Tests, the demo and the game share one user directory (`MaSzyna-Reloaded`): a test setting
+  `maszyna/game_dir` to the fixtures and restoring it in `after_each` undoes a directory the
+  operator sets while the test runs.
+* libsimulator: the MaSzyna-independent core (servers, vehicles, player, HUD state) split out of
+  libmaszyna.
+
 ## Architecture rework (#184)
 
 Each stage is one PR, titled `(#184) <area> - <what>`, and leaves the game runnable.
@@ -85,51 +101,22 @@ are still to decide and move (preload/`res://` paths and `.tscn`/`.tres` referen
 
 ## Player and HUD
 
-* The HUD keeps copies of the player's state: `DrivingAid.vehicle`, `FollowedVehicleChip.vehicle`,
-  `PlayerVehicleChip.vehicle` (set from `PlayerServer`/`PlayerCameraServer` signals).
+The game's screens and HUD are the game repository's (`MaSzyna-Reloaded/maszyna-reloaded`), and
+so is their open work.
+
 * The developer console (`addons/libmaszyna/console/console.gd`) still reads keycodes for
   Ctrl+~ (size), Escape, the arrows, Page Up/Down and Tab - only its toggle is an action
   (`console_toggle`).
 
-### Scenario panel (Shift+F2, `demo/hud/scenario_panel.gd`)
-* A scenery started with `-s` shows the file name as the title and an empty "Scenario
-  description" tab, although its header has `//$n`, `//$d` and `//$i` (seen on
-  `$zwierzyniec_tlk.scn`; the same before the "Scenario progress" tab was added).
-* "Scenario progress" (`ScenarioTask`) tells only what the driver already has - its timetable and
-  the order the scenario's events gave it so far; an order an event will give later cannot be
-  known ahead, events being tied to tracks, not to vehicles.
-* The trainset's `assignment <lang> "<text>" ... endassignment` block
-  (simulationstateserializer.cpp:197-205, the original's "Assignment" in the scenario window) is
-  not parsed.
-
-### Problem reports (`demo/bug_report/`)
-* The reporting endpoint (`maszyna/bugtracking/endpoint`, the Cloudflare Worker in
-  `MaSzyna-Reloaded/reports`, `worker/`) is on a personal `workers.dev` account; moving it to the
-  project's account or domain changes that address.
-* A command carries no sender (`VehicleServer.vehicle_command_received`), so the report's command
-  audit cannot tell the player's commands from the scenario's or the console's.
-
-### Settings screen (`demo/settings/`)
-* A light a caller makes by hand (`E3DRenderingServer.spot_light_create()`/`omni_light_create()`)
-  keeps the `scenery/lights/size` it was made with.
-* In a scenery the panel pauses nothing, and the world takes keys before the panel swallows them -
-  the cab may react to keys meant for the settings.
-* Not on the screen, editor-only: `import/*`, `python/home`, `locale/translations`,
-  `smoke/modern/atlas`, `smoke/modern/atlas_frames`.
-* `settings.json` repeats the readers' defaults: the registration in `libmaszyna.gd` runs only in
-  the editor. One registrar that runs in the game too would let the screen take hints and defaults
-  from `ProjectSettings`.
-* A drop-down's popup is mouse-only; the keyboard walks its choices with left and right.
-* Weather > Advanced lacks `near_rain_color`, `mid_rain_color`: the screen has no row for a
-  `Color`.
-* `demo/hud/user_settings_panel.gd` (demo_3d) and the editor dock keep their own widgets; the
-  dock's `render/fxaa_enabled` is read by nothing (the game reads `render/screen_space_aa`).
-
-### Game directory (`GameDirWindow`)
-* The warning chip's "Configure" is mouse-only; from the keyboard the window is reached only
-  through the dialog shown at launch.
-
 ## Cabins
+
+* **Next, right after the split commit (operator, 2026-10-09):** the occupancy layer drives the cabs
+  by plain vehicle commands instead of `set_driver_cabin_kind()` (`RailVehicleServer.cpp:1007`):
+  `cabin_activate` (today's `cab_activation`), `cabin_change` (`ChangeCab()`, Mover.cpp:736) and,
+  if decided, `cabin_occupy`. Every `cab_*` command renamed to `cabin_*` at once. Open: whether
+  `CabOccupied` is the vehicle's control state (any sender may set it) or the persons' fact (only
+  `RailVehicleServer` sends it) - the first changes `CODE_STYLE.md`, "A vehicle is commanded, not
+  called". `mover_demo` then activates its cab without a seated person.
 
 * **Cab elements run on a clock of their own** (`SimulationClock`, the simulation's time in their
   `_process`): every `BaseCabinTool3D` (buttons, switches, knobs, gauges, blinkers), the lamps and
@@ -200,11 +187,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * EP07: round buttons get a rectangular outline. First dump the button's submodel (AABB, faces,
   alpha texture): a quad with an alpha-tested texture outlines as its quad.
 
-### DebugWindow
-
-* `debug_hud.tscn` (`examples/mover_demo.tscn`) hands the vehicle only to `MoverSwitches`, which
-  does not pass it on to its sections.
-
 ### Python integration
 
 * **Windows runtime untested** - should use the game dir's `python27.dll` and `python64/`
@@ -264,8 +246,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Translations
 
-* The HUD's help (`demo/hud/help.gd`) shows `action.capitalize()` as a msgid, so a new input
-  action needs its capitalised name added to `demo/translations/*.po` by hand.
 * Units (`km/h`, `bar`, `%d m`, ...) are not msgids.
 
 ## Sounds
@@ -666,15 +646,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * **Cab targets**: the motor car's ammeters, voltmeters and lamps (`mvControlled` in
   `update_gauges`) need `target` in `MmdSemanticCatalog`.
 
-### Driving aid (`demo/hud/driving_aid.gd`)
-
-* Left out (`driveruipanels.cpp:42-205`): the reverser letter, the grade, the slipping `!`, the
-  brake cylinder pressure, the load exchange / vehicle ahead line, the alerter/SHP line.
-* An EIM vehicle shows `MainCtrlPos + ScndCtrlPos`; the original `eimic_real` % plus `MainCtrlPos`
-  and the integrated brake's `eimic` (`EIMCtrlType` not exposed).
-* The nearest signal and its lights (postponed): a memcell -> signal head link recorded from the
-  scenery's `multiple`; the lights' colours have no getter in `E3DRenderingServer`.
-
 ## Game data (GameDataServer)
 
 * The build named at the top of `app.log` is `res://build_number.txt`, written by the last full
@@ -782,23 +753,10 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `_move_placement()` (writes TrackServer, emits signals) and `Curve3D` baking on first sample.
   The original's function is `vehicle_table::update()`, `DynObj.cpp:8686`.
 
-## Linux release built on an old glibc
-
-* `release-linux-symbols` (`compile-release-symbols`) still builds on the host; needs the
-  `release-linux` container.
-* A local install holds the host-built debug export template until `ci/fetch-godot.sh` replaces it.
-
 ## CI
 
-* A pull request from a fork has a read-only token: after a `GODOT_VERSION` bump it cannot
-  publish the engine release, and it publishes no prerelease.
 * The Linux library is built in the SDK container without ccache.
 * The engine is built without Swappy and AccessKit, which the official builds carry.
-* Android: only `arm64`; the `android_x86_64` preset has no template.
-* The `maszyna-reloaded-<branch>` prerelease of a pull request stays after it is merged or closed.
-* The Windows installer and the exe are unsigned: SmartScreen asks "Run anyway". Candidates:
-  SignPath Foundation (free for open source, signs in GitHub Actions), Certum Open Source Code
-  Signing (cloud key, awkward in CI), Azure Trusted Signing (eligibility for individuals limited).
 
 ## Data the original reads that the wrapper does not read yet
 

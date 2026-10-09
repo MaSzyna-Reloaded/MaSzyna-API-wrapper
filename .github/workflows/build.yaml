@@ -1,15 +1,15 @@
 name: docker-build
 
+# DoS's double-precision images (docker-compose.yml, ci/docker/entrypoint.sh) build the library
+# once per kind: the host library (template_debug) that Godot needs to import and test the demo
+# project is built by build-host and handed to the unit tests; every platform's build compiles its
+# own template_release library. Exporting and releasing the game is the game's repository's.
 on:
   pull_request:
   workflow_dispatch:
 
 jobs:
-  build-windows:
-    strategy:
-      matrix:
-        arch: [x86_64]
-        target: [template_debug]
+  build-host:
     runs-on: ubuntu-24.04
     steps:
       - name: Checkout
@@ -24,93 +24,101 @@ jobs:
             godot-cpp/
             build-api/
             build-host/
-            build-win64/
-          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
+          key: template_debug-host-godot-cpp
           restore-keys: |
-            ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-windows-${{ matrix.arch }}
+            template_debug-host-
 
-      - name: Docker build Windows ${{ matrix.arch }}
+      - name: Docker build the host library
         run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run windows_${{ matrix.arch }} ${{ matrix.target }}
+          docker compose run -e HOST_ONLY=true unit_tests
 
       - uses: actions/upload-artifact@v7
         with:
-          name: lib-windows-${{ matrix.target }}-${{ matrix.arch }}
-          path: demo/bin/libmaszyna/windows
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: game-windows-${{ matrix.target }}-${{ matrix.arch }}
-          path: build/windows
+          name: host-library
+          path: demo/bin/libmaszyna/linux/libmaszyna.debug.64.so
+          if-no-files-found: error
 
       - uses: actions/cache/save@v6
-        id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
             build-api/
             build-host/
-            build-win64/
-          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
+          key: template_debug-host-godot-cpp
 
-  build-linux:
-    strategy:
-      matrix:
-        arch: [x86_64]
-        target: [template_debug]
-    runs-on: ubuntu-latest
+  run-tests:
+    needs: build-host
+    runs-on: ubuntu-24.04
+    # the start-up report is a comment of the pull request
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
-      - name: Checkout
+      - name: Check out the code
         uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v6
-        id: cache-restore
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-host/
-            build-linux64/
-          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
-          restore-keys: |
-            ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-linux-${{ matrix.arch }}-
+      # the addons the demo links in from the checkout (see .gitignore) - CMake links them when it
+      # configures a build, and the tests build nothing
+      - name: Link the addons
+        run: |
+          ln -s ../../vendor/gut/addons/gut demo/addons/gut
+          ln -s ../../addons/libmaszyna demo/addons/libmaszyna
 
-      - name: Docker build Linux ${{ matrix.arch }}
-        run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run linux_${{ matrix.arch }} ${{ matrix.target }}
-
-      - uses: actions/upload-artifact@v7
+      - uses: actions/download-artifact@v8
         with:
-          name: lib-linux-${{ matrix.target }}-${{ matrix.arch }}
+          name: host-library
           path: demo/bin/libmaszyna/linux
 
+      - name: Run tests
+        run: sudo chmod 777 ci/docker/entrypoint.sh |
+          docker compose run -e HOST_PREBUILT=true unit_tests
+
       - uses: actions/upload-artifact@v7
+        if: always()
         with:
-          name: game-linux-${{ matrix.target }}-${{ matrix.arch }}
-          path: build/linux
+          name: gut-test-results
+          path: demo/test_results.xml
 
-      - uses: actions/cache/save@v6
-        id: cache
-        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-host/
-            build-linux64/
-          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
+      # vehicle -> OK / FAIL of its start-up test, in the run's summary and in one comment of the
+      # pull request, updated by every run
+      - name: Start-up report
+        if: always()
+        run: |
+          scripts/startup-report demo/test_results.xml > startup-report.md
+          cat startup-report.md >> "$GITHUB_STEP_SUMMARY"
 
-  build-android:
+      # a pull request from a fork has a read-only token and gets the summary only
+      - name: Start-up report on the pull request
+        if: always() && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          comment=$(gh api "repos/${{ github.repository }}/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.body | startswith("<!-- startup-report -->")) | .id' | head -1)
+          if [ -n "$comment" ]; then
+            gh api -X PATCH "repos/${{ github.repository }}/issues/comments/$comment" -F body=@startup-report.md
+          else
+            gh api -X POST "repos/${{ github.repository }}/issues/$PR/comments" -F body=@startup-report.md
+          fi
+
+  build:
     strategy:
+      fail-fast: false
       matrix:
-        arch: [x86_64, arm64]
-        target: [template_debug]
-    runs-on: ubuntu-latest
+        include:
+          - platform: windows
+            arch: x86_64
+          - platform: linux
+            arch: x86_64
+          - platform: android
+            arch: x86_64
+          - platform: android
+            arch: arm64
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -123,34 +131,30 @@ jobs:
           path: |
             godot-cpp/
             build-api/
-            build-host/
-            build-android64/
-          key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp
+            build-${{ matrix.platform == 'windows' && 'win64' || format('{0}64', matrix.platform) }}/
+          key: template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-cpp
           restore-keys: |
-            ${{ matrix.target }}-android-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-android-
+            template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-
+            template_release-${{ matrix.platform }}-
 
-      - name: Docker build Android ${{ matrix.arch }}
+      # docker-compose.yml reads the target from $TARGET (-t $TARGET); the library only - the host
+      # library is the build-host job's
+      - name: Docker build ${{ matrix.platform }} ${{ matrix.arch }}
+        env:
+          TARGET: template_release
         run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run android_${{ matrix.arch }} ${{ matrix.target }}
+          docker compose run -e HOST_PREBUILT=true ${{ matrix.platform }}_${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v7
         with:
-          name: lib-android-${{ matrix.target }}-${{ matrix.arch }}
-          path: demo/bin/libmaszyna/android
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: game-android-${{ matrix.target }}-${{ matrix.arch }}
-          path: build/android
+          name: lib-${{ matrix.platform }}-template_release-${{ matrix.arch }}
+          path: demo/bin/libmaszyna/${{ matrix.platform }}
 
       - uses: actions/cache/save@v6
-        id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
             build-api/
-            build-host/
-            build-android64/
-          key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp
+            build-${{ matrix.platform == 'windows' && 'win64' || format('{0}64', matrix.platform) }}/
+          key: template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-cpp

@@ -19,6 +19,13 @@ signal vehicle_command_received(vehicle_rid:RID, command:String, p1:Variant, p2:
 ## The vehicle has a cab scene to show now (vehicle_set_cabin_scene()) - one its builder hands over
 ## after the vehicle has its simulation, and may already be driven
 signal vehicle_cabin_scene_changed(vehicle_rid:RID)
+## The interior of a vehicle's cab was built and is shown now - in the tree and drawn
+## (cabin_show(), vehicle_get_cabin()); once per interior, showing another cab of the vehicle
+## rebuilds the same one. Only the player's cab is ever shown, so what hangs on it (a rain
+## exclusion volume) exists once - never emit this for a cab scene merely set
+## (vehicle_set_cabin_scene()): one volume per vehicle of a scenery was a quarter of the frame
+## (docs/findings-archive.md, 2026-10-03 hundreds of vehicles)
+signal vehicle_cabin_built(vehicle_rid:RID)
 ## The light of a cabin shines at another level (cabin_set_light_level())
 signal cabin_light_level_changed(cabin:RID, level:float)
 ## The instrument light of a cabin came on or went out (cabin_set_instrument_light_enabled())
@@ -197,6 +204,7 @@ func cabin_show(cabin_rid:RID, parent:Node) -> Cabin3D:
     # from here - told once it is in the tree, because building its interior puts nodes there
     cabin.set_cabin(cabin_rid)
     cabin.set_vehicle_rid(vehicle_rid)
+    vehicle_cabin_built.emit(vehicle_rid)
     return cabin
 
 

@@ -1,87 +1,67 @@
-name: docker-build
+name: build
 
-# DoS's double-precision images (docker-compose.yml, ci/docker/entrypoint.sh) build the library
-# once per kind: the host library (template_debug) that Godot needs to import and test the demo
-# project is built by build-host and handed to the unit tests; every platform's build compiles its
-# own template_release library. Exporting and releasing the game is the game's repository's.
+# The unit tests and the library of each platform, with the double precision Godot fetched from the
+# release godot-<version>-double (ci/fetch-godot.sh), which the godot-engine workflow builds once
+# per engine version. The tests and the Windows and Android libraries are built on the runner; the
+# Linux release library in ci/docker/linux-sdk, for an old glibc. Exporting and releasing the game
+# is the game's repository's.
 on:
   pull_request:
   workflow_dispatch:
 
 jobs:
-  build-host:
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-        with:
-          submodules: recursive
-
-      - uses: actions/cache/restore@v6
-        id: cache-restore
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-host/
-          key: template_debug-host-godot-cpp
-          restore-keys: |
-            template_debug-host-
-
-      - name: Docker build the host library
-        run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run -e HOST_ONLY=true unit_tests
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: host-library
-          # and maszyna-python-host, the process PythonScreenServer runs CPython in
-          path: |
-            demo/bin/libmaszyna/linux/libmaszyna.debug.64.so
-            demo/bin/libmaszyna/linux/maszyna-python-host.64
-          if-no-files-found: error
-
-      - uses: actions/cache/save@v6
-        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-host/
-          key: template_debug-host-godot-cpp
+  godot-engine:
+    uses: ./.github/workflows/godot-engine.yml
+    permissions:
+      contents: write
 
   run-tests:
-    needs: build-host
+    needs: godot-engine
     runs-on: ubuntu-24.04
     # the start-up report is a comment of the pull request
     permissions:
       contents: read
       pull-requests: write
+    env:
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
     steps:
       - name: Check out the code
         uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      # the addons the demo links in from the checkout (see .gitignore) - CMake links them when it
-      # configures a build, and the tests build nothing
+      - name: Fetch the double precision Godot
+        run: |
+          ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      # the addons the demo links in from the checkout (see .gitignore)
       - name: Link the addons
         run: |
           ln -s ../../vendor/gut/addons/gut demo/addons/gut
           ln -s ../../addons/libmaszyna demo/addons/libmaszyna
 
-      - uses: actions/download-artifact@v8
+      - uses: hendrikmuhs/ccache-action@v1.2
         with:
-          name: host-library
-          path: demo/bin/libmaszyna/linux
+          key: tests
 
-      # an artifact does not keep the executable bit
-      - name: Make the Python host executable
-        run: chmod +x demo/bin/libmaszyna/linux/maszyna-python-host.64
+      # the tests need no old glibc, so the library is built on the runner itself; the empty
+      # overrides leave out the clang-tidy database compile-debug prepares for the IDE
+      - name: Build the library
+        run: make compile-debug CLANG_TIDY_COMPILE_COMMANDS_FILE= CLANG_TIDY_BINDINGS_FILE=
 
-      - name: Run tests
-        run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run -e HOST_PREBUILT=true unit_tests
+      - name: Import the project
+        run: godot-double --headless --path demo --import
+
+      # GUT skips a test script that does not parse with only a warning and does not count it, so
+      # the run fails on the engine's own message for it; pipefail keeps GUT's own exit code, which
+      # tee would otherwise replace with its own success
+      - name: Run the tests
+        run: |
+          set -o pipefail
+          godot-double --headless --path demo -s addons/gut/gut_cmdln.gd \
+            -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml 2>&1 | tee gut.log
+          ! grep "Failed to load script" gut.log
 
       - uses: actions/upload-artifact@v7
         if: always()
@@ -113,55 +93,52 @@ jobs:
           fi
 
   build:
+    needs: godot-engine
     strategy:
       fail-fast: false
       matrix:
         include:
-          - platform: windows
-            arch: x86_64
           - platform: linux
-            arch: x86_64
+            make: compile-release-linux
+          - platform: windows
+            make: compile-windows-release
           - platform: android
-            arch: x86_64
-          - platform: android
-            arch: arm64
+            make: compile-android-release
     runs-on: ubuntu-24.04
+    env:
+      CMAKE_CXX_COMPILER_LAUNCHER: ccache
+      # the directory ccache-action keeps; the Makefile mounts it into the Linux SDK container
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v6
-        id: cache-restore
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-${{ matrix.platform == 'windows' && 'win64' || format('{0}64', matrix.platform) }}/
-          key: template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-cpp
-          restore-keys: |
-            template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-
-            template_release-${{ matrix.platform }}-
+      # CMake dumps the double precision API from it (CMakeLists.txt) - on the runner also for the
+      # Linux library, whose SDK container has no Godot
+      - name: Fetch the double precision Godot
+        run: |
+          ci/fetch-godot.sh godot.linuxbsd.editor.double.x86_64
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      # docker-compose.yml reads the target from $TARGET (-t $TARGET); the library only - the host
-      # library is the build-host job's
-      - name: Docker build ${{ matrix.platform }} ${{ matrix.arch }}
-        env:
-          TARGET: template_release
-        run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run -e HOST_PREBUILT=true ${{ matrix.platform }}_${{ matrix.arch }}
+      - name: Install MinGW
+        if: matrix.platform == 'windows'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends g++-mingw-w64-x86-64
+          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+
+      - uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.platform }}
+
+      - name: Build the ${{ matrix.platform }} library
+        run: make ${{ matrix.make }}
 
       - uses: actions/upload-artifact@v7
         with:
-          name: lib-${{ matrix.platform }}-template_release-${{ matrix.arch }}
+          name: lib-${{ matrix.platform }}-template_release
           path: demo/bin/libmaszyna/${{ matrix.platform }}
-
-      - uses: actions/cache/save@v6
-        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
-        with:
-          path: |
-            godot-cpp/
-            build-api/
-            build-${{ matrix.platform == 'windows' && 'win64' || format('{0}64', matrix.platform) }}/
-          key: template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-cpp
+          if-no-files-found: error

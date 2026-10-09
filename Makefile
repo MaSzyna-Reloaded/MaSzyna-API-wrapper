@@ -1,4 +1,4 @@
-.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols
+.PHONY: linux-sdk-image linux-sdk-image-push compile-release-linux compile-android-release compile-android-debug godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The Godot project the library is built into (its bin/libmaszyna/) and whose addons/ CMake links
@@ -31,9 +31,15 @@ GODOT_VERSION:=4.7.2
 # (glibc 2.34). The checkout is mounted at its own path and the build runs as the host user, so
 # the cmake cache and every output land exactly where a host build would put them; a game building
 # into its own project mounts its checkout, which holds this one (LINUX_SDK_MOUNT).
-LINUX_SDK_IMAGE:=maszyna-linux-sdk
+# Published on ghcr.io and tagged by its Dockerfile: the CI pulls it rather than building it, and a
+# changed Dockerfile is a new tag, built here and published with make linux-sdk-image-push
+LINUX_SDK_IMAGE:=ghcr.io/maszyna-reloaded/linux-sdk:$(shell sha256sum ci/docker/linux-sdk/Dockerfile | cut -c1-12)
 LINUX_SDK_MOUNT?=$(CURDIR)
-LINUX_SDK_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(LINUX_SDK_MOUNT):$(LINUX_SDK_MOUNT) -w $(CURDIR) $(LINUX_SDK_IMAGE)
+# The host's ccache directory, mounted, so the container's builds reuse and fill the same cache
+CCACHE_DIR?=$(HOME)/.cache/ccache
+LINUX_SDK_RUN=mkdir -p $(CCACHE_DIR) && docker run --rm --user $(shell id -u):$(shell id -g) \
+    -v $(LINUX_SDK_MOUNT):$(LINUX_SDK_MOUNT) -w $(CURDIR) -v $(CCACHE_DIR):/ccache -e CCACHE_DIR=/ccache \
+    -e CMAKE_C_COMPILER_LAUNCHER=ccache -e CMAKE_CXX_COMPILER_LAUNCHER=ccache $(LINUX_SDK_IMAGE)
 GODOT_SOURCE_DIR:=build-godot-$(GODOT_VERSION)
 GODOT_BIN:=$(GODOT_SOURCE_DIR)/bin
 GODOT_SCONS=scons precision=double production=yes -j$(CMAKE_BUILD_JOBS)
@@ -162,7 +168,12 @@ compile-android-release:
 
 
 linux-sdk-image:
-	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
+	docker image inspect $(LINUX_SDK_IMAGE) > /dev/null 2>&1 || docker pull -q $(LINUX_SDK_IMAGE) \
+	    || docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
+
+
+linux-sdk-image-push: linux-sdk-image
+	docker push $(LINUX_SDK_IMAGE)
 
 
 

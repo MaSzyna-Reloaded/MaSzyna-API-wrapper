@@ -91,20 +91,20 @@ func test_the_delay_is_the_arrival_then_the_departure():
 func test_the_delay_counts_on_while_the_train_stands_past_its_departure():
     timetable.get_entries()[0].arrival = DEPARTURE - DWELL_MINUTES * MINUTE
     timetable.arrive(DEPARTURE - (DWELL_MINUTES + ARRIVAL_EARLY_MINUTES) * MINUTE)
-    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE - MINUTE), 0, "early, it waits for the departure")
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), DEPARTURE - MINUTE), 0, "early, it waits for the departure")
     var standing:float = DEPARTURE + (STANDING_LATE_MINUTES + PART_OF_A_MINUTE) * MINUTE
-    assert_eq(TimetablePanel.delay_minutes(_state(), standing), STANDING_LATE_MINUTES, "whole minutes past it")
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), standing), STANDING_LATE_MINUTES, "whole minutes past it")
     timetable.advance()
-    assert_eq(TimetablePanel.delay_minutes(_state(), standing), STANDING_LATE_MINUTES, "still at the station it has left")
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), standing), STANDING_LATE_MINUTES, "still at the station it has left")
     timetable.show_next_station(DEPARTURE + DEPARTURE_LATE_MINUTES * MINUTE)
-    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE + LATER_ON_MINUTES * MINUTE), DEPARTURE_LATE_MINUTES,
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), DEPARTURE + LATER_ON_MINUTES * MINUTE), DEPARTURE_LATE_MINUTES,
             "on the way: as it left")
 
 
 func test_the_delay_of_a_late_arrival_stays_until_the_departure():
     timetable.get_entries()[0].arrival = DEPARTURE - DWELL_MINUTES * MINUTE
     timetable.arrive(DEPARTURE - (DWELL_MINUTES - ARRIVAL_LATE_MINUTES) * MINUTE)
-    assert_eq(TimetablePanel.delay_minutes(_state(), DEPARTURE - MINUTE), ARRIVAL_LATE_MINUTES,
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), DEPARTURE - MINUTE), ARRIVAL_LATE_MINUTES,
             "late at the arrival, before the departure")
 
 

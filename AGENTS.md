@@ -202,7 +202,7 @@ Checks:
 * REQUIRED: **every headless Godot run (a test, a probe, `--import`, `--check-only`) passes
   `--log-file <scratchpad>/godot.log`** - it shares the game's user directory, and without it each
   run rotates the operator's `logs/app.log` (five runs delete it). A headless run's game log files
-  go to `logs/headless/` by themselves (`demo_scenery_loading.gd`, `HEADLESS_LOG_DIRECTORY`)
+  go to `logs/headless/` by themselves (the game's `game.gd`, `HEADLESS_LOG_DIRECTORY`)
 * TESTS: a GDScript that fails to **parse** is not reported as failing - GUT ignores it, finds no
   match for `-gselect` and runs the whole directory until the timeout, so a syntax error looks
   like a hang. Parse-check first:

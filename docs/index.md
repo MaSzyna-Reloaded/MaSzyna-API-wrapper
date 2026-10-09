@@ -31,7 +31,6 @@ Resposibilities of the core:
 * [API reference](api/) - every class of libmaszyna, C++ and GDScript
 * [Wrapping the original MaSzyna physics](wrapping-mover)
 * [Lua scenario scripts](lua-scripting) - the scripting API for sceneries, with examples
-* [Problem reports](bug-reports) - what the game sends to the reporting endpoint
 
 ## Knowledge base
 

@@ -94,8 +94,8 @@ func arrive(hours:float) -> bool:
     if station_index >= entries.size() or not next_stop == _next_station:
         return false
     var entry:TimetableEntry = entries[station_index]
-    latency = _compare_time(hours, entry.departure)
-    delay = -_compare_time(hours, entry.arrival if entry.is_stop() else entry.departure)
+    latency = compare_time(hours, entry.departure)
+    delay = -compare_time(hours, entry.arrival if entry.is_stop() else entry.departure)
     arrived = true
     if station_index < entries.size() - 1:
         var following:TimetableEntry = entries[station_index + 1]
@@ -122,7 +122,7 @@ func show_next_station(hours:float) -> void:
     if station_start < station_index and station_start < entries.size():
         var left:TimetableEntry = entries[station_start]
         if left.departure >= 0.0:
-            delay = -_compare_time(hours, left.departure)
+            delay = -compare_time(hours, left.departure)
     station_start = station_index
     changed.emit()
 
@@ -160,7 +160,7 @@ func is_time_to_go(hours:float) -> bool:
     var entry:TimetableEntry = get_entries()[station_index]
     if not entry.is_stop():
         return true
-    return _compare_time(hours, entry.departure) <= 0.0
+    return compare_time(hours, entry.departure) <= 0.0
 
 
 ## The seconds from `hours` to the departure from the station it stands at or has just left
@@ -170,7 +170,7 @@ func seconds_until_departure(hours:float) -> float:
     var entries:Array = get_entries()
     if station_start >= entries.size() or not (entries[station_start] as TimetableEntry).is_stop():
         return 0.0
-    return SECONDS_PER_MINUTE * _compare_time(hours, (entries[station_start] as TimetableEntry).departure)
+    return SECONDS_PER_MINUTE * compare_time(hours, (entries[station_start] as TimetableEntry).departure)
 
 
 ## Whether the train turns at the station it stands at (DirectionChange(), `@`) - not at the last
@@ -197,9 +197,31 @@ func rewind(station:String) -> bool:
     return false
 
 
+## Whether the train of a timetable state (DriverDelegate.get_timetable_state()) stands at its
+## station, the entry `station_start` names: it has arrived there, or left it and not driven clear
+## of it yet
+static func state_is_standing(state:Dictionary) -> bool:
+    return int(state.get("station_start", 0)) < int(state.get("station_index", 0)) or state.get("arrived", false)
+
+
+## The delay [min] of a train by its timetable state (DriverDelegate.get_timetable_state()) at
+## `hours`, late when positive: at a stop, what it arrived with and, past the departure, the time
+## since - an early arrival waits for the departure and is none; on the way, what it left the last
+## station with
+static func state_delay_minutes(state:Dictionary, hours:float) -> int:
+    var state_timetable:Timetable = state.get("timetable")
+    var start:int = state.get("station_start", 0)
+    var state_delay:int = roundi(state.get("delay", 0.0))
+    if state_is_standing(state) and state_timetable and start < state_timetable.entries.size():
+        var entry:TimetableEntry = state_timetable.entries[start]
+        if entry.is_stop() and entry.departure >= 0.0:
+            return maxi(0, maxi(state_delay, floori(-compare_time(hours, entry.departure))))
+    return state_delay
+
+
 ## CompareTime() (utilities.cpp:50): `to` less `from` [min], the shorter way round the clock; 0 when
 ## `to` is not given
-static func _compare_time(from:float, to:float) -> float:
+static func compare_time(from:float, to:float) -> float:
     if to < 0.0:
         return 0.0
     var minutes:float = (to - from) * MINUTES_PER_HOUR

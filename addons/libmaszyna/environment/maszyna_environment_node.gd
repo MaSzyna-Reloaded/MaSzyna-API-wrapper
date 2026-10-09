@@ -2,7 +2,6 @@
 extends Node
 class_name MaszynaEnvironmentNode
 
-const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
 ## Group the player sets cabin_view on when switching between the cabin and the exterior view
 const GROUP: StringName = &"maszyna_environment"
 ## Render layer of the cab interior - with maszyna/cabin/improve_shadows_quality the cab is lit by a
@@ -11,6 +10,28 @@ const CABIN_RENDER_LAYER: int = 1 << 18
 ## How often the time of day, the light level and the wind are pushed to E3DRenderingServer, which
 ## decides from the first two which scenery lights are lit (see _push_environment_state())
 const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
+## How often the running time is taken from SimulationServer's clock
+const TIME_UPDATE_INTERVAL: float = 0.1
+const SECONDS_PER_HOUR: float = 3600.0
+const SECONDS_PER_DAY: int = 86400
+const MONTHS_PER_YEAR: int = 12
+## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
+## original lights a scenery light set to "on when dark" below a light level of 0.325
+## (AnimModel.cpp:598), which on this ramp falls at about 1.4 degrees below the horizon. Both ends
+## have to stay clear of a winter noon - at 50 N the sun peaks at 16-19 degrees in January, so a
+## day threshold anywhere near that would light the whole town at midday (see FINDINGS.md).
+const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/lights/night_altitude"
+const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/lights/day_altitude"
+const LIGHT_LEVEL_NIGHT_ALTITUDE: float = -6.0
+const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
+## Overcast dims the key light in the original by this much at full cover
+## (simulationenvironment.cpp:163)
+const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
+## Surface pressure of the sun's refraction, millibars (sun.cpp:14)
+const SUN_SURFACE_PRESSURE: float = 1013.0
+## Wind speed the 0-1 wind_strength maps onto, m/s
+const WIND_SPEED_MIN: float = 0.15
+const WIND_SPEED_MAX: float = 3.0
 ## The original's Global.Overcast runs 0-1 for the cloud cover and on up to 2 for precipitation
 ## (simulationenvironment.cpp:64-71); MaszynaScenery turns its heaviest step into a precipitation
 ## of 0.4 (maszyna_scenery.gd PRECIPITATION_MEDIUM), which here is an overcast of 2 again
@@ -19,15 +40,6 @@ const OVERCAST_FULL_PRECIPITATION: float = 0.4
 ## The original's fog range with the fog switched off - the longest a scenery may declare
 ## (simulationstateserializer.cpp:216)
 const FOG_RANGE_MAX: float = 25000.0
-## Glow as tuned in forest-test-scene materials/environment_filmic.tres - what the player's Graphics
-## settings (render/glow_intensity, render/bloom_intensity) fall back to
-const GLOW_INTENSITY_DEFAULT: float = 1.37
-const BLOOM_INTENSITY_DEFAULT: float = 0.3
-## The player's gamma (render/gamma): the picture's mid-tones as x^(1/gamma) - above 1 brighter,
-## below darker, black and white staying put - through the environment's colour correction, a
-## curve of this many steps; at 1 there is no correction at all
-const GAMMA_DEFAULT: float = 1.0
-const GAMMA_CURVE_STEPS: int = 256
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
@@ -43,9 +55,10 @@ const WEATHER_PRESETS: Dictionary = {
     },
 }
 
-## The environment applied a change of its configuration - a preset, a scenery's own declarations
-## or a property written from anywhere. Whoever shows this state reacts to this instead of reading
-## the node every frame; the running clock is deliberately not announced here (see _process()).
+## The environment applied a change of its configuration - a preset, a scenery's own declarations,
+## the cabin view or a property written from anywhere. Whoever shows this state (a
+## MaszynaSkyEnvironment) reacts to this instead of reading the node every frame; the running clock
+## is deliberately not announced here (see _process()).
 signal configuration_changed
 
 @export_category("Time")
@@ -148,46 +161,18 @@ const MAX_SIMULATION_SPEED: float = 100.0
         fog_enabled = value
         _dirty_visuals = true
 
-## How much of the view the fog covers at fog_distance: 0 - none, 1 - fully opaque. The sky backend
-## adds its own share on top (day/night base fog, rain), so this is the scenery's part of it.
+## How much of the view the fog covers at fog_distance: 0 - none, 1 - fully opaque. Whoever draws
+## the sky may add its own share on top (day/night base fog, rain), so this is the scenery's part.
 @export_range(0.0, 1.0, 0.001) var fog_density: float = 0.15:
     set(value):
         fog_density = value
         _dirty_visuals = true
 
-## Distance the fog reaches fog_density at, growing linearly up to it. The sky backend may tell
-## day from night
-## (maszyna/weather/fog/day_distance_factor, night_distance_factor).
+## Distance the fog reaches fog_density at, growing linearly up to it. Whoever draws the sky may
+## tell day from night (maszyna/weather/fog/day_distance_factor, night_distance_factor).
 @export_range(10.0, 25000.0, 1.0, "suffix:m") var fog_distance: float = 470.0:
     set(value):
         fog_distance = value
-        _dirty_visuals = true
-
-@export_category("Adjustments")
-@export_group("Tone Mapping")
-@export var tonemap_mode: Environment.ToneMapper = Environment.TONE_MAPPER_AGX:
-    set(value):
-        tonemap_mode = value
-        _dirty_visuals = true
-
-@export_range(0.0, 16.0, 0.01) var tonemap_white: float = 6.0:
-    set(value):
-        tonemap_white = value
-        _dirty_visuals = true
-
-@export_range(0.0, 16.0, 0.01) var tonemap_agx_white: float = 6.19:
-    set(value):
-        tonemap_agx_white = value
-        _dirty_visuals = true
-
-@export_range(0.0, 2.0, 0.01) var tonemap_agx_contrast: float = 1.55:
-    set(value):
-        tonemap_agx_contrast = value
-        _dirty_visuals = true
-
-@export var adjustment_enabled: bool = true:
-    set(value):
-        adjustment_enabled = value
         _dirty_visuals = true
 
 var season: MaszynaEnvironment.Season = MaszynaEnvironment.Season.SEASON_SUMMER:
@@ -196,30 +181,23 @@ var season: MaszynaEnvironment.Season = MaszynaEnvironment.Season.SEASON_SUMMER:
             season = value
             MaterialManager.season = season
 
-var _world_environment: WorldEnvironment
-var _environment: Environment
-var _sky_environment: MaszynaSkyEnvironment
 var _dirty_time: bool = true
 var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
-var _dirty_lights: bool = false
+var _dirty_view: bool = false
 var _light_state_elapsed: float = 0.0
-## The gamma the colour correction curve was made for - it is made again only when that changes -
-## and the curve itself, none at the default
-var _gamma: float = GAMMA_DEFAULT
-var _gamma_curve: ImageTexture = null
+var _time_update_elapsed: float = 0.0
 
-## Cabin view (the player in a cab) - the cab light casts its shadows then
+## Cabin view (the player in a cab) - whoever draws the environment lets the cab light cast its
+## shadows then (MaszynaSkyEnvironment)
 var cabin_view: bool = false:
     set(value):
         if not value == cabin_view:
             cabin_view = value
-            _dirty_lights = true
+            _dirty_view = true
 
 
 func _ready() -> void:
-    _ensure_environment()
-    _sky_environment.apply_light_configuration()
     update()
     _process_dirty()
 
@@ -229,27 +207,31 @@ func _enter_tree() -> void:
     # the time of day passes while the environment is there (SimulationServer's clock)
     if not Engine.is_editor_hint():
         SimulationServer.clock_hold()
-    UserSettings.config_changed.connect(_on_user_settings_changed)
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
-    SimulationServer.simulation_paused.connect(_on_runtime_paused)
-    SimulationServer.simulation_unpaused.connect(_on_runtime_unpaused)
 
 
 func _exit_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_release()
-    UserSettings.config_changed.disconnect(_on_user_settings_changed)
     ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
-    SimulationServer.simulation_paused.disconnect(_on_runtime_paused)
-    SimulationServer.simulation_unpaused.disconnect(_on_runtime_unpaused)
 
 
 func _process(delta: float) -> void:
+    var time_set: bool = _dirty_time
     _process_dirty()
-    _sky_environment.sync_cabin_lights()
-    _sky_environment.process(delta)
-    _sync_time()
-    _push_environment_state(delta)
+    _time_update_elapsed += delta
+    if not Engine.is_editor_hint() and _time_update_elapsed >= TIME_UPDATE_INTERVAL:
+        _time_update_elapsed = 0.0
+        if use_system_time:
+            _read_system_time()
+        else:
+            # the time the simulation's clock ran to; past midnight it is the next day
+            var now: float = SimulationServer.time_of_day
+            if now < current_time:
+                _set_normalized_date(year, month, day + 1)
+            current_time = now
+        season = _season_from_year_day(_get_year_day(day, month, year))
+    _push_environment_state(delta, time_set)
     # Running time is only mirrored here; it must not be re-applied as a configuration change.
     _dirty_time = false
 
@@ -260,18 +242,71 @@ func update() -> void:
 
 
 func set_date(next_year: int, next_month: int, next_day: int) -> void:
-    if not _sky_environment:
-        year = next_year
-        month = next_month
-        day = next_day
-        return
+    _set_normalized_date(next_year, next_month, next_day)
 
-    var normalized_date: Vector3i = _sky_environment.set_date(
-        next_year, next_month, next_day
-    )
-    year = normalized_date.x
-    month = normalized_date.y
-    day = normalized_date.z
+
+## How bright the scene is, the equivalent of the original's Global.fLuminance
+## (simulationenvironment.cpp:184): daylight from the sun's altitude, dimmed by the overcast. It is
+## what decides whether a scenery light that is set to come on automatically is on: the original
+## compares it against DefaultDarkThresholdLevel of 0.325 (AnimModel.cpp:598).
+##
+## The sun's refracted altitude is cSun::move() and cSun::refract() (sun.cpp:104-240), with the
+## location in decimal degrees (the original reads its own minutes-as-fraction notation).
+func get_light_level() -> float:
+    var local_time: float = current_time
+    # days from 2000-01-01, the original's integer arithmetic included (sun.cpp:122-128)
+    var day_number: float = (
+        367 * year - 7 * (year + (month + 9) / MONTHS_PER_YEAR) / 4 + 275 * month / 9 + day - 730530
+        + local_time / 24.0)
+    var universal_time: float = local_time - timezone_offset
+    var perihelion_longitude: float = 282.9404 + 4.70935e-5 * day_number
+    var eccentricity: float = 0.016709 - 1.151e-9 * day_number
+    var mean_anomaly: float = fposmod(356.0470 + 0.9856002585 * day_number, 360.0)
+    var obliquity: float = 23.4393 - 3.563e-7 * day_number
+    var eccentric_anomaly: float = mean_anomaly + rad_to_deg(
+        eccentricity * sin(deg_to_rad(mean_anomaly)) * (1.0 + eccentricity * cos(deg_to_rad(mean_anomaly))))
+    var xv: float = cos(deg_to_rad(eccentric_anomaly)) - eccentricity
+    var yv: float = sin(deg_to_rad(eccentric_anomaly)) * sqrt(1.0 - eccentricity * eccentricity)
+    var ecliptic_longitude: float = fposmod(rad_to_deg(atan2(yv, xv)) + perihelion_longitude, 360.0)
+    var declination: float = asin(sin(deg_to_rad(obliquity)) * sin(deg_to_rad(ecliptic_longitude)))
+    var right_ascension: float = fposmod(rad_to_deg(atan2(
+        cos(deg_to_rad(obliquity)) * sin(deg_to_rad(ecliptic_longitude)), cos(deg_to_rad(ecliptic_longitude)))), 360.0)
+    var sidereal_time: float = fposmod(6.697375 + 0.0657098242 * day_number + universal_time, 24.0)
+    var hour_angle: float = wrapf(fposmod(sidereal_time * 15.0 + longitude, 360.0) - right_ascension, -180.0, 180.0)
+    var zenith_cosine: float = clampf(
+        sin(declination) * sin(deg_to_rad(latitude))
+        + cos(declination) * cos(deg_to_rad(latitude)) * cos(deg_to_rad(hour_angle)), -1.0, 1.0)
+    var elevation: float = 90.0 - rad_to_deg(acos(zenith_cosine))
+    var refraction: float = 0.0
+    if elevation <= 85.0:
+        var elevation_tangent: float = tan(deg_to_rad(elevation))
+        if elevation >= 5.0:
+            refraction = (58.1 / elevation_tangent - 0.07 / pow(elevation_tangent, 3)
+                + 0.000086 / pow(elevation_tangent, 5))
+        elif elevation >= -0.575:
+            refraction = 1735.0 + elevation * (-518.2 + elevation * (
+                103.4 + elevation * (-12.79 + elevation * 0.711)))
+        else:
+            refraction = -20.774 / elevation_tangent
+        refraction *= (SUN_SURFACE_PRESSURE * 283.0) / (SUN_SURFACE_PRESSURE * (273.0 + temperature)) / SECONDS_PER_HOUR
+    var daylight: float = smoothstep(
+        float(ProjectSettings.get_setting(LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING, LIGHT_LEVEL_NIGHT_ALTITUDE)),
+        float(ProjectSettings.get_setting(LIGHT_LEVEL_DAY_ALTITUDE_SETTING, LIGHT_LEVEL_DAY_ALTITUDE)),
+        elevation + refraction)
+    return daylight * (1.0 - clampf(cloudiness, 0.0, 1.0) * LIGHT_LEVEL_OVERCAST_FACTOR)
+
+
+## Unit vector the wind blows along - horizontal, from the compass bearing. The original keeps one
+## wind for the whole simulation (simulationenvironment.cpp:255-268) and the smoke emitters drift
+## with it.
+func get_wind_direction() -> Vector3:
+    var bearing: float = deg_to_rad(wind_direction)
+    return Vector3(cos(bearing), 0.0, sin(bearing))
+
+
+## Wind speed in metres per second, wind_strength mapped onto WIND_SPEED_MIN..WIND_SPEED_MAX
+func get_wind_speed() -> float:
+    return lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, wind_strength)
 
 
 func _process_dirty() -> void:
@@ -279,186 +314,61 @@ func _process_dirty() -> void:
 
     if _dirty_weather_preset:
         _dirty_weather_preset = false
-        _apply_weather_preset()
+        var preset: Dictionary = WEATHER_PRESETS[weather]
+        precipitation = preset["precipitation"]
+        cloudiness = preset["cloudiness"]
+        fog_density = preset["fog_density"]
+        wind_strength = preset["wind_strength"]
         applied = true
 
     if _dirty_visuals:
         _dirty_visuals = false
-        _apply_visual_configuration()
+        # Any precipitation switches the materials to their "rain" variant. It was blocked for a
+        # while as bad looking: the wet texture ("rain: { texture2: ... }") is a reflection map and
+        # was bound as a normal map back then (FINDINGS.md, "texture2: is not always the normal map").
+        MaterialManager.weather = (
+            MaszynaEnvironment.Weather.WEATHER_RAIN if precipitation > 0.0 else weather
+        )
+        # rain_params of the "rain_windscreen" materials (opengl33renderer.cpp:752-754): the share of
+        # active droplets and the time they take to return after a wiper pass
+        RenderingServer.global_shader_parameter_set("maszyna_rain_intensity", precipitation)
+        RenderingServer.global_shader_parameter_set("maszyna_wiper_regen_time", lerpf(15.0, 1.0, precipitation))
+        # the free spotlights' points and glare (types/free_spotlight*.gdshader) follow the
+        # original's Global.Overcast and m_fogrange (opengl33renderer.cpp:5009), which fog_distance
+        # is a multiple of
+        RenderingServer.global_shader_parameter_set(
+            "maszyna_overcast", clampf(cloudiness + precipitation / OVERCAST_FULL_PRECIPITATION, 0.0, OVERCAST_MAX))
+        RenderingServer.global_shader_parameter_set(
+            "maszyna_fog_range",
+            fog_distance / float(ProjectSettings.get_setting(
+                MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
+                MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
+            if fog_enabled
+            else FOG_RANGE_MAX)
         applied = true
 
-    if _dirty_lights:
-        _dirty_lights = false
-        _sky_environment.apply_light_configuration()
+    if _dirty_view:
+        _dirty_view = false
         applied = true
 
     if _dirty_time:
         _dirty_time = false
-        _apply_time_configuration()
+        if use_system_time:
+            _read_system_time()
+        else:
+            _set_normalized_date(year, month, day)
+        season = _season_from_year_day(_get_year_day(day, month, year))
+        # a time set, not run: the clock jumps to it
+        SimulationServer.time_of_day = current_time
         applied = true
 
     if applied:
         configuration_changed.emit()
 
 
-func _ensure_environment() -> void:
-    if is_instance_valid(_world_environment):
-        return
-
-    _world_environment = get_node_or_null(NodePath(GENERATED_WORLD_NAME)) as WorldEnvironment
-    if _world_environment:
-        _environment = _world_environment.environment
-        _sky_environment = _create_sky_environment()
-        _sky_environment.bind_nodes(_world_environment)
-        return
-
-    _world_environment = _create_world_environment()
-    add_child(_world_environment, false, INTERNAL_MODE_BACK)
-
-
-func _create_world_environment() -> WorldEnvironment:
-    var world_environment: WorldEnvironment = WorldEnvironment.new()
-    world_environment.name = GENERATED_WORLD_NAME
-
-    _sky_environment = _create_sky_environment()
-    _environment = _create_environment()
-    world_environment.environment = _environment
-    world_environment.camera_attributes = CameraAttributesPractical.new()
-    _sky_environment.create_nodes(world_environment, _environment)
-
-    return world_environment
-
-
-func _create_sky_environment() -> MaszynaSkyEnvironment:
-    return GndSkydomeMaszynaEnvironment.new(self)
-
-
-func _create_environment() -> Environment:
-    var environment: Environment = Environment.new()
-    environment.background_mode = Environment.BG_SKY
-    environment.sky = _sky_environment.create_sky()
-    environment.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-    environment.ambient_light_color = Color.WHITE
-    environment.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
-    environment.fog_mode = Environment.FOG_MODE_DEPTH
-    environment.fog_light_color = Color(0.3605356, 0.39691955, 0.44612736, 1.0)
-    environment.fog_light_energy = 0.7
-    environment.fog_sun_scatter = 0.07
-    environment.volumetric_fog_anisotropy = 0.0
-    environment.volumetric_fog_detail_spread = 1.0
-    # Glow tuned as in forest-test-scene materials/environment_filmic.tres (its intensity and bloom
-    # are the player's, _apply_visual_configuration()); the luminance cap keeps small specular
-    # highlights (e.g. rain streaks) from blooming into large blobs.
-    environment.glow_normalized = true
-    environment.glow_strength = 0.8
-    environment.glow_hdr_threshold = 1.37
-    environment.glow_hdr_luminance_cap = 0.18
-    return environment
-
-
-func _apply_weather_preset() -> void:
-    var preset: Dictionary = WEATHER_PRESETS[weather]
-    precipitation = preset["precipitation"]
-    cloudiness = preset["cloudiness"]
-    fog_density = preset["fog_density"]
-    wind_strength = preset["wind_strength"]
-
-
-func _apply_visual_configuration() -> void:
-    # Any precipitation switches the materials to their "rain" variant. It was blocked for a while
-    # as bad looking: the wet texture ("rain: { texture2: ... }") is a reflection map and was bound
-    # as a normal map back then (FINDINGS.md, "texture2: is not always the normal map").
-    MaterialManager.weather = (
-        MaszynaEnvironment.Weather.WEATHER_RAIN if precipitation > 0.0 else weather
-    )
-    # rain_params of the "rain_windscreen" materials (opengl33renderer.cpp:752-754): the share of
-    # active droplets and the time they take to return after a wiper pass
-    RenderingServer.global_shader_parameter_set("maszyna_rain_intensity", precipitation)
-    RenderingServer.global_shader_parameter_set("maszyna_wiper_regen_time", lerpf(15.0, 1.0, precipitation))
-    # the free spotlights' points and glare (types/free_spotlight*.gdshader) follow the original's
-    # Global.Overcast and m_fogrange (opengl33renderer.cpp:5009), which fog_distance is a multiple of
-    RenderingServer.global_shader_parameter_set(
-        "maszyna_overcast", clampf(cloudiness + precipitation / OVERCAST_FULL_PRECIPITATION, 0.0, OVERCAST_MAX))
-    RenderingServer.global_shader_parameter_set(
-        "maszyna_fog_range",
-        fog_distance / float(ProjectSettings.get_setting(
-            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
-            MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
-        if fog_enabled
-        else FOG_RANGE_MAX)
-    if not _environment or not _sky_environment:
-        return
-
-    # fog_density is a multiplier; zero fades the fog out instead of switching it off.
-    var fog_active: bool = fog_enabled
-
-    _sky_environment.apply_visual_configuration()
-
-    _environment.tonemap_mode = tonemap_mode
-    _environment.tonemap_white = tonemap_white
-    _environment.tonemap_agx_white = tonemap_agx_white
-    _environment.tonemap_agx_contrast = tonemap_agx_contrast
-    _environment.ssr_enabled = bool(UserSettings.get_setting("render", "ssr_enabled", true))
-    _environment.ssao_enabled = bool(UserSettings.get_setting("render", "ssao_enabled", true))
-    _environment.ssil_enabled = bool(UserSettings.get_setting("render", "ssil_enabled", true))
-    _environment.sdfgi_enabled = bool(UserSettings.get_setting("render", "sdfgi_enabled", true))
-    _environment.glow_enabled = bool(UserSettings.get_setting("render", "glow_enabled", true))
-    _environment.glow_intensity = float(
-        UserSettings.get_setting("render", "glow_intensity", GLOW_INTENSITY_DEFAULT))
-    _environment.glow_bloom = float(
-        UserSettings.get_setting("render", "bloom_intensity", BLOOM_INTENSITY_DEFAULT))
-    _environment.adjustment_enabled = adjustment_enabled
-    var gamma: float = float(UserSettings.get_setting("render", "gamma", GAMMA_DEFAULT))
-    if not is_equal_approx(gamma, _gamma):
-        _gamma = gamma
-        _gamma_curve = null
-        if not is_equal_approx(gamma, GAMMA_DEFAULT):
-            # one row, the input along it, the output in every channel
-            var curve: Image = Image.create(GAMMA_CURVE_STEPS, 1, false, Image.FORMAT_RGB8)
-            for step: int in GAMMA_CURVE_STEPS:
-                var value: float = pow(float(step) / float(GAMMA_CURVE_STEPS - 1), 1.0 / gamma)
-                curve.set_pixel(step, 0, Color(value, value, value))
-            _gamma_curve = ImageTexture.create_from_image(curve)
-    _environment.adjustment_color_correction = _gamma_curve
-    _environment.fog_enabled = fog_active
-    # the sky backends leave these two alone
-    _environment.fog_aerial_perspective = float(ProjectSettings.get_setting(
-        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_SETTING,
-        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_DEFAULT))
-    _environment.fog_depth_curve = maxf(MaszynaSkyEnvironment.FOG_CURVE_MIN, float(
-        ProjectSettings.get_setting(
-            MaszynaSkyEnvironment.FOG_CURVE_SETTING, MaszynaSkyEnvironment.FOG_CURVE_DEFAULT)))
-    _environment.volumetric_fog_enabled = (
-        fog_active and bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
-    )
-
-
-func _on_user_settings_changed() -> void:
-    _dirty_visuals = true
-
-
-## The fog, the shadows and the lights follow their project settings while the scenery runs
+## The fog follows its project settings while the scenery runs
 func _on_project_settings_changed() -> void:
     _dirty_visuals = true
-    _dirty_lights = true
-
-
-func _on_runtime_paused() -> void:
-    _sky_environment.pause_weather()
-
-
-func _on_runtime_unpaused() -> void:
-    _sky_environment.unpause_weather()
-
-
-func _apply_time_configuration() -> void:
-    if not _sky_environment:
-        return
-
-    _sky_environment.apply_time_configuration()
-    _sync_time()
-    # a time set, not run: the clock jumps to it
-    SimulationServer.time_of_day = current_time
 
 
 ## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
@@ -466,32 +376,40 @@ func _apply_time_configuration() -> void:
 ## the time, the light level and the temperature for everything else (a cab screen's clock, once
 ## a second, is exactly the resolution it shows). None of the three
 ## changes fast enough to be worth pushing every frame - a whole scenery is re-resolved on each
-## push - so they go at a fixed interval, and at once when the time was jumped rather than merely
+## push - so they go at a fixed interval, and at once when the time was set rather than merely
 ## running.
-func _push_environment_state(delta: float) -> void:
+func _push_environment_state(delta: float, time_set: bool) -> void:
     _light_state_elapsed += delta
-    if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not _dirty_time:
+    if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not time_set:
         return
     _light_state_elapsed = 0.0
-    var light_level:float = _sky_environment.get_light_level()
+    var light_level: float = get_light_level()
     E3DRenderingServer.environment_set_time(current_time)
     E3DRenderingServer.environment_set_light_level(light_level)
     # Global.fLuminance of the free spotlights' glare (types/free_spotlight_glare.gdshader)
     RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
     SimulationServer.light_level = light_level
     SimulationServer.air_temperature = temperature
-    E3DRenderingServer.environment_set_wind(
-        _sky_environment.get_wind_strength(), _sky_environment.get_wind_direction()
-    )
+    E3DRenderingServer.environment_set_wind(get_wind_speed(), get_wind_direction())
 
 
-func _sync_time() -> void:
-    var normalized_date: Vector3i = _sky_environment.get_date()
-    year = normalized_date.x
-    month = normalized_date.y
-    day = normalized_date.z
-    current_time = _sky_environment.get_current_time()
-    season = _season_from_year_day(_get_year_day(day, month, year))
+## A date past the end of its month or year carries over (the 32nd of January is the 1st of February)
+func _set_normalized_date(next_year: int, next_month: int, next_day: int) -> void:
+    var normalized_year: int = next_year + floori((next_month - 1) / float(MONTHS_PER_YEAR))
+    var normalized_month: int = posmod(next_month - 1, MONTHS_PER_YEAR) + 1
+    var unix_time: int = Time.get_unix_time_from_datetime_dict(
+        {"year": normalized_year, "month": normalized_month, "day": 1}
+    ) + (next_day - 1) * SECONDS_PER_DAY
+    var date: Dictionary = Time.get_date_dict_from_unix_time(unix_time)
+    year = date["year"]
+    month = date["month"]
+    day = date["day"]
+
+
+func _read_system_time() -> void:
+    var datetime: Dictionary = Time.get_datetime_dict_from_system()
+    current_time = datetime["hour"] + datetime["minute"] / 60.0 + datetime["second"] / SECONDS_PER_HOUR
+    _set_normalized_date(datetime["year"], datetime["month"], datetime["day"])
 
 
 func _season_from_year_day(year_day: int) -> MaszynaEnvironment.Season:

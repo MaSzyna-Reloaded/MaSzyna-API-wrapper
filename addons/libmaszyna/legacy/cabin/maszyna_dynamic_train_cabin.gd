@@ -36,11 +36,6 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
 ## Distance of the cab light below the found ceiling lamp - inside the lamp's shadow casting mesh
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
-## No rain falls inside the vehicle the player sits in: its body, as FIZ Dimensions give it, takes
-## the precipitation away. Only the shown cab has one - a volume on every vehicle of a scenery was
-## a quarter of the frame (docs/findings-archive.md, 2026-10-03 hundreds of vehicles)
-const RAIN_EXCLUSION_NAME:StringName = &"RainExclusion"
-const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
 
 var _generated:Node3D
 var _diagnostics:Array[Dictionary] = []
@@ -155,14 +150,6 @@ func _rebuild_generated() -> void:
     if not definition.instruments.any(
             func(instrument:MmdInstrumentDescriptor) -> bool: return instrument.label == "i-cablight"):
         _build_cab_light(definition)
-    # the vehicle's origin lies on the rail level, so the box is lifted by half of its height; the
-    # cab's own turn about the vertical leaves the box as it is
-    var rain_exclusion := RainVolume.new()
-    rain_exclusion.name = RAIN_EXCLUSION_NAME
-    rain_exclusion.precipitation_delta = RAIN_EXCLUSION_PRECIPITATION_DELTA
-    rain_exclusion.size = VehicleServer.vehicle_get_dimensions(get_vehicle_rid())
-    rain_exclusion.position.y = rain_exclusion.size.y * 0.5
-    _generated.add_child(rain_exclusion)
     var windscreen_wipers := CabinWindscreenWipers.new()
     windscreen_wipers.name = "WindscreenWipers"
     windscreen_wipers.vehicle_rid = get_vehicle_rid()

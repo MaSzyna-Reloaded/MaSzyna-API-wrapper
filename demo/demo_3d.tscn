@@ -17,11 +17,22 @@
 [ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d.gd" id="29_dcvyd"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/debug_hud.tscn" id="debug_hud_scene"]
 [ext_resource type="SignallingSystemDelegate" path="res://signalling/demo_block_delegate.tres" id="demo_block_delegate"]
-[ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
-[ext_resource type="Script" path="res://addons/libmaszyna/scenery/scenery_streamer.gd" id="scenery_streamer"]
 [ext_resource type="SignalHeadKind" uid="uid://diyvl26to634d" path="res://signalling/sbl_3.tres" id="sbl_3_kind"]
+[ext_resource type="Script" uid="uid://clkcp3220jqpe" path="res://addons/libmaszyna/scenery/scenery_streamer.gd" id="scenery_streamer"]
+
+[sub_resource type="ProceduralSkyMaterial" id="DemoSkyMaterial"]
+
+[sub_resource type="Sky" id="DemoSky"]
+sky_material = SubResource("DemoSkyMaterial")
+
+[sub_resource type="Environment" id="DemoEnvironment"]
+background_mode = 2
+sky = SubResource("DemoSky")
+tonemap_mode = 4
+tonemap_agx_contrast = 1.0
 
 [sub_resource type="Resource" id="TrackCurve_common"]
 script = ExtResource("22_track_curve")
@@ -103,7 +114,16 @@ script = ExtResource("1_ut343")
 
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
-[node name="GameHud" parent="." unique_id=194798435 instance=ExtResource("game_hud_scene")]
+[node name="DiagnosticsBar" type="MenuBar" parent="." unique_id=1447103033]
+offset_right = 120.0
+offset_bottom = 31.0
+
+[node name="Diagnostics" type="PopupMenu" parent="DiagnosticsBar" unique_id=1149420873]
+unique_name_in_owner = true
+title = "Diagnostics"
+
+[node name="DebugHud" parent="." unique_id=194798435 instance=ExtResource("debug_hud_scene")]
+unique_name_in_owner = true
 
 [node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]
 visible = null
@@ -111,16 +131,23 @@ visible = null
 [node name="UserSettingsPanel" parent="." unique_id=1798306963 instance=ExtResource("12_eihw1")]
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1464463242]
+unique_name_in_owner = true
 script = ExtResource("2_py6pt")
 current_time = 10.0
 timezone_offset = 2
-tonemap_agx_contrast = 1.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1419385403]
+environment = SubResource("DemoEnvironment")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=912604814]
+transform = Transform3D(1, 0, 0, 0, 0.5, 0.866025, 0, -0.866025, 0.5, 0, 50, 0)
+shadow_enabled = true
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, -18.508982, 1.959, 168.0919)
 sfx_bank = ExtResource("player_sfx_bank")
 
-[node name="SceneryStreamer" type="Node" parent="." node_paths=PackedStringArray("camera")]
+[node name="SceneryStreamer" type="Node" parent="." unique_id=197017765 node_paths=PackedStringArray("camera")]
 script = ExtResource("scenery_streamer")
 active = true
 camera = NodePath("../Player/FreeCamera3D")
@@ -1400,6 +1427,7 @@ signal_head_names = PackedStringArray("demo_sbl")
 wait_time = 5.0
 autostart = true
 
+[connection signal="index_pressed" from="DiagnosticsBar/Diagnostics" to="." method="_on_diagnostics_menu_index_pressed"]
+[connection signal="index_pressed" from="DiagnosticsBar/Diagnostics" to="DebugHud" method="menu_index_pressed"]
 [connection signal="camera_changed" from="Player" to="SceneryStreamer" method="set_camera"]
-
 [connection signal="timeout" from="AspectCycle" to="DemoBlock" method="send_event" binds= [&"next"]]

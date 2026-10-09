@@ -153,7 +153,7 @@ func test_early_at_the_first_station_it_waits_for_the_departure() -> void:
     assert_eq(_timetable.station_index, 0, "Krzyżowa, until the departure")
     assert_eq(_timetable.station_start, 0)
     assert_almost_eq(_timetable.latency, 5.0, EPSILON, "5 min early")
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE - 5.0 * MINUTE), 0, "on time while it waits")
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), KRZYZOWA_DEPARTURE - 5.0 * MINUTE), 0, "on time while it waits")
 
 
 func test_on_time_it_leaves_and_is_shown_at_the_station_until_clear_of_it() -> void:
@@ -173,10 +173,10 @@ func test_late_it_leaves_at_once_and_the_delay_counts() -> void:
 
     assert_eq(_timetable.station_index, 1, "late: it goes at once")
     assert_almost_eq(_timetable.latency, -3.0, EPSILON, "3 min late")
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), KRZYZOWA_ARRIVAL_LATE_MINUTES,
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), KRZYZOWA_DEPARTURE + 3.5 * MINUTE), KRZYZOWA_ARRIVAL_LATE_MINUTES,
             "still standing: late against its arrival (10:31)")
     _run_to(STOPS[0] + CLEAR_OF_THE_STOP, KRZYZOWA_DEPARTURE + KRZYZOWA_DEPARTURE_LATE_MINUTES * MINUTE)
-    assert_eq(TimetablePanel.delay_minutes(_state(), KRZYZOWA_DEPARTURE + LATER_ON_MINUTES * MINUTE),
+    assert_eq(MaszynaLegacyDriverTimetable.state_delay_minutes(_state(), KRZYZOWA_DEPARTURE + LATER_ON_MINUTES * MINUTE),
             KRZYZOWA_DEPARTURE_LATE_MINUTES, "on the way: as it drove clear of Krzyżowa")
 
 

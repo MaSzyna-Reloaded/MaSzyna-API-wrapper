@@ -21,7 +21,7 @@ cmp -s build-api/dump/extension_api.json build-api/extension_api.json || \
     mv build-api/dump/extension_api.json build-api/extension_api.json
 godotcpp_common_args=(-DGODOTCPP_PRECISION=double -DGODOTCPP_CUSTOM_API_FILE=/var/maszyna/build-api/extension_api.json)
 
-# The host library (template_debug) is what Godot loads to import, test and export the project: the
+# The host library (template_debug) is what Godot loads to import and test the demo project: the
 # CI builds it once (HOST_ONLY=true) and hands it to the other jobs (HOST_PREBUILT=true)
 if [ "${HOST_PREBUILT:-}" != "true" ]; then
     echo "Building Dynamic-linked library for host platform"
@@ -38,7 +38,7 @@ if [ "$unit_tests" = "true" ]; then
     exit 0
 fi
 
-echo "Creating Dynamic-linked libraries for $target-$platform build..."
+echo "Creating Dynamic-linked libraries for $target-$platform build (exporting the game is the game repository's)..."
 case $platform in
   "windows")
     cmake -B build-win64 \
@@ -64,26 +64,3 @@ case $platform in
       "${godotcpp_common_args[@]}" || exit 1
     cmake --build build-android64 || exit 1 ;;
 esac
-
-mkdir -p "build/${platform}"
-export_preset="${platform}_${arch}"
-# a desktop game is exported as `make release-linux` / `release-windows` export it: Godot names the
-# binary after the file, so reloaded.zip holds reloaded (ELF) or reloaded.exe
-unzip="true"
-target_file_name="reloaded.zip"
-if [ "$platform" = "android" ]; then
-    unzip="false"
-    target_file_name="reloaded_${export_preset}.apk"
-fi
-
-echo "Importing Godot project..."
-(godot --path demo --headless --import || exit 0) && godot --path demo --headless --import
-if [ "$target" = "template_release" ]; then
-    cd demo && godot --headless --export-release "$export_preset" "../build/${platform}/${target_file_name}" || exit 1
-else
-    cd demo && godot --headless --export-debug "$export_preset" "../build/${platform}/${target_file_name}" || exit 1
-fi
-
-if [ $unzip = "true" ]; then
-    cd "../build/${platform}" && unzip "${target_file_name}" && rm "${target_file_name}"
-fi

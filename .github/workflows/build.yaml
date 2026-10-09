@@ -1,10 +1,9 @@
 name: docker-build
 
 # DoS's double-precision images (docker-compose.yml, ci/docker/entrypoint.sh) build the library
-# once per kind: the host library (template_debug) that Godot needs to import, test and export the
-# project is built by build-host and handed to the unit tests and to every platform's release
-# build, which compiles only its own template_release library and exports the game. The games are
-# published as the branch's prerelease.
+# once per kind: the host library (template_debug) that Godot needs to import and test the demo
+# project is built by build-host and handed to the unit tests; every platform's build compiles its
+# own template_release library. Exporting and releasing the game is the game's repository's.
 on:
   pull_request:
   workflow_dispatch:
@@ -12,8 +11,6 @@ on:
 jobs:
   build-host:
     runs-on: ubuntu-24.04
-    outputs:
-      build_number: ${{ steps.build-number.outputs.value }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -30,14 +27,6 @@ jobs:
           key: template_debug-host-godot-cpp
           restore-keys: |
             template_debug-host-
-
-      # the build number of the whole run, stamped once (cmake/write_build_number.cmake): every
-      # platform's game and the installer carry the same one
-      - name: Build number
-        id: build-number
-        run: |
-          make build-number
-          echo "value=$(cat demo/build_number.txt)" >> "$GITHUB_OUTPUT"
 
       - name: Docker build the host library
         run: sudo chmod 777 ci/docker/entrypoint.sh |
@@ -117,7 +106,6 @@ jobs:
           fi
 
   build:
-    needs: build-host
     strategy:
       fail-fast: false
       matrix:
@@ -149,70 +137,18 @@ jobs:
             template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-
             template_release-${{ matrix.platform }}-
 
-      - uses: actions/download-artifact@v8
-        with:
-          name: host-library
-          path: demo/bin/libmaszyna/linux
-
-      # the build number the game shows and the installer carries, the one build-host stamped
-      - name: Build number
-        env:
-          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
-        run: printf '%s' "$BUILD_NUMBER" > demo/build_number.txt
-
-      # a throwaway key: a release APK has to be signed, and this build is for testing - a published
-      # APK is signed elsewhere; it lies in the checkout, which the container mounts as /var/maszyna
-      - name: Create the release keystore
-        if: matrix.platform == 'android'
-        run: |
-          keytool -genkeypair -keystore release.keystore -alias maszyna \
-            -storepass maszyna -keypass maszyna -keyalg RSA -validity 1 -dname CN=maszyna
-          {
-            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/var/maszyna/release.keystore"
-            echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=maszyna"
-            echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=maszyna"
-          } >> "$GITHUB_ENV"
-
-      # docker-compose.yml reads the target from $TARGET (-t $TARGET); the keystore's variables go
-      # into the container as they are (empty for the other platforms)
+      # docker-compose.yml reads the target from $TARGET (-t $TARGET); the library only - the host
+      # library is the build-host job's
       - name: Docker build ${{ matrix.platform }} ${{ matrix.arch }}
         env:
           TARGET: template_release
         run: sudo chmod 777 ci/docker/entrypoint.sh |
-          docker compose run -e HOST_PREBUILT=true -e GODOT_ANDROID_KEYSTORE_RELEASE_PATH
-            -e GODOT_ANDROID_KEYSTORE_RELEASE_USER -e GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD
-            ${{ matrix.platform }}_${{ matrix.arch }}
-
-      # the installer of the exported game (ci/windows/maszyna-reloaded.nsi), made as release-windows
-      # makes it: the export's exe, its library beside it
-      - name: Windows installer
-        if: matrix.platform == 'windows'
-        run: |
-          # build/ is the container's (root's), the runner writes beside it
-          mkdir -p installer setup
-          cp build/windows/reloaded.exe installer/
-          cp build/windows/libmaszyna.64.dll installer/
-          make windows-installer-image
-          docker run --rm -v "$PWD:$PWD" -w "$PWD" maszyna-windows-installer \
-            makensis -V2 -DSOURCE_DIR="$PWD/installer" -DBUILD_NUMBER="$(cat demo/build_number.txt)" \
-              -DOUTFILE="$PWD/setup/maszyna-reloaded-win64-setup.exe" ci/windows/maszyna-reloaded.nsi
-
-      - uses: actions/upload-artifact@v7
-        if: matrix.platform == 'windows'
-        with:
-          name: installer-windows-template_release-${{ matrix.arch }}
-          path: setup/maszyna-reloaded-win64-setup.exe
-          if-no-files-found: error
+          docker compose run -e HOST_PREBUILT=true ${{ matrix.platform }}_${{ matrix.arch }}
 
       - uses: actions/upload-artifact@v7
         with:
           name: lib-${{ matrix.platform }}-template_release-${{ matrix.arch }}
           path: demo/bin/libmaszyna/${{ matrix.platform }}
-
-      - uses: actions/upload-artifact@v7
-        with:
-          name: game-${{ matrix.platform }}-template_release-${{ matrix.arch }}
-          path: build/${{ matrix.platform }}
 
       - uses: actions/cache/save@v6
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
@@ -222,63 +158,3 @@ jobs:
             build-api/
             build-${{ matrix.platform == 'windows' && 'win64' || format('{0}64', matrix.platform) }}/
           key: template_release-${{ matrix.platform }}-${{ matrix.arch }}-godot-cpp
-
-  # The games the builds exported (game-<platform>-<target>-<arch>), published as the branch's
-  # prerelease (maszyna-reloaded-<branch>, "/" as "-") on its own commit, whose files every push
-  # replaces with the latest build's, named with its build number; nothing is built again here. A
-  # pull request from a fork has a read-only token and keeps only the artifacts.
-  publish:
-    needs: [build-host, build]
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
-    permissions:
-      contents: write
-    concurrency:
-      group: publish-${{ github.ref }}
-    steps:
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: game-*
-          path: artifacts
-
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: installer-*
-          path: installers
-
-      # each game as maszyna-reloaded-<branch>-<build>-<platform>-<target>-<arch>.zip, an APK as it
-      # is, the Windows installer as maszyna-reloaded-<branch>-<build>-windows-setup.exe
-      - name: Name the files
-        env:
-          NAME: ${{ github.head_ref }}
-          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
-        run: |
-          mkdir release
-          prefix="maszyna-reloaded-${NAME//\//-}-$BUILD_NUMBER"
-          for dir in artifacts/game-*; do
-            file="$PWD/release/$prefix-${dir#artifacts/game-}"
-            if ls "$dir"/*.apk > /dev/null 2>&1; then
-              cp "$dir"/*.apk "$file.apk"
-            else
-              (cd "$dir" && zip -qr "$file.zip" .)
-            fi
-          done
-          # one artifact is unpacked straight into installers/, several each into its own directory
-          find installers -name maszyna-reloaded-win64-setup.exe \
-            -exec cp {} "release/$prefix-windows-setup.exe" \;
-          test -f "release/$prefix-windows-setup.exe"
-          ls -l release
-
-      - name: Publish the branch prerelease
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-          BRANCH: ${{ github.head_ref }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          BUILD_NUMBER: ${{ needs.build-host.outputs.build_number }}
-        run: |
-          tag="maszyna-reloaded-${BRANCH//\//-}"
-          # the tag is moved to the commit just built: the old release goes with its tag
-          gh release delete "$tag" --cleanup-tag --yes || true
-          gh release create "$tag" release/* --prerelease --target "$HEAD_SHA" \
-            --title "$tag" --notes "Build $BUILD_NUMBER of $HEAD_SHA (#${{ github.event.number }})"

@@ -593,7 +593,7 @@ script logs more than once (`var _log: GameLogger = GameLog.get_logger("ai")`, t
 `_log.debug(...)`). A line goes at once - nothing is kept in memory - to the handlers registered
 for the logger's id (`GameLog.create_handler()`, a `GameLogHandler` with its `min_level`, e.g.
 `GameLogFileHandler`) and to `GameLog.message_logged`, which the HUD's Logs window shows, a tab per
-logger. The game sets up the log files (`demo_scenery_loading.gd`); a handler may be registered
+logger. The game sets up the log files (its `game.gd`); a handler may be registered
 for an id whose logger does not exist yet. Nothing goes to the Godot's console nor to the developer
 console (`~`).
 
@@ -609,7 +609,7 @@ This project has a sound system - the vendored `gnd-sfx` addon (`SfxBank` / `Sfx
 How a bank is built:
 
 1. One `SfxBank` resource per screen or subsystem, saved next to the assets it uses
-   (e.g. `demo/startup/ui_sounds.tres`).
+   (e.g. the game's `startup/ui_sounds.tres`).
 2. **Events are named after what happened, not after the sample or the widget**:
    `load_scenery`, `back_button`, `list_item_click`, `list_item_hover`, `apply_skin`. Code says
    `_ui_sounds.play(&"list_item_click")` and never learns which file that is - swapping the

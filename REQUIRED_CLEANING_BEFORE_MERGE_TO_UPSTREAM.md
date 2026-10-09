@@ -392,7 +392,7 @@ Legend:
 
 * **Where:** `src/cabin/Cabin3D.hpp:45, 98-99` vs the comment at `:78-79`; bound at
   `Cabin3D.cpp:45-51`, accessors `:272-276`; used by
-  `addons/libmaszyna/legacy/cabin/maszyna_dynamic_train_cabin.gd:58-62`
+  `addons/libmaszyna/legacy/cabin/maszyna_dynamic_train_cabin.gd:56-60`
 * **Problem:** a bound `NodePath controller_path` to a `VehiclePhysicsNode`, although the class
   says "there is deliberately no path to a controller here" and already holds `vehicle_rid`. The
   cab has two ways to reach its vehicle.
@@ -450,7 +450,7 @@ Legend:
 **`build_check_version()` once-guard called "to be sure"**
 
 * **Where:** `src/game_data/GameDataServer.cpp:57-62` (flag `GameDataServer.hpp:29`); callers
-  `demo/demo_3d.gd:6`, `demo/demo_scenery_loading.gd:89`, `demo/startup/startup.gd:15`
+  `demo/demo_3d.gd:9`; in the game (`MaSzyna-Reloaded/game`) `game.gd:89`, `startup/startup.gd:15`
 * **Rule:** no `ensure_*`; never do the same thing twice
 * **Problem:** `if (build_version_checked) return false;` - an ensure-style guard that clears
   caches and writes a setting, called from three scenes.
@@ -553,7 +553,7 @@ Legend:
 **Time and light level each walk all E3D instances**
 
 * **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1902, 1915-1929`; caller
-  `maszyna_environment_node.gd:477-478`
+  `maszyna_environment_node.gd:387-388`
 * **Problem:** on a change, `environment_set_time()` and `environment_set_light_level()` each call
   `_resolve_all_lights()` (`:1902`), which walks every instance. The environment calls both back
   to back, so a push that changes both costs two full passes.

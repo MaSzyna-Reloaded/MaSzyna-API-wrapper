@@ -15,4 +15,3 @@ header_pages:
   - api/index.md
   - wrapping-mover.md
   - lua-scripting.md
-  - bug-reports.md

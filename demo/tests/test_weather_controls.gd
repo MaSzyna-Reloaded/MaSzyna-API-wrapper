@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-const WEATHER_CONTROLS_SCENE: PackedScene = preload("res://weather/weather_controls.tscn")
+const WEATHER_CONTROLS_SCENE: PackedScene = preload("res://addons/libmaszyna/debug_hud/weather_controls.tscn")
 
 var _previous_weather: MaszynaEnvironment.Weather
 

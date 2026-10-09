@@ -1,13 +1,11 @@
-.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug release-android godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols release-linux-symbols release-clear-godot-cache windows-installer-image
+.PHONY: linux-sdk-image compile-release-linux compile-android-release compile-android-debug godot-version docs compile watch-and-compile api-docs docs-server docs-install docs-pdf cleanup style-check style-fix compile-release-symbols
 .DEFAULT_GOAL = compile-debug
 
-# The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
-# same from build to build and does not carry a branch or a date
-LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
-ANDROID_APK:=bin/android/maszyna-reloaded-android-arm64.apk
-WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
-WINDOWS_SETUP:=bin/windows/maszyna-reloaded-win64-setup.exe
-BUILD_NUMBER_FILE:=demo/build_number.txt
+# The Godot project the library is built into (its bin/libmaszyna/) and whose addons/ CMake links
+# the addon into - relative to this directory or absolute; a game with libmaszyna as a submodule
+# passes its own: make -C vendor/libmaszyna compile-debug GODOT_PROJECT_DIR=$(CURDIR)
+GODOT_PROJECT_DIR?=demo
+CMAKE_PROJECT_ARGS=-DGODOT_PROJECT_DIR=$(GODOT_PROJECT_DIR)
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
 CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
@@ -16,33 +14,31 @@ LIBMASZYNA_DEBUG:=""
 # The extension is built against double precision godot-cpp, so only a Godot built the same way
 # can load it - a single precision binary dies with a glibc heap assertion while the module
 # initialises. Override when your double precision build is named differently:
-#   make release-linux GODOT=godot-double
+#   make compile-debug GODOT=godot-double
 GODOT?=godot-double
 CMAKE_GODOTCPP_API_VERSION=4.7
 # f21961238's precision and API file: the double-precision API this repository versions, which
 # CMakeLists.txt binds anyway (FORCE), so no target needs a Godot to dump it
 CMAKE_GODOTCPP_PRECISION=double
 CMAKE_GODOTCPP_API_FILE=$(CURDIR)/extension_api.json
-# The engine the release is exported with - it has to match the editor exactly, since the export
-# looks its template up by this version
+# The engine the library is built for - a game exporting with it has to use exactly this one, since
+# the export looks its template up by this version
 GODOT_VERSION:=4.7.2
 
 # glibc is only forward compatible: a library or template linked against a rolling distribution's
 # glibc (2.43-2.44 here) refuses to start on anything older - Ubuntu 22.04/24.04, Debian 12, Mint.
 # The Linux release is therefore built in ci/docker/linux-sdk, Godot's own buildroot SDK
 # (glibc 2.34). The checkout is mounted at its own path and the build runs as the host user, so
-# the cmake cache and every output land exactly where a host build would put them.
+# the cmake cache and every output land exactly where a host build would put them; a game building
+# into its own project mounts its checkout, which holds this one (LINUX_SDK_MOUNT).
 LINUX_SDK_IMAGE:=maszyna-linux-sdk
-LINUX_SDK_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(LINUX_SDK_IMAGE)
+LINUX_SDK_MOUNT?=$(CURDIR)
+LINUX_SDK_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(LINUX_SDK_MOUNT):$(LINUX_SDK_MOUNT) -w $(CURDIR) $(LINUX_SDK_IMAGE)
 GODOT_SOURCE_DIR:=build-godot-$(GODOT_VERSION)
 GODOT_BIN:=$(GODOT_SOURCE_DIR)/bin
 GODOT_SCONS=scons precision=double production=yes -j$(CMAKE_BUILD_JOBS)
 LINUX_TEMPLATE:=$(GODOT_BIN)/godot.linuxbsd.template_release.double.x86_64
 ANDROID_TEMPLATES:=$(GODOT_BIN)/android_release.apk $(GODOT_BIN)/android_debug.apk
-LINUX_TEMPLATE_INSTALLED:=$(HOME)/.local/share/godot/export_templates/$(GODOT_VERSION).stable.double/linux_release.x86_64
-# The Windows installer is made by NSIS in ci/docker/windows-installer, mounted the same way
-WINDOWS_INSTALLER_IMAGE:=maszyna-windows-installer
-WINDOWS_INSTALLER_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(WINDOWS_INSTALLER_IMAGE)
 
 #Helper for CLion so it would see generated bindings
 generate-bindings: $(CMAKE_GODOTCPP_API_FILE)
@@ -71,26 +67,13 @@ cleanup-build-release:
 cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
-# The build number is stamped only when it is asked for, so a build never changes it. That is
-# what lets `upgrade-linux.sh` and `upgrade-windows.sh` - two separate make invocations, often
-# hours apart - ship the same number, and it makes the number describe a release rather than the
-# last time somebody compiled anything. Bump it deliberately: `make build-number`.
-.PHONY: build-number
-build-number:
-	cmake -DOUT=$(BUILD_NUMBER_FILE) -P cmake/write_build_number.cmake
-
-# A checkout that has never been stamped gets a number on its first build, and keeps it.
-$(BUILD_NUMBER_FILE):
-	$(MAKE) build-number
-
-
-compile-debug: $(BUILD_NUMBER_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
-	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
+	cmake -B build-debug $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-release: $(BUILD_NUMBER_FILE)
-	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-release:
+	cmake -B build-release $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
@@ -98,8 +81,8 @@ compile-release: $(BUILD_NUMBER_FILE)
 # compile-debug builds the vendored Mover at -O0, which makes the physics several times slower
 # than it is in a shipped build and sends any frame-time investigation after the wrong subsystem.
 # Overwrites the same .so as compile-debug; run that to go back.
-compile-profiling: $(BUILD_NUMBER_FILE)
-	cmake -B build-profiling -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-profiling:
+	cmake -B build-profiling $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-profiling --parallel $(CMAKE_BUILD_JOBS)
 
 
@@ -108,23 +91,9 @@ compile-profiling: $(BUILD_NUMBER_FILE)
 # on (its cmake/common_compiler_flags.cmake), and DEBUG_SYMBOLS is Debug or RelWithDebInfo. The
 # price is -O2 instead of -O3, so this build is for diagnosing a crash and not for measuring frame
 # times. It writes the same library as compile-release, so rebuild that one afterwards.
-compile-release-symbols: $(BUILD_NUMBER_FILE)
-	cmake -B build-release-symbols -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+compile-release-symbols:
+	cmake -B build-release-symbols $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-release-symbols --parallel $(CMAKE_BUILD_JOBS)
-
-
-# The export keeps each scene converted to binary and converts it again only when that scene's own
-# file changes - a scene instancing another, changed one keeps the old diff of it (FINDINGS.md), so
-# a release is exported from no cache at all
-release-clear-godot-cache:
-	rm -rf demo/.godot/exported
-
-
-release-linux-symbols: release-clear-godot-cache compile-debug compile-release-symbols
-	mkdir -p bin/linux
-	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
-	mv bin/linux/reloaded.zip $(LINUX_ZIP)
-	@echo "Exported with symbols: $(LINUX_ZIP)"
 
 
 compile-all: compile-debug compile-release
@@ -134,13 +103,13 @@ cross-compile-release: compile-release compile-windows-release
 
 
 cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
-	cmake -B build-linux64-debug \
+	cmake -B build-linux64-debug $(CMAKE_PROJECT_ARGS) \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DLIBMASZYNA_DEBUG=ON \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-linux64-debug --parallel $(CMAKE_BUILD_JOBS)
-	cmake -B build-win64-debug \
+	cmake -B build-win64-debug $(CMAKE_PROJECT_ARGS) \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
@@ -153,8 +122,8 @@ cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_F
 	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-windows-debug: $(BUILD_NUMBER_FILE)
-	cmake -B build-win64-debug \
+compile-windows-debug:
+	cmake -B build-win64-debug $(CMAKE_PROJECT_ARGS) \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
@@ -166,8 +135,8 @@ compile-windows-debug: $(BUILD_NUMBER_FILE)
 	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-windows-release: $(BUILD_NUMBER_FILE)
-	cmake -B build-win64-release \
+compile-windows-release:
+	cmake -B build-win64-release $(CMAKE_PROJECT_ARGS) \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
@@ -182,21 +151,19 @@ compile-windows-release: $(BUILD_NUMBER_FILE)
 # Any NDK will do for a GDExtension; GitHub's runners carry one in ANDROID_NDK_LATEST_HOME
 ANDROID_NDK_ROOT?=$(ANDROID_NDK_LATEST_HOME)
 
-compile-android-debug: $(BUILD_NUMBER_FILE)
-	cmake -B build-android-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
+compile-android-debug:
+	cmake -B build-android-debug $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
 	cmake --build build-android-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-android-release: $(BUILD_NUMBER_FILE)
-	cmake -B build-android-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
+compile-android-release:
+	cmake -B build-android-release $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PLATFORM=android -DANDROID_NDK_ROOT=$(ANDROID_NDK_ROOT)
 	cmake --build build-android-release --parallel $(CMAKE_BUILD_JOBS)
 
 
 linux-sdk-image:
 	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
 
-windows-installer-image:
-	docker build -q -t $(WINDOWS_INSTALLER_IMAGE) ci/docker/windows-installer
 
 
 # The SDK container has no Godot, so the API the build binds against is dumped on the host first
@@ -204,8 +171,8 @@ extension_api.json:
 	$(GODOT) --headless --dump-extension-api
 
 
-compile-release-linux: $(BUILD_NUMBER_FILE) extension_api.json linux-sdk-image
-	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
+compile-release-linux: extension_api.json linux-sdk-image
+	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux $(CMAKE_PROJECT_ARGS) -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
 
 
 # The runtime of the cab Python screens, built in the SDK like the release. PythonScreenServer
@@ -250,41 +217,6 @@ $(ANDROID_TEMPLATES) &: | $(GODOT_SOURCE_DIR)
 	cd $(GODOT_SOURCE_DIR) && $(GODOT_SCONS) platform=android arch=arm64 target=template_release swappy=no \
 	    && $(GODOT_SCONS) platform=android arch=arm64 target=template_debug swappy=no \
 	    && cd platform/android/java && ./gradlew generateGodotTemplates
-
-
-$(LINUX_TEMPLATE_INSTALLED): $(LINUX_TEMPLATE)
-	install -D $< $@
-
-
-# The export is run by the editor, which loads the debug library (libmaszyna.gdextension, the
-# editor's own feature tag), so that one is built as well - a stale one fails the scripts that use
-# a newer API
-release-linux: release-clear-godot-cache compile-debug compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
-	mkdir -p bin/linux
-	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
-	mv bin/linux/reloaded.zip $(LINUX_ZIP)
-	@echo "Exported: $(LINUX_ZIP)"
-
-
-release-windows: release-clear-godot-cache compile-debug compile-windows-release windows-installer-image
-	mkdir -p bin/windows
-	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
-	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
-	@echo "Exported: $(WINDOWS_ZIP)"
-	$(WINDOWS_INSTALLER_RUN) sh -c 'rm -rf bin/windows/installer && unzip -q $(WINDOWS_ZIP) -d bin/windows/installer \
-	    && makensis -V2 -DSOURCE_DIR=$(CURDIR)/bin/windows/installer -DBUILD_NUMBER=$$(cat $(BUILD_NUMBER_FILE)) \
-	       -DOUTFILE=$(CURDIR)/$(WINDOWS_SETUP) ci/windows/maszyna-reloaded.nsi \
-	    && rm -rf bin/windows/installer'
-	@echo "Exported: $(WINDOWS_SETUP)"
-
-
-release-android: release-clear-godot-cache compile-debug compile-android-release
-	mkdir -p bin/android
-	cd demo && $(GODOT) --headless --export-release "android_arm64" ../$(ANDROID_APK)
-	@echo "Exported: $(ANDROID_APK)"
-
-
-release: release-linux release-windows
 
 
 # The class reference pages of the Jekyll site in docs/ (docs/api/, not versioned): C++ classes

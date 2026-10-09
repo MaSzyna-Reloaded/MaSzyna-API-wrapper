@@ -76,10 +76,10 @@ func test_whoever_drove_the_vehicle_entered_rides_along() -> void:
 
 func test_the_player_goes_along_into_the_next_vehicle_with_its_driver() -> void:
     _couple(RailVehicleController.COUPLER_END_FRONT, GANGWAY)
-    DriverServer.driver_attach_implementation(driver, DriverImplementation.new())
+    attach_driver_implementation(driver, DriverImplementation.new())
     var other:RID = PersonServer.person_create()
     RailVehicleServer.person_enter_rear_cabin(other, second, DRIVER)
-    DriverServer.driver_attach_implementation(other, DriverImplementation.new())
+    attach_driver_implementation(other, DriverImplementation.new())
     PlayerServer.player_take_over_vehicle(first)
     var player:RID = PlayerServer.player_get_person()
     RailVehicleServer.person_move_to_rear_cabin(player)

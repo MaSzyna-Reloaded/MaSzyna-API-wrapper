@@ -10,10 +10,17 @@
 #include <vector>
 
 namespace godot {
-    /// The AI drivers - PersonServer persons given a DriverImplementation - by the person's handle. A
-    /// driver takes the orders a scenario gives (driver_send_command()) and, through its implementation,
-    /// what they mean; it drives the vehicle it sits in (VehicleServer) as a player does, through
-    /// the cab, while it sits there in the driver's role. A player at the controls needs no driver.
+    /// The AI drivers - PersonServer persons declared drivers of a named DriverImplementation - by the
+    /// person's handle. A driver takes the orders a scenario gives (driver_send_command()) and,
+    /// through its implementation, what they mean; it drives the vehicle it sits in (VehicleServer)
+    /// as a player does, through the cab, while it sits there in the driver's role. A player at the
+    /// controls needs no driver.
+    ///
+    /// The implementations are registered by name (implementation_register()), as VehicleServer's
+    /// are: whoever declares a driver (a scenery's trainset) names what it thinks with, and knows
+    /// nothing of the class. A driver of a name nobody registered yet thinks with nothing - its
+    /// orders are lost - until the implementation is registered, so it is registered before the
+    /// drivers get their orders.
     ///
     /// A driver acts in moments, as the original's does after its reaction time (TController::
     /// ReactionTime, Driver.cpp:150-158): its implementation asks for the next one
@@ -29,6 +36,9 @@ namespace godot {
 
         private:
             struct DriverData {
+                    /// What the driver was declared to think with, and the implementation registered
+                    /// under it, null while none is
+                    StringName implementation_name;
                     Ref<DriverImplementation> implementation;
                     /// The sequence of its scheduled update in the queue, 0 while none is
                     uint64_t update_sequence = 0;
@@ -47,6 +57,7 @@ namespace godot {
             };
 
             HashMap<RID, DriverData> drivers;
+            HashMap<StringName, Ref<DriverImplementation>> implementations;
             std::priority_queue<UpdateEntry, std::vector<UpdateEntry>, std::greater<UpdateEntry>> updates;
             uint64_t next_sequence = 1;
             /// While something is scheduled it holds the runtime's clock and runs as it advances
@@ -55,6 +66,7 @@ namespace godot {
             void _on_person_freed(const RID &p_person);
             void _on_cabin_person_role_changed(const RID &p_cabin, const RID &p_person, VehiclePersonRole::Role p_role);
             void _detach(const RID &p_driver);
+            void _set_implementation(const RID &p_driver, const Ref<DriverImplementation> &p_implementation);
             void _set_processing(bool p_processing);
             void _process_updates(double p_seconds);
 
@@ -67,7 +79,7 @@ namespace godot {
             /// The person is no driver any more (driver: RID) - its implementation was taken, or the
             /// person freed
             static const char *driver_freed_signal;
-            /// The person is a driver now (driver: RID) - it was given its first implementation
+            /// The person is a driver now (driver: RID) - it was declared one
             static const char *driver_attached_signal;
 
             DriverServer();
@@ -75,8 +87,15 @@ namespace godot {
 
             /// Every driver there is
             TypedArray<RID> driver_get_rids() const;
-            /// The person becomes a driver thinking with p_implementation; null makes it none
-            void driver_attach_implementation(const RID &p_driver, const Ref<DriverImplementation> &p_implementation);
+            /// p_implementation thinks for the drivers declared with p_name, from now on those declared
+            /// before it as well; a name registered again is thought with by the new one
+            void implementation_register(const StringName &p_name, const Ref<DriverImplementation> &p_implementation);
+            /// The drivers declared with p_name think with nothing until it is registered again
+            void implementation_unregister(const StringName &p_name);
+            /// The person becomes a driver thinking with the implementation registered as
+            /// p_implementation (implementation_register()), as soon as there is one; an empty name
+            /// makes it none
+            void driver_attach_implementation(const RID &p_driver, const StringName &p_implementation);
             Ref<DriverImplementation> driver_get_implementation(const RID &p_driver) const;
             /// The driver aboard the vehicle, in whatever role (the original's Mechanik); RID() for none
             RID vehicle_get_driver(const RID &p_vehicle) const;

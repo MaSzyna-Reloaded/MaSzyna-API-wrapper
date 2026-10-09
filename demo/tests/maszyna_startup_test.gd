@@ -69,7 +69,7 @@ const AIR_TIMEOUT:float = 300.0
 ## (LegacyCabinMainSwitch closes it on the release once the delay has run)
 const MAIN_SWITCH_HOLD_MARGIN:float = 1.0
 ## The main reservoir the driver waits for before releasing the brakes (Driver.cpp PrepareEngine
-## ready check, maszyna_legacy_ai_driver.gd EngineCheck.AIR) [bar]
+## ready check, the game's maszyna_legacy_ai_driver.gd EngineCheck.AIR) [bar]
 const READY_AIR_PRESSURE:float = 4.5
 ## The universal brake buttons of a cab (universalbrake1_bt..3_bt) and the flag of theirs that
 ## unlocks the brake pipe (TUniversalBrake::ub_UnlockPipe, hamulce.h:151)

@@ -4228,3 +4228,23 @@ lighting or the trainset.
   global transform while its player is leaving the tree.
 * **Rule:** a consumer of `scenery_loaded` exists and is connected before loading starts; removing
   a readiness fallback requires migrating every composition and test fixture to that signal path.
+
+
+## 2026-10-09 Classes moved out of the project, hidden by a warm class cache
+
+* **Symptom:** after the AI driver moved to the game, CI's run-tests failed with parse errors -
+  `MaszynaLegacyDriverTrainset` and `MaszynaLegacyDriverTimetable` not found in
+  `legacy/station/maszyna_legacy_station.gd`, `SunShaftsCompositorEffect` not found in
+  `test_sun_shafts_compositor_effect.gd` - and a translation test expecting the game's "Skład".
+  The same tests had passed locally; in the game, `test_maszyna_legacy_ai_driver.gd` used a helper
+  class left in libmaszyna's test, and its 21 tests never ran while the run reported all green.
+* **What proved it:** the local check ran in a copy whose `.godot/global_script_class_cache.cfg`
+  still listed the moved classes; CI imports from no cache. GUT leaves a script that fails to parse
+  out of the run without failing it, so the game's count simply lacked that file.
+* **Fix:** the station (it works on the driver's trainset and timetable) and the sun shafts test
+  went to the game, the core tests name the passengers load themselves
+  (`MaszynaGutTest.PASSENGERS`), the translation test checks libmaszyna's catalogue only.
+* **Rule:** after moving classes or files out, check from a fresh `.godot` (imported twice, as CI
+  does) and parse every test script - `gut_cmdln.gd -gdir=res://tests/
+  -gunit_test_name=<no such test>` runs none and reports every parse error - before trusting a
+  green count.

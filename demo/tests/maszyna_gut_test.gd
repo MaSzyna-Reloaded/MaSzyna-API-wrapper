@@ -7,6 +7,8 @@ const BUILT_TRACK_GAUGE:float = 1.435
 const RAIL_VEHICLE_MASS:float = 74000.0
 ## build_passenger_car()'s door travel [m] - a car without it has no doors (Mover.cpp:7920)
 const PASSENGER_CAR_DOOR_SHIFT:float = 0.5
+## The load passenger cars carry, as the data names it (FIZ LoadAccepted, the original's station.cpp)
+const PASSENGERS:String = "passengers"
 
 ## Simulated seconds a spawned vehicle may take to be drawn in detail - its steps place it, its frames
 ## look at its detail a few times a second (RailVehicleRenderingServer)
@@ -119,6 +121,17 @@ func build_vehicle_node(train_id:String = "TestTrain", description:VehicleContro
     return physics_node
 
 
+## The person becomes a driver thinking with `implementation` (null: no driver any more): it is
+## registered with DriverServer under a name of its own, which the driver is declared with
+func attach_driver_implementation(driver:RID, implementation:DriverImplementation) -> void:
+    if not implementation:
+        DriverServer.driver_attach_implementation(driver, &"")
+        return
+    var implementation_name:StringName = StringName("test_%d" % implementation.get_instance_id())
+    DriverServer.implementation_register(implementation_name, implementation)
+    DriverServer.driver_attach_implementation(driver, implementation_name)
+
+
 ## The person build_vehicle() seated as the DRIVER of the vehicle
 func get_vehicle_driver(vehicle_rid:RID) -> RID:
     var drivers:Array[VehiclePerson] = VehicleServer.vehicle_list_persons(
@@ -180,7 +193,7 @@ func build_passenger_car(train_id:String, track_name:String, offset:float, capac
     load.max_load = capacity
     load.load_speed = exchange_speed
     load.unload_speed = exchange_speed
-    var accepted:Array[String] = [MaszynaLegacyStation.PASSENGERS]
+    var accepted:Array[String] = [PASSENGERS]
     load.accepted_loads = accepted
     model.add_component(load)
     var physics_node:VehiclePhysicsNode = build_vehicle_node(train_id, model, initial_velocity)

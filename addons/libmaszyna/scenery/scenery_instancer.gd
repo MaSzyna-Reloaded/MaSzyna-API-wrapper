@@ -8,8 +8,11 @@ static var config_importer = preload("res://addons/libmaszyna/legacy/scenery/mas
 static var node_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd").new()
 ## A lit model no `lights` event is aimed at - it has lights but no aspects
-## The one implementation every scenery driver shares; it keeps their state per driver
-static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+## What a scenery's drivers think with, by name (DriverServer.implementation_register()): the
+## original's driver, which the game registers - a scenery knows its drivers, not their class
+const DRIVER_IMPLEMENTATION:StringName = &"maszyna_legacy"
+## The order that gives a driver its timetable (simulationstateserializer.cpp:845, endtrainset)
+const TIMETABLE_ORDER:String = "Timetable:"
 const GENERIC_SIGNAL_HEAD_KIND:SignalHeadKind = preload("../signalling/generic_signal_head_kind.tres")
 static var origin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_origin_importer.gd").new()
 static var endorigin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_endorigin_importer.gd").new()
@@ -338,12 +341,12 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
             var driver:RID = MaszynaLegacyVehicleSystem.vehicle_get_driver(trainset_vehicles[member])
             if driver.is_valid():
                 trainset_driver = driver
-                DriverServer.driver_attach_implementation(trainset_driver, _ai_driver)
+                DriverServer.driver_attach_implementation(trainset_driver, DRIVER_IMPLEMENTATION)
         # endtrainset (simulationstateserializer.cpp:839-848): the trainset's driver gets its
         # timetable and the velocity it starts with; of several drivers, the one furthest along
         if trainset_driver.is_valid() and trainset_data.timetable:
             DriverServer.driver_send_command(
-                    trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset_data.timetable,
+                    trainset_driver, TIMETABLE_ORDER + trainset_data.timetable,
                     trainset_data.velocity, 0.0)
     root.load_progress.emit(1.0, MaszynaIncludeNode.LoadStage.VEHICLES, "")
 

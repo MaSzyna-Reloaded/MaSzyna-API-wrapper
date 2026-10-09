@@ -188,7 +188,7 @@ func test_a_vehicle_takes_commands_and_reports_them() -> void:
             "LuaTestTrain", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
     controller.add_component(build_power_supply(BATTERY_VOLTAGE))
     var recording:RecordingDriver = RecordingDriver.new()
-    DriverServer.driver_attach_implementation(get_vehicle_driver(controller.get_rid()), recording)
+    attach_driver_implementation(get_vehicle_driver(controller.get_rid()), recording)
     var source:String = (
         "local output = maszyna.memory.find('lua_test_output')\n"
         + "local v = maszyna.vehicle.find('LuaTestTrain')\n"

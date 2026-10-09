@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="DriverSystem" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="DriverServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 	</brief_description>
 	<description>
@@ -7,15 +7,15 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="driver_attach_delegate">
+		<method name="driver_attach_implementation">
 			<return type="void" />
 			<param index="0" name="driver" type="RID" />
-			<param index="1" name="delegate" type="DriverDelegate" />
+			<param index="1" name="implementation" type="DriverImplementation" />
 			<description>
 			</description>
 		</method>
-		<method name="driver_get_delegate" qualifiers="const">
-			<return type="DriverDelegate" />
+		<method name="driver_get_implementation" qualifiers="const">
+			<return type="DriverImplementation" />
 			<param index="0" name="driver" type="RID" />
 			<description>
 			</description>
@@ -30,28 +30,28 @@
 			<return type="Dictionary" />
 			<param index="0" name="driver" type="RID" />
 			<description>
-				What the driver keeps, from its delegate ([method DriverDelegate._get_state]); empty without a delegate.
+				What the driver keeps, from its implementation ([method DriverImplementation._get_state]); empty without an implementation.
 			</description>
 		</method>
 		<method name="driver_get_timetable_state" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="driver" type="RID" />
 			<description>
-				The driver's timetable and its progress, from its delegate ([method DriverDelegate._get_timetable_state]); empty without a delegate.
+				The driver's timetable and its progress, from its implementation ([method DriverImplementation._get_timetable_state]); empty without an implementation.
 			</description>
 		</method>
 		<method name="driver_report_order_changed">
 			<return type="void" />
 			<param index="0" name="driver" type="RID" />
 			<description>
-				Called by the driver's delegate when the driver takes up another order; emits [signal driver_order_changed].
+				Called by the driver's implementation when the driver takes up another order; emits [signal driver_order_changed].
 			</description>
 		</method>
 		<method name="driver_report_timetable_changed">
 			<return type="void" />
 			<param index="0" name="driver" type="RID" />
 			<description>
-				Called by the driver's delegate when its timetable, or how far it got through it, has changed; emits [signal driver_timetable_changed].
+				Called by the driver's implementation when its timetable, or how far it got through it, has changed; emits [signal driver_timetable_changed].
 			</description>
 		</method>
 		<method name="driver_schedule_update">
@@ -82,7 +82,7 @@
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="hours" type="float" />
 			<description>
-				The seconds from [param hours] (the time of day) to the departure of the vehicle's train ([method DriverDelegate._get_seconds_until_departure]): by the timetable of its own driver, else of the first driver of its trainset with one ([code]Mechanik[/code], else [code]ctOwner[/code], [code]Event.cpp:2431-2435[/code]); 0 for a train without a timetable.
+				The seconds from [param hours] (the time of day) to the departure of the vehicle's train ([method DriverImplementation._get_seconds_until_departure]): by the timetable of its own driver, else of the first driver of its trainset with one ([code]Mechanik[/code], else [code]ctOwner[/code], [code]Event.cpp:2431-2435[/code]); 0 for a train without a timetable.
 			</description>
 		</method>
 		<method name="vehicle_is_control_active" qualifiers="const">
@@ -96,13 +96,13 @@
 		<signal name="driver_attached">
 			<param index="0" name="driver" type="RID" />
 			<description>
-				The person is a driver now: it was given its first delegate ([method driver_attach_delegate]).
+				The person is a driver now: it was given its first implementation ([method driver_attach_implementation]).
 			</description>
 		</signal>
 		<signal name="driver_freed">
 			<param index="0" name="driver" type="RID" />
 			<description>
-				The person is no driver any more: its delegate was taken ([method driver_attach_delegate] with null), or the person was freed (PersonServer).
+				The person is no driver any more: its implementation was taken ([method driver_attach_implementation] with null), or the person was freed (PersonServer).
 			</description>
 		</signal>
 		<signal name="driver_order_changed">

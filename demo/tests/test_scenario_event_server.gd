@@ -39,7 +39,7 @@ class RecordingAction extends ScenarioEventAction:
 
 
 ## A driver whose train departs this many seconds from any time
-class DepartingDriver extends DriverDelegate:
+class DepartingDriver extends DriverImplementation:
     var seconds:float = 0.0
 
     func _get_seconds_until_departure(_driver:RID, _hours:float) -> float:
@@ -244,7 +244,7 @@ func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
             "DepartureDelayTest", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD).get_rid()
     var departing:DepartingDriver = DepartingDriver.new()
     departing.seconds = UNTIL_DEPARTURE
-    DriverSystem.driver_attach_delegate(get_vehicle_driver(vehicle), departing)
+    DriverServer.driver_attach_implementation(get_vehicle_driver(vehicle), departing)
     var event:RID = _create_event(RecordingAction.new(), EVENT_DELAY)
     ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
     var now:float = SimulationServer.simulation_get_time()
@@ -428,7 +428,7 @@ func test_scenery_lights_event_shows_the_aspect() -> void:
     var aspects:Dictionary = {&"sem_ligh1": PackedFloat32Array([1.0])}
     SignallingServer.signal_head_set_kind(signal_head, MaszynaLegacySignalHeadKindFactory.create_kind(aspects))
     var system:RID = SignallingServer.system_create()
-    SignallingServer.system_attach_delegate(system, MaszynaLegacySignallingDelegate.new())
+    SignallingServer.system_attach_implementation(system, MaszynaLegacySignallingImplementation.new())
     SignallingServer.system_add_signal_head(system, signal_head)
     var model_data:MaszynaModelData = MaszynaModelData.new()
     model_data.name = "Sem_A"

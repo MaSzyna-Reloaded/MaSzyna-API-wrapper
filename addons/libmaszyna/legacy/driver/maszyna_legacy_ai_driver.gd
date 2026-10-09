@@ -1,5 +1,5 @@
 @tool
-extends DriverDelegate
+extends DriverImplementation
 class_name MaszynaLegacyAIDriver
 
 ## The original's AI driver (TController, Driver.cpp): the orders a scenario gives a train, in the
@@ -11,7 +11,7 @@ class_name MaszynaLegacyAIDriver
 ## cued (MaszynaLegacyDriverHints): taken while the computer drives, and kept in its list of hints
 ## either way, so a player driving its vehicle sees what to do. It acts in moments, one reaction
 ## time apart
-## (DriverSystem.driver_schedule_update()). One delegate serves every driver, their state is kept
+## (DriverServer.driver_schedule_update()). One implementation serves every driver, their state is kept
 ## per driver RID.
 
 ## TOrders (Driver.h:29-45): the operations are bits, so a change of direction can sit on top of
@@ -234,7 +234,7 @@ func _init() -> void:
 ## neither it keeps its way, the driver here never drives none
 func _on_vehicle_command_received(vehicle:RID, command:String, _p1:Variant, _p2:Variant) -> void:
     var controller:RailVehicleController = VehicleServer.vehicle_get_controller(vehicle) as RailVehicleController
-    if not controller or DriverSystem.vehicle_is_control_active(vehicle):
+    if not controller or DriverServer.vehicle_is_control_active(vehicle):
         return
     var reverser:bool = (command == "direction_increase" or command == "direction_decrease") \
             and not controller.get_direction() == VehicleController.DIRECTION_NEUTRAL
@@ -259,9 +259,9 @@ func _driver_attached(driver:RID) -> void:
     # Driver.cpp:1872) - never none: turning towards none puts the reverser at neutral and takes
     # that for the way it drives
     state.direction_order = state.direction
-    state.timetable.changed.connect(DriverSystem.driver_report_timetable_changed.bind(driver))
+    state.timetable.changed.connect(DriverServer.driver_report_timetable_changed.bind(driver))
     _drivers[driver] = state
-    DriverSystem.driver_schedule_update(driver, 0.0)
+    DriverServer.driver_schedule_update(driver, 0.0)
 
 
 func _driver_detached(driver:RID) -> void:
@@ -310,7 +310,7 @@ func _prepare_direction(situation:MaszynaLegacyDriverTraction.Situation) -> void
 ## so a train is not held by a vehicle driven from that has no doors of its own. Doors that warn
 ## have the departure signal sounded first, and close on the driver's next update.
 func _on_dispatch_step_changed(vehicle:RID, step:StationServer.DispatchStep) -> void:
-    var state:DriverState = _drivers.get(DriverSystem.vehicle_get_driver(vehicle))
+    var state:DriverState = _drivers.get(DriverServer.vehicle_get_driver(vehicle))
     if not state:
         return
     var situation:MaszynaLegacyDriverTraction.Situation = _read_situation(state)
@@ -366,7 +366,7 @@ func _close_doors(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     if doors and doors.permit_required:
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_RIGHT_PERMIT_OFF)
         MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF)
-    if not DriverSystem.vehicle_is_control_active(vehicle):
+    if not DriverServer.vehicle_is_control_active(vehicle):
         return
     for car:RID in state.trainset.vehicles:
         var car_doors:RailVehicleDoors = VehicleServer.vehicle_component_get(car, VehicleComponentType.COMPONENT_DOORS)
@@ -382,7 +382,7 @@ func _close_doors(situation:MaszynaLegacyDriverTraction.Situation) -> void:
             MaszynaLegacyDriverHints.send(car, &"doors_right_local", false)
 
 
-## The timetable and how far the driver got through it (DriverDelegate.get_timetable_state())
+## The timetable and how far the driver got through it (DriverImplementation.get_timetable_state())
 func _get_timetable_state(driver:RID) -> Dictionary:
     var state:DriverState = _drivers.get(driver)
     if not state:
@@ -398,7 +398,7 @@ func _get_timetable_state(driver:RID) -> Dictionary:
 
 
 ## The seconds from `hours` to the departure of the driver's train, NAN without a timetable
-## (DriverDelegate.get_seconds_until_departure())
+## (DriverImplementation.get_seconds_until_departure())
 func _get_seconds_until_departure(driver:RID, hours:float) -> float:
     var state:DriverState = _drivers.get(driver)
     if not state or not state.timetable.timetable:
@@ -444,7 +444,7 @@ static func order_text(order:int, vehicle_count:int, coupling:bool) -> String:
     return ""
 
 
-## What the driver keeps: its orders and what they asked for (DriverDelegate.get_state())
+## What the driver keeps: its orders and what they asked for (DriverImplementation.get_state())
 func _get_state(driver:RID) -> Dictionary:
     var state:DriverState = _drivers.get(driver)
     if not state:
@@ -619,7 +619,7 @@ func _update(driver:RID) -> void:
         state.engine_active = false
     # what its brakes can do - the table again when the trainset or the kind of order changed
     state.braking.read_trainset(
-            vehicle, state.orders[state.order_position], state.trainset, DriverSystem.vehicle_is_control_active(vehicle))
+            vehicle, state.orders[state.order_position], state.trainset, DriverServer.vehicle_is_control_active(vehicle))
     # DirectionalVel(), Driver.h:312: the speed, negative when it runs against the way it drives
     var directional_speed:float = VehicleServer.vehicle_get_speed(vehicle) \
             * signf(state.direction * VehicleServer.vehicle_get_velocity(vehicle))
@@ -631,7 +631,7 @@ func _update(driver:RID) -> void:
             vehicle, state.orders[state.order_position], state.stop_here, state.velocity, directional_speed,
             MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset,
             state.timetable, SimulationServer.time_of_day, state.shunt_velocity, state.speed.velocity_desired,
-            state.coupling_vehicle.is_valid(), state.braking, not DriverSystem.vehicle_is_control_active(vehicle))
+            state.coupling_vehicle.is_valid(), state.braking, not DriverServer.vehicle_is_control_active(vehicle))
     state.velocity = state.route.signal_velocity
     # uncoupling: stand, then press the buffers at walking pace (pick_optimal_speed(), Driver.cpp:7330-7343)
     if state.orders[state.order_position] & Order.DISCONNECT and state.vehicle_count >= 0:
@@ -721,7 +721,7 @@ func _update(driver:RID) -> void:
     # the computer is - its orders follow the vehicle the player gets ready too, as the timetable's
     # stops need them
     MaszynaLegacyDriverHints.update(situation)
-    var in_control:bool = DriverSystem.vehicle_is_control_active(vehicle)
+    var in_control:bool = DriverServer.vehicle_is_control_active(vehicle)
     # the cab the crew sits in switched on, another one off (determine_consist_state(),
     # Driver.cpp:6013-6022)
     var master:RailVehicleMasterController = RailVehicleServer.vehicle_component_get(
@@ -825,7 +825,7 @@ func _update(driver:RID) -> void:
         if state.direction == state.direction_order:
             _prepare_engine(_read_situation(state))
             _jump_to_next_order(state, vehicle)
-    DriverSystem.driver_schedule_update(driver, state.reaction_time)
+    DriverServer.driver_schedule_update(driver, state.reaction_time)
 
 
 ## What one decision of the driver works with (MaszynaLegacyDriverTraction.Situation), read afresh -
@@ -1072,7 +1072,7 @@ func _update_connect(situation:MaszynaLegacyDriverTraction.Situation) -> void:
             MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.COUPLING_ADAPTER_ATTACH, state.coupling_end, func() -> void:
                 MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_adapter_attach", state.coupling_end))
         if compatible and neighbour and neighbour.distance < ATTACH_DISTANCE \
-                and DriverSystem.vehicle_is_control_active(vehicle):
+                and DriverServer.vehicle_is_control_active(vehicle):
             MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_connect", state.coupling_end)
     # the command joins at once: coupled now, it drives on
     if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
@@ -1089,7 +1089,7 @@ func _update_connect(situation:MaszynaLegacyDriverTraction.Situation) -> void:
 func _update_disconnect(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var state:DriverState = situation.state
     var vehicle:RID = situation.vehicle
-    var in_control:bool = DriverSystem.vehicle_is_control_active(vehicle)
+    var in_control:bool = DriverServer.vehicle_is_control_active(vehicle)
     if state.vehicle_count >= 0:
         # a player may have uncoupled already, or before the order: as many units left as are to
         # stay, it is done (Driver.cpp:7104-7111) - the units from the driver's vehicle to the end,
@@ -1497,7 +1497,7 @@ func _check_vehicles(state:DriverState) -> void:
     if not vehicle.is_valid():
         return
     var situation:MaszynaLegacyDriverTraction.Situation = _read_situation(state)
-    if DriverSystem.vehicle_is_control_active(vehicle) and state.engine_active:
+    if DriverServer.vehicle_is_control_active(vehicle) and state.engine_active:
         MaszynaLegacyDriverLights.check_vehicles(situation)
     MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.CONSIST_DOOR_LOCKS_ON)
     # the heating a unit always wants, and a passenger train with heated cars behind its engines
@@ -1535,7 +1535,7 @@ func _jump_to_first_order(state:DriverState, vehicle:RID) -> void:
 ## What a new order changes at once (OrderCheck(), Driver.cpp:5161-5185): the lights of the order
 ## (CheckVehicles(), Driver.cpp:5084-5092) - the doors it checks belong to the driving (TODO.md)
 func _order_check(state:DriverState, vehicle:RID) -> void:
-    DriverSystem.driver_report_order_changed(state.driver)
+    DriverServer.driver_report_order_changed(state.driver)
     var current:int = state.orders[state.order_position]
     if not current == Order.OBEY_TRAIN:
         state.light_hints = Vector2i(MaszynaLegacyDriverLights.NO_HINT, MaszynaLegacyDriverLights.NO_HINT)

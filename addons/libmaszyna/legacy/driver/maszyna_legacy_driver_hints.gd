@@ -608,7 +608,7 @@ static func cue(situation:MaszynaLegacyDriverTraction.Situation, hint:Hint, para
         action:Callable = Callable()) -> bool:
     var vehicle:RID = situation.vehicle
     var cabin:RID = situation.cabin
-    var acting:bool = DriverSystem.vehicle_is_control_active(vehicle)
+    var acting:bool = DriverServer.vehicle_is_control_active(vehicle)
     if hint in DOOR_OPERATIONS:
         var doors:RailVehicleDoors = VehicleServer.vehicle_component_get(
                 vehicle, VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors

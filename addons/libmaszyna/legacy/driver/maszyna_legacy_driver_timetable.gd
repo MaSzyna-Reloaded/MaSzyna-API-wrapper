@@ -197,14 +197,14 @@ func rewind(station:String) -> bool:
     return false
 
 
-## Whether the train of a timetable state (DriverDelegate.get_timetable_state()) stands at its
+## Whether the train of a timetable state (DriverImplementation.get_timetable_state()) stands at its
 ## station, the entry `station_start` names: it has arrived there, or left it and not driven clear
 ## of it yet
 static func state_is_standing(state:Dictionary) -> bool:
     return int(state.get("station_start", 0)) < int(state.get("station_index", 0)) or state.get("arrived", false)
 
 
-## The delay [min] of a train by its timetable state (DriverDelegate.get_timetable_state()) at
+## The delay [min] of a train by its timetable state (DriverImplementation.get_timetable_state()) at
 ## `hours`, late when positive: at a stop, what it arrived with and, past the departure, the time
 ## since - an early arrival waits for the departure and is none; on the way, what it left the last
 ## station with

@@ -1,4 +1,4 @@
-extends SignallingSystemDelegate
+extends SignallingImplementation
 
 ## Demo automatic block: every `next` event moves each signal head of the system to the next aspect
 ## its kind declares (sbl_3.tres: S1, S5, S2, S3), and back to the first after the last.

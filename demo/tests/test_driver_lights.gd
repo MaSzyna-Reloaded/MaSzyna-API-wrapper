@@ -40,11 +40,11 @@ func before_each() -> void:
         controllers[index - 1].couple(controllers[index], RailVehicleController.COUPLER_END_REAR,
                 RailVehicleController.COUPLER_END_FRONT, RailVehicleController.COUPLING_FLAG_COUPLER)
     driver = get_vehicle_driver(vehicles[0])
-    DriverSystem.driver_attach_delegate(driver, DriverDelegate.new())
+    DriverServer.driver_attach_implementation(driver, DriverImplementation.new())
 
 
 func after_each() -> void:
-    DriverSystem.driver_attach_delegate(driver, null)
+    DriverServer.driver_attach_implementation(driver, null)
     controllers.clear()
     vehicles.clear()
 

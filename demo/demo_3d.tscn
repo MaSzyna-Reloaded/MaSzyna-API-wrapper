@@ -18,7 +18,7 @@
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/legacy/vehicle/maszyna_rail_vehicle_3d.gd" id="29_dcvyd"]
 [ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/debug_hud.tscn" id="debug_hud_scene"]
-[ext_resource type="SignallingSystemDelegate" path="res://signalling/demo_block_delegate.tres" id="demo_block_delegate"]
+[ext_resource type="SignallingImplementation" path="res://signalling/demo_block_implementation.tres" id="demo_block_implementation"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
 [ext_resource type="SignalHeadKind" uid="uid://diyvl26to634d" path="res://signalling/sbl_3.tres" id="sbl_3_kind"]
 [ext_resource type="Script" uid="uid://clkcp3220jqpe" path="res://addons/libmaszyna/scenery/scenery_streamer.gd" id="scenery_streamer"]
@@ -1420,7 +1420,7 @@ kind = ExtResource("sbl_3_kind")
 aspect = &"S1"
 
 [node name="DemoBlock" type="SignallingSystemNode" parent="." unique_id=1340977105]
-delegate = ExtResource("demo_block_delegate")
+implementation = ExtResource("demo_block_implementation")
 signal_head_names = PackedStringArray("demo_sbl")
 
 [node name="AspectCycle" type="Timer" parent="." unique_id=517233640]

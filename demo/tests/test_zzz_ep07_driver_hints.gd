@@ -45,18 +45,18 @@ func after_each() -> void:
 
 
 func test_a_player_with_the_pantograph_tank_cut_off_is_hinted_to_turn_the_valve() -> void:
-    var driver:RID = DriverSystem.vehicle_get_driver(_vehicle)
+    var driver:RID = DriverServer.vehicle_get_driver(_vehicle)
     assert_true(driver.is_valid(), "EP07-424 has its scenery driver (headdriver)")
     if not driver.is_valid():
         return
     var power_source:RailVehicleEnginePowerSource = RailVehicleServer.vehicle_component_get(
             _vehicle, RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
     assert_false(power_source.cntrl_pantograph_auto_valve, "the EP07's three-way valve is turned by hand")
-    DriverSystem.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
-    if not await wait_simulated_until(func() -> bool: return DriverSystem.driver_get_state(driver)["engine_active"],
+    DriverServer.driver_send_command(driver, "Prepare_engine", 1.0, 0.0)
+    if not await wait_simulated_until(func() -> bool: return DriverServer.driver_get_state(driver)["engine_active"],
             ENGINE_READY_SECONDS, "the driver's locomotive ready"):
         return
-    assert_true(DriverSystem.driver_get_state(driver)["engine_active"], "the driver gets the locomotive ready")
+    assert_true(DriverServer.driver_get_state(driver)["engine_active"], "the driver gets the locomotive ready")
 
     # the player takes it over with the valve on the small compressor
     PlayerServer.player_take_over_vehicle(_vehicle)
@@ -83,10 +83,10 @@ func test_a_player_with_the_pantograph_tank_cut_off_is_hinted_to_turn_the_valve(
 ## `Warning_signal`: the horn the scenery asks for is hinted to a player, and goes once it sounds
 ## (Driver.cpp:4860-4861; driverhints.cpp:993-1004)
 func test_the_horn_a_scenery_asks_for_is_hinted() -> void:
-    var driver:RID = DriverSystem.vehicle_get_driver(_vehicle)
+    var driver:RID = DriverServer.vehicle_get_driver(_vehicle)
     PlayerServer.player_take_over_vehicle(_vehicle)
 
-    DriverSystem.driver_send_command(driver, "Warning_signal", WARNING_DURATION, float(MaszynaLegacyDriverHints.HORN_LOW))
+    DriverServer.driver_send_command(driver, "Warning_signal", WARNING_DURATION, float(MaszynaLegacyDriverHints.HORN_LOW))
     assert_true(_hinted(driver, MaszynaLegacyDriverHints.Hint.HORN_ON), "the player is hinted to sound the horn")
 
     VehicleServer.vehicle_send_command(_vehicle, "horn_low", true)
@@ -99,7 +99,7 @@ func test_the_horn_a_scenery_asks_for_is_hinted() -> void:
 
 
 func _hinted(driver:RID, hint:MaszynaLegacyDriverHints.Hint) -> bool:
-    for entry:Dictionary in DriverSystem.driver_get_state(driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(driver).get("hints", []):
         if entry["hint"] == hint:
             return true
     return false

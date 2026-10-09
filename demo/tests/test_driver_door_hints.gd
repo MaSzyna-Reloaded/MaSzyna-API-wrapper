@@ -61,12 +61,12 @@ func test_closing_the_doors_revokes_their_permit() -> void:
 
 func test_a_player_is_hinted_to_close_the_doors_before_the_permits() -> void:
     var driver:RID = get_vehicle_driver(_vehicle)
-    DriverSystem.driver_attach_delegate(driver, MaszynaLegacyAIDriver.new())
+    DriverServer.driver_attach_implementation(driver, MaszynaLegacyAIDriver.new())
     PlayerServer.player_take_over_vehicle(_vehicle)
     # the hints look at the doors of the trainset the driver has checked - on its first update, at
     # once on attaching (MaszynaLegacyAIDriver)
     if not await wait_simulated_until(
-            func() -> bool: return DriverSystem.driver_get_state(driver).get("trainset_vehicles", []).size() > 0,
+            func() -> bool: return DriverServer.driver_get_state(driver).get("trainset_vehicles", []).size() > 0,
             TICK, "the driver's trainset checked"):
         return
     var cars:Array[RID] = [_vehicle]
@@ -83,7 +83,7 @@ func test_a_player_is_hinted_to_close_the_doors_before_the_permits() -> void:
             hints.find(MaszynaLegacyDriverHints.Hint.DOOR_LEFT_PERMIT_OFF), "the doors first, then the permit")
     assert_lt(hints.find(MaszynaLegacyDriverHints.Hint.DOOR_LEFT_CLOSE),
             hints.find(MaszynaLegacyDriverHints.Hint.DOOR_RIGHT_PERMIT_OFF), "the doors first, then the permits")
-    DriverSystem.driver_attach_delegate(driver, null)
+    DriverServer.driver_attach_implementation(driver, null)
 
 
 func _doors() -> RailVehicleDoors:
@@ -92,6 +92,6 @@ func _doors() -> RailVehicleDoors:
 
 func _hints(driver:RID) -> Array[MaszynaLegacyDriverHints.Hint]:
     var hints:Array[MaszynaLegacyDriverHints.Hint] = []
-    for entry:Dictionary in DriverSystem.driver_get_state(driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(driver).get("hints", []):
         hints.append(entry["hint"])
     return hints

@@ -1,5 +1,5 @@
 #include "MaszynaLegacyVehicleCommandAction.hpp"
-#include "driver/DriverSystem.hpp"
+#include "driver/DriverServer.hpp"
 #include "scenario/ScenarioEventServer.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -48,7 +48,7 @@ namespace godot {
             return;
         }
         // the rest is an order for the driver of the vehicle that queued the event
-        DriverSystem *drivers = DriverSystem::get_instance();
+        DriverServer *drivers = DriverServer::get_instance();
         ERR_FAIL_NULL(drivers);
         const RID driver = drivers->vehicle_get_driver(p_activator);
         if (text.is_empty() || !driver.is_valid()) {

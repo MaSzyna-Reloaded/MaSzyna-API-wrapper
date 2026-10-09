@@ -37,11 +37,11 @@ func before_each():
     state = MaszynaLegacyAIDriver.DriverState.new()
     # the computer drives (AIControllFlag): a driver whose cues are taken
     driver = get_vehicle_driver(vehicle)
-    DriverSystem.driver_attach_delegate(driver, DriverDelegate.new())
+    DriverServer.driver_attach_implementation(driver, DriverImplementation.new())
 
 
 func after_each():
-    DriverSystem.driver_attach_delegate(driver, null)
+    DriverServer.driver_attach_implementation(driver, null)
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 

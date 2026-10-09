@@ -145,7 +145,7 @@ func test_the_releaser_is_not_asked_for_once_the_independent_brake_is_let_off() 
 func _start_by_hints(scenery:String) -> bool:
     if not await enter_vehicle(scenery, "SN61-02"):
         return false
-    _driver = DriverSystem.vehicle_get_driver(occupied)
+    _driver = DriverServer.vehicle_get_driver(occupied)
     assert_true(_driver.is_valid(), "the scenery's driver is seated in SN61-02")
     if not _driver.is_valid():
         return false
@@ -171,7 +171,7 @@ func _start_by_hints(scenery:String) -> bool:
 
 
 func _listed(hint:MaszynaLegacyDriverHints.Hint) -> bool:
-    for entry:Dictionary in DriverSystem.driver_get_state(_driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(_driver).get("hints", []):
         if entry["hint"] == hint:
             return true
     return false
@@ -183,7 +183,7 @@ func _running() -> bool:
 
 ## The key beside the first listed hint not done yet that has one, or none
 func _hinted_action() -> StringName:
-    for entry:Dictionary in DriverSystem.driver_get_state(_driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(_driver).get("hints", []):
         if entry["done"] or not entry["control"]:
             continue
         var action:StringName = _cab_logic.get_action(entry["control"], entry["gesture"])
@@ -196,7 +196,7 @@ func _hinted_action() -> StringName:
 ## goes into the story with what the window listed and what the vehicle showed
 func _hold(action:StringName) -> void:
     var listed:Array[String] = []
-    for entry:Dictionary in DriverSystem.driver_get_state(_driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(_driver).get("hints", []):
         listed.append(entry["text"])
     await key_press(action)
     await step(ticks(KEY_HOLD))

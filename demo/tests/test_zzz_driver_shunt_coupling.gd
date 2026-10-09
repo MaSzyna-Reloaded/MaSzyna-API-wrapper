@@ -55,14 +55,14 @@ func before_each() -> void:
         return
     _driven = VehicleServer.vehicle_get_rid_by_name("SN61-02")
     _standing = VehicleServer.vehicle_get_rid_by_name("SN61-03")
-    _driver = DriverSystem.vehicle_get_driver(_driven)
+    _driver = DriverServer.vehicle_get_driver(_driven)
     VehicleServer.vehicle_command_received.connect(_on_vehicle_command_received)
-    DriverSystem.driver_order_changed.connect(_on_driver_order_changed)
+    DriverServer.driver_order_changed.connect(_on_driver_order_changed)
 
 
 func after_each() -> void:
     VehicleServer.vehicle_command_received.disconnect(_on_vehicle_command_received)
-    DriverSystem.driver_order_changed.disconnect(_on_driver_order_changed)
+    DriverServer.driver_order_changed.disconnect(_on_driver_order_changed)
     _scenery.free()
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
@@ -71,7 +71,7 @@ func test_shunt_couples_by_what_the_couplers_have_and_drives_on() -> void:
     assert_true(_driver.is_valid(), "the scenery's driver is seated in SN61-02")
     if not is_passing():
         return
-    DriverSystem.driver_send_command(_driver, "Shunt", SHUNT_VEHICLES, SHUNT_COUPLER)
+    DriverServer.driver_send_command(_driver, "Shunt", SHUNT_VEHICLES, SHUNT_COUPLER)
     var started:int = Time.get_ticks_msec()
     while not _connected and not _asked_beyond_joinable:
         if Time.get_ticks_msec() - started > HANG_GUARD_SECONDS * MSEC_PER_SECOND:
@@ -101,7 +101,7 @@ func _on_vehicle_command_received(vehicle:RID, command:String, p1:Variant, _p2:V
 func _on_driver_order_changed(driver:RID) -> void:
     if not driver == _driver or not _connecting:
         return
-    var order:Order = DriverSystem.driver_get_state(driver)["order"] as Order
+    var order:Order = DriverServer.driver_get_state(driver)["order"] as Order
     if not order & Order.CONNECT and _joined_as_asked():
         _connected = true
 
@@ -135,4 +135,4 @@ static func _flag_names(flags:RailVehicleController.CouplingFlags) -> String:
 
 func _coupling_text() -> String:
     return "asked and joinable %s, order %s" % [_flag_names(_asked_joinable()),
-            MaszynaLegacyAIDriver.order_text(DriverSystem.driver_get_state(_driver)["order"], 0, false)]
+            MaszynaLegacyAIDriver.order_text(DriverServer.driver_get_state(_driver)["order"], 0, false)]

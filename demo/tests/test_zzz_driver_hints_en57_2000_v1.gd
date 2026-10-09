@@ -11,7 +11,7 @@ const DRIVER_UPDATE_SECONDS:float = 5.0
 
 func test_a_compressor_switched_on_is_not_hinted() -> void:
     await run_startup("startup_en57-2000_v1.scn", "EN57-2067ra", Kind.ELECTRIC_MULTIPLE_UNIT)
-    var driver:RID = DriverSystem.vehicle_get_driver(occupied)
+    var driver:RID = DriverServer.vehicle_get_driver(occupied)
     assert_true(driver.is_valid(), "the scenery's driver is seated in the unit")
     if not driver.is_valid():
         return
@@ -29,6 +29,6 @@ func test_a_compressor_switched_on_is_not_hinted() -> void:
                 brake.get_compressor_allowed(), brake.get_compressor_enabled()])
     assert_true(allowed, "the start-up switched a compressor on: %s" % "; ".join(cars))
     var hinted:bool = false
-    for entry:Dictionary in DriverSystem.driver_get_state(driver).get("hints", []):
+    for entry:Dictionary in DriverServer.driver_get_state(driver).get("hints", []):
         hinted = hinted or entry["hint"] == MaszynaLegacyDriverHints.Hint.COMPRESSOR_ON
     assert_false(hinted, "no hint to switch on a compressor switched on: %s" % "; ".join(cars))

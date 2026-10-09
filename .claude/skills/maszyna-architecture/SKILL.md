@@ -154,12 +154,12 @@ of two same-named vehicles lost its commands and its cab (TrainSystem, removed 2
   silently stopped existing.
 * **A new component** - a `RailVehicle<Domain>` interface plus a `MoverRailVehicle<Domain>` implementation, added
   with `add_component()` and reached with `get_component(VehicleComponentType::TYPE)`.
-* **Behaviour that differs between variants of one server object** - a delegate, not a subclass
+* **Behaviour that differs between variants of one server object** - an implementation, not a subclass
   of the object: an interface class of `GDVIRTUAL`s whose C++ virtuals forward to the script
-  (`SignallingSystemDelegate`), implemented in C++ (`MaszynaLegacySignallingDelegate`) or GDScript,
-  attached after `*_create()` (`system_attach_delegate`). Every callback carries the owner's RID,
-  since a `Resource` is shared; the delegate changes state only through the server's API. The
-  original's behaviour is one such delegate (`MaszynaLegacy*`), never the base.
+  (`SignallingImplementation`), implemented in C++ (`MaszynaLegacySignallingImplementation`) or GDScript,
+  attached after `*_create()` (`system_attach_implementation`). Every callback carries the owner's RID,
+  since a `Resource` is shared; the implementation changes state only through the server's API. The
+  original's behaviour is one such implementation (`MaszynaLegacy*`), never the base.
 * **Something that lives as long as another server's handle** - follow the owner's freed signal
   (`E3DRenderingServer.instance_freed` frees the instance's signal head), not a validity check.
 * **Configuration of a handle** - the server's struct under the RID (`SignalHeadData`), set by

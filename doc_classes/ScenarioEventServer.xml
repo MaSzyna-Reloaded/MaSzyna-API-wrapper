@@ -120,7 +120,7 @@
 			<param index="0" name="event" type="RID" />
 			<param index="1" name="seconds" type="float" />
 			<description>
-				Queued by a vehicle, the event runs [param seconds] from the departure of the vehicle's train by its timetable ([method DriverSystem.vehicle_get_seconds_until_departure]), not before now, instead of from now ([code]departuredelay[/code], [code]Event.cpp:2431-2444[/code]); [code]NAN[/code] for an event that does not wait for a departure.
+				Queued by a vehicle, the event runs [param seconds] from the departure of the vehicle's train by its timetable ([method DriverServer.vehicle_get_seconds_until_departure]), not before now, instead of from now ([code]departuredelay[/code], [code]Event.cpp:2431-2444[/code]); [code]NAN[/code] for an event that does not wait for a departure.
 			</description>
 		</method>
 		<method name="event_set_name">

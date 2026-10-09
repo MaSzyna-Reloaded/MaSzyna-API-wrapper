@@ -224,7 +224,7 @@ func control(situation:Situation) -> void:
                     decrease.bind(situation, false))
     control_handles(situation)
     # SpeedSet() is the computer's own (AIControllFlag, Driver.cpp:3848)
-    if DriverSystem.vehicle_is_control_active(situation.vehicle):
+    if DriverServer.vehicle_is_control_active(situation.vehicle):
         set_speed(situation)
 
 

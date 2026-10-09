@@ -1,5 +1,5 @@
-class_name CabinScriptDelegate
-extends ScenarioScriptCabinDelegate
+class_name CabinScriptImplementation
+extends ScenarioScriptCabinImplementation
 
 ## The scenario scripts' way to the cabs (maszyna.cabin): a script's manipulation goes to
 ## CabinSystem.act(), as the driver's hand and the AI driver's do, and what changes in a cab goes

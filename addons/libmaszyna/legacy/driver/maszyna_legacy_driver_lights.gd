@@ -62,7 +62,7 @@ static func check_vehicles(situation:MaszynaLegacyDriverTraction.Situation) -> v
 ## Tb1 shunting, one white lamp at each end, diagonally. Any other order lights nothing.
 static func control(situation:MaszynaLegacyDriverTraction.Situation) -> void:
     var hints:Vector2i = situation.state.light_hints
-    var acting:bool = DriverSystem.vehicle_is_control_active(situation.vehicle)
+    var acting:bool = DriverServer.vehicle_is_control_active(situation.vehicle)
     if situation.order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN:
         if hints.x == NO_HINT:
             MaszynaLegacyDriverHints.cue(situation, MaszynaLegacyDriverHints.Hint.HEADCODE_PC1, 0.0,

@@ -22,7 +22,7 @@ func test_starts_and_moves_off() -> void:
 func test_the_driver_walks_to_the_rear_cab_with_the_player() -> void:
     await _walk_to_the_rear_cab_of_c()
     var player_vehicle:RID = PlayerServer.player_get_vehicle()
-    var driver:RID = DriverSystem.vehicle_get_driver(player_vehicle)
+    var driver:RID = DriverServer.vehicle_get_driver(player_vehicle)
     assert_eq(VehicleServer.person_get_cabin(driver), VehicleServer.person_get_cabin(PlayerServer.player_get_person()),
             "the driver sits in the player's cab")
     for car:RID in RailVehicleServer.vehicle_get_coupled(player_vehicle, RailVehicleController.COUPLER_END_FRONT,
@@ -77,7 +77,7 @@ func _walk_to_the_rear_cab_of_c() -> void:
 
 func _hints() -> Array[String]:
     var texts:Array[String] = []
-    var driver:RID = DriverSystem.vehicle_get_driver(PlayerServer.player_get_vehicle())
-    for hint:Dictionary in DriverSystem.driver_get_state(driver).get("hints", []):
+    var driver:RID = DriverServer.vehicle_get_driver(PlayerServer.player_get_vehicle())
+    for hint:Dictionary in DriverServer.driver_get_state(driver).get("hints", []):
         texts.append(hint["text"])
     return texts

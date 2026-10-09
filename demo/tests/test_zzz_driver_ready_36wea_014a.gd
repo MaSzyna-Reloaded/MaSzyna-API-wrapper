@@ -13,12 +13,12 @@ const DRIVER_UPDATE_SECONDS:float = 5.0
 
 func test_a_unit_moved_off_is_ready_for_its_driver() -> void:
     await run_startup("startup_36wea-014a.scn", "36WEa-014A", Kind.ELECTRIC_MULTIPLE_UNIT, Pantographs.SELECTOR)
-    var driver:RID = DriverSystem.vehicle_get_driver(occupied)
+    var driver:RID = DriverServer.vehicle_get_driver(occupied)
     assert_true(driver.is_valid(), "the scenery's driver is seated in the unit")
     if not driver.is_valid():
         return
     await step(ticks(DRIVER_UPDATE_SECONDS))
-    var state:Dictionary = DriverSystem.driver_get_state(driver)
+    var state:Dictionary = DriverServer.driver_get_state(driver)
     var cars:Array[String] = []
     for car:RID in VehicleServer.vehicle_get_rids():
         var dump:Dictionary = VehicleServer.vehicle_dump_state(car)

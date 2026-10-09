@@ -39,8 +39,6 @@ namespace godot {
                 p_mover->UniCtrlList[i].PrevPosFastDec = item->get_nearest_stable_down();
             }
         }
-
-        p_mover->MainCtrlPos = get_selector_position();
     }
 
 

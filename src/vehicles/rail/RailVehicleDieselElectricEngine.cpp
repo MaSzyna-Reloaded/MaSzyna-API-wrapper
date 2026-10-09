@@ -3,6 +3,9 @@
 namespace godot {
     void RailVehicleDieselElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
         RailVehicleDieselEngine::_fill_state_dictionary(p_state);
+        if (!is_simulation_ready()) {
+            return;
+        }
         p_state["Im"] = get_motor_current();
         p_state["engine_voltage"] = get_engine_voltage();
         p_state["circuit_imax"] = get_circuit_imax();

@@ -1,6 +1,7 @@
 #include "MaszynaMoverVehicleServer.hpp"
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
+#include "legacy/vehicles/MoverBackend.hpp"
 #include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include <cmath>
@@ -643,10 +644,12 @@ namespace godot {
     }
 
     void MoverRailVehicleController::compartment_lights(const bool p_enabled) const {
+        ASSERT_MOVER(mover);
         mover->CompartmentLightsSwitch(p_enabled);
     }
 
     void MoverRailVehicleController::compartment_lights_switch_off(const bool p_enabled) const {
+        ASSERT_MOVER(mover);
         mover->CompartmentLightsSwitchOff(p_enabled);
     }
 
@@ -660,6 +663,7 @@ namespace godot {
 
     // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
     void MoverRailVehicleController::cab_activation(const bool p_enabled) const {
+        ASSERT_MOVER(mover);
         if (p_enabled) {
             mover->CabActivisation();
             return;
@@ -670,17 +674,20 @@ namespace godot {
     // Original engine: taking over a vehicle activates its cab if the FIZ allows automatic
     // activation (Train.cpp:9086, 9147); otherwise the driver uses cab_activation
     void MoverRailVehicleController::cab_activation_auto() const {
+        ASSERT_MOVER(mover);
         mover->CabActivisationAuto(true);
     }
 
     // Original engine: TTrain::CabChange() (Train.cpp:10336) switches the cab off before the change
     void MoverRailVehicleController::cab_deactivation_auto() const {
+        ASSERT_MOVER(mover);
         mover->CabDeactivisationAuto();
     }
 
     // Original engine: what TMoverParameters::ChangeCab() resets besides the cab (Mover.cpp:735-749);
     // the cab itself is the driver's, handed down by set_driver_cabin_kind()
     void MoverRailVehicleController::cab_controls_reset() const {
+        ASSERT_MOVER(mover);
         if ((mover->BrakeCtrlPosNo > 0) && ((mover->BrakeSystem == TBrakeSystem::Pneumatic) ||
                                             (mover->BrakeSystem == TBrakeSystem::ElectroPneumatic))) {
             mover->BrakeLevelSet(mover->Handle->GetPos(bh_NP));
@@ -718,6 +725,7 @@ namespace godot {
     // Original engine: TTrain::MoveToVehicle() (Train.cpp:10950-10954) - CabOccupied follows the driver
     // (set_driver_cabin_kind())
     void MoverRailVehicleController::cabin_leave() const {
+        ASSERT_MOVER(mover);
         mover->CabDeactivisation();
         mover->BrakeLevelSet(mover->Handle->GetPos(bh_NP));
         mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
@@ -726,6 +734,7 @@ namespace godot {
 
     // Original engine: TTrain::MoveToVehicle() (Train.cpp:10976-10977)
     void MoverRailVehicleController::cabin_enter() const {
+        ASSERT_MOVER(mover);
         mover->LimPipePress = mover->PipePress;
         mover->CabActivisationAuto(true);
     }
@@ -746,39 +755,47 @@ namespace godot {
     }
 
     void MoverRailVehicleController::ground_relay_reset() const {
+        ASSERT_MOVER(mover);
         mover->RelayReset(Maszyna::maincircuitground);
     }
 
     void MoverRailVehicleController::antislip() const {
+        ASSERT_MOVER(mover);
         mover->AntiSlippingButton();
     }
 
     void MoverRailVehicleController::main_controller_increase(const int p_step) const {
+        ASSERT_MOVER(mover);
         const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
     void MoverRailVehicleController::main_controller_decrease(const int p_step) const {
+        ASSERT_MOVER(mover);
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
     // Original engine: OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), regular mode
     void MoverRailVehicleController::second_controller_increase(const int p_step) const {
+        ASSERT_MOVER(mover);
         const int step = p_step > 0 ? p_step : 1;
         mover->IncScndCtrl(step);
     }
 
     void MoverRailVehicleController::second_controller_decrease(const int p_step) const {
+        ASSERT_MOVER(mover);
         const int step = p_step > 0 ? p_step : 1;
         mover->DecScndCtrl(step);
     }
 
     void MoverRailVehicleController::direction_increase() const {
+        ASSERT_MOVER(mover);
         mover->DirectionForward();
     }
 
     void MoverRailVehicleController::direction_decrease() const {
+        ASSERT_MOVER(mover);
         mover->DirectionBackward();
     }
 } // namespace godot

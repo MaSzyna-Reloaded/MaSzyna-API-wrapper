@@ -45,12 +45,15 @@ namespace godot {
     }
 
     void RailVehicleElectricInductionEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        RailVehicleElectricEngine::_fill_state_dictionary(p_state);
+        if (!is_simulation_ready()) {
+            return;
+        }
         p_state["inverters"] = get_inverters();
         p_state["force_max"] = get_force_max();
         p_state["force_full"] = get_force_full();
         p_state["field_current"] = get_field_current();
         p_state["motor_voltage"] = get_motor_voltage();
-        RailVehicleElectricEngine::_fill_state_dictionary(p_state);
     }
 
     void RailVehicleElectricInductionEngine::set_nominal_voltage(const double p_value) {

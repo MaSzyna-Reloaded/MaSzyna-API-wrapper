@@ -65,6 +65,9 @@ namespace godot {
     }
 
     void RailVehicleRadio::_fill_state_dictionary(Dictionary &p_state) const {
+        if (!is_simulation_ready()) {
+            return;
+        }
         p_state["radio_enabled"] = get_enabled();
         p_state["radio_powered"] = get_powered();
         p_state["radio_channel"] = get_channel();
@@ -94,5 +97,7 @@ namespace godot {
         unregister_command("radio_volume_increase");
         unregister_command("radio_volume_decrease");
         unregister_command("radio_stop");
+        unregister_command("radio_call1");
+        unregister_command("radio_call3");
     }
 } // namespace godot

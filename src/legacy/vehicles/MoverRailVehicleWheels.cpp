@@ -40,7 +40,8 @@ namespace godot {
         if (get_axle_inertial_moment() <= 0.0) {
             const double k = 472.0;
             p_mover->AxleInertialMoment = k / 4.0 * std::pow(p_mover->WheelDiameter, 4.0) * p_mover->NAxles;
-            // FIXME: THIS IS MODIFICATION OF OTHER SECTION, IT SHOULD BE MOVED TO POST-CONFIG STAGE
+            // Original engine: LoadFIZ_Wheels() overwrites the Mred LoadFIZ_Param() read (Mover.cpp:
+            // 10248, 10390) - the controller applies its Param: values before the components
             p_mover->Mred = k * std::pow(p_mover->WheelDiameter, 2.0) * p_mover->NAxles;
         } else {
             p_mover->AxleInertialMoment = get_axle_inertial_moment();

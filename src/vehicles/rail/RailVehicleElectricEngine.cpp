@@ -109,6 +109,10 @@ namespace godot {
 
 
     void RailVehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        RailVehicleEngine::_fill_state_dictionary(p_state);
+        if (!is_simulation_ready()) {
+            return;
+        }
         p_state["camshaft_available"] = get_camshaft_available();
         p_state["converter_overload"] = get_converter_overload();
         p_state["line_breaker_delay"] = get_line_breaker_delay();
@@ -123,10 +127,6 @@ namespace godot {
         p_state["motor_connectors_open"] = get_motor_connectors_open();
         p_state["line_contactor_closed"] = is_line_contactor_closed();
         p_state["pressure_switch_tripped"] = is_pressure_switch_tripped();
-        RailVehicleEngine::_fill_state_dictionary(p_state);
-        if (!is_simulation_ready()) {
-            return;
-        }
         p_state["indicators/contactors_active"] = get_contactors_active();
         p_state["indicators/diff_relay_active"] = get_diff_relay_active();
         p_state["indicators/resistors_active"] = get_resistors_active();

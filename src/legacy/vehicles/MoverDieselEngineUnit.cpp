@@ -178,7 +178,11 @@ namespace godot {
                 RailVehicleDieselEngine::NOMINAL_COOLING_POWER / p_engine->get_cooling_nominal_power());
         // LoadFIZ_Engine (Mover.cpp:11172-11203): derived from what was read
         p_mover->dizel_nreg_min = p_engine->get_mechanical_min_rpm() * NREG_MIN_SHARE;
-        p_mover->ShuntModeAllow = p_engine->get_mechanical_shunt_mode_ratio() > 0.0;
+        // the mechanical diesel's shunt gear (LoadFIZ_Engine(), Mover.cpp:11201-11205); a
+        // diesel-electric's shunt mode is its own (Mover.cpp:11258-11262)
+        if (p_mover->EngineType == TEngineType::DieselEngine) {
+            p_mover->ShuntModeAllow = p_engine->get_mechanical_shunt_mode_ratio() > 0.0;
+        }
 
         p_mover->hydro_TC = p_engine->get_torque_converter_present();
         p_mover->hydro_TC_TMMax = p_engine->get_torque_converter_max_torque_ratio();

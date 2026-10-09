@@ -31,20 +31,20 @@ Legend:
 - [x] [RC-003](#rc-003) Diesel backend forces test power source ✔
 - [x] [RC-004](#rc-004) Configuration applied up to five times per vehicle ✔
 - [x] [RC-005](#rc-005) Cargo list duplicated by repeated configuration
-- [ ] [RC-006](#rc-006) Radio call commands never unregistered ✔
+- [x] [RC-006](#rc-006) Radio call commands never unregistered ✔
 - [x] [RC-007](#rc-007) `e3d_loaded` connected again on every dirty frame ✔
 - [ ] [RC-008](#rc-008) Headlight colour 255 times overbright ✔
 - [x] [RC-009](#rc-009) Main switch voltage defaults derived from zero
-- [ ] [RC-010](#rc-010) Mover controller commands dereference a null backend
+- [x] [RC-010](#rc-010) Mover controller commands dereference a null backend
 - [ ] [RC-011](#rc-011) Singleton teardown leaks `TractionServer` and breaks the order ✔
 - [ ] [RC-012](#rc-012) `MaszynaTranslationServer` dereferences `UserSettings` unchecked
 - [ ] [RC-013](#rc-013) `RailVehicleDoors::VOLTAGE_AUTO` not bound
-- [ ] [RC-014](#rc-014) State keys published before the simulation is ready
+- [x] [RC-014](#rc-014) State keys published before the simulation is ready
 - [ ] [RC-015](#rc-015) `VehicleComponent::send_command()` discards the command result
 - [x] [RC-016](#rc-016) Cab control drag signs lost without a mesh
 - [ ] [RC-017](#rc-017) `PlanarMirror3D` default outside its own range
 - [ ] [RC-018](#rc-018) `get_cache_dir` bound with a default for a missing argument
-- [ ] [RC-019](#rc-019) Mover fields written by two components
+- [x] [RC-019](#rc-019) Mover fields written by two components
 
 ### Separation of concerns and getters (ALARM)
 
@@ -181,17 +181,6 @@ Legend:
 
 ## Correctness
 
-### RC-006
-
-**Radio call commands never unregistered** ✔
-
-* **Where:** `src/vehicles/rail/RailVehicleRadio.cpp:84-85` (register) vs `:88-97`
-  (unregister)
-* **Problem:** `radio_call1` and `radio_call3` are registered but not unregistered. After a
-  rebuild or a disable they point at a freed component, and registering again fails with
-  "Command is already registered".
-* **Fix:** unregister both.
-
 ### RC-008
 
 **Headlight colour 255 times overbright** ✔
@@ -200,23 +189,6 @@ Legend:
 * **Problem:** `Color(255, 255, 255)` - `Color` takes floats in 0..1, so this is white
   multiplied by 255.
 * **Fix:** `Color(1, 1, 1)`.
-
-### RC-010
-
-**Mover controller commands dereference a null backend**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleController.cpp`:
-  * `:645-651` - the compartment lights
-  * `:662-694` - `cab_*`
-  * `:720-731` - `cabin_leave`, `cabin_enter`
-  * `:748-783` - `ground_relay_reset`, `antislip`, `*_controller_*`, `direction_*`
-* **Problem:** these methods are bound and registered as commands
-  (`RailVehicleController.cpp:222-241`, in `attach_to_system()`, before `initialize()`), but call
-  `mover->...` with no null check. Every getter of the class does check, and
-  `is_simulation_ready()` exists because `mover` can be null. A command sent before the
-  configuration lands crashes.
-* **Fix:** the same guard the getters use - `ASSERT_MOVER`, as `MoverRailVehiclePowerSupply`
-  does - one condition per method.
 
 ### RC-011
 
@@ -252,20 +224,6 @@ Legend:
   constants, so it is missing from Godot.
 * **Fix:** bind it.
 
-### RC-014
-
-**State keys published before the simulation is ready**
-
-* **Where:**
-  * `src/vehicles/rail/RailVehicleElectricEngine.cpp:110-126` (the check is at `:127`)
-  * `RailVehicleElectricInductionEngine.cpp:47-53`
-  * `RailVehicleDieselElectricEngine.cpp:4-13`
-  * `RailVehicleRadio.cpp:67-72`
-* **Problem:** these components write state keys before, or without, the
-  `is_simulation_ready()` check. The contract in `VehicleComponent.hpp:48-52` says nothing is
-  published until then.
-* **Fix:** move the writes behind the check.
-
 ### RC-015
 
 **`VehicleComponent::send_command()` discards the command result**
@@ -292,25 +250,6 @@ Legend:
 * **Where:** `src/cache/ResourceCache.cpp:23`
 * **Problem:** `get_cache_dir` takes no arguments but is bound with `DEFVAL("")`.
 * **Fix:** remove the `DEFVAL`.
-
-### RC-019
-
-**Mover fields written by two components**
-
-* **Where:**
-  * `src/legacy/vehicles/MoverRailVehicleWheels.cpp:43-44` (`Mred`,
-    `// FIXME: THIS IS MODIFICATION OF OTHER SECTION`), also written by the controller at
-    `MoverRailVehicleController.cpp:561`
-  * `MoverRailVehicleDieselElectricEngine.cpp:20` (`ShuntModeAllow`), also set by
-    `MoverDieselEngineUnit.cpp:181`
-  * `MoverRailVehicleUniversalController.cpp:43` (`MainCtrlPos`, a runtime field written during
-    configuration), also written by `initialize_mover_state` at `MoverRailVehicleController.cpp:87`
-    and at run time by `MoverDriveUnit.cpp:268`
-* **Rule:** one writer per field
-* **Problem:** the result depends on the order the components are applied in.
-* **Fix:** one owner per field.
-
-## Separation of concerns and getters (ALARM)
 
 ### RC-020
 
@@ -383,8 +322,8 @@ Legend:
 
 * **Where:**
   * `src/vehicles/rail/RailVehicleEngine.cpp:225-228`: `"Mm"`, `"Mw"`, `"Fw"`, `"Ft"`
-  * `RailVehicleElectricEngine.cpp:117`: `"Im"`
-  * `RailVehicleDieselElectricEngine.cpp:6`: `"Im"`
+  * `RailVehicleElectricEngine.cpp:121`: `"Im"`
+  * `RailVehicleDieselElectricEngine.cpp:9`: `"Im"`
 * **Rule:** the backend never appears in a public interface
 * **Problem:** these keys are Mover member names in the public state dump, while every other key
   is descriptive `snake_case`.
@@ -887,7 +826,7 @@ ported value keeps the original's value and a source reference".
 
 * **Where:** nine times in six files, among them:
   * `src/cabin/Cabin3D.cpp:169-170`
-  * `src/legacy/vehicles/MoverDieselEngineUnit.cpp:219, 271, 282`
+  * `src/legacy/vehicles/MoverDieselEngineUnit.cpp:223, 275, 286`
   * `MoverRailVehicleHeating.cpp:25-26`
 * **Problem:** only a local `SECONDS_PER_MINUTE` exists (`RailVehicleRenderingServer.cpp:1426`),
   not shared.
@@ -1004,7 +943,7 @@ ported value keeps the original's value and a source reference".
   (`dcemued/…`, 6), `MoverRailVehicleSpeedControl.cpp` (`speed_control/…`, 6),
   `MoverRailVehicleSpringBrake.cpp` (`spring_brake/…`, 5), `MoverRailVehicleLighting.cpp`
   (`lights/…`, 20), `src/vehicles/rail/RailVehicleEnginePowerSource.cpp` (30, mostly
-  `current_collector/…`), `RailVehicleElectricEngine.cpp:130-133` (`indicators/…`)
+  `current_collector/…`), `RailVehicleElectricEngine.cpp:130-135` (`indicators/…`)
 * **Rule:** by analogy with "property names ... without slashes"
 * **Decision:** whether state keys follow the property rule; renaming them touches the GDScript
   readers.

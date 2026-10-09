@@ -180,6 +180,13 @@
 				The model of the adapter fitted to an end, empty without one.
 			</description>
 		</method>
+		<method name="get_coupler_joinable_flags" qualifiers="const">
+			<return type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The couplings this end and the neighbour beyond it can join: what both couplers allow, the control line only between equal control types; [constant COUPLING_FLAG_NONE] without a neighbour.
+			</description>
+		</method>
 		<method name="get_coupler_stretched" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -410,6 +417,9 @@
 		</constant>
 		<constant name="COUPLER_END_REAR" value="1" enum="CouplerEnd">
 			The vehicle's rear end (end::rear).
+		</constant>
+		<constant name="COUPLING_FLAG_NONE" value="0" enum="CouplingFlags" is_bitfield="true">
+			Nothing joined (the original's coupling::faux).
 		</constant>
 		<constant name="COUPLING_FLAG_COUPLER" value="1" enum="CouplingFlags" is_bitfield="true">
 			The coupler.

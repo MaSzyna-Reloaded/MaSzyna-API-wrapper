@@ -374,6 +374,21 @@ namespace godot {
         return mover != nullptr && mover->Couplers[p_end].type() == TCouplerType::Automatic;
     }
 
+    BitField<RailVehicleController::CouplingFlags>
+    MoverRailVehicleController::get_coupler_joinable_flags(const CouplerEnd p_end) const {
+        if (mover == nullptr || mover->Neighbours[p_end].vehicle == nullptr) {
+            return COUPLING_FLAG_NONE;
+        }
+        const neighbour_data &neighbour = mover->Neighbours[p_end];
+        const TCoupling &coupler = mover->Couplers[p_end];
+        const TCoupling &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
+        int64_t joinable = coupler.AllowedFlag & other_coupler.AllowedFlag;
+        if (coupler.control_type != other_coupler.control_type) {
+            joinable &= ~static_cast<int64_t>(coupling::control);
+        }
+        return joinable;
+    }
+
     bool MoverRailVehicleController::coupler_adapter_attach(const Variant &p_where) {
         return mover != nullptr && _fit_coupler_adapter(_resolve_coupler_end(p_where), true);
     }
@@ -453,19 +468,15 @@ namespace godot {
             return;
         }
         const TCoupling &coupler = mover->Couplers[side];
-        const TCoupling &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
-        const int allowed = coupler.AllowedFlag & other_coupler.AllowedFlag;
+        const int64_t joinable = get_coupler_joinable_flags(side);
 
-        if (coupler.CouplingFlag == coupling::faux && (allowed & coupling::coupler) == coupling::coupler &&
+        if (coupler.CouplingFlag == coupling::faux && (joinable & coupling::coupler) == coupling::coupler &&
             mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupling::coupler)) {
             return;
         }
         for (const int flag:
              {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway, coupling::heating}) {
-            if ((coupler.CouplingFlag & flag) == flag || (allowed & flag) != flag) {
-                continue;
-            }
-            if (flag == coupling::control && coupler.control_type != other_coupler.control_type) {
+            if ((coupler.CouplingFlag & flag) == flag || (joinable & flag) != flag) {
                 continue;
             }
             if (mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupler.CouplingFlag | flag)) {

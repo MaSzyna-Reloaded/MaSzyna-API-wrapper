@@ -62,6 +62,10 @@ anything. Open work belongs in `TODO.md`.
 * Port the whole `LoadFIZ_*` / loader function: derived counts, container sizes, fallbacks, and
   the state it sets at the end. A struct default is what a vehicle **without** that section gets.
   *(09-24 NaN forces; 09-24 spring brake)*
+* What a scenery order asks of the couplers is masked by what the pair can join: the original's
+  `Attach()` sets the asked couplings whatever `AllowedFlag` says, so its `UpdateConnect()` never
+  waits; a port that joins only allowed flags must not wait for the rest. *(10-09 SN61 coupled for
+  ever on `Shunt -3 -99`)*
 * A Mover field the original keeps as the FIZ text (`BrakeValveParams`: an ESt3's `PZZ`, `AL2`,
   `-s216`, `-ED` relays) is passed as text, not only decoded into its enum. *(10-06 SN61: the
   independent brake did not brake, the engine stopped after the start)*

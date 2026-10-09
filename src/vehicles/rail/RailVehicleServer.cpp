@@ -209,6 +209,9 @@ namespace godot {
                 D_METHOD("vehicle_is_coupler_automatic", "vehicle", "end"),
                 &RailVehicleServer::vehicle_is_coupler_automatic);
         ClassDB::bind_method(
+                D_METHOD("vehicle_get_coupler_joinable_flags", "vehicle", "end"),
+                &RailVehicleServer::vehicle_get_coupler_joinable_flags);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupler_adapter_length", "vehicle", "end"),
                 &RailVehicleServer::vehicle_get_coupler_adapter_length);
         ClassDB::bind_method(
@@ -823,6 +826,14 @@ namespace godot {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
         return controller != nullptr && controller->is_coupler_automatic(p_end);
+    }
+
+    BitField<RailVehicleController::CouplingFlags> RailVehicleServer::vehicle_get_coupler_joinable_flags(
+            const RID &p_vehicle, const RailVehicleController::CouplerEnd p_end) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const RailVehicleController *controller = placement != nullptr ? _get_controller(*placement) : nullptr;
+        return controller != nullptr ? controller->get_coupler_joinable_flags(p_end)
+                                     : RailVehicleController::COUPLING_FLAG_NONE;
     }
 
     double RailVehicleServer::vehicle_get_coupler_adapter_length(

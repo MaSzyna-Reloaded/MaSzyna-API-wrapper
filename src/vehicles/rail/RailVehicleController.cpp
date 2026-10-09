@@ -82,6 +82,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("coupler_adapter_fit", "end"), &RailVehicleController::coupler_adapter_fit);
         ClassDB::bind_method(D_METHOD("is_coupler_automatic", "end"), &RailVehicleController::is_coupler_automatic);
         ClassDB::bind_method(
+                D_METHOD("get_coupler_joinable_flags", "end"), &RailVehicleController::get_coupler_joinable_flags);
+        ClassDB::bind_method(
                 D_METHOD("coupler_adapter_remove", "where"), &RailVehicleController::coupler_adapter_remove);
         ClassDB::bind_method(
                 D_METHOD("get_coupler_adapter_fitted_model", "end"),
@@ -173,6 +175,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(COUPLER_END_FRONT);
         BIND_ENUM_CONSTANT(COUPLER_END_REAR);
 
+        BIND_BITFIELD_FLAG(COUPLING_FLAG_NONE);
         BIND_BITFIELD_FLAG(COUPLING_FLAG_COUPLER);
         BIND_BITFIELD_FLAG(COUPLING_FLAG_BRAKEHOSE);
         BIND_BITFIELD_FLAG(COUPLING_FLAG_CONTROL);

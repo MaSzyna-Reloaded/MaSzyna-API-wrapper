@@ -573,6 +573,25 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Drivers (#297)
 
+* **High-level vehicle operations through the servers, executed by components**
+  (`maszyna-architecture`, "Servers forward to components", 2026-10-09): `RailVehicleServer`
+  couples (`vehicle_couple()`, `uncouple`, `is_coupled_by`, `is_coupler_automatic`, adapters,
+  `vehicle_get_coupler_joinable_flags()`) through `RailVehicleController`/
+  `MoverRailVehicleController`; the coupling logic moves to the server, executed by the
+  `RailVehicleBuffCoupl` component (`MoverRailVehicleBuffCoupl` on the Mover), the per-end
+  `AllowedFlag` (`BuffCoupl1/2`) and `control_type` with it. The same for walking through the cabins,
+  managing trainsets and moving a vehicle. The AI then couples by a server operation instead of the
+  `coupler_connect` command. Plan with the operator first.
+* **`scenery_loaded` comes before the vehicles are placed**: `TrainSet3D` places its trainset in
+  `_process` on the next frame (`train_set_3d.gd:119-140`), after `MaszynaScenery._load_content()`
+  emitted `scenery_loaded` (`maszyna_scenery.gd:89`) - the player (`player.gd:104`), `world.gd`,
+  `ScenarioKeyboard` and the tests read it as "built, coupled and placed". A `vehicle_find_vehicle()`
+  right after it finds no neighbour. Needs a "scenario ready" event at its owner (operator: a task of
+  its own; where it lives is to be decided - scenery node or a server).
+* **`universal_brake_button` 0, 1, 2 sent on every driver update** while coupling, standing
+  (calkowo SN61 log 2026-10-09, `shunt_sn61_couple.scn`): check against the original's
+  `universal` handling before treating it as a bug.
+
 * **The AI stops at a Tm at Ms1, not 7-12 m before it** (shunting, SN61-02 + a wagon,
   calkowo_sn61_zima.scn, Paszki Tm7, 2026-10-07): at "0.0 km" to the stop point it still ran
   11 km/h and stood with its buffers past the mast, braking hard (pipe 2.8 bar). The original's

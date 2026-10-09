@@ -122,6 +122,7 @@ namespace godot {
             bool coupler_adapter_attach(const Variant &p_where) override;
             bool coupler_adapter_fit(CouplerEnd p_end) override;
             bool is_coupler_automatic(CouplerEnd p_end) const override;
+            BitField<CouplingFlags> get_coupler_joinable_flags(CouplerEnd p_end) const override;
             bool coupler_adapter_remove(const Variant &p_where) override;
             String get_coupler_adapter_fitted_model(CouplerEnd p_end) const override;
             double get_coupler_adapter_fitted_length(CouplerEnd p_end) const override;

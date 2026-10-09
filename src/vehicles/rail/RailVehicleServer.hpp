@@ -438,6 +438,10 @@ namespace godot {
             vehicle_get_coupler_adapter_model(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
             /* Whether an end couples as an automatic coupler, its adapter's or its own */
             bool vehicle_is_coupler_automatic(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
+            /* The couplings an end and the neighbour beyond it can join (RailVehicleController::
+             * get_coupler_joinable_flags()) */
+            BitField<RailVehicleController::CouplingFlags>
+            vehicle_get_coupler_joinable_flags(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
             double
             vehicle_get_coupler_adapter_length(const RID &p_vehicle, RailVehicleController::CouplerEnd p_end) const;
             double

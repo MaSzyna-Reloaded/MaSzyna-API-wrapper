@@ -63,6 +63,7 @@ namespace godot {
 
         public:
             static const char *driver_timetable_changed_signal;
+            static const char *driver_order_changed_signal;
             /// The person is no driver any more (driver: RID) - its delegate was taken, or the
             /// person freed
             static const char *driver_freed_signal;
@@ -102,6 +103,9 @@ namespace godot {
             /// The driver's delegate reports that its timetable, or how far it got through it, has
             /// changed - announced as driver_timetable_changed
             void driver_report_timetable_changed(const RID &p_driver);
+            /// The driver's delegate reports that the driver took up another order (OrderCheck(),
+            /// Driver.cpp:5161) - announced as driver_order_changed
+            void driver_report_order_changed(const RID &p_driver);
             /// What the driver keeps (DriverDelegate::get_state()); empty without a delegate
             Dictionary driver_get_state(const RID &p_driver) const;
     };

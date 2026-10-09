@@ -565,6 +565,21 @@ void MoverRailVehicleDoors::_apply_configuration() {
 }
 ```
 
+### Flags
+
+Readable on both sides - a hard requirement. A Mover bitmask whose bits combine (`coupling::`,
+`bdelay_*`, damage flags) is a bitfield enum of the interface, with its own bits - never the
+Mover's enum:
+
+* C++ takes and returns `BitField<Enum>`; the constants are bound with `BIND_BITFIELD_FLAG`
+  (`RailVehicleController::CouplingFlags`)
+* GDScript holds such a value **typed with that enum** - a variable, a parameter, a return or a
+  `const` composed of the named constants (`var coupler:RailVehicleController.CouplingFlags`) -
+  never an `int`, a bare number or a `const ...:int`
+* a number out of the data (the scenery's `Shunt -3 -99`) becomes the enum type once, where it is
+  read (`as RailVehicleController.CouplingFlags`)
+* what is printed or asserted names the flags, not the number
+
 ### Command callbacks
 
 Commands are registered and unregistered in `_register_commands()` and `_unregister_commands()` of the interface.

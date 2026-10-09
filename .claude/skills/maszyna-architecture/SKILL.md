@@ -35,10 +35,33 @@ Read top to bottom: each layer may use the ones below it and must know nothing o
 | Backend | `src/legacy/maszyna-mover/` (vendored `TMoverParameters`) | physical quantities, the original's own model | be edited. It is vendored; a divergence is ported around it, never into it |
 | Backend adapters | `Mover*` classes (`MoverRailVehicleController`, `MoverRailVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
 | Vehicle model | `VehicleController` (an `Object`, any vehicle) and `RailVehicleController` (a railway one: cabs, couplers, controllers, relays), `VehicleComponent` / `RailVehicleComponent` + `RailVehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
-| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SignallingServer`, and the GDScript servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`, `ScenerySoundServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
+| Servers | `RailVehicleServer`, `TrackServer`, `TractionServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, `SignallingServer`, and the GDScript servers (`TrackRenderingServer`, `TractionRenderingServer`, `MaszynaSceneryChunkRenderingServer`, `ScenerySoundServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own; reach a vehicle's controller to execute vehicle logic (see "Servers forward to components") |
 | Systems | `CabinSystem` (a cab per vehicle RID and cab), `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
 | Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets, `SignalHeadNode`/`SignallingSystemNode` (proxies holding a server RID) | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
 | Importers | `src/legacy/parsers/`, `src/legacy/e3d/`, `addons/libmaszyna/legacy/fiz/`, `.../legacy/mmd/`, `.../legacy/scenery/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
+
+### Servers forward to components
+
+The components' API (a coupling component, say) is a layer below the server. A server offers the
+**high-level API** for the high-level operations: walking through the cabins
+(`person_change_cabin()`), coupling (`vehicle_couple()`), managing trainsets (`trainset_place()`)
+and moving a vehicle (`vehicle_move()`). Whether a server has to wrap everything beyond these is
+not settled - ask the operator before wrapping more. A vehicle server **forwards its execution to
+the vehicle's component** for that domain - the base classes
+(`RailVehicleBuffCoupl`, `RailVehicle<Domain>`) exist for this. The component's backend
+implementation executes it on the physics backend: the server finds the vehicle's rail buffer and
+coupling component, on the Mover's physics that is `MoverRailVehicleBuffCoupl`, and the coupling
+happens there. A server never reaches the vehicle's controller to execute such logic.
+
+Logic outside the vehicle - the AI driver, the player, scripts - **executes through the servers**.
+The components' API is fixed too, but it serves reading state on hot paths and the backend's
+implementation of the forwarding, not executing logic from outside.
+
+Debt on record (2026-10-09, `TODO.md`): `RailVehicleServer`'s coupling (`vehicle_couple()`,
+`uncouple`, `is_coupled_by`, `is_coupler_automatic`, adapters,
+`vehicle_get_coupler_joinable_flags()`) still goes through `RailVehicleController`/
+`MoverRailVehicleController`, and the AI couples by the `coupler_connect` command; nothing new is
+added that way.
 
 Autoloads are listed in `demo/project.godot`; C++ singletons are registered in
 `src/register_types.cpp`. A singleton is reached by its typed `get_instance()` and the result is

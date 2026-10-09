@@ -331,6 +331,14 @@
 				The model of the adapter fitted to an end of [param vehicle], empty without one.
 			</description>
 		</method>
+		<method name="vehicle_get_coupler_joinable_flags" qualifiers="const">
+			<return type="int" enum="RailVehicleController.CouplingFlags" is_bitfield="true" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="end" type="int" enum="RailVehicleController.CouplerEnd" />
+			<description>
+				The couplings an end of [param vehicle] and the neighbour beyond it can join (see [method RailVehicleController.get_coupler_joinable_flags]).
+			</description>
+		</method>
 		<method name="vehicle_get_curve">
 			<return type="Dictionary" />
 			<param index="0" name="vehicle" type="RID" />

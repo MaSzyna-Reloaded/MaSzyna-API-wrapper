@@ -68,6 +68,7 @@ namespace godot {
             /* What joins two coupled vehicles, as the original names it; the flags combine into a
              * coupling (enum coupling, MOVER.h:162). Permanent marks the couplings inside one unit. */
             enum CouplingFlags {
+                COUPLING_FLAG_NONE = 0x0,
                 COUPLING_FLAG_COUPLER = 0x1,
                 COUPLING_FLAG_BRAKEHOSE = 0x2,
                 COUPLING_FLAG_CONTROL = 0x4,
@@ -197,6 +198,9 @@ namespace godot {
             /* Whether an end couples as an automatic coupler, its adapter's or its own
              * (TCoupling::type(), MOVER.h:800) */
             virtual bool is_coupler_automatic(CouplerEnd p_end) const = 0;
+            /* The couplings this end and the neighbour beyond it can join: what both couplers allow, the
+             * control line only between equal control types; none without a neighbour */
+            virtual BitField<CouplingFlags> get_coupler_joinable_flags(CouplerEnd p_end) const = 0;
             /* The adapter taken off an end, uncoupling it first (DynObj.cpp:1791-1810) */
             virtual bool coupler_adapter_remove(const Variant &p_where) = 0;
             /* The model of the adapter fitted to an end, "" without one */

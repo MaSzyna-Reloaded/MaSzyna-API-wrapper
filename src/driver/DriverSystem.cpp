@@ -9,6 +9,7 @@
 
 namespace godot {
     const char *DriverSystem::driver_timetable_changed_signal = "driver_timetable_changed";
+    const char *DriverSystem::driver_order_changed_signal = "driver_order_changed";
     const char *DriverSystem::driver_freed_signal = "driver_freed";
     const char *DriverSystem::driver_attached_signal = "driver_attached";
 
@@ -34,6 +35,9 @@ namespace godot {
                 D_METHOD("driver_report_timetable_changed", "driver"), &DriverSystem::driver_report_timetable_changed);
         ClassDB::bind_method(D_METHOD("driver_get_state", "driver"), &DriverSystem::driver_get_state);
         ADD_SIGNAL(MethodInfo(driver_timetable_changed_signal, PropertyInfo(Variant::RID, "driver")));
+        ClassDB::bind_method(
+                D_METHOD("driver_report_order_changed", "driver"), &DriverSystem::driver_report_order_changed);
+        ADD_SIGNAL(MethodInfo(driver_order_changed_signal, PropertyInfo(Variant::RID, "driver")));
         ADD_SIGNAL(MethodInfo(driver_freed_signal, PropertyInfo(Variant::RID, "driver")));
         ADD_SIGNAL(MethodInfo(driver_attached_signal, PropertyInfo(Variant::RID, "driver")));
     }
@@ -241,6 +245,11 @@ namespace godot {
     void DriverSystem::driver_report_timetable_changed(const RID &p_driver) {
         ERR_FAIL_COND(!drivers.has(p_driver));
         emit_signal(driver_timetable_changed_signal, p_driver);
+    }
+
+    void DriverSystem::driver_report_order_changed(const RID &p_driver) {
+        ERR_FAIL_COND(!drivers.has(p_driver));
+        emit_signal(driver_order_changed_signal, p_driver);
     }
 
     Dictionary DriverSystem::driver_get_state(const RID &p_driver) const {

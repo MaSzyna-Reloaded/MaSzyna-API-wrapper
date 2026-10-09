@@ -128,10 +128,10 @@ const ATTACH_DISTANCE:float = 2.0
 const ADAPTER_DISTANCE:float = 10.0
 ## The couplings a `Shunt` may ask for (coupling::, MOVER.h:162); the high voltage and the power
 ## lines are nothing a shunter joins
-const SHUNTER_COUPLINGS:int = (RailVehicleController.COUPLING_FLAG_COUPLER
+const SHUNTER_COUPLINGS:RailVehicleController.CouplingFlags = (RailVehicleController.COUPLING_FLAG_COUPLER
         | RailVehicleController.COUPLING_FLAG_BRAKEHOSE | RailVehicleController.COUPLING_FLAG_CONTROL
         | RailVehicleController.COUPLING_FLAG_GANGWAY | RailVehicleController.COUPLING_FLAG_MAINHOSE
-        | RailVehicleController.COUPLING_FLAG_HEATING)
+        | RailVehicleController.COUPLING_FLAG_HEATING) as RailVehicleController.CouplingFlags
 
 
 ## What one driver keeps
@@ -157,7 +157,7 @@ class DriverState:
     var shunt_velocity:float = DEFAULT_SHUNT_VELOCITY
     ## iVehicleCount, iCoupler, fStopTime of `Shunt` and `Wait_for_orders`
     var vehicle_count:int = -2
-    var coupler:int = 0
+    var coupler:RailVehicleController.CouplingFlags = RailVehicleController.COUPLING_FLAG_NONE
     var stop_time:float = 0.0
     ## iCouplingVehicle - the vehicle of the trainset that couples up and its end, while it does
     ## (moveConnect)
@@ -1076,7 +1076,7 @@ func _update_connect(situation:MaszynaLegacyDriverTraction.Situation) -> void:
             MaszynaLegacyDriverHints.send(state.coupling_vehicle, "coupler_connect", state.coupling_end)
     # the command joins at once: coupled now, it drives on
     if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
-        state.coupler = 0
+        state.coupler = RailVehicleController.COUPLING_FLAG_NONE
         state.coupling_vehicle = RID()
         _jump_to_next_order(state, vehicle)
 
@@ -1355,7 +1355,7 @@ func _take_shunt(driver:RID, state:DriverState, loose:bool, vehicles:float, coup
     if not state.engine_active:
         _order_next(state, Order.PREPARE_ENGINE)
     if not coupler == 0.0:
-        state.coupler = floori(absf(coupler))
+        state.coupler = floori(absf(coupler)) as RailVehicleController.CouplingFlags
         _order_next(state, Order.CONNECT)
         if vehicles >= 0.0:
             # after coupling, pull away the vehicles counted: turn first, they are behind
@@ -1409,16 +1409,24 @@ func _direction_towards(driver:RID, position:Vector3, value:float) -> int:
 
 ## Whether something is joined at the vehicle's end by every one of `flags` - the walk out through
 ## that end starts beyond it
-static func _is_coupled_by(vehicle:RID, end:RailVehicleController.CouplerEnd, flags:int) -> bool:
+static func _is_coupled_by(vehicle:RID, end:RailVehicleController.CouplerEnd, flags:RailVehicleController.CouplingFlags) -> bool:
     var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, end, flags)
     return not coupled.is_empty() and not coupled[0] == vehicle
 
 
-## Whether every coupling `coupler` asks for (the original's bits) is joined at the vehicle's end;
-## asked for none, it is
-static func _is_coupled_as_asked(vehicle:RID, end:RailVehicleController.CouplerEnd, coupler:int) -> bool:
-    var asked:int = coupler & SHUNTER_COUPLINGS
-    return not asked or _is_coupled_by(vehicle, end, asked)
+## Whether every coupling `coupler` asks for (the original's bits) that the end and its neighbour
+## can join is joined; asked for none, it is. The original's Attach() sets the couplings asked for
+## whatever the couplers allow (Mover.cpp:576-583) and so ends its UpdateConnect() (Driver.cpp:7028);
+## a coupling neither coupler has (a heating line `Shunt -3 -99` asks of an SN61) is not waited for.
+## With no neighbour nothing can be joined, and nothing is
+static func _is_coupled_as_asked(vehicle:RID, end:RailVehicleController.CouplerEnd,
+        coupler:RailVehicleController.CouplingFlags) -> bool:
+    var asked:RailVehicleController.CouplingFlags = (coupler & SHUNTER_COUPLINGS) as RailVehicleController.CouplingFlags
+    if asked == RailVehicleController.COUPLING_FLAG_NONE:
+        return true
+    var joinable:RailVehicleController.CouplingFlags = (asked
+            & RailVehicleServer.vehicle_get_coupler_joinable_flags(vehicle, end)) as RailVehicleController.CouplingFlags
+    return not joinable == RailVehicleController.COUPLING_FLAG_NONE and _is_coupled_by(vehicle, end, joinable)
 
 
 ## The end of the trainset's vehicle at `index` towards its front
@@ -1527,6 +1535,7 @@ func _jump_to_first_order(state:DriverState, vehicle:RID) -> void:
 ## What a new order changes at once (OrderCheck(), Driver.cpp:5161-5185): the lights of the order
 ## (CheckVehicles(), Driver.cpp:5084-5092) - the doors it checks belong to the driving (TODO.md)
 func _order_check(state:DriverState, vehicle:RID) -> void:
+    DriverSystem.driver_report_order_changed(state.driver)
     var current:int = state.orders[state.order_position]
     if not current == Order.OBEY_TRAIN:
         state.light_hints = Vector2i(MaszynaLegacyDriverLights.NO_HINT, MaszynaLegacyDriverLights.NO_HINT)

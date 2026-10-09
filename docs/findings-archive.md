@@ -4,6 +4,26 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-10-09 - SN61 coupled for ever on `Shunt -3 -99`
+
+* **Symptom:** calkowo, SN61 at night: SN61-02's AI stood by the train it was to couple to, sent
+  `coupler_connect 1` (and `universal_brake_button`) about every 0.5 s from 2386 s on and never took
+  its next order (the operator's `ai.log`, screenshots at Tm7).
+* **What proved it:** the scenery's `Shunt -3 -99` (`events_noc_zimowa.ctr`, `events_os.ctr`, many
+  times) asks for 99 = coupler | brakehose | mainhose | heating; the SN61 has `AllowedFlag=39`, no
+  heating. `test_zzz_driver_shunt_coupling.gd`: joined by coupler and both hoses within a few
+  seconds, then `coupler_connect` again and again in CONNECT.
+* **Cause:** `MoverRailVehicleController::coupler_connect()` joins only what both couplers allow,
+  and `_is_coupled_as_asked()` waited for all of 99. The original's `Attach(..., iCoupler)` sets
+  `CouplingFlag = iCoupler` whatever `AllowedFlag` is (Mover.cpp:576-583) and compares it with
+  `iCoupler` (Driver.cpp:7028) - it never waits, at the price of a heating line on a vehicle without
+  one (a quirk, not ported).
+* **Fix:** `RailVehicleServer.vehicle_get_coupler_joinable_flags()` - what both ends allow, the
+  control line only between equal control types, used by `coupler_connect()` too; the driver waits
+  for the asked couplings it can join. `DriverSystem.driver_order_changed` lets the test follow the
+  driver by events.
+* **Rule:** what a scenery order asks of the couplers is masked by what the pair can join.
+
 ## 2026-10-09 - SN61 stood on its hand brake after the player took it on scenery_loaded
 
 * **Symptom:** `test_zzz_driver_hints_sn61_v2.gd` red since 2e6e863: SN61-02 started by the

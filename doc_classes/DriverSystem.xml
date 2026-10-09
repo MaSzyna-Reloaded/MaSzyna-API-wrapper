@@ -40,6 +40,13 @@
 				The driver's timetable and its progress, from its delegate ([method DriverDelegate._get_timetable_state]); empty without a delegate.
 			</description>
 		</method>
+		<method name="driver_report_order_changed">
+			<return type="void" />
+			<param index="0" name="driver" type="RID" />
+			<description>
+				Called by the driver's delegate when the driver takes up another order; emits [signal driver_order_changed].
+			</description>
+		</method>
 		<method name="driver_report_timetable_changed">
 			<return type="void" />
 			<param index="0" name="driver" type="RID" />
@@ -96,6 +103,12 @@
 			<param index="0" name="driver" type="RID" />
 			<description>
 				The person is no driver any more: its delegate was taken ([method driver_attach_delegate] with null), or the person was freed (PersonServer).
+			</description>
+		</signal>
+		<signal name="driver_order_changed">
+			<param index="0" name="driver" type="RID" />
+			<description>
+				The driver took up another order.
 			</description>
 		</signal>
 		<signal name="driver_timetable_changed">

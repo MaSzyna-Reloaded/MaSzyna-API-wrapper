@@ -345,6 +345,15 @@ style-check: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 style-fix:
 	@scripts/style-fix $(STYLE_FILE)
 
+# A staged script or shader goes in with its .uid (scripts/check-staged-uids)
+.PHONY: check-staged-uids install-git-hooks
+check-staged-uids:
+	@scripts/check-staged-uids
+
+# The repository's hooks (scripts/git-hooks): pre-commit runs check-staged-uids
+install-git-hooks:
+	git config core.hooksPath scripts/git-hooks
+
 docker-build-tests:
 	docker build -t godot-tests .
 

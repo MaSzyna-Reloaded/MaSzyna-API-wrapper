@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# A script or shader Godot gives a `.uid` is committed together with it: a staged `.gd`,
+# `.gdshader` or `.gdshaderinc` whose `<file>.uid` is not in the index fails - also when Godot has
+# not written it yet (the file never imported: `godot --headless --path demo --import`).
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "${ROOT_DIR}"
+
+missing=()
+while IFS= read -r -d '' file; do
+    case "${file}" in
+        *.gd|*.gdshader|*.gdshaderinc) ;;
+        *) continue ;;
+    esac
+    uid="${file}.uid"
+    if ! git ls-files --error-unmatch --cached -- "${uid}" >/dev/null 2>&1; then
+        missing+=("${uid}")
+    fi
+done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+
+if [ "${#missing[@]}" -gt 0 ]; then
+    echo "check-staged-uids: stage the .uid of every staged script and shader (one not written" >&2
+    echo "yet: godot --headless --path demo --import):" >&2
+    printf '  git add %s\n' "${missing[@]}" >&2
+    exit 1
+fi

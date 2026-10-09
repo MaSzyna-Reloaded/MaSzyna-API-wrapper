@@ -223,6 +223,14 @@ Before every commit:
   `[]`/`{}` handed to a typed collection, a private helper with one call site, work added to
   `_process`, and a name that does not come from the data or the original engine. Fix what the
   review finds in the same commit.
+* REQUIRED, ABSOLUTE: **a new `.gd`, `.gdshader` or `.gdshaderinc` is committed with its `.uid`**
+  - the file Godot writes next to it on the first run. `git status --short` shows no `??` `.uid`
+  beside a staged file; the pre-commit hook (`make install-git-hooks` once per clone,
+  `scripts/check-staged-uids`) refuses the commit otherwise
+* REQUIRED: **the staged diff is checked against `REQUIRED_CLEANING_BEFORE_MERGE_TO_UPSTREAM.md`**
+  - an item the commit resolves is ticked in the index and its entry deleted in the same commit;
+  an item whose code the commit touches gets its line numbers corrected; the commit adds no new
+  instance of an open item's pattern
 
 Commit style:
 

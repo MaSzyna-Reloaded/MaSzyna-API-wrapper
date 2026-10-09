@@ -2,6 +2,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
@@ -34,6 +35,8 @@ namespace godot {
             static constexpr int AVERAGE_COLOR_SAMPLES = 16;
             /// A frame was drawn onto the screen's texture (screen: RID)
             static const char *screen_rendered_signal;
+            /// Command-line switch: no Python runtime is loaded and the screens stay blank
+            static constexpr const char *ARG_NO_PYTHON = "--no-python";
 
             static PythonScreenServer *get_instance() {
                 return Object::cast_to<PythonScreenServer>(
@@ -57,6 +60,7 @@ namespace godot {
 
             // main thread only
             HashMap<RID, Screen> screens;
+            const bool disabled = OS::get_singleton()->get_cmdline_args().has(ARG_NO_PYTHON);
 
             // shared with the worker, under the mutex
             Mutex mutex;

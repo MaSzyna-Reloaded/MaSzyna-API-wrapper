@@ -5,6 +5,7 @@
 #include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -245,6 +246,8 @@ namespace godot {
             uint64_t target_revision = 0;
             uint64_t scanned_revision = 0;
             int pending_build_count = 0;
+            /// --verbose: every piece's preload, build and clear in the log, to find a crash by the last
+            const bool verbose = OS::get_singleton()->is_stdout_verbose();
             bool building = false;               // main thread only: pending_build_count > 0, as last announced
             Vector<PendingBuild> planned_builds; // published by the worker
             Vector<PendingClear> planned_clears;

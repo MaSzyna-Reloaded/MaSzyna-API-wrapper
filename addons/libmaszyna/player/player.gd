@@ -110,7 +110,10 @@ func _on_scenery_loaded(_first_train_id:String) -> void:
     var outside_transform:Transform3D = free_camera.global_transform
     if vehicle.is_valid():
         if CabinSystem.vehicle_get_cabin_scene(vehicle):
+            # in the game's log before and after: the cab, its screens and the streaming start here
+            print("[PlayerStart] taking over vehicle '%s'" % train_id)
             PlayerServer.player_take_over_vehicle(vehicle)
+            print("[PlayerStart] vehicle '%s' taken over" % train_id)
             if _cabin_vehicle == vehicle:
                 _initialization_complete()
                 return
@@ -118,6 +121,7 @@ func _on_scenery_loaded(_first_train_id:String) -> void:
     else:
         if train_id:
             push_warning("Player initialization: vehicle '%s' is not registered; starting outside." % train_id)
+        print("[PlayerStart] starting outside")
         PlayerCameraServer.camera_set_mode(PlayerCameraServer.CAMERA_MODE_FREE)
         free_camera.global_transform = outside_transform
     _initialization_complete()

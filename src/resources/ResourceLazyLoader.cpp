@@ -94,6 +94,8 @@ namespace godot {
                 return entry->resource;
             }
             loader = entry->loader;
+            // names what a streamed piece loads (--verbose): a preload's piece is only its RID
+            UtilityFunctions::print_verbose("[ResourceLazyLoader] loading ", entry->key);
         }
         Ref<Resource> resource = loader.call();
         MutexLock lock(mutex);

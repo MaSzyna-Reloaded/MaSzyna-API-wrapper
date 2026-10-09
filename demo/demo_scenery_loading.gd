@@ -196,6 +196,7 @@ func _on_world_scenario_progress(progress: float) -> void:
 ## (RailVehicleRenderingServer) built. The rest of the draw distance keeps streaming after the game
 ## appears.
 func _build_surroundings() -> void:
+    print("[SceneryLoad] SURROUNDINGS started")
     var started_msec: int = Time.get_ticks_msec()
     var deadline: float = started_msec + STREAMING_WAIT_TIME * 1000.0
     var most_pending: int = 0

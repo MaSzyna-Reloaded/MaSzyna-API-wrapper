@@ -174,7 +174,10 @@ namespace godot {
         owner.clear = p_clear;
         owners.push_back(owner);
         owner_times.push_back(WorkTime());
-        return static_cast<int>(owners.size() - 1);
+        const int index = static_cast<int>(owners.size() - 1);
+        // the pieces are logged by the owner's index (--verbose), its name only here
+        UtilityFunctions::print("[SceneryStreaming] owner ", index, ": ", p_name);
+        return index;
     }
 
     /// Clears every piece of the owner built so far, and the next plan builds again - preload
@@ -837,6 +840,10 @@ namespace godot {
                 }
             }
             if (apply && pending.clear.is_valid()) {
+                if (verbose) {
+                    UtilityFunctions::print(
+                            "[SceneryStreaming] clearing owner ", pending.owner, " piece ", pending.user_rid.get_id());
+                }
                 const uint64_t started = time->get_ticks_usec();
                 pending.clear.call(pending.user_rid);
                 owner_times.write[pending.owner].add(time->get_ticks_usec() - started);
@@ -906,6 +913,9 @@ namespace godot {
             }
             const uint64_t started = time->get_ticks_usec();
             std::array<Vector<RID>, CONTENT_KIND_COUNT> adopted;
+            if (verbose) {
+                UtilityFunctions::print("[SceneryStreaming] adopting cell ", pending.cell);
+            }
             for (int kind = 0; kind < CONTENT_KIND_COUNT; kind++) {
                 const Callable &adopt = kind_consumers[kind].adopt;
                 ERR_CONTINUE_MSG(
@@ -968,6 +978,10 @@ namespace godot {
                 }
             }
             if (apply && pending.build.is_valid()) {
+                if (verbose) {
+                    UtilityFunctions::print(
+                            "[SceneryStreaming] building owner ", pending.owner, " piece ", pending.user_rid.get_id());
+                }
                 const uint64_t started = time->get_ticks_usec();
                 pending.build.call(pending.user_rid, pending.preloaded);
                 owner_times.write[pending.owner].add(time->get_ticks_usec() - started);
@@ -1115,6 +1129,9 @@ namespace godot {
                 }
             }
             for (const ContentKind kind: provide.kinds) {
+                if (verbose) {
+                    UtilityFunctions::print("[SceneryStreaming] loading cell ", provide.cell, " kind ", kind);
+                }
                 provide.items[kind] = provide.provider->chunk_load(provide.cell, kind);
             }
             MutexLock lock(mutex);
@@ -1147,6 +1164,11 @@ namespace godot {
             tasks.assign(batch.size(), -1);
             for (size_t index = 0; index < batch.size(); index++) {
                 if (batch[index].preload.is_valid()) {
+                    if (verbose) {
+                        UtilityFunctions::print(
+                                "[SceneryStreaming] preloading owner ", batch[index].owner, " piece ",
+                                batch[index].user_rid.get_id());
+                    }
                     tasks[index] = preload_queue->submit(batch[index].preload.bind(batch[index].user_rid));
                 }
             }

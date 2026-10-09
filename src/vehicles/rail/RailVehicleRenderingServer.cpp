@@ -27,6 +27,7 @@
 #include <godot_cpp/classes/world3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 #include <array>
 
@@ -1534,10 +1535,15 @@ namespace godot {
     /* Built, the vehicle takes its detail at once: one near the camera is drawn as nodes before its
      * build counts as done (builds_get_pending_count()), not at the sweep's next turn */
     void RailVehicleRenderingServer::_build_models(const RID &p_vehicle, Visual &p_visual) {
+        // in the game's log before and after: a crash with no message is found by the last line
+        const String model_path =
+                p_visual.appearance->get_data_path().path_join(p_visual.appearance->get_model_filename());
+        UtilityFunctions::print("[RailVehicleRendering] building ", model_path);
         _create_models(p_vehicle, p_visual);
         _bind_parts(p_vehicle, p_visual);
         _build_load(p_vehicle, p_visual);
         _update_detail(p_vehicle, p_visual);
+        UtilityFunctions::print("[RailVehicleRendering] built ", model_path);
     }
 
     void RailVehicleRenderingServer::_cancel_build(const RID &p_vehicle, Visual &p_visual) {

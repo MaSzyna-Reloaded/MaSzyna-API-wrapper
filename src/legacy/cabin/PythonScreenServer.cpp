@@ -190,6 +190,9 @@ namespace godot {
 
     PythonScreenServer::PythonScreenServer() {
         semaphore.instantiate();
+        if (disabled) {
+            UtilityFunctions::print("[PythonScreen] disabled by ", ARG_NO_PYTHON, " - the screens stay blank");
+        }
         if (GameDataServer *game_data = GameDataServer::get_instance(); game_data != nullptr) {
             game_data->connect(
                     GameDataServer::data_reload_requested_signal,
@@ -226,7 +229,7 @@ namespace godot {
     }
 
     RID PythonScreenServer::screen_create(const String &p_script_path, const Callable &p_commands_received) {
-        if (worker.is_null()) {
+        if (worker.is_null() && !disabled) {
             const UserSettings *user_settings = UserSettings::get_instance();
             ERR_FAIL_NULL_V(user_settings, RID());
             const String game_dir = user_settings->get_maszyna_game_dir();
@@ -241,6 +244,8 @@ namespace godot {
             home = home.is_empty() ? game_dir.path_join("python2.7") : home;
             const String library = home.path_join("lib/libpython2.7.so.1.0");
 #endif
+            // in the game's log: a runtime that fails to start ends the process without a message
+            UtilityFunctions::print("[PythonScreen] starting the interpreter: ", library, ", home ", home);
             worker.instantiate();
             worker->start(callable_mp(this, &PythonScreenServer::_worker_loop).bind(library, home, game_dir));
         }
@@ -265,6 +270,9 @@ namespace godot {
     void PythonScreenServer::screen_request_render(const RID &p_screen, const Dictionary &p_state) {
         const Screen *screen = screens.getptr(p_screen);
         ERR_FAIL_NULL(screen);
+        if (disabled) {
+            return; // no interpreter to draw it
+        }
         {
             MutexLock lock(mutex);
             bool replaced = false;
@@ -340,6 +348,7 @@ namespace godot {
             *python.Py_NoUserSiteDirectory = 1;
             python.Py_SetPythonHome(home.ptrw());
             python.Py_InitializeEx(0);
+            UtilityFunctions::print("[PythonScreen] interpreter started");
             main = python.PyImport_AddModule("__main__");
             // the data is made on Windows, whose file names ignore letter case, and the scripts
             // name files as they please ("WS_gotowosc.png" for ws_gotowosc.png): a path that is

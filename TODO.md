@@ -440,6 +440,13 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * Skydome installs the sun shafts effect twice at start ("Installed sunshafts compositor effect"
   printed twice before `(Re)Initialized`); the earlier one is removed, but the install runs twice.
   The D3D12 crash fix (`FINDINGS.md`, 2026-10-06) is unconfirmed on Windows until a player reports.
+* **Windows: td.scn ends the game without a message** (RTX 4080 SUPER, Vulkan, build
+  20261007-1333; Stary Jawor loads). `app.log` stops after `[SceneryMemory] loaded`, nothing in the
+  Windows event log; an older build loaded it. Each step after it is now in `app.log`
+  (`[ScenarioStart]`, `[PlayerStart]`, `[PythonScreen]`, `[RailVehicleRendering]`), the streaming's
+  pieces with `--verbose`. Candidates: the streaming, Vulkan (`--rendering-driver d3d12`), the
+  Python runtime (`python27.dll`). Also unguarded: a pending vehicle build whose appearance was set
+  to none - `_build_models()` reads the appearance without a check.
 * Normal maps: Godot's tangents not checked against the original's `f_tbn`.
 * Overexposure in the demo scenery unmeasured. Candidates, one at a time: `tonemap_mode`,
   `soft_shadow_filter_quality` 3 -> 1, `directional_shadow/size=8192` (`042b392`), `fog_enabled`,

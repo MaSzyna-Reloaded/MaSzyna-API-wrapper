@@ -18,13 +18,18 @@ var _script_context:RID = RID()
 ## scenery gets a context, so that a script can be applied to it while it runs. `progressed` is
 ## told the share of the start done (0..1) - the scenery's sounds made, the longest of it.
 func start(scenery:MaszynaIncludeNode, progressed:Callable = Callable()) -> void:
+    # each step in the game's log before it runs: a crash with no message is found by the last one
+    print("[ScenarioStart] building the scenery's sounds")
     _scenery_sounds = scenery.get_scenery_sounds()
     await _scenery_sounds.build(progressed)
+    print("[ScenarioStart] creating the script context")
     _script_context = ScenarioScriptServer.context_create(
             UserSettings.get_maszyna_game_dir().path_join(SCRIPTS_DIRECTORY))
     ScenarioScriptServer.context_attach_cabin_delegate(_script_context, CabinScriptDelegate.new())
     for script_path:String in scenery.get_scenario_scripts():
+        print("[ScenarioStart] running script %s" % script_path)
         ScenarioScriptServer.context_run_file(_script_context, script_path)
+    print("[ScenarioStart] started")
 
 
 ## The script context first, so no queued event of the scripts' own runs against what is freed

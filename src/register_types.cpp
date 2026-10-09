@@ -31,6 +31,7 @@
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
 #include "resources/load/LoadListItem.hpp"
+#include "systems/TrainPhysicsServer.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include "wheels/TrainWheels.hpp"
 #include <gdextension_interface.h>
@@ -43,6 +44,7 @@
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
+TrainPhysicsServer *train_physics_server_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
@@ -80,6 +82,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainWheels);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
+        GDREGISTER_CLASS(TrainPhysicsServer);
         GDREGISTER_CLASS(TrainLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
@@ -94,13 +97,15 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
         user_settings_singleton = memnew(UserSettings);
         train_system_singleton = memnew(TrainSystem);
+        train_physics_server_singleton = memnew(TrainPhysicsServer);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
 
-        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton); // 1
-        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);       // 2
-        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);           // 3
-        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);   // 4
+        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);              // 1
+        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                    // 2
+        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                        // 3
+        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                // 4
+        Engine::get_singleton()->register_singleton("TrainPhysicsServer", train_physics_server_singleton); // 5
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -130,6 +135,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("TrainSystem"); // 4
     }
 
+    if (Engine::get_singleton()->has_singleton("TrainPhysicsServer")) {
+        Engine::get_singleton()->unregister_singleton("TrainPhysicsServer"); // 5
+    }
+
     if (Engine::get_singleton()->has_singleton("GameLog")) {
         Engine::get_singleton()->unregister_singleton("GameLog"); // 3
     }
@@ -145,6 +154,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (train_system_singleton != nullptr) { // 4
         memdelete(train_system_singleton);
         train_system_singleton = nullptr;
+    }
+
+    if (train_physics_server_singleton != nullptr) { // 5
+        memdelete(train_physics_server_singleton);
+        train_physics_server_singleton = nullptr;
     }
 
     if (game_log_singleton != nullptr) { // 3

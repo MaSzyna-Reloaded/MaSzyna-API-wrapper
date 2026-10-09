@@ -10,7 +10,9 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            // No _do_process_mover() override: McZapkie already calls update_doors() automatically every
+            // tick from within compute_movement_() (the shared tail of ComputeMovement/FastComputeMovement),
+            // so a wrapper-side call here would just be a duplicate, double-advancing door timers.
             void _register_commands() override;
             void _unregister_commands() override;
 

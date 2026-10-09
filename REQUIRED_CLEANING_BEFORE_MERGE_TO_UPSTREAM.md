@@ -28,7 +28,7 @@ Legend:
 ### Correctness
 
 - [x] [RC-002](#rc-002) `BrakeMethod` reaches the Mover unmapped ✔
-- [ ] [RC-003](#rc-003) Diesel backend forces test power source ✔
+- [x] [RC-003](#rc-003) Diesel backend forces test power source ✔
 - [x] [RC-004](#rc-004) Configuration applied up to five times per vehicle ✔
 - [x] [RC-005](#rc-005) Cargo list duplicated by repeated configuration
 - [ ] [RC-006](#rc-006) Radio call commands never unregistered ✔
@@ -181,18 +181,6 @@ Legend:
 
 ## Correctness
 
-### RC-003
-
-**Diesel backend forces test power source** ✔
-
-* **Where:** `src/legacy/vehicles/MoverDieselEngineUnit.cpp:124-126`
-* **Rule:** correctness, magic value
-* **Problem:** `// FIXME: test data` sets
-  `p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator` for every diesel and
-  diesel-electric vehicle, regardless of its FIZ.
-* **Fix:** take the source type from the configuration (as the electric backend does), or
-  remove the line after checking what the original sets (`Mover.cpp`, `LoadFIZ_PowerParamsDecode`).
-
 ### RC-006
 
 **Radio call commands never unregistered** ✔
@@ -314,7 +302,7 @@ Legend:
     `// FIXME: THIS IS MODIFICATION OF OTHER SECTION`), also written by the controller at
     `MoverRailVehicleController.cpp:561`
   * `MoverRailVehicleDieselElectricEngine.cpp:20` (`ShuntModeAllow`), also set by
-    `MoverDieselEngineUnit.cpp:185`
+    `MoverDieselEngineUnit.cpp:181`
   * `MoverRailVehicleUniversalController.cpp:43` (`MainCtrlPos`, a runtime field written during
     configuration), also written by `initialize_mover_state` at `MoverRailVehicleController.cpp:87`
     and at run time by `MoverDriveUnit.cpp:268`
@@ -899,7 +887,7 @@ ported value keeps the original's value and a source reference".
 
 * **Where:** nine times in six files, among them:
   * `src/cabin/Cabin3D.cpp:169-170`
-  * `src/legacy/vehicles/MoverDieselEngineUnit.cpp:223, 275, 286`
+  * `src/legacy/vehicles/MoverDieselEngineUnit.cpp:219, 271, 282`
   * `MoverRailVehicleHeating.cpp:25-26`
 * **Problem:** only a local `SECONDS_PER_MINUTE` exists (`RailVehicleRenderingServer.cpp:1426`),
   not shared.

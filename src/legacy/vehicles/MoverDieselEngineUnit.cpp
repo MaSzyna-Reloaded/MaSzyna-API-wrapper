@@ -121,10 +121,6 @@ namespace godot {
     void MoverDieselEngineUnit::apply_configuration(const RailVehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
 
-        // FIXME: test data
-        p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
-        // end test data
-
         p_mover->OilPump.pressure_minimum = p_engine->get_oil_pump_pressure_minimum();
         p_mover->OilPump.pressure_maximum = p_engine->get_oil_pump_pressure_maximum();
         p_mover->FuelPump.start_type = mover_start_mode(p_engine->get_fuel_pump_start_mode());

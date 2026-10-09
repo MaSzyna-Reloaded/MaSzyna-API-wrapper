@@ -174,7 +174,6 @@ horn2={
 
 [rendering]
 
-rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=1
 environment/volumetric_fog/volume_size=96

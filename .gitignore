@@ -26,6 +26,7 @@ CMakeCache.txt
 /demo/addons/gut
 /demo/addons/libmaszyna
 /demo/bin
+/demo/override.cfg
 /src/gen/
 /doc
 /modules

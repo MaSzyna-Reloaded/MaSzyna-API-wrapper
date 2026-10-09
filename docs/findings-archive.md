@@ -4,6 +4,25 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-10-09 - Mover configured five times, spring brake released
+
+* **Symptom:** none reported directly - the review of `REQUIRED_CLEANING` (RC-004) and the operator's
+  concern that a Mover initialised twice ends in a wrong state (brakes, other functions).
+* **What proved it:** traced per scenery vehicle: CheckLocomotiveParameters 3x, every component's
+  `_apply_configuration` 5x (direct + again through `simulation_configured`, and a fifth time on the
+  first step because `controller_configure`'s `duplicate_deep` marked every component dirty).
+  `test_vehicle_build_configuration.gd`: an E6ACT standing at load had its spring brake released;
+  its first step announced 14 configuration changes.
+* **Cause:** passes after the last CheckLocomotiveParameters undid it (spring brake, brake load flag
+  and delays, `CntrlPipePress`); the fifth pass rewrote `MainCtrlPos`, `BatteryVoltage`, the current
+  collector, door permits over what had been done since the build. `AssignLoad` ran after CLP.
+* **Fix:** one pass in the original's order (DynObj.cpp:2020-2075); components no longer re-applied
+  through `simulation_configured`; `apply_config()` consumes the component's `dirty`. Three tests
+  that added components to a built vehicle and relied on the extra passes build through a
+  description now, as the game does; one applies its changed setting with `apply_config()`.
+* **Rule:** the backend is configured once, CheckLocomotiveParameters last; a test builds through
+  the description.
+
 ## 2026-10-09 - SN61 coupled for ever on `Shunt -3 -99`
 
 * **Symptom:** calkowo, SN61 at night: SN61-02's AI stood by the train it was to couple to, sent

@@ -98,21 +98,23 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
 
 ## A driven E186-like vehicle (the Engine: line of dynamic/pkp/e186_v2/p160dc.fiz, without InvNo)
 ## under 3000 V, with the line breaker closed and a direction set.
+## Built as the game builds a vehicle: every component in its description before the vehicle takes
+## it, so the backend is configured once and CheckLocomotiveParameters() runs after all of it
 func _powered_up_eim(train_id: String) -> VehicleController:
-    var driven:VehicleController = build_vehicle(train_id, null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
-    driven.add_component(build_power_supply(110.0))
-    driven.power = 5600.0
-    driven.mass = 81000.0
+    var description:VehicleController = MoverRailVehicleController.new()
+    description.add_component(build_power_supply(110.0))
+    description.power = 5600.0
+    description.mass = 81000.0
     var wheels: RailVehicleWheels = MoverRailVehicleWheels.new()
     wheels.powered_wheel_diameter = 1.25
     wheels.axle_arrangement = "Bo'Bo'"
-    driven.add_component(wheels)
+    description.add_component(wheels)
     var eim: RailVehicleElectricInductionEngine = MoverRailVehicleElectricInductionEngine.new()
     var power_source: RailVehicleEnginePowerSource = MoverRailVehicleEnginePowerSource.new()
     power_source.source_type = RailVehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     var master_controller: RailVehicleMasterController = MoverRailVehicleMasterController.new()
     master_controller.main_position_count = 4
-    driven.add_component(master_controller)
+    description.add_component(master_controller)
     eim.transmission_gear_teeth_motor = 48
     eim.transmission_gear_teeth_wheel = 251
     var line: MaszynaParser = MaszynaParser.new()
@@ -124,10 +126,11 @@ func _powered_up_eim(train_id: String) -> VehicleController:
     power_source.current_collector_min_main_switch_voltage = 1900.0
     power_source.current_collector_physical_layout = 3
     power_source.current_collector_number_of_collectors = 2
-    driven.add_component(eim)
-    driven.add_component(power_source)
-    driven.apply_configuration()
-    await step(1)
+    description.add_component(eim)
+    description.add_component(power_source)
+    var driven:VehicleController = build_vehicle(train_id, description, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD)
+    # the vehicle's own copy of the description's power source, the one the wire feeds
+    power_source = driven.get_rail_component(RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE)
     driven.send_command("battery", true)
     # the crew switches its cab on - no cab is active before (CabActive = 0, MOVER.h:2090)
     driven.send_command("cab_activation", true)

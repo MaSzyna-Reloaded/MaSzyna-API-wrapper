@@ -29,7 +29,7 @@ Legend:
 
 - [x] [RC-002](#rc-002) `BrakeMethod` reaches the Mover unmapped ✔
 - [ ] [RC-003](#rc-003) Diesel backend forces test power source ✔
-- [ ] [RC-004](#rc-004) Configuration applied up to five times per vehicle ✔
+- [x] [RC-004](#rc-004) Configuration applied up to five times per vehicle ✔
 - [x] [RC-005](#rc-005) Cargo list duplicated by repeated configuration
 - [ ] [RC-006](#rc-006) Radio call commands never unregistered ✔
 - [x] [RC-007](#rc-007) `e3d_loaded` connected again on every dirty frame ✔
@@ -193,32 +193,6 @@ Legend:
 * **Fix:** take the source type from the configuration (as the electric backend does), or
   remove the line after checking what the original sets (`Mover.cpp`, `LoadFIZ_PowerParamsDecode`).
 
-### RC-004
-
-**Configuration applied up to five times per vehicle**
-
-* **Where:**
-  * `src/legacy/vehicles/MoverRailVehicleController.cpp:100-155` (`_initialize_simulation()`),
-    `:590-592` (CheckLocomotiveParameters and `initialize_mover_state()` inside `apply_config()`)
-  * `src/vehicles/base/VehicleController.cpp:139-145`; `VehicleComponent.cpp:79-80, 207-211`
-* **Rule:** do the work once, where it belongs; port the original's order
-* **Problem:** per vehicle, CheckLocomotiveParameters runs 3 times, the controller's
-  `apply_config` 2 times, every component's `_apply_configuration` 5 times and
-  `initialize_mover_state` 3 times:
-  * `apply_configuration()` applies every component directly and again through
-    `simulation_configured` (`VehicleComponent.cpp:79-80`), so each pass reaches the components twice.
-  * the fifth pass runs on the first stepping frame: `controller_configure`'s `duplicate_deep` calls
-    `set_enabled()`, which marks every component dirty (`VehicleComponent.cpp:207-211`, RC-045).
-  * `AssignLoad` (`:147`) runs after every CheckLocomotiveParameters; the original runs it before
-    (DynObj.cpp:2030-2035).
-  * passes after the last CheckLocomotiveParameters undo it: `MoverRailVehicleSpringBrake.cpp:51`
-    releases the spring brake of a standing vehicle, `MoverRailVehicleBrake.cpp:546-549, 608, 614,
-    626-627` reset `BrakeDelay[]`, `BrakeCylMult[0]`, `LoadFlag` and re-randomise `CntrlPipePress`;
-    the fifth pass rewrites `MainCtrlPos`, `BatteryVoltage`, the current collector, the door permit
-    preset and `LoadAttributes` over whatever was done to the vehicle since its build.
-* **Fix:** the original's order (`TDynamicObject::Init()`, DynObj.cpp:2020-2075): every FIZ value
-  once, the load and the mass, CheckLocomotiveParameters once, then the controller and the handle.
-
 ### RC-006
 
 **Radio call commands never unregistered** ✔
@@ -244,10 +218,10 @@ Legend:
 **Mover controller commands dereference a null backend**
 
 * **Where:** `src/legacy/vehicles/MoverRailVehicleController.cpp`:
-  * `:648-654` - the compartment lights
-  * `:665-697` - `cab_*`
-  * `:723-734` - `cabin_leave`, `cabin_enter`
-  * `:751-786` - `ground_relay_reset`, `antislip`, `*_controller_*`, `direction_*`
+  * `:645-651` - the compartment lights
+  * `:662-694` - `cab_*`
+  * `:720-731` - `cabin_leave`, `cabin_enter`
+  * `:748-783` - `ground_relay_reset`, `antislip`, `*_controller_*`, `direction_*`
 * **Problem:** these methods are bound and registered as commands
   (`RailVehicleController.cpp:222-241`, in `attach_to_system()`, before `initialize()`), but call
   `mover->...` with no null check. Every getter of the class does check, and
@@ -308,7 +282,7 @@ Legend:
 
 **`VehicleComponent::send_command()` discards the command result**
 
-* **Where:** `src/vehicles/base/VehicleComponent.cpp:21-23` (bound), `:217-221` (body)
+* **Where:** `src/vehicles/base/VehicleComponent.cpp:21-23` (bound), `:211-215` (body)
 * **Problem:** it returns `void` and drops the `Variant` that `VehicleController::send_command()`
   returns (`VehicleController.cpp:379-396`), so a component - and a modder's script through it -
   never learns whether its command was accepted (#43).
@@ -338,7 +312,7 @@ Legend:
 * **Where:**
   * `src/legacy/vehicles/MoverRailVehicleWheels.cpp:43-44` (`Mred`,
     `// FIXME: THIS IS MODIFICATION OF OTHER SECTION`), also written by the controller at
-    `MoverRailVehicleController.cpp:560`
+    `MoverRailVehicleController.cpp:561`
   * `MoverRailVehicleDieselElectricEngine.cpp:20` (`ShuntModeAllow`), also set by
     `MoverDieselEngineUnit.cpp:185`
   * `MoverRailVehicleUniversalController.cpp:43` (`MainCtrlPos`, a runtime field written during
@@ -523,12 +497,11 @@ Legend:
 
 **Component enable lands a tick late through flags**
 
-* **Where:** `src/vehicles/base/VehicleComponent.cpp:207-211` (`set_enabled`), `:146-171`
-  (`process()`), `:11, 142-144` (`mark_dirty`, bound)
+* **Where:** `src/vehicles/base/VehicleComponent.cpp:201-205` (`set_enabled`), `:139-164`
+  (`process()`), `:11, 135-137` (`mark_dirty`, bound)
 * **Rule:** one road to one effect; no deferral
 * **Problem:** `set_enabled` sets `enabled_changed` and `dirty`, consumed by `process()` on the
-  next tick, so commands and config land a tick late - and every component is configured once
-  more on the first stepping frame (RC-004's fifth pass). `mark_dirty` is bound, which gives a
+  next tick, so commands and config land a tick late. `mark_dirty` is bound, which gives a
   second road to `apply_config`.
 * **Fix:** apply at once in the setter's owner operation, and remove the bound `mark_dirty`.
 
@@ -810,9 +783,9 @@ Legend:
 
 **Commands registered with `Callable(this, "name")`**
 
-* **Where:** 124 sites in 21 files - every `_register_commands`, the largest
+* **Where:** 122 sites in 20 files - every `_register_commands`, the largest
   `src/vehicles/rail/RailVehicleController.cpp` (20), `RailVehicleBrake.cpp` (19) and
-  `RailVehicleDoors.cpp` (13), and `src/vehicles/base/VehicleComponent.cpp:80, 98`
+  `RailVehicleDoors.cpp` (13)
 * **Rule:** call a method, do not name it
 * **Problem:** the class is known, so a rename or typo silently yields a callable to nothing.
 * **Fix:** `callable_mp(this, &Class::method)`.
@@ -826,7 +799,7 @@ Legend:
     `emit_signal("blinking_changed")`, `("beeping_changed")` - no constant exists, the
     `ADD_SIGNAL` in `RailVehicleSecuritySystem.cpp:31-32` uses literals too
   * `src/utils/UserSettings.cpp:133-184`
-  * `src/vehicles/base/VehicleComponent.cpp:139, 168`
+  * `src/vehicles/base/VehicleComponent.cpp:132, 159`
 * **Fix:** use the constants, and add one where it is missing.
 
 ## Magic numbers
@@ -1085,8 +1058,7 @@ ported value keeps the original's value and a source reference".
 
 * **Where:**
   * Polish comments (AGENTS.md asks for English):
-    `src/legacy/vehicles/MoverRailVehicleController.cpp:116, 591`,
-    `MoverRailVehicleBrake.cpp:572, 630`
+    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:572, 630`
   * `MoverRailVehicleBrake.cpp:196`, `MoverRailVehicleLighting.cpp:408`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,

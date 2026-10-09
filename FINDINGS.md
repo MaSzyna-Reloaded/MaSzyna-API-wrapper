@@ -59,6 +59,10 @@ anything. Open work belongs in `TODO.md`.
   *(10-06 a cab change in the 36WEa froze the game)*
 
 ## Porting the original engine
+* A vehicle's backend is configured once, in `TDynamicObject::Init()`'s order: every FIZ value, the
+  load, then `CheckLocomotiveParameters()` once - nothing configured after it, or it undoes what it
+  derived. A test builds a vehicle through its description, as the game does, not by adding
+  components to a built one. *(10-09 Mover configured five times, spring brake released)*
 * Port the whole `LoadFIZ_*` / loader function: derived counts, container sizes, fallbacks, and
   the state it sets at the end. A struct default is what a vehicle **without** that section gets.
   *(09-24 NaN forces; 09-24 spring brake)*

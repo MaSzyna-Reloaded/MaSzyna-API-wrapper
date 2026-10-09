@@ -76,11 +76,6 @@ namespace godot {
             return;
         }
         train_controller_node->register_component(this);
-        const Error connected = train_controller_node->connect(
-                VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
-        if (connected != OK) {
-            log_warning("VehicleComponent::attach() failed with error code " + String::num(connected));
-        }
         if (enabled) {
             _register_commands();
             _commands_registered = true;
@@ -94,8 +89,6 @@ namespace godot {
         }
         if (train_controller_node != nullptr) {
             train_controller_node->unregister_component(this);
-            train_controller_node->disconnect(
-                    VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
         }
         train_controller_node = nullptr;
     }
@@ -145,9 +138,7 @@ namespace godot {
 
     void VehicleComponent::process(const double p_delta) {
         if (dirty) {
-            // emit_config_changed_signal();
             apply_config();
-            dirty = false;
         }
 
         if (enabled) {
@@ -193,6 +184,9 @@ namespace godot {
             return;
         }
         _apply_configuration();
+        // what changed is in the backend now - a change before it (the description copied with its
+        // properties) leaves nothing to apply again on the next step
+        dirty = false;
         train_controller_node->emit_config_changed();
     }
 

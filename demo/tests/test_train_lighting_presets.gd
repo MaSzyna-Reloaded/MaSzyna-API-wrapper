@@ -9,7 +9,6 @@ var lighting: RailVehicleLighting
 
 
 func before_each():
-    train = build_vehicle("TestLightPresets")
     lighting = MoverRailVehicleLighting.new()
     var upper := RailVehicleLightListItem.new()
     upper.cabin_a_head_light = true
@@ -21,9 +20,11 @@ func before_each():
     var presets:Array[RailVehicleLightListItem] = [upper, lower_pair]
     lighting.lights_list = presets
     lighting.lights_default_selector_position = 1
-    train.add_component(lighting)
-    train.apply_configuration()
-    await wait_idle_frames(2)
+    # in the description before the vehicle takes it, as the game builds one: the selector starts
+    # where CheckLocomotiveParameters() puts it, after the configuration (Mover.cpp:8885)
+    var description:VehicleController = MoverRailVehicleController.new()
+    description.add_component(lighting)
+    train = build_vehicle("TestLightPresets", description)
 
 
 func test_the_selector_starts_at_the_default_preset():

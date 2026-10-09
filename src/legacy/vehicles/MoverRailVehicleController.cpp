@@ -110,20 +110,27 @@ namespace godot {
         // every component takes the Mover before the configuration is written into it
         _attach_implementation(mover_implementation);
 
+        // Original engine: TDynamicObject::Init() (DynObj.cpp:2020-2075) - every value of the FIZ
+        // (LoadFIZ()), the load and the mass, then CheckLocomotiveParameters() once, then the
+        // controller and the brake handle; nothing of the configuration is written after it, or it
+        // undoes what CheckLocomotiveParameters() derived (the spring brake of a standing vehicle,
+        // the brake's load flag and delays)
         apply_configuration();
-
-        /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(get_initial_velocity() != 0.0, 0); // FIXME: brakujace parametery
-
-        /* CheckLocomotiveParameters() will reset some parameters, so the changes
-         * must be applied second time */
-
-        apply_configuration();
+        /* What the scenery loaded the vehicle with. The backend takes the cargo's name and its
+         * amount together and reads more than cargo out of them - `pantstate` is how a scenery
+         * starts a locomotive with raised pantographs (Mover.cpp:7647). */
+        if (!get_load_name().is_empty()) {
+            mover->AssignLoad(std::string(get_load_name().utf8().ptr()), static_cast<float>(get_load_amount()));
+        }
+        mover->ComputeMass();
+        // the original's Dir (velocity sign x cab x direction, DynObj.cpp:2036-2039) sets DirActive
+        // of a vehicle moving at load; here no cab is active yet (see below), so it is 0
+        mover->CheckLocomotiveParameters(get_initial_velocity() != 0.0, 0);
         initialize_mover_state();
 
         // Original engine: Load() (Mover.cpp:11692) calls ComputeConstans() once, after every
         // physical parameter (TotalMass, Dim, Cx, BearingType, NPoweredAxles, TrackW - all
-        // already applied above by the two apply_configuration() passes) is settled -
+        // already applied above by apply_configuration()) is settled -
         // it derives FrictConst1/FrictConst2s/FrictConst2d, the per-vehicle rolling/air-drag
         // resistance coefficients FrictionForce() (called every tick from ComputeTotalForce())
         // actually uses. Never called anywhere else in the original either (a single call at
@@ -140,12 +147,6 @@ namespace godot {
         // no cab is active yet (CabActive = 0, MOVER.h:2090): the driver switches it on once the
         // trainset is coupled - the AI by its hint (driverhints.cpp:108), the player on entering
         // (Train.cpp:9147) - so the activation reaches every cab of the unit (SendCtrlToNext)
-        /* What the scenery loaded the vehicle with. The backend takes the cargo's name and its
-         * amount together and reads more than cargo out of them - `pantstate` is how a scenery
-         * starts a locomotive with raised pantographs (Mover.cpp:7647). */
-        if (!get_load_name().is_empty()) {
-            mover->AssignLoad(std::string(get_load_name().utf8().ptr()), static_cast<float>(get_load_amount()));
-        }
 
         /* switch_physics() raczej trzeba zostawic */
         mover->switch_physics(true);
@@ -586,10 +587,6 @@ namespace godot {
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();
         mover->InactiveCabFlag = get_cntrl_inactive_cab_flag();
         emit_config_changed();
-
-        /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(get_initial_velocity() != 0.0, 0); // FIXME: brakujace parametery
-        initialize_mover_state();
     }
 
     void MoverRailVehicleController::_fill_config_dictionary(Dictionary &p_config) const {

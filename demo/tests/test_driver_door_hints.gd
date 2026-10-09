@@ -7,10 +7,6 @@ extends MaszynaGutTest
 ## presets, the doors closed from the cab (CloseCtrl=DriverCtrl).
 
 const CONTROL_CAR_PATH:String = "res://tests/fixtures/dynamic/pkp/en57-2000_v1/6bs.fiz"
-## Steps a vehicle just built takes to stand ready: its node takes the controller within the
-## frames, the vehicle its configuration on its first step
-const SETTLE_TICKS:int = 2
-
 var _vehicle:RID
 
 
@@ -22,7 +18,7 @@ func before_each() -> void:
     var power_supply:RailVehiclePowerSupply = RailVehicleServer.vehicle_component_get(
             _vehicle, RailVehicleComponentType.COMPONENT_POWER_SUPPLY) as RailVehiclePowerSupply
     power_supply.cntrl_battery_start_mode = RailVehicleController.START_MODE_MANUAL
-    await step(SETTLE_TICKS)
+    power_supply.apply_config()
     # the doors are worked from the cab only with the low voltage (Mover.cpp:8669-8673)
     VehicleServer.vehicle_send_command(_vehicle, "battery", true)
     # the low voltage is reckoned on the vehicle's next step

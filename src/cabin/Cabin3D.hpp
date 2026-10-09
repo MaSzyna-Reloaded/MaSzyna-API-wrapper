@@ -27,14 +27,22 @@ namespace godot {
             static void _bind_methods();
 
             /* Original engine: the shake is integrated at a fixed step so it does not depend on
-             * the frame rate; the accumulator carries the remainder between frames. */
+             * the frame rate; the accumulator carries the remainder between frames
+             * (drivermode.h:113 m_secondaryupdaterate) */
             static constexpr double SHAKE_STEP = 1.0 / 50.0;
+            /* Spring.h:33 restLen */
             static constexpr double SPRING_REST_LENGTH = 0.01;
+            /* TDynamicObject::update_shake (DynObj.cpp:8048-8136) */
+            static constexpr double ENGINE_SHAKE_ANGLE_MULTIPLIER = 4.0; // DynObj.cpp:8069
+            static constexpr double SHAKE_FORCE_GAIN = 1.25;             // DynObj.cpp:8111
+            static constexpr double SHAKE_FORCE_ATTENUATION = 0.85;      // DynObj.cpp:8124
+            static constexpr double SHAKE_VELOCITY_DAMPING = 100.0;      // DynObj.cpp:8126
+            static constexpr double SHAKE_JOLT_SCALE_DIVISOR = 200.0;    // DynObj.cpp:8126
 
             /// The RailVehicleServer handle of the vehicle this cab sits in
             RID vehicle_rid;
             bool cabin_ready = false;
-            double engine_angle = Math::PI * 0.5;
+            double engine_angle = Math::PI * 0.5; // MOVER.h:2207 eAngle
             Vector3 shake_velocity;
             Vector3 shake_offset;
             double shake_accumulator = 0.0;
@@ -51,9 +59,11 @@ namespace godot {
              * (driverNangle:, Train.cpp:10529-10538; drivermode.cpp:1225-1226) */
             Vector2 driver_view_angle;
 
-            double shake_spring_stiffness = 125.0;
-            double shake_spring_damping = 0.002;
+            double shake_spring_stiffness = 125.0; // DynObj.cpp:2340 ShakeSpring.Init()
+            double shake_spring_damping = 0.002;   // Spring.h:29 nKd
+            /* BaseShake and EngineShake defaults (DynObj.h:837-846) */
             Vector3 shake_jolt_scale = Vector3(0.2, 0.2, 0.1);
+            /* The original's is 2.0 (DynObj.h:839) - REQUIRED_CLEANING RC-125 */
             double shake_jolt_limit = 0.15;
             Vector2 shake_angle_scale = Vector2(0.05, 0.1);
             double engine_shake_scale = 2.0;

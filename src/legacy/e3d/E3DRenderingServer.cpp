@@ -4,6 +4,7 @@
 #include "resources/ResourceLazyLoader.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -937,7 +938,8 @@ namespace godot {
             const float distance =
                     settings->get_setting(SCENERY_LIGHT_DISTANCE_SETTING, DEFAULT_SCENERY_LIGHT_DISTANCE);
             rs->light_set_distance_fade(
-                    light->light, true, distance, SCENERY_LIGHT_SHADOW_FADE_DISTANCE, distance * 0.25f);
+                    light->light, true, distance, SCENERY_LIGHT_SHADOW_FADE_DISTANCE,
+                    distance * SCENERY_LIGHT_FADE_LENGTH_SHARE);
         }
 
         light->light_instance = rs->instance_create();
@@ -1302,7 +1304,7 @@ namespace godot {
         if (size == 0) {
             return;
         }
-        light_clock = static_cast<double>(Time::get_singleton()->get_ticks_usec()) / USEC_PER_SECOND;
+        light_clock = static_cast<double>(Time::get_singleton()->get_ticks_usec()) / LibMaszynaUnits::USEC_PER_SECOND;
         const int visited = MIN(size, MAX_BLINKING_INSTANCES_PER_FRAME);
         for (int i = 0; i < visited; i++) {
             if (blinking_cursor >= size) {
@@ -1351,7 +1353,8 @@ namespace godot {
         }
         light_processing = p_processing;
         if (p_processing) {
-            light_clock = static_cast<double>(Time::get_singleton()->get_ticks_usec()) / USEC_PER_SECOND;
+            light_clock =
+                    static_cast<double>(Time::get_singleton()->get_ticks_usec()) / LibMaszynaUnits::USEC_PER_SECOND;
             tree->connect("process_frame", callable_mp(this, &E3DRenderingServer::_process_lights));
             return;
         }
@@ -1752,7 +1755,7 @@ namespace godot {
         if (!p_smoke.visible || !p_smoke.particles.is_valid()) {
             return;
         }
-        const double delta = static_cast<double>(p_now - p_smoke.last_spawn_usec) / 1000000.0;
+        const double delta = static_cast<double>(p_now - p_smoke.last_spawn_usec) / LibMaszynaUnits::USEC_PER_SECOND;
         p_smoke.last_spawn_usec = p_now;
         p_smoke.spawn_backlog =
                 static_cast<float>(p_smoke.spawn_backlog + (p_smoke.spawn_rate * p_smoke.intensity * delta));

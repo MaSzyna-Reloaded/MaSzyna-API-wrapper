@@ -63,8 +63,6 @@ namespace godot {
             /// (the backlog only drains at frame rate times budget). Never while driving through the
             /// world: there a frame on time beats the world appearing a little sooner.
             static constexpr uint64_t CATCHUP_BUDGET_MSEC = 16;
-            static constexpr uint64_t USEC_PER_MSEC = 1000;
-            static constexpr uint64_t USEC_PER_SECOND = 1000000;
             /// Backlog above which the catch-up budget is used
             static constexpr int CATCHUP_BACKLOG = 64;
             /// Pieces cleared before the memory they held is given back to the system, once the

@@ -3,6 +3,13 @@
 #include <godot_cpp/core/math.hpp>
 
 namespace godot {
+    namespace {
+        /* The diameter TMoverParameters keeps when the data gives none (MOVER.h:1595) */
+        constexpr double DEFAULT_WHEEL_DIAMETER = 1.0;
+        /* LoadFIZ_Wheels: "approximation formula by youby", an arbitrary constant (Mover.cpp:10388) */
+        constexpr double AXLE_INERTIA_APPROXIMATION_FACTOR = 472.0;
+    } // namespace
+
     void MoverRailVehicleWheels::_bind_methods() {}
 
 
@@ -10,7 +17,7 @@ namespace godot {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         const double resolved_powered_wheel_diameter =
-                get_powered_wheel_diameter() > 0.0 ? get_powered_wheel_diameter() : 1.0;
+                get_powered_wheel_diameter() > 0.0 ? get_powered_wheel_diameter() : DEFAULT_WHEEL_DIAMETER;
         const double resolved_front_rolling_wheel_diameter = get_front_rolling_wheel_diameter() > 0.0
                                                                      ? get_front_rolling_wheel_diameter()
                                                                      : resolved_powered_wheel_diameter;
@@ -38,11 +45,11 @@ namespace godot {
         p_mover->BDist = get_bogie_pivot_spacing();
 
         if (get_axle_inertial_moment() <= 0.0) {
-            const double k = 472.0;
-            p_mover->AxleInertialMoment = k / 4.0 * std::pow(p_mover->WheelDiameter, 4.0) * p_mover->NAxles;
+            p_mover->AxleInertialMoment =
+                    AXLE_INERTIA_APPROXIMATION_FACTOR / 4.0 * std::pow(p_mover->WheelDiameter, 4.0) * p_mover->NAxles;
             // Original engine: LoadFIZ_Wheels() overwrites the Mred LoadFIZ_Param() read (Mover.cpp:
             // 10248, 10390) - the controller applies its Param: values before the components
-            p_mover->Mred = k * std::pow(p_mover->WheelDiameter, 2.0) * p_mover->NAxles;
+            p_mover->Mred = AXLE_INERTIA_APPROXIMATION_FACTOR * std::pow(p_mover->WheelDiameter, 2.0) * p_mover->NAxles;
         } else {
             p_mover->AxleInertialMoment = get_axle_inertial_moment();
         }

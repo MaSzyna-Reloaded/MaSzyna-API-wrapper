@@ -94,6 +94,7 @@
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackServer.hpp"
 #include "traction/TractionServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "utils/MaszynaTranslationServer.hpp"
 #include "utils/ProcessMemory.hpp"
 #include "utils/UserSettings.hpp"
@@ -285,6 +286,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(VehiclePersonRole);
+        GDREGISTER_ABSTRACT_CLASS(LibMaszynaUnits);
         GDREGISTER_ABSTRACT_CLASS(RailVehicleCabinKind);
         GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_CLASS(RailVehiclePhysicsNode);

@@ -2,7 +2,6 @@
 #include "MoverRailVehicleController.hpp"
 #include "legacy/maszyna-mover/utilities.h"
 #include "legacy/vehicles/MoverBackend.hpp"
-#include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
@@ -583,8 +582,9 @@ namespace godot {
         mover->Cx = get_dimensions_drag_coefficient();
         mover->Floor = static_cast<float>(get_dimensions_floor_height());
 
-        mover->GroundRelayStart = mover_start_mode(get_cntrl_ground_relay_start_mode());
-        mover->CompartmentLights.start_type = mover_start_mode(get_cntrl_compartment_lights_start_mode());
+        mover->GroundRelayStart = MaszynaMoverVehicleServer::start_mode_to_mover(get_cntrl_ground_relay_start_mode());
+        mover->CompartmentLights.start_type =
+                MaszynaMoverVehicleServer::start_mode_to_mover(get_cntrl_compartment_lights_start_mode());
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();
         mover->InactiveCabFlag = get_cntrl_inactive_cab_flag();
         emit_config_changed();

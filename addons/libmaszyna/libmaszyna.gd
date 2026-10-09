@@ -263,6 +263,10 @@ func _enter_tree():
         "maszyna/scenery/lights/volumetric_fog_energy", 4.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,16.0,0.1"
     )
+    add_custom_project_setting(
+        "maszyna/vehicles/lights/volumetric_fog_energy", 4.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,16.0,0.1"
+    )
     # Lifts the synthesized street lamp light above the halo billboard that marks the lamp head.
     # Nothing in the data asks for it - a plain tuning offset.
     add_custom_project_setting(

@@ -1,4 +1,5 @@
 #include "SimulationServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
@@ -152,8 +153,10 @@ namespace godot {
             // the launchers look at whole minutes (EvLaunch.cpp:197-211): the clock says so when
             // one passes, not every slice
             const double previous = time_of_day;
-            time_of_day = Math::fposmod(time_of_day + (slice / SECONDS_PER_HOUR), HOURS_PER_DAY);
-            if (!(Math::floor(previous * MINUTES_PER_HOUR) == Math::floor(time_of_day * MINUTES_PER_HOUR))) {
+            time_of_day = Math::fposmod(
+                    time_of_day + (slice / LibMaszynaUnits::SECONDS_PER_HOUR), LibMaszynaUnits::HOURS_PER_DAY);
+            if (!(Math::floor(previous * LibMaszynaUnits::MINUTES_PER_HOUR) ==
+                  Math::floor(time_of_day * LibMaszynaUnits::MINUTES_PER_HOUR))) {
                 emit_signal(time_of_day_changed_signal);
             }
             emit_signal(simulation_advanced_signal, slice);

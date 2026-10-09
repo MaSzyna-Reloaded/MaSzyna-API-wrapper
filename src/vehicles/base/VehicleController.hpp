@@ -209,7 +209,11 @@ namespace godot {
             RID rid;
             /* What runs the simulation while it exists (_attach_implementation()) */
             ObjectID implementation_server;
-            Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
+            /* position_changed is emitted once the vehicle has moved this far (m) */
+            static constexpr double POSITION_CHANGED_MIN_DISTANCE = 1.0;
+            /* Far from anywhere, so the first position is always announced */
+            static constexpr real_t UNSET_POSITION = 1e10;
+            Vector3 last_emitted_position = Vector3(UNSET_POSITION, UNSET_POSITION, UNSET_POSITION);
     };
 } // namespace godot
 

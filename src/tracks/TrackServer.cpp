@@ -1,4 +1,5 @@
 #include "TrackServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "utils/Names.hpp"
 
 #include <godot_cpp/classes/project_settings.hpp>
@@ -466,7 +467,7 @@ namespace godot {
     // MaSzyna Track.cpp:1933-1955 animates domain offset.
     void TrackServer::_process_switches() {
         const uint64_t now = Time::get_singleton()->get_ticks_usec();
-        const double delta = static_cast<double>(now - last_switch_step_usec) / 1000000.0;
+        const double delta = static_cast<double>(now - last_switch_step_usec) / LibMaszynaUnits::USEC_PER_SECOND;
         last_switch_step_usec = now;
         for (int index = static_cast<int>(moving_switches.size()) - 1; index >= 0; --index) {
             const RID track_rid = moving_switches[index];

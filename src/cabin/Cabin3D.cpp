@@ -1,4 +1,5 @@
 #include "Cabin3D.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "vehicles/base/VehicleComponentType.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
@@ -165,13 +166,18 @@ namespace godot {
         const double engine_revolutions = engine.is_valid() ? Math::abs(engine->get_rpm_count()) : 0.0;
         if (engine_revolutions > 0.0) {
             engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math::TAU);
-            const double fade_in = CLAMP(
-                    (engine_revolutions - (engine_shake_fade_in_rpm / 60.0)) * engine_shake_fade_in_factor, 0.0, 1.0);
-            const double fade_out = 1.0 - CLAMP((engine_revolutions - (engine_shake_fade_out_rpm / 60.0)) *
-                                                        engine_shake_fade_out_factor,
-                                                0.0, 1.0);
+            const double fade_in =
+                    CLAMP((engine_revolutions - (engine_shake_fade_in_rpm / LibMaszynaUnits::SECONDS_PER_MINUTE)) *
+                                  engine_shake_fade_in_factor,
+                          0.0, 1.0);
+            const double fade_out =
+                    1.0 -
+                    CLAMP((engine_revolutions - (engine_shake_fade_out_rpm / LibMaszynaUnits::SECONDS_PER_MINUTE)) *
+                                  engine_shake_fade_out_factor,
+                          0.0, 1.0);
             shake_vector.x = static_cast<real_t>(
-                    Math::sin(engine_angle * 4.0) * p_delta * engine_shake_scale * fade_in * fade_out);
+                    Math::sin(engine_angle * ENGINE_SHAKE_ANGLE_MULTIPLIER) * p_delta * engine_shake_scale * fade_in *
+                    fade_out);
         }
 
         const Vector3 spring_delta = shake_vector - shake_offset;
@@ -183,9 +189,10 @@ namespace godot {
             spring_force = spring_delta / static_cast<real_t>(distance) * static_cast<real_t>(-force);
         }
 
-        const Vector3 shake = spring_force * 1.0625;
-        const double damping = (shake_jolt_scale.x + shake_jolt_scale.y + shake_jolt_scale.z) / 200.0;
-        shake_velocity -= (shake + shake_velocity * 100.0) * static_cast<real_t>(damping);
+        const Vector3 shake = spring_force * SHAKE_FORCE_GAIN * SHAKE_FORCE_ATTENUATION;
+        const double damping =
+                (shake_jolt_scale.x + shake_jolt_scale.y + shake_jolt_scale.z) / SHAKE_JOLT_SCALE_DIVISOR;
+        shake_velocity -= (shake + shake_velocity * SHAKE_VELOCITY_DAMPING) * static_cast<real_t>(damping);
         shake_offset += shake_velocity * static_cast<real_t>(p_delta);
         if (Math::abs(shake_offset.y) > Math::abs(shake_jolt_limit)) {
             shake_velocity.y = -shake_velocity.y;

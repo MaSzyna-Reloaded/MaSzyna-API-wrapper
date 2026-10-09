@@ -84,6 +84,10 @@ namespace godot {
             static constexpr double RADIO_STOP_RANGE = 2000.0;
             /* How far ahead and behind the transform samples the curve to find its heading (m) */
             static constexpr double HEADING_SAMPLE_DISTANCE = 0.1;
+            /* Below it the sampled heading is no direction at all */
+            static constexpr double HEADING_MIN_LENGTH_SQUARED = 0.000001;
+            /* Above it the heading is too close to vertical to build the basis on the up axis */
+            static constexpr double UP_PARALLEL_DOT_LIMIT = 0.999;
             /* Beyond this the track is straight as far as the running shape is concerned (m) */
             static constexpr double CURVE_RADIUS_LIMIT = 15000.0;
 

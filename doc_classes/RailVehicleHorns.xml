@@ -7,11 +7,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_combined_signal" qualifiers="const">
-			<return type="int" />
-			<description>
-			</description>
-		</method>
 		<method name="get_high_active" qualifiers="const">
 			<return type="bool" />
 			<description>

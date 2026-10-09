@@ -9,7 +9,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_low_pressed"), &RailVehicleHorns::get_low_pressed);
         ClassDB::bind_method(D_METHOD("get_high_pressed"), &RailVehicleHorns::get_high_pressed);
         ClassDB::bind_method(D_METHOD("get_whistle_pressed"), &RailVehicleHorns::get_whistle_pressed);
-        ClassDB::bind_method(D_METHOD("get_combined_signal"), &RailVehicleHorns::get_combined_signal);
         ClassDB::bind_method(D_METHOD("get_low_active"), &RailVehicleHorns::get_low_active);
         ClassDB::bind_method(D_METHOD("get_high_active"), &RailVehicleHorns::get_high_active);
         ClassDB::bind_method(D_METHOD("get_whistle_active"), &RailVehicleHorns::get_whistle_active);

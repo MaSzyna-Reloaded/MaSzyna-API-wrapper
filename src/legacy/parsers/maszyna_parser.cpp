@@ -2,11 +2,9 @@
 
 namespace godot {
     namespace {
-        /// The first byte past ASCII
-        constexpr uint8_t ASCII_END = 0x80;
         /// Unicode code points of the bytes 0x80-0xFF in cp1250, the encoding of the original's data
         /// files (U+FFFD for undefined bytes) - the table of Windows1250.gd
-        constexpr char32_t CP1250_HIGH[ASCII_END] = {
+        constexpr char32_t CP1250_HIGH[] = {
                 0x20AC, 0xFFFD, 0x201A, 0xFFFD, 0x201E, 0x2026, 0x2020, 0x2021, 0xFFFD, 0x2030, 0x0160, 0x2039, 0x015A,
                 0x0164, 0x017D, 0x0179, 0xFFFD, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, 0xFFFD, 0x2122,
                 0x0161, 0x203A, 0x015B, 0x0165, 0x017E, 0x017A, 0x00A0, 0x02C7, 0x02D8, 0x0141, 0x00A4, 0x0104, 0x00A6,
@@ -59,13 +57,13 @@ namespace godot {
     }
 
     /// Single ASCII stop characters; others never matched a single byte in the tokenizer anyway
-    void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&p_r_table)[128]) {
+    void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&p_r_table)[ASCII_END]) {
         for (bool &entry: p_r_table) {
             entry = false;
         }
         for (int i = 0; i < p_stops.size(); i++) {
             const String stop = p_stops[i];
-            if (stop.length() == 1 && stop[0] < 128) {
+            if (stop.length() == 1 && stop[0] < ASCII_END) {
                 p_r_table[stop[0]] = true;
             }
         }
@@ -115,7 +113,7 @@ namespace godot {
         PackedByteArray subbuf;
         while (!eof_reached()) {
             const int c = get8();
-            if (c == -1 || c == 10 || c == 13) {
+            if (c == -1 || c == '\n' || c == '\r') {
                 break;
             }
             subbuf.append(static_cast<uint8_t>(c));
@@ -148,7 +146,7 @@ namespace godot {
     }
 
     /// Reads one token (empty at a comment or repeated stop characters), parameters substituted
-    String MaszynaParser::_read_token(const bool (&p_stop_table)[128]) {
+    String MaszynaParser::_read_token(const bool (&p_stop_table)[ASCII_END]) {
         std::string raw;
         bool maybe_comment = false;
         bool maybe_endcomment = false;
@@ -204,7 +202,7 @@ namespace godot {
                 raw += '/';
             }
 
-            if (skip || (static_cast<uint8_t>(c) < 128 && p_stop_table[static_cast<uint8_t>(c)])) {
+            if (skip || (static_cast<uint8_t>(c) < ASCII_END && p_stop_table[static_cast<uint8_t>(c)])) {
                 break;
             }
 
@@ -245,11 +243,11 @@ namespace godot {
     }
 
     Array MaszynaParser::get_tokens(const int p_num, const Array &p_stops) {
-        bool stop_table[128] = {};
+        bool stop_table[ASCII_END] = {};
         if (!p_stops.is_empty()) {
             _make_stop_table(p_stops, stop_table);
         }
-        const bool (&table)[128] = p_stops.is_empty() ? default_stop_table : stop_table;
+        const bool (&table)[ASCII_END] = p_stops.is_empty() ? default_stop_table : stop_table;
 
         Array tokens;
         while (tokens.size() < p_num && !eof_reached()) {
@@ -261,11 +259,11 @@ namespace godot {
     }
 
     String MaszynaParser::next_token(const Array &p_stops) {
-        bool stop_table[128] = {};
+        bool stop_table[ASCII_END] = {};
         if (!p_stops.is_empty()) {
             _make_stop_table(p_stops, stop_table);
         }
-        const bool (&table)[128] = p_stops.is_empty() ? default_stop_table : stop_table;
+        const bool (&table)[ASCII_END] = p_stops.is_empty() ? default_stop_table : stop_table;
 
         while (!eof_reached()) {
             if (String token = _read_token(table); !token.is_empty()) {

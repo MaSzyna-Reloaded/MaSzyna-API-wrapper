@@ -19,7 +19,18 @@ namespace godot {
         private:
             static void _bind_methods();
 
-            // Hasler speed recorder (Train.cpp:6917-6940 fTachoVelocity/fTachoVelocityJump/fTachoCount)
+            /* Hasler speed recorder: TTrain::Update() (Train.cpp:8580-8611) and its sound gate
+             * (Train.cpp:10091-10103) */
+            static constexpr double MAX_TACHOMETER_COUNT = 3.0;            // Train.cpp:8581 maxtacho
+            static constexpr double TACHOMETER_WHEEL_SPEED_FACTOR = 11.31; // Train.cpp:8588
+            static constexpr double TACHOMETER_MAX_SPEED_FACTOR = 1.05;    // Train.cpp:8583
+            static constexpr double TACHOMETER_MIN_VELOCITY = 1.0;         // Train.cpp:8602
+            static constexpr double TACHOMETER_JUMP_OFFSET = 2.0;          // Train.cpp:8595
+            static constexpr double TACHOMETER_JUMP_RANDOM_RANGE = 3.0;    // Train.cpp:8595
+            static constexpr double TACHOMETER_JUMP_SCALE = 0.5;           // Train.cpp:8595
+            static constexpr double TACHOMETER_COUNT_RISE_RATE = 3.0;      // Train.cpp:8605
+            static constexpr double TACHOMETER_COUNT_FALL_RATE = 0.66;     // Train.cpp:8610
+            static constexpr double TACHOMETER_CLOCK_STOP_COUNT = 1.0;     // Train.cpp:10100
             double tachometer_velocity = 0.0;
             double tachometer_velocity_jump = 0.0;
             double tachometer_count = 0.0;

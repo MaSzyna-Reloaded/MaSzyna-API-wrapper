@@ -45,6 +45,13 @@ Legend:
 - [ ] [RC-017](#rc-017) `PlanarMirror3D` default outside its own range
 - [ ] [RC-018](#rc-018) `get_cache_dir` bound with a default for a missing argument
 - [x] [RC-019](#rc-019) Mover fields written by two components
+- [ ] [RC-124](#rc-124) Bare coupler built from `max_velocity` instead of `Ftmax`
+- [ ] [RC-125](#rc-125) `Cabin3D` shake: jolt limit and the random jolt
+- [ ] [RC-126](#rc-126) `TrackServer` track width and switch blade speed
+- [ ] [RC-127](#rc-127) Doors `VOLTAGE_112` never powered
+- [ ] [RC-128](#rc-128) Lighting defaults off the original
+- [ ] [RC-129](#rc-129) Tachometer without `MaxTachoSpeed` and the slow jump
+- [ ] [RC-130](#rc-130) Brake control pipe pressure and the `NBpA` clamp
 
 ### Separation of concerns and getters (ALARM)
 
@@ -68,6 +75,8 @@ Legend:
 - [ ] [RC-037](#rc-037) `track_get_endpoints()` fills a cache
 - [x] [RC-038](#rc-038) `build_get_number()` reads a file and sets a flag
 - [ ] [RC-039](#rc-039) `MaszynaParser::get*()` advance the cursor
+- [x] [RC-131](#rc-131) `RailVehicleHorns::get_combined_signal()` returns the Mover's bits
+- [x] [RC-132](#rc-132) `MoverTypes.hpp` - shared Mover translations without an owner
 
 ### Missing events and wiring
 
@@ -125,24 +134,24 @@ Legend:
 ### Magic numbers
 
 - [x] [RC-080](#rc-080) `RailVehicle3D`
-- [ ] [RC-081](#rc-081) `Cabin3D`
-- [ ] [RC-082](#rc-082) `TractionServer`
-- [ ] [RC-083](#rc-083) `TrackServer`
-- [ ] [RC-084](#rc-084) `MoverRailVehicleBuffCoupl`
-- [ ] [RC-085](#rc-085) `MoverRailVehicleBrake`
-- [ ] [RC-086](#rc-086) `MoverRailVehicleMasterController`
-- [ ] [RC-087](#rc-087) Warning signal bitmasks in horns and security system
-- [ ] [RC-088](#rc-088) `MoverCircuitUnit` thresholds
-- [ ] [RC-089](#rc-089) `MoverRailVehicleWheels`
-- [ ] [RC-090](#rc-090) `60.0` rpm conversion repeated in six files
-- [ ] [RC-091](#rc-091) Speed control preset count and doors remote control value
-- [ ] [RC-092](#rc-092) `E3DNodesBackend` light settings defaults
-- [ ] [RC-093](#rc-093) Microsecond conversions and E3D distances
-- [ ] [RC-094](#rc-094) `e3d_parser` flags and offsets
-- [ ] [RC-095](#rc-095) `MaszynaParser` characters and buffer size
-- [ ] [RC-096](#rc-096) Scenery loading and streaming timings
-- [ ] [RC-097](#rc-097) Vehicle server, controller and coupler literals
-- [ ] [RC-098](#rc-098) FIZ defaults in rail component headers without a source
+- [x] [RC-081](#rc-081) `Cabin3D`
+- [x] [RC-082](#rc-082) `TractionServer`
+- [x] [RC-083](#rc-083) `TrackServer`
+- [x] [RC-084](#rc-084) `MoverRailVehicleBuffCoupl`
+- [x] [RC-085](#rc-085) `MoverRailVehicleBrake`
+- [x] [RC-086](#rc-086) `MoverRailVehicleMasterController`
+- [x] [RC-087](#rc-087) Warning signal bitmasks in horns and security system
+- [x] [RC-088](#rc-088) `MoverCircuitUnit` thresholds
+- [x] [RC-089](#rc-089) `MoverRailVehicleWheels`
+- [x] [RC-090](#rc-090) `60.0` rpm conversion repeated in six files
+- [x] [RC-091](#rc-091) Speed control preset count and doors remote control value
+- [x] [RC-092](#rc-092) `E3DNodesBackend` light settings defaults
+- [x] [RC-093](#rc-093) Microsecond conversions and E3D distances
+- [x] [RC-094](#rc-094) `e3d_parser` flags and offsets
+- [x] [RC-095](#rc-095) `MaszynaParser` characters and buffer size
+- [x] [RC-096](#rc-096) Scenery loading and streaming timings
+- [x] [RC-097](#rc-097) Vehicle server, controller and coupler literals
+- [x] [RC-098](#rc-098) FIZ defaults in rail component headers without a source
 
 ### DRY / KISS
 
@@ -185,7 +194,7 @@ Legend:
 
 **Headlight colour 255 times overbright** ✔
 
-* **Where:** `src/vehicles/rail/RailVehicleLighting.hpp:80`
+* **Where:** `src/vehicles/rail/RailVehicleLighting.hpp:83`
 * **Problem:** `Color(255, 255, 255)` - `Color` takes floats in 0..1, so this is white
   multiplied by 255.
 * **Fix:** `Color(1, 1, 1)`.
@@ -194,15 +203,15 @@ Legend:
 
 **Singleton teardown leaks `TractionServer` and breaks the order** ✔
 
-* **Where:** `src/register_types.cpp:581-640` (unregister), from `:642` (free)
+* **Where:** `src/register_types.cpp:583-642` (unregister), from `:644` (free)
 * **Rule:** `CODE_STYLE.md` "Singletons C++" (unregister, then `memdelete`, then `nullptr`,
   per singleton)
 * **Problem:**
   * `TractionServer` is unregistered and freed only inside
-    `if (has_singleton("RailVehicleServer"))` (`:585-594`). Without that server it leaks.
+    `if (has_singleton("RailVehicleServer"))` (`:587-596`). Without that server it leaks.
   * `MaszynaMoverVehicleServer`, `RailVehicleServer` and every singleton after them down to
-    `UserSettings` are unregistered in one block (`:581-640`) and freed in another (from
-    `:642`).
+    `UserSettings` are unregistered in one block (`:583-642`) and freed in another (from
+    `:644`).
 * **Fix:** one independent block per singleton, in reverse registration order.
 
 ### RC-012
@@ -255,8 +264,8 @@ Legend:
 
 **`wire_get_voltage()` changes the power source's state** ✔ ALARM
 
-* **Where:** `src/traction/TractionServer.cpp:537-580`, through `PowerSource::current_get()` at
-  `:124-140`; the "Quirk" is at `:108-121`
+* **Where:** `src/traction/TractionServer.cpp:544-587`, through `PowerSource::current_get()` at
+  `:125-142`; the "Quirk" is at `:109-122`
 * **Rule:** a getter never changes state; never work around a mistimed event
 * **Problem:**
   * The read adds to `total_admittance`, sets `loaded`, `total_current` and `output_voltage`,
@@ -310,7 +319,7 @@ Legend:
 **`vehicle_get_transform()` writes a cache** ALARM
 
 * **Where:** `src/vehicles/rail/RailVehicleServer.cpp:1388-1400`; invalidated at `:1062, 1357`;
-  fields `RailVehicleServer.hpp:178-179`
+  fields `RailVehicleServer.hpp:182-183`
 * **Rule:** a getter never changes state
 * **Problem:** the getter sets `placement->body_transform` and `body_transform_valid`
   (`:1397-1398`). `VehicleController::get_world_transform()` reaches it too.
@@ -328,7 +337,7 @@ Legend:
 * **Problem:** these keys are Mover member names in the public state dump, while every other key
   is descriptive `snake_case`.
 * **Fix:** descriptive names such as `motor_torque` and `motor_current`, with their readers
-  updated: `addons/libmaszyna/legacy/cabin/python_screen_state.gd:137, 139` and the tests
+  updated: `addons/libmaszyna/legacy/cabin/python_screen_state.gd:133, 135` and the tests
   (`test_train_electric_induction_engine.gd:152, 178`, `maszyna_startup_test.gd:417`,
   `test_zzz_driver_hints_sn61_v2.gd:32`).
 
@@ -336,8 +345,8 @@ Legend:
 
 **`Mover*` classes public and instantiated from GDScript** ALARM
 
-* **Where:** `src/register_types.cpp:296-330` (`GDREGISTER_CLASS(MoverRailVehicle*)`,
-  `set_controller_implementation` at `:315`); `Mover*.new()` in about 18
+* **Where:** `src/register_types.cpp:298-332` (`GDREGISTER_CLASS(MoverRailVehicle*)`,
+  `set_controller_implementation` at `:317`); `Mover*.new()` in about 18
   `addons/libmaszyna/legacy/fiz/fiz_train_*_parser.gd` and in `fiz_vehicle_builder.gd:170-171`
   (horns, radio)
 * **Rule:** the backend never appears in a public interface
@@ -357,7 +366,7 @@ Legend:
   * `MoverRailVehicleWheels.hpp:33-35`: `wheel_angle_*_deg` ("vehicle layer's, not the Mover's")
   * `MoverRailVehicleDoors.hpp:81-82`: `mirror_left_position`
   * `MoverRailVehicleLighting.hpp:55`: `headlights_dimmed`
-  * `MoverRailVehicleMasterController.hpp:23-30`: tachometer, `distance_counter`
+  * `MoverRailVehicleMasterController.hpp:34-41`: tachometer, `distance_counter`
   * `MoverRailVehicleController.hpp:28`: `fitted_adapter_models`
 * **Rule:** "if this layer were replaced wholesale, would the field go with it?"
 * **Problem:** replacing the backend would lose vehicle state.
@@ -390,8 +399,8 @@ Legend:
 
 **`Cabin3D` keeps a controller path it says it has not got** ALARM
 
-* **Where:** `src/cabin/Cabin3D.hpp:45, 98-99` vs the comment at `:78-79`; bound at
-  `Cabin3D.cpp:45-51`, accessors `:272-276`; used by
+* **Where:** `src/cabin/Cabin3D.hpp:53, 108-109` vs the comment at `:88-89`; bound at
+  `Cabin3D.cpp:46-52`, accessors `:279-283`; used by
   `addons/libmaszyna/legacy/cabin/maszyna_dynamic_train_cabin.gd:56-60`
 * **Problem:** a bound `NodePath controller_path` to a `VehiclePhysicsNode`, although the class
   says "there is deliberately no path to a controller here" and already holds `vehicle_rid`. The
@@ -402,21 +411,99 @@ Legend:
 
 **`track_get_endpoints()` fills a cache**
 
-* **Where:** `src/tracks/TrackServer.cpp:829-832` → `_endpoints()` at `:272-285`
+* **Where:** `src/tracks/TrackServer.cpp:830-833` → `_endpoints()` at `:273-286`
 * **Rule:** a getter never changes state
 * **Problem:** the getter lazily fills `cached_endpoints` from a `const` method.
-* **Fix:** build the cache in `_set_curves` (`:349`), which already clears it (`:356`).
+* **Fix:** build the cache in `_set_curves` (`:350`), which already clears it (`:357`).
 
 ### RC-039
 
 **`MaszynaParser::get*()` advance the cursor**
 
-* **Where:** `src/legacy/parsers/maszyna_parser.cpp:106-124` (`get8`, `get_line`), `:38, 42`
-  (`get_tokens`, `get_tokens_until` bound); `maszyna_parser.hpp:49-60`
+* **Where:** `src/legacy/parsers/maszyna_parser.cpp:104-122` (`get8`, `get_line`), `:36, 40`
+  (`get_tokens`, `get_tokens_until` bound); `maszyna_parser.hpp:52-63`
 * **Rule:** a getter never changes state
 * **Problem:** `get8`, `get_line`, `get_tokens` and `get_tokens_until` advance `cursor`. They mirror
   `FileAccess.get_8`, but they are `get_*` methods with a side effect.
 * **Decision:** rename them to `read_*`, or accept the `FileAccess` idiom and note it.
+
+### RC-124
+
+**Bare coupler built from `max_velocity` instead of `Ftmax`** ✔
+
+* **Where:** `src/legacy/vehicles/MoverRailVehicleBuffCoupl.cpp:72, 108-115`
+* **Problem:** a Bare coupler's `SpringKC`, `FmaxC`, `SpringKB` and `FmaxB` add the vehicle's
+  `max_velocity` (Vmax) where `LoadFIZ_BuffCoupl` adds `Ftmax`, the maximum tractive force
+  (`Mover.cpp:10666-10671`).
+* **Fix:** take `Ftmax`; check that it is set before the coupler applies its configuration.
+
+### RC-125
+
+**`Cabin3D` shake: jolt limit and the random jolt** ✔
+
+* **Where:** `src/cabin/Cabin3D.hpp:67`; `Cabin3D.cpp:192`
+* **Problem:** `shake_jolt_limit` defaults to 0.15, the original's `BaseShake.jolt_limit` to 2.0
+  (`DynObj.h:839`). The extra random shake at speed (`DynObj.cpp:8113-8123`), added to the
+  spring force before the attenuation, is not ported.
+* **Fix:** the original's default and the missing branch.
+
+### RC-126
+
+**`TrackServer` track width and switch blade speed** ✔
+
+* **Where:** `src/tracks/TrackServer.hpp:111, 122`; `TrackServer.cpp:1206`
+* **Problem:** `DEFAULT_TRACK_WIDTH` is 1.6, the original's `fTrackWidth` 1.435 (`Track.h:205`).
+  The blade speed is derived from `SWITCH_FULL_DURATION` (2 s over the full travel); the original
+  moves it at a fixed `fOffsetSpeed = 0.1` (`Track.h:67`, `Track.cpp:1944`), which matches only
+  while the offset delay is the default.
+* **Fix:** the original's width, and `fOffsetSpeed` in place of the duration.
+
+### RC-127
+
+**Doors `VOLTAGE_112` never powered** ✔
+
+* **Where:** `src/legacy/vehicles/MoverRailVehicleDoors.hpp:84`;
+  `src/vehicles/rail/RailVehicleDoors.hpp:78`, `.cpp:22, 78`;
+  `addons/libmaszyna/legacy/fiz/fiz_train_doors_parser.gd:83`
+* **Problem:** the voltage maps to 112 V, but the Mover powers doors only at 0, 24 or 110 V
+  (`Mover.cpp:8768`), so doors set to it never move.
+* **Fix:** `VOLTAGE_110` = 110 V, and the FIZ parser's value with it.
+
+### RC-128
+
+**Lighting defaults off the original** ✔
+
+* **Where:** `src/vehicles/rail/RailVehicleLighting.hpp:66, 77-78, 83-88`
+* **Problem:**
+  * `lights_default_selector_position` defaults to 0, the original's `LightsDefPos` to 1
+    (`MOVER.h:1701`), and the selector starts there (`Mover.cpp:11925-11926`).
+  * `light_alternative_max_voltage` 24.0 and `light_alternative_capacity` 495.0 have no source;
+    the original's `TPowerParameters` starts at 0 (`MOVER.h:1032`).
+  * The head light colour, the normal and high-beam multipliers and `instrument_type` are bound
+    but read by nothing.
+* **Fix:** the original's defaults; the unread properties wired or removed.
+
+### RC-129
+
+**Tachometer without `MaxTachoSpeed` and the slow jump** ✔
+
+* **Where:** `src/legacy/vehicles/MoverRailVehicleMasterController.cpp:56-71`
+* **Problem:** the needle's limit is always `Vmax * 1.05`; the original takes the FIZ's
+  `MaxTachoSpeed` when it is set (`Train.cpp:8584-8587`, `Mover.cpp:10815`). Below 5 km/h the
+  original's needle swings to a random 0-4 (`Train.cpp:8594-8597`); the port has one rule above
+  1 km/h.
+* **Fix:** port both.
+
+### RC-130
+
+**Brake control pipe pressure and the `NBpA` clamp** ✔
+
+* **Where:** `src/legacy/vehicles/MoverRailVehicleBrake.cpp:597, 641-646`
+* **Problem:** the original reads `HiPP` into `CntrlPipePress` right after the random start
+  value and sets `HighPipePress` from it (`Mover.cpp:10469-10471`); the port keeps the random
+  value and sets `HighPipePress` apart. `NBpA` is clamped to 0..4, which `LoadFIZ_Brake` does not
+  do (`Mover.cpp:10401`).
+* **Fix:** the original's order; the clamp dropped or kept with a reason.
 
 ## Missing events and wiring
 
@@ -436,9 +523,9 @@ Legend:
 
 **Lazy `owner_create` inside the streaming build**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:867-871` (in `_light_create`, `:841`),
-  `:1077-1081` (in `_build_instance_smoke_sources`, `:1042`), `:739-744` (in
-  `instance_register`, `:732`)
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:868-872` (in `_light_create`, `:842`),
+  `:1079-1083` (in `_build_instance_smoke_sources`, `:1044`), `:740-745` (in
+  `instance_register`, `:733`)
 * **Rule:** no `ensure_*` under any name; no wiring in a hot path
 * **Problem:** `if (light_stream_owner < 0) { light_stream_owner = streaming->owner_create(...) }`
   - and the same for `smoke_stream_owner` and `stream_owner` - wires callables into
@@ -473,7 +560,7 @@ Legend:
 
 **`area_is_ready()` has no event and is polled per frame**
 
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:605-608` (signals `:62-67`); poller
+* **Where:** `src/scenery/SceneryStreamingServer.cpp:606-609` (signals `:63-68`); poller
   `demo/demo_scenery_loading.gd:207` (an `await process_frame` loop in `_build_surroundings`,
   which also polls `RailVehicleRenderingServer.builds_get_pending_count()`)
 * **Problem:** there is no "area ready" signal - `streaming_builds_finished` is not about an
@@ -498,7 +585,7 @@ Legend:
 
 **Bogie track samples computed twice per frame**
 
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:1044-1051`;
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:1045-1052`;
   `RailVehicleServer.cpp:1402-1420` (`_compose_body_transform()`)
 * **Problem:** `wheels->get_bogie_transform(...)`, called twice, repeats the ±half-spacing
   samples that `_compose_body_transform` has just made, and the wheels component is looked up on
@@ -519,7 +606,7 @@ Legend:
 
 **Allocations and boxing in the vehicle server step**
 
-* **Where:** `src/legacy/vehicles/MaszynaMoverVehicleServer.cpp:92-103`;
+* **Where:** `src/legacy/vehicles/MaszynaMoverVehicleServer.cpp:93-104`;
   `src/vehicles/rail/RailVehicleServer.cpp:1657-1661`
 * **Problem:** the Mover server clears and refills both controller vectors every frame, with an
   ObjectDB lookup per vehicle, and `track_vehicles` (a map of vectors) is cleared and rebuilt
@@ -535,17 +622,17 @@ Legend:
 * **Rule:** per-frame lookups; a string call only with a comment saying why
 * **Problem:** `curve_data->get("roll1")`/`("roll2")` per moved vehicle per frame, with no
   comment, although `TrackServer` already caches `CurvePoints::roll1/roll2`
-  (`TrackServer.hpp:121-128`) - it only does not expose them.
+  (`TrackServer.hpp:125-132`) - it only does not expose them.
 * **Fix:** expose the cached roll from `TrackServer` and read it there.
 
 ### RC-059
 
 **Unbounded E3D animation loop with allocations**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1679, 1683, 1412`
-* **Problem:** the loop over `animating_instances` (`:1679`) has no bound; it allocates a
-  `PackedStringArray` per instance (`:1683`), and clears and rebuilds `submodel_poses` through
-  `_pose_submodels` (`:1412`).
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1682, 1686, 1415`
+* **Problem:** the loop over `animating_instances` (`:1682`) has no bound; it allocates a
+  `PackedStringArray` per instance (`:1686`), and clears and rebuilds `submodel_poses` through
+  `_pose_submodels` (`:1415`).
 * **Fix:** a per-frame budget, round-robin like `_process_smoke()`, and no per-instance
   allocation.
 
@@ -553,10 +640,10 @@ Legend:
 
 **Time and light level each walk all E3D instances**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1902, 1915-1929`; caller
-  `maszyna_environment_node.gd:387-388`
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1905, 1918-1932`; caller
+  `maszyna_environment_node.gd:385-386`
 * **Problem:** on a change, `environment_set_time()` and `environment_set_light_level()` each call
-  `_resolve_all_lights()` (`:1902`), which walks every instance. The environment calls both back
+  `_resolve_all_lights()` (`:1905`), which walks every instance. The environment calls both back
   to back, so a push that changes both costs two full passes.
 * **Fix:** one operation that sets both and resolves once.
 
@@ -564,9 +651,9 @@ Legend:
 
 **Smoke emitters looked up and ticked while idle**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1263-1279`
-* **Problem:** a hash lookup per emitter (`smoke_objects.getptr(smoke_order[...])`, `:1274`),
-  and a `Time::get_singleton()` lookup per frame (`:1268`). Invisible or zero-intensity dynamic
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1265-1281`
+* **Problem:** a hash lookup per emitter (`smoke_objects.getptr(smoke_order[...])`, `:1276`),
+  and a `Time::get_singleton()` lookup per frame (`:1270`). Invisible or zero-intensity dynamic
   emitters stay in the order and keep being ticked.
 * **Fix:** cache the singleton, take idle emitters out of the order, and keep pointers in the
   order.
@@ -584,17 +671,17 @@ Legend:
 
 **Scenery streaming runs idle with an unbounded loop**
 
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:719-742`
+* **Where:** `src/scenery/SceneryStreamingServer.cpp:723-746`
 * **Problem:** `_process_streaming()` runs every frame while a camera is set, even when idle,
-  and takes the mutex and does ObjectDB and `Time` work every frame (`:723-742`).
+  and takes the mutex and does ObjectDB and `Time` work every frame (`:727-746`).
 * **Fix:** stop when the plan is fulfilled and restart on camera cell change.
 
 ### RC-064
 
 **Scenery streaming entry found by linear scan**
 
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:345-359` (`_get_entry()`); callers
-  `:831, 973, 989, 1185`
+* **Where:** `src/scenery/SceneryStreamingServer.cpp:346-360` (`_get_entry()`); callers
+  `:836, 979, 995, 1191`
 * **Problem:** `_get_entry()` scans the chunk's entries linearly, called inside the per-frame
   budget loops.
 * **Fix:** index the entries by id.
@@ -603,7 +690,7 @@ Legend:
 
 **`TractionServer` ticks forever**
 
-* **Where:** `src/traction/TractionServer.cpp:51-52, 65-76`
+* **Where:** `src/traction/TractionServer.cpp:52-53, 66-77`
 * **Problem:** the `process_frame` connection is permanent. Every frame it looks up the main
   loop and the root and loops over all power sources, even with no sources or no load.
 * **Fix:** connect only while there are sources with a load, and cache the tree.
@@ -612,7 +699,7 @@ Legend:
 
 **`Cabin3D` processes forever**
 
-* **Where:** `src/cabin/Cabin3D.cpp:140, 160-164`
+* **Where:** `src/cabin/Cabin3D.cpp:141, 161-165`
 * **Problem:** `set_process(true)` is never switched off. Every 1/50 s step does a
   `VehicleServer::get_instance()` lookup and a `vehicle_component_get()`, even for a cab
   whose vehicle has no diesel engine.
@@ -634,9 +721,9 @@ Legend:
 
 **`SimulationServer::get_instance()` looked up per frame**
 
-* **Where:** `src/simulation/SimulationServer.hpp:79-81` (`get_instance()`); per tick in
+* **Where:** `src/simulation/SimulationServer.hpp:76-78` (`get_instance()`); per tick in
   `src/driver/DriverServer.cpp:85` (`_process_updates`) and
-  `src/scenario/ScenarioEventServer.cpp:281` (`_process_queue`)
+  `src/scenario/ScenarioEventServer.cpp:283` (`_process_queue`)
 * **Problem:** the lookup is a name lookup on `Engine`, done every tick.
 * **Fix:** cache the pointer at initialisation.
 
@@ -655,7 +742,7 @@ Legend:
 
 **`E3DRenderingServer::instance_attach_node(Node3D *)`**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.hpp:387`, bound at `.cpp:41`
+* **Where:** `src/legacy/e3d/E3DRenderingServer.hpp:388`, bound at `.cpp:42`
 * **Rule:** a public API takes RIDs, Variants, Callables and `ObjectID`s
 * **Fix:** `instance_attach_object_instance_id(RID, uint64_t)`, like
   `vehicle_attach_object_instance_id`.
@@ -664,7 +751,7 @@ Legend:
 
 **`SceneryStreamingServer::streaming_set_camera(Camera3D *)`**
 
-* **Where:** `src/scenery/SceneryStreamingServer.hpp:347`, bound at `.cpp:38`
+* **Where:** `src/scenery/SceneryStreamingServer.hpp:345`, bound at `.cpp:39`
 * **Problem:** a bound server method with a raw pointer; the two HUD mouse servers take an
   `ObjectID` for the same thing.
 * **Fix:** take a `uint64_t` `ObjectID`, like the HUD mouse servers.
@@ -723,187 +810,12 @@ Legend:
 **Signal names as literals despite constants**
 
 * **Where:**
-  * `src/legacy/vehicles/MoverRailVehicleSecuritySystem.cpp:20, 24`:
+  * `src/legacy/vehicles/MoverRailVehicleSecuritySystem.cpp:21, 25`:
     `emit_signal("blinking_changed")`, `("beeping_changed")` - no constant exists, the
     `ADD_SIGNAL` in `RailVehicleSecuritySystem.cpp:31-32` uses literals too
   * `src/utils/UserSettings.cpp:133-184`
   * `src/vehicles/base/VehicleComponent.cpp:132, 159`
 * **Fix:** use the constants, and add one where it is missing.
-
-## Magic numbers
-
-All items below break the PROHIBITED rule: "a non-self-evident literal gets a named constant; a
-ported value keeps the original's value and a source reference".
-
-### RC-081
-
-**`Cabin3D`**
-
-* **Where:**
-  * `src/cabin/Cabin3D.cpp:169-188`: `/ 60.0`, `* 4.0`, `* 1.0625`, `/ 200.0`, `* 100.0`, some
-    ported from `DynObj.cpp:8028` without a reference
-  * `Cabin3D.hpp:31-32, 54-63`: `SHAKE_STEP`, `SPRING_REST_LENGTH`,
-    `shake_spring_stiffness = 125.0` (`DynObj.cpp:2284`) and the other ported defaults, without
-    file:line
-
-### RC-082
-
-**`TractionServer`**
-
-* **Where:** `src/traction/TractionServer.cpp`:
-  * `:119-135, 547`: `1e-10`, `< 100.0`, `* 1.083`, `10000.0`. These come from
-    `TractionPower.h:58`, `TractionPower.cpp:122, 128` and `Traction.cpp:477`, but are neither
-    named nor referenced.
-  * `:231, 264, 269, 294, 469`: `grow(5.0)`, `last_flags |= 1`, `|= 2` - unnamed bits, although
-    `LAST_SPAN_FLAGS` exists
-  * `:321-322`: `0.0, 0.2, ..., 1.0, 3, 60.0` repeats the `PowerSource` defaults
-    (`TractionPower.h:50-54`) as bare literals
-
-### RC-083
-
-**`TrackServer`**
-
-* **Where:**
-  * `src/tracks/TrackServer.hpp:157`: `switch_f_offset1 = -0.05` instead of
-    `-SWITCH_OFFSET_DELAY` (`Track.cpp:57`)
-  * `.hpp:94, 96, 110, 112, 118, 139`: `SWITCH_OFFSET_DELAY` (`Track.h:71`), `RAIL_HEIGHT`,
-    `SWITCH_FULL_DURATION`, `SWITCH_BLADE_RATIO`, `ROLL_FIX_FACTOR` and `width = 1.6`, with no
-    source reference
-
-### RC-084
-
-**`MoverRailVehicleBuffCoupl`**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleBuffCoupl.cpp:85-104`
-* **Problem:** `SpringKC = 50.0 * mass + max_velocity / 0.05`, `4500 * 1000`, `0.55` - only the
-  function has a reference (`Mover.cpp:10297`); none of the values are named.
-
-### RC-085
-
-**`MoverRailVehicleBrake`**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleBrake.cpp`:
-  * `:587`: `CLAMP(..., 0, 4)`
-  * `:590`: `* 1000.0`
-  * `:612`: `100 * M_PI`
-  * `:220, 597, 600`: `< 0.01`, three times
-  * `:629`: `5 + 0.001 * (randf_range(0, 10) - randf_range(0, 10))`, no source
-
-### RC-086
-
-**`MoverRailVehicleMasterController`**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleMasterController.cpp:56-79`: `11.31`, `1.05`,
-  `3.0`, `0.66` - the tachometer values, unnamed and without a source; `3.0` is repeated
-  although `max_tachometer = 3.0` is declared.
-
-### RC-087
-
-**Warning signal bitmasks in horns and security system**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleHorns.cpp:13-90`;
-  `MoverRailVehicleSecuritySystem.cpp:114-123`
-* **Problem:** `WarningSignal |= 4`, `TestFlag(..., 4)` and `EmergencyBrakeWarningSignal = 4` -
-  the bits 1/2/4 have no names.
-
-### RC-088
-
-**`MoverCircuitUnit` thresholds**
-
-* **Where:** `src/legacy/vehicles/MoverCircuitUnit.cpp:13, 21, 34`
-* **Problem:** `BrakePress < 1.0` and `RventRot < 5.0`, with no reference.
-
-### RC-089
-
-**`MoverRailVehicleWheels`**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleWheels.cpp:13, 41`
-* **Problem:** `const double k = 472.0` has no source reference; `1.0` m is used as a fallback
-  diameter.
-
-### RC-090
-
-**`60.0` rpm conversion repeated in six files**
-
-* **Where:** nine times in six files, among them:
-  * `src/cabin/Cabin3D.cpp:169-170`
-  * `src/legacy/vehicles/MoverDieselEngineUnit.cpp:223, 275, 286`
-  * `MoverRailVehicleHeating.cpp:25-26`
-* **Problem:** only a local `SECONDS_PER_MINUTE` exists (`RailVehicleRenderingServer.cpp:1426`),
-  not shared.
-* **Fix:** one shared `SECONDS_PER_MINUTE` constant.
-
-### RC-091
-
-**Speed control preset count and doors remote control value**
-
-* **Where:**
-  * `src/legacy/vehicles/MoverRailVehicleSpeedControl.cpp:23`: local `MAX_PRESET_SPEEDS = 10`
-    instead of the size of `SpeedCtrlButtons`
-  * `MoverRailVehicleDoors.cpp:387`: `remote_control ? 24 : 0`
-
-### RC-092
-
-**`E3DNodesBackend` light settings defaults**
-
-* **Where:** `src/legacy/e3d/E3DNodesBackend.cpp:289, 294-296`
-* **Problem:**
-  * The literal `"maszyna/vehicles/lights_volumetric_fog_energy", 4.0` (`:289`).
-  * The fade values `150.0`, `100.0` and `200.0` are unnamed (`:294-296`).
-
-### RC-093
-
-**Microsecond conversions and E3D distances**
-
-* **Where:**
-  * `src/legacy/e3d/E3DRenderingServer.cpp:1755`: `/ 1000000.0`, although `USEC_PER_SECOND` exists
-  * `src/tracks/TrackServer.cpp:469`: `/ 1000000.0`
-  * `E3DRenderingServer.cpp:940`: `distance * 0.25f`
-
-### RC-094
-
-**`e3d_parser` flags and offsets**
-
-* **Where:** `src/legacy/e3d/e3d_parser.cpp`:
-  * `:58`: `flags & 32`
-  * `:88` (commented out), `:111, 116, 125`: `- 168`, `/ 256`, `/ 320`, `/ 64`
-
-### RC-095
-
-**`MaszynaParser` characters and buffer size**
-
-* **Where:** `src/legacy/parsers/maszyna_parser.cpp:118`; `[128]` at `maszyna_parser.hpp:32, 34,
-  36` and `.cpp:62, 151, 248, 252`
-* **Problem:** `c == 10 || c == 13` instead of `'\n'`/`'\r'`, and a `[128]` buffer size repeated
-  seven times.
-
-### RC-096
-
-**Scenery loading and streaming timings**
-
-* **Where:** `src/utils/WorkerTaskQueue.cpp:94, 111`: `delay_usec(100)`,
-  `get_processor_count() - 2`
-
-### RC-097
-
-**Vehicle server, controller and coupler literals**
-
-* **Where:**
-  * `src/vehicles/rail/RailVehicleServer.cpp:1469, 1476`: `0.000001`, `0.999`
-  * `src/vehicles/base/VehicleController.hpp:212`: `1e10`
-  * `VehicleController.cpp:193`: 1.0 m threshold
-
-### RC-098
-
-**FIZ defaults in rail component headers without a source**
-
-* **Where:**
-  * `src/vehicles/rail/RailVehicleElectricEngine.hpp:55-67`
-  * `RailVehicleLighting.hpp:75-84`
-  * `RailVehicleAIHints.hpp:32` (`1.05`)
-* **Problem:** default values copied from the original have no `Mover.cpp`/`MOVER.h`
-  reference.
-* **Fix:** one reference per block of defaults, pointing at where the original declares them.
 
 ## Cosmetic
 
@@ -923,7 +835,7 @@ ported value keeps the original's value and a source reference".
 
 **`macros.hpp` included where unused**
 
-* **Where:** `src/legacy/vehicles/MoverRailVehicleSecuritySystem.cpp:3` (only `ASSERT_MOVER` is
+* **Where:** `src/legacy/vehicles/MoverRailVehicleSecuritySystem.cpp:4` (only `ASSERT_MOVER` is
   used, which comes from `MoverBackend.hpp`); `src/legacy/e3d/E3DModel.hpp:9` (only the `.cpp`
   uses `BIND_PROPERTY`)
 
@@ -931,7 +843,7 @@ ported value keeps the original's value and a source reference".
 
 **Functional casts instead of `static_cast`**
 
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:945, 1376, 1647`;
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:946, 1377, 1647`;
   `RailVehicleServer.cpp:332, 1753, 1762-1763`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
   `src/legacy/e3d/E3DNodesBackend.cpp:193`
 * **Rule:** `CODE_STYLE.md` "Conversions"
@@ -986,8 +898,8 @@ ported value keeps the original's value and a source reference".
 
 * **Where:**
   * Polish comments (AGENTS.md asks for English):
-    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:572, 630`
-  * `MoverRailVehicleBrake.cpp:196`, `MoverRailVehicleLighting.cpp:408`: refer to
+    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:582, 645`
+  * `MoverRailVehicleBrake.cpp:205`, `MoverRailVehicleLighting.cpp:410`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,
     `VehicleController.cpp:146-147`, `src/vehicles/rail/RailVehicleServer.cpp:2056-2057`
@@ -1000,7 +912,7 @@ ported value keeps the original's value and a source reference".
   * `src/vehicles/rail/RailVehicleSpringBrake.cpp:34-35`: commands
     `set_spring_brake_active/enabled`
   * `RailVehicleElectroPneumaticDynamicBrake.cpp:49`: command `set_ep_brake_force`
-  * `RailVehicleHorns.cpp:20-22`: the commands `horn_low`, `horn_high` and `whistle` dispatch to
+  * `RailVehicleHorns.cpp:19-21`: the commands `horn_low`, `horn_high` and `whistle` dispatch to
     methods named `set_*`
 * **Rule:** `CODE_STYLE.md` "Godot properties" - `set_<property>` is reserved for property
   setters

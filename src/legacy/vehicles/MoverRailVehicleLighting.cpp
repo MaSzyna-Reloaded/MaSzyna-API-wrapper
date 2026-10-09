@@ -1,7 +1,7 @@
 #include "MoverRailVehicleLighting.hpp"
 #include "legacy/maszyna-mover/utilities.h"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
-#include "legacy/vehicles/MoverTypes.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -44,8 +44,9 @@ namespace godot {
         p_mover->LightsWrap = get_lights_wrap_selector();
         // the selector starts at LightsDefPos, set by CheckLocomotiveParameters (Mover.cpp:8885)
         p_mover->LightsDefPos = get_lights_default_selector_position();
-        p_mover->LightPowerSource.SourceType = mover_power_source(get_light_source());
-        p_mover->AlterLightPowerSource.SourceType = mover_power_source(get_light_alternative_source());
+        p_mover->LightPowerSource.SourceType = MaszynaMoverVehicleServer::power_source_to_mover(get_light_source());
+        p_mover->AlterLightPowerSource.SourceType =
+                MaszynaMoverVehicleServer::power_source_to_mover(get_light_alternative_source());
     }
 
     bool MoverRailVehicleLighting::_light_enabled(
@@ -77,7 +78,8 @@ namespace godot {
 
     int MoverRailVehicleLighting::get_power_source() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? power_source_of_mover(mover->LightPowerSource.SourceType) : 0;
+        return mover != nullptr ? MaszynaMoverVehicleServer::power_source_from_mover(mover->LightPowerSource.SourceType)
+                                : 0;
     }
 
     bool MoverRailVehicleLighting::get_front_headlight_upper_enabled() const {

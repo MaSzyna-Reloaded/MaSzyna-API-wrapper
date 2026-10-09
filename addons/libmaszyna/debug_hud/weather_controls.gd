@@ -162,10 +162,13 @@ func _refresh_clock() -> void:
 func _on_clock_timer_timeout() -> void:
     if not is_visible_in_tree():
         return
-    var seconds_of_day: int = int(wrapf(_environment_node.current_time, 0.0, 24.0) * 3600.0)
+    var seconds_of_day: int = int(wrapf(_environment_node.current_time, 0.0, LibMaszynaUnits.HOURS_PER_DAY)
+            * LibMaszynaUnits.SECONDS_PER_HOUR)
     _simulation_time_label.text = "%02d.%02d.%04d %02d:%02d:%02d" % [
             _environment_node.day, _environment_node.month, _environment_node.year,
-            seconds_of_day / 3600, seconds_of_day / 60 % 60, seconds_of_day % 60]
+            seconds_of_day / LibMaszynaUnits.SECONDS_PER_HOUR,
+            seconds_of_day / LibMaszynaUnits.SECONDS_PER_MINUTE % LibMaszynaUnits.MINUTES_PER_HOUR,
+            seconds_of_day % LibMaszynaUnits.SECONDS_PER_MINUTE]
 
 
 func _on_wind_strength_changed(value: float) -> void:
@@ -252,10 +255,10 @@ func _format_meters(value: float) -> String:
 
 
 func _format_time_label(value: float) -> String:
-    var wrapped: float = wrapf(value, 0.0, 24.0)
+    var wrapped: float = wrapf(value, 0.0, LibMaszynaUnits.HOURS_PER_DAY)
     var hours: int = int(floor(wrapped))
-    var minutes: int = int(round((wrapped - float(hours)) * 60.0))
-    if minutes >= 60:
-        hours = (hours + 1) % 24
+    var minutes: int = int(round((wrapped - float(hours)) * LibMaszynaUnits.MINUTES_PER_HOUR))
+    if minutes >= LibMaszynaUnits.MINUTES_PER_HOUR:
+        hours = (hours + 1) % LibMaszynaUnits.HOURS_PER_DAY
         minutes = 0
     return "%02d:%02d" % [hours, minutes]

@@ -91,7 +91,7 @@ namespace godot {
             // the worker thread's stack runs out.
             if (!_run_task(p_task_id)) {
                 // the task runs on another thread
-                OS::get_singleton()->delay_usec(100);
+                OS::get_singleton()->delay_usec(AWAIT_POLL_USEC);
             }
         }
     }
@@ -108,7 +108,7 @@ namespace godot {
     }
 
     int WorkerTaskQueue::get_worker_count() const {
-        return MAX(OS::get_singleton()->get_processor_count() - 2, 1);
+        return MAX(OS::get_singleton()->get_processor_count() - RESERVED_CORES, 1);
     }
 
     /// Runs one queued task, false when it is not queued any more (it runs on another thread).

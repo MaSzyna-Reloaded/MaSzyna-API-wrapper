@@ -4248,3 +4248,20 @@ lighting or the trainset.
   does) and parse every test script - `gut_cmdln.gd -gdir=res://tests/
   -gunit_test_name=<no such test>` runs none and reports every parse error - before trusting a
   green count.
+
+
+## 2026-10-09 Port errors behind the magic numbers
+
+* **Symptom:** none in the game reported - the values looked plausible. They came up only when the
+  cleaning list's magic numbers (RC-081..RC-098) were to get a source reference each.
+* **What proved it:** every literal was read against its line in `~/src/maszyna`. These places
+  differ from the original: a Bare coupler adds `max_velocity` where `LoadFIZ_BuffCoupl` adds
+  `Ftmax` (`Mover.cpp:10666`); the cab shake's `jolt_limit` 0.15 against 2.0 (`DynObj.h:839`);
+  the track width 1.6 against 1.435 (`Track.h:205`); a switch blade timed by a duration instead
+  of `fOffsetSpeed` (`Track.h:67`); doors at 112 V, which the Mover never powers
+  (`Mover.cpp:8768`); `LightsDefPos` 0 against 1 (`MOVER.h:1701`); the tachometer without
+  `MaxTachoSpeed` (`Train.cpp:8584`); the control pipe without `HiPP` (`Mover.cpp:10470`).
+* **Fix:** the constants carry the reference and say where the value differs; the divergences are
+  REQUIRED_CLEANING RC-124..RC-130 and `TODO.md`.
+* **Rule:** a source reference is written only after reading the original's line - its value and
+  the inputs of its formula. What differs is a port error to report, not a value to name.

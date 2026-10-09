@@ -51,7 +51,7 @@ namespace godot {
             bool get_mainbreaker_active() const;
 
             static void _bind_methods();
-            /* Circuit: (elektryczny obwod napedowy) */
+            /* Circuit: (elektryczny obwod napedowy) - defaults of MOVER.h:1740-1744, 1762-1769 */
             MAKE_MEMBER_GS(double, circuit_resistance, 0.0);
             MAKE_MEMBER_GS(int, circuit_imax_low, 0);
             MAKE_MEMBER_GS(int, circuit_imax_high, 0);

@@ -69,7 +69,7 @@ namespace godot {
             /* The active cab (CabActive) and whether it is the one in command (IsCabMaster()) */
             virtual int get_cabin() const = 0;
             virtual bool get_cabin_controleable() const = 0;
-            /* Hasler speed recorder (Train.cpp:6917-6940) */
+            /* Hasler speed recorder (Train.cpp:8580-8611) */
             virtual double get_tachometer_speed() const = 0;
             virtual double get_tachometer_speed_jump() const = 0;
             virtual double get_tachometer_clock_speed() const = 0;

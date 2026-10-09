@@ -55,7 +55,7 @@ namespace godot {
         const float selfillum_b = p_file->get_float();
         const float selfillum_a = p_file->get_float();
         Color selfillum_color = Color(selfillum_r, selfillum_g, selfillum_b, selfillum_a);
-        if (const auto transparent = result.flags & 32; transparent == 0u) {
+        if (const auto transparent = result.flags & SUBMODEL_FLAG_TRANSLUCENT; transparent == 0u) {
             diffuse_color.a = 1.0;
         }
 
@@ -85,7 +85,7 @@ namespace godot {
         result.first_index_idx = p_file->get_32(); // Offset 160
         result.light_energy = p_file->get_float(); // Offset 164
 
-        p_file->get_buffer(p_chunk_size - 168); //  Offset 168: dev/unused data
+        p_file->get_buffer(p_chunk_size - SUBMODEL_READ_SIZE); // dev/unused data
 
 
         result.vertices = PackedVector3Array();
@@ -108,21 +108,21 @@ namespace godot {
         while (!p_file->eof_reached()) {
             const ChunkHeader chunk = _read_chunk_header(p_file);
             if (chunk.id == "SUB0") {
-                const int submodels_count = static_cast<int>(chunk.data_len) / 256;
+                const int submodels_count = static_cast<int>(chunk.data_len) / SUB0_SUBMODEL_SIZE;
                 for (int i = 0; i < submodels_count; i++) {
-                    submodels.emplace_back(_read_submodel(p_file, 256));
+                    submodels.emplace_back(_read_submodel(p_file, SUB0_SUBMODEL_SIZE));
                 }
             } else if (chunk.id == "SUB1") {
-                const int submodels_count = static_cast<int>(chunk.data_len) / 320;
+                const int submodels_count = static_cast<int>(chunk.data_len) / SUB1_SUBMODEL_SIZE;
                 for (int i = 0; i < submodels_count; i++) {
-                    submodels.emplace_back(_read_submodel(p_file, 320));
+                    submodels.emplace_back(_read_submodel(p_file, SUB1_SUBMODEL_SIZE));
                 }
             } else if (chunk.id == "NAM0") {
                 submodel_names = _buffer_to_strings(p_file->get_buffer(chunk.data_len));
             } else if (chunk.id == "TEX0") {
                 material_names = _buffer_to_strings(p_file->get_buffer(chunk.data_len));
             } else if (chunk.id == "TRA0") {
-                const int matrix_count = static_cast<int>(chunk.data_len) / 64;
+                const int matrix_count = static_cast<int>(chunk.data_len) / TRA0_MATRIX_SIZE;
                 for (int i = 0; i < matrix_count; i++) {
                     std::array<float, 16> m{};
                     for (float &row: m) {

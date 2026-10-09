@@ -1,8 +1,26 @@
 #include "MoverRailVehicleBuffCoupl.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 
 namespace godot {
+    namespace {
+        /* The data's own values of a coupler without a FIZ entry of its own (LoadFIZ_BuffCoupl,
+         * Mover.cpp:10663-10692) */
+        constexpr double COUPLER_DMAX = 0.05;
+        constexpr double BARE_COUPLER_SPRING_KC_PER_MASS = 50.0;
+        constexpr double BARE_COUPLER_FMAXC_PER_MASS = 100.0;
+        constexpr double BARE_COUPLER_SPRING_KB_PER_MASS = 60.0;
+        constexpr double BARE_COUPLER_FMAXB_PER_MASS = 50.0;
+        constexpr double BARE_COUPLER_FMAX_PER_FORCE = 2.0;
+        constexpr double BARE_COUPLER_BETA = 0.3;
+        constexpr double ARTICULATED_COUPLER_SPRING_KC = 4500.0;
+        constexpr double ARTICULATED_COUPLER_FMAXC = 850.0;
+        constexpr double ARTICULATED_COUPLER_SPRING_KB = 9200.0;
+        constexpr double ARTICULATED_COUPLER_FMAXB = 320.0;
+        constexpr double ARTICULATED_COUPLER_BETA = 0.55;
+    } // namespace
+
     void MoverRailVehicleBuffCoupl::_bind_methods() {}
 
     /* The coupling flags of one end, read straight from the backend - this class is the only one
@@ -43,7 +61,7 @@ namespace godot {
     void MoverRailVehicleBuffCoupl::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
-        // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
+        // LoadFIZ_BuffCoupl (Mover.cpp:10619): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
         if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BACK) {
             coupler = &p_mover->Couplers[end::rear];
@@ -82,30 +100,31 @@ namespace godot {
         if (coupler->CouplerType != TCouplerType::NoCoupler && coupler->CouplerType != TCouplerType::Bare &&
             coupler->CouplerType != TCouplerType::Articulated) {
 
-            coupler->SpringKC *= 1000;
-            coupler->FmaxC *= 1000;
-            coupler->SpringKB *= 1000;
-            coupler->FmaxB *= 1000;
+            coupler->SpringKC *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->FmaxC *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->SpringKB *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->FmaxB *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
         } else if (coupler->CouplerType == TCouplerType::Bare) {
-            coupler->SpringKC = (50.0 * mass) + (max_velocity / 0.05);
-            coupler->DmaxC = 0.05;
-            coupler->FmaxC = (100.0 * mass) + (2 * max_velocity);
-            coupler->SpringKB = (60.0 * mass) + (max_velocity / 0.05);
-            coupler->DmaxB = 0.05;
-            coupler->FmaxB = (50.0 * mass) + (2.0 * max_velocity);
-            coupler->beta = 0.3;
+            // the original takes Ftmax where this takes max_velocity - REQUIRED_CLEANING RC-124
+            coupler->SpringKC = (BARE_COUPLER_SPRING_KC_PER_MASS * mass) + (max_velocity / COUPLER_DMAX);
+            coupler->DmaxC = COUPLER_DMAX;
+            coupler->FmaxC = (BARE_COUPLER_FMAXC_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * max_velocity);
+            coupler->SpringKB = (BARE_COUPLER_SPRING_KB_PER_MASS * mass) + (max_velocity / COUPLER_DMAX);
+            coupler->DmaxB = COUPLER_DMAX;
+            coupler->FmaxB = (BARE_COUPLER_FMAXB_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * max_velocity);
+            coupler->beta = BARE_COUPLER_BETA;
         } else if (coupler->CouplerType == TCouplerType::Articulated) {
-            coupler->SpringKC = 4500 * 1000;
-            coupler->DmaxC = 0.05;
-            coupler->FmaxC = 850 * 1000;
-            coupler->SpringKB = 9200 * 1000;
-            coupler->DmaxB = 0.05;
-            coupler->FmaxB = 320 * 1000;
-            coupler->beta = 0.55;
+            coupler->SpringKC = ARTICULATED_COUPLER_SPRING_KC * LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->DmaxC = COUPLER_DMAX;
+            coupler->FmaxC = ARTICULATED_COUPLER_FMAXC * LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->SpringKB = ARTICULATED_COUPLER_SPRING_KB * LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->DmaxB = COUPLER_DMAX;
+            coupler->FmaxB = ARTICULATED_COUPLER_FMAXB * LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
+            coupler->beta = ARTICULATED_COUPLER_BETA;
         }
 
         if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BOTH) {
-            // single entry for both couplers (Mover.cpp:10370); copy only the configuration, never the
+            // single entry for both couplers (Mover.cpp:10694-10698); copy only the configuration, never the
             // runtime connection state (Connected, CouplingFlag, ...) of an already coupled vehicle
             TCoupling &rear = p_mover->Couplers[end::rear];
             rear.CouplerType = coupler->CouplerType;

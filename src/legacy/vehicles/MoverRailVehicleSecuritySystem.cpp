@@ -1,4 +1,5 @@
 #include "MoverRailVehicleSecuritySystem.hpp"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -111,16 +112,16 @@ namespace godot {
 
         switch (get_emergency_signal()) {
             case EMERGENCY_SIGNAL_SIREN_LOW_TONE:
-                p_mover->EmergencyBrakeWarningSignal = 1;
+                p_mover->EmergencyBrakeWarningSignal = MaszynaMoverVehicleServer::WARNING_SIGNAL_HORN_LOW;
                 break;
             case EMERGENCY_SIGNAL_SIREN_HIGH_TONE:
-                p_mover->EmergencyBrakeWarningSignal = 2;
+                p_mover->EmergencyBrakeWarningSignal = MaszynaMoverVehicleServer::WARNING_SIGNAL_HORN_HIGH;
                 break;
             case EMERGENCY_SIGNAL_WHISTLE:
-                p_mover->EmergencyBrakeWarningSignal = 4;
+                p_mover->EmergencyBrakeWarningSignal = MaszynaMoverVehicleServer::WARNING_SIGNAL_WHISTLE;
                 break;
             default:
-                p_mover->EmergencyBrakeWarningSignal = 1;
+                p_mover->EmergencyBrakeWarningSignal = MaszynaMoverVehicleServer::WARNING_SIGNAL_HORN_LOW;
                 break;
         }
     }

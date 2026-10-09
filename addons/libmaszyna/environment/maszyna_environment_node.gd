@@ -12,8 +12,6 @@ const CABIN_RENDER_LAYER: int = 1 << 18
 const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
 ## How often the running time is taken from SimulationServer's clock
 const TIME_UPDATE_INTERVAL: float = 0.1
-const SECONDS_PER_HOUR: float = 3600.0
-const SECONDS_PER_DAY: int = 86400
 const MONTHS_PER_YEAR: int = 12
 ## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
 ## original lights a scenery light set to "on when dark" below a light level of 0.325
@@ -288,7 +286,7 @@ func get_light_level() -> float:
                 103.4 + elevation * (-12.79 + elevation * 0.711)))
         else:
             refraction = -20.774 / elevation_tangent
-        refraction *= (SUN_SURFACE_PRESSURE * 283.0) / (SUN_SURFACE_PRESSURE * (273.0 + temperature)) / SECONDS_PER_HOUR
+        refraction *= (SUN_SURFACE_PRESSURE * 283.0) / (SUN_SURFACE_PRESSURE * (273.0 + temperature)) / LibMaszynaUnits.ARCSECONDS_PER_DEGREE
     var daylight: float = smoothstep(
         float(ProjectSettings.get_setting(LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING, LIGHT_LEVEL_NIGHT_ALTITUDE)),
         float(ProjectSettings.get_setting(LIGHT_LEVEL_DAY_ALTITUDE_SETTING, LIGHT_LEVEL_DAY_ALTITUDE)),
@@ -399,7 +397,7 @@ func _set_normalized_date(next_year: int, next_month: int, next_day: int) -> voi
     var normalized_month: int = posmod(next_month - 1, MONTHS_PER_YEAR) + 1
     var unix_time: int = Time.get_unix_time_from_datetime_dict(
         {"year": normalized_year, "month": normalized_month, "day": 1}
-    ) + (next_day - 1) * SECONDS_PER_DAY
+    ) + (next_day - 1) * LibMaszynaUnits.SECONDS_PER_DAY
     var date: Dictionary = Time.get_date_dict_from_unix_time(unix_time)
     year = date["year"]
     month = date["month"]
@@ -408,7 +406,8 @@ func _set_normalized_date(next_year: int, next_month: int, next_day: int) -> voi
 
 func _read_system_time() -> void:
     var datetime: Dictionary = Time.get_datetime_dict_from_system()
-    current_time = datetime["hour"] + datetime["minute"] / 60.0 + datetime["second"] / SECONDS_PER_HOUR
+    current_time = (datetime["hour"] + datetime["minute"] / float(LibMaszynaUnits.MINUTES_PER_HOUR)
+            + datetime["second"] / float(LibMaszynaUnits.SECONDS_PER_HOUR))
     _set_normalized_date(datetime["year"], datetime["month"], datetime["day"])
 
 

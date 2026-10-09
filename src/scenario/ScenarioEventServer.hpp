@@ -57,8 +57,6 @@ namespace godot {
                 ISOLATED_EVENT_MAX,
             };
 
-            static constexpr double MINUTES_PER_HOUR = 60.0;
-
             static const char *event_queued_signal;
             static const char *event_launched_signal;
             static const char *event_dequeued_signal;

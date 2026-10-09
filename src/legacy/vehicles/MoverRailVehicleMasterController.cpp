@@ -51,31 +51,36 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
-        // sound gate (Train.cpp:8323-8335).
-        const double max_tachometer = 3.0;
-        tachometer_velocity = std::min(std::abs(11.31 * mover->WheelDiameter * mover->nrot), mover->Vmax * 1.05);
+        // Original engine: TTrain::Update() Hasler block (Train.cpp:8580-8611) and its tachoclock
+        // sound gate (Train.cpp:10091-10103).
+        tachometer_velocity = std::min(
+                std::abs(TACHOMETER_WHEEL_SPEED_FACTOR * mover->WheelDiameter * mover->nrot),
+                mover->Vmax * TACHOMETER_MAX_SPEED_FACTOR);
 
         // the needle jumps once per simulation second, with a small random error
         const double previous_second = std::floor(tachometer_time);
         tachometer_time += p_delta;
         if (std::floor(tachometer_time) != previous_second) {
-            tachometer_velocity_jump = tachometer_velocity > 1.0
-                                               ? tachometer_velocity + ((2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                                         UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                        0.5)
-                                               : 0.0;
+            tachometer_velocity_jump =
+                    tachometer_velocity > TACHOMETER_MIN_VELOCITY
+                            ? tachometer_velocity +
+                                      ((TACHOMETER_JUMP_OFFSET -
+                                        UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE) +
+                                        UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE)) *
+                                       TACHOMETER_JUMP_SCALE)
+                            : 0.0;
         }
 
         // ticking starts ~1 s after moving off and fades out slowly after stopping
-        if (tachometer_velocity > 1.0) {
-            tachometer_count = std::min(max_tachometer, tachometer_count + (p_delta * 3.0));
+        if (tachometer_velocity > TACHOMETER_MIN_VELOCITY) {
+            tachometer_count =
+                    std::min(MAX_TACHOMETER_COUNT, tachometer_count + (p_delta * TACHOMETER_COUNT_RISE_RATE));
         } else if (tachometer_count > 0.0) {
-            tachometer_count = std::max(0.0, tachometer_count - (p_delta * 0.66));
+            tachometer_count = std::max(0.0, tachometer_count - (p_delta * TACHOMETER_COUNT_FALL_RATE));
         }
-        if (tachometer_count >= 3.0) {
+        if (tachometer_count >= MAX_TACHOMETER_COUNT) {
             tachometer_clock_active = true;
-        } else if (tachometer_count < 1.0) {
+        } else if (tachometer_count < TACHOMETER_CLOCK_STOP_COUNT) {
             tachometer_clock_active = false;
         }
 

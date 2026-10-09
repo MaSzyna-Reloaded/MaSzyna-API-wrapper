@@ -2,6 +2,7 @@
 #include "legacy/vehicles/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <type_traits>
 
 namespace godot {
     void MoverRailVehicleSpeedControl::_bind_methods() {}
@@ -20,7 +21,7 @@ namespace godot {
         p_mover->SpeedCtrlTypeTime = get_impulse_lever();
         p_mover->SpeedCtrlAutoTurnOffFlag = get_disables_on();
 
-        constexpr int MAX_PRESET_SPEEDS = 10;
+        constexpr int MAX_PRESET_SPEEDS = static_cast<int>(std::extent_v<decltype(TMoverParameters::SpeedCtrlButtons)>);
         const int preset_speeds_size = static_cast<int>(get_preset_speeds().size());
         if (preset_speeds_size > MAX_PRESET_SPEEDS) {
             UtilityFunctions::push_warning(

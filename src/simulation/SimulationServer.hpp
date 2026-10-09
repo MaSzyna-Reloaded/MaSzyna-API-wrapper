@@ -32,9 +32,6 @@ namespace godot {
             /// the same whether a frame is short or long. The physics steps each slice in its own
             /// 0.01 s steps.
             static constexpr double MAX_SLICE_TIME = 0.1;
-            static constexpr double SECONDS_PER_HOUR = 3600.0;
-            static constexpr double MINUTES_PER_HOUR = 60.0;
-            static constexpr double HOURS_PER_DAY = 24.0;
 
             double time_of_day = 0.0;
             double simulation_time = 0.0;

@@ -22,6 +22,16 @@ namespace godot {
             /// Bytes per vertex: position, normal, uv (VNT0), plus a tangent (VNT2) - Model3d.cpp:1984
             static constexpr uint64_t VNT0_VERTEX_SIZE = 32;
             static constexpr uint64_t VNT2_VERTEX_SIZE = 48;
+            /// iFlags bit of a translucent submodel (Model3d.cpp:455)
+            static constexpr uint32_t SUBMODEL_FLAG_TRANSLUCENT = 0x20;
+            /// Bytes of one submodel record: 256 + 64 per chunk version (Model3d.cpp:1948)
+            static constexpr int SUB0_SUBMODEL_SIZE = 256;
+            static constexpr int SUB1_SUBMODEL_SIZE = 320;
+            /// Bytes of a submodel record read field by field; the rest is skipped
+            /// (TSubModel::deserialize, Model3d.cpp:1873-1916)
+            static constexpr int SUBMODEL_READ_SIZE = 168;
+            /// Bytes of one TRA0 matrix, 16 floats (Model3d.cpp:2129)
+            static constexpr int TRA0_MATRIX_SIZE = 64;
             using SubModelData = E3DModelBuilder::SubModelData;
 
             struct ChunkHeader {

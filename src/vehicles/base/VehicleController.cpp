@@ -190,7 +190,7 @@ namespace godot {
 
     void VehicleController::emit_position_changed_if_needed() {
         const Vector3 position = get_world_position();
-        if (position.distance_to(last_emitted_position) < 1.0) {
+        if (position.distance_to(last_emitted_position) < POSITION_CHANGED_MIN_DISTANCE) {
             return;
         }
         last_emitted_position = position;

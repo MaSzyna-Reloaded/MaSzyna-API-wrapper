@@ -20,6 +20,10 @@ namespace godot {
             GDCLASS(WorkerTaskQueue, RefCounted)
 
         private:
+            /* How long a wait sleeps while the awaited task runs on another thread */
+            static constexpr uint64_t AWAIT_POLL_USEC = 100;
+            /* Cores the workers leave to the rest of the engine */
+            static constexpr int RESERVED_CORES = 2;
             struct Task {
                     Callable callable;
                     Variant result;

@@ -1,5 +1,6 @@
 #include "MoverRailVehicleBrake.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "utils/utils.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/rail/RailVehicleBrake.hpp"
@@ -9,8 +10,16 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    /* The data gives masses in tonnes, the Mover takes kilograms (Mover.cpp:10774) */
-    static constexpr double KILOGRAMS_PER_TONNE = 1000.0;
+    namespace {
+        /* LoadFIZ_Brake (Mover.cpp:10394-10475) */
+        constexpr int MAX_FRICTION_ELEMENTS_PER_AXLE = 4; // MOVER.h:1607 NBpA: 0, 1, 2 or 4
+        /* A pressure below it means the data gives none (Mover.cpp:10416, 10423) */
+        constexpr double MIN_BRAKE_PRESSURE = 0.01;
+        /* The control pipe starts slightly off its nominal pressure (Mover.cpp:10469) */
+        constexpr double DEFAULT_CONTROL_PIPE_PRESSURE = 5.0;
+        constexpr double CONTROL_PIPE_PRESSURE_JITTER = 0.001;
+        constexpr double CONTROL_PIPE_PRESSURE_JITTER_RANGE = 10.0;
+    } // namespace
 
     void MoverRailVehicleBrake::_bind_methods() {}
 
@@ -217,7 +226,7 @@ namespace godot {
         p_config["brake_local_handle_available"] = get_cntrl_local_brake_handle_type() != BRAKE_HANDLE_TYPE_NO_HANDLE;
         p_config["brake_max_cylinder_pressure"] = get_max_cylinder_pressure();
         p_config["brake_max_control_pressure"] =
-                get_max_aux_pressure() >= 0.01 ? get_max_aux_pressure() : get_max_cylinder_pressure();
+                get_max_aux_pressure() >= MIN_BRAKE_PRESSURE ? get_max_aux_pressure() : get_max_cylinder_pressure();
 
         if (mover->Handle == nullptr) {
             return;
@@ -550,7 +559,8 @@ namespace godot {
         p_mover->BrakeDelays = get_cntrl_brake_delays();                           // BrakeDelays
         // MaxBPMass, in tonnes in the data and only then in kilograms (Mover.cpp:10771-10775)
         if (get_cntrl_max_brake_pressure_mass() > 0.0) {
-            p_mover->MBPM = get_cntrl_max_brake_pressure_mass() * KILOGRAMS_PER_TONNE;
+            p_mover->MBPM =
+                    get_cntrl_max_brake_pressure_mass() * LibMaszynaUnits::KILOGRAMS_PER_TONNE; // Mover.cpp:10774
         }
         p_mover->BrakeOpModes = get_cntrl_brake_op_modes();                                      // BrakeOpModes
         p_mover->BrakeHandle = brake_handle_type_map.at(get_cntrl_brake_handle_type());          // BrakeHandle
@@ -584,20 +594,22 @@ namespace godot {
                 brake_valve_to_subsystem_map.find(p_mover->BrakeValve);
         p_mover->BrakeSubsystem = it != brake_valve_to_subsystem_map.end() ? it->second : TBrakeSubSystem::ss_None;
 
-        p_mover->NBpA = CLAMP<int, int, int>(get_friction_elements_per_axle(), 0, 4);
+        p_mover->NBpA = CLAMP<int, int, int>(get_friction_elements_per_axle(), 0, MAX_FRICTION_ELEMENTS_PER_AXLE);
         p_mover->MaxBrakeForce = get_brake_force_max();
         p_mover->BrakeValveSize = get_est_valve_size();
-        p_mover->TrackBrakeForce = get_brake_force_traction() * 1000.0;
+        p_mover->TrackBrakeForce =
+                get_brake_force_traction() * LibMaszynaUnits::NEWTONS_PER_KILONEWTON; // Mover.cpp:10405
         p_mover->MaxBrakePress[3] = get_max_cylinder_pressure();
         if (get_max_cylinder_pressure() > 0.0) {
             p_mover->BrakeCylNo = get_cylinder_count();
 
             if (get_cylinder_count() > 0) {
-                p_mover->MaxBrakePress[0] =
-                        get_max_aux_pressure() < 0.01 ? get_max_cylinder_pressure() : get_max_aux_pressure();
+                p_mover->MaxBrakePress[0] = get_max_aux_pressure() < MIN_BRAKE_PRESSURE ? get_max_cylinder_pressure()
+                                                                                        : get_max_aux_pressure();
                 p_mover->MaxBrakePress[1] = get_max_tare_pressure();
                 p_mover->MaxBrakePress[2] = get_max_medium_pressure();
-                p_mover->MaxBrakePress[4] = get_max_antislip_pressure() < 0.01 ? 0.0 : get_max_antislip_pressure();
+                p_mover->MaxBrakePress[4] =
+                        get_max_antislip_pressure() < MIN_BRAKE_PRESSURE ? 0.0 : get_max_antislip_pressure();
 
                 p_mover->BrakeCylRadius = get_cylinder_radius();
                 p_mover->BrakeCylDist = get_cylinder_distance();
@@ -609,7 +621,8 @@ namespace godot {
                 p_mover->BrakeCylMult[1] = get_cylinder_gear_ratio_low();
                 p_mover->BrakeCylMult[2] = get_cylinder_gear_ratio_high();
 
-                p_mover->P2FTrans = 100 * M_PI * std::pow(get_cylinder_radius(), 2);
+                // Mover.cpp:10438 - kN/bar
+                p_mover->P2FTrans = LibMaszynaUnits::KILOPASCALS_PER_BAR * M_PI * std::pow(get_cylinder_radius(), 2);
 
                 p_mover->LoadFlag = (get_cylinder_gear_ratio_low() > 0.0 || get_max_tare_pressure() > 0.0) ? 1 : 0;
 
@@ -625,8 +638,10 @@ namespace godot {
             p_mover->P2FTrans = 0;
         }
 
-        p_mover->CntrlPipePress =
-                5 + (0.001 * (UtilityFunctions::randf_range(0.0, 10.0) - UtilityFunctions::randf_range(0.0, 10.0)));
+        p_mover->CntrlPipePress = DEFAULT_CONTROL_PIPE_PRESSURE +
+                                  (CONTROL_PIPE_PRESSURE_JITTER *
+                                   (UtilityFunctions::randf_range(0.0, CONTROL_PIPE_PRESSURE_JITTER_RANGE) -
+                                    UtilityFunctions::randf_range(0.0, CONTROL_PIPE_PRESSURE_JITTER_RANGE)));
         /* PipePress i HighPipePress musza byc skopiowane */
         p_mover->HighPipePress = get_pipe_pressure_max();
         p_mover->LowPipePress = get_pipe_pressure_min();

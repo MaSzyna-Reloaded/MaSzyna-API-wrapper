@@ -1,14 +1,13 @@
 #include "MoverRailVehicleEnginePowerSource.hpp"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
-#include "legacy/vehicles/MoverTypes.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include <algorithm>
 #include <cmath>
 #include <unordered_map>
 
 namespace godot {
     namespace {
-        // DynObj.cpp:3897 - the meter counts kWh
-        constexpr double JOULES_PER_KWH = 3600000.0;
         // Train.cpp:3695 (df5a8a8) - the pantograph compressor starts only below this pressure
         constexpr double PANTOGRAPH_COMPRESSOR_START_PRESSURE = 4.8;
     } // namespace
@@ -51,10 +50,10 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
         TPowerParameters &source = p_mover->EnginePowerSource;
-        source.SourceType = mover_power_source(get_source_type());
+        source.SourceType = MaszynaMoverVehicleServer::power_source_to_mover(get_source_type());
         switch (get_source_type()) {
             case RailVehicleController::POWER_SOURCE_INTERNAL: {
-                source.PowerType = mover_power_type(get_power_cable_source());
+                source.PowerType = MaszynaMoverVehicleServer::power_type_to_mover(get_power_cable_source());
                 break;
             }
             case RailVehicleController::POWER_SOURCE_TRANSDUCER: {
@@ -68,7 +67,8 @@ namespace godot {
                 break;
             }
             case RailVehicleController::POWER_SOURCE_ACCUMULATOR: {
-                source.RAccumulator.RechargeSource = mover_power_source(get_accumulator_recharge_source());
+                source.RAccumulator.RechargeSource =
+                        MaszynaMoverVehicleServer::power_source_to_mover(get_accumulator_recharge_source());
                 break;
             }
             case RailVehicleController::POWER_SOURCE_CURRENTCOLLECTOR: {
@@ -96,7 +96,8 @@ namespace godot {
                 break;
             }
             case RailVehicleController::POWER_SOURCE_POWERCABLE: {
-                source.RPowerCable.PowerTrans = mover_power_type(get_power_cable_source());
+                source.RPowerCable.PowerTrans =
+                        MaszynaMoverVehicleServer::power_type_to_mover(get_power_cable_source());
                 if (source.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     source.RPowerCable.SteamPressure = get_power_cable_steam_pressure();
                 }
@@ -107,12 +108,15 @@ namespace godot {
             default:;
         }
 
-        p_mover->PantographCompressorStart = mover_start_mode(get_cntrl_pantograph_compressor_start_mode());
+        p_mover->PantographCompressorStart =
+                MaszynaMoverVehicleServer::start_mode_to_mover(get_cntrl_pantograph_compressor_start_mode());
         p_mover->PantAutoValve = get_cntrl_pantograph_auto_valve();
-        p_mover->PantsValve.start_type = mover_start_mode(get_cntrl_pantographs_valve_start_mode());
+        p_mover->PantsValve.start_type =
+                MaszynaMoverVehicleServer::start_mode_to_mover(get_cntrl_pantographs_valve_start_mode());
         p_mover->PantsValve.spring = get_cntrl_pantographs_valve_spring();
         for (auto &pantograph_parameters: p_mover->Pantographs) {
-            pantograph_parameters.valve.start_type = mover_start_mode(get_cntrl_pantograph_valve_start_mode());
+            pantograph_parameters.valve.start_type =
+                    MaszynaMoverVehicleServer::start_mode_to_mover(get_cntrl_pantograph_valve_start_mode());
             pantograph_parameters.valve.spring = get_cntrl_pantograph_valve_spring();
             pantograph_parameters.valve.solenoid = get_cntrl_pantograph_valve_solenoid();
         }
@@ -137,8 +141,8 @@ namespace godot {
         // (set_pantograph_wire_voltage())
         const int active_pantographs = (mover->PantFrontVolt > 0.0 ? 1 : 0) + (mover->PantRearVolt > 0.0 ? 1 : 0);
         const double pantograph_current = current / std::max(1, active_pantographs);
-        const double energy =
-                (mover->PantFrontVolt + mover->PantRearVolt) * pantograph_current * p_delta / JOULES_PER_KWH;
+        const double energy = (mover->PantFrontVolt + mover->PantRearVolt) * pantograph_current * p_delta /
+                              LibMaszynaUnits::JOULES_PER_KILOWATT_HOUR; // DynObj.cpp:3897 - the meter counts kWh
         (pantograph_current > 0.0 ? mover->EnergyMeter.first : mover->EnergyMeter.second) += energy;
     }
 

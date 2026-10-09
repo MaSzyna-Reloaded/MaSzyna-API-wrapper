@@ -4,6 +4,7 @@
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "simulation/SimulationServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "utils/Names.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
@@ -210,9 +211,10 @@ namespace godot {
     void ScenarioEventServer::_check_timed_launchers() {
         const SimulationServer *runtime = SimulationServer::get_instance();
         ERR_FAIL_NULL(runtime);
-        const int minutes = static_cast<int>(Math::floor(runtime->get_time_of_day() * MINUTES_PER_HOUR));
-        const int hour = minutes / static_cast<int>(MINUTES_PER_HOUR);
-        const int minute = minutes % static_cast<int>(MINUTES_PER_HOUR);
+        const int minutes =
+                static_cast<int>(Math::floor(runtime->get_time_of_day() * LibMaszynaUnits::MINUTES_PER_HOUR));
+        const int hour = minutes / static_cast<int>(LibMaszynaUnits::MINUTES_PER_HOUR);
+        const int minute = minutes % static_cast<int>(LibMaszynaUnits::MINUTES_PER_HOUR);
         // copied: firing queues events, and a listener may create launchers
         const Vector<RID> timed = timed_launchers;
         for (const RID &rid: timed) {

@@ -1,16 +1,22 @@
 #include "MoverCircuitUnit.hpp"
+#include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverBackend.hpp"
-#include "legacy/vehicles/MoverTypes.hpp"
 #include "vehicles/rail/RailVehicleController.hpp"
 #include "vehicles/rail/RailVehicleElectricEngine.hpp"
 
 namespace godot {
+    namespace {
+        /* The cab lamps' own thresholds (Train.cpp:9054-9058, 9076) */
+        constexpr double LAMP_BRAKE_PRESS_RELEASED = 1.0;
+        constexpr double LAMP_VENT_OVERLOAD_MIN_ROT = 5.0;
+    } // namespace
+
     bool MoverCircuitUnit::get_contactors_active() const {
         TMoverParameters *p_mover = owner.get_mover();
         if (p_mover == nullptr || p_mover->StLinFlag || p_mover->ControlPressureSwitch) {
             return false;
         }
-        return p_mover->BrakePress < 1.0;
+        return p_mover->BrakePress < LAMP_BRAKE_PRESS_RELEASED;
     }
 
     bool MoverCircuitUnit::get_diff_relay_active() const {
@@ -18,7 +24,7 @@ namespace godot {
         if (p_mover == nullptr || p_mover->GroundRelay || p_mover->ControlPressureSwitch) {
             return false;
         }
-        return p_mover->BrakePress < 1.0;
+        return p_mover->BrakePress < LAMP_BRAKE_PRESS_RELEASED;
     }
 
     bool MoverCircuitUnit::get_resistors_active() const {
@@ -31,7 +37,8 @@ namespace godot {
 
     bool MoverCircuitUnit::get_vent_overload_active() const {
         TMoverParameters *p_mover = owner.get_mover();
-        return p_mover != nullptr ? (p_mover->RventRot < 5.0) && p_mover->ResistorsFlagCheck() : false;
+        return p_mover != nullptr ? (p_mover->RventRot < LAMP_VENT_OVERLOAD_MIN_ROT) && p_mover->ResistorsFlagCheck()
+                                  : false;
     }
 
     bool MoverCircuitUnit::get_highcurrent_active() const {
@@ -99,10 +106,11 @@ namespace godot {
         p_mover->TUHEX_Sum2 = p_engine->get_circuit_tuhex_sum_2();
         p_mover->TUHEX_Sum3 = p_engine->get_circuit_tuhex_sum_3();
 
-        p_mover->ConverterOverloadRelayStart =
-                mover_start_mode(p_engine->get_cntrl_converter_overload_relay_start_mode());
+        p_mover->ConverterOverloadRelayStart = MaszynaMoverVehicleServer::start_mode_to_mover(
+                p_engine->get_cntrl_converter_overload_relay_start_mode());
         p_mover->ConverterOverloadRelayOffWhenMainIsOff =
                 p_engine->get_cntrl_converter_overload_relay_off_when_main_is_off();
-        p_mover->MainsStart = mover_start_mode(p_engine->get_cntrl_main_switch_start_mode());
+        p_mover->MainsStart =
+                MaszynaMoverVehicleServer::start_mode_to_mover(p_engine->get_cntrl_main_switch_start_mode());
     }
 } // namespace godot

@@ -384,7 +384,8 @@ namespace godot {
         if (voltage_map.find(get_voltage()) != voltage_map.end()) {
             p_mover->Doors.voltage = voltage_map.at(get_voltage());
         } else {
-            p_mover->Doors.voltage = remote_control ? 24 : 0;
+            // Mover.cpp:10599 - remote-controlled doors run on 24 V by default
+            p_mover->Doors.voltage = voltage_map.at(remote_control ? VOLTAGE_24 : VOLTAGE_0);
         }
         p_mover->Doors.step_rate = get_platform_speed();
         p_mover->Doors.step_range = get_platform_max_shift();

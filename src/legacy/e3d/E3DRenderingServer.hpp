@@ -78,6 +78,8 @@ namespace godot {
             /// Shadows are dropped well before the light itself is, the way E3DNodesBackend fades
             /// a vehicle spotlight out
             static constexpr float SCENERY_LIGHT_SHADOW_FADE_DISTANCE = 80.0;
+            /// The light fades out over this share of its streaming distance - the wrapper's own
+            static constexpr float SCENERY_LIGHT_FADE_LENGTH_SHARE = 0.25;
             /// A lamp must not shadow its own light. With one light per arm each arm was lit by its
             /// neighbours; economy mode leaves a single light in the middle, below which the arms
             /// and the pole throw long dark spokes right across the pool. The geometry of a model
@@ -137,7 +139,6 @@ namespace godot {
             /// Blinking instances visited per frame; above it an instance's edge comes a few
             /// frames late, the cycle itself runs on the clock and does not drift
             static constexpr int MAX_BLINKING_INSTANCES_PER_FRAME = 64;
-            static constexpr double USEC_PER_SECOND = 1000000.0;
 
             /// Emitted once an instance is freed, so whatever refers to it can let go
             static const char *instance_freed_signal;

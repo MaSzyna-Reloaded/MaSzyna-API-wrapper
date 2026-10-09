@@ -1466,14 +1466,14 @@ namespace godot {
         }
         Vector3 forward = curve->sample_baked(static_cast<real_t>(next_offset), false) -
                           curve->sample_baked(static_cast<real_t>(previous_offset), false);
-        if (forward.length_squared() <= 0.000001) {
+        if (forward.length_squared() <= HEADING_MIN_LENGTH_SQUARED) {
             forward = Vector3(0.0, 0.0, -1.0);
         } else {
             forward = forward.normalized();
         }
 
         Vector3 reference_up(0.0, 1.0, 0.0);
-        if (Math::abs(forward.dot(reference_up)) > 0.999) {
+        if (Math::abs(forward.dot(reference_up)) > UP_PARALLEL_DOT_LIMIT) {
             reference_up = Vector3(1.0, 0.0, 0.0);
         }
 

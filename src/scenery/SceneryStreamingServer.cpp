@@ -1,4 +1,5 @@
 #include "SceneryStreamingServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "utils/ProcessMemory.hpp"
 
 #include <godot_cpp/classes/project_settings.hpp>
@@ -665,14 +666,17 @@ namespace godot {
         Dictionary owner_msec;
         Dictionary owner_max_msec;
         for (int index = 0; index < owners.size(); index++) {
-            owner_msec[owners[index].name] = static_cast<double>(owner_times[index].last_usec) / USEC_PER_MSEC;
-            owner_max_msec[owners[index].name] = static_cast<double>(owner_times[index].last_max_usec) / USEC_PER_MSEC;
+            owner_msec[owners[index].name] =
+                    static_cast<double>(owner_times[index].last_usec) / LibMaszynaUnits::USEC_PER_MSEC;
+            owner_max_msec[owners[index].name] =
+                    static_cast<double>(owner_times[index].last_max_usec) / LibMaszynaUnits::USEC_PER_MSEC;
         }
         statistics["owner_msec"] = owner_msec;
         statistics["owner_max_msec"] = owner_max_msec;
-        statistics["provide_msec"] = static_cast<double>(provide_time.last_usec) / USEC_PER_MSEC;
-        statistics["provide_max_msec"] = static_cast<double>(provide_time.last_max_usec) / USEC_PER_MSEC;
-        statistics["withdraw_msec"] = static_cast<double>(withdraw_time.last_usec) / USEC_PER_MSEC;
+        statistics["provide_msec"] = static_cast<double>(provide_time.last_usec) / LibMaszynaUnits::USEC_PER_MSEC;
+        statistics["provide_max_msec"] =
+                static_cast<double>(provide_time.last_max_usec) / LibMaszynaUnits::USEC_PER_MSEC;
+        statistics["withdraw_msec"] = static_cast<double>(withdraw_time.last_usec) / LibMaszynaUnits::USEC_PER_MSEC;
         statistics["draw_distance"] = draw_distance;
         statistics["chunk_size"] = CHUNK_SIZE_M;
         statistics["camera_position"] = camera_position;
@@ -807,8 +811,9 @@ namespace godot {
 
         Time *time = Time::get_singleton();
         const uint64_t now = time->get_ticks_usec();
-        const uint64_t deadline = now + (USEC_PER_MSEC * (catching_up ? CATCHUP_BUDGET_MSEC : BUDGET_MSEC));
-        if (now - build_rate_usec >= USEC_PER_SECOND) {
+        const uint64_t deadline = now + (static_cast<uint64_t>(LibMaszynaUnits::USEC_PER_MSEC) *
+                                         (catching_up ? CATCHUP_BUDGET_MSEC : BUDGET_MSEC));
+        if (now - build_rate_usec >= static_cast<uint64_t>(LibMaszynaUnits::USEC_PER_SECOND)) {
             build_rate = applied_builds;
             applied_builds = 0;
             build_rate_usec = now;
@@ -958,7 +963,8 @@ namespace godot {
         }
         // nothing in range waits: what is ahead of the train is built with what is left, a little
         const uint64_t prefetch_deadline =
-                MIN(deadline, time->get_ticks_usec() + (USEC_PER_MSEC * PREFETCH_BUDGET_MSEC));
+                MIN(deadline, time->get_ticks_usec() +
+                                      (static_cast<uint64_t>(LibMaszynaUnits::USEC_PER_MSEC) * PREFETCH_BUDGET_MSEC));
         _apply_builds(pending_prefetches, prefetch_deadline);
     }
 

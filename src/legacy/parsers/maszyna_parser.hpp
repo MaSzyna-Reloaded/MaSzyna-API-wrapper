@@ -27,13 +27,16 @@ namespace godot {
              * .scn otherwise held the window open until the whole file was through, and on
              * Windows there is no shell to interrupt it from (see `FINDINGS.md`, 2026-09-24). */
             static std::atomic<bool> cancelled;
+            /* The first byte past ASCII; the stop tables cover ASCII only (the original's
+             * parser.cpp:27 takes all 256 bytes) */
+            static constexpr uint8_t ASCII_END = 0x80;
             TypedArray<Dictionary> meta;
             Array default_stop_chars;
-            bool default_stop_table[128] = {};
+            bool default_stop_table[ASCII_END] = {};
             Dictionary parameters;
-            static void _make_stop_table(const Array &p_stops, bool (&p_r_table)[128]);
+            static void _make_stop_table(const Array &p_stops, bool (&p_r_table)[ASCII_END]);
             static String _to_token(const std::string &p_raw);
-            String _read_token(const bool (&p_stop_table)[128]);
+            String _read_token(const bool (&p_stop_table)[ASCII_END]);
 
         protected:
             static void _bind_methods();

@@ -29,7 +29,7 @@ namespace godot {
             };
             MAKE_MEMBER_GS_NR(PantographState, pantograph_state, PANTOGRAPH_STATE_AUTOMATIC);
             MAKE_MEMBER_GS(bool, raise_pantographs_when_idle, true);
-            MAKE_MEMBER_GS(double, local_brake_acceleration_factor, 1.05);
+            MAKE_MEMBER_GS(double, local_brake_acceleration_factor, 1.05); // MOVER.h:2286
     };
 } // namespace godot
 VARIANT_ENUM_CAST(RailVehicleAIHints::PantographState)

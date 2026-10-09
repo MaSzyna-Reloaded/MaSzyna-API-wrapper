@@ -4,6 +4,7 @@
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
+#include "utils/LibMaszynaUnits.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
 #include "vehicles/rail/RailVehicleComponentType.hpp"
@@ -1423,7 +1424,6 @@ namespace godot {
         // particles.cpp:188-205
         static constexpr double SPINUP_RATE = 4.0;
         static constexpr double SMOKE_SCALE = 0.01;
-        static constexpr double SECONDS_PER_MINUTE = 60.0;
         static constexpr double LOAD_SCALE = 0.005;
         static constexpr double RATE_SCALE = 0.02;
         const double revolutions = engine->get_rpm_count(); // rev/s, as the Mover keeps enrot
@@ -1440,7 +1440,7 @@ namespace godot {
             // deficit nearly constant and makes the rate track the engine power. Kept as it is:
             // reading both in rev/min would stop a diesel from smoking at full revs, which is
             // where it smokes most.
-            const double revolutions_deficit = (max_rpm - revolutions) / SECONDS_PER_MINUTE;
+            const double revolutions_deficit = (max_rpm - revolutions) / LibMaszynaUnits::SECONDS_PER_MINUTE;
             const double load = power * LOAD_SCALE;
             if (Math::is_zero_approx(direction) || Math::is_zero_approx(current)) {
                 intensity = revolutions_deficit * RATE_SCALE * load;

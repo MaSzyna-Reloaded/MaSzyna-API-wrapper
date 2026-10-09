@@ -62,6 +62,7 @@ namespace godot {
         public:
             static const char *selector_position_changed_signal;
             MAKE_MEMBER_GS(bool, lights_wrap_selector, false);
+            /* The original's is 1 (MOVER.h:1701 LightsDefPos) - REQUIRED_CLEANING RC-128 */
             MAKE_MEMBER_GS(int, lights_default_selector_position, 0);
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, light_source,
@@ -72,11 +73,13 @@ namespace godot {
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, light_alternative_source,
                     RailVehicleController::TrainPowerSource::POWER_SOURCE_ACCUMULATOR);
+            /* No source in the original, whose default is 0 (MOVER.h:1032) - REQUIRED_CLEANING RC-128 */
             MAKE_MEMBER_GS(double, light_alternative_max_voltage, 24.0);
             MAKE_MEMBER_GS(double, light_alternative_capacity, 495.0);
             MAKE_MEMBER_GS_NR(
                     RailVehicleController::TrainPowerSource, source_accumulator_recharge_source,
                     RailVehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);
+            /* Headlights: defaults of MOVER.h:2273-2280 */
             MAKE_MEMBER_GS(Color, head_light_color, Color(255, 255, 255));
             MAKE_MEMBER_GS(double, head_light_dimmed_multiplier, 0.6);
             MAKE_MEMBER_GS(double, head_light_normal_multiplier, 1.0);

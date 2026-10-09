@@ -8,7 +8,7 @@ static var config_importer = preload("res://addons/libmaszyna/legacy/scenery/mas
 static var node_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_event_importer.gd").new()
 ## A lit model no `lights` event is aimed at - it has lights but no aspects
-## The one delegate every scenery driver shares; it keeps their state per driver
+## The one implementation every scenery driver shares; it keeps their state per driver
 static var _ai_driver:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
 const GENERIC_SIGNAL_HEAD_KIND:SignalHeadKind = preload("../signalling/generic_signal_head_kind.tres")
 static var origin_importer = preload("res://addons/libmaszyna/legacy/scenery/maszyna_origin_importer.gd").new()
@@ -338,11 +338,11 @@ static func _build_trainsets(root:MaszynaIncludeNode, trainsets:Array[MaszynaTra
             var driver:RID = MaszynaLegacyVehicleSystem.vehicle_get_driver(trainset_vehicles[member])
             if driver.is_valid():
                 trainset_driver = driver
-                DriverSystem.driver_attach_delegate(trainset_driver, _ai_driver)
+                DriverServer.driver_attach_implementation(trainset_driver, _ai_driver)
         # endtrainset (simulationstateserializer.cpp:839-848): the trainset's driver gets its
         # timetable and the velocity it starts with; of several drivers, the one furthest along
         if trainset_driver.is_valid() and trainset_data.timetable:
-            DriverSystem.driver_send_command(
+            DriverServer.driver_send_command(
                     trainset_driver, MaszynaLegacyAIDriver.TIMETABLE_PREFIX + trainset_data.timetable,
                     trainset_data.velocity, 0.0)
     root.load_progress.emit(1.0, MaszynaIncludeNode.LoadStage.VEHICLES, "")
@@ -397,7 +397,7 @@ static func _instantiate_server_data(
 
     # the original's signal heads: every lit model, driven by the scenery's own `lights` events
     var signalling_system:RID = SignallingServer.system_create()
-    SignallingServer.system_attach_delegate(signalling_system, MaszynaLegacySignallingDelegate.new())
+    SignallingServer.system_attach_implementation(signalling_system, MaszynaLegacySignallingImplementation.new())
     SignallingServer.system_set_name(signalling_system, root.filename)
     root._signalling_system_rids.append(signalling_system)
     for model_data:MaszynaModelData in models:

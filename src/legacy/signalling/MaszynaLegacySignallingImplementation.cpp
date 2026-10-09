@@ -1,10 +1,10 @@
-#include "MaszynaLegacySignallingDelegate.hpp"
+#include "MaszynaLegacySignallingImplementation.hpp"
 #include "signalling/SignallingServer.hpp"
 
 namespace godot {
-    void MaszynaLegacySignallingDelegate::_bind_methods() {}
+    void MaszynaLegacySignallingImplementation::_bind_methods() {}
 
-    void MaszynaLegacySignallingDelegate::handle_event(
+    void MaszynaLegacySignallingImplementation::handle_event(
             const RID &p_system, const StringName &p_event, const Dictionary &p_arguments) {
         if (!(p_event == StringName(LIGHTS_EVENT))) {
             return;

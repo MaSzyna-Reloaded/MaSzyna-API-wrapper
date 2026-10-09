@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="ScenarioScriptCabinDelegate" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="ScenarioScriptCabinImplementation" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		How the scenario scripts reach the cabs.
 	</brief_description>
 	<description>
-		The cab layer a scenario script manipulates through [code]maszyna.cabin[/code]. Implemented next to the cab layer (the demo's [code]CabinScriptDelegate[/code] forwards to [code]CabinSystem[/code]) and attached with [method ScenarioScriptServer.context_attach_cabin_delegate].
+		The cab layer a scenario script manipulates through [code]maszyna.cabin[/code]. Implemented next to the cab layer (the demo's [code]CabinScriptImplementation[/code] forwards to [code]CabinSystem[/code]) and attached with [method ScenarioScriptServer.context_attach_cabin_implementation].
 	</description>
 	<tutorials>
 	</tutorials>

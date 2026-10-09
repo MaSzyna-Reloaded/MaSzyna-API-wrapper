@@ -9,14 +9,14 @@ namespace godot {
     /// The behaviour of a SignallingServer system: its state machine and the vocabulary of its
     /// aspects. A system is always the same server object; what differs between signalling
     /// systems (the original's scenery events, an automatic block, an interlocking...) is its
-    /// delegate. This class is only the interface - implement it in C++ by overriding the virtual
+    /// implementation. This class is only the interface - implement it in C++ by overriding the virtual
     /// methods, or in GDScript by overriding their script counterparts.
     ///
-    /// Every callback carries the system: a Resource is shared by default, so one delegate may
-    /// serve several systems and keeps whatever state it needs per system RID. A delegate drives
+    /// Every callback carries the system: a Resource is shared by default, so one implementation may
+    /// serve several systems and keeps whatever state it needs per system RID. An implementation drives
     /// the lights only through the SignallingServer API.
-    class SignallingSystemDelegate : public Resource {
-            GDCLASS(SignallingSystemDelegate, Resource)
+    class SignallingImplementation : public Resource {
+            GDCLASS(SignallingImplementation, Resource)
             friend class SignallingServer;
 
         protected:
@@ -32,7 +32,7 @@ namespace godot {
             GDVIRTUAL3(_handle_event, RID, StringName, Dictionary)
             GDVIRTUAL4(_handle_source_event, RID, RID, StringName, Dictionary)
 
-            /// Called by SignallingServer. A C++ delegate overrides these; the default forwards to
+            /// Called by SignallingServer. A C++ implementation overrides these; the default forwards to
             /// the script.
             virtual void system_attached(const RID &p_system);
             virtual void system_detached(const RID &p_system);

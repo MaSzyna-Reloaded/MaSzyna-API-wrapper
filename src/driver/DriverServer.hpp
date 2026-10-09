@@ -1,5 +1,5 @@
 #pragma once
-#include "DriverDelegate.hpp"
+#include "DriverImplementation.hpp"
 #include "vehicles/base/VehiclePersonRole.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -10,26 +10,26 @@
 #include <vector>
 
 namespace godot {
-    /// The AI drivers - PersonServer persons given a DriverDelegate - by the person's handle. A
-    /// driver takes the orders a scenario gives (driver_send_command()) and, through its delegate,
+    /// The AI drivers - PersonServer persons given a DriverImplementation - by the person's handle. A
+    /// driver takes the orders a scenario gives (driver_send_command()) and, through its implementation,
     /// what they mean; it drives the vehicle it sits in (VehicleServer) as a player does, through
     /// the cab, while it sits there in the driver's role. A player at the controls needs no driver.
     ///
     /// A driver acts in moments, as the original's does after its reaction time (TController::
-    /// ReactionTime, Driver.cpp:150-158): its delegate asks for the next one
+    /// ReactionTime, Driver.cpp:150-158): its implementation asks for the next one
     /// (driver_schedule_update()) and is called when it comes. The time is SimulationServer's
     /// simulation time, which the physics and the events read too.
-    class DriverSystem : public Object {
-            GDCLASS(DriverSystem, Object)
+    class DriverServer : public Object {
+            GDCLASS(DriverServer, Object)
 
         public:
-            static DriverSystem *get_instance() {
-                return Object::cast_to<DriverSystem>(Engine::get_singleton()->get_singleton("DriverSystem"));
+            static DriverServer *get_instance() {
+                return Object::cast_to<DriverServer>(Engine::get_singleton()->get_singleton("DriverServer"));
             }
 
         private:
             struct DriverData {
-                    Ref<DriverDelegate> delegate;
+                    Ref<DriverImplementation> implementation;
                     /// The sequence of its scheduled update in the queue, 0 while none is
                     uint64_t update_sequence = 0;
             };
@@ -64,20 +64,20 @@ namespace godot {
         public:
             static const char *driver_timetable_changed_signal;
             static const char *driver_order_changed_signal;
-            /// The person is no driver any more (driver: RID) - its delegate was taken, or the
+            /// The person is no driver any more (driver: RID) - its implementation was taken, or the
             /// person freed
             static const char *driver_freed_signal;
-            /// The person is a driver now (driver: RID) - it was given its first delegate
+            /// The person is a driver now (driver: RID) - it was given its first implementation
             static const char *driver_attached_signal;
 
-            DriverSystem();
-            ~DriverSystem() override;
+            DriverServer();
+            ~DriverServer() override;
 
             /// Every driver there is
             TypedArray<RID> driver_get_rids() const;
-            /// The person becomes a driver thinking with p_delegate; null makes it none
-            void driver_attach_delegate(const RID &p_driver, const Ref<DriverDelegate> &p_delegate);
-            Ref<DriverDelegate> driver_get_delegate(const RID &p_driver) const;
+            /// The person becomes a driver thinking with p_implementation; null makes it none
+            void driver_attach_implementation(const RID &p_driver, const Ref<DriverImplementation> &p_implementation);
+            Ref<DriverImplementation> driver_get_implementation(const RID &p_driver) const;
             /// The driver aboard the vehicle, in whatever role (the original's Mechanik); RID() for none
             RID vehicle_get_driver(const RID &p_vehicle) const;
             /// An order for the driver - a scenario's command with its two values, and where what
@@ -85,28 +85,28 @@ namespace godot {
             void driver_send_command(
                     const RID &p_driver, const String &p_command, double p_value1, double p_value2,
                     const Vector3 &p_position = Vector3());
-            /// The driver's delegate is updated in p_seconds of simulated time; a later call
+            /// The driver's implementation is updated in p_seconds of simulated time; a later call
             /// replaces the one pending
             void driver_schedule_update(const RID &p_driver, double p_seconds);
             /// Whether the vehicle's driver sits at its controls (AIControllFlag) - not while it
             /// rides along in a cab a player drives from; it still takes its orders then, but
             /// touches no control. False for a vehicle without a driver.
             bool vehicle_is_control_active(const RID &p_vehicle) const;
-            /// The driver's timetable and its progress (DriverDelegate::get_timetable_state()); empty
-            /// without a delegate
+            /// The driver's timetable and its progress (DriverImplementation::get_timetable_state()); empty
+            /// without an implementation
             Dictionary driver_get_timetable_state(const RID &p_driver) const;
             /// The seconds from p_hours (the time of day) to the departure of the vehicle's train
-            /// (DriverDelegate::get_seconds_until_departure()): by the timetable of its own
+            /// (DriverImplementation::get_seconds_until_departure()): by the timetable of its own
             /// driver, else of the first driver of its trainset with one (Mechanik, else ctOwner,
             /// Event.cpp:2431-2435); 0 for a train without a timetable
             double vehicle_get_seconds_until_departure(const RID &p_vehicle, double p_hours) const;
-            /// The driver's delegate reports that its timetable, or how far it got through it, has
+            /// The driver's implementation reports that its timetable, or how far it got through it, has
             /// changed - announced as driver_timetable_changed
             void driver_report_timetable_changed(const RID &p_driver);
-            /// The driver's delegate reports that the driver took up another order (OrderCheck(),
+            /// The driver's implementation reports that the driver took up another order (OrderCheck(),
             /// Driver.cpp:5161) - announced as driver_order_changed
             void driver_report_order_changed(const RID &p_driver);
-            /// What the driver keeps (DriverDelegate::get_state()); empty without a delegate
+            /// What the driver keeps (DriverImplementation::get_state()); empty without an implementation
             Dictionary driver_get_state(const RID &p_driver) const;
     };
 } // namespace godot

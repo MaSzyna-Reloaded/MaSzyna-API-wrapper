@@ -126,7 +126,7 @@ anything. Open work belongs in `TODO.md`.
 * Grep every `extract_value(..., "Key")` of LoadFIZ_Cntrl against the parser before calling the
   section ported. *(09-29 MainInitTime was never loaded; 10-06 EN57 braked weakly - its trailers'
   wheels locked)*
-* The player's driver (DriverSystem) sits in the player's cab after every cab change, of the same
+* The player's driver (DriverServer) sits in the player's cab after every cab change, of the same
   vehicle too; which pantographs a vehicle has is its `PhysicalLayout`, not `CollectorsNo`.
   *(10-06 36WEa: "deactivate the cab" and "raise pantograph A" in the C car's cab)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
@@ -271,7 +271,7 @@ anything. Open work belongs in `TODO.md`.
   the cab layer: `CabinSystem` knows no view, and hid the low-poly cab from outside too. *(10-04
   SM42's windows missing)*
 * A cab (the original's TTrain) is at work only for a driven vehicle: its logic is attached on
-  `DriverSystem.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
+  `DriverServer.vehicle_driven_changed`, never to every vehicle. *(09-29 every vehicle's cab ran
   each step)*
 
 * Outside a vehicle's composition an action on it is `vehicle_send_command()`, never the
@@ -643,7 +643,7 @@ anything. Open work belongs in `TODO.md`.
 * A tool reading the game's text files skips a UTF-8 BOM as the game does. *(10-05 EN57KM cab)*
 * A default the original sets in one FIZ section for another section's keys reaches the vehicle
   even without that section's component (`LoadFIZ_Param`'s EZT `IminLo/Hi`). *(10-05 EN57 cab car reverser)*
-* A delegate, a role or a seat goes to the person its owner created, never to whoever holds the
+* An implementation, a role or a seat goes to the person its owner created, never to whoever holds the
   role at that moment - the player takes a vehicle over while the scenery still loads. *(10-05 player as the AI driver)*
 * A CI step piping a test run keeps its exit code (`set -o pipefail`); a green run is checked
   against its summary. *(10-05 CI green over red tests)*

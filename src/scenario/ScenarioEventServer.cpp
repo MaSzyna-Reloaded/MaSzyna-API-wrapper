@@ -1,6 +1,6 @@
 #include "../tracks/TrackServer.hpp"
 #include "ScenarioEventServer.hpp"
-#include "driver/DriverSystem.hpp"
+#include "driver/DriverServer.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -587,7 +587,7 @@ namespace godot {
         double run_time = now + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
         const VehicleServer *vehicles = VehicleServer::get_instance();
         if (!Math::is_nan(event->departure_delay) && vehicles != nullptr && vehicles->vehicle_exists(p_activator)) {
-            const DriverSystem *drivers = DriverSystem::get_instance();
+            const DriverServer *drivers = DriverServer::get_instance();
             ERR_FAIL_NULL_V(drivers, false);
             // the departure may be past already: the event runs at once (Event.cpp:2444)
             run_time = MAX(

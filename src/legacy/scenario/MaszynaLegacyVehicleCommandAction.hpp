@@ -6,7 +6,7 @@ namespace godot {
     /// read from a memory when the event runs. What the track does to a vehicle stays with the
     /// events: `CabSignal` is the cab signal magnet acting on the vehicle that queued the event, and
     /// `Emergency_brake` a Radio-Stop sent from where the event stands. The rest is an order for the
-    /// driver of the vehicle that queued the event (DriverSystem.driver_send_command()).
+    /// driver of the vehicle that queued the event (DriverServer.driver_send_command()).
     class MaszynaLegacyVehicleCommandAction : public ScenarioEventAction {
             GDCLASS(MaszynaLegacyVehicleCommandAction, ScenarioEventAction)
 

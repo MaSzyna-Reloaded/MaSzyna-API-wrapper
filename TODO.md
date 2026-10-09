@@ -110,6 +110,9 @@ so is their open work.
 
 ## Cabins
 
+* **Next (operator, 2026-10-09):** the AI driver (`legacy/driver/`, `MaszynaLegacyAIDriver`) moves to
+  the game as a `DriverImplementation` the game hands to `SceneryInstancer`, which today makes one
+  itself (`scenery_instancer.gd:12`); its tests and the fixtures they need go with it.
 * **Next, right after the split commit (operator, 2026-10-09):** the occupancy layer drives the cabs
   by plain vehicle commands instead of `set_driver_cabin_kind()` (`RailVehicleServer.cpp:1007`):
   `cabin_activate` (today's `cab_activation`), `cabin_change` (`ChangeCab()`, Mover.cpp:736) and,
@@ -505,7 +508,7 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 ## Signalling (#296)
 
 * **The isolated sections become the system's sources** (`SignallingServer.system_add_source`).
-* **The logical aspect for trains**: a signalling delegate has only the lights, nothing it shows
+* **The logical aspect for trains**: a signalling implementation has only the lights, nothing it shows
   reaches a train (the driver reads the memcells).
 * **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times): no light following the
   daylight.
@@ -670,7 +673,7 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * **The start sequence**: still open - the converter and the master controller through the cab,
   an EP09 and an ED78/36WE fixture (`ep09_v1/104e-039.fiz`, `impuls_v1/ed78-028-a..d_zachpom.fiz`:
   `LMaxVoltage=24`, control cars `a`/`d`, motor cars `b`/`c`). The five tests b5e744f1 took
-  `battery_voltage` from (`test_driver_system.gd`, `test_driver_braking.gd`,
+  `battery_voltage` from (`test_driver_server.gd`, `test_driver_braking.gd`,
   `test_train_controller_radio_channel.gd`, `test_train_ep_fuse_switch.gd`,
   `test_train_sound_system.gd`) get `build_power_supply()` back where they relied on the low
   voltage. The tester's report (EU07, ED78, 36WE unstartable) is not reproduced: needs the build
@@ -703,7 +706,7 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
     `test_traction_power_sections.gd`, `test_rail_vehicle_track_movement.gd`,
     `test_rail_vehicle_at_rest.gd`, `test_rail_vehicle_start_track.gd`,
     `test_rail_vehicle_idle_*_regression.gd`.
-  * *Stops before what the player sees*: `test_driver_system.gd` (`Prepare_engine` only to
+  * *Stops before what the player sees*: `test_driver_server.gd` (`Prepare_engine` only to
     `battery_enabled`, `:185` asserts an open main switch).
   * *Fixtures that build a 0 V vehicle unnoticed*: `test_vehicle.fiz`, `test_wagon.fiz`,
     `dynamic/test/synthetic_v1/synthetic.fiz`.

@@ -1,8 +1,8 @@
 #include "cabin/Cabin3D.hpp"
 #include "cabin/CabinHUDMouseSystem.hpp"
 #include "cache/ResourceCache.hpp"
-#include "driver/DriverDelegate.hpp"
-#include "driver/DriverSystem.hpp"
+#include "driver/DriverImplementation.hpp"
+#include "driver/DriverServer.hpp"
 #include "game_data/GameDataServer.hpp"
 #include "hud/HUDServer.hpp"
 #include "legacy/MaszynaDataPath.hpp"
@@ -30,7 +30,7 @@
 #include "legacy/scenery/MaszynaTrianglesChunkGeometry.hpp"
 #include "legacy/scenery/MaszynaTrianglesImporter.hpp"
 #include "legacy/signalling/MaszynaLegacySignalHeadKindFactory.hpp"
-#include "legacy/signalling/MaszynaLegacySignallingDelegate.hpp"
+#include "legacy/signalling/MaszynaLegacySignallingImplementation.hpp"
 #include "legacy/vehicles/MaszynaMoverVehicleServer.hpp"
 #include "legacy/vehicles/MoverRailVehicleAIHints.hpp"
 #include "legacy/vehicles/MoverRailVehicleBrake.hpp"
@@ -79,13 +79,13 @@
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesSink.hpp"
 #include "scripting/ScenarioScriptAction.hpp"
-#include "scripting/ScenarioScriptCabinDelegate.hpp"
+#include "scripting/ScenarioScriptCabinImplementation.hpp"
 #include "scripting/ScenarioScriptServer.hpp"
 #include "signalling/SignalAspect.hpp"
 #include "signalling/SignalHeadKind.hpp"
 #include "signalling/SignalHeadNode.hpp"
+#include "signalling/SignallingImplementation.hpp"
 #include "signalling/SignallingServer.hpp"
-#include "signalling/SignallingSystemDelegate.hpp"
 #include "signalling/SignallingSystemNode.hpp"
 #include "simulation/SimulationRuntime.hpp"
 #include "simulation/SimulationServer.hpp"
@@ -187,7 +187,7 @@ SignallingServer *signalling_server_singleton = nullptr;
 ScenarioEventServer *scenario_event_server_singleton = nullptr;
 SceneryHUDMouseServer *scenery_hud_mouse_server_singleton = nullptr;
 ScenarioScriptServer *scenario_script_server_singleton = nullptr;
-DriverSystem *driver_system_singleton = nullptr;
+DriverServer *driver_server_singleton = nullptr;
 PlayerServer *player_server_singleton = nullptr;
 StationServer *station_server_singleton = nullptr;
 PlayerCameraServer *player_camera_server_singleton = nullptr;
@@ -239,18 +239,18 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SignalAspect);
         GDREGISTER_CLASS(SignalHeadKind);
         GDREGISTER_ABSTRACT_CLASS(MaszynaLegacySignalHeadKindFactory);
-        GDREGISTER_VIRTUAL_CLASS(SignallingSystemDelegate);
-        GDREGISTER_CLASS(MaszynaLegacySignallingDelegate);
+        GDREGISTER_VIRTUAL_CLASS(SignallingImplementation);
+        GDREGISTER_CLASS(MaszynaLegacySignallingImplementation);
         GDREGISTER_CLASS(SignalHeadNode);
         GDREGISTER_CLASS(SignallingSystemNode);
         GDREGISTER_CLASS(ScenarioEventServer);
         GDREGISTER_CLASS(SceneryHUDMouseServer);
-        GDREGISTER_CLASS(DriverSystem);
-        GDREGISTER_VIRTUAL_CLASS(DriverDelegate);
+        GDREGISTER_CLASS(DriverServer);
+        GDREGISTER_VIRTUAL_CLASS(DriverImplementation);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventAction);
         GDREGISTER_VIRTUAL_CLASS(ScenarioEventCondition);
         GDREGISTER_CLASS(ScenarioScriptServer);
-        GDREGISTER_VIRTUAL_CLASS(ScenarioScriptCabinDelegate);
+        GDREGISTER_VIRTUAL_CLASS(ScenarioScriptCabinImplementation);
         GDREGISTER_CLASS(PlayerServer);
         GDREGISTER_CLASS(StationServer);
         GDREGISTER_CLASS(PlayerCameraServer);
@@ -424,8 +424,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenario_event_server_singleton = memnew(ScenarioEventServer);
         Engine::get_singleton()->register_singleton("ScenarioEventServer", scenario_event_server_singleton); // 16
         // after RailVehicleServer is registered: the constructor follows its freed vehicles
-        driver_system_singleton = memnew(DriverSystem);
-        Engine::get_singleton()->register_singleton("DriverSystem", driver_system_singleton); // 17
+        driver_server_singleton = memnew(DriverServer);
+        Engine::get_singleton()->register_singleton("DriverServer", driver_server_singleton); // 17
         // after E3DRenderingServer is registered: it outlines and picks its instances
         scenery_hud_mouse_server_singleton = memnew(SceneryHUDMouseServer);
         Engine::get_singleton()->register_singleton("SceneryHUDMouseServer", scenery_hud_mouse_server_singleton); // 18
@@ -437,7 +437,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // after VehicleServer: the constructor follows its freed vehicles
         station_server_singleton = memnew(StationServer);
         Engine::get_singleton()->register_singleton("StationServer", station_server_singleton); // 18b
-        // after RailVehicleServer and DriverSystem: it follows freed vehicles and hands trainsets
+        // after RailVehicleServer and DriverServer: it follows freed vehicles and hands trainsets
         // over to their drivers
         player_server_singleton = memnew(PlayerServer);
         Engine::get_singleton()->register_singleton("PlayerServer", player_server_singleton); // 19
@@ -530,12 +530,12 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenery_hud_mouse_server_singleton = nullptr;
     }
 
-    if (Engine::get_singleton()->has_singleton("DriverSystem")) {
-        Engine::get_singleton()->unregister_singleton("DriverSystem"); // 17
+    if (Engine::get_singleton()->has_singleton("DriverServer")) {
+        Engine::get_singleton()->unregister_singleton("DriverServer"); // 17
     }
-    if (driver_system_singleton != nullptr) {
-        memdelete(driver_system_singleton);
-        driver_system_singleton = nullptr;
+    if (driver_server_singleton != nullptr) {
+        memdelete(driver_server_singleton);
+        driver_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("ScenarioEventServer")) {

@@ -135,7 +135,7 @@ A probe reads frozen values - and "proves" anything - unless the vehicle is real
   `MaszynaGutTest.step()` does) - with no `SimulationRuntime` nothing else moves it; check that
   `SimulationServer.simulation_get_time()` grows;
 - it is driven (`PlayerServer.player_take_over_vehicle()` or
-  `DriverSystem.vehicle_set_control_active()`), or a standing vehicle switches its physics off;
+  `DriverServer.vehicle_set_control_active()`), or a standing vehicle switches its physics off;
 - waits are in simulated time the probe steps, never in frames or `create_timer` - a headless
   frame is microseconds and a real second says nothing of the simulation.
 

@@ -7,10 +7,10 @@
 
 namespace godot {
     /// How a scenario script reaches the cabs. The cab layer (CabinSystem) is written in GDScript,
-    /// so the scripting layer cannot name it; a delegate implemented next to it forwards the
+    /// so the scripting layer cannot name it; an implementation implemented next to it forwards the
     /// scripts' manipulations and reports back what changed in a cab (control_changed).
-    class ScenarioScriptCabinDelegate : public Resource {
-            GDCLASS(ScenarioScriptCabinDelegate, Resource)
+    class ScenarioScriptCabinImplementation : public Resource {
+            GDCLASS(ScenarioScriptCabinImplementation, Resource)
 
         protected:
             static void _bind_methods();

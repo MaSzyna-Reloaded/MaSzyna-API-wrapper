@@ -461,7 +461,7 @@ Legend:
 **Loading queue waits by sleeping and is polled**
 
 * **Where:** `src/utils/WorkerTaskQueue.cpp:61-66` (`is_done()`), `:69-96` (`wait()`, the sleep
-  at `:94`); pollers `addons/libmaszyna/scenery/scenery_instancer.gd:527` (loop `:519-530`),
+  at `:94`); pollers `addons/libmaszyna/scenery/scenery_instancer.gd:530` (loop `:524-533`),
   `addons/libmaszyna/legacy/vehicle/maszyna_vehicle_profile_manager.gd:117`
 * **Rule:** never work around a missing event
 * **Problem:** `wait()` loops on `OS::delay_usec(100)`, and `is_done()` exists so callers can
@@ -634,7 +634,7 @@ Legend:
 **`SimulationServer::get_instance()` looked up per frame**
 
 * **Where:** `src/simulation/SimulationServer.hpp:79-81` (`get_instance()`); per tick in
-  `src/driver/DriverServer.cpp:81` (`_process_updates`) and
+  `src/driver/DriverServer.cpp:85` (`_process_updates`) and
   `src/scenario/ScenarioEventServer.cpp:281` (`_process_queue`)
 * **Problem:** the lookup is a name lookup on `Engine`, done every tick.
 * **Fix:** cache the pointer at initialisation.

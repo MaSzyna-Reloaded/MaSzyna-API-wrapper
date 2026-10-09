@@ -110,9 +110,6 @@ their open work.
 
 ## Cabins
 
-* **Next (operator, 2026-10-09):** the AI driver (`legacy/driver/`, `MaszynaLegacyAIDriver`) moves to
-  the game as a `DriverImplementation` the game hands to `SceneryInstancer`, which today makes one
-  itself (`scenery_instancer.gd:12`); its tests and the fixtures they need go with it.
 * **Next, right after the split commit (operator, 2026-10-09):** the occupancy layer drives the cabs
   by plain vehicle commands instead of `set_driver_cabin_kind()` (`RailVehicleServer.cpp:1007`):
   `cabin_activate` (today's `cab_activation`), `cabin_change` (`ChangeCab()`, Mover.cpp:736) and,
@@ -571,15 +568,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   `ScenarioKeyboard` and the tests read it as "built, coupled and placed". A `vehicle_find_vehicle()`
   right after it finds no neighbour. Needs a "scenario ready" event at its owner (operator: a task of
   its own; where it lives is to be decided - scenery node or a server).
-* **`universal_brake_button` 0, 1, 2 sent on every driver update** while coupling, standing
-  (calkowo SN61 log 2026-10-09, `shunt_sn61_couple.scn`): check against the original's
-  `universal` handling before treating it as a bug.
-
-* **The AI stops at a Tm at Ms1, not 7-12 m before it** (shunting, SN61-02 + a wagon,
-  calkowo_sn61_zima.scn, Paszki Tm7, 2026-10-07): at "0.0 km" to the stop point it still ran
-  11 km/h and stood with its buffers past the mast, braking hard (pipe 2.8 bar). The original's
-  shunting range is 5-25 m (`Driver.cpp:6715-6716`, ported the same). Measure with a probe - speed,
-  distance of the front, `brake_distance`, when braking starts - against the original's.
 * **Commands a vehicle does not have are sent and fail**: `fuse_reset` from the cab key (N, every
   cab, `mmd_semantic_catalog.gd:224`) and `security_cabsignal_trigger` from an SHP event
   (`MaszynaLegacyVehicleCommandAction.cpp:38`) on an SN61 - no electric engine, no security system;
@@ -588,64 +576,6 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   and switch limits, spring return, the horn's value); `LegacyCabinControls` parses the MMD with no
   random choices. The `brake_level_drive` `CabinCommand` node still carries `command`/
   `command_param`, only as the guard of its key.
-* **Preparing and releasing the engine** (`Driver.cpp:2759-3012`): diesel heating
-  (`PrepareHeating()`), pantograph air (`bPantKurek3`, `PantsValve`) and the speed a pantograph
-  counts as up at, ground and motor overload relay resets, SN61's idle position,
-  `mastercontrollersetreverserunlock`, motor blowers, spring brake, doors, releaser and brakes on
-  putting away; compressor presence not asked; the brake handle's driving position cued, not
-  checked; `Activation()`'s move to another vehicle (EN57, ET41); `ShuntModeAllow`. On Stary Jawor
-  sa134-014 and WMB10-819 report their line breaker open after being prepared.
-  `PrepareEngine()`'s readiness compares the main reservoir, the original the feed pipe
-  (`ScndPipePress`, Driver.cpp:2843-2851).
-* **Orders**: `engine_active` lost on a breakdown while driving; the trainset's timetable and
-  velocity from the `.scn` (`OrdersInit`); a push-pull set turning only at `@` (`movePushPull`);
-  `OrderCheck()`'s doors; lights - lamp inventory (`iInventory`), the far end put out on
-  `Disconnect` (`Driver.cpp:2510-2525`), the player's vehicle on taking over (`Driver.cpp:5662`),
-  `Global.AITrainman`'s Pc5; `SetSignal`; station announcements and guard signals of `Timetable:`.
-* **Trainset reading**: stretched couplers, doors, light, relays of the other vehicles, the
-  individual release of an overcharged vehicle, the parking brake of a speed control unit, EP
-  brakes in `IsConsistBraked`, `BrakePressureActual.PipePressureVal` (taken as 3.9).
-* **Speed**: obstacles, an aggressive driver, EMU/DMU thresholds, cargo trains' and couplers'
-  acceleration limits, the braking test.
-* **Traction**: EN57 does not prepare (`Activation()` not ported); doors closed and departure
-  signal off before power (`Doors()`, `DepartureSignal` not published); no-current sections
-  (`fOverhead2`, `iOverheadZero`); shunting mode of a 2Ls150 and of an induction motor; SN61's idle
-  position after the reverser (Driver.cpp:5778); the input action for `maxcurrent_sw` (Ctrl+F);
-  `Engine:EngineMaxTemperature` (Mover.cpp:8306, not in the vendored Mover); the radio off after a
-  Radio-Stop.
-* **Braking**: the braking test (`ForcePNBrake`, `DynamicBrakeTest`), unlocking the pipe before
-  the releaser (`control_main_pipe()`), individual release of an overcharged wagon, `manualbrakon`
-  on putting away, the weather's friction; why the eszelon almost stopped on n226 before E4 (x20).
-* **Speed table**: passenger stop points, section and road speeds, stopping at an SBL, crossings,
-  the switch branch of an event on a switch, the cargo train's distances; vehicles ahead - the scan
-  from the rear end (Driver.cpp:6642), a signal beyond a vehicle ahead (`isforsomeoneelse`,
-  Driver.cpp:1566, 1709), coupler adapters in the gap, `braking_distance_multiplier()` in the
-  target speed. `VelLimitLastDist` ported, `SwitchClearDist` only as far as it extends it,
-  `moveSwitchFound`/`moveStopPointFound` (Driver.cpp:1043) not.
-* **Timetable**: the departure signal before the doors close (Driver.cpp:4305-4320) and the wait
-  after (`Random(-3.5, -1.0)`, Driver.cpp:4351); `moveGuardOpenDoor`; car load weights
-  (`load_weights.txt`) and visible load (`update_load_visibility()`, `update_load_sections()`);
-  passenger announcements; the load unit `"tons"` vs the original's `"tonns"` (Mover.cpp:4464);
-  the guard's message beside the train (`<timetable>.ogg`, Driver.cpp:4466-4472, 6862-6870); the
-  radio channel hint (Driver.cpp:1113); `UpdateDelayFlag()`; a player's stop left far behind
-  (Driver.cpp:1190-1200); `VelSignalLast` reset by a stop (`eSignNext`); a player leaving a stop
-  early keeps counting the delay from it.
-* **Timetable panel** (`demo/hud/timetable_panel.gd`): the list from `StationStart`
-  (driveruipanels.cpp:392), the expanded mode's weight and length (:360-386), re-resolving the
-  followed driver on coupling.
-* **The driver's hints**: the compartment lights go by the scenery's light level alone - the
-  consist's shade (`ConsistShade`) is not published.
-* **The Hints chip** (`demo/hud/driver_hints.tscn`): its place under the driving aid not seen in the
-  running game yet.
-* **Coupling and uncoupling - not checked on a scenery** (linia61, calkowo too heavy for a headless
-  probe so far). Left: high voltage and power lines of a coupler number; `coupler_connect` joins in
-  a fixed order; lights after the trainset changed (`CheckVehicles()`); `bh_EPB`; a coupling a
-  player left half done; margins of modern vehicles, the weather and a late train (`moveLate`).
-* **`movePrimary` is not ported** (`TController::primary()`, Driver.h:226-231): the others defer
-  to it (Driver.cpp:2410-2430), only it runs the dynamic brake test (Driver.cpp:7856), and one
-  moving through a gangway takes over (Driver.cpp:5870).
-* **To drive again in game**: Stary Jawor Osobowy 1, the AI's n323m ran past a signal at stop
-  while the player shunted in SM42-329 (two likely causes fixed on krzyzowa2).
 * **Cab targets**: the motor car's ammeters, voltmeters and lamps (`mvControlled` in
   `update_gauges`) need `target` in `MmdSemanticCatalog`.
 

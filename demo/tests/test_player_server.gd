@@ -68,27 +68,27 @@ func test_the_driver_steps_back_while_the_player_drives() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
     var driver:RID = get_vehicle_driver(vehicle)
-    DriverServer.driver_attach_implementation(driver, IdleDriver.new())
+    attach_driver_implementation(driver, IdleDriver.new())
 
     PlayerServer.player_take_over_vehicle(vehicle)
     assert_false(DriverServer.vehicle_is_control_active(vehicle), "the player drives")
     PlayerServer.player_leave_vehicle()
     assert_true(DriverServer.vehicle_is_control_active(vehicle), "the driver drives again")
-    DriverServer.driver_attach_implementation(driver, null)
+    attach_driver_implementation(driver, null)
 
 
 func test_entering_the_cab_leaves_the_driver_driving() -> void:
     await wait_idle_frames(SETTLE_FRAMES)
     var vehicle:RID = _first.get_rid()
     var driver:RID = get_vehicle_driver(vehicle)
-    DriverServer.driver_attach_implementation(driver, IdleDriver.new())
+    attach_driver_implementation(driver, IdleDriver.new())
 
     PlayerServer.player_enter_vehicle(vehicle)
     assert_eq(PlayerServer.player_get_vehicle(), vehicle, "the player sits in its cab")
     assert_true(DriverServer.vehicle_is_control_active(vehicle), "the driver drives on")
     PlayerServer.player_enter_vehicle(vehicle)
     assert_true(DriverServer.vehicle_is_control_active(vehicle), "entered again, still the driver's")
-    DriverServer.driver_attach_implementation(driver, null)
+    attach_driver_implementation(driver, null)
 
 
 ## Train.cpp:9147 - taking a vehicle over activates the cab its crew sits in, with or without a 3D

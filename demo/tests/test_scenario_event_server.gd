@@ -244,7 +244,7 @@ func test_a_departure_delay_counts_from_the_departure_of_the_train() -> void:
             "DepartureDelayTest", null, 0.0, MaszynaDynamicData.DriverType.DRIVER_HEAD).get_rid()
     var departing:DepartingDriver = DepartingDriver.new()
     departing.seconds = UNTIL_DEPARTURE
-    DriverServer.driver_attach_implementation(get_vehicle_driver(vehicle), departing)
+    attach_driver_implementation(get_vehicle_driver(vehicle), departing)
     var event:RID = _create_event(RecordingAction.new(), EVENT_DELAY)
     ScenarioEventServer.event_set_departure_delay(event, DEPARTURE_DELAY)
     var now:float = SimulationServer.simulation_get_time()

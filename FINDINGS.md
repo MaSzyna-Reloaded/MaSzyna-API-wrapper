@@ -666,3 +666,7 @@ anything. Open work belongs in `TODO.md`.
 * A consumer of `scenery_loaded` exists and is connected before loading starts; removing a
   readiness fallback means every composition and its test fixture must use that signal path.
   *(10-08 player initialization CI regression)*
+* After moving classes or files out of a project, check from a fresh `.godot` (imported twice) and
+  parse every test script (`-gdir=res://tests/ -gunit_test_name=<none>`) - a warm class cache hides
+  the move, and GUT drops a script that fails to parse without failing the run. *(10-09 classes
+  moved out, hidden by a warm class cache)*

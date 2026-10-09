@@ -222,7 +222,7 @@ func test_handing_over_gives_the_ai_driver_the_players_cabin_and_leaving_hands_i
     var front:RID = RailVehicleServer.vehicle_get_front_cabin(vehicle)
     var driver:RID = _create_person()
     var player:RID = PlayerServer.player_get_person()
-    DriverServer.driver_attach_implementation(driver, IdleImplementation.new())
+    attach_driver_implementation(driver, IdleImplementation.new())
     assert_eq(RailVehicleServer.person_enter_rear_cabin(driver, vehicle, DRIVER), OK)
     assert_true(DriverServer.vehicle_is_control_active(vehicle), "the AI drives")
     PlayerServer.player_take_over_vehicle(vehicle)

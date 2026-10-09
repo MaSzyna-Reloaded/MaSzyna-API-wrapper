@@ -4,6 +4,7 @@
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/core/math.hpp>
+#include <godot_cpp/templates/vector.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -14,6 +15,9 @@ namespace godot {
     const char *DriverServer::driver_attached_signal = "driver_attached";
 
     void DriverServer::_bind_methods() {
+        ClassDB::bind_method(
+                D_METHOD("implementation_register", "name", "implementation"), &DriverServer::implementation_register);
+        ClassDB::bind_method(D_METHOD("implementation_unregister", "name"), &DriverServer::implementation_unregister);
         ClassDB::bind_method(D_METHOD("driver_get_rids"), &DriverServer::driver_get_rids);
         ClassDB::bind_method(
                 D_METHOD("driver_attach_implementation", "driver", "implementation"),
@@ -163,25 +167,64 @@ namespace godot {
         emit_signal(driver_freed_signal, p_driver);
     }
 
+    /// The driver thinks with p_implementation from now on: the one it thought with learns it lost
+    /// it, the new one that it has it
+    void DriverServer::_set_implementation(const RID &p_driver, const Ref<DriverImplementation> &p_implementation) {
+        DriverData *data = drivers.getptr(p_driver);
+        ERR_FAIL_NULL(data);
+        const Ref<DriverImplementation> previous = data->implementation;
+        data->implementation = p_implementation;
+        if (previous.is_valid()) {
+            previous->driver_detached(p_driver);
+        }
+        if (p_implementation.is_valid()) {
+            p_implementation->driver_attached(p_driver);
+        }
+    }
+
     void
-    DriverServer::driver_attach_implementation(const RID &p_driver, const Ref<DriverImplementation> &p_implementation) {
+    DriverServer::implementation_register(const StringName &p_name, const Ref<DriverImplementation> &p_implementation) {
+        ERR_FAIL_COND(p_implementation.is_null());
+        implementations[p_name] = p_implementation;
+        // collected first: an implementation learning of a driver may create or free drivers
+        Vector<RID> declared;
+        for (const KeyValue<RID, DriverData> &entry: drivers) {
+            if (entry.value.implementation_name == p_name) {
+                declared.push_back(entry.key);
+            }
+        }
+        for (const RID &driver: declared) {
+            _set_implementation(driver, p_implementation);
+        }
+    }
+
+    void DriverServer::implementation_unregister(const StringName &p_name) {
+        implementations.erase(p_name);
+        Vector<RID> declared;
+        for (const KeyValue<RID, DriverData> &entry: drivers) {
+            if (entry.value.implementation_name == p_name) {
+                declared.push_back(entry.key);
+            }
+        }
+        for (const RID &driver: declared) {
+            _set_implementation(driver, Ref<DriverImplementation>());
+        }
+    }
+
+    void DriverServer::driver_attach_implementation(const RID &p_driver, const StringName &p_implementation) {
         const PersonServer *persons = PersonServer::get_instance();
         ERR_FAIL_NULL(persons);
         ERR_FAIL_COND_MSG(!persons->person_exists(p_driver), "A driver is a person of PersonServer");
-        if (p_implementation.is_null()) {
+        if (p_implementation.is_empty()) {
             if (drivers.has(p_driver)) {
                 _detach(p_driver);
             }
             return;
         }
         const bool attached = !drivers.has(p_driver);
-        DriverData &data = drivers[p_driver];
-        const Ref<DriverImplementation> previous = data.implementation;
-        data.implementation = p_implementation;
-        if (previous.is_valid()) {
-            previous->driver_detached(p_driver);
-        }
-        p_implementation->driver_attached(p_driver);
+        drivers[p_driver].implementation_name = p_implementation;
+        const Ref<DriverImplementation> *registered = implementations.getptr(p_implementation);
+        _set_implementation(p_driver, registered == nullptr ? Ref<DriverImplementation>() : *registered);
         if (attached) {
             emit_signal(driver_attached_signal, p_driver);
         }

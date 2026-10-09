@@ -77,7 +77,7 @@ func test_a_freed_person_is_no_driver() -> void:
     var person:RID = _create_person()
     var implementation:IdleImplementation = IdleImplementation.new()
     assert_eq(VehicleServer.cabin_person_enter(cabin, person, VehiclePersonRole.VEHICLE_PERSON_ROLE_DRIVER), OK)
-    DriverServer.driver_attach_implementation(person, implementation)
+    attach_driver_implementation(person, implementation)
     assert_has(DriverServer.driver_get_rids(), person)
     assert_eq(DriverServer.vehicle_get_driver(VehicleServer.cabin_get_vehicle(cabin)), person)
     watch_signals(DriverServer)

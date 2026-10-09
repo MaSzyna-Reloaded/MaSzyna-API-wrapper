@@ -189,8 +189,14 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ### Python integration
 
-* **Windows runtime untested** - should use the game dir's `python27.dll` and `python64/`
-  (PyInt.cpp:233); `make python-runtime` builds only the Linux one.
+* **Windows runtime tested under wine only** - `maszyna-python-host.64.exe` with Steam MaSzyna's
+  `python27.dll` and `python64/` starts and renders a PIL screen; not yet on a player's Windows.
+  `make python-runtime` builds only the Linux one.
+* **`maszyna-python-host` in an export** (`[dependencies]` of `libmaszyna.gdextension`): not yet
+  seen in an exported game; on Linux its executable bit must survive the export.
+* **Non-ASCII paths on Windows**: CPython 2.7 takes paths in the ANSI code page, the host hands
+  it UTF-8 (`maszyna/python/home` set to an absolute path, the game directory and the scripts'
+  paths). The default home is relative, so only a game directory outside the code page breaks.
 * **Keys with no source yet**: `off_from_dimmer` (no dimmer positions in the vendored Mover),
   `lights_compartments` (`compartmentlights_sw` not ported), `doors_no_N` (MMD `animations:`
   count, held by the model layer), lamps beyond the five carried in `lights_front`/`lights_rear`/
@@ -447,12 +453,14 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   printed twice before `(Re)Initialized`); the earlier one is removed, but the install runs twice.
   The D3D12 crash fix (`FINDINGS.md`, 2026-10-06) is unconfirmed on Windows until a player reports.
 * **Windows: td.scn ends the game without a message** (RTX 4080 SUPER, Vulkan, build
-  20261007-1333; Stary Jawor loads). `app.log` stops after `[SceneryMemory] loaded`, nothing in the
-  Windows event log; an older build loaded it. Each step after it is now in `app.log`
-  (`[ScenarioStart]`, `[PlayerStart]`, `[PythonScreen]`, `[RailVehicleRendering]`), the streaming's
-  pieces with `--verbose`. Candidates: the streaming, Vulkan (`--rendering-driver d3d12`), the
-  Python runtime (`python27.dll`). Also unguarded: a pending vehicle build whose appearance was set
-  to none - `_build_models()` reads the appearance without a check.
+  20261007-1333). The `--verbose` log ends at starting the Python interpreter and `--no-python`
+  runs without fault (`docs/findings-archive.md`, 2026-10-09): Python now runs in
+  `maszyna-python-host`, so the game survives it. **Still open: why it failed for that player** -
+  the next build's `app.log` has the host's stderr and exit code; asked of the player meanwhile:
+  `--verbose 2> stderr.txt` from `cmd`, the event log's faulting module and exception code,
+  whether eu07.exe shows the Python screens, another Python 2.7 in the registry
+  (`PythonCore\2.7`) or on `PATH`. Also unguarded: a pending vehicle build whose appearance was
+  set to none - `_build_models()` reads the appearance without a check.
 * Normal maps: Godot's tangents not checked against the original's `f_tbn`.
 * Overexposure in the demo scenery unmeasured. Candidates, one at a time: `tonemap_mode`,
   `soft_shadow_filter_quality` 3 -> 1, `directional_shadow/size=8192` (`042b392`), `fog_enabled`,

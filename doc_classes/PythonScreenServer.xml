@@ -42,6 +42,12 @@
 		</method>
 	</methods>
 	<signals>
+		<signal name="python_runtime_failed">
+			<param index="0" name="message" type="String" />
+			<description>
+				The Python host process (maszyna-python-host) has ended - the runtime is missing or broken, or a script brought the interpreter down - and the screens stay blank until the game is restarted. [param message] is what the host printed on its way out and its exit code; it is in the log too. Emitted once.
+			</description>
+		</signal>
 		<signal name="screen_rendered">
 			<param index="0" name="screen" type="RID" />
 			<description>

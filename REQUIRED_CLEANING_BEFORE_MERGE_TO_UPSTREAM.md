@@ -574,8 +574,8 @@ Legend:
 * **Where:**
   * `src/legacy/vehicles/MoverRailVehicleWipers.cpp:29-33` (`switch_initialized`, field
     `MoverRailVehicleWipers.hpp:31`, checked on every configuration apply)
-  * `src/legacy/cabin/PythonScreenServer.cpp:231-251` (the worker thread is started lazily in
-    `screen_create`, `:232, 249-250`; the reload path `:206-210` relies on it)
+  * `src/legacy/cabin/PythonScreenServer.cpp:225-259` (the worker thread and the Python host
+    are started lazily in `screen_create`, `:226, 256-258`; the reload path `:200-205` relies on it)
 * **Rule:** no `ensure_*` under any name - state is initialised where it is created
 * **Fix:** initialise in the constructor or the server's initialisation.
 

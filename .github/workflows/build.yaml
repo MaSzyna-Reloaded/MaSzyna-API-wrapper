@@ -35,7 +35,10 @@ jobs:
       - uses: actions/upload-artifact@v7
         with:
           name: host-library
-          path: demo/bin/libmaszyna/linux/libmaszyna.debug.64.so
+          # and maszyna-python-host, the process PythonScreenServer runs CPython in
+          path: |
+            demo/bin/libmaszyna/linux/libmaszyna.debug.64.so
+            demo/bin/libmaszyna/linux/maszyna-python-host.64
           if-no-files-found: error
 
       - uses: actions/cache/save@v6
@@ -71,6 +74,10 @@ jobs:
         with:
           name: host-library
           path: demo/bin/libmaszyna/linux
+
+      # an artifact does not keep the executable bit
+      - name: Make the Python host executable
+        run: chmod +x demo/bin/libmaszyna/linux/maszyna-python-host.64
 
       - name: Run tests
         run: sudo chmod 777 ci/docker/entrypoint.sh |

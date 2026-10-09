@@ -4265,3 +4265,30 @@ lighting or the trainset.
   REQUIRED_CLEANING RC-124..RC-130 and `TODO.md`.
 * **Rule:** a source reference is written only after reading the original's line - its value and
   the inputs of its formula. What differs is a port error to report, not a value to name.
+
+
+## 2026-10-09 Python screens ended the game without a trace
+
+* **Symptom:** a player on Windows (RTX 4080 SUPER, Steam MaSzyna, the game installed in another
+  directory than MaSzyna) had the game close with no message and no entry in the Windows event
+  log, right after taking over EP07-424; the build with `--no-python` ran without fault.
+* **What proved it:** the `--verbose` `app.log` ends at `[PythonScreen] starting the interpreter`,
+  with `run/flush_stdout_on_print=true` - every line is in the file the moment it is printed - and
+  neither "cannot load" nor "missing from the library" before it: `LoadLibraryW()` and the symbols
+  were fine, and the process ended in `Py_SetPythonHome()`/`Py_InitializeEx()` on the worker
+  thread. A fatal error of CPython is a line on the C stderr of `python27.dll`'s own CRT, which a
+  windowed process does not have, and `abort()`; Godot's crash handler covers the main thread
+  only. Started the original's way, the same `python27.dll` and `python64/` run under wine:
+  `PIL` imports and a screen script renders. The started interpreter differs from eu07.exe's in
+  where it starts: eu07.exe sits in the game directory, which is its working directory and the
+  first place Windows looks for DLLs, and CPython adds the executable's directory to `sys.path`.
+  The player's actual error is not known yet.
+* **Fix:** CPython runs in `maszyna-python-host`, a program of its own beside the library
+  (`src/legacy/cabin/python_host/`), started in the game directory with it on the DLL search path,
+  as eu07.exe is. When it ends, `PythonScreenServer` logs its stderr and exit code, emits
+  `python_runtime_failed` once and leaves the screens blank; the scripts' tracebacks reach the log
+  through a captured `sys.stderr` (PyInt.cpp:265).
+* **Rule:** a runtime from the player's game directory runs out of the game's process, and what
+  it says on its way out is read and logged - the game survives it and the next report carries
+  the reason.
+

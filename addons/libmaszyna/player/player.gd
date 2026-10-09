@@ -15,7 +15,10 @@ var controlled_vehicle:RailVehicle3D
 var _dirty: bool = false
 
 func _ready() -> void:
-    pass
+    if not has_node("MultiMonitorManager"):
+        var manager: MultiMonitorManager = MultiMonitorManager.new()
+        manager.name = "MultiMonitorManager"
+        add_child(manager)
 
 func _process(delta):
     if _dirty:

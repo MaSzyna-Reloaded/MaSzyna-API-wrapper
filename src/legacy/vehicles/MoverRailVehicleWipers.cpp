@@ -54,7 +54,14 @@ namespace godot {
         if (get_positions().size() == 0) {
             return;
         }
+        sweep_clock += p_delta;
         const Ref<RailVehicleWiperListItem> switched = get_positions()[switch_position];
+        const bool switched_on =
+                switched.is_valid() && p_mover->Battery && !(p_mover->CabActive == 0) && switched->get_wiper_mask() > 0;
+        if (parked && !switched_on) {
+            return;
+        }
+        parked = true;
         const int count = static_cast<int>(wipers.size());
         for (int i = 0; i < count; i++) {
             Wiper &wiper = wipers[i];
@@ -68,11 +75,10 @@ namespace godot {
                 }
             }
 
-            wiper.out_timer += p_delta;
-            wiper.park_timer += p_delta;
             if (!active && wiper.position <= 0.0) {
                 continue;
             }
+            parked = false;
 
             // the parameters of the position the wiper started its sweep with
             const Ref<RailVehicleWiperListItem> working = get_positions()[wiper.working_switch_position];
@@ -86,18 +92,19 @@ namespace godot {
                 wiper.position = std::max(0.0, wiper.position - step);
                 continue;
             }
-            if (wiper.position < 1.0 && !wiper.returning && wiper.park_timer > working->get_period()) {
+            if (wiper.position < 1.0 && !wiper.returning && sweep_clock - wiper.park_since > working->get_period()) {
                 wiper.position = std::min(1.0, wiper.position + step);
             }
-            if (wiper.position > 0.0 && wiper.returning && wiper.out_timer > working->get_return_delay()) {
+            if (wiper.position > 0.0 && wiper.returning &&
+                sweep_clock - wiper.out_since > working->get_return_delay()) {
                 wiper.position = std::max(0.0, wiper.position - step);
             }
             if (wiper.position >= 1.0) {
-                wiper.park_timer = 0.0;
+                wiper.park_since = sweep_clock;
                 wiper.returning = true;
             }
             if (wiper.position <= 0.0) {
-                wiper.out_timer = 0.0;
+                wiper.out_since = sweep_clock;
                 wiper.returning = false;
                 wiper.working_switch_position = switch_position;
             }

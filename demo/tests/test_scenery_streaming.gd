@@ -5,6 +5,8 @@ extends MaszynaGutTest
 
 ## Frames given to the streaming worker and the frame-budgeted build/clear before a check fails
 const STREAMING_FRAMES:int = 60
+## Real seconds to wait for the streaming to look at a moved camera - a few of its watch intervals
+const CAMERA_WATCH_TIMEOUT:float = 1.0
 const CHUNK_SIZE_M:float = 1000.0
 
 var _camera:Camera3D
@@ -106,12 +108,12 @@ func test_camera_can_pause_registration_until_the_final_start_position() -> void
     var menu_rid:RID = _stream_register(owner, Vector3.ZERO)
     var cabin_rid:RID = _stream_register(owner, Vector3(4 * CHUNK_SIZE_M, 0, 0))
 
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(_build_order.size(), 0, "built scenery while streaming was paused")
 
     _camera.global_position = Vector3(4 * CHUNK_SIZE_M, 0, 0)
     SceneryStreamingServer.streaming_set_camera(_camera)
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_has(_build_order, cabin_rid, "did not build around the final camera")
     assert_does_not_have(_build_order, menu_rid, "built around the stale menu camera")
 
@@ -124,7 +126,7 @@ func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void
     assert_false(SceneryStreamingServer.area_is_ready(1), "paused streaming reported ready")
 
     SceneryStreamingServer.streaming_set_camera(_camera)
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(_build_order[0], near_rid, "farther chunk was built before the camera chunk")
     assert_has(_build_order, far_rid, "neighbour chunk was not built")
     assert_true(SceneryStreamingServer.area_is_ready(1), "camera neighbourhood did not become ready")
@@ -139,9 +141,16 @@ func test_the_area_is_filled_after_a_new_camera_and_a_jump_only() -> void:
     await _move_camera(Vector3.ZERO)
     assert_false(SceneryStreamingServer.streaming_get_statistics()["filling"], "still filling a ready area")
 
+    # the camera is looked at every SceneryStreamingServer.WATCH_INTERVAL_SEC: the jump is seen when
+    # the plan for it moves the camera's chunk - read there, as an empty area is filled at once
+    var filling_at_jump:Array[bool] = []
+    var on_chunk_changed:Callable = func(_chunk:Vector2i) -> void:
+        filling_at_jump.append(SceneryStreamingServer.streaming_get_statistics()["filling"])
+    SceneryStreamingServer.streaming_camera_chunk_changed.connect(on_chunk_changed)
     _camera.global_position = Vector3(10.0 * CHUNK_SIZE_M, 0, 0)
-    await wait_idle_frames(1)
-    assert_true(SceneryStreamingServer.streaming_get_statistics()["filling"], "a jump is not filling")
+    await wait_for_signal(SceneryStreamingServer.streaming_camera_chunk_changed, CAMERA_WATCH_TIMEOUT)
+    SceneryStreamingServer.streaming_camera_chunk_changed.disconnect(on_chunk_changed)
+    assert_eq(filling_at_jump, [true] as Array[bool], "a jump is not filling")
     await _move_camera(Vector3(10.0 * CHUNK_SIZE_M + 40.0, 0, 0))
     assert_false(SceneryStreamingServer.streaming_get_statistics()["filling"], "still filling after the jump")
 
@@ -164,18 +173,18 @@ func test_the_anchor_chunk_is_kept_built_wherever_the_camera_is() -> void:
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0)
 
     SceneryStreamingServer.streaming_set_anchor_position(Vector3(500.0, 0, 500.0))
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "the anchor's chunk was not built")
 
     # driven on by an AI into the next chunk: the one it left is no longer kept
     SceneryStreamingServer.streaming_set_anchor_position(Vector3(1500.0, 0, 500.0))
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "the chunk left is still kept")
 
     SceneryStreamingServer.streaming_set_anchor_position(Vector3(500.0, 0, 500.0))
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     SceneryStreamingServer.streaming_clear_anchor()
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "kept after the anchor went")
 
 
@@ -269,7 +278,7 @@ func _record_clear(_user_rid:RID) -> void:
 ## the streaming to settle instead of assuming it happened in one frame
 func _move_camera(position:Vector3) -> void:
     _camera.global_position = position
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
 
 
 func _load_test_model(_data_path:String, _filename:String) -> E3DModel:

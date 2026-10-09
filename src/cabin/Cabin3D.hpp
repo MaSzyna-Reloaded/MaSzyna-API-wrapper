@@ -1,4 +1,5 @@
 #pragma once
+#include "vehicles/rail/RailVehicleDieselEngine.hpp"
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/variant/node_path.hpp>
 #include <godot_cpp/variant/vector2.hpp>
@@ -46,6 +47,10 @@ namespace godot {
             Vector3 shake_velocity;
             Vector3 shake_offset;
             double shake_accumulator = 0.0;
+            /* The engine that shakes the cab, taken when the cab or its vehicle's controller
+             * changes; only a diesel does in the original, and without one the cab does not
+             * process */
+            Ref<RailVehicleDieselEngine> engine;
 
             RID cabin;
             bool has_cab_model = true;
@@ -73,6 +78,8 @@ namespace godot {
             double engine_shake_fade_out_factor = 0.5;
 
             void _process_engine_shake(double p_delta);
+            void _resolve_engine();
+            void _on_vehicle_changed(const RID &p_vehicle);
             /* The cab's elements are GDScript nodes this class only hosts, so the name is handed
              * down by a named call - the one case `CODE_STYLE.md` allows. */
             void _propagate_vehicle_rid(Node *p_node) const;

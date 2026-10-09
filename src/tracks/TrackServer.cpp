@@ -98,6 +98,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("track_get_curve", "track", "branch"), &TrackServer::track_get_curve, DEFVAL(TRACK_COMMON));
         ClassDB::bind_method(
+                D_METHOD("track_get_roll", "track", "branch"), &TrackServer::track_get_roll, DEFVAL(TRACK_COMMON));
+        ClassDB::bind_method(
                 D_METHOD("track_get_domain_curve", "track", "branch"), &TrackServer::track_get_domain_curve,
                 DEFVAL(TRACK_COMMON));
         ClassDB::bind_method(
@@ -847,6 +849,16 @@ namespace godot {
             return track->curve2;
         }
         return track->curve1;
+    }
+
+    Vector2 TrackServer::track_get_roll(const RID &p_track, const int p_branch) const {
+        const TrackSegment *track = tracks.getptr(p_track);
+        if (track == nullptr) {
+            return Vector2();
+        }
+        const CurvePoints &points =
+                p_branch == TRACK_DIVERGING && track->curve2.is_valid() ? track->points2 : track->points1;
+        return Vector2(static_cast<real_t>(points.roll1), static_cast<real_t>(points.roll2));
     }
 
     Ref<Curve3D> TrackServer::track_get_domain_curve(const RID &p_track, const int p_branch) const {

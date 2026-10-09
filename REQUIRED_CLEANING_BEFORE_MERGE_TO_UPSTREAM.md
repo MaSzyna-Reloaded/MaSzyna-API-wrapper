@@ -55,12 +55,12 @@ Legend:
 
 ### Separation of concerns and getters (ALARM)
 
-- [ ] [RC-020](#rc-020) `wire_get_voltage()` changes the power source's state ✔
+- [x] [RC-020](#rc-020) `wire_get_voltage()` changes the power source's state ✔
 - [x] [RC-021](#rc-021) Vehicle server calls the scene node
 - [x] [RC-022](#rc-022) Drawing node runs pantograph physics and writes simulation inputs
-- [ ] [RC-023](#rc-023) Base vehicle layer knows rail
-- [ ] [RC-024](#rc-024) Controller and server call each other; `get_state()` builds a cache
-- [ ] [RC-025](#rc-025) `vehicle_get_transform()` writes a cache
+- [x] [RC-023](#rc-023) Base vehicle layer knows rail
+- [x] [RC-024](#rc-024) Controller and server call each other; `get_state()` builds a cache
+- [x] [RC-025](#rc-025) `vehicle_get_transform()` writes a cache
 - [x] [RC-026](#rc-026) Drawing node creates a second vehicle RID
 - [ ] [RC-027](#rc-027) Mover member names as public state keys
 - [x] [RC-028](#rc-028) `RailVehicleHorns` includes the vendored Mover
@@ -68,7 +68,7 @@ Legend:
 - [ ] [RC-030](#rc-030) `Mover*` components hold state the Mover does not have
 - [x] [RC-031](#rc-031) Brake backend keeps a rate only the sound needs
 - [ ] [RC-032](#rc-032) Radio component calls up into the vehicle servers
-- [ ] [RC-033](#rc-033) `E3DInstanceBackend` and `E3DRenderingServer` include each other
+- [x] [RC-033](#rc-033) `E3DInstanceBackend` and `E3DRenderingServer` include each other
 - [x] [RC-034](#rc-034) Driver layer tracks player-controlled vehicles
 - [ ] [RC-035](#rc-035) `Cabin3D` keeps a controller path it says it has not got
 - [x] [RC-036](#rc-036) `SimulationServer` holds cache, build and language
@@ -97,22 +97,22 @@ Legend:
 - [x] [RC-051](#rc-051) Every `RailVehicle3D` processes every frame
 - [x] [RC-052](#rc-052) Whole config dictionary built per frame for the wiper angle
 - [x] [RC-053](#rc-053) Coupler lookups and string building per frame
-- [ ] [RC-054](#rc-054) Bogie track samples computed twice per frame
+- [x] [RC-054](#rc-054) Bogie track samples computed twice per frame
 - [x] [RC-055](#rc-055) Pantograph geometry through string-keyed dictionaries per frame
-- [ ] [RC-056](#rc-056) `ProjectSettings` read per vehicle every 0.25 s
-- [ ] [RC-057](#rc-057) Allocations and boxing in the vehicle server step
-- [ ] [RC-058](#rc-058) Track roll read by property name per moved vehicle
-- [ ] [RC-059](#rc-059) Unbounded E3D animation loop with allocations
-- [ ] [RC-060](#rc-060) Time and light level each walk all E3D instances
-- [ ] [RC-061](#rc-061) Smoke emitters looked up and ticked while idle
+- [x] [RC-056](#rc-056) `ProjectSettings` read per vehicle every 0.25 s
+- [x] [RC-057](#rc-057) Allocations and boxing in the vehicle server step
+- [x] [RC-058](#rc-058) Track roll read by property name per moved vehicle
+- [x] [RC-059](#rc-059) Unbounded E3D animation loop with allocations
+- [x] [RC-060](#rc-060) Time and light level each walk all E3D instances
+- [x] [RC-061](#rc-061) Smoke emitters looked up and ticked while idle
 - [ ] [RC-062](#rc-062) `E3DOptimizedBackend::update()` allocates a map
-- [ ] [RC-063](#rc-063) Scenery streaming runs every frame while idle
-- [ ] [RC-064](#rc-064) Scenery streaming entry found by linear scan
-- [ ] [RC-065](#rc-065) `TractionServer` ticks forever
-- [ ] [RC-066](#rc-066) `Cabin3D` processes forever
+- [x] [RC-063](#rc-063) Scenery streaming runs every frame while idle
+- [x] [RC-064](#rc-064) Scenery streaming entry found by linear scan
+- [x] [RC-065](#rc-065) `TractionServer` ticks forever
+- [x] [RC-066](#rc-066) `Cabin3D` processes forever
 - [ ] [RC-067](#rc-067) `PlanarMirror3D` sets shader parameters every frame
-- [ ] [RC-068](#rc-068) `SimulationServer::get_instance()` looked up per frame
-- [ ] [RC-069](#rc-069) Wipers ticked while parked
+- [x] [RC-068](#rc-068) `SimulationServer::get_instance()` looked up per frame
+- [x] [RC-069](#rc-069) Wipers ticked while parked
 
 ### Raw pointers in public API
 
@@ -203,15 +203,15 @@ Legend:
 
 **Singleton teardown leaks `TractionServer` and breaks the order** ✔
 
-* **Where:** `src/register_types.cpp:583-642` (unregister), from `:644` (free)
+* **Where:** `src/register_types.cpp:586-645` (unregister), from `:647` (free)
 * **Rule:** `CODE_STYLE.md` "Singletons C++" (unregister, then `memdelete`, then `nullptr`,
   per singleton)
 * **Problem:**
   * `TractionServer` is unregistered and freed only inside
-    `if (has_singleton("RailVehicleServer"))` (`:587-596`). Without that server it leaks.
+    `if (has_singleton("RailVehicleServer"))` (`:590-599`). Without that server it leaks.
   * `MaszynaMoverVehicleServer`, `RailVehicleServer` and every singleton after them down to
-    `UserSettings` are unregistered in one block (`:583-642`) and freed in another (from
-    `:644`).
+    `UserSettings` are unregistered in one block (`:586-645`) and freed in another (from
+    `:647`).
 * **Fix:** one independent block per singleton, in reverse registration order.
 
 ### RC-012
@@ -239,7 +239,7 @@ Legend:
 
 * **Where:** `src/vehicles/base/VehicleComponent.cpp:21-23` (bound), `:211-215` (body)
 * **Problem:** it returns `void` and drops the `Variant` that `VehicleController::send_command()`
-  returns (`VehicleController.cpp:379-396`), so a component - and a modder's script through it -
+  returns (`VehicleController.cpp:377-394`), so a component - and a modder's script through it -
   never learns whether its command was accepted (#43).
 * **Fix:** return the controller's result.
 
@@ -259,71 +259,6 @@ Legend:
 * **Where:** `src/cache/ResourceCache.cpp:23`
 * **Problem:** `get_cache_dir` takes no arguments but is bound with `DEFVAL("")`.
 * **Fix:** remove the `DEFVAL`.
-
-### RC-020
-
-**`wire_get_voltage()` changes the power source's state** ✔ ALARM
-
-* **Where:** `src/traction/TractionServer.cpp:544-587`, through `PowerSource::current_get()` at
-  `:125-142`; the "Quirk" is at `:109-122`
-* **Rule:** a getter never changes state; never work around a mistimed event
-* **Problem:**
-  * The read adds to `total_admittance`, sets `loaded`, `total_current` and `output_voltage`,
-    and resets `fuse_timer`.
-  * The voltage therefore depends on how many readers ask per tick. The only caller is the
-    vehicle step (`RailVehicleServer.cpp:1787`), once per pantograph.
-  * It is a port of `TTraction::VoltageGet` (`Traction.cpp:470`). The loads ask from render
-    frames while the sources tick on their own beat, and the "Quirk" keeps the previous load to
-    cover that - a workaround for the timing.
-* **Decision:**
-  * (a) Split the read into a named operation, e.g. `wire_draw_current()` in the vehicle tick,
-    and a pure `wire_get_voltage()`.
-  * (b) Move the loads' query into the traction tick, so the order is the original's.
-
-### RC-023
-
-**Base vehicle layer knows rail** ALARM
-
-* **Where:** `src/vehicles/base/VehicleController.hpp:15-18`; `VehicleController.cpp:4-5,
-  343-349`
-* **Problem:**
-  * The base controller forward-declares `RailVehicleBrake`, `RailVehicleEngine` and
-    `RailVehicleSecuritySystem`, none of which it uses.
-  * The `.cpp` includes `RailVehicleEngine.hpp` (apparently unused) and `RailVehicleServer.hpp`,
-    and `get_world_transform()` (`:343-349`) calls `RailVehicleServer::vehicle_get_transform()` -
-    the base layer reaching the rail one (RC-024, RC-025).
-* **Decision:** the base controller loses the rail knowledge; the transform comes from a layer
-  the base one may know.
-
-### RC-024
-
-**Controller and server call each other; `get_state()` builds a cache** ALARM
-
-* **Where:**
-  * `src/vehicles/rail/RailVehicleController.cpp:12-20` (`get_state()` →
-    `VehicleServer::vehicle_dump_state()`), cache written in `VehicleServer.cpp:516-535`
-    (fields `VehicleServer.hpp:57-59`)
-  * `src/vehicles/base/VehicleController.cpp:344` (`RailVehicleServer::vehicle_get_transform` -
-    the base layer reaching the rail one, RC-023)
-  * `src/vehicles/rail/RailVehicleWheels.cpp:13` (`get_bogie_transform()` reaches
-    `RailVehicleServer`)
-* **Rule:** layers do not call each other both ways; a getter never changes state
-* **Problem:** the server steps controllers and components, and they call back into it. The
-  getter `get_state()`, also the `state` property, writes `state_dump`, `state_dump_serial` and
-  `state_dump_valid`. The comment (`VehicleServer.cpp:529-530`) admits the call "would
-  recurse".
-* **Decision:** one direction of calls; the dump is built in the tick, not in the getter.
-
-### RC-025
-
-**`vehicle_get_transform()` writes a cache** ALARM
-
-* **Where:** `src/vehicles/rail/RailVehicleServer.cpp:1388-1400`; invalidated at `:1062, 1357`;
-  fields `RailVehicleServer.hpp:182-183`
-* **Rule:** a getter never changes state
-* **Problem:** the getter sets `placement->body_transform` and `body_transform_valid`
-  (`:1397-1398`). `VehicleController::get_world_transform()` reaches it too.
-* **Fix:** compose the transform where the placement changes, in the step.
 
 ### RC-027
 
@@ -361,7 +296,7 @@ Legend:
 **`Mover*` components hold state the Mover does not have** ALARM
 
 * **Where:**
-  * `src/legacy/vehicles/MoverRailVehicleWipers.hpp:22-31`: `wipers` ("the vendored Mover has no
+  * `src/legacy/vehicles/MoverRailVehicleWipers.hpp:22-35`: `wipers` ("the vendored Mover has no
     wipers at all")
   * `MoverRailVehicleWheels.hpp:33-35`: `wheel_angle_*_deg` ("vehicle layer's, not the Mover's")
   * `MoverRailVehicleDoors.hpp:81-82`: `mirror_left_position`
@@ -384,23 +319,12 @@ Legend:
 * **Decision:** the component emits events, and the server, or whoever cares, reacts; what it
   needs to know of the occupancy is handed down by the owner.
 
-### RC-033
-
-**`E3DInstanceBackend` and `E3DRenderingServer` include each other** ALARM
-
-* **Where:** `src/legacy/e3d/E3DInstanceBackend.cpp:2, 100, 123, 125`;
-  `E3DRenderingServer.hpp:2, 37-40`
-* **Problem:** the backend uses `E3DRenderingServer::INSTANCE_KIND_DYNAMIC` and
-  `TRANSLUCENCY_CUTOUT`, while the server's header includes the backend's, so the two layers
-  depend on each other.
-* **Fix:** move the enum to a header shared by both, or into the backend.
-
 ### RC-035
 
 **`Cabin3D` keeps a controller path it says it has not got** ALARM
 
-* **Where:** `src/cabin/Cabin3D.hpp:53, 108-109` vs the comment at `:88-89`; bound at
-  `Cabin3D.cpp:46-52`, accessors `:279-283`; used by
+* **Where:** `src/cabin/Cabin3D.hpp:58, 115-116` vs the comment at `:95-96`; bound at
+  `Cabin3D.cpp:46-52`, accessors `:312-316`; used by
   `addons/libmaszyna/legacy/cabin/maszyna_dynamic_train_cabin.gd:56-60`
 * **Problem:** a bound `NodePath controller_path` to a `VehiclePhysicsNode`, although the class
   says "there is deliberately no path to a controller here" and already holds `vehicle_rid`. The
@@ -411,10 +335,10 @@ Legend:
 
 **`track_get_endpoints()` fills a cache**
 
-* **Where:** `src/tracks/TrackServer.cpp:830-833` → `_endpoints()` at `:273-286`
+* **Where:** `src/tracks/TrackServer.cpp:832-835` → `_endpoints()` at `:275-288`
 * **Rule:** a getter never changes state
 * **Problem:** the getter lazily fills `cached_endpoints` from a `const` method.
-* **Fix:** build the cache in `_set_curves` (`:350`), which already clears it (`:357`).
+* **Fix:** build the cache in `_set_curves` (`:352`), which already clears it (`:359`).
 
 ### RC-039
 
@@ -441,7 +365,7 @@ Legend:
 
 **`Cabin3D` shake: jolt limit and the random jolt** ✔
 
-* **Where:** `src/cabin/Cabin3D.hpp:67`; `Cabin3D.cpp:192`
+* **Where:** `src/cabin/Cabin3D.hpp:72`; `Cabin3D.cpp:224`
 * **Problem:** `shake_jolt_limit` defaults to 0.15, the original's `BaseShake.jolt_limit` to 2.0
   (`DynObj.h:839`). The extra random shake at speed (`DynObj.cpp:8113-8123`), added to the
   spring force before the attenuation, is not ported.
@@ -451,7 +375,7 @@ Legend:
 
 **`TrackServer` track width and switch blade speed** ✔
 
-* **Where:** `src/tracks/TrackServer.hpp:111, 122`; `TrackServer.cpp:1206`
+* **Where:** `src/tracks/TrackServer.hpp:111, 122`; `TrackServer.cpp:1218`
 * **Problem:** `DEFAULT_TRACK_WIDTH` is 1.6, the original's `fTrackWidth` 1.435 (`Track.h:205`).
   The blade speed is derived from `SWITCH_FULL_DURATION` (2 s over the full travel); the original
   moves it at a fixed `fOffsetSpeed = 0.1` (`Track.h:67`, `Track.cpp:1944`), which matches only
@@ -523,9 +447,9 @@ Legend:
 
 **Lazy `owner_create` inside the streaming build**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:868-872` (in `_light_create`, `:842`),
-  `:1079-1083` (in `_build_instance_smoke_sources`, `:1044`), `:740-745` (in
-  `instance_register`, `:733`)
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:873-877` (in `_light_create`, `:847`),
+  `:1082-1086` (in `_build_instance_smoke_sources`, `:1049`), `:744-749` (in
+  `instance_register`, `:737`)
 * **Rule:** no `ensure_*` under any name; no wiring in a hot path
 * **Problem:** `if (light_stream_owner < 0) { light_stream_owner = streaming->owner_create(...) }`
   - and the same for `smoke_stream_owner` and `stream_owner` - wires callables into
@@ -560,7 +484,7 @@ Legend:
 
 **`area_is_ready()` has no event and is polled per frame**
 
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:606-609` (signals `:63-68`); poller
+* **Where:** `src/scenery/SceneryStreamingServer.cpp:606-609` (signals `:64-69`); poller
   `demo/demo_scenery_loading.gd:207` (an `await process_frame` loop in `_build_surroundings`,
   which also polls `RailVehicleRenderingServer.builds_get_pending_count()`)
 * **Problem:** there is no "area ready" signal - `streaming_builds_finished` is not about an
@@ -573,90 +497,13 @@ Legend:
 
 * **Where:**
   * `src/legacy/vehicles/MoverRailVehicleWipers.cpp:29-33` (`switch_initialized`, field
-    `MoverRailVehicleWipers.hpp:31`, checked on every configuration apply)
+    `MoverRailVehicleWipers.hpp:37`, checked on every configuration apply)
   * `src/legacy/cabin/PythonScreenServer.cpp:225-259` (the worker thread and the Python host
     are started lazily in `screen_create`, `:226, 256-258`; the reload path `:200-205` relies on it)
 * **Rule:** no `ensure_*` under any name - state is initialised where it is created
 * **Fix:** initialise in the constructor or the server's initialisation.
 
 ## Per-frame work
-
-### RC-054
-
-**Bogie track samples computed twice per frame**
-
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:1045-1052`;
-  `RailVehicleServer.cpp:1402-1420` (`_compose_body_transform()`)
-* **Problem:** `wheels->get_bogie_transform(...)`, called twice, repeats the ±half-spacing
-  samples that `_compose_body_transform` has just made, and the wheels component is looked up on
-  every placement change of a detailed vehicle.
-* **Fix:** the server publishes the bogie transforms together with the body transform.
-
-### RC-056
-
-**`ProjectSettings` read per vehicle every 0.25 s**
-
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:1525-1526`
-* **Problem:** `ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING)` runs per
-  vehicle on every slow visit.
-* **Fix:** read it once and refresh on `ProjectSettings.settings_changed`, as
-  `RailVehicleServer.cpp:42` does.
-
-### RC-057
-
-**Allocations and boxing in the vehicle server step**
-
-* **Where:** `src/legacy/vehicles/MaszynaMoverVehicleServer.cpp:93-104`;
-  `src/vehicles/rail/RailVehicleServer.cpp:1657-1661`
-* **Problem:** the Mover server clears and refills both controller vectors every frame, with an
-  ObjectDB lookup per vehicle, and `track_vehicles` (a map of vectors) is cleared and rebuilt
-  every frame.
-* **Fix:** keep the structures across frames and update them when a vehicle is added, removed or
-  moved to another track.
-
-### RC-058
-
-**Track roll read by property name per moved vehicle**
-
-* **Where:** `src/vehicles/rail/RailVehicleServer.cpp:1483-1484, 1509-1510`
-* **Rule:** per-frame lookups; a string call only with a comment saying why
-* **Problem:** `curve_data->get("roll1")`/`("roll2")` per moved vehicle per frame, with no
-  comment, although `TrackServer` already caches `CurvePoints::roll1/roll2`
-  (`TrackServer.hpp:125-132`) - it only does not expose them.
-* **Fix:** expose the cached roll from `TrackServer` and read it there.
-
-### RC-059
-
-**Unbounded E3D animation loop with allocations**
-
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1682, 1686, 1415`
-* **Problem:** the loop over `animating_instances` (`:1682`) has no bound; it allocates a
-  `PackedStringArray` per instance (`:1686`), and clears and rebuilds `submodel_poses` through
-  `_pose_submodels` (`:1415`).
-* **Fix:** a per-frame budget, round-robin like `_process_smoke()`, and no per-instance
-  allocation.
-
-### RC-060
-
-**Time and light level each walk all E3D instances**
-
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1905, 1918-1932`; caller
-  `maszyna_environment_node.gd:385-386`
-* **Problem:** on a change, `environment_set_time()` and `environment_set_light_level()` each call
-  `_resolve_all_lights()` (`:1905`), which walks every instance. The environment calls both back
-  to back, so a push that changes both costs two full passes.
-* **Fix:** one operation that sets both and resolves once.
-
-### RC-061
-
-**Smoke emitters looked up and ticked while idle**
-
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:1265-1281`
-* **Problem:** a hash lookup per emitter (`smoke_objects.getptr(smoke_order[...])`, `:1276`),
-  and a `Time::get_singleton()` lookup per frame (`:1270`). Invisible or zero-intensity dynamic
-  emitters stay in the order and keep being ticked.
-* **Fix:** cache the singleton, take idle emitters out of the order, and keep pointers in the
-  order.
 
 ### RC-062
 
@@ -666,44 +513,6 @@ Legend:
 * **Problem:** `HashMap<E3DSubModel *, bool> overrides` is allocated, and every RID is walked,
   on each call - reached from blink edges in `_process_lights` and from `_resolve_all_lights`.
 * **Fix:** keep the map as a member and update only what changed.
-
-### RC-063
-
-**Scenery streaming runs idle with an unbounded loop**
-
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:723-746`
-* **Problem:** `_process_streaming()` runs every frame while a camera is set, even when idle,
-  and takes the mutex and does ObjectDB and `Time` work every frame (`:727-746`).
-* **Fix:** stop when the plan is fulfilled and restart on camera cell change.
-
-### RC-064
-
-**Scenery streaming entry found by linear scan**
-
-* **Where:** `src/scenery/SceneryStreamingServer.cpp:346-360` (`_get_entry()`); callers
-  `:836, 979, 995, 1191`
-* **Problem:** `_get_entry()` scans the chunk's entries linearly, called inside the per-frame
-  budget loops.
-* **Fix:** index the entries by id.
-
-### RC-065
-
-**`TractionServer` ticks forever**
-
-* **Where:** `src/traction/TractionServer.cpp:52-53, 66-77`
-* **Problem:** the `process_frame` connection is permanent. Every frame it looks up the main
-  loop and the root and loops over all power sources, even with no sources or no load.
-* **Fix:** connect only while there are sources with a load, and cache the tree.
-
-### RC-066
-
-**`Cabin3D` processes forever**
-
-* **Where:** `src/cabin/Cabin3D.cpp:141, 161-165`
-* **Problem:** `set_process(true)` is never switched off. Every 1/50 s step does a
-  `VehicleServer::get_instance()` lookup and a `vehicle_component_get()`, even for a cab
-  whose vehicle has no diesel engine.
-* **Fix:** resolve the engine when `vehicle_rid` changes, and do not process without one.
 
 ### RC-067
 
@@ -717,32 +526,13 @@ Legend:
     `"mirror_view_projection"` every frame.
 * **Fix:** set on change only, with the constant set once and a cached `StringName`.
 
-### RC-068
-
-**`SimulationServer::get_instance()` looked up per frame**
-
-* **Where:** `src/simulation/SimulationServer.hpp:76-78` (`get_instance()`); per tick in
-  `src/driver/DriverServer.cpp:85` (`_process_updates`) and
-  `src/scenario/ScenarioEventServer.cpp:283` (`_process_queue`)
-* **Problem:** the lookup is a name lookup on `Engine`, done every tick.
-* **Fix:** cache the pointer at initialisation.
-
-### RC-069
-
-**Wipers ticked while parked**
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleWipers.cpp:58-71`
-* **Problem:** the per-wiper timers run every tick (`wiper.out_timer += p_delta`), even when
-  every wiper is parked and switched off.
-* **Fix:** skip, or turn off, while every wiper is parked and switched off.
-
 ## Raw pointers in public API
 
 ### RC-070
 
 **`E3DRenderingServer::instance_attach_node(Node3D *)`**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.hpp:388`, bound at `.cpp:42`
+* **Where:** `src/legacy/e3d/E3DRenderingServer.hpp:390`, bound at `.cpp:42`
 * **Rule:** a public API takes RIDs, Variants, Callables and `ObjectID`s
 * **Fix:** `instance_attach_object_instance_id(RID, uint64_t)`, like
   `vehicle_attach_object_instance_id`.
@@ -751,7 +541,7 @@ Legend:
 
 **`SceneryStreamingServer::streaming_set_camera(Camera3D *)`**
 
-* **Where:** `src/scenery/SceneryStreamingServer.hpp:345`, bound at `.cpp:39`
+* **Where:** `src/scenery/SceneryStreamingServer.hpp:363`, bound at `.cpp:40`
 * **Problem:** a bound server method with a raw pointer; the two HUD mouse servers take an
   `ObjectID` for the same thing.
 * **Fix:** take a `uint64_t` `ObjectID`, like the HUD mouse servers.
@@ -843,8 +633,8 @@ Legend:
 
 **Functional casts instead of `static_cast`**
 
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:946, 1377, 1647`;
-  `RailVehicleServer.cpp:332, 1753, 1762-1763`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:954, 1386, 1654`;
+  `RailVehicleServer.cpp:338, 1807, 1816-1817`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
   `src/legacy/e3d/E3DNodesBackend.cpp:193`
 * **Rule:** `CODE_STYLE.md` "Conversions"
 
@@ -883,13 +673,13 @@ Legend:
 
 * **Where:**
   * Empty or dangling sections: `RailVehicleEngine.hpp:159`, `RailVehicleDieselEngine.hpp:202`,
-    `RailVehicleBuffCoupl.hpp:19`, `VehicleController.hpp:31-32` (`public:` followed at once by
+    `RailVehicleBuffCoupl.hpp:19`, `VehicleController.hpp:28-29` (`public:` followed at once by
     `private:`)
   * Public members: `RailVehicleEngine.hpp:102-103` (`_bind_methods`, `motor_param_table`)
   * Protected `_register_commands` overrides made public: `RailVehicleSpeedControl.hpp:38`,
     `RailVehicleHeating.hpp:40`, `RailVehicleSwitches.hpp:81`, `RailVehicleElectricEngine.hpp:79`
   * `VehicleController.hpp:50`: `apply_configuration` is protected but bound publicly
-    (`.cpp:43`)
+    (`.cpp:41`)
 * **Rule:** `CODE_STYLE.md` "Explicit privacy declarations"
 
 ### RC-121
@@ -902,7 +692,7 @@ Legend:
   * `MoverRailVehicleBrake.cpp:205`, `MoverRailVehicleLighting.cpp:410`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,
-    `VehicleController.cpp:146-147`, `src/vehicles/rail/RailVehicleServer.cpp:2056-2057`
+    `VehicleController.cpp:144-145`, `src/vehicles/rail/RailVehicleServer.cpp:2111-2112`
 
 ### RC-122
 

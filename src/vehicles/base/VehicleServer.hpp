@@ -79,8 +79,13 @@ namespace godot {
             /// Stepping holds SimulationServer's clock and steps as it advances
             bool stepping = false;
             bool stepping_enabled = true;
-            /* Rebuilt every step, kept as a member so the step allocates no map per frame */
-            HashMap<StringName, Vector<RID>> stepped_vehicles;
+            /* The vehicles each implementation steps, with their controllers - set where a
+             * controller is bound to a vehicle or unbound from it, not per step */
+            struct SteppedGroup {
+                    Vector<RID> vehicles;
+                    Vector<Ref<VehicleController>> controllers;
+            };
+            HashMap<StringName, SteppedGroup> stepped_groups;
 
             void _refresh_stepping();
             void _on_simulation_advanced(double p_seconds);

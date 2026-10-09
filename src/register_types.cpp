@@ -385,7 +385,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_parser_singleton = memnew(E3DParser);
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         track_server_singleton = memnew(TrackServer);
-        traction_server_singleton = memnew(TractionServer);
         python_screen_server_singleton = memnew(PythonScreenServer);
         cabin_hud_mouse_system_singleton = memnew(CabinHUDMouseSystem);
 
@@ -397,6 +396,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton); // 6
         Engine::get_singleton()->register_singleton("SimulationServer", simulation_server_singleton);      // 7
         Engine::get_singleton()->register_singleton("TrackServer", track_server_singleton);                // 8
+        /* after SimulationServer is registered and before VehicleServer: the constructor follows
+         * its clock first, so a slice ticks the power sources before the vehicles draw from them -
+         * the original's order (simulation.cpp:115-116) */
+        traction_server_singleton = memnew(TractionServer);
         // after SimulationServer is registered: the constructor follows its clock
         person_server_singleton = memnew(PersonServer);
         Engine::get_singleton()->register_singleton("PersonServer", person_server_singleton); // 8b

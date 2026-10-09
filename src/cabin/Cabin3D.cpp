@@ -137,8 +137,27 @@ namespace godot {
             return;
         }
         switch (p_what) {
+            case NOTIFICATION_ENTER_TREE: {
+                VehicleServer *server = VehicleServer::get_instance();
+                ERR_FAIL_NULL(server);
+                server->connect(
+                        VehicleServer::vehicle_controller_changed_signal,
+                        callable_mp(this, &Cabin3D::_on_vehicle_changed));
+                server->connect(
+                        VehicleServer::vehicle_configured_signal, callable_mp(this, &Cabin3D::_on_vehicle_changed));
+                // the vehicle may have got its controller while the cab was out of the tree
+                _resolve_engine();
+            } break;
+            case NOTIFICATION_EXIT_TREE: {
+                VehicleServer *server = VehicleServer::get_instance();
+                ERR_FAIL_NULL(server);
+                server->disconnect(
+                        VehicleServer::vehicle_controller_changed_signal,
+                        callable_mp(this, &Cabin3D::_on_vehicle_changed));
+                server->disconnect(
+                        VehicleServer::vehicle_configured_signal, callable_mp(this, &Cabin3D::_on_vehicle_changed));
+            } break;
             case NOTIFICATION_READY:
-                set_process(true);
                 cabin_ready = true;
                 emit_signal(cabin_ready_signal);
                 break;
@@ -153,17 +172,30 @@ namespace godot {
         }
     }
 
+    /* In the original only a diesel shakes the cab, so the engine's own kind answers the question -
+     * no configuration is looked up for it. A cab left without one stands at rest. */
+    void Cabin3D::_resolve_engine() {
+        const VehicleServer *server = VehicleServer::get_instance();
+        engine = server != nullptr && vehicle_rid.is_valid()
+                         ? server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE)
+                         : Ref<VehicleComponent>();
+        if (engine.is_null()) {
+            shake_velocity = Vector3();
+            shake_offset = Vector3();
+            shake_accumulator = 0.0;
+        }
+        set_process(engine.is_valid());
+    }
+
+    void Cabin3D::_on_vehicle_changed(const RID &p_vehicle) {
+        if (p_vehicle == vehicle_rid) {
+            _resolve_engine();
+        }
+    }
+
     void Cabin3D::_process_engine_shake(const double p_delta) {
         Vector3 shake_vector;
-        /* The revolutions the cab shakes with, or 0 for a vehicle whose engine does not shake it. In
-         * the original only a diesel does, so the engine's own kind answers the question - no
-         * configuration is looked up for it. */
-        const VehicleServer *server = VehicleServer::get_instance();
-        const Ref<RailVehicleDieselEngine> engine =
-                server != nullptr && vehicle_rid.is_valid()
-                        ? server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE)
-                        : Ref<VehicleComponent>();
-        const double engine_revolutions = engine.is_valid() ? Math::abs(engine->get_rpm_count()) : 0.0;
+        const double engine_revolutions = Math::abs(engine->get_rpm_count());
         if (engine_revolutions > 0.0) {
             engine_angle = Math::fmod(engine_angle + (engine_revolutions * p_delta), Math::TAU);
             const double fade_in =
@@ -213,6 +245,7 @@ namespace godot {
 
     void Cabin3D::set_vehicle_rid(const RID &p_vehicle_rid) {
         vehicle_rid = p_vehicle_rid;
+        _resolve_engine();
         _propagate_vehicle_rid(this);
         emit_signal(vehicle_rid_changed_signal, vehicle_rid);
     }

@@ -197,12 +197,15 @@ namespace godot {
             };
             Vector<PendingBuild> pending_builds;
             bool processing = false;
+            /* DETAIL_DISTANCE_SETTING, read when the settings change - not per vehicle visited */
+            float detail_distance = DEFAULT_DETAIL_DISTANCE;
 
             static Node3D *_node(const Visual &p_visual);
             void _set_processing(bool p_processing);
             void _process_frame();
             void _on_data_reload_requested();
             void _on_streaming_camera_changed();
+            void _on_project_settings_changed();
             void _free_models(Visual &p_visual);
             void _create_models(const RID &p_vehicle, Visual &p_visual);
             void _bind_parts(const RID &p_vehicle, Visual &p_visual);

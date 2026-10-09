@@ -19,6 +19,8 @@ const BUILD_TIMEOUT:float = 5.0
 ## Real seconds a scenery fixture may take to load: parsing and building is the machine's work, not
 ## simulated time - a fixture loads in under 0.1 s, this only catches a hang
 const LOAD_TIMEOUT:float = 5.0
+## A few of the streaming's camera watch intervals (SceneryStreamingServer WATCH_INTERVAL_SEC 0.1 s)
+const STREAMING_WATCH_SEC:float = 0.3
 ## One step of the test's clock [simulated s]: the simulation's tick to come (#301, 30 Hz). The run
 ## has no SimulationRuntime - no frame moves the simulation; a test steps it tick by tick, as a step
 ## debugger does, and what happens does not depend on how fast the machine is
@@ -78,6 +80,14 @@ func wait_idle_frames(frames, message = ""):
     while frames > 0:
         await Engine.get_main_loop().process_frame
         frames -= 1
+
+
+## The streaming looks at its camera, anchor and content every 0.1 s of real time
+## (SceneryStreamingServer WATCH_INTERVAL_SEC) and applies what it planned per frame: a change of
+## them is waited for by both
+func wait_streaming(frames:int) -> void:
+    await wait_seconds(STREAMING_WATCH_SEC)
+    await wait_idle_frames(frames)
 
 
 ## A vehicle is an object owned by RailVehicleServer and stepped by the server's own tick - it is
@@ -277,3 +287,31 @@ func wait_detailed(vehicle:MaszynaRailVehicle3D) -> bool:
     if not has_camera:
         SceneryStreamingServer.streaming_set_camera(null)
     return detailed
+
+
+## A static E3D instance of build_lit_model(), drawn as nodes under `parent` and built - its
+## `light_on00` submodel is shown while light 00 is on
+func build_lit_instance(parent: Node3D) -> RID:
+    var rid: RID = E3DRenderingServer.instance_create(build_lit_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
+    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_build(rid)
+    return rid
+
+
+func build_lit_model() -> E3DModel:
+    var model: E3DModel = E3DModel.new()
+    var light_on: E3DSubModel = E3DSubModel.new()
+    light_on.resource_name = "light_on00"
+    light_on.submodel_type = E3DSubModel.SUBMODEL_TRANSFORM
+    var mesh_submodel: E3DSubModel = E3DSubModel.new()
+    mesh_submodel.resource_name = "mesh"
+    mesh_submodel.submodel_type = E3DSubModel.SUBMODEL_GL_TRIANGLES
+    var mesh: ArrayMesh = ArrayMesh.new()
+    mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, BoxMesh.new().get_mesh_arrays())
+    mesh_submodel.mesh = mesh
+    light_on.submodels = [mesh_submodel]
+    model.submodels = [light_on]
+    var light_definition: E3DModelLightDefinition = E3DModelLightDefinition.new()
+    light_definition.on_submodel_path = NodePath("light_on00")
+    model.register_light("00", light_definition)
+    return model

@@ -324,6 +324,9 @@ namespace godot {
             PackedVector3Array track_get_endpoints(const RID &p_track);
             int track_get_common_endpoint_index(const RID &p_track) const;
             Ref<Resource> track_get_curve(const RID &p_track, int p_branch = TRACK_COMMON) const;
+            /* The roll of the branch's curve at its start (x) and end (y) [deg], as read out of the
+             * curve resource when it was set */
+            Vector2 track_get_roll(const RID &p_track, int p_branch = TRACK_COMMON) const;
             Ref<Curve3D> track_get_domain_curve(const RID &p_track, int p_branch = TRACK_COMMON) const;
             PackedInt32Array switch_get_common_endpoints(const RID &p_track) const;
             int switch_get_branch_start_endpoint(const RID &p_track, int p_branch) const;

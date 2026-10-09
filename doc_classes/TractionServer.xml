@@ -64,6 +64,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="wire_draw_current">
+			<return type="void" />
+			<param index="0" name="wire" type="RID" />
+			<param index="1" name="assumed_voltage" type="float" />
+			<param index="2" name="current" type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="wire_find_above_with_height" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="position" type="Vector3" />
@@ -93,7 +101,7 @@
 			<description>
 			</description>
 		</method>
-		<method name="wire_get_voltage">
+		<method name="wire_get_voltage" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="wire" type="RID" />
 			<param index="1" name="assumed_voltage" type="float" />

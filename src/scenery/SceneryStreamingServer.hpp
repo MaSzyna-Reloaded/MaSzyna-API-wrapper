@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/scene_tree_timer.hpp>
 #include <godot_cpp/classes/semaphore.hpp>
 #include <godot_cpp/classes/thread.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -56,6 +57,9 @@ namespace godot {
             static constexpr uint64_t INTERVAL_MSEC = 250;
             /// ...or as soon as the camera has moved this far
             static constexpr float CAMERA_STEP_M = 50.0;
+            /// The camera, the anchor and the content are looked at this often [s]; only the work
+            /// a plan leaves - building, clearing - runs every frame, and only while there is some
+            static constexpr double WATCH_INTERVAL_SEC = 0.1;
             /// Time spent building and clearing per frame once the streaming has caught up
             static constexpr uint64_t BUDGET_MSEC = 4;
             /// ...and while an area is filled - a new camera, or one that jumped: filling a scenery
@@ -129,7 +133,7 @@ namespace godot {
             };
 
             struct Chunk {
-                    Vector<Entry> entries; // sorted by range_end, descending
+                    Vector<Entry> entries; // sorted by range_end, descending; freed ones until sorted
                     int built_count = 0;
                     bool dirty = false; // entries registered or unregistered since the last sort
             };
@@ -226,7 +230,13 @@ namespace godot {
 
             Vector<Owner> owners;
             HashMap<Vector2i, Chunk> chunks;
-            HashMap<RID, Vector2i> entry_chunks;
+            /// Where a piece's entry is: its chunk, and its index in the chunk's entries - set where
+            /// the entry is added and where the chunk is sorted, so an entry is found without a scan
+            struct EntryLocation {
+                    Vector2i chunk;
+                    int index = 0;
+            };
+            HashMap<RID, EntryLocation> entry_locations;
             Vector3 camera_position;
             float draw_distance = DEFAULT_DRAW_DISTANCE_M;
 
@@ -246,7 +256,11 @@ namespace godot {
             int pending_build_count = 0;
             /// --verbose: every piece's preload, build and clear in the log, to find a crash by the last
             const bool verbose = OS::get_singleton()->is_stdout_verbose();
-            bool building = false;               // main thread only: pending_build_count > 0, as last announced
+            bool building = false; // main thread only: pending_build_count > 0, as last announced
+            /// Main thread only: the next look at the camera (_watch_camera()), while there is one
+            Ref<SceneTreeTimer> watch_timer;
+            /// Main thread only: _process_streaming() is connected to process_frame - while there is work
+            bool applying = false;
             Vector<PendingBuild> planned_builds; // published by the worker
             Vector<PendingClear> planned_clears;
             /// Taken over by the main thread; builds are ordered farthest first and taken from the
@@ -282,7 +296,7 @@ namespace godot {
 
             static Vector2i _get_chunk_key(const Vector3 &p_origin);
             static float _get_chunk_distance(const Vector2i &p_key, const Vector3 &p_position);
-            void _sort_chunk(Chunk &p_chunk) const;
+            void _sort_chunk(Chunk &p_chunk);
             Entry *_get_entry(const RID &p_stream_rid);
             bool _plan(uint64_t p_revision, const Vector3 &p_camera_position);
             void _drop_freed_work();
@@ -291,7 +305,11 @@ namespace godot {
             int _get_pending_nearby_locked(int p_chunk_radius) const;
             void _request_plan(const Vector3 &p_position);
             void _worker_loop();
+            void _watch_camera();
             void _process_streaming();
+            void _set_applying(bool p_applying);
+            /// A plan is being made or its work waits to be applied. Must be called with the mutex held.
+            bool _has_work_locked() const;
             void _apply_plan();
             void _set_building(bool p_building);
             /// Builds from the back of the queue until the deadline; false once it is reached

@@ -1,8 +1,6 @@
 #include "vehicles/base/VehicleComponent.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleServer.hpp"
-#include "vehicles/rail/RailVehicleEngine.hpp"
-#include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -325,7 +323,7 @@ namespace godot {
         p_component->attach_implementation(ObjectID());
     }
 
-    Dictionary VehicleController::compose_state() {
+    Dictionary VehicleController::get_state() const {
         Dictionary result;
         _fill_state_dictionary(result);
         for (const Ref<VehicleComponent> &component: components) {
@@ -341,11 +339,11 @@ namespace godot {
     }
 
     Transform3D VehicleController::get_world_transform() const {
-        RailVehicleServer *server = RailVehicleServer::get_instance();
-        if (server == nullptr || !rid.is_valid()) {
-            return Transform3D();
-        }
-        return server->vehicle_get_transform(rid);
+        return world_transform;
+    }
+
+    void VehicleController::set_world_transform(const Transform3D &p_transform) {
+        world_transform = p_transform;
     }
 
     void VehicleController::set_implementation(const StringName &p_implementation) {

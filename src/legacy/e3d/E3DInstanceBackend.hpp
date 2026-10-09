@@ -111,6 +111,11 @@ namespace godot {
             Vector<RID> light_objects;
             /// By lower-case submodel name, kept across a stream clear/build cycle
             HashMap<String, SubmodelAnimation> submodel_animations;
+            /// The pass of E3DRenderingServer::_process_animations() and the simulated time its
+            /// animations were last advanced at. One advanced in the previous pass is advanced by
+            /// the slice, exactly; one the budget left out catches up by the time it waited.
+            uint64_t animation_pass = 0;
+            double animation_time = 0.0;
             /// By lower-case submodel name, kept across a rebuild (instance_set_submodel_*())
             HashMap<String, SubmodelSettings> submodel_settings;
             /// What the animations and the client's poses make of their submodels, on top of the
@@ -138,7 +143,7 @@ namespace godot {
             /// Drawn over every submodel (instance_set_material_overlay()), kept across a stream
             /// clear/build cycle
             Ref<Material> material_overlay;
-            /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
+            /// E3DInstanceTypes::InstanceKind - scenery unless the client says otherwise,
             /// which is what a placement registered for streaming always is
             int instance_kind = 0;
 
@@ -210,7 +215,7 @@ namespace godot {
             /// only in a dynamic (vehicle) model (Model3d.cpp:275, 2221)
             static bool _is_submodel_shown(const E3DInstanceData &p_instance, const E3DSubModel *p_submodel);
             static Vector<E3DSubModel *> _get_force_alpha_submodels(const E3DInstanceData &p_instance);
-            /* How the submodel is drawn (E3DRenderingServer::Translucency): p_forced for a forced
+            /* How the submodel is drawn (E3DInstanceTypes::Translucency): p_forced for a forced
              * one - its parent is, it is one of p_force_alpha_submodels, or the instance forces
              * its translucent submodels (flag 0x20, or a translucent replaceable skin) - else
              * the cutout */

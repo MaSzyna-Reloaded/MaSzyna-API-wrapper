@@ -13,6 +13,8 @@ func after_each() -> void:
     MaterialManager.weather = _previous_weather
     # the time scale slider sets SimulationServer's speed - every script after this one runs at it
     SimulationServer.simulation_reset_speed()
+    # and the time and the weather are its too
+    SimulationServer.environment_reset()
 
 
 func test_controls_drive_environment_node() -> void:

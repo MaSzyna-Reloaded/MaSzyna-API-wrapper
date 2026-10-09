@@ -150,6 +150,9 @@ namespace godot {
 
     RailVehicleRenderingServer::RailVehicleRenderingServer() {
         singleton = this;
+        _on_project_settings_changed();
+        ProjectSettings::get_singleton()->connect(
+                "settings_changed", callable_mp(this, &RailVehicleRenderingServer::_on_project_settings_changed));
         if (VehicleServer *vehicle_server = VehicleServer::get_instance(); vehicle_server != nullptr) {
             vehicle_server->connect(
                     VehicleServer::vehicle_freed_signal,
@@ -199,6 +202,11 @@ namespace godot {
                     SceneryStreamingServer::streaming_camera_changed_signal,
                     callable_mp(this, &RailVehicleRenderingServer::_on_streaming_camera_changed));
         }
+    }
+
+    void RailVehicleRenderingServer::_on_project_settings_changed() {
+        detail_distance =
+                ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
     }
 
     /* Every vehicle's place against the new camera at once - the ones within the draw distance
@@ -1037,19 +1045,20 @@ namespace godot {
         }
     }
 
-    /* The bogies turned towards their own track (the wheels' business: they know the pivot
-     * spacing and where each bogie sits), and the wheels turned by the distance rolled - the same
+    /* The bogies turned towards their own track (where each sits on it is RailVehicleServer's,
+     * by the wheels' pivot spacing), and the wheels turned by the distance rolled - the same
      * sign as the original's UpdateAxle() (DynObj.cpp:489). A bogie turns about the vehicle's
      * vertical, which in its own frame is its rest basis seen from the vehicle. */
     void RailVehicleRenderingServer::_pose_running_gear(const RID &p_vehicle, Visual &p_visual) {
         const Ref<RailVehicleWheels> wheels =
                 component<RailVehicleWheels>(p_vehicle, VehicleComponentType::COMPONENT_WHEELS);
-        if (wheels.is_null()) {
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (wheels.is_null() || server == nullptr) {
             return;
         }
         const Transform3D bogie_transforms[] = {
-                wheels->get_bogie_transform(RailVehicleWheels::BOGIE_FRONT),
-                wheels->get_bogie_transform(RailVehicleWheels::BOGIE_REAR)};
+                server->vehicle_get_bogie_transform(p_vehicle, RailVehicleWheels::BOGIE_FRONT),
+                server->vehicle_get_bogie_transform(p_vehicle, RailVehicleWheels::BOGIE_REAR)};
         Vector3 body_forward = bogie_transforms[0].origin - bogie_transforms[1].origin;
         if (!body_forward.is_zero_approx()) {
             body_forward.normalize();
@@ -1522,8 +1531,6 @@ namespace godot {
             if (!has_camera) {
                 return;
             }
-            const float detail_distance =
-                    ProjectSettings::get_singleton()->get_setting(DETAIL_DISTANCE_SETTING, DEFAULT_DETAIL_DISTANCE);
             const float hysteresis = MAX(DETAIL_HYSTERESIS_MIN, detail_distance * DETAIL_HYSTERESIS);
             detailed = p_visual.detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
         }

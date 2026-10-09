@@ -4,6 +4,7 @@
 
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/scene_tree_timer.hpp>
 #include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -144,16 +145,18 @@ namespace godot {
     }
 
     /// Drops the entries of freed pieces and restores the range order and the streamed count
-    void SceneryStreamingServer::_sort_chunk(Chunk &p_chunk) const {
+    void SceneryStreamingServer::_sort_chunk(Chunk &p_chunk) {
         Vector<Entry> kept;
         for (const Entry &entry: p_chunk.entries) {
-            if (entry_chunks.has(entry.stream_rid)) {
+            if (entry_locations.has(entry.stream_rid)) {
                 kept.push_back(entry);
             }
         }
         kept.sort_custom<RangeComparator>();
         p_chunk.built_count = 0;
-        for (const Entry &entry: kept) {
+        for (int index = 0; index < kept.size(); index++) {
+            const Entry &entry = kept[index];
+            entry_locations.getptr(entry.stream_rid)->index = index;
             if (entry.built) {
                 p_chunk.built_count++;
             }
@@ -194,7 +197,7 @@ namespace godot {
             for (KeyValue<Vector2i, Chunk> &item: chunks) {
                 for (Entry &entry: item.value.entries) {
                     // a freed piece stays in its chunk until the chunk is sorted again
-                    if (entry.owner == p_owner && entry.built && entry_chunks.has(entry.stream_rid)) {
+                    if (entry.owner == p_owner && entry.built && entry_locations.has(entry.stream_rid)) {
                         entry.built = false;
                         entry.queued_revision = 0;
                         item.value.built_count--;
@@ -319,7 +322,7 @@ namespace godot {
         Chunk &chunk = chunks[key];
         chunk.entries.push_back(entry);
         chunk.dirty = true;
-        entry_chunks[entry.stream_rid] = key;
+        entry_locations[entry.stream_rid] = EntryLocation{key, static_cast<int>(chunk.entries.size() - 1)};
         content_dirty = true;
         return entry.stream_rid;
     }
@@ -329,35 +332,30 @@ namespace godot {
     /// is not called: whoever frees the piece frees its content too.
     void SceneryStreamingServer::stream_free(const RID &p_stream_rid) {
         MutexLock lock(mutex);
-        const Vector2i *key = entry_chunks.getptr(p_stream_rid);
-        if (key == nullptr) {
+        const EntryLocation *location = entry_locations.getptr(p_stream_rid);
+        if (location == nullptr) {
             return;
         }
         Entry *entry = _get_entry(p_stream_rid);
         if (entry != nullptr && entry->wanted_revision == target_revision && !entry->built) {
             pending_build_count--;
         }
-        chunks[*key].dirty = true;
-        entry_chunks.erase(p_stream_rid);
+        chunks[location->chunk].dirty = true;
+        entry_locations.erase(p_stream_rid);
         freed_pending = true;
         content_dirty = true;
     }
 
     SceneryStreamingServer::Entry *SceneryStreamingServer::_get_entry(const RID &p_stream_rid) {
-        const Vector2i *key = entry_chunks.getptr(p_stream_rid);
-        if (key == nullptr) {
+        const EntryLocation *location = entry_locations.getptr(p_stream_rid);
+        if (location == nullptr) {
             return nullptr;
         }
-        Chunk *chunk = chunks.getptr(*key);
+        Chunk *chunk = chunks.getptr(location->chunk);
         if (chunk == nullptr) {
             return nullptr;
         }
-        for (Entry &entry: chunk->entries) {
-            if (entry.stream_rid == p_stream_rid) {
-                return &entry;
-            }
-        }
-        return nullptr;
+        return &chunk->entries.write[location->index];
     }
 
     /// Queued work of pieces freed since the last frame. Unloading a scenery frees thousands of
@@ -367,35 +365,35 @@ namespace godot {
     void SceneryStreamingServer::_drop_freed_work() {
         Vector<PendingBuild> builds;
         for (const PendingBuild &pending: pending_builds) {
-            if (entry_chunks.has(pending.stream_rid)) {
+            if (entry_locations.has(pending.stream_rid)) {
                 builds.push_back(pending);
             }
         }
         pending_builds = builds;
         builds.clear();
         for (const PendingBuild &pending: pending_prefetches) {
-            if (entry_chunks.has(pending.stream_rid)) {
+            if (entry_locations.has(pending.stream_rid)) {
                 builds.push_back(pending);
             }
         }
         pending_prefetches = builds;
         builds.clear();
         for (const PendingBuild &pending: planned_builds) {
-            if (entry_chunks.has(pending.stream_rid)) {
+            if (entry_locations.has(pending.stream_rid)) {
                 builds.push_back(pending);
             }
         }
         planned_builds = builds;
         Vector<PendingClear> clears;
         for (const PendingClear &pending: pending_clears) {
-            if (entry_chunks.has(pending.stream_rid)) {
+            if (entry_locations.has(pending.stream_rid)) {
                 clears.push_back(pending);
             }
         }
         pending_clears = clears;
         clears.clear();
         for (const PendingClear &pending: planned_clears) {
-            if (entry_chunks.has(pending.stream_rid)) {
+            if (entry_locations.has(pending.stream_rid)) {
                 clears.push_back(pending);
             }
         }
@@ -436,14 +434,14 @@ namespace godot {
     void SceneryStreamingServer::_drop_stale_work() {
         Vector<PendingBuild> builds;
         for (const PendingBuild &pending: pending_builds) {
-            if (pending.revision == target_revision && entry_chunks.has(pending.stream_rid)) {
+            if (pending.revision == target_revision && entry_locations.has(pending.stream_rid)) {
                 builds.push_back(pending);
             }
         }
         pending_builds = builds;
         builds.clear();
         for (const PendingBuild &pending: pending_prefetches) {
-            if (pending.revision == target_revision && entry_chunks.has(pending.stream_rid)) {
+            if (pending.revision == target_revision && entry_locations.has(pending.stream_rid)) {
                 builds.push_back(pending);
             }
         }
@@ -452,7 +450,7 @@ namespace godot {
 
         Vector<PendingClear> clears;
         for (const PendingClear &pending: pending_clears) {
-            if (pending.revision == target_revision && entry_chunks.has(pending.stream_rid)) {
+            if (pending.revision == target_revision && entry_locations.has(pending.stream_rid)) {
                 clears.push_back(pending);
             }
         }
@@ -479,8 +477,8 @@ namespace godot {
     }
 
     /// Camera the streaming follows; without one nothing is ever built. Setting the first camera
-    /// starts the per-frame tick, clearing it (null) stops it - the main loop does not exist yet
-    /// when the singleton is created.
+    /// starts looking at it (_watch_camera()), clearing it (null) stops that and the work - the
+    /// main loop does not exist yet when the singleton is created.
     void SceneryStreamingServer::streaming_set_camera(Camera3D *p_camera) {
         bool was_streaming;
         bool is_streaming;
@@ -510,12 +508,14 @@ namespace godot {
             return;
         }
         if (was_streaming) {
-            tree->disconnect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
+            watch_timer->disconnect("timeout", callable_mp(this, &SceneryStreamingServer::_watch_camera));
+            watch_timer.unref();
+            _set_applying(false);
             // nothing streams without a camera, and the tick that would announce it has stopped
             _set_building(false);
             return;
         }
-        tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
+        _watch_camera();
     }
 
     void SceneryStreamingServer::streaming_set_anchor_position(const Vector3 &p_position) {
@@ -561,7 +561,7 @@ namespace godot {
         }
         for (const Entry &entry: chunk->entries) {
             // a freed piece stays in its chunk until the chunk is sorted again
-            if (entry_chunks.has(entry.stream_rid)) {
+            if (entry_locations.has(entry.stream_rid)) {
                 rids.push_back(entry.user_rid);
             }
         }
@@ -643,7 +643,7 @@ namespace godot {
         statistics["providers"] = providers.size();
         statistics["supplied_cells"] = supplied_cells;
         statistics["pending_provides"] = pending_provides.size() + planned_provides.size();
-        statistics["registered"] = entry_chunks.size();
+        statistics["registered"] = entry_locations.size();
         statistics["streamed"] = streamed;
         statistics["chunks"] = chunks.size();
         statistics["active_chunks"] = active_chunks;
@@ -710,8 +710,6 @@ namespace godot {
         semaphore->post();
     }
 
-    /// Plans after a meaningful camera move or a content change and applies whatever the worker has
-    /// published so far, a few milliseconds per frame.
     void SceneryStreamingServer::streaming_set_enabled(const bool p_enabled) {
         streaming_enabled = p_enabled;
     }
@@ -720,7 +718,13 @@ namespace godot {
         return streaming_enabled;
     }
 
-    void SceneryStreamingServer::_process_streaming() {
+    /// Looks at the camera, the anchor and the content every WATCH_INTERVAL_SEC and plans when
+    /// they changed; the work a plan leaves is applied per frame (_process_streaming())
+    void SceneryStreamingServer::_watch_camera() {
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        ERR_FAIL_NULL(tree);
+        watch_timer = tree->create_timer(WATCH_INTERVAL_SEC, true, false, true);
+        watch_timer->connect("timeout", callable_mp(this, &SceneryStreamingServer::_watch_camera));
         if (!streaming_enabled) {
             return;
         }
@@ -756,13 +760,59 @@ namespace godot {
                 emit_signal(streaming_camera_chunk_changed_signal, chunk);
             }
         }
-        _apply_plan();
-        bool is_building;
+        bool has_work;
         {
             MutexLock lock(mutex);
+            has_work = _has_work_locked();
+        }
+        if (has_work) {
+            _set_applying(true);
+        }
+    }
+
+    /// The work of the plan, a frame budget at a time, until none is left
+    void SceneryStreamingServer::_process_streaming() {
+        if (!streaming_enabled) {
+            _set_applying(false);
+            return;
+        }
+        _apply_plan();
+        bool is_building;
+        bool has_work;
+        {
+            MutexLock lock(mutex);
+            // after the frame's work, not before the next: the tick stops once the work is done
+            if (filling && _is_area_ready_locked(1)) {
+                filling = false;
+            }
             is_building = planning || pending_build_count > 0;
+            has_work = _has_work_locked();
         }
         _set_building(is_building);
+        if (!has_work) {
+            _set_applying(false);
+        }
+    }
+
+    bool SceneryStreamingServer::_has_work_locked() const {
+        return planning || freed_pending || planned_builds.size() > 0 || planned_clears.size() > 0 ||
+               planned_provides.size() > 0 || planned_withdraws.size() > 0 || pending_builds.size() > 0 ||
+               pending_prefetches.size() > 0 || pending_clears.size() > 0 || pending_provides.size() > 0 ||
+               pending_withdraws.size() > 0;
+    }
+
+    void SceneryStreamingServer::_set_applying(const bool p_applying) {
+        if (p_applying == applying) {
+            return;
+        }
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        ERR_FAIL_NULL(tree);
+        applying = p_applying;
+        if (applying) {
+            tree->connect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
+            return;
+        }
+        tree->disconnect("process_frame", callable_mp(this, &SceneryStreamingServer::_process_streaming));
     }
 
     void SceneryStreamingServer::_set_building(const bool p_building) {
@@ -803,9 +853,6 @@ namespace godot {
             if (freed_pending) {
                 _drop_freed_work();
             }
-            if (filling && _is_area_ready_locked(1)) {
-                filling = false;
-            }
             catching_up = filling && pending_build_count + pending_clears.size() > CATCHUP_BACKLOG;
         }
 
@@ -837,7 +884,7 @@ namespace godot {
                 if (pending.revision == target_revision && entry != nullptr && entry->built &&
                     entry->wanted_revision != target_revision) {
                     entry->built = false;
-                    key = entry_chunks[pending.stream_rid];
+                    key = entry_locations[pending.stream_rid].chunk;
                     Chunk &chunk = chunks[key];
                     chunk.built_count--;
                     chunk_cleared = chunk.built_count == 0;
@@ -996,7 +1043,7 @@ namespace godot {
                 if (pending.revision == target_revision && entry != nullptr && !entry->built &&
                     entry->wanted_revision == target_revision) {
                     entry->built = true;
-                    chunks[entry_chunks[pending.stream_rid]].built_count++;
+                    chunks[entry_locations[pending.stream_rid].chunk].built_count++;
                     if (!pending.ahead) {
                         pending_build_count--;
                     }
@@ -1162,7 +1209,7 @@ namespace godot {
                     return false;
                 }
                 for (; next >= 0 && static_cast<int64_t>(batch.size()) < batch_size; next--) {
-                    if (entry_chunks.has(entering[next].stream_rid)) {
+                    if (entry_locations.has(entering[next].stream_rid)) {
                         batch.push_back(entering[next]);
                     }
                 }

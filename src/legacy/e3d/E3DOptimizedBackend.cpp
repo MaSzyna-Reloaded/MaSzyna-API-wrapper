@@ -1,5 +1,5 @@
+#include "E3DInstanceTypes.hpp"
 #include "E3DOptimizedBackend.hpp"
-#include "E3DRenderingServer.hpp"
 #include <godot_cpp/classes/rendering_server.hpp>
 
 namespace godot {
@@ -15,7 +15,7 @@ namespace godot {
 
         _add_submodels(
                 p_instance, p_instance.model->get_submodels(), Transform3D(), Vector<E3DSubModel *>(),
-                _get_force_alpha_submodels(p_instance), E3DRenderingServer::TRANSLUCENCY_CUTOUT, p_material_resolver);
+                _get_force_alpha_submodels(p_instance), E3DInstanceTypes::TRANSLUCENCY_CUTOUT, p_material_resolver);
         update(p_instance);
     }
 
@@ -135,7 +135,7 @@ namespace godot {
             chain.push_back(submodel.ptr());
             const int translucency = _submodel_translucency(
                     p_instance, submodel.ptr(), p_force_alpha_submodels, p_parent_translucency,
-                    E3DRenderingServer::TRANSLUCENCY_OPAQUE);
+                    E3DInstanceTypes::TRANSLUCENCY_OPAQUE);
 
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
                 submodel->get_mesh().is_valid()) {
@@ -149,8 +149,8 @@ namespace godot {
             // here it is only the point (and the glare) the original draws where the light is
             // (opengl33renderer.cpp:4375-4500), when the resolver gives it a material
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_FREE_SPOTLIGHT) {
-                const Ref<Material> material = p_material_resolver.resolve(
-                        p_instance, submodel.ptr(), E3DRenderingServer::TRANSLUCENCY_CUTOUT);
+                const Ref<Material> material =
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), E3DInstanceTypes::TRANSLUCENCY_CUTOUT);
                 if (material.is_valid()) {
                     const RID rid = _add_submodel(
                             p_instance, submodel.ptr(), point_mesh->get_rid(), material, local_transform, chain);

@@ -12,10 +12,7 @@
 
 
 namespace godot {
-    class RailVehicleBrake;
     class VehicleComponent;
-    class RailVehicleEngine;
-    class RailVehicleSecuritySystem;
 
 
     /// The vehicle itself: its configuration, its components and the operations that change them,
@@ -34,6 +31,9 @@ namespace godot {
             /// Bumped by every step (process_components()) and every command (command_executed());
             /// what tells a cached state dump that it is stale.
             uint64_t state_serial = 0;
+            /// Where the vehicle is in the world, handed down by the server that places it
+            /// (set_world_transform())
+            Transform3D world_transform;
             /// What this vehicle answers to, registered by itself and its components. A vehicle
             /// holds its own commands, so a scenery name shared by two vehicles, or none at all,
             /// leaves every one of them commandable.
@@ -146,6 +146,9 @@ namespace godot {
             void emit_position_changed_if_needed();
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;
+            /* The vehicle's place in the world - state its owner hands down: only the server
+             * that places the vehicle sets it, where the placement changes */
+            void set_world_transform(const Transform3D &p_transform);
             /* The name of what simulates this vehicle, as registered with VehicleServer
              * (VehicleServer::implementation_register()) - the server hands that one the step */
             void set_implementation(const StringName &p_implementation);
@@ -169,13 +172,10 @@ namespace godot {
             // cntrl_battery_start_mode.
             MAKE_MEMBER_GS(double, initial_velocity, 0.0);
 
-            /* The whole state of this vehicle, by name. Answered by the server that owns the
-             * handle, from its per-vehicle cache, so a reader may call this per frame without
-             * paying for a rebuild each time. */
-            virtual Dictionary get_state() = 0;
-            /* Builds the state dictionary from this vehicle and every enabled component. The one
-             * place that composes it, called by the owner of the cache on a miss. */
-            Dictionary compose_state();
+            /* The whole state of this vehicle, by name: this vehicle and every enabled component,
+             * composed on each call. A reader asking per frame takes the cached dump instead
+             * (VehicleServer::vehicle_dump_state()). */
+            Dictionary get_state() const;
 
             /* This vehicle's components, in the order they joined - which is the order of the
              * FIZ sections that built them. They announce themselves rather than being searched

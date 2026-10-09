@@ -19,14 +19,20 @@ namespace godot {
         private:
             static void _bind_methods();
 
+            /* The original's wiperOutTimer/wiperParkTimer run on every step (DynObj.cpp:4152-4153);
+             * here a wiper keeps when they were last zeroed against one sweep_clock, so a parked
+             * one costs nothing and still reads the same timers */
             struct Wiper {
                     double position = 0.0;  // dWiperPos: 0 parked, 1 fully out
                     bool returning = false; // wiperDirection
-                    double out_timer = 0.0;
-                    double park_timer = 0.0;
+                    double out_since = 0.0;
+                    double park_since = 0.0;
                     int working_switch_position = 0;
             };
             std::vector<Wiper> wipers;
+            double sweep_clock = 0.0;
+            /* Every wiper stood parked after the last pass */
+            bool parked = true;
             int switch_position = 0;
             bool switch_initialized = false;
             void _set_switch_position(int p_position);

@@ -52,6 +52,9 @@ namespace godot {
         vehicle_server->connect(
                 VehicleServer::vehicle_configured_signal,
                 callable_mp(this, &RailVehicleServer::_on_vehicle_configured));
+        vehicle_server->connect(
+                VehicleServer::vehicle_config_changed_signal,
+                callable_mp(this, &RailVehicleServer::_on_vehicle_config_changed));
         // who drives from which cabin is the controller's occupied cab
         vehicle_server->connect(
                 VehicleServer::cabin_person_entered_signal,
@@ -231,6 +234,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_transform_at_distance", "vehicle", "distance"),
                 &RailVehicleServer::vehicle_get_transform_at_distance);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_bogie_transform", "vehicle", "bogie"),
+                &RailVehicleServer::vehicle_get_bogie_transform);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_track_position", "vehicle"), &RailVehicleServer::vehicle_get_track_position);
         ClassDB::bind_method(
@@ -494,6 +500,9 @@ namespace godot {
             return;
         }
         _disconnect_relays(p_vehicle, *placement);
+        if (Vector<RID> *listed = track_vehicles.getptr(placement->indexed_track); listed != nullptr) {
+            listed->erase(p_vehicle);
+        }
         const RID reported_track = placement->reported_track;
         _track_changed(placement->track);
         vehicles.erase(p_vehicle);
@@ -874,6 +883,7 @@ namespace godot {
         // the scans that found it hold the previous controller
         _track_changed(placement->track);
         _connect_relays(p_vehicle, *placement);
+        _place_body(*placement);
         // a newly bound controller takes the rail values before its simulation starts
         // (VehicleServer::vehicle_bind_controller() tells this before starting it)
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
@@ -883,6 +893,14 @@ namespace godot {
             controller->emit_position_changed_if_needed();
         }
         _hand_driver_cabin_kind(p_vehicle);
+    }
+
+    /* The bogie pivot spacing is the wheels' configuration, and the body hangs between the
+     * pivots */
+    void RailVehicleServer::_on_vehicle_config_changed(const RID &p_vehicle) {
+        if (VehiclePlacement *placement = vehicles.getptr(p_vehicle); placement != nullptr) {
+            _place_body(*placement);
+        }
     }
 
     void RailVehicleServer::_connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement) {
@@ -1059,7 +1077,6 @@ namespace godot {
         placement->track_direction = p_track_direction;
         placement->moved = true;
         placement->location_stale = true;
-        placement->body_transform_valid = false;
         placement->track_is_switch = tracks->track_is_switch(p_track);
         placement->switch_track =
                 placement->track_is_switch
@@ -1070,7 +1087,9 @@ namespace godot {
         const double remaining_offset = p_track_offset - placement->track_offset;
         const double direction_sign = p_track_direction == TrackServer::DIRECTION_NORMAL ? -1.0 : 1.0;
         _move_placement(*placement, remaining_offset * direction_sign, false);
+        _place_body(*placement);
         _track_changed(placement->track);
+        _note_track_move(p_vehicle, *placement);
         placement->placement_unreported = false;
         emit_signal(vehicle_placed_signal, p_vehicle);
     }
@@ -1083,7 +1102,9 @@ namespace godot {
         }
         _track_changed(placement->track);
         _move_placement(*placement, p_distance, true);
+        _place_body(*placement);
         _track_changed(placement->track);
+        _note_track_move(p_vehicle, *placement);
         if (RailVehicleController *controller = _get_controller(*placement); controller != nullptr) {
             controller->emit_position_changed_if_needed();
         }
@@ -1354,7 +1375,6 @@ namespace godot {
         p_placement.track_offset = current_track_offset;
         p_placement.track_direction = current_track_direction;
         p_placement.switch_track = current_switch_track;
-        p_placement.body_transform_valid = false;
         if (diagnostics && p_force_switch_state) {
             _check_movement(p_placement, start_point, Math::abs(p_distance) - remaining);
         }
@@ -1385,44 +1405,63 @@ namespace godot {
      * original reads the running shape too (DynObj.cpp:2950-2970). The track sampled under the
      * vehicle's centre is the same thing only on straight track; on a curve it differs, and on a
      * switch it differs most. One of them has to be the answer, and it is this one. */
-    Transform3D RailVehicleServer::vehicle_get_transform(const RID &p_vehicle) {
-        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+    Transform3D RailVehicleServer::vehicle_get_transform(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         const TrackServer *tracks = TrackServer::get_instance();
         if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
             return Transform3D();
         }
-        if (placement->body_transform_valid) {
-            return placement->body_transform;
-        }
-        placement->body_transform = _compose_body_transform(*placement, p_vehicle);
-        placement->body_transform_valid = true;
         return placement->body_transform;
     }
 
-    Transform3D RailVehicleServer::_compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle) {
-        const RailVehicleController *controller = _get_controller(p_placement);
+    /* Composed once where the placement changes, and handed down to the controller as the
+     * vehicle's world transform - the state its owner hands down, as the driver cabin kind. */
+    void RailVehicleServer::_place_body(VehiclePlacement &p_placement) {
+        const TrackServer *tracks = TrackServer::get_instance();
+        RailVehicleController *controller = _get_controller(p_placement);
         const Ref<RailVehicleWheels> wheels =
                 controller != nullptr ? controller->get_component(VehicleComponentType::COMPONENT_WHEELS)
                                       : Ref<VehicleComponent>();
         const double spacing = wheels.is_valid() ? wheels->get_bogie_pivot_spacing() : 0.0;
-        if (spacing <= 0.0) {
+        const bool on_track = tracks != nullptr && tracks->track_exists(p_placement.track);
+        Transform3D body;
+        if (on_track) {
             // no bogies to be carried by: the track under the vehicle's own centre is all there is
-            return _placement_transform(p_placement);
+            body = _placement_transform(p_placement);
         }
-        /* The offset is rear-relative, the same sign RailVehicleWheels::get_bogie_transform() uses -
-         * getting it wrong flips the vehicle the moment it moves. */
-        const Transform3D front = _placement_transform(_sample_placement(p_placement, -0.5 * spacing));
-        const Transform3D rear = _placement_transform(_sample_placement(p_placement, 0.5 * spacing));
-        Vector3 body_forward = front.origin - rear.origin;
-        if (body_forward.is_zero_approx()) {
-            return _placement_transform(p_placement);
+        p_placement.bogie_transforms[RailVehicleWheels::BOGIE_FRONT] = body;
+        p_placement.bogie_transforms[RailVehicleWheels::BOGIE_REAR] = body;
+        if (on_track && spacing > 0.0) {
+            /* The track-offset distance is rear-relative (see vehicle_process_movement()), so a
+             * positive distance samples toward the vehicle's rear - the sign is deliberate and was
+             * confirmed live: getting it wrong flips the whole vehicle the moment it starts moving
+             * (test_rail_vehicle_idle_orientation_regression.gd). */
+            const Transform3D front = _placement_transform(_sample_placement(p_placement, -0.5 * spacing));
+            const Transform3D rear = _placement_transform(_sample_placement(p_placement, 0.5 * spacing));
+            p_placement.bogie_transforms[RailVehicleWheels::BOGIE_FRONT] = front;
+            p_placement.bogie_transforms[RailVehicleWheels::BOGIE_REAR] = rear;
+            Vector3 body_forward = front.origin - rear.origin;
+            if (!body_forward.is_zero_approx()) {
+                body_forward.normalize();
+                const Vector3 average_up = (front.basis.get_column(1) + rear.basis.get_column(1)).normalized();
+                const Vector3 z_axis = -body_forward;
+                const Vector3 x_axis = average_up.cross(z_axis).normalized();
+                const Vector3 y_axis = z_axis.cross(x_axis).normalized();
+                body = Transform3D(Basis(x_axis, y_axis, z_axis).orthonormalized(), (front.origin + rear.origin) * 0.5);
+            }
         }
-        body_forward.normalize();
-        const Vector3 average_up = (front.basis.get_column(1) + rear.basis.get_column(1)).normalized();
-        const Vector3 z_axis = -body_forward;
-        const Vector3 x_axis = average_up.cross(z_axis).normalized();
-        const Vector3 y_axis = z_axis.cross(x_axis).normalized();
-        return Transform3D(Basis(x_axis, y_axis, z_axis).orthonormalized(), (front.origin + rear.origin) * 0.5);
+        p_placement.body_transform = body;
+        if (controller != nullptr) {
+            controller->set_world_transform(body);
+        }
+    }
+
+    Transform3D
+    RailVehicleServer::vehicle_get_bogie_transform(const RID &p_vehicle, const RailVehicleWheels::Bogie p_bogie) const {
+        // the bogie comes from scripts as a bare int
+        ERR_FAIL_INDEX_V(p_bogie, 2, Transform3D());
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? placement->bogie_transforms[p_bogie] : Transform3D();
     }
 
     Transform3D RailVehicleServer::vehicle_get_transform_at_distance(const RID &p_vehicle, const double p_distance) {
@@ -1445,9 +1484,8 @@ namespace godot {
     Transform3D RailVehicleServer::_placement_transform(const VehiclePlacement &p_placement) const {
         TrackServer *tracks = TrackServer::get_instance();
         ERR_FAIL_NULL_V(tracks, Transform3D());
-        const Ref<Resource> curve_data = tracks->track_get_curve(p_placement.track, p_placement.switch_track);
         const Ref<Curve3D> curve = tracks->track_get_domain_curve(p_placement.track, p_placement.switch_track);
-        if (curve_data.is_null() || curve.is_null()) {
+        if (curve.is_null()) {
             return Transform3D();
         }
 
@@ -1480,9 +1518,9 @@ namespace godot {
         const Vector3 z_axis = -forward;
         const Vector3 x_axis = reference_up.cross(z_axis).normalized();
         const Vector3 y_axis = z_axis.cross(x_axis).normalized();
-        const double roll1 = curve_data->get("roll1");
-        const double roll2 = curve_data->get("roll2");
-        const double roll = length <= 0.0 ? roll1 : Math::lerp(roll1, roll2, CLAMP(safe_offset / length, 0.0, 1.0));
+        const Vector2 rolls = tracks->track_get_roll(p_placement.track, p_placement.switch_track);
+        const double roll =
+                length <= 0.0 ? rolls.x : Math::lerp(rolls.x, rolls.y, CLAMP(safe_offset / length, 0.0, 1.0));
         Transform3D track_transform(
                 Basis(x_axis, y_axis, z_axis)
                         .orthonormalized()
@@ -1501,14 +1539,14 @@ namespace godot {
     double RailVehicleServer::_placement_roll(const VehiclePlacement &p_placement) const {
         TrackServer *tracks = TrackServer::get_instance();
         ERR_FAIL_NULL_V(tracks, 0.0);
-        const Ref<Resource> curve_data = tracks->track_get_curve(p_placement.track, p_placement.switch_track);
         const double length = tracks->track_get_length(p_placement.track, p_placement.switch_track);
-        if (curve_data.is_null() || length <= 0.0) {
+        if (length <= 0.0) {
             return 0.0;
         }
-        const double roll1 = curve_data->get("roll1");
-        const double roll2 = curve_data->get("roll2");
-        return Math::lerp(roll1, roll2, CLAMP(p_placement.track_offset / length, 0.0, 1.0));
+        const Vector2 rolls = tracks->track_get_roll(p_placement.track, p_placement.switch_track);
+        return Math::lerp(
+                static_cast<double>(rolls.x), static_cast<double>(rolls.y),
+                CLAMP(p_placement.track_offset / length, 0.0, 1.0));
     }
 
     Dictionary RailVehicleServer::vehicle_get_track_position(const RID &p_vehicle) const {
@@ -1651,20 +1689,36 @@ namespace godot {
         }
         _track_changed(placement->track);
         _move_placement(*placement, distance, true);
+        _place_body(*placement);
         _track_changed(placement->track);
+        _note_track_move(p_vehicle, *placement);
     }
 
-    void RailVehicleServer::neighbour_index_rebuild() {
-        track_vehicles.clear();
-        // every rail vehicle is a neighbour to be found, whatever implementation steps it
-        for (KeyValue<RID, VehiclePlacement> &item: vehicles) {
-            track_vehicles[item.value.track].push_back(item.key);
-            // a scan made since it entered the track could not find it there yet
-            if (item.value.indexed_track != item.value.track) {
-                _track_changed(item.value.indexed_track);
-                _track_changed(item.value.track);
-                item.value.indexed_track = item.value.track;
+    /* Only the vehicles that changed track since the last update move in the index, at the same
+     * moment of the step as ever: once, before any vehicle looks for its neighbours */
+    void RailVehicleServer::neighbour_index_update() {
+        for (const RID &vehicle: track_moved_vehicles) {
+            VehiclePlacement *placement = vehicles.getptr(vehicle);
+            if (placement == nullptr || placement->indexed_track == placement->track) {
+                continue;
             }
+            if (Vector<RID> *listed = track_vehicles.getptr(placement->indexed_track); listed != nullptr) {
+                listed->erase(vehicle);
+            }
+            if (placement->track.is_valid()) {
+                track_vehicles[placement->track].push_back(vehicle);
+            }
+            // a scan made since it entered the track could not find it there yet
+            _track_changed(placement->indexed_track);
+            _track_changed(placement->track);
+            placement->indexed_track = placement->track;
+        }
+        track_moved_vehicles.clear();
+    }
+
+    void RailVehicleServer::_note_track_move(const RID &p_vehicle, const VehiclePlacement &p_placement) {
+        if (!(p_placement.track == p_placement.indexed_track)) {
+            track_moved_vehicles.push_back(p_vehicle);
         }
     }
 
@@ -1785,6 +1839,7 @@ namespace godot {
                 if (TractionServer *traction = TractionServer::get_instance();
                     collector.touching && wire.is_valid() && traction != nullptr) {
                     voltage = traction->wire_get_voltage(wire, assumed_voltage, current);
+                    traction->wire_draw_current(wire, assumed_voltage, current);
                     /* A span overhead that carries nothing is another defect than a hole in the
                      * wiring - the network behind it has no source, or the resistance never
                      * reached it - and the two look the same from the cab, as a dead line. */

@@ -111,7 +111,7 @@ func test_a_supplied_model_is_drawn_by_the_model_consumer() -> void:
     await _move_camera(Vector3.ZERO)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 1, "the supplied model was not built")
     SceneryStreamingServer.provider_free(_providers.pop_back())
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
     assert_eq(SceneryStreamingServer.streaming_get_streamed_count(), 0, "the model outlived its provider")
     E3DRenderingServer.model_set_loader(E3DModelManager.load_model)
 
@@ -138,7 +138,7 @@ func _release(rid:RID) -> void:
 ## streaming to settle instead of assuming it happened in one frame
 func _move_camera(position:Vector3) -> void:
     _camera.global_position = position
-    await wait_idle_frames(STREAMING_FRAMES)
+    await wait_streaming(STREAMING_FRAMES)
 
 
 func _load_test_model(_data_path:String, _filename:String) -> E3DModel:

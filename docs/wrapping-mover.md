@@ -641,16 +641,16 @@ Known quirks are listed in `MASZYNA_ORIGINAL_QUIRKS.md`.
 
 The original engine updates everything within one simulation step: producers (e.g. `TTractionPowerSource::Update()`)
 and their consumers (e.g. pantographs calling `TTraction::VoltageGet()` from `TDynamicObject`) always run in the same
-step. In this wrapper `MaszynaMoverVehicleServer::stepping_advance()` runs the vehicles once per rendered frame (`process_frame`), like
-the original, but the servers they consume are stepped on their own: `TractionServer` ticks its power sources from
-`process_frame` too, and a load asks for voltage whenever its vehicle's step reaches it. Nothing guarantees that every
-producer step has a consumer.
+step, the producers first (`simulation.cpp:115-116`). This wrapper keeps that order: `TractionServer` ticks its power
+sources on `SimulationServer`'s `simulation_advanced`, connected before `VehicleServer`, so every slice ticks the
+sources and then steps the vehicles that draw from them (`wire_draw_current()`) and read their voltage
+(`wire_get_voltage()`).
 
-Ported per-step state must therefore tolerate steps without any consumer. Real case: `TractionServer`'s power
-source reset its accumulated load (admittance) every tick; a tick without any pantograph asking left it at
-"no load", the next `current_get()` returned 0 V, Mover's `NoVoltRelay` saw a loss of voltage and tripped the line
-breaker - randomly while driving and every time the player left the cabin. Fixed by keeping the previous load when
-nobody asked since the last tick (`TractionServer::PowerSource::tick()`).
+A producer ticked on another beat than its consumers breaks ported per-step state. Real case: `TractionServer` once
+ticked from `process_frame` while the loads asked from the vehicle step; a tick without any pantograph asking left the
+source at "no load", the next query returned 0 V, Mover's `NoVoltRelay` saw a loss of voltage and tripped the line
+breaker - randomly while driving and every time the player left the cabin. Keeping the previous load covered it; the
+fix is the order above.
 
 Related pitfall: port the original's exact comparisons literally (`x != 0.0` as `not x == 0.0`), not with
 `is_zero_approx()` - its tolerance (1e-5) swallowed the tiny non-zero value the port used as a "no load" floor and

@@ -7,26 +7,6 @@ const GROUP: StringName = &"maszyna_environment"
 ## Render layer of the cab interior - with maszyna/cabin/improve_shadows_quality the cab is lit by a
 ## sun of its own that reaches only this layer (MaszynaSkyEnvironment._create_cabin_light())
 const CABIN_RENDER_LAYER: int = 1 << 18
-## How often the time of day, the light level and the wind are pushed to E3DRenderingServer, which
-## decides from the first two which scenery lights are lit (see _push_environment_state())
-const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
-## How often the running time is taken from SimulationServer's clock
-const TIME_UPDATE_INTERVAL: float = 0.1
-const MONTHS_PER_YEAR: int = 12
-## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
-## original lights a scenery light set to "on when dark" below a light level of 0.325
-## (AnimModel.cpp:598), which on this ramp falls at about 1.4 degrees below the horizon. Both ends
-## have to stay clear of a winter noon - at 50 N the sun peaks at 16-19 degrees in January, so a
-## day threshold anywhere near that would light the whole town at midday (see FINDINGS.md).
-const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/lights/night_altitude"
-const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/lights/day_altitude"
-const LIGHT_LEVEL_NIGHT_ALTITUDE: float = -6.0
-const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
-## Overcast dims the key light in the original by this much at full cover
-## (simulationenvironment.cpp:163)
-const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
-## Surface pressure of the sun's refraction, millibars (sun.cpp:14)
-const SUN_SURFACE_PRESSURE: float = 1013.0
 ## Wind speed the 0-1 wind_strength maps onto, m/s
 const WIND_SPEED_MIN: float = 0.15
 const WIND_SPEED_MAX: float = 3.0
@@ -56,43 +36,62 @@ const WEATHER_PRESETS: Dictionary = {
 ## The environment applied a change of its configuration - a preset, a scenery's own declarations,
 ## the cabin view or a property written from anywhere. Whoever shows this state (a
 ## MaszynaSkyEnvironment) reacts to this instead of reading the node every frame; the running clock
-## is deliberately not announced here (see _process()).
+## is deliberately not announced here.
 signal configuration_changed
+
+## The time, the date, the location, the cloud cover and the temperature are SimulationServer's -
+## it runs the clock, rolls the date and works out the light level from the sun, and says so by its
+## signals. This node only passes them through: the getters read the server, the setters write it,
+## and what a backend needs of them (E3DRenderingServer's lights, the shaders' light level, the
+## materials' season) the node hands over when the server announces a change. Its defaults are the
+## server's (SimulationServer DEFAULT_*), so a scene that keeps one stores nothing for it.
 
 @export_category("Time")
 @export var use_system_time: bool = false:
     set(value):
-        use_system_time = value
+        SimulationServer.use_system_time = value
         _dirty_time = true
+    get:
+        return SimulationServer.use_system_time
 
 @export_range(0.0, 23.9998) var current_time: float = 8.0:
     set(value):
-        if not value == current_time:
-            current_time = value
+        if not value == SimulationServer.time_of_day:
+            SimulationServer.time_of_day = value
             _dirty_time = true
+    get:
+        return SimulationServer.time_of_day
 
 @export_range(1, 31) var day: int = 3:
     set(value):
-        if not value == day:
-            day = value
+        if not value == SimulationServer.date_get_day():
+            SimulationServer.date_set(SimulationServer.date_get_year(), SimulationServer.date_get_month(), value)
             _dirty_time = true
+    get:
+        return SimulationServer.date_get_day()
 
 @export_range(1, 12) var month: int = 5:
     set(value):
-        if not value == month:
-            month = value
+        if not value == SimulationServer.date_get_month():
+            SimulationServer.date_set(SimulationServer.date_get_year(), value, SimulationServer.date_get_day())
             _dirty_time = true
+    get:
+        return SimulationServer.date_get_month()
 
 @export_range(0, 9999) var year: int = 2026:
     set(value):
-        if not value == year:
-            year = value
+        if not value == SimulationServer.date_get_year():
+            SimulationServer.date_set(value, SimulationServer.date_get_month(), SimulationServer.date_get_day())
             _dirty_time = true
+    get:
+        return SimulationServer.date_get_year()
 
 @export_range(-12, 14, 1) var timezone_offset: int = 1:
     set(value):
-        timezone_offset = value
+        SimulationServer.timezone_offset = value
         _dirty_time = true
+    get:
+        return SimulationServer.timezone_offset
 
 ## The fastest the simulation runs, as many times the wall clock
 const MAX_SIMULATION_SPEED: float = 100.0
@@ -108,15 +107,19 @@ const MAX_SIMULATION_SPEED: float = 100.0
 @export_category("Location")
 @export_range(-90.0, 90.0, 0.001, "suffix:°") var latitude: float = 50.271:
     set(value):
-        if not value == latitude:
-            latitude = value
+        if not value == SimulationServer.latitude:
+            SimulationServer.latitude = value
             _dirty_time = true
+    get:
+        return SimulationServer.latitude
 
 @export_range(-180.0, 180.0, 0.001, "suffix:°") var longitude: float = 19.04:
     set(value):
-        if not value == longitude:
-            longitude = value
+        if not value == SimulationServer.longitude:
+            SimulationServer.longitude = value
             _dirty_time = true
+    get:
+        return SimulationServer.longitude
 
 @export_category("Weather")
 ## Preset: changing it after the node is ready sets precipitation, cloudiness, fog density and
@@ -130,8 +133,10 @@ const MAX_SIMULATION_SPEED: float = 100.0
 
 @export_range(0.0, 1.0, 0.01) var cloudiness: float = 0.5:
     set(value):
-        cloudiness = value
+        SimulationServer.cloud_cover = value
         _dirty_visuals = true
+    get:
+        return SimulationServer.cloud_cover
 
 ## Compass bearing the wind blows towards, in degrees. A plain angle rather than a vector: the
 ## weather backends and the particle emitters only ever need a horizontal direction.
@@ -150,8 +155,11 @@ const MAX_SIMULATION_SPEED: float = 100.0
         precipitation = value
         _dirty_visuals = true
 
-## Air temperature, published to SimulationServer
-@export_range(-15.0, 45.0, 0.1, "suffix:°C") var temperature: float = 15.0
+@export_range(-15.0, 45.0, 0.1, "suffix:°C") var temperature: float = 15.0:
+    set(value):
+        SimulationServer.air_temperature = value
+    get:
+        return SimulationServer.air_temperature
 
 @export_group("Fog")
 @export var fog_enabled: bool = true:
@@ -183,8 +191,6 @@ var _dirty_time: bool = true
 var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
 var _dirty_view: bool = false
-var _light_state_elapsed: float = 0.0
-var _time_update_elapsed: float = 0.0
 
 ## Cabin view (the player in a cab) - whoever draws the environment lets the cab light cast its
 ## shadows then (MaszynaSkyEnvironment)
@@ -195,43 +201,45 @@ var cabin_view: bool = false:
             _dirty_view = true
 
 
+## A new environment starts from SimulationServer's defaults - the values its scene stores are set
+## after this, through the properties
+func _init() -> void:
+    if not Engine.is_editor_hint():
+        SimulationServer.environment_reset()
+
+
 func _ready() -> void:
     update()
     _process_dirty()
 
 
+## What the backends take of SimulationServer's environment they are handed now, and again
+## whenever the server announces a change
 func _enter_tree() -> void:
     add_to_group(GROUP)
     # the time of day passes while the environment is there (SimulationServer's clock)
     if not Engine.is_editor_hint():
         SimulationServer.clock_hold()
     ProjectSettings.settings_changed.connect(_on_project_settings_changed)
+    SimulationServer.light_level_changed.connect(_on_light_level_changed)
+    SimulationServer.time_of_day_hour_changed.connect(_on_time_of_day_hour_changed)
+    SimulationServer.date_changed.connect(_on_date_changed)
+    _on_light_level_changed(SimulationServer.light_level)
+    _on_time_of_day_hour_changed()
+    _on_date_changed()
 
 
 func _exit_tree() -> void:
     if not Engine.is_editor_hint():
         SimulationServer.clock_release()
     ProjectSettings.settings_changed.disconnect(_on_project_settings_changed)
+    SimulationServer.light_level_changed.disconnect(_on_light_level_changed)
+    SimulationServer.time_of_day_hour_changed.disconnect(_on_time_of_day_hour_changed)
+    SimulationServer.date_changed.disconnect(_on_date_changed)
 
 
-func _process(delta: float) -> void:
-    var time_set: bool = _dirty_time
+func _process(_delta: float) -> void:
     _process_dirty()
-    _time_update_elapsed += delta
-    if not Engine.is_editor_hint() and _time_update_elapsed >= TIME_UPDATE_INTERVAL:
-        _time_update_elapsed = 0.0
-        if use_system_time:
-            _read_system_time()
-        else:
-            # the time the simulation's clock ran to; past midnight it is the next day
-            var now: float = SimulationServer.time_of_day
-            if now < current_time:
-                _set_normalized_date(year, month, day + 1)
-            current_time = now
-        season = _season_from_year_day(_get_year_day(day, month, year))
-    _push_environment_state(delta, time_set)
-    # Running time is only mirrored here; it must not be re-applied as a configuration change.
-    _dirty_time = false
 
 
 func update() -> void:
@@ -239,59 +247,28 @@ func update() -> void:
     _dirty_visuals = true
 
 
+## A date past the end of its month or year carries over (the 32nd of January is the 1st of
+## February) - SimulationServer.date_set()
 func set_date(next_year: int, next_month: int, next_day: int) -> void:
-    _set_normalized_date(next_year, next_month, next_day)
+    SimulationServer.date_set(next_year, next_month, next_day)
+    _dirty_time = true
 
 
-## How bright the scene is, the equivalent of the original's Global.fLuminance
-## (simulationenvironment.cpp:184): daylight from the sun's altitude, dimmed by the overcast. It is
-## what decides whether a scenery light that is set to come on automatically is on: the original
-## compares it against DefaultDarkThresholdLevel of 0.325 (AnimModel.cpp:598).
-##
-## The sun's refracted altitude is cSun::move() and cSun::refract() (sun.cpp:104-240), with the
-## location in decimal degrees (the original reads its own minutes-as-fraction notation).
-func get_light_level() -> float:
-    var local_time: float = current_time
-    # days from 2000-01-01, the original's integer arithmetic included (sun.cpp:122-128)
-    var day_number: float = (
-        367 * year - 7 * (year + (month + 9) / MONTHS_PER_YEAR) / 4 + 275 * month / 9 + day - 730530
-        + local_time / 24.0)
-    var universal_time: float = local_time - timezone_offset
-    var perihelion_longitude: float = 282.9404 + 4.70935e-5 * day_number
-    var eccentricity: float = 0.016709 - 1.151e-9 * day_number
-    var mean_anomaly: float = fposmod(356.0470 + 0.9856002585 * day_number, 360.0)
-    var obliquity: float = 23.4393 - 3.563e-7 * day_number
-    var eccentric_anomaly: float = mean_anomaly + rad_to_deg(
-        eccentricity * sin(deg_to_rad(mean_anomaly)) * (1.0 + eccentricity * cos(deg_to_rad(mean_anomaly))))
-    var xv: float = cos(deg_to_rad(eccentric_anomaly)) - eccentricity
-    var yv: float = sin(deg_to_rad(eccentric_anomaly)) * sqrt(1.0 - eccentricity * eccentricity)
-    var ecliptic_longitude: float = fposmod(rad_to_deg(atan2(yv, xv)) + perihelion_longitude, 360.0)
-    var declination: float = asin(sin(deg_to_rad(obliquity)) * sin(deg_to_rad(ecliptic_longitude)))
-    var right_ascension: float = fposmod(rad_to_deg(atan2(
-        cos(deg_to_rad(obliquity)) * sin(deg_to_rad(ecliptic_longitude)), cos(deg_to_rad(ecliptic_longitude)))), 360.0)
-    var sidereal_time: float = fposmod(6.697375 + 0.0657098242 * day_number + universal_time, 24.0)
-    var hour_angle: float = wrapf(fposmod(sidereal_time * 15.0 + longitude, 360.0) - right_ascension, -180.0, 180.0)
-    var zenith_cosine: float = clampf(
-        sin(declination) * sin(deg_to_rad(latitude))
-        + cos(declination) * cos(deg_to_rad(latitude)) * cos(deg_to_rad(hour_angle)), -1.0, 1.0)
-    var elevation: float = 90.0 - rad_to_deg(acos(zenith_cosine))
-    var refraction: float = 0.0
-    if elevation <= 85.0:
-        var elevation_tangent: float = tan(deg_to_rad(elevation))
-        if elevation >= 5.0:
-            refraction = (58.1 / elevation_tangent - 0.07 / pow(elevation_tangent, 3)
-                + 0.000086 / pow(elevation_tangent, 5))
-        elif elevation >= -0.575:
-            refraction = 1735.0 + elevation * (-518.2 + elevation * (
-                103.4 + elevation * (-12.79 + elevation * 0.711)))
-        else:
-            refraction = -20.774 / elevation_tangent
-        refraction *= (SUN_SURFACE_PRESSURE * 283.0) / (SUN_SURFACE_PRESSURE * (273.0 + temperature)) / LibMaszynaUnits.ARCSECONDS_PER_DEGREE
-    var daylight: float = smoothstep(
-        float(ProjectSettings.get_setting(LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING, LIGHT_LEVEL_NIGHT_ALTITUDE)),
-        float(ProjectSettings.get_setting(LIGHT_LEVEL_DAY_ALTITUDE_SETTING, LIGHT_LEVEL_DAY_ALTITUDE)),
-        elevation + refraction)
-    return daylight * (1.0 - clampf(cloudiness, 0.0, 1.0) * LIGHT_LEVEL_OVERCAST_FACTOR)
+## Global.fLuminance of the scenery lights set to come on when dark (AnimModel.cpp:598) and of the
+## free spotlights' glare (types/free_spotlight_glare.gdshader)
+func _on_light_level_changed(light_level: float) -> void:
+    E3DRenderingServer.environment_set_light_level(light_level)
+    RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
+
+
+## The scenery's home lights go dark between 1:00 and 5:00 (E3DRenderingServer), so the hour is all
+## they need of the time
+func _on_time_of_day_hour_changed() -> void:
+    E3DRenderingServer.environment_set_time(SimulationServer.time_of_day)
+
+
+func _on_date_changed() -> void:
+    season = _season_from_year_day(_get_year_day(day, month, year))
 
 
 ## Unit vector the wind blows along - horizontal, from the compass bearing. The original keeps one
@@ -343,6 +320,7 @@ func _process_dirty() -> void:
                 MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT))
             if fog_enabled
             else FOG_RANGE_MAX)
+        E3DRenderingServer.environment_set_wind(get_wind_speed(), get_wind_direction())
         applied = true
 
     if _dirty_view:
@@ -351,13 +329,6 @@ func _process_dirty() -> void:
 
     if _dirty_time:
         _dirty_time = false
-        if use_system_time:
-            _read_system_time()
-        else:
-            _set_normalized_date(year, month, day)
-        season = _season_from_year_day(_get_year_day(day, month, year))
-        # a time set, not run: the clock jumps to it
-        SimulationServer.time_of_day = current_time
         applied = true
 
     if applied:
@@ -367,48 +338,6 @@ func _process_dirty() -> void:
 ## The fog follows its project settings while the scenery runs
 func _on_project_settings_changed() -> void:
     _dirty_visuals = true
-
-
-## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
-## day and the light level, and the particle emitters drift with the wind; SimulationServer carries
-## the time, the light level and the temperature for everything else (a cab screen's clock, once
-## a second, is exactly the resolution it shows). None of the three
-## changes fast enough to be worth pushing every frame - a whole scenery is re-resolved on each
-## push - so they go at a fixed interval, and at once when the time was set rather than merely
-## running.
-func _push_environment_state(delta: float, time_set: bool) -> void:
-    _light_state_elapsed += delta
-    if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not time_set:
-        return
-    _light_state_elapsed = 0.0
-    var light_level: float = get_light_level()
-    E3DRenderingServer.environment_set_time(current_time)
-    E3DRenderingServer.environment_set_light_level(light_level)
-    # Global.fLuminance of the free spotlights' glare (types/free_spotlight_glare.gdshader)
-    RenderingServer.global_shader_parameter_set("maszyna_light_level", light_level)
-    SimulationServer.light_level = light_level
-    SimulationServer.air_temperature = temperature
-    E3DRenderingServer.environment_set_wind(get_wind_speed(), get_wind_direction())
-
-
-## A date past the end of its month or year carries over (the 32nd of January is the 1st of February)
-func _set_normalized_date(next_year: int, next_month: int, next_day: int) -> void:
-    var normalized_year: int = next_year + floori((next_month - 1) / float(MONTHS_PER_YEAR))
-    var normalized_month: int = posmod(next_month - 1, MONTHS_PER_YEAR) + 1
-    var unix_time: int = Time.get_unix_time_from_datetime_dict(
-        {"year": normalized_year, "month": normalized_month, "day": 1}
-    ) + (next_day - 1) * LibMaszynaUnits.SECONDS_PER_DAY
-    var date: Dictionary = Time.get_date_dict_from_unix_time(unix_time)
-    year = date["year"]
-    month = date["month"]
-    day = date["day"]
-
-
-func _read_system_time() -> void:
-    var datetime: Dictionary = Time.get_datetime_dict_from_system()
-    current_time = (datetime["hour"] + datetime["minute"] / float(LibMaszynaUnits.MINUTES_PER_HOUR)
-            + datetime["second"] / float(LibMaszynaUnits.SECONDS_PER_HOUR))
-    _set_normalized_date(datetime["year"], datetime["month"], datetime["day"])
 
 
 func _season_from_year_day(year_day: int) -> MaszynaEnvironment.Season:

@@ -239,6 +239,14 @@
 			<description>
 			</description>
 		</method>
+		<method name="track_get_roll" qualifiers="const">
+			<return type="Vector2" />
+			<param index="0" name="track" type="RID" />
+			<param index="1" name="branch" type="int" default="0" />
+			<description>
+				The roll of the branch's curve at its start (x) and its end (y), in degrees, as read out of the curve resource when it was set.
+			</description>
+		</method>
 		<method name="track_get_sound_distance" qualifiers="const">
 			<return type="float" />
 			<param index="0" name="track" type="RID" />

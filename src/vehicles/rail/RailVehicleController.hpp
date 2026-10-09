@@ -229,13 +229,6 @@ namespace godot {
              * kind - a vehicle has two couplers, one per end */
             Ref<VehicleComponent> get_rail_component(RailVehicleComponentType::Type p_type) const;
             TypedArray<VehicleComponent> find_rail_components(RailVehicleComponentType::Type p_type) const;
-            /* Answered from VehicleServer's per-vehicle cache, which is keyed on the state
-             * serial (a step or a command), so a reader per frame costs a lookup rather
-             * than a rebuild of the whole dictionary. A controller the server does not hold - the
-             * throwaway one the FIZ builder saves as a description - has no state to give
-             * and answers an empty dictionary. */
-            Dictionary get_state() override;
-
             /* The name of the vehicle's type - the original's CHK/MMD name TMoverParameters keeps
              * as TypeName (DynObj.cpp:2019) */
             MAKE_MEMBER_GS(String, type_name, "");

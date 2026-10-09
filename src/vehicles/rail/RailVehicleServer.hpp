@@ -8,6 +8,7 @@
 #include "vehicles/rail/RailVehicleEnginePowerSource.hpp"
 #include "vehicles/rail/RailVehicleLoad.hpp"
 #include "vehicles/rail/RailVehicleRadio.hpp"
+#include "vehicles/rail/RailVehicleWheels.hpp"
 
 #include "RailVehicleNeighbour.hpp"
 #include "tracks/TrackServer.hpp"
@@ -176,11 +177,13 @@ namespace godot {
                     bool location_stale = true;
                     /* Moved since vehicle_placement_changed last said so */
                     bool placement_unreported = true;
-                    /* The body's transform and whether it still describes the placement above. A
-                     * parked vehicle is asked for it every frame by everything that draws it or
+                    /* The body's transform, composed where the placement changes (_place_body()).
+                     * A parked vehicle is asked for it every frame by everything that draws it or
                      * listens from it, and composing it samples the track twice. */
                     Transform3D body_transform;
-                    bool body_transform_valid = false;
+                    /* Where the bogies sit (RailVehicleWheels::BOGIE_FRONT, BOGIE_REAR), sampled
+                     * with the body above and handed out with it */
+                    Transform3D bogie_transforms[2];
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
@@ -233,12 +236,17 @@ namespace godot {
             };
             HashMap<RID, Trainset> trainsets;
             void _on_vehicle_configured(const RID &p_vehicle);
+            void _on_vehicle_config_changed(const RID &p_vehicle);
             bool diagnostics = false;
             /// The diagnostics follow their setting
             void _on_project_settings_changed();
-            /* The rail vehicles on each track, rebuilt once a step (neighbour_index_rebuild()),
-             * kept as a member so the step allocates nothing per frame */
+            /* The rail vehicles on each track, updated once a step (neighbour_index_update()) for
+             * those that changed track since (track_moved_vehicles) */
             HashMap<RID, Vector<RID>> track_vehicles;
+            LocalVector<RID> track_moved_vehicles;
+            /* The vehicle is on another track than it is indexed under: it moves in the index at
+             * the next neighbour_index_update() */
+            void _note_track_move(const RID &p_vehicle, const VehiclePlacement &p_placement);
             /* Counts every change a neighbour scan depends on; each track keeps the count of its
              * last change - a vehicle moving on it, entering or leaving it, its switch set - and a
              * change of the track network as a whole stales every scan */
@@ -292,7 +300,9 @@ namespace godot {
             RailVehicleLoad *_get_load(const RID &p_vehicle) const;
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
-            Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
+            /* Where the vehicle's body is, for the placement as it now is: into the placement and
+             * to its controller */
+            void _place_body(VehiclePlacement &p_placement);
             Transform3D _placement_transform(const VehiclePlacement &p_placement) const;
             double _placement_roll(const VehiclePlacement &p_placement) const;
             bool _motion_connection(
@@ -523,7 +533,7 @@ namespace godot {
              * implementation that steps its vehicles in its own phases (MaszynaMoverVehicleServer). */
             /* Which vehicle stands on which track, for this step's neighbour scans: once a step,
              * before any vehicle looks for its neighbours */
-            void neighbour_index_rebuild();
+            void neighbour_index_update();
             /* The vehicle moved since its position was last announced: announce it */
             void vehicle_report_position(const RID &p_vehicle);
             /* Hands the simulated vehicle its location on the route, where it has moved */
@@ -540,7 +550,7 @@ namespace godot {
             /* The vehicle moved since its placement was last announced: announce it, so nothing
              * draws it a frame late */
             void vehicle_report_placement(const RID &p_vehicle);
-            Transform3D vehicle_get_transform(const RID &p_vehicle);
+            Transform3D vehicle_get_transform(const RID &p_vehicle) const;
             /* A pantograph as it is built: where it stands in the vehicle's own space, the arms'
              * lengths, the horizontal offset between their ends, their angles lowered and the slider's
              * height over its pivot (TAnimPant). Given by whoever draws the vehicle; a model rebuilt
@@ -556,6 +566,10 @@ namespace godot {
             Vector2 vehicle_get_pantograph_raise(
                     const RID &p_vehicle, RailVehicleEnginePowerSource::PantographSelector p_pantograph) const;
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
+            /* Where a bogie sits on the track: sampled with the body where the placement changes,
+             * at half the wheels' pivot spacing to each side; a vehicle whose pivot spacing is
+             * unknown yet has both bogies at its centre, which is what the caller sees. */
+            Transform3D vehicle_get_bogie_transform(const RID &p_vehicle, RailVehicleWheels::Bogie p_bogie) const;
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;
             /* The tracks ahead of the vehicle the way p_direction leads - +1 towards its front, as

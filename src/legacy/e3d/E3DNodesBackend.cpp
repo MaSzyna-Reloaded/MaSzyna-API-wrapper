@@ -1,6 +1,6 @@
+#include "E3DInstanceTypes.hpp"
 #include "E3DLightFactory.hpp"
 #include "E3DNodesBackend.hpp"
-#include "E3DRenderingServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -30,7 +30,7 @@ namespace godot {
 
         _add_submodels(
                 p_instance, target, target, p_instance.model->get_submodels(), Transform3D(), light_roles, String(),
-                _get_force_alpha_submodels(p_instance), E3DRenderingServer::TRANSLUCENCY_CUTOUT, p_material_resolver);
+                _get_force_alpha_submodels(p_instance), E3DInstanceTypes::TRANSLUCENCY_CUTOUT, p_material_resolver);
         update(p_instance);
     }
 
@@ -182,7 +182,7 @@ namespace godot {
             const Transform3D model_transform = p_parent_transform * submodel->get_transform();
             const int translucency = _submodel_translucency(
                     p_instance, submodel.ptr(), p_force_alpha_submodels, p_parent_translucency,
-                    E3DRenderingServer::TRANSLUCENCY_BLENDED);
+                    E3DInstanceTypes::TRANSLUCENCY_BLENDED);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
                 Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), translucency);
                 // the instance drives its self-illumination (instance_set_emission_energy(),
@@ -233,8 +233,8 @@ namespace godot {
                 }
                 // the point (and the glare) the original draws where the light is
                 // (opengl33renderer.cpp:4375-4500); it goes on and off with the spotlight node
-                const Ref<Material> point_material = p_material_resolver.resolve(
-                        p_instance, submodel.ptr(), E3DRenderingServer::TRANSLUCENCY_CUTOUT);
+                const Ref<Material> point_material =
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), E3DInstanceTypes::TRANSLUCENCY_CUTOUT);
                 if (point_material.is_valid()) {
                     MeshInstance3D *point = memnew(MeshInstance3D);
                     point->set_mesh(point_mesh);

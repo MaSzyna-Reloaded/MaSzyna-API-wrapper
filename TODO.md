@@ -301,6 +301,15 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 
 ## Vehicles
 
+* **EN76 main pipe does not fill** (reports#12, l053_poludnie.scn, EN76-005a, local build): all
+  four units with the main reservoir at 8.26 bar, `pipe_pressure` ~0, the hand brake released,
+  the train brake handle of 005a at 0, of 005b-d at 1; the driving aid's hints contradict each
+  other (screenshot in the report). Diagnose from `snapshot.json` against the original's EN76 FIZ.
+* **Wagons with full cylinders show no brake force** (reports#13, l053_poludnie.scn,
+  ES64F4-846 + 20 wagons, build 20261007-1333): all wagons `brake_air_pressure` ~3.95 bar with
+  `brake_force` 0.0 while the train creeps on at 0.05-0.1 km/h; the loco itself 365 kN (hand brake
+  20, independent brake full, handle 6). "182/183 do not brake" - check the wagons' `BrakeForce()`
+  inputs (NBpA, BCN, the brake's friction) first.
 * **Left of the move of the state to its owners**: `MoverRailVehicleBrake` fills the brake valve
   and the compressor for a wagon too; the master controller's, reverser's and cab's commands
   (`main/second_controller_*`, `direction_*`, `cab_activation*`, `cab_change`) and the cab

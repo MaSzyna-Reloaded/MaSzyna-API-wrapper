@@ -524,6 +524,10 @@ anything. Open work belongs in `TODO.md`.
 * A scenery vehicle has a driver from the start: taken over after it has stood, it may be held
   by its independent brake (Driver.cpp:8166-8180). A test that drives it sets every control it
   needs, the independent brake too. *(09-30 the EP07 orientation test braked by its driver)*
+* A vehicle standing at load is built with its hand brake full (Mover.cpp:8946), and only the
+  AI's `AutoRewident()` releases it, never on a vehicle the player already drives; no hint asks
+  for it. Braked with empty cylinders: read `brake_manual_position` first. *(10-09 SN61 stood on
+  its hand brake after the player took it on scenery_loaded)*
 * Only a vehicle standing on a track is stepped, and the component a test built its controller
   from is a description, not the vehicle's: a test of a component's tick puts the vehicle on a
   track and takes the component by `VehicleServer.vehicle_component_get()`. After an operation,

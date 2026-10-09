@@ -63,6 +63,14 @@ func test_the_hints_start_it_and_the_independent_brake_stops_it() -> void:
         await _hold(&"local_brake_decrease")
         if brake.get_local_position_normalized() == before:
             break
+    # the hand brake a standing vehicle is built with (CheckLocomotiveParameters(), Mover.cpp:8946)
+    # is the player's to release: AutoRewident() releases it only on vehicles nobody drives by hand
+    # (Driver.cpp:2193-2245) and no hint asks for it - the original cues no "manualbrakoff"
+    while brake.get_manual_position() > 0:
+        var before:int = brake.get_manual_position()
+        await key_tap(&"manual_brake_decrease")
+        if brake.get_manual_position() == before:
+            break
     for _step:int in MAX_DRIVING_STEPS:
         if VehicleServer.vehicle_get_speed(occupied) >= DRIVING_SPEED or not _running():
             break

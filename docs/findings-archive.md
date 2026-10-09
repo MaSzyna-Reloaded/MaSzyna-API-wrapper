@@ -4,6 +4,26 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-10-09 - SN61 stood on its hand brake after the player took it on scenery_loaded
+
+* **Symptom:** `test_zzz_driver_hints_sn61_v2.gd` red since 2e6e863: SN61-02 started by the
+  hints, master controller at 8, Ft = -57 kN, yet `speed` 0 with `brake_force` 107 840 N and
+  empty cylinders.
+* **What proved it:** the test run with the state logged per step: `brake_manual_position` was
+  20 (ManualBrakePosNo) before the first step and stayed there. 85 kN (MBF) x BCN 3 x friction
+  0.42 = 108 kN, the force measured.
+* **Cause:** `CheckLocomotiveParameters(ReadyFlag = fVel != 0)` (DynObj.cpp:2034) puts every
+  standing vehicle on its full hand brake (Mover.cpp:8946). Only `AutoRewident()` releases it,
+  and only on vehicles nobody drives by hand (`AIControllFlag || d != pVehicle`,
+  Driver.cpp:2193; `MaszynaLegacyDriverBraking._set_brake_delays()`). The original cues no
+  "manualbrakoff" hint. Before 2e6e863 the player took the vehicle a frame after
+  `scenery_loaded`, after the AI's first update had released it; since then the player is in the
+  cab first. The game matches the original; the test followed the hints only.
+* **Fix:** the test releases the hand brake by its key before moving off, as
+  `MaszynaStartupTest.run_startup()` does.
+* **Rule:** a vehicle braked with empty cylinders - read `brake_manual_position` first; a test
+  that drives a vehicle taken from the start releases its hand brake itself.
+
 ## 2026-10-01 - style-check red behind a green local check
 
 * **Symptom:** `style-check / clang-tidy` failed on the PR with

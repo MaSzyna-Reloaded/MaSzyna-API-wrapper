@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://addons/libmaszyna/debug_hud/mover_switches_power_source.gd" id="1_power_source"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://addons/libmaszyna/debug_hud/switch.tscn" id="2_switch"]
 [ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/vertical_gauge.tscn" id="9_vgauge"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/not_applicable_label.tscn" id="not_applicable"]
 
 [node name="PowerSource" type="VBoxContainer"]
 script = ExtResource("1_power_source")
@@ -125,5 +126,9 @@ label = "Pantograph tank"
 [node name="RefreshTimer" type="Timer" parent="."]
 wait_time = 0.1
 autostart = true
+
+[node name="NotApplicable" parent="." instance=ExtResource("not_applicable")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

@@ -19,6 +19,7 @@ func _ready() -> void:
 func _do_update():
     super._do_update()
     _load = _component(VehicleComponentType.COMPONENT_LOAD) as RailVehicleLoad
+    _show_applicable(not _load == null)
 
 
 func _on_refresh_timer_timeout() -> void:

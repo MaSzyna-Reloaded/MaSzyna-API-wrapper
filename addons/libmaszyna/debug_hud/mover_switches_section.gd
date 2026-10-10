@@ -28,6 +28,16 @@ func _do_update():
     universal_controller = _rail_component(RailVehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as RailVehicleUniversalController
 
 
+## A section of a component the vehicle does not have says so instead of its controls - they would
+## keep the previous vehicle's values and send commands nobody takes. Called by the section when it
+## takes its component, before it picks which of its own groups to show.
+func _show_applicable(applicable:bool) -> void:
+    for child:Node in get_children():
+        if child is CanvasItem:
+            child.visible = applicable
+    %NotApplicable.visible = not applicable
+
+
 func _component(type:VehicleComponentType.Type) -> VehicleComponent:
     return VehicleServer.vehicle_component_get(target_vehicle, type)
 

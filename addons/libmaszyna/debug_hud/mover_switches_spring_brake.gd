@@ -6,6 +6,7 @@ var _spring_brake:RailVehicleSpringBrake
 func _do_update():
     super._do_update()
     _spring_brake = _rail_component(RailVehicleComponentType.COMPONENT_SPRING_BRAKE) as RailVehicleSpringBrake
+    _show_applicable(not _spring_brake == null)
 
 
 func _on_refresh_timer_timeout() -> void:

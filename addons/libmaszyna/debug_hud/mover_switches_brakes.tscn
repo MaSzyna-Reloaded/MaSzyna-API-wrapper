@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://ddag4vhhuox0t" path="res://addons/libmaszyna/debug_hud/knob.tscn" id="2_jocun"]
 [ext_resource type="PackedScene" uid="uid://dy8wkx8wr4gjf" path="res://addons/libmaszyna/debug_hud/button.tscn" id="3_igujr"]
 [ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/vertical_gauge.tscn" id="9_vgauge"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/debug_hud/not_applicable_label.tscn" id="not_applicable"]
 
 [node name="Brakes" type="VBoxContainer" unique_id=207886123]
 script = ExtResource("1_jocun")
@@ -93,5 +94,9 @@ label = "Local brake"
 [node name="RefreshTimer" type="Timer" parent="."]
 wait_time = 0.1
 autostart = true
+
+[node name="NotApplicable" parent="." instance=ExtResource("not_applicable")]
+unique_name_in_owner = true
+layout_mode = 2
 
 [connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

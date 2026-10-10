@@ -6,6 +6,7 @@ var _brakes:RailVehicleBrake
 func _do_update():
     super._do_update()
     _brakes = _rail_component(RailVehicleComponentType.COMPONENT_BRAKES) as RailVehicleBrake
+    _show_applicable(not _brakes == null)
 
 
 func _on_refresh_timer_timeout() -> void:

@@ -10,6 +10,7 @@ var _power_source:RailVehicleEnginePowerSource
 func _do_update():
     super._do_update()
     _power_source = _rail_component(RailVehicleComponentType.COMPONENT_ENGINE_POWER_SOURCE) as RailVehicleEnginePowerSource
+    _show_applicable(not _power_source == null)
     # A native enum is no Dictionary in GDScript - its names come from ClassDB
     var source_name:String = "-"
     if _power_source:

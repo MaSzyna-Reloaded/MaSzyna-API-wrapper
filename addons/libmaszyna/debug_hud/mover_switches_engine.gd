@@ -12,6 +12,7 @@ func _do_update():
     var engine:RailVehicleEngine = _component(VehicleComponentType.COMPONENT_ENGINE) as RailVehicleEngine
     _diesel_engine = engine as RailVehicleDieselEngine
     _electric_engine = engine as RailVehicleElectricEngine
+    _show_applicable(not engine == null)
     # A native enum is no Dictionary in GDScript - its names come from ClassDB
     var type_name:String = "-"
     if engine:

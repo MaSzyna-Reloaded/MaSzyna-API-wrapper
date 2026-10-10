@@ -6,6 +6,7 @@ var _doors:RailVehicleDoors
 func _do_update():
     super._do_update()
     _doors = _component(VehicleComponentType.COMPONENT_DOORS) as RailVehicleDoors
+    _show_applicable(not _doors == null)
 
 
 func _on_refresh_timer_timeout() -> void:

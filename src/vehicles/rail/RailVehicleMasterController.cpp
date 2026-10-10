@@ -28,6 +28,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("set_step_down_delay", "value"), &RailVehicleMasterController::set_step_down_delay);
         ClassDB::bind_method(D_METHOD("get_step_down_delay"), &RailVehicleMasterController::get_step_down_delay);
+        ClassDB::bind_method(
+                D_METHOD("set_tachometer_max_speed", "value"), &RailVehicleMasterController::set_tachometer_max_speed);
+        ClassDB::bind_method(
+                D_METHOD("get_tachometer_max_speed"), &RailVehicleMasterController::get_tachometer_max_speed);
 
         ADD_PROPERTY(
                 PropertyInfo(Variant::INT, "main_position_count"), "set_main_position_count",
@@ -44,6 +48,9 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_delay"), "set_initial_delay", "get_initial_delay");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "step_delay"), "set_step_delay", "get_step_delay");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "step_down_delay"), "set_step_down_delay", "get_step_down_delay");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tachometer_max_speed"), "set_tachometer_max_speed",
+                "get_tachometer_max_speed");
 
         ClassDB::bind_method(D_METHOD("get_main_position"), &RailVehicleMasterController::get_main_position);
         ClassDB::bind_method(D_METHOD("get_second_position"), &RailVehicleMasterController::get_second_position);
@@ -151,5 +158,13 @@ namespace godot {
 
     double RailVehicleMasterController::get_step_down_delay() const {
         return step_down_delay;
+    }
+
+    void RailVehicleMasterController::set_tachometer_max_speed(const double p_value) {
+        tachometer_max_speed = p_value;
+    }
+
+    double RailVehicleMasterController::get_tachometer_max_speed() const {
+        return tachometer_max_speed;
     }
 } // namespace godot

@@ -479,8 +479,9 @@ namespace godot {
                 continue;
             }
             const double remaining = track->switch_desired_offset - track->switch_f_offset;
-            const double step = track->switch_offset_speed * delta;
-            if (Math::abs(remaining) <= step || track->switch_offset_speed <= 0.0) {
+            // Track.cpp:1944 - the blade moves at a constant speed
+            const double step = SWITCH_OFFSET_SPEED * delta;
+            if (Math::abs(remaining) <= step) {
                 _set_switch_f_offset(*track, track->switch_desired_offset);
                 moving_switches.remove_at(index);
                 emit_signal(switch_movement_finished_signal, track_rid, track->active_track);
@@ -1206,16 +1207,11 @@ namespace godot {
 
         moving_switches.erase(p_track);
 
-        const double remaining = Math::abs(track->switch_desired_offset - track->switch_f_offset);
-        const double full_distance = SWITCH_MAX_OFFSET + (track->switch_f_offset_delay * 2.0);
-        if (remaining <= 0.0 || full_distance <= 0.0) {
+        if (track->switch_desired_offset == track->switch_f_offset) {
             _set_switch_f_offset(*track, track->switch_desired_offset);
             emit_signal(switch_movement_finished_signal, p_track, p_active_track);
             return;
         }
-        // the whole range in SWITCH_FULL_DURATION, so a shorter move simply takes proportionally
-        // less time - the constant speed the Tween's duration used to express
-        track->switch_offset_speed = full_distance / SWITCH_FULL_DURATION;
         moving_switches.push_back(p_track);
         last_switch_step_usec = Time::get_singleton()->get_ticks_usec();
         _set_switch_processing(true);

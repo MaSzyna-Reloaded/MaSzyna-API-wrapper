@@ -25,6 +25,8 @@ namespace godot {
             static constexpr double TACHOMETER_WHEEL_SPEED_FACTOR = 11.31; // Train.cpp:8588
             static constexpr double TACHOMETER_MAX_SPEED_FACTOR = 1.05;    // Train.cpp:8583
             static constexpr double TACHOMETER_MIN_VELOCITY = 1.0;         // Train.cpp:8602
+            static constexpr double TACHOMETER_MOVING_VELOCITY = 5.0;      // Train.cpp:8594
+            static constexpr double TACHOMETER_SWING_RANGE = 4.0;          // Train.cpp:8597
             static constexpr double TACHOMETER_JUMP_OFFSET = 2.0;          // Train.cpp:8595
             static constexpr double TACHOMETER_JUMP_RANDOM_RANGE = 3.0;    // Train.cpp:8595
             static constexpr double TACHOMETER_JUMP_SCALE = 0.5;           // Train.cpp:8595

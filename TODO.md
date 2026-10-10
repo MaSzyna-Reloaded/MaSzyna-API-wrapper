@@ -255,12 +255,11 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   only register what `LegacyCabinUnmodelledControls` registers anyway - fold them in.
 * A tile's placeholder guesses its width (`TileGrid.PLACEHOLDER_STRETCH`): FIZ `Dim=` is parsed
   nowhere for `MaszynaSceneryInfo.Vehicle`.
-* **Port errors found while naming the magic numbers**
-  (`REQUIRED_CLEANING_BEFORE_MERGE_TO_UPSTREAM.md`):
-  * RC-125: the cab shake's `jolt_limit` is 0.15 (original 2.0, `DynObj.h:839`), and the random
-    jolt at speed (`DynObj.cpp:8113-8123`) is not ported
-  * RC-129: the Hasler needle ignores the FIZ's `MaxTachoSpeed` (`Train.cpp:8584-8587`) and the
-    random swing below 5 km/h (`Train.cpp:8594-8597`)
+* **Cab shake** (`Cabin3D::_process_engine_shake()`, `TDynamicObject::update_shake`,
+  DynObj.cpp:8048-8137): the acceleration-driven base shake (`AccN`, `AccVert`, `AccSVBased` with
+  `Global.ShakingMultiplier*`, `:8102-8109`) and the hunting shake (`:8083-8097`) are not ported,
+  and the cab shakes only when its vehicle has a diesel engine - the original's base shake moves
+  every cab (`:8064-8065` limits only the engine's vibration to a diesel).
 
 ## Translations
 
@@ -397,17 +396,20 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   distance).
 * A vehicle is clicked in free camera only while its model is detailed; its tooltip shows the
   name taken at registration.
-* **Port errors found while naming the magic numbers**
-  (`REQUIRED_CLEANING_BEFORE_MERGE_TO_UPSTREAM.md`):
-  * RC-124: a Bare coupler is built from `max_velocity` where the original takes `Ftmax`
-    (`Mover.cpp:10666-10671`)
-  * RC-126: the track width defaults to 1.6 (original 1.435, `Track.h:205`), and the switch
-    blade moves by a duration instead of `fOffsetSpeed` (`Track.h:67`)
-  * RC-127: doors `VOLTAGE_112` are never powered; the Mover knows 110 V (`Mover.cpp:8768`)
-  * RC-128: lighting defaults off the original (`LightsDefPos` 1, the alternative source's 24 V
-    and 495), and bound headlight properties nobody reads
-  * RC-130: the brake's control pipe ignores `HiPP` (`Mover.cpp:10469-10471`), and `NBpA` is
-    clamped where `LoadFIZ_Brake` does not clamp it
+* **Headlight properties nobody reads**: `RailVehicleLighting.head_light_color` and the normal
+  and high-beam multipliers are parsed but not drawn - the original tints and scales the head
+  lights by them (`rendering/lightarray.cpp:78-109`); the wrapper applies only the dimmed
+  multiplier (`RailVehicleRenderingServer.cpp:1404`) and a fixed 1.0 otherwise
+  (`E3DNodesBackend.cpp:110`), and has no high beam. `instrument_type` has neither a writer nor a
+  reader.
+* `RailVehicleBrake.friction_elements_per_axle` defaults to 1, the original's `NBpA` to 0
+  (`MOVER.h:1607`), which decides `Mover.cpp:5225`.
+* The switch blade is stepped on the wall clock (`TrackServer`, `Time::get_ticks_usec()`), the
+  original's on the simulation's delta (`Track.cpp:1944`).
+* **The second configuration pass runs only with the whole vehicle**
+  (`VehicleController::apply_configuration()`): a component applied again alone - `set_enabled`,
+  `mark_dirty`, `add_component` to a running vehicle, the wipers' count from the appearance - does
+  not run `apply_vehicle_config()` (REQUIRED_CLEANING RC-045).
 
 ## Rendering
 

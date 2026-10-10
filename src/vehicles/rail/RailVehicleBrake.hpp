@@ -269,7 +269,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, cylinder_gear_ratio, 0.0);
             MAKE_MEMBER_GS(double, cylinder_gear_ratio_low, 0.0);
             MAKE_MEMBER_GS(double, cylinder_gear_ratio_high, 0.0);
-            MAKE_MEMBER_GS(double, pipe_pressure_max, 5.0);
+            /* HiPP [bar]; 0 when the FIZ gives none - the control pipe then starts near 5 bar */
+            MAKE_MEMBER_GS(double, pipe_pressure_max, 0.0);
             MAKE_MEMBER_GS(double, pipe_pressure_min, 3.5);
             MAKE_MEMBER_GS(double, tank_volume_main, 0.0);
             MAKE_MEMBER_GS(double, tank_volume_aux, 0.0);

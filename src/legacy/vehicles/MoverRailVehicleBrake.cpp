@@ -12,7 +12,6 @@
 namespace godot {
     namespace {
         /* LoadFIZ_Brake (Mover.cpp:10394-10475) */
-        constexpr int MAX_FRICTION_ELEMENTS_PER_AXLE = 4; // MOVER.h:1607 NBpA: 0, 1, 2 or 4
         /* A pressure below it means the data gives none (Mover.cpp:10416, 10423) */
         constexpr double MIN_BRAKE_PRESSURE = 0.01;
         /* The control pipe starts slightly off its nominal pressure (Mover.cpp:10469) */
@@ -604,7 +603,7 @@ namespace godot {
                 brake_valve_to_subsystem_map.find(p_mover->BrakeValve);
         p_mover->BrakeSubsystem = it != brake_valve_to_subsystem_map.end() ? it->second : TBrakeSubSystem::ss_None;
 
-        p_mover->NBpA = CLAMP<int, int, int>(get_friction_elements_per_axle(), 0, MAX_FRICTION_ELEMENTS_PER_AXLE);
+        p_mover->NBpA = get_friction_elements_per_axle();
         p_mover->MaxBrakeForce = get_brake_force_max();
         p_mover->BrakeValveSize = get_est_valve_size();
         p_mover->TrackBrakeForce =
@@ -648,12 +647,16 @@ namespace godot {
             p_mover->P2FTrans = 0;
         }
 
-        p_mover->CntrlPipePress = DEFAULT_CONTROL_PIPE_PRESSURE +
+        // Mover.cpp:10469-10471 - the control pipe starts slightly off its nominal pressure, unless
+        // the FIZ gives HiPP (pipe_pressure_max 0 means it does not), and the high pressure is that
+        p_mover->CntrlPipePress =
+                get_pipe_pressure_max() > 0.0
+                        ? get_pipe_pressure_max()
+                        : DEFAULT_CONTROL_PIPE_PRESSURE +
                                   (CONTROL_PIPE_PRESSURE_JITTER *
                                    (UtilityFunctions::randf_range(0.0, CONTROL_PIPE_PRESSURE_JITTER_RANGE) -
                                     UtilityFunctions::randf_range(0.0, CONTROL_PIPE_PRESSURE_JITTER_RANGE)));
-        /* PipePress i HighPipePress musza byc skopiowane */
-        p_mover->HighPipePress = get_pipe_pressure_max();
+        p_mover->HighPipePress = p_mover->CntrlPipePress;
         p_mover->LowPipePress = get_pipe_pressure_min();
         // Mover.cpp:10474 - LoadFIZ derives it; the time-controlled handles of the AI steer by it
         p_mover->DeltaPipePress = p_mover->HighPipePress - p_mover->LowPipePress;

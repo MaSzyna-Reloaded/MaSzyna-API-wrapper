@@ -1,11 +1,13 @@
 #include "Cabin3D.hpp"
 #include "utils/LibMaszynaUnits.hpp"
 #include "vehicles/base/VehicleComponentType.hpp"
+#include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleServer.hpp"
 #include "vehicles/rail/RailVehicleDieselEngine.hpp"
 #include "vehicles/rail/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     namespace {
@@ -193,6 +195,19 @@ namespace godot {
         }
     }
 
+    /* TSpring::ComputateForces (world/Spring.cpp) - the force pulling the cab from its shake offset
+     * towards p_position */
+    Vector3 Cabin3D::_compute_spring_force(const Vector3 &p_position) const {
+        const Vector3 spring_delta = p_position - shake_offset;
+        const double distance = spring_delta.length();
+        if (distance <= SPRING_REST_LENGTH) {
+            return {};
+        }
+        double force = (distance - SPRING_REST_LENGTH) * shake_spring_stiffness;
+        force += distance * shake_spring_damping;
+        return spring_delta / static_cast<real_t>(distance) * static_cast<real_t>(-force);
+    }
+
     void Cabin3D::_process_engine_shake(const double p_delta) {
         Vector3 shake_vector;
         const double engine_revolutions = Math::abs(engine->get_rpm_count());
@@ -212,16 +227,20 @@ namespace godot {
                     fade_out);
         }
 
-        const Vector3 spring_delta = shake_vector - shake_offset;
-        const double distance = spring_delta.length();
-        Vector3 spring_force;
-        if (distance > SPRING_REST_LENGTH) {
-            double force = (distance - SPRING_REST_LENGTH) * shake_spring_stiffness;
-            force += distance * shake_spring_damping;
-            spring_force = spring_delta / static_cast<real_t>(distance) * static_cast<real_t>(-force);
+        Vector3 shake = _compute_spring_force(shake_vector) * SHAKE_FORCE_GAIN;
+        // the extra shake at increased velocity (DynObj.cpp:8102, 8113-8123)
+        const double velocity = MIN(Math::abs(engine->get_controller()->get_speed()), SHAKE_MAX_VELOCITY);
+        if (UtilityFunctions::randf_range(0.0, velocity) > SHAKE_JOLT_MIN_VELOCITY) {
+            const double jolt_range = velocity * 2.0;
+            const auto jolt = [velocity, jolt_range]() {
+                return static_cast<real_t>(
+                        (UtilityFunctions::randf_range(0.0, jolt_range) - velocity) /
+                        (jolt_range * SHAKE_JOLT_DIVISOR));
+            };
+            shake += _compute_spring_force(
+                    Vector3(jolt(), jolt(), jolt()) * shake_jolt_scale * static_cast<real_t>(SHAKE_FORCE_GAIN));
         }
-
-        const Vector3 shake = spring_force * SHAKE_FORCE_GAIN * SHAKE_FORCE_ATTENUATION;
+        shake *= static_cast<real_t>(SHAKE_FORCE_ATTENUATION);
         const double damping =
                 (shake_jolt_scale.x + shake_jolt_scale.y + shake_jolt_scale.z) / SHAKE_JOLT_SCALE_DIVISOR;
         shake_velocity -= (shake + shake_velocity * SHAKE_VELOCITY_DAMPING) * static_cast<real_t>(damping);

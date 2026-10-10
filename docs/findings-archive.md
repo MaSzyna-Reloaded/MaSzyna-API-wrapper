@@ -4327,3 +4327,25 @@ lighting or the trainset.
   releasing position on an EP brake (maszyna-reloaded#3).
 * **Rule:** a unit with an EP handle that "does not move" is read on its cylinders first - an FVel6
   holds them at "drive" (0) and releases only at -1.
+
+
+## 2026-10-10 Configuration that depended on the order of the FIZ sections
+
+* **Symptom:** none reported. Porting REQUIRED_CLEANING RC-124 (a bare coupler built from
+  `max_velocity` instead of `Ftmax`) showed that `Ftmax` is not there yet when the coupler is
+  configured.
+* **What proved it:** the original reads a FIZ line by line, and `LoadFIZ_BuffCoupl`
+  (`Mover.cpp:10663-10672`) reads `Ftmax` before `LoadFIZ_Engine` has set it (`:11166`, `:11251`)
+  - in the game's data `BuffCoupl.` comes before `Engine:` (`411d-025.fiz`: lines 7 and 22), so
+  the original's bare coupler sees `Ftmax == 0`. The wrapper applies its components in the same
+  order (`fiz_vehicle_builder.gd`, `context.parts`), so reading the Mover's `Ftmax` there
+  repeats it. The same order decided `SpeedCtrl` (`EngineType` and `ScndCtrlPosNo` written by the
+  engine and Cntrl.) and an EZT's default `IminLo`/`IminHi` (the controller saw 0 before the
+  engine's Circuit: wrote them, and the engine then overwrote the defaults with its own zeros).
+* **Fix:** `VehicleController::apply_configuration()` has a second pass: the controller's and
+  every component's `apply_vehicle_config()`, run after every component applied its own
+  configuration. The bare coupler takes the engine's `maximum_traction_force`, the speed
+  control the engine's kind and the master controller's `second_position_count`, the controller
+  the EZT thresholds the engine left at zero.
+* **Rule:** a configuration value that depends on another component is applied in the second
+  pass, from that component's properties - never from the order of the FIZ sections.

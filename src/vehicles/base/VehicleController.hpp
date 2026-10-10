@@ -137,6 +137,9 @@ namespace godot {
             virtual double get_total_distance() const = 0;
             virtual Direction get_direction() const = 0;
             virtual void apply_config() = 0;
+            /// The second pass of apply_configuration(): what depends on the whole vehicle, written
+            /// once every component has applied its own configuration
+            virtual void apply_vehicle_config() {}
             virtual bool is_physics_active() const = 0;
             static void _bind_methods();
             /* This vehicle's handle in VehicleServer, set when the server attaches it - what

@@ -20,7 +20,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("remove", "path"), &ResourceCache::remove);
         ClassDB::bind_method(D_METHOD("get_file_path", "path"), &ResourceCache::get_file_path);
         ClassDB::bind_method(D_METHOD("clear"), &ResourceCache::clear);
-        ClassDB::bind_method(D_METHOD("get_cache_dir"), &ResourceCache::get_cache_dir, DEFVAL(""));
+        ClassDB::bind_method(D_METHOD("get_cache_dir"), &ResourceCache::get_cache_dir);
 
         ADD_PROPERTY(
                 PropertyInfo(

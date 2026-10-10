@@ -100,6 +100,7 @@ namespace godot {
             double get_total_distance() const override;
             Direction get_direction() const override;
             void apply_config() override;
+            void apply_vehicle_config() override;
             double process_movement(double p_delta) override;
             void update_location() override;
             void update_neighbour(

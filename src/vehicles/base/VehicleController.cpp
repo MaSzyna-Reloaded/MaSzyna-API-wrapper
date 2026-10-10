@@ -129,16 +129,23 @@ namespace godot {
         }
     }
 
-    /* Applying the vehicle's configuration to the backend: the vehicle's own, then every
-     * component's, in registration order. The signal is emitted afterwards and means exactly
-     * "the backend now carries this" - it is not how the components are reached, because a
-     * component of this vehicle is applied by name here rather than by whoever happens to be
-     * connected. */
+    /* Applying the vehicle's configuration to the backend, in two passes. The first writes what
+     * each part owns alone - the vehicle's own, then every component's, in registration order
+     * (the order of the FIZ sections). The second writes what depends on other parts of the
+     * vehicle (a bare coupler on the engine's tractive force), so it never depends on that order.
+     * The signal is emitted afterwards and means exactly "the backend now carries this" - it is
+     * not how the components are reached, because a component of this vehicle is applied by name
+     * here rather than by whoever happens to be connected. */
     void VehicleController::apply_configuration() {
         apply_config();
         for (const Ref<VehicleComponent> &component: components) {
             component->apply_config();
         }
+        apply_vehicle_config();
+        for (const Ref<VehicleComponent> &component: components) {
+            component->apply_vehicle_config();
+        }
+        emit_config_changed();
         emit_signal(simulation_configured_signal);
     }
 

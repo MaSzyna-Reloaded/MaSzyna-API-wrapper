@@ -176,6 +176,8 @@ namespace godot {
 
     void VehicleComponent::_apply_configuration() {};
 
+    void VehicleComponent::apply_vehicle_config() {}
+
     /* Writing the component's configuration into the backend and saying so. A component that is
      * not in a vehicle yet, or whose vehicle has not started its backend yet, simply has nowhere
      * to write - it is configured before it is attached, and initialize() applies all of it. */
@@ -208,10 +210,11 @@ namespace godot {
         return enabled;
     }
 
-    void VehicleComponent::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        if (train_controller_node != nullptr) {
-            train_controller_node->send_command(p_command, p_p1, p_p2);
+    Variant VehicleComponent::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+        if (train_controller_node == nullptr) {
+            return {};
         }
+        return train_controller_node->send_command(p_command, p_p1, p_p2);
     }
 
 } // namespace godot

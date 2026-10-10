@@ -211,6 +211,13 @@ follow the same logic, defaults included. It runs when the vehicle's simulation 
 (`VehicleController::simulation_configured_signal`), when a component joins a vehicle that is already running, and
 after `mark_dirty()`. Every run is announced with the vehicle's `config_changed` signal.
 
+`VehicleController::apply_configuration()` configures a vehicle in two passes. The first is every
+`_apply_configuration()` - the controller's own `apply_config()`, then each component's, in the order of the FIZ
+sections - and writes only what the component owns alone. The second is `apply_vehicle_config()`, run once all of
+them are done: it writes what depends on another component (a bare coupler on the engine's maximum tractive force,
+the speed control on the engine's kind), read from that component's properties. A value of another component is
+never read in `_apply_configuration()`: there it depends on whether its section came first.
+
 > NOTE: In the legacy game `LoadFIZ_*` logic was called just once while loading the scenery, so the state of a vehicle
 > was always clean. MaSzyna Reloaded allows to re-configure vehicles at runtime, but the original Mover can produce
 > unexpected results in such cases. A some "resetting" or re-initializing logic may be necessary to add here.

@@ -59,6 +59,11 @@ anything. Open work belongs in `TODO.md`.
   *(10-06 a cab change in the 36WEa froze the game)*
 
 ## Porting the original engine
+* A configuration value that depends on another component (a bare coupler on the engine's
+  `Ftmax`, `SpeedCtrl` on the engine kind and `SCPN`) is applied in the second pass,
+  `apply_vehicle_config()`, from the other component's properties - never from what the FIZ
+  section order happened to write into the Mover first. *(10-10 configuration that depended on
+  the order of the FIZ sections)*
 * A vehicle's backend is configured once, in `TDynamicObject::Init()`'s order: every FIZ value, the
   load, then `CheckLocomotiveParameters()` once - nothing configured after it, or it undoes what it
   derived. A test builds a vehicle through its description, as the game does, not by adding

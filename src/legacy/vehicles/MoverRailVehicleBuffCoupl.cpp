@@ -2,6 +2,7 @@
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "utils/LibMaszynaUnits.hpp"
 #include "vehicles/rail/RailVehicleBuffCoupl.hpp"
+#include "vehicles/rail/RailVehicleEngine.hpp"
 
 namespace godot {
     namespace {
@@ -58,18 +59,16 @@ namespace godot {
     }
 
 
+    TCoupling *MoverRailVehicleBuffCoupl::_get_coupling(TMoverParameters *p_mover) const {
+        // LoadFIZ_BuffCoupl (Mover.cpp:10619): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
+        return &p_mover->Couplers
+                        [get_buffer_location() == BufferLocation::BUFFER_LOCATION_BACK ? end::rear : end::front];
+    }
+
     void MoverRailVehicleBuffCoupl::_apply_configuration() {
         TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
-        // LoadFIZ_BuffCoupl (Mover.cpp:10619): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
-        TCoupling *coupler;
-        if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BACK) {
-            coupler = &p_mover->Couplers[end::rear];
-        } else {
-            coupler = &p_mover->Couplers[end::front];
-        }
-        const double mass = train_controller_node->get_mass();
-        const double max_velocity = train_controller_node->get_max_velocity();
+        TCoupling *coupler = _get_coupling(p_mover);
         std::map<CouplerType, TCouplerType> coupler_types{
                 {COUPLER_TYPE_AUTOMATIC, TCouplerType::Automatic},
                 {COUPLER_TYPE_SCREW, TCouplerType::Screw},
@@ -104,15 +103,6 @@ namespace godot {
             coupler->FmaxC *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
             coupler->SpringKB *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
             coupler->FmaxB *= LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
-        } else if (coupler->CouplerType == TCouplerType::Bare) {
-            // the original takes Ftmax where this takes max_velocity - REQUIRED_CLEANING RC-124
-            coupler->SpringKC = (BARE_COUPLER_SPRING_KC_PER_MASS * mass) + (max_velocity / COUPLER_DMAX);
-            coupler->DmaxC = COUPLER_DMAX;
-            coupler->FmaxC = (BARE_COUPLER_FMAXC_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * max_velocity);
-            coupler->SpringKB = (BARE_COUPLER_SPRING_KB_PER_MASS * mass) + (max_velocity / COUPLER_DMAX);
-            coupler->DmaxB = COUPLER_DMAX;
-            coupler->FmaxB = (BARE_COUPLER_FMAXB_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * max_velocity);
-            coupler->beta = BARE_COUPLER_BETA;
         } else if (coupler->CouplerType == TCouplerType::Articulated) {
             coupler->SpringKC = ARTICULATED_COUPLER_SPRING_KC * LibMaszynaUnits::NEWTONS_PER_KILONEWTON;
             coupler->DmaxC = COUPLER_DMAX;
@@ -140,6 +130,35 @@ namespace godot {
             rear.PowerCoupling = coupler->PowerCoupling;
             rear.PowerFlag = coupler->PowerFlag;
             rear.control_type = coupler->control_type;
+        }
+    }
+
+    /* A bare coupler is sized by the vehicle's mass and its maximum tractive force
+     * (LoadFIZ_BuffCoupl, Mover.cpp:10663-10672). The original reads Ftmax as far as its FIZ
+     * has been parsed, which is 0 before an Engine: section that comes after BuffCoupl. (see
+     * FINDINGS.md); the engine's property is the force the formula means. */
+    void MoverRailVehicleBuffCoupl::apply_vehicle_config() {
+        if (get_coupler_type() != COUPLER_TYPE_BARE) {
+            return;
+        }
+        TMoverParameters *p_mover = get_mover();
+        ASSERT_MOVER(p_mover);
+        const double mass = train_controller_node->get_mass();
+        const Ref<RailVehicleEngine> engine =
+                train_controller_node->get_component(VehicleComponentType::COMPONENT_ENGINE);
+        const double traction_force = engine.is_valid() ? engine->get_maximum_traction_force() : 0.0;
+        const auto size_bare_coupler = [mass, traction_force](TCoupling &p_coupler) {
+            p_coupler.SpringKC = (BARE_COUPLER_SPRING_KC_PER_MASS * mass) + (traction_force / COUPLER_DMAX);
+            p_coupler.DmaxC = COUPLER_DMAX;
+            p_coupler.FmaxC = (BARE_COUPLER_FMAXC_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * traction_force);
+            p_coupler.SpringKB = (BARE_COUPLER_SPRING_KB_PER_MASS * mass) + (traction_force / COUPLER_DMAX);
+            p_coupler.DmaxB = COUPLER_DMAX;
+            p_coupler.FmaxB = (BARE_COUPLER_FMAXB_PER_MASS * mass) + (BARE_COUPLER_FMAX_PER_FORCE * traction_force);
+            p_coupler.beta = BARE_COUPLER_BETA;
+        };
+        size_bare_coupler(*_get_coupling(p_mover));
+        if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BOTH) {
+            size_bare_coupler(p_mover->Couplers[end::rear]);
         }
     }
 

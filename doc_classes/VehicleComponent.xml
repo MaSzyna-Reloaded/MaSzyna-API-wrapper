@@ -87,12 +87,12 @@
 			</description>
 		</method>
 		<method name="send_command">
-			<return type="void" />
+			<return type="Variant" />
 			<param index="0" name="command" type="String" />
 			<param index="1" name="p1" type="Variant" default="null" />
 			<param index="2" name="p2" type="Variant" default="null" />
 			<description>
-			Sends command to the train, which part belongs to.
+			Sends command to the train, which part belongs to. Returns what the command's handler returned (see [method VehicleController.send_command]).
 			</description>
 		</method>
 		<method name="unregister_command">

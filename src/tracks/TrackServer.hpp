@@ -106,9 +106,8 @@ namespace godot {
              * scan is complete. */
             static constexpr double ENDPOINT_CELL_SIZE = 0.5;
             static constexpr double GRID_CELL_SIZE = 500.0;
-            /* The switch blade travels its whole range in this long (s). The original moves it at
-             * Track.h:67 fOffsetSpeed instead - REQUIRED_CLEANING RC-126. */
-            static constexpr double SWITCH_FULL_DURATION = 2.0;
+            /* Track.h:67 fOffsetSpeed - the blade's linear speed (m/s) */
+            static constexpr double SWITCH_OFFSET_SPEED = 0.1;
             static constexpr int SWITCH_BLADE_SEGMENT_COUNT = 6;
             /* Track.cpp:1371 bladelength */
             static constexpr double SWITCH_BLADE_RATIO = 0.65;
@@ -118,8 +117,8 @@ namespace godot {
             static constexpr double AABB_MARGIN = 5.0;
             /* A roll of this many degrees lifts the outer rail by sin(roll) * this (Segment.cpp:84). */
             static constexpr double ROLL_FIX_FACTOR = 0.75;
-            /* The original's is 1.435 (Track.h:205 fTrackWidth) - REQUIRED_CLEANING RC-126. */
-            static constexpr double DEFAULT_TRACK_WIDTH = 1.6;
+            /* Track.h:205 fTrackWidth */
+            static constexpr double DEFAULT_TRACK_WIDTH = 1.435;
 
             /* Both endpoints of one curve, read out of the GDScript resource once. */
             struct CurvePoints {
@@ -160,8 +159,6 @@ namespace godot {
                     double switch_f_offset = -SWITCH_OFFSET_DELAY;
                     double switch_f_offset1 = -SWITCH_OFFSET_DELAY; // Track.cpp:55
                     double switch_f_offset2 = 0.0;
-                    /* How far the blade still has to travel per second while it is moving. */
-                    double switch_offset_speed = 0.0;
                     int switch_common_endpoint_index = POINT_NONE;
                     PackedInt32Array switch_common_endpoints;
                     /* Indexed by SwitchTrack; -1 where the branch does not exist. */

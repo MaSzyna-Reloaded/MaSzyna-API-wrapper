@@ -34,6 +34,9 @@ namespace godot {
             double initial_delay = 0.0;
             double step_delay = 0.0;
             double step_down_delay = 0.0;
+            /* MaxTachoSpeed: the top of the speed recorder's dial [km/h], 0 for Vmax * 1.05
+             * (Mover.cpp:10815, Train.cpp:8583-8587) */
+            double tachometer_max_speed = 0.0;
 
         public:
             void set_main_position_count(int p_value);
@@ -50,6 +53,8 @@ namespace godot {
             double get_step_delay() const;
             void set_step_down_delay(double p_value);
             double get_step_down_delay() const;
+            void set_tachometer_max_speed(double p_value);
+            double get_tachometer_max_speed() const;
 
             /* Live state, read straight from the backend */
             virtual int get_main_position() const = 0;

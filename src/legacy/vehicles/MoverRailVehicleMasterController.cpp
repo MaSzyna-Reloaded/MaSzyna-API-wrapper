@@ -55,20 +55,23 @@ namespace godot {
         // sound gate (Train.cpp:10091-10103).
         tachometer_velocity = std::min(
                 std::abs(TACHOMETER_WHEEL_SPEED_FACTOR * mover->WheelDiameter * mover->nrot),
-                mover->Vmax * TACHOMETER_MAX_SPEED_FACTOR);
+                get_tachometer_max_speed() != 0.0 ? get_tachometer_max_speed()
+                                                  : mover->Vmax * TACHOMETER_MAX_SPEED_FACTOR);
 
-        // the needle jumps once per simulation second, with a small random error
+        // the needle jumps once per simulation second, with a small random error; below walking
+        // speed it swings at random and stays where it was when the vehicle stops (Train.cpp:8594-8597)
         const double previous_second = std::floor(tachometer_time);
         tachometer_time += p_delta;
         if (std::floor(tachometer_time) != previous_second) {
-            tachometer_velocity_jump =
-                    tachometer_velocity > TACHOMETER_MIN_VELOCITY
-                            ? tachometer_velocity +
-                                      ((TACHOMETER_JUMP_OFFSET -
-                                        UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE) +
-                                        UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE)) *
-                                       TACHOMETER_JUMP_SCALE)
-                            : 0.0;
+            if (tachometer_velocity >= TACHOMETER_MOVING_VELOCITY) {
+                tachometer_velocity_jump =
+                        tachometer_velocity +
+                        ((TACHOMETER_JUMP_OFFSET - UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE) +
+                          UtilityFunctions::randf_range(0.0, TACHOMETER_JUMP_RANDOM_RANGE)) *
+                         TACHOMETER_JUMP_SCALE);
+            } else if (tachometer_velocity > TACHOMETER_MIN_VELOCITY) {
+                tachometer_velocity_jump = UtilityFunctions::randf_range(0.0, TACHOMETER_SWING_RANGE);
+            }
         }
 
         // ticking starts ~1 s after moving off and fades out slowly after stopping

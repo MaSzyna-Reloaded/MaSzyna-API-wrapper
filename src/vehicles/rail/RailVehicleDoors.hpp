@@ -75,7 +75,7 @@ namespace godot {
                 VOLTAGE_0,
                 VOLTAGE_12,
                 VOLTAGE_24,
-                VOLTAGE_112,
+                VOLTAGE_110,
             };
             enum Type {
                 TYPE_SHIFT,

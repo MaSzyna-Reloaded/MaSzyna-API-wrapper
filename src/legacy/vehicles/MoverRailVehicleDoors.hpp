@@ -81,7 +81,7 @@ namespace godot {
             double mirror_left_position = 0.0;
             double mirror_right_position = 0.0;
             const std::map<Voltage, float> voltage_map = {
-                    {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_112, 112.0f}};
+                    {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_110, 110.0f}};
             const std::map<Type, int> door_type_map = {
                     {TYPE_SHIFT, 1}, {TYPE_ROTATE, 2}, {TYPE_FOLD, 3}, {TYPE_PLUG, 4}};
             const std::map<PlatformType, int> door_platform_type_map = {

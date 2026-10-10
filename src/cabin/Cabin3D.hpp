@@ -39,6 +39,9 @@ namespace godot {
             static constexpr double SHAKE_FORCE_ATTENUATION = 0.85;      // DynObj.cpp:8124
             static constexpr double SHAKE_VELOCITY_DAMPING = 100.0;      // DynObj.cpp:8126
             static constexpr double SHAKE_JOLT_SCALE_DIVISOR = 200.0;    // DynObj.cpp:8126
+            static constexpr double SHAKE_MAX_VELOCITY = 150.0;          // DynObj.cpp:8102 [km/h]
+            static constexpr double SHAKE_JOLT_MIN_VELOCITY = 25.0;      // DynObj.cpp:8113 [km/h]
+            static constexpr double SHAKE_JOLT_DIVISOR = 4.0;            // DynObj.cpp:8117
 
             /// The RailVehicleServer handle of the vehicle this cab sits in
             RID vehicle_rid;
@@ -68,8 +71,7 @@ namespace godot {
             double shake_spring_damping = 0.002;   // Spring.h:29 nKd
             /* BaseShake and EngineShake defaults (DynObj.h:837-846) */
             Vector3 shake_jolt_scale = Vector3(0.2, 0.2, 0.1);
-            /* The original's is 2.0 (DynObj.h:839) - REQUIRED_CLEANING RC-125 */
-            double shake_jolt_limit = 0.15;
+            double shake_jolt_limit = 2.0;
             Vector2 shake_angle_scale = Vector2(0.05, 0.1);
             double engine_shake_scale = 2.0;
             double engine_shake_fade_in_rpm = 90.0;
@@ -77,6 +79,7 @@ namespace godot {
             double engine_shake_fade_out_rpm = 600.0;
             double engine_shake_fade_out_factor = 0.5;
 
+            Vector3 _compute_spring_force(const Vector3 &p_position) const;
             void _process_engine_shake(double p_delta);
             void _resolve_engine();
             void _on_vehicle_changed(const RID &p_vehicle);

@@ -564,14 +564,6 @@ namespace godot {
 
         mover->CategoryFlag = get_category();
         mover->TrainType = get_train_type();
-        // an EZT's automatic start thresholds before an engine's Circuit: writes its own
-        // (LoadFIZ_Param, Mover.cpp:10300-10305) - a cab car has no engine to write them, and with
-        // Imin == IminHi == 0 DirectionBackward() switches the high start off forever (Mover.cpp:3250)
-        if (mover->TrainType == Maszyna::dt_EZT && mover->IminLo == 0 && mover->IminHi == 0) {
-            mover->IminLo = EZT_IMIN_LOW;
-            mover->IminHi = EZT_IMIN_HIGH;
-            mover->Imin = mover->IminLo;
-        }
         mover->SandCapacity = static_cast<int>(get_sand_capacity());
         mover->HeatingPower = get_heating_power();
         mover->LightPower = get_light_power();
@@ -588,6 +580,21 @@ namespace godot {
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();
         mover->InactiveCabFlag = get_cntrl_inactive_cab_flag();
         emit_config_changed();
+    }
+
+    /* An EZT's automatic start thresholds where the engine's Circuit: has not written its own
+     * (LoadFIZ_Param, Mover.cpp:10300-10305) - a cab car has no engine to write them, and with
+     * Imin == IminHi == 0 DirectionBackward() switches the high start off forever (Mover.cpp:3250).
+     * Read after every component has applied its configuration, the engine's among them. */
+    void MoverRailVehicleController::apply_vehicle_config() {
+        if (mover == nullptr) {
+            return;
+        }
+        if (mover->TrainType == Maszyna::dt_EZT && mover->IminLo == 0 && mover->IminHi == 0) {
+            mover->IminLo = EZT_IMIN_LOW;
+            mover->IminHi = EZT_IMIN_HIGH;
+            mover->Imin = mover->IminLo;
+        }
     }
 
     void MoverRailVehicleController::_fill_config_dictionary(Dictionary &p_config) const {

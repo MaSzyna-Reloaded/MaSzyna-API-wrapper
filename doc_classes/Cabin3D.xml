@@ -86,7 +86,7 @@
 		</member>
 		<member name="shake_angle_scale" type="Vector2" setter="set_shake_angle_scale" getter="get_shake_angle_scale" default="Vector2(0.05, 0.1)">
 		</member>
-		<member name="shake_jolt_limit" type="float" setter="set_shake_jolt_limit" getter="get_shake_jolt_limit" default="0.15">
+		<member name="shake_jolt_limit" type="float" setter="set_shake_jolt_limit" getter="get_shake_jolt_limit" default="2.0">
 		</member>
 		<member name="shake_jolt_scale" type="Vector3" setter="set_shake_jolt_scale" getter="get_shake_jolt_scale" default="Vector3(0.2, 0.2, 0.1)">
 		</member>

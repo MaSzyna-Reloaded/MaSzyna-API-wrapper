@@ -33,25 +33,25 @@ Legend:
 - [x] [RC-005](#rc-005) Cargo list duplicated by repeated configuration
 - [x] [RC-006](#rc-006) Radio call commands never unregistered ✔
 - [x] [RC-007](#rc-007) `e3d_loaded` connected again on every dirty frame ✔
-- [ ] [RC-008](#rc-008) Headlight colour 255 times overbright ✔
+- [x] [RC-008](#rc-008) Headlight colour 255 times overbright ✔
 - [x] [RC-009](#rc-009) Main switch voltage defaults derived from zero
 - [x] [RC-010](#rc-010) Mover controller commands dereference a null backend
-- [ ] [RC-011](#rc-011) Singleton teardown leaks `TractionServer` and breaks the order ✔
-- [ ] [RC-012](#rc-012) `MaszynaTranslationServer` dereferences `UserSettings` unchecked
-- [ ] [RC-013](#rc-013) `RailVehicleDoors::VOLTAGE_AUTO` not bound
+- [x] [RC-011](#rc-011) Singleton teardown leaks `TractionServer` and breaks the order ✔
+- [x] [RC-012](#rc-012) `MaszynaTranslationServer` dereferences `UserSettings` unchecked
+- [x] [RC-013](#rc-013) `RailVehicleDoors::VOLTAGE_AUTO` not bound
 - [x] [RC-014](#rc-014) State keys published before the simulation is ready
-- [ ] [RC-015](#rc-015) `VehicleComponent::send_command()` discards the command result
+- [x] [RC-015](#rc-015) `VehicleComponent::send_command()` discards the command result
 - [x] [RC-016](#rc-016) Cab control drag signs lost without a mesh
 - [ ] [RC-017](#rc-017) `PlanarMirror3D` default outside its own range
-- [ ] [RC-018](#rc-018) `get_cache_dir` bound with a default for a missing argument
+- [x] [RC-018](#rc-018) `get_cache_dir` bound with a default for a missing argument
 - [x] [RC-019](#rc-019) Mover fields written by two components
-- [ ] [RC-124](#rc-124) Bare coupler built from `max_velocity` instead of `Ftmax`
-- [ ] [RC-125](#rc-125) `Cabin3D` shake: jolt limit and the random jolt
-- [ ] [RC-126](#rc-126) `TrackServer` track width and switch blade speed
-- [ ] [RC-127](#rc-127) Doors `VOLTAGE_112` never powered
-- [ ] [RC-128](#rc-128) Lighting defaults off the original
-- [ ] [RC-129](#rc-129) Tachometer without `MaxTachoSpeed` and the slow jump
-- [ ] [RC-130](#rc-130) Brake control pipe pressure and the `NBpA` clamp
+- [x] [RC-124](#rc-124) Bare coupler built from `max_velocity` instead of `Ftmax`
+- [x] [RC-125](#rc-125) `Cabin3D` shake: jolt limit and the random jolt
+- [x] [RC-126](#rc-126) `TrackServer` track width and switch blade speed
+- [x] [RC-127](#rc-127) Doors `VOLTAGE_112` never powered
+- [x] [RC-128](#rc-128) Lighting defaults off the original
+- [x] [RC-129](#rc-129) Tachometer without `MaxTachoSpeed` and the slow jump
+- [x] [RC-130](#rc-130) Brake control pipe pressure and the `NBpA` clamp
 
 ### Separation of concerns and getters (ALARM)
 
@@ -190,59 +190,6 @@ Legend:
 
 ## Correctness
 
-### RC-008
-
-**Headlight colour 255 times overbright** ✔
-
-* **Where:** `src/vehicles/rail/RailVehicleLighting.hpp:83`
-* **Problem:** `Color(255, 255, 255)` - `Color` takes floats in 0..1, so this is white
-  multiplied by 255.
-* **Fix:** `Color(1, 1, 1)`.
-
-### RC-011
-
-**Singleton teardown leaks `TractionServer` and breaks the order** ✔
-
-* **Where:** `src/register_types.cpp:586-645` (unregister), from `:647` (free)
-* **Rule:** `CODE_STYLE.md` "Singletons C++" (unregister, then `memdelete`, then `nullptr`,
-  per singleton)
-* **Problem:**
-  * `TractionServer` is unregistered and freed only inside
-    `if (has_singleton("RailVehicleServer"))` (`:590-599`). Without that server it leaks.
-  * `MaszynaMoverVehicleServer`, `RailVehicleServer` and every singleton after them down to
-    `UserSettings` are unregistered in one block (`:586-645`) and freed in another (from
-    `:647`).
-* **Fix:** one independent block per singleton, in reverse registration order.
-
-### RC-012
-
-**`MaszynaTranslationServer` dereferences `UserSettings` unchecked**
-
-* **Where:** `src/utils/MaszynaTranslationServer.cpp:25, 48, 65, 78`
-* **Rule:** `CODE_STYLE.md` "Singletons C++" - `get_instance()` does not guarantee a pointer
-* **Problem:** `UserSettings::get_instance()` is dereferenced without a null check, while
-  `GameDataServer` in the same file is checked (`:20-21`).
-* **Fix:** check the pointer once, as for `GameDataServer`.
-
-### RC-013
-
-**`RailVehicleDoors::VOLTAGE_AUTO` not bound**
-
-* **Where:** `src/vehicles/rail/RailVehicleDoors.hpp:74` vs `.cpp:75-78`
-* **Problem:** the enum value `VOLTAGE_AUTO` is declared but not bound with the other voltage
-  constants, so it is missing from Godot.
-* **Fix:** bind it.
-
-### RC-015
-
-**`VehicleComponent::send_command()` discards the command result**
-
-* **Where:** `src/vehicles/base/VehicleComponent.cpp:21-23` (bound), `:211-215` (body)
-* **Problem:** it returns `void` and drops the `Variant` that `VehicleController::send_command()`
-  returns (`VehicleController.cpp:377-394`), so a component - and a modder's script through it -
-  never learns whether its command was accepted (#43).
-* **Fix:** return the controller's result.
-
 ### RC-017
 
 **`PlanarMirror3D` default outside its own range**
@@ -251,14 +198,6 @@ Legend:
 * **Problem:** the default `resolution_scale = 2.0` is outside the inspector range
   `"0.05,1,0.05"`.
 * **Fix:** make the default and the range agree.
-
-### RC-018
-
-**`get_cache_dir` bound with a default for a missing argument**
-
-* **Where:** `src/cache/ResourceCache.cpp:23`
-* **Problem:** `get_cache_dir` takes no arguments but is bound with `DEFVAL("")`.
-* **Fix:** remove the `DEFVAL`.
 
 ### RC-027
 
@@ -301,7 +240,7 @@ Legend:
   * `MoverRailVehicleWheels.hpp:33-35`: `wheel_angle_*_deg` ("vehicle layer's, not the Mover's")
   * `MoverRailVehicleDoors.hpp:81-82`: `mirror_left_position`
   * `MoverRailVehicleLighting.hpp:55`: `headlights_dimmed`
-  * `MoverRailVehicleMasterController.hpp:34-41`: tachometer, `distance_counter`
+  * `MoverRailVehicleMasterController.hpp:36-43`: tachometer, `distance_counter`
   * `MoverRailVehicleController.hpp:28`: `fitted_adapter_models`
 * **Rule:** "if this layer were replaced wholesale, would the field go with it?"
 * **Problem:** replacing the backend would lose vehicle state.
@@ -323,8 +262,8 @@ Legend:
 
 **`Cabin3D` keeps a controller path it says it has not got** ALARM
 
-* **Where:** `src/cabin/Cabin3D.hpp:58, 115-116` vs the comment at `:95-96`; bound at
-  `Cabin3D.cpp:46-52`, accessors `:312-316`; used by
+* **Where:** `src/cabin/Cabin3D.hpp:61, 118-119` vs the comment at `:98-99`; bound at
+  `Cabin3D.cpp:48-54`, accessors `:330-334`; used by
   `addons/libmaszyna/legacy/cabin/maszyna_dynamic_train_cabin.gd:56-60`
 * **Problem:** a bound `NodePath controller_path` to a `VehiclePhysicsNode`, although the class
   says "there is deliberately no path to a controller here" and already holds `vehicle_rid`. The
@@ -335,7 +274,7 @@ Legend:
 
 **`track_get_endpoints()` fills a cache**
 
-* **Where:** `src/tracks/TrackServer.cpp:832-835` → `_endpoints()` at `:275-288`
+* **Where:** `src/tracks/TrackServer.cpp:833-836` → `_endpoints()` at `:275-288`
 * **Rule:** a getter never changes state
 * **Problem:** the getter lazily fills `cached_endpoints` from a `const` method.
 * **Fix:** build the cache in `_set_curves` (`:352`), which already clears it (`:359`).
@@ -351,91 +290,13 @@ Legend:
   `FileAccess.get_8`, but they are `get_*` methods with a side effect.
 * **Decision:** rename them to `read_*`, or accept the `FileAccess` idiom and note it.
 
-### RC-124
-
-**Bare coupler built from `max_velocity` instead of `Ftmax`** ✔
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleBuffCoupl.cpp:72, 108-115`
-* **Problem:** a Bare coupler's `SpringKC`, `FmaxC`, `SpringKB` and `FmaxB` add the vehicle's
-  `max_velocity` (Vmax) where `LoadFIZ_BuffCoupl` adds `Ftmax`, the maximum tractive force
-  (`Mover.cpp:10666-10671`).
-* **Fix:** take `Ftmax`; check that it is set before the coupler applies its configuration.
-
-### RC-125
-
-**`Cabin3D` shake: jolt limit and the random jolt** ✔
-
-* **Where:** `src/cabin/Cabin3D.hpp:72`; `Cabin3D.cpp:224`
-* **Problem:** `shake_jolt_limit` defaults to 0.15, the original's `BaseShake.jolt_limit` to 2.0
-  (`DynObj.h:839`). The extra random shake at speed (`DynObj.cpp:8113-8123`), added to the
-  spring force before the attenuation, is not ported.
-* **Fix:** the original's default and the missing branch.
-
-### RC-126
-
-**`TrackServer` track width and switch blade speed** ✔
-
-* **Where:** `src/tracks/TrackServer.hpp:111, 122`; `TrackServer.cpp:1218`
-* **Problem:** `DEFAULT_TRACK_WIDTH` is 1.6, the original's `fTrackWidth` 1.435 (`Track.h:205`).
-  The blade speed is derived from `SWITCH_FULL_DURATION` (2 s over the full travel); the original
-  moves it at a fixed `fOffsetSpeed = 0.1` (`Track.h:67`, `Track.cpp:1944`), which matches only
-  while the offset delay is the default.
-* **Fix:** the original's width, and `fOffsetSpeed` in place of the duration.
-
-### RC-127
-
-**Doors `VOLTAGE_112` never powered** ✔
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleDoors.hpp:84`;
-  `src/vehicles/rail/RailVehicleDoors.hpp:78`, `.cpp:22, 78`;
-  `addons/libmaszyna/legacy/fiz/fiz_train_doors_parser.gd:83`
-* **Problem:** the voltage maps to 112 V, but the Mover powers doors only at 0, 24 or 110 V
-  (`Mover.cpp:8768`), so doors set to it never move.
-* **Fix:** `VOLTAGE_110` = 110 V, and the FIZ parser's value with it.
-
-### RC-128
-
-**Lighting defaults off the original** ✔
-
-* **Where:** `src/vehicles/rail/RailVehicleLighting.hpp:66, 77-78, 83-88`
-* **Problem:**
-  * `lights_default_selector_position` defaults to 0, the original's `LightsDefPos` to 1
-    (`MOVER.h:1701`), and the selector starts there (`Mover.cpp:11925-11926`).
-  * `light_alternative_max_voltage` 24.0 and `light_alternative_capacity` 495.0 have no source;
-    the original's `TPowerParameters` starts at 0 (`MOVER.h:1032`).
-  * The head light colour, the normal and high-beam multipliers and `instrument_type` are bound
-    but read by nothing.
-* **Fix:** the original's defaults; the unread properties wired or removed.
-
-### RC-129
-
-**Tachometer without `MaxTachoSpeed` and the slow jump** ✔
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleMasterController.cpp:56-71`
-* **Problem:** the needle's limit is always `Vmax * 1.05`; the original takes the FIZ's
-  `MaxTachoSpeed` when it is set (`Train.cpp:8584-8587`, `Mover.cpp:10815`). Below 5 km/h the
-  original's needle swings to a random 0-4 (`Train.cpp:8594-8597`); the port has one rule above
-  1 km/h.
-* **Fix:** port both.
-
-### RC-130
-
-**Brake control pipe pressure and the `NBpA` clamp** ✔
-
-* **Where:** `src/legacy/vehicles/MoverRailVehicleBrake.cpp:597, 641-646`
-* **Problem:** the original reads `HiPP` into `CntrlPipePress` right after the random start
-  value and sets `HighPipePress` from it (`Mover.cpp:10469-10471`); the port keeps the random
-  value and sets `HighPipePress` apart. `NBpA` is clamped to 0..4, which `LoadFIZ_Brake` does not
-  do (`Mover.cpp:10401`).
-* **Fix:** the original's order; the clamp dropped or kept with a reason.
-
 ## Missing events and wiring
 
 ### RC-045
 
 **Component enable lands a tick late through flags**
 
-* **Where:** `src/vehicles/base/VehicleComponent.cpp:201-205` (`set_enabled`), `:139-164`
+* **Where:** `src/vehicles/base/VehicleComponent.cpp:203-207` (`set_enabled`), `:139-164`
   (`process()`), `:11, 135-137` (`mark_dirty`, bound)
 * **Rule:** one road to one effect; no deferral
 * **Problem:** `set_enabled` sets `enabled_changed` and `dirty`, consumed by `process()` on the
@@ -688,11 +549,11 @@ Legend:
 
 * **Where:**
   * Polish comments (AGENTS.md asks for English):
-    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:592, 655`
-  * `MoverRailVehicleBrake.cpp:215`, `MoverRailVehicleLighting.cpp:410`: refer to
+    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:592`
+  * `MoverRailVehicleBrake.cpp:214`, `MoverRailVehicleLighting.cpp:410`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,
-    `VehicleController.cpp:144-145`, `src/vehicles/rail/RailVehicleServer.cpp:2130-2131`
+    `VehicleController.cpp:152-153`, `src/vehicles/rail/RailVehicleServer.cpp:2130-2131`
 
 ### RC-122
 

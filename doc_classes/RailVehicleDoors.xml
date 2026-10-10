@@ -415,6 +415,9 @@
 		<constant name="CONTROLS_MIXED" value="4" enum="Controls">
 			Doors can be closed both manually and remotely
 		</constant>
+		<constant name="VOLTAGE_AUTO" value="0" enum="Voltage">
+			The voltage follows the controls: 24V for remotely controlled doors, 0V otherwise (Mover.cpp:10599)
+		</constant>
 		<constant name="VOLTAGE_0" value="1" enum="Voltage">
 			0V is required in the low voltage circuit. Doors are opened manually
 		</constant>
@@ -424,8 +427,8 @@
 		<constant name="VOLTAGE_24" value="3" enum="Voltage">
 			24V are required in the low voltage circuit to control the doors
 		</constant>
-		<constant name="VOLTAGE_112" value="4" enum="Voltage">
-			112V are required in the low voltage circuit to control the doors
+		<constant name="VOLTAGE_110" value="4" enum="Voltage">
+			110V are required in the low voltage circuit to control the doors
 		</constant>
 		<constant name="TYPE_SHIFT" value="0" enum="Type">
 			Sliding/shifting door type

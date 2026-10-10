@@ -19,7 +19,7 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 RailVehicleDoors, Variant::INT, close_method, "close", PROPERTY_HINT_ENUM,
                 "Passenger,Automatic,Driver,Conductor,Mixed");
-        BIND_PROPERTY_W_HINT(RailVehicleDoors, Variant::INT, voltage, PROPERTY_HINT_ENUM, "Automatic,0V,12V,24V,112V");
+        BIND_PROPERTY_W_HINT(RailVehicleDoors, Variant::INT, voltage, PROPERTY_HINT_ENUM, "Automatic,0V,12V,24V,110V");
         BIND_PROPERTY(RailVehicleDoors, Variant::BOOL, close_warning, "close");
         BIND_PROPERTY(RailVehicleDoors, Variant::BOOL, close_auto_close_warning, "close");
         BIND_PROPERTY(RailVehicleDoors, Variant::FLOAT, open_delay, "open");
@@ -72,10 +72,11 @@ namespace godot {
         BIND_ENUM_CONSTANT(CONTROLS_CONDUCTOR)
         BIND_ENUM_CONSTANT(CONTROLS_MIXED)
 
+        BIND_ENUM_CONSTANT(VOLTAGE_AUTO)
         BIND_ENUM_CONSTANT(VOLTAGE_0)
         BIND_ENUM_CONSTANT(VOLTAGE_12)
         BIND_ENUM_CONSTANT(VOLTAGE_24)
-        BIND_ENUM_CONSTANT(VOLTAGE_112)
+        BIND_ENUM_CONSTANT(VOLTAGE_110)
 
         BIND_ENUM_CONSTANT(TYPE_SHIFT)
         BIND_ENUM_CONSTANT(TYPE_ROTATE)

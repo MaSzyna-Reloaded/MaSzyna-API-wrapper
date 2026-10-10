@@ -57,6 +57,14 @@ namespace godot {
                 TRAINSET_TYPE_CARGO,
                 TRAINSET_TYPE_MIXED,
             };
+            /* Why a raised pantograph lost its line voltage: its arm does not reach the wire found
+             * (DynObj.cpp:3784), there is no wire over it (scene.cpp:112, "Bad traction" when it
+             * had one), or the wire over it carries nothing */
+            enum PantographContactLoss {
+                PANTOGRAPH_CONTACT_LOSS_NOT_REACHING,
+                PANTOGRAPH_CONTACT_LOSS_NO_WIRE,
+                PANTOGRAPH_CONTACT_LOSS_DEAD_WIRE,
+            };
 
             static RailVehicleServer *get_instance() {
                 return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
@@ -355,6 +363,9 @@ namespace godot {
             /* A Radio-Stop reached the vehicle and braked it (TDynamicObject::RadioStop,
              * DynObj.cpp:7229) */
             static const char *vehicle_emergency_signal_received_signal;
+            /* A raised pantograph of the vehicle lost its line voltage (vehicle, pantograph: 0 or 1,
+             * cause: PantographContactLoss) - on the change, as the warnings report it */
+            static const char *vehicle_pantograph_contact_lost_signal;
 
             RailVehicleServer();
 
@@ -590,3 +601,4 @@ namespace godot {
 
 VARIANT_ENUM_CAST(RailVehicleServer::CabinChange);
 VARIANT_ENUM_CAST(RailVehicleServer::TrainsetType);
+VARIANT_ENUM_CAST(RailVehicleServer::PantographContactLoss);

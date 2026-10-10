@@ -634,7 +634,7 @@ Legend:
 **Functional casts instead of `static_cast`**
 
 * **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:954, 1386, 1654`;
-  `RailVehicleServer.cpp:338, 1807, 1816-1817`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
+  `RailVehicleServer.cpp:349, 1818, 1827-1828`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
   `src/legacy/e3d/E3DNodesBackend.cpp:193`
 * **Rule:** `CODE_STYLE.md` "Conversions"
 
@@ -692,7 +692,7 @@ Legend:
   * `MoverRailVehicleBrake.cpp:215`, `MoverRailVehicleLighting.cpp:410`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,
-    `VehicleController.cpp:144-145`, `src/vehicles/rail/RailVehicleServer.cpp:2111-2112`
+    `VehicleController.cpp:144-145`, `src/vehicles/rail/RailVehicleServer.cpp:2130-2131`
 
 ### RC-122
 

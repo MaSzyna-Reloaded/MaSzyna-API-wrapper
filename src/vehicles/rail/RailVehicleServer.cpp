@@ -35,6 +35,7 @@ namespace godot {
     const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
     const char *RailVehicleServer::vehicle_radio_called_signal = "vehicle_radio_called";
     const char *RailVehicleServer::vehicle_emergency_signal_received_signal = "vehicle_emergency_signal_received";
+    const char *RailVehicleServer::vehicle_pantograph_contact_lost_signal = "vehicle_pantograph_contact_lost";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -126,6 +127,9 @@ namespace godot {
                 D_METHOD("person_change_cabin", "person", "direction"), &RailVehicleServer::person_change_cabin);
         BIND_ENUM_CONSTANT(CABIN_CHANGE_FORWARD);
         BIND_ENUM_CONSTANT(CABIN_CHANGE_BACKWARD);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_CONTACT_LOSS_NOT_REACHING);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_CONTACT_LOSS_NO_WIRE);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_CONTACT_LOSS_DEAD_WIRE);
         ClassDB::bind_method(
                 D_METHOD("person_move_to_rear_cabin", "person"), &RailVehicleServer::person_move_to_rear_cabin);
         ClassDB::bind_method(
@@ -249,6 +253,13 @@ namespace godot {
                 D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
 
         ADD_SIGNAL(MethodInfo(vehicle_emergency_signal_received_signal, PropertyInfo(Variant::RID, "vehicle")));
+        ADD_SIGNAL(MethodInfo(
+                vehicle_pantograph_contact_lost_signal, PropertyInfo(Variant::RID, "vehicle"),
+                PropertyInfo(Variant::INT, "pantograph"),
+                PropertyInfo(
+                        Variant::INT, "cause", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_DEFAULT | PROPERTY_USAGE_CLASS_IS_ENUM,
+                        "RailVehicleServer.PantographContactLoss")));
         ADD_SIGNAL(MethodInfo(vehicle_trainset_changed_signal, PropertyInfo(Variant::RID, "vehicle")));
         ADD_SIGNAL(MethodInfo(
                 vehicle_driver_cabin_changed_signal, PropertyInfo(Variant::RID, "vehicle"),
@@ -1828,6 +1839,11 @@ namespace godot {
                     UtilityFunctions::push_warning(vformat(
                             "Lost contact: %s pantograph %d is not reaching the wire - %s",
                             vehicle_server->vehicle_get_name(p_vehicle), pantograph, _track_position_text(p_vehicle)));
+                    // one announcement a loss: the arm short of a wire found, or no wire over it
+                    emit_signal(
+                            vehicle_pantograph_contact_lost_signal, p_vehicle, pantograph,
+                            collector.wire.is_valid() ? PANTOGRAPH_CONTACT_LOSS_NOT_REACHING
+                                                      : PANTOGRAPH_CONTACT_LOSS_NO_WIRE);
                 }
                 collector.touching = active[pantograph] && collector.reaches_wire;
                 double voltage = 0.0;
@@ -1848,6 +1864,9 @@ namespace godot {
                                 vformat("Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
                                         vehicle_server->vehicle_get_name(p_vehicle), pantograph,
                                         _track_position_text(p_vehicle), frame.xform(collector.position)));
+                        emit_signal(
+                                vehicle_pantograph_contact_lost_signal, p_vehicle, pantograph,
+                                PANTOGRAPH_CONTACT_LOSS_DEAD_WIRE);
                     }
                     collector.powered = !Math::is_zero_approx(voltage);
                 }

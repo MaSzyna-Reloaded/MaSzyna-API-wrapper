@@ -593,6 +593,14 @@
 			<description>
 			</description>
 		</signal>
+		<signal name="vehicle_pantograph_contact_lost">
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="pantograph" type="int" />
+			<param index="2" name="cause" type="int" enum="RailVehicleServer.PantographContactLoss" />
+			<description>
+				A raised pantograph of the vehicle (0 or 1) lost its line voltage, for [param cause]: announced once a loss, on the change.
+			</description>
+		</signal>
 		<signal name="vehicle_placed">
 			<param index="0" name="vehicle" type="RID" />
 			<description>
@@ -630,6 +638,15 @@
 		</constant>
 		<constant name="CABIN_CHANGE_BACKWARD" value="1" enum="CabinChange">
 			Towards its rear.
+		</constant>
+		<constant name="PANTOGRAPH_CONTACT_LOSS_NOT_REACHING" value="0" enum="PantographContactLoss">
+			The pantograph's arm does not reach the wire found over it.
+		</constant>
+		<constant name="PANTOGRAPH_CONTACT_LOSS_NO_WIRE" value="1" enum="PantographContactLoss">
+			There is no wire over the pantograph.
+		</constant>
+		<constant name="PANTOGRAPH_CONTACT_LOSS_DEAD_WIRE" value="2" enum="PantographContactLoss">
+			The wire over the pantograph carries no voltage.
 		</constant>
 		<constant name="TRAINSET_TYPE_NONE" value="0" enum="TrainsetType">
 			No cars coupled to the vehicle, or not determined yet.

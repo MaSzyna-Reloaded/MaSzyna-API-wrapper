@@ -16,7 +16,6 @@ namespace godot {
 
         protected:
             static void _bind_methods();
-            E3DSubModel *parent = nullptr;
 
         public:
             enum SubModelType {
@@ -100,7 +99,6 @@ namespace godot {
             MAKE_MEMBER_GS_NR(float, light_energy, 0.0)
 
             void add_child(const Ref<E3DSubModel> &p_sub_model);
-            void set_parent(E3DSubModel *p_sub_model);
             void clear();
     };
 } // namespace godot

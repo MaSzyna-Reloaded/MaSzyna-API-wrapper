@@ -4349,3 +4349,22 @@ lighting or the trainset.
   the EZT thresholds the engine left at zero.
 * **Rule:** a configuration value that depends on another component is applied in the second
   pass, from that component's properties - never from the order of the FIZ sections.
+
+
+## 2026-10-10 A scripted component called its freed node
+
+* **Symptom:** none reported. Sweeping REQUIRED_CLEANING RC-123 (scene-tree nodes holding
+  pointers) showed a use-after-free reachable today.
+* **What proved it:** `GenericVehicleComponentNode` put its component into the vehicle on
+  `ENTER_TREE` with `set_script_owner(this)`, a `Node *`, and on `EXIT_TREE` only called
+  `component->detach()` - which clears the component's controller and implementation but leaves
+  it in `VehicleController::components`. `process_components()` and `get_state()` go on reaching
+  `script_target()->call(...)`, the freed node. Taken out of the tree and put back ("Edit FIZ"),
+  the node added a second component and its script ran twice.
+* **Fix:** `VehicleController::remove_component()`; the node takes its component out of the vehicle
+  it put it into (held by its RID) on `EXIT_TREE`, and the component keeps the node as an
+  `ObjectID`. `VehicleController` also releases its components in the editor, so their
+  `train_controller_node` back-pointer never outlives it.
+* **Rule:** whatever a node puts into another object on entering the tree it takes out on
+  leaving - detaching is not removing. A pointer kept in a member is judged by what it points at:
+  owner, parent, children, singleton or backend, otherwise an `ObjectID` (`CODE_STYLE.md`).

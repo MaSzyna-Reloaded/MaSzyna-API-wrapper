@@ -150,6 +150,13 @@
 				Registers a command this vehicle answers to. A command registered twice is an error.
 			</description>
 		</method>
+		<method name="remove_component">
+			<return type="void" />
+			<param index="0" name="component" type="VehicleComponent" />
+			<description>
+				Lets [param component] go: it leaves the vehicle and is no longer processed with it nor read into its state and configuration. What a proxy node does when it leaves the tree.
+			</description>
+		</method>
 		<method name="send_command">
 			<return type="Variant" />
 			<param index="0" name="command" type="StringName" />

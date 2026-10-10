@@ -24,7 +24,7 @@ func test_optimized_instance_creates_no_nodes() -> void:
     add_child_autoqfree(parent)
 
     var rid: RID = E3DRenderingServer.instance_create(build_lit_model(), E3DRenderingServer.INSTANCER_OPTIMIZED, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_set_scenario(rid, parent.get_world_3d().scenario)
     E3DRenderingServer.instance_set_transform(rid, Transform3D(Basis(), Vector3(10, 0, 0)))
     E3DRenderingServer.instance_set_lights_state(rid, {"00": true})
@@ -40,7 +40,7 @@ func test_nodes_instance_builds_tree_and_follows_lights_state() -> void:
     add_child_autoqfree(parent)
 
     var rid: RID = E3DRenderingServer.instance_create(build_lit_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_set_lights_state(rid, {"00": false})
     E3DRenderingServer.instance_build(rid)
 
@@ -63,7 +63,7 @@ func test_nodes_instance_rebuilds_on_options_change() -> void:
     add_child_autoqfree(parent)
 
     var rid: RID = E3DRenderingServer.instance_create(build_lit_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_build(rid)
     assert_not_null(parent.get_node_or_null(NodePath("light_on00/mesh")))
 
@@ -89,7 +89,7 @@ func test_opaque_meshes_leave_out_translucent_submodels() -> void:
     mesh_submodel.submodels = mesh_children
 
     var rid: RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_build(rid)
 
     var mesh: MeshInstance3D = parent.get_node(NodePath("light_on00/mesh"))
@@ -126,7 +126,7 @@ func test_forced_translucent_submodel_is_blended_as_nodes_and_opaque_optimized()
         resolved.clear()
         var rid: RID = E3DRenderingServer.instance_create(model, instancer, E3DRenderingServer.INSTANCE_KIND_DYNAMIC)
         E3DRenderingServer.instance_set_options(rid, "", [], [], true, [], 0)
-        E3DRenderingServer.instance_attach_node(rid, parent)
+        E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
         E3DRenderingServer.instance_set_scenario(rid, parent.get_world_3d().scenario)
         E3DRenderingServer.instance_build(rid)
         var forced: E3DRenderingServer.Translucency = (
@@ -152,7 +152,7 @@ func test_submodel_box_is_centred_on_the_model_origin() -> void:
     model.submodels[0].submodels[0].transform = Transform3D(Basis(), offset)
 
     var rid: RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_build(rid)
 
     var mesh: MeshInstance3D = parent.get_node(NodePath("light_on00/mesh"))

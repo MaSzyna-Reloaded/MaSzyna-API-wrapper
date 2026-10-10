@@ -637,7 +637,7 @@ namespace godot {
             constexpr bool FORCE_ALPHA = true;
             models->instance_set_options(instance, data_path, p_skins, Array(), FORCE_ALPHA, {}, 0);
             if (p_instancer != E3DRenderingServer::INSTANCER_OPTIMIZED) {
-                models->instance_attach_node(instance, holder);
+                models->instance_attach_object_instance_id(instance, holder->get_instance_id());
             }
             models->instance_set_node_transform(instance, appearance->get_model_transform());
             models->instance_set_scenario(instance, p_visual.placed ? p_visual.scenario : RID());
@@ -1585,9 +1585,9 @@ namespace godot {
             }
             holder->set_global_transform(p_visual.transform);
             p_visual.holder = ObjectID(holder->get_instance_id());
-            models->instance_attach_node(p_visual.model, holder);
+            models->instance_attach_object_instance_id(p_visual.model, p_visual.holder);
             if (p_visual.low_poly.is_valid()) {
-                models->instance_attach_node(p_visual.low_poly, holder);
+                models->instance_attach_object_instance_id(p_visual.low_poly, p_visual.holder);
             }
         }
         const E3DRenderingServer::Instancer instancer = detail_instancer(p_visual.detailed, p_visual.editable);

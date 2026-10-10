@@ -689,3 +689,6 @@ anything. Open work belongs in `TODO.md`.
 * A test frees what it built through its owner (an include node, not the RIDs it owns) before it
   ends - a leftover freed later errors inside the next script's test. *(10-09 a test that fails
   only after another script)*
+* Whatever a node puts into another object on entering the tree it takes out on leaving -
+  detaching is not removing; a pointer kept in a member points only at its owner, parent,
+  children, a singleton or a backend. *(10-10 a scripted component called its freed node)*

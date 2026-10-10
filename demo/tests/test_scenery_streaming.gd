@@ -19,7 +19,7 @@ func before_each() -> void:
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
     E3DRenderingServer.model_set_loader(_load_test_model)
-    SceneryStreamingServer.streaming_set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera.get_instance_id())
 
 
 func after_each() -> void:
@@ -30,7 +30,7 @@ func after_each() -> void:
         SceneryStreamingServer.stream_free(rid)
     _stream_rids.clear()
     _build_order.clear()
-    SceneryStreamingServer.streaming_set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(0)
     E3DRenderingServer.model_set_loader(E3DModelManager.load_model)
 
 
@@ -103,7 +103,7 @@ func test_triangle_chunk_out_of_range_is_not_built() -> void:
 
 
 func test_camera_can_pause_registration_until_the_final_start_position() -> void:
-    SceneryStreamingServer.streaming_set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(0)
     var owner:int = SceneryStreamingServer.owner_create("test", Callable(), _record_build, _record_clear)
     var menu_rid:RID = _stream_register(owner, Vector3.ZERO)
     var cabin_rid:RID = _stream_register(owner, Vector3(4 * CHUNK_SIZE_M, 0, 0))
@@ -112,20 +112,20 @@ func test_camera_can_pause_registration_until_the_final_start_position() -> void
     assert_eq(_build_order.size(), 0, "built scenery while streaming was paused")
 
     _camera.global_position = Vector3(4 * CHUNK_SIZE_M, 0, 0)
-    SceneryStreamingServer.streaming_set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera.get_instance_id())
     await wait_streaming(STREAMING_FRAMES)
     assert_has(_build_order, cabin_rid, "did not build around the final camera")
     assert_does_not_have(_build_order, menu_rid, "built around the stale menu camera")
 
 
 func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void:
-    SceneryStreamingServer.streaming_set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(0)
     var owner:int = SceneryStreamingServer.owner_create("test", Callable(), _record_build, _record_clear)
     var far_rid:RID = _stream_register(owner, Vector3(CHUNK_SIZE_M, 0, 0))
     var near_rid:RID = _stream_register(owner, Vector3.ZERO)
     assert_false(SceneryStreamingServer.area_is_ready(1), "paused streaming reported ready")
 
-    SceneryStreamingServer.streaming_set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera.get_instance_id())
     await wait_streaming(STREAMING_FRAMES)
     assert_eq(_build_order[0], near_rid, "farther chunk was built before the camera chunk")
     assert_has(_build_order, far_rid, "neighbour chunk was not built")
@@ -136,7 +136,7 @@ func test_nearest_chunk_is_built_first_and_neighbourhood_becomes_ready() -> void
 ## train drives through
 func test_the_area_is_filled_after_a_new_camera_and_a_jump_only() -> void:
     _register(Vector3.ZERO, 200.0)
-    SceneryStreamingServer.streaming_set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera.get_instance_id())
     assert_true(SceneryStreamingServer.streaming_get_statistics()["filling"], "a new camera is not filling")
     await _move_camera(Vector3.ZERO)
     assert_false(SceneryStreamingServer.streaming_get_statistics()["filling"], "still filling a ready area")

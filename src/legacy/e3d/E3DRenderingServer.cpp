@@ -39,7 +39,8 @@ namespace godot {
                         "force_alpha_submodel_paths", "max_texture_size"),
                 &E3DRenderingServer::instance_set_options);
         ClassDB::bind_method(
-                D_METHOD("instance_attach_node", "instance", "node"), &E3DRenderingServer::instance_attach_node);
+                D_METHOD("instance_attach_object_instance_id", "instance", "id"),
+                &E3DRenderingServer::instance_attach_object_instance_id);
         ClassDB::bind_method(
                 D_METHOD("instance_get_attached_node", "instance"), &E3DRenderingServer::instance_get_attached_node);
         ClassDB::bind_method(D_METHOD("smoke_rebuild"), &E3DRenderingServer::smoke_rebuild);
@@ -372,8 +373,8 @@ namespace godot {
         }
     }
 
-    /// Creates an empty instance; set it up with instance_set_*() and instance_attach_node(),
-    /// then call instance_build().
+    /// Creates an empty instance; set it up with instance_set_*() and
+    /// instance_attach_object_instance_id(), then call instance_build().
     ///
     /// The kind is given here rather than through a setter because it cannot be changed once the
     /// instance is built: the smoke density it selects is baked into every emitter - its process
@@ -486,12 +487,12 @@ namespace godot {
         _rebuild_if_built(*instance);
     }
 
-    /// NODES/EDITABLE_NODES build their node tree under [param p_node]; OPTIMIZED instances
-    /// report it as their owner (e.g. for picking in the editor).
-    void E3DRenderingServer::instance_attach_node(const RID &p_instance, Node3D *p_node) {
+    /// NODES/EDITABLE_NODES build their node tree under the Node3D of [param p_id]; OPTIMIZED
+    /// instances report it as their owner (e.g. for picking in the editor). 0 detaches it.
+    void E3DRenderingServer::instance_attach_object_instance_id(const RID &p_instance, const uint64_t p_id) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
-        instance->node_id = p_node != nullptr ? ObjectID(p_node->get_instance_id()) : ObjectID();
+        instance->node_id = ObjectID(p_id);
         _rebuild_if_built(*instance);
     }
 

@@ -114,7 +114,11 @@ Code generation:
   by name or `get_tree()->get_root()->get_node_or_null(name)`; a string call only where the class
   cannot be known at build time, with a comment saying so - see `CODE_STYLE.md`
 * PROHIBITED: **a public API takes and returns RIDs, Variants and `Callable`s - never raw
-  pointers** (`ObjectID` for an object). Pointers stay inside one class - see `CODE_STYLE.md`
+  pointers** (`ObjectID` for an object, `Ref<T>` for a `RefCounted`; an exported node property
+  stays a `Node`). Pointers stay inside one class - see `CODE_STYLE.md`
+* a pointer kept in a member points only at what outlives the holder by construction - its owner
+  (which clears it), its parent, its children, a singleton, a backend; anything else is an
+  `ObjectID` or a RID - see `CODE_STYLE.md`
 * PROHIBITED: **never work around a missing or mistimed event** - no retry, re-request, poll,
   "next frame" flag, deferred call or second attempt. Fix the order, or give the owner an event
   that says the value has landed - see `CODE_STYLE.md`

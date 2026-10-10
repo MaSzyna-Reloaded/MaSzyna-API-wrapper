@@ -2,6 +2,7 @@
 #include "utils/LibMaszynaUnits.hpp"
 #include "utils/ProcessMemory.hpp"
 
+#include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/scene_tree_timer.hpp>
@@ -37,7 +38,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("streaming_set_enabled", "enabled"), &SceneryStreamingServer::streaming_set_enabled);
         ClassDB::bind_method(D_METHOD("streaming_is_enabled"), &SceneryStreamingServer::streaming_is_enabled);
-        ClassDB::bind_method(D_METHOD("streaming_set_camera", "camera"), &SceneryStreamingServer::streaming_set_camera);
+        ClassDB::bind_method(
+                D_METHOD("streaming_set_camera", "camera_id"), &SceneryStreamingServer::streaming_set_camera);
         ClassDB::bind_method(
                 D_METHOD("streaming_set_anchor_position", "position"),
                 &SceneryStreamingServer::streaming_set_anchor_position);
@@ -102,7 +104,7 @@ namespace godot {
 
     /// The worker finishes the pass it is in before it is joined
     SceneryStreamingServer::~SceneryStreamingServer() {
-        streaming_set_camera(nullptr);
+        streaming_set_camera(0);
         streaming_drain();
     }
 
@@ -476,10 +478,10 @@ namespace godot {
         planned_withdraws.clear();
     }
 
-    /// Camera the streaming follows; without one nothing is ever built. Setting the first camera
-    /// starts looking at it (_watch_camera()), clearing it (null) stops that and the work - the
+    /// Camera the streaming follows, by its ObjectID; without one nothing is ever built. Setting the
+    /// first camera starts looking at it (_watch_camera()), clearing it (0) stops that and the work - the
     /// main loop does not exist yet when the singleton is created.
-    void SceneryStreamingServer::streaming_set_camera(Camera3D *p_camera) {
+    void SceneryStreamingServer::streaming_set_camera(const uint64_t p_camera_id) {
         bool was_streaming;
         bool is_streaming;
         bool changed;
@@ -487,7 +489,7 @@ namespace godot {
             MutexLock lock(mutex);
             was_streaming = camera_id.is_valid();
             const ObjectID previous_camera_id = camera_id;
-            camera_id = p_camera != nullptr ? ObjectID(p_camera->get_instance_id()) : ObjectID();
+            camera_id = ObjectID(p_camera_id);
             changed = camera_id != previous_camera_id;
             is_streaming = camera_id.is_valid();
             filling = is_streaming;

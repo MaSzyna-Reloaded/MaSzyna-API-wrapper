@@ -402,6 +402,21 @@ A pointer that crosses a public boundary makes every caller responsible for a li
 create, and the resulting dangle surfaces far from the code that caused it. Pointers stay inside
 one class.
 
+Two shapes are not this rule's business. A `RefCounted` is passed as a `Ref<T>` - it carries its
+lifetime with it. And an exported node property (`PROPERTY_HINT_NODE_TYPE`, as
+`SignalHeadNode.model`) stays a `Node`: Godot saves it as a `NodePath` and the inspector picks it,
+which an `ObjectID` cannot do - the class keeps it as an `ObjectID` inside.
+
+**A stored pointer is judged by what it points at, not by being one.** A pointer that only crosses
+a call costs nothing; one kept in a member is a defect when its target may die first. Allowed is
+only what outlives the holder by construction: its **owner**, which clears the pointer when it
+releases (`VehicleComponent::train_controller_node` - a `Ref` back would be a cycle), its
+**parent** in the tree, cleared on `EXIT_TREE` (`PlanarMirror3D::glass`), its own **children**, a
+**singleton**, a non-Object **backend** (`TMoverParameters *`). Anything else - a sibling, a
+cousin, another vehicle's part, a node handed in from outside - is held by its `ObjectID`, a
+vehicle by its RID. `GenericVehicleComponent` kept its script's node as a pointer, and a freed
+node was called from the next tick.
+
 ### Never work around a missing event
 
 A value that is not there yet is an ordering defect, and the

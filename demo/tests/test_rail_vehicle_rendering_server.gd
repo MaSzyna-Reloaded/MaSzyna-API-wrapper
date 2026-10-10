@@ -191,7 +191,7 @@ func test_a_vehicle_is_built_only_within_the_draw_distance() -> void:
     var camera:Camera3D = add_child_autoqfree(Camera3D.new())
     var far:Vector3 = Vector3(BEYOND_DRAW_DISTANCE * SceneryStreamingServer.streaming_get_draw_distance(), 0.0, 0.0)
     camera.global_position = far
-    SceneryStreamingServer.streaming_set_camera(camera)
+    SceneryStreamingServer.streaming_set_camera(camera.get_instance_id())
     var vehicle:MaszynaRailVehicle3D = MaszynaRailVehicle3D.new()
     vehicle.data_path = "dynamic/test/synthetic_v1"
     vehicle.file_name = "synthetic"
@@ -212,7 +212,7 @@ func test_a_vehicle_is_built_only_within_the_draw_distance() -> void:
     await wait_until(_has_no_model.bind(rid), MODELS_TIMEOUT)
     assert_false(_has_model(rid), "beyond it again its model is freed")
 
-    SceneryStreamingServer.streaming_set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(0)
     # the vehicle goes before the game directory it was read from
     vehicle.free()
     UserSettings.save_maszyna_game_dir(previous_game_dir)

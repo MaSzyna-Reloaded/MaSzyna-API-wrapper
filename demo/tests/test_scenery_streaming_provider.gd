@@ -46,7 +46,7 @@ func before_each() -> void:
     add_child_autoqfree(_camera)
     _camera.global_position = FAR_AWAY
     SceneryStreamingServer.content_set_consumer(SceneryStreamingProvider.CONTENT_TERRAIN, _adopt, _release)
-    SceneryStreamingServer.streaming_set_camera(_camera)
+    SceneryStreamingServer.streaming_set_camera(_camera.get_instance_id())
 
 
 func after_each() -> void:
@@ -55,7 +55,7 @@ func after_each() -> void:
     _providers.clear()
     _adopted.clear()
     _released.clear()
-    SceneryStreamingServer.streaming_set_camera(null)
+    SceneryStreamingServer.streaming_set_camera(0)
     SceneryStreamingServer.content_set_consumer(
         SceneryStreamingProvider.CONTENT_TERRAIN, MaszynaSceneryChunkRenderingServer.adopt_terrain,
         MaszynaSceneryChunkRenderingServer.free_chunk)

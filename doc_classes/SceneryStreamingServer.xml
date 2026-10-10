@@ -166,9 +166,9 @@
 		</method>
 		<method name="streaming_set_camera">
 			<return type="void" />
-			<param index="0" name="camera" type="Camera3D" />
+			<param index="0" name="camera_id" type="int" />
 			<description>
-				Camera the streaming follows; without one nothing is ever built. Passing [code]null[/code] stops the streaming, leaving whatever is built in place. In game this is the player's camera, in the editor the camera of the 3D view.
+				The [Camera3D], by instance id, the streaming follows; without one nothing is ever built. Passing [code]0[/code] stops the streaming, leaving whatever is built in place. In game this is the player's camera, in the editor the camera of the 3D view.
 			</description>
 		</method>
 		<method name="streaming_set_enabled">

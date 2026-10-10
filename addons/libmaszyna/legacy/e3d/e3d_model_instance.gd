@@ -252,7 +252,7 @@ func _get_server_instancer() -> int:
 func _create_instance() -> void:
     var server_instancer: int = _get_server_instancer()
     if _proxy:
-        E3DRenderingServer.instance_attach_node(_rid, self)
+        E3DRenderingServer.instance_attach_object_instance_id(_rid, get_instance_id())
         E3DRenderingServer.instance_set_instancer(_rid, server_instancer)
         # the node moved is the instance moved
         set_notify_transform(true)
@@ -264,7 +264,7 @@ func _create_instance() -> void:
         _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths,
         max_texture_size
     )
-    E3DRenderingServer.instance_attach_node(_rid, self)
+    E3DRenderingServer.instance_attach_object_instance_id(_rid, get_instance_id())
     E3DRenderingServer.instance_set_scenario(_rid, get_world_3d().scenario)
     E3DRenderingServer.instance_set_transform(_rid, global_transform)
     E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
@@ -291,7 +291,7 @@ func _free_instance() -> void:
         if _proxy:
             # drawn by its owner as its owner draws it - where the node left it
             E3DRenderingServer.instance_set_instancer(_rid, E3DRenderingServer.INSTANCER_OPTIMIZED)
-            E3DRenderingServer.instance_attach_node(_rid, null)
+            E3DRenderingServer.instance_attach_object_instance_id(_rid, 0)
             return
         E3DRenderingServer.instance_free(_rid)
         _rid = RID()

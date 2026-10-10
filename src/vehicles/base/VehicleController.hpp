@@ -195,6 +195,8 @@ namespace godot {
              * the vehicle and freed with it. The shape Node::add_child() has, for the same
              * reason: the thing being handed over has no life of its own outside its owner. */
             void add_component(const Ref<VehicleComponent> &p_component);
+            /* Lets a component go: it leaves the vehicle and is no longer ticked nor read with it */
+            void remove_component(const Ref<VehicleComponent> &p_component);
             /* The components as stored configuration: setting them lets go of the ones the vehicle
              * had and takes these in, in their order (add_component()) */
             void set_components(const TypedArray<VehicleComponent> &p_components);

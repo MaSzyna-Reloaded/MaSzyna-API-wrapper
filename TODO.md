@@ -353,8 +353,7 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
     into the new one.
   * The HUD's "remove trainset" frees only vehicles built from MaSzyna data.
   * A vehicle coming within detail distance is built twice
-    (`instance_attach_node()` then `instance_set_instancer()`).
-  * `E3DRenderingServer::instance_attach_node(RID, Node3D *)` takes a pointer in a public API.
+    (`instance_attach_object_instance_id()` then `instance_set_instancer()`).
   * `compiled.nodes` still carries the Time/Config/Atmo nodes.
   * "Edit FIZ" logs errors: `cabin_python_screen.gd` and `maszyna_dynamic_train_cabin.gd`
     disconnect in `_exit_tree()` what they connected once; `!is_inside_tree()` transform reads -
@@ -514,6 +513,8 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   append in `gnd-sfx`.
 * `[SceneryLoad]` lines not measured on a heavy scenery.
 * In the editor streaming follows 3D viewport 0 only.
+* A freed streaming camera is not noticed: `SceneryStreamingServer::camera_id` stays set,
+  `streaming_has_camera()` stays true and the streaming stops where it was, silently.
 * `maszyna_node_track_importer.gd` drops `road`, `river`, `cross`, `turn`, `table`
   (`Track.cpp:1554` on).
 * Lamp head colour does not match its tinted pool - needs a flag in the `E3DMaterialResolver` key.
@@ -545,6 +546,9 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
 * **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).
 * **Telling signal heads apart** from other lit models (street lamps included).
 * A scenery signal head's light states read `LIGHT_STATE_OFF` until its first aspect.
+* `SignalHeadNode.model` set while the node is in the tree is not connected
+  (`e3d_instance_created` is connected on `ENTER_TREE` only), and `EXIT_TREE` disconnects the new
+  model instead of the old one.
 * **`SignalAspect.lights` are plain numbers** in the inspector, not an enum.
 
 ## Scenario events

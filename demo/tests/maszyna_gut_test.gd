@@ -280,12 +280,13 @@ func spawn_maszyna_vehicle(data_path:String, file_name:String, skin:String, vehi
 func wait_detailed(vehicle:MaszynaRailVehicle3D) -> bool:
     var has_camera:bool = SceneryStreamingServer.streaming_has_camera()
     if not has_camera:
-        SceneryStreamingServer.streaming_set_camera(add_child_autoqfree(Camera3D.new()))
+        var camera:Camera3D = add_child_autoqfree(Camera3D.new())
+        SceneryStreamingServer.streaming_set_camera(camera.get_instance_id())
     var detailed:bool = await wait_simulated_until(
             RailVehicleRenderingServer.vehicle_is_detailed.bind(vehicle.get_rid()), DETAIL_TIMEOUT,
             "%s drawn in detail" % vehicle.vehicle_id)
     if not has_camera:
-        SceneryStreamingServer.streaming_set_camera(null)
+        SceneryStreamingServer.streaming_set_camera(0)
     return detailed
 
 
@@ -293,7 +294,7 @@ func wait_detailed(vehicle:MaszynaRailVehicle3D) -> bool:
 ## `light_on00` submodel is shown while light 00 is on
 func build_lit_instance(parent: Node3D) -> RID:
     var rid: RID = E3DRenderingServer.instance_create(build_lit_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
-    E3DRenderingServer.instance_attach_node(rid, parent)
+    E3DRenderingServer.instance_attach_object_instance_id(rid, parent.get_instance_id())
     E3DRenderingServer.instance_build(rid)
     return rid
 

@@ -12,7 +12,7 @@ namespace godot {
 
     void E3DNodesBackend::build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) {
         Node3D *target = Object::cast_to<Node3D>(ObjectDB::get_instance(p_instance.node_id));
-        ERR_FAIL_NULL_MSG(target, "NODES instancer requires a node attached with instance_attach_node()");
+        ERR_FAIL_NULL_MSG(target, "NODES instancer requires a node attached with instance_attach_object_instance_id()");
 
         // which submodels belong to which light was found by E3DLightFactory, not here
         HashMap<E3DSubModel *, LightRole> light_roles;

@@ -2,7 +2,6 @@
 
 #include "scenery/SceneryStreamingProvider.hpp"
 #include "utils/WorkerTaskQueue.hpp"
-#include <godot_cpp/classes/camera3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -360,7 +359,7 @@ namespace godot {
             void streaming_set_enabled(bool p_enabled);
             bool streaming_is_enabled() const;
 
-            void streaming_set_camera(Camera3D *p_camera);
+            void streaming_set_camera(uint64_t p_camera_id);
             /* Where the anchor is: its chunk is kept built - never cleared, its pieces built with
              * the prefetch budget while out of the camera's range - wherever the camera goes and
              * however far it is. Said again as the anchor moves; none after streaming_clear_anchor() */

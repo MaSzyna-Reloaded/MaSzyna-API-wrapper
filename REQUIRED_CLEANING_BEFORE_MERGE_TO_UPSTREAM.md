@@ -116,13 +116,13 @@ Legend:
 
 ### Raw pointers in public API
 
-- [ ] [RC-070](#rc-070) `E3DRenderingServer::instance_attach_node(Node3D *)`
-- [ ] [RC-071](#rc-071) `SceneryStreamingServer::streaming_set_camera(Camera3D *)`
+- [x] [RC-070](#rc-070) `E3DRenderingServer::instance_attach_node(Node3D *)` ✔
+- [x] [RC-071](#rc-071) `SceneryStreamingServer::streaming_set_camera(Camera3D *)` ✔
 - [x] [RC-072](#rc-072) `RailVehicleServer::vehicle_component_get()` returns a pointer
-- [ ] [RC-073](#rc-073) `SignalHeadNode::set_model(Node *)` / `get_model()`
-- [ ] [RC-074](#rc-074) `MaszynaTrianglesImporter::import_triangles(MaszynaParser *)`
+- [x] [RC-073](#rc-073) `SignalHeadNode::set_model(Node *)` / `get_model()` (invalid)
+- [x] [RC-074](#rc-074) `MaszynaTrianglesImporter::import_triangles(MaszynaParser *)` ✔
 - [x] [RC-075](#rc-075) Vehicle layer bound methods taking and returning pointers
-- [ ] [RC-076](#rc-076) `E3DSubModel::set_parent(E3DSubModel *)`
+- [x] [RC-076](#rc-076) `E3DSubModel::set_parent(E3DSubModel *)` ✔
 - [ ] [RC-123](#rc-123) Scene-tree nodes holding pointers to objects they do not own
 
 ### Calls by name
@@ -389,59 +389,28 @@ Legend:
 
 ## Raw pointers in public API
 
-### RC-070
-
-**`E3DRenderingServer::instance_attach_node(Node3D *)`**
-
-* **Where:** `src/legacy/e3d/E3DRenderingServer.hpp:390`, bound at `.cpp:42`
-* **Rule:** a public API takes RIDs, Variants, Callables and `ObjectID`s
-* **Fix:** `instance_attach_object_instance_id(RID, uint64_t)`, like
-  `vehicle_attach_object_instance_id`.
-
-### RC-071
-
-**`SceneryStreamingServer::streaming_set_camera(Camera3D *)`**
-
-* **Where:** `src/scenery/SceneryStreamingServer.hpp:363`, bound at `.cpp:40`
-* **Problem:** a bound server method with a raw pointer; the two HUD mouse servers take an
-  `ObjectID` for the same thing.
-* **Fix:** take a `uint64_t` `ObjectID`, like the HUD mouse servers.
-
-### RC-073
-
-**`SignalHeadNode::set_model(Node *)` / `get_model()`**
-
-* **Where:** `src/signalling/SignalHeadNode.hpp:54-55`, bound at `.cpp:22-23`
-* **Problem:** bound with raw pointers, although the class stores an `ObjectID` inside.
-* **Fix:** take and return an `ObjectID`.
-
-### RC-074
-
-**`MaszynaTrianglesImporter::import_triangles(MaszynaParser *)`**
-
-* **Where:** `src/legacy/scenery/MaszynaTrianglesImporter.hpp:17-19`
-* **Problem:** a bound static method with a raw pointer to a `RefCounted`.
-* **Fix:** `Ref<MaszynaParser>`.
-
-### RC-076
-
-**`E3DSubModel::set_parent(E3DSubModel *)`**
-
-* **Where:** `src/legacy/e3d/E3DSubModel.hpp:103`
-* **Problem:** a public C++ method with a raw pointer. It is not bound, so this is low priority.
-* **Fix:** make it private or a friend of the parser, or take an index.
+A pointer is judged by what it costs, not by being one: one that only crosses a call is a question
+of API style, one that is stored is a defect only when it may outlive what it points at
+(`CODE_STYLE.md`, "No pointers in a public API").
 
 ### RC-123
 
 **Scene-tree nodes holding pointers to objects they do not own**
 
-* **Rule:** a node living in the scene tree keeps no pointer to another object - a node as an
-  `ObjectID`, the vehicle by its RID (FINDINGS.md 2026-09-30, "Edit FIZ" aborted the editor)
-* **Where:**
-  * `src/rendering/PlanarMirror3D.hpp:26`: `glass` (`MeshInstance3D *`, its parent)
-  * `src/vehicles/base/GenericVehicleComponent.hpp:21`: `Node *script_owner`, held by a
-    `RefCounted` component - the same dangle from the other side
-  * the rest of the codebase not yet swept
+* **Rule:** a stored pointer only to what outlives the holder by construction - its owner (which
+  clears it on release), its parent (cleared on `EXIT_TREE`), its own children, a singleton, a
+  non-Object backend; anything else as an `ObjectID`, a vehicle by its RID (FINDINGS.md
+  2026-09-30, "Edit FIZ" aborted the editor)
+* **Swept 2026-10-10:** `PlanarMirror3D::glass` (its parent) and
+  `VehicleComponent::train_controller_node` (its owner, now released in the editor too) are
+  allowed; `GenericVehicleComponent::script_owner` was a use-after-free and is an `ObjectID`,
+  its node taking the component out of the vehicle on leaving the tree
+* **Where (still open):**
+  * `src/cabin/Cabin3D.hpp:56`: `Ref<RailVehicleDieselEngine> engine` - a strong reference to a
+    component instead of the vehicle's RID; `Cabin3D.cpp:232` dereferences
+    `engine->get_controller()` unchecked, null once the vehicle is released
+  * `src/logging/GameLogger.hpp:28`: `GameLog *game_log` - a logger kept by a script past the
+    extension's teardown points at a freed log
 
 ## Calls by name
 

@@ -14,7 +14,6 @@ namespace godot {
         }
         submodels.clear();
         mesh.unref();
-        parent = nullptr;
     }
 
     void E3DSubModel::_bind_methods() {
@@ -137,12 +136,5 @@ namespace godot {
 
     void E3DSubModel::add_child(const Ref<E3DSubModel> &p_sub_model) {
         submodels.append(p_sub_model);
-    }
-
-    void E3DSubModel::set_parent(E3DSubModel *p_sub_model) {
-        parent = p_sub_model;
-        if (p_sub_model != nullptr) {
-            p_sub_model->add_child(this);
-        }
     }
 } // namespace godot

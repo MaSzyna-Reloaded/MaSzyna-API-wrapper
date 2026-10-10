@@ -1,7 +1,6 @@
 #include "vehicles/base/VehicleComponent.hpp"
 #include "vehicles/base/VehicleController.hpp"
 #include "vehicles/base/VehicleServer.hpp"
-#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -41,6 +40,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("apply_configuration"), &VehicleController::apply_configuration);
         ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
+        ClassDB::bind_method(D_METHOD("remove_component", "component"), &VehicleController::remove_component);
         ClassDB::bind_method(D_METHOD("set_components", "components"), &VehicleController::set_components);
         ClassDB::bind_method(D_METHOD("get_components"), &VehicleController::get_components);
         ADD_PROPERTY(
@@ -120,10 +120,8 @@ namespace godot {
         return commands.has(p_command);
     }
 
+    /* In the editor too: a component outliving its controller must not keep a pointer to it */
     void VehicleController::_notification(const int p_what) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
         if (p_what == NOTIFICATION_PREDELETE) {
             release();
         }
@@ -288,6 +286,12 @@ namespace godot {
         if (is_simulation_ready()) {
             p_component->apply_config();
         }
+    }
+
+    void VehicleController::remove_component(const Ref<VehicleComponent> &p_component) {
+        ERR_FAIL_COND(p_component.is_null());
+        p_component->detach();
+        components.erase(p_component);
     }
 
     void VehicleController::set_components(const TypedArray<VehicleComponent> &p_components) {

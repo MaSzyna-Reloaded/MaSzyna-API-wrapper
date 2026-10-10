@@ -4445,3 +4445,21 @@ lighting or the trainset.
   `test_the_driver_told_to_go_moves_the_unit_off`: red before, green after.
 * **Rule:** where the original's driver assigns a control, the port does not step it - a step is a
   Mover operation with side effects of its own (relay time, delays, messages to the trainset).
+
+## 2026-10-10 The EP07's motor connectors stayed open
+
+* **Symptom:** reports#22 (Wrzosy, IC EIE8310, EP07-1024): the player could not move the train;
+  the controller went up and down with nothing happening. (The AI, given the cab, stood at a stop
+  signal - the route waited for ROJ43411, see "An EN76 never raised its D car's pantograph".)
+* **What proved it:** the report's `gameplay.log` has `motor_connectors_open true` at 1721 s with
+  no release after it, and the `snapshot.json` `motor_connectors_open = True` with
+  `line_contactor_closed = False`: `MotorConnectorsCheck()` refuses traction while `StLinSwitchOff`
+  is set (Mover.cpp:6475-6487). The cab catalog declared `stlinoff_bt` a persistent toggle
+  ("`_bt` not `_sw`"), but the original's `OnCommand_motorconnectorsopen` clears `StLinSwitchOff`
+  on release unless `StLinSwitchType == "toggle"` (Train.cpp:5025-5055) - an impulse button by
+  default. The FIZ parser also took only `MotorConnectors=impulse` as impulse.
+* **Fix:** `RailVehicleSwitches` publishes `motor_connectors_switch_impulse` in the config;
+  `stlinoff_bt` is monostable by it (true when absent); the parser takes every value but `toggle`
+  as impulse. `test_train_switches.gd`, `test_mmd_semantic_catalog.gd`.
+* **Rule:** a cab button springs back or stays as the original's handler decides, with the
+  original's own test of the vehicle's switch type.

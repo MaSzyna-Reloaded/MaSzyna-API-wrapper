@@ -223,6 +223,9 @@ anything. Open work belongs in `TODO.md`.
 * Where the original's driver assigns a control (`MainCtrlPos = 4`), the port does not step it: a
   step (`IncMainCtrl()`) restarts the relay time an Elf waits out. *(10-10 an Elf that never
   gathered power under its driver)*
+* A cab button springs back or stays as the original's handler decides it, with the original's
+  test (`StLinSwitchType != "toggle"` is impulse, Train.cpp:5045) - never a catalog guess from the
+  `_bt`/`_sw` suffix. *(10-10 the EP07's motor connectors stayed open)*
 
 ## State, ownership, events
 * An operation somebody awaits is done only when everything its waiter relies on is; a signal

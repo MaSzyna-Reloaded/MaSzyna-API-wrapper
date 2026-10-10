@@ -65,5 +65,7 @@ namespace godot {
         p_config["pantograph_switch_impulse"] = get_pantograph_impulse();
         // ConvSwitchType (Train.cpp:4387, 4419)
         p_config["converter_switch_impulse"] = get_converter_impulse();
+        // StLinSwitchType (Train.cpp:5045)
+        p_config["motor_connectors_switch_impulse"] = get_motor_connectors_impulse();
     }
 } // namespace godot

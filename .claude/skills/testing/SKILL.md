@@ -118,6 +118,13 @@ proves nothing - the 36WE's pantograph names passed every test for a month.
   per step), runs in the background into a file, and the file is watched - no new line for 15 s
   means it is hung or dead: kill it and read the file at once. The ceiling is the time the next
   stage should take, never the whole run "just in case".
+- **A probe of a real scenery is capped at 60-120 s, whole run** (`timeout 120`), never more. It
+  runs in the background; the first 15 s of its output are read for `Parse Error`/`SCRIPT ERROR`
+  before anything waits on it (a probe that does not parse idles silently - 2026-10-10 a turn
+  blocked 10 minutes on one). It prints its load progress (`load_progress`), so a long load is not
+  silence. A long simulated span is reached by stepping more ticks per frame
+  (`SimulationServer.simulation_advance(TICK)` N times between frames), never by a longer
+  timeout. Never a tool call that sits in the turn waiting for a probe.
 - A probe never `save_*`s a user setting - a killed probe leaves it written in the operator's
   `settings.cfg`. In memory only: `UserSettings.set_setting("maszyna", "game_dir", ...)`.
 - `godot-double`, never `godot` (double-precision extension).

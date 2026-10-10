@@ -4376,3 +4376,23 @@ lighting or the trainset.
 * **Rule:** whatever a node puts into another object on entering the tree it takes out on
   leaving - detaching is not removing. A pointer kept in a member is judged by what it points at:
   owner, parent, children, singleton or backend, otherwise an `ObjectID` (`CODE_STYLE.md`).
+
+## 2026-10-10 Windows streaming listed directories for every missing file
+
+* **Symptom:** the Windows build (under wine, RTX 5050, warm cache) filled Drawinowo's
+  surroundings in 30 s at 1-4 fps, with single model builds of 50-117 ms; the Linux build on the
+  same machine filled it in 7 s with builds of 14 ms at most.
+* **What proved it:** `perf` of the Windows process: a third of the main thread in wine's
+  `NtQueryDirectoryFile`/`NtQueryAttributesFile`/`readdir64`. `WINEDEBUG=+file` over 10 s of the
+  fill: ~29 000 directory listings and 1.44 million `FindNextFileW` on the main thread - whole
+  `textures/` (764 entries), `dynamic/pkp/ep09_v1`, `406r_v1` and the game directory, listed for
+  the candidates the callers try (`silence1.wav/.ogg/.flac` in the vehicle's directory, a `.mat`
+  in four places, a model's two extensions in two directories). `MaszynaDataPath.resolve()` listed
+  the directory of every candidate that was missing, twice (files, directories) - on Windows,
+  whose filesystem ignores case, always in vain.
+* **Fix:** `resolve()` tries the authored spelling and its lowercase form, and lists nothing. A
+  scan of the data found two references that only the listing found on Linux:
+  `przejazdy/plyty3_l.t3d` (`plyty3_L.e3d`) and `slupy_nn_400kv_*_atlas` (`400kV` on disk) of
+  l053 and l204; they are given up.
+* **Rule:** a path lookup costs a fixed number of existence checks; it never lists a directory to
+  match a name letter case aside.

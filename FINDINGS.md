@@ -170,9 +170,10 @@ anything. Open work belongs in `TODO.md`.
 * A FIZ section is applied whatever the order the file gives it in: `Cntrl.` may follow
   `Engine:` (EN57 keeps it in the brake include). *(09-27 EN57 without a master controller)*
 * The game data is written for Windows and `cParser`: a quoted text is one token without its
-  quotes. Keep a file name's authored spelling and resolve it exactly, then lowercase, then
-  letter case aside part by part; never lowercase the token before the first lookup. *(09-28 timetable screens without
-  their background; 10-02 uppercase 2M62 files reported missing)*
+  quotes. Keep a file name's authored spelling and resolve it exactly, then lowercase - never
+  lowercase the token before the first lookup, and never list a directory to match a name letter
+  case aside. *(09-28 timetable screens without their background; 10-02 uppercase 2M62 files
+  reported missing; 10-10 Windows streaming listed directories)*
 * A vehicle's MMD is read as an include with `(p1)` name, `(p2)` type, `(p3)` skin
   (`DynObj.cpp:5260`); a model named `none` is a missing parameter. *(10-02 SN61 drawn without
   its body)*

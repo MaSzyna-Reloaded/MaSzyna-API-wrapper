@@ -148,6 +148,11 @@ func _enter_tree():
     # CPython 2.7 prefix PythonScreenServer runs the cab screens with (lib/libpython2.7.so.1.0 on
     # Linux); empty is python2.7 in the game directory on Linux and the original's python64 on Windows
     add_custom_project_setting("maszyna/python/home", "", TYPE_STRING, PROPERTY_HINT_GLOBAL_DIR)
+    # ResourceLazyLoader: on, the models of a scenery, its terrain and a vehicle's models are loaded
+    # when the camera comes near and let go when it leaves; off, they are all loaded with the
+    # scenery and kept, and the streaming only builds and clears their instances. The
+    # --enable-lazy-loading command-line switch turns it on (read at startup)
+    add_custom_project_setting("maszyna/resources/lazy_loading", false, TYPE_BOOL)
     # E3DRenderingServer streams registered scenery models in and out around the camera; this caps
     # every node's own range and stands in for the nodes that declare none (read at startup)
     add_custom_project_setting(

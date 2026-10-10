@@ -2907,6 +2907,10 @@ lighting or the trainset.
 * **Rule:** a cache in memory that never evicts grows with the session, not with what is in view.
   Whatever is loaded for a streamed piece is held by that piece's build and let go by its clear,
   and a cache file holds data, not render resources.
+* **Since 2026-10-10:** this is lazy loading, an option (`maszyna/resources/lazy_loading`,
+  `--enable-lazy-loading`), off by default at the operator's decision. Off, `ResourceLazyLoader`
+  loads a resource when it is registered and keeps it until its last registration is freed - the
+  memory this entry measured is spent again - and the streaming only builds and clears.
 
 ## 2026-10-01 - the parse kept every include's triangles in world space
 
@@ -3901,6 +3905,10 @@ lighting or the trainset.
 * **Rule:** a vehicle's models are built when it comes within the draw distance and freed beyond
   it, never at load. What the simulation needs of the model is read off the model file, not off
   its drawing.
+* **Since 2026-10-10:** the model files of a vehicle's appearance go through `ResourceLazyLoader`
+  (registered in `vehicle_set_appearance()`, held by the build). Without lazy loading - the
+  default - they are loaded with the vehicle and kept; only the models built from them follow the
+  draw distance.
 
 ## 2026-10-06 A cab change in the 36WEa froze the game for half a minute
 

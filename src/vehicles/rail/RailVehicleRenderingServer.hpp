@@ -100,6 +100,11 @@ namespace godot {
                     String load_data_path;
                     String load_model_filename;
                     bool own_models = false;
+                    /* The appearance's model files registered with ResourceLazyLoader, by file
+                     * name - loaded at once without lazy loading - and what the models built from
+                     * them hold, one per model */
+                    HashMap<String, RID> model_resources;
+                    Vector<RID> held_models;
                     /* Waiting in pending_builds for its models to be built */
                     bool build_pending = false;
                     /* The appearance's model could not be loaded - not built again until another
@@ -207,6 +212,7 @@ namespace godot {
             void _on_streaming_camera_changed();
             void _on_project_settings_changed();
             void _free_models(Visual &p_visual);
+            static void _free_model_resources(Visual &p_visual);
             void _create_models(const RID &p_vehicle, Visual &p_visual);
             void _bind_parts(const RID &p_vehicle, Visual &p_visual);
             Part _part(const Visual &p_visual, const String &p_submodel) const;

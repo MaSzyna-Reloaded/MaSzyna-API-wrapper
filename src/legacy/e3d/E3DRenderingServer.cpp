@@ -731,8 +731,9 @@ namespace godot {
         material_resolver.set_callable(p_material_resolver);
     }
 
-    /// Registers a scenery model placement for streaming: nothing is loaded or built until the
-    /// streaming camera comes within its visibility range of the chunk it falls into. A range of
+    /// Registers a scenery model placement for streaming: nothing is built until the streaming
+    /// camera comes within its visibility range of the chunk it falls into, and with lazy loading
+    /// nothing is loaded until then either (ResourceLazyLoader). A range of
     /// 0 (a scenery node that declares none) means the global draw distance - see
     /// SceneryStreamingServer.
     RID E3DRenderingServer::instance_register(
@@ -787,7 +788,8 @@ namespace godot {
 
     /// Not memoized here: a model kept for the whole session is what filled the memory of a large
     /// scenery. The loader's own cache (ResourceLoader's) shares a model while anything holds it,
-    /// and a streamed placement holds it through ResourceLazyLoader only while it is built.
+    /// and a streamed placement holds it through ResourceLazyLoader - with lazy loading only while
+    /// it is built.
     Ref<E3DModel> E3DRenderingServer::model_load(const String &p_data_path, const String &p_model_filename) {
         Callable loader;
         {

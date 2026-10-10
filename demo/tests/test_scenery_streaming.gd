@@ -13,9 +13,13 @@ var _camera:Camera3D
 var _rids:Array[RID] = []
 var _stream_rids:Array[RID] = []
 var _build_order:Array[RID] = []
+var _previous_lazy_loading:bool = false
 
 
 func before_each() -> void:
+    # what is loaded and let go follows the camera only with lazy loading
+    _previous_lazy_loading = ResourceLazyLoader.lazy_loading
+    ResourceLazyLoader.lazy_loading = true
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
     E3DRenderingServer.model_set_loader(_load_test_model)
@@ -32,6 +36,7 @@ func after_each() -> void:
     _build_order.clear()
     SceneryStreamingServer.streaming_set_camera(0)
     E3DRenderingServer.model_set_loader(E3DModelManager.load_model)
+    ResourceLazyLoader.lazy_loading = _previous_lazy_loading
 
 
 func test_registered_instance_is_built_only_within_range() -> void:

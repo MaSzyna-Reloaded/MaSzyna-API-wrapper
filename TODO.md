@@ -491,6 +491,10 @@ and a catalog `state_light`. The lamps also light without low voltage - TGauge g
   cache in local space, invalidate by dependency list.
 * `ResourceLazyLoader` shares only a held copy: a per-model load lock, and the loader holding the
   copy with a release for a dropped preload.
+* Lazy loading off (default): a vehicle's cargo (`_build_load()`) and coupler adapters
+  (`_update_coupler_adapters()`) still load through `model_load()` at their build, outside
+  `ResourceLazyLoader` - their files change while the game runs. After a data reload a resource
+  resident by registration is loaded again only by its next use.
 * The subscene cache is used only by queued parsing; `parse_file()` reparses every include.
 * Streaming keeps the track/traction instances and drops only meshes (~16k empty in `baltyk`).
 * A track streams by the chunk of its first curve point, not its nearest point.

@@ -2,6 +2,7 @@
 #include "game_data/GameDataServer.hpp"
 #include "legacy/e3d/E3DModel.hpp"
 #include "legacy/e3d/E3DRenderingServer.hpp"
+#include "resources/ResourceLazyLoader.hpp"
 #include "scenery/SceneryHUDMouseServer.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "utils/LibMaszynaUnits.hpp"
@@ -337,6 +338,7 @@ namespace godot {
         }
         _cancel_build(p_vehicle, *visual);
         _free_models(*visual);
+        _free_model_resources(*visual);
         if (visual->load.is_valid()) {
             E3DRenderingServer::get_instance()->instance_free(visual->load);
         }
@@ -440,9 +442,29 @@ namespace godot {
         visual->appearance = p_appearance;
         visual->model_missing = false;
         // models of its own replace the ones built from the last appearance, built once the
-        // vehicle is within the draw distance (_update_detail()); handed-over ones stay
+        // vehicle is within the draw distance (_update_detail()); handed-over ones stay. Its files
+        // are registered at once - without lazy loading, that loads them
         if (p_appearance.is_valid() && !p_appearance->get_model_filename().is_empty()) {
             _free_models(*visual);
+            _free_model_resources(*visual);
+            E3DRenderingServer *models = E3DRenderingServer::get_instance();
+            ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
+            ERR_FAIL_NULL(models);
+            ERR_FAIL_NULL(lazy_loader);
+            const String data_path = p_appearance->get_data_path();
+            PackedStringArray filenames = p_appearance->get_attachment_model_filenames();
+            filenames.push_back(p_appearance->get_model_filename());
+            filenames.push_back(p_appearance->get_low_poly_model_filename());
+            filenames.push_back(p_appearance->get_passengers_model_filename());
+            for (const String &filename: filenames) {
+                if (filename.is_empty() || visual->model_resources.has(filename)) {
+                    continue;
+                }
+                // the key a scenery placement of the same file has (E3DRenderingServer::instance_register())
+                visual->model_resources[filename] = lazy_loader->resource_register(
+                        data_path.path_join(filename),
+                        callable_mp(models, &E3DRenderingServer::model_load).bind(data_path, filename));
+            }
             _build_load(p_vehicle, *visual);
         }
         _bind_parts(p_vehicle, *visual);
@@ -610,6 +632,21 @@ namespace godot {
         p_visual.passengers = RID();
         p_visual.attachments.clear();
         p_visual.own_models = false;
+        if (ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance(); lazy_loader != nullptr) {
+            for (const RID &resource: p_visual.held_models) {
+                lazy_loader->resource_release(resource);
+            }
+        }
+        p_visual.held_models.clear();
+    }
+
+    void RailVehicleRenderingServer::_free_model_resources(Visual &p_visual) {
+        if (ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance(); lazy_loader != nullptr) {
+            for (const KeyValue<String, RID> &resource: p_visual.model_resources) {
+                lazy_loader->resource_free(resource.value);
+            }
+        }
+        p_visual.model_resources.clear();
     }
 
     /* Every MaSzyna-authored model of a vehicle lives in one vehicle-local frame (the original
@@ -618,15 +655,23 @@ namespace godot {
      * camera - their submodels are posed and hidden - the passengers and the attachments never are. */
     void RailVehicleRenderingServer::_create_models(const RID &p_vehicle, Visual &p_visual) {
         E3DRenderingServer *models = E3DRenderingServer::get_instance();
+        ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
         ERR_FAIL_NULL(models);
+        ERR_FAIL_NULL(lazy_loader);
         const Ref<RailVehicleAppearance> &appearance = p_visual.appearance;
         const String data_path = appearance->get_data_path();
         // models built again while the vehicle is drawn in detail go under the holder it has
         Node3D *holder = Object::cast_to<Node3D>(ObjectDB::get_instance(p_visual.holder));
         const auto create = [&](const String &p_filename, const PackedStringArray &p_skins,
                                 const E3DRenderingServer::Instancer p_instancer) {
-            const Ref<E3DModel> model =
-                    p_filename.is_empty() ? Ref<E3DModel>() : models->model_load(data_path, p_filename);
+            // held while built, as a streamed scenery placement holds its model
+            const RID *resource = p_visual.model_resources.getptr(p_filename);
+            const Ref<Resource> loaded = resource != nullptr ? lazy_loader->resource_load(*resource) : Ref<Resource>();
+            if (loaded.is_null()) {
+                return RID();
+            }
+            const Ref<E3DModel> model = lazy_loader->resource_hold(*resource, loaded);
+            p_visual.held_models.push_back(*resource);
             if (model.is_null()) {
                 return RID();
             }
@@ -819,13 +864,15 @@ namespace godot {
                                             p_vehicle, RailVehicleComponentType::COMPONENT_ENGINE_POWER_SOURCE))
                                   : Ref<RailVehicleEnginePowerSource>();
         const Ref<RailVehicleAppearance> &appearance = p_visual.appearance;
-        if (models == nullptr || appearance.is_null() || source.is_null()) {
+        ResourceLazyLoader *lazy_loader = ResourceLazyLoader::get_instance();
+        if (models == nullptr || lazy_loader == nullptr || appearance.is_null() || source.is_null()) {
             return;
         }
         // the model this server builds from the appearance, or the one handed over
         Ref<E3DModel> model;
-        if (!appearance->get_model_filename().is_empty()) {
-            model = models->model_load(appearance->get_data_path(), appearance->get_model_filename());
+        if (const RID *resource = p_visual.model_resources.getptr(appearance->get_model_filename());
+            resource != nullptr) {
+            model = lazy_loader->resource_load(*resource);
         } else if (p_visual.model.is_valid()) {
             model = models->instance_get_model(p_visual.model);
         }

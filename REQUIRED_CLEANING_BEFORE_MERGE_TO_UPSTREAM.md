@@ -308,9 +308,9 @@ Legend:
 
 **Lazy `owner_create` inside the streaming build**
 
-* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:873-877` (in `_light_create`, `:847`),
-  `:1082-1086` (in `_build_instance_smoke_sources`, `:1049`), `:744-749` (in
-  `instance_register`, `:737`)
+* **Where:** `src/legacy/e3d/E3DRenderingServer.cpp:876-880` (in `_light_create`, `:850`),
+  `:1085-1089` (in `_build_instance_smoke_sources`, `:1052`), `:746-751` (in
+  `instance_register`, `:739`)
 * **Rule:** no `ensure_*` under any name; no wiring in a hot path
 * **Problem:** `if (light_stream_owner < 0) { light_stream_owner = streaming->owner_create(...) }`
   - and the same for `smoke_stream_owner` and `stream_owner` - wires callables into
@@ -463,7 +463,7 @@ of API style, one that is stored is a defect only when it may outlive what it po
 
 **Functional casts instead of `static_cast`**
 
-* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:954, 1386, 1654`;
+* **Where:** `src/vehicles/rail/RailVehicleRenderingServer.cpp:1001, 1433, 1701`;
   `RailVehicleServer.cpp:349, 1818, 1827-1828`; `src/legacy/e3d/E3DInstanceBackend.cpp:54`;
   `src/legacy/e3d/E3DNodesBackend.cpp:193`
 * **Rule:** `CODE_STYLE.md` "Conversions"

@@ -4309,3 +4309,21 @@ lighting or the trainset.
 * **Rule:** a test frees what it built through the owner that built it, before it ends - never an
   owned RID by hand, never an owner left for GUT. An error of the freeing lands on the next
   script's test.
+
+## 2026-10-10 An EN57 that "does not start" stood on its EP brake
+
+* **Symptom:** reports#16 - after the main switch tripped before a platform and the train was
+  stopped with the brake, the EN57 took no notch any more with the main switch closed again.
+* **What proved it:** the report's snapshot showed every line-contactor condition clear on the
+  motor car; a probe of the same unit (trip, EP brake, handle back to "drive", main switch,
+  notch 1 held) closed the line contactors at once with 104 kN of tractive force and stood, the
+  cylinders at 2.49 bar. FVel6's "drive" is `bh_RP` = 0 = `bh_EPN`, the EP neutral that holds the
+  cylinders; only `bh_EPR` = -1 releases (`TFVel6::pos_table`, hamulce.cpp:34). The releaser does
+  not touch the EP part. The player's log: EP brake at 179 s, then only "drive" and the releaser
+  until 262 s, when one step down to -1 released the train. The original behaves the same.
+* **Fix:** none in the physics. After the release at -1 the game's "Release train brakes" hint
+  showed the "drive" key and was done only at the driving position, sending the player back to
+  0 - the original checks RP too (driverhints.cpp:868). The game's hint now takes the EP
+  releasing position on an EP brake (maszyna-reloaded#3).
+* **Rule:** a unit with an EP handle that "does not move" is read on its cylinders first - an FVel6
+  holds them at "drive" (0) and releases only at -1.

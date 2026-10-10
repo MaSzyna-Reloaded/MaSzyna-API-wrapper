@@ -107,6 +107,12 @@ so is their open work.
 * The developer console (`addons/libmaszyna/console/console.gd`) still reads keycodes for
   Ctrl+~ (size), Escape, the arrows, Page Up/Down and Tab - only its toggle is an action
   (`console_toggle`).
+* `PlayerServer.player_enter_vehicle()` into a vehicle of the trainset the player drives (the
+  game's vehicle card "Enter cabin") leaves the trainset with nobody at the controls: the driver
+  the take-over made an observer gets the controls back only for another trainset
+  (`trainset_left_drivers_take_control`), and a gangway walk back keeps the player an observer -
+  the chip shows the vehicle unmanned until Q, F5 or the chip (reports#16). Left as it is on the
+  operator's decision; what an observer visit should do to the trainset is open.
 
 ## Cabins
 

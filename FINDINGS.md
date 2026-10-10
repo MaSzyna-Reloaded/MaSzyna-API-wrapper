@@ -207,6 +207,10 @@ anything. Open work belongs in `TODO.md`.
   the original leaves unbound - never move the original's keys around. *(10-06 the line breaker's
   keys took the rear motor blowers' Shift+M)*
 
+* An EP handle that "does not move" the train: read the brake cylinders first - an FVel6 holds
+  them at "drive" (0, the EP neutral) and releases only at -1 (hamulce.cpp:34). *(10-10 an EN57
+  that "does not start" stood on its EP brake)*
+
 ## State, ownership, events
 * An operation somebody awaits is done only when everything its waiter relies on is; a signal
   relayed after an `await` arrives after the call that caused it returned. *(10-03 the loading

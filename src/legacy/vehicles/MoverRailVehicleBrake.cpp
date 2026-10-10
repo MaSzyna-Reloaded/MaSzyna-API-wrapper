@@ -103,6 +103,12 @@ namespace godot {
     void MoverRailVehicleBrake::local_brake_set(const double p_level) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
+        // the original's independentbrakeset does not check (Train.cpp:1826), but it comes only from a
+        // cab's localbrake: gauge; the keys go through independentbrakeincrease, refused on a vehicle
+        // whose local brake is the hand wheel (Train.cpp:1724) - here the keys hold the handle by "set"
+        if (mover->LocalBrake == TLocalBrake::ManualBrake) {
+            return;
+        }
         // LocalBrakePosA is already normalized 0..1 in the mover (unlike the main brake's
         // arbitrary Handle-position units), so no range conversion is needed here.
         mover->LocalBrakePosA = CLAMP(p_level, 0.0, 1.0);
@@ -111,6 +117,10 @@ namespace godot {
     void MoverRailVehicleBrake::local_brake_increase() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
+        // no independent brake on a vehicle whose local brake is the hand wheel (Train.cpp:1724)
+        if (mover->LocalBrake == TLocalBrake::ManualBrake) {
+            return;
+        }
         // One notch per call, mirroring this wrapper's main_controller_increase(step=1)
         // convention for a single cab-click/command invocation.
         mover->IncLocalBrakeLevel(1);

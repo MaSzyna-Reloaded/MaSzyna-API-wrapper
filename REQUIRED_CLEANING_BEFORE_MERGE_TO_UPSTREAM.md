@@ -688,8 +688,8 @@ Legend:
 
 * **Where:**
   * Polish comments (AGENTS.md asks for English):
-    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:582, 645`
-  * `MoverRailVehicleBrake.cpp:205`, `MoverRailVehicleLighting.cpp:410`: refer to
+    `src/legacy/vehicles/MoverRailVehicleBrake.cpp:592, 655`
+  * `MoverRailVehicleBrake.cpp:215`, `MoverRailVehicleLighting.cpp:410`: refer to
     `_do_fetch_state_from_mover()`, which no longer exists
   * orphaned or misplaced doc comments: `src/vehicles/base/VehicleController.hpp:107-112`,
     `VehicleController.cpp:144-145`, `src/vehicles/rail/RailVehicleServer.cpp:2111-2112`

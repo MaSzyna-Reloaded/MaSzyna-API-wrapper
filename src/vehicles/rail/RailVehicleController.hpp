@@ -163,6 +163,10 @@ namespace godot {
             virtual void antislip() const = 0;
             virtual void main_controller_increase(int p_step = 1) const = 0;
             virtual void main_controller_decrease(int p_step = 1) const = 0;
+            /* The master controller put at a position at once, as the original's driver sets
+             * MainCtrlPos of an EIM controller (Driver.cpp:3771-3816, 4284-4290): no step, so the
+             * relay time a step restarts goes on (CheckEIMIC(), Mover.cpp) */
+            virtual void main_controller_set_position(int p_position) const = 0;
             virtual void second_controller_increase(int p_step = 1) const = 0;
             virtual void second_controller_decrease(int p_step = 1) const = 0;
             virtual void direction_increase() const = 0;

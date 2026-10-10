@@ -117,16 +117,6 @@ interface.
   engine or not. Wrapper: the line breaker is the engine's (`RailVehicleEngine`); a car without
   an engine has none and is not counted (`MaszynaLegacyDriverTrainset`) - counted, it stood open
   for ever and the driver never took the unit ready.
-* **Pantograph B of a vehicle with one.** `PrepareEngine()` asks for both pantographs of any
-  vehicle with a current collector (`CollectorsNo > 0`, `Driver.cpp:2782-2813`), and
-  `control_pantographs()` applies the vehicle's pantograph setup with both of them
-  (`Driver.cpp:6276-6319`). The 36WE A car has one collector (`36wea-a_kd.fiz`: `CollectorsNo=1`):
-  the hints asked to raise pantograph B, which the car has not got, and on the move to lower A, the
-  one carrying the current - neither ever done. Wrapper: a vehicle with one collector is asked
-  only for the pantograph it has - A or B by its `PhysicalLayout` (the 36WE C car's is B,
-  `PhysicalLayout=2`, which the original's loader counts as two collectors, `CollectorsNo =
-  min(PhysicalLayout, 2)`, Mover.cpp:11636-11637) - and the setup applies only to a vehicle with
-  both (`MaszynaLegacyDriverPantographs`).
 
 ## Scenario events (`world/Event.cpp`, `world/EvLaunch.cpp`)
 

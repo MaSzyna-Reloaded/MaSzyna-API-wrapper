@@ -99,6 +99,11 @@ namespace godot {
              * pantrear_sw flip, together with is_active (Train.cpp:3161) */
             virtual bool get_collector_pantograph_first_valve_enabled() const = 0;
             virtual bool get_collector_pantograph_second_valve_enabled() const = 0;
+            /* A pantograph's own valve working (Pantographs[].valve.is_active, Mover.cpp:2312-2315),
+             * whether the vehicle has that pantograph or not - what the original's driver takes as
+             * a pantograph raised or lowered (driverhints.cpp:269-310) */
+            virtual bool get_collector_pantograph_first_valve_active() const = 0;
+            virtual bool get_collector_pantograph_second_valve_active() const = 0;
             virtual double get_collector_pantograph_first_voltage() const = 0;
             virtual double get_collector_pantograph_second_voltage() const = 0;
             virtual double get_collector_voltage() const = 0;

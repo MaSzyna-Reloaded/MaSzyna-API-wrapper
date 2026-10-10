@@ -43,6 +43,9 @@ namespace godot {
                 D_METHOD("main_controller_decrease", "step"), &RailVehicleController::main_controller_decrease,
                 DEFVAL(1));
         ClassDB::bind_method(
+                D_METHOD("main_controller_set_position", "position"),
+                &RailVehicleController::main_controller_set_position);
+        ClassDB::bind_method(
                 D_METHOD("second_controller_increase", "step"), &RailVehicleController::second_controller_increase,
                 DEFVAL(1));
         ClassDB::bind_method(
@@ -220,6 +223,7 @@ namespace godot {
         register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
         register_command("main_controller_increase", Callable(this, "main_controller_increase"));
         register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
+        register_command("main_controller_set_position", Callable(this, "main_controller_set_position"));
         register_command("second_controller_increase", Callable(this, "second_controller_increase"));
         register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
         register_command("direction_increase", Callable(this, "direction_increase"));
@@ -243,6 +247,7 @@ namespace godot {
         unregister_command("cab_activation_auto");
         unregister_command("main_controller_increase");
         unregister_command("main_controller_decrease");
+        unregister_command("main_controller_set_position");
         unregister_command("second_controller_increase");
         unregister_command("second_controller_decrease");
         unregister_command("direction_increase");

@@ -4396,3 +4396,52 @@ lighting or the trainset.
   l053 and l204; they are given up.
 * **Rule:** a path lookup costs a fixed number of existence checks; it never lists a directory to
   match a name letter case aside.
+
+## 2026-10-10 An EN76 never raised its D car's pantograph
+
+* **Symptom:** in Wrzosy, IC EIE8310 (`wrzosy_eie8310.scn`), nothing happened at Wolica after
+  16:00: no route for the player's train, no shunting, the event queue holding only the station
+  sounds' loop. ROJ43411 (EN76-001, `22WE_P4`) stood at its start for good.
+* **What proved it:** a headless probe of the scenario in the game project (the AI registered as
+  `game.gd` does - in `demo` no driver has an implementation, and a train given a starting
+  velocity only rolls): everything after `final_2t849:event2` waited for the EN76 to cross that
+  track, and its driver stood at "prepare the vehicle" with `engine_missing` = LINE_BREAKER. The
+  A car (`PhysicalLayout=1`) had pantograph A up at 3448 V and its line breaker closed; the D car,
+  powered too, has only pantograph B (`PhysicalLayout=2`), which was never raised, so its line
+  breaker could not close - and the readiness counts every powered car (`Driver.cpp:6141-6144`).
+  The driver asked only for the pantograph the pantograph unit has (the 2026-10-06 fix): the
+  original asks for both, consist-wide (`Driver.cpp:2811-2813`, `OperatePantographValve()`
+  defaults to `range_t::consist`), and takes a hint as done by the pantograph unit's **valve**
+  (`Pantographs[end].valve.is_active`, `driverhints.cpp:269-310`), which a car without that
+  pantograph has as well. The port tested the pantograph raised on the unit, so "raise B" never
+  ended on a car without B - the reason the quirk was introduced.
+* **Fix:** `RailVehicleEnginePowerSource.get_collector_pantograph_first/second_valve_active()`
+  (the valve's `is_active`); the driver's pantograph hints end on them, both pantographs are asked
+  for and the suggested setup applies to every vehicle, `CollectorsNo > 1` where the original
+  reads it (`MaszynaLegacyDriverPantographs`, the game's `ai_driver/`). The quirk "Pantograph B of
+  a vehicle with one" is gone. `test_zzz_driver_prepare_engine_elf.gd` (the EN76 cut from
+  `ic8310_dekoracje.scm`): red before, green after.
+* **Rule:** a hint ends on the state the original's hint reads, of the vehicle it reads it from -
+  a valve is not a pantograph; a workaround for a hint that never ends is a sign of the wrong
+  state read.
+
+## 2026-10-10 An Elf that never gathered power under its driver
+
+* **Symptom:** with its pantographs fixed (the entry above), the EN76 of Wrzosy's IC EIE8310 stood
+  ready, its driver at "increase tractive force", the master controller at 4 ("add to 1") - and
+  `eimic_real` at 0.01 for good.
+* **What proved it:** a print in `MoverDriveUnit::process()` (removed): `MainCtrlPos` and
+  `MainCtrlActualPos` 4 all the time, `LastRelayTime` back to 0 on every driver update (0.5 s),
+  never reaching `InitialCtrlDelay` (1.0 s), so `CheckEIMIC()` case 2 added nothing past the first
+  0.01. On every update the driver puts the controller to holding (3, `eimic > 0`,
+  CheckTimeControllers(), Driver.cpp:4289) and back to driving (4, IncSpeedEIM(), Driver.cpp:3784).
+  The original assigns `MainCtrlPos` - between two Mover steps it stays 4 and the relay time goes
+  on. The port stepped it through the cab, `DecMainCtrl()`/`IncMainCtrl()`, which restart
+  `LastRelayTime` (Mover.cpp:2361, 2558).
+* **Fix:** `RailVehicleController.main_controller_set_position()`, a command; the driver puts an
+  EIM controller of kind 1, 2 and 3 at its position where the original assigns it
+  (`MaszynaLegacyDriverTraction.put_main_controller()`: IncSpeedEIM/DecSpeedEIM, IncBrakeEIM/
+  DecBrakeEIM, CheckTimeControllers). `test_zzz_driver_prepare_engine_elf.gd`,
+  `test_the_driver_told_to_go_moves_the_unit_off`: red before, green after.
+* **Rule:** where the original's driver assigns a control, the port does not step it - a step is a
+  Mover operation with side effects of its own (relay time, delays, messages to the trainset).

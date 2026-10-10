@@ -252,6 +252,13 @@
 				Increase main controller position
 			</description>
 		</method>
+		<method name="main_controller_set_position" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="position" type="int" />
+			<description>
+				Put the main controller at [param position] at once, without stepping through the positions between - as the original's driver sets an EIM controller. A step restarts the controller's relay time, which an Elf's integrated control waits out before it raises the power.
+			</description>
+		</method>
 		<method name="opposite_end" qualifiers="static">
 			<return type="int" enum="RailVehicleController.CouplerEnd" />
 			<param index="0" name="end" type="int" enum="RailVehicleController.CouplerEnd" />

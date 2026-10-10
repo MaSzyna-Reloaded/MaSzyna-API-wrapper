@@ -256,6 +256,16 @@ namespace godot {
         return mover != nullptr && mover->Pantographs[Maszyna::end::rear].valve.is_enabled;
     }
 
+    bool MoverRailVehicleEnginePowerSource::get_collector_pantograph_first_valve_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Pantographs[Maszyna::end::front].valve.is_active;
+    }
+
+    bool MoverRailVehicleEnginePowerSource::get_collector_pantograph_second_valve_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Pantographs[Maszyna::end::rear].valve.is_active;
+    }
+
     double MoverRailVehicleEnginePowerSource::get_collector_pantograph_first_voltage() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Pantographs[Maszyna::end::front].voltage : 0.0;

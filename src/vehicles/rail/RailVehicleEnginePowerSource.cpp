@@ -179,6 +179,12 @@ namespace godot {
                 D_METHOD("get_collector_pantograph_second_valve_enabled"),
                 &RailVehicleEnginePowerSource::get_collector_pantograph_second_valve_enabled);
         ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_first_valve_active"),
+                &RailVehicleEnginePowerSource::get_collector_pantograph_first_valve_active);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_second_valve_active"),
+                &RailVehicleEnginePowerSource::get_collector_pantograph_second_valve_active);
+        ClassDB::bind_method(
                 D_METHOD("get_collector_pantograph_first_voltage"),
                 &RailVehicleEnginePowerSource::get_collector_pantograph_first_voltage);
         ClassDB::bind_method(
@@ -273,6 +279,8 @@ namespace godot {
         p_state["current_collector/pantograph_first_active"] = get_collector_pantograph_first_active();
         p_state["current_collector/pantograph_first_valve_enabled"] = get_collector_pantograph_first_valve_enabled();
         p_state["current_collector/pantograph_second_valve_enabled"] = get_collector_pantograph_second_valve_enabled();
+        p_state["pantograph_first_valve_active"] = get_collector_pantograph_first_valve_active();
+        p_state["pantograph_second_valve_active"] = get_collector_pantograph_second_valve_active();
         p_state["current_collector/pantograph_first_voltage"] = get_collector_pantograph_first_voltage();
         p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
         p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();

@@ -3,6 +3,7 @@
 #include "legacy/maszyna-mover/utilities.h"
 #include "legacy/vehicles/MoverBackend.hpp"
 #include "vehicles/base/VehicleServer.hpp"
+#include <algorithm>
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -781,6 +782,11 @@ namespace godot {
         ASSERT_MOVER(mover);
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
+    }
+
+    void MoverRailVehicleController::main_controller_set_position(const int p_position) const {
+        ASSERT_MOVER(mover);
+        mover->MainCtrlPos = std::clamp(p_position, 0, mover->MainCtrlPosNo);
     }
 
     // Original engine: OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), regular mode

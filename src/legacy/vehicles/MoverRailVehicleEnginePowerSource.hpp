@@ -47,6 +47,8 @@ namespace godot {
             bool get_collector_pantograph_second_active() const override;
             bool get_collector_pantograph_first_valve_enabled() const override;
             bool get_collector_pantograph_second_valve_enabled() const override;
+            bool get_collector_pantograph_first_valve_active() const override;
+            bool get_collector_pantograph_second_valve_active() const override;
             double get_collector_pantograph_first_voltage() const override;
             double get_collector_pantograph_second_voltage() const override;
             double get_collector_voltage() const override;

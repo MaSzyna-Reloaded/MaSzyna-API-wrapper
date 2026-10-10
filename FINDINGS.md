@@ -114,8 +114,8 @@ anything. Open work belongs in `TODO.md`.
   *(09-20 blotchy ground)*
 * A driver's readiness is tested on every vehicle under control (`IsAnyLineBreakerOpen`), in its
   reset and in its check alike, and only on devices a car has - a car without an engine has no line
-  breaker to be open; a hint asks only for what the vehicle has, and is done by the switch of any
-  car that has the device, not by the device running. *(10-06 Vehicle not ready with nothing
+  breaker to be open; a hint is done by the switch of any car that has the device, not by the
+  device running. *(10-06 Vehicle not ready with nothing
   missing; "Switch on compressor" with the compressor on)*
 * A vehicle that is not driven is not simulated (`CabActive`/`PhysicActivation`). *(09-23 loco
   with nobody in the cab)*
@@ -216,6 +216,13 @@ anything. Open work belongs in `TODO.md`.
 * An EP handle that "does not move" the train: read the brake cylinders first - an FVel6 holds
   them at "drive" (0, the EP neutral) and releases only at -1 (hamulce.cpp:34). *(10-10 an EN57
   that "does not start" stood on its EP brake)*
+
+* A driver's hint ends on the state the original's hint reads, of the same vehicle: a pantograph
+  is "raised" when the pantograph unit's valve of it works (`driverhints.cpp:269-310`), on a car
+  without that pantograph too. *(10-10 an EN76 never raised its D car's pantograph)*
+* Where the original's driver assigns a control (`MainCtrlPos = 4`), the port does not step it: a
+  step (`IncMainCtrl()`) restarts the relay time an Elf waits out. *(10-10 an Elf that never
+  gathered power under its driver)*
 
 ## State, ownership, events
 * An operation somebody awaits is done only when everything its waiter relies on is; a signal

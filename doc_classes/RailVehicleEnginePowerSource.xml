@@ -64,6 +64,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_collector_pantograph_first_valve_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the first pantograph's own valve is working, whether the vehicle has that pantograph or not. The original's driver takes it as the pantograph raised.
+			</description>
+		</method>
 		<method name="get_collector_pantograph_first_valve_enabled" qualifiers="const">
 			<return type="bool" />
 			<description>
@@ -87,6 +93,12 @@
 		<method name="get_collector_pantograph_second_active" qualifiers="const">
 			<return type="bool" />
 			<description>
+			</description>
+		</method>
+		<method name="get_collector_pantograph_second_valve_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Whether the second pantograph's own valve is working, whether the vehicle has that pantograph or not. The original's driver takes it as the pantograph raised.
 			</description>
 		</method>
 		<method name="get_collector_pantograph_second_valve_enabled" qualifiers="const">

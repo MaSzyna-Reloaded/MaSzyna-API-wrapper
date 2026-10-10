@@ -85,6 +85,7 @@ namespace godot {
             void antislip() const override;
             void main_controller_increase(int p_step = 1) const override;
             void main_controller_decrease(int p_step = 1) const override;
+            void main_controller_set_position(int p_position) const override;
             void second_controller_increase(int p_step = 1) const override;
             void second_controller_decrease(int p_step = 1) const override;
             void direction_increase() const override;
